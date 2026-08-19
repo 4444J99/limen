@@ -576,7 +576,10 @@
       "unlocks": "none; the prior one-time hand gate is superseded",
       "gate": "none; fixed free-space targets are historical evidence, not current authority",
       "source_task": "superseded by Prima Materia evacuation v2 and the dynamic resource-envelope contract",
-      "issue": 912
+      "issue": 912,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-IDENTITY-POPULATE",
@@ -664,7 +667,10 @@
       "unlocks": "80 of the 562 local branches become reapable on the beat's reap rung; local_branches residue (562 vs the LIMEN_RESIDUE_LOCAL_BRANCHES=40 cap) gets its first mechanism that can actually reduce it, rather than a cap measuring a quantity nothing is empowered to lower",
       "source_task": "asked 2026-08-07 (\"why do we need 469 live work branches?\") \u2192 measured: of 457 ledger entries, 230 never pushed, 87 closed-unmerged, 49 open-PR, 11 merged-but-missed, 80 genuinely unfulfilled \u00b7 limen PR feat/branch-reap-decided-proof",
       "note": "Separately and NOT part of this lever: 230 of the local branches were never pushed anywhere (159 are limen/* fleet dispatch packets). Rule #2 says on-disk-only is not done, but they are also exactly the class the removal-acceptance covenant protects (unpushed-commits roots are never reaped), so the resolution there is push-then-decide, never delete \u2014 no proof can make an unpushed commit loss-free.",
-      "issue": 2010
+      "issue": 2010,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-DAILY-ENGINE-PHONE-LEAVES",
@@ -804,7 +810,10 @@
       "gate": "vendor-portal logins the organ cannot perform (interactive export flows)",
       "unlocks": "widens AI-chat dossier coverage to all 8 vendors \u2014 adds Gemini, Grok, Perplexity, Copilot, DeepSeek, Mistral alongside the already-imported ChatGPT + Claude corpus. The constellation program is green without it; this deepens source breadth for the cross-vendor insights engine.",
       "source_task": "constellation closeout filings (limen PR #1373); CCE provider-import lane in conversation-corpus-check picks up archives dropped under the source-drop inbox.",
-      "issue": 1394
+      "issue": 1394,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-DECORUM-LINKEDIN-HEADLINE",
@@ -826,7 +835,10 @@
       "gate": "no free X write API \u2014 the current bio can only be captured by the account holder",
       "unlocks": "DECORVM covers the X bio as an off-platform surface (voice + staleness), closing another human-facing egg-face gap",
       "source_task": "DECORVM off_platform slot x_bio (institutio/governance/decorum-surfaces.yaml)",
-      "issue": 1427
+      "issue": 1427,
+      "sovereignty": {
+        "reason": "identity"
+      }
     },
     {
       "id": "L-DECORUM-EMAIL-SIGNATURE",
@@ -837,7 +849,10 @@
       "gate": "mail-client signature config is not organ-readable \u2014 the current block can only be captured by you",
       "unlocks": "DECORVM covers the email signature as an off-platform surface (stale title/links + voice)",
       "source_task": "DECORVM off_platform slot email_signature (institutio/governance/decorum-surfaces.yaml)",
-      "issue": 1428
+      "issue": 1428,
+      "sovereignty": {
+        "reason": "identity"
+      }
     },
     {
       "id": "L-DECORUM-RESUME-PDF",
@@ -848,7 +863,10 @@
       "gate": "the canonical resume PDF lives off-repo \u2014 the current file/text can only be provided by you",
       "unlocks": "DECORVM covers the public resume as an off-platform surface (stale dates + narrative-accuracy against the contribution mix)",
       "source_task": "DECORVM off_platform slot resume_pdf (institutio/governance/decorum-surfaces.yaml)",
-      "issue": 1429
+      "issue": 1429,
+      "sovereignty": {
+        "reason": "identity"
+      }
     },
     {
       "id": "L-APPLY-FIRE",
@@ -870,7 +888,10 @@
       "unlocks": "the pitch is sent to David",
       "source_task": "victoroff-os pitch deploy",
       "gate": "Sending emails is irreversible external communication. The human must send it.",
-      "issue": 1450
+      "issue": 1450,
+      "sovereignty": {
+        "reason": "identity"
+      }
     },
     {
       "id": "L-CONST-CUSTODY-MIGRATION",
@@ -903,7 +924,10 @@
       "gate": "person-scoped writes into the private stores are classifier-gated to agents in background sessions (verified 2026-07-29, repeated denials including content-neutral rewrites) \u2014 the move is yours",
       "unlocks": "zero local-only partner records: every constellation record durable as vault ciphertext, satisfying Rule #2 with nothing world-readable",
       "source_task": "custody dual-estate excavation 2026-07-29 \u2014 docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md",
-      "issue": 1646
+      "issue": 1646,
+      "sovereignty": {
+        "reason": "wallet_custody"
+      }
     },
     {
       "id": "L-PERSONAL-PRO",
@@ -946,7 +970,10 @@
       "unlocks": "clause 3 of the autonomy maintenance resume predicate, which is one of the three conditions holding the estate paused since 2026-07-22",
       "source_task": "PR #1741 \u2014 heal(autonomy): a resume predicate written as prose is a pause with no exit",
       "note": "Verify with `python3 scripts/check-heartbeat-env.py --diff`: exit 0 means the root the daemon names still generates it byte-for-byte. This lever exists because a merged organ that never ran led back through a nine-day pause to a daemon whose environment nobody had checked against the repo.",
-      "issue": 1776
+      "issue": 1776,
+      "sovereignty": {
+        "reason": "physical_act"
+      }
     },
     {
       "id": "L-COLLABORATION-OPERATIONS-PLATFORM-GENESIS",
@@ -962,7 +989,10 @@
         "Create and seed the private repository; verify owner, visibility, collaborators, and default branch",
         "Build, deploy, migrate, restore-test, and close only on the plan's executable predicates"
       ],
-      "issue": 1779
+      "issue": 1779,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-CONSTELLATION-OVERLAY-RESTORE",
@@ -980,7 +1010,10 @@
       ],
       "unlocks": "constellation-registry Rule #6 (15 publicly-indexed people regain private backing; dossier lanes stop failing with 'no pipeline_slug in overlay'); local verify-scoped green on any organs/consulting diff",
       "note": "2026-08-06: _people-private/constellation/ was left empty by the 2026-07-27 laptop evacuation (correspondence/ and opportunities/ were restored, constellation/ was not). Single unambiguous snapshot on the archive (Jul 22-25). Discovered when the lint-scope chore made organs/consulting/** implicate the gate for the first time.",
-      "issue": 1925
+      "issue": 1925,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-NAME-RULING-LIMEN-ASTRA-STRATVM",
@@ -998,7 +1031,10 @@
       ],
       "note": "Scale of what the name binds today: ~258 LIMEN_* parameters, com.limen.* LaunchAgents, ~/.limen.env, install.sh, the limen CLI + Homebrew formula, the limen-runtime Worker, limen-dashboard.pages.dev. The alias-layer design in ARC 3 makes any answer safe; the only unsafe move is executing a rename from an external charter without this ruling.",
       "issue": 1934,
-      "unlocks": "the entire rename/keep track of the 2026-07-30 PORTVS/ASTRA plan (ARC 3): nomenclator mint, GitHub rename with redirects, CLI compat shim, LIMEN_* alias layer \u2014 all parked until this one word; also closes the naming loop the 2026-08-06 external charters kept reopening"
+      "unlocks": "the entire rename/keep track of the 2026-07-30 PORTVS/ASTRA plan (ARC 3): nomenclator mint, GitHub rename with redirects, CLI compat shim, LIMEN_* alias layer \u2014 all parked until this one word; also closes the naming loop the 2026-08-06 external charters kept reopening",
+      "sovereignty": {
+        "reason": "identity"
+      }
     },
     {
       "id": "L-DEPENDABOT-DELIVERY-ARM",
@@ -1016,7 +1052,10 @@
       ],
       "note": "Fail-closed typing is already DONE and reversible \u2014 nothing merges while this lever is open. The 200 PRs span 94 public repos; each is a dependabot version bump, individually green-gated at merge time.",
       "issue": 1947,
-      "unlocks": "autonomous drain of the dependabot two-thirds of the open-PR estate (200 of ~1300 open PRs); the stale-pr-sweep count drops by up to 200 without another human touch"
+      "unlocks": "autonomous drain of the dependabot two-thirds of the open-PR estate (200 of ~1300 open PRs); the stale-pr-sweep count drops by up to 200 without another human touch",
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-FLYWHEEL-VALVE-ARM",
@@ -1133,7 +1172,10 @@
       "gate": "a bulk disposition changes the treatment of hundreds of externally visible PRs; the registry may name the cohort but cannot choose that governance policy for you",
       "status": "open",
       "issue": 1981,
-      "note": "No draft is closed, converted, or merged by this lever record. Any later effector must re-enumerate the live cohort, preserve exact heads, and remain bounded by lifecycle.yaml plus merge-policy.sh."
+      "note": "No draft is closed, converted, or merged by this lever record. Any later effector must re-enumerate the live cohort, preserve exact heads, and remain bounded by lifecycle.yaml plus merge-policy.sh.",
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-MADDIE-CUSTODY-TRANSFER",
@@ -1145,7 +1187,10 @@
       "unlocks": "ends open-ended hosting of a third party's production estate on a personal account, removes you as the single point of failure for their live funnels, and makes the lane re-tierable so it leaves the session launcher",
       "note": "Provenance: Surfaced by the 2026-08-12 lane review; had no owner because neither party ever raised it (a standing condition, not an ask). elevatealign.com itself is still PARKED at GoDaddy (client-side nameserver change never made) and its registry expiry is 2026-09-10T19:30Z - the only hard external clock on this lane. Commercial terms and correspondence are deliberately NOT here: this file publishes. They live in the ARCA-sealed private register (_people-private/people/maddie/ - open-asks.yaml MAD-020 + handover-packet-2026-08-12.md).",
       "source_task": "maddie/spiral delta review 2026-08-12",
-      "issue": 2339
+      "issue": 2339,
+      "sovereignty": {
+        "reason": "wallet_custody"
+      }
     },
     {
       "id": "L-DUSTIN-GH-PROFILE",
@@ -1158,7 +1203,10 @@
       "note": "Ask registry: _people-private/people/dustin/open-asks.yaml DUS-003. Delivery constraints per the dialogue persona record: one ask per message, never bundled.",
       "owner": "yours",
       "source_task": "dustin alpha\u2192omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
-      "issue": 2367
+      "issue": 2367,
+      "sovereignty": {
+        "reason": "identity"
+      }
     },
     {
       "id": "L-DSP-TEN-QUESTIONS",
@@ -1171,7 +1219,10 @@
       "note": "Ask registry: DUS-004. Roadmap: 4444J99/post-dsp-platform roadmap/ladder.json levers block.",
       "owner": "yours",
       "source_task": "dustin alpha\u2192omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
-      "issue": 2368
+      "issue": 2368,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-CONS-PRICE",
@@ -1197,7 +1248,10 @@
       "note": "Ask registry: DUS-001/DUS-002. Engagement record holds the no-bundling exclusion: never fold the two unfunded ventures into this offer.",
       "owner": "yours",
       "source_task": "dustin alpha\u2192omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
-      "issue": 2370
+      "issue": 2370,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-NAS-CREDENTIALS",
@@ -1210,7 +1264,10 @@
       "note": "Terms (L-NAS-TERMS) come first; this lever is deliberately separate so terms can close without any credential exposure.",
       "owner": "yours",
       "source_task": "dustin alpha\u2192omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
-      "issue": 2371
+      "issue": 2371,
+      "sovereignty": {
+        "reason": "vendor_mint"
+      }
     },
     {
       "id": "L-HOSPES-PUBLISH-CONSENT",
@@ -1223,7 +1280,10 @@
       "note": "The repo itself stays private either way; this lever governs the public FACE only. Do not conflate with the retired CI gate (hospes CI has run green on ubuntu-latest since organvm/hospes#8 merged 2026-07-22).",
       "owner": "yours",
       "source_task": "HOSPES full completion campaign (limen #2401, plan docs/plans/2026-08-14-hospes-full-done.md)",
-      "issue": 2405
+      "issue": 2405,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-HOSPES-PILOT-RECEIPTS",
@@ -1236,7 +1296,10 @@
       "note": "The product refuses to start a pilot run without the review + slate + verified routes; nothing here is a software blocker.",
       "owner": "yours",
       "source_task": "HOSPES full completion campaign (limen #2401, plan docs/plans/2026-08-14-hospes-full-done.md)",
-      "issue": 2406
+      "issue": 2406,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-HOSPES-CUSTODY-TRANSFER",
@@ -1249,7 +1312,10 @@
       "note": "Sequenced AFTER the eviction-retirement PR merges; the lever text will be stale until then \u2014 check the campaign plan for the receipt path.",
       "owner": "yours",
       "source_task": "HOSPES full completion campaign (limen #2401, plan docs/plans/2026-08-14-hospes-full-done.md)",
-      "issue": 2407
+      "issue": 2407,
+      "sovereignty": {
+        "reason": "wallet_custody"
+      }
     },
     {
       "id": "L-BOARD-PARTITION-DECISION",
@@ -1262,7 +1328,10 @@
       "note": "The hospes campaign proceeds regardless: the GitHub issues + hospes/resources/spec/completion-registry.yaml are the durable work registry for the build. The hospes roadmap rows (GH-organvm-hospes-70..83) landed on canonical 2026-08-15 when the write path healed. Close this lever when #2001 merges; it is retained only so the last mechanical step keeps a visible owner.",
       "owner": "yours",
       "source_task": "board-partition plan (limen #2069) + HOSPES full completion campaign (limen #2401)",
-      "issue": 2408
+      "issue": 2408,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-FRICTION-FEDERATION-SOURCE",
@@ -1275,7 +1344,10 @@
       "note": "The routine itself is healthy and loudly self-reporting on its rolling issue (session-meta 'Friction federation \u2014 rolling'); the starvation is upstream. Filed 2026-08-15 while triaging the notification wall.",
       "owner": "yours",
       "source_task": "notification-wall triage 2026-08-15 (2.AUDIT.4 friction-federation)",
-      "issue": 2473
+      "issue": 2473,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-DANSE-ARTISTIC-APPROVAL",
@@ -1292,7 +1364,10 @@
         "Review the actual #10 cut and approve only the factual final-cut, biography, and rights assertions that are true",
         "Perform or authorize any upload, filing, public post, fee, agreement, or identity claim only when its owner issue is ready"
       ],
-      "issue": 1792
+      "issue": 1792,
+      "sovereignty": {
+        "reason": "identity"
+      }
     },
     {
       "id": "L-CLOUD-BULK-PR-CLOSE-N75",
@@ -1310,7 +1385,10 @@
         "Authorize the bounded close batch; attach the exact PR-number denominator and GitHub receipt to organvm/session-meta#29."
       ],
       "note": "Predicate after authorization: the exact reviewed target set is closed and the receipt records every result; unrelated drafts and all human-authored PRs remain untouched.",
-      "issue": 2120
+      "issue": 2120,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-CLOUD-EXTERNAL-GOVERNANCE-N77",
@@ -1328,7 +1406,10 @@
         "Merge only if the authority claim is correct and required checks pass; otherwise request bounded changes or close."
       ],
       "note": "No agent may silently merge, close, or leave this governance proposal without the named human disposition.",
-      "issue": 2120
+      "issue": 2120,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-CLOUD-SESSION-SCOPE-EXPANSION",
@@ -1346,7 +1427,10 @@
         "Done when the delivery emits CloudRoutineReceiptV1 observations from both canonical sources with no access-denied finding."
       ],
       "note": "Private repository contents and credentials remain out of receipts; scope expansion grants read access only to the named canonical sources unless separately authorized.",
-      "issue": 2120
+      "issue": 2120,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-CLOUD-ARCHIVE-ENTERPRISE-PLUGIN-N80",
@@ -1364,7 +1448,10 @@
         "Verify: test \"$(gh repo view organvm-iii-ergon/enterprise-plugin --json isArchived --jq .isArchived)\" = true, then attach the receipt to organvm-iii-ergon/enterprise-plugin#1."
       ],
       "note": "Do not remove the [ARCHIVED] description prefix: the repository-owned seed resolves the mismatch in favor of archived=true. The shared-checkout admission hook denied the attempted GitHub PATCH before delivery, so no external state changed in this session.",
-      "issue": 2120
+      "issue": 2120,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     },
     {
       "id": "L-LAUNCHDARKLY-OAUTH-CONSENT",
