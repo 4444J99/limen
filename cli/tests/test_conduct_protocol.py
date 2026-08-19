@@ -31,10 +31,26 @@ from limen.conduct import (
 from limen.conduct.models import PredicateEvidenceV1
 from limen.conduct.models import canonical_hash
 from limen.conduct.resources import resources_overlap
+from limen.prima_materia import ResourceClaimV1 as StorageEnvelopeClaimV1
 from limen.work_loan import WorkLoanV1
 
 
 NOW = datetime(2026, 7, 18, 15, 0, tzinfo=timezone.utc)
+
+
+def storage_claim(identifier: str = "storageClaimIdentifier01") -> StorageEnvelopeClaimV1:
+    return StorageEnvelopeClaimV1(
+        claim_id=identifier,
+        hydrated_inputs_bytes=1,
+        workspace_bytes=2,
+        temporary_expansion_bytes=3,
+        output_bytes=4,
+        encryption_chunking_bytes=5,
+        rollback_bytes=6,
+        effective_from=NOW,
+        effective_until=NOW + timedelta(hours=1),
+        rollback_until=NOW + timedelta(hours=2),
+    )
 
 
 def identity(agent: str, session_id: str | None = None) -> AgentIdentityV1:
@@ -158,6 +174,27 @@ def test_packet_hashes_are_canonical_and_mismatch_is_rejected() -> None:
     assert first.execution_hash == second.execution_hash
     with pytest.raises(ValueError, match="intent_hash"):
         WorkPacketV1(**(first.model_dump() | {"intent_hash": "0" * 64}))
+
+
+def test_local_worktree_writer_requires_typed_storage_envelope() -> None:
+    base = packet(work_id="local-write", conductor=identity("codex"))
+    values = base.model_dump()
+    values["required_capabilities"] = {"code", "local-worktree"}
+    with pytest.raises(ValueError, match="storage_envelope_claims"):
+        WorkPacketV1.model_validate(values)
+
+    values["storage_envelope_claims"] = [storage_claim().model_dump(mode="json")]
+    accepted = WorkPacketV1.model_validate(values)
+    assert accepted.storage_envelope_claims[0].workspace_bytes == 2
+
+
+def test_storage_envelope_claim_ids_are_unique_per_packet() -> None:
+    base = packet(work_id="duplicate-storage", conductor=identity("codex"))
+    values = base.model_dump()
+    claim = storage_claim().model_dump(mode="json")
+    values["storage_envelope_claims"] = [claim, claim]
+    with pytest.raises(ValueError, match="unique claim IDs"):
+        WorkPacketV1.model_validate(values)
 
 
 def test_task_run_returns_existing_execution_and_rejects_multiple_active_runs() -> None:

@@ -1832,6 +1832,38 @@ test("canonical hashes, packet deadlines, and conservative unknown write scope f
     left === "repo/organvm/limen/write" && right === "repo/organvm/limen/write"));
 });
 
+test("local worktree writers require unique ordered storage envelope claims", async () => {
+  const codex = session("codex");
+  const original = await packet({ workId: "storage-envelope", conductor: codex.identity });
+  const local = {
+    ...original,
+    intent_hash: "",
+    execution_hash: "",
+    required_capabilities: ["code", "local-worktree"],
+  };
+  await assert.rejects(validateWorkPacket(local), /storage_envelope_claims/);
+
+  const claim = {
+    schema_version: "limen.resource_claim.v1",
+    claim_id: "storageClaimIdentifier01",
+    hydrated_inputs_bytes: 1,
+    workspace_bytes: 2,
+    temporary_expansion_bytes: 3,
+    output_bytes: 4,
+    encryption_chunking_bytes: 5,
+    rollback_bytes: 6,
+    effective_from: "2026-08-12T00:00:00Z",
+    effective_until: "2026-08-12T01:00:00Z",
+    rollback_until: "2026-08-12T02:00:00Z",
+  };
+  const accepted = await validateWorkPacket({ ...local, storage_envelope_claims: [claim] });
+  assert.equal(accepted.storage_envelope_claims[0].workspace_bytes, 2);
+  await assert.rejects(
+    validateWorkPacket({ ...local, storage_envelope_claims: [claim, claim] }),
+    /unique claim IDs/,
+  );
+});
+
 test("resource claims enforce legal modes and repository, path, and external authority", async () => {
   const codex = session("codex");
   const { service } = await serviceWith([codex]);
