@@ -134,9 +134,7 @@ def _exact_ids(
         indexed[item_id] = item
     actual = set(indexed)
     if actual != required:
-        errors.append(
-            f"{label} ids must be exactly {sorted(required)}; got {sorted(actual)}"
-        )
+        errors.append(f"{label} ids must be exactly {sorted(required)}; got {sorted(actual)}")
     return indexed
 
 
@@ -154,9 +152,7 @@ def _sensitive_keys(value: Any, path: str = "$") -> list[str]:
     return found
 
 
-def validate_preparation(
-    document: dict[str, Any], *, repo_root: Path = ROOT
-) -> list[str]:
+def validate_preparation(document: dict[str, Any], *, repo_root: Path = ROOT) -> list[str]:
     errors: list[str] = []
 
     if document.get("schema") != "consulting.phase0.preparation.v1":
@@ -196,9 +192,7 @@ def validate_preparation(
         errors.append("authority must be an object")
     else:
         if set(authority) != FALSE_AUTHORITY_FLAGS:
-            errors.append(
-                "authority flags must be exactly the fail-closed preparation set"
-            )
+            errors.append("authority flags must be exactly the fail-closed preparation set")
         for flag in sorted(FALSE_AUTHORITY_FLAGS):
             if authority.get(flag) is not False:
                 errors.append(f"authority.{flag} must be false before BBNC receipt")
@@ -214,15 +208,11 @@ def validate_preparation(
         if role.get("owner") != "BBNC":
             errors.append(f"required_roles[{role_id}].owner must be BBNC")
         if role.get("assignment_state") != "pending_bbnc_nomination":
-            errors.append(
-                f"required_roles[{role_id}] must remain pending_bbnc_nomination"
-            )
+            errors.append(f"required_roles[{role_id}] must remain pending_bbnc_nomination")
         if "principal_ref" in role or "person" in role:
             errors.append(f"required_roles[{role_id}] exposes a personal assignment")
 
-    gates = _exact_ids(
-        document.get("gates"), "gate_id", REQUIRED_GATES, "gates", errors
-    )
+    gates = _exact_ids(document.get("gates"), "gate_id", REQUIRED_GATES, "gates", errors)
     for gate_id, gate in gates.items():
         if gate.get("state") != "open":
             errors.append(f"gates[{gate_id}] must be open in the prepared packet")
@@ -240,9 +230,7 @@ def validate_preparation(
         if account.get("owner") != "BBNC":
             errors.append(f"delivery_accounts[{account_id}].owner must be BBNC")
         if account.get("state") != "not_provisioned":
-            errors.append(
-                f"delivery_accounts[{account_id}] must be not_provisioned"
-            )
+            errors.append(f"delivery_accounts[{account_id}] must be not_provisioned")
         if "locator" in account or "evidence_digest" in account:
             errors.append(f"delivery_accounts[{account_id}] exposes owner state")
 
@@ -315,9 +303,7 @@ def validate_preparation(
     return errors
 
 
-def validate_authority_receipt(
-    preparation: dict[str, Any], receipt: dict[str, Any] | None
-) -> list[str]:
+def validate_authority_receipt(preparation: dict[str, Any], receipt: dict[str, Any] | None) -> list[str]:
     errors = validate_preparation(preparation)
     if receipt is None:
         errors.append("BBNC-owned Phase 0 authority receipt is required")
@@ -353,9 +339,7 @@ def validate_authority_receipt(
     if grants != required_grants:
         errors.append("receipt grants must authorize Phase 1 discovery only")
 
-    roles = _exact_ids(
-        receipt.get("roles"), "role_id", REQUIRED_ROLES, "receipt.roles", errors
-    )
+    roles = _exact_ids(receipt.get("roles"), "role_id", REQUIRED_ROLES, "receipt.roles", errors)
     for role_id, role in roles.items():
         principal_ref = role.get("principal_ref")
         if not isinstance(principal_ref, str) or not principal_ref.strip():
@@ -363,9 +347,7 @@ def validate_authority_receipt(
         if "name" in role:
             errors.append(f"receipt.roles[{role_id}] must not expose a name")
 
-    gates = _exact_ids(
-        receipt.get("gates"), "gate_id", REQUIRED_GATES, "receipt.gates", errors
-    )
+    gates = _exact_ids(receipt.get("gates"), "gate_id", REQUIRED_GATES, "receipt.gates", errors)
     for gate_id, gate in gates.items():
         if gate.get("state") != "passed":
             errors.append(f"receipt.gates[{gate_id}] must be passed")
@@ -385,9 +367,7 @@ def validate_authority_receipt(
         if account.get("owner") != "BBNC":
             errors.append(f"receipt.delivery_accounts[{account_id}].owner must be BBNC")
         if not SHA256_RE.fullmatch(str(account.get("evidence_digest", ""))):
-            errors.append(
-                f"receipt.delivery_accounts[{account_id}] needs an evidence_digest"
-            )
+            errors.append(f"receipt.delivery_accounts[{account_id}] needs an evidence_digest")
 
     if receipt.get("signatures_verified") is not True:
         errors.append("receipt must attest signatures_verified true")
@@ -430,9 +410,7 @@ def main() -> int:
     prepare.add_argument("--packet", required=True, type=Path)
     prepare.add_argument("--quiet", action="store_true")
 
-    authorize = subparsers.add_parser(
-        "authorize", help="validate an external BBNC authority receipt"
-    )
+    authorize = subparsers.add_parser("authorize", help="validate an external BBNC authority receipt")
     authorize.add_argument("--packet", required=True, type=Path)
     authorize.add_argument("--receipt", required=True, type=Path)
     authorize.add_argument("--quiet", action="store_true")
@@ -443,9 +421,7 @@ def main() -> int:
         if args.command == "prepare":
             return _report(str(args.packet), validate_preparation(packet), args.quiet)
         receipt = load_json(args.receipt)
-        return _report(
-            str(args.receipt), validate_authority_receipt(packet, receipt), args.quiet
-        )
+        return _report(str(args.receipt), validate_authority_receipt(packet, receipt), args.quiet)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         if not args.quiet:
             print(f"FAIL  {exc}")

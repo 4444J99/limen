@@ -32,4 +32,6 @@ def workstream_launchable(vendor: Vendor, *, autonomous: bool) -> bool:
 
     profile = getattr(vendor, "execution", None)
     adapter = getattr(profile, "workstream_adapter", "positional") if profile is not None else "positional"
-    return not getattr(vendor, "issue_assignment", False) and (direct_native_workstream(vendor) or (autonomous and adapter == "jules"))
+    return not getattr(vendor, "issue_assignment", False) and (
+        direct_native_workstream(vendor) or (autonomous and adapter == "jules")
+    )

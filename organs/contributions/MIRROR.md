@@ -87,7 +87,7 @@ scout/fieldwork vetting; adoption and every send stay human-gated.
 
 ## Estate register (`ESTATE.yaml`)
 
-42 artifacts registered — 28 verified present locally, 3 cited (remote/receipt), 9 DRIFT, 2 optional-absent.
+43 artifacts registered — 29 verified present locally, 3 cited (remote/receipt), 9 DRIFT, 2 optional-absent.
 
 **DRIFT — registered artifacts gone absent (repair or re-home, never delete the entry):**
 

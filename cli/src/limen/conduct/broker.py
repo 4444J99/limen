@@ -9,7 +9,7 @@ import hmac
 import secrets
 from datetime import datetime, timedelta
 from pathlib import PurePath
-from typing import Any, Callable, Literal
+from typing import Any, Callable
 
 from limen.conduct.models import (
     AgentIdentityV1,
@@ -91,6 +91,7 @@ def _validate_runtime_identity(value: dict[str, str] | None) -> dict[str, str] |
         "git_sha": git_sha,
         "deployment_id": deployment_id,
     }
+
 
 def _dump(model) -> dict[str, Any]:
     return model.model_dump(mode="json")
