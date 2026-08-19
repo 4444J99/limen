@@ -148,7 +148,7 @@ def test_real_omega_manifest_derives_exact_live_owner_receipt_invariant():
     rungs = [*core, *sensors]
     live = [rung for rung in rungs if rung["tier"] == "live"]
 
-    assert len(rungs) == 37
+    assert len(rungs) == 38
     assert len(live) == 21
     assert all(sum(item.get("role") == "owner_receipt" for item in rung["semantic_inputs"]) == 1 for rung in live)
 

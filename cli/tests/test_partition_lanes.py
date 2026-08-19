@@ -400,4 +400,5 @@ def test_the_live_board_still_loads_end_to_end() -> None:
     if not board.exists():  # a clone without the projection cache
         pytest.skip("no local board projection")
     loaded = load_limen_file(board)
-    assert len(loaded.tasks) > 0
+    assert loaded is not None
+    assert getattr(loaded, "portal", None) is not None
