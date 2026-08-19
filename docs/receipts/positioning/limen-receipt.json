@@ -1,0 +1,29 @@
+{
+  "artifact_digest": "e6bd53549ae0b41569a7d8aa2c36461d4e81ae2a1475f0efc761ccb78e626f36",
+  "default_branch": null,
+  "environment": {
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "python": "3.14.7"
+  },
+  "errors": [],
+  "exact_head": "9c8a87215962da131059ab63bd95a376f79891c2",
+  "exit_code": 3,
+  "finished_at": "2026-08-15T15:14:03.149689Z",
+  "flagship_id": "limen",
+  "limitations": [
+    "Internal operation is not customer adoption.",
+    "Task counts are dated snapshots, not reliability or outcome rates."
+  ],
+  "output_bytes": 50,
+  "predicate": {
+    "argv": [
+      "bash",
+      "scripts/verify-whole.sh"
+    ],
+    "timeout_seconds": 600
+  },
+  "repository": "organvm/limen",
+  "result": "current_fail",
+  "schema_version": "limen.positioning_flagship_receipt.v1",
+  "started_at": "2026-08-15T15:13:59.649003Z"
+}
