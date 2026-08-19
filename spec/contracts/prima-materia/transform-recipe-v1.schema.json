@@ -88,6 +88,8 @@
       "type": "object"
     },
     "randomness_declaration": {
+      "maxLength": 4096,
+      "minLength": 1,
       "title": "Randomness Declaration",
       "type": "string"
     },
@@ -123,6 +125,8 @@
       "title": "Semantic Equivalence Predicate"
     },
     "time_declaration": {
+      "maxLength": 4096,
+      "minLength": 1,
       "title": "Time Declaration",
       "type": "string"
     },

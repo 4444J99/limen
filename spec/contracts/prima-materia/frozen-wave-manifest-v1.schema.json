@@ -1,0 +1,202 @@
+{
+  "$defs": {
+    "FrozenDeviceRoleV1": {
+      "additionalProperties": false,
+      "properties": {
+        "physical_device_sha256": {
+          "title": "Physical Device Sha256",
+          "type": "string"
+        },
+        "role_id": {
+          "title": "Role Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role_id",
+        "physical_device_sha256"
+      ],
+      "title": "FrozenDeviceRoleV1",
+      "type": "object"
+    },
+    "FrozenRepositoryV1": {
+      "additionalProperties": false,
+      "properties": {
+        "path_sha256": {
+          "title": "Path Sha256",
+          "type": "string"
+        },
+        "repository_id": {
+          "title": "Repository Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repository_id",
+        "path_sha256"
+      ],
+      "title": "FrozenRepositoryV1",
+      "type": "object"
+    },
+    "FrozenSourceInstanceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "instance_id": {
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "source_id": {
+          "title": "Source Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "instance_id",
+        "source_id"
+      ],
+      "title": "FrozenSourceInstanceV1",
+      "type": "object"
+    },
+    "FrozenStorageRootV1": {
+      "additionalProperties": false,
+      "properties": {
+        "path_sha256": {
+          "title": "Path Sha256",
+          "type": "string"
+        },
+        "root_id": {
+          "title": "Root Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "root_id",
+        "path_sha256"
+      ],
+      "title": "FrozenStorageRootV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "One immutable denominator for a pair of independent \u03bb audits.",
+  "properties": {
+    "control_plane_default_branch": {
+      "title": "Control Plane Default Branch",
+      "type": "string"
+    },
+    "control_plane_repository": {
+      "title": "Control Plane Repository",
+      "type": "string"
+    },
+    "control_plane_runtime_path_sha256": {
+      "title": "Control Plane Runtime Path Sha256",
+      "type": "string"
+    },
+    "device_roles": {
+      "items": {
+        "$ref": "#/$defs/FrozenDeviceRoleV1"
+      },
+      "maxItems": 64,
+      "title": "Device Roles",
+      "type": "array"
+    },
+    "enumeration_complete": {
+      "title": "Enumeration Complete",
+      "type": "boolean"
+    },
+    "frozen_at": {
+      "format": "date-time",
+      "title": "Frozen At",
+      "type": "string"
+    },
+    "installed_runtime_sha": {
+      "title": "Installed Runtime Sha",
+      "type": "string"
+    },
+    "lambda_rung_registry_digest": {
+      "title": "Lambda Rung Registry Digest",
+      "type": "string"
+    },
+    "protected_exclusion_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 256,
+      "title": "Protected Exclusion Ids",
+      "type": "array"
+    },
+    "protected_registry_digest": {
+      "title": "Protected Registry Digest",
+      "type": "string"
+    },
+    "remote_main_sha": {
+      "title": "Remote Main Sha",
+      "type": "string"
+    },
+    "repositories": {
+      "items": {
+        "$ref": "#/$defs/FrozenRepositoryV1"
+      },
+      "maxItems": 4096,
+      "title": "Repositories",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "limen.frozen_wave_manifest.v1",
+      "default": "limen.frozen_wave_manifest.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_instances": {
+      "items": {
+        "$ref": "#/$defs/FrozenSourceInstanceV1"
+      },
+      "maxItems": 8192,
+      "minItems": 1,
+      "title": "Source Instances",
+      "type": "array"
+    },
+    "source_inventory_producer_digest": {
+      "title": "Source Inventory Producer Digest",
+      "type": "string"
+    },
+    "source_registry_digest": {
+      "title": "Source Registry Digest",
+      "type": "string"
+    },
+    "storage_roots": {
+      "items": {
+        "$ref": "#/$defs/FrozenStorageRootV1"
+      },
+      "maxItems": 4096,
+      "title": "Storage Roots",
+      "type": "array"
+    },
+    "wave_id": {
+      "title": "Wave Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "wave_id",
+    "frozen_at",
+    "enumeration_complete",
+    "repositories",
+    "storage_roots",
+    "source_instances",
+    "device_roles",
+    "protected_exclusion_ids",
+    "protected_registry_digest",
+    "source_registry_digest",
+    "source_inventory_producer_digest",
+    "lambda_rung_registry_digest",
+    "remote_main_sha",
+    "installed_runtime_sha",
+    "control_plane_runtime_path_sha256",
+    "control_plane_repository",
+    "control_plane_default_branch"
+  ],
+  "title": "FrozenWaveManifestV1",
+  "type": "object"
+}

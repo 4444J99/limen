@@ -23,8 +23,9 @@ ownership proof for a proposed removal.
 The operator directed (2026-07-09, after the acceptance loop deadlocked at 646
 pooled roots / ~38 GiB with `removed: []` on every beat) that the loss-free
 worktree class is **pre-accepted for removal**: a root whose tree is clean,
-whose HEAD is merged into the remote default branch or whose preservation
-receipt proves a merged remote PR, and which is idle past its min-age.
+whose exact HEAD and all required local refs are reachable from the remote
+owner (including a pushed-but-unmerged branch or open PR), and which is idle
+past its min-age.
 `scripts/reclaim-worktrees.py` honors this as
 `standing-grant-2026-07-09` (disable with
 `LIMEN_RECLAIM_STANDING_ACCEPTANCE=0`). The classifier's own checks (dirty,
@@ -32,13 +33,12 @@ unpushed, active) remain the guardrails, and every removal is
 still receipted in `logs/reclaim-worktrees.jsonl`. All other classes on every
 surface still require a per-root human acceptance event.
 
-**Merge-before-reap correction (2026-07-09).** The standing grant is merged-only.
-A pushed branch or open PR is preservation, not closure. A root that is clean and
-idle and whose commits are already on origin but are **not** merged is kept as
-`not-merged-to-default`; the owning PR/task must be merged, or the reason it
-cannot merge must be solved, before any local checkout is removed. The
-`unpushed-commits` and `dirty` guardrails are unchanged — a root whose work is
-not yet on origin is **never** reaped.
+**Remote-custody correction.** A pushed branch or open PR is durable custody
+for a disposable checkout even though it is not lifecycle closure. The local
+root may be removed as `clean+pushed+idle`; the remote branch, PR, task, or
+blocker remains the unresolved lifecycle owner until it merges or closes. The
+`unpushed-commits`, `dirty`, locked, and active-process guardrails are unchanged
+— work not yet preserved by the remote owner is never reaped.
 
 This standing grant does not apply to Antigravity/Agy scratch roots. Those roots
 must use the `antigravity_scratch` surface and its archive/redaction acceptance

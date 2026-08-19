@@ -1,0 +1,29 @@
+{
+  "schema": "limen.prima_materia_source_enumerators.v1",
+  "enumerators": [
+    {
+      "kind": "physical_device",
+      "source_id": "physicalDevices01"
+    },
+    {
+      "kind": "private_root",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "kind": "protected_process",
+      "source_id": "processCwdSource01"
+    },
+    {
+      "kind": "repository",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "kind": "resource_telemetry",
+      "source_id": "resourceTelemetry1"
+    },
+    {
+      "kind": "source_registry",
+      "source_id": "sourceRegistry001"
+    }
+  ]
+}

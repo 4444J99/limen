@@ -6,12 +6,36 @@
       "title": "Composition Id",
       "type": "string"
     },
+    "custody_receipt_digests": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Custody Receipt Digests",
+      "type": "array"
+    },
+    "decision_receipt_digests": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Decision Receipt Digests",
+      "type": "array"
+    },
     "explicit_order": {
       "items": {
         "type": "string"
       },
       "maxItems": 100000,
       "title": "Explicit Order",
+      "type": "array"
+    },
+    "failure_receipt_digests": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Failure Receipt Digests",
       "type": "array"
     },
     "omissions": {

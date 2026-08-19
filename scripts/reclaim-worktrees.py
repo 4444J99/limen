@@ -7,7 +7,7 @@ accumulate (the dispatch root hit 91 dirs / 3.4 GB; the interactive root leaked 
 those:
 
   • clean working tree (no uncommitted or untracked changes), AND
-  • HEAD/content is reachable from a remote ref, already merged into the remote default branch,
+  • HEAD/content and required local refs are reachable from a remote owner, merged into or
     patch-equivalent to default, or covered by a preservation receipt, AND
   • idle for >= the root's min-age (so a task/session mid-run is never touched).
   • no live process has its current directory inside the candidate root.
@@ -46,7 +46,8 @@ Env: LIMEN_WORKTREE_ROOT, LIMEN_RECLAIM_MIN_AGE_H (6), LIMEN_RECLAIM_CLAUDE_WT (
      LIMEN_RECLAIM_REGISTERED_WT, LIMEN_RECLAIM_REGISTERED_AGE_H, LIMEN_RECLAIM_MAIN_REPOS,
      LIMEN_RECLAIM_WORKSPACE_ROOTS, LIMEN_RECLAIM_WORKSPACE_CHECKOUTS,
      LIMEN_RECLAIM_WORKSPACE_CHECKOUT_AGE_H, LIMEN_RECLAIM_MAX (50), LIMEN_RECLAIM_EVERY_MIN (30),
-     LIMEN_RECLAIM_ORPHANS (0 — observable-first arm for the dead-gitdir orphan sweep),
+     LIMEN_RECLAIM_PROTECTED_EXCLUSIONS (tracked runtime-source registry; invalid/missing blocks all),
+     LIMEN_RECLAIM_ORPHANS (0 — explicit arm for the dead-gitdir orphan sweep),
      LIMEN_ORPHAN_QUARANTINE (same-volume off-worktree target for preserved orphans),
      LIMEN_ABANDONMENT_QUARANTINE (same-volume target for clones/residue/generated payloads),
      LIMEN_WORKTREE_ABANDONMENT_RECEIPTS (private typed receipt root).
@@ -88,6 +89,10 @@ from limen.estate_audit_custody import (
 from limen.estate_audit_custody import (
     verify_receipt as verify_estate_custody_receipt,
 )
+from limen.protected_exclusions import (
+    ProtectedExclusionError,
+    ProtectedExclusionRegistry,
+)
 from limen.worktree_abandonment import (
     CustodyPathIdentity,
     WorktreeAbandonmentError,
@@ -108,6 +113,16 @@ from reap_acceptance import (
 HOME = os.environ.get("HOME", "/Users/4jp")
 
 
+def _option_value(name: str) -> str:
+    prefix = f"{name}="
+    for index, value in enumerate(sys.argv):
+        if value.startswith(prefix):
+            return value[len(prefix) :]
+        if value == name and index + 1 < len(sys.argv):
+            return sys.argv[index + 1]
+    return ""
+
+
 def _int_env(name: str, default: int) -> int:
     try:
         return int(os.environ.get(name, str(default)))
@@ -125,7 +140,21 @@ def _float_env(name: str, default: float) -> float:
 MAX_REMOVE = _int_env("LIMEN_RECLAIM_MAX", 50)
 EVERY_MIN = _float_env("LIMEN_RECLAIM_EVERY_MIN", 30)
 GENERATED_RECLAIM_MAX = _int_env("LIMEN_RECLAIM_GENERATED_MAX", 80)
-LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen"))
+LIMEN_ROOT = Path(
+    _option_value("--repository-root")
+    or os.environ.get("LIMEN_ROOT", str(SCRIPT_ROOT))
+)
+PROTECTED_EXCLUSION_REGISTRY = Path(
+    os.environ.get(
+        "LIMEN_RECLAIM_PROTECTED_EXCLUSIONS",
+        str(
+            SCRIPT_ROOT
+            / "institutio"
+            / "governance"
+            / "reconciliation-protected-exclusions.json"
+        ),
+    )
+)
 AGY_SCRATCH_ROOT = Path(os.environ.get("LIMEN_AGY_SCRATCH_ROOT", f"{HOME}/.gemini/antigravity-cli/scratch"))
 AGY_ROOT = AGY_SCRATCH_ROOT.expanduser().parent
 LOG = LIMEN_ROOT / "logs" / "reclaim-worktrees.jsonl"
@@ -138,16 +167,6 @@ APPLY = "--apply" in sys.argv and not CHECK
 FORCE = "--force" in sys.argv  # ignore the throttle
 GENERATED_ONLY = "--generated-only" in sys.argv
 HELP = "--help" in sys.argv or "-h" in sys.argv
-
-
-def _option_value(name: str) -> str:
-    prefix = f"{name}="
-    for index, value in enumerate(sys.argv):
-        if value.startswith(prefix):
-            return value[len(prefix) :]
-        if value == name and index + 1 < len(sys.argv):
-            return sys.argv[index + 1]
-    return ""
 
 
 EXPECTED_PLAN_SHA = _option_value("--expected-plan-sha")
@@ -290,7 +309,10 @@ def purge_generated_payloads(d: Path) -> tuple[bool, str]:
     return True, f"quarantined:{moved}"
 
 
-def reclaim_generated_payloads(targets) -> dict[str, object]:
+def reclaim_generated_payloads(
+    targets,
+    protected_registry: ProtectedExclusionRegistry | None = None,
+) -> dict[str, object]:
     """Bounded, source-safe cleanup for retained worktrees.
 
     This atomically quarantines only ignored generated payload paths from inactive git roots.
@@ -304,6 +326,8 @@ def reclaim_generated_payloads(targets) -> dict[str, object]:
     cleaned, failed = [], []
     for target in targets:
         d = target.path
+        if protected_registry is not None and protected_registry.match(d) is not None:
+            continue
         try:
             if d.resolve() in _SELF_GUARD:
                 continue
@@ -747,7 +771,7 @@ STANDING_ACCEPTANCE_REASONS = {"clean+merged+idle", "receipt-remote-merged+clean
 # which resolves the debt without destroying data. Actual deletion of a quarantined orphan is a
 # SEPARATE, proof-gated step (branch provably on origin, or a long operator grace) — out of scope of
 # this autonomous sweep. Confined to THROWAWAY roots, past min-age, only when armed.
-ORPHAN_SWEEP = os.environ.get("LIMEN_RECLAIM_ORPHANS", "1") != "0"
+ORPHAN_SWEEP = os.environ.get("LIMEN_RECLAIM_ORPHANS", "0") != "0"
 ORPHAN_REASON = "orphan-dead-gitdir+throwaway+idle"
 # Off-worktree quarantine root (a MOVE target, not a delete). Default: a sibling of the worktree
 # root on the same volume (an instant rename, off the worktree-scan path). An override must stay on
@@ -989,10 +1013,21 @@ def classify(
     preservation_receipts=None,
     source: str = "",
     estate_custody_paths: frozenset[Path] | set[Path] | None = None,
+    protected_registry: ProtectedExclusionRegistry | None = None,
 ):
     """Return (action, reason). action in {remove-worktree, remove-clone, remove-residue,
     quarantine-orphan, skip}. quarantine-orphan MOVES (never deletes) a dead-gitdir orphan."""
     preservation_receipts = preservation_receipts or {}
+    if protected_registry is not None:
+        protected_reason = protected_registry.match(d)
+        if protected_reason is None and git(
+            ["rev-parse", "--is-inside-work-tree"],
+            d,
+        ).returncode == 0:
+            branch = git(["branch", "--show-current"], d).stdout.strip()
+            protected_reason = protected_registry.match(d, branch=branch or None)
+        if protected_reason is not None:
+            return "skip", protected_reason
     try:
         if d.resolve() in _SELF_GUARD:
             return "skip", "self/live-checkout"
@@ -1118,6 +1153,7 @@ def build_candidate_manifest(
     preservation_receipts: dict,
     reclaim_acceptance: list[dict],
     estate_custody_context: dict[str, object] | None = None,
+    protected_registry: ProtectedExclusionRegistry | None = None,
 ) -> tuple[dict, str, list[tuple[str, str]], list[str]]:
     """Return the canonical, bounded, accepted candidate set and its digest."""
 
@@ -1134,6 +1170,7 @@ def build_candidate_manifest(
             preservation_receipts,
             source=source,
             estate_custody_paths=custody_paths,
+            protected_registry=protected_registry,
         )
         if action == "skip":
             skipped.append((directory.name, reason))
@@ -1184,6 +1221,14 @@ def build_candidate_manifest(
     manifest = {
         "schema": "limen.worktree_reclaim_plan.v1",
         "max_reclaim": MAX_REMOVE,
+        "protected_exclusions": (
+            protected_registry.projection()["protected_exclusions"]
+            if protected_registry is not None
+            else []
+        ),
+        "protected_exclusion_registry_digest": (
+            protected_registry.registry_digest if protected_registry is not None else None
+        ),
         "candidates": selected,
     }
     if custody_proof:
@@ -1238,6 +1283,7 @@ def main():
     if HELP:
         print(
             "usage: reclaim-worktrees.py [--check] [--json] [--apply] [--force] "
+            "[--repository-root PATH] "
             "[--generated-only] [--expected-plan-sha SHA256] "
             "[--estate-custody-root PATH --estate-custody-plan-sha SHA256]\n\n"
             "Dry-run by default. Use --check --json for a canonical candidate manifest, "
@@ -1245,6 +1291,30 @@ def main():
             "The estate-custody pair admits only exact fully restored failed-checkout roots."
         )
         return 0
+
+    try:
+        protected_registry = ProtectedExclusionRegistry.load(
+            LIMEN_ROOT,
+            PROTECTED_EXCLUSION_REGISTRY,
+        )
+    except ProtectedExclusionError as exc:
+        if JSON_OUT:
+            print(
+                json.dumps(
+                    {
+                        "mode": "PROTECTION-BLOCKED",
+                        "apply": APPLY,
+                        "failed": [
+                            {"root": "protected-exclusions", "reason": str(exc)}
+                        ],
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+            )
+        else:
+            print(f"reclaim [PROTECTION-BLOCKED]: {exc}")
+        return 2
 
     try:
         estate_custody_context = load_estate_custody_context()
@@ -1279,7 +1349,9 @@ def main():
     stamp = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime(now))
     if GENERATED_ONLY:
         generated_reclaim = (
-            reclaim_generated_payloads(targets) if APPLY else {"enabled": False, "cleaned": [], "failed": []}
+            reclaim_generated_payloads(targets, protected_registry)
+            if APPLY
+            else {"enabled": False, "cleaned": [], "failed": []}
         )
         cleaned = generated_reclaim.get("cleaned") or []
         gen_failed = generated_reclaim.get("failed") or []
@@ -1312,6 +1384,7 @@ def main():
             preservation_receipts,
             reclaim_acceptance,
             estate_custody_context,
+            protected_registry,
         )
     finally:
         # The exact manifest gets one coherent remote advertisement per repository. Disable the
@@ -1370,6 +1443,7 @@ def main():
                 preservation_receipts,
                 source=planned["source"],
                 estate_custody_paths=custody_paths,
+                protected_registry=protected_registry,
             )
             accepted, accept_reason = reclaim_accepted(
                 directory,

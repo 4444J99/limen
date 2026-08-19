@@ -14,7 +14,9 @@ from limen.prima_materia import (
     ActionReceiptV1,
     CompositionManifestV1,
     CustodyReceiptV1,
+    FrozenWaveManifestV1,
     PrimaMateriaEventV1,
+    ResourceClaimV1,
     SourceAdapterV1,
     SourceCoverageV1,
     StandingAuthorityV1,
@@ -23,7 +25,9 @@ from limen.prima_materia import (
 
 MODELS = {
     "prima-materia-event-v1.schema.json": PrimaMateriaEventV1,
+    "resource-claim-v1.schema.json": ResourceClaimV1,
     "source-adapter-v1.schema.json": SourceAdapterV1,
+    "frozen-wave-manifest-v1.schema.json": FrozenWaveManifestV1,
     "transform-recipe-v1.schema.json": TransformRecipeV1,
     "action-receipt-v1.schema.json": ActionReceiptV1,
     "custody-receipt-v1.schema.json": CustodyReceiptV1,

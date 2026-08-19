@@ -29,12 +29,18 @@ def _claim(identifier: str = "claimIdentifier01") -> ResourceClaimV1:
     start = datetime(2026, 7, 28, tzinfo=UTC)
     return ResourceClaimV1(
         claim_id=identifier,
+        source_instance_id="sourceInstance001",
+        operation_id="operationInstance01",
         hydrated_inputs_bytes=1,
         workspace_bytes=2,
         temporary_expansion_bytes=3,
         output_bytes=4,
         encryption_chunking_bytes=5,
         rollback_bytes=6,
+        memory_bytes=7,
+        file_count=8,
+        network_bytes=9,
+        wall_time_seconds=10,
         effective_from=start,
         effective_until=start + timedelta(hours=1),
         rollback_until=start + timedelta(hours=2),
@@ -50,7 +56,7 @@ def _adapter(adapter_id: str, source_id: str) -> SourceAdapterV1:
         cursor_schema_digest=DIGEST,
         completeness_predicate="source cursor is exhausted",
         privacy_transform_digest=DIGEST,
-        resource_claim=_claim(f"claim{source_id}"),
+        claim_recipe=f"claim-recipe-{source_id}",
         recipe_version="recipe-v1",
         custody_target_refs=("encrypted-primary", "encrypted-recovery"),
         restoration_predicate="both targets restore",
@@ -118,12 +124,18 @@ def test_contract_times_require_explicit_utc_offsets() -> None:
     with pytest.raises(ValueError, match="explicit UTC offset"):
         ResourceClaimV1(
             claim_id="claimIdentifier01",
+            source_instance_id="sourceInstance001",
+            operation_id="operationInstance01",
             hydrated_inputs_bytes=1,
             workspace_bytes=2,
             temporary_expansion_bytes=3,
             output_bytes=4,
             encryption_chunking_bytes=5,
             rollback_bytes=6,
+            memory_bytes=7,
+            file_count=8,
+            network_bytes=9,
+            wall_time_seconds=10,
             effective_from=datetime(2026, 7, 28, tzinfo=UTC).replace(tzinfo=None),
             effective_until=datetime(2026, 7, 28, 1, tzinfo=UTC).replace(tzinfo=None),
             rollback_until=datetime(2026, 7, 28, 2, tzinfo=UTC).replace(tzinfo=None),
@@ -146,12 +158,32 @@ def test_semantic_recipe_requires_original_output_and_equivalence() -> None:
         )
 
 
+def test_observable_only_recipe_requires_preserved_original_output() -> None:
+    with pytest.raises(ValueError, match="observable-only replay"):
+        TransformRecipeV1(
+            recipe_id="external-action",
+            version="v1",
+            input_digests=(DIGEST,),
+            code_digest=DIGEST,
+            config_digest=DIGEST,
+            environment_digest=DIGEST,
+            randomness_declaration="provider controlled",
+            time_declaration="provider observed",
+            output_digests=(DIGEST,),
+            replay_class="observable_only",
+        )
+
+
 def test_explicit_composition_order_accepts_a_complete_permutation() -> None:
     manifest = CompositionManifestV1(
         composition_id="compositionId0001",
         selected_event_ids=("eventIdentifierA1", "eventIdentifierB2"),
         ordering="explicit",
         explicit_order=("eventIdentifierB2", "eventIdentifierA1"),
+        decision_receipt_digests=(DIGEST,),
+        redaction_receipt_digests=(DIGEST,),
+        failure_receipt_digests=(DIGEST,),
+        custody_receipt_digests=(DIGEST,),
         output_digests=(DIGEST,),
     )
 
@@ -159,6 +191,9 @@ def test_explicit_composition_order_accepts_a_complete_permutation() -> None:
         "eventIdentifierB2",
         "eventIdentifierA1",
     )
+    assert manifest.decision_receipt_digests == (DIGEST,)
+    assert manifest.failure_receipt_digests == (DIGEST,)
+    assert manifest.custody_receipt_digests == (DIGEST,)
 
     with pytest.raises(ValueError, match="enumerate selected events exactly"):
         CompositionManifestV1(
@@ -271,7 +306,9 @@ def test_generated_schemas_match_models(tmp_path: Path) -> None:
         "action-receipt-v1.schema.json",
         "composition-manifest-v1.schema.json",
         "custody-receipt-v1.schema.json",
+        "frozen-wave-manifest-v1.schema.json",
         "prima-materia-event-v1.schema.json",
+        "resource-claim-v1.schema.json",
         "source-adapter-v1.schema.json",
         "source-coverage-v1.schema.json",
         "standing-authority-v1.schema.json",

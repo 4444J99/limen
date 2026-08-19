@@ -87,13 +87,33 @@ def _load(tmp_path, n_open=6, agent="codex"):
     return da
 
 
-def _empty_resource_graph(tmp_path):
+def _resource_graph(tmp_path):
     resource_graph = tmp_path / "resource-task-graph.json"
     resource_graph.write_text(
         json.dumps(
             {
                 "schema": "limen.resource_task_graph.v1",
-                "claims": [],
+                "claims": [
+                    {
+                        "schema_version": "limen.prima_materia_resource_claim.v1",
+                        "claim_id": "asyncDispatchClaim01",
+                        "source_instance_id": "asyncDispatchSource01",
+                        "operation_id": "asyncDispatchOperation01",
+                        "hydrated_inputs_bytes": 0,
+                        "workspace_bytes": 0,
+                        "temporary_expansion_bytes": 0,
+                        "output_bytes": 0,
+                        "encryption_chunking_bytes": 0,
+                        "rollback_bytes": 0,
+                        "memory_bytes": 0,
+                        "file_count": 0,
+                        "network_bytes": 0,
+                        "wall_time_seconds": 1,
+                        "effective_from": "2026-07-28T00:00:00Z",
+                        "effective_until": "2036-07-28T00:00:00Z",
+                        "rollback_until": "2036-07-29T00:00:00Z",
+                    }
+                ],
             },
         ),
         encoding="utf-8",
@@ -1479,7 +1499,7 @@ def test_async_marker_holds_checkout_room_until_worktree_birth(tmp_path):
 def test_two_async_processes_cannot_reuse_slot_before_first_marker_exists(tmp_path):
     """The durable lease closes the board-save -> running-marker cross-process race."""
     da = _load(tmp_path, n_open=2)
-    resource_graph = _empty_resource_graph(tmp_path)
+    resource_graph = _resource_graph(tmp_path)
     ready = tmp_path / "first-at-spawn"
     release = tmp_path / "release-first"
     first_out = tmp_path / "first.json"
@@ -3097,7 +3117,7 @@ def test_targeted_only_dry_run_is_unmocked_byte_identical_across_control_surface
     os.environ["LIMEN_ROOT"] = str(tmp_path)
     os.environ["LIMEN_TASKS"] = str(tmp_path / "tasks.yaml")
     _load(tmp_path, n_open=1)
-    resource_graph = _empty_resource_graph(tmp_path)
+    resource_graph = _resource_graph(tmp_path)
     board = load_limen_file(tmp_path / "tasks.yaml")
     task = board.tasks[0]
     task.context = "exact dry-run byte identity"

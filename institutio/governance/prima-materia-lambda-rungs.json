@@ -1,0 +1,125 @@
+{
+  "schema": "limen.prima_materia_lambda_rungs.v1",
+  "rungs": [
+    {
+      "dependencies": [],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/prima-materia-reclaim-census.py --check-receipt --frozen-wave-sha {frozen_wave_sha256}",
+      "receipt_path": "logs/prima-materia-owner-receipts/automatically_safe_reclaim_zero.json",
+      "rung_id": "automatically_safe_reclaim_zero",
+      "timeout_seconds": 300
+    },
+    {
+      "dependencies": [
+        "replay_passed"
+      ],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/prima-materia-compose.py --check --frozen-wave-sha {frozen_wave_sha256}",
+      "receipt_path": "logs/prima-materia-owner-receipts/composition_passed.json",
+      "rung_id": "composition_passed",
+      "timeout_seconds": 600
+    },
+    {
+      "dependencies": [
+        "composition_passed"
+      ],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/prima-materia-dematerialize.py --check --frozen-wave-sha {frozen_wave_sha256}",
+      "receipt_path": "logs/prima-materia-owner-receipts/dematerialization_passed.json",
+      "rung_id": "dematerialization_passed",
+      "timeout_seconds": 600
+    },
+    {
+      "dependencies": [],
+      "max_age_seconds": 900,
+      "predicate": "python3 -m limen.resource_envelope --check-task-graph --frozen-wave-sha {frozen_wave_sha256}",
+      "receipt_path": "logs/prima-materia-owner-receipts/dynamic_resource_envelope_nonnegative.json",
+      "rung_id": "dynamic_resource_envelope_nonnegative",
+      "timeout_seconds": 120
+    },
+    {
+      "dependencies": [],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/prima-materia-bootstrap.py --check --frozen-wave-sha {frozen_wave_sha256}",
+      "receipt_path": "logs/prima-materia-owner-receipts/empty_scratch_bootstrap_passed.json",
+      "rung_id": "empty_scratch_bootstrap_passed",
+      "timeout_seconds": 600
+    },
+    {
+      "dependencies": [],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/repository-custody-wave.py --check --frozen-wave-sha {frozen_wave_sha256}",
+      "receipt_path": "logs/prima-materia-owner-receipts/frozen_repository_terminal_custody.json",
+      "rung_id": "frozen_repository_terminal_custody",
+      "timeout_seconds": 600
+    },
+    {
+      "dependencies": [],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/personal-custody-wave.py --check --frozen-wave-sha {frozen_wave_sha256}",
+      "receipt_path": "logs/prima-materia-owner-receipts/frozen_storage_terminal_custody.json",
+      "rung_id": "frozen_storage_terminal_custody",
+      "timeout_seconds": 600
+    },
+    {
+      "dependencies": [],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/prima-materia-source-inventory.py --check --frozen-wave-sha {frozen_wave_sha256}",
+      "receipt_path": "logs/prima-materia-owner-receipts/frozen_wave_adapter_debt_zero.json",
+      "rung_id": "frozen_wave_adapter_debt_zero",
+      "timeout_seconds": 300
+    },
+    {
+      "dependencies": [
+        "empty_scratch_bootstrap_passed"
+      ],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/prima-materia-hydrate.py --check --frozen-wave-sha {frozen_wave_sha256}",
+      "receipt_path": "logs/prima-materia-owner-receipts/hydration_passed.json",
+      "rung_id": "hydration_passed",
+      "timeout_seconds": 600
+    },
+    {
+      "dependencies": [
+        "frozen_storage_terminal_custody"
+      ],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/personal-custody-wave.py --check-two-device-restore --frozen-wave-sha {frozen_wave_sha256}",
+      "receipt_path": "logs/prima-materia-owner-receipts/private_material_restores_from_two_devices.json",
+      "rung_id": "private_material_restores_from_two_devices",
+      "timeout_seconds": 600
+    },
+    {
+      "dependencies": [
+        "frozen_repository_terminal_custody"
+      ],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/repository-custody-wave.py --check-restoration --frozen-wave-sha {frozen_wave_sha256}",
+      "receipt_path": "logs/prima-materia-owner-receipts/removed_repositories_reconstruct.json",
+      "rung_id": "removed_repositories_reconstruct",
+      "timeout_seconds": 600
+    },
+    {
+      "dependencies": [
+        "hydration_passed"
+      ],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/prima-materia-replay.py --check --frozen-wave-sha {frozen_wave_sha256}",
+      "receipt_path": "logs/prima-materia-owner-receipts/replay_passed.json",
+      "rung_id": "replay_passed",
+      "timeout_seconds": 600
+    },
+    {
+      "dependencies": [
+        "automatically_safe_reclaim_zero",
+        "frozen_repository_terminal_custody",
+        "removed_repositories_reconstruct"
+      ],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/repository-custody-wave.py --check-zero-live-census --frozen-wave-sha {frozen_wave_sha256}",
+      "receipt_path": "logs/prima-materia-owner-receipts/repository_and_stale_registration_census_zero_except_protected.json",
+      "rung_id": "repository_and_stale_registration_census_zero_except_protected",
+      "timeout_seconds": 600
+    }
+  ]
+}

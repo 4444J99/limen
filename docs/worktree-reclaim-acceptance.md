@@ -77,6 +77,8 @@ moving anything. A wildcard acceptance event (`"root":"*"`) is valid only for
 `custody_content_sha256` equal the live proof. It never authorizes another
 reason or custody plan.
 
-Pushed-but-unmerged branches and open PRs are not a removal class. They stay as
-`not-merged-to-default` until the PR is merged or the local patch is proven
-patch-equivalent to the remote default branch.
+Pushed-but-unmerged branches and open PRs are eligible as
+`clean+pushed+idle` only when the exact HEAD and every required local ref are
+remote-reachable, the checkout is clean and idle, and no lock, process, or
+protected exclusion applies. Removing the local cache does not close the
+remote PR/task lifecycle.

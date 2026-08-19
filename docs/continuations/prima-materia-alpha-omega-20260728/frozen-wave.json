@@ -1,0 +1,894 @@
+{
+  "control_plane_default_branch": "main",
+  "control_plane_repository": "https://github.com/organvm/limen.git",
+  "control_plane_runtime_path_sha256": "3c010731646f883ffbc5b5b863c559b1d363eedb016e213be226e5e72669da3d",
+  "device_roles": [
+    {
+      "physical_device_sha256": "00d6a07c613cc8dfe8fc22a91cef28897864752e3c81da1fac72b36dad4ddcff",
+      "role_id": "Archive4T"
+    },
+    {
+      "physical_device_sha256": "aa6c427e69520dd69512be08144be00f9baebb33fbe72ede4ccf29a80073dfab",
+      "role_id": "T7Recovery"
+    }
+  ],
+  "enumeration_complete": true,
+  "frozen_at": "2026-07-28T19:26:38.124215Z",
+  "installed_runtime_sha": "4a86f3825ef3a2acf308e1bbd3a0c8463c42d0e1",
+  "lambda_rung_registry_digest": "08ceebce5dbf51e4e811a92de5e9dd2b7f9215034b6d24d2fea86afbcc670764",
+  "protected_exclusion_ids": [
+    "career-portal-20260728"
+  ],
+  "protected_registry_digest": "7fd4bfd220f294a42fd598c502fa4bce075a0f76e815f6af0dd2b728fadb8ac8",
+  "remote_main_sha": "4a86f3825ef3a2acf308e1bbd3a0c8463c42d0e1",
+  "repositories": [
+    {
+      "path_sha256": "0214cf160cbfb3e7759df346c9cdcdc3812d2d03c3c2281663ffa52d1ed03c22",
+      "repository_id": "repository0214cf160cbfb3e7759df346"
+    },
+    {
+      "path_sha256": "02aa0fccfd64848a328612a60259a92f94f027b742e5ba947f9b788f3efaa73d",
+      "repository_id": "repository02aa0fccfd64848a328612a6"
+    },
+    {
+      "path_sha256": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
+      "repository_id": "repository0665800866c86d3ce7d8f083"
+    },
+    {
+      "path_sha256": "0d1535ec981741891b2ecfb642e1e8c1e01bf8a4c835dd3ac260d0ed4ab11e79",
+      "repository_id": "repository0d1535ec981741891b2ecfb6"
+    },
+    {
+      "path_sha256": "0e5df63a1e3069ae0e4228ef6700064dfc1c7fc41ff057701aa33f29d905a1dd",
+      "repository_id": "repository0e5df63a1e3069ae0e4228ef"
+    },
+    {
+      "path_sha256": "0eec96426b9e2d0c1adf97c190d2ce01cabc513d7337612dbb86fe5acc90c1cf",
+      "repository_id": "repository0eec96426b9e2d0c1adf97c1"
+    },
+    {
+      "path_sha256": "0f0d43f28146c18c84f3adf8e2adbb327c969a78696ac2a827a39f37093b66fb",
+      "repository_id": "repository0f0d43f28146c18c84f3adf8"
+    },
+    {
+      "path_sha256": "100f56771741c8d729479d40bf123ca95865a395df68fe7ff991a8ddc4c7b2ca",
+      "repository_id": "repository100f56771741c8d729479d40"
+    },
+    {
+      "path_sha256": "13031a4d5dcb973e6f3fa3b5951d26b2b94084c902d3d893b32e057bfb6f90c7",
+      "repository_id": "repository13031a4d5dcb973e6f3fa3b5"
+    },
+    {
+      "path_sha256": "162bd6223f7a13a32392b33ebe3513f8bfba3076f38c05f113ca7aec9034f323",
+      "repository_id": "repository162bd6223f7a13a32392b33e"
+    },
+    {
+      "path_sha256": "17bcb95973bec28a646bb65faa1f978eb50482fcc62b7fa51e1d2cd4649c57a9",
+      "repository_id": "repository17bcb95973bec28a646bb65f"
+    },
+    {
+      "path_sha256": "1bae7180d9e225986c019d196111ed297c2a0c754d478f9f4931394bc4a168f3",
+      "repository_id": "repository1bae7180d9e225986c019d19"
+    },
+    {
+      "path_sha256": "1f3ac30cdd47f2c3a506e66dfe13fbb1227af633e0eb29ee68a6a4f356b0ca8c",
+      "repository_id": "repository1f3ac30cdd47f2c3a506e66d"
+    },
+    {
+      "path_sha256": "21241ef54cf572c19eff9f1aba4f0864dfd704076acc79de93262da364b4611e",
+      "repository_id": "repository21241ef54cf572c19eff9f1a"
+    },
+    {
+      "path_sha256": "2178954009931f21353db9d2b4616fbf3abafa4ef01f0458c9362ac1bbd8de21",
+      "repository_id": "repository2178954009931f21353db9d2"
+    },
+    {
+      "path_sha256": "24a22e5e3c7c5dbc7600fa5800a0f3c2ab39773d1dd7b137e5c742cb228c1017",
+      "repository_id": "repository24a22e5e3c7c5dbc7600fa58"
+    },
+    {
+      "path_sha256": "25b16e8cf9ea495a6f2c6c4d0389662634ee0d345400f01185df6bee174d5b57",
+      "repository_id": "repository25b16e8cf9ea495a6f2c6c4d"
+    },
+    {
+      "path_sha256": "278f6f64f26c84440f4ee974a2560774eee883e7bd8f1783e54de54b0a6b5e72",
+      "repository_id": "repository278f6f64f26c84440f4ee974"
+    },
+    {
+      "path_sha256": "29fe2b11a60a6ff758f344cc8c72021eca50b6cf28e45b88be59617890bd23dc",
+      "repository_id": "repository29fe2b11a60a6ff758f344cc"
+    },
+    {
+      "path_sha256": "2ae36231659c47401c738f6b12c2b0984e5ea3cf252f9225a4834d39a3ab471e",
+      "repository_id": "repository2ae36231659c47401c738f6b"
+    },
+    {
+      "path_sha256": "328e8e68e771a01f44f02a733728bd9938ec1c8cc918f358b4278d1688bfd507",
+      "repository_id": "repository328e8e68e771a01f44f02a73"
+    },
+    {
+      "path_sha256": "32cf1abdf4db5c524169285d9fcc774b06f9653aa84835e16cd690d39ec63498",
+      "repository_id": "repository32cf1abdf4db5c524169285d"
+    },
+    {
+      "path_sha256": "3392190b0d55aa5dc6ab61a8bc0a33c615a84a23f251f2b3cb29773dd56ddf48",
+      "repository_id": "repository3392190b0d55aa5dc6ab61a8"
+    },
+    {
+      "path_sha256": "36a8468649a8a0c913ed84b62ca0237139f9bd1c5080f622b0c2c7e4d4f700be",
+      "repository_id": "repository36a8468649a8a0c913ed84b6"
+    },
+    {
+      "path_sha256": "3c500bd1cf46267f8d1aa23950cc1382b6e0b4e1a70307c365d1dc71b6073cee",
+      "repository_id": "repository3c500bd1cf46267f8d1aa239"
+    },
+    {
+      "path_sha256": "3ea18c3c7dc558048a48672ad1c46697cede5854bad02498b8481230032aed8c",
+      "repository_id": "repository3ea18c3c7dc558048a48672a"
+    },
+    {
+      "path_sha256": "444fb286c042ada913bef8738a89c88c502ec4eefa8c0bbf1a8a86a375866ff5",
+      "repository_id": "repository444fb286c042ada913bef873"
+    },
+    {
+      "path_sha256": "4a2af63b41fbf2a2ad12e2224ff3c1abc12c13df232790f52e09af4f790e356b",
+      "repository_id": "repository4a2af63b41fbf2a2ad12e222"
+    },
+    {
+      "path_sha256": "4d6b397319cd42bbb711df6505464d7556659f758f7dfc6d774f3fcab65c7261",
+      "repository_id": "repository4d6b397319cd42bbb711df65"
+    },
+    {
+      "path_sha256": "4f35c91e600a6cfaecb4499db1a1be84a98be587e1861879b3e1f9e07613da7f",
+      "repository_id": "repository4f35c91e600a6cfaecb4499d"
+    },
+    {
+      "path_sha256": "4fa163971aaf7296580005c476b9c0a7aff8af0e7700c7240c9406ba8ee5bd28",
+      "repository_id": "repository4fa163971aaf7296580005c4"
+    },
+    {
+      "path_sha256": "5856c16ec133ac392200a6adb7e868c2414fe8aec0e98d06de29356673baa691",
+      "repository_id": "repository5856c16ec133ac392200a6ad"
+    },
+    {
+      "path_sha256": "5ba9fdfe7845868a7d2883a99c8da28d078067236b4512a1452b0e0f9315624c",
+      "repository_id": "repository5ba9fdfe7845868a7d2883a9"
+    },
+    {
+      "path_sha256": "5e50fb2cba4a842ed05a62f8fc24ac563d9918eac758fea4d1ef7ed9c69d9f49",
+      "repository_id": "repository5e50fb2cba4a842ed05a62f8"
+    },
+    {
+      "path_sha256": "5fe94c9212a23bd5a067619dec735a53e8307c7fc199a6b95b42f52446786fba",
+      "repository_id": "repository5fe94c9212a23bd5a067619d"
+    },
+    {
+      "path_sha256": "61b7fc564c8a6c3fbf0647f58a02fe806598eb4ea736010275e500a3035772a9",
+      "repository_id": "repository61b7fc564c8a6c3fbf0647f5"
+    },
+    {
+      "path_sha256": "65bbacd9615b6c166fdf69d311d091c8658641d188f26cbda3dafa13f661c0ac",
+      "repository_id": "repository65bbacd9615b6c166fdf69d3"
+    },
+    {
+      "path_sha256": "67187251af3f10c0ced9073ad348065350cdc9519c4177bc7abf3856791f42ff",
+      "repository_id": "repository67187251af3f10c0ced9073a"
+    },
+    {
+      "path_sha256": "682b2b49558007f6bf81393fe002b77ce04a7b22fc3e7252fad8ca25ff8c5fd3",
+      "repository_id": "repository682b2b49558007f6bf81393f"
+    },
+    {
+      "path_sha256": "695d7450f9c2c412a40d13a2c0af5777f9873901f742e77dda811fc3267837b1",
+      "repository_id": "repository695d7450f9c2c412a40d13a2"
+    },
+    {
+      "path_sha256": "69b96e9f7217ad519458f917bbc3e9b800390e2e4e31eb1f9fa44575cd8d6d6c",
+      "repository_id": "repository69b96e9f7217ad519458f917"
+    },
+    {
+      "path_sha256": "6a07b97c3826ba947d70cb1368b5f83b14c096b64d6c5649c30f4a2caadceaf4",
+      "repository_id": "repository6a07b97c3826ba947d70cb13"
+    },
+    {
+      "path_sha256": "6c72df1980dbd6abfd35d284ca86e4fa3c2ac847073abb0d5a7e12420c1b70d8",
+      "repository_id": "repository6c72df1980dbd6abfd35d284"
+    },
+    {
+      "path_sha256": "6d237bc9a0b08b585bcedc029e1633c6a62757a35efa5ab53e96a02787da4f45",
+      "repository_id": "repository6d237bc9a0b08b585bcedc02"
+    },
+    {
+      "path_sha256": "6fe02e7fa47f566df720d76eb9caff2ade99b6cbf0c0f5da1561be0afbf9e64f",
+      "repository_id": "repository6fe02e7fa47f566df720d76e"
+    },
+    {
+      "path_sha256": "7e8e8aded814a1292db451cef184848e94eb2732378211d40d33fc0279670e6b",
+      "repository_id": "repository7e8e8aded814a1292db451ce"
+    },
+    {
+      "path_sha256": "7eb0b3cd0d62458279526752d86a2a1140d6ff2839766030866e900038e9b3fc",
+      "repository_id": "repository7eb0b3cd0d62458279526752"
+    },
+    {
+      "path_sha256": "80c310c1d12e540e116aa4694971111d05d04c7e1b4b63308d10b58aba1c2859",
+      "repository_id": "repository80c310c1d12e540e116aa469"
+    },
+    {
+      "path_sha256": "8265280fbb625079cb29f6a1085ed0f63464770d456f2eeafd87b2ee1518fa95",
+      "repository_id": "repository8265280fbb625079cb29f6a1"
+    },
+    {
+      "path_sha256": "837f1da0cc42222a3437afad953bebf87a21a516d0eacbf71a3c9bf639475184",
+      "repository_id": "repository837f1da0cc42222a3437afad"
+    },
+    {
+      "path_sha256": "8bcacd9a5b0ed673fa87244d5b4a1f75c25a9069dedea842c8aa82f2cc43509b",
+      "repository_id": "repository8bcacd9a5b0ed673fa87244d"
+    },
+    {
+      "path_sha256": "8cde68d7803e0deb63dde4934b73bb393aaae292a3897fe42f5b8e492ea2771f",
+      "repository_id": "repository8cde68d7803e0deb63dde493"
+    },
+    {
+      "path_sha256": "8fafac63312b6338876a991cab28dfef5892fc90a7ddc76b1ff3f7e46c13bf6a",
+      "repository_id": "repository8fafac63312b6338876a991c"
+    },
+    {
+      "path_sha256": "8fe2b3ca86e84d65569a8d488a09383f00079d0e3d71f162c03d97aa973eff48",
+      "repository_id": "repository8fe2b3ca86e84d65569a8d48"
+    },
+    {
+      "path_sha256": "901e2faccff800a528bc5d8bc98f057acd5b2a5a8ff6430ac857b4ffce860812",
+      "repository_id": "repository901e2faccff800a528bc5d8b"
+    },
+    {
+      "path_sha256": "920e84d208b4b12143313306b1eba05a6accc1155d0220247c808ee241316ec8",
+      "repository_id": "repository920e84d208b4b12143313306"
+    },
+    {
+      "path_sha256": "9286bc4e5ea6980aa1caf947eda795401258eb3b0f6c785f14b793654fcb8fce",
+      "repository_id": "repository9286bc4e5ea6980aa1caf947"
+    },
+    {
+      "path_sha256": "982442f7d4459a4dae80fd6ef6224405e6840a40c8155f0057ea58119ae1f8ef",
+      "repository_id": "repository982442f7d4459a4dae80fd6e"
+    },
+    {
+      "path_sha256": "a43ca0f6f8cfce50e2a29c2a9f99be41ca6de838ef87bb2c5f4e83bace370aaa",
+      "repository_id": "repositorya43ca0f6f8cfce50e2a29c2a"
+    },
+    {
+      "path_sha256": "ab42aa5fd74250737b75e88fb2f5a78aa6437acd34c90846d2b191e708dff80a",
+      "repository_id": "repositoryab42aa5fd74250737b75e88f"
+    },
+    {
+      "path_sha256": "ad70cd1f80fa63bcf11aa23a03bd975a5ff5206a4c294337123697730db1a782",
+      "repository_id": "repositoryad70cd1f80fa63bcf11aa23a"
+    },
+    {
+      "path_sha256": "b639b0c2e0f139314b67d84859607e9c82863758b5d3a984fae28a758b38a989",
+      "repository_id": "repositoryb639b0c2e0f139314b67d848"
+    },
+    {
+      "path_sha256": "c08f40db50603b5f64dc7255f3aefaf8debaa2ff91cd6ec2796867c27f287b7c",
+      "repository_id": "repositoryc08f40db50603b5f64dc7255"
+    },
+    {
+      "path_sha256": "c2d8a44f6f1e15dfa5fa294c567c8f99eb42cc7c8d330d59afcb056e0583a0db",
+      "repository_id": "repositoryc2d8a44f6f1e15dfa5fa294c"
+    },
+    {
+      "path_sha256": "c7f2116b7e994c11e564b054c38bb753e917b072eb904dff61ffca7100c2c199",
+      "repository_id": "repositoryc7f2116b7e994c11e564b054"
+    },
+    {
+      "path_sha256": "cc0bbfe5785da4580cd26857a7cdb36ca8fb11eef1e5a93ea31042bb404a5ff4",
+      "repository_id": "repositorycc0bbfe5785da4580cd26857"
+    },
+    {
+      "path_sha256": "cdee0ca72b5eabbd624ba9997224d6d41029e55a11bb6aa8f5ff7ba914a227d4",
+      "repository_id": "repositorycdee0ca72b5eabbd624ba999"
+    },
+    {
+      "path_sha256": "d0b3c1085d663ac81cebdc259859c20ff3d464cbd6caf0318225b6139355705c",
+      "repository_id": "repositoryd0b3c1085d663ac81cebdc25"
+    },
+    {
+      "path_sha256": "d198300573aa6731e9f2dca6bd5941741e0aa6e91427b5e3afbb85b0bf41bcaa",
+      "repository_id": "repositoryd198300573aa6731e9f2dca6"
+    },
+    {
+      "path_sha256": "da193296d00330193f38fd36a68f149d2a35fcb429e0e91de9881cf6de9e7522",
+      "repository_id": "repositoryda193296d00330193f38fd36"
+    },
+    {
+      "path_sha256": "ddd41e7c38578c262e39d8f96befd3fe1dd15085f002831581766cb32c039aac",
+      "repository_id": "repositoryddd41e7c38578c262e39d8f9"
+    },
+    {
+      "path_sha256": "e5ac1b9946a29bc5aed3f6b80961cc56fdd6831c4dfd6f8cbdecb3e90fdab843",
+      "repository_id": "repositorye5ac1b9946a29bc5aed3f6b8"
+    },
+    {
+      "path_sha256": "e75510868b0fbc5f0be990146052077e6994e1ef3c9f1d0544950efb09603554",
+      "repository_id": "repositorye75510868b0fbc5f0be99014"
+    },
+    {
+      "path_sha256": "e7b4d7e9c2abf61f2dec42ab079f4543abada324fb68bca178f94f4848d2997e",
+      "repository_id": "repositorye7b4d7e9c2abf61f2dec42ab"
+    },
+    {
+      "path_sha256": "e81a203d04b126b61dd3f76e89c7271c3ed63139e3bcce773a93cd9dd4d1c562",
+      "repository_id": "repositorye81a203d04b126b61dd3f76e"
+    },
+    {
+      "path_sha256": "eea1cd33db9b060d74a3299c7b03522cdc3104d80c171c9208887af697de447a",
+      "repository_id": "repositoryeea1cd33db9b060d74a3299c"
+    },
+    {
+      "path_sha256": "f0901b101b5f95af9718b8f994001dccb64598e4272bd0e42e3569790670a887",
+      "repository_id": "repositoryf0901b101b5f95af9718b8f9"
+    },
+    {
+      "path_sha256": "f173421dba390e4ce156dffc29c92a744c8da63eb0286d2819bcc269f894189e",
+      "repository_id": "repositoryf173421dba390e4ce156dffc"
+    },
+    {
+      "path_sha256": "f546360ce8315025dadc751410932c77c15e399e948d5eb37bacbb802696a88e",
+      "repository_id": "repositoryf546360ce8315025dadc7514"
+    },
+    {
+      "path_sha256": "f9201c3b64a75cd1727d35b8b943e80d195d353d7b3ff78ad25040195337b281",
+      "repository_id": "repositoryf9201c3b64a75cd1727d35b8"
+    },
+    {
+      "path_sha256": "f95a271ab70888364c349e43342078413eefa99e192b5379b8a95b3e26c7be3a",
+      "repository_id": "repositoryf95a271ab70888364c349e43"
+    },
+    {
+      "path_sha256": "fa5eb7cbff1c4f8edb3f5d0ff73f49c7e396b641c136097e63bd1b8e2171b44b",
+      "repository_id": "repositoryfa5eb7cbff1c4f8edb3f5d0f"
+    },
+    {
+      "path_sha256": "fdcf61a5e172537f4dbb46e5f5c2dd64321e9a41fbf87110d49d2ad7a29d9e23",
+      "repository_id": "repositoryfdcf61a5e172537f4dbb46e5"
+    },
+    {
+      "path_sha256": "fec27fcbe09c7ab5b4d0e4b7209b436ca9906bb1015595f2c1a1196e33dff2d2",
+      "repository_id": "repositoryfec27fcbe09c7ab5b4d0e4b7"
+    }
+  ],
+  "schema_version": "limen.frozen_wave_manifest.v1",
+  "source_instances": [
+    {
+      "instance_id": "sourceInstance01f5849ff8c4d6af9610154b",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance03ebdfd6dd6f5154bdfb9947",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance070f3f6049c8529b66e607f8",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance07c5b9237b011611c50df18c",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance084561255758562a20387587",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance0ac25dfbc2f6ac2719717486",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance0b372a6da610ec7539dff169",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance0bc30271bd358624cc9fb2d0",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance103ec5bd5fdfa08c87ea620a",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance12dc54a3ad3e51fecff3dac7",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance135aa8f0eb801e7c593c5ff4",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance16dc9a4b9aee8428e00823bc",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance1705e6f8dde95c279c5f173f",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance19e0b37251483b3a1dc86ee6",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance2346e8bfdad4dc4dc4cd8ddf",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance251075de081ff00d33cecc5f",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance2b901df8fa28c252249ad255",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstance2d4ba62d0be9784ca6d872f7",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance2dc3d5025b866526503e82b3",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance30b135466ed98bed3116af56",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance3104334fa169fcd793810c77",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance34c39574c43cad852bb4f8df",
+      "source_id": "physicalDevices01"
+    },
+    {
+      "instance_id": "sourceInstance35cd514f0e56f5ff1d3ed6b4",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance37164dfccc16ed059dd9e26b",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance3797747396b44f6dd63c7556",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance3ac670c3a2b9178aef5a78da",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance3b4344a3ab4e9bce3e250e22",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance3ba430257538dc09b61c01e3",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstance3bd8e86515b80d52447dd5e0",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance3c02fa1e58aa4c231f58136c",
+      "source_id": "physicalDevices01"
+    },
+    {
+      "instance_id": "sourceInstance3f0e2bd8c385f8e3446f9bb0",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance3f11044ee9e5540bf8b1785e",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance40b4cb5d87dd5234f76601f0",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstance40c3658fde8aff3084892d15",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance49590af61a6afc0d24743114",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance4ae8d365d7bf22dd21884e84",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance4d02032ad77a9a3df97e8139",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstance4d792189aad555f07ce6cb7f",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance515c0e8717f061c4d8b3e63c",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstance53a9577e14c3cf09f97a1b94",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance5885e968417b6f49270f4417",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance5b73e4707082ed5c26dc66b2",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance5c381151766bfcdd6f8aa6d4",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance62aa805f753f85ce8264c37c",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance630c4b20bad10de41b33cc74",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstance631375e95b3254eacb451560",
+      "source_id": "physicalDevices01"
+    },
+    {
+      "instance_id": "sourceInstance639f8ed52dcda8fd66bf723f",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance6daa9c1737534e5e12644e6d",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance6e65862d6794947fcd515221",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance6e7fc2a093929a621ee3af81",
+      "source_id": "sourceRegistry001"
+    },
+    {
+      "instance_id": "sourceInstance70c2ff071c70c89af1f70074",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstance7151b7a29ef7a30c4d613c6f",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance735fb84c2957b8e50835bb3d",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstance7386a0dcbc03bd533572a22d",
+      "source_id": "physicalDevices01"
+    },
+    {
+      "instance_id": "sourceInstance78fb88319d72b6f8bd30dc0a",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance7c5545b202ebcaeeb2a36064",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance7e84839a24d8f7034611378d",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance7ea4604b41acdfd74784e7c7",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance84c48827f18a2584ecddd078",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance862ca2f2c3ef4d26abae4ee3",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance8632b3be042e493cc59bbf0b",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance86544997d6df943f2b5ce10f",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance86df133077e8cdaedc7343aa",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance8bde3503a625d7056269dd15",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance8c4f6780cbff3fb72021638e",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance8fec0ce52aeb944d81f0c083",
+      "source_id": "physicalDevices01"
+    },
+    {
+      "instance_id": "sourceInstance902203fd1bfe026ad36e46e3",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance91d1c5ee3437154535eb81fc",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance95466ab4edde6a8654b65e82",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance969a3837090c5be28ecbdea0",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance96cfb91d09232527bc6d26d9",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance98b065a3138d7dfcd74d0b8f",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstance9d07f1cd5775d5c0dbb38cbb",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancea0ed175f4d7eb05cbdffff6e",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancea20c8d9a7f3924f9cc71791d",
+      "source_id": "resourceTelemetry1"
+    },
+    {
+      "instance_id": "sourceInstancea69064ab29a9ab591816ffcf",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstanceacfb906061b17bb392f4fe2e",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstanceae20fb853ee95ef2a683c853",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstanceb268e52a97d3d9f65e427a26",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstanceb4eda5b0d8369a097ca7e54b",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstanceb9474b748e5419efcfc74b61",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstanceb96402141e2172e872fe99be",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancebd1785b9723be9e8adbafdfd",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancebe5db171935105974c3b01cb",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstancebea0429d84314d098fdee749",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstancec034df70e356405ff98be3c8",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancec5a04359aad7004590f731a7",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancec82938c2241384fd8bdb4e49",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstancecb81b2c450782673bd909888",
+      "source_id": "physicalDevices01"
+    },
+    {
+      "instance_id": "sourceInstancecc09861b31b8436c0436fe08",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancecf6e9f75d9a80018862a43d9",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstanced1b5223dce1964f2d0da7175",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstanced2fd0cddaff74b39638d5963",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstanced4ba9ec2589afdb0c48679a9",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstanced4f08bf0fc7e9dbeea790fa8",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstancedb0be02f51d6cc5f9fdc43ad",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstancedc2b52f257c5f34184caf3fc",
+      "source_id": "processCwdSource01"
+    },
+    {
+      "instance_id": "sourceInstancedc6107a7d34a1426f1ee5709",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancedcb0c078dfec0b86b7b22e65",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancedee7e86256b4c9ceec14ca18",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancee156aa878333ae82df9db181",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancee709adc7173401841e1c21e9",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstanceea8391e6a03adb6b49a6d5b9",
+      "source_id": "physicalDevices01"
+    },
+    {
+      "instance_id": "sourceInstanceeb603f49c85a43bc4f31b0dd",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstanceec7f902c73e36cfe811e8c44",
+      "source_id": "physicalDevices01"
+    },
+    {
+      "instance_id": "sourceInstanceed37709618c7eecc2c5f8e57",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstanceee88e4008e58ddeb50cde226",
+      "source_id": "privateRootsSrc01"
+    },
+    {
+      "instance_id": "sourceInstanceee9428557e763054d87620c2",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancef063c15f8d3a24a743c987b8",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancef32bcb5f29b22b6038eea555",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancef386d031f5e6739c84db3b6d",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancef3c233fad1005303b6e6599e",
+      "source_id": "gitEstateSource01"
+    },
+    {
+      "instance_id": "sourceInstancefec69d85c2fe89762a4d1e87",
+      "source_id": "gitEstateSource01"
+    }
+  ],
+  "source_inventory_producer_digest": "2f743048781323f53a333e301ee86c43265d71b32b9db64ffafdda3bbd2f44c0",
+  "source_registry_digest": "6b0edd489d85aabb10ecdce1f3772eaae73a3710d37cbe6d8ff8d0036f830cb9",
+  "storage_roots": [
+    {
+      "path_sha256": "0f4ff74dc946d5195707638d044bc55676ae2062526c9550510b6c4fb7193d9d",
+      "root_id": "privateRoot0f4ff74dc946d5195707638d"
+    },
+    {
+      "path_sha256": "10b2e28aaefaa2b5308c27424d570605b1b06dc1b4b82438a1729645f5547783",
+      "root_id": "privateRoot10b2e28aaefaa2b5308c2742"
+    },
+    {
+      "path_sha256": "13ab0fba0f0046e06669edea6957e02ec99da698721d5d0104f8b03d38c2bcb4",
+      "root_id": "privateRoot13ab0fba0f0046e06669edea"
+    },
+    {
+      "path_sha256": "16c21bb693e18a6d9820cc40cadc7cd5d0dff570be5b030ca564c735aea11cd3",
+      "root_id": "privateRoot16c21bb693e18a6d9820cc40"
+    },
+    {
+      "path_sha256": "1b136503256f010aca1d7a7c207f4d5638ea4b3e13de259bb89eef853d05a121",
+      "root_id": "privateRoot1b136503256f010aca1d7a7c"
+    },
+    {
+      "path_sha256": "1bdc84ea1c297882823d928e446b1351a77082c123cc05d46a47abf0b7c4d10e",
+      "root_id": "privateRoot1bdc84ea1c297882823d928e"
+    },
+    {
+      "path_sha256": "227d27b35baa32342e451bee0fbe2a5c42bfae6e71646f98f477e40b37182839",
+      "root_id": "privateRoot227d27b35baa32342e451bee"
+    },
+    {
+      "path_sha256": "2eec1fb30ea132db7e2ca040e4ac713c1fb73c1a8fe4b8ffeba79cef467362a6",
+      "root_id": "privateRoot2eec1fb30ea132db7e2ca040"
+    },
+    {
+      "path_sha256": "3305df425d859fc4630b2c325cfcb1a0a646130d037da61ad60c62c3e081fdbc",
+      "root_id": "privateRoot3305df425d859fc4630b2c32"
+    },
+    {
+      "path_sha256": "4814122395f811b231a725ffc38d7ea2529011be7259c34c20900025e2187c45",
+      "root_id": "privateRoot4814122395f811b231a725ff"
+    },
+    {
+      "path_sha256": "5e7306b8975c106dc3a02cadfa0481066675a6f36cc316d98edba8ecd75336f9",
+      "root_id": "privateRoot5e7306b8975c106dc3a02cad"
+    },
+    {
+      "path_sha256": "66a63282ebf6f91071e829a655b14a828c2c6cdca5360f6ed8de79851a96c6cc",
+      "root_id": "privateRoot66a63282ebf6f91071e829a6"
+    },
+    {
+      "path_sha256": "75a6b306dea2fdacdb7117596795c859d4d2c638a125f9c008e99af1a73fea2a",
+      "root_id": "privateRoot75a6b306dea2fdacdb711759"
+    },
+    {
+      "path_sha256": "76e478625f177eb58fa2042b126c16fb65101dee8a9570a7ac5dae0158164f94",
+      "root_id": "privateRoot76e478625f177eb58fa2042b"
+    },
+    {
+      "path_sha256": "7a5d814bf3d04a40ff310d744b324b3c3d4ed80e0baceed10aa546b12f6b513b",
+      "root_id": "privateRoot7a5d814bf3d04a40ff310d74"
+    },
+    {
+      "path_sha256": "89e3bd907783d8a9db3906f6375024c7638d6b877a47f64fa22e94fd21164dc7",
+      "root_id": "privateRoot89e3bd907783d8a9db3906f6"
+    },
+    {
+      "path_sha256": "bbd6b0603cbc7f67e4f4653f406d1b8ee7981ee0481ad35a9e92fdc9481295ef",
+      "root_id": "privateRootbbd6b0603cbc7f67e4f4653f"
+    },
+    {
+      "path_sha256": "f7b092d495a94939848ee1122c1763f3d3e4dbd4db9426b51fb45ec194d757f1",
+      "root_id": "privateRootf7b092d495a94939848ee112"
+    }
+  ],
+  "wave_id": "wave20260728T192638Z"
+}

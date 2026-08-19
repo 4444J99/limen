@@ -1,85 +1,13 @@
 {
-  "$defs": {
-    "ResourceClaimV1": {
-      "additionalProperties": false,
-      "properties": {
-        "claim_id": {
-          "title": "Claim Id",
-          "type": "string"
-        },
-        "effective_from": {
-          "format": "date-time",
-          "title": "Effective From",
-          "type": "string"
-        },
-        "effective_until": {
-          "format": "date-time",
-          "title": "Effective Until",
-          "type": "string"
-        },
-        "encryption_chunking_bytes": {
-          "minimum": 0,
-          "title": "Encryption Chunking Bytes",
-          "type": "integer"
-        },
-        "hydrated_inputs_bytes": {
-          "minimum": 0,
-          "title": "Hydrated Inputs Bytes",
-          "type": "integer"
-        },
-        "output_bytes": {
-          "minimum": 0,
-          "title": "Output Bytes",
-          "type": "integer"
-        },
-        "rollback_bytes": {
-          "minimum": 0,
-          "title": "Rollback Bytes",
-          "type": "integer"
-        },
-        "rollback_until": {
-          "format": "date-time",
-          "title": "Rollback Until",
-          "type": "string"
-        },
-        "schema_version": {
-          "const": "limen.resource_claim.v1",
-          "default": "limen.resource_claim.v1",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "temporary_expansion_bytes": {
-          "minimum": 0,
-          "title": "Temporary Expansion Bytes",
-          "type": "integer"
-        },
-        "workspace_bytes": {
-          "minimum": 0,
-          "title": "Workspace Bytes",
-          "type": "integer"
-        }
-      },
-      "required": [
-        "claim_id",
-        "hydrated_inputs_bytes",
-        "workspace_bytes",
-        "temporary_expansion_bytes",
-        "output_bytes",
-        "encryption_chunking_bytes",
-        "rollback_bytes",
-        "effective_from",
-        "effective_until",
-        "rollback_until"
-      ],
-      "title": "ResourceClaimV1",
-      "type": "object"
-    }
-  },
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
     "adapter_id": {
       "title": "Adapter Id",
+      "type": "string"
+    },
+    "claim_recipe": {
+      "title": "Claim Recipe",
       "type": "string"
     },
     "completeness_predicate": {
@@ -111,9 +39,6 @@
       "title": "Recipe Version",
       "type": "string"
     },
-    "resource_claim": {
-      "$ref": "#/$defs/ResourceClaimV1"
-    },
     "restoration_predicate": {
       "title": "Restoration Predicate",
       "type": "string"
@@ -141,7 +66,7 @@
     "cursor_schema_digest",
     "completeness_predicate",
     "privacy_transform_digest",
-    "resource_claim",
+    "claim_recipe",
     "recipe_version",
     "custody_target_refs",
     "restoration_predicate"
