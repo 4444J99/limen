@@ -107,3 +107,4 @@ generate_peer_audit_comments.py
 
 # constellation atlas — generated HTML register (regenerable via constellation-atlas.py)
 logs/constellation/
+github-universe-ledger.json
