@@ -480,13 +480,10 @@ keeper commits accepted task-state projections remotely with SHA compare-and-swa
 
 ## Safety & Evidence
 
-- Never place plaintext secrets, tokens, credentials, personal contact data, or private customer
-  data in `tasks.yaml`, `dispatch_log`, commits, PR bodies, or chat transcripts.
+- Never place plaintext secrets, tokens, credentials, or private customer data in `tasks.yaml`, `dispatch_log`, commits, PR bodies, or transcripts.
 - Prefer durable links and paths over pasted logs. Summarize long outputs.
-- Every `done` report should be reproducible from the repo: predicate command, result, changed
-  files, and commit/PR reference where applicable.
-- If a tool charter asks for behavior that conflicts with this protocol, follow the precedence
-  ladder above and update the lower-priority doc later.
+- Every `done` report must be reproducible: predicate command, result, changed files, and commit/PR reference.
+- If a tool charter conflicts with this protocol, follow the precedence ladder above.
 
 ## Deployment Pointer
 
@@ -503,6 +500,8 @@ checks.
 `scripts/check-reserved-tier.py`.
 
 ### Claude
+- **TABVLARIVS & MEMORIA:** submit task and memory transitions as tickets via `tabularius-ticket.py`
+  or `memory-ticket.py`. Memory is keeper-owned — never Write MEMORY.md or memory atoms; submit a memory ticket.
 - You are Claude. Read this file at startup. Support Limen as a native peer: use the conduct
   CLI/MCP surface and preserve Claude identity in every session, packet, and receipt.
 - **Fleet launches never wait on permissions** — non-interactive dispatch uses
@@ -563,9 +562,7 @@ checks.
   target plus a verification command; report `failed_blocked` on a missing external gate.
 
 ### Goose
-- Goose is not currently in Limen's canonical `target_agent` set. Do not assign tasks to Goose
-  until `VALID_AGENTS`, capacity detection, dispatch routing, and this protocol are updated
-  together.
+- Goose is not in `target_agent` set. Do not assign tasks to Goose until `VALID_AGENTS` and capacity detection are updated.
 
 ---
 
@@ -573,7 +570,7 @@ checks.
 
 | Action | Command |
 |---|---|
-| Inspect tasks | `limen status` plus the read-only `$LIMEN_ROOT/tasks.yaml` projection |
+| Inspect tasks | `limen status` or `$LIMEN_ROOT/tasks.yaml` projection |
 | Discover lanes | `limen conduct capabilities` |
 | Register session | `limen conduct register --agent <name> --session-id <id> ...` |
 | Submit root | `limen conduct submit --packet <file>` |
