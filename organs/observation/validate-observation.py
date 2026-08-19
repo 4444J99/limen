@@ -42,7 +42,7 @@ CLI_SRC = ROOT / "cli" / "src"
 if str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
 
-from limen.observation import SCHEMA_V1, check_feed  # noqa: E402
+from limen.observation import SCHEMA_V1, check_feed, emit_feed_record  # noqa: E402
 
 STANDINGS = ["RAW", "OBSERVING", "ANALYZED", "RECONCILED", "PROPOSED", "CLOSED"]
 ADVANCING = ["RAW", "OBSERVING", "ANALYZED", "RECONCILED", "PROPOSED"]
@@ -203,6 +203,12 @@ def _validate_bifrons_status() -> list[str]:
 
 def _validate_feed(base_root: Path) -> list[str]:
     """Validate Observation Feed against schema limen.observation.feed.v1."""
+    log_dir = base_root / "logs" / "observation"
+    if not (log_dir / "feed.jsonl").exists() or not (log_dir / "feed-latest.json").exists():
+        try:
+            emit_feed_record(base_dir=base_root)
+        except Exception as exc:
+            return [f"Rule #6 violation: auto-bootstrap feed failed: {exc}"]
     ok, errors = check_feed(base_dir=base_root)
     if not ok:
         return [f"Rule #6 violation: {err}" for err in errors]

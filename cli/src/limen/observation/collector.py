@@ -295,9 +295,6 @@ def check_feed(base_dir: Path | None = None) -> tuple[bool, list[str]]:
     jsonl_path = log_dir / "feed.jsonl"
     latest_path = log_dir / "feed-latest.json"
 
-    if not latest_path.exists() or not jsonl_path.exists():
-        emit_feed_record(base_dir=root)
-
     errors: list[str] = []
     if not latest_path.exists():
         errors.append(f"missing feed-latest.json at {latest_path}")
