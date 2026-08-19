@@ -1,6 +1,6 @@
 # Campaign Heartbeat Health
 
-Generated: `2026-08-17T21:59:20+00:00`
+Generated: `2026-08-18T20:06:13+00:00`
 
 Status: `blocked`
 
@@ -27,7 +27,7 @@ Status: `blocked`
 - Loaded LIMEN_WORKTREES: `/Volumes/Scratch/limen-worktrees`.
 - Loaded LIMEN_WORKTREE_ROOT: `/Volumes/Scratch/limen-worktrees`.
 - Loaded LIMEN_CAMPAIGN_WAKE_TIMEOUT: `300`.
-- Watchdog dry-run healthy: `False`; `[watchdog] 2026-08-17T21:59:21.072428+00:00 UNHEALTHY sig=beating`.
+- Watchdog dry-run healthy: `False`; `[watchdog] 2026-08-18T20:06:13.945475+00:00 UNHEALTHY sig=beating`.
 
 ## Legacy Manual Async Diagnostic
 
@@ -61,19 +61,24 @@ Status: `blocked`
 
 - Live root: `~/Workspace/limen`.
 - Branch: `docs/custody-preservation-receipts-20260817`; status `## docs/custody-preservation-receipts-20260817...origin/docs/custody-preservation-receipts-20260817`.
-- HEAD: `ead56dac052b52ba4a47a90c5d353b7c53ba3eac`.
+- HEAD: `f2aba88470eba938d5a6a572afcb6a2d7ae17bb1`.
 - origin/main: `751f44ab7f39cc62dba16733cfa21c3f0feaae37`.
-- Matches origin/main: `False`; ahead `6` behind `14`.
-- Dirty entries: `6`.
+- Matches origin/main: `False`; ahead `7` behind `14`.
+- Dirty entries: `11`.
 - Ignored generated receipt dirty entries: `2`.
   - `docs/receipts/tcc-track-c-1703/closeout-latest.json`
-  - `docs/receipts/tcc-track-c-1703/closeout-20260817T212847Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260818T152738Z.json`
   - `docs/RECLASSIFY-PROPOSAL.md`
   - `docs/branch-hygiene.md`
-  - `docs/github-actions-usage.json`
+  - `docs/diurnal/INDEX.md`
+  - `docs/github-pr-debt-ledger.json`
+  - `docs/prompt-atom-ledger.md`
+  - `docs/prompt-authority-seal.json`
+  - `docs/receipts/session-contention-ledger.json`
   - `dump.rdb`
   - `logs/overnight-watch.md`
-  - `docs/receipts/reapable_branches_20260817.json`
+  - `organs/financial/cashflow.md`
+  - `docs/diurnal/2026-08-18.md`
 
 ## Verified Worktree
 
@@ -84,8 +89,8 @@ Status: `blocked`
 ## Blockers
 
 - `heartbeat-watchdog-unhealthy`:   ok  not-wedged: {"reason": "no PARALLEL beats in window", "recent_pr_counts": [], "max_fails_threshold": 3}
-- `live-root-not-at-origin-main`: live root branch docs/custody-preservation-receipts-20260817 head ead56dac052b differs from origin/main 751f44ab7f39.
-- `live-root-dirty`: live root has 6 dirty entries.
+- `live-root-not-at-origin-main`: live root branch docs/custody-preservation-receipts-20260817 head f2aba88470eb differs from origin/main 751f44ab7f39.
+- `live-root-dirty`: live root has 11 dirty entries.
 - `always-working-reconciliation-missing`: No current always-working reconciliation receipt is available.
 
 ## Commands

@@ -1,12 +1,12 @@
 # Overnight Watch
 
 - Status: `alert`
-- Updated: `2026-08-17T21:59:16+00:00`
-- Log age: `1114` seconds
+- Updated: `2026-08-19T13:17:46+00:00`
+- Log age: `89` seconds
 - Launchd: `active`
-- Latest tick: `tick emitted: 2026-08-17T18:08:25+00:00 total=3119 open=837 spent=8/600`
+- Latest tick: `None`
 - Latest async: `None`
-- Stale tick samples: `37`
+- Stale tick samples: `54`
 - Active workers: `0`
 - Heartbeat child processes: `1`
 
@@ -30,9 +30,10 @@
 
 ## Throughput
 
-- Recent per-60min completions: `[0, 0, 0]` (derived floor `0.0`, median `0.0`).
+- Recent per-60min completions: `[0, 0, 0]` (derived floor `0.0`, median `0`).
 - Below floor: `false`; suppressed: `no`.
-  - child `1297` `S` `07:51:21` `/bin/bash /Users/4jp/Workspace/limen/scripts/heartbeat-loop.sh`
+  - child `1297` `S` `01-23:09:51` `/bin/bash /Users/4jp/Workspace/limen/scripts/heartbeat-loop.sh`
 
 ## WATCH_ALERT
-- `handoff-relay-stale`: handoff-relay --check: FAIL — provider headroom stale (244m > 90m)
+- `heartbeat-tick-missing`: no tick emitted line found in recent heartbeat log
+- `handoff-relay-stale`: handoff-relay --check: FAIL — provider headroom stale (2603m > 90m)
