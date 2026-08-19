@@ -59,8 +59,8 @@ Run/Next.js/FastAPI can be swapped.
 | `web/app/` | Next.js dashboard (static export → Cloudflare Pages `limen-dashboard.pages.dev`; the Firebase Hosting step is dormant — its GCP credential exists nowhere, road-not-taken). Surfaces `/` (owner), `/qa`, `/client`, `/public`. | `npm run dev`; `npm run build` (prebuild generates static data + validates surfaces) |
 | `mcp/` | MCP adapter exposing the same authenticated conduct protocol and task-compatibility events (`mcp/src/limen_mcp/server.py`). | `pip install -e mcp/` |
 | `ianva/` | MCP doorway/aggregator package. | `pip install -e ianva/` |
-| `moneta/` | **MONETA** — the sovereign cash organ (sibling of `quaestor`: quaestor *finds* money, MONETA *intakes* it). Self-hosted Bitcoin licence mint: takes BTC to an owner-controlled address, confirms against a **keyless** public explorer (mempool.space/Esplora), and signs each product's own offline ECDSA-P256 Pro licence — **no processor in the path**. Unconfigured, it *pools* demand as `reserved` orders (the valve) and auto-opens them the moment a receive address is set. `Dockerfile`-ready for a $0 deploy. | `cd moneta && npm test` (vitest + `tsc`); tests in `moneta/src/__tests__/` |
-| `spec/contracts/` | Portable JSON Schemas (incl. `spec/contracts/conduct/`) the generated surface contracts must satisfy. | `node scripts/validate-contract-schemas.mjs` |
+| `moneta/` | **MONETA** — sovereign Bitcoin licence mint, no processor in the path (see `moneta/README.md`). Gotcha: unconfigured it *pools* demand as `reserved` orders (the valve) and auto-opens them the moment a receive address is set. | `cd moneta && npm test` |
+| `spec/contracts/` (incl. `spec/contracts/conduct/`) | Portable JSON Schemas the generated surface contracts must satisfy. | `node scripts/validate-contract-schemas.mjs` |
 | `scripts/` (~420 files) | The operational fleet: `metabolize.sh`/`heartbeat-loop.sh` (the beat), `verify-whole.sh` (whole-system predicate), `merge-policy.sh` (merge decision), `organ-health.py` (liveness), `creds-hydrate.py` (credential organ), plus per-organ generators. | run directly |
 | `organs/`, `organ-ladder.json`, `pillars.yaml`, `his-hand-levers.json` | Declarative registries: the self-* organ ladder, platform pillars, and the owned human-gated lever registry. | data files |
 | `apps/` | Product applications (`danse/`, `vision-board-studio/`). `apps/danse/AGENTS.md` is the one directory-scoped instruction file — closest wins for files under it. | per-app |
@@ -82,7 +82,6 @@ python3 scripts/check-ruff-pin.py && python3 -m ruff check cli/src cli/tests web
 scripts/verify-whole.sh                              # whole-system predicate (exit 0 ⟺ green)
 limen dispatch --agent jules         # dry-run preview; add --live to dispatch for real
 ```
-
 ## Session Phase Entry
 
 **A session opens in the PLAN phase.** `.claude/settings.json` sets `permissions.defaultMode:
@@ -222,22 +221,16 @@ Do **not** declare work "done" or "fully done" until verified end-to-end:
 ## Data Grounding
 
 Before drawing ANY conclusion from a dataset — a message export, a mail archive, a review window,
-a log trawl — establish the ground truth of the *input* first (2026-07-24 insights lineage: two
-confidently-wrong message analyses from a received-only export and a too-narrow window; the
-domain instances are `docs/student-email-reply-grounding.md` and the outreach sent-state memory —
-this section is their generalization):
+a log trawl — establish the ground truth of the *input* first (case histories behind every rule
+here: [`docs/data-grounding-precedents.md`](docs/data-grounding-precedents.md)):
 
 - **Enumerate the CHANNELS before analyzing any one of them.** A missing channel does not widen
   the error bars — it **inverts the conclusion's sign**. Before concluding anything about an
   interaction, a relationship, or a sequence of events, list every channel that could carry it
   (text messages, voice/video calls, a second messaging app, email, transfers, in-person) and
-  state in the output which you queried and which you did not. (2026-08-05: "three hours of
-  silence" and "detonating into an empty room" were both produced by never opening the call
-  database — it held seven calls inside that window, three of them minutes before the message
-  being interpreted; in the same analysis a second messaging app carrying the day's most decisive
-  exchange went unopened. Both conclusions reversed on contact with the missing channel.) **No
-  scope, window, or count check catches this**, because every count *within* the queried channel
-  was correct — which is why channel enumeration precedes all of them.
+  state in the output which you queried and which you did not (precedent P1). **No scope,
+  window, or count check catches this**, because every count *within* the queried channel was
+  correct — which is why channel enumeration precedes all of them.
 - **State the scope up front, in the output**: the exact date/window boundaries, the direction of
   the records (sent AND received? one side only?), any export filters, and the **total record
   count** — before the first conclusion, so a scope error surfaces immediately.
@@ -253,13 +246,10 @@ this section is their generalization):
   negotiated are *conversation* — most are never executed. A claim of the form "X happened"
   sourced only from message text is **asserted-in-conversation**, never **occurred**, unless a
   NON-conversational channel corroborates it: commits, transactions, calendar, filesystem
-  artifacts, or the operator. Mark the distinction in the output. (2026-07-31: summing every
-  dollar figure in a thread was reported as "$103,309 funded" and a proposed arrangement as an
-  executed one; the contracts went unsigned and the job was never left.)
+  artifacts, or the operator. Mark the distinction in the output (precedent P2).
 - **A window is not the corpus — never state a sample's finding in the corpus's language.** Report
   the denominator you actually read, next to the denominator that exists, every time. The failure
-  is silent and it scales: a 435-message / 10-day slice of a 65,872-message / 34-month record is
-  0.7% of it, and conclusions drawn there were written as "never once" and "in six months." If the
+  is silent and it scales (precedent P3). If the
   full extent is unknown, that is itself the first finding — establish it before analyzing.
 - **Corpus retrieval fails silently and looks like absence.** Before concluding a corpus holds
   nothing about a subject, verify the resolver reached a real store: `python3
