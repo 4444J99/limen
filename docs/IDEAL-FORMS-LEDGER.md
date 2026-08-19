@@ -461,6 +461,24 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   notification when it exists.
 - **Owner:** Claude (all four forms).
 
+### IF-RECORD-KEEPER-COVENANT — the testament class has one keeper and one lane
+- **Ideal form:** a single covenant registry (`institutio/governance/covenant.yaml`) declares the
+  testament class (tasks.yaml + memory dir) as keeper-owned; one parity gate (`check-agent-docs.py`
+  check O) holds every agent surface to the covenant; one lane (`memory-ticket.py`) is the only
+  path sessions use to write memory; one guard (hook, PR 6) prevents direct memory writes once armed;
+  one keeper (TABVLARIVS) drains the lane and folds tickets into the memory dir on the beat.
+  Adding a new testament member = one covenant registry entry, never a new ad-hoc write path.
+- **Distance:** the keeper law is encoded on every agent surface (AGENTS.md tabularius note +
+  Session Discipline line + GEMINI.md mirror, parity check O). The covenant registry
+  (`institutio/governance/covenant.yaml`) and the lane (`memory-ticket.py`) land in sibling PRs
+  (plain references here — not yet merged). The guard (PR 6) and the beat drain are later
+  candidates. Arming is the operator's two ordered flips: `LIMEN_MEMORIA=1` (lane-on), then
+  settings arming (guard active). Five organ ledgers (credential, config, sensor, mail, health)
+  are later enrolment candidates once the board + memory members prove the pattern.
+- **Status:** PARTIAL — keeper law landed-not-armed (this PR); lane + registry + guard staged in
+  sibling PRs.
+- **Owner:** tabularius.
+
 ### IF-LEDGER-OF-IDEALS — this ledger (self)
 - **Ideal form:** every Claude-originated ideal is a tracked named param here; the ledger is
   linked from memory and the autopoiesis heartbeat references it (closing the self-loop).

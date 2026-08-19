@@ -763,6 +763,31 @@ def main() -> int:
                 f"{scoped.relative_to(ROOT)} presents non-canonical status values: {sorted(invalid_presented)} (T)"
             )
 
+    # O. Record-Keeper Covenant keeper law
+    claude_note = section(agents_text, "Agent-Specific Notes")
+    for phrase, label in [
+        ("memory", "keeper law: AGENTS.md tabularius note must contain 'memory'"),
+        ("memory-ticket", "keeper law: AGENTS.md tabularius note must contain 'memory-ticket'"),
+    ]:
+        if phrase not in claude_note:
+            errors.append(
+                f"AGENTS.md 'Agent-Specific Notes' lacks {label} "
+                f"(fix: add the TABVLARIVS keeper law to the ### Claude note)"
+            )
+    if "Memory is keeper-owned" not in claude_note:
+        errors.append(
+            "AGENTS.md 'Agent-Specific Notes' lacks the keeper line "
+            "'Memory is keeper-owned — never Write MEMORY.md or memory atoms; submit a memory ticket' "
+            "(fix: add it to the TABVLARIVS note in ### Claude under ## Agent-Specific Notes)"
+        )
+    gemini_text = (ROOT / "GEMINI.md").read_text(encoding="utf-8")
+    if "keeper" not in gemini_text or "memoria" not in gemini_text:
+        errors.append(
+            "GEMINI.md lacks the keeper/memoria mirror line "
+            "(fix: add a section stating Gemini/Jules never write memory directly; "
+            "memory capture goes through the keeper's memoria lane)"
+        )
+
     if errors:
         print("Agent-instruction doc drift detected:")
         for err in errors:

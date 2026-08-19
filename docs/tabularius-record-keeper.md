@@ -127,3 +127,18 @@ to preserve a legacy local test expectation.
 The live-cutover continuation owns conversion of those callers to reserve before execution and report
 through the same lease. Until that predicate is green, broker-backed paths fail closed and local
 `tasks.yaml` remains untouched.
+
+## The testament class: memory as the second ticket family
+
+`tasks.yaml` is the first testament TABVLARIVS keeps: the single-writer board. The per-project
+**memory dir** (`~/.claude/projects/.../memory/MEMORY.md` and its atom files) is the second
+testament: the durable session-knowledge ledger that cross-session siblings read.
+
+Like the board, the memory dir has the same failure mode when written ad hoc — any session that
+directly edits `MEMORY.md` races with every concurrent session and with the beat's own captures,
+producing the same torn-bytes / lost-update hazard the ticket lane was built to solve.
+
+The **Record-Keeper Covenant** extends TABVLARIVS's single-writer principle to this second
+testament. Sessions submit a **memory ticket** (`memory-ticket.py`) — one atomic create, no read,
+no board touch — and the keeper folds it into the memory dir on the beat, in order, with the same
+collapse-guard and quarantine discipline it applies to board tickets.
