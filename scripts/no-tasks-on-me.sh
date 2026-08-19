@@ -314,6 +314,14 @@ else
 fi
 
 echo
+# ---------------------------------------------------------------------------
+# 12: no AUTOMATABLE homework parked on him. Prove every open lever is IRREDUCIBLE
+#     sovereignty boundary, never design debt.
+# ---------------------------------------------------------------------------
+if ! LIMEN_HIS_HAND_LEVERS="$REGISTRY" python3 "$ROOT/scripts/lever-classify.py" --check; then
+  bad "an open lever is UNCLASSIFIED or malformed — the sovereignty predicate failed. See: scripts/lever-classify.py --list"
+fi
+
 if [ "$fail" -ne 0 ]; then
   echo "VERDICT: tasks are hanging — see FAIL lines above. Hang each in its owner's git-tracked record, then re-run."
   exit 1

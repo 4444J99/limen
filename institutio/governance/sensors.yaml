@@ -2394,3 +2394,22 @@ sensors:
       - command: "python3 scripts/exchange-guard.py"
         severity: advisory
         escalation: "exchange detector found payments within connected call windows — run `python3 scripts/exchange-guard.py --detail` locally to review amounts and times safely"
+  lever-classify:
+    section: heartbeat
+    title: "the lever-sovereignty sensor — verifies that every open lever in his-hand-levers.json is irreducible sovereignty, not automatable design debt parked on him"
+    gate: LIMEN_LEVER_CLASSIFY
+    default: "1"
+    source: [heartbeat]
+    owner: vigilia
+    cadence:
+      env: LIMEN_BEAT_LEVER_CLASSIFY
+      default: 1
+    timeout:
+      env: LIMEN_LEVER_CLASSIFY_TIMEOUT
+      default: 30
+    steps:
+      - name: check
+        command: "python3 scripts/lever-classify.py --check"
+        timeout: 30
+        on_fail: escalate
+        escalation: "unclassified open levers in his-hand-levers.json (see scripts/lever-classify.py --list)"

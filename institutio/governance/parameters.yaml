@@ -6216,3 +6216,15 @@ parameters:
     self_update: none
     owner: diurnal
     note: "Whether morning/midday emit a push notification (scripts/_notify.py, onset-deduped on a date-keyed condition so each day fires once). 0 = the dated page is written but nothing reaches the phone. The evening never pushes — it persists."
+  LIMEN_LEVER_CLASSIFY:
+    default: "1"
+    env: LIMEN_LEVER_CLASSIFY
+    self_update: none
+    owner: vigilia
+    note: "Master on/off for the lever-sovereignty classifier (his-hand-levers.json -> sovereignty / design_debt / unclassified). 0 skips the pass. When 1, every open lever must be tagged sovereignty{reason} or design_debt{organ,dissolves_when}; unclassified open levers red the check."
+  LIMEN_BEAT_LEVER_CLASSIFY:
+    default: 1
+    env: LIMEN_BEAT_LEVER_CLASSIFY
+    self_update: none
+    owner: vigilia
+    note: "Cadence (every N beats) of the lever classifier. Fast (1) because classification is purely local and instant."
