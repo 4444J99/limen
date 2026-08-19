@@ -1,6 +1,10 @@
 {
   "_doc": "SSOT manifest of claude.ai scheduled cloud routines. The RemoteTrigger API is in-session-only so beat scripts audit the DELIVERY side (rolling-issue comments) via gh; any session that edits routines in claude.ai must update this manifest.",
   "generated_at": "2026-07-08",
+  "receipt_schema_version": "limen.cloud_routine_receipt.v1",
+  "receipt_schema": "spec/contracts/cloud-routine-receipt-v1.schema.json",
+  "consumer": "scripts/cloud-routine-ingest.py",
+  "delivery_contract": "Every delivery emits one receipt per stable finding. Material findings must name an owner; only new_work dispositions may submit idempotent TABVLARIVS upsert tickets.",
   "routines": [
     {
       "name": "stale-pr-sweep",

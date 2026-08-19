@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/organvm/limen/spec/contracts/cloud-routine-receipt-v1.schema.json",
+  "title": "CloudRoutineReceiptV1",
+  "description": "One recurring cloud-routine observation with stable ownership and executable closure truth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "routine_id",
+    "observed_at",
+    "status",
+    "stable_finding_key",
+    "disposition",
+    "owner_ref",
+    "predicate"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "limen.cloud_routine_receipt.v1"
+    },
+    "routine_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timezone-aware observation time; producers must not emit timestamps more than 300 seconds ahead of the consumer clock.",
+      "x-limen-max-future-skew-seconds": 300
+    },
+    "status": {
+      "enum": [
+        "ok",
+        "finding",
+        "failed"
+      ]
+    },
+    "stable_finding_key": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$"
+    },
+    "disposition": {
+      "enum": [
+        "no_change",
+        "superseded",
+        "owned",
+        "new_work",
+        "human_gate"
+      ]
+    },
+    "owner_ref": {
+      "anyOf": [
+        {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024,
+          "pattern": "^(?=.*\\S)[^\\u0000]{1,1024}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "predicate": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8192,
+      "pattern": "^(?!.*`)(?!.*\"[^\"]*[$][(][^;|&]*[;|&])(?=(?:(?:[^'\";|&])|'[^']*'|\"[^\"]*\")*$)(?!.*(?:<[^>]+>|\\b(?:tbd|todo|fixme|replace[-_ ]me)\\b))(?=(?:[^']*'[^']*')*[^']*$)(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)(?!.*\\\\$)(?!.*[\\r\\n])\\s*(?:(?:command|env|sudo)\\s+|(?:[A-Za-z_][A-Za-z0-9_]*=[^\\s]+|-[^\\s]+)\\s+)*(?:\\[|bash|bundle|cargo|curl|gh|git|go|just|limen|make|node|nox|npm|pnpm|py\\.test|pytest|python|python3|ruby|sh|test|tox|uv|yarn|zsh|[^\\s]*/[^\\s]+|[^\\s]+\\.(?:py|sh))(?:\\s+.*)?$",
+      "$comment": "Kept in parity with CloudRoutineReceiptV1.validate_predicate: nonblank input, no placeholders, balanced quotes, no trailing escape or unquoted shell composition, clustered shell -c/-uc options with composition are rejected, and one admitted executable."
+    }
+  },
+  "allOf": [
+    {
+      "not": {
+        "properties": {
+          "predicate": {
+            "pattern": "(?:^|\\s)(?:bash|sh|zsh)\\s+[^\\r\\n]*-[^\\s]*c[^\\s]*\\s+[^\\r\\n]*[;|&]"
+          }
+        }
+      }
+    },
+    {
+      "not": {
+        "properties": {
+          "predicate": {
+            "pattern": "(?:^|\\s)(?:bash|sh|zsh)\\s+[^\\r\\n]*-[^\\s]*c[^\\s]*\\s+[^\\r\\n]*[$]'[^']*\\\\(?:n|r)"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "finding",
+              "failed"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "owner_ref": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "status": {
+                "enum": [
+                  "finding",
+                  "failed"
+                ]
+              }
+            }
+          },
+          {
+            "properties": {
+              "disposition": {
+                "enum": [
+                  "no_change",
+                  "superseded",
+                  "owned"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "then": {
+        "properties": {
+          "owner_ref": {
+            "type": "string",
+            "pattern": "^(?:lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}|irf:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}|https://github\\.com/(?!\\.\\.?/)(?![A-Za-z0-9_.-]+/\\.\\.?/)[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/(?:issues|pull|actions/runs)/[0-9]+)$"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "new_work"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "enum": [
+              "finding",
+              "failed"
+            ]
+          },
+          "owner_ref": {
+            "type": "string",
+            "pattern": "^(?!(?:\\.{1,2})/)(?!.*/(?:\\.{1,2})$)[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "disposition": {
+            "const": "human_gate"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "status": {
+            "enum": [
+              "finding",
+              "failed"
+            ]
+          },
+          "owner_ref": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^lever:[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+          }
+        }
+      }
+    }
+  ]
+}

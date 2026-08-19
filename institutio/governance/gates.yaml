@@ -943,7 +943,7 @@ gates:
     note: "Format-check the same estate ruff-lint lints; ran unregistered in pr-gate until the scoped rewrite (issue #1048). Same #1658 version lock as ruff-lint; same 2026-08-06 apps/organs extension."
   pytest-cli:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto"
-    paths: ["cli/**", "ianva/**", "his-hand-levers.json", "cloud-routines.json"]
+    paths: ["cli/**", "cli/tests/test_cloud_routine.py", "ianva/**", "his-hand-levers.json", "cloud-routines.json", "spec/contracts/cloud-routine-receipt-v1.schema.json", "scripts/cloud-routine-ingest.py", "scripts/check-cloud-routine-ingest.py", "docs/receipts/cloud-routine-findings-20260808.json", "docs/receipts/cloud-routine-lineage.json", "docs/receipts/irf-p0-owner-classification-20260808.json"]
     tier: heavy
     serialize: true
     timeout_seconds: 1500

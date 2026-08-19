@@ -1293,6 +1293,116 @@
         "Perform or authorize any upload, filing, public post, fee, agreement, or identity claim only when its owner issue is ready"
       ],
       "issue": 1792
+    },
+    {
+      "id": "L-CLOUD-BULK-PR-CLOSE-N75",
+      "label": "Authorize the N75 terminal cleanup of 57 abandoned Jules draft PRs in organvm-iv-taxis/petasum-super-petasum.",
+      "owner": "yours",
+      "cost": "one bounded review of the live 57-PR denominator, then one bulk close operation with a receipt",
+      "unlocks": "removes the 7-8 month abandoned bot-draft cohort without allowing a cloud routine to perform a destructive external mutation from a stale count",
+      "source_task": "Jules backlog curation N75 (organvm/session-meta#29), expanded on 2026-08-06 from 11 to 57 live Jules drafts; umbrella closeout organvm/limen#2120",
+      "gate": "closing 57 GitHub pull requests is a destructive external-state mutation and requires explicit human authorization",
+      "status": "open",
+      "added": "2026-08-08",
+      "steps": [
+        "Re-enumerate open draft PRs in organvm-iv-taxis/petasum-super-petasum authored by app/google-labs-jules; do not trust the historical count if live state differs.",
+        "Confirm every target is an abandoned Jules draft and that none has a human review, requested continuation, or unique unpreserved work.",
+        "Authorize the bounded close batch; attach the exact PR-number denominator and GitHub receipt to organvm/session-meta#29."
+      ],
+      "note": "Predicate after authorization: the exact reviewed target set is closed and the receipt records every result; unrelated drafts and all human-authored PRs remain untouched.",
+      "issue": 2120
+    },
+    {
+      "id": "L-CLOUD-EXTERNAL-GOVERNANCE-N77",
+      "label": "Disposition external collaborator PR 4444J99/victoroff-os#327, which proposes canonical repository authority.",
+      "owner": "yours",
+      "cost": "read one governance PR and choose merge, request-changes, or close with a public rationale",
+      "unlocks": "resolves N77 without allowing an agent to accept or reject an external contributor's authority claim on your behalf",
+      "source_task": "Jules backlog curation N77 (organvm/session-meta#29) from stale-PR-sweep evidence; umbrella closeout organvm/limen#2120",
+      "gate": "an external collaborator's governance proposal is a public authority and relationship decision",
+      "status": "open",
+      "added": "2026-08-08",
+      "steps": [
+        "Read https://github.com/4444J99/victoroff-os/pull/327 and compare its canonical-authority claim with the current repository and ecosystem governance doctrine.",
+        "Post the chosen disposition and rationale on the PR.",
+        "Merge only if the authority claim is correct and required checks pass; otherwise request bounded changes or close."
+      ],
+      "note": "No agent may silently merge, close, or leave this governance proposal without the named human disposition.",
+      "issue": 2120
+    },
+    {
+      "id": "L-CLOUD-SESSION-SCOPE-EXPANSION",
+      "label": "Expand the hosted cloud-routine GitHub scope from session-meta-only to the current canonical sources.",
+      "owner": "yours",
+      "cost": "one hosted-session repository-scope update and one subsequent routine run",
+      "unlocks": "lets fleet audit, IRF surface, Jules curation, and disposition triage read organvm/limen plus organvm/organvm-corpvs-testamentvm instead of repeating access-denied prose",
+      "source_task": "cloud routine access failures recorded in organvm/session-meta#29, #31, #34, #79 and attached-alert closeout organvm/limen#2120",
+      "gate": "changing a hosted account/session allowed-repository set is an external access-governance action",
+      "status": "open",
+      "added": "2026-08-08",
+      "steps": [
+        "Add organvm/limen and organvm/organvm-corpvs-testamentvm to the hosted routine session's allowed repositories; do not add the obsolete a-organvm route.",
+        "Run one bounded fleet-audit or Jules-curation delivery.",
+        "Done when the delivery emits CloudRoutineReceiptV1 observations from both canonical sources with no access-denied finding."
+      ],
+      "note": "Private repository contents and credentials remain out of receipts; scope expansion grants read access only to the named canonical sources unless separately authorized.",
+      "issue": 2120
+    },
+    {
+      "id": "L-CLOUD-ARCHIVE-ENTERPRISE-PLUGIN-N80",
+      "label": "Archive organvm-iii-ergon/enterprise-plugin so GitHub matches its repository-owned seed lifecycle.",
+      "owner": "yours",
+      "cost": "one GitHub repository archive setting change after final confirmation",
+      "unlocks": "resolves N80's four-day description/archive mismatch using the authority already declared by the repository",
+      "source_task": "N80 in organvm/session-meta#29; seed.yaml declares implementation_status=ARCHIVED, promotion_status=ARCHIVED, tier=archive; existing owner issue organvm-iii-ergon/enterprise-plugin#1",
+      "gate": "archiving a GitHub repository changes external repository capabilities and remains a human-gated account setting",
+      "status": "open",
+      "added": "2026-08-08",
+      "steps": [
+        "Confirm seed.yaml on the default branch still declares implementation_status and promotion_status ARCHIVED.",
+        "Archive with: gh api --method PATCH repos/organvm-iii-ergon/enterprise-plugin -F archived=true",
+        "Verify: test \"$(gh repo view organvm-iii-ergon/enterprise-plugin --json isArchived --jq .isArchived)\" = true, then attach the receipt to organvm-iii-ergon/enterprise-plugin#1."
+      ],
+      "note": "Do not remove the [ARCHIVED] description prefix: the repository-owned seed resolves the mismatch in favor of archived=true. The shared-checkout admission hook denied the attempted GitHub PATCH before delivery, so no external state changed in this session.",
+      "issue": 2120
+    },
+    {
+      "id": "L-LAUNCHDARKLY-OAUTH-CONSENT",
+      "label": "Complete LaunchDarkly hosted MCP browser consent once, but only if the semantic MCP probe reports auth_needed after the split-owned hosted configuration lands.",
+      "owner": "yours",
+      "cost": "one bounded browser consent and Codex restart; zero secrets pasted or stored",
+      "unlocks": "authenticated LaunchDarkly hosted tool discovery instead of a transport-only startup warning",
+      "source_task": "attached-alert closeout #2120; domus-genoma PR #366; limen PR #2124",
+      "gate": "OAuth browser consent acts as your hosted LaunchDarkly identity and cannot be completed headlessly on your behalf",
+      "condition": "active only when codex mcp list --json reports auth_needed for launchdarkly",
+      "status": "open",
+      "added": "2026-08-08",
+      "steps": [
+        "After the split-owned config is applied, run the semantic health probe and stop here if launchdarkly is already authenticated.",
+        "If and only if it reports auth_needed, run: codex mcp login launchdarkly and approve the hosted LaunchDarkly OAuth request in the browser.",
+        "Restart Codex, then verify codex mcp list --json reports authenticated and the hosted LaunchDarkly tool catalog is discoverable.",
+        "Attach the green semantic-auth receipt to organvm/limen#2120; never add an SDK key, bearer token, or local npx server."
+      ],
+      "note": "The hosted URL and OAuth model are source-owned by domus-genoma. Reachable transport is not proof of authentication; this lever owns only the consent transition when the semantic status requires it.",
+      "issue": 2120
+    },
+    {
+      "id": "L-IRF-P0-HUMAN-ACTIONS-20260808",
+      "label": "Disposition the 18 IRF P0 rows whose next step is a human identity, credential, purchase, relationship, or governance action.",
+      "owner": "yours",
+      "cost": "review the named 18-row denominator and discharge each IRF through its original owner evidence",
+      "unlocks": "keeps the IRF P0 denominator truthful: human actions remain visible in the lever registry instead of being counted as owned by self-referential IRF IDs",
+      "source_task": "IRF P0 surface receipt attached to organvm/limen#2120; exact IDs are tracked in docs/receipts/irf-p0-owner-classification-20260808.json",
+      "gate": "the rows require human identity, credentials, spend, relationship judgment, or governance choices that agents cannot exercise",
+      "status": "open",
+      "added": "2026-08-08",
+      "steps": [
+        "Read human_gate_irf_ids in docs/receipts/irf-p0-owner-classification-20260808.json; that versioned 18-ID set is the denominator.",
+        "For each ID, use its original IRF owner to perform or explicitly decline the human action and attach the durable receipt there.",
+        "Discharge this lever only when every named IRF has a terminal owner receipt and the classification predicate passes."
+      ],
+      "note": "This umbrella lever does not merge the underlying decisions. It provides one durable human surface while each IRF retains its own source lineage and evidence.",
+      "issue": 2120
     }
   ]
 }
