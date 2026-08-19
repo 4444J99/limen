@@ -68,6 +68,30 @@ class TaskAlreadyHomed(ValueError):
         self.task_id = task_id
 
 
+import re
+
+_RUNTIME_GIT_RE = re.compile(r"^(?:[0-9a-f]{40}|[0-9a-f]{64})$")
+
+
+def _validate_runtime_identity(value: dict[str, str] | None) -> dict[str, str] | None:
+    if value is None:
+        return None
+    if set(value) != {"schema_version", "git_sha", "deployment_id"}:
+        raise ValueError("conduct runtime identity must contain only schema_version, git_sha, and deployment_id")
+    if value.get("schema_version") != "limen.conduct_runtime_identity.v1":
+        raise ValueError("conduct runtime identity has an unsupported schema")
+    git_sha = str(value.get("git_sha") or "")
+    deployment_id = str(value.get("deployment_id") or "")
+    if not _RUNTIME_GIT_RE.fullmatch(git_sha):
+        raise ValueError("conduct runtime git_sha must be an exact lowercase Git object ID")
+    if not deployment_id or "\x00" in deployment_id or len(deployment_id) > 512:
+        raise ValueError("conduct runtime deployment_id must be a non-empty bounded string")
+    return {
+        "schema_version": "limen.conduct_runtime_identity.v1",
+        "git_sha": git_sha,
+        "deployment_id": deployment_id,
+    }
+
 def _dump(model) -> dict[str, Any]:
     return model.model_dump(mode="json")
 
@@ -186,6 +210,7 @@ class ConductBroker:
         adoption_after: timedelta = timedelta(minutes=10),
         lease_ttl: timedelta = timedelta(minutes=15),
         capability_secret: str | bytes | None = None,
+        runtime_identity: dict[str, str] | None = None,
     ):
         self.store = store
         self.session_ttl = session_ttl
@@ -193,6 +218,7 @@ class ConductBroker:
         self.lease_ttl = lease_ttl
         secret = capability_secret or secrets.token_bytes(32)
         self.capability_secret = secret.encode("utf-8") if isinstance(secret, str) else secret
+        self.runtime_identity = _validate_runtime_identity(runtime_identity)
 
     def register(
         self,
@@ -266,7 +292,12 @@ class ConductBroker:
             )
             return _dump(session)
 
-    def capabilities(self, *, now: datetime | None = None) -> dict[str, Any]:
+    def capabilities(
+        self,
+        *,
+        principal: ConductPrincipalV1 | None = None,
+        now: datetime | None = None,
+    ) -> dict[str, Any]:
         now = now or utc_now()
         with self.store.transaction() as state:
             active_load = self._active_load(state, now)
@@ -281,9 +312,20 @@ class ConductBroker:
                     }
                 )
             sessions.sort(key=lambda row: (row["identity"]["agent"], row["session_id"]))
+            authenticated_principal = None
+            if principal is not None:
+                authenticated_principal = _dump(principal)
+                authenticated_principal["roles"] = sorted(principal.roles)
             return {
                 "schema_version": "limen.conduct_capabilities.v1",
                 "generated_at": now.isoformat(),
+                "runtime_identity": copy.deepcopy(self.runtime_identity),
+                "authenticated_principal": authenticated_principal,
+                "authenticated_session_ids": sorted(
+                    session_id
+                    for session_id, principal_id in state.get("session_principals", {}).items()
+                    if principal is not None and principal_id == principal.principal_id
+                ),
                 "sessions": sessions,
             }
 

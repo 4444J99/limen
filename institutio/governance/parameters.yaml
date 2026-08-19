@@ -1451,6 +1451,48 @@ parameters:
     self_update: none
     owner: dispatch
     note: "Private user-owned mode-0600 cache from which a plain-shell workstream launcher imports only LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN before registration. The cache's other values are never imported into the provider environment. Tests may point this at an isolated fixture."
+  LIMEN_CONDUCT_CANARY_CREDENTIAL_REFS:
+    default: "{}"
+    env: LIMEN_CONDUCT_CANARY_CREDENTIAL_REFS
+    self_update: "credential wall rotation only"
+    owner: dispatch
+    note: "JSON manifest of environment-variable reference names for the authenticated conductor and executor principals used by the production full-mesh canary. It never contains bearer values; missing, duplicate, or role-incompatible references fail closed."
+  LIMEN_CONDUCT_CANARY_RUNTIME_IDENTITY:
+    default: "{}"
+    env: LIMEN_CONDUCT_CANARY_RUNTIME_IDENTITY
+    self_update: "exact runtime installation only"
+    owner: dispatch
+    note: "Exact merged Git SHA and deployment identity asserted by the installed conduct runtime for a full-mesh canary receipt. The canary hashes deployment identity in its redacted receipt and rejects missing or mismatched runtime evidence."
+  LIMEN_CONDUCT_CANARY_LOCK_ROOT:
+    default: ""
+    env: LIMEN_CONDUCT_CANARY_LOCK_ROOT
+    self_update: none
+    owner: dispatch
+    note: "Optional non-secret, host-local runtime directory for persistent full-mesh canary flock inodes. Blank derives the private per-UID XDG or temporary runtime root; an override changes only lock placement, never receipt identity or tracked output."
+  LIMEN_CONDUCT_CANARY_CREDENTIAL_REF:
+    default: ""
+    env: LIMEN_CONDUCT_CANARY_CREDENTIAL_REF
+    self_update: "native executor callback only"
+    owner: dispatch
+    note: "Non-secret name of the exact executor credential environment variable bound into one native full-mesh canary callback request and acknowledgement. The callback rejects a missing named credential and never falls back to LIMEN_CONDUCT_TOKEN."
+  LIMEN_CONDUCT_CANARY_WAKE_BIN:
+    default: ""
+    env: LIMEN_CONDUCT_CANARY_WAKE_BIN
+    self_update: none
+    owner: dispatch
+    note: "Executable bridge that routes one bounded, non-secret full-mesh canary edge request to its exact already-running native executor session. Blank fails closed before graph writes; the bridge never receives bearer values."
+  LIMEN_CONDUCT_CANARY_WAKE_TIMEOUT_SECONDS:
+    default: 60
+    env: LIMEN_CONDUCT_CANARY_WAKE_TIMEOUT_SECONDS
+    self_update: none
+    owner: dispatch
+    note: "Finite timeout for one native full-mesh canary bridge invocation. Values are constrained to 1..300 seconds and never extend the packet deadline."
+  LIMEN_CONDUCT_RUNTIME_GIT_SHA:
+    default: ""
+    env: LIMEN_CONDUCT_RUNTIME_GIT_SHA
+    self_update: "exact runtime deployment only"
+    owner: dispatch
+    note: "Deployment-owned exact Git SHA exposed by the remote conduct keeper. The Worker deploy workflow injects GITHUB_SHA; together with Cloudflare version metadata it forms the authenticated runtime identity and is never a caller-selected canary override."
   LIMEN_CONDUCT_KEEPALIVE_SECONDS:
     default: 180
     env: LIMEN_CONDUCT_KEEPALIVE_SECONDS

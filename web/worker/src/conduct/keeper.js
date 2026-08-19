@@ -1819,6 +1819,7 @@ export class SerializedConductService {
       leaseTtlMs,
       capabilitySecret = "development-only-capability-secret",
       steadyHeartbeatPersistence = true,
+      runtimeIdentity = null,
     } = {},
   ) {
     this.store = store;
