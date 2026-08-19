@@ -153,6 +153,10 @@ sanctioned:
   - {path: progress-prompt-lineage.json, kind: data, owner: fleet, why: "consumed at this exact path by config/progress-history-sources/prompt-lineage.json (progress-history source config)"}
   - {path: work-loan-journal.json, kind: data, owner: fleet, why: "consumed at this exact path by config/progress-history-sources/work-loan.json (progress-history source config)"}
 
+  - {path: github-universe-mission.md, kind: doc, owner: gitvs, why: "doctrine for cross-repo github universe sweeps"}
+  - {path: prima-materia-alpha-omega.md, kind: doc, owner: organvm, why: "Prima Materia alpha-to-omega custody specification"}
+  - {path: record-keeper-covenant.md, kind: doc, owner: tabularius, why: "Record-Keeper Covenant testament and single-writer doctrine"}
+
 grandfathered:
   - {path: health-office, target_home: "organvm/domus:docs/health-office/", why: "personal-office records in a public repo — bound to scripts/health-organ.py + his-hand-levers.json; moves when the organ relocates"}
   - {path: life-office, target_home: "organvm/domus:docs/life-office/", why: "personal-office records in a public repo — bound to scripts/life-organ.py; moves when the organ relocates"}

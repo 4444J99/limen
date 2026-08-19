@@ -15,107 +15,30 @@
     "python3 scripts/tcc-track-c-closeout.py --run",
     "# wait until Claude Code > 2.1.220; do not discharge L-DOMUS-AGENT-HOST-TCC on no-op"
   ],
-  "normalized_inventory": {
-    "active_leaks": 3,
-    "automatic_updates_enabled": true,
-    "failures": [
-      "rotating_identity_active_grants",
-      "active_managed_tcc_leak",
-      "visible_app_management_path_client"
-    ],
-    "new_managed_identities": 3,
-    "ok": false,
-    "schema": "limen.tcc_identity_audit.v2",
-    "stable_host_app_management_grants": 1,
-    "stable_host_cdhash": "45556d6c709a4c307b4c189cd825587275343f05",
-    "stable_host_ok": true,
-    "status": "blocked",
-    "summary": {
-      "active_leaks": 3,
-      "baseline_managed": 28,
-      "managed_unbaselined": 0,
-      "new_managed": 3,
-      "rotating_identity_active_grants": 28,
-      "stable_host": 1,
-      "unhosted_configured_ingresses": 0,
-      "unrelated": 269,
-      "visible_app_management_path_rows": 1
-    },
-    "unhosted_configured_ingresses": 0,
-    "unrelated_grants_preserved": true,
-    "visible_app_management_path_rows": 1
-  },
-  "observed_at": "2026-08-10T22:26:15Z",
+  "normalized_inventory": null,
+  "observed_at": "2026-08-19T13:21:55Z",
   "paths": {
-    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260810T222615Z.json",
+    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260819T132155Z.json",
     "status": "logs/tcc-track-c-status.json"
   },
-  "post_audit": {
-    "exit_code": 1,
-    "normalized": {
-      "active_leaks": 3,
-      "automatic_updates_enabled": true,
-      "failures": [
-        "rotating_identity_active_grants",
-        "active_managed_tcc_leak",
-        "visible_app_management_path_client"
-      ],
-      "new_managed_identities": 3,
-      "ok": false,
-      "schema": "limen.tcc_identity_audit.v2",
-      "stable_host_app_management_grants": 1,
-      "stable_host_cdhash": "45556d6c709a4c307b4c189cd825587275343f05",
-      "stable_host_ok": true,
-      "status": "blocked",
-      "summary": {
-        "active_leaks": 3,
-        "baseline_managed": 28,
-        "managed_unbaselined": 0,
-        "new_managed": 3,
-        "rotating_identity_active_grants": 28,
-        "stable_host": 1,
-        "unhosted_configured_ingresses": 0,
-        "unrelated": 269,
-        "visible_app_management_path_rows": 1
-      },
-      "unhosted_configured_ingresses": 0,
-      "unrelated_grants_preserved": true,
-      "visible_app_management_path_rows": 1
-    },
-    "ok": false
-  },
+  "post_audit": null,
   "schema": "limen.tcc_track_c_closeout.v1",
   "track_c": {
     "cutover_baseline_version": "2.1.220",
     "failure_classes": [
-      "strict_audit_not_ok",
-      "active_leaks_nonzero",
-      "visible_app_management_path_rows_nonzero",
-      "new_managed_identities_nonzero"
+      "version_unreadable"
     ],
     "met": false,
-    "met_reason": "Track C blocked: strict_audit_not_ok, active_leaks_nonzero, visible_app_management_path_rows_nonzero, new_managed_identities_nonzero",
-    "non_noop": true,
+    "met_reason": "Track C blocked: version_unreadable",
+    "non_noop": false,
     "requirement": "An external-host update through domus-agent-host must complete with a non-noop Claude Code version advance beyond the cutover baseline, then normalized v2 tcc-identity-audit predicates must remain green.",
     "status": "blocked",
     "update_attempted": false,
-    "version_after": "2.1.226",
-    "version_before": "2.1.226"
+    "version_after": null,
+    "version_before": null
   },
   "update": null,
-  "version_probe_after": {
-    "command": [
-      "domus-agent-host",
-      "run",
-      "--",
-      "claude",
-      "--version"
-    ],
-    "exit_code": 0,
-    "ok": true,
-    "output": "2.1.226 (Claude Code)",
-    "version": "2.1.226"
-  },
+  "version_probe_after": null,
   "version_probe_before": {
     "command": [
       "domus-agent-host",
@@ -124,9 +47,9 @@
       "claude",
       "--version"
     ],
-    "exit_code": 0,
-    "ok": true,
-    "output": "2.1.226 (Claude Code)",
-    "version": "2.1.226"
+    "exit_code": 1,
+    "ok": false,
+    "output": "Traceback (most recent call last):\n  File \"/Users/4jp/Workspace/limen/scripts/shims/claude\", line 76, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/Users/4jp/Workspace/limen/scripts/shims/claude\", line 71, in main\n    os.execv(real, [real, *args])\n    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory",
+    "version": null
   }
 }

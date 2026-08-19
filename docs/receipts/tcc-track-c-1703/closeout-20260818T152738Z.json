@@ -1,0 +1,55 @@
+{
+  "architecture": "docs/architecture/tcc-stable-agent-host.md#live-acceptance",
+  "baseline_audit": null,
+  "doctrine": {
+    "fixture_only_is_not_completion": true,
+    "formula": "track_c_pass = non_noop_update AND normalized_inventory_green",
+    "non_noop_means": "claude --version advances past cutover baseline",
+    "noop_is_not_completion": true
+  },
+  "issue": 1703,
+  "lever_id": "L-DOMUS-AGENT-HOST-TCC",
+  "mode": "beat",
+  "next_commands": [
+    "python3 scripts/tcc-track-c-closeout.py --beat",
+    "python3 scripts/tcc-track-c-closeout.py --run",
+    "# wait until Claude Code > 2.1.220; do not discharge L-DOMUS-AGENT-HOST-TCC on no-op"
+  ],
+  "normalized_inventory": null,
+  "observed_at": "2026-08-18T15:27:38Z",
+  "paths": {
+    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260818T152738Z.json",
+    "status": "logs/tcc-track-c-status.json"
+  },
+  "post_audit": null,
+  "schema": "limen.tcc_track_c_closeout.v1",
+  "track_c": {
+    "cutover_baseline_version": "2.1.220",
+    "failure_classes": [
+      "version_unreadable"
+    ],
+    "met": false,
+    "met_reason": "Track C blocked: version_unreadable",
+    "non_noop": false,
+    "requirement": "An external-host update through domus-agent-host must complete with a non-noop Claude Code version advance beyond the cutover baseline, then normalized v2 tcc-identity-audit predicates must remain green.",
+    "status": "blocked",
+    "update_attempted": false,
+    "version_after": null,
+    "version_before": null
+  },
+  "update": null,
+  "version_probe_after": null,
+  "version_probe_before": {
+    "command": [
+      "domus-agent-host",
+      "run",
+      "--",
+      "claude",
+      "--version"
+    ],
+    "exit_code": 1,
+    "ok": false,
+    "output": "Traceback (most recent call last):\n  File \"/Users/4jp/Workspace/limen/scripts/shims/claude\", line 76, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/Users/4jp/Workspace/limen/scripts/shims/claude\", line 71, in main\n    os.execv(real, [real, *args])\n    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory",
+    "version": null
+  }
+}

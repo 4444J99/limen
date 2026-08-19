@@ -1,0 +1,3108 @@
+[
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/fleet-maintenance-run",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 2511,
+    "title": "wip(custody): work/fleet-maintenance-run",
+    "updatedAt": "2026-08-17T19:53:25Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "worktree-wf_29a15be5-9f8-2",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 2510,
+    "title": "wip(custody): worktree-wf_29a15be5-9f8-2",
+    "updatedAt": "2026-08-17T19:52:50Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/phase-2-doctrine-surfaces",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 2509,
+    "title": "wip(custody): feat/phase-2-doctrine-surfaces",
+    "updatedAt": "2026-08-17T19:52:16Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "session/correspondence-jessica",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 2508,
+    "title": "wip(custody): session/correspondence-jessica",
+    "updatedAt": "2026-08-17T19:52:00Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "worktree-retro-2026-07-08",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 2507,
+    "title": "wip(custody): worktree-retro-2026-07-08",
+    "updatedAt": "2026-08-17T19:52:00Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "fix/queue-free-merge-rail",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 2506,
+    "title": "wip(custody): fix/queue-free-merge-rail",
+    "updatedAt": "2026-08-17T19:54:26Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "worktree-plan-prima-materia-reconcile",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 2505,
+    "title": "wip(custody): worktree-plan-prima-materia-reconcile",
+    "updatedAt": "2026-08-17T19:51:21Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/estate-derived-supply",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 2504,
+    "title": "wip(custody): feat/estate-derived-supply",
+    "updatedAt": "2026-08-17T19:51:17Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "chore/lesson-harvest-tranche-5",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 2503,
+    "title": "wip(custody): chore/lesson-harvest-tranche-5",
+    "updatedAt": "2026-08-17T19:51:04Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "worktree-heal-estate-chezmoi-clobber",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 2502,
+    "title": "wip(custody): worktree-heal-estate-chezmoi-clobber",
+    "updatedAt": "2026-08-17T19:50:54Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "h-flywheel-fix",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 2501,
+    "title": "wip(custody): h-flywheel-fix",
+    "updatedAt": "2026-08-17T19:50:31Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "heal/derive-mediark-host-cloudflare",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 2500,
+    "title": "wip(custody): heal/derive-mediark-host-cloudflare",
+    "updatedAt": "2026-08-17T19:50:25Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "worktree-bifrons-autopoiesis",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 2499,
+    "title": "wip(custody): worktree-bifrons-autopoiesis",
+    "updatedAt": "2026-08-17T19:50:07Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260817192658",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2498,
+    "title": "docs(contention): record session-contention incident (34 total)",
+    "updatedAt": "2026-08-17T19:27:34Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/custody-preservation-receipts-20260817",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2497,
+    "title": "docs(custody): record remote branch reaping and worktree preservation receipts",
+    "updatedAt": "2026-08-17T19:45:15Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "agent/claude-no-modal-dispatch",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 2496,
+    "title": "claude-no-modal-dispatch-0714 lifecycle checkpoint",
+    "updatedAt": "2026-08-17T18:53:23Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/psp-p00-w04-contracts",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 2495,
+    "title": "psp-p00-w04-contracts lifecycle checkpoint",
+    "updatedAt": "2026-08-17T18:50:44Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/psp-p00-w02-validator",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 2494,
+    "title": "psp-p00-w02-validator lifecycle checkpoint",
+    "updatedAt": "2026-08-17T18:50:32Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/psp-p00-w01-phase-predicates",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 2493,
+    "title": "psp-p00-w01-phase-predicates lifecycle checkpoint",
+    "updatedAt": "2026-08-17T18:50:10Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/psp-p01-w05-baseline-relay",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 2492,
+    "title": "limen lifecycle checkpoint",
+    "updatedAt": "2026-08-17T18:49:46Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/psp-c11-governed-foundry-preflight",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 2491,
+    "title": "limen lifecycle checkpoint",
+    "updatedAt": "2026-08-17T18:49:35Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/collaboration-operations-platform-alpha-omega-20260803",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 2490,
+    "title": "collaboration-operations-platform-alpha-omega-20260803 lifecycle checkpoint",
+    "updatedAt": "2026-08-17T19:54:33Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen-psp-omega-lane-identity-offer",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 2489,
+    "title": "limen-psp-omega-lane-identity-offer lifecycle checkpoint",
+    "updatedAt": "2026-08-17T18:48:25Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/sync-captured-state-20260815",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 2487,
+    "title": "docs(sync): capture all local state through 2026-08-15",
+    "updatedAt": "2026-08-16T04:47:41Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260815203149",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2483,
+    "title": "docs(contention): record session-contention incident (54 total)",
+    "updatedAt": "2026-08-15T20:35:30Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/psp-receipt-corruption-recovery",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2481,
+    "title": "fix(psp): quarantine forged positioning receipts",
+    "updatedAt": "2026-08-15T20:03:05Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260815164503",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2476,
+    "title": "docs(contention): record session-contention incident (47 total)",
+    "updatedAt": "2026-08-15T16:48:53Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/psp-omega-lane-proof-architecture",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2459,
+    "title": "[PSP-P05-W01] Publish Limen engineering report source",
+    "updatedAt": "2026-08-17T19:56:40Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260815121136",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2443,
+    "title": "docs(contention): record session-contention incident (41 total)",
+    "updatedAt": "2026-08-15T12:14:24Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/pr-debt-observation-20260815121016",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2442,
+    "title": "docs(gitvs): record open-PR debt observation (1225 open)",
+    "updatedAt": "2026-08-15T12:10:49Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260815075714",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2440,
+    "title": "docs(contention): record session-contention incident (36 total)",
+    "updatedAt": "2026-08-15T08:00:57Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260815033009",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2438,
+    "title": "docs(contention): record session-contention incident (32 total)",
+    "updatedAt": "2026-08-15T03:34:27Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260815005925",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2437,
+    "title": "docs(contention): record session-contention incident (29 total)",
+    "updatedAt": "2026-08-15T01:02:59Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/estate-census-observation-20260815005848",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2436,
+    "title": "docs(fleet): record estate census observation (issues=2226, branches=11361)",
+    "updatedAt": "2026-08-15T01:04:11Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/diurnal-20260815000819",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2434,
+    "title": "docs(diurnal): 2026-08-14 INDEX",
+    "updatedAt": "2026-08-15T00:15:34Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260814181017",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2423,
+    "title": "docs(contention): record session-contention incident (26 total)",
+    "updatedAt": "2026-08-14T18:13:24Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/psp-c04-proof-experience-preflight",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2414,
+    "title": "fix(positioning): harden C04 proof receipts",
+    "updatedAt": "2026-08-17T19:49:29Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260814134213",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2384,
+    "title": "docs(contention): record session-contention incident (38 total)",
+    "updatedAt": "2026-08-14T13:45:39Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/pr-debt-observation-20260814134056",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2383,
+    "title": "docs(gitvs): record open-PR debt observation (1205 open)",
+    "updatedAt": "2026-08-14T13:47:41Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260814093422",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2382,
+    "title": "docs(contention): record session-contention incident (36 total)",
+    "updatedAt": "2026-08-14T09:37:49Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260814042143",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2381,
+    "title": "docs(contention): record session-contention incident (34 total)",
+    "updatedAt": "2026-08-14T04:24:38Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/diurnal-20260814002542",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2380,
+    "title": "docs(diurnal): 2026-08-13 INDEX",
+    "updatedAt": "2026-08-14T00:31:31Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260814002211",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2379,
+    "title": "docs(contention): record session-contention incident (32 total)",
+    "updatedAt": "2026-08-14T00:25:29Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260813225552",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2378,
+    "title": "docs(contention): record session-contention incident (30 total)",
+    "updatedAt": "2026-08-13T22:58:49Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/estate-census-observation-20260813225521",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2377,
+    "title": "docs(fleet): record estate census observation (issues=2400, branches=11298)",
+    "updatedAt": "2026-08-13T23:00:12Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260813164557",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2376,
+    "title": "docs(contention): record session-contention incident (28 total)",
+    "updatedAt": "2026-08-13T16:49:07Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/pr-debt-observation-20260813164428",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2375,
+    "title": "docs(gitvs): record open-PR debt observation (1185 open)",
+    "updatedAt": "2026-08-13T16:45:07Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260813024505",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2360,
+    "title": "docs(contention): record session-contention incident (26 total)",
+    "updatedAt": "2026-08-13T02:48:05Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/diurnal-20260813000917",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2356,
+    "title": "docs(diurnal): 2026-08-12 INDEX",
+    "updatedAt": "2026-08-13T00:09:52Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260812221242",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2346,
+    "title": "docs(contention): record session-contention incident (26 total)",
+    "updatedAt": "2026-08-12T22:15:47Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/estate-census-observation-20260812221211",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2345,
+    "title": "docs(fleet): record estate census observation (issues=2029, branches=11265)",
+    "updatedAt": "2026-08-12T22:15:48Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260812180804",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2344,
+    "title": "docs(contention): record session-contention incident (25 total)",
+    "updatedAt": "2026-08-12T18:10:52Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/pr-debt-observation-20260812180615",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2343,
+    "title": "docs(gitvs): record open-PR debt observation (1188 open)",
+    "updatedAt": "2026-08-12T18:07:17Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260812123526",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2330,
+    "title": "docs(contention): record session-contention incident (24 total)",
+    "updatedAt": "2026-08-12T12:39:07Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/resource-graph-admission-1765",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 2329,
+    "title": "fix: bind storage admission to broker graphs",
+    "updatedAt": "2026-08-12T13:00:26Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260812081133",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2325,
+    "title": "docs(contention): record session-contention incident (23 total)",
+    "updatedAt": "2026-08-13T10:25:24Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260812034533",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2324,
+    "title": "docs(contention): record session-contention incident (22 total)",
+    "updatedAt": "2026-08-12T03:46:14Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "fix/cloudflare-do-plan-mismatch-20260809",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 2290,
+    "title": "fix(conduct): preserve evidence level for Cloudflare storage refusal",
+    "updatedAt": "2026-08-10T00:25:00Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/session-contention-incident-20260809034540",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 2138,
+    "title": "docs(contention): record session-contention incident (18 total)",
+    "updatedAt": "2026-08-09T09:49:56Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/cloud-routine-receipts-2120",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 2125,
+    "title": "feat(cloud): ingest typed routine outcomes idempotently",
+    "updatedAt": "2026-08-09T09:49:49Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "fix/vigilia-fast-sample-2120",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 2123,
+    "title": "fix(vigilia): decouple fast host samples from slow beats",
+    "updatedAt": "2026-08-12T13:07:16Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "fix/attached-alert-review-corrections-2120",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 2121,
+    "title": "fix(review): close alert findings and canonicalize cloud routes",
+    "updatedAt": "2026-08-09T09:49:44Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "continuation-beat/worktree-preservation-receip-73759fd36879",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1939,
+    "title": "limen: refresh autonomous PR receipts",
+    "updatedAt": "2026-08-07T12:46:52Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/diurnal-20260807012631",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1928,
+    "title": "docs(diurnal): 2026-08-06 INDEX",
+    "updatedAt": "2026-08-07T12:46:50Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/pr-debt-observation-20260807005128",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1927,
+    "title": "docs(gitvs): record open-PR debt observation (1297 open)",
+    "updatedAt": "2026-08-07T12:46:48Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "worktree-doctor-report",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1900,
+    "title": "docs(charter): /doctor trim \u2014 relocate Data-Grounding case histories, cut derivable blocks",
+    "updatedAt": "2026-08-07T12:46:46Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/settings-estate-leftovers-20260806213824",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 1899,
+    "title": "docs(plan): Settings-estate leftovers: heal the keystone PR, expand the predicates, evolve the sensors",
+    "updatedAt": "2026-08-07T12:46:44Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "worktree-settings-estate-plan",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1896,
+    "title": "chore(claude): settings-estate repair \u2014 plansDirectory alignment + install lever",
+    "updatedAt": "2026-08-07T12:46:42Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/diurnal-20260806014825",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1845,
+    "title": "docs(diurnal): 2026-08-05 INDEX",
+    "updatedAt": "2026-08-07T12:46:41Z"
+  },
+  {
+    "author": {
+      "is_bot": true,
+      "login": "app/dependabot"
+    },
+    "headRefName": "dependabot/npm_and_yarn/moneta/npm_and_yarn-14d799c0ca",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 1801,
+    "title": "chore(deps-dev): bump postcss from 8.5.15 to 8.5.25 in /moneta in the npm_and_yarn group across 1 directory",
+    "updatedAt": "2026-08-07T11:24:22Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "chore/danse-his-hand-closeout-20260803",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1793,
+    "title": "chore: home Danse artistic approval in the human-gate registry",
+    "updatedAt": "2026-08-07T12:46:36Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/charles-cotton-preview",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 1791,
+    "title": "feat: deliver Charles cotton editorial preview",
+    "updatedAt": "2026-08-07T12:46:34Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/charles-universe-registry",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 1789,
+    "title": "Register the complete Charles universe",
+    "updatedAt": "2026-08-07T12:46:33Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/charles-downs-style-archive",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 1788,
+    "title": "Assemble the Downs Style archive and Charles voice system",
+    "updatedAt": "2026-08-07T12:46:31Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/charles-cotton-summer",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 1787,
+    "title": "docs(charles): complete summer fabric trilogy",
+    "updatedAt": "2026-08-07T12:46:29Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/omega-substrate-literal",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1705,
+    "title": "Enforce literal substrate convergence",
+    "updatedAt": "2026-08-17T19:53:53Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/relay-lifecycle-closeout-20260730",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1693,
+    "title": "fix(conduct): close relay lifecycle cleanup gaps",
+    "updatedAt": "2026-08-07T11:14:08Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/relay-native-admission-20260730",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1691,
+    "title": "Guard campaign relay providers with native admission",
+    "updatedAt": "2026-08-07T11:14:07Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/conduct-full-mesh-canary",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1679,
+    "title": "feat(conduct): add authenticated full-mesh canary",
+    "updatedAt": "2026-08-07T11:14:05Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/prima-materia-alpha-omega-20260728",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1606,
+    "title": "Enforce Prima Materia alpha-to-omega custody",
+    "updatedAt": "2026-08-07T11:14:03Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/career-portal-20260728",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1605,
+    "title": "feat(representation): compose the career/network portal",
+    "updatedAt": "2026-08-07T11:14:01Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "preserve/canonical-root-lock-20260726",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1554,
+    "title": "Preserve canonical MCP lock drift",
+    "updatedAt": "2026-08-07T11:14:00Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/laptop-wide-recovery-closeout-20260725-s5",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 1531,
+    "title": "docs: continue laptop recovery fixed point",
+    "updatedAt": "2026-07-25T18:54:12Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/eliminate-million-change-monoliths-20260723",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 1416,
+    "title": "docs: preserve million-change monolith elimination lane",
+    "updatedAt": "2026-07-24T03:37:40Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "heal/vvltvs-measure-published-face",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 1406,
+    "title": "heal(vvltvs): measure the published face (origin blob), not a stale local clone",
+    "updatedAt": "2026-07-24T04:11:14Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/bbnc-phase0-authority-20260721",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1332,
+    "title": "feat(consulting): gate BBNC Phase 0 authority",
+    "updatedAt": "2026-07-24T04:11:09Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/truth-first-system-advance-20260720",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1324,
+    "title": "chore: preserve stranded truth-first overlay (do not merge)",
+    "updatedAt": "2026-07-24T03:37:40Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "issue-774",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1309,
+    "title": "chore: supersede issue 774 with 785 in board tracker",
+    "updatedAt": "2026-07-24T04:11:05Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "issue-785",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1307,
+    "title": "chore: distill blocked handoff issues from #785",
+    "updatedAt": "2026-07-24T04:11:03Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/ingest-styx-issues",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1303,
+    "title": "chore: Ingest peer-audited--behavioral-blockchain issues into Limen pipeline",
+    "updatedAt": "2026-07-24T04:11:02Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/github-universe-mission",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1246,
+    "title": "feat: github-universe mission \u2014 never-dismiss cross-repo doctrine",
+    "updatedAt": "2026-07-24T04:11:00Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "worktree-feat-lever-sovereignty-classifier",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1244,
+    "title": "feat(vigilia): lever sovereignty classifier \u2014 prove his head is not a backlog",
+    "updatedAt": "2026-07-24T04:10:59Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "fix/closeout-reconcile-effector",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1236,
+    "title": "feat(censor): reconcile-closeouts effector \u2014 home HARD findings via insight-route",
+    "updatedAt": "2026-07-24T04:10:57Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "worktree-fix+pause-marker-fence-not-wall",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 1208,
+    "title": "fix(autonomy): a peer-coordination pause is a fence, not a wall (+ catch un-clearable markers)",
+    "updatedAt": "2026-07-24T04:10:55Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/covenant-registry-and-checker",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 1200,
+    "title": "feat(covenant): the record-keeper covenant \u2014 registry, parity checker, charter doc",
+    "updatedAt": "2026-07-24T04:10:53Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/memoria-ticket-lane",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1199,
+    "title": "feat(memoria): the memory ticket lane \u2014 submit CLI + keeper drain, dark behind LIMEN_MEMORIA",
+    "updatedAt": "2026-07-24T04:10:52Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "docs/covenant-agent-docs",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1198,
+    "title": "docs(covenant): keeper law on every agent surface \u2014 AGENTS/GEMINI clauses + parity assertions + IF entry",
+    "updatedAt": "2026-07-24T04:10:50Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/covenant-attribution-sensor",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1196,
+    "title": "feat(covenant): attribution sensor \u2014 every memory write must carry a keeper receipt",
+    "updatedAt": "2026-07-24T04:10:49Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/board-writer-audit-gate",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1195,
+    "title": "feat(covenant): board writer audit becomes a baseline-ratcheted gate \u2014 no new direct writers",
+    "updatedAt": "2026-07-24T04:10:47Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/claude-recovery-peer-gate-20260717",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1171,
+    "title": "recovery: bind peer review and merge authority to exact-head proof",
+    "updatedAt": "2026-07-24T04:10:44Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/claude-recovery-zero-write-custody-20260717",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1170,
+    "title": "recovery: make mail and storage effects race-safe",
+    "updatedAt": "2026-07-24T04:10:42Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/claude-recovery-authority-workflow-20260717",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1169,
+    "title": "recovery: bind prompt, Fable, and relationship authority",
+    "updatedAt": "2026-07-24T04:10:41Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/claude-reacceptance-ledger-v2-20260716",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 1168,
+    "title": "recovery: replace unreachable acceptance ledger with evidence-derived v2",
+    "updatedAt": "2026-07-24T04:10:39Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/claude-recovery-provider-trajectory-20260717",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1167,
+    "title": "recovery: derive provider routing and execution value from live evidence",
+    "updatedAt": "2026-07-24T04:10:38Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/claude-recovery-containment-20260716",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1166,
+    "title": "recovery: separate immediate containment from protection",
+    "updatedAt": "2026-07-24T04:10:36Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/claude-recovery-preview-truth-20260716",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1165,
+    "title": "fix: make recovery preview state truthful",
+    "updatedAt": "2026-07-24T04:10:35Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/authorization-boundary-repair-20260716",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 1164,
+    "title": "fix: enforce execution authority and preserve trailing operator intent",
+    "updatedAt": "2026-07-24T04:10:33Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/claude-reacceptance-20260716",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1163,
+    "title": "recovery: fail-closed shared-keeper reacceptance controls",
+    "updatedAt": "2026-07-24T04:10:32Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/host-pressure-reacceptance-20260716",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1162,
+    "title": "fix: reaccept host-pressure observation without peer control",
+    "updatedAt": "2026-07-24T04:10:30Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/governance-organ-recovery-20260716",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1161,
+    "title": "feat: build truth-first governance memory cadence",
+    "updatedAt": "2026-07-24T04:10:29Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-gen-organvm-limen-typing-0627-3681",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1071,
+    "title": "[preserve] limen/jules-gen-organvm-limen-typing-0627-3681",
+    "updatedAt": "2026-07-24T03:37:41Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-org-consulting-organ-face-0628-f5ee",
+    "isDraft": true,
+    "mergeable": "MERGEABLE",
+    "number": 1070,
+    "title": "[preserve] limen/jules-org-consulting-organ-face-0628-f5ee",
+    "updatedAt": "2026-07-24T03:37:40Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "preserve/agent-checkout-guard-20260709-95b47a63",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1050,
+    "title": "[PRESERVATION-ONLY \u2014 DO NOT MERGE] checkout guard local delta",
+    "updatedAt": "2026-07-24T03:37:40Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "agent/verify-dispatch-root-isolation-20260714",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1033,
+    "title": "fix(dispatch): isolate verify and heal runtime roots",
+    "updatedAt": "2026-07-24T04:10:25Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/runtime-probe-retry-0713",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 1004,
+    "title": "fix: retry transient runtime probe failures",
+    "updatedAt": "2026-07-24T04:10:24Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/heal-cifix-organvm-limen-414-361fb12b",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 889,
+    "title": "heal-cifix-organvm-limen-414-361fb12b lifecycle checkpoint",
+    "updatedAt": "2026-07-24T04:10:16Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/aw-tabvlarivs-status-writers-c37d2df5",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 853,
+    "title": "aw-tabvlarivs-status-writers-c37d2df5 lifecycle checkpoint",
+    "updatedAt": "2026-07-24T04:09:58Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/aw-mail-active-flagged-dad69fe3",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 845,
+    "title": "aw-mail-active-flagged-dad69fe3 lifecycle checkpoint",
+    "updatedAt": "2026-07-24T04:09:48Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/mail-story-mining-20260706",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 844,
+    "title": "mail-story-mining-20260706 lifecycle checkpoint",
+    "updatedAt": "2026-07-24T04:09:46Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/promote-fetch-familiar-friends-value-tier",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 843,
+    "title": "limen: promote organvm/fetch-familiar-friends to the value tier",
+    "updatedAt": "2026-07-24T04:09:45Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/session-scope-boundary-closeout",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 825,
+    "title": "fix(hooks): scope task sessions to worktree",
+    "updatedAt": "2026-07-24T04:09:43Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/aw-repo-boil-up-eb66c5ab",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 821,
+    "title": "aw-repo-boil-up-eb66c5ab lifecycle checkpoint",
+    "updatedAt": "2026-07-24T04:09:42Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/aw-credential-wall-token-hygiene-2c076ba3",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 820,
+    "title": "aw-credential-wall-token-hygiene-2c076ba3 lifecycle checkpoint",
+    "updatedAt": "2026-07-24T04:09:40Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/agent-checkout-guard-20260709",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 814,
+    "title": "limen: guard worktree session launches",
+    "updatedAt": "2026-07-24T04:09:39Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/safe-storage-reclaim-20260709",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 810,
+    "title": "reclaim: preserve and reap safe storage roots",
+    "updatedAt": "2026-07-24T04:09:37Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/tabularius-writer-cutover",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 781,
+    "title": "tabularius: cut over board writers",
+    "updatedAt": "2026-07-24T04:09:36Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-retro-0708-handoff-relay-41fd",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 703,
+    "title": "[limen jules RETRO-0708-HANDOFF-RELAY] handoff-relay.py: cross-session/cross-vendor warm-resume pack",
+    "updatedAt": "2026-07-24T04:09:33Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-heal-cifix-organvm-limen-375-f260",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 696,
+    "title": "[limen jules HEAL-cifix-organvm-limen-375] fix failing CI on organvm/limen#375",
+    "updatedAt": "2026-07-24T04:09:32Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-retro-0708-pii-premerge-gate-4e92",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 695,
+    "title": "[limen jules RETRO-0708-PII-PREMERGE-GATE] pr-gate PII containment scan for person-adjacent organ pa",
+    "updatedAt": "2026-07-24T04:09:30Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-org-contributions-organ-deepen-0704-7930",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 684,
+    "title": "[limen jules ORG-contributions-organ-deepen-0704] Deepen the contributions organ toward a usable ins",
+    "updatedAt": "2026-07-24T04:09:28Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "discover-cind-and-sol-foundation",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 683,
+    "title": "DISCOVER: latent value of organvm/cind-and-sol-foundation",
+    "updatedAt": "2026-07-24T04:09:27Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/heal-cifix-organvm-limen-432-19e5f605",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 680,
+    "title": "[limen HEAL-cifix-organvm-limen-432] fix failing CI on organvm/limen#432",
+    "updatedAt": "2026-07-24T04:09:25Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/heal-cifix-organvm-limen-434-529e2e6d",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 679,
+    "title": "[limen HEAL-cifix-organvm-limen-434] fix failing CI on organvm/limen#434",
+    "updatedAt": "2026-07-24T04:09:24Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/heal-cifix-organvm-limen-425-0597e483",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 678,
+    "title": "[limen HEAL-cifix-organvm-limen-425] fix failing CI on organvm/limen#425",
+    "updatedAt": "2026-07-24T04:09:22Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/heal-cifix-organvm-limen-427-5f8bb97d",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 677,
+    "title": "[limen HEAL-cifix-organvm-limen-427] fix failing CI on organvm/limen#427",
+    "updatedAt": "2026-07-24T04:09:21Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/vltima-organ-impl-20260706",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 676,
+    "title": "[codex] vltima: add owner-certified absorption organ",
+    "updatedAt": "2026-07-24T04:09:19Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/universal-kernel-recordkeeper-20260705",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 665,
+    "title": "limen: route records through tabularius and vltima kernel",
+    "updatedAt": "2026-07-24T04:09:17Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/financial-codex-finish-0704",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 639,
+    "title": "[codex] Add financial obligation action plan",
+    "updatedAt": "2026-07-24T04:09:16Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "session/post-moneta-durability",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 635,
+    "title": "linear-conjuring-bear lifecycle checkpoint",
+    "updatedAt": "2026-07-24T04:09:14Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/org-financial-organ-face-0703-f0c1",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 630,
+    "title": "[limen ORG-financial-organ-face-0703] Make the financial organ's macro + micro face excellent",
+    "updatedAt": "2026-07-24T04:09:11Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/org-health-organ-charter-0704-8a32",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 629,
+    "title": "[limen ORG-health-organ-charter-0704] Charter the health organ as an institution rivaling a concierge medical / recovery team",
+    "updatedAt": "2026-07-24T04:09:09Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/org-social-organ-charter-0704-fdfe",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 628,
+    "title": "[limen ORG-social-organ-charter-0704] Charter the social organ as an institution rivaling a civic/community institution + relationship support ('relationship gurus')",
+    "updatedAt": "2026-07-24T04:09:08Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/org-social-organ-firstslice-0703-9582",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 627,
+    "title": "[limen ORG-social-organ-firstslice-0703] Build the first working vertical slice of the social organ",
+    "updatedAt": "2026-07-24T04:09:06Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/org-legal-organ-firstslice-0703-60d3",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 626,
+    "title": "[limen ORG-legal-organ-firstslice-0703] Build the first working vertical slice of the legal organ",
+    "updatedAt": "2026-07-24T04:09:04Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/org-financial-organ-face-0703-23b2",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 625,
+    "title": "[limen ORG-financial-organ-face-0703] Make the financial organ's macro + micro face excellent",
+    "updatedAt": "2026-07-24T04:09:03Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/org-financial-organ-deepen-0703-f16a",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 624,
+    "title": "[limen ORG-financial-organ-deepen-0703] Deepen the financial organ toward a usable institution",
+    "updatedAt": "2026-07-24T04:09:01Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/org-social-organ-charter-0703-7ce2",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 623,
+    "title": "[limen ORG-social-organ-charter-0703] Charter the social organ as an institution rivaling a civic/community institution + relationship support ('relationship gurus')",
+    "updatedAt": "2026-07-24T04:08:59Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/org-governance-organ-selffeed-0703-c3b9",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 622,
+    "title": "[limen ORG-governance-organ-selffeed-0703] Wire the governance organ to advance autonomously",
+    "updatedAt": "2026-07-24T04:08:58Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/org-health-organ-firstslice-0703-e860",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 621,
+    "title": "[limen ORG-health-organ-firstslice-0703] Build the first working vertical slice of the health organ",
+    "updatedAt": "2026-07-24T04:08:56Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-org-health-organ-firstslice-0703-d1b9",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 619,
+    "title": "[limen jules ORG-health-organ-firstslice-0703] Build the first working vertical slice of the health ",
+    "updatedAt": "2026-07-24T04:08:54Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-org-social-organ-firstslice-0703-8b2a",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 617,
+    "title": "[limen jules ORG-social-organ-firstslice-0703] Build the first working vertical slice of the social ",
+    "updatedAt": "2026-07-24T04:08:53Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/org-financial-organ-deepen-0703-9de1",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 590,
+    "title": "[limen ORG-financial-organ-deepen-0703] Deepen the financial organ toward a usable institution",
+    "updatedAt": "2026-07-24T04:08:51Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/gen-organvm-limen-test-coverage-0701-52e4",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 516,
+    "title": "[limen GEN-organvm-limen-test-coverage-0701] Raise test coverage in organvm/limen",
+    "updatedAt": "2026-07-24T04:08:49Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "work/warp-agent-routing-20260629",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 495,
+    "title": "Limen Warp agent routing checkpoint",
+    "updatedAt": "2026-07-24T04:08:47Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/network-substrate-healing-20260628",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 494,
+    "title": "Limen network substrate healing checkpoint",
+    "updatedAt": "2026-07-24T04:08:45Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "codex/limen-main-trench-20260628",
+    "isDraft": true,
+    "mergeable": "CONFLICTING",
+    "number": 493,
+    "title": "Limen main trench autonomous receipt checkpoint",
+    "updatedAt": "2026-07-24T04:08:43Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/health-kernel-0630",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 492,
+    "title": "Map the VLTIMA 5-primitive kernel to the health organ",
+    "updatedAt": "2026-07-24T04:08:41Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/recover-force-copilot-lane-0870",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 490,
+    "title": "[limen RECOVER-FORCE-copilot-lane] Recover closed PR task: Add GitHub Copilot coding agent as a Limen dispatch lane",
+    "updatedAt": "2026-07-24T04:08:40Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feat/cli-watch-subcommand",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 486,
+    "title": "feat(cli): wire watch subcommand with --compact/--once modes",
+    "updatedAt": "2026-07-24T04:08:38Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/recover-force-route-all-services-808f",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 485,
+    "title": "[limen RECOVER-FORCE-route-all-services] Recover closed PR task: Router fans across ALL paid services, not just the 6 vendors",
+    "updatedAt": "2026-07-24T04:08:37Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/force-route-all-services-4cff",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 484,
+    "title": "[limen FORCE-route-all-services] Router fans across ALL paid services, not just the 6 vendors",
+    "updatedAt": "2026-07-24T04:08:35Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-opencode-20260630-04-3e5e",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 480,
+    "title": "[limen CAPFILL-opencode-20260630-04] OpenCode daily capacity-fill packet 04",
+    "updatedAt": "2026-07-24T04:08:34Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-agy-20260630-05-95dc",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 479,
+    "title": "[limen CAPFILL-agy-20260630-05] Agy daily capacity-fill packet 05",
+    "updatedAt": "2026-07-24T04:08:32Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-claude-20260630-08-abaf",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 478,
+    "title": "[limen CAPFILL-claude-20260630-08] Claude daily capacity-fill packet 08",
+    "updatedAt": "2026-07-24T04:08:31Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-opencode-20260630-03-7cee",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 476,
+    "title": "[limen CAPFILL-opencode-20260630-03] OpenCode daily capacity-fill packet 03",
+    "updatedAt": "2026-07-24T04:08:29Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-claude-20260629-11-5e80",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 457,
+    "title": "[limen jules CAPFILL-claude-20260629-11] Claude daily capacity-fill packet 11",
+    "updatedAt": "2026-07-24T04:08:28Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-jules-20260629-13-de2d",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 456,
+    "title": "[limen jules CAPFILL-jules-20260629-13] Jules daily capacity-fill packet 13",
+    "updatedAt": "2026-07-24T04:08:27Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-jules-20260629-04-e67a",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 455,
+    "title": "[limen jules CAPFILL-jules-20260629-04] Jules daily capacity-fill packet 04",
+    "updatedAt": "2026-07-24T04:08:25Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-opencode-20260629-13-2def",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 454,
+    "title": "[limen jules CAPFILL-opencode-20260629-13] OpenCode daily capacity-fill packet 13",
+    "updatedAt": "2026-07-24T04:08:24Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-gemini-20260629-05-4831",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 453,
+    "title": "[limen jules CAPFILL-gemini-20260629-05] Gemini daily capacity-fill packet 05",
+    "updatedAt": "2026-07-24T04:08:22Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-gen-organvm-limen-ci-green-0630-9622",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 452,
+    "title": "[limen jules GEN-organvm-limen-ci-green-0630] Make organvm/limen CI green",
+    "updatedAt": "2026-07-24T04:08:20Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-jules-20260629-01-1383",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 451,
+    "title": "[limen jules CAPFILL-jules-20260629-01] Jules daily capacity-fill packet 01",
+    "updatedAt": "2026-07-24T04:08:19Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-agy-20260629-07-fdfc",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 450,
+    "title": "[limen jules CAPFILL-agy-20260629-07] Agy daily capacity-fill packet 07",
+    "updatedAt": "2026-07-24T04:08:17Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-claude-20260629-14-5970",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 449,
+    "title": "[limen jules CAPFILL-claude-20260629-14] Claude daily capacity-fill packet 14",
+    "updatedAt": "2026-07-24T04:08:16Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-opencode-20260629-17-b06e",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 448,
+    "title": "[limen CAPFILL-opencode-20260629-17] OpenCode daily capacity-fill packet 17",
+    "updatedAt": "2026-07-24T04:08:14Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-gemini-20260629-10-261e",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 447,
+    "title": "[limen CAPFILL-gemini-20260629-10] Gemini daily capacity-fill packet 10",
+    "updatedAt": "2026-07-24T04:08:13Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-agy-20260629-02-627d",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 444,
+    "title": "[limen jules CAPFILL-agy-20260629-02] Agy daily capacity-fill packet 02",
+    "updatedAt": "2026-07-24T04:08:11Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-jules-20260629-08-e434",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 443,
+    "title": "[limen jules CAPFILL-jules-20260629-08] Jules daily capacity-fill packet 08",
+    "updatedAt": "2026-07-24T04:08:09Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-claude-20260629-15-bfda",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 442,
+    "title": "[limen jules CAPFILL-claude-20260629-15] Claude daily capacity-fill packet 15",
+    "updatedAt": "2026-07-24T04:08:08Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-agy-20260629-25-eb64",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 441,
+    "title": "[limen CAPFILL-agy-20260629-25] Agy daily capacity-fill packet 25",
+    "updatedAt": "2026-07-24T04:08:06Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-agy-20260629-03-796b",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 440,
+    "title": "[limen CAPFILL-agy-20260629-03] Agy daily capacity-fill packet 03",
+    "updatedAt": "2026-07-24T04:08:05Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-agy-20260629-01-aef0",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 438,
+    "title": "[limen CAPFILL-agy-20260629-01] Agy daily capacity-fill packet 01",
+    "updatedAt": "2026-07-24T04:08:03Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-agy-20260629-20-c696",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 437,
+    "title": "[limen CAPFILL-agy-20260629-20] Agy daily capacity-fill packet 20",
+    "updatedAt": "2026-07-24T04:08:01Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-agy-20260629-12-5661",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 436,
+    "title": "[limen CAPFILL-agy-20260629-12] Agy daily capacity-fill packet 12",
+    "updatedAt": "2026-07-24T04:08:00Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-jules-20260629-14-26c8",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 434,
+    "title": "[limen jules CAPFILL-jules-20260629-14] Jules daily capacity-fill packet 14",
+    "updatedAt": "2026-07-24T04:07:58Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-jules-20260629-15-6d33",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 433,
+    "title": "[limen jules CAPFILL-jules-20260629-15] Jules daily capacity-fill packet 15",
+    "updatedAt": "2026-07-24T04:07:57Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-opencode-20260629-01-79bc",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 432,
+    "title": "[limen CAPFILL-opencode-20260629-01] OpenCode daily capacity-fill packet 01",
+    "updatedAt": "2026-07-24T04:07:55Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-agy-20260629-08-c6b0",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 431,
+    "title": "[limen CAPFILL-agy-20260629-08] Agy daily capacity-fill packet 08",
+    "updatedAt": "2026-07-24T04:07:53Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-agy-20260629-22-9baa",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 429,
+    "title": "[limen CAPFILL-agy-20260629-22] Agy daily capacity-fill packet 22",
+    "updatedAt": "2026-07-24T04:07:52Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-jules-20260629-09-f6cc",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 428,
+    "title": "[limen jules CAPFILL-jules-20260629-09] Jules daily capacity-fill packet 09",
+    "updatedAt": "2026-07-24T04:07:50Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-opencode-20260629-11-980d",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 427,
+    "title": "[limen jules CAPFILL-opencode-20260629-11] OpenCode daily capacity-fill packet 11",
+    "updatedAt": "2026-07-24T04:07:49Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-opencode-20260629-15-2e01",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 426,
+    "title": "[limen jules CAPFILL-opencode-20260629-15] OpenCode daily capacity-fill packet 15",
+    "updatedAt": "2026-07-24T04:07:47Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-gemini-20260629-08-2982",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 425,
+    "title": "[limen CAPFILL-gemini-20260629-08] Gemini daily capacity-fill packet 08",
+    "updatedAt": "2026-07-24T04:07:45Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-opencode-20260629-12-6617",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 424,
+    "title": "[limen CAPFILL-opencode-20260629-12] OpenCode daily capacity-fill packet 12",
+    "updatedAt": "2026-07-24T04:07:44Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-claude-20260629-07-b523",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 422,
+    "title": "[limen CAPFILL-claude-20260629-07] Claude daily capacity-fill packet 07",
+    "updatedAt": "2026-07-24T04:07:42Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-opencode-20260629-18-6db2",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 421,
+    "title": "[limen CAPFILL-opencode-20260629-18] OpenCode daily capacity-fill packet 18",
+    "updatedAt": "2026-07-24T04:07:41Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-agy-20260629-21-71c3",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 420,
+    "title": "[limen CAPFILL-agy-20260629-21] Agy daily capacity-fill packet 21",
+    "updatedAt": "2026-07-24T04:07:39Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-jules-20260629-05-3e2c",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 418,
+    "title": "[limen jules CAPFILL-jules-20260629-05] Jules daily capacity-fill packet 05",
+    "updatedAt": "2026-07-24T04:07:36Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-agy-20260629-04-73b3",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 417,
+    "title": "[limen CAPFILL-agy-20260629-04] Agy daily capacity-fill packet 04",
+    "updatedAt": "2026-07-24T04:07:34Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-agy-20260629-02-03d1",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 416,
+    "title": "[limen CAPFILL-agy-20260629-02] Agy daily capacity-fill packet 02",
+    "updatedAt": "2026-07-24T04:07:32Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-opencode-20260629-01-0afd",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 415,
+    "title": "[limen CAPFILL-opencode-20260629-01] OpenCode daily capacity-fill packet 01",
+    "updatedAt": "2026-07-24T04:07:30Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-gemini-20260629-02-e603",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 413,
+    "title": "[limen jules CAPFILL-gemini-20260629-02] Gemini daily capacity-fill packet 02",
+    "updatedAt": "2026-07-24T04:07:29Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-gemini-20260629-04-a3d2",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 412,
+    "title": "[limen jules CAPFILL-gemini-20260629-04] Gemini daily capacity-fill packet 04",
+    "updatedAt": "2026-07-24T04:07:27Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-capfill-claude-20260629-06-5f73",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 411,
+    "title": "[limen jules CAPFILL-claude-20260629-06] Claude daily capacity-fill packet 06",
+    "updatedAt": "2026-07-24T04:07:26Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-agy-20260629-11-a3b7",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 410,
+    "title": "[limen CAPFILL-agy-20260629-11] Agy daily capacity-fill packet 11",
+    "updatedAt": "2026-07-24T04:07:24Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-opencode-20260629-08-ab66",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 409,
+    "title": "[limen CAPFILL-opencode-20260629-08] OpenCode daily capacity-fill packet 08",
+    "updatedAt": "2026-07-24T04:07:23Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-agy-20260629-13-cf80",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 408,
+    "title": "[limen CAPFILL-agy-20260629-13] Agy daily capacity-fill packet 13",
+    "updatedAt": "2026-07-24T04:07:21Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-claude-20260629-01-278a",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 407,
+    "title": "[limen CAPFILL-claude-20260629-01] Claude daily capacity-fill packet 01",
+    "updatedAt": "2026-07-24T04:07:20Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-opencode-20260629-06-1d03",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 406,
+    "title": "[limen CAPFILL-opencode-20260629-06] OpenCode daily capacity-fill packet 06",
+    "updatedAt": "2026-07-24T04:07:18Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/capfill-opencode-20260629-04-79e3",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 405,
+    "title": "[limen CAPFILL-opencode-20260629-04] OpenCode daily capacity-fill packet 04",
+    "updatedAt": "2026-07-24T04:07:17Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/gen-organvm-limen-typing-0629-7bfb",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 404,
+    "title": "[limen GEN-organvm-limen-typing-0629] Tighten types in organvm/limen",
+    "updatedAt": "2026-07-24T04:07:15Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/gen-organvm-limen-test-coverage-0629-f1c2",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 402,
+    "title": "[limen GEN-organvm-limen-test-coverage-0629] Raise test coverage in organvm/limen",
+    "updatedAt": "2026-07-24T04:07:14Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-gen-organvm-limen-test-coverage-0628-3c1d",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 401,
+    "title": "[limen jules GEN-organvm-limen-test-coverage-0628] Raise test coverage in organvm/limen",
+    "updatedAt": "2026-07-24T04:07:12Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-org-financial-organ-deepen-0628-1155",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 394,
+    "title": "[limen jules ORG-financial-organ-deepen-0628] Deepen the financial organ toward a usable institution",
+    "updatedAt": "2026-07-24T04:07:10Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "feature/ORG-artist-organ-face-0628",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 387,
+    "title": "feat(artist): polish macro + micro face for A-MAVS-OLEVM",
+    "updatedAt": "2026-07-24T04:07:09Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/org-governance-organ-deepen-0628-0e39",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 386,
+    "title": "limen: governance organ KERNEL+CHARTER+promotion validator",
+    "updatedAt": "2026-07-24T04:07:07Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-org-legal-organ-kernel-0628-9d40",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 385,
+    "title": "[limen jules ORG-legal-organ-kernel-0628] Map the VLTIMA 5-primitive kernel to the legal organ",
+    "updatedAt": "2026-07-24T04:07:06Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-org-social-organ-kernel-0628-94cd",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 384,
+    "title": "[limen jules ORG-social-organ-kernel-0628] Map the VLTIMA 5-primitive kernel to the social organ",
+    "updatedAt": "2026-07-24T04:07:04Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-gen-organvm-limen-test-coverage-0626-13d4",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 379,
+    "title": "[limen jules GEN-organvm-limen-test-coverage-0626] Raise test coverage in organvm/limen",
+    "updatedAt": "2026-07-24T04:07:03Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/gen-organvm-limen-docs-0628-31d6",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 377,
+    "title": "docs: fix dispatch --budget flag in CLI reference table",
+    "updatedAt": "2026-07-24T04:07:01Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-studium-film-beowulf-3e40",
+    "isDraft": false,
+    "mergeable": "MERGEABLE",
+    "number": 375,
+    "title": "[limen jules studium-film-beowulf] Beowulf film companion (wyrd/heroic doom)",
+    "updatedAt": "2026-07-24T04:06:59Z"
+  },
+  {
+    "author": {
+      "id": "MDQ6VXNlcjI0Nzk2NDQ4",
+      "is_bot": false,
+      "login": "4444J99",
+      "name": "Anthony James Padavano"
+    },
+    "headRefName": "limen/jules-studium-film-odyssey-43c8",
+    "isDraft": false,
+    "mergeable": "CONFLICTING",
+    "number": 367,
+    "title": "[limen jules studium-film-odyssey] Odyssey film companion (return/exile/recognition)",
+    "updatedAt": "2026-07-24T04:06:58Z"
+  }
+]
