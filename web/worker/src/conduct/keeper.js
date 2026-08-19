@@ -572,6 +572,7 @@ export class ConductKernel {
         && identitiesEqual(stored.conductor, packet.conductor)
         && stableStringify(stored.authority) === stableStringify(packet.authority)
         && stableStringify(stored.resource_claims) === stableStringify(packet.resource_claims)
+        && stableStringify(stored.storage_envelope_claims || []) === stableStringify(packet.storage_envelope_claims || [])
         && stored.predicate === packet.predicate
         && stored.receipt_target === packet.receipt_target
         && stableStringify(stored.work_loan) === stableStringify(packet.work_loan)
@@ -591,6 +592,9 @@ export class ConductKernel {
     }
     const parent = this.validateLineage(packet, enforced ? principal.principal_id : null);
     const executor = this.selectExecutor(packet);
+    if (packet.effect === "write" && (executor.capabilities || []).includes("local-worktree") && !packet.storage_envelope_claims.length) {
+      throw new ConductError("selected local-worktree executor requires storage_envelope_claims");
+    }
     const claims = this.effectiveClaims(packet);
     const conflicts = [];
     for (const lease of Object.values(this.state.leases)) {
@@ -623,6 +627,13 @@ export class ConductKernel {
     const rootRunId = parent ? parent.root_run_id : runId;
     if (packet.root_run_id && packet.root_run_id !== rootRunId) {
       throw new ConductError("root_run_id does not match the broker-owned lineage root");
+    }
+    const existingStorageIds = new Set(Object.values(this.state.runs)
+      .filter((run) => run.root_run_id === rootRunId)
+      .flatMap((run) => run.packet.storage_envelope_claims || [])
+      .map((claim) => claim.claim_id));
+    if (packet.storage_envelope_claims.some((claim) => existingStorageIds.has(claim.claim_id))) {
+      throw new ConductError("storage envelope claim IDs must be unique within the run graph");
     }
     const generation = Number(this.state.next_generation || 0) + 1;
     this.state.next_generation = generation;
@@ -1115,6 +1126,7 @@ export class ConductKernel {
         excludeSessions: new Set([run.executor_session_id]),
         ignoreRequiredSession: true,
       });
+      if (run.packet.effect === "write" && (executor.capabilities || []).includes("local-worktree") && !run.packet.storage_envelope_claims.length) return null;
     } catch (error) {
       if (error instanceof ConductError) return null;
       throw error;

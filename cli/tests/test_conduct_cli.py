@@ -121,6 +121,57 @@ def test_register_conflict_reraised_when_worktree_has_live_occupant(monkeypatch,
     assert len(client.attempts) == 1
 
 
+def test_resource_graph_command_writes_private_bound_file(monkeypatch, tmp_path) -> None:
+    class GraphClient:
+        def graph(self, root_run):
+            assert root_run == "run-root"
+            return {
+                "schema_version": "limen.conduct_graph.v1",
+                "root_run_id": "run-root",
+                "nodes": [
+                    {
+                        "run_id": "run-root",
+                        "packet": {
+                            "storage_envelope_claims": [
+                                    {
+                                        "schema_version": "limen.prima_materia_resource_claim.v1",
+                                        "source_instance_id": "instanceIdentifier01",
+                                        "operation_id": "operationIdentifier01",
+                                        "claim_id": "storageClaimIdentifier01",
+                                        "memory_bytes": 1024,
+                                        "file_count": 10,
+                                        "network_bytes": 1024,
+                                        "wall_time_seconds": 60,
+                                        "hydrated_inputs_bytes": 1,
+                                        "workspace_bytes": 2,
+                                        "temporary_expansion_bytes": 3,
+                                        "output_bytes": 4,
+                                        "encryption_chunking_bytes": 5,
+                                        "rollback_bytes": 6,
+                                        "effective_from": "2026-08-12T00:00:00Z",
+                                        "effective_until": "2026-08-12T01:00:00Z",
+                                        "rollback_until": "2026-08-12T02:00:00Z",
+                                    }
+                            ]
+                        },
+                    }
+                ],
+            }
+
+    output = tmp_path / "graph.json"
+    monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: GraphClient())
+    result = CliRunner().invoke(
+        conduct_group,
+        ["resource-graph", "run-root", "--output", str(output)],
+    )
+
+    assert result.exit_code == 0, result.output
+    receipt = json.loads(result.output)
+    assert receipt["claim_count"] == 1
+    assert receipt["environment"]["LIMEN_RESOURCE_TASK_GRAPH"] == str(output)
+    assert output.stat().st_mode & 0o777 == 0o600
+
+
 def test_register_conflict_reraised_when_probe_unavailable(monkeypatch, tmp_path) -> None:
     client = OwnedWorktreeClient()
     monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)

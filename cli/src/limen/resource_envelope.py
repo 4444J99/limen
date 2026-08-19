@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import re
 import stat
@@ -11,12 +12,35 @@ import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
+
+import rfc8785
 
 from limen.prima_materia import ResourceClaimV1
 
 TASK_GRAPH_SCHEMA = "limen.resource_task_graph.v1"
 MAX_TASK_GRAPH_BYTES = 4 * 1024 * 1024
 _NATIVE_POPEN = subprocess.Popen
+
+
+class ResourceGraphError(ValueError):
+    """Base class for selected-graph admission failures."""
+
+
+class ResourceGraphMissing(ResourceGraphError):
+    """No selected graph was supplied."""
+
+
+class ResourceGraphInvalid(ResourceGraphError):
+    """A selected graph exists but cannot be trusted."""
+
+
+class ResourceTelemetryUnavailable(RuntimeError):
+    """The host cannot provide the telemetry needed for admission."""
+
+
+def _canonical_digest(value: Any) -> str:
+    return hashlib.sha256(rfc8785.dumps(value)).hexdigest()
 
 
 def _capture_command(args: list[str], *, timeout: int = 5) -> str:
@@ -83,9 +107,6 @@ class ResourceEnvelope:
     observed_at: datetime
     observed_system_reserve_bytes: int
     peak_concurrent_task_bytes: int
-    peak_concurrent_memory_bytes: int
-    memory_available_bytes: int
-    memory_nonnegative: bool
     custody_and_rollback_staging_bytes: int
     telemetry_error_bytes: int
     required_free_bytes: int
@@ -114,13 +135,6 @@ def evaluate_resource_envelope(
         (sum(claim.active_bytes(boundary) for claim in live_claims) for boundary in boundaries),
         default=0,
     )
-    peak_memory = max(
-        (
-            sum(claim.memory_bytes for claim in live_claims if claim.effective_from <= boundary < claim.effective_until)
-            for boundary in boundaries
-        ),
-        default=0,
-    )
     staging = max(
         (
             sum(
@@ -138,9 +152,6 @@ def evaluate_resource_envelope(
         observed_at=instant,
         observed_system_reserve_bytes=system,
         peak_concurrent_task_bytes=peak,
-        peak_concurrent_memory_bytes=peak_memory,
-        memory_available_bytes=telemetry.ram_available_bytes,
-        memory_nonnegative=telemetry.ram_available_bytes >= peak_memory,
         custody_and_rollback_staging_bytes=staging,
         telemetry_error_bytes=telemetry.telemetry_error_bytes,
         required_free_bytes=required,
@@ -195,7 +206,7 @@ def _darwin_memory() -> tuple[int, int, int] | None:
 def observe_resource_telemetry() -> ResourceTelemetry:
     memory = _darwin_memory() if os.uname().sysname == "Darwin" else _linux_memory()
     if memory is None:
-        raise RuntimeError("live RAM/swap telemetry is unavailable")
+        raise ResourceTelemetryUnavailable("live RAM/swap telemetry is unavailable")
     total, available, swap = memory
     return ResourceTelemetry(
         observed_at=datetime.now(UTC),
@@ -208,14 +219,18 @@ def observe_resource_telemetry() -> ResourceTelemetry:
     )
 
 
-def load_task_graph_claims(path: Path | None = None) -> tuple[ResourceClaimV1, ...]:
+def load_task_graph_claims(
+    path: Path | None = None,
+    *,
+    expected_run_id: str | None = None,
+) -> tuple[ResourceClaimV1, ...]:
     """Load the selected graph's bounded claims without inventing defaults."""
 
     selected = path
     if selected is None:
         raw = os.environ.get("LIMEN_RESOURCE_TASK_GRAPH")
         if not raw:
-            raise ValueError("selected resource task graph is required")
+            raise ResourceGraphMissing("selected resource task graph is required")
         selected = Path(raw).expanduser()
     try:
         info = selected.lstat()
@@ -225,37 +240,126 @@ def load_task_graph_claims(path: Path | None = None) -> tuple[ResourceClaimV1, .
             or info.st_size <= 0
             or info.st_size > MAX_TASK_GRAPH_BYTES
         ):
-            raise ValueError("resource task graph must be a bounded regular file")
+            raise ResourceGraphInvalid("resource task graph must be a bounded regular file")
+        if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) != 0o600:
+            raise ResourceGraphInvalid("resource task graph must be owner-controlled mode 0600")
         payload = json.loads(selected.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
-        raise ValueError("resource task graph is unavailable or invalid") from exc
-    if (
-        not isinstance(payload, dict)
-        or set(payload) != {"schema", "claims"}
-        or payload.get("schema") != TASK_GRAPH_SCHEMA
-        or not isinstance(payload.get("claims"), list)
-    ):
-        raise ValueError("resource task graph has an invalid shape")
-    claims = tuple(ResourceClaimV1.model_validate(value) for value in payload["claims"])
-    if not claims:
-        raise ValueError("resource task graph must contain concrete claims")
+        raise ResourceGraphInvalid("resource task graph is unavailable or invalid") from exc
+    if not isinstance(payload, dict) or payload.get("schema") != TASK_GRAPH_SCHEMA:
+        raise ResourceGraphInvalid("resource task graph has an invalid shape")
+    legacy = set(payload) == {"schema", "claims"}
+    bound = set(payload) == {"schema", "run_id", "root_run_id", "claims", "digest"}
+    if not (legacy or bound) or not isinstance(payload.get("claims"), list):
+        raise ResourceGraphInvalid("resource task graph has an invalid shape")
+    if expected_run_id is not None:
+        if not bound or payload.get("run_id") != expected_run_id:
+            raise ResourceGraphInvalid("resource task graph is not bound to the selected run")
+    if bound:
+        unsigned = {key: value for key, value in payload.items() if key != "digest"}
+        if payload.get("digest") != _canonical_digest(unsigned):
+            raise ResourceGraphInvalid("resource task graph digest does not match its contents")
+        expected_digest = os.environ.get("LIMEN_RESOURCE_TASK_GRAPH_SHA256")
+        if expected_digest is not None and payload.get("digest") != expected_digest:
+            raise ResourceGraphInvalid("resource task graph digest does not match selected admission")
+    try:
+        claims = tuple(ResourceClaimV1.model_validate(value) for value in payload["claims"])
+    except (TypeError, ValueError) as exc:
+        raise ResourceGraphInvalid("resource task graph contains an invalid storage claim") from exc
     identifiers = [claim.claim_id for claim in claims]
     if len(identifiers) != len(set(identifiers)):
-        raise ValueError("resource task graph contains duplicate claim IDs")
+        raise ResourceGraphInvalid("resource task graph contains duplicate claim IDs")
+    if bound:
+        now = datetime.now(UTC)
+        if any(not (claim.effective_from <= now <= claim.effective_until) for claim in claims):
+            raise ResourceGraphInvalid("resource task graph contains an inactive storage claim")
     return claims
+
+
+def materialize_run_task_graph(
+    graph: dict[str, Any],
+    *,
+    run_id: str,
+    destination: Path,
+) -> dict[str, Any]:
+    """Write one broker-observed run graph as a bounded mode-0600 admission file."""
+
+    nodes = graph.get("nodes") if isinstance(graph, dict) else None
+    root_run_id = graph.get("root_run_id") if isinstance(graph, dict) else None
+    if graph.get("schema_version") != "limen.conduct_graph.v1" or not isinstance(nodes, list):
+        raise ResourceGraphInvalid("broker run graph has an invalid shape")
+    selected = [node for node in nodes if isinstance(node, dict) and node.get("run_id") == run_id]
+    if len(selected) != 1 or not isinstance(root_run_id, str):
+        raise ResourceGraphInvalid("selected run is absent from the broker graph")
+    claims: list[dict[str, Any]] = []
+    identifiers: set[str] = set()
+    for node in nodes:
+        packet = node.get("packet") if isinstance(node, dict) else None
+        raw_claims = packet.get("storage_envelope_claims", []) if isinstance(packet, dict) else []
+        if not isinstance(raw_claims, list):
+            raise ResourceGraphInvalid("broker packet storage claims have an invalid shape")
+        for raw in raw_claims:
+            try:
+                claim = ResourceClaimV1.model_validate(raw)
+            except (TypeError, ValueError) as exc:
+                raise ResourceGraphInvalid("broker graph contains an invalid storage claim") from exc
+            if claim.claim_id in identifiers:
+                raise ResourceGraphInvalid("broker graph contains duplicate storage claim IDs")
+            identifiers.add(claim.claim_id)
+            claims.append(claim.model_dump(mode="json"))
+    unsigned = {
+        "schema": TASK_GRAPH_SCHEMA,
+        "run_id": run_id,
+        "root_run_id": root_run_id,
+        "claims": claims,
+    }
+    payload = {**unsigned, "digest": _canonical_digest(unsigned)}
+    encoded = json.dumps(payload, indent=2, sort_keys=True).encode("utf-8") + b"\n"
+    if not encoded or len(encoded) > MAX_TASK_GRAPH_BYTES:
+        raise ResourceGraphInvalid("materialized resource task graph exceeds its size bound")
+    destination = destination.expanduser()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        existing = destination.lstat()
+    except FileNotFoundError:
+        existing = None
+    if existing is not None and (stat.S_ISLNK(existing.st_mode) or not stat.S_ISREG(existing.st_mode)):
+        raise ResourceGraphInvalid("resource task graph destination must be a regular file")
+    temporary = destination.with_name(f".{destination.name}.{os.getpid()}.tmp")
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, destination)
+        os.chmod(destination, 0o600)
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+    return {
+        "schema_version": "limen.resource_task_graph_receipt.v1",
+        "path": str(destination.resolve()),
+        "run_id": run_id,
+        "root_run_id": root_run_id,
+        "digest": payload["digest"],
+        "claim_count": len(claims),
+    }
 
 
 def current_required_free_gib(
     claims: tuple[ResourceClaimV1, ...] | None = None,
 ) -> float:
-    selected = load_task_graph_claims() if claims is None else claims
-    envelope = evaluate_resource_envelope(
+    expected_run_id = os.environ.get("LIMEN_RESOURCE_TASK_GRAPH_RUN_ID") or None
+    if claims is None and expected_run_id is None:
+        raise ResourceGraphInvalid("selected resource task graph run identity is required")
+    selected = load_task_graph_claims(expected_run_id=expected_run_id) if claims is None else claims
+    return evaluate_resource_envelope(
         observe_resource_telemetry(),
         selected,
-    )
-    if not envelope.memory_nonnegative:
-        raise RuntimeError("selected resource task graph exceeds live memory headroom")
-    return envelope.required_free_gib
+    ).required_free_gib
 
 
 def main() -> int:

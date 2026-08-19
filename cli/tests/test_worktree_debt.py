@@ -510,6 +510,7 @@ def _isolate(tmp_path: Path, monkeypatch, *, floor="1") -> Path:
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(wtroot))
     monkeypatch.setattr(wd, "_required_free_gib", lambda: float(floor))
+    monkeypatch.setattr(wd, "_required_free_diagnostic", lambda: (float(floor), ""))
     monkeypatch.setenv("LIMEN_RECLAIM_CLAUDE_WT", "0")
     monkeypatch.setenv("LIMEN_RECLAIM", "1")
     monkeypatch.setenv("LIMEN_RECLAIM_APPLY", "1")
@@ -632,12 +633,12 @@ def test_snapshot_resource_unknown_free_fails_closed(tmp_path: Path, monkeypatch
     monkeypatch.setattr(wd, "_worktree_disk_free_gib", lambda _p: None)
     snap = wd.take_admission_snapshot(tmp_path)
     assert snap["resource_blocked"] is True and snap["block_new_local"] is True
-    assert "unknown" in snap["reason"]
+    assert "disk telemetry unavailable" in snap["reason"]
 
 
 def test_snapshot_requirement_comes_from_live_resource_envelope(tmp_path: Path, monkeypatch) -> None:
     _isolate(tmp_path, monkeypatch)
-    monkeypatch.setattr(wd, "_required_free_gib", lambda: 2.75)
+    monkeypatch.setattr(wd, "_required_free_diagnostic", lambda: (2.75, ""))
     monkeypatch.setattr(wd, "_worktree_disk_free_gib", lambda _p: 500.0)
     snap = wd.take_admission_snapshot(tmp_path)
     assert snap["floor_gib"] == 2.75
@@ -658,9 +659,28 @@ def test_snapshot_unknown_resource_envelope_fails_closed_local(tmp_path: Path, m
     _isolate(tmp_path, monkeypatch)
     monkeypatch.setattr(wd, "_worktree_disk_free_gib", lambda _p: 500.0)
     monkeypatch.setattr(wd, "_required_free_gib", lambda: None)
+    monkeypatch.setattr(wd, "_required_free_diagnostic", lambda: (None, "resource graph missing"))
     snap = wd.take_admission_snapshot(tmp_path)
     assert snap["floor_gib"] is None
     assert snap["resource_blocked"] is True and snap["block_new_local"] is True
+    assert "resource graph missing" in snap["reason"]
+
+
+def test_snapshot_distinguishes_invalid_graph_and_unavailable_telemetry(tmp_path: Path, monkeypatch) -> None:
+    _isolate(tmp_path, monkeypatch)
+    monkeypatch.setattr(wd, "_worktree_disk_free_gib", lambda _p: 500.0)
+    monkeypatch.setattr(wd, "_required_free_gib", lambda: None)
+    monkeypatch.setattr(wd, "_required_free_diagnostic", lambda: (None, "resource telemetry unavailable"))
+    snap = wd.take_admission_snapshot(tmp_path)
+    assert "resource telemetry unavailable" in snap["reason"]
+
+    monkeypatch.setattr(
+        wd,
+        "_required_free_diagnostic",
+        lambda: (None, "resource graph invalid or not bound to this run"),
+    )
+    snap = wd.take_admission_snapshot(tmp_path)
+    assert "resource graph invalid or not bound to this run" in snap["reason"]
 
 
 # ---- VITALS fold ----

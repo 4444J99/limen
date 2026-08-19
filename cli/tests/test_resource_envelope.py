@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import stat
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
@@ -11,6 +12,7 @@ from limen.resource_envelope import (
     ResourceTelemetry,
     evaluate_resource_envelope,
     load_task_graph_claims,
+    materialize_run_task_graph,
 )
 
 GIB = 1024**3
@@ -85,22 +87,33 @@ def _telemetry() -> ResourceTelemetry:
 
 def _claim(identifier: str, scale: int = 1) -> ResourceClaimV1:
     return ResourceClaimV1(
+        source_instance_id="instance-fixture-01",
+        operation_id="operation-fixture-01",
         claim_id=identifier,
-        source_instance_id="sourceInstance001",
-        operation_id=f"operation{identifier}",
+        memory_bytes=scale * GIB,
+        file_count=10,
+        network_bytes=1024,
+        wall_time_seconds=60,
         hydrated_inputs_bytes=scale * GIB,
         workspace_bytes=scale * GIB,
         temporary_expansion_bytes=scale * GIB,
         output_bytes=scale * GIB,
         encryption_chunking_bytes=scale * GIB,
         rollback_bytes=scale * GIB,
-        memory_bytes=scale * GIB,
-        file_count=scale,
-        network_bytes=scale * GIB,
-        wall_time_seconds=60 * scale,
         effective_from=NOW - timedelta(minutes=1),
         effective_until=NOW + timedelta(minutes=1),
         rollback_until=NOW + timedelta(hours=1),
+    )
+
+
+def _current_claim(identifier: str, scale: int = 1) -> ResourceClaimV1:
+    now = datetime.now(UTC)
+    return _claim(identifier, scale).model_copy(
+        update={
+            "effective_from": now - timedelta(minutes=1),
+            "effective_until": now + timedelta(minutes=10),
+            "rollback_until": now + timedelta(hours=1),
+        }
     )
 
 
@@ -130,18 +143,6 @@ def test_every_live_telemetry_component_changes_requirement() -> None:
         replace(_telemetry(), telemetry_error_bytes=2 * GIB),
     )
     assert all(evaluate_resource_envelope(value, ()).required_free_bytes > baseline for value in variants)
-
-
-def test_low_available_memory_fails_the_live_claim() -> None:
-    constrained = replace(_telemetry(), ram_available_bytes=GIB // 2)
-
-    envelope = evaluate_resource_envelope(
-        constrained,
-        (_claim("claimIdentifier01"),),
-    )
-
-    assert envelope.peak_concurrent_memory_bytes == GIB
-    assert envelope.memory_nonnegative is False
 
 
 def test_task_dimensions_and_rollback_lifetime_are_authoritative() -> None:
@@ -210,6 +211,7 @@ def test_selected_task_graph_claims_are_registry_data(tmp_path) -> None:
         ),
         encoding="utf-8",
     )
+    path.chmod(0o600)
 
     loaded = load_task_graph_claims(path)
 
@@ -238,14 +240,54 @@ def test_explicit_empty_graph_remains_observable(monkeypatch) -> None:
     )
 
 
-def test_current_admission_rejects_low_memory(monkeypatch) -> None:
-    monkeypatch.setattr(
-        resource_envelope,
-        "observe_resource_telemetry",
-        lambda: replace(_telemetry(), ram_available_bytes=GIB // 2),
-    )
+def test_broker_graph_materialization_is_bound_digest_checked_and_private(tmp_path) -> None:
+    claim = _current_claim("claimIdentifier01")
+    graph = {
+        "schema_version": "limen.conduct_graph.v1",
+        "root_run_id": "run-root",
+        "nodes": [
+            {
+                "run_id": "run-root",
+                "packet": {
+                    "storage_envelope_claims": [claim.model_dump(mode="json")],
+                },
+            }
+        ],
+    }
+    path = tmp_path / "selected-resource-graph.json"
 
-    with pytest.raises(RuntimeError, match="memory headroom"):
-        resource_envelope.current_required_free_gib(
-            claims=(_claim("claimIdentifier01"),),
-        )
+    receipt = materialize_run_task_graph(graph, run_id="run-root", destination=path)
+
+    assert receipt["run_id"] == "run-root"
+    assert receipt["claim_count"] == 1
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    assert load_task_graph_claims(path, expected_run_id="run-root") == (claim,)
+    with pytest.raises(ValueError, match="not bound"):
+        load_task_graph_claims(path, expected_run_id="run-foreign")
+
+
+def test_materialized_graph_rejects_tampering(tmp_path) -> None:
+    claim = _current_claim("claimIdentifier01")
+    path = tmp_path / "selected-resource-graph.json"
+    materialize_run_task_graph(
+        {
+            "schema_version": "limen.conduct_graph.v1",
+            "root_run_id": "run-root",
+            "nodes": [
+                {
+                    "run_id": "run-root",
+                    "packet": {
+                        "storage_envelope_claims": [claim.model_dump(mode="json")],
+                    },
+                }
+            ],
+        },
+        run_id="run-root",
+        destination=path,
+    )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["claims"][0]["output_bytes"] += 1
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="digest"):
+        load_task_graph_claims(path, expected_run_id="run-root")

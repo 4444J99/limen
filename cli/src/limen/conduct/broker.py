@@ -385,6 +385,7 @@ class ConductBroker:
                     or stored.conductor != packet.conductor
                     or stored.authority != packet.authority
                     or stored.resource_claims != packet.resource_claims
+                    or stored.storage_envelope_claims != packet.storage_envelope_claims
                     or stored.predicate != packet.predicate
                     or stored.receipt_target != packet.receipt_target
                     or stored.work_loan != packet.work_loan
@@ -400,6 +401,12 @@ class ConductBroker:
                 principal_id=principal.principal_id if principal_enforced else None,
             )
             executor = self._select_executor(state, packet, now)
+            if (
+                packet.effect == "write"
+                and "local-worktree" in executor.capabilities
+                and not packet.storage_envelope_claims
+            ):
+                raise ConductConflict("selected local-worktree executor requires storage_envelope_claims")
             claims = self._effective_claims(packet)
             conflicts: list[dict[str, Any]] = []
             for lease_raw in state["leases"].values():
@@ -433,6 +440,16 @@ class ConductBroker:
             if packet.root_run_id and packet.root_run_id != (parent["root_run_id"] if parent else run_id):
                 raise ConductConflict("root_run_id does not match the broker-owned lineage root")
             root_run_id = parent["root_run_id"] if parent else run_id
+            existing_storage_ids = {
+                str(claim.get("claim_id"))
+                for existing in state["runs"].values()
+                if existing.get("root_run_id") == root_run_id
+                for claim in (existing.get("packet", {}).get("storage_envelope_claims") or [])
+                if isinstance(claim, dict)
+            }
+            submitted_storage_ids = {claim.claim_id for claim in packet.storage_envelope_claims}
+            if existing_storage_ids & submitted_storage_ids:
+                raise ConductConflict("storage envelope claim IDs must be unique within the run graph")
             generation = int(state.get("next_generation", 0)) + 1
             state["next_generation"] = generation
             resource_generations: dict[str, int] = {}
@@ -1025,6 +1042,12 @@ class ConductBroker:
                 exclude_sessions=frozenset({run["executor_session_id"]}),
                 ignore_required_session=True,
             )
+            if (
+                packet.effect == "write"
+                and "local-worktree" in executor.capabilities
+                and not packet.storage_envelope_claims
+            ):
+                return None
         except ConductConflict:
             return None
         generation = int(state.get("next_generation", 0)) + 1

@@ -11,6 +11,7 @@ import rfc8785
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from limen.work_loan import WorkLoanV1
+from limen.prima_materia import ResourceClaimV1 as StorageEnvelopeClaimV1
 
 
 _IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$")
@@ -238,6 +239,10 @@ class WorkPacketV1(ProtocolModel):
     preferred_agent: str | None = None
     required_capabilities: frozenset[str] = Field(default_factory=frozenset)
     resource_claims: tuple[ResourceClaimV1, ...] = ()
+    # Bounded disk-custody claims are distinct from broker exclusion claims.  The
+    # field stays optional at the schema boundary so historical receipts remain
+    # readable; new local-worktree writers must provide a measured envelope.
+    storage_envelope_claims: tuple[StorageEnvelopeClaimV1, ...] = ()
     predicate: str
     receipt_target: str
     # Optional at the schema boundary so old stored runs remain inspectable.
@@ -296,6 +301,15 @@ class WorkPacketV1(ProtocolModel):
                 raise ValueError("campaign work packets require a value/cost work loan")
             if not self.authority.actions:
                 raise ValueError("campaign work packets require an explicit authority scope")
+        claim_ids = [claim.claim_id for claim in self.storage_envelope_claims]
+        if len(claim_ids) != len(set(claim_ids)):
+            raise ValueError("storage envelope claims must have unique claim IDs")
+        if (
+            self.effect == "write"
+            and "local-worktree" in self.required_capabilities
+            and not self.storage_envelope_claims
+        ):
+            raise ValueError("local-worktree writes require storage_envelope_claims")
         return self
 
 
