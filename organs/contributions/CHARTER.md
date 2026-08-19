@@ -36,6 +36,10 @@ tracking, rendering, routing, reconciling.
    beat; the full state machine + git/repo processes are `LIFECYCLE.md`.
 1. **Scout** — a pooled candidate becomes a vetted target with its mandate
    named: *what wiring do we want to study here?*
+   Live career and network relationships are a priority ingress: person →
+   organization → roles → products → repositories → maintainers. They do not
+   justify collision, spam, or a reputation-only patch; a current role may be
+   ineligible while its public repository remains a valid learning surface.
 2. **Workspace** — the orchestrator opens a `contrib--*` tracking workspace;
    the contribution is authored there under the upstream's own Standard.
 3. **Campaign** — engine B's sequencer (UNBLOCK → ENGAGE → CULTIVATE →
@@ -57,6 +61,9 @@ tracking, rendering, routing, reconciling.
   `logs/contributions.json` (health signal), and the product ledger's
   `contrib-mirror` outward-path records (`scripts/product-ledger.py` already
   consumes the same hub ledger).
+- **Career bridge:** `organs/representation/career-portal.yaml` supplies live
+  organization/repository ingress; SPECVLVM returns contribution outcome and
+  backflow owner receipts without becoming an application tracker.
 
 ## Standing estate (what this institution owns)
 
