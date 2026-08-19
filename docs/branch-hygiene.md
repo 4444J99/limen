@@ -60,7 +60,7 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `worktree-fix-macos-fork-oslog-crash` — 414ded132 heal(tests): fix 3 non-hermetic/mismatched cli tests breaking main pr-gate
 - `worktree-ianva-doorway` — f4c0c076f fix(ianva): never echo bearer to stdout; untrack generated/ golden files
 
-## Live-work branches (339) — decide each
+## Live-work branches (338) — decide each
 
 - `_pr198` — 4cd0dbaa9 fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `archive/danse-predecessor-experiments-20260802` — a232f2d71 archive(danse): preserve predecessor experiments
@@ -104,7 +104,6 @@ Push them as a follow-up PR, or delete if the extra commits are throwaway.
 - `feat/studium-deepen-metamorphoses-batch-1` — 2bf801175 limen: REV-organvm-a-i-chat--exporter-revenue-launch-post-0623 done
 - `feat/studium-deepen-quran` — 2bf801175 limen: REV-organvm-a-i-chat--exporter-revenue-launch-post-0623 done
 - `feat/valve-potency-rung` — 41625588c feat(enactment): a POTENCY rung — prove a destructive valve actually FIRES
-- `feat/vltima-5-primitive-kernel-mapping` — 719641222 feat: VLTIMA 5-primitive kernel mapping — representation slice + observation self-feed
 - `feature/ORG-education-organ-face-0630` — 9d174794c feat(education): author polished macro and micro face for education organ
 - `fix-branch` — 70689bf3d fix: resolve ruff format failure and remove mypy_cache artifacts
 - `fix-bug-28` — b4c56d9db chore: fix validation errors in tasks.yaml
