@@ -133,25 +133,25 @@ def test_resource_graph_command_writes_private_bound_file(monkeypatch, tmp_path)
                         "run_id": "run-root",
                         "packet": {
                             "storage_envelope_claims": [
-                                    {
-                                        "schema_version": "limen.prima_materia_resource_claim.v1",
-                                        "source_instance_id": "instanceIdentifier01",
-                                        "operation_id": "operationIdentifier01",
-                                        "claim_id": "storageClaimIdentifier01",
-                                        "memory_bytes": 1024,
-                                        "file_count": 10,
-                                        "network_bytes": 1024,
-                                        "wall_time_seconds": 60,
-                                        "hydrated_inputs_bytes": 1,
-                                        "workspace_bytes": 2,
-                                        "temporary_expansion_bytes": 3,
-                                        "output_bytes": 4,
-                                        "encryption_chunking_bytes": 5,
-                                        "rollback_bytes": 6,
-                                        "effective_from": "2026-08-12T00:00:00Z",
-                                        "effective_until": "2026-08-12T01:00:00Z",
-                                        "rollback_until": "2026-08-12T02:00:00Z",
-                                    }
+                                {
+                                    "schema_version": "limen.prima_materia_resource_claim.v1",
+                                    "source_instance_id": "instanceIdentifier01",
+                                    "operation_id": "operationIdentifier01",
+                                    "claim_id": "storageClaimIdentifier01",
+                                    "memory_bytes": 1024,
+                                    "file_count": 10,
+                                    "network_bytes": 1024,
+                                    "wall_time_seconds": 60,
+                                    "hydrated_inputs_bytes": 1,
+                                    "workspace_bytes": 2,
+                                    "temporary_expansion_bytes": 3,
+                                    "output_bytes": 4,
+                                    "encryption_chunking_bytes": 5,
+                                    "rollback_bytes": 6,
+                                    "effective_from": "2026-08-12T00:00:00Z",
+                                    "effective_until": "2026-08-12T01:00:00Z",
+                                    "rollback_until": "2026-08-12T02:00:00Z",
+                                }
                             ]
                         },
                     }

@@ -1206,14 +1206,20 @@ def _terminate_process_group(
 
     try:
         os.killpg(process_group_id, signal.SIGTERM)
-    except ProcessLookupError:
-        return True
+    except (ProcessLookupError, PermissionError):
+        try:
+            process.terminate()
+        except Exception:
+            pass
     if _wait_for_process_group_exit(process, process_group_id, 2):
         return True
     try:
         os.killpg(process_group_id, signal.SIGKILL)
-    except ProcessLookupError:
-        return True
+    except (ProcessLookupError, PermissionError):
+        try:
+            process.kill()
+        except Exception:
+            pass
     return _wait_for_process_group_exit(process, process_group_id, 2)
 
 

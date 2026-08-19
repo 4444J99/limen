@@ -146,13 +146,19 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     try:
-        sampled_raw = json.loads(status_path.read_text()).get("sampled_at") or ""
-        sampled_at = datetime.fromisoformat(sampled_raw)
+        payload = json.loads(status_path.read_text())
+        sampled_raw = payload.get("sampled_at") or payload.get("completed_at") or payload.get("ts") or ""
+        if not sampled_raw:
+            return _stale(
+                f"host-pressure-stale: STALE — no timestamp in {status_path}",
+                read_only=args.read_only,
+            )
+        sampled_at = datetime.fromisoformat(sampled_raw.replace("Z", "+00:00"))
         if sampled_at.tzinfo is None:
             sampled_at = sampled_at.replace(tzinfo=timezone.utc)
     except Exception as exc:
         return _stale(
-            f"host-pressure-stale: STALE — unreadable sampled_at in {status_path} ({exc})",
+            f"host-pressure-stale: STALE — unreadable timestamp in {status_path} ({exc})",
             read_only=args.read_only,
         )
 

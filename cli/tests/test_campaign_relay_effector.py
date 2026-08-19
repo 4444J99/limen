@@ -29,7 +29,6 @@ from limen.conduct.campaign_relay import (
     reserve_relay,
 )
 from limen.conduct.campaign_relay_process import _bounded_registration
-from limen.conduct.campaign_relay_protocol import _spawn_relay_process_group
 from limen.conduct.campaign_relay_state import _read_relay, _replace_relay
 from limen.conduct.models import CampaignRelayReceiptV1
 from limen.workstream_contract import RECEIPT_MODULES, new_contract

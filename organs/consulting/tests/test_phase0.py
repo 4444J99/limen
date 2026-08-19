@@ -89,9 +89,7 @@ class Phase0ValidationTests(unittest.TestCase):
     def test_synthetic_bbnc_receipt_authorizes_phase_1_only(self) -> None:
         preparation = packet()
         receipt = authority_receipt(preparation)
-        self.assertEqual(
-            VALIDATOR.validate_authority_receipt(preparation, receipt), []
-        )
+        self.assertEqual(VALIDATOR.validate_authority_receipt(preparation, receipt), [])
 
     def test_open_gate_rejects_authority_receipt(self) -> None:
         preparation = packet()
@@ -105,9 +103,7 @@ class Phase0ValidationTests(unittest.TestCase):
         receipt = authority_receipt(preparation)
         receipt["grants"]["production_access"] = True
         errors = VALIDATOR.validate_authority_receipt(preparation, receipt)
-        self.assertIn(
-            "receipt grants must authorize Phase 1 discovery only", errors
-        )
+        self.assertIn("receipt grants must authorize Phase 1 discovery only", errors)
 
 
 if __name__ == "__main__":

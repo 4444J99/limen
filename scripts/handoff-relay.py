@@ -31,6 +31,21 @@ CODE_ROOT = Path(__file__).resolve().parents[1]
 ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
 sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
+_env_file = Path(os.environ.get("LIMEN_CONDUCT_ENV_FILE", Path.home() / ".limen.env"))
+if _env_file.exists():
+    try:
+        for _line in _env_file.read_text(encoding="utf-8").splitlines():
+            _line = _line.strip()
+            if _line.startswith("export "):
+                _line = _line[7:].strip()
+            if "=" in _line and not _line.startswith("#"):
+                _k, _v = _line.split("=", 1)
+                _k = _k.strip()
+                if _k not in os.environ:
+                    os.environ[_k] = _v.strip("\"'")
+    except Exception:
+        pass
+
 from limen.capacity import PAID_AGENT_ORDER, agent_status, canonical_agent, lane_throughput_cap  # noqa: E402
 from limen.dispatch import (
     LOCAL_CHECKOUT_AGENTS,

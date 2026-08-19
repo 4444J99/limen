@@ -35,11 +35,11 @@ _NOW = datetime(2026, 7, 16, 12, 0, 0, tzinfo=timezone.utc)
 
 
 @pytest.fixture()
-def memdir(tmp_path: Path) -> Path:
+def memdir(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """A temp memory dir wired via the LIMEN_MEMORY_DIR override (never the real one)."""
     d = tmp_path / "memory"
     d.mkdir()
-    os.environ["LIMEN_MEMORY_DIR"] = str(d)
+    monkeypatch.setenv("LIMEN_MEMORY_DIR", str(d))
     return d
 
 
