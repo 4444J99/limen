@@ -1,0 +1,60 @@
+{"repo": "a-mavs-olevm", "action": "pr-open", "detail": "required checks ['validate-dependencies']; https://github.com/organvm/a-mavs-olevm/pull/108"}
+{"repo": "organvm-ontologia", "action": "pr-open", "detail": "required checks ['test (3.11)', 'test (3.12)']; https://github.com/organvm/organvm-ontologia/pull/19"}
+{"repo": "call-function--ontological", "action": "pr-open", "detail": "required checks ['validate-dependencies']; https://github.com/organvm/call-function--ontological/pull/17"}
+{"repo": "public-process", "action": "merged", "detail": "https://github.com/organvm/public-process/pull/40"}
+{"repo": "reverse-engine-recursive-run", "action": "merged", "detail": "https://github.com/organvm/reverse-engine-recursive-run/pull/15"}
+{"repo": "community-hub", "action": "merged", "detail": "https://github.com/organvm/community-hub/pull/13"}
+{"repo": "universal-node-network", "action": "merged", "detail": "https://github.com/organvm/universal-node-network/pull/13"}
+{"repo": "auto-revision-epistemic-engine", "action": "merged", "detail": "https://github.com/organvm/auto-revision-epistemic-engine/pull/22"}
+{"repo": "my-knowledge-base", "action": "merged", "detail": "https://github.com/organvm/my-knowledge-base/pull/80"}
+{"repo": "recursive-engine--generative-entity", "action": "pr-open", "detail": "required checks ['test (3.11)', 'test (3.12)']; https://github.com/organvm/recursive-engine--generative-entity/pull/25"}
+{"repo": "sema-metra--alchemica-mundi", "action": "merged", "detail": "https://github.com/organvm/sema-metra--alchemica-mundi/pull/28"}
+{"repo": "narratological-algorithmic-lenses", "action": "pr-open", "detail": "required checks ['test']; https://github.com/organvm/narratological-algorithmic-lenses/pull/52"}
+{"repo": "krypto-velamen", "action": "merged", "detail": "https://github.com/organvm/krypto-velamen/pull/14"}
+{"repo": "vigiles-aeternae--corpus-mythicum", "action": "merged", "detail": "https://github.com/organvm/vigiles-aeternae--corpus-mythicum/pull/13"}
+{"repo": "agent--claude-smith", "action": "merged", "detail": "https://github.com/organvm/agent--claude-smith/pull/37"}
+{"repo": "fetch-familiar-friends", "action": "merged", "detail": "https://github.com/organvm/fetch-familiar-friends/pull/229"}
+{"repo": "classroom-rpg-aetheria", "action": "merged", "detail": "https://github.com/organvm/classroom-rpg-aetheria/pull/150"}
+{"repo": "life-my--midst--in", "action": "merged", "detail": "https://github.com/organvm/life-my--midst--in/pull/140"}
+{"repo": "alchemical-synthesizer", "action": "merged", "detail": "https://github.com/organvm/alchemical-synthesizer/pull/38"}
+{"repo": "peer-audited--behavioral-blockchain", "action": "pr-open", "detail": "required checks ['e2e']; https://github.com/organvm/peer-audited--behavioral-blockchain/pull/791"}
+{"repo": "orchestration-start-here", "action": "pr-open", "detail": "required checks ['test']; https://github.com/organvm/orchestration-start-here/pull/185"}
+{"repo": "petasum-super-petasum", "action": "merged", "detail": "https://github.com/organvm/petasum-super-petasum/pull/157"}
+{"repo": "cognitive-archaelogy-tribunal", "action": "merged", "detail": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/133"}
+{"repo": "a-i--skills", "action": "pr-open", "detail": "required review gate; https://github.com/organvm/a-i--skills/pull/37"}
+{"repo": "public-record-data-scrapper", "action": "merged", "detail": "https://github.com/organvm/public-record-data-scrapper/pull/363"}
+{"repo": "praxis-perpetua", "action": "skip", "detail": "already -1"}
+{"repo": "schema-definitions", "action": "pr-open", "detail": "required checks ['test (3.11)', 'test (3.12)']; https://github.com/organvm/schema-definitions/pull/13"}
+{"repo": "dot-github--logos", "action": "merged", "detail": "https://github.com/organvm/dot-github--logos/pull/43"}
+{"repo": "organvm-engine", "action": "pr-open", "detail": "required checks ['test', 'test-matrix (3.11)', 'test-matrix (3.12)']; https://github.com/organvm/organvm-engine/pull/169"}
+{"repo": "alchemia-ingestvm", "action": "pr-open", "detail": "required checks ['lint-and-test (3.11)', 'lint-and-test (3.12)']; https://github.com/organvm/alchemia-ingestvm/pull/12"}
+{"repo": "materia-collider", "action": "merged", "detail": "https://github.com/organvm/materia-collider/pull/16"}
+{"repo": "distribution-strategy", "action": "merged", "detail": "https://github.com/organvm/distribution-strategy/pull/8"}
+{"repo": "reading-group-curriculum", "action": "merged", "detail": "https://github.com/organvm/reading-group-curriculum/pull/12"}
+{"repo": "announcement-templates", "action": "merged", "detail": "https://github.com/organvm/announcement-templates/pull/11"}
+{"repo": "agentic-titan", "action": "pr-open", "detail": "required checks ['test (3.11)', 'test (3.12)']; https://github.com/organvm/agentic-titan/pull/97"}
+{"repo": "linguistic-atomization-framework", "action": "merged", "detail": "https://github.com/organvm/linguistic-atomization-framework/pull/18"}
+{"repo": "metasystem-master", "action": "pr-open", "detail": "required checks ['lint-typescript', 'test-core-engine']; https://github.com/organvm/metasystem-master/pull/45"}
+{"repo": "dot-github--kerygma", "action": "merged", "detail": "https://github.com/organvm/dot-github--kerygma/pull/11"}
+{"repo": "dot-github--koinonia", "action": "merged", "detail": "https://github.com/organvm/dot-github--koinonia/pull/23"}
+{"repo": "dot-github--ergon", "action": "merged", "detail": "https://github.com/organvm/dot-github--ergon/pull/14"}
+{"repo": "dot-github--poiesis", "action": "merged", "detail": "https://github.com/organvm/dot-github--poiesis/pull/12"}
+{"repo": "chthon-oneiros", "action": "merged", "detail": "https://github.com/organvm/chthon-oneiros/pull/9"}
+{"repo": "adaptive-personal-syllabus", "action": "merged", "detail": "https://github.com/organvm/adaptive-personal-syllabus/pull/16"}
+{"repo": "organvm-iii-ergon--superproject", "action": "merged", "detail": "https://github.com/organvm/organvm-iii-ergon--superproject/pull/10"}
+{"repo": "vigiles-aeternae--theatrum-mundi", "action": "merged", "detail": "https://github.com/organvm/vigiles-aeternae--theatrum-mundi/pull/10"}
+{"repo": "social-automation", "action": "merged", "detail": "https://github.com/organvm/social-automation/pull/9"}
+{"repo": "vigiles-aeternae--agon-cosmogonicum", "action": "merged", "detail": "https://github.com/organvm/vigiles-aeternae--agon-cosmogonicum/pull/11"}
+{"repo": "styx-behavioral-economics-theory", "action": "merged", "detail": "https://github.com/organvm/styx-behavioral-economics-theory/pull/14"}
+{"repo": "stakeholder-portal", "action": "pr-open", "detail": "required checks ['test']; https://github.com/organvm/stakeholder-portal/pull/65"}
+{"repo": "tool-interaction-design", "action": "merged", "detail": "https://github.com/organvm/tool-interaction-design/pull/38"}
+{"repo": "collective-persona-operations", "action": "merged", "detail": "https://github.com/organvm/collective-persona-operations/pull/12"}
+{"repo": "styx-behavioral-art", "action": "merged", "detail": "https://github.com/organvm/styx-behavioral-art/pull/10"}
+{"repo": "salon-archive", "action": "merged", "detail": "https://github.com/organvm/salon-archive/pull/9"}
+{"repo": "ivi374ivi027-05", "action": "merged", "detail": "https://github.com/organvm/ivi374ivi027-05/pull/34"}
+{"repo": "organvm-mcp-server", "action": "merged", "detail": "https://github.com/organvm/organvm-mcp-server/pull/12"}
+{"repo": "the-actual-news", "action": "merged", "detail": "https://github.com/organvm/the-actual-news/pull/53"}
+{"repo": "koinonia-db", "action": "merged", "detail": "https://github.com/organvm/koinonia-db/pull/9"}
+{"repo": "commerce--meta", "action": "merged", "detail": "https://github.com/organvm/commerce--meta/pull/7"}
+{"repo": "system-dashboard", "action": "pr-open", "detail": "required checks ['test']; https://github.com/organvm/system-dashboard/pull/9"}
+{"repo": "pydantic-ai", "action": "merged", "detail": "https://github.com/organvm/pydantic-ai/pull/1"}
