@@ -24,6 +24,7 @@ artifacts:
   - {id: mirror, class: organ, location: organs/contributions/MIRROR.md, role: the generated public proof surface}
   - {id: ledger-cache, class: data, location: organs/contributions/ledger-cache.json, role: committed hub-ledger snapshot (offline beat source)}
   - {id: opportunities, class: data, location: organs/contributions/opportunities.json, role: the autopoietic pool — inward-derived outward opportunities (generated)}
+  - {id: career-portal-bridge, class: data, location: organs/representation/career-portal.yaml, role: live person-to-organization-to-repository ingress and receipt-backflow owner contract}
   - {id: organ-script, class: script, location: scripts/contributions-organ.py, role: the mirror/scout/estate/lifecycle generator (SPECVLVM)}
   - {id: heartbeat-rung, class: script, location: scripts/heartbeat-loop.sh, role: C_CONTRIB beat wiring (offline render every 12 beats)}
   - {id: params, class: param, location: institutio/governance/parameters.yaml, role: all LIMEN_CONTRIB* + LIMEN_BACKFLOW_MANIFEST knobs, declared}

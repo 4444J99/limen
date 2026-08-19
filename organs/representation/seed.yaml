@@ -1,0 +1,39 @@
+schema_version: "1.0"
+organ: "representation"
+repo: "organvm/limen"
+org: "organvm"
+metadata:
+  implementation_status: "BETA"
+  promotion_status: "BETA"
+description: >
+  Representation is Limen's owner surface for source-backed career, creator,
+  opportunity, and public-presence packets. The career/network doorway composes
+  existing corpus, portfolio, mail, application, relationship, contribution,
+  distribution, and provider owners without replacing them.
+produces:
+  - type: "career_portal_contract"
+    consumers:
+      - "organvm/application-pipeline"
+      - "organs/social"
+      - "organs/contributions"
+  - type: "bounded_action_authorization"
+    consumers:
+      - "organvm/application-pipeline"
+      - "organvm/universal-mail--automation"
+  - type: "representation_receipt_view"
+    consumers:
+      - "principal"
+      - "conducting-report"
+consumes:
+  - type: "canonical_identity_and_evidence"
+    source: "meta-organvm/organvm-corpvs-testamentvm + 4444j99/portfolio"
+  - type: "inbound_mail_and_delivery_receipts"
+    source: "organvm/universal-mail--automation"
+  - type: "opportunities_crm_and_submission_receipts"
+    source: "organvm/application-pipeline"
+  - type: "relationship_posture"
+    source: "organs/social"
+  - type: "external_repo_resonance_and_contribution_receipts"
+    source: "organs/observation/bifrons + organs/contributions"
+  - type: "distribution_receipts"
+    source: "organvm-vii-kerygma/social-automation + authenticated provider surfaces"
