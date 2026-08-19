@@ -23,6 +23,12 @@ def _validate_digest(value: str) -> str:
     return value
 
 
+def _validate_git_sha(value: str) -> str:
+    if len(value) != 40 or any(character not in "0123456789abcdef" for character in value):
+        raise ValueError("Git SHA must be a full lowercase SHA-1")
+    return value
+
+
 def _validate_opaque_id(value: str) -> str:
     if not 16 <= len(value) <= 128 or any(
         character not in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-" for character in value
@@ -80,19 +86,29 @@ class PrivacyConsentPolicyV1(PrimaMateriaModel):
 
 
 class ResourceClaimV1(PrimaMateriaModel):
-    schema_version: Literal["limen.resource_claim.v1"] = "limen.resource_claim.v1"
+    schema_version: Literal["limen.prima_materia_resource_claim.v1"] = "limen.prima_materia_resource_claim.v1"
     claim_id: str
+    source_instance_id: str
+    operation_id: str
     hydrated_inputs_bytes: int = Field(ge=0)
     workspace_bytes: int = Field(ge=0)
     temporary_expansion_bytes: int = Field(ge=0)
     output_bytes: int = Field(ge=0)
     encryption_chunking_bytes: int = Field(ge=0)
     rollback_bytes: int = Field(ge=0)
+    memory_bytes: int = Field(ge=0)
+    file_count: int = Field(ge=0)
+    network_bytes: int = Field(ge=0)
+    wall_time_seconds: int = Field(ge=1, le=2_592_000)
     effective_from: datetime
     effective_until: datetime
     rollback_until: datetime
 
-    _claim_id = field_validator("claim_id")(_validate_opaque_id)
+    _opaque_ids = field_validator(
+        "claim_id",
+        "source_instance_id",
+        "operation_id",
+    )(_validate_opaque_id)
     _times = field_validator(
         "effective_from",
         "effective_until",
@@ -157,14 +173,110 @@ class SourceAdapterV1(PrimaMateriaModel):
     cursor_schema_digest: _Digest
     completeness_predicate: str
     privacy_transform_digest: _Digest
-    resource_claim: ResourceClaimV1
+    claim_recipe: str
     recipe_version: str
     custody_target_refs: tuple[str, ...] = Field(min_length=1, max_length=32)
     restoration_predicate: str
 
     _source_id = field_validator("source_id")(_validate_opaque_id)
-    _registry = field_validator("adapter_id", "owner_ref", "recipe_version")(_validate_registry_key)
+    _registry = field_validator(
+        "adapter_id",
+        "owner_ref",
+        "claim_recipe",
+        "recipe_version",
+    )(_validate_registry_key)
     _digests = field_validator("cursor_schema_digest", "privacy_transform_digest")(_validate_digest)
+
+
+class FrozenRepositoryV1(PrimaMateriaModel):
+    repository_id: str
+    path_sha256: _Digest
+
+    _repository_id = field_validator("repository_id")(_validate_opaque_id)
+    _path = field_validator("path_sha256")(_validate_digest)
+
+
+class FrozenStorageRootV1(PrimaMateriaModel):
+    root_id: str
+    path_sha256: _Digest
+
+    _root_id = field_validator("root_id")(_validate_opaque_id)
+    _path = field_validator("path_sha256")(_validate_digest)
+
+
+class FrozenSourceInstanceV1(PrimaMateriaModel):
+    instance_id: str
+    source_id: str
+
+    _ids = field_validator("instance_id", "source_id")(_validate_opaque_id)
+
+
+class FrozenDeviceRoleV1(PrimaMateriaModel):
+    role_id: str
+    physical_device_sha256: _Digest
+
+    _role = field_validator("role_id")(_validate_registry_key)
+    _device = field_validator("physical_device_sha256")(_validate_digest)
+
+
+class FrozenWaveManifestV1(PrimaMateriaModel):
+    """One immutable denominator for a pair of independent λ audits."""
+
+    schema_version: Literal["limen.frozen_wave_manifest.v1"] = "limen.frozen_wave_manifest.v1"
+    wave_id: str
+    frozen_at: datetime
+    enumeration_complete: bool
+    repositories: tuple[FrozenRepositoryV1, ...] = Field(max_length=4096)
+    storage_roots: tuple[FrozenStorageRootV1, ...] = Field(max_length=4096)
+    source_instances: tuple[FrozenSourceInstanceV1, ...] = Field(min_length=1, max_length=8192)
+    device_roles: tuple[FrozenDeviceRoleV1, ...] = Field(max_length=64)
+    protected_exclusion_ids: tuple[str, ...] = Field(max_length=256)
+    protected_registry_digest: _Digest
+    source_registry_digest: _Digest
+    source_inventory_producer_digest: _Digest
+    lambda_rung_registry_digest: _Digest
+    remote_main_sha: str
+    installed_runtime_sha: str
+    control_plane_runtime_path_sha256: _Digest
+    control_plane_repository: str
+    control_plane_default_branch: str
+
+    _wave_id = field_validator("wave_id")(_validate_opaque_id)
+    _frozen_at = field_validator("frozen_at")(_validate_aware_datetime)
+    _protected = field_validator("protected_exclusion_ids")(
+        lambda values: tuple(_validate_registry_key(value) for value in values)
+    )
+    _registry_digests = field_validator(
+        "protected_registry_digest",
+        "source_registry_digest",
+        "source_inventory_producer_digest",
+        "lambda_rung_registry_digest",
+        "control_plane_runtime_path_sha256",
+    )(_validate_digest)
+    _control_shas = field_validator(
+        "remote_main_sha",
+        "installed_runtime_sha",
+    )(_validate_git_sha)
+    _control_registry = field_validator(
+        "control_plane_repository",
+        "control_plane_default_branch",
+    )(_validate_registry_key)
+
+    @model_validator(mode="after")
+    def denominator_is_unique_and_ordered(self) -> FrozenWaveManifestV1:
+        collections = (
+            ("repositories", tuple(item.repository_id for item in self.repositories)),
+            ("storage_roots", tuple(item.root_id for item in self.storage_roots)),
+            ("source_instances", tuple(item.instance_id for item in self.source_instances)),
+            ("device_roles", tuple(item.role_id for item in self.device_roles)),
+            ("protected_exclusions", self.protected_exclusion_ids),
+        )
+        for label, values in collections:
+            if len(values) != len(set(values)):
+                raise ValueError(f"{label} must contain unique identities")
+            if tuple(sorted(values)) != values:
+                raise ValueError(f"{label} must be sorted")
+        return self
 
 
 class TransformRecipeV1(PrimaMateriaModel):
@@ -177,8 +289,8 @@ class TransformRecipeV1(PrimaMateriaModel):
     config_digest: _Digest
     environment_digest: _Digest
     parameters: dict[str, Any] = Field(default_factory=dict)
-    randomness_declaration: str
-    time_declaration: str
+    randomness_declaration: str = Field(min_length=1, max_length=4096)
+    time_declaration: str = Field(min_length=1, max_length=4096)
     output_digests: tuple[_Digest, ...] = Field(min_length=1, max_length=4096)
     replay_class: ReplayClass
     semantic_equivalence_predicate: str | None = None
@@ -200,6 +312,8 @@ class TransformRecipeV1(PrimaMateriaModel):
             raise ValueError("semantic replay requires an equivalence predicate and preserved original outputs")
         if self.replay_class == "exact" and self.semantic_equivalence_predicate is not None:
             raise ValueError("exact replay must not substitute semantic equivalence")
+        if self.replay_class == "observable_only" and not self.original_output_refs:
+            raise ValueError("observable-only replay requires preserved original outputs")
         return self
 
 
@@ -288,7 +402,19 @@ class CompositionManifestV1(PrimaMateriaModel):
     ordering: Literal["observed_time", "effective_time", "explicit"]
     explicit_order: tuple[str, ...] = Field(default_factory=tuple, max_length=100_000)
     omissions: tuple[str, ...] = Field(default_factory=tuple, max_length=100_000)
+    decision_receipt_digests: tuple[_Digest, ...] = Field(
+        default_factory=tuple,
+        max_length=100_000,
+    )
     redaction_receipt_digests: tuple[_Digest, ...] = Field(default_factory=tuple, max_length=100_000)
+    failure_receipt_digests: tuple[_Digest, ...] = Field(
+        default_factory=tuple,
+        max_length=100_000,
+    )
+    custody_receipt_digests: tuple[_Digest, ...] = Field(
+        default_factory=tuple,
+        max_length=100_000,
+    )
     transform_recipe_ids: tuple[str, ...] = Field(default_factory=tuple, max_length=100_000)
     output_digests: tuple[_Digest, ...] = Field(min_length=1, max_length=100_000)
 
@@ -296,9 +422,13 @@ class CompositionManifestV1(PrimaMateriaModel):
     _event_ids = field_validator("selected_event_ids", "explicit_order")(
         lambda values: tuple(_validate_opaque_id(value) for value in values)
     )
-    _digests = field_validator("redaction_receipt_digests", "output_digests")(
-        lambda values: tuple(_validate_digest(value) for value in values)
-    )
+    _digests = field_validator(
+        "decision_receipt_digests",
+        "redaction_receipt_digests",
+        "failure_receipt_digests",
+        "custody_receipt_digests",
+        "output_digests",
+    )(lambda values: tuple(_validate_digest(value) for value in values))
 
     @model_validator(mode="after")
     def explicit_order_is_complete(self) -> CompositionManifestV1:
