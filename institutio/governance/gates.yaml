@@ -250,6 +250,28 @@ gates:
     scoped: false
     owner: social
     note: "Koinonia relationship-posture briefs stay schema-clean."
+  representation-records:
+    command: "python3 organs/representation/validate-representation.py --fleet --quiet"
+    paths: ["organs/representation/**"]
+    scoped: false
+    owner: representation
+    note: "Representation Substrate records and opportunities stay schema-clean."
+  representation-substrate-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_representation_substrate.py -q"
+    paths: ["organs/representation/**", "cli/tests/test_representation_substrate.py"]
+    owner: representation
+    note: "Representation Substrate unit and integration tests stay green."
+  observation-records:
+    command: "python3 organs/observation/validate-observation.py --fleet --quiet"
+    paths: ["organs/observation/**"]
+    scoped: false
+    owner: observatory
+    note: "Observation Organ governance, 5-primitive kernel mapping, and telemetry feed stay schema-clean."
+  observation-feed-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_observation_feed.py -q"
+    paths: ["cli/src/limen/observation/**", "scripts/observation-feed.py", "organs/observation/**", "cli/tests/test_observation_feed.py"]
+    owner: observatory
+    note: "Observation Organ autonomous self-feed loop unit and integration tests stay green."
 
   # ── apps (the work itself, not the fleet that keeps it) ─────────────────────
   danse-invariants:
