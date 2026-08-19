@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import os
 import selectors
+import signal
 import subprocess
 import threading
 import time
 from collections.abc import Callable
-from contextlib import ExitStack
+from contextlib import ExitStack, nullcontext, suppress
 from pathlib import Path
 from typing import Any
 
@@ -42,7 +43,6 @@ from limen.conduct.campaign_relay_process import (
     _live_relay_lanes,
     _process_start_identity,
     _reap_relay_process,
-    _spawn_relay_process,
     _startup_evidence,
     _terminalize_relay,
     _validate_control_event,
@@ -68,6 +68,204 @@ from limen.conduct.campaign_relay_state import (
 )
 from limen.conduct.models import CampaignRelayReceiptV1
 
+_CLEANUP_TIMEOUT_SECONDS = 60.0
+_TERMINATION_GRACE_SECONDS = 0.25
+_TERMINATION_KILL_WAIT_SECONDS = 1.0
+_TERMINAL_RECEIPT_RESERVE_SECONDS = 5.0
+
+
+def _relay_environment() -> dict[str, str]:
+    env = dict(os.environ)
+    for key in (
+        "LIMEN_HUMAN_PROTECTED",
+        "LIMEN_NATIVE_RUN_ID",
+        "LIMEN_NATIVE_SESSION_ID",
+        "LIMEN_PROVIDER_IDENTITY",
+        "LIMEN_RUN_ID",
+    ):
+        env.pop(key, None)
+    return env
+
+
+def _spawn_relay_process_group(
+    command: list[str],
+    *,
+    root: Path,
+    env: dict[str, str],
+    ack_descriptor: int,
+    control_descriptor: int,
+    exec_descriptor: int,
+) -> subprocess.Popen[bytes]:
+    """Spawn one provider wrapper as the leader of its own POSIX process group."""
+
+    if os.name != "posix" or not hasattr(os, "killpg"):
+        raise OSError("campaign relay process groups are unavailable")
+    return subprocess.Popen(
+        command,
+        cwd=root,
+        env=env,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        pass_fds=(ack_descriptor, control_descriptor, exec_descriptor),
+        start_new_session=True,
+    )
+
+
+def _close_descriptor(descriptor: int) -> None:
+    with suppress(OSError):
+        os.close(descriptor)
+
+
+def _process_group_is_absent(process_group: int) -> bool:
+    try:
+        os.killpg(process_group, 0)
+    except ProcessLookupError:
+        return True
+    except OSError:
+        return False
+    return False
+
+
+def _terminate_relay_process_group(
+    process: subprocess.Popen[bytes],
+    *,
+    expected_started: str | None,
+    process_identity: Callable[[int], str],
+    process_group_verified: bool,
+    deadline_monotonic: float,
+) -> bool:
+    """Bound and reap one exact provider group without signalling a reused live PID."""
+
+    process_group = process.pid
+    try:
+        live = process.poll() is None
+    except BaseException:  # noqa: BLE001 - cleanup must preserve lifecycle evidence
+        live = True
+    if live:
+        try:
+            current_group = os.getpgid(process.pid)
+            if current_group != process_group or (
+                expected_started is not None and process_identity(process.pid) != expected_started
+            ):
+                return False
+        except (CampaignRelayError, OSError):
+            return False
+        process_group_verified = True
+    if not process_group_verified:
+        return False
+
+    signalled = False
+    try:
+        os.killpg(process_group, signal.SIGTERM)
+        signalled = True
+    except ProcessLookupError:
+        signalled = True
+    except OSError:
+        pass
+    remaining = deadline_monotonic - time.monotonic()
+    if remaining > 0:
+        with suppress(BaseException):
+            process.wait(timeout=min(_TERMINATION_GRACE_SECONDS, remaining))
+
+    # Always signal the isolated group a second time: the wrapper may have exited
+    # while a descendant still owns startup pipes or launch authority.
+    try:
+        os.killpg(process_group, signal.SIGKILL)
+        signalled = True
+    except ProcessLookupError:
+        signalled = True
+    except OSError:
+        pass
+    remaining = deadline_monotonic - time.monotonic()
+    if remaining > 0:
+        with suppress(BaseException):
+            process.wait(timeout=min(_TERMINATION_KILL_WAIT_SECONDS, remaining))
+    try:
+        leader_reaped = process.poll() is not None
+    except BaseException:  # noqa: BLE001 - cleanup evidence stays bounded
+        leader_reaped = False
+    return signalled and (leader_reaped or _process_group_is_absent(process_group))
+
+
+def _rollback_relay_activation(
+    root: Path,
+    receipt: CampaignRelayReceiptV1,
+    *,
+    registration: Callable[..., tuple[str, int]],
+    deadline_monotonic: float,
+    activation_lock_held: bool = False,
+) -> CampaignRelayReceiptV1:
+    """Restore one exact successor session to dormant while holding its marker lock."""
+
+    if receipt.selected_agent is None or not receipt.selected_capabilities:
+        raise CampaignRelayError(
+            "relay_activation_rollback_failed",
+            "campaign relay activation identity is incomplete",
+        )
+    worktree = _relay_worktree(
+        root,
+        receipt.successor_slug,
+        deadline_monotonic=deadline_monotonic,
+    )
+    env = _relay_environment()
+    try:
+        lock = (
+            nullcontext()
+            if activation_lock_held
+            else _activation_registration_lock(
+                worktree,
+                deadline_monotonic=deadline_monotonic,
+            )
+        )
+        with lock:
+            current = _read_relay(
+                root,
+                receipt.relay_id,
+                deadline_monotonic=deadline_monotonic,
+            )
+            if (
+                current.state == "ready"
+                or current.state not in {"published", "indeterminate"}
+                or not _same_relay_identity(current, receipt)
+                or current.selected_agent != receipt.selected_agent
+                or current.selected_capabilities != receipt.selected_capabilities
+            ):
+                raise CampaignRelayError(
+                    "relay_activation_rollback_failed",
+                    "campaign relay activation identity changed before rollback",
+                )
+            _clear_activation_marker(worktree, receipt.relay_id)
+            registration(
+                root=root,
+                env=env,
+                agent=receipt.selected_agent,
+                capabilities=receipt.selected_capabilities,
+                session_id=receipt.successor_session_id,
+                worktree=worktree,
+                accepting_work=False,
+                deadline_monotonic=deadline_monotonic,
+            )
+            return _replace_relay(
+                root,
+                receipt.relay_id,
+                expected_states=frozenset({current.state}),
+                updates={"activation_response_sha256": None},
+                deadline_monotonic=deadline_monotonic,
+            )
+    except CampaignRelayError as exc:
+        if exc.code == "relay_activation_rollback_failed":
+            raise
+        raise CampaignRelayError(
+            "relay_activation_rollback_failed",
+            "campaign relay activation could not be restored to dormant",
+        ) from exc
+    except Exception as exc:
+        raise CampaignRelayError(
+            "relay_activation_rollback_failed",
+            "campaign relay activation could not be restored to dormant",
+        ) from exc
+
 
 def _reconcile_consumed_attempt(
     root: Path,
@@ -76,7 +274,9 @@ def _reconcile_consumed_attempt(
     process_identity: Callable[[int], str],
     registration: Callable[..., tuple[str, int]],
     deadline_monotonic: float | None = None,
+    cleanup_deadline_monotonic: float | None = None,
 ) -> RelayLaunch:
+    cleanup_deadline = cleanup_deadline_monotonic or deadline_monotonic
     if receipt.state == "ready":
         return RelayLaunch(receipt=receipt, launched=False)
     recovered = _recover_remote_ready(
@@ -85,15 +285,22 @@ def _reconcile_consumed_attempt(
         deadline_monotonic=deadline_monotonic,
     )
     if recovered is not None:
-        updates = recovered.model_dump(mode="json")
-        ready = _replace_relay(
-            root,
-            receipt.relay_id,
-            expected_states=frozenset({"launching", "registered", "published", "failed", "indeterminate"}),
-            updates=updates,
-            deadline_monotonic=deadline_monotonic,
-        )
-        return RelayLaunch(receipt=ready, launched=False)
+        provider_alive = False
+        if recovered.launch_pid is not None and recovered.launch_process_started is not None:
+            try:
+                provider_alive = process_identity(recovered.launch_pid) == recovered.launch_process_started
+            except CampaignRelayError:
+                provider_alive = False
+        if receipt.state == "reserved" or provider_alive:
+            updates = recovered.model_dump(mode="json")
+            ready = _replace_relay(
+                root,
+                receipt.relay_id,
+                expected_states=frozenset({"launching", "registered", "published", "failed", "indeterminate"}),
+                updates=updates,
+                deadline_monotonic=deadline_monotonic,
+            )
+            return RelayLaunch(receipt=ready, launched=False)
     if receipt.state == "indeterminate" and receipt.terminal_code == "relay_ready_publication_uncertain":
         provider_alive = False
         if receipt.launch_pid is not None and receipt.launch_process_started is not None:
@@ -130,38 +337,16 @@ def _reconcile_consumed_attempt(
                 )
                 return RelayLaunch(receipt=ready, launched=False)
 
-        rollback_ok = receipt.selected_agent is not None and bool(receipt.selected_capabilities)
-        if rollback_ok:
-            worktree = _relay_worktree(
-                root,
-                receipt.successor_slug,
-                deadline_monotonic=deadline_monotonic,
-            )
-            env = dict(os.environ)
-            for key in (
-                "LIMEN_HUMAN_PROTECTED",
-                "LIMEN_NATIVE_RUN_ID",
-                "LIMEN_NATIVE_SESSION_ID",
-                "LIMEN_PROVIDER_IDENTITY",
-                "LIMEN_RUN_ID",
-            ):
-                env.pop(key, None)
+        rollback_ok = False
+        if cleanup_deadline is not None:
             try:
-                with _activation_registration_lock(
-                    worktree,
-                    deadline_monotonic=deadline_monotonic,
-                ):
-                    _clear_activation_marker(worktree, receipt.relay_id)
-                    registration(
-                        root=root,
-                        env=env,
-                        agent=receipt.selected_agent,
-                        capabilities=receipt.selected_capabilities,
-                        session_id=receipt.successor_session_id,
-                        worktree=worktree,
-                        accepting_work=False,
-                        deadline_monotonic=deadline_monotonic,
-                    )
+                receipt = _rollback_relay_activation(
+                    root,
+                    receipt,
+                    registration=registration,
+                    deadline_monotonic=cleanup_deadline,
+                )
+                rollback_ok = True
             except CampaignRelayError:
                 rollback_ok = False
         terminal_code = failure_code if rollback_ok else "relay_activation_rollback_failed"
@@ -173,7 +358,7 @@ def _reconcile_consumed_attempt(
                 "activation_response_sha256": (None if rollback_ok else receipt.activation_response_sha256),
                 "terminal_code": terminal_code,
             },
-            deadline_monotonic=deadline_monotonic,
+            deadline_monotonic=cleanup_deadline,
         )
         return RelayLaunch(receipt=terminal, launched=False)
     if receipt.state in _TERMINAL_STATES:
@@ -186,16 +371,30 @@ def _reconcile_consumed_attempt(
             controller_alive = False
     if controller_alive:
         return RelayLaunch(receipt=receipt, launched=False)
+    terminal_code = "relay_controller_interrupted"
+    if receipt.state == "published":
+        if cleanup_deadline is None:
+            terminal_code = "relay_activation_rollback_failed"
+        else:
+            try:
+                receipt = _rollback_relay_activation(
+                    root,
+                    receipt,
+                    registration=registration,
+                    deadline_monotonic=cleanup_deadline,
+                )
+            except CampaignRelayError:
+                terminal_code = "relay_activation_rollback_failed"
     empty_stdout = _BoundedStreamDigest()
     empty_stderr = _BoundedStreamDigest()
     terminal = _terminalize_relay(
         root,
         receipt.relay_id,
         state="indeterminate",
-        code="relay_controller_interrupted",
+        code=terminal_code,
         stdout=empty_stdout,
         stderr=empty_stderr,
-        deadline_monotonic=deadline_monotonic,
+        deadline_monotonic=cleanup_deadline,
     )
     return RelayLaunch(receipt=terminal, launched=False)
 
@@ -205,7 +404,7 @@ def launch_reserved_relay(
     relay_id: str,
     *,
     timeout_seconds: float = _STARTUP_TIMEOUT_SECONDS,
-    process_factory: Callable[..., subprocess.Popen[bytes]] = _spawn_relay_process,
+    process_factory: Callable[..., subprocess.Popen[bytes]] = _spawn_relay_process_group,
     process_identity: Callable[[int], str] = _process_start_identity,
     lane_selector: Callable[[Path], tuple[str, ...]] = _live_relay_lanes,
     registration: Callable[..., tuple[str, int]] = _bounded_registration,
@@ -223,6 +422,8 @@ def launch_reserved_relay(
             "campaign relay startup timeout must be between 1 and 900 seconds",
         )
     deadline = startup_started + float(timeout_seconds)
+    cleanup_deadline = deadline + _CLEANUP_TIMEOUT_SECONDS
+    cleanup_action_deadline = cleanup_deadline - _TERMINAL_RECEIPT_RESERVE_SECONDS
     root = root.resolve()
     primary_root = _primary_checkout(
         root,
@@ -240,6 +441,7 @@ def launch_reserved_relay(
             process_identity=process_identity,
             registration=registration,
             deadline_monotonic=deadline,
+            cleanup_deadline_monotonic=cleanup_deadline,
         )
     recovered_ready = _recover_remote_ready(
         root,
@@ -286,6 +488,7 @@ def launch_reserved_relay(
                 process_identity=process_identity,
                 registration=registration,
                 deadline_monotonic=deadline,
+                cleanup_deadline_monotonic=cleanup_deadline,
             )
         return _reconcile_consumed_attempt(
             root,
@@ -293,6 +496,7 @@ def launch_reserved_relay(
             process_identity=process_identity,
             registration=registration,
             deadline_monotonic=deadline,
+            cleanup_deadline_monotonic=cleanup_deadline,
         )
     _deadline_timeout(deadline, float(timeout_seconds))
     live_lanes = lane_selector(root)
@@ -322,6 +526,7 @@ def launch_reserved_relay(
             process_identity=process_identity,
             registration=registration,
             deadline_monotonic=deadline,
+            cleanup_deadline_monotonic=cleanup_deadline,
         )
     try:
         published_attempt = _publish_remote_attempt(
@@ -351,7 +556,7 @@ def launch_reserved_relay(
             code=exc.code,
             stdout=_BoundedStreamDigest(),
             stderr=_BoundedStreamDigest(),
-            deadline_monotonic=deadline,
+            deadline_monotonic=cleanup_deadline,
         )
         return RelayLaunch(receipt=terminal, launched=False)
     if not published_attempt.won:
@@ -361,6 +566,7 @@ def launch_reserved_relay(
             process_identity=process_identity,
             registration=registration,
             deadline_monotonic=deadline,
+            cleanup_deadline_monotonic=cleanup_deadline,
         )
     try:
         _deadline_timeout(deadline, float(timeout_seconds))
@@ -372,7 +578,7 @@ def launch_reserved_relay(
             code=exc.code,
             stdout=_BoundedStreamDigest(),
             stderr=_BoundedStreamDigest(),
-            deadline_monotonic=deadline,
+            deadline_monotonic=cleanup_deadline,
         )
         return RelayLaunch(receipt=terminal, launched=False)
     control_reader, control_writer = os.pipe()
@@ -382,15 +588,7 @@ def launch_reserved_relay(
     os.set_inheritable(exec_writer, True)
     os.set_inheritable(ack_reader, True)
     ack_writer_open = True
-    env = dict(os.environ)
-    for key in (
-        "LIMEN_HUMAN_PROTECTED",
-        "LIMEN_NATIVE_RUN_ID",
-        "LIMEN_NATIVE_SESSION_ID",
-        "LIMEN_PROVIDER_IDENTITY",
-        "LIMEN_RUN_ID",
-    ):
-        env.pop(key, None)
+    env = _relay_environment()
     env.update(
         {
             "LIMEN_CAMPAIGN_RELAY_BASE": receipt.exact_remote_main,
@@ -431,12 +629,15 @@ def launch_reserved_relay(
             exec_descriptor=exec_writer,
         )
     except OSError:
-        os.close(control_reader)
-        os.close(control_writer)
-        os.close(exec_reader)
-        os.close(exec_writer)
-        os.close(ack_reader)
-        os.close(ack_writer)
+        for descriptor in (
+            control_reader,
+            control_writer,
+            exec_reader,
+            exec_writer,
+            ack_reader,
+            ack_writer,
+        ):
+            _close_descriptor(descriptor)
         ack_writer_open = False
         terminal = _terminalize_relay(
             root,
@@ -445,50 +646,76 @@ def launch_reserved_relay(
             code="relay_spawn_failed",
             stdout=stdout_evidence,
             stderr=stderr_evidence,
-            deadline_monotonic=deadline,
+            deadline_monotonic=cleanup_deadline,
         )
         return RelayLaunch(receipt=terminal, launched=True)
-    finally:
-        if "process" in locals():
-            os.close(ack_reader)
-            os.close(control_writer)
-            os.close(exec_writer)
-    if process.stdout is None or process.stderr is None:
-        os.close(control_reader)
-        os.close(exec_reader)
+    _close_descriptor(ack_reader)
+    _close_descriptor(control_writer)
+    _close_descriptor(exec_writer)
+
+    selector: selectors.BaseSelector | None = None
+    started: str | None = None
+    process_group_verified = False
+    nonready_cleaned = False
+    ready_path = False
+    drain_threads: list[threading.Thread] = []
+    activation_registration_guard = ExitStack()
+    activation_registration_guard_held = False
+
+    def finish_nonready(
+        code: str,
+        *,
+        state: str = "indeterminate",
+    ) -> RelayLaunch:
+        nonlocal ack_writer_open, nonready_cleaned
+        if selector is not None:
+            with suppress(BaseException):
+                selector.close()
+        _close_descriptor(control_reader)
+        _close_descriptor(exec_reader)
         if ack_writer_open:
-            os.close(ack_writer)
+            _close_descriptor(ack_writer)
             ack_writer_open = False
+        terminated = _terminate_relay_process_group(
+            process,
+            expected_started=started,
+            process_identity=process_identity,
+            process_group_verified=process_group_verified,
+            deadline_monotonic=cleanup_action_deadline,
+        )
+        activation_registration_guard.close()
+        if len(drain_threads) == 2:
+            _finish_drains(
+                (drain_threads[0], drain_threads[1]),
+                deadline=cleanup_action_deadline,
+            )
+        if not terminated:
+            code = "relay_process_termination_unverified"
+            state = "indeterminate"
         terminal = _terminalize_relay(
             root,
             relay_id,
-            state="indeterminate",
-            code="relay_startup_streams_missing",
+            state=state,
+            code=code,
             stdout=stdout_evidence,
             stderr=stderr_evidence,
-            deadline_monotonic=deadline,
+            deadline_monotonic=cleanup_deadline,
         )
-        _reap_relay_process(process)
+        nonready_cleaned = True
         return RelayLaunch(receipt=terminal, launched=True)
+
+    if process.stdout is None or process.stderr is None:
+        return finish_nonready("relay_startup_streams_missing")
+    try:
+        process_group_verified = os.getpgid(process.pid) == process.pid
+    except OSError:
+        return finish_nonready("relay_process_group_unavailable")
+    if not process_group_verified:
+        return finish_nonready("relay_process_group_unavailable")
     try:
         started = process_identity(process.pid)
     except CampaignRelayError:
-        os.close(control_reader)
-        os.close(exec_reader)
-        if ack_writer_open:
-            os.close(ack_writer)
-            ack_writer_open = False
-        terminal = _terminalize_relay(
-            root,
-            relay_id,
-            state="indeterminate",
-            code="relay_process_identity_unavailable",
-            stdout=stdout_evidence,
-            stderr=stderr_evidence,
-            deadline_monotonic=deadline,
-        )
-        _reap_relay_process(process)
-        return RelayLaunch(receipt=terminal, launched=True)
+        return finish_nonready("relay_process_identity_unavailable")
     try:
         _replace_relay(
             root,
@@ -501,22 +728,7 @@ def launch_reserved_relay(
             deadline_monotonic=deadline,
         )
     except CampaignRelayError as exc:
-        os.close(control_reader)
-        os.close(exec_reader)
-        if ack_writer_open:
-            os.close(ack_writer)
-            ack_writer_open = False
-        terminal = _terminalize_relay(
-            root,
-            relay_id,
-            state="indeterminate",
-            code=exc.code,
-            stdout=stdout_evidence,
-            stderr=stderr_evidence,
-            deadline_monotonic=deadline,
-        )
-        _reap_relay_process(process)
-        return RelayLaunch(receipt=terminal, launched=True)
+        return finish_nonready(exc.code)
     stdout_thread = threading.Thread(
         target=stdout_evidence.consume,
         args=(process.stdout,),
@@ -527,13 +739,22 @@ def launch_reserved_relay(
         args=(process.stderr,),
         daemon=True,
     )
-    stdout_thread.start()
-    stderr_thread.start()
-    os.set_blocking(control_reader, False)
-    os.set_blocking(exec_reader, False)
-    selector = selectors.DefaultSelector()
-    selector.register(control_reader, selectors.EVENT_READ, data="control")
-    selector.register(exec_reader, selectors.EVENT_READ, data="exec")
+    try:
+        stdout_thread.start()
+        drain_threads.append(stdout_thread)
+        stderr_thread.start()
+        drain_threads.append(stderr_thread)
+        os.set_blocking(control_reader, False)
+        os.set_blocking(exec_reader, False)
+        selector = selectors.DefaultSelector()
+        selector.register(control_reader, selectors.EVENT_READ, data="control")
+        selector.register(exec_reader, selectors.EVENT_READ, data="exec")
+    except (OSError, RuntimeError, ValueError):
+        return finish_nonready("relay_controller_setup_failed", state="failed")
+    except BaseException:
+        finish_nonready("relay_controller_setup_failed", state="failed")
+        raise
+    assert selector is not None
     control_buffer = bytearray()
     control_total = 0
     exec_buffer = bytearray()
@@ -545,8 +766,6 @@ def launch_reserved_relay(
     exec_eof = False
     selected_capabilities: tuple[str, ...] = ()
     worktree: Path | None = None
-    activation_registration_guard = ExitStack()
-    activation_registration_guard_held = False
 
     def startup_output_ceiling_crossed() -> bool:
         return stdout_evidence.output_ceiling_crossed() or stderr_evidence.output_ceiling_crossed()
@@ -791,11 +1010,13 @@ def launch_reserved_relay(
         drains_finished = (
             _finish_drains(
                 (stdout_thread, stderr_thread),
-                deadline=deadline,
+                deadline=cleanup_action_deadline,
             )
             if terminal_code is None
             else False
         )
+        if terminal_code is None and time.monotonic() >= deadline:
+            terminal_code = "relay_startup_timeout"
         evidence = _startup_evidence(stdout_evidence, stderr_evidence)
         output_truncated = bool(evidence["startup_stdout_truncated"] or evidence["startup_stderr_truncated"])
         output_read_failed = stdout_evidence.read_failed() or stderr_evidence.read_failed()
@@ -895,6 +1116,7 @@ def launch_reserved_relay(
                             },
                             deadline_monotonic=deadline,
                         )
+                        ready_path = True
                         return RelayLaunch(receipt=ready, launched=True)
                     except CampaignRelayError as exc:
                         terminal_code = exc.code
@@ -903,55 +1125,20 @@ def launch_reserved_relay(
                             and not ready_published
                             and terminal_code != "relay_ready_publication_uncertain"
                         ):
-                            rollback_ok = True
                             try:
-                                if activation_registration_guard_held:
-                                    _clear_activation_marker(worktree, relay_id)
-                                    registration(
-                                        root=root,
-                                        env=env,
-                                        agent=current.selected_agent,
-                                        capabilities=selected_capabilities,
-                                        session_id=current.successor_session_id,
-                                        worktree=worktree,
-                                        accepting_work=False,
-                                        deadline_monotonic=deadline,
-                                    )
-                                else:
-                                    with _activation_registration_lock(
-                                        worktree,
-                                        deadline_monotonic=deadline,
-                                    ):
-                                        _clear_activation_marker(worktree, relay_id)
-                                        registration(
-                                            root=root,
-                                            env=env,
-                                            agent=current.selected_agent,
-                                            capabilities=selected_capabilities,
-                                            session_id=current.successor_session_id,
-                                            worktree=worktree,
-                                            accepting_work=False,
-                                            deadline_monotonic=deadline,
-                                        )
+                                _rollback_relay_activation(
+                                    root,
+                                    current,
+                                    registration=registration,
+                                    deadline_monotonic=cleanup_deadline,
+                                    activation_lock_held=activation_registration_guard_held,
+                                )
                             except CampaignRelayError:
-                                rollback_ok = False
+                                terminal_code = "relay_activation_rollback_failed"
                             finally:
                                 if activation_registration_guard_held:
                                     activation_registration_guard.close()
                                     activation_registration_guard_held = False
-                            if rollback_ok:
-                                try:
-                                    _replace_relay(
-                                        root,
-                                        relay_id,
-                                        expected_states=frozenset({"published"}),
-                                        updates={"activation_response_sha256": None},
-                                        deadline_monotonic=deadline,
-                                    )
-                                except CampaignRelayError:
-                                    rollback_ok = False
-                            if not rollback_ok:
-                                terminal_code = "relay_activation_rollback_failed"
             else:
                 terminal_code = "relay_exec_identity_changed"
         if activation_registration_guard_held:
@@ -969,24 +1156,35 @@ def launch_reserved_relay(
             )
         if process.poll() is not None and not exec_pending:
             terminal_state = "failed"
-        terminal = _terminalize_relay(
-            root,
-            relay_id,
+        return finish_nonready(
+            terminal_code,
             state=terminal_state,
-            code=terminal_code,
-            stdout=stdout_evidence,
-            stderr=stderr_evidence,
-            deadline_monotonic=deadline,
         )
-        return RelayLaunch(receipt=terminal, launched=True)
     finally:
-        activation_registration_guard.close()
-        selector.close()
-        os.close(control_reader)
-        os.close(exec_reader)
+        with suppress(BaseException):
+            selector.close()
+        _close_descriptor(control_reader)
+        _close_descriptor(exec_reader)
         if ack_writer_open:
-            os.close(ack_writer)
-        _reap_relay_process(process)
+            _close_descriptor(ack_writer)
+        if ready_path:
+            activation_registration_guard.close()
+            _reap_relay_process(process)
+        elif not nonready_cleaned:
+            _terminate_relay_process_group(
+                process,
+                expected_started=started,
+                process_identity=process_identity,
+                process_group_verified=process_group_verified,
+                deadline_monotonic=cleanup_action_deadline,
+            )
+            activation_registration_guard.close()
+            _finish_drains(
+                (stdout_thread, stderr_thread),
+                deadline=cleanup_action_deadline,
+            )
+        else:
+            activation_registration_guard.close()
 
 
 def discover_ready_relay(
@@ -1046,7 +1244,10 @@ def discover_ready_relay(
             "campaign relay latest-ready ref names a different workstream",
         )
     receipt_name, _lock_name = _relay_names(receipt.relay_id)
-    with _open_store(root) as store:
+    with _open_store(
+        root,
+        deadline_monotonic=deadline_monotonic,
+    ) as store:
         local_receipt = _read_receipt(store, receipt_name)
     if local_receipt is not None:
         if not _same_relay_identity(local_receipt, receipt) and not (
