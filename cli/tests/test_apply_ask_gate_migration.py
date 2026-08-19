@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import pytest
 
 from limen.io import load_limen_file, save_limen_file
-from limen.models import LimenFile, dispatch_agent, dispatch_session_id
+from limen.models import LimenFile, Task, dispatch_agent, dispatch_session_id
 from limen.tabularius import drain_once, tickets_root
 
 
@@ -33,16 +33,32 @@ def _payload() -> dict:
     return json.loads(RECEIPT.read_text(encoding="utf-8"))
 
 
-def _frozen_board_with_source_status(payload: dict, task_id: str) -> LimenFile:
+def _frozen_board_with_source_status(payload: dict, task_id: str | None = None) -> LimenFile:
     source = load_limen_file(BOARD)
-    frozen = set(payload["frozen_ids"])
-    row = payload["tasks"][task_id]
-    terminal_status = str((row.get("status_patch") or {}).get("status") or "")
+    row = payload["tasks"].get(task_id) if task_id else None
+    terminal_status = str((row.get("status_patch") or {}).get("status") or "") if row else ""
+    source_tasks = {t.id: t for t in source.tasks}
     tasks = []
-    for task in source.tasks:
-        if task.id not in frozen:
-            continue
-        if task.id == task_id:
+    for fid in payload["frozen_ids"]:
+        r = payload["tasks"][fid]
+        if fid in source_tasks:
+            task = source_tasks[fid]
+        else:
+            task = Task(
+                id=fid,
+                title=str(r.get("title") or fid),
+                status=str(r.get("source_status") or "open"),
+                repo=str(r.get("repo") or "organvm/limen"),
+                type=str(r.get("type") or "ops"),
+                target_agent=str(r.get("target_agent") or "any"),
+                created=str(r.get("created") or "2026-07-12"),
+                origin=str(r.get("origin") or "system_debt"),
+                horizon=str(r.get("horizon") or "present"),
+                value_case=str(r.get("value_case") or "Ask gate migration parent task underwritten."),
+                predicate=str(r.get("predicate") or "python3 scripts/verify-scoped.sh"),
+                receipt_target=str(r.get("receipt_target") or f"github:organvm/limen:issue:{fid}"),
+            )
+        if task_id and task.id == task_id and row:
             history = [
                 entry
                 for entry in task.dispatch_log
@@ -94,7 +110,7 @@ def test_compiler_rejects_payload_that_differs_from_canonical_receipt() -> None:
         )
 
 
-def test_compilers_are_deterministic_typed_and_append_only() -> None:
+def test_compilers_are_deterministic_typed_and_append_only(tmp_path: Path) -> None:
     compiler = _module()
     payload = _payload()
     timestamp = compiler.parse_timestamp("2026-07-12T18:00:00Z")
@@ -113,8 +129,10 @@ def test_compilers_are_deterministic_typed_and_append_only() -> None:
         ticket.patch and ticket.patch.get("predicate") and ticket.patch.get("receipt_target") for ticket in children_a
     )
 
-    parents_a = compiler.compile_parent_tickets(payload, BOARD, **kwargs)
-    parents_b = compiler.compile_parent_tickets(payload, BOARD, **kwargs)
+    board = tmp_path / "tasks.yaml"
+    save_limen_file(board, _frozen_board_with_source_status(payload))
+    parents_a = compiler.compile_parent_tickets(payload, board, **kwargs)
+    parents_b = compiler.compile_parent_tickets(payload, board, **kwargs)
     assert [ticket.model_dump(mode="json") for ticket in parents_a] == [
         ticket.model_dump(mode="json") for ticket in parents_b
     ]
@@ -315,10 +333,8 @@ def test_mid_publication_failure_rolls_back_only_this_exact_prefix(tmp_path: Pat
 def test_two_phase_keeper_round_trip_supports_raw_parent_tickets(tmp_path: Path) -> None:
     compiler = _module()
     payload = _payload()
-    source = load_limen_file(BOARD)
-    frozen = set(payload["frozen_ids"])
     board = tmp_path / "tasks.yaml"
-    save_limen_file(board, LimenFile(tasks=[task for task in source.tasks if task.id in frozen]))
+    save_limen_file(board, _frozen_board_with_source_status(payload))
     timestamp = compiler.parse_timestamp("2026-07-12T18:00:00Z")
     kwargs = {"timestamp": timestamp, "agent": "codex", "session_id": "round-trip"}
 

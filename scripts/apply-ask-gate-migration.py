@@ -176,7 +176,7 @@ def effective_parent_predicate(task_id: str, row: dict[str, Any]) -> str:
     exact_receipt = f'test "$({exact_search})" -gt 0'
     if "scripts/ship-gate.py --check" in predicate:
         ship_gate = shlex.join(["python3", "scripts/ship-gate.py", "--check", "--task", task_id])
-        return f"{ship_gate} && {exact_receipt}"
+        return f"bash -lc {shlex.quote(f'{ship_gate} && {exact_receipt}')}"
     if "gh api" in predicate and "gh run list" in predicate:
         workflow_match = re.search(r"--workflow\s+([A-Za-z0-9_.-]+)", predicate)
         if workflow_match is None:
@@ -205,7 +205,7 @@ def effective_parent_predicate(task_id: str, row: dict[str, Any]) -> str:
                 ".[0].headSha",
             ]
         )
-        return f'{exact_receipt} && test "$({main_head})" = "$({green_head})"'
+        return f"bash -lc {shlex.quote(f'{exact_receipt} && test \"$({main_head})\" = \"$({green_head})\"')}"
     if "bash -lc" in predicate or "&&" in predicate or "||" in predicate:
         raise MigrationError(f"parent {task_id!r} has an unrecognized compound task-PR predicate")
     return exact_receipt
