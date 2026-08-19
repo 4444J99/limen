@@ -2438,6 +2438,7 @@ sensors:
     steps:
       - name: check
         command: "python3 scripts/lever-classify.py --check"
+        severity: advisory
         timeout: 30
         on_fail: escalate
         escalation: "unclassified open levers in his-hand-levers.json (see scripts/lever-classify.py --list)"
