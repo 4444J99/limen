@@ -63,7 +63,7 @@ jobs:
         working-directory: web/worker
 
       - name: Deploy exact main Worker
-        run: npm run deploy -- --message "exact-main:${GITHUB_SHA}"
+        run: npm run deploy -- --message "exact-main:${GITHUB_SHA}" --var "LIMEN_CONDUCT_RUNTIME_GIT_SHA:${GITHUB_SHA}"
         working-directory: web/worker
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
