@@ -29,9 +29,7 @@ from limen.conduct.campaign_relay import (
     reserve_relay,
 )
 from limen.conduct.campaign_relay_process import _bounded_registration
-=======
 from limen.conduct.campaign_relay_protocol import _spawn_relay_process_group
->>>>>>> f2b8c0146 (fix(conduct): close relay lifecycle cleanup gaps)
 from limen.conduct.campaign_relay_state import _read_relay, _replace_relay
 from limen.conduct.models import CampaignRelayReceiptV1
 from limen.workstream_contract import RECEIPT_MODULES, new_contract
@@ -62,6 +60,7 @@ def _spawn_fixture_relay_process(
             control_descriptor,
             exec_descriptor,
         ),
+        start_new_session=True,
     )
 
 
@@ -269,7 +268,6 @@ def test_full_relay_exec_proof_closes_while_keepalive_remains_live(
 
     def spawn(command, **kwargs):
         command = [str(ROOT / "scripts" / "start-worktree-session.sh"), *command[1:]]
-<<<<<<< HEAD
         return _spawn_fixture_relay_process(command, **kwargs)
 
     monkeypatch.setenv("LIMEN_AGENT", "codex")
