@@ -41,12 +41,18 @@ NOW = datetime(2026, 7, 18, 15, 0, tzinfo=timezone.utc)
 def storage_claim(identifier: str = "storageClaimIdentifier01") -> StorageEnvelopeClaimV1:
     return StorageEnvelopeClaimV1(
         claim_id=identifier,
+        source_instance_id="sourceInstanceId01",
+        operation_id="operationIdentifier01",
         hydrated_inputs_bytes=1,
         workspace_bytes=2,
         temporary_expansion_bytes=3,
         output_bytes=4,
         encryption_chunking_bytes=5,
         rollback_bytes=6,
+        memory_bytes=1024,
+        file_count=10,
+        network_bytes=1024,
+        wall_time_seconds=3600,
         effective_from=NOW,
         effective_until=NOW + timedelta(hours=1),
         rollback_until=NOW + timedelta(hours=2),
