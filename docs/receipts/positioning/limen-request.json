@@ -1,0 +1,15 @@
+{
+  "schema_version": "limen.positioning_flagship_receipt_request.v1",
+  "flagship_id": "limen",
+  "repository": "organvm/limen",
+  "repository_path": "/Users/4jp/Workspace/.worktrees/limen-psp-omega-lane-proof-architecture",
+  "expected_head": "9c8a87215962da131059ab63bd95a376f79891c2",
+  "predicate": {
+    "argv": ["bash", "scripts/verify-whole.sh"],
+    "timeout_seconds": 600
+  },
+  "limitations": [
+    "Internal operation is not customer adoption.",
+    "Task counts are dated snapshots, not reliability or outcome rates."
+  ]
+}
