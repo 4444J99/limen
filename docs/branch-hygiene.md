@@ -10,7 +10,7 @@ empty-branch-is-a-todo), so they are **kept, never auto-deleted** — this is th
 location instead of hanging invisibly.
 Resolve each: open a PR and land it, or delete the branch by hand if the intention is abandoned.
 
-## Live-work branches (539) — decide each
+## Live-work branches (573) — decide each
 
 - `_pr198` — 4cd0dbaa9 fix(ci): heal main CI-poison — remove dead `import time` in dispatch.py (F401)
 - `agent/codex-sessions-adapter-0713` — 4f56aa95a fix(prompt): adapt Codex session records exactly
@@ -26,7 +26,7 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `capture/main-2026-07-08T21-07-28Z` — 672c21c1c capture: off-disk sync 2026-07-08T21:07:28Z (main behind origin → side ref, HEAD untouched)
 - `capture/main-2026-07-16T04-48-58Z` — a0bdb5593 capture: off-disk sync 2026-07-16T04:48:58Z (main behind origin → side ref, HEAD untouched)
 - `capture/main-2026-08-09-offdisk-priority` — a6aea4a76 capture: autonomic off-disk sync 2026-08-09T03:08:50Z
-- `chore/danse-his-hand-closeout-20260803` — 8c11047e8 chore: home danse artistic approval lever
+- `chore/lesson-harvest-tranche-5` — 12d57ab73 chore(lesson-harvest): tranche 5 — final 22 sessions; claude backlog DRAINED (0/97, check exit 0)
 - `chore/mail-keyed-path` — 132602a5d fix(mail): make the required Gmail credential fail LOUD + wire the Gmail IMAP archiver into the beat
 - `chore/pii-containment-limen-scrub` — 59a109c8e chore(security): correct PII-containment doctrine — surgical-by-default, no unique work deleted
 - `chore/ruff-format-cli-tests` — bbd9874a3 heal(tests): fix 3 non-hermetic/mismatched cli tests breaking main pr-gate
@@ -34,14 +34,19 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `codex/claude-permission-preflight-0713` — 2597ad485 fix(claude): preflight unattended permission conflicts
 - `codex/claude-projects-adapter-20260713` — b0c3676ac fix(prompt-corpus): narrow alias target type for mypy
 - `codex/codex-attachments-gap-0713` — c33b9a4f4 fix(prompt): admit exact Codex attachment parents
-- `codex/discovery-disposition-ledger-20260712` — 6f2c93979 Merge remote-tracking branch 'origin/main' into codex/discovery-disposition-ledger-20260712
 - `codex/epoch-closeout-20260714` — ddcb50060 refactor(session): compose bounded continuation modules
 - `codex/financial-codex-finish-0704` — 65f20fcb2 limen: add financial obligation action plan
 - `codex/limen-main-trench-20260628` — c5fb867f3 limen: preserve overnight autonomous receipts
 - `codex/network-substrate-healing-20260628` — 5ba52e5d0 capture: autonomic off-disk sync 2026-06-29T10:39:58Z
+- `codex/notification-routing-2122` — 99d9f62d0 fix(notify): settle disabled and corrupt states
 - `codex/private-board-bootstrap-cli-20260810` — 7f5512829 fix: enforce worker body limits on actual bytes
 - `codex/private-board-projection-20260810-format` — 6591389b8 style: format private board helpers
 - `codex/progress-universe-0713` — 45a7aa40a docs(cli): document progress ledger command
+- `codex/psp-c00-relay-2026-08-10` — 1357eb603 docs(positioning): correct W07 continuation gate
+- `codex/psp-p00-w02-validator` — 8e20ada9c fix(positioning): bound phase issue recovery
+- `codex/psp-p00-w04-contracts` — e8e5d5bfc docs(positioning): name phase proof predicates
+- `codex/psp-p02-w03-final-review-correction` — 95cadbdfd docs(positioning): refresh final flagship relay
+- `codex/resource-graph-admission-1765` — 93bd5340c style: format broker admission guard
 - `codex/resource-safe-closeout` — d682600e2 limen: format lifecycle pressure tests
 - `codex/runtime-probe-retry-0713` — 6f0307fc6 Merge remote-tracking branch 'origin/main' into codex/runtime-probe-retry-0713
 - `codex/safe-storage-reclaim-20260709` — 49bd86b75 reclaim: preserve and reap safe storage roots
@@ -57,7 +62,6 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `discover-organvm-browser-state` — 7fb6478b9 docs: preserve gens discovery thesis
 - `discovery-organvm-palimpsest` — 738089502 feat: discover organvm/palimpsest and add to value-repos
 - `docs/board-partition-verify-20260808014448` — b254c2793 docs(verify): the stale count was 15, and a PR rollup reports failures that pass
-- `docs/charles-cotton-summer` — 0b4e24c63 docs(charles): deliver trilogy as Word documents
 - `docs/charles-downs-style-archive` — 738e46848 test: avoid dynamic URL regular expressions
 - `docs/covenant-agent-docs` — dc7ecd517 docs(covenant): keeper law on every agent surface — AGENTS/GEMINI clauses + parity assertions + IF entry
 - `docs/diurnal-20260801100329` — e57536b7b docs(diurnal): 2026-08-01 INDEX
@@ -66,16 +70,43 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `docs/diurnal-20260802100422` — 72f04e7f9 docs(diurnal): 2026-08-02 INDEX
 - `docs/diurnal-20260806014825` — 2ab04fb82 docs(diurnal): 2026-08-05 INDEX
 - `docs/diurnal-20260807012631` — 13797b235 docs(diurnal): 2026-08-06 INDEX
+- `docs/diurnal-20260813000917` — 08aef0e88 docs(diurnal): 2026-08-12 INDEX
+- `docs/diurnal-20260815000819` — b0cf837c6 docs(diurnal): 2026-08-14 INDEX
 - `docs/diurnal-first-live-day` — 3c8d8480d docs(diurnal): day one — the organ's first emission against the live body
 - `docs/enc1101-eot-catchalls-20260804` — d86a575dd capture(sync-release): preserve parked dirt before unpark [skip ci]
+- `docs/estate-census-observation-20260812221211` — fa5e42b68 docs(fleet): record estate census observation (issues=2029, branches=11265)
+- `docs/estate-census-observation-20260813225521` — 08a95642e docs(fleet): record estate census observation (issues=2400, branches=11298)
+- `docs/estate-census-observation-20260815005848` — 2053e8d4c docs(fleet): record estate census observation (issues=2226, branches=11361)
 - `docs/gitvs-pr-debt-zero-20260809` — 4bdf960a8 capture: autonomic off-disk sync 2026-08-09T16:54:54Z
 - `docs/pr-debt-observation-20260806033359` — 7739086a4 docs(gitvs): record open-PR debt observation (1293 open)
 - `docs/pr-debt-observation-20260807005128` — f62f053bd docs(gitvs): record open-PR debt observation (1297 open)
+- `docs/pr-debt-observation-20260812180615` — 25c2c5aa0 docs(gitvs): record open-PR debt observation (1188 open)
+- `docs/pr-debt-observation-20260814134056` — ab9002c11 docs(gitvs): record open-PR debt observation (1205 open)
+- `docs/pr-debt-observation-20260815121016` — d5c2b29e6 docs(gitvs): record open-PR debt observation (1225 open)
 - `docs/quicken-residue` — 1890688bb docs: QUICKEN residue — irreducible human atoms (daemon capture)
 - `docs/reap-acceptance-0709-final-20260709115323` — 00cd21cee docs: accept reap of final aged straggler (4th in-session round, standing grant noted) — operator in-session
 - `docs/reap-acceptance-0709-final2-20260709115636` — cdef65734 docs: accept reap of final aged straggler (4th in-session round, standing grant noted) — operator in-session
 - `docs/session-contention-incident-20260809034540` — 28f68b44c docs(contention): record session-contention incident (18 total)
-- `docs/settings-estate-leftovers-20260806213824` — 1bc09bddc docs(plan): Settings-estate leftovers: heal the keystone PR, expand the predicates, evolve the sensors
+- `docs/session-contention-incident-20260812034533` — 987c86d2b docs(contention): record session-contention incident (22 total)
+- `docs/session-contention-incident-20260812123526` — 7610f9573 docs(contention): record session-contention incident (24 total)
+- `docs/session-contention-incident-20260812180804` — d802bf713 docs(contention): record session-contention incident (25 total)
+- `docs/session-contention-incident-20260812221242` — 196d269e4 docs(contention): record session-contention incident (26 total)
+- `docs/session-contention-incident-20260813024505` — b2754fce5 docs(contention): record session-contention incident (26 total)
+- `docs/session-contention-incident-20260813164557` — 0971e7de2 docs(contention): record session-contention incident (28 total)
+- `docs/session-contention-incident-20260813225552` — 2572693f0 docs(contention): record session-contention incident (30 total)
+- `docs/session-contention-incident-20260814002211` — 77239a36c docs(contention): record session-contention incident (32 total)
+- `docs/session-contention-incident-20260814042143` — 0df205fa5 docs(contention): record session-contention incident (34 total)
+- `docs/session-contention-incident-20260814093422` — c91f7770f docs(contention): record session-contention incident (36 total)
+- `docs/session-contention-incident-20260814134213` — ecfc673d0 docs(contention): record session-contention incident (38 total)
+- `docs/session-contention-incident-20260814181017` — 2c838d09b docs(contention): record session-contention incident (26 total)
+- `docs/session-contention-incident-20260815005925` — 7d23eac8e docs(contention): record session-contention incident (29 total)
+- `docs/session-contention-incident-20260815033009` — e11869292 docs(contention): record session-contention incident (32 total)
+- `docs/session-contention-incident-20260815075714` — f9d7c9989 docs(contention): record session-contention incident (36 total)
+- `docs/session-contention-incident-20260815121136` — bb86b65cd docs(contention): record session-contention incident (41 total)
+- `docs/session-contention-incident-20260815164503` — 1f6b4d764 docs(contention): record session-contention incident (47 total)
+- `docs/session-contention-incident-20260815203149` — 61781ab43 docs(contention): record session-contention incident (54 total)
+- `docs/session-contention-incident-20260817192658` — 76b576627 docs(contention): record session-contention incident (34 total)
+- `docs/sync-captured-state-20260815` — 7c133f14f capture(sync-release): preserve parked dirt before unpark [skip ci]
 - `docs/uig-planfill` — 8bf193b63 docs(plan): R2 harvest folded — six lane suggestions, six dispositions, zero parked
 - `feat-58-referral-program` — b4c56d9db chore: fix validation errors in tasks.yaml
 - `feat-59-waitlist-landing` — 42e1dea48 feat: Closed beta waitlist landing page - pre-launch acquisition funnel
@@ -83,15 +114,14 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `feat-62-tiered-verification` — b4c56d9db chore: fix validation errors in tasks.yaml
 - `feat-63-ugc-moderation` — b4c56d9db chore: fix validation errors in tasks.yaml
 - `feat/bhagavad-gita-arcs-5-8` — 13a810c35 feat(studium): author metamorphoses books 2 and 3 arcs
+- `feat/board-consumer-custody-routing` — 6b8354c11 feat(board): route every board reader through custody, and make missing custody unswallowable
 - `feat/board-writer-audit-gate` — 1851d9c2d fix(covenant): anchor baseline path to script location, fail-open on absent baseline
 - `feat/censor-monthly-tier` — a89dd0483 censor: add MONTHLY cadence (2592000s) to TIER_SECONDS
-- `feat/charles-cotton-preview` — b19f02f8f fix: harden cotton closeout invariants
 - `feat/charles-rose-toners-post` — 876e6033b Add Charles rose toners closeout relay capsule
 - `feat/clavis-credential-provisioning` — 028faaa95 feat(clavis): credential-provisioning organ — own the service account + its one vault as code
 - `feat/cli-watch-subcommand` — 7f17d103e feat(cli): wire watch subcommand with --compact/--once modes
 - `feat/conversion-funnel` — 0eba9cca2 feat(conversion): measure the public face — traffic collector + funnel leak-diagnosis
 - `feat/covenant-attribution-sensor` — ac0489077 feat(covenant): attribution sensor — every memory write must carry a keeper receipt
-- `feat/covenant-registry-and-checker` — 360b4edfe fix(covenant): ruff format test_check_covenant.py
 - `feat/danse-screendance-leaf-20260802` — 911410ba4 test(danse): avoid secret-like fixture flow
 - `feat/depends-on-sequencer` — b83a5d0bb feat: seq-depends.py — append depends_on edges via the keeper (concern 11)
 - `feat/enactment-audit-efficacy-rung` — f2eb45cc6 feat(enactment): a third audit axis — a rung can be wired, live, and fail on every single beat
@@ -101,7 +131,6 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `feat/ingest-styx-issues` — 29326f020 capture(sync-release): preserve parked dirt before unpark [skip ci]
 - `feat/mail-story-mining-20260706` — d76726f37 feat: complete mail story mining outputs
 - `feat/memoria-ticket-lane` — 0abce446c fix(memoria): ruff format memoria.py and test_memoria.py
-- `feat/observatory-complete` — ca4a3df41 feat(observatory): R5 — CHARTER complete (zero residual) + doctor proves the 5-stage spine
 - `feat/outbound-valve-registry` — c281b2979 feat: tiered outbound valve registry (concern 4) — all tiers coexist, configurable
 - `feat/receipt-classifier` — 45672027f feat: receipt-classifier.py — flag receipt-only diffs behind shipped-X claims (concern 9)
 - `feat/session-cadence-ceiling` — 37296f149 feat(arms-agents): guard the cadence CEILING, not the literal string "fable"
@@ -133,12 +162,14 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `fix/616-format` — e020757ce style: ruff format test_corpus_command_center.py (CI format-check gate)
 - `fix/application-funnel-dormant` — 964772922 fix(funnel): the outbound job funnel was dormant on a path miss
 - `fix/autonomy-timegate-throughput-correction-v2` — 41ab3e915 fix: disable generated cleanup in reclaim tranche
+- `fix/ci-red-disposition-ledger` — a46b1b8d4 capture(sync-release): preserve parked dirt before unpark [skip ci]
 - `fix/closeout-reconcile-effector` — 1aade249b feat(censor): reconcile-closeouts effector — home HARD findings via insight-route
 - `fix/cloudflare-do-plan-mismatch-20260809` — 845152da1 fix(conduct): report storage refusal without billing inference
 - `fix/dispatch-admission-ci-768` — 96f6c10b6 Merge remote-tracking branch 'origin/main' into fix/dispatch-admission-ci-768
 - `fix/fork-safety-predicate` — 09b6eb0cf style(fork-safety): ruff format the predicate + its test
 - `fix/guard-unresolved-model` — 625ce323e fix(arms-agents): an unresolvable session model becomes a third state that speaks
 - `fix/heartbeat-refresh-web-wedge` — 0a512024e fix(heartbeat): stop refresh-web piping into tail — it wedges the daemon (regression reintroduced in loop refactor)
+- `fix/hospes-heal-work-loan-underwriting` — c608db294 capture(sync-release): preserve parked dirt before unpark [skip ci]
 - `fix/ianva-secret-redaction` — c67b98892 fix(ianva): write enableBearerAuth explicitly — loopback /mcp was 401ing every agent
 - `fix/limen-typing-0703` — 7b4435181 docs(gitvs): record open-PR debt observation (1307 open, untyped 0)
 - `fix/needs-human-truth` — ed62e484e feat(board): beat-wire the needs_human reclassify pass (0g6) — visibility + FLIP valve
@@ -151,6 +182,9 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `fix/routines-freshness-budget-and-defect-clock` — f8665b095 fix(organ-health): ROUTINES read down for 5.5 of every 6 hours of correct operation
 - `fix/self-load-above-the-governor-is-declared` — 3288f9b53 fix(beat): the self-load rung acting during an autonomy pause is now a DECISION, not an accident
 - `fix/settles-trailer-test-not-universal` — fdc22a722 fix(tests): the Claude-Session trailer-parser gap is per-commit, not universal
+- `fix/tcc-cure-cadence-and-verdict` — 6f3911dde fix(tcc): give the shipped bundle-identity cure a cadence, and stop the probe saying UNRESOLVED
+- `fix/tcc-versions-enclosure` — 72b66f76a fix(sensors): enclose the Claude Code version store in its bundle — kill the rotating "2.1.233" TCC identity (#1703)
+- `fix/vigilia-fast-sample-2120` — b1d148bf2 fix: align fast-sample shutdown and timeout state
 - `flywheel-merge-heal` — f7341bf93 merge origin/main — pick up ianva census heal (#1946) and merge-ready removal-ban heal (#1962)
 - `g-merge-fix` — 9b886a237 Merge remote-tracking branch 'origin/main' into g-merge-fix
 - `heal-pr-621` — af456827e Build the first working vertical slice of the health organ
@@ -166,17 +200,13 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `heal/micro-tato-audience` — fb9378999 heal(estate): micro-tato is the operation half of a pair that already exists — declare it
 - `heal/micro-tato-audience-v2` — 8926ceb17 heal(estate): micro-tato is the operation half of a pair that already exists — declare it
 - `heal/revert-opencode-lane-truth-932` — 6dcaf0a52 Revert "heal(opencode): land surviving lane pieces — auth lever + census/doc truth (#932)"
-- `heal/revive-self-heal-beat` — dc0498d19 heal(gate): make capacity-fill-ledger f-strings Python 3.11-safe
 - `heal/trunk-green-censor-armed-valves` — a709336d0 heal(vigilia): green the trunk — classify + home the two dark censor armed-valves
-- `heal/vvltvs-measure-published-face` — 076a37cea heal(vvltvs): measure the PUBLISHED face (origin blob), not a stale local clone
 - `issue-774` — 2cab6d7f1 chore: supersede issue 774 with 785 in board tracker
 - `issue-785` — 1c04a6aa1 chore: distill blocked handoff issues from #785
 - `limen-pr-1803-refresh` — 4a342a504 fix: make App Management closure executable
 - `limen/aw-credential-wall-token-hygiene-2c076ba3` — 17c418a83 docs: add credential token tombstone audit
 - `limen/aw-credential-wall-token-hygiene-e729c093` — 5552f1739 docs(credentials): add token tombstone audit receipt
-- `limen/aw-estate-custody-1bf70c8a` — 46f5fdf30 Fix estate custody PR gates
 - `limen/aw-mail-active-flagged-dad69fe3` — 617c5005c mail: classify active flagged receipt
-- `limen/aw-public-face-contribution-balance-3112b780` — 3ffa19691 Declare contribution balance public root
 - `limen/aw-repo-boil-up-eb66c5ab` — b3a3c1ba2 limen: refresh repo surface ledger
 - `limen/aw-tabvlarivs-status-writers-c37d2df5` — e071bf5c4 limen: owner-record tabularius status writers
 - `limen/capfill-agy-20260629-01-aef0` — 3b9fbe7c8 fix mypy type errors in _task_agent/_task_status/_task_cost_int
@@ -351,11 +381,9 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `limen/jules-capfill-jules-20260629-14-26c8` — b1a12a512 style: format cli.py
 - `limen/jules-capfill-opencode-20260629-11-980d` — 8bbcfb231 OpenCode daily capacity-fill packet 11
 - `limen/jules-gen-organvm-limen-ci-green-0630-9622` — 793e4afea Make organvm/limen CI green
-- `limen/jules-gen-organvm-limen-typing-0627-3681` — f7f12b18c ruff format: fix formatting in cli.py and vigilia/params.py
 - `limen/jules-heal-cifix-organvm-limen-375-f260` — 42d75f7e1 fix failing CI on organvm/limen#375
 - `limen/jules-org-consulting-organ-face-0628-f5ee` — 33b8a1416 Merge remote-tracking branch 'origin/main' into limen/jules-org-consulting-organ-face-0628-f5ee
 - `limen/jules-org-contributions-organ-deepen-0704-7930` — b035e97c4 Deepen the contributions organ toward a usable institution
-- `limen/jules-org-legal-organ-firstslice-0703-40b8` — 39a07d4d8 fix: ruff format 4 test files to fix CI pr-gate format check
 - `limen/jules-retro-0708-handoff-relay-41fd` — 742f6330f handoff-relay.py: cross-session/cross-vendor warm-resume packet
 - `limen/jules-retro-0708-pii-premerge-gate-4e92` — d5649a557 pr-gate PII containment scan for person-adjacent organ paths
 - `limen/jules-studium-film-beowulf-3e40` — 8573c3f88 Beowulf film companion (wyrd/heroic doom)
@@ -471,6 +499,7 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `subagent-Bug-28-DB-Resolver-self-c327883b` — b4c56d9db chore: fix validation errors in tasks.yaml
 - `subagent-Bug-32-Payment-Resolver-self-1d9ba79a` — b4c56d9db chore: fix validation errors in tasks.yaml
 - `subagent-Bug-34-Bounty-Resolver-self-a660c4d8` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `subagent-HEAL-CI-Repair-Agent-self-c2eb198d` — 15c479511 capture: autonomic off-disk sync 2026-08-09T01:19:06Z
 - `subagent-Issue-149-Researcher-self-9170d04f` — b4c56d9db chore: fix validation errors in tasks.yaml
 - `subagent-Issue-58-Implementer-self-32ef6d32` — b4c56d9db chore: fix validation errors in tasks.yaml
 - `subagent-Issue-59-Implementer-self-2879632c` — b4c56d9db chore: fix validation errors in tasks.yaml
@@ -478,13 +507,14 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `subagent-Issue-61-Implementer-self-fa1615a7` — b4c56d9db chore: fix validation errors in tasks.yaml
 - `subagent-Issue-62-Implementer-self-8a5cfdf5` — b4c56d9db chore: fix validation errors in tasks.yaml
 - `subagent-Issue-63-Implementer-self-da385229` — b4c56d9db chore: fix validation errors in tasks.yaml
+- `subagent-Static-Typing-Agent-self-a1525e6d` — 15c479511 capture: autonomic off-disk sync 2026-08-09T01:19:06Z
+- `subagent-Test-Coverage-Expansion-Agent-self-83fb16e9` — 15c479511 capture: autonomic off-disk sync 2026-08-09T01:19:06Z
 - `tabularius/board-projection-20260721-177302a5` — b16284fef tabularius: publish current board projection
 - `task-conference-of-birds-batch-1` — e1facc15c feat(studium): author Conference of the Birds arcs 2-4
 - `tmp-rebase-394` — 05596a461 Deepen the financial organ toward a usable institution
 - `work/action-admission-bootstrap-20260723` — 65dc0d9ca Test torn lease refresh recovery
 - `work/agent-state-metabolism-20260724` — 292e38c5b fix(governance): account for agent-state default ref
 - `work/authorization-boundary-repair-20260716` — fcefa3aba fix: preserve assessed atoms during noise migration
-- `work/bbnc-phase0-authority-20260721` — f332bd665 feat(consulting): gate BBNC Phase 0 authority
 - `work/career-portal-20260728` — 4c0b782eb fix(representation): close career portal review ownership
 - `work/charles-cotton-preview-successor-20260803` — 5c082683b fix: harden cotton closeout invariants
 - `work/charles-universe-registry` — a989cdc2d Register the complete Charles universe
@@ -496,6 +526,7 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `work/claude-recovery-preview-truth-20260716` — fb2143f8b fix: make drain preview state truthful
 - `work/claude-recovery-provider-trajectory-20260717` — 997ae136e recovery: preserve exact provider attempt custody
 - `work/claude-recovery-zero-write-custody-20260717` — 5dc912ab5 recovery: close zero-write custody races
+- `work/collaboration-operations-platform-alpha-omega-20260803` — 09d0336f3 fix(worker): rename Cloudflare worker to collaboration-operations-platform-api
 - `work/collaboration-operations-platform-genesis-20260802` — 67f3400af plan: bind collaboration platform alpha-to-omega launch
 - `work/concurrency-closeout-reap-20260719` — ae107552b docs: admit concurrency closeout runway
 - `work/correspondence` — 843240cee docs: publish admitted correspondence runway
@@ -505,6 +536,7 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `work/governance-organ-recovery-20260716` — 261ad2523 fix(governance): expire Scratch authority receipts
 - `work/governance-organ-recovery-next` — 261ad2523 fix(governance): expire Scratch authority receipts
 - `work/hokage-chess` — d0b13ec0a docs: publish admitted hokage-chess runway
+- `work/hospes-heal-reconcile-20260809` — 6de49b29f docs: publish admitted hospes-heal-reconcile-20260809 runway
 - `work/hospes-heal-reconcile-20260810-s1` — 05ea9a955 docs: publish admitted hospes-heal-reconcile-20260810-s1 runway
 - `work/host-pressure-reacceptance-20260716` — 536bf494d fix(host-pressure): keep peer observation bounded
 - `work/laptop-wide-recovery-closeout-20260724-s3` — 578bf5d1c docs: preserve post-merge lifecycle fixed point
@@ -522,6 +554,7 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `work/laptop-wide-recovery-closeout-20260727-s18` — 4d5be58ff fix(omega): redact strict canary skip output
 - `work/lead-representation` — 2ae87712e chore(leads): publish lead-representation continuation receipt (capsule custody)
 - `work/lead-substrate` — 46bb367dc chore(leads): publish lead-substrate continuation receipt (capsule custody)
+- `work/limen-notifier-closeout-successor-20260812` — 400e921e7 docs(continuation): preserve notifier closeout successor
 - `work/micro-tato` — 86e75528b docs: publish admitted micro-tato runway
 - `work/next-autonomous-epoch-20260714` — 9335337ba docs(session): record restart capsule fixed point
 - `work/omega-substrate-convergence-next` — 66bb7c272 docs: seal final Omega producer closeout
@@ -541,10 +574,11 @@ Resolve each: open a PR and land it, or delete the branch by hand if the intenti
 - `work/victoroff-external-custody-20260722` — 456a03a4f govern Victoroff external custody
 - `work/warp-agent-routing-20260629` — 6fb678e85 limen: audit warp notification provenance
 - `work/workstream-agent-launcher-20260629` — a66424e0e chore: execute dynamic-substrate fanout executor packet
+- `worktree-dustin-conversation-review` — b2e544ede feat(constellation): mint Dustin's two venture repos, private by override
 - `worktree-feat+opencode-tier-ladder` — bf7f2091f feat(dispatch): opencode multi-model tier ladder (free floor / Zen subscription rung)
 - `worktree-feat-decorum-keeper` — 50145954f feat(decorum): complete the mentor loop — self-closing issues, recurrence ratchet, offline gate
 - `worktree-feat-host-pressure-loop` — 1864ea386 feat: close the host-pressure loop — swap axis, host-relief effector, loud escalation (IF-HOST-PRESSURE form 4)
-- `worktree-fix+pause-marker-fence-not-wall` — de487e7ba feat(autonomy): class: fence|wall as declared data — regex demotes to legacy fallback
+- `worktree-fix-chatdb-decoder-and-identity-bundle` — e7356fcbf fix(identity): recognize the native-installer symlink as an already-healed identity
 - `worktree-fix-macos-fork-oslog-crash` — 414ded132 heal(tests): fix 3 non-hermetic/mismatched cli tests breaking main pr-gate
 - `worktree-fluttering-twirling-abelson` — c2c548846 Redact circle-personal business intel from public consulting organ
 - `worktree-ianva-doorway` — f4c0c076f fix(ianva): never echo bearer to stdout; untrack generated/ golden files

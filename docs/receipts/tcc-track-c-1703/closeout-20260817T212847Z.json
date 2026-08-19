@@ -16,9 +16,9 @@
     "# wait until Claude Code > 2.1.220; do not discharge L-DOMUS-AGENT-HOST-TCC on no-op"
   ],
   "normalized_inventory": null,
-  "observed_at": "2026-08-19T13:21:55Z",
+  "observed_at": "2026-08-17T21:28:47Z",
   "paths": {
-    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260819T132155Z.json",
+    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260817T212847Z.json",
     "status": "logs/tcc-track-c-status.json"
   },
   "post_audit": null,
@@ -47,9 +47,9 @@
       "claude",
       "--version"
     ],
-    "exit_code": 1,
+    "exit_code": 137,
     "ok": false,
-    "output": "Traceback (most recent call last):\n  File \"/Users/4jp/Workspace/limen/scripts/shims/claude\", line 76, in <module>\n    raise SystemExit(main())\n                     ~~~~^^\n  File \"/Users/4jp/Workspace/limen/scripts/shims/claude\", line 71, in main\n    os.execv(real, [real, *args])\n    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory",
+    "output": "",
     "version": null
   }
 }
