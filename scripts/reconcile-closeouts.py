@@ -78,6 +78,22 @@ except Exception:  # pragma: no cover - fallback keeps the predicate runnable in
             return False, None
 
 
+# --- reuse the finding router from insight-route (single homing engine) ---------------------------
+# insight-route.py already homes a finding by owner: org/repo -> a TABVLARIVS board task (via the
+# single-writer keeper inbox, deduped vs board + pending tickets), <organ> -> residual, anthony ->
+# lever. The effector below is a thin MAPPER onto that engine — it never re-implements routing, and
+# never writes a derived file (PREC-2026-07-10). The mutation rides insight-route's OWN existing
+# `LIMEN_INSIGHT_ROUTE_APPLY` arm, so no new silent-off valve is introduced (PREC-2026-07-08).
+_IR = ROOT / "scripts" / "insight-route.py"
+try:
+    _spec_ir = importlib.util.spec_from_file_location("insight_route", _IR)
+    _ir = importlib.util.module_from_spec(_spec_ir)
+    _spec_ir.loader.exec_module(_ir)  # type: ignore[union-attr]
+    route_repo_insight = _ir.route_repo_insight
+except Exception:  # pragma: no cover - routing is optional; --check/--doctor still run bare
+    route_repo_insight = None  # type: ignore[assignment]
+
+
 HASH_RE = re.compile(r"#(\d+)\b")
 # generic tokens that carry no subject signal, so they never count toward claim↔PR-title overlap
 _STOP = frozenset(
@@ -229,6 +245,51 @@ def classify_claim(claim: dict, state_fn=gh_pr_state, title_fn=_gh_pr_title) -> 
 HARD = {"DONE_UNVERIFIED", "PR_MISSING"}  # verdicts that fail --check (concrete false-closeouts)
 
 
+# --- effector: home HARD findings to their durable owner (the BRANCH rung) ------------------------
+# A sensor whose real findings aren't routed to a durable owner is a defect. A HARD finding — a task
+# claims done but its receipt is unverified — is stranded work on the claim's OWN repo, so it homes as
+# a board task on that repo. VERIFIED / MISCITED / HOMED_ELSEWHERE / UNRECEIPTED are not stranded work
+# and never route. Safe to auto-home ONLY because the classifier is precise (the merged-receipt-EXISTS
+# fix): before it, the 4 phantom findings would have spawned junk tasks.
+def _finding_to_insight(finding: dict, claim_repo: str) -> dict | None:
+    """Map a HARD reconcile finding → an insight-route insight dict (the org/repo → board-task lane).
+    Returns None when the finding is not stranded work or has no routable repo."""
+    if finding.get("verdict") not in HARD:
+        return None
+    if not claim_repo or "/" not in claim_repo:
+        return None  # no org/repo owner to home it on
+    cid = finding.get("id") or "unknown"
+    return {
+        "id": f"CLOSEOUT-{cid}",  # stable per claim → insight-route dedup skips repeats across beats
+        "owner": claim_repo,
+        "title": f"reconcile: {cid} claims done but receipt unverified",
+        "detail": finding.get("detail", ""),
+        "suggested_action": "land the cited PR, or correct the done-claim's receipt / status",
+        "source": "closeout-reconcile",  # NOT "tasks.yaml" — that string triggers the board-echo skip
+        "severity": "high" if finding.get("verdict") == "DONE_UNVERIFIED" else "medium",
+    }
+
+
+def _route_findings(claims: list[dict], findings: list[dict], apply: bool, router=None) -> list[dict]:
+    """Home each HARD finding via insight-route's org/repo lane. `apply` is insight-route's OWN arm
+    (LIMEN_INSIGHT_ROUTE_APPLY): False → the router prints a dry-run plan and writes nothing. Returns
+    the routed plan for the report. `router` is injectable so --doctor exercises the mapper offline."""
+    router = router if router is not None else route_repo_insight
+    repo_by_id = {c.get("id"): c.get("repo", "") for c in claims}
+    routed: list[dict] = []
+    if router is None:  # insight-route unavailable (bare checkout) — nothing to route
+        return routed
+    stats = {"cap_left": int(os.environ.get("LIMEN_INSIGHT_ROUTE_MAX", "5")),
+             "created": 0, "echo": 0, "deferred": 0}
+    for f in findings:
+        insight = _finding_to_insight(f, repo_by_id.get(f.get("id"), ""))
+        if insight is None:
+            continue
+        router(insight, apply, stats)
+        routed.append({"insight_id": insight["id"], "owner": insight["owner"], "verdict": f["verdict"]})
+    return routed
+
+
 def _board_claims(since_hours: int, limit: int | None) -> list[dict]:
     """Closeout claims from the live board: each done task's done dispatch_log entries, within the
     window and citing a PR (only PR-citing claims are cheap to reconcile against GitHub)."""
@@ -358,6 +419,30 @@ def _doctor() -> int:
         if got != expected:
             ok = False
         print(f"  [{flag}] {claim['id']}: expected {expected}, got {got}")
+
+    # Effector mapper contract (network-free): a HARD finding maps to a well-formed org/repo insight;
+    # a soft verdict maps to None; and _route_findings routes ONLY the HARD ones, to the right owner.
+    m_hard = _finding_to_insight({"id": "T-9", "verdict": "DONE_UNVERIFIED", "detail": "d"}, "org/repo")
+    m_soft = _finding_to_insight({"id": "T-9", "verdict": "VERIFIED", "detail": "d"}, "org/repo")
+    m_norepo = _finding_to_insight({"id": "T-9", "verdict": "PR_MISSING", "detail": "d"}, "")
+    map_ok = (
+        m_soft is None and m_norepo is None and m_hard is not None
+        and m_hard["owner"] == "org/repo" and m_hard["id"] == "CLOSEOUT-T-9"
+        and m_hard["source"] == "closeout-reconcile" and m_hard["suggested_action"]
+    )
+    print(f"  [{'ok' if map_ok else 'FAIL'}] mapper: HARD→insight, soft/no-repo→None")
+    seen: list[tuple] = []
+    claims_x = [{"id": "T-1", "repo": "org/a"}, {"id": "T-2", "repo": "org/b"}, {"id": "T-3", "repo": "org/c"}]
+    findings_x = [{"id": "T-1", "verdict": "DONE_UNVERIFIED", "detail": "d"},
+                  {"id": "T-2", "verdict": "VERIFIED", "detail": "d"},
+                  {"id": "T-3", "verdict": "PR_MISSING", "detail": "d"}]
+    plan = _route_findings(claims_x, findings_x, apply=False,
+                           router=lambda ins, ap, st: seen.append((ins["owner"], ins["id"])))
+    route_ok = (len(plan) == 2 and {p["verdict"] for p in plan} == {"DONE_UNVERIFIED", "PR_MISSING"}
+                and ("org/a", "CLOSEOUT-T-1") in seen and ("org/c", "CLOSEOUT-T-3") in seen)
+    print(f"  [{'ok' if route_ok else 'FAIL'}] router: only HARD findings home, to their claim's repo")
+    ok = ok and map_ok and route_ok
+
     print("doctor: PASS" if ok else "doctor: FAIL")
     return 0 if ok else 1
 
@@ -366,6 +451,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="verify claimed-done closeouts against ground truth")
     ap.add_argument("--doctor", action="store_true", help="network-free classifier self-test")
     ap.add_argument("--check", action="store_true", help="probe the live board; exit 1 on false-closeouts")
+    ap.add_argument("--apply", action="store_true",
+                    help="--check + HOME each HARD finding as a board task via insight-route "
+                         "(mutation rides LIMEN_INSIGHT_ROUTE_APPLY; dry-run plan otherwise)")
     ap.add_argument("--fixture", help="reconcile a JSON list of claim dicts (live gh)")
     ap.add_argument("--since-hours", type=int, default=72)
     ap.add_argument("--limit", type=int, default=40)
@@ -378,17 +466,24 @@ def main() -> int:
 
     if args.fixture:
         claims = json.loads(Path(args.fixture).read_text())
-    elif args.check:
+    elif args.check or args.apply:
         # both claim sources: durable board dispatch_log done-claims AND captured ephemeral session
         # closeouts (logs/session-claims.jsonl). Combined then capped so the GitHub probe stays bounded.
         claims = _board_claims(args.since_hours, None) + _session_claims(args.since_hours, None)
         if args.limit:
             claims = claims[: args.limit]
     else:
-        ap.error("one of --doctor / --check / --fixture is required")
+        ap.error("one of --doctor / --check / --apply / --fixture is required")
 
     report = _run(claims)
-    if args.json or args.check:
+
+    if args.apply:
+        # Home HARD findings via insight-route. The mutation rides insight-route's OWN arm; unset →
+        # a dry-run plan, so this is safe to beat-wire dark by default (no new silent-off valve).
+        route_apply = os.environ.get("LIMEN_INSIGHT_ROUTE_APPLY", "0") == "1"
+        report["routed"] = _route_findings(claims, report["findings"], route_apply)
+
+    if args.json or args.check or args.apply:
         _emit(report)
 
     if not args.quiet:
@@ -398,6 +493,11 @@ def main() -> int:
             print(f"{flag}{v:16} {n}")
         for f in report["failing"]:
             print(f"    {f['verdict']}: {f['id']}  — {f['detail']}")
+        if args.apply:
+            routed = report.get("routed", [])
+            armed = os.environ.get("LIMEN_INSIGHT_ROUTE_APPLY", "0") == "1"
+            print(f"  → routed {len(routed)} HARD finding(s) to board tasks"
+                  f"{'' if armed else ' [dry-run — set LIMEN_INSIGHT_ROUTE_APPLY=1 to file]'}")
 
     return 1 if report["failing"] else 0
 
