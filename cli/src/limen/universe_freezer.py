@@ -343,8 +343,12 @@ def freeze_universe(
         if observation.observed_at > census.frozen_at:
             raise ValueError("source observation is newer than the frozen census")
 
-    project_records: list[SourceProjectObservationV1] = [record for observation in observations for record in observation.projects]
-    collaborator_records: list[SourceCollaboratorObservationV1] = [record for observation in observations for record in observation.collaborators]
+    project_records: list[SourceProjectObservationV1] = [
+        record for observation in observations for record in observation.projects
+    ]
+    collaborator_records: list[SourceCollaboratorObservationV1] = [
+        record for observation in observations for record in observation.collaborators
+    ]
     project_aliases = _identity_map(
         project_records,
         identity_attribute="canonical_project_id",
@@ -452,7 +456,9 @@ def freeze_universe(
     for collaborator_id, collab_records in sorted(grouped_collaborators.items()):
         collab_entries = [r.collaborator for r in collab_records]
         github_digests = {entry.github_login_sha256 for entry in collab_entries if entry.github_login_sha256}
-        github_receipts = {entry.github_identity_receipt_ref for entry in collab_entries if entry.github_identity_receipt_ref}
+        github_receipts = {
+            entry.github_identity_receipt_ref for entry in collab_entries if entry.github_identity_receipt_ref
+        }
         if len(github_digests) > 1 or len(github_receipts) > 1:
             raise ValueError("conflicting proven GitHub identities require a source-owned disposition")
         collaborators.append(
@@ -466,7 +472,9 @@ def freeze_universe(
                     [relationship for entry in collab_entries for relationship in entry.relationships],
                     project_aliases,
                 ),
-                coverage_disposition=_merge_collaborator_disposition({entry.coverage_disposition for entry in collab_entries}),
+                coverage_disposition=_merge_collaborator_disposition(
+                    {entry.coverage_disposition for entry in collab_entries}
+                ),
                 disposition_receipt_refs=_sorted_union(entry.disposition_receipt_refs for entry in collab_entries),
             )
         )

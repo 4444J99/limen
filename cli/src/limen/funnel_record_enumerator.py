@@ -26,7 +26,9 @@ from limen.universe_adapter_runner import (
 from limen.universe_freezer import UniverseSourceInstanceExpectationV1
 
 SOURCE_KIND: Literal["funnel_records"] = "funnel_records"
-OWNER_REF: Literal["institutio/governance/prima-materia-funnel-sources.json"] = "institutio/governance/prima-materia-funnel-sources.json"
+OWNER_REF: Literal["institutio/governance/prima-materia-funnel-sources.json"] = (
+    "institutio/governance/prima-materia-funnel-sources.json"
+)
 CONTEXT_SCHEMA: Literal["limen.universe_enumerator_context.v1"] = "limen.universe_enumerator_context.v1"
 MANIFEST_SCHEMA: Literal["limen.funnel_source_manifest.v1"] = "limen.funnel_source_manifest.v1"
 

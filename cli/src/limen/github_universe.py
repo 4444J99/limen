@@ -277,7 +277,10 @@ def _desired_access(
                         raise ValueError("desired repository access lacks a proven GitHub identity")
                     repository_levels[(access.repository_id, digest)].add(access.access_level)
     return (
-        {digest: cast(ProjectLevel, _maximum_level(levels, ("read", "write", "admin"))) for digest, levels in project_levels.items()},
+        {
+            digest: cast(ProjectLevel, _maximum_level(levels, ("read", "write", "admin")))
+            for digest, levels in project_levels.items()
+        },
         {
             identity: cast(RepositoryLevel, _maximum_level(levels, ("read", "triage", "write", "maintain", "admin")))
             for identity, levels in repository_levels.items()

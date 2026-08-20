@@ -21,7 +21,9 @@ from limen.prima_materia import (
 )
 
 AUDIT_SCHEMA: Literal["limen.prima_materia_universe_audit.v1"] = "limen.prima_materia_universe_audit.v1"
-GITHUB_PLAN_SCHEMA: Literal["limen.prima_materia_github_projection_plan.v1"] = "limen.prima_materia_github_projection_plan.v1"
+GITHUB_PLAN_SCHEMA: Literal["limen.prima_materia_github_projection_plan.v1"] = (
+    "limen.prima_materia_github_projection_plan.v1"
+)
 DEFAULT_MAX_AGE_SECONDS = 3600
 CHECKS = (
     "all-canonical-projects-built",
