@@ -136,6 +136,7 @@ THROUGHPUT_WINDOW_MIN = int(os.environ.get("LIMEN_THROUGHPUT_WINDOW_MIN", "60") 
 THROUGHPUT_WINDOWS = int(os.environ.get("LIMEN_THROUGHPUT_WINDOWS", "3") or "3")
 THROUGHPUT_FLOOR_FRACTION = float(os.environ.get("LIMEN_THROUGHPUT_FLOOR_FRACTION", "0.25") or "0.25")
 THROUGHPUT_BASELINE_DAYS = int(os.environ.get("LIMEN_THROUGHPUT_BASELINE_DAYS", "7") or "7")
+DEFAULT_WATCH_MAX_SAMPLES = 12
 TAIL_BYTES = 192 * 1024
 TRIAL_SCHEMA_VERSION = "overnight-trial.v2"
 TRIAL_MARKER_SCHEMA_VERSION = "overnight-trial-window.v2"
@@ -5796,7 +5797,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--max-samples",
         type=int,
-        default=12,
+        default=DEFAULT_WATCH_MAX_SAMPLES,
         help="watch-loop sample cap (default: 12; must be positive)",
     )
     args = parser.parse_args(argv)

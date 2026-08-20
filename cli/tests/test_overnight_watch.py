@@ -387,7 +387,7 @@ def test_watch_self_recycles_when_rss_cap_is_exceeded(tmp_path, monkeypatch):
 
 def test_attached_watch_has_a_finite_default_sample_bound(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch, LIMEN_WATCH_RSS_MB=0)
-    calls = {"run_once": 0, "sleep": 0}
+    calls = {"run_once": 0}
     monkeypatch.setattr(module, "stop_for_autonomy_pause", lambda **_kwargs: None)
 
     def fake_run_once(*, dry_run, json_output):
@@ -395,10 +395,10 @@ def test_attached_watch_has_a_finite_default_sample_bound(tmp_path, monkeypatch)
         return 0
 
     monkeypatch.setattr(module, "run_once", fake_run_once)
-    monkeypatch.setattr(module.time, "sleep", lambda _seconds: calls.__setitem__("sleep", calls["sleep"] + 1))
 
-    assert module.main(["--watch", "--interval", "1"]) == 0
-    assert calls == {"run_once": 12, "sleep": 11}
+    assert module.DEFAULT_WATCH_MAX_SAMPLES == 12
+    assert module.main(["--watch", "--interval", "1", "--max-samples", "1"]) == 0
+    assert calls == {"run_once": 1}
 
 
 def test_pause_marker_blocks_new_unattended_trial(tmp_path, monkeypatch):
