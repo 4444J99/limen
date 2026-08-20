@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,8 +14,7 @@ if str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
 
 from limen.doctor import qa_report  # noqa: E402
-from limen.io import load_limen_file
-from _board_custody import board_path  # noqa: E402
+from limen.io import load_limen_file  # noqa: E402
 
 
 def fail(message: str) -> None:
@@ -46,11 +46,11 @@ def parse_generated_at(value: object) -> datetime | None:
 
 
 def main() -> None:
-    tasks_path = ROOT / "tasks.yaml"
+    tasks_path = Path(os.environ.get("LIMEN_TASKS") or (ROOT / "tasks.yaml"))
     static_qa = read_json(ROOT / "web" / "app" / ".generated" / "surfaces" / "qa-status.json")
     static_generated_at = parse_generated_at(static_qa.get("generated_at"))
     cli_qa = qa_report(
-        load_limen_file(board_path(tasks_path)),
+        load_limen_file(tasks_path),
         tasks_path,
         agent="jules",
         now=static_generated_at,
