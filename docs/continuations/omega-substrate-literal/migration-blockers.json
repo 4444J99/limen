@@ -1,0 +1,67 @@
+{
+  "schema": "limen.omega_substrate_migration_gates.v1",
+  "status": "active",
+  "gates": [
+    {
+      "id": "conduct-bridge",
+      "owner": "TABVLARIVS authenticated conduct bridge",
+      "failed_predicate": "A native protected session can register and submit lifecycle events.",
+      "evidence": "LIMEN_CONDUCT_URL and its authenticated token were not configured in this direct session.",
+      "next_command": "limen conduct register --agent codex --surface cli --worktree \"$PWD\" --human-protected --session-id \"$LIMEN_SESSION_ID\"",
+      "blocks": [
+        "broker lifecycle transitions"
+      ]
+    },
+    {
+      "id": "protected-legacy-cwds",
+      "owner": "Limen active-session and compatibility-link court",
+      "failed_predicate": "Every legacy repository path has zero active CWD consumers.",
+      "evidence": "live-substrate-report.json",
+      "next_command": "python3 scripts/substrate-convergence.py --manifest \"$HOME/Workspace/4444J99/portvs/.worktrees/omega-substrate-literal/governance/workspace-manifest.yaml\" --json",
+      "blocks": [
+        "repository rehome",
+        "compatibility-link removal"
+      ]
+    },
+    {
+      "id": "private-restoration",
+      "owner": "institutio/governance/private-substrate-custody.json",
+      "failed_predicate": "Each private root has two independent copies and one verified restoration receipt.",
+      "evidence": "All four custody records remain pending with zero verified copies.",
+      "next_command": "python3 scripts/substrate-convergence.py --manifest \"$HOME/Workspace/4444J99/portvs/.worktrees/omega-substrate-literal/governance/workspace-manifest.yaml\" --json",
+      "blocks": [
+        "private payload routing"
+      ]
+    },
+    {
+      "id": "legacy-residue",
+      "owner": "PORTVS workspace manifest and Limen convergence court",
+      "failed_predicate": "The physical Workspace exactly matches the literal manifest with zero compatibility links or loose entries.",
+      "evidence": "live-substrate-report.json",
+      "next_command": "bash \"$HOME/Workspace/4444J99/portvs/.worktrees/omega-substrate-literal/jack.sh\" --plan --json",
+      "blocks": [
+        "strict structural convergence"
+      ]
+    },
+    {
+      "id": "home-routing",
+      "owner": "Domus Home guard",
+      "failed_predicate": "The exact Home manifest has zero pending routes and the portal points at canonical PORTVS.",
+      "evidence": "organvm/domus-genoma feat/omega-substrate-literal live-home-report.json",
+      "next_command": "python3 \"$HOME/Workspace/domus-genoma/.worktrees/omega-substrate-literal/dot_local/bin/executable_domus-home-guard.tmpl\" --check --json",
+      "blocks": [
+        "exact Home convergence"
+      ]
+    },
+    {
+      "id": "omega-observation-window",
+      "owner": "Limen Omega trial receipts",
+      "failed_predicate": "Two storage readings and the eight-hour unchanged-convergence trial are complete.",
+      "evidence": "The observation window has not started because structural and custody gates remain red.",
+      "next_command": "python3 scripts/substrate-convergence.py --manifest \"$HOME/Workspace/4444J99/portvs/.worktrees/omega-substrate-literal/governance/workspace-manifest.yaml\" --json",
+      "blocks": [
+        "Omega recording"
+      ]
+    }
+  ]
+}
