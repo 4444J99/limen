@@ -446,28 +446,28 @@ def freeze_universe(
     )
 
     grouped_collaborators: dict[str, list[SourceCollaboratorObservationV1]] = defaultdict(list)
-    for record in collaborator_records:
-        grouped_collaborators[record.canonical_collaborator_id].append(record)
+    for collab_rec in collaborator_records:
+        grouped_collaborators[collab_rec.canonical_collaborator_id].append(collab_rec)
     collaborators: list[CollaboratorUniverseEntryV1] = []
-    for collaborator_id, records in sorted(grouped_collaborators.items()):
-        entries = [record.collaborator for record in records]
-        github_digests = {entry.github_login_sha256 for entry in entries if entry.github_login_sha256}
-        github_receipts = {entry.github_identity_receipt_ref for entry in entries if entry.github_identity_receipt_ref}
+    for collaborator_id, collab_records in sorted(grouped_collaborators.items()):
+        collab_entries = [r.collaborator for r in collab_records]
+        github_digests = {entry.github_login_sha256 for entry in collab_entries if entry.github_login_sha256}
+        github_receipts = {entry.github_identity_receipt_ref for entry in collab_entries if entry.github_identity_receipt_ref}
         if len(github_digests) > 1 or len(github_receipts) > 1:
             raise ValueError("conflicting proven GitHub identities require a source-owned disposition")
         collaborators.append(
             CollaboratorUniverseEntryV1(
                 collaborator_id=collaborator_id,
-                alias_ids=tuple(sorted({alias for record in records for alias in record.alias_ids})),
-                source_lineage_ids=_sorted_union(entry.source_lineage_ids for entry in entries),
+                alias_ids=tuple(sorted({alias for r in collab_records for alias in r.alias_ids})),
+                source_lineage_ids=_sorted_union(entry.source_lineage_ids for entry in collab_entries),
                 github_login_sha256=next(iter(github_digests), None),
                 github_identity_receipt_ref=next(iter(github_receipts), None),
                 relationships=_merge_relationships(
-                    [relationship for entry in entries for relationship in entry.relationships],
+                    [relationship for entry in collab_entries for relationship in entry.relationships],
                     project_aliases,
                 ),
-                coverage_disposition=_merge_collaborator_disposition({entry.coverage_disposition for entry in entries}),
-                disposition_receipt_refs=_sorted_union(entry.disposition_receipt_refs for entry in entries),
+                coverage_disposition=_merge_collaborator_disposition({entry.coverage_disposition for entry in collab_entries}),
+                disposition_receipt_refs=_sorted_union(entry.disposition_receipt_refs for entry in collab_entries),
             )
         )
 
