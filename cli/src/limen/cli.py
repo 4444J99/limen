@@ -1263,16 +1263,20 @@ def observatory_run(apply):
     """Run the whole loop (collect → analyze → reconcile → brief) for one beat."""
     from limen.observatory import executive as obs_exec
 
+    status = obs_exec.run_beat(apply=apply)
+    click.echo(obs_exec.summary_line(status))
+
+
 def _load_vltima_validator(root: Path):
     path = root / "scripts" / "validate-vltima-kernel.py"
     if not path.exists():
         click.echo(f"VLTIMA validator missing at {path}", err=True)
         sys.exit(2)
     spec = importlib.util.spec_from_file_location("limen_vltima_validator_cli", path)
-    module = importlib.util.module_from_spec(spec)
-    if spec.loader is None:
+    if spec is None or spec.loader is None:
         click.echo(f"Could not load VLTIMA validator at {path}", err=True)
         sys.exit(2)
+    module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
@@ -1307,24 +1311,28 @@ def _select_vltima_projection(
 
     if primitive:
         needle = _norm_selector(primitive)
-        for item in projection.get("primitives") or []:
-            if not isinstance(item, dict):
-                continue
-            identifiers = {str(item.get("id") or "").lower(), str(item.get("label") or "").lower()}
-            if needle in identifiers:
-                return item
+        primitives = projection.get("primitives")
+        if isinstance(primitives, list):
+            for item in primitives:
+                if not isinstance(item, dict):
+                    continue
+                identifiers = {str(item.get("id") or "").lower(), str(item.get("label") or "").lower()}
+                if needle in identifiers:
+                    return item
         click.echo(f"vltima-kernel: primitive not found: {primitive}", err=True)
         sys.exit(1)
 
     if organ:
         needle = _norm_selector(organ)
-        for item in projection.get("organs") or []:
-            if not isinstance(item, dict):
-                continue
-            home = _norm_selector(str(item.get("home") or ""))
-            identifiers = {str(item.get("pillar") or "").lower(), home, home.removeprefix("organs/")}
-            if needle in identifiers:
-                return item
+        organs = projection.get("organs")
+        if isinstance(organs, list):
+            for item in organs:
+                if not isinstance(item, dict):
+                    continue
+                home = _norm_selector(str(item.get("home") or ""))
+                identifiers = {str(item.get("pillar") or "").lower(), home, home.removeprefix("organs/")}
+                if needle in identifiers:
+                    return item
         click.echo(f"vltima-kernel: organ not found: {organ}", err=True)
         sys.exit(1)
 
