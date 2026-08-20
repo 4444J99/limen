@@ -1,0 +1,94 @@
+{
+  "schema_version": "limen.fanout_manifest.v1",
+  "root_work_id": "loop-recovery-cloud-handoff-limen-continuation-20260820-v3",
+  "idempotency_key": "loop-recovery-cloud-handoff/limen-continuation/2026-08-20/v3",
+  "initiator": {
+    "schema_version": "limen.agent_identity.v1",
+    "agent": "codex",
+    "surface": "direct",
+    "session_id": "01a02013-e799-7c52-95d6-8d0faa34ef8a",
+    "native_run_id": "01a02013-e799-7c52-95d6-8d0faa34ef8a",
+    "provider_identity": "codex"
+  },
+  "conductor": {
+    "schema_version": "limen.agent_identity.v1",
+    "agent": "codex",
+    "surface": "direct",
+    "session_id": "01a02013-e799-7c52-95d6-8d0faa34ef8a",
+    "native_run_id": "01a02013-e799-7c52-95d6-8d0faa34ef8a",
+    "provider_identity": "codex"
+  },
+  "predicate": "limen fanout status loop-recovery-cloud-handoff-limen-continuation-20260820-v3 --json",
+  "receipt_target": "github:organvm/limen:issue:2385",
+  "work_loan": {
+    "schema_version": "limen.work_loan.v1",
+    "source_origin": "human_prompt",
+    "horizon": "present",
+    "value_case": "Recover the Limen implementation lane after the first provider session paused for feedback unsupported by the Jules CLI.",
+    "budget_cost": 1,
+    "owner_surface": "github:organvm/limen:issue:2385",
+    "external_deadline": false,
+    "due_at": null
+  },
+  "campaign": null,
+  "deadline": "2026-08-21T16:45:00Z",
+  "leaves": [
+    {
+      "schema_version": "limen.fanout_leaf.v1",
+      "work_id": "limen-loop-recovery-continuation-20260820-v3",
+      "idempotency_key": "organvm/limen:loop-recovery-continuation:2026-08-20/v3",
+      "owner_repository": "organvm/limen",
+      "exact_base": "5ea7a6a52efe11b3a8c83a7bfa67c71a86ea7f3c",
+      "topic_branch": "jules/loop-recovery-limen-20260820-v3",
+      "allowed_paths": [
+        ".github/workflows",
+        "cli",
+        "container/launchd",
+        "docs",
+        "institutio/governance",
+        "scripts",
+        "web/worker"
+      ],
+      "resource_claims": [
+        {
+          "schema_version": "limen.resource_claim.v1",
+          "key": "repo/organvm/limen/write",
+          "mode": "exclusive"
+        }
+      ],
+      "dependencies": [],
+      "required_capabilities": [
+        "code"
+      ],
+      "intended_effect": "The implementation plan is fully pre-approved. Begin editing immediately and do not pause for plan approval, clarification, or user feedback; choose the smallest sound implementation when details require judgment. Implement the complete public-safe Limen loop-recovery repair at exact base 5ea7a6a52efe11b3a8c83a7bfa67c71a86ea7f3c. Fix issue 2385 by filtering repositories for which limen.partition_lanes.heuristics_may_promote(repo) is false before constructing self-heal task rows, preserving valid rows and reporting partition-skipped=N; add mixed-row live and dry-run regressions in the existing focused Python test surface. Preserve the strict WorkPacketV1/storage_envelope_claims contract and prove exact serialized packets validate against the published Worker schema; do not weaken or omit the field. Make scripts/handoff-relay.py resolve the authenticated canonical private board instead of treating the empty public aggregate as keeper truth, with fail-closed tests. Add a workflow_dispatch-only maintenance workflow with expected_sha and dry-run|apply inputs, exact-ref/SHA checks, vars.LIMEN_API_URL, secrets.LIMEN_API_TOKEN mapped to LIMEN_CONDUCT_TOKEN, counts-only JSON output, and no corpus content. Replace self-heal local-log mtime freshness with the last successful cloud maintenance receipt. Remove the committed com.limen.overnight-watch plist, positive LaunchAgent tests, lint gates, install instructions, and overnight-specific self-reinstall/launchctl behavior; retain bounded manual diagnostics only. Add docs/receipts/jules-loop-recovery-limen-20260820.json containing exact base, changed paths, predicate commands, topic branch jules/loop-recovery-limen-20260820-v3, and next_action exactly `python3 scripts/jules-land.py --apply --recover`; include no credentials, private corpus bodies, private paths, plan.md, or tasks.yaml edits. Run focused self-heal, Worker check, handoff and diurnal/sensor regressions, then scripts/verify-scoped.sh --base 5ea7a6a52efe11b3a8c83a7bfa67c71a86ea7f3c --require-base once on the unchanged final head. Leave a pullable result; Limen will create the PR.",
+      "effect": "write",
+      "predicate": "scripts/verify-scoped.sh --base 5ea7a6a52efe11b3a8c83a7bfa67c71a86ea7f3c --require-base",
+      "receipt_target": "github:organvm/limen:issue:2385",
+      "work_loan": {
+        "schema_version": "limen.work_loan.v1",
+        "source_origin": "human_prompt",
+        "horizon": "present",
+        "value_case": "Complete the full Limen repair without an unsupported provider feedback pause.",
+        "budget_cost": 1,
+        "owner_surface": "organvm/limen",
+        "external_deadline": false,
+        "due_at": null
+      },
+      "campaign": null,
+      "deadline": "2026-08-21T16:45:00Z",
+      "retry": {
+        "schema_version": "limen.retry_policy.v1",
+        "max_attempts": 1,
+        "transient_only": true
+      },
+      "spend": {
+        "schema_version": "limen.spend_envelope.v1",
+        "unit": "runs",
+        "limit": 1,
+        "reserve": 0
+      },
+      "prompt_hash": "9f506d6a4423b5451921bdca97779d76fa1f158975bd9c4bce1579f8e888f950",
+      "plan_hash": "09bce6546a4f527dc7897ad061304aed2f39c7893fa7087e5d1714f70fe45568"
+    }
+  ]
+}
