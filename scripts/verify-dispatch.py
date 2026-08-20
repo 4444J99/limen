@@ -28,13 +28,14 @@ from pathlib import Path
 
 import yaml
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+SCRIPT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(SCRIPT_ROOT / "cli" / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _board_custody
 from _board_custody import board_path  # noqa: E402
 from limen.dispatch_ownership import active_typed_pr_owner_id  # noqa: E402
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noqa: E402
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
+ROOT = Path(os.environ.get("LIMEN_ROOT", SCRIPT_ROOT)).expanduser().resolve()
 PR_RE = re.compile(r"github\.com/([^/]+)/([^/]+)/pull/(\d+)")
 # A dispatch is RESERVED (status=dispatched, updated stamped, reserve log appended) before its
 # slow run. A freshly reserved local task still has no PR/session result, so only treat it as
