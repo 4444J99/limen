@@ -24,7 +24,13 @@ Its prompt explicitly pre-approves the plan and directs Jules not to pause for
 feedback. It launched as broker root
 `run-063d4bf0b288d3cc8f125133aa888cb5`, leaf
 `run-39fb2c3d22a1178ce4cb9ec66a1d52d1`, Jules session
-`8532144557688814721`. The reproducible plan/start commands are:
+`8532144557688814721`. Jules ran from the exact base but terminated `failed`;
+the keeper accepted `receipt-exhausted-39fb2c3d22a1178ce4cb9ec6` with predicate
+exit 1, unchanged heads, and no accepted changed paths. The provider still
+retains a pullable partial patch, but it is not the required successful
+continuation receipt and the laptop-close checkpoint is therefore not green.
+
+The reproducible plan/start commands are:
 
 ```bash
 PYTHONPATH=cli/src python3 -m limen.cli fanout plan --manifest docs/continuations/loop-recovery-cloud-handoff-20260820/fanout-manifest-limen-continuation.json
