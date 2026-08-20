@@ -47,6 +47,7 @@ if _env_file.exists():
         pass
 
 from limen.capacity import PAID_AGENT_ORDER, agent_status, canonical_agent, lane_throughput_cap  # noqa: E402
+from limen.conduct.client import client_from_env  # noqa: E402
 from limen.dispatch import (
     LOCAL_CHECKOUT_AGENTS,
     _down_lanes,
@@ -109,21 +110,29 @@ def _load_json(path: Path, default: Any) -> Any:
         return default
 
 
+def _load_canonical_board() -> dict[str, Any]:
+    """Fetch authenticated keeper custody; the public aggregate is never board truth."""
+    payload = client_from_env().private_board()
+    if not isinstance(payload, dict):
+        raise ValueError("canonical keeper returned a non-object board")
+    board = payload.get("board") if isinstance(payload.get("board"), dict) else payload
+    if not isinstance(board, dict):
+        raise ValueError("canonical keeper response contains no board object")
+    return board
+
+
 def _load_board() -> dict[str, Any] | None:
-    """Load one schema-valid keeper projection from a single immutable byte snapshot."""
+    """Load and validate one authenticated canonical keeper snapshot."""
     try:
         import yaml
     except Exception:
         return None
     try:
-        raw = TASKS.read_text()
-        board = yaml.safe_load(raw)
-        if not isinstance(board, dict):
-            return None
-        # Dispatch consumes LimenFile, so a merely parseable mapping is not proof that
-        # the keeper is available. Validate the exact bytes we return instead of
-        # re-reading a projection that could be atomically replaced between reads.
-        load_limen_text(raw, name=TASKS.name)
+        board = _load_canonical_board()
+        raw = yaml.safe_dump(board, sort_keys=False)
+        # Dispatch consumes LimenFile, so a merely parseable object is not proof that
+        # keeper custody is usable. Validate the exact authenticated snapshot returned.
+        load_limen_text(raw, name="authenticated-private-board")
     except Exception:
         return None
     return board

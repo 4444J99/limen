@@ -2016,18 +2016,6 @@ parameters:
     self_update: none
     owner: continuity
     note: "Maximum consecutive one-shot monitor samples with the same latest tick and no active workers before WATCH_ALERT heartbeat-progress-stale."
-  LIMEN_OVERNIGHT_WATCH_HEAL:
-    default: 1
-    env: LIMEN_OVERNIGHT_WATCH_HEAL
-    self_update: none
-    owner: continuity
-    note: "Set 0 to disable the overnight monitor's bootstrap fallback that restores a booted-out heartbeat/watchdog launchd service (governor-pause and cooldown gated)."
-  LIMEN_OVERNIGHT_WATCH_HEAL_COOLDOWN_SEC:
-    default: 1200
-    env: LIMEN_OVERNIGHT_WATCH_HEAL_COOLDOWN_SEC
-    self_update: none
-    owner: continuity
-    note: "Minimum seconds between overnight monitor bootstrap heal attempts, so the healer never fights an operator cycling daemons."
   LIMEN_THROUGHPUT_WINDOW_MIN:
     default: 60
     env: LIMEN_THROUGHPUT_WINDOW_MIN
@@ -2052,24 +2040,6 @@ parameters:
     self_update: none
     owner: continuity
     note: "Trailing window (days) of ticks.jsonl history the throughput floor's median is computed over."
-  LIMEN_THROUGHPUT_ISSUE_ESCALATE:
-    default: 1
-    env: LIMEN_THROUGHPUT_ISSUE_ESCALATE
-    self_update: none
-    owner: continuity
-    note: "Set 0 to disable escalating a remediation-surviving throughput-collapse to the censor GitHub issues mirror (an alert whose only consumer is the operator is a defect — remediate or issue-mirror, never chat)."
-  LIMEN_CENSOR_ISSUES_REPO:
-    default: organvm/limen
-    env: LIMEN_CENSOR_ISSUES_REPO
-    self_update: none
-    owner: continuity
-    note: "Repo the censor/throughput escalations open issues against (the process-organ mirror)."
-  LIMEN_WATCHDOG_LABEL:
-    default: com.limen.watchdog
-    env: LIMEN_WATCHDOG_LABEL
-    self_update: none
-    owner: continuity
-    note: "launchd label for the watchdog service the overnight monitor restores when it is booted out."
   LIMEN_OVERNIGHT_WATCH_EXPECT_CAMPAIGN_WAKE_TIMEOUT:
     default: ""
     env: LIMEN_OVERNIGHT_WATCH_EXPECT_CAMPAIGN_WAKE_TIMEOUT
@@ -2564,7 +2534,7 @@ parameters:
     env: LIMEN_SELF_HEAL_STALE
     self_update: none
     owner: heal
-    note: "Gate for the self-heal-stale beat sensor (institutio/governance/sensors.yaml section 0o4): scripts/state-freshness.py --field mtime fails (advisory) when logs/self-heal.log hasn't been refreshed within ~6h (~2 windows of the C_HEAL=6-beat rung's worst-case tempo). Sibling of host-pressure-stale — watches the PR-repair FACTORY's writer so the 2026-08-09 ~26h-silent death (quota wall exits self-heal.py before its success-path write) can't recur unseen; a frozen writer fires one onset-deduped notification (scripts/_notify.py). Step-gated on when_env LIMEN_SELF_HEAL so a deliberately-off factory (LIMEN_SELF_HEAL=0) doesn't alarm on a log stale by design. Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
+    note: "Gate for the self-heal-stale beat sensor (institutio/governance/sensors.yaml section 0o4): scripts/cloud-maintenance-freshness.py fails advisory when the latest successful workflow_dispatch receipt for cloud-maintenance.yml is absent or older than 6h. A local log mtime is not success custody. The sensor is read-only and emits no corpus content. Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
   LIMEN_HEAL_RECONCILE_SCAN_MAX:
     default: 1000               # ceiling on self-heal.py's full-fleet enumeration (--reconcile-scan-max)
     env: LIMEN_HEAL_RECONCILE_SCAN_MAX
@@ -6355,4 +6325,3 @@ parameters:
     self_update: none
     owner: tabularius
     note: "Beat gate for the covenant attribution sensor (scripts/covenant-attribution.py --check) run each beat by metabolize.sh via the derive runner (section 0r). Proves every MEMORY.md change since the prior beat has a covering keeper receipt in <memdir>/.covenant-receipts.jsonl. Advisory severity; fail-open when memdir, receipts, or the state file (logs/covenant-attribution-state.json) are absent. Part of the Record-Keeper Covenant: the lane (memoria.py) ships in a sibling PR; this sensor surfaces the live leak as evidence before the wall (PR 6) arms. Set 0 to silence."
-

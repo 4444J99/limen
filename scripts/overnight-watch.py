@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """Low-cost overnight heartbeat progress monitor.
 
-This is the cheap receipt writer that should replace interactive-agent-attached
-"watch all night" polling. Each default invocation is one-shot: inspect the live
-heartbeat, write compact receipts, update a stale-tick counter, and exit
-non-zero only when there is a concrete WATCH_ALERT. launchd/cron can run it
-every few minutes without replaying any agent conversation.
+This is an explicit operator-invoked diagnostic. Each default invocation is
+one-shot: inspect the live heartbeat, write compact receipts, update a stale-tick
+counter, and exit non-zero only when there is a concrete WATCH_ALERT. The script
+does not install, repair, reload, or require a scheduler.
 """
 
 from __future__ import annotations
@@ -20,7 +19,6 @@ import os
 import pwd
 import re
 import shlex
-import shutil
 import signal
 import stat
 import statistics
@@ -109,8 +107,6 @@ USAGE_PATH = Path(os.environ.get("LIMEN_USAGE_JSON", LOGS / "usage.json"))
 LANE_SWITCH_LOCK = Path(os.environ.get("LIMEN_OVERNIGHT_LANE_SWITCH_LOCK", LOGS / "overnight-lane-switch.lock"))
 _ASYNC_RESERVATION_RE = re.compile(r"^async-reserve:[0-9a-f]{32}$")
 LABEL = os.environ.get("LIMEN_HEARTBEAT_LABEL", os.environ.get("LIMEN_LAUNCHD_LABEL", "com.limen.heartbeat"))
-WATCHDOG_LABEL = os.environ.get("LIMEN_WATCHDOG_LABEL", "com.limen.watchdog")
-LAUNCH_AGENTS = Path.home() / "Library" / "LaunchAgents"
 
 
 def _positive_env_int(name: str, default: int) -> int:
@@ -131,21 +127,15 @@ _HEARTBEAT_OVERHEAD_SEC = _positive_env_int("LIMEN_WATCHDOG_OVERHEAD_SEC", 600)
 _HEARTBEAT_MAX_INTER_TICK_SEC = _HEARTBEAT_MAX_BEAT_SEC + _HEARTBEAT_CAMPAIGN_WAKE_SEC + _HEARTBEAT_OVERHEAD_SEC
 MAX_LOG_AGE_SEC = _positive_env_int("LIMEN_OVERNIGHT_WATCH_MAX_LOG_AGE_SEC", _HEARTBEAT_MAX_INTER_TICK_SEC)
 MAX_STALE_TICKS = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_MAX_STALE_TICKS", "6") or "6")
-HEAL_ENABLED = (os.environ.get("LIMEN_OVERNIGHT_WATCH_HEAL", "1") or "1") != "0"
-HEAL_COOLDOWN_SEC = int(os.environ.get("LIMEN_OVERNIGHT_WATCH_HEAL_COOLDOWN_SEC", "1200") or "1200")
 
 # Throughput floor (2026-07-08 incident: the fleet idled a full night at ~5% of baseline while
 # every liveness alert stayed green — liveness is not velocity). The floor is DERIVED from the
 # trailing per-window completion history, never pinned.
 TICKS_PATH = LOGS / "ticks.jsonl"
-COMMITTED_PLIST = ROOT / "container" / "launchd" / f"{LABEL}.plist"
 THROUGHPUT_WINDOW_MIN = int(os.environ.get("LIMEN_THROUGHPUT_WINDOW_MIN", "60") or "60")
 THROUGHPUT_WINDOWS = int(os.environ.get("LIMEN_THROUGHPUT_WINDOWS", "3") or "3")
 THROUGHPUT_FLOOR_FRACTION = float(os.environ.get("LIMEN_THROUGHPUT_FLOOR_FRACTION", "0.25") or "0.25")
 THROUGHPUT_BASELINE_DAYS = int(os.environ.get("LIMEN_THROUGHPUT_BASELINE_DAYS", "7") or "7")
-ISSUE_ESCALATE = (os.environ.get("LIMEN_THROUGHPUT_ISSUE_ESCALATE", "1") or "1") != "0"
-ESCALATE_REPO = os.environ.get("LIMEN_CENSOR_ISSUES_REPO", "organvm/limen")
-PLIST_DRIFT_KEYS = ("LIMEN_CAMPAIGN_WAKE_TIMEOUT", "LIMEN_ROOT", "LIMEN_VIGILIA")
 TAIL_BYTES = 192 * 1024
 TRIAL_SCHEMA_VERSION = "overnight-trial.v2"
 TRIAL_MARKER_SCHEMA_VERSION = "overnight-trial-window.v2"
@@ -475,6 +465,8 @@ def heartbeat_child_processes(pid: str | None) -> list[dict[str, Any]]:
             children.append(child)
             pending.append(child_pid)
     return children
+
+
 def _resident_pid(path: Path) -> str | None:
     try:
         value = path.read_text(encoding="utf-8").strip()
@@ -1917,25 +1909,6 @@ def throughput_snapshot(snapshot: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def _plist_env(text: str) -> dict[str, str]:
-    return dict(re.findall(r"<key>([A-Z_]+)</key><string>([^<]*)</string>", text))
-
-
-def plist_drift() -> list[dict[str, str]]:
-    """Live launchd plist vs the committed copy — the Jul-7 failure class (a hand-edited
-    live plist silently starving the fleet) becomes an alert with a remediation."""
-    try:
-        live = _plist_env((LAUNCH_AGENTS / f"{LABEL}.plist").read_text(encoding="utf-8"))
-        committed = _plist_env(COMMITTED_PLIST.read_text(encoding="utf-8"))
-    except OSError:
-        return []
-    return [
-        {"key": key, "live": live.get(key, ""), "committed": committed[key]}
-        for key in PLIST_DRIFT_KEYS
-        if key in committed and live.get(key) != committed[key]
-    ]
-
-
 def next_stale_count(previous: dict[str, Any], tick: dict[str, Any] | None) -> int:
     current = tick.get("timestamp") if tick else None
     if current and current != previous.get("latest_tick"):
@@ -1976,32 +1949,18 @@ def build_snapshot(
     watchdog_pid = resident_host_pressure_watchdog_pid()
     resident_pids = {str(pid) for pid in (fast_wave_pid, watchdog_pid) if pid}
     resident_tree_pids = _resident_subtree_pids(children, resident_pids)
-    progress_children = [
-        child
-        for child in children
-        if str(child.get("pid") or "") not in resident_tree_pids
-    ]
+    progress_children = [child for child in children if str(child.get("pid") or "") not in resident_tree_pids]
     resident_fast_wave_child = next(
-        (
-            child
-            for child in children
-            if str(child.get("pid") or "") == str(fast_wave_pid or "")
-        ),
+        (child for child in children if str(child.get("pid") or "") == str(fast_wave_pid or "")),
         None,
     )
     resident_host_pressure_watchdog_child = next(
-        (
-            child
-            for child in children
-            if str(child.get("pid") or "") == str(watchdog_pid or "")
-        ),
+        (child for child in children if str(child.get("pid") or "") == str(watchdog_pid or "")),
         None,
     )
     resident_fast_wave = _resident_state(fast_wave_pid, resident_fast_wave_child)
     resident_host_pressure_watchdog = _resident_state(watchdog_pid, resident_host_pressure_watchdog_child)
-    effective_env = effective_runtime_env(
-        launchd.get("env") if isinstance(launchd.get("env"), dict) else None
-    )
+    effective_env = effective_runtime_env(launchd.get("env") if isinstance(launchd.get("env"), dict) else None)
     host_pressure = host_pressure_snapshot(
         read_only=host_pressure_read_only,
         effective_env=effective_env,
@@ -2037,7 +1996,6 @@ def build_snapshot(
     snapshot["lane_switch"] = lane_switch_snapshot(snapshot, submit=submit_lane_switch)
     snapshot["dispatch_control"] = apply_lane_switch_control(snapshot["dispatch_control"], snapshot["lane_switch"])
     snapshot["overnight_counts"] = overnight_counts(snapshot)
-    snapshot["plist_drift"] = plist_drift()
     snapshot["throughput"] = throughput_snapshot(snapshot)
     snapshot["status"], snapshot["alerts"] = evaluate(snapshot)
     return snapshot
@@ -2082,7 +2040,13 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
                 "evidence": str(host_pressure.get("detail") or "host-pressure watcher failed")[:500],
             }
         )
-    env = snapshot.get("effective_env") if isinstance(snapshot.get("effective_env"), dict) else launchd.get("env") if isinstance(launchd.get("env"), dict) else {}
+    env = (
+        snapshot.get("effective_env")
+        if isinstance(snapshot.get("effective_env"), dict)
+        else launchd.get("env")
+        if isinstance(launchd.get("env"), dict)
+        else {}
+    )
     handoff = snapshot.get("handoff_relay") if isinstance(snapshot.get("handoff_relay"), dict) else {}
     value_gate = snapshot.get("value_gate") if isinstance(snapshot.get("value_gate"), dict) else {}
     dispatch = snapshot.get("dispatch_control") if isinstance(snapshot.get("dispatch_control"), dict) else {}
@@ -2106,9 +2070,7 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
     if heartbeat_active and resident_telemetry_present:
         fast_wave = snapshot.get("resident_fast_wave")
         watchdog = snapshot.get("resident_host_pressure_watchdog")
-        if env.get("LIMEN_VIGILIA", "1") == "1" and (
-            not isinstance(fast_wave, dict) or not fast_wave.get("alive")
-        ):
+        if env.get("LIMEN_VIGILIA", "1") == "1" and (not isinstance(fast_wave, dict) or not fast_wave.get("alive")):
             fast_wave_pid = fast_wave.get("pid") if isinstance(fast_wave, dict) else None
             alerts.append(
                 {
@@ -2202,17 +2164,6 @@ def evaluate(snapshot: dict[str, Any]) -> tuple[str, list[dict[str, str]]]:
             }
         )
 
-    drift = snapshot.get("plist_drift") or []
-    if drift:
-        alerts.append(
-            {
-                "id": "plist-drift",
-                "evidence": "; ".join(f"{d['key']}: live={d['live']!r} committed={d['committed']!r}" for d in drift)[
-                    :500
-                ],
-            }
-        )
-
     throughput = snapshot.get("throughput") if isinstance(snapshot.get("throughput"), dict) else {}
     if throughput.get("below_floor"):
         alerts.append(
@@ -2245,146 +2196,8 @@ def governor_mode() -> str:
     return (proc.stdout or "").strip() or "paused"
 
 
-def service_missing(label: str) -> bool:
-    return run(["launchctl", "print", f"gui/{os.getuid()}/{label}"]).returncode != 0
-
-
-def bootstrap_service(label: str) -> dict[str, Any]:
-    plist = LAUNCH_AGENTS / f"{label}.plist"
-    if not plist.exists():
-        return {"label": label, "action": "skip", "reason": f"plist missing: {plist}"}
-    proc = run(["launchctl", "bootstrap", f"gui/{os.getuid()}", str(plist)], timeout=30)
-    return {
-        "label": label,
-        "action": "bootstrap",
-        "ok": proc.returncode == 0,
-        "error": (proc.stderr or "").strip() if proc.returncode else "",
-    }
-
-
-def reinstall_plist() -> dict[str, Any]:
-    """Re-install the committed plist over a drifted live copy, then bootout+bootstrap."""
-    if not COMMITTED_PLIST.exists():
-        return {"action": "skip", "reason": f"committed plist missing: {COMMITTED_PLIST}"}
-    dest = LAUNCH_AGENTS / f"{LABEL}.plist"
-    try:
-        shutil.copyfile(COMMITTED_PLIST, dest)
-    except OSError as exc:
-        return {"action": "reinstall-plist", "ok": False, "error": str(exc)}
-    run(["launchctl", "bootout", f"gui/{os.getuid()}/{LABEL}"], timeout=30)
-    time.sleep(2)
-    proc = run(["launchctl", "bootstrap", f"gui/{os.getuid()}", str(dest)], timeout=30)
-    return {
-        "action": "reinstall-plist",
-        "ok": proc.returncode == 0,
-        "error": (proc.stderr or "").strip() if proc.returncode else "",
-    }
-
-
-def kickstart_service(label: str) -> dict[str, Any]:
-    proc = run(["launchctl", "kickstart", "-k", f"gui/{os.getuid()}/{label}"], timeout=30)
-    return {
-        "action": "kickstart",
-        "label": label,
-        "ok": proc.returncode == 0,
-        "error": (proc.stderr or "").strip() if proc.returncode else "",
-    }
-
-
-def escalate_issue(evidence: str) -> dict[str, Any]:
-    """A collapse that survives remediation escalates to the censor issues mirror — never chat."""
-    if not ISSUE_ESCALATE:
-        return {"action": "skip", "reason": "issue escalation disabled"}
-    title = "throughput-collapse survives remediation"
-    listing = run(
-        [
-            "gh",
-            "issue",
-            "list",
-            "--repo",
-            ESCALATE_REPO,
-            "--state",
-            "open",
-            "--search",
-            f"{title} in:title",
-            "--json",
-            "number",
-        ],
-        timeout=30,
-    )
-    if listing.returncode == 0:
-        try:
-            if json.loads(listing.stdout or "[]"):
-                return {"action": "escalate-issue", "ok": True, "deduped": True}
-        except ValueError:
-            pass
-    body = (
-        f"The overnight monitor's throughput-collapse alert survived self-remediation.\n\n"
-        f"Evidence: {evidence}\n\nReceipts: logs/overnight-watch.md, logs/ticks.jsonl."
-    )
-    proc = run(
-        ["gh", "issue", "create", "--repo", ESCALATE_REPO, "--title", title, "--label", "censor", "--body", body],
-        timeout=30,
-    )
-    return {
-        "action": "escalate-issue",
-        "ok": proc.returncode == 0,
-        "url": (proc.stdout or "").strip() if proc.returncode == 0 else "",
-        "error": (proc.stderr or "").strip() if proc.returncode else "",
-    }
-
-
-def heal(snapshot: dict[str, Any]) -> list[dict[str, Any]]:
-    """Every alert this monitor owns names its effector (PREC-2026-07-09-sensor-without-effector).
-
-    Lanes, disjoint from watchdog.py's stale-daemon kickstart:
-      * heartbeat-launchd-not-running + service absent  -> bootstrap from the plist
-      * plist-drift                                     -> reinstall committed plist + reload
-      * throughput-collapse (no drift)                  -> kickstart; if it survives a prior
-        remediation, escalate to the censor issues mirror — never to the operator in chat
-    """
-    if not HEAL_ENABLED:
-        return []
-    alert_ids = {alert["id"] for alert in snapshot.get("alerts") or []}
-    launchd_missing = "heartbeat-launchd-not-running" in alert_ids and not (snapshot.get("launchd") or {}).get("ok")
-    drift = "plist-drift" in alert_ids
-    collapse = "throughput-collapse" in alert_ids
-    if not (launchd_missing or drift or collapse):
-        return []
-    previous = load_json(STATE_PATH)
-    last_heal = parse_iso(previous.get("last_heal_at"))
-    if last_heal and (utc_now() - last_heal).total_seconds() < HEAL_COOLDOWN_SEC:
-        return [{"action": "skip", "reason": f"heal cooldown ({HEAL_COOLDOWN_SEC}s) active"}]
-    if governor_mode() == "paused":
-        return [{"action": "skip", "reason": "autonomy governor paused"}]
-
-    actions: list[dict[str, Any]] = []
-    if launchd_missing:
-        actions.append(bootstrap_service(LABEL))
-        if service_missing(WATCHDOG_LABEL):
-            actions.append(bootstrap_service(WATCHDOG_LABEL))
-    elif drift:
-        actions.append(reinstall_plist())
-    elif collapse:
-        actions.append(kickstart_service(LABEL))
-
-    if collapse:
-        attempts = int(previous.get("collapse_heal_attempts") or 0) + 1
-        snapshot["collapse_heal_attempts"] = attempts
-        if attempts >= 2:
-            evidence = next(
-                (a["evidence"] for a in snapshot.get("alerts") or [] if a["id"] == "throughput-collapse"), ""
-            )
-            actions.append(escalate_issue(evidence))
-
-    if any(a.get("action") in ("bootstrap", "reinstall-plist", "kickstart") for a in actions):
-        snapshot["heal_at"] = snapshot.get("timestamp")
-    return actions
-
-
 def update_state(snapshot: dict[str, Any]) -> None:
     tick = (snapshot.get("heartbeat") or {}).get("latest_tick") or {}
-    previous = load_json(STATE_PATH)
     STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
     STATE_PATH.write_text(
         json.dumps(
@@ -2393,16 +2206,6 @@ def update_state(snapshot: dict[str, Any]) -> None:
                 "latest_tick": tick.get("timestamp"),
                 "stale_tick_count": snapshot.get("stale_tick_count", 0),
                 "status": snapshot.get("status"),
-                "last_heal_at": snapshot.get("heal_at") or previous.get("last_heal_at"),
-                "collapse_heal_attempts": (
-                    snapshot.get("collapse_heal_attempts")
-                    if snapshot.get("collapse_heal_attempts") is not None
-                    else (
-                        int(previous.get("collapse_heal_attempts") or 0)
-                        if any(a.get("id") == "throughput-collapse" for a in snapshot.get("alerts") or [])
-                        else 0
-                    )
-                ),
             },
             indent=2,
             sort_keys=True,
@@ -5828,7 +5631,6 @@ def pause_guard_snapshot() -> dict[str, Any]:
             "lane_switch_blocker": "",
             "next_command": next_command,
         },
-        "plist_drift": [],
         "throughput": {"suppressed": "governor-paused"},
         "alerts": [],
     }
@@ -5862,9 +5664,6 @@ def run_once(*, dry_run: bool, json_output: bool) -> int:
         host_pressure_read_only=True,
     )
     if not dry_run:
-        heal_actions = heal(snapshot)
-        if heal_actions:
-            snapshot["heal"] = heal_actions
         write_receipts(snapshot)
         try:
             trial_observation = append_trial_observation(snapshot)
@@ -5931,16 +5730,16 @@ def _vitals_shedding() -> bool:
 def _arm_wall_clock_bound() -> int:
     """Bound any single tick's wall clock (IF-HOST-PRESSURE form 4, issue #1148).
 
-    2026-07-16: one launchd one-shot tick wedged for 51 minutes at 3.1 GiB under an
-    I/O storm. The bound exits 0 (fail-open — a wedged monitor must never redden
-    launchd); StartInterval respawns a fresh process within 5 minutes. Returns the
-    bound in seconds (0 = disabled); callers re-arm per tick via signal.alarm().
+    2026-07-16: one legacy scheduled tick wedged for 51 minutes at 3.1 GiB under an
+    I/O storm. The bound exits 0 (fail-open — a wedged diagnostic must not compound
+    host pressure). Returns the bound in seconds (0 = disabled); callers re-arm per
+    tick via signal.alarm().
 
     Under VITALS shed the bound tightens to ~1/5 (240 -> 48s, floor 30s) so the monitor
     never piles a full heavy scan onto an already-thrashing host — it runs a short pass,
-    exits fail-open, and StartInterval respawns a fresh tick once pressure clears. Local
-    dispatch is already refused under shed (_local_admission_gate); this cuts the monitor's
-    own scan duty cycle too, complementing the heartbeat hygiene-shed gate.
+    exits fail-open, and a later explicit invocation can retry once pressure clears.
+    Local dispatch is already refused under shed (_local_admission_gate); this cuts the
+    monitor's own scan duty cycle too, complementing the heartbeat hygiene-shed gate.
     """
     wall_s = int(os.environ.get("LIMEN_WATCH_WALL_S", "240") or 0)
     if wall_s > 0 and _vitals_shedding():
@@ -5951,7 +5750,7 @@ def _arm_wall_clock_bound() -> int:
     def _wall_timeout(signum, frame):  # noqa: ARG001 — signal handler signature
         print(
             f"overnight-watch: wall-clock bound {wall_s}s hit — exiting fail-open; "
-            "launchd StartInterval respawns fresh (2026-07-16 wedged-tick incident)",
+            "a later explicit invocation may retry (2026-07-16 wedged-tick incident)",
             file=sys.stderr,
         )
         os._exit(0)
@@ -5990,14 +5789,19 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="with --check-trial, exit 77 only when the terminal receipt is absent",
     )
-    parser.add_argument(
-        "--watch", action="store_true", help="run an attached loop; launchd should prefer one-shot mode"
-    )
+    parser.add_argument("--watch", action="store_true", help="run a bounded attached diagnostic loop")
     parser.add_argument(
         "--interval", type=int, default=int(os.environ.get("LIMEN_OVERNIGHT_WATCH_INTERVAL_SEC", "300"))
     )
-    parser.add_argument("--max-samples", type=int, default=0, help="watch-loop sample cap; 0 means forever")
+    parser.add_argument(
+        "--max-samples",
+        type=int,
+        default=12,
+        help="watch-loop sample cap (default: 12; must be positive)",
+    )
     args = parser.parse_args(argv)
+    if args.max_samples <= 0:
+        parser.error("--max-samples must be positive")
 
     if args.start_trial:
         paused_rc = stop_for_autonomy_pause(dry_run=False, json_output=args.json)
@@ -6091,7 +5895,7 @@ def main(argv: list[str] | None = None) -> int:
             # heap is accumulation — exit clean; the next invocation starts at ~100 MB.
             print(
                 f"overnight-watch: RSS {rss_mb:.0f} MB > cap {rss_cap_mb:.0f} MB — "
-                "exiting after receipts; launchd/StartInterval respawns fresh"
+                "exiting after receipts; a later explicit invocation may retry"
             )
             return 0
         if args.max_samples and samples >= args.max_samples:

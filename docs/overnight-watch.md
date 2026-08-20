@@ -27,19 +27,10 @@ It writes:
 - `logs/overnight-watch.md` latest human-readable status
 - `logs/overnight-watch-alert.json` only when a `WATCH_ALERT` is active
 
-Recommended supervisor cadence is a cheap one-shot invocation every five
-minutes. The script exits non-zero only when it has concrete evidence of a
+Run it only as an explicit, bounded operator diagnostic. No local scheduler or
+resident service is installed or supported. The script exits non-zero only when it has concrete evidence of a
 blocker, such as a missing heartbeat log, stale heartbeat log, repeated latest
 tick with no active workers, or optional dispatch-env drift.
-
-The repo includes a launchd job for that cadence:
-
-```bash
-cp container/launchd/com.limen.overnight-watch.plist \
-  "$HOME/Library/LaunchAgents/com.limen.overnight-watch.plist"
-launchctl bootstrap "gui/$(id -u)" \
-  "$HOME/Library/LaunchAgents/com.limen.overnight-watch.plist"
-```
 
 For the overnight fleet profile, run with explicit expectations:
 
@@ -49,17 +40,23 @@ LIMEN_OVERNIGHT_WATCH_EXPECT_DISPATCH_LANES=auto \
 python3 scripts/overnight-watch.py
 ```
 
-`--watch` exists for a local terminal, but it is not the interactive-agent
-pattern. Agents should inspect the receipt or respond to `WATCH_ALERT`; they
-should not spend a large conversation context on routine five-minute polling.
+`--watch` exists for a local terminal and is bounded to 12 samples by default.
+Use `--max-samples N` to select another positive finite bound. Agents should
+inspect the receipt or respond to `WATCH_ALERT`; they should not keep a
+conversation attached for routine polling.
 
-## Eight-hour unattended trial
+## Prospective eight-hour trial
 
-Start the fixed contract once; the normal five-minute one-shot producer will
-finalize it automatically after eight hours:
+Start the fixed contract once. During the window, an operator may invoke the
+one-shot command at the required cadence; no local scheduler is installed.
+After eight hours, invoke `--finalize-trial` explicitly:
 
 ```bash
 python3 scripts/overnight-watch.py --start-trial
+```
+
+```bash
+python3 scripts/overnight-watch.py --finalize-trial
 ```
 
 The active window is recorded in `logs/overnight-trial-window.json`. It seals the
