@@ -17,8 +17,10 @@ def _make_checkout(path: Path, *, scripts: bool = False) -> Path:
     (path / "tasks.yaml").write_text("tasks: []\n", encoding="utf-8")
     if scripts:
         (path / "scripts").mkdir()
-        for name in (VERIFY_SCRIPT, HEAL_SCRIPT):
-            shutil.copy2(REPO_ROOT / "scripts" / name, path / "scripts" / name)
+        for name in (VERIFY_SCRIPT, HEAL_SCRIPT, "_board_custody.py", "_human_signals.py"):
+            src = REPO_ROOT / "scripts" / name
+            if src.exists():
+                shutil.copy2(src, path / "scripts" / name)
     return path
 
 
