@@ -6,7 +6,7 @@ private paths, or task-board state.
 
 Exact bases:
 
-- `organvm/limen` `main`: `9dcde495fe740c36251136a157504bc2ef7bab57`
+- `organvm/limen` `main`: `b302ba97e6092e62b40aab9eff923e1a91c90c30`
 - `organvm/domus-genoma` `master`: `a8e0c7d434968d289b5da2e79c01e0692a3ec2b5`
 
 Current blocker: the live broker returns HTTP 401 for the registered Jules

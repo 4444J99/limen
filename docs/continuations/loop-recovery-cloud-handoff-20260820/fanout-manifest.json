@@ -1,7 +1,7 @@
 {
   "schema_version": "limen.fanout_manifest.v1",
-  "root_work_id": "loop-recovery-cloud-handoff-20260820",
-  "idempotency_key": "loop-recovery-cloud-handoff/2026-08-20/v1",
+  "root_work_id": "loop-recovery-cloud-handoff-20260820-v2",
+  "idempotency_key": "loop-recovery-cloud-handoff/2026-08-20/v2",
   "initiator": {
     "schema_version": "limen.agent_identity.v1",
     "agent": "codex",
@@ -18,7 +18,7 @@
     "native_run_id": "01a02013-e799-7c52-95d6-8d0faa34ef8a",
     "provider_identity": "codex"
   },
-  "predicate": "limen fanout status loop-recovery-cloud-handoff-20260820 --json",
+  "predicate": "limen fanout status loop-recovery-cloud-handoff-20260820-v2 --json",
   "receipt_target": "github:organvm/limen:issue:2385",
   "work_loan": {
     "schema_version": "limen.work_loan.v1",
@@ -35,18 +35,18 @@
   "leaves": [
     {
       "schema_version": "limen.fanout_leaf.v1",
-      "work_id": "limen-loop-recovery-20260820",
-      "idempotency_key": "organvm/limen:loop-recovery:2026-08-20/v1",
+      "work_id": "limen-loop-recovery-20260820-v2",
+      "idempotency_key": "organvm/limen:loop-recovery:2026-08-20/v2",
       "owner_repository": "organvm/limen",
-      "exact_base": "9dcde495fe740c36251136a157504bc2ef7bab57",
+      "exact_base": "b302ba97e6092e62b40aab9eff923e1a91c90c30",
       "topic_branch": "jules/loop-recovery-limen-20260820",
       "allowed_paths": [".github/workflows", "cli", "container/launchd", "docs", "institutio/governance", "scripts", "web/worker"],
       "resource_claims": [{"schema_version": "limen.resource_claim.v1", "key": "repo/organvm/limen/write", "mode": "exclusive"}],
       "dependencies": [],
       "required_capabilities": ["code"],
-      "intended_effect": "Implement the public-safe Limen half at the exact base. Fix issue 2385 by filtering repositories for which limen.partition_lanes.heuristics_may_promote(repo) is false before constructing self-heal task rows, preserving valid rows and reporting partition-skipped=N; add mixed-row live and dry-run regressions. Preserve the strict WorkPacketV1/storage_envelope_claims contract and prove exact serialized packets validate against the published Worker schema; do not weaken or omit the field. Make handoff-relay resolve the authenticated canonical private board instead of treating the empty public aggregate as keeper truth, with fail-closed tests. Add a workflow_dispatch-only maintenance workflow with expected_sha and dry-run|apply inputs, exact-ref/SHA checks, vars.LIMEN_API_URL, the existing owner secret mapped to LIMEN_CONDUCT_TOKEN, counts-only JSON output, and no corpus content. Replace self-heal local-log mtime freshness with the last successful cloud maintenance receipt. Remove the committed com.limen.overnight-watch plist, positive LaunchAgent tests, lint gates, install instructions, and overnight-specific self-reinstall/launchctl behavior; retain bounded manual diagnostics only. Add docs/receipts/jules-loop-recovery-limen-20260820.json containing exact base, changed paths, predicate commands, topic branch, and next_action exactly `python3 scripts/jules-land.py --apply --recover`; include no credentials, private corpus bodies, private paths, or tasks.yaml edits. Run focused self-heal, Worker check, handoff and diurnal/sensor regressions, then scripts/verify-scoped.sh --base 9dcde495fe740c36251136a157504bc2ef7bab57 --require-base once on the unchanged final head. Leave a pullable result; Limen will create the PR.",
+      "intended_effect": "Implement the public-safe Limen half at the exact base. Fix issue 2385 by filtering repositories for which limen.partition_lanes.heuristics_may_promote(repo) is false before constructing self-heal task rows, preserving valid rows and reporting partition-skipped=N; add mixed-row live and dry-run regressions. Preserve the strict WorkPacketV1/storage_envelope_claims contract and prove exact serialized packets validate against the published Worker schema; do not weaken or omit the field. Make handoff-relay resolve the authenticated canonical private board instead of treating the empty public aggregate as keeper truth, with fail-closed tests. Add a workflow_dispatch-only maintenance workflow with expected_sha and dry-run|apply inputs, exact-ref/SHA checks, vars.LIMEN_API_URL, the existing owner secret mapped to LIMEN_CONDUCT_TOKEN, counts-only JSON output, and no corpus content. Replace self-heal local-log mtime freshness with the last successful cloud maintenance receipt. Remove the committed com.limen.overnight-watch plist, positive LaunchAgent tests, lint gates, install instructions, and overnight-specific self-reinstall/launchctl behavior; retain bounded manual diagnostics only. Add docs/receipts/jules-loop-recovery-limen-20260820.json containing exact base, changed paths, predicate commands, topic branch, and next_action exactly `python3 scripts/jules-land.py --apply --recover`; include no credentials, private corpus bodies, private paths, or tasks.yaml edits. Run focused self-heal, Worker check, handoff and diurnal/sensor regressions, then scripts/verify-scoped.sh --base b302ba97e6092e62b40aab9eff923e1a91c90c30 --require-base once on the unchanged final head. Leave a pullable result; Limen will create the PR.",
       "effect": "write",
-      "predicate": "scripts/verify-scoped.sh --base 9dcde495fe740c36251136a157504bc2ef7bab57 --require-base",
+      "predicate": "scripts/verify-scoped.sh --base b302ba97e6092e62b40aab9eff923e1a91c90c30 --require-base",
       "receipt_target": "github:organvm/limen:issue:2385",
       "work_loan": {"schema_version": "limen.work_loan.v1", "source_origin": "human_prompt", "horizon": "present", "value_case": "Repair the failed self-heal batch and move bounded maintenance to an exact-head cloud receipt without exposing private custody.", "budget_cost": 1, "owner_surface": "organvm/limen", "external_deadline": false, "due_at": null},
       "campaign": null,
@@ -58,8 +58,8 @@
     },
     {
       "schema_version": "limen.fanout_leaf.v1",
-      "work_id": "domus-loop-recovery-20260820",
-      "idempotency_key": "organvm/domus-genoma:loop-recovery:2026-08-20/v1",
+      "work_id": "domus-loop-recovery-20260820-v2",
+      "idempotency_key": "organvm/domus-genoma:loop-recovery:2026-08-20/v2",
       "owner_repository": "organvm/domus-genoma",
       "exact_base": "a8e0c7d434968d289b5da2e79c01e0692a3ec2b5",
       "topic_branch": "jules/loop-recovery-domus-20260820",
