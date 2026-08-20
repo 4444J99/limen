@@ -82,4 +82,5 @@ sanctioned:
   - {path: value-repos.json, kind: registry, owner: observation, why: "value-repo census (65 referents)"}
   - {path: web, kind: dir, owner: web, why: "worker + api + dashboard"}
 
-grandfathered: []
+grandfathered:
+  - {path: .staged-heal, target_home: DELETE, why: "temporary staged heal fixtures for chezmoi clobber recovery"}

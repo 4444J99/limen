@@ -2038,6 +2038,26 @@ sensors:
         severity: advisory
         escalation: "a lane opens above its declared cadence ceiling with no lever citing it, or a vendor has no OPENING_FLOORS row — lower the pin, raise the declared ceiling, or file it (his-hand-levers.json L-LANE-OPENING-FLOOR)"
 
+  estate-repos:
+    section: "0z10"
+    title: "estate repos — remote-first enumeration of every owned repo, projected into the hot cache"
+    gate: LIMEN_ESTATE_REPOS
+    default: "1"
+    source: [metabolize]
+    owner: arms-agents
+    # GitHub is the durable authority on what the estate owns (300+ repos across the owner
+    # accounts); the local cache (logs/estate-repos.json, limen.estate_repos.v1) is a
+    # skeleton-thin TTL'd projection of that answer, and the work-loan backfill's membership
+    # bar derives from it — never from a hand-maintained repo list. The refresher is its own
+    # cheap due-check: inside the TTL (LIMEN_ESTATE_CACHE_TTL_HOURS, 24h) it prints `fresh`
+    # and exits 0, so the hourly metabolize pass costs two gh calls at most once a day.
+    # Fail-closed on partial truth: any owner listing failure leaves the old cache untouched
+    # (a half-estate would silently refuse every repo under the missing owner).
+    steps:
+      - command: "python3 scripts/estate-repos-refresh.py"
+        severity: advisory
+        escalation: "estate enumeration failed — gh cannot list an owner account, so supply underwriting is narrowed to the value-tier registry until the cache refreshes (check gh auth status)"
+
   work-loan-backfill:
     section: "0z8"
     title: "work-loan backfill — loan-less open tasks become dispatchable packets, refusals counted"
@@ -2047,11 +2067,14 @@ sensors:
     owner: arms-agents
     # The candidate-starvation cut of the 07-19 starvation: 738/829 open tasks (89%) fail
     # WorkLoanV1 readiness, so an open valve found ~8 jules candidates. This organ derives
-    # the missing loan fields mechanically under docs/repo-predicates.yaml's declarative
-    # quality bar (value-tier membership = permission to underwrite; measured first census:
-    # 168 mintable, 520 honestly refused). Enrichments land as preconditioned TABVLARIVS
-    # tickets — never a direct board write. Batch-capped 25/run through the single-writer
-    # queue. Gauge-only until the apply valve arms: review one dry-run census first.
+    # the missing loan fields mechanically under a remote-first membership bar: the estate
+    # itself (the estate-repos hot cache) admits any live owned repo, and
+    # docs/repo-predicates.yaml carries only per-repo overrides + value-tier standing.
+    # (Registry-only first census: 168 mintable, 520 refused — most on the hand-list
+    # membership clause the estate derivation dissolves.) Enrichments land as
+    # preconditioned TABVLARIVS tickets — never a direct board write. Batch-capped 25/run
+    # through the single-writer queue. Gauge-only until the apply valve arms: review one
+    # dry-run census first.
     steps:
       - command: "python3 scripts/work-loan-backfill.py"
         args_when:
@@ -2064,7 +2087,8 @@ sensors:
             args: ["--apply"]
             armed_valve_type: deliverable
         severity: advisory
-        escalation: "loan-less board tasks exist and minting is unarmed or refused — review the census in logs/work-loan-backfill.jsonl; membership in docs/repo-predicates.yaml is the permission to underwrite a repo"
+        escalation: "loan-less board tasks exist and minting is unarmed or refused — review the census in logs/work-loan-backfill.jsonl; the estate hot cache is the membership bar and docs/repo-predicates.yaml holds the overrides"
+
   jules-dispatch:
     section: "0z5"
     title: "jules dispatch valve rung — the beat's governed path to the serial engine"
