@@ -6348,3 +6348,11 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Max repos to sweep per run."
+
+  LIMEN_COVENANT_CHECK:
+    default: "1"
+    env: LIMEN_COVENANT_CHECK
+    self_update: none
+    owner: tabularius
+    note: "Beat gate for the covenant attribution sensor (scripts/covenant-attribution.py --check) run each beat by metabolize.sh via the derive runner (section 0r). Proves every MEMORY.md change since the prior beat has a covering keeper receipt in <memdir>/.covenant-receipts.jsonl. Advisory severity; fail-open when memdir, receipts, or the state file (logs/covenant-attribution-state.json) are absent. Part of the Record-Keeper Covenant: the lane (memoria.py) ships in a sibling PR; this sensor surfaces the live leak as evidence before the wall (PR 6) arms. Set 0 to silence."
+
