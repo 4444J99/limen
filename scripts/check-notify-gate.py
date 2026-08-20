@@ -348,26 +348,8 @@ def _clean_exact_head(root: Path) -> str | None:
         return None
 
 
-def _source_mentions_notification_command(candidate: Path) -> bool:
-    """Cheaply retain literal and statically concatenated AppleScript senders.
-
-    Removing source punctuation joins adjacent string fragments, so both
-    ``"osascript"`` and ``"osa" + "script"`` reach the structural scanner.  This is
-    deliberately only a prefilter: the AST/shlex passes below still decide whether the
-    file actually executes a notification.
-    """
-    try:
-        lowered = candidate.read_bytes().lower()
-    except OSError:
-        return True
-    if b"osascript" in lowered:
-        return True
-    compact = re.sub(rb"[^a-z]+", b"", lowered)
-    return b"osascript" in compact and b"displaynotification" in compact
-
-
-def _tracked_source_paths(root: Path) -> list[Path] | None:
-    """Enumerate tracked executable sources, or return None when git is unavailable."""
+def _fallback_source_paths(root: Path) -> list[Path]:
+    """Recover from git-grep degradation without narrowing the tree to scripts/."""
     try:
         tracked = subprocess.run(
             [
@@ -387,17 +369,19 @@ def _tracked_source_paths(root: Path) -> list[Path] | None:
             check=False,
         )
     except (OSError, subprocess.SubprocessError):
-        return None
-    if tracked.returncode != 0:
-        return None
-    return [root / raw.decode("utf-8", errors="surrogateescape") for raw in tracked.stdout.split(b"\0") if raw]
-
-
-def _fallback_source_paths(root: Path) -> list[Path]:
-    """Recover from git degradation without narrowing the tree to scripts/."""
-    tracked = _tracked_source_paths(root)
-    if tracked is not None:
-        return [candidate for candidate in tracked if _source_mentions_notification_command(candidate)]
+        tracked = None
+    if tracked is not None and tracked.returncode == 0:
+        candidates = [
+            root / raw.decode("utf-8", errors="surrogateescape") for raw in tracked.stdout.split(b"\0") if raw
+        ]
+        selected: list[Path] = []
+        for candidate in candidates:
+            try:
+                if b"osascript" in candidate.read_bytes().lower():
+                    selected.append(candidate)
+            except OSError:
+                selected.append(candidate)
+        return selected
 
     # Synthetic roots in focused tests are intentionally not git repositories. Scan the
     # whole supplied root; a scripts-only fallback would hide a direct effector elsewhere.
@@ -416,20 +400,42 @@ def _fallback_source_paths(root: Path) -> list[Path]:
 
 
 def _source_paths(root: Path) -> list[Path]:
-    """Return tracked sources that can construct a notification command."""
+    """Return only tracked sources mentioning osascript; avoid estate-wide AST parsing."""
     cache_key = _clean_exact_head(root)
     if cache_key is not None and cache_key in _SOURCE_PATH_CACHE:
         return [root / relative for relative in _SOURCE_PATH_CACHE[cache_key]]
-    candidates = _tracked_source_paths(root)
-    if candidates is None:
+    candidates: list[Path]
+    try:
+        found = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(root),
+                "grep",
+                "-l",
+                "-e",
+                "osascript",
+                "--",
+                "*.py",
+                "*.sh",
+                "*.bash",
+                "*.zsh",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        if found.returncode in {0, 1}:
+            candidates = [root / line for line in found.stdout.splitlines() if line.strip()]
+        else:
+            candidates = _fallback_source_paths(root)
+    except (OSError, UnicodeError, subprocess.SubprocessError):
         candidates = _fallback_source_paths(root)
     selected = [
         candidate
         for candidate in candidates
-        if candidate.is_file()
-        and candidate.suffix in DIRECT_SUFFIXES
-        and candidate != root / NOTIFIER_REL
-        and _source_mentions_notification_command(candidate)
+        if candidate.is_file() and candidate.suffix in DIRECT_SUFFIXES and candidate != root / NOTIFIER_REL
     ]
     if cache_key is not None:
         try:
@@ -462,17 +468,6 @@ def _static_argv(
     if isinstance(node, ast.Name):
         value = bindings.get(node.id)
         return list(value) if value is not None else None
-    if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Name):
-        key = _static_string(node.slice)
-        binding = f"{node.value.id}[{key!r}]" if key is not None else f"{node.value.id}[*]"
-        value = bindings.get(binding)
-        return list(value) if value is not None else None
-    if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Dict):
-        key = _static_string(node.slice)
-        if key is not None:
-            for mapping_key, mapping_value in zip(node.value.keys, node.value.values, strict=True):
-                if mapping_key is not None and _static_string(mapping_key) == key:
-                    return _static_argv(mapping_value, bindings)
     if (value := _static_string(node)) is not None:
         return [value]
     if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
@@ -492,27 +487,10 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         self,
         bindings: dict[str, list[str]] | None = None,
         process_aliases: set[str] | None = None,
-        local_functions: dict[str, ast.FunctionDef | ast.AsyncFunctionDef] | None = None,
-        active_helpers: set[str] | None = None,
     ) -> None:
         self.bindings = {name: list(values) for name, values in (bindings or {}).items()}
         self.found = False
         self.process_aliases = set(process_aliases or _PROCESS_CALLS)
-        self.local_functions = dict(local_functions or {})
-        self.active_helpers = set(active_helpers or ())
-
-    def _child(
-        self,
-        bindings: dict[str, list[str]] | None = None,
-        *,
-        active_helpers: set[str] | None = None,
-    ) -> "_PythonBypassVisitor":
-        return _PythonBypassVisitor(
-            self.bindings if bindings is None else bindings,
-            self.process_aliases,
-            self.local_functions,
-            self.active_helpers if active_helpers is None else active_helpers,
-        )
 
     def visit_ImportFrom(self, node: ast.ImportFrom) -> None:
         if node.module in {"subprocess", "os"}:
@@ -525,32 +503,12 @@ class _PythonBypassVisitor(ast.NodeVisitor):
             for element in target.elts:
                 self._assign(element, None)
             return
-        name = target.id if isinstance(target, ast.Name) else (target.arg if isinstance(target, ast.arg) else None)
-        if name is None:
+        if not isinstance(target, ast.Name):
             return
-        for binding in [key for key in self.bindings if key.startswith(f"{name}[")]:
-            self.bindings.pop(binding, None)
         if values is None:
-            self.bindings.pop(name, None)
+            self.bindings.pop(target.id, None)
         else:
-            self.bindings[name] = list(values)
-
-    def _bind_mapping(self, target: ast.AST, value: ast.AST | None) -> None:
-        """Bind exact static mapping keys plus one conservative dynamic-key union."""
-        name = target.id if isinstance(target, ast.Name) else (target.arg if isinstance(target, ast.arg) else None)
-        if name is None or not isinstance(value, ast.Dict):
-            return
-        aggregate: list[str] = []
-        for mapping_key, mapping_value in zip(value.keys, value.values, strict=True):
-            resolved = _static_argv(mapping_value, self.bindings)
-            if resolved is None:
-                continue
-            aggregate.extend(resolved)
-            key = _static_string(mapping_key) if mapping_key is not None else None
-            if key is not None:
-                self.bindings[f"{name}[{key!r}]"] = list(resolved)
-        if aggregate:
-            self.bindings[f"{name}[*]"] = aggregate
+            self.bindings[target.id] = list(values)
 
     def _is_process_callable(self, node: ast.AST) -> bool:
         if isinstance(node, ast.Name):
@@ -562,27 +520,12 @@ class _PythonBypassVisitor(ast.NodeVisitor):
             for element in target.elts:
                 self._assign_process_alias(element, False)
             return
-        name = target.id if isinstance(target, ast.Name) else (target.arg if isinstance(target, ast.arg) else None)
-        if name is None:
+        if not isinstance(target, ast.Name):
             return
         if is_alias:
-            self.process_aliases.add(name)
-        elif name not in _PROCESS_CALLS:
-            self.process_aliases.discard(name)
-
-    def _bind_assignment(self, target: ast.AST, value: ast.AST | None) -> None:
-        """Bind literal destructuring element-by-element instead of erasing it."""
-        if isinstance(target, (ast.Tuple, ast.List)):
-            if isinstance(value, (ast.Tuple, ast.List)) and len(target.elts) == len(value.elts):
-                for target_element, value_element in zip(target.elts, value.elts, strict=True):
-                    self._bind_assignment(target_element, value_element)
-            else:
-                self._assign(target, None)
-                self._assign_process_alias(target, False)
-            return
-        self._assign(target, _static_argv(value, self.bindings) if value is not None else None)
-        self._bind_mapping(target, value)
-        self._assign_process_alias(target, self._is_process_callable(value) if value is not None else False)
+            self.process_aliases.add(target.id)
+        elif target.id not in _PROCESS_CALLS:
+            self.process_aliases.discard(target.id)
 
     def visit_Module(self, node: ast.Module) -> None:
         """Collect module bindings before scanning function bodies.
@@ -592,13 +535,6 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         functions/classes with that conservative union so definition order cannot hide an
         effector command.
         """
-        self.local_functions.update(
-            {
-                statement.name: statement
-                for statement in node.body
-                if isinstance(statement, (ast.FunctionDef, ast.AsyncFunctionDef))
-            }
-        )
         deferred: list[ast.stmt] = []
         observed = {name: set(values) for name, values in self.bindings.items()}
         observed_aliases = set(self.process_aliases)
@@ -624,22 +560,18 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         for default in [*node.args.defaults, *node.args.kw_defaults]:
             if default is not None:
                 self.visit(default)
-        child = self._child(active_helpers=self.active_helpers | {node.name})
-
-        def bind_parameter(argument: ast.arg, default: ast.AST | None) -> None:
-            child._bind_assignment(argument, default)
-
-        positional = [*node.args.posonlyargs, *node.args.args]
-        positional_defaults: list[ast.AST | None] = [None] * (len(positional) - len(node.args.defaults)) + list(
-            node.args.defaults
-        )
-        for argument, default in zip(positional, positional_defaults, strict=True):
-            bind_parameter(argument, default)
-        for argument, default in zip(node.args.kwonlyargs, node.args.kw_defaults, strict=True):
-            bind_parameter(argument, default)
-        for argument in (node.args.vararg, node.args.kwarg):
-            if argument is not None:
-                bind_parameter(argument, None)
+        child = _PythonBypassVisitor(self.bindings, self.process_aliases)
+        arguments = [
+            *node.args.posonlyargs,
+            *node.args.args,
+            *node.args.kwonlyargs,
+        ]
+        if node.args.vararg is not None:
+            arguments.append(node.args.vararg)
+        if node.args.kwarg is not None:
+            arguments.append(node.args.kwarg)
+        for argument in arguments:
+            child.bindings.pop(argument.arg, None)
         for statement in node.body:
             child.visit(statement)
         self.found = self.found or child.found
@@ -656,7 +588,7 @@ class _PythonBypassVisitor(ast.NodeVisitor):
             self.visit(decorator)
         for base in node.bases:
             self.visit(base)
-        child = self._child()
+        child = _PythonBypassVisitor(self.bindings, self.process_aliases)
         for statement in node.body:
             child.visit(statement)
         self.found = self.found or child.found
@@ -664,13 +596,23 @@ class _PythonBypassVisitor(ast.NodeVisitor):
 
     def visit_Assign(self, node: ast.Assign) -> None:
         self.visit(node.value)
+        values = _static_argv(node.value, self.bindings)
+        process_alias = self._is_process_callable(node.value)
         for target in node.targets:
-            self._bind_assignment(target, node.value)
+            self._assign(target, values)
+            self._assign_process_alias(target, process_alias)
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         if node.value is not None:
             self.visit(node.value)
-        self._bind_assignment(node.target, node.value)
+        self._assign(
+            node.target,
+            _static_argv(node.value, self.bindings) if node.value is not None else None,
+        )
+        self._assign_process_alias(
+            node.target,
+            self._is_process_callable(node.value) if node.value is not None else False,
+        )
 
     def visit_AugAssign(self, node: ast.AugAssign) -> None:
         self.visit(node.value)
@@ -679,41 +621,16 @@ class _PythonBypassVisitor(ast.NodeVisitor):
 
     def visit_NamedExpr(self, node: ast.NamedExpr) -> None:
         self.visit(node.value)
-        self._bind_assignment(node.target, node.value)
-
-    def _visit_comprehension(self, node: ast.AST, values: list[ast.AST]) -> None:
-        """Scan comprehension bodies with their target bindings in lexical scope."""
-        child = self._child()
-        generators = getattr(node, "generators", [])
-        for generator in generators:
-            child.visit(generator.iter)
-            child._assign(generator.target, _static_argv(generator.iter, child.bindings))
-            child._assign_process_alias(generator.target, False)
-            for condition in generator.ifs:
-                child.visit(condition)
-        for value in values:
-            child.visit(value)
-        self.found = self.found or child.found
-
-    def visit_ListComp(self, node: ast.ListComp) -> None:
-        self._visit_comprehension(node, [node.elt])
-
-    def visit_SetComp(self, node: ast.SetComp) -> None:
-        self._visit_comprehension(node, [node.elt])
-
-    def visit_GeneratorExp(self, node: ast.GeneratorExp) -> None:
-        self._visit_comprehension(node, [node.elt])
-
-    def visit_DictComp(self, node: ast.DictComp) -> None:
-        self._visit_comprehension(node, [node.key, node.value])
+        self._assign(node.target, _static_argv(node.value, self.bindings))
+        self._assign_process_alias(node.target, self._is_process_callable(node.value))
 
     def visit_If(self, node: ast.If) -> None:
         self.visit(node.test)
         before = {name: list(values) for name, values in self.bindings.items()}
-        body = self._child(before)
+        body = _PythonBypassVisitor(before, self.process_aliases)
         for statement in node.body:
             body.visit(statement)
-        alternate = self._child(before)
+        alternate = _PythonBypassVisitor(before, self.process_aliases)
         for statement in node.orelse:
             alternate.visit(statement)
         self.found = self.found or body.found or alternate.found
@@ -729,14 +646,14 @@ class _PythonBypassVisitor(ast.NodeVisitor):
     def visit_Try(self, node: ast.Try) -> None:
         """Merge every path that can continue after try/except/else."""
         before = {name: list(values) for name, values in self.bindings.items()}
-        success = self._child(before)
+        success = _PythonBypassVisitor(before, self.process_aliases)
         for statement in node.body:
             success.visit(statement)
         for statement in node.orelse:
             success.visit(statement)
         paths = [success]
         for handler in node.handlers:
-            branch = self._child(before)
+            branch = _PythonBypassVisitor(before, self.process_aliases)
             if handler.type is not None:
                 branch.visit(handler.type)
             if handler.name:
@@ -765,13 +682,7 @@ class _PythonBypassVisitor(ast.NodeVisitor):
         else:
             self.visit(node.test)
         before = {name: list(values) for name, values in self.bindings.items()}
-        body = self._child(before)
-        if isinstance(node, (ast.For, ast.AsyncFor)):
-            # A loop target is a real assignment in the body's lexical scope. Bind
-            # every statically visible command fragment from a literal iterable so
-            # ordinary for/async-for forms cannot evade the effector scan.
-            body._assign(node.target, _static_argv(node.iter, before))
-            body._assign_process_alias(node.target, False)
+        body = _PythonBypassVisitor(before, self.process_aliases)
         for statement in node.body:
             body.visit(statement)
         self.found = self.found or body.found
@@ -789,42 +700,6 @@ class _PythonBypassVisitor(ast.NodeVisitor):
     visit_AsyncFor = _visit_loop
     visit_While = _visit_loop
 
-    def _visit_local_helper_call(
-        self,
-        name: str,
-        function: ast.FunctionDef | ast.AsyncFunctionDef,
-        call: ast.Call,
-    ) -> None:
-        """Scan a local helper with the statically visible arguments from this call site."""
-        child = self._child(active_helpers=self.active_helpers | {name})
-        positional = [*function.args.posonlyargs, *function.args.args]
-        defaults: list[ast.AST | None] = [None] * (len(positional) - len(function.args.defaults)) + list(
-            function.args.defaults
-        )
-        keywords = {keyword.arg: keyword.value for keyword in call.keywords if keyword.arg is not None}
-        for index, (argument, default) in enumerate(zip(positional, defaults, strict=True)):
-            supplied = call.args[index] if index < len(call.args) else keywords.get(argument.arg, default)
-            child._bind_assignment(argument, supplied)
-        for argument, default in zip(function.args.kwonlyargs, function.args.kw_defaults, strict=True):
-            child._bind_assignment(argument, keywords.get(argument.arg, default))
-        if function.args.vararg is not None:
-            extras = call.args[len(positional) :]
-            child._assign(
-                function.args.vararg,
-                [value for extra in extras for value in (_static_argv(extra, self.bindings) or [])] or None,
-            )
-        if function.args.kwarg is not None:
-            extra_values = [
-                value
-                for keyword in call.keywords
-                if keyword.arg is None or keyword.arg not in {argument.arg for argument in positional}
-                for value in (_static_argv(keyword.value, self.bindings) or [])
-            ]
-            child._assign(function.args.kwarg, extra_values or None)
-        for statement in function.body:
-            child.visit(statement)
-        self.found = self.found or child.found
-
     def visit_Call(self, node: ast.Call) -> None:
         call_name = (
             node.func.id
@@ -838,13 +713,6 @@ class _PythonBypassVisitor(ast.NodeVisitor):
             has_osascript = any(_OSASCRIPT_COMMAND_RE.search(value) for value in values)
             if has_osascript and "display notification" in " ".join(values).lower():
                 self.found = True
-        helper_name = node.func.id if isinstance(node.func, ast.Name) else None
-        if (
-            helper_name is not None
-            and helper_name not in self.active_helpers
-            and (function := self.local_functions.get(helper_name)) is not None
-        ):
-            self._visit_local_helper_call(helper_name, function, node)
         self.generic_visit(node)
 
 

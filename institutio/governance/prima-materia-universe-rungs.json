@@ -1,0 +1,66 @@
+{
+  "schema": "limen.prima_materia_universe_rungs.v1",
+  "rungs": [
+    {
+      "dependencies": [
+        "canonical_project_coverage_complete"
+      ],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/prima-materia-universe-audit.py --check all-canonical-projects-built --frozen-wave-sha {frozen_wave_sha256} --installed-runtime-sha {installed_runtime_sha}",
+      "receipt_path": "logs/prima-materia-universe-owner-receipts/all_canonical_projects_built.json",
+      "rung_id": "all_canonical_projects_built",
+      "timeout_seconds": 1800
+    },
+    {
+      "dependencies": [
+        "source_coverage_complete"
+      ],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/prima-materia-universe-audit.py --check canonical-project-coverage-complete --frozen-wave-sha {frozen_wave_sha256} --installed-runtime-sha {installed_runtime_sha}",
+      "receipt_path": "logs/prima-materia-universe-owner-receipts/canonical_project_coverage_complete.json",
+      "rung_id": "canonical_project_coverage_complete",
+      "timeout_seconds": 600
+    },
+    {
+      "dependencies": [
+        "canonical_project_coverage_complete",
+        "source_coverage_complete"
+      ],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/prima-materia-universe-audit.py --check collaborator-universe-reconciled --frozen-wave-sha {frozen_wave_sha256} --installed-runtime-sha {installed_runtime_sha}",
+      "receipt_path": "logs/prima-materia-universe-owner-receipts/collaborator_universe_reconciled.json",
+      "rung_id": "collaborator_universe_reconciled",
+      "timeout_seconds": 600
+    },
+    {
+      "dependencies": [
+        "all_canonical_projects_built",
+        "collaborator_universe_reconciled",
+        "privacy_safe_projection"
+      ],
+      "max_age_seconds": 1800,
+      "predicate": "python3 scripts/prima-materia-universe-audit.py --check github-projection-idempotent --frozen-wave-sha {frozen_wave_sha256} --installed-runtime-sha {installed_runtime_sha}",
+      "receipt_path": "logs/prima-materia-universe-owner-receipts/github_projection_idempotent.json",
+      "rung_id": "github_projection_idempotent",
+      "timeout_seconds": 600
+    },
+    {
+      "dependencies": [
+        "collaborator_universe_reconciled"
+      ],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/prima-materia-universe-audit.py --check privacy-safe-projection --frozen-wave-sha {frozen_wave_sha256} --installed-runtime-sha {installed_runtime_sha}",
+      "receipt_path": "logs/prima-materia-universe-owner-receipts/privacy_safe_projection.json",
+      "rung_id": "privacy_safe_projection",
+      "timeout_seconds": 600
+    },
+    {
+      "dependencies": [],
+      "max_age_seconds": 3600,
+      "predicate": "python3 scripts/prima-materia-universe-audit.py --check source-coverage-complete --frozen-wave-sha {frozen_wave_sha256} --installed-runtime-sha {installed_runtime_sha}",
+      "receipt_path": "logs/prima-materia-universe-owner-receipts/source_coverage_complete.json",
+      "rung_id": "source_coverage_complete",
+      "timeout_seconds": 600
+    }
+  ]
+}

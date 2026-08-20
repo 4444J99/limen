@@ -1,0 +1,321 @@
+{
+  "schema_version": "limen.universe_enumerator_registry.v1",
+  "registry_id": "organvmEnumeratorRegistryV1",
+  "enumerators": [
+    {
+      "enumerator_ref": "constellation-census-v1",
+      "dimension": "census",
+      "command": [
+        "python3",
+        "scripts/prima-materia-enumerate-constellation.py",
+        "--dimension",
+        "census"
+      ],
+      "command_sha256": "6093bd6f26e62d2efa4a4d1d856d7f034ab584fd662c6eba1b66f230cf687e22",
+      "input_files": [
+        "cli/src/limen/constellation_registry_enumerator.py",
+        "organs/consulting/constellation/registry.yaml",
+        "scripts/prima-materia-enumerate-constellation.py"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 1048576,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "constellation-collaborators-v1",
+      "dimension": "collaborator",
+      "command": [
+        "python3",
+        "scripts/prima-materia-enumerate-constellation.py",
+        "--dimension",
+        "collaborator"
+      ],
+      "command_sha256": "2bca8bb93b75a0761c47a6c555a4cd39d3552a0bf26754c0737329404c03e152",
+      "input_files": [
+        "cli/src/limen/constellation_registry_enumerator.py",
+        "organs/consulting/constellation/registry.yaml",
+        "scripts/prima-materia-enumerate-constellation.py"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 1048576,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "constellation-projects-v1",
+      "dimension": "project",
+      "command": [
+        "python3",
+        "scripts/prima-materia-enumerate-constellation.py",
+        "--dimension",
+        "project"
+      ],
+      "command_sha256": "acecd9bbee6cb412e2bac48401ac619eda8e74cd31c55babab5ae38b50c8ed50",
+      "input_files": [
+        "cli/src/limen/constellation_registry_enumerator.py",
+        "organs/consulting/constellation/registry.yaml",
+        "scripts/prima-materia-enumerate-constellation.py"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 1048576,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "curated-registry-census-v1",
+      "dimension": "census",
+      "command": [
+        "python3",
+        "scripts/prima-materia-enumerate-curated-registry.py",
+        "--dimension",
+        "census"
+      ],
+      "command_sha256": "9af2550f04f2816e5ad1b8b6f0f9dcc083a230cde698d9e67255a33187849917",
+      "input_files": [
+        "cli/src/limen/curated_registry_enumerator.py",
+        "institutio/registry/organs.yaml",
+        "scripts/prima-materia-enumerate-curated-registry.py"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 262144,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "curated-registry-collaborators-v1",
+      "dimension": "collaborator",
+      "command": [
+        "python3",
+        "scripts/prima-materia-enumerate-curated-registry.py",
+        "--dimension",
+        "collaborator"
+      ],
+      "command_sha256": "614df2a18cc50a5603e642a894cc8e917395699585f663811a6c788797c84642",
+      "input_files": [
+        "cli/src/limen/curated_registry_enumerator.py",
+        "institutio/registry/organs.yaml",
+        "scripts/prima-materia-enumerate-curated-registry.py"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 262144,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "curated-registry-projects-v1",
+      "dimension": "project",
+      "command": [
+        "python3",
+        "scripts/prima-materia-enumerate-curated-registry.py",
+        "--dimension",
+        "project"
+      ],
+      "command_sha256": "ba97f7e6676fb4d6c74f503b40e371c3073d19e95869a2733270f866608406e8",
+      "input_files": [
+        "cli/src/limen/curated_registry_enumerator.py",
+        "institutio/registry/organs.yaml",
+        "scripts/prima-materia-enumerate-curated-registry.py"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 262144,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "engagements-census-v1",
+      "dimension": "census",
+      "command": [
+        "python3",
+        "scripts/prima-materia-enumerate-engagements.py",
+        "--dimension",
+        "census"
+      ],
+      "command_sha256": "96df2c666f385bbd0ed3ec763b26538d5959fd13f69b0e638c95851b0f6030ad",
+      "input_files": [
+        "cli/src/limen/engagement_ledger_enumerator.py",
+        "scripts/prima-materia-enumerate-engagements.py",
+        "state/aug1/engagements.json"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 262144,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "engagement-collaborators-v1",
+      "dimension": "collaborator",
+      "command": [
+        "python3",
+        "scripts/prima-materia-enumerate-engagements.py",
+        "--dimension",
+        "collaborator"
+      ],
+      "command_sha256": "5fa5516d4ae342c1ed1371392f5e4f9d4c6905330f9e3b81357918661ded1fbd",
+      "input_files": [
+        "cli/src/limen/engagement_ledger_enumerator.py",
+        "scripts/prima-materia-enumerate-engagements.py",
+        "state/aug1/engagements.json"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 262144,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "engagement-projects-v1",
+      "dimension": "project",
+      "command": [
+        "python3",
+        "scripts/prima-materia-enumerate-engagements.py",
+        "--dimension",
+        "project"
+      ],
+      "command_sha256": "739e1a806ec50746d701b1105c2301e00529106f7db59a40141cf081b173a5d5",
+      "input_files": [
+        "cli/src/limen/engagement_ledger_enumerator.py",
+        "scripts/prima-materia-enumerate-engagements.py",
+        "state/aug1/engagements.json"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 262144,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "funnel-records-census-v1",
+      "dimension": "census",
+      "command": [
+        "python3",
+        "scripts/prima-materia-enumerate-funnel-records.py",
+        "--dimension",
+        "census"
+      ],
+      "command_sha256": "5f39a62231d7b8329b6c3d66ff61921a29020328a339c766ccdc6a1f52b411f4",
+      "input_files": [
+        "cli/src/limen/funnel_record_enumerator.py",
+        "institutio/governance/prima-materia-funnel-sources.json",
+        "scripts/conversion-funnel.py",
+        "scripts/opportunity-review-delta.py",
+        "scripts/prima-materia-enumerate-funnel-records.py",
+        "scripts/traffic-collect.py"
+      ],
+      "optional_input_files": [
+        "logs/observatory/traffic.jsonl",
+        "logs/opportunity-status.json",
+        "logs/profile-conversion-funnel-latest.json"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 1048576,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "funnel-record-collaborators-v1",
+      "dimension": "collaborator",
+      "command": [
+        "python3",
+        "scripts/prima-materia-enumerate-funnel-records.py",
+        "--dimension",
+        "collaborator"
+      ],
+      "command_sha256": "8f38a9a1e3a5b5569c39b1a34cbfd2e28ded5f8a139d1f7fbff730b6c26419c3",
+      "input_files": [
+        "cli/src/limen/funnel_record_enumerator.py",
+        "institutio/governance/prima-materia-funnel-sources.json",
+        "scripts/conversion-funnel.py",
+        "scripts/opportunity-review-delta.py",
+        "scripts/prima-materia-enumerate-funnel-records.py",
+        "scripts/traffic-collect.py"
+      ],
+      "optional_input_files": [
+        "logs/observatory/traffic.jsonl",
+        "logs/opportunity-status.json",
+        "logs/profile-conversion-funnel-latest.json"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 1048576,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "funnel-record-projects-v1",
+      "dimension": "project",
+      "command": [
+        "python3",
+        "scripts/prima-materia-enumerate-funnel-records.py",
+        "--dimension",
+        "project"
+      ],
+      "command_sha256": "419ee5e26e045d8ba61bba6fbfb9f80c57c8b1936b6836e5a486f5b0b21ff895",
+      "input_files": [
+        "cli/src/limen/funnel_record_enumerator.py",
+        "institutio/governance/prima-materia-funnel-sources.json",
+        "scripts/conversion-funnel.py",
+        "scripts/opportunity-review-delta.py",
+        "scripts/prima-materia-enumerate-funnel-records.py",
+        "scripts/traffic-collect.py"
+      ],
+      "optional_input_files": [
+        "logs/observatory/traffic.jsonl",
+        "logs/opportunity-status.json",
+        "logs/profile-conversion-funnel-latest.json"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 1048576,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "github-estate-census-v1",
+      "dimension": "census",
+      "command": [
+        "python3",
+        "scripts/prima-materia-github-estate.py",
+        "enumerate",
+        "--dimension",
+        "census"
+      ],
+      "command_sha256": "dcc4de5c5c6251e31026908abe5a8f9663a91c199e385469b22a3ff8708855d3",
+      "input_files": [
+        "cli/src/limen/github_estate_enumerator.py",
+        "docs/github-universe-snapshot.json",
+        "institutio/github/estate.yaml",
+        "scripts/prima-materia-github-estate.py"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 4194304,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "github-estate-collaborators-v1",
+      "dimension": "collaborator",
+      "command": [
+        "python3",
+        "scripts/prima-materia-github-estate.py",
+        "enumerate",
+        "--dimension",
+        "collaborator"
+      ],
+      "command_sha256": "84f3b82c918ee5c6bdac13f0b87507bdc883290848b58afa125b94a7c59cf291",
+      "input_files": [
+        "cli/src/limen/github_estate_enumerator.py",
+        "docs/github-universe-snapshot.json",
+        "institutio/github/estate.yaml",
+        "scripts/prima-materia-github-estate.py"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 4194304,
+      "requires_custody_receipt": false
+    },
+    {
+      "enumerator_ref": "github-estate-projects-v1",
+      "dimension": "project",
+      "command": [
+        "python3",
+        "scripts/prima-materia-github-estate.py",
+        "enumerate",
+        "--dimension",
+        "project"
+      ],
+      "command_sha256": "932372a8460f920e5d1f8afec86d27c90626868e40705e87ec467d9c944e65d2",
+      "input_files": [
+        "cli/src/limen/github_estate_enumerator.py",
+        "docs/github-universe-snapshot.json",
+        "institutio/github/estate.yaml",
+        "scripts/prima-materia-github-estate.py"
+      ],
+      "timeout_seconds": 10,
+      "max_output_bytes": 4194304,
+      "requires_custody_receipt": false
+    }
+  ]
+}

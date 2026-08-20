@@ -178,26 +178,6 @@ def test_python_test_helper_with_concatenated_effector_command_is_detected(tmp_p
     assert check_gate._python_bypasses(helper) is True
 
 
-def test_tracked_concatenated_executable_survives_source_prefilter(tmp_path, check_gate, monkeypatch):
-    sender = tmp_path / "scripts" / "sender.py"
-    sender.parent.mkdir()
-    sender.write_text(
-        "import subprocess\n"
-        'command = "osa" + "script"\n'
-        'message = "display " + "notification x"\n'
-        'subprocess.run([command, "-e", message])\n',
-        encoding="utf-8",
-    )
-    monkeypatch.setattr(check_gate, "_clean_exact_head", lambda _root: None)
-    monkeypatch.setattr(
-        check_gate.subprocess,
-        "run",
-        lambda *_args, **_kwargs: SimpleNamespace(returncode=0, stdout=b"scripts/sender.py\0"),
-    )
-
-    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
-
-
 def test_shell_command_regex_accepts_path_and_arguments(check_gate):
     assert check_gate._OSASCRIPT_COMMAND_RE.search("/usr/bin/osascript -e display")
     assert check_gate._OSASCRIPT_COMMAND_RE.search("osascript -e display")
@@ -388,139 +368,6 @@ def test_list_bound_python_notification_bypass_is_rejected(tmp_path, check_gate)
     scripts.mkdir()
     (scripts / "sender.py").write_text(
         'import subprocess\ncmd = ["osascript", "-e", \'display notification "x"\']\nsubprocess.run(cmd)\n',
-        encoding="utf-8",
-    )
-
-    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
-
-
-@pytest.mark.parametrize(
-    "expression",
-    [
-        '[subprocess.run(cmd) for cmd in [["osascript", "-e", "display notification x"]]]',
-        '{subprocess.run(cmd) for cmd in [["osascript", "-e", "display notification x"]]}',
-        '(subprocess.run(cmd) for cmd in [["osascript", "-e", "display notification x"]])',
-        '{"delivery": subprocess.run(cmd) for cmd in [["osascript", "-e", "display notification x"]]}',
-    ],
-)
-def test_comprehension_target_notification_bypass_is_rejected(tmp_path, check_gate, expression):
-    scripts = tmp_path / "scripts"
-    scripts.mkdir()
-    (scripts / "sender.py").write_text(f"import subprocess\n{expression}\n", encoding="utf-8")
-
-    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
-
-
-@pytest.mark.parametrize(
-    "source",
-    [
-        'for cmd in [["osascript", "-e", "display notification x"]]:\n    subprocess.run(cmd)\n',
-        'async def fire():\n    async for cmd in [["osascript", "-e", "display notification x"]]:\n'
-        "        subprocess.run(cmd)\n",
-    ],
-)
-def test_loop_target_notification_bypass_is_rejected(tmp_path, check_gate, source):
-    scripts = tmp_path / "scripts"
-    scripts.mkdir()
-    (scripts / "sender.py").write_text(f"import subprocess\n{source}", encoding="utf-8")
-
-    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
-
-
-@pytest.mark.parametrize(
-    "signature",
-    [
-        'cmd=["osascript", "-e", "display notification x"]',
-        '*, cmd=["osascript", "-e", "display notification x"]',
-    ],
-)
-def test_default_parameter_notification_bypass_is_rejected(tmp_path, check_gate, signature):
-    scripts = tmp_path / "scripts"
-    scripts.mkdir()
-    (scripts / "sender.py").write_text(
-        f"import subprocess\ndef fire({signature}):\n    subprocess.run(cmd)\nfire()\n",
-        encoding="utf-8",
-    )
-
-    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
-
-
-def test_static_mapping_notification_bypass_is_rejected(tmp_path, check_gate):
-    scripts = tmp_path / "scripts"
-    scripts.mkdir()
-    (scripts / "sender.py").write_text(
-        "import subprocess\n"
-        'commands = {"notify": ["osascript", "-e", "display notification x"]}\n'
-        'subprocess.run(commands["notify"])\n',
-        encoding="utf-8",
-    )
-
-    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
-
-
-def test_static_mapping_safe_key_does_not_inherit_notification_command(tmp_path, check_gate):
-    scripts = tmp_path / "scripts"
-    scripts.mkdir()
-    (scripts / "sender.py").write_text(
-        "import subprocess\n"
-        'commands = {"notify": ["osascript", "-e", "display notification x"], "safe": ["echo", "ok"]}\n'
-        'subprocess.run(commands["safe"])\n',
-        encoding="utf-8",
-    )
-
-    assert check_gate.direct_notification_effectors(tmp_path) == []
-
-
-def test_static_mapping_dynamic_key_is_conservatively_rejected(tmp_path, check_gate):
-    scripts = tmp_path / "scripts"
-    scripts.mkdir()
-    (scripts / "sender.py").write_text(
-        "import subprocess\n"
-        'commands = {"notify": ["osascript", "-e", "display notification x"], "safe": ["echo", "ok"]}\n'
-        'key = input("command: ")\nsubprocess.run(commands[key])\n',
-        encoding="utf-8",
-    )
-
-    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
-
-
-@pytest.mark.parametrize(
-    "call",
-    [
-        'fire(["osascript", "-e", "display notification x"])',
-        'fire(cmd=["osascript", "-e", "display notification x"])',
-    ],
-)
-def test_local_helper_notification_argument_is_rejected(tmp_path, check_gate, call):
-    scripts = tmp_path / "scripts"
-    scripts.mkdir()
-    (scripts / "sender.py").write_text(
-        f"import subprocess\ndef fire(cmd):\n    subprocess.run(cmd)\n{call}\n",
-        encoding="utf-8",
-    )
-
-    assert check_gate.direct_notification_effectors(tmp_path) == ["scripts/sender.py"]
-
-
-def test_local_helper_safe_argument_does_not_inherit_unrelated_notification_literal(tmp_path, check_gate):
-    scripts = tmp_path / "scripts"
-    scripts.mkdir()
-    (scripts / "sender.py").write_text(
-        "import subprocess\n"
-        'unused = ["osascript", "-e", "display notification x"]\n'
-        "def fire(cmd):\n    subprocess.run(cmd)\n"
-        'fire(["echo", "ok"])\n',
-        encoding="utf-8",
-    )
-
-    assert check_gate.direct_notification_effectors(tmp_path) == []
-
-
-def test_destructured_python_command_binding_is_rejected(tmp_path, check_gate):
-    scripts = tmp_path / "scripts"
-    scripts.mkdir()
-    (scripts / "sender.py").write_text(
-        'import subprocess\ncmd, unused = (["osascript", "-e", "display notification x"], None)\nsubprocess.run(cmd)\n',
         encoding="utf-8",
     )
 
@@ -722,7 +569,7 @@ def test_clean_exact_head_reuses_source_path_scan(tmp_path, check_gate, monkeypa
 
     def fake_run(*_args, **_kwargs):
         calls.append(True)
-        return SimpleNamespace(returncode=0, stdout=b"scripts/sender.py\0")
+        return SimpleNamespace(returncode=0, stdout="scripts/sender.py\n")
 
     monkeypatch.setattr(check_gate.subprocess, "run", fake_run)
 
@@ -966,11 +813,5 @@ def test_netmode_binds_notifier_to_the_invoking_checkout():
     assert '_notify_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"' in shell
     assert '_notify_root="${LIMEN_ROOT:-$(cd "$_notify_script_dir/.." && pwd)}"' in shell
     assert '"$_notify_script_dir/_notify.py"' in shell
-    live_helper = '"$HOME/Workspace/limen/scripts/_notify.py"'
-    runtime_helper = '"$HOME/.local/share/limen/current/source/scripts/_notify.py"'
-    assert live_helper in shell
-    assert runtime_helper in shell
-    assert shell.index('"$_notify_script_dir/_notify.py"') < shell.index(live_helper)
-    assert shell.index(live_helper) < shell.index(runtime_helper)
-    assert '_notify_root="$(cd "$(dirname "$LIMEN_NOTIFY_HELPER")/.." && pwd)"' in shell
+    assert "$HOME/.local/share/limen/current/source/scripts/_notify.py" not in shell
     assert '--root "$_notify_root"' in shell

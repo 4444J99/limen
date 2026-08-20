@@ -1,0 +1,363 @@
+{
+  "$defs": {
+    "CollaboratorProjectRelationshipV1": {
+      "additionalProperties": false,
+      "properties": {
+        "project_access_level": {
+          "default": "none",
+          "enum": [
+            "none",
+            "read",
+            "write",
+            "admin"
+          ],
+          "title": "Project Access Level",
+          "type": "string"
+        },
+        "project_access_receipt_refs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 256,
+          "title": "Project Access Receipt Refs",
+          "type": "array"
+        },
+        "project_access_status": {
+          "default": "not_granted",
+          "enum": [
+            "not_granted",
+            "pending",
+            "active",
+            "declined",
+            "identity_unresolved"
+          ],
+          "title": "Project Access Status",
+          "type": "string"
+        },
+        "project_authority_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Project Authority Ref"
+        },
+        "project_id": {
+          "title": "Project Id",
+          "type": "string"
+        },
+        "repository_accesses": {
+          "items": {
+            "$ref": "#/$defs/CollaboratorRepositoryAccessV1"
+          },
+          "maxItems": 1024,
+          "title": "Repository Accesses",
+          "type": "array"
+        },
+        "roles": {
+          "items": {
+            "enum": [
+              "reference",
+              "research",
+              "audience",
+              "prospect",
+              "client",
+              "advisor",
+              "contributor",
+              "co_builder"
+            ],
+            "type": "string"
+          },
+          "maxItems": 6,
+          "minItems": 1,
+          "title": "Roles",
+          "type": "array"
+        }
+      },
+      "required": [
+        "project_id",
+        "roles"
+      ],
+      "title": "CollaboratorProjectRelationshipV1",
+      "type": "object"
+    },
+    "CollaboratorRepositoryAccessV1": {
+      "additionalProperties": false,
+      "properties": {
+        "access_level": {
+          "enum": [
+            "none",
+            "read",
+            "triage",
+            "write",
+            "maintain",
+            "admin"
+          ],
+          "title": "Access Level",
+          "type": "string"
+        },
+        "authority_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Authority Ref"
+        },
+        "receipt_refs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 256,
+          "title": "Receipt Refs",
+          "type": "array"
+        },
+        "repository_id": {
+          "title": "Repository Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "not_granted",
+            "pending",
+            "active",
+            "declined",
+            "identity_unresolved"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repository_id",
+        "access_level",
+        "status"
+      ],
+      "title": "CollaboratorRepositoryAccessV1",
+      "type": "object"
+    },
+    "CollaboratorUniverseEntryV1": {
+      "additionalProperties": false,
+      "properties": {
+        "alias_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4096,
+          "title": "Alias Ids",
+          "type": "array"
+        },
+        "collaborator_id": {
+          "title": "Collaborator Id",
+          "type": "string"
+        },
+        "coverage_disposition": {
+          "enum": [
+            "reconciled",
+            "pending",
+            "declined",
+            "identity_unresolved",
+            "unknown"
+          ],
+          "title": "Coverage Disposition",
+          "type": "string"
+        },
+        "disposition_receipt_refs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4096,
+          "title": "Disposition Receipt Refs",
+          "type": "array"
+        },
+        "github_identity_receipt_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Github Identity Receipt Ref"
+        },
+        "github_login_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Github Login Sha256"
+        },
+        "relationships": {
+          "items": {
+            "$ref": "#/$defs/CollaboratorProjectRelationshipV1"
+          },
+          "maxItems": 4096,
+          "minItems": 1,
+          "title": "Relationships",
+          "type": "array"
+        },
+        "source_lineage_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4096,
+          "minItems": 1,
+          "title": "Source Lineage Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "collaborator_id",
+        "source_lineage_ids",
+        "relationships",
+        "coverage_disposition"
+      ],
+      "title": "CollaboratorUniverseEntryV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "collaborators": {
+      "items": {
+        "$ref": "#/$defs/CollaboratorUniverseEntryV1"
+      },
+      "maxItems": 100000,
+      "title": "Collaborators",
+      "type": "array"
+    },
+    "enumeration_complete": {
+      "title": "Enumeration Complete",
+      "type": "boolean"
+    },
+    "frozen_at": {
+      "format": "date-time",
+      "title": "Frozen At",
+      "type": "string"
+    },
+    "frozen_wave_digest": {
+      "title": "Frozen Wave Digest",
+      "type": "string"
+    },
+    "manifest_id": {
+      "title": "Manifest Id",
+      "type": "string"
+    },
+    "missing_collaborator_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Missing Collaborator Ids",
+      "type": "array"
+    },
+    "missing_source_instance_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Missing Source Instance Ids",
+      "type": "array"
+    },
+    "observed_source_instance_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Observed Source Instance Ids",
+      "type": "array"
+    },
+    "project_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "minItems": 1,
+      "title": "Project Ids",
+      "type": "array"
+    },
+    "project_universe_manifest_digest": {
+      "title": "Project Universe Manifest Digest",
+      "type": "string"
+    },
+    "required_collaborator_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "minItems": 1,
+      "title": "Required Collaborator Ids",
+      "type": "array"
+    },
+    "required_source_instance_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "minItems": 1,
+      "title": "Required Source Instance Ids",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "limen.collaborator_universe_manifest.v1",
+      "default": "limen.collaborator_universe_manifest.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_registry_digest": {
+      "title": "Source Registry Digest",
+      "type": "string"
+    },
+    "unexpected_collaborator_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Unexpected Collaborator Ids",
+      "type": "array"
+    },
+    "unexpected_source_instance_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Unexpected Source Instance Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "manifest_id",
+    "frozen_at",
+    "frozen_wave_digest",
+    "source_registry_digest",
+    "project_universe_manifest_digest",
+    "enumeration_complete",
+    "required_source_instance_ids",
+    "observed_source_instance_ids",
+    "missing_source_instance_ids",
+    "unexpected_source_instance_ids",
+    "project_ids",
+    "required_collaborator_ids",
+    "missing_collaborator_ids",
+    "unexpected_collaborator_ids",
+    "collaborators"
+  ],
+  "title": "CollaboratorUniverseManifestV1",
+  "type": "object"
+}

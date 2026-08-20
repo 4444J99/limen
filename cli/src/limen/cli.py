@@ -1,4 +1,5 @@
 import hashlib
+import importlib.util
 import json
 import os
 import subprocess
@@ -1264,6 +1265,172 @@ def observatory_run(apply):
 
     status = obs_exec.run_beat(apply=apply)
     click.echo(obs_exec.summary_line(status))
+
+
+def _load_vltima_validator(root: Path):
+    path = root / "scripts" / "validate-vltima-kernel.py"
+    if not path.exists():
+        click.echo(f"VLTIMA validator missing at {path}", err=True)
+        sys.exit(2)
+    spec = importlib.util.spec_from_file_location("limen_vltima_validator_cli", path)
+    if spec is None or spec.loader is None:
+        click.echo(f"Could not load VLTIMA validator at {path}", err=True)
+        sys.exit(2)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _display_path(root: Path, path: Path) -> str:
+    try:
+        return str(path.relative_to(root))
+    except ValueError:
+        return str(path)
+
+
+def _vltima_json_text(payload: object) -> str:
+    return json.dumps(payload, indent=2, sort_keys=True) + "\n"
+
+
+def _norm_selector(value: str) -> str:
+    return value.strip().strip("/").lower()
+
+
+def _select_vltima_projection(
+    projection: dict[str, object],
+    *,
+    primitive: str | None,
+    organ: str | None,
+    layer: str | None,
+    projection_name: str | None,
+) -> object | None:
+    selectors = [value for value in (primitive, organ, layer, projection_name) if value]
+    if len(selectors) > 1:
+        click.echo("vltima-kernel: choose only one of --primitive, --organ, --layer, or --projection", err=True)
+        sys.exit(2)
+
+    if primitive:
+        needle = _norm_selector(primitive)
+        primitives = projection.get("primitives")
+        if isinstance(primitives, list):
+            for item in primitives:
+                if not isinstance(item, dict):
+                    continue
+                identifiers = {str(item.get("id") or "").lower(), str(item.get("label") or "").lower()}
+                if needle in identifiers:
+                    return item
+        click.echo(f"vltima-kernel: primitive not found: {primitive}", err=True)
+        sys.exit(1)
+
+    if organ:
+        needle = _norm_selector(organ)
+        organs = projection.get("organs")
+        if isinstance(organs, list):
+            for item in organs:
+                if not isinstance(item, dict):
+                    continue
+                home = _norm_selector(str(item.get("home") or ""))
+                identifiers = {str(item.get("pillar") or "").lower(), home, home.removeprefix("organs/")}
+                if needle in identifiers:
+                    return item
+        click.echo(f"vltima-kernel: organ not found: {organ}", err=True)
+        sys.exit(1)
+
+    if layer:
+        layers = projection.get("layers") or {}
+        if not isinstance(layers, dict):
+            click.echo("vltima-kernel: layer map missing", err=True)
+            sys.exit(1)
+        needle = _norm_selector(layer)
+        for layer_name, primitives in layers.items():
+            if needle == str(layer_name).lower():
+                return primitives
+        click.echo(f"vltima-kernel: layer not found: {layer}", err=True)
+        sys.exit(1)
+
+    if projection_name:
+        projections = projection.get("projections") or {}
+        if not isinstance(projections, dict):
+            click.echo("vltima-kernel: projection map missing", err=True)
+            sys.exit(1)
+        if projection_name not in projections:
+            click.echo(f"vltima-kernel: projection not found: {projection_name}", err=True)
+            sys.exit(1)
+        return projections[projection_name]
+
+    return None
+
+
+@main.command("vltima-kernel")
+@click.option("--root", type=click.Path(path_type=Path), default=None, help="Repo root to inspect.")
+@click.option("--json-output", is_flag=True, help="Emit the derived VLTIMA kernel projection as JSON.")
+@click.option("--write-projection", is_flag=True, help="Write organs/vltima/projection.json from the registry.")
+@click.option("--check-projection", is_flag=True, help="Fail if organs/vltima/projection.json is missing or stale.")
+@click.option("--projection-path", type=click.Path(path_type=Path), default=None, help="Override projection path.")
+@click.option("--primitive", default=None, help="Emit one primitive by id or label.")
+@click.option("--organ", default=None, help="Emit one organ projection by pillar or home path.")
+@click.option("--layer", default=None, help="Emit one primitive layer by name.")
+@click.option("--projection", "projection_name", default=None, help="Emit one named projection group.")
+def vltima_kernel(
+    root,
+    json_output,
+    write_projection,
+    check_projection,
+    projection_path,
+    primitive,
+    organ,
+    layer,
+    projection_name,
+):
+    """Validate and emit the VLTIMA universal kernel substrate."""
+    repo_root = root.expanduser().resolve() if root else resolve_limen_repo_root()
+    validator = _load_vltima_validator(repo_root)
+    errors = validator.validate(repo_root)
+    if errors:
+        click.echo(f"vltima-kernel: blocked with {len(errors)} issue(s)", err=True)
+        for error in errors:
+            click.echo(f"  - {error}", err=True)
+        sys.exit(1)
+
+    selector_requested = bool(primitive or organ or layer or projection_name)
+    if json_output or write_projection or check_projection or selector_requested:
+        projection, projection_errors = validator.build_projection(repo_root)
+        if projection_errors:
+            click.echo(f"vltima-kernel: blocked with {len(projection_errors)} issue(s)", err=True)
+            for error in projection_errors:
+                click.echo(f"  - {error}", err=True)
+            sys.exit(1)
+        expected = validator.projection_json_text(projection)
+        target = validator._projection_path(repo_root, projection_path)
+        if write_projection:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(expected)
+            if not json_output:
+                click.echo(f"vltima-kernel: wrote projection to {_display_path(repo_root, target)}")
+        if check_projection:
+            if not target.exists():
+                click.echo(f"vltima-kernel: projection missing: {_display_path(repo_root, target)}", err=True)
+                sys.exit(1)
+            if target.read_text() != expected:
+                click.echo(f"vltima-kernel: projection stale: {_display_path(repo_root, target)}", err=True)
+                sys.exit(1)
+            if not json_output and not write_projection and not selector_requested:
+                click.echo(f"vltima-kernel: projection current at {_display_path(repo_root, target)}")
+        selected = _select_vltima_projection(
+            projection,
+            primitive=primitive,
+            organ=organ,
+            layer=layer,
+            projection_name=projection_name,
+        )
+        if selected is not None:
+            click.echo(_vltima_json_text(selected), nl=False)
+            return
+        if json_output:
+            click.echo(expected, nl=False)
+        return
+
+    click.echo("vltima-kernel: universal kernel and organ projections valid")
 
 
 if __name__ == "__main__":

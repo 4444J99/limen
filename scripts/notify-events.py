@@ -38,14 +38,13 @@ def _load(path, default):
         return default
 
 
-def _notify_macos(title, msg, *, stable_id):
+def _notify_macos(title, msg):
     return notify_event(
         ROOT,
         source="money-view",
         event=title,
         message=msg,
         title=title,
-        stable_id=stable_id,
         payload={"message": msg},
     )
 
@@ -54,8 +53,8 @@ def _notify_ntfy(title, msg):
     return notify_ntfy(ROOT, msg, title=title, tags="money_with_wings")
 
 
-def _emit(title, msg, *, stable_id) -> NotificationResult:
-    result = _notify_macos(title, msg, stable_id=stable_id)
+def _emit(title, msg) -> NotificationResult:
+    result = _notify_macos(title, msg)
     pushed = _notify_ntfy(title, msg) if result.reserved else False
     print(f"[notify:{result.status}{'+ntfy' if pushed else ''}] {title}: {msg}")
     return result
@@ -86,29 +85,17 @@ def main():
         before = prev_stages.get(key)
         if before is not None and before != stage and stage in _LOUD:
             if p.get("whose_hand") == "yours":
-                events.append(
-                    (
-                        "⟶ YOUR MOVE",
-                        f"{p.get('product')} is {stage} — {p.get('next_action', '')} = first $",
-                        f"{key}@{stage}",
-                    )
-                )
+                events.append(("⟶ YOUR MOVE", f"{p.get('product')} is {stage} — {p.get('next_action', '')} = first $"))
             else:
-                events.append(("milestone", f"{p.get('product')} reached {stage}", f"{key}@{stage}"))
+                events.append(("milestone", f"{p.get('product')} reached {stage}"))
 
     # ship milestone (rolling 24h; only fire when crossing a NEW higher bucket today)
     ships = (view.get("ships_24h") or {}).get("total", 0)
     cur_bucket = max([b for b in SHIP_BUCKETS if ships >= b], default=0)
     if cur_bucket > prev_bucket:
-        events.append(
-            (
-                "shipping",
-                f"{ships} PRs shipped in the last 24h across the fleet",
-                f"ships-24h@{today}:{cur_bucket}",
-            )
-        )
+        events.append(("shipping", f"{ships} PRs shipped in the last 24h across the fleet"))
 
-    results = [_emit(f"LIMEN {title}", msg, stable_id=stable_id) for title, msg, stable_id in events]
+    results = [_emit(f"LIMEN {title}", msg) for title, msg in events]
 
     if all(_event_settled(result) for result in results):
         STATE.write_text(

@@ -1719,7 +1719,6 @@ def validate_phase_receipt(
     if not isinstance(predicate, dict):
         failures.append("predicate must be a mapping")
     else:
-        command = predicate.get("command")
         failures.extend(
             _predicate_binding_failures(
                 predicate, expected_command=expected_command, strengthened=strengthened

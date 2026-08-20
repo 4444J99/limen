@@ -1,0 +1,229 @@
+{
+  "$defs": {
+    "ProjectUniverseEntryV1": {
+      "additionalProperties": false,
+      "properties": {
+        "alias_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4096,
+          "title": "Alias Ids",
+          "type": "array"
+        },
+        "artifact_refs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4096,
+          "title": "Artifact Refs",
+          "type": "array"
+        },
+        "build_status": {
+          "enum": [
+            "not_started",
+            "passed",
+            "failed",
+            "blocked",
+            "unknown"
+          ],
+          "title": "Build Status",
+          "type": "string"
+        },
+        "child_task_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 100000,
+          "title": "Child Task Ids",
+          "type": "array"
+        },
+        "collaborator_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4096,
+          "title": "Collaborator Ids",
+          "type": "array"
+        },
+        "coverage_disposition": {
+          "enum": [
+            "complete",
+            "partial",
+            "unknown",
+            "blocked",
+            "superseded"
+          ],
+          "title": "Coverage Disposition",
+          "type": "string"
+        },
+        "lifecycle_stage": {
+          "title": "Lifecycle Stage",
+          "type": "string"
+        },
+        "predicate_refs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4096,
+          "minItems": 1,
+          "title": "Predicate Refs",
+          "type": "array"
+        },
+        "project_id": {
+          "title": "Project Id",
+          "type": "string"
+        },
+        "receipt_refs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4096,
+          "title": "Receipt Refs",
+          "type": "array"
+        },
+        "repository_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 1024,
+          "title": "Repository Ids",
+          "type": "array"
+        },
+        "source_lineage_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4096,
+          "minItems": 1,
+          "title": "Source Lineage Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "project_id",
+        "source_lineage_ids",
+        "lifecycle_stage",
+        "predicate_refs",
+        "coverage_disposition",
+        "build_status"
+      ],
+      "title": "ProjectUniverseEntryV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "enumeration_complete": {
+      "title": "Enumeration Complete",
+      "type": "boolean"
+    },
+    "frozen_at": {
+      "format": "date-time",
+      "title": "Frozen At",
+      "type": "string"
+    },
+    "frozen_wave_digest": {
+      "title": "Frozen Wave Digest",
+      "type": "string"
+    },
+    "manifest_id": {
+      "title": "Manifest Id",
+      "type": "string"
+    },
+    "missing_project_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Missing Project Ids",
+      "type": "array"
+    },
+    "missing_source_instance_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Missing Source Instance Ids",
+      "type": "array"
+    },
+    "observed_source_instance_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Observed Source Instance Ids",
+      "type": "array"
+    },
+    "projects": {
+      "items": {
+        "$ref": "#/$defs/ProjectUniverseEntryV1"
+      },
+      "maxItems": 100000,
+      "title": "Projects",
+      "type": "array"
+    },
+    "required_project_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "minItems": 1,
+      "title": "Required Project Ids",
+      "type": "array"
+    },
+    "required_source_instance_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "minItems": 1,
+      "title": "Required Source Instance Ids",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "limen.project_universe_manifest.v1",
+      "default": "limen.project_universe_manifest.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_registry_digest": {
+      "title": "Source Registry Digest",
+      "type": "string"
+    },
+    "unexpected_project_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Unexpected Project Ids",
+      "type": "array"
+    },
+    "unexpected_source_instance_ids": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 100000,
+      "title": "Unexpected Source Instance Ids",
+      "type": "array"
+    }
+  },
+  "required": [
+    "manifest_id",
+    "frozen_at",
+    "frozen_wave_digest",
+    "source_registry_digest",
+    "enumeration_complete",
+    "required_source_instance_ids",
+    "observed_source_instance_ids",
+    "missing_source_instance_ids",
+    "unexpected_source_instance_ids",
+    "required_project_ids",
+    "missing_project_ids",
+    "unexpected_project_ids",
+    "projects"
+  ],
+  "title": "ProjectUniverseManifestV1",
+  "type": "object"
+}

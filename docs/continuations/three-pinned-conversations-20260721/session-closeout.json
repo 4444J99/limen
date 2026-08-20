@@ -1,0 +1,38 @@
+{
+  "schema": "limen.session-closeout.receipt.v1",
+  "recorded_at": "2026-07-21T18:26:35Z",
+  "scope": "claude-agent-manager",
+  "before": {
+    "sessions": 17,
+    "terminal": 15,
+    "blocked_idle": 2,
+    "working": 0
+  },
+  "actions": {
+    "blocked_idle_sessions_stopped": 2,
+    "manager_entries_removed": 17
+  },
+  "preservation": {
+    "transcripts_retained": true,
+    "substantive_owner_receipts_preexisted": true,
+    "external_messages_sent": 0,
+    "deployments_performed": 0,
+    "merges_performed": 0
+  },
+  "after": {
+    "predicate": "claude agents --json --all",
+    "runs": [
+      [],
+      []
+    ]
+  },
+  "requested_codex_session": {
+    "target_id_sha256": "b01cff3f83a63dd14b328018fc49693b600f9189eddab0d255f430778388b7fa",
+    "action": "native_archive",
+    "active_record_absent": true,
+    "archived_record_present": true,
+    "archived_record_sha256": "8c95d44a15d6fb584df417e004d334968f70f1e26e2f0d00f2f27c69f475dad2",
+    "sqlite_archived": true,
+    "reversible": true
+  }
+}

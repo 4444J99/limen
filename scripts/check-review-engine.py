@@ -22,7 +22,6 @@ import json
 import os
 import shutil
 import subprocess
-import sys
 
 # The known review-agent logins (GitHub actor names as they appear on reviews/issue comments).
 # github-actions is deliberately EXCLUDED — that is our own fanout requester, not a reviewer.

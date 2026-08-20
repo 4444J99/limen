@@ -1,0 +1,108 @@
+{
+  "alpha": {
+    "installed_runtime_sha": "4a86f3825ef3a2acf308e1bbd3a0c8463c42d0e1",
+    "installed_runtime_status": "installed",
+    "merged_and_installed": false,
+    "pr": {
+      "head_sha": "f002f973d7f2d46cb218fe49edebfa43d43cc523",
+      "merge_state": "CLEAN",
+      "merged_at": null,
+      "number": 1606,
+      "required_checks": {
+        "pr-gate": "SUCCESS",
+        "python": "SUCCESS"
+      },
+      "state": "OPEN"
+    },
+    "remote_main_sha": "4a86f3825ef3a2acf308e1bbd3a0c8463c42d0e1",
+    "runtime_exact_to_remote_main": true
+  },
+  "campaign": {
+    "deadline_at": "2026-07-29T04:43:09Z",
+    "identity": "prima-materia-alpha-omega-universe-v3",
+    "remaining_seconds": 13471,
+    "started_at": "2026-07-28T20:43:09Z"
+  },
+  "custody": {
+    "authenticated_encrypted_byte_store_present": true,
+    "distinct_physical_parents_live": true,
+    "dual_device_restore_proven": false,
+    "role_physical_parent_sha256": {
+      "Archive4T": "954e72f192007ca4b6a5a6a1e9e328718e744e4d16ef92efb01736614ce073e5",
+      "T7Recovery": "1bbc1f99a911fd3d955f28b7ab38bfa66f9bcc8f0ca45651e77bbf0eb84860a2"
+    },
+    "source_drift_guard_present": false,
+    "streaming_put_path_present": false,
+    "streaming_restore_to_path_present": false,
+    "resume_present": false
+  },
+  "decision": {
+    "action": "continue_redirected",
+    "discard_verified_lineage": false,
+    "next_packet": "beta-streaming-custody-executor",
+    "rationale": [
+      "alpha remains an exact human merge-and-install gate",
+      "custody execution is independently reversible and gates repository or private-data mutation",
+      "universe adapter throughput cannot substitute for alpha, restore proof, project builds, lambda, or omega",
+      "a new root lineage would reset evidence without changing any live predicate"
+    ],
+    "start_from_scratch": false
+  },
+  "estate": {
+    "automatic_safe_reclaim_count": null,
+    "frozen_repository_roots": 84,
+    "frozen_source_instances": 113,
+    "frozen_storage_roots": 18,
+    "frozen_wave_at": "2026-07-28T19:26:38.124215Z",
+    "frozen_wave_complete_at_observation": true,
+    "frozen_wave_current_for_s15_sources": false,
+    "internal_available_bytes": 169222164480,
+    "internal_available_gib": 157.6,
+    "reclaim_census_complete": false,
+    "reclaim_failure_count": 1,
+    "reclaim_plan_sha256": null,
+    "reclaim_scanned_count": 0,
+    "storage_formal_free_space_bytes": 214748364800,
+    "storage_formal_free_space_passed": false
+  },
+  "host": {
+    "heavy_admitted": false,
+    "swap_fraction": 0.2612762451171875,
+    "vitals_action": "ok",
+    "writer_admitted": true
+  },
+  "lambda": {
+    "audit_complete_equal_count": 0,
+    "first_audit_complete": false,
+    "first_state_sha256": "d6f11170dd2c48f6c4d4a30b39fefade7c6e2dfdf964a09afd9229700af3c5fe",
+    "original_predicate_count": 13,
+    "passed_predicate_count": 0,
+    "second_audit_complete": false,
+    "second_state_sha256": "e91c683b3b7fe3fb8c96a455cb1421e485305ead3a8246b4b7ef27c64dc89b52",
+    "state_digests_equal": false
+  },
+  "observed_at": "2026-07-29T00:58:38Z",
+  "omega": {
+    "audit_complete_equal_count": 0,
+    "career_lane_touched": false,
+    "protected_blocker_count": 1
+  },
+  "schema": "limen.prima_materia_recalibration_receipt.v1",
+  "universe": {
+    "all_canonical_projects_built": false,
+    "collaborator_universe_reconciled": false,
+    "executable_enumerator_refs": 15,
+    "executable_source_families": 5,
+    "github_access_rows": 4,
+    "github_project_debt_rows": 1,
+    "github_repository_rows": 308,
+    "latest_public_collaborator_lower_bound": 14,
+    "latest_public_project_lower_bound": 19,
+    "missing_enumerator_refs": 18,
+    "missing_source_families": 6,
+    "source_coverage_complete": false,
+    "source_family_count": 11,
+    "universe_fixed_point_passed_rungs": 0,
+    "universe_fixed_point_rung_count": 6
+  }
+}
