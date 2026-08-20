@@ -1855,14 +1855,20 @@ test("local worktree writers require unique ordered storage envelope claims", as
   await assert.rejects(validateWorkPacket(local), /storage_envelope_claims/);
 
   const claim = {
-    schema_version: "limen.resource_claim.v1",
+    schema_version: "limen.prima_materia_resource_claim.v1",
     claim_id: "storageClaimIdentifier01",
+    source_instance_id: "storageInstance01",
+    operation_id: "storageOperation01",
     hydrated_inputs_bytes: 1,
     workspace_bytes: 2,
     temporary_expansion_bytes: 3,
     output_bytes: 4,
     encryption_chunking_bytes: 5,
     rollback_bytes: 6,
+    memory_bytes: 0,
+    file_count: 0,
+    network_bytes: 0,
+    wall_time_seconds: 1,
     effective_from: "2026-08-12T00:00:00Z",
     effective_until: "2026-08-12T01:00:00Z",
     rollback_until: "2026-08-12T02:00:00Z",

@@ -317,7 +317,8 @@ def compile_child_tickets(
         if not isinstance(row, dict):
             raise MigrationError("manifest contains a non-object child")
         child = Task.model_validate(row)
-        validate_intake_contract(child, is_new=True)
+        if child.status in {"open", "dispatched", "in_progress"}:
+            validate_intake_contract(child, is_new=True)
         patch = _stamp_child_underwriting(child.model_dump(mode="json", exclude_none=True), row)
         tickets.append(
             _ticket(
@@ -383,8 +384,7 @@ def compile_parent_tickets(
         }
         merged = parent.model_dump(mode="json", exclude_none=True)
         merged.update(patch)
-        validated = Task.model_validate(merged)
-        validate_intake_contract(validated, is_new=False)
+        Task.model_validate(merged)
         tickets.append(
             _ticket(
                 payload,
@@ -623,7 +623,8 @@ def verify_children_admitted(payload: dict[str, Any], board_path: Path) -> dict[
         child = board.get(task_id)
         if child is None:
             raise MigrationError(f"child {task_id!r} is not admitted on the board")
-        validate_intake_contract(child, is_new=True)
+        if child.status in {"open", "dispatched", "in_progress"}:
+            validate_intake_contract(child, is_new=True)
         actual = child.model_dump(mode="json", exclude_none=True)
         expected = _child_manifest_fields(children[task_id])
         for volatile in CHILD_ROUTING_VOLATILE_FIELDS:

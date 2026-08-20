@@ -1354,7 +1354,8 @@
       "label": "After the agent-owned score research and synchronized audiovisual proof exist, review THE THING WITHOUT A NAME's proposed score language and actual new cut. Approve or redirect the repertoire/score direction; then approve the final audiovisual cut and its factual rights/biographical assertions before any upload, filing, public post, fee, agreement, or identity claim. The current 5:13 technical package is explicitly provisional and cannot satisfy this lever.",
       "owner": "yours",
       "cost": "deferred until agent prerequisites exist; then one bounded artistic review plus final-cut/signoff review",
-      "status": "deferred \u2014 not actionable during the 2026-08-03 pause; reversible Agy/OpenCode lanes proceed without it",
+      "status": "blocked",
+      "note": "deferred \u2014 not actionable during the 2026-08-03 pause; reversible Agy/OpenCode lanes proceed without it",
       "gate": "artistic judgment, factual/rights attestations, and irreversible account/public actions cannot be inferred or automated",
       "unlocks": "the score-driven final cut, submission filing, public presentation, and archival Omega release",
       "source_task": "organvm/the-thing-without-a-name Alpha \u2192 Omega epic #7; score/repertoire #8, shared score clock #9, re-cut #10, rights #16, submission #2",
@@ -1489,7 +1490,30 @@
         "Discharge this lever only when every named IRF has a terminal owner receipt and the classification predicate passes."
       ],
       "note": "This umbrella lever does not merge the underlying decisions. It provides one durable human surface while each IRF retains its own source lineage and evidence.",
-      "issue": 2120
+      "issue": 2120,
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
+    },
+    {
+      "id": "L-CLAUDE-SETTINGS-ESTATE-INSTALL",
+      "label": "Install the validated Claude settings-estate repair: swap the staged settings.json.tmpl candidate into domus-genoma, commit, chezmoi-apply, verify. The 2026-08-06 review proved all 19 inline PreToolUse guards dead (wrong hook interface); the repair layer (stdin-JSON dispatcher + 26-fixture liveness predicate + tracker fix) is already on disk and fixture-green, but the agent-session classifier hard-gates the settings/hook-arming mutation class, so the final swap+apply is a one-paste human action.",
+      "owner": "yours",
+      "cost": "~2 min, one paste, fully reversible (git revert + archive dir)",
+      "status": "needs_human",
+      "gate": "auto-mode classifier self-modification boundary: agent sessions cannot mutate user-level settings or arm hooks",
+      "unlocks": "live guard layer (force-push/branch-D/push-main/registry/IRF advisories restored; brew-zap-claude-code and LaunchAgents writes become real denies), fleetview Stop-digest un-silenced (root cause: empty stdin to async hook since ~Jul 24), PostCompact reorientation, PermissionDenied + protected-registry FileChanged audit logs, ConfigChange formatter-hazard warning, CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY=5 (16GB jetsam cap harness-enforced), cleanupPeriodDays=14, useAutoModeDuringPlan=true",
+      "source_task": "2026-08-06 settings-estate review + implementation (limen bg session 611a4757); domus-genoma commit 7df265ac (pre-repair snapshot); hook scripts + liturgy edits on disk uncommitted pending this lever",
+      "steps": [
+        "cd /Users/4jp/Workspace/domus-genoma",
+        "cp /tmp/settings.json.tmpl.candidate-611a4757 private_dot_claude/settings.json.tmpl",
+        "mkdir -p ~/.claude/archive-20260806-settings-estate && mv ~/.claude/settings.proposed.json ~/.claude/settings.json.bak ~/.claude/settings.json.bak-20260625-160116 ~/.claude/settings.json.bak-20260625-164006 ~/.claude/hooks/allow-trusted-cd-git.sh.bak ~/.claude/hooks/allow-trusted-cd-git.sh.bak-20260701 ~/.claude/hooks/allow-trusted-cd-git.sh.bak-20260709-resume ~/.claude/archive-20260806-settings-estate/ 2>/dev/null; mv private_dot_claude/settings.json.tmpl.bak ~/.claude/archive-20260806-settings-estate/source-settings.json.tmpl.bak",
+        "git add private_dot_claude/settings.json.tmpl private_dot_claude/hooks/executable_pretooluse-guard-dispatch.sh private_dot_claude/hooks/executable_guard-liveness-check.sh private_dot_claude/hooks/executable_comment-cadence-tracker.sh private_dot_claude/CLAUDE.md.tmpl && git commit -m 'feat(claude): stdin-JSON guard dispatcher, settings adoptions, estate hygiene (2026-08-06 review)'",
+        "chezmoi add ~/.claude/hooks/allow-trusted-cd-git.sh",
+        "chezmoi diff; chezmoi apply && ~/.claude/hooks/guard-liveness-check.sh && git push origin master"
+      ],
+      "note": "Candidate template: /tmp/settings.json.tmpl.candidate-611a4757 (render-validated: chezmoi execute-template + jq green; 504->416 lines). If /tmp was cleared, regenerate deterministically: python3 /tmp/tmpl-candidate-611a4757.py against the committed tmpl, or re-derive from memory project-inline-settings-guards-dead.md (records the full fix pattern). After apply, guard-liveness-check.sh must print ALL PASS and the next session's gh-pr-comment probe should inject preflight context. Residual nuance: liturgy line 51 still says the hook blocks all *.plist; the dispatcher denies only LaunchAgents/LaunchDaemons paths and advises on other .plist (that line edit was itself classifier-gated).",
+      "issue": 1897
     }
   ]
 }

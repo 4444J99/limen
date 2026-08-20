@@ -26,6 +26,10 @@ class _CP:
 
 def _fresh_module(tmp_path, monkeypatch, **env):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_CONDUCT_ENV_FILE", str(tmp_path / "nonexistent.env"))
+    monkeypatch.delenv("LIMEN_CONDUCT_URL", raising=False)
+    monkeypatch.setenv("LIMEN_CONDUCT_STATE", str(tmp_path / "conduct_state.sqlite3"))
+    monkeypatch.delenv("LIMEN_CONDUCT_TOKEN", raising=False)
     for key, value in env.items():
         monkeypatch.setenv(key, str(value))
     (tmp_path / "logs" / "async-runs").mkdir(parents=True, exist_ok=True)

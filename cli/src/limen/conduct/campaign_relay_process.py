@@ -62,11 +62,18 @@ def _live_relay_lanes(_root: Path) -> tuple[str, ...]:
         if not workstream_launchable(vendor, autonomous=True):
             continue
         profile = getattr(vendor, "execution", None)
+        is_jules = getattr(profile, "workstream_adapter", "") == "jules"
         direct_native = bool(
-            vendor.local_checkout
-            and profile is not None
-            and {"execute", "local-worktree"}.issubset(profile.capabilities)
-            and (profile.transport == "native-cli" or profile.transport.startswith("ianva-"))
+            profile is not None
+            and "execute" in profile.capabilities
+            and (
+                (
+                    getattr(vendor, "local_checkout", False)
+                    and "local-worktree" in profile.capabilities
+                    and (profile.transport == "native-cli" or profile.transport.startswith("ianva-"))
+                )
+                or is_jules
+            )
         )
         if not direct_native:
             continue

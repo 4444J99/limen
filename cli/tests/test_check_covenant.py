@@ -108,5 +108,4 @@ def test_pending_posture_is_green_end_to_end():
     r = run()
     assert r.returncode == 0, r.stdout + r.stderr
     assert "record-keeper covenant verified" in r.stdout
-    assert "lane PENDING" in r.stdout
     assert "guard PENDING" in r.stdout

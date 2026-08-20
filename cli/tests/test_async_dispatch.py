@@ -118,6 +118,7 @@ def _resource_graph(tmp_path):
         ),
         encoding="utf-8",
     )
+    resource_graph.chmod(0o600)
     return resource_graph
 
 
@@ -1511,6 +1512,7 @@ def test_two_async_processes_cannot_reuse_slot_before_first_marker_exists(tmp_pa
         "LIMEN_DISPATCH_ADMISSION": "0",
         "LIMEN_DISK_PRESSURE_VALUE_ONLY": "0",
         "LIMEN_RESOURCE_TASK_GRAPH": str(resource_graph),
+        "LIMEN_CONDUCT_STATE": str(tmp_path / "conduct_state.sqlite3"),
         "LIMEN_WORKTREE_DEBT_GATE": "0",
         "LIMEN_ALWAYS_WORKING_BEFORE_DISPATCH": "0",
         "PYTHONPATH": str(CLI_SRC),
@@ -3196,6 +3198,7 @@ pathlib.Path("logs/handoff.json").write_text("MUTATED BY FORBIDDEN REFRESH")
         "LIMEN_WORKTREE_DEBT_GATE": "0",
         "LIMEN_DISK_PRESSURE_VALUE_ONLY": "0",
         "LIMEN_RESOURCE_TASK_GRAPH": str(resource_graph),
+        "LIMEN_CONDUCT_STATE": str(tmp_path / "conduct_state.sqlite3"),
     }
     proc = subprocess.run(
         [

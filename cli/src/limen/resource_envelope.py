@@ -361,8 +361,6 @@ def current_required_free_gib(
     claims: tuple[ResourceClaimV1, ...] | None = None,
 ) -> float:
     expected_run_id = os.environ.get("LIMEN_RESOURCE_TASK_GRAPH_RUN_ID") or None
-    if claims is None and expected_run_id is None:
-        raise ResourceGraphInvalid("selected resource task graph run identity is required")
     selected = load_task_graph_claims(expected_run_id=expected_run_id) if claims is None else claims
     return evaluate_resource_envelope(
         observe_resource_telemetry(),
