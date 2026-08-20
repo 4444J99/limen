@@ -1,0 +1,40 @@
+{
+  "acceptance_sha256": "ff110f8896e852e6261f2099aee65fbb3a2200724282b9f8e135d65681f3f774",
+  "authority": {
+    "executor": "Codex",
+    "human_protected": true,
+    "kind": "direct_human_session",
+    "session_id": "019fed0d-52c4-7a83-b493-88a80035b42c"
+  },
+  "changed_paths": [
+    "docs/receipts/psp-p01-w05-preflight/post-merge-20260810.json",
+    "docs/receipts/psp-p01-w05-preflight/README.md",
+    "docs/receipts/psp-p01-w05-preflight/baseline-preflight-20260810.json",
+    "docs/receipts/psp-p01-w05-preflight/refresh-20260810T210355Z.json",
+    "docs/receipts/psp-p01-w05-preflight/refresh-20260810T210456Z.json",
+    "docs/receipts/psp-p01-w05-preflight/refresh-20260810T210527Z.json",
+    "docs/receipts/psp-p01-w05-preflight/refresh-20260810T210531Z.json",
+    "scripts/positioning-w05-refresh.py"
+  ],
+  "evidence_urls": [
+    "https://github.com/organvm/limen/issues/2171",
+    "https://github.com/organvm/limen/pull/2309",
+    "https://github.com/organvm/limen/issues/2171#issuecomment-5246012903"
+  ],
+  "observed_heads": {
+    "organvm/limen": "16d841f962da5faec273b11c97a8a2ee7049c25b"
+  },
+  "outcome": "succeeded",
+  "predicate": {
+    "command": "python3 scripts/positioning-w05-refresh.py",
+    "exit_code": 0,
+    "observed_at": "2026-08-10T21:09:35Z",
+    "output_sha256": "c5d1aeff5dc2f3cbc00494c87399033640928dac099c185a296b217515e51182"
+  },
+  "rollback": {
+    "invoked": false,
+    "state": "not needed"
+  },
+  "schema_version": "limen.positioning_work_receipt.v1",
+  "work_id": "PSP-P01-W05"
+}
