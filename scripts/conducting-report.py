@@ -7,8 +7,7 @@ window toward the reserve drops) or did it IDLE at a full tank (and why)? It als
 got value-discovery work. Delivery is CASCADED (never-"NO"): a local macOS notification AND, if
 LIMEN_NTFY_TOPIC is set, an ntfy.sh push to your phone. Idempotent: fires at most once per day (tracks
 logs/.conducting-report-state.json); --force re-emits now. Fail-open: a missing/torn feed prints what it
-can and never crashes the beat. Before claiming a route, it runs dispatch's canonical always-working
-owner reconciliation; otherwise it writes only its own state and delivery receipts.
+can and never crashes the beat. Read-only on the fleet's data; writes only its own state file.
 """
 
 from __future__ import annotations
@@ -17,29 +16,15 @@ import argparse
 import json
 import math
 import os
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
 
 from _notify import NotificationResult, notify_event, notify_ntfy
-
-try:
-    from limen.dispatch import run_always_working_before_dispatch as _run_always_working_before_dispatch
-except Exception:  # pragma: no cover - an older installed runtime must fail closed below
-    _run_always_working_before_dispatch = None
-
-try:
-    from limen.bounded_subprocess import (
-        BoundedSubprocessError as _BoundedSubprocessError,
-        run_bounded_subprocess as _run_bounded_subprocess,
-    )
-except Exception:  # pragma: no cover - an older installed runtime must fail closed below
-    _BoundedSubprocessError = None
-    _run_bounded_subprocess = None
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
@@ -52,9 +37,6 @@ ADMISSION_REFRESH_RECEIPT = LOGS / "conducting-admission-refresh.jsonl"
 ROUTING_REASONS = frozenset({"routable", "admission_blocked", "capacity_blocked", "auth_blocked", "keeper_unavailable"})
 TELEMETRY_MAX_AGE_SECONDS = 5400
 ADMISSION_REFRESH_TIMEOUT_SECONDS = 60.0
-ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES = 8192
-SESSION_VALUE_TIMEOUT_SECONDS = 90.0
-SESSION_VALUE_OUTPUT_LIMIT_BYTES = 8192
 
 
 def _load(path, default):
@@ -80,7 +62,7 @@ def _admission_refresh_receipt(event: str, **fields: object) -> None:
 
 
 def _refresh_admission() -> bool:
-    """Refresh keeper-owned admission through one process-group-bounded relay."""
+    """Refresh keeper-owned admission through one bounded relay process."""
     path = Path(__file__).with_name("handoff-relay.py")
     try:
         configured_timeout = float(
@@ -92,42 +74,27 @@ def _refresh_admission() -> bool:
     except ValueError:
         timeout = ADMISSION_REFRESH_TIMEOUT_SECONDS
     started = time.monotonic()
-    _admission_refresh_receipt(
-        "start",
-        timeout_seconds=timeout,
-        output_limit_bytes=ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES * 2,
-        stdout_limit_bytes=ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES,
-        stderr_limit_bytes=ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES,
-    )
-    if _run_bounded_subprocess is None:
+    _admission_refresh_receipt("start", timeout_seconds=timeout)
+    try:
+        result = subprocess.run(
+            [sys.executable, str(path)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
         _admission_refresh_receipt(
             "finish",
             elapsed_seconds=round(time.monotonic() - started, 3),
-            outcome="runner_unavailable",
+            outcome="timeout",
         )
         return False
-    try:
-        result = _run_bounded_subprocess(
-            [sys.executable, str(path)],
-            cwd=ROOT,
-            timeout_seconds=timeout,
-            stdout_ceiling=ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES,
-            stderr_ceiling=ADMISSION_REFRESH_OUTPUT_LIMIT_BYTES,
-        )
-    except Exception as exc:
-        failure_kind = (
-            str(exc.kind)
-            if _BoundedSubprocessError is not None and isinstance(exc, _BoundedSubprocessError)
-            else "unavailable"
-        )
-        outcome = {
-            "output": "output_limit",
-            "unavailable": "launch_failed",
-        }.get(failure_kind, failure_kind)
+    except OSError:
         _admission_refresh_receipt(
             "finish",
             elapsed_seconds=round(time.monotonic() - started, 3),
-            outcome=outcome,
+            outcome="launch_failed",
         )
         return False
     outcome = "ok" if result.returncode == 0 else "failed"
@@ -138,117 +105,6 @@ def _refresh_admission() -> bool:
         returncode=result.returncode,
     )
     return result.returncode == 0
-
-
-def _session_value_admission() -> dict[str, object]:
-    """Evaluate the same session-value gate that withholds generic dispatch."""
-    if os.environ.get("LIMEN_SESSION_VALUE_GATE", "1") in {"0", "false", "False"}:
-        return {"status": "allowed", "reason": "session value gate disabled"}
-    path = Path(__file__).with_name("session-value-review.py")
-    hours = os.environ.get(
-        "LIMEN_VALUE_GATE_HOURS",
-        os.environ.get("LIMEN_ASYNC_VALUE_GATE_HOURS", "1.5"),
-    )
-    try:
-        configured_timeout = float(
-            os.environ.get(
-                "LIMEN_VALUE_GATE_TIMEOUT",
-                os.environ.get("LIMEN_ASYNC_VALUE_GATE_TIMEOUT", SESSION_VALUE_TIMEOUT_SECONDS),
-            )
-        )
-        timeout = max(1.0, configured_timeout) if math.isfinite(configured_timeout) else SESSION_VALUE_TIMEOUT_SECONDS
-    except ValueError:
-        timeout = SESSION_VALUE_TIMEOUT_SECONDS
-    started = time.monotonic()
-    _admission_refresh_receipt(
-        "start",
-        step="session_value",
-        timeout_seconds=timeout,
-        output_limit_bytes=SESSION_VALUE_OUTPUT_LIMIT_BYTES * 2,
-        stdout_limit_bytes=SESSION_VALUE_OUTPUT_LIMIT_BYTES,
-        stderr_limit_bytes=SESSION_VALUE_OUTPUT_LIMIT_BYTES,
-    )
-    if _run_bounded_subprocess is None:
-        _admission_refresh_receipt(
-            "finish",
-            step="session_value",
-            elapsed_seconds=round(time.monotonic() - started, 3),
-            outcome="runner_unavailable",
-        )
-        return {"status": "unavailable", "reason": "bounded session value runner unavailable"}
-    try:
-        result = _run_bounded_subprocess(
-            [sys.executable, str(path), "--gate", "--hours", hours, "--no-record-gate"],
-            cwd=ROOT,
-            timeout_seconds=timeout,
-            stdout_ceiling=SESSION_VALUE_OUTPUT_LIMIT_BYTES,
-            stderr_ceiling=SESSION_VALUE_OUTPUT_LIMIT_BYTES,
-        )
-    except Exception as exc:
-        failure_kind = (
-            str(exc.kind)
-            if _BoundedSubprocessError is not None and isinstance(exc, _BoundedSubprocessError)
-            else "unavailable"
-        )
-        outcome = "output_limit" if failure_kind == "output" else failure_kind
-        _admission_refresh_receipt(
-            "finish",
-            step="session_value",
-            elapsed_seconds=round(time.monotonic() - started, 3),
-            outcome=outcome,
-        )
-        detail = "exceeded output limit" if failure_kind == "output" else failure_kind
-        return {"status": "unavailable", "reason": f"session value gate unavailable: {detail}"}
-    stdout = result.stdout.decode("utf-8", errors="replace")
-    stderr = result.stderr.decode("utf-8", errors="replace")
-    detail = (stderr or stdout or "session value gate returned no detail").strip()
-    try:
-        gate_payload = json.loads(stdout) if stdout else None
-    except (TypeError, ValueError):
-        gate_payload = None
-    if isinstance(gate_payload, dict):
-        action = str(gate_payload.get("action") or "unspecified")
-        detail = f"action={action}"
-    else:
-        detail = " ".join(detail.split())[:500]
-    if result.returncode == 0:
-        outcome = "allowed"
-        response = {"status": "allowed", "reason": detail or "session value gate allowed dispatch"}
-    elif result.returncode == 10:
-        outcome = "blocked"
-        response = {"status": "blocked", "reason": detail or "session value gate withheld dispatch"}
-    else:
-        outcome = "unavailable"
-        response = {"status": "unavailable", "reason": detail or f"session value gate exited {result.returncode}"}
-    _admission_refresh_receipt(
-        "finish",
-        step="session_value",
-        elapsed_seconds=round(time.monotonic() - started, 3),
-        outcome=outcome,
-        returncode=result.returncode,
-        output_bytes=len(result.stdout) + len(result.stderr),
-        output_truncated=False,
-    )
-    return response
-
-
-def _always_working_admission() -> dict[str, str]:
-    """Run the dispatcher's canonical final pre-reservation gate."""
-    if _run_always_working_before_dispatch is None:
-        return {
-            "status": "unavailable",
-            "reason": "canonical always-working gate is unavailable",
-        }
-    try:
-        allowed = _run_always_working_before_dispatch(TASKS)
-    except Exception as exc:
-        return {
-            "status": "unavailable",
-            "reason": f"canonical always-working gate raised {type(exc).__name__}",
-        }
-    if allowed:
-        return {"status": "allowed", "reason": "canonical always-working gate allowed dispatch"}
-    return {"status": "blocked", "reason": "canonical always-working gate withheld dispatch"}
 
 
 def _notify_macos(title, msg, day, *, force=False) -> NotificationResult:
@@ -319,8 +175,6 @@ def _continuity_summary(instant: datetime) -> str:
 def _routing_reason(
     now: datetime | None = None,
     target_providers: set[str] | None = None,
-    session_value_gate: dict[str, object] | None = None,
-    always_working_gate: dict[str, object] | None = None,
 ) -> tuple[str, str]:
     """Classify routing from keeper-owned admission, never from vendor consumption."""
     handoff = _load(HANDOFF, None)
@@ -342,14 +196,6 @@ def _routing_reason(
     if admission.get("keeper_available") is False:
         return "keeper_unavailable", "keeper board unavailable during admission refresh"
 
-    if session_value_gate is not None:
-        gate_status = str(session_value_gate.get("status") or "unavailable")
-        gate_reason = str(session_value_gate.get("reason") or "session value gate returned no detail")
-        if gate_status == "blocked":
-            return "admission_blocked", f"session value gate withheld dispatch: {gate_reason}"
-        if gate_status != "allowed":
-            return "keeper_unavailable", f"session value gate unavailable: {gate_reason}"
-
     provider_headroom = handoff.get("provider_headroom")
     if not _fresh_timestamp(provider_headroom, instant):
         return "keeper_unavailable", "provider-headroom telemetry unavailable or stale"
@@ -363,13 +209,6 @@ def _routing_reason(
     down_lanes = {_normalize_provider(lane) for lane in raw_down_lanes if str(lane).strip()}
     target_names = {_normalize_provider(name) for name in (target_providers or set()) if str(name).strip()}
     if admissible > 0 or admission.get("dispatchable_next"):
-        gate = always_working_gate if always_working_gate is not None else _always_working_admission()
-        gate_status = str(gate.get("status") or "unavailable")
-        gate_reason = str(gate.get("reason") or "always-working gate returned no detail")
-        if gate_status == "blocked":
-            return "admission_blocked", f"always-working gate withheld dispatch: {gate_reason}"
-        if gate_status != "allowed":
-            return "keeper_unavailable", f"always-working gate unavailable: {gate_reason}"
         if target_providers is None:
             lane_counts = admission.get("admissible_agent_counts")
             any_lane_counts = admission.get("admissible_any_agent_counts")
@@ -546,13 +385,9 @@ def _verdict(v: dict) -> tuple[str, bool]:
     return (f"used {used_pct}% (headroom {hr}%, pace {pace})", used_pct >= 50)
 
 
-def build_report(
-    *,
-    session_value_gate: dict[str, object] | None = None,
-    usage_snapshot: dict | None = None,
-) -> tuple[str, str, str, str]:
+def build_report() -> tuple[str, str, str, str]:
     """Returns (headline, full_text, local_day_key, canonical_routing_reason)."""
-    usage = usage_snapshot if usage_snapshot is not None else (_load(USAGE, {}) or {})
+    usage = _load(USAGE, {}) or {}
     vendors = usage.get("vendors", {})
     day = _local_day()
     lines, burned, idle = [], 0, 0
@@ -568,10 +403,7 @@ def build_report(
             idle += 1
             idle_providers.add(str(name))
         lines.append(f"  {name:9} {verdict}")
-    routing_reason, routing_detail = _routing_reason(
-        target_providers=idle_providers if idle_providers else None,
-        session_value_gate=session_value_gate,
-    )
+    routing_reason, routing_detail = _routing_reason(target_providers=idle_providers if idle_providers else None)
     disc = _discovery_count()
     tracked = burned + idle
     # Actionable admission truth outranks the burn-rate summary: an idle lane with admitted
@@ -613,14 +445,7 @@ def census() -> dict:
         "value_verdict_present": _value_verdict() is not None,
         "open_value_discovery": _discovery_count(),
         "state_present": STATE.exists(),
-        # The public census is counts-only and must not run the writer-backed pre-dispatch gate.
-        # Without that proof it also must not claim that a route is live.
-        "routing_reason": _routing_reason(
-            always_working_gate={
-                "status": "unavailable",
-                "reason": "not evaluated by counts-only census",
-            }
-        )[0],
+        "routing_reason": _routing_reason()[0],
     }
 
 
@@ -634,47 +459,31 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(census(), indent=2, sort_keys=True))
         return 0
 
-    day = _local_day()
-    state = _load(STATE, {})
-    if not args.force and not args.print_only and state.get("last_day") == day:
-        return 0
-
     # Usage and admission are emitted by separate heartbeat rungs. Refresh the keeper
     # snapshot immediately before pairing them so a once-daily report cannot reuse a prior beat's
     # routing decision after budgets, auth, or worktree pressure changed.
     if not _refresh_admission():
         print("conducting-report: keeper admission refresh failed; delivery withheld")
         return 0
-    session_value_gate = _session_value_admission()
-    usage = _load(USAGE, {})
-    if not isinstance(usage, dict):
-        usage = {}
-    headline, body, day, routing_reason = build_report(
-        session_value_gate=session_value_gate,
-        usage_snapshot=usage,
-    )
+    headline, body, day, routing_reason = build_report()
     print(body)
     if args.print_only:
         return 0
 
+    usage = _load(USAGE, {})
     instant = datetime.now(timezone.utc)
     if not _fresh_timestamp(usage, instant):
         print("conducting-report: usage telemetry unavailable or stale; delivery withheld")
         return 0
     usage_generated = str(usage.get("generated") or usage.get("generated_at"))
 
+    state = _load(STATE, {})
+    if not args.force and state.get("last_day") == day:
+        return 0  # already reported for this fresh local-day snapshot
+
     macos = _notify_macos("Limen — conducting", headline, day, force=args.force)
-    notifications_disabled = macos.status == "withheld" and getattr(macos, "reason", None) == "notifications disabled"
-    retry_ntfy = (macos.reserved and not notifications_disabled) or (
-        macos.status == "duplicate" and getattr(macos, "prior_status", None) in {"delivery_failed", "withheld"}
-    )
-    ntfy = _notify_ntfy("Limen — conducting", body) if retry_ntfy else False
-    macos_settled = (
-        notifications_disabled
-        or macos.status == "emitted"
-        or (macos.status == "duplicate" and getattr(macos, "prior_status", None) == "emitted")
-    )
-    if not macos_settled and not ntfy:
+    ntfy = _notify_ntfy("Limen — conducting", body) if macos.reserved else False
+    if macos.status != "emitted" and not ntfy:
         print(f"conducting-report: delivery not recorded ({macos.status})")
         return 0
     try:

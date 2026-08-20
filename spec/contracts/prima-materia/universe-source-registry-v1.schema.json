@@ -1,0 +1,92 @@
+{
+  "$defs": {
+    "UniverseSourceAdapterV1": {
+      "additionalProperties": false,
+      "description": "One dynamically configured source class for both universe manifests.",
+      "properties": {
+        "adapter_id": {
+          "title": "Adapter Id",
+          "type": "string"
+        },
+        "census_enumerator_ref": {
+          "title": "Census Enumerator Ref",
+          "type": "string"
+        },
+        "collaborator_enumerator_ref": {
+          "title": "Collaborator Enumerator Ref",
+          "type": "string"
+        },
+        "completeness_predicate": {
+          "maxLength": 4096,
+          "minLength": 1,
+          "title": "Completeness Predicate",
+          "type": "string"
+        },
+        "owner_ref": {
+          "title": "Owner Ref",
+          "type": "string"
+        },
+        "privacy_projection_ref": {
+          "title": "Privacy Projection Ref",
+          "type": "string"
+        },
+        "project_enumerator_ref": {
+          "title": "Project Enumerator Ref",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "limen.universe_source_adapter.v1",
+          "default": "limen.universe_source_adapter.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_kind": {
+          "title": "Source Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "adapter_id",
+        "source_kind",
+        "owner_ref",
+        "census_enumerator_ref",
+        "project_enumerator_ref",
+        "collaborator_enumerator_ref",
+        "completeness_predicate",
+        "privacy_projection_ref"
+      ],
+      "title": "UniverseSourceAdapterV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Order-independent registry whose members define the live source denominator.",
+  "properties": {
+    "adapters": {
+      "items": {
+        "$ref": "#/$defs/UniverseSourceAdapterV1"
+      },
+      "maxItems": 4096,
+      "minItems": 1,
+      "title": "Adapters",
+      "type": "array"
+    },
+    "registry_id": {
+      "title": "Registry Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "limen.universe_source_registry.v1",
+      "default": "limen.universe_source_registry.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "registry_id",
+    "adapters"
+  ],
+  "title": "UniverseSourceRegistryV1",
+  "type": "object"
+}

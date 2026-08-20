@@ -476,7 +476,6 @@ class FlagshipProofSetTests(unittest.TestCase):
         candidate = copy.deepcopy(self.candidate("public_records"))
         repository = candidate["repository"]
         workflow = next(anchor for anchor in candidate["evidence_anchors"] if anchor["kind"] == "workflow_run")
-        observed_head = workflow["observed_head"]
         advanced_head = "f" * 40
 
         def fake_command(args: list[str]) -> dict:
