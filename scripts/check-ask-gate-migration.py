@@ -213,6 +213,7 @@ def _validate_with_owner_contract(task: dict[str, Any], errors: list[str]) -> No
 
     try:
         from limen.models import Task  # type: ignore[import-not-found]
+
         Task.model_validate(task)
     except Exception as exc:  # noqa: BLE001 - verifier reports the owner contract verbatim
         errors.append(f"{task.get('id')}: task schema invalid: {exc}")

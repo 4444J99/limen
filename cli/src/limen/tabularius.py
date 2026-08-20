@@ -1050,8 +1050,7 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
         intent = event.get("intent") or {}
         log = dict(intent.get("log") or {})
         is_migration = bool(
-            "migration" in str(log.get("output") or "").lower()
-            or "ask-gate" in str(log.get("output") or "").lower()
+            "migration" in str(log.get("output") or "").lower() or "ask-gate" in str(log.get("output") or "").lower()
         )
         if not (is_migration and validated.status in {"needs_human", "archived", "done"}):
             validate_intake_contract(validated, is_new=is_new)

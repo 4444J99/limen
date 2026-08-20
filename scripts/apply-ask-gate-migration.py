@@ -384,7 +384,7 @@ def compile_parent_tickets(
         }
         merged = parent.model_dump(mode="json", exclude_none=True)
         merged.update(patch)
-        validated = Task.model_validate(merged)
+        Task.model_validate(merged)
         tickets.append(
             _ticket(
                 payload,
