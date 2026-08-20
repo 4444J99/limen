@@ -1,0 +1,65 @@
+version: 1
+layers:
+  lower:
+    - id: object
+      label: Object
+      meaning: Anything the institution can point at.
+    - id: subject
+      label: Subject
+      meaning: A bearer of interest, consent, harm, benefit, identity, or standing.
+    - id: agent
+      label: Agent
+      meaning: A system or person capable of producing an event under a known authority boundary.
+    - id: actor
+      label: Actor
+      meaning: An agent acting in a role at a specific moment.
+    - id: system
+      label: System
+      meaning: The bounded machine, office, institution, or process that receives events and maintains records.
+    - id: event
+      label: Event
+      meaning: A dated assertion that something happened, was proposed, was decided, or changed state.
+    - id: record
+      label: Record
+      meaning: A durable event or projection that can be re-read, audited, and cited.
+    - id: covenant
+      label: Covenant
+      meaning: A binding rule or promise that governs future events and record interpretation.
+  institutional:
+    - id: member
+      label: Member
+      meaning: Subject or object with recognized standing inside the system.
+      sources: [subject, object]
+    - id: mandate
+      label: Mandate
+      meaning: Covenant-backed purpose, claim, role, matter, goal, or obligation.
+      sources: [covenant, record]
+    - id: standing
+      label: Standing
+      meaning: Current record-derived posture.
+      sources: [record, subject, object]
+    - id: standard
+      label: Standard
+      meaning: The covenant, law, rubric, benchmark, or test that decides whether standing can change.
+      sources: [covenant, system]
+    - id: governance
+      label: Governance
+      meaning: The rule-bound authority map for actors, agents, records, and external acts.
+      sources: [actor, agent, system, record, covenant]
+  value:
+    - id: exchange
+      label: Exchange
+      meaning: A recordable transfer of value or promise of value.
+      sources: [event, record]
+    - id: entitlement
+      label: Entitlement
+      meaning: Standing granted by a valid record.
+      sources: [standing, record]
+    - id: obligation
+      label: Obligation
+      meaning: A covenant-backed duty to pay, deliver, maintain, review, or refrain.
+      sources: [covenant, mandate]
+projection:
+  organ_kernel: [member, mandate, standing, standard, governance]
+  record_proof: [event, record, standing]
+  value_proof: [exchange, entitlement, obligation]
