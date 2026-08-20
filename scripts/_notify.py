@@ -54,7 +54,6 @@ class NotificationResult:
     identifier: str
     reserved: bool = False
     reason: str | None = None
-    prior_status: str | None = None
 
 
 def _state_path(root: Path | str) -> Path:
@@ -421,14 +420,12 @@ def notify_event(
             events = state["events"]
             previous = events.get(event_key)
             if isinstance(previous, dict) and not force:
-                prior_status = str(previous.get("status") or "reserved")
                 return NotificationResult(
                     "duplicate",
                     event_key,
                     day,
                     identifier,
-                    reason=f"already reserved ({prior_status})",
-                    prior_status=prior_status,
+                    reason=f"already reserved ({previous.get('status') or 'reserved'})",
                 )
             events[event_key] = {
                 "event": " ".join(str(event).split()),

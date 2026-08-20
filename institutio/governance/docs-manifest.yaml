@@ -58,6 +58,7 @@ sanctioned:
   - {path: always-working.md, kind: doc, owner: fleet, why: "consumed at this exact path by institutio/governance/parameters.yaml (+2 more)"}
   - {path: antigravity-scratch-bridge-history.jsonl, kind: data, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py"}
   - {path: antigravity-scratch-bridge.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/estate-closeout-audit.py (+3 more)"}
+  - {path: github-universe-snapshot.json, kind: data, owner: fleet, why: "consumed at this exact path by cli/src/limen/github_estate_enumerator.py"}
   - {path: antigravity-scratch-preservation.jsonl, kind: data, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py (+1 more)"}
   - {path: antigravity-scratch-reap-acceptance.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/reap_acceptance.py"}
   - {path: antigravity-scratch-root-blockers.md, kind: doc, owner: governance, why: "consumed at this exact path by tasks.yaml"}

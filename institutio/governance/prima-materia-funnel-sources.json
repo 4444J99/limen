@@ -1,0 +1,30 @@
+{
+  "schema_version": "limen.funnel_source_manifest.v1",
+  "manifest_id": "organvmFunnelSourcesV1",
+  "sources": [
+    {
+      "source_id": "generated-funnel-summary",
+      "path": "logs/profile-conversion-funnel-latest.json",
+      "format": "json",
+      "owner_ref": "scripts/conversion-funnel.py",
+      "max_bytes": 8388608,
+      "max_rows": 10000
+    },
+    {
+      "source_id": "opportunity-status-aggregate",
+      "path": "logs/opportunity-status.json",
+      "format": "json",
+      "owner_ref": "scripts/opportunity-review-delta.py",
+      "max_bytes": 8388608,
+      "max_rows": 10000
+    },
+    {
+      "source_id": "repository-traffic-observations",
+      "path": "logs/observatory/traffic.jsonl",
+      "format": "jsonl",
+      "owner_ref": "scripts/traffic-collect.py",
+      "max_bytes": 8388608,
+      "max_rows": 10000
+    }
+  ]
+}

@@ -126,7 +126,7 @@ def _print_human(reports: list[CorpusReport], *, apply: bool, stale_days: int) -
         acted = len(report.archived) if apply and report.archivable else len(report.stale)
         print(f"  {report.label}: {report.total} plan(s), {len(report.stale)} stale, {verb} {acted}")
         if not report.archivable and report.stale:
-            print(f"    git-tracked — relocate via a normal branch/PR, not this organ's --apply")
+            print("    git-tracked — relocate via a normal branch/PR, not this organ's --apply")
         for rel in report.stale[:5]:
             print(f"    - {rel}")
         if len(report.stale) > 5:
