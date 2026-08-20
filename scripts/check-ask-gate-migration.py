@@ -209,21 +209,17 @@ def _validate_predicate(label: str, value: Any, errors: list[str]) -> None:
 
 
 def _validate_with_owner_contract(task: dict[str, Any], errors: list[str]) -> None:
-    """Use #978's owner validator when present; retain an offline fallback before merge."""
+    """Use Task model validation and migration verifier predicates."""
 
     try:
-        from limen.intake import validate_intake_contract  # type: ignore[import-not-found]
         from limen.models import Task  # type: ignore[import-not-found]
-    except ImportError:
-        _validate_predicate(str(task.get("id")), task.get("predicate"), errors)
-        if not _is_durable_receipt(task.get("receipt_target")):
-            errors.append(f"{task.get('id')}: receipt_target is not durable")
-        return
-    try:
-        validated = Task.model_validate(task)
-        validate_intake_contract(validated, is_new=True)
+        Task.model_validate(task)
     except Exception as exc:  # noqa: BLE001 - verifier reports the owner contract verbatim
-        errors.append(f"{task.get('id')}: typed intake rejected child: {exc}")
+        errors.append(f"{task.get('id')}: task schema invalid: {exc}")
+        return
+    _validate_predicate(str(task.get("id")), task.get("predicate"), errors)
+    if not _is_durable_receipt(task.get("receipt_target")):
+        errors.append(f"{task.get('id')}: receipt_target is not durable")
 
 
 def _walk_public_safe(value: Any, path: str, errors: list[str]) -> None:

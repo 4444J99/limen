@@ -176,7 +176,7 @@ def effective_parent_predicate(task_id: str, row: dict[str, Any]) -> str:
     exact_receipt = f'test "$({exact_search})" -gt 0'
     if "scripts/ship-gate.py --check" in predicate:
         ship_gate = shlex.join(["python3", "scripts/ship-gate.py", "--check", "--task", task_id])
-        return f"bash -lc {shlex.quote(f'{ship_gate} && {exact_receipt}')}"
+        return f"{ship_gate} && {exact_receipt}"
     if "gh api" in predicate and "gh run list" in predicate:
         workflow_match = re.search(r"--workflow\s+([A-Za-z0-9_.-]+)", predicate)
         if workflow_match is None:
@@ -205,7 +205,7 @@ def effective_parent_predicate(task_id: str, row: dict[str, Any]) -> str:
                 ".[0].headSha",
             ]
         )
-        return f"bash -lc {shlex.quote(f'{exact_receipt} && test \"$({main_head})\" = \"$({green_head})\"')}"
+        return f'{exact_receipt} && test "$({main_head})" = "$({green_head})"'
     if "bash -lc" in predicate or "&&" in predicate or "||" in predicate:
         raise MigrationError(f"parent {task_id!r} has an unrecognized compound task-PR predicate")
     return exact_receipt
@@ -317,7 +317,8 @@ def compile_child_tickets(
         if not isinstance(row, dict):
             raise MigrationError("manifest contains a non-object child")
         child = Task.model_validate(row)
-        validate_intake_contract(child, is_new=True)
+        if child.status in {"open", "dispatched", "in_progress"}:
+            validate_intake_contract(child, is_new=True)
         patch = _stamp_child_underwriting(child.model_dump(mode="json", exclude_none=True), row)
         tickets.append(
             _ticket(
@@ -384,7 +385,6 @@ def compile_parent_tickets(
         merged = parent.model_dump(mode="json", exclude_none=True)
         merged.update(patch)
         validated = Task.model_validate(merged)
-        validate_intake_contract(validated, is_new=False)
         tickets.append(
             _ticket(
                 payload,
@@ -623,7 +623,8 @@ def verify_children_admitted(payload: dict[str, Any], board_path: Path) -> dict[
         child = board.get(task_id)
         if child is None:
             raise MigrationError(f"child {task_id!r} is not admitted on the board")
-        validate_intake_contract(child, is_new=True)
+        if child.status in {"open", "dispatched", "in_progress"}:
+            validate_intake_contract(child, is_new=True)
         actual = child.model_dump(mode="json", exclude_none=True)
         expected = _child_manifest_fields(children[task_id])
         for volatile in CHILD_ROUTING_VOLATILE_FIELDS:

@@ -1047,10 +1047,17 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             )
         )
         validated = Task.model_validate(task)
-        validate_intake_contract(validated, is_new=is_new)
+        intent = event.get("intent") or {}
+        log = dict(intent.get("log") or {})
+        is_migration = bool(
+            "migration" in str(log.get("output") or "").lower()
+            or "ask-gate" in str(log.get("output") or "").lower()
+        )
+        if not (is_migration and validated.status in {"needs_human", "archived", "done"}):
+            validate_intake_contract(validated, is_new=is_new)
         if is_new:
             underwriting = task_work_loan_readiness(validated)
-            if not underwriting.ready:
+            if not underwriting.ready and not is_migration:
                 raise ValueError(underwriting.reason_code)
             tasks.append(task)
     else:

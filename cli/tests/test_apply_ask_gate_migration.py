@@ -11,7 +11,7 @@ from types import SimpleNamespace
 import pytest
 
 from limen.io import load_limen_file, save_limen_file
-from limen.models import LimenFile, Task, dispatch_agent, dispatch_session_id
+from limen.models import LimenFile, dispatch_agent, dispatch_session_id
 from limen.tabularius import drain_once, tickets_root
 
 
@@ -31,6 +31,9 @@ def _module():
 
 def _payload() -> dict:
     return json.loads(RECEIPT.read_text(encoding="utf-8"))
+
+
+from limen.models import LimenFile, Task, dispatch_agent, dispatch_session_id
 
 
 def _frozen_board_with_source_status(payload: dict, task_id: str | None = None) -> LimenFile:
@@ -114,7 +117,7 @@ def test_compilers_are_deterministic_typed_and_append_only(tmp_path: Path) -> No
     compiler = _module()
     payload = _payload()
     timestamp = compiler.parse_timestamp("2026-07-12T18:00:00Z")
-    kwargs = {"timestamp": timestamp, "agent": "codex", "session_id": "test-session"}
+    kwargs = {"timestamp": timestamp, "agent": "codex", "session_id": "deterministic"}
 
     children_a = compiler.compile_child_tickets(payload, **kwargs)
     children_b = compiler.compile_child_tickets(payload, **kwargs)
