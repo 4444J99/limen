@@ -1,0 +1,127 @@
+{
+  "schema_version": "limen.universe_source_registry.v1",
+  "registry_id": "organvmUniverseSourcesV1",
+  "adapters": [
+    {
+      "schema_version": "limen.universe_source_adapter.v1",
+      "adapter_id": "constellation-v1",
+      "source_kind": "constellation",
+      "owner_ref": "organs/consulting/constellation/registry.yaml",
+      "census_enumerator_ref": "constellation-census-v1",
+      "project_enumerator_ref": "constellation-projects-v1",
+      "collaborator_enumerator_ref": "constellation-collaborators-v1",
+      "completeness_predicate": "every public constellation person and project lane has a source disposition, with sealed overlay parity checked when available",
+      "privacy_projection_ref": "constellation-redacted-projection-v1"
+    },
+    {
+      "schema_version": "limen.universe_source_adapter.v1",
+      "adapter_id": "curated-registry-v1",
+      "source_kind": "curated_registry",
+      "owner_ref": "institutio/registry/organs.yaml",
+      "census_enumerator_ref": "curated-registry-census-v1",
+      "project_enumerator_ref": "curated-registry-projects-v1",
+      "collaborator_enumerator_ref": "curated-registry-collaborators-v1",
+      "completeness_predicate": "every curated registry entry has a stable lineage and project or non-project disposition",
+      "privacy_projection_ref": "curated-registry-redacted-projection-v1"
+    },
+    {
+      "schema_version": "limen.universe_source_adapter.v1",
+      "adapter_id": "deployment-surfaces-v1",
+      "source_kind": "deployment_surfaces",
+      "owner_ref": "docs/deployment.md",
+      "census_enumerator_ref": "deployment-surfaces-census-v1",
+      "project_enumerator_ref": "deployment-surfaces-projects-v1",
+      "collaborator_enumerator_ref": "deployment-surfaces-collaborators-v1",
+      "completeness_predicate": "every discovered deployment surface has a canonical project binding or explicit source debt",
+      "privacy_projection_ref": "deployment-surfaces-redacted-projection-v1"
+    },
+    {
+      "schema_version": "limen.universe_source_adapter.v1",
+      "adapter_id": "engagements-v1",
+      "source_kind": "engagements",
+      "owner_ref": "state/aug1/engagements.json",
+      "census_enumerator_ref": "engagements-census-v1",
+      "project_enumerator_ref": "engagement-projects-v1",
+      "collaborator_enumerator_ref": "engagement-collaborators-v1",
+      "completeness_predicate": "every engagement record has a privacy-safe project and collaborator disposition",
+      "privacy_projection_ref": "engagements-redacted-projection-v1"
+    },
+    {
+      "schema_version": "limen.universe_source_adapter.v1",
+      "adapter_id": "external-obligations-v1",
+      "source_kind": "external_obligations",
+      "owner_ref": "scripts/obligations-view.py",
+      "census_enumerator_ref": "external-obligations-census-v1",
+      "project_enumerator_ref": "external-obligation-projects-v1",
+      "collaborator_enumerator_ref": "external-obligation-collaborators-v1",
+      "completeness_predicate": "every due external obligation has a canonical project binding or explicit non-project disposition",
+      "privacy_projection_ref": "external-obligations-redacted-projection-v1"
+    },
+    {
+      "schema_version": "limen.universe_source_adapter.v1",
+      "adapter_id": "funnel-records-v1",
+      "source_kind": "funnel_records",
+      "owner_ref": "institutio/governance/prima-materia-funnel-sources.json",
+      "census_enumerator_ref": "funnel-records-census-v1",
+      "project_enumerator_ref": "funnel-record-projects-v1",
+      "collaborator_enumerator_ref": "funnel-record-collaborators-v1",
+      "completeness_predicate": "every source-owned funnel record has a project, collaborator, reference-only, or non-project disposition",
+      "privacy_projection_ref": "funnel-records-redacted-projection-v1"
+    },
+    {
+      "schema_version": "limen.universe_source_adapter.v1",
+      "adapter_id": "github-estate-v1",
+      "source_kind": "github_estate",
+      "owner_ref": "institutio/github/estate.yaml",
+      "census_enumerator_ref": "github-estate-census-v1",
+      "project_enumerator_ref": "github-estate-projects-v1",
+      "collaborator_enumerator_ref": "github-estate-collaborators-v1",
+      "completeness_predicate": "every live repository, collaborator grant, and marker-bound Project item has an exact remote disposition",
+      "privacy_projection_ref": "github-estate-redacted-projection-v1"
+    },
+    {
+      "schema_version": "limen.universe_source_adapter.v1",
+      "adapter_id": "product-ledger-v1",
+      "source_kind": "product_ledger",
+      "owner_ref": "scripts/product-ledger.py",
+      "census_enumerator_ref": "product-ledger-census-v1",
+      "project_enumerator_ref": "product-ledger-projects-v1",
+      "collaborator_enumerator_ref": "product-ledger-collaborators-v1",
+      "completeness_predicate": "every ledger row is separated into canonical project, repository, child task, or non-project lineage",
+      "privacy_projection_ref": "product-ledger-redacted-projection-v1"
+    },
+    {
+      "schema_version": "limen.universe_source_adapter.v1",
+      "adapter_id": "prompt-corpus-v1",
+      "source_kind": "prompt_corpus",
+      "owner_ref": "cli/src/limen/prompt_corpus.py",
+      "census_enumerator_ref": "prompt-corpus-census-v1",
+      "project_enumerator_ref": "prompt-corpus-projects-v1",
+      "collaborator_enumerator_ref": "prompt-corpus-collaborators-v1",
+      "completeness_predicate": "every preserved prompt atom has a source lineage and project, collaborator, reference-only, or non-project disposition",
+      "privacy_projection_ref": "prompt-corpus-redacted-projection-v1"
+    },
+    {
+      "schema_version": "limen.universe_source_adapter.v1",
+      "adapter_id": "recovered-historical-masters-v1",
+      "source_kind": "recovered_historical_masters",
+      "owner_ref": "docs/reviews/deep-history-2022-2026.md",
+      "census_enumerator_ref": "historical-master-census-v1",
+      "project_enumerator_ref": "historical-master-projects-v1",
+      "collaborator_enumerator_ref": "historical-master-collaborators-v1",
+      "completeness_predicate": "every recovered historical master has retained lineage and a canonical, superseded, or non-project disposition",
+      "privacy_projection_ref": "historical-masters-redacted-projection-v1"
+    },
+    {
+      "schema_version": "limen.universe_source_adapter.v1",
+      "adapter_id": "sealed-private-overlay-v1",
+      "source_kind": "sealed_private_overlay",
+      "owner_ref": "institutio/governance/parameters.yaml",
+      "census_enumerator_ref": "sealed-private-census-v1",
+      "project_enumerator_ref": "sealed-private-projects-v1",
+      "collaborator_enumerator_ref": "sealed-private-collaborators-v1",
+      "completeness_predicate": "the custody-restored private overlay is enumerated without publishing raw identities, paths, or private payloads",
+      "privacy_projection_ref": "sealed-private-privacy-projection-v1"
+    }
+  ]
+}

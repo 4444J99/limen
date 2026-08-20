@@ -14,7 +14,6 @@ if str(CLI_SRC) not in sys.path:
 
 from limen.doctor import qa_report  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
-from limen.private_board import PrivateCustodyUnavailable, operational_board_path  # noqa: E402
 
 
 def fail(message: str) -> None:

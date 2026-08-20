@@ -1,0 +1,106 @@
+{
+  "$defs": {
+    "UniverseEnumeratorSpecV1": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 64,
+          "minItems": 1,
+          "title": "Command",
+          "type": "array"
+        },
+        "command_sha256": {
+          "title": "Command Sha256",
+          "type": "string"
+        },
+        "dimension": {
+          "enum": [
+            "census",
+            "project",
+            "collaborator"
+          ],
+          "title": "Dimension",
+          "type": "string"
+        },
+        "enumerator_ref": {
+          "title": "Enumerator Ref",
+          "type": "string"
+        },
+        "input_files": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 256,
+          "title": "Input Files",
+          "type": "array"
+        },
+        "max_output_bytes": {
+          "maximum": 16777216,
+          "minimum": 1024,
+          "title": "Max Output Bytes",
+          "type": "integer"
+        },
+        "optional_input_files": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 256,
+          "title": "Optional Input Files",
+          "type": "array"
+        },
+        "requires_custody_receipt": {
+          "default": false,
+          "title": "Requires Custody Receipt",
+          "type": "boolean"
+        },
+        "timeout_seconds": {
+          "maximum": 900,
+          "minimum": 1,
+          "title": "Timeout Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "enumerator_ref",
+        "dimension",
+        "command",
+        "command_sha256",
+        "timeout_seconds",
+        "max_output_bytes"
+      ],
+      "title": "UniverseEnumeratorSpecV1",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "enumerators": {
+      "items": {
+        "$ref": "#/$defs/UniverseEnumeratorSpecV1"
+      },
+      "maxItems": 12288,
+      "title": "Enumerators",
+      "type": "array"
+    },
+    "registry_id": {
+      "title": "Registry Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "limen.universe_enumerator_registry.v1",
+      "default": "limen.universe_enumerator_registry.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "registry_id",
+    "enumerators"
+  ],
+  "title": "UniverseEnumeratorRegistryV1",
+  "type": "object"
+}

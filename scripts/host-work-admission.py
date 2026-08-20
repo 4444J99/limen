@@ -18,7 +18,6 @@ from limen.host_admission import (  # noqa: E402
     USAGE_EXIT,
     AdmissionController,
     AdmissionStateError,
-    host_admission_capabilities,
 )
 from limen.host_admission_capabilities import host_admission_capabilities  # noqa: E402
 

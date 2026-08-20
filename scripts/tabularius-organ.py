@@ -27,8 +27,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
-from limen.memoria import drain_memory_once  # noqa: E402
-from limen.memoria import pending_count as memory_pending_count  # noqa: E402
 from limen.tabularius import (  # noqa: E402
     board_publication_preflight,
     drain_once,
