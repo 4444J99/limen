@@ -3114,7 +3114,43 @@ parameters:
     env: LIMEN_REPO_PREDICATES
     self_update: none
     owner: arms-agents
-    note: "Override path for the repo-predicates registry (default docs/repo-predicates.yaml at LIMEN_ROOT) — the work-loan backfill's declarative quality bar."
+    note: "Override path for the repo-predicates registry (default docs/repo-predicates.yaml at LIMEN_ROOT) — per-repo overrides + value-tier standing for the work-loan backfill; the estate hot cache is the membership bar."
+  LIMEN_ESTATE_REPOS:
+    default: "1"
+    env: LIMEN_ESTATE_REPOS
+    self_update: none
+    owner: arms-agents
+    note: "Beat gate for the estate-repos sensor: project the remote estate (gh repo list per owner) into the skeleton-thin hot cache the supply underwriter derives membership from."
+  LIMEN_ESTATE_REPOS_CACHE:
+    default: ""
+    env: LIMEN_ESTATE_REPOS_CACHE
+    self_update: none
+    owner: arms-agents
+    note: "Override path for the estate hot cache (default logs/estate-repos.json at LIMEN_ROOT; schema limen.estate_repos.v1). A projection of GitHub's answer, never an independent registry."
+  LIMEN_ESTATE_CACHE_TTL_HOURS:
+    default: 24
+    env: LIMEN_ESTATE_CACHE_TTL_HOURS
+    self_update: none
+    owner: arms-agents
+    note: "Freshness horizon for the estate hot cache. Inside it the refresher is a no-op due-check; past it consumers treat the cache as ABSENT (evidence, not emptiness) and the refresher re-lists."
+  LIMEN_ESTATE_REFRESH:
+    default: "1"
+    env: LIMEN_ESTATE_REFRESH
+    self_update: none
+    owner: arms-agents
+    note: "0 stops the work-loan backfill from attempting an inline estate refresh on a stale cache (it then narrows to registry-only membership). The beat's estate-repos sensor is the primary refresher."
+  LIMEN_OWNERS:
+    default: ""
+    env: LIMEN_OWNERS
+    self_update: none
+    owner: arms-agents
+    note: "Explicit pin for the estate's GitHub owner accounts (comma-separated). Empty = REMOTE-FIRST: derive live as the authenticated identity + every org it belongs to (gh api user + user/orgs) — 11 accounts as of 2026-08-06, vs the 2 the old hand-list named."
+  LIMEN_ESTATE_ALIAS_PROBE_MAX:
+    default: 40
+    env: LIMEN_ESTATE_ALIAS_PROBE_MAX
+    self_update: none
+    owner: arms-agents
+    note: "Per-run bound on gh redirect probes for board repo names the estate roster doesn't know (transferred/renamed repos). Hits are cached as aliases; the remainder defers to the next run — counted, never silent."
   LIMEN_JULES_DISPATCH:
     default: "1"
     env: LIMEN_JULES_DISPATCH

@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import datetime as dt
+
+from limen.estate import EstateCache, EstateRepo
 from limen.work_loan import task_work_loan_readiness
 from limen.work_loan_backfill import (
     RepoPredicates,
@@ -136,3 +139,59 @@ def test_live_registry_parses_and_underwrites():
     assert reason == "minted"
     enriched = {**_task(), **patch}
     assert task_work_loan_readiness(enriched).ready
+
+
+ESTATE = EstateCache(
+    fetched_at=dt.datetime(2026, 8, 6, 10, 0, tzinfo=dt.timezone.utc),
+    repos={
+        "organvm/limen": EstateRepo(archived=False, fork=False),
+        "organvm/some-live-repo": EstateRepo(archived=False, fork=False),
+        "organvm/mothballed": EstateRepo(archived=True, fork=False),
+        "meta-organvm/moved-repo": EstateRepo(archived=False, fork=False),
+    },
+    aliases={"organvm/moved-repo": "meta-organvm/moved-repo"},
+)
+
+
+def test_estate_admits_unlisted_live_repo_under_default_template():
+    patch, reason = derive_loan_patch(_task(repo="organvm/some-live-repo"), REGISTRY, ESTATE)
+    assert reason == "minted"
+    assert "organvm/some-live-repo" in patch["predicate"]
+    assert "across the estate" in patch["value_case"]  # honest: estate-derived, not value-tier
+    enriched = {**_task(repo="organvm/some-live-repo"), **patch}
+    assert task_work_loan_readiness(enriched).ready
+
+
+def test_registry_entry_still_claims_value_tier_with_estate_present():
+    patch, reason = derive_loan_patch(_task(), REGISTRY, ESTATE)
+    assert reason == "minted"
+    assert "on the value tier" in patch["value_case"]
+
+
+def test_archived_estate_repo_is_refused():
+    patch, reason = derive_loan_patch(_task(repo="organvm/mothballed"), REGISTRY, ESTATE)
+    assert patch is None and reason == "unmintable:repo-archived"
+
+
+def test_repo_outside_estate_and_registry_is_refused():
+    patch, reason = derive_loan_patch(_task(repo="stranger/elsewhere"), REGISTRY, ESTATE)
+    assert patch is None and reason == "unmintable:repo-not-in-estate"
+
+
+def test_no_estate_evidence_preserves_registry_only_behavior():
+    patch, reason = derive_loan_patch(_task(repo="organvm/some-live-repo"), REGISTRY, None)
+    assert patch is None and reason == "unmintable:repo-not-in-predicate-registry"
+
+
+def test_registry_exclude_vetoes_even_estate_members():
+    registry = RepoPredicates(default_template=REGISTRY.default_template, repos={"organvm/limen": {"exclude": True}})
+    patch, reason = derive_loan_patch(_task(), registry, ESTATE)
+    assert patch is None and reason == "excluded:repo-excluded"
+
+
+def test_alias_resolves_transferred_repo_and_mints_against_canonical():
+    patch, reason = derive_loan_patch(_task(repo="organvm/moved-repo"), REGISTRY, ESTATE)
+    assert reason == "minted"
+    # the loan points at where the repo LIVES, not at the redirect stub the board recorded
+    assert patch["receipt_target"] == "github:meta-organvm/moved-repo:pull-request:GITVS-042"
+    assert "meta-organvm/moved-repo" in patch["predicate"]

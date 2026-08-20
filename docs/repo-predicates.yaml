@@ -1,11 +1,14 @@
-# repo-predicates — the work-loan backfill's declarative quality bar.
+# repo-predicates — per-repo OVERRIDES for the work-loan backfill's quality bar.
 #
 # schema: limen.repo_predicates.v1
 #
-# A task whose repo has NO entry here cannot be mechanically underwritten: a garbage loan
-# wastes a quota slot, so refusal is the default and membership is the permission. Seeded
-# from value-repos.json (the value tier is the only place fleet effort may be spent, and
-# the only place a mechanical value_case is an honest claim).
+# Membership is REMOTE-FIRST: the estate itself — every non-archived repo GitHub reports
+# for the owner accounts (limen.estate; refreshed by scripts/estate-repos-refresh.py into
+# the skeleton-thin hot cache at logs/estate-repos.json) — is the permission to
+# underwrite. This file is NOT the permission list: it carries only per-repo overrides,
+# and an entry here additionally marks the repo as value-tier (the value_case says so).
+# When estate evidence is absent (cache stale + refresh failed), only entries here admit —
+# absence of evidence narrows the bar to the value tier, never widens it.
 #
 # Per entry:
 #   owner_surface       — the durable owner the loan names (defaults to the repo slug).
@@ -15,9 +18,11 @@
 #                         tasks.yaml): done ⟺ a merged PR referencing the task id exists.
 #                         jules-land titles PRs "[limen jules <task-id>]", so the search
 #                         matches the receipts the fleet actually produces.
+#   exclude             — true bars underwriting for this repo even though it is in the
+#                         estate (the one hand-maintained veto; counted, never silent).
 #
-# Adding a repo = adding one entry. scripts/work-loan-backfill.py refuses everything else
-# with a counted reason — never a silent skip.
+# scripts/work-loan-backfill.py refuses non-estate/archived/excluded repos with a counted
+# reason — never a silent skip.
 
 schema: limen.repo_predicates.v1
 default_predicate_template: >-

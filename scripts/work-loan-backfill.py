@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -31,6 +32,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
 
 from limen.dispatch import chronic_dispatch_reason  # noqa: E402
+from limen.estate import append_aliases, load_estate_cache  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
 from limen.partition_lanes import heuristics_may_promote  # noqa: E402
 from limen.tabularius import INTENT_UPSERT, Ticket, new_ticket_id, submit_ticket  # noqa: E402
@@ -40,8 +42,75 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 REGISTRY = Path(os.environ.get("LIMEN_REPO_PREDICATES", str(ROOT / "docs" / "repo-predicates.yaml")))
 RECEIPTS = Path(os.environ.get("LIMEN_WORK_LOAN_BACKFILL_RECEIPTS", str(ROOT / "logs" / "work-loan-backfill.jsonl")))
+ESTATE_CACHE = Path(os.environ.get("LIMEN_ESTATE_REPOS_CACHE", str(ROOT / "logs" / "estate-repos.json")))
+ESTATE_TTL_HOURS = float(os.environ.get("LIMEN_ESTATE_CACHE_TTL_HOURS", "24") or 24)
 
 _EXCLUDED_LABELS = {"needs-human", "operator-paused"}
+
+
+def _probe_aliases(board, estate):
+    """Follow GitHub transfer/rename redirects for board repos the roster doesn't know.
+
+    The board records the path a task was FILED under; a transferred repo leaves those
+    rows pointing at a redirect stub GitHub still answers for. One `gh repo view` per
+    unique unknown name (bounded by LIMEN_ESTATE_ALIAS_PROBE_MAX) recovers the canonical
+    path; hits are folded into the cache (limen.estate.append_aliases) so the next run
+    pays nothing. Returns the estate with the new aliases applied.
+    """
+    import dataclasses
+
+    limit = int(os.environ.get("LIMEN_ESTATE_ALIAS_PROBE_MAX", "40") or 40)
+    unknown: list[str] = []
+    seen: set[str] = set()
+    for task in board.tasks:
+        repo = str(task.repo or "").strip()
+        if not repo or task.status != "open" or repo in seen:
+            continue
+        seen.add(repo)
+        if "/" in repo and estate.resolve(repo) is None:
+            unknown.append(repo)
+    found: dict[str, str] = {}
+    for repo in unknown[:limit]:
+        try:
+            proc = subprocess.run(
+                ["gh", "repo", "view", repo, "--json", "nameWithOwner", "--jq", ".nameWithOwner"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except (OSError, subprocess.SubprocessError):
+            continue
+        canonical = proc.stdout.strip()
+        if proc.returncode != 0 or not canonical or canonical == repo:
+            continue
+        if canonical in estate.repos:
+            found[repo] = canonical
+    if found:
+        append_aliases(ESTATE_CACHE, found)
+        estate = dataclasses.replace(estate, aliases={**estate.aliases, **found})
+    skipped = max(0, len(unknown) - limit)
+    if skipped:
+        print(f"  work-loan-backfill: alias probe capped — {skipped} unknown repo name(s) deferred to the next run")
+    return estate
+
+
+def _load_estate(now: datetime):
+    """Hot cache first; one bounded refresh attempt when the cache is absent/stale.
+
+    Returns None on refresh failure — the pure module then falls back to registry-only
+    membership, so a network outage NARROWS supply to the value tier, never inverts it.
+    """
+    estate = load_estate_cache(ESTATE_CACHE, now=now, ttl_hours=ESTATE_TTL_HOURS)
+    if estate is not None:
+        return estate
+    if os.environ.get("LIMEN_ESTATE_REFRESH", "1") != "1":
+        return None
+    refresher = Path(__file__).resolve().parent / "estate-repos-refresh.py"
+    try:
+        subprocess.run([sys.executable, str(refresher)], capture_output=True, text=True, timeout=180)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return load_estate_cache(ESTATE_CACHE, now=now, ttl_hours=ESTATE_TTL_HOURS)
 
 
 def main() -> int:
@@ -54,6 +123,9 @@ def main() -> int:
     board = load_limen_file(TASKS)
     registry = load_repo_predicates(REGISTRY)
     now = datetime.now(timezone.utc)
+    estate = _load_estate(now)
+    if estate is not None:
+        estate = _probe_aliases(board, estate)
 
     reasons: dict[str, int] = {}
     minted = 0
@@ -74,7 +146,7 @@ def main() -> int:
         if chronic_dispatch_reason(task):
             reasons["excluded:chronic"] = reasons.get("excluded:chronic", 0) + 1
             continue
-        patch, reason = derive_loan_patch(task, registry)
+        patch, reason = derive_loan_patch(task, registry, estate)
         if patch is None:
             reasons[reason] = reasons.get(reason, 0) + 1
             continue
@@ -120,11 +192,12 @@ def main() -> int:
 
     census = " ".join(f"{key}={value}" for key, value in sorted(reasons.items()))
     mode = "APPLY" if armed else "DRY-RUN"
-    print(f"  work-loan-backfill: {mode} minted={minted} failures={failures} {census}")
+    scope = f"estate={len(estate.live_members())}" if estate is not None else "estate=absent(registry-only)"
+    print(f"  work-loan-backfill: {mode} {scope} minted={minted} failures={failures} {census}")
     if reasons.get("unmintable:repo-not-in-predicate-registry"):
         print(
-            "  work-loan-backfill: refused repos are the model/human authoring backlog — "
-            "membership in docs/repo-predicates.yaml is the permission to underwrite"
+            "  work-loan-backfill: estate evidence is ABSENT so only docs/repo-predicates.yaml admits — "
+            "run scripts/estate-repos-refresh.py (or check gh auth) to restore estate-wide underwriting"
         )
     return 1 if (armed and failures and not minted) else 0
 

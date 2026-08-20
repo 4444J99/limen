@@ -6,8 +6,12 @@ starvation. This module derives the missing loan fields from data the task and t
 registries already own, and REFUSES with a counted reason whenever an honest derivation
 does not exist: a garbage loan wastes a quota slot, so refusal is the default.
 
-The quality bar is declarative: ``docs/repo-predicates.yaml`` membership (seeded from the
-value tier) is the permission to underwrite. Derivations:
+The quality bar is declarative and REMOTE-FIRST: the estate itself (every non-archived
+repo GitHub reports for the owner accounts — limen.estate, a TTL'd hot-cache projection)
+is the permission to underwrite, and ``docs/repo-predicates.yaml`` holds only per-repo
+overrides: custom predicate templates, owner surfaces, value-tier standing, and explicit
+``exclude`` marks. With no estate evidence (cache absent/stale) the registry alone
+admits — absence of evidence never widens the bar. Derivations:
 
   source_origin   id-prefix / label mapping; board debt defaults to ``system_debt``.
   horizon         ``horizon:*`` label else ``present``.
@@ -16,8 +20,8 @@ value tier) is the permission to underwrite. Derivations:
   receipt_target  ``github:{repo}:pull-request:{task_id}`` (the jules-supply convention).
   predicate       a PR URL the task already carries -> the board's merged-PR probe;
                   else the registry's predicate template. NEVER invented otherwise.
-  value_case      mechanical template — honest only inside the value tier, which registry
-                  membership already guarantees.
+  value_case      mechanical template — claims the value tier only for registry-listed
+                  repos; estate-derived admissions say so ("across the estate").
 
 Pure functions over the task + registry — no gh, no filesystem writes — so the refusal
 matrix is exhaustively testable. The effector (scripts/work-loan-backfill.py) owns board
@@ -34,6 +38,7 @@ from typing import Any, Mapping
 
 import yaml
 
+from limen.estate import EstateCache
 from limen.intake import is_durable_receipt_target, is_executable_predicate
 from limen.work_loan import task_work_loan_readiness
 
@@ -110,8 +115,13 @@ def derive_horizon(task: Mapping[str, Any] | object) -> str:
 def derive_loan_patch(
     task: Mapping[str, Any] | object,
     registry: RepoPredicates,
+    estate: EstateCache | None = None,
 ) -> tuple[dict[str, Any] | None, str]:
     """(patch, reason). patch is None on refusal; reason is 'minted' or a counted refusal code.
+
+    Membership: a registry entry admits (and carries overrides); with estate evidence, any
+    live (non-archived) estate repo also admits under the default template. ``estate=None``
+    means NO evidence — the registry alone decides, exactly the pre-estate behavior.
 
     The patch carries ONLY the fields readiness reports missing — a targeted edit, never a
     rewrite of fields the task already owns.
@@ -129,9 +139,26 @@ def derive_loan_patch(
     repo = str(_value(task, "repo") or "").strip()
     if not repo:
         return None, "unmintable:no-repo"
+    canonical = repo
     entry = registry.repos.get(repo)
+    if estate is not None:
+        resolved = estate.resolve(repo)
+        if resolved is not None:
+            canonical = resolved
+            if entry is None:
+                entry = registry.repos.get(canonical)
+    if entry is not None and entry.get("exclude"):
+        return None, "excluded:repo-excluded"
+    value_tier = entry is not None
     if entry is None:
-        return None, "unmintable:repo-not-in-predicate-registry"
+        if estate is None:
+            return None, "unmintable:repo-not-in-predicate-registry"
+        known = estate.repos.get(canonical)
+        if known is None:
+            return None, "unmintable:repo-not-in-estate"
+        if known.archived:
+            return None, "unmintable:repo-archived"
+        entry = {}
 
     task_id = str(_value(task, "id") or "").strip()
     if not task_id:
@@ -145,9 +172,10 @@ def derive_loan_patch(
     if "budget_cost" in missing:
         patch["budget_cost"] = 1
     if "owner_surface" in missing:
-        patch["owner_surface"] = str(entry.get("owner_surface") or repo)
+        patch["owner_surface"] = str(entry.get("owner_surface") or canonical)
     if "receipt_target" in missing:
-        target = f"github:{repo}:pull-request:{task_id}"
+        # the CANONICAL repo: receipts land where the repo lives now, not at the redirect stub
+        target = f"github:{canonical}:pull-request:{task_id}"
         if not is_durable_receipt_target(target):
             return None, "unmintable:receipt-target-shape"
         patch["receipt_target"] = target
@@ -160,15 +188,16 @@ def derive_loan_patch(
             template = str(entry.get("predicate_template") or registry.default_template).strip()
             if not template:
                 return None, "unmintable:no-repo-predicate"
-            predicate = template.format(repo=repo, task_id=task_id)
+            predicate = template.format(repo=canonical, task_id=task_id)
         if not is_executable_predicate(predicate):
             return None, "unmintable:predicate-shape"
         patch["predicate"] = predicate
     if "value_case" in missing:
         title = str(_value(task, "title") or "").strip() or task_id
+        standing = "on the value tier" if value_tier else "across the estate"
         patch["value_case"] = (
-            f"Board-debt conversion on the value tier: {title}. Landing this closes {task_id} "
-            f"on {repo} with a merged-PR receipt instead of leaving it structurally undispatchable."
+            f"Board-debt conversion {standing}: {title}. Landing this closes {task_id} "
+            f"on {canonical} with a merged-PR receipt instead of leaving it structurally undispatchable."
         )
     if not patch:
         return None, "unmintable:nothing-derivable"
