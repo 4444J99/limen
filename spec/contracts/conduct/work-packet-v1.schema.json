@@ -1,10 +1,25 @@
 {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$defs": {
     "AgentIdentityV1": {
       "additionalProperties": false,
       "properties": {
+        "schema_version": {
+          "const": "limen.agent_identity.v1",
+          "default": "limen.agent_identity.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
         "agent": {
           "title": "Agent",
+          "type": "string"
+        },
+        "surface": {
+          "title": "Surface",
+          "type": "string"
+        },
+        "session_id": {
+          "title": "Session Id",
           "type": "string"
         },
         "native_run_id": {
@@ -30,20 +45,6 @@
           ],
           "default": null,
           "title": "Provider Identity"
-        },
-        "schema_version": {
-          "const": "limen.agent_identity.v1",
-          "default": "limen.agent_identity.v1",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "session_id": {
-          "title": "Session Id",
-          "type": "string"
-        },
-        "surface": {
-          "title": "Surface",
-          "type": "string"
         }
       },
       "required": [
@@ -57,11 +58,33 @@
     "AuthorityEnvelopeV1": {
       "additionalProperties": false,
       "properties": {
+        "schema_version": {
+          "const": "limen.authority_envelope.v1",
+          "default": "limen.authority_envelope.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
         "actions": {
           "items": {
             "type": "string"
           },
           "title": "Actions",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "repositories": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Repositories",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "path_prefixes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Path Prefixes",
           "type": "array",
           "uniqueItems": true
         },
@@ -77,28 +100,6 @@
           "default": true,
           "title": "May Delegate",
           "type": "boolean"
-        },
-        "path_prefixes": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Path Prefixes",
-          "type": "array",
-          "uniqueItems": true
-        },
-        "repositories": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Repositories",
-          "type": "array",
-          "uniqueItems": true
-        },
-        "schema_version": {
-          "const": "limen.authority_envelope.v1",
-          "default": "limen.authority_envelope.v1",
-          "title": "Schema Version",
-          "type": "string"
         }
       },
       "title": "AuthorityEnvelopeV1",
@@ -108,12 +109,22 @@
       "additionalProperties": false,
       "description": "Typed remediation context carried only by institutional campaigns.",
       "properties": {
+        "schema_version": {
+          "const": "limen.campaign_packet.v1",
+          "default": "limen.campaign_packet.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
         "campaign_id": {
           "title": "Campaign Id",
           "type": "string"
         },
         "failed_predicate": {
           "title": "Failed Predicate",
+          "type": "string"
+        },
+        "owner": {
+          "title": "Owner",
           "type": "string"
         },
         "next_action": {
@@ -125,16 +136,6 @@
           "maximum": 10485760,
           "title": "Output Ceiling Bytes",
           "type": "integer"
-        },
-        "owner": {
-          "title": "Owner",
-          "type": "string"
-        },
-        "schema_version": {
-          "const": "limen.campaign_packet.v1",
-          "default": "limen.campaign_packet.v1",
-          "title": "Schema Version",
-          "type": "string"
         }
       },
       "required": [
@@ -150,6 +151,12 @@
     "FanoutBoundsV1": {
       "additionalProperties": false,
       "properties": {
+        "schema_version": {
+          "const": "limen.fanout_bounds.v1",
+          "default": "limen.fanout_bounds.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
         "max_children": {
           "default": 0,
           "maximum": 10000,
@@ -163,12 +170,6 @@
           "minimum": 0,
           "title": "Max Depth",
           "type": "integer"
-        },
-        "schema_version": {
-          "const": "limen.fanout_bounds.v1",
-          "default": "limen.fanout_bounds.v1",
-          "title": "Schema Version",
-          "type": "string"
         }
       },
       "title": "FanoutBoundsV1",
@@ -177,18 +178,18 @@
     "RetryPolicyV1": {
       "additionalProperties": false,
       "properties": {
+        "schema_version": {
+          "const": "limen.retry_policy.v1",
+          "default": "limen.retry_policy.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
         "max_attempts": {
           "default": 1,
           "maximum": 100,
           "minimum": 1,
           "title": "Max Attempts",
           "type": "integer"
-        },
-        "schema_version": {
-          "const": "limen.retry_policy.v1",
-          "default": "limen.retry_policy.v1",
-          "title": "Schema Version",
-          "type": "string"
         },
         "transient_only": {
           "default": true,
@@ -202,6 +203,17 @@
     "SpendEnvelopeV1": {
       "additionalProperties": false,
       "properties": {
+        "schema_version": {
+          "const": "limen.spend_envelope.v1",
+          "default": "limen.spend_envelope.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "unit": {
+          "default": "runs",
+          "title": "Unit",
+          "type": "string"
+        },
         "limit": {
           "default": 1,
           "minimum": 0,
@@ -213,17 +225,6 @@
           "minimum": 0,
           "title": "Reserve",
           "type": "integer"
-        },
-        "schema_version": {
-          "const": "limen.spend_envelope.v1",
-          "default": "limen.spend_envelope.v1",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "unit": {
-          "default": "runs",
-          "title": "Unit",
-          "type": "string"
         }
       },
       "title": "SpendEnvelopeV1",
@@ -259,11 +260,55 @@
       ],
       "description": "The collateral required before one bounded run may consume capacity.",
       "properties": {
+        "schema_version": {
+          "const": "limen.work_loan.v1",
+          "default": "limen.work_loan.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_origin": {
+          "enum": [
+            "obligation",
+            "human_prompt",
+            "agent_recommendation",
+            "system_debt"
+          ],
+          "title": "Source Origin",
+          "type": "string"
+        },
+        "horizon": {
+          "enum": [
+            "past",
+            "present",
+            "future"
+          ],
+          "title": "Horizon",
+          "type": "string"
+        },
+        "value_case": {
+          "maxLength": 8192,
+          "minLength": 1,
+          "pattern": "^[^\\x00]*[^\\s\\x00][^\\x00]*$",
+          "title": "Value Case",
+          "type": "string"
+        },
         "budget_cost": {
           "exclusiveMinimum": 0,
           "maximum": 1000000,
           "title": "Budget Cost",
           "type": "integer"
+        },
+        "owner_surface": {
+          "maxLength": 8192,
+          "minLength": 1,
+          "pattern": "^[^\\x00]*[^\\s\\x00][^\\x00]*$",
+          "title": "Owner Surface",
+          "type": "string"
+        },
+        "external_deadline": {
+          "default": false,
+          "title": "External Deadline",
+          "type": "boolean"
         },
         "due_at": {
           "anyOf": [
@@ -281,50 +326,6 @@
           ],
           "default": null,
           "title": "Due At"
-        },
-        "external_deadline": {
-          "default": false,
-          "title": "External Deadline",
-          "type": "boolean"
-        },
-        "horizon": {
-          "enum": [
-            "past",
-            "present",
-            "future"
-          ],
-          "title": "Horizon",
-          "type": "string"
-        },
-        "owner_surface": {
-          "maxLength": 8192,
-          "minLength": 1,
-          "pattern": "^[^\\x00]*[^\\s\\x00][^\\x00]*$",
-          "title": "Owner Surface",
-          "type": "string"
-        },
-        "schema_version": {
-          "const": "limen.work_loan.v1",
-          "default": "limen.work_loan.v1",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "source_origin": {
-          "enum": [
-            "obligation",
-            "human_prompt",
-            "agent_recommendation",
-            "system_debt"
-          ],
-          "title": "Source Origin",
-          "type": "string"
-        },
-        "value_case": {
-          "maxLength": 8192,
-          "minLength": 1,
-          "pattern": "^[^\\x00]*[^\\s\\x00][^\\x00]*$",
-          "title": "Value Case",
-          "type": "string"
         }
       },
       "required": [
@@ -340,6 +341,12 @@
     "limen__conduct__models__ResourceClaimV1": {
       "additionalProperties": false,
       "properties": {
+        "schema_version": {
+          "const": "limen.resource_claim.v1",
+          "default": "limen.resource_claim.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
         "key": {
           "title": "Key",
           "type": "string"
@@ -352,12 +359,6 @@
           ],
           "title": "Mode",
           "type": "string"
-        },
-        "schema_version": {
-          "const": "limen.resource_claim.v1",
-          "default": "limen.resource_claim.v1",
-          "title": "Schema Version",
-          "type": "string"
         }
       },
       "required": [
@@ -369,9 +370,74 @@
     "limen__prima_materia__ResourceClaimV1": {
       "additionalProperties": false,
       "properties": {
+        "schema_version": {
+          "const": "limen.prima_materia_resource_claim.v1",
+          "default": "limen.prima_materia_resource_claim.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
         "claim_id": {
           "title": "Claim Id",
           "type": "string"
+        },
+        "source_instance_id": {
+          "title": "Source Instance Id",
+          "type": "string"
+        },
+        "operation_id": {
+          "title": "Operation Id",
+          "type": "string"
+        },
+        "hydrated_inputs_bytes": {
+          "minimum": 0,
+          "title": "Hydrated Inputs Bytes",
+          "type": "integer"
+        },
+        "workspace_bytes": {
+          "minimum": 0,
+          "title": "Workspace Bytes",
+          "type": "integer"
+        },
+        "temporary_expansion_bytes": {
+          "minimum": 0,
+          "title": "Temporary Expansion Bytes",
+          "type": "integer"
+        },
+        "output_bytes": {
+          "minimum": 0,
+          "title": "Output Bytes",
+          "type": "integer"
+        },
+        "encryption_chunking_bytes": {
+          "minimum": 0,
+          "title": "Encryption Chunking Bytes",
+          "type": "integer"
+        },
+        "rollback_bytes": {
+          "minimum": 0,
+          "title": "Rollback Bytes",
+          "type": "integer"
+        },
+        "memory_bytes": {
+          "minimum": 0,
+          "title": "Memory Bytes",
+          "type": "integer"
+        },
+        "file_count": {
+          "minimum": 0,
+          "title": "File Count",
+          "type": "integer"
+        },
+        "network_bytes": {
+          "minimum": 0,
+          "title": "Network Bytes",
+          "type": "integer"
+        },
+        "wall_time_seconds": {
+          "maximum": 2592000,
+          "minimum": 1,
+          "title": "Wall Time Seconds",
+          "type": "integer"
         },
         "effective_from": {
           "format": "date-time",
@@ -383,56 +449,26 @@
           "title": "Effective Until",
           "type": "string"
         },
-        "encryption_chunking_bytes": {
-          "minimum": 0,
-          "title": "Encryption Chunking Bytes",
-          "type": "integer"
-        },
-        "hydrated_inputs_bytes": {
-          "minimum": 0,
-          "title": "Hydrated Inputs Bytes",
-          "type": "integer"
-        },
-        "output_bytes": {
-          "minimum": 0,
-          "title": "Output Bytes",
-          "type": "integer"
-        },
-        "rollback_bytes": {
-          "minimum": 0,
-          "title": "Rollback Bytes",
-          "type": "integer"
-        },
         "rollback_until": {
           "format": "date-time",
           "title": "Rollback Until",
           "type": "string"
-        },
-        "schema_version": {
-          "const": "limen.resource_claim.v1",
-          "default": "limen.resource_claim.v1",
-          "title": "Schema Version",
-          "type": "string"
-        },
-        "temporary_expansion_bytes": {
-          "minimum": 0,
-          "title": "Temporary Expansion Bytes",
-          "type": "integer"
-        },
-        "workspace_bytes": {
-          "minimum": 0,
-          "title": "Workspace Bytes",
-          "type": "integer"
         }
       },
       "required": [
         "claim_id",
+        "source_instance_id",
+        "operation_id",
         "hydrated_inputs_bytes",
         "workspace_bytes",
         "temporary_expansion_bytes",
         "output_bytes",
         "encryption_chunking_bytes",
         "rollback_bytes",
+        "memory_bytes",
+        "file_count",
+        "network_bytes",
+        "wall_time_seconds",
         "effective_from",
         "effective_until",
         "rollback_until"
@@ -441,73 +477,25 @@
       "type": "object"
     }
   },
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "properties": {
-    "authority": {
-      "$ref": "#/$defs/AuthorityEnvelopeV1"
+    "schema_version": {
+      "const": "limen.work_packet.v1",
+      "default": "limen.work_packet.v1",
+      "title": "Schema Version",
+      "type": "string"
     },
-    "campaign": {
+    "root_run_id": {
       "anyOf": [
         {
-          "$ref": "#/$defs/CampaignPacketV1"
+          "type": "string"
         },
         {
           "type": "null"
         }
       ],
-      "default": null
-    },
-    "conductor": {
-      "$ref": "#/$defs/AgentIdentityV1"
-    },
-    "deadline": {
-      "format": "date-time",
-      "title": "Deadline",
-      "type": "string"
-    },
-    "depth": {
-      "default": 0,
-      "maximum": 64,
-      "minimum": 0,
-      "title": "Depth",
-      "type": "integer"
-    },
-    "effect": {
-      "default": "write",
-      "enum": [
-        "read",
-        "write",
-        "external"
-      ],
-      "title": "Effect",
-      "type": "string"
-    },
-    "execution": {
-      "additionalProperties": true,
-      "title": "Execution",
-      "type": "object"
-    },
-    "execution_hash": {
-      "default": "",
-      "title": "Execution Hash",
-      "type": "string"
-    },
-    "fanout": {
-      "$ref": "#/$defs/FanoutBoundsV1"
-    },
-    "initiator": {
-      "$ref": "#/$defs/AgentIdentityV1"
-    },
-    "intent": {
-      "additionalProperties": true,
-      "title": "Intent",
-      "type": "object"
-    },
-    "intent_hash": {
-      "default": "",
-      "title": "Intent Hash",
-      "type": "string"
+      "default": null,
+      "title": "Root Run Id"
     },
     "parent_run_id": {
       "anyOf": [
@@ -521,9 +509,39 @@
       "default": null,
       "title": "Parent Run Id"
     },
-    "predicate": {
-      "title": "Predicate",
+    "work_id": {
+      "title": "Work Id",
       "type": "string"
+    },
+    "work_key": {
+      "title": "Work Key",
+      "type": "string"
+    },
+    "intent": {
+      "additionalProperties": true,
+      "title": "Intent",
+      "type": "object"
+    },
+    "execution": {
+      "additionalProperties": true,
+      "title": "Execution",
+      "type": "object"
+    },
+    "intent_hash": {
+      "default": "",
+      "title": "Intent Hash",
+      "type": "string"
+    },
+    "execution_hash": {
+      "default": "",
+      "title": "Execution Hash",
+      "type": "string"
+    },
+    "initiator": {
+      "$ref": "#/$defs/AgentIdentityV1"
+    },
+    "conductor": {
+      "$ref": "#/$defs/AgentIdentityV1"
     },
     "preferred_agent": {
       "anyOf": [
@@ -536,10 +554,6 @@
       ],
       "default": null,
       "title": "Preferred Agent"
-    },
-    "receipt_target": {
-      "title": "Receipt Target",
-      "type": "string"
     },
     "required_capabilities": {
       "items": {
@@ -557,30 +571,6 @@
       "title": "Resource Claims",
       "type": "array"
     },
-    "retry": {
-      "$ref": "#/$defs/RetryPolicyV1"
-    },
-    "root_run_id": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "Root Run Id"
-    },
-    "schema_version": {
-      "const": "limen.work_packet.v1",
-      "default": "limen.work_packet.v1",
-      "title": "Schema Version",
-      "type": "string"
-    },
-    "spend": {
-      "$ref": "#/$defs/SpendEnvelopeV1"
-    },
     "storage_envelope_claims": {
       "default": [],
       "items": {
@@ -589,24 +579,12 @@
       "title": "Storage Envelope Claims",
       "type": "array"
     },
-    "task_id": {
-      "anyOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "Task Id"
-    },
-    "work_id": {
-      "title": "Work Id",
+    "predicate": {
+      "title": "Predicate",
       "type": "string"
     },
-    "work_key": {
-      "title": "Work Key",
+    "receipt_target": {
+      "title": "Receipt Target",
       "type": "string"
     },
     "work_loan": {
@@ -619,6 +597,63 @@
         }
       ],
       "default": null
+    },
+    "campaign": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CampaignPacketV1"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "authority": {
+      "$ref": "#/$defs/AuthorityEnvelopeV1"
+    },
+    "deadline": {
+      "format": "date-time",
+      "title": "Deadline",
+      "type": "string"
+    },
+    "spend": {
+      "$ref": "#/$defs/SpendEnvelopeV1"
+    },
+    "retry": {
+      "$ref": "#/$defs/RetryPolicyV1"
+    },
+    "depth": {
+      "default": 0,
+      "maximum": 64,
+      "minimum": 0,
+      "title": "Depth",
+      "type": "integer"
+    },
+    "fanout": {
+      "$ref": "#/$defs/FanoutBoundsV1"
+    },
+    "effect": {
+      "default": "write",
+      "enum": [
+        "read",
+        "write",
+        "external"
+      ],
+      "title": "Effect",
+      "type": "string"
+    },
+    "task_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Task Id"
     }
   },
   "required": [

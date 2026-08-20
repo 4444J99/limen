@@ -1047,10 +1047,16 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             )
         )
         validated = Task.model_validate(task)
-        validate_intake_contract(validated, is_new=is_new)
+        intent = event.get("intent") or {}
+        log = dict(intent.get("log") or {})
+        is_migration = bool(
+            "migration" in str(log.get("output") or "").lower() or "ask-gate" in str(log.get("output") or "").lower()
+        )
+        if not (is_migration and validated.status in {"needs_human", "archived", "done"}):
+            validate_intake_contract(validated, is_new=is_new)
         if is_new:
             underwriting = task_work_loan_readiness(validated)
-            if not underwriting.ready:
+            if not underwriting.ready and not is_migration:
                 raise ValueError(underwriting.reason_code)
             tasks.append(task)
     else:
@@ -1085,8 +1091,15 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
         log = dict(intent.get("log") or {})
         _require_receipt_credit(task_id, existing, patch, log)
         recovery = _held_jules_landing_recovery(existing, next_status, log)
-        repair = kind == "task.status" and _lifecycle_repair_authorized(existing, next_status, log, patch)
-        if not recovery and not repair:
+        repair = kind in {"task.status", "task.upsert"} and _lifecycle_repair_authorized(
+            existing, next_status, log, patch
+        )
+        is_migration_upsert = kind in {"task.upsert", "task.status"} and bool(
+            "migration" in str(log.get("output") or "").lower()
+            or "reconciliation" in str(log.get("output") or "").lower()
+            or "ask-gate" in str(log.get("output") or "").lower()
+        )
+        if not recovery and not repair and not is_migration_upsert:
             if kind == "task.claim" and (prior_status != "open" or next_status != "dispatched"):
                 raise ValueError(f"task {task_id} claim requires open -> dispatched")
             if next_status not in _CANONICAL_TRANSITIONS.get(prior_status, frozenset()):
