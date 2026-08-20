@@ -1,0 +1,83 @@
+{
+  "schema_version": "limen.fanout_manifest.v1",
+  "root_work_id": "loop-recovery-cloud-handoff-20260820",
+  "idempotency_key": "loop-recovery-cloud-handoff/2026-08-20/v1",
+  "initiator": {
+    "schema_version": "limen.agent_identity.v1",
+    "agent": "codex",
+    "surface": "direct",
+    "session_id": "01a02013-e799-7c52-95d6-8d0faa34ef8a",
+    "native_run_id": "01a02013-e799-7c52-95d6-8d0faa34ef8a",
+    "provider_identity": "codex"
+  },
+  "conductor": {
+    "schema_version": "limen.agent_identity.v1",
+    "agent": "codex",
+    "surface": "direct",
+    "session_id": "01a02013-e799-7c52-95d6-8d0faa34ef8a",
+    "native_run_id": "01a02013-e799-7c52-95d6-8d0faa34ef8a",
+    "provider_identity": "codex"
+  },
+  "predicate": "limen fanout status loop-recovery-cloud-handoff-20260820 --json",
+  "receipt_target": "github:organvm/limen:issue:2385",
+  "work_loan": {
+    "schema_version": "limen.work_loan.v1",
+    "source_origin": "human_prompt",
+    "horizon": "present",
+    "value_case": "Move both loop-recovery implementation lanes to receipt-backed remote execution so the local dirty checkout can remain untouched.",
+    "budget_cost": 2,
+    "owner_surface": "github:organvm/limen:issue:2385",
+    "external_deadline": false,
+    "due_at": null
+  },
+  "campaign": null,
+  "deadline": "2026-08-21T16:45:00Z",
+  "leaves": [
+    {
+      "schema_version": "limen.fanout_leaf.v1",
+      "work_id": "limen-loop-recovery-20260820",
+      "idempotency_key": "organvm/limen:loop-recovery:2026-08-20/v1",
+      "owner_repository": "organvm/limen",
+      "exact_base": "9c7f96fa5ce251249b87e3e0ea2d3ec34b11d1cc",
+      "topic_branch": "jules/loop-recovery-limen-20260820",
+      "allowed_paths": [".github/workflows", "cli", "container/launchd", "docs", "institutio/governance", "scripts", "web/worker"],
+      "resource_claims": [{"schema_version": "limen.resource_claim.v1", "key": "repo/organvm/limen/write", "mode": "exclusive"}],
+      "dependencies": [],
+      "required_capabilities": ["code"],
+      "intended_effect": "Implement the public-safe Limen half at the exact base. Fix issue 2385 by filtering repositories for which limen.partition_lanes.heuristics_may_promote(repo) is false before constructing self-heal task rows, preserving valid rows and reporting partition-skipped=N; add mixed-row live and dry-run regressions. Preserve the strict WorkPacketV1/storage_envelope_claims contract and prove exact serialized packets validate against the published Worker schema; do not weaken or omit the field. Make handoff-relay resolve the authenticated canonical private board instead of treating the empty public aggregate as keeper truth, with fail-closed tests. Add a workflow_dispatch-only maintenance workflow with expected_sha and dry-run|apply inputs, exact-ref/SHA checks, vars.LIMEN_API_URL, the existing owner secret mapped to LIMEN_CONDUCT_TOKEN, counts-only JSON output, and no corpus content. Replace self-heal local-log mtime freshness with the last successful cloud maintenance receipt. Remove the committed com.limen.overnight-watch plist, positive LaunchAgent tests, lint gates, install instructions, and overnight-specific self-reinstall/launchctl behavior; retain bounded manual diagnostics only. Add docs/receipts/jules-loop-recovery-limen-20260820.json containing exact base, changed paths, predicate commands, topic branch, and next_action exactly `python3 scripts/jules-land.py --apply --recover`; include no credentials, private corpus bodies, private paths, or tasks.yaml edits. Run focused self-heal, Worker check, handoff and diurnal/sensor regressions, then scripts/verify-scoped.sh --base 9c7f96fa5ce251249b87e3e0ea2d3ec34b11d1cc --require-base once on the unchanged final head. Leave a pullable result; Limen will create the PR.",
+      "effect": "write",
+      "predicate": "scripts/verify-scoped.sh --base 9c7f96fa5ce251249b87e3e0ea2d3ec34b11d1cc --require-base",
+      "receipt_target": "github:organvm/limen:issue:2385",
+      "work_loan": {"schema_version": "limen.work_loan.v1", "source_origin": "human_prompt", "horizon": "present", "value_case": "Repair the failed self-heal batch and move bounded maintenance to an exact-head cloud receipt without exposing private custody.", "budget_cost": 1, "owner_surface": "organvm/limen", "external_deadline": false, "due_at": null},
+      "campaign": null,
+      "deadline": "2026-08-21T16:45:00Z",
+      "retry": {"schema_version": "limen.retry_policy.v1", "max_attempts": 1, "transient_only": true},
+      "spend": {"schema_version": "limen.spend_envelope.v1", "unit": "runs", "limit": 1, "reserve": 1},
+      "prompt_hash": "df9ded9d454803ab16919ab8e16173e5dbb107243dcf06de85d32deda4c87393",
+      "plan_hash": "8d79b885ae861626cd04e6923ea4168c2f83d06c278b338f27ab418d5481bf0a"
+    },
+    {
+      "schema_version": "limen.fanout_leaf.v1",
+      "work_id": "domus-loop-recovery-20260820",
+      "idempotency_key": "organvm/domus-genoma:loop-recovery:2026-08-20/v1",
+      "owner_repository": "organvm/domus-genoma",
+      "exact_base": "a8e0c7d434968d289b5da2e79c01e0692a3ec2b5",
+      "topic_branch": "jules/loop-recovery-domus-20260820",
+      "allowed_paths": [".chezmoiignore", ".chezmoiscripts", "CLAUDE.md", "docs", "dot_config/ai-context", "dot_local/bin/executable_domus-limen-runtime", "private_Library/LaunchAgents", "tests"],
+      "resource_claims": [{"schema_version": "limen.resource_claim.v1", "key": "repo/organvm/domus-genoma/write", "mode": "exclusive"}],
+      "dependencies": [],
+      "required_capabilities": ["code"],
+      "intended_effect": "Implement the domus-genoma half at the exact master base. Delete the managed overnight-watch plist template and reload hook. Remove the bounded LaunchAgent exception from CLAUDE.md, .chezmoiignore, and live dot_config/ai-context doctrine while preserving the no-LaunchAgents rule. Keep domus-limen-runtime producer-exec intact as an explicit operator-invoked command and document that boundary. Rewrite test_domus_limen_runtime.py and test_limen_producer_reload_lock.py as negative guards proving the plist, reload hook, and exception doctrine are absent while producer-exec remains exposed; do not add .chezmoiremove or touch the live host. Add docs/receipts/jules-loop-recovery-domus-20260820.json with exact base, changed paths, predicate commands, topic branch, and next_action exactly `python3 scripts/jules-land.py --apply --recover`; include no credentials, private content, or local paths. Run python3 -m pytest tests/test_domus_limen_runtime.py tests/test_limen_producer_reload_lock.py -q and normal scoped lint/checks. Leave a pullable result; Limen will create the PR.",
+      "effect": "write",
+      "predicate": "python3 -m pytest tests/test_domus_limen_runtime.py tests/test_limen_producer_reload_lock.py -q",
+      "receipt_target": "github:organvm/domus-genoma:pull-request:jules/loop-recovery-domus-20260820",
+      "work_loan": {"schema_version": "limen.work_loan.v1", "source_origin": "human_prompt", "horizon": "present", "value_case": "Remove the forbidden managed LaunchAgent path while retaining an explicit on-demand diagnostic command.", "budget_cost": 1, "owner_surface": "organvm/domus-genoma", "external_deadline": false, "due_at": null},
+      "campaign": null,
+      "deadline": "2026-08-21T16:45:00Z",
+      "retry": {"schema_version": "limen.retry_policy.v1", "max_attempts": 1, "transient_only": true},
+      "spend": {"schema_version": "limen.spend_envelope.v1", "unit": "runs", "limit": 1, "reserve": 1},
+      "prompt_hash": "a87caf5880adcb00901ba64a534ad9fea4f4b1e69c686c95c94276216ef7b6ae",
+      "plan_hash": "b9fa48b94d0fda8f46726d0289ec32157d32e303de8179c1bf1a634084ad327b"
+    }
+  ]
+}
