@@ -1,0 +1,501 @@
+{
+  "compatibility_links": [
+    {
+      "active_cwd_count": 14,
+      "ambiguous_cwd_count": 0,
+      "correct": false,
+      "expired": false,
+      "path": "limen",
+      "present": true,
+      "target": "library/engine/organvm/limen"
+    },
+    {
+      "active_cwd_count": 0,
+      "ambiguous_cwd_count": 0,
+      "correct": false,
+      "expired": false,
+      "path": "domus-genoma",
+      "present": true,
+      "target": "library/engine/organvm/domus-genoma"
+    },
+    {
+      "active_cwd_count": 0,
+      "ambiguous_cwd_count": 0,
+      "correct": false,
+      "expired": false,
+      "path": "4444J99/portvs",
+      "present": true,
+      "target": "library/engine/organvm/portvs"
+    }
+  ],
+  "counts": {
+    "compatibility_links": 3,
+    "manifest_rows": 42,
+    "private_roots": 4,
+    "repositories": 1,
+    "unmeasured": 0,
+    "violations": 76
+  },
+  "ephemeral_roots": [
+    {
+      "entry_count": 0,
+      "expired_entry_count": 0,
+      "expires_after": 604800,
+      "namespace_count": 0,
+      "oldest_age_seconds": 0,
+      "path": "runtime/worktrees",
+      "reaper": "limen worktree reap"
+    },
+    {
+      "entry_count": 0,
+      "expired_entry_count": 0,
+      "expires_after": 86400,
+      "namespace_count": 0,
+      "oldest_age_seconds": 0,
+      "path": "runtime/scratch",
+      "reaper": "limen reclaim --runtime"
+    }
+  ],
+  "manifest_sha256": "55e87b1d7343a037b58e36a9d709cd4f8354dada784a80ca680bafacb3250d09",
+  "ok": false,
+  "private_custody": [
+    {
+      "custody_label": "workspace-private-life",
+      "custody_verified": false,
+      "inspection_complete": true,
+      "inventory_available": false,
+      "path": "private/life",
+      "restoration_identity_verified": false,
+      "restoration_receipt_available": false,
+      "restoration_verified": false,
+      "sealed_inventory_verified": false
+    },
+    {
+      "custody_label": "workspace-private-finance",
+      "custody_verified": false,
+      "inspection_complete": true,
+      "inventory_available": false,
+      "path": "private/finance",
+      "restoration_identity_verified": false,
+      "restoration_receipt_available": false,
+      "restoration_verified": false,
+      "sealed_inventory_verified": false
+    },
+    {
+      "custody_label": "workspace-private-health",
+      "custody_verified": false,
+      "inspection_complete": true,
+      "inventory_available": false,
+      "path": "private/health",
+      "restoration_identity_verified": false,
+      "restoration_receipt_available": false,
+      "restoration_verified": false,
+      "sealed_inventory_verified": false
+    },
+    {
+      "custody_label": "workspace-private-people",
+      "custody_verified": false,
+      "inspection_complete": true,
+      "inventory_available": false,
+      "path": "private/people",
+      "restoration_identity_verified": false,
+      "restoration_receipt_available": false,
+      "restoration_verified": false,
+      "sealed_inventory_verified": false
+    }
+  ],
+  "repositories": [
+    "library/engine/organvm/limen"
+  ],
+  "scan_truncated": false,
+  "schema": "limen.substrate_convergence_report.v1",
+  "violations": [
+    {
+      "code": "residue_cap_breached",
+      "message": "violations=75 exceeds max_violations=0",
+      "path": "."
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".DS_Store"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".claude"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".cleanunique"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".domus-genoma-stub-20260730"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".edu-worktrees"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".limen-repair"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".limen-worktrees"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".limen.env"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".pytest_cache"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".serena-victoroff-os-20260727"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".session-meta-worktrees"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".session-reconcile"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".surface-engine-runtime-residue-20260721"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".uma-worktrees"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": ".worktrees"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "4444J99"
+    },
+    {
+      "code": "compatibility_link_mismatch",
+      "message": "link must resolve to library/engine/organvm/portvs",
+      "path": "4444J99/portvs"
+    },
+    {
+      "code": "compatibility_link_unresolved",
+      "message": "temporary compatibility doorway remains; final architecture requires zero",
+      "path": "4444J99/portvs"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "ANTHONY-OS-v1.md"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "EXPORTER-GTM-ASSETS.md"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "GOAL.md"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "LEMONSQUEEZY-HANDOFF.md"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "LIVE-PRODUCTS-GTM.md"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "MORNING-BRIEFING.md"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "OWNER-ISSUE-DRYRUN.md"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "PRODUCT-REVENUE-BACKLOG.md"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "RELAY-HANDOFF.md"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "REMAINING-WORK-DIGEST.md"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "REVENUE-LAUNCH-KIT.md"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "_ferpa-quarantine"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "_finance-private"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "_health-private"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "_life-private"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "_people-private"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "_vigilia-organ-preserve"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "asi-interview-companion.html"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "asi-interview-prep.md"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "browser-state"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "composition-projects"
+    },
+    {
+      "code": "compatibility_link_mismatch",
+      "message": "link must resolve to library/engine/organvm/domus-genoma",
+      "path": "domus-genoma"
+    },
+    {
+      "code": "compatibility_link_unresolved",
+      "message": "temporary compatibility doorway remains; final architecture requires zero",
+      "path": "domus-genoma"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "domus-genoma"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "goal.py"
+    },
+    {
+      "code": "declared_entry_missing",
+      "message": "declared repository is absent",
+      "path": "library/engine/organvm/domus-genoma"
+    },
+    {
+      "code": "repository_missing_git",
+      "message": "declared repository is not a Git worktree",
+      "path": "library/engine/organvm/limen"
+    },
+    {
+      "code": "declared_entry_missing",
+      "message": "declared repository is absent",
+      "path": "library/engine/organvm/portvs"
+    },
+    {
+      "code": "declared_entry_missing",
+      "message": "declared repository is absent",
+      "path": "library/shelves/meta-organvm/organvm-corpvs-testamentvm"
+    },
+    {
+      "code": "declared_entry_missing",
+      "message": "declared repository is absent",
+      "path": "library/shelves/organvm-iii-ergon/universal-mail--automation"
+    },
+    {
+      "code": "declared_entry_missing",
+      "message": "declared repository is absent",
+      "path": "library/storefront/4444J99/application-pipeline"
+    },
+    {
+      "code": "declared_entry_missing",
+      "message": "declared repository is absent",
+      "path": "library/storefront/4444J99/peer-audited--behavioral-blockchain"
+    },
+    {
+      "code": "declared_entry_missing",
+      "message": "declared repository is absent",
+      "path": "library/storefront/4444J99/victoroff-os"
+    },
+    {
+      "code": "active_legacy_path",
+      "message": "14 active process cwd(s) still depend on this compatibility path",
+      "path": "limen"
+    },
+    {
+      "code": "compatibility_link_mismatch",
+      "message": "link must resolve to library/engine/organvm/limen",
+      "path": "limen"
+    },
+    {
+      "code": "compatibility_link_unresolved",
+      "message": "temporary compatibility doorway remains; final architecture requires zero",
+      "path": "limen"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "limen"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "limen-status-report.html"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "logs"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "meta-organvm"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "organvm-ii-poiesis"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "organvm-iv-taxis"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "organvm-vi-koinonia"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "organvm-vii-kerygma"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "owner-digest.py"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "owner-issue-dryrun.py"
+    },
+    {
+      "code": "private_inventory_missing",
+      "message": "sealed inventory reference is unavailable",
+      "path": "private/finance"
+    },
+    {
+      "code": "private_restoration_unverified",
+      "message": "no matching two-copy restoration receipt is bound to the current sealed inventory and inventory/plan/content identity",
+      "path": "private/finance"
+    },
+    {
+      "code": "private_inventory_missing",
+      "message": "sealed inventory reference is unavailable",
+      "path": "private/health"
+    },
+    {
+      "code": "private_restoration_unverified",
+      "message": "no matching two-copy restoration receipt is bound to the current sealed inventory and inventory/plan/content identity",
+      "path": "private/health"
+    },
+    {
+      "code": "private_inventory_missing",
+      "message": "sealed inventory reference is unavailable",
+      "path": "private/life"
+    },
+    {
+      "code": "private_restoration_unverified",
+      "message": "no matching two-copy restoration receipt is bound to the current sealed inventory and inventory/plan/content identity",
+      "path": "private/life"
+    },
+    {
+      "code": "private_inventory_missing",
+      "message": "sealed inventory reference is unavailable",
+      "path": "private/people"
+    },
+    {
+      "code": "private_restoration_unverified",
+      "message": "no matching two-copy restoration receipt is bound to the current sealed inventory and inventory/plan/content identity",
+      "path": "private/people"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "scope-connectors.sh"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "victoroff-os"
+    },
+    {
+      "code": "undeclared_entry",
+      "message": "entry has no Workspace manifest row",
+      "path": "vision-board-restore"
+    }
+  ],
+  "workspace_root": "$WORKSPACE_ROOT",
+  "workspace_root_identity": {
+    "device": 16777230,
+    "inode": 328407439,
+    "lexical_sha256": "6a038fbe7c51d2d92294fcfe9cb4a99f81bc72223cde93d80dd596f46a3aa97f"
+  },
+  "workspace_root_is_canonical_live": true
+}
