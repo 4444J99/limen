@@ -2466,3 +2466,16 @@ sensors:
         timeout: 30
         on_fail: escalate
         escalation: "unclassified open levers in his-hand-levers.json (see scripts/lever-classify.py --list)"
+
+  covenant-attribution:
+    section: "0r"
+    title: "covenant — memory writes are keeper-attributed (no session leak)"
+    gate: LIMEN_COVENANT_CHECK
+    default: "1"
+    source: [metabolize]
+    owner: tabularius
+    steps:
+      - command: "python3 scripts/covenant-attribution.py --check"
+        severity: advisory
+        escalation: "a memory atom/MEMORY.md changed with NO keeper receipt — a session wrote memory directly; route captures through the memoria lane (memory-ticket.py)"
+
