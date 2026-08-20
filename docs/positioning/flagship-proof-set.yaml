@@ -84,7 +84,7 @@ candidate_screen:
 
 privacy_split:
   public_candidates_scored: 22
-  private_repositories_in_w01_census: 79
+  private_repositories_in_w01_census: 84
   private_repository_names_in_this_artifact: 0
   public_rule: "Only public repositories and endpoints may appear in this matrix."
   private_rule: >-
