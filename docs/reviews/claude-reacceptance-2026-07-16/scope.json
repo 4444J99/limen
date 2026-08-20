@@ -1,0 +1,143 @@
+{
+  "schema": "limen.reacceptance_scope.v2",
+  "review_gate_app_slug": null,
+  "source_reference_manifest_digest": "sha256:adef6d87492db9934a9a072a288139e420393702368ed2e985735ef722325399",
+  "legacy_v1_rows_digest": "sha256:499add49943b460615402f26f1f1ea86e4a5c3779c6a4ed18014c7021845521a",
+  "privacy_content_manifest_digest": null,
+  "owner_attestation_requirements": null,
+  "boundary": {
+    "kind": "session_lineage",
+    "starts_at": "2026-07-12T15:37:35Z",
+    "basis": "Start of the 49h20m Codex stream; resumed Claude sessions with activity after the boundary remain in scope."
+  },
+  "privacy": {
+    "tracked_prompt_bodies": false,
+    "session_identifier_representation": "sha256 prefix, 20 lowercase hex characters",
+    "workflow_identifier_representation": "sha256 prefix, 20 lowercase hex characters",
+    "source_ask_representation": "redacted private-corpus reference",
+    "private_owner": "private_prompt_corpus_owner"
+  },
+  "cutoff_receipt": {
+    "schema": "limen.prompt_corpus_cutoff.v1",
+    "status": "not_verified",
+    "owner": "private_prompt_corpus_owner",
+    "event_offsets": []
+  },
+  "baseline_open_prs": [
+    "pull_request:organvm/domus-genoma#304",
+    "pull_request:organvm/domus-genoma#305",
+    "pull_request:organvm/limen#1147",
+    "pull_request:organvm/limen#1149",
+    "pull_request:organvm/limen#1151"
+  ],
+  "findings": {
+    "p1": 28,
+    "p2": 180,
+    "unclassified": 0,
+    "total": 208,
+    "discussion_url_digest": "sha256:9a22f327cf37b2da90e8670b1cf2e67f86ee8db72f391a358c07eb7625e1a163",
+    "manifest_digest": "sha256:cd95eb89d114e734a379c9740edc0c4f6849c65f396216a5901e59485fe5d7f2"
+  },
+  "privacy_affected_row_ids": [
+    "pull_request:organvm/application-pipeline#77",
+    "pull_request:organvm/application-pipeline#78",
+    "pull_request:organvm/limen#1089"
+  ],
+  "known_side_effects": {
+    "pull_request:organvm/limen#1089": ["privacy_material_publicly_reachable"],
+    "pull_request:organvm/limen#1100": ["media_custody_or_visibility_changed"],
+    "pull_request:organvm/limen#1119": ["nominal_check_path_performed_remote_storage_writes"],
+    "pull_request:organvm/limen#1144": ["worktree_roots_moved_or_quarantined"],
+    "pull_request:organvm/limen#1147": ["backblaze_xml_changed_before_review"],
+    "pull_request:organvm/limen#1149": ["private_prompt_checkpoint_or_seal_changed"],
+    "pull_request:organvm/limen#1150": ["mail_self_test_sent"],
+    "pull_request:organvm/universal-mail--automation#171": ["mail_send_path_exercised"],
+    "pull_request:organvm/application-pipeline#77": ["private_material_committed_to_public_history"],
+    "pull_request:organvm/application-pipeline#78": ["current_tree_cleanup_did_not_remove_public_history"]
+  },
+  "known_side_effect_owners": {
+    "pull_request:organvm/limen#1089": {
+      "privacy_material_publicly_reachable": "private_privacy_custody_owner"
+    },
+    "pull_request:organvm/limen#1100": {
+      "media_custody_or_visibility_changed": "media_custody_owner"
+    },
+    "pull_request:organvm/limen#1119": {
+      "nominal_check_path_performed_remote_storage_writes": "remote_storage_owner"
+    },
+    "pull_request:organvm/limen#1144": {
+      "worktree_roots_moved_or_quarantined": "worktree_lifecycle_owner"
+    },
+    "pull_request:organvm/limen#1147": {
+      "backblaze_xml_changed_before_review": "domus_backup_configuration_owner"
+    },
+    "pull_request:organvm/limen#1149": {
+      "private_prompt_checkpoint_or_seal_changed": "private_prompt_corpus_owner"
+    },
+    "pull_request:organvm/limen#1150": {
+      "mail_self_test_sent": "mail_owner"
+    },
+    "pull_request:organvm/universal-mail--automation#171": {
+      "mail_send_path_exercised": "mail_owner"
+    },
+    "pull_request:organvm/application-pipeline#77": {
+      "private_material_committed_to_public_history": "private_privacy_custody_owner"
+    },
+    "pull_request:organvm/application-pipeline#78": {
+      "current_tree_cleanup_did_not_remove_public_history": "private_privacy_custody_owner"
+    }
+  },
+  "sessions": [
+    "claude-session-sha256:0e8f26e709399777ae88",
+    "claude-session-sha256:4e6e587802dc628cb20f",
+    "claude-session-sha256:c1a8a5d2a386d2218423",
+    "claude-session-sha256:61181bbc3c520c9fbfd0",
+    "claude-session-sha256:ee3e636942a301daa170",
+    "claude-session-sha256:2186a25178b53248d9a6",
+    "claude-session-sha256:4a83ec16b900ed6db926",
+    "claude-session-sha256:cbb64bcb93134a8387bf",
+    "claude-session-sha256:4107cd73f6fac4b2ea00",
+    "claude-session-sha256:e77af5448fc3181bf52b",
+    "claude-session-sha256:48d92804733191ffa947",
+    "claude-session-sha256:1c5551df6dc00dc9349d",
+    "claude-session-sha256:52f582a4b5ea4454f1b1",
+    "claude-session-sha256:ff44ad33ce47213300e5",
+    "claude-session-sha256:02af77d6b62a92a75174",
+    "claude-session-sha256:367c73d1fe94cf1724dc",
+    "claude-session-sha256:97387ef6e00cfb493d8a",
+    "claude-session-sha256:c38e2faf3fb37fcda1e8",
+    "claude-session-sha256:33c21a6cd8e36aea83a8",
+    "claude-session-sha256:062c4405b9bb76bb5623",
+    "claude-session-sha256:b23fc42ba1672ef8b087",
+    "claude-session-sha256:3d160c468bb2e472bb86",
+    "claude-session-sha256:fd3fdc1da373b9c4b0d1",
+    "claude-session-sha256:480e38099f3b131b0995",
+    "claude-session-sha256:b60aca450110204442f3",
+    "claude-session-sha256:8ca36cfe60f49cbfd6a9",
+    "claude-session-sha256:3edbf678cd4923d4d317",
+    "claude-session-sha256:3016d4ef4f3c76bf76c8",
+    "claude-session-sha256:030deb13e6d5bb03704b"
+  ],
+  "workflows": [
+    "claude-workflow-sha256:65721fadf46ded0b1311",
+    "claude-workflow-sha256:8311dce381c28c66582d",
+    "claude-workflow-sha256:c56b3ef32dfe3a170623",
+    "claude-workflow-sha256:ad675b6a7ac811103aac",
+    "claude-workflow-sha256:35bd6af5f60203a113b3",
+    "claude-workflow-sha256:24fa4a6f88ff94fd0cee",
+    "claude-workflow-sha256:3bd669827d28f877bcd2",
+    "claude-workflow-sha256:143a7b4a458355089373",
+    "claude-workflow-sha256:b1fe2118c68ebfeba76e",
+    "claude-workflow-sha256:2661dcf3cdeb10686329",
+    "claude-workflow-sha256:c309b0f93ad17f9c1bfc"
+  ],
+  "pull_requests": [
+    {"repository": "organvm/limen", "numbers": [1076, 1077, 1080, 1081, 1082, 1083, 1084, 1085, 1086, 1088, 1089, 1091, 1092, 1095, 1096, 1097, 1100, 1101, 1102, 1103, 1104, 1105, 1118, 1119, 1122, 1123, 1124, 1125, 1126, 1127, 1128, 1129, 1132, 1133, 1134, 1135, 1138, 1139, 1140, 1141, 1142, 1143, 1144, 1146, 1147, 1149, 1150, 1151]},
+    {"repository": "organvm/domus-genoma", "numbers": [302, 304, 305]},
+    {"repository": "organvm/universal-mail--automation", "numbers": [171]},
+    {"repository": "organvm/daily-engine", "numbers": [17, 19, 21, 22, 23, 24]},
+    {"repository": "organvm/application-pipeline", "numbers": [77, 78]},
+    {"repository": "organvm/public-record-data-scrapper", "numbers": [349, 351, 352, 353]},
+    {"repository": "organvm/_agent", "numbers": [20]}
+  ]
+}
