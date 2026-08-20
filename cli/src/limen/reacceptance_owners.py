@@ -600,7 +600,7 @@ def owner_gate_attestation_errors(
     payload = attestation.get("payload")
     if expected_payload is None or payload != expected_payload:
         errors.append(f"{gate_key} owner attestation payload does not match current evidence")
-    if public_key is not None and payload == expected_payload:
+    if public_key is not None and expected_payload is not None and payload == expected_payload:
         try:
             message = canonical_owner_attestation_payload(expected_payload)
         except ValueError as exc:
@@ -675,7 +675,7 @@ def effect_owner_attestation_errors(
     payload = attestation.get("payload")
     if expected_payload is None or payload != expected_payload:
         errors.append("effect owner attestation payload does not match current outcome")
-    if public_key is not None and payload == expected_payload:
+    if public_key is not None and expected_payload is not None and payload == expected_payload:
         try:
             message = canonical_effect_owner_attestation_payload(expected_payload)
         except ValueError as exc:

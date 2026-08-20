@@ -159,7 +159,8 @@ def _release_blockers(document: dict[str, Any]) -> list[str]:
         for key in sorted(COMPLETION_GATE_KEYS):
             gate = gates.get(key)
             if not isinstance(gate, dict) or gate.get("status") != "passed":
-                reasons = gate.get("blockers") if isinstance(gate, dict) else ["missing"]
+                raw_reasons = gate.get("blockers") if isinstance(gate, dict) else None
+                reasons = raw_reasons if isinstance(raw_reasons, list) else ["missing"]
                 blockers.append(f"{key}={','.join(str(reason) for reason in reasons)}")
     else:
         blockers.append("completion_gates_missing")

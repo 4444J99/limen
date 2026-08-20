@@ -319,16 +319,20 @@ def _merge_refreshed_row(fresh: dict[str, Any], previous: dict[str, Any]) -> dic
         merged["receipt"] = copy.deepcopy(previous.get("receipt"))
         merged["keeper"] = copy.deepcopy(previous.get("keeper"))
     else:
-        fresh_receipt = fresh.get("receipt") if isinstance(fresh.get("receipt"), dict) else {}
-        old_receipt = previous.get("receipt") if isinstance(previous.get("receipt"), dict) else {}
-        merged_receipt = copy.deepcopy(fresh_receipt)
+        fresh_val = fresh.get("receipt")
+        fresh_receipt: dict[str, Any] = dict(fresh_val) if isinstance(fresh_val, dict) else {}
+        old_val = previous.get("receipt")
+        old_receipt: dict[str, Any] = dict(old_val) if isinstance(old_val, dict) else {}
+        merged_receipt: dict[str, Any] = copy.deepcopy(fresh_receipt)
         merged_receipt.update(
             {key: copy.deepcopy(value) for key, value in old_receipt.items() if key not in REMOTE_RECEIPT_KEYS}
         )
         merged["receipt"] = merged_receipt
-        old_keeper = previous.get("keeper") if isinstance(previous.get("keeper"), dict) else {}
-        fresh_keeper = fresh.get("keeper") if isinstance(fresh.get("keeper"), dict) else {}
-        merged_keeper = copy.deepcopy(old_keeper)
+        old_k_val = previous.get("keeper")
+        old_keeper: dict[str, Any] = dict(old_k_val) if isinstance(old_k_val, dict) else {}
+        fresh_k_val = fresh.get("keeper")
+        fresh_keeper: dict[str, Any] = dict(fresh_k_val) if isinstance(fresh_k_val, dict) else {}
+        merged_keeper: dict[str, Any] = copy.deepcopy(old_keeper)
         merged_keeper.update(
             {
                 key: copy.deepcopy(value)
