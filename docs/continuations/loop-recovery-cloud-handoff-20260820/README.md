@@ -6,7 +6,7 @@ private paths, or task-board state.
 
 Exact bases:
 
-- `organvm/limen` `main`: `9c7f96fa5ce251249b87e3e0ea2d3ec34b11d1cc`
+- `organvm/limen` `main`: `9dcde495fe740c36251136a157504bc2ef7bab57`
 - `organvm/domus-genoma` `master`: `a8e0c7d434968d289b5da2e79c01e0692a3ec2b5`
 
 Current blocker: the live broker returns HTTP 401 for the registered Jules
@@ -27,4 +27,3 @@ and `limen conduct graph ROOT_RUN`. The laptop is safe to close only after both
 leaf runs have keeper-bound Jules session URLs and pullable continuation
 receipts naming `python3 scripts/jules-land.py --apply --recover` as the next
 action.
-
