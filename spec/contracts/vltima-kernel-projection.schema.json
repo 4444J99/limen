@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://limen.local/contracts/vltima-kernel-projection.schema.json",
+  "title": "VLTIMA Kernel Projection",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "schema_version",
+    "version",
+    "primitives",
+    "edges",
+    "layers",
+    "projections",
+    "organs",
+    "graph"
+  ],
+  "properties": {
+    "kind": { "type": "string", "enum": ["vltima.kernel-projection"] },
+    "schema_version": { "type": "number", "enum": [1] },
+    "version": { "type": "number" },
+    "primitives": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/primitive" }
+    },
+    "edges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge" }
+    },
+    "layers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lower", "institutional", "value"],
+      "properties": {
+        "lower": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/primitiveRef" }
+        },
+        "institutional": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/primitiveRef" }
+        },
+        "value": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/primitiveRef" }
+        }
+      }
+    },
+    "projections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["organ_kernel", "record_proof", "value_proof"],
+      "properties": {
+        "organ_kernel": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/primitiveRef" }
+        },
+        "record_proof": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/primitiveRef" }
+        },
+        "value_proof": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/primitiveRef" }
+        }
+      }
+    },
+    "organs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/organ" }
+    },
+    "graph": { "$ref": "#/$defs/graph" }
+  },
+  "$defs": {
+    "primitiveRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" }
+      }
+    },
+    "primitive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "layer", "meaning", "sources"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "layer": { "type": "string", "enum": ["lower", "institutional", "value"] },
+        "meaning": { "type": "string" },
+        "sources": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to", "type"],
+      "properties": {
+        "from": { "type": "string" },
+        "to": { "type": "string" },
+        "type": { "type": "string" }
+      }
+    },
+    "organ": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pillar", "home", "domain_map", "kernel_map", "macro", "micro", "first_artifact", "organ_kernel"],
+      "properties": {
+        "pillar": { "type": "string" },
+        "home": { "type": "string" },
+        "domain_map": { "type": "string" },
+        "kernel_map": { "$ref": "#/$defs/organKernelMap" },
+        "macro": { "type": "string" },
+        "micro": { "type": "string" },
+        "first_artifact": { "type": "string" },
+        "organ_kernel": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/primitiveRef" }
+        }
+      }
+    },
+    "organKernelMap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["Member", "Mandate", "Standing", "Standard", "Governance"],
+      "properties": {
+        "Member": { "type": "string" },
+        "Mandate": { "type": "string" },
+        "Standing": { "type": "string" },
+        "Standard": { "type": "string" },
+        "Governance": { "type": "string" }
+      }
+    },
+    "graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nodes", "edges"],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/graphNode" }
+        },
+        "edges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/edge" }
+        }
+      }
+    },
+    "graphNode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "label", "ref"],
+      "properties": {
+        "id": { "type": "string" },
+        "kind": { "type": "string", "enum": ["layer", "primitive", "projection", "organ"] },
+        "label": { "type": "string" },
+        "ref": { "type": "string" },
+        "layer": { "type": "string" }
+      }
+    }
+  }
+}
