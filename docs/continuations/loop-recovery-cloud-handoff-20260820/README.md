@@ -7,7 +7,8 @@ private paths, or task-board state.
 Exact bases:
 
 - initial `organvm/limen` `main`: `b302ba97e6092e62b40aab9eff923e1a91c90c30`
-- Limen continuation `main`: `5ea7a6a52efe11b3a8c83a7bfa67c71a86ea7f3c`
+- fenced Limen continuation `main`: `5ea7a6a52efe11b3a8c83a7bfa67c71a86ea7f3c`
+- active Limen continuation `main`: `9369244bef81011feb230fafa642b276487c875f`
 - `organvm/domus-genoma` `master`: `a8e0c7d434968d289b5da2e79c01e0692a3ec2b5`
 
 The additive principal registry bootstrap and exact-SHA Worker deployment
@@ -17,9 +18,13 @@ with a pullable receipt. Limen session `1893712404416464604` stopped at
 `awaiting_user_feedback`; Jules CLI v0.1.42 can pull that partial result but
 cannot answer feedback, so it is not a closeable implementation receipt.
 
-The bounded CLI-native recovery is the single-leaf continuation manifest. Its
-prompt explicitly pre-approves the plan and directs Jules not to pause for
-feedback. Plan it, then launch it exactly once through the broker:
+The first continuation was fenced when `main` moved before provider launch.
+The bounded CLI-native recovery is the single-leaf v4 continuation manifest.
+Its prompt explicitly pre-approves the plan and directs Jules not to pause for
+feedback. It launched as broker root
+`run-063d4bf0b288d3cc8f125133aa888cb5`, leaf
+`run-39fb2c3d22a1178ce4cb9ec66a1d52d1`, Jules session
+`8532144557688814721`. The reproducible plan/start commands are:
 
 ```bash
 PYTHONPATH=cli/src python3 -m limen.cli fanout plan --manifest docs/continuations/loop-recovery-cloud-handoff-20260820/fanout-manifest-limen-continuation.json
