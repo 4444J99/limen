@@ -25,7 +25,8 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
+SCRIPT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(SCRIPT_ROOT / "cli" / "src"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _human_signals
 from limen.chronic import CHRONIC_FLEET_DEBT_LABEL, chronic_escalated_to_needs_human  # noqa: E402
 from limen.conduct.client import BrokerQuotaExhausted  # noqa: E402
@@ -38,7 +39,7 @@ from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL  # noq
 
 from _human_signals import is_human_gated, lever_ids  # noqa: E402
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
+ROOT = Path(os.environ.get("LIMEN_ROOT", SCRIPT_ROOT)).expanduser().resolve()
 LOCKD = ROOT / "logs" / ".queue.lock.d"
 # The live owner of a quota-exhausted keeper. NOT a human lever: L-CLOUDFLARE-DO-QUOTA was
 # RETIRED 2026-08-10 because the recurrence proved the defect is ours — unbounded heartbeat
