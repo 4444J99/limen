@@ -698,7 +698,12 @@ def main():
                 mt = tasks_by_id.get(mainred_tid)
                 if mt is not None and mt.status in _MAINRED_ACTIVE_STATUSES:
                     continue
-            lf.tasks.append(build_task(verdict, repo, num, url, stamp))
+            task = build_task(verdict, repo, num, url, stamp)
+            lf.tasks.append(task)
+            # Search spans multiple owners. A repository visible through more than one owner can
+            # therefore appear twice in the same scan; reserve the id immediately so the second
+            # row cannot enqueue a duplicate create in this transaction.
+            tasks_by_id[tid] = task
             emitted.append(tid)
         if emitted or retired:
             try:
