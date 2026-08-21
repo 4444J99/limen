@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import plistlib
 import tomllib
 from pathlib import Path
@@ -19,6 +20,11 @@ CONTROL_PLISTS = (
 
 def test_overnight_watch_launchagent_remains_absent() -> None:
     assert not OVERNIGHT_PLIST.exists()
+
+
+def test_overnight_watch_is_not_declared_as_a_background_item() -> None:
+    registry = json.loads((ROOT / "spec" / "background-items.json").read_text(encoding="utf-8"))
+    assert "com.limen.overnight-watch" not in registry["estate_agents"]
 
 
 def test_remaining_limen_launchd_control_plane_enters_stable_host() -> None:
