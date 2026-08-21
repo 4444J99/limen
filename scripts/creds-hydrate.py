@@ -1212,7 +1212,7 @@ def main() -> int:
     if apply:
         print(
             f"creds-hydrate: {hydrated} hydrated, {skipped} skipped. "
-            f"Apply to the running daemon: launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat"
+            "Validate with a bounded host observation: limen observe --once --scope host"
         )
         if skipped:
             print(

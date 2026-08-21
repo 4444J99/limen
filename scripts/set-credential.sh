@@ -69,4 +69,4 @@ chmod 600 "$ENV_FILE"
 was="updated"; { [ "$(grep -cE "^(export )?${KEY}=" "$ENV_FILE")" = 1 ]; } && true
 echo "✓ $KEY written to $ENV_FILE (value hidden · chmod 600 · idempotent)." >&2
 echo "  The running daemon loads ~/.limen.env at startup, so apply it with a restart:" >&2
-echo "    launchctl kickstart -k gui/\$(id -u)/com.limen.heartbeat" >&2
+echo "    limen observe --once --scope host" >&2

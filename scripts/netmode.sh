@@ -92,7 +92,7 @@ RESET_DAY=1; AUTO_SWITCH=1                  # RESET_DAY kept for the 'free' buck
 BACKGROUND_SWITCHING=0                      # launchd ticks observe by default; explicit CLI commands switch
 WARN_PCT=80; CRIT_PCT=95; AUTO_RECOVER=1
 RECYCLE_CLIENTS=1                            # on a gateway change, recycle long-lived clients (drop stale sockets)
-RECYCLE_LABELS="com.limen.heartbeat"        # space-sep launchd labels to kickstart on net switch
+RECYCLE_LABELS=""                           # optional explicit clients; heartbeat is retired
 STARLINK_SSID="MY_STARLINK_SSID"; PHONE_SSID="MY_PHONE_HOTSPOT_SSID"   # publish-safe placeholders; real values live in the untracked $CONFIG (sourced below)
 PHONE_GW="172.20.10.1"; STARLINK_GW="192.168.1.1"; WIFI_IF="en0"; USB_IF="en8"; DASH_PORT=8765
 DISH_GW="192.168.100.1"; DISH_GPORT=9200; DISHCACHE="$DIR/dish_status.json"; DISH_TTL=30  # Starlink dish gRPC (read-only diagnostic)

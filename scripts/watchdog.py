@@ -7,8 +7,8 @@ caught it — it took a human asking "why are we idle". A finished autonomic sys
 asserts its own health each beat. This organ closes that gap.
 
 Each invocation it asserts THREE health checks and, on failure, raises EXACTLY ONE
-alert (deduped by failure-signature — never a spam loop) and OPTIONALLY self-heals
-behind a double gate. Default is DETECT + ALERT only; it never restarts unprompted.
+alert (deduped by failure-signature — never a spam loop). The former self-heal
+path is retired; this script is diagnostic-only.
 
   CHECK 1  daemon-up     launchd com.limen.heartbeat running AND the pid in
                          logs/heartbeat-loop.pid is alive (ps -p).
@@ -19,20 +19,20 @@ behind a double gate. Default is DETECT + ALERT only; it never restarts unprompt
 
 On any failure: write ONE alert to logs/watchdog-alert.json (ts, failed check,
 evidence) + append a line to logs/watchdog.log. Idempotent: same signature already
-active → no re-fire; health returns → clear the alert. Self-heal (launchctl kickstart)
-is gated behind --heal AND LIMEN_WATCHDOG_HEAL=1.
+active → no re-fire; health returns → clear the alert.
 
   --dry-run   assess + print, NO writes
-  --heal      allow restart (also needs LIMEN_WATCHDOG_HEAL=1)
+  --heal      accepted for compatibility; never restarts the retired heartbeat
   (default)   assess + write alert/log, no restart
 
 Env-parameterized (DERIVE, never hardcode):
   LIMEN_ROOT             conductor root (default ~/Workspace/limen)
   LIMEN_WATCHDOG_STALE_SEC  tick staleness ceiling (default = 3 × slowest beat)
   LIMEN_WATCHDOG_MAX_FAILS  consecutive all-failed beats → wedged (default 3)
-  LIMEN_WATCHDOG_HEAL    "1" arms --heal restart
+  LIMEN_WATCHDOG_HEAL    legacy input; ignored
   LIMEN_LAUNCHD_LABEL    launchd label (default com.limen.heartbeat)
 """
+
 import argparse
 import datetime
 import json
@@ -145,19 +145,26 @@ def check_beating():
     for m in TICK_RE.finditer(text):
         last = m.group(1)
     if last is None:
-        return False, {"reason": "no tick line found in recent log window",
-                       "stale_sec_threshold": STALE_SEC, "last_tick": None, "age_sec": None}
+        return False, {
+            "reason": "no tick line found in recent log window",
+            "stale_sec_threshold": STALE_SEC,
+            "last_tick": None,
+            "age_sec": None,
+        }
     try:
         ts = datetime.datetime.fromisoformat(last)
         if ts.tzinfo is None:
             ts = ts.replace(tzinfo=datetime.timezone.utc)
     except Exception:
-        return False, {"reason": f"unparseable tick timestamp {last!r}",
-                       "stale_sec_threshold": STALE_SEC, "last_tick": last, "age_sec": None}
+        return False, {
+            "reason": f"unparseable tick timestamp {last!r}",
+            "stale_sec_threshold": STALE_SEC,
+            "last_tick": last,
+            "age_sec": None,
+        }
     age = (_now() - ts).total_seconds()
     ok = age <= STALE_SEC
-    return ok, {"last_tick": last, "age_sec": round(age, 1),
-                "stale_sec_threshold": STALE_SEC}
+    return ok, {"last_tick": last, "age_sec": round(age, 1), "stale_sec_threshold": STALE_SEC}
 
 
 # --- CHECK 3: dispatch not wedged ----------------------------------------------
@@ -166,13 +173,15 @@ def check_not_wedged():
     pr_counts = [int(m.group(1)) for m in PARALLEL_RE.finditer(text)]
     if not pr_counts:
         # no dispatch beats in window — can't be wedged on evidence we don't have.
-        return True, {"reason": "no PARALLEL beats in window", "recent_pr_counts": [],
-                      "max_fails_threshold": MAX_FAILS}
+        return True, {"reason": "no PARALLEL beats in window", "recent_pr_counts": [], "max_fails_threshold": MAX_FAILS}
     recent = pr_counts[-MAX_FAILS:]
     # wedged = the last MAX_FAILS beats ALL produced 0 PRs (and we have that many).
     wedged = len(recent) >= MAX_FAILS and all(c == 0 for c in recent)
-    return (not wedged), {"recent_pr_counts": recent, "max_fails_threshold": MAX_FAILS,
-                          "consecutive_zero": all(c == 0 for c in recent)}
+    return (not wedged), {
+        "recent_pr_counts": recent,
+        "max_fails_threshold": MAX_FAILS,
+        "consecutive_zero": all(c == 0 for c in recent),
+    }
 
 
 CHECKS = [
@@ -189,10 +198,8 @@ def signature(failures):
 
 
 def heal():
-    """Self-heal: launchctl kickstart the daemon. Double-gated by the caller."""
-    uid = os.getuid()
-    r = _run(["launchctl", "kickstart", "-k", f"gui/{uid}/{LABEL}"], timeout=30)
-    return (r.returncode == 0, (r.stdout + r.stderr).strip())
+    """The resident heartbeat is retired; diagnostics cannot restart it."""
+    return (False, "heartbeat retired; run limen observe --once --scope host")
 
 
 def _append_log(line):
@@ -206,8 +213,7 @@ def _append_log(line):
 def main():
     ap = argparse.ArgumentParser(description="Limen self-watchdog organ")
     ap.add_argument("--dry-run", action="store_true", help="assess + print, no writes")
-    ap.add_argument("--heal", action="store_true",
-                    help="allow restart (also needs LIMEN_WATCHDOG_HEAL=1)")
+    ap.add_argument("--heal", action="store_true", help=argparse.SUPPRESS)
     a = ap.parse_args()
 
     results = []
@@ -252,7 +258,7 @@ def main():
         return 0
 
     # unhealthy
-    heal_armed = a.heal and os.environ.get("LIMEN_WATCHDOG_HEAL") == "1"
+    heal_armed = False
     if prior_active and prior_sig == sig:
         # SAME alert already active → do NOT re-fire (dedupe). Keep it quiet.
         print(f"[watchdog] alert already active sig={sig} — not re-firing")
