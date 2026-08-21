@@ -39,10 +39,8 @@ HEARTBEAT_PLIST = Path(
     os.environ.get("LIMEN_HEARTBEAT_PLIST", HOME / "Library" / "LaunchAgents" / "com.limen.heartbeat.plist")
 )
 LAUNCHD_LABEL = os.environ.get("LIMEN_HEARTBEAT_LABEL", "com.limen.heartbeat")
-WATCHDOG_PLIST = Path(
-    os.environ.get("LIMEN_WATCHDOG_PLIST", HOME / "Library" / "LaunchAgents" / "com.limen.watchdog.plist")
-)
-WATCHDOG_LABEL = os.environ.get("LIMEN_WATCHDOG_LABEL", "com.limen.watchdog")
+WATCHDOG_PLIST = HOME / "Library" / "LaunchAgents" / "com.limen.watchdog.plist"
+WATCHDOG_LABEL = "com.limen.watchdog"
 IGNORED_GENERATED_RECEIPTS = {
     "docs/conductor-tranche.md",
     "docs/dispatch-health.md",
