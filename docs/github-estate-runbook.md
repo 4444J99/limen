@@ -1,10 +1,9 @@
 # GitHub Estate Runbook — the ordered his-hand clicks (2026-07-17)
 
-The one page that ends the recurring "GitHub billing problem" conversation. Ground truth (verified
-live via the API, 2026-07-17): **all 307 repos live in `organvm` (free plan)** while **8 empty orgs
-ride the paid Enterprise plan**; every private-repo Actions job dies at start with *"recent account
-payments have failed or your spending limit needs to be increased"* (root: the card-0186 fraud hold,
-lever #182); Copilot seats are 0 everywhere; the review-bot fleet is installed on an empty org.
+Historical 2026-07-17 repair record for the recurring "GitHub billing problem" conversation. The
+card-0186 hold and the Actions budget defect documented here were discharged that day. This page is
+not current evidence that `L-CARD-FRAUD-HOLD` or issue #182 owns a later billing failure: re-query the
+live account, budget, usage canary, and affected exact-head annotations before assigning a cause.
 
 Each step cites its lever in `his-hand-levers.json` — the machine half is already done or lands via
 PR; **only these clicks are yours**. Total: ~20 minutes. Order matters: everything gates on step 1.

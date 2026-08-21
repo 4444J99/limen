@@ -9,6 +9,24 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def test_discharged_card_hold_cannot_own_later_billing_failures():
+    """Do not turn a historical repair into a permanent causal routing rule."""
+    registry = json.loads((ROOT / "his-hand-levers.json").read_text(encoding="utf-8"))
+    rows = [row for row in registry["levers"] if row.get("id") == "L-CARD-FRAUD-HOLD"]
+
+    assert len(rows) == 1
+    assert rows[0]["status"] == "discharged"
+    assert rows[0]["issue"] == 182
+    assert "must not be cited" in rows[0]["label"]
+
+    gitvs = (ROOT / "scripts/gitvs.py").read_text(encoding="utf-8")
+    sensors = (ROOT / "institutio/governance/sensors.yaml").read_text(encoding="utf-8")
+    chronic = json.loads((ROOT / "scripts/heal-chronic-receipts.json").read_text(encoding="utf-8"))
+    assert "→ L-CARD-FRAUD-HOLD (#182)" not in gitvs
+    assert "roots: L-CARD-FRAUD-HOLD (#182)" not in sensors
+    assert not any(row.get("lever") == "L-CARD-FRAUD-HOLD" for row in chronic)
+
+
 def test_arca_key_escrow_gate_has_one_canonical_owner_receipt():
     registry = json.loads((ROOT / "his-hand-levers.json").read_text(encoding="utf-8"))
     rows = [row for row in registry["levers"] if row.get("id") == "L-ARCA-KEY-ESCROW"]

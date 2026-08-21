@@ -385,7 +385,7 @@ sensors:
     steps:
       - command: "python3 scripts/gitvs.py usage --check"
         severity: advisory
-        escalation: "Actions spend over budget or the account-billing canary is red — read docs/github-actions-usage.json; roots: L-CARD-FRAUD-HOLD (#182) then L-ORG-TEAM-UPGRADE (docs/github-estate-runbook.md)"
+        escalation: "Actions spend over budget or the account-billing canary is red — read docs/github-actions-usage.json and diagnose the current account/budget evidence; never route a later incident to discharged L-CARD-FRAUD-HOLD (#182) without new causal proof"
     omega_eligible:
       - label: "GitHub Actions budget"
         rung_id: sensor.github.actions-budget

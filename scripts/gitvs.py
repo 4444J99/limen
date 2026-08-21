@@ -2723,7 +2723,11 @@ def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False) 
     if projected > budget:
         fails.append(f"projected ${projected} exceeds budget ${budget}")
     if canary_green is False:
-        fails.append(f"billing canary RED on {canary_repo} ({canary_detail}) → L-CARD-FRAUD-HOLD (#182)")
+        fails.append(
+            f"billing canary RED on {canary_repo} ({canary_detail}); "
+            "diagnose current account and budget evidence (discharged "
+            "L-CARD-FRAUD-HOLD/#182 is not a default cause or owner)"
+        )
     if (check or strict) and fails:
         print(f"✗ gitvs usage: {'; '.join(fails)} — see {USAGE_DOC.relative_to(ROOT)}")
         return 1
