@@ -191,6 +191,26 @@ def test_idempotent_no_duplicate_on_rerun(tmp_path, monkeypatch):
     assert first == second == 2, "re-running must not emit duplicate heal tasks"
 
 
+def test_idempotent_duplicate_rows_within_one_scan(tmp_path, monkeypatch):
+    """The same PR can be returned through multiple owner searches; emit it once per transaction."""
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    duplicated = [_PRS[0], _PRS[0]]
+
+    def fake_gh(args, timeout=60):
+        if args[:2] == ["search", "prs"]:
+            return _R(json.dumps(duplicated))
+        return _fake_gh(args, timeout=timeout)
+
+    monkeypatch.setattr(m, "gh", fake_gh)
+    monkeypatch.setattr(sys, "argv", ["self-heal", "--tasks", str(p)])
+
+    assert m.main() == 0
+    tasks = yaml.safe_load(p.read_text())["tasks"]
+    assert [task["id"] for task in tasks] == ["HEAL-cifix-organvm-exporter-54"]
+
+
 def test_respects_limit_cap(tmp_path, monkeypatch):
     m = _load(tmp_path, monkeypatch)
     p = tmp_path / "tasks.yaml"
