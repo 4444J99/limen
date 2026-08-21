@@ -16,11 +16,6 @@
       "program_basename": "DomusAgentHost",
       "committed_plist": "container/launchd/com.limen.claude-stub-heal.plist"
     },
-    "com.limen.overnight-watch": {
-      "role": "overnight watch — interval observer under the stable TCC principal",
-      "program_basename": "DomusAgentHost",
-      "committed_plist": "container/launchd/com.limen.overnight-watch.plist"
-    },
     "com.ianva.gateway": {
       "role": "ianva MCP doorway (lever L-IANVA-LOCAL); renders as 'bash' in Login Items",
       "program_basename": "bash",
