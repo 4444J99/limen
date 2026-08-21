@@ -53,6 +53,10 @@ import yaml
 SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
+CLI_SRC = SCRIPT_DIR.parent / "cli" / "src"
+if str(CLI_SRC) not in sys.path:
+    sys.path.insert(0, str(CLI_SRC))
+from limen.ci_failure import classify_ci_failure
 
 # ROOT is the script's OWN tree (never LIMEN_ROOT) — a registry-drift predicate must validate the tree
 # it lives in, so the parity gate checks THIS checkout's estate.yaml in a worktree/CI, not wherever an
@@ -2596,7 +2600,6 @@ def classify_estate(estate: dict, *, fresh: bool, sample_max: int, emit: bool, o
 # ── the Meter: Actions spend telemetry + the account-billing canary ─────────────────────────────
 USAGE_DOC = ROOT / "docs" / "github-actions-usage.json"
 USAGE_STAMP = ROOT / "logs" / "gh-usage.json"
-BILLING_BLOCK_PHRASES = ("payments have failed", "spending limit")
 
 
 def _usage_month(org: str, year: int, month: int) -> dict | None:
@@ -2660,13 +2663,21 @@ def _billing_canary(repo: str) -> tuple[bool | None, str]:
         return None, "no completed runs"
     if conclusion != "failure":
         return True, f"newest run {run_id} concluded '{conclusion}'"
-    rj = _gh_user(["api", f"/repos/{repo}/actions/runs/{run_id}/jobs", "--jq", ".jobs[].id"], timeout=30)
-    job_ids = [j.strip() for j in (rj.stdout or "").splitlines() if j.strip()] if rj.returncode == 0 else []
-    for jid in job_ids[:5]:
-        ra = _gh_user(["api", f"/repos/{repo}/check-runs/{jid}/annotations", "--jq", ".[].message"], timeout=30)
-        text = (ra.stdout or "") if ra.returncode == 0 else ""
-        if any(p in text for p in BILLING_BLOCK_PHRASES):
-            return False, f"run {run_id}: account-billing block annotation present"
+    rj = _gh_user(["api", f"/repos/{repo}/actions/runs/{run_id}/jobs"], timeout=30)
+    try:
+        jobs = (json.loads(rj.stdout or "{}").get("jobs") or []) if rj.returncode == 0 else []
+    except json.JSONDecodeError:
+        jobs = []
+    annotations: list[dict] = []
+    for job in jobs[:5]:
+        ra = _gh_user(["api", f"/repos/{repo}/check-runs/{job.get('id')}/annotations"], timeout=30)
+        try:
+            annotations.extend(json.loads(ra.stdout or "[]") if ra.returncode == 0 else [])
+        except json.JSONDecodeError:
+            continue
+    failure = classify_ci_failure(jobs, annotations)
+    if failure.classification in {"account_billing_lock", "payment_failure", "spending_limit"}:
+        return False, f"run {run_id}: {failure.detail}"
     return True, f"newest run {run_id} failed, but not on the billing wall"
 
 

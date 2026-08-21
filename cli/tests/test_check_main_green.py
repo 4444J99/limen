@@ -510,29 +510,27 @@ def _classify_with(monkeypatch, m, jobs, annotations):
 def test_classify_jam_from_zero_steps_and_quota_annotation(monkeypatch):
     m = _load()
     klass, detail = _classify_with(monkeypatch, m, _jobs(steps=0), [{"message": QUOTA_ANNOTATION}])
-    assert klass == "ci-jam"
-    # detail names the quota/never-started cause — never "payment failure" or a card lever
-    assert "quota" in detail.lower() or "never started" in detail.lower()
-    assert "card" not in detail.lower() and "payment failure" not in detail.lower()
+    assert klass == "payment_failure"
+    assert "payment failure" in detail.lower()
 
 
 def test_classify_jam_when_zero_steps_without_quota_text(monkeypatch):
     m = _load()
     klass, _ = _classify_with(monkeypatch, m, _jobs(steps=0), [{"message": "runner exploded"}])
-    assert klass == "ci-jam"  # zero-step never-started is still a jam, whatever the annotation
+    assert klass == "unknown"
 
 
 def test_classify_real_failure_when_steps_executed(monkeypatch):
     m = _load()
     klass, _ = _classify_with(monkeypatch, m, _jobs(steps=3), [{"message": QUOTA_ANNOTATION}])
-    assert klass == "ci-fail"  # steps ran — a real failure even if the annotation text were misleading
+    assert klass == "executed_code_failure"
 
 
 def test_classify_fails_open_to_ci_fail(monkeypatch):
     m = _load()
     monkeypatch.setattr(m, "_gh_json", lambda args, default: default)  # API unavailable
-    assert m.classify_red_run(123) == ("ci-fail", "")
-    assert m.classify_red_run(0) == ("ci-fail", "")  # cached stamp without run_id
+    assert m.classify_red_run(123).classification == "executed_code_failure"
+    assert m.classify_red_run(0).classification == "executed_code_failure"
 
 
 def test_jammed_pr_run_ids_extracts_filters_and_dedups():
@@ -571,22 +569,22 @@ def test_attempt_reruns_backoff_cap_and_state(tmp_path, monkeypatch):
 
     monkeypatch.setattr(m.subprocess, "run", fake_run)
     ids = [111, 222, 333, 444, 555, 666, 777, 888]  # 8 targets, cap is 6
-    r1 = m.attempt_reruns(ids, now=1000.0)
+    r1 = m.attempt_reruns(ids, now=1000.0, enabled=True)
     assert [x["action"] for x in r1] == ["rerun"] * 6 and reran == ids[:6]
     # immediately again — everything inside base backoff
-    r2 = m.attempt_reruns(ids, now=1001.0)
+    r2 = m.attempt_reruns(ids, now=1001.0, enabled=True)
     assert [x["action"] for x in r2] == ["backoff"] * 6 and len(reran) == 6
     # past base backoff — attempt 2 fires; next delay doubles
-    r3 = m.attempt_reruns(ids[:1], now=1000.0 + 1801)
+    r3 = m.attempt_reruns(ids[:1], now=1000.0 + 1801, enabled=True)
     assert r3[0]["action"] == "rerun"
     state = json.loads((tmp_path / "logs" / "vigilia" / "ci-jam-state.json").read_text())
     assert state["111"]["attempts"] == 2
     # 2nd->3rd attempt needs 2*base; base alone is now inside the window
-    r4 = m.attempt_reruns(ids[:1], now=1000.0 + 1801 + 1801)
+    r4 = m.attempt_reruns(ids[:1], now=1000.0 + 1801 + 1801, enabled=True)
     assert r4[0]["action"] == "backoff"
 
 
-def test_jam_red_path_notifies_reruns_and_skips_heal_task(tmp_path, monkeypatch, capsys):
+def test_unknown_startup_jam_reruns_only_with_explicit_flag(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("LIMEN_NOTIFY", "0")  # bookkeeping only — hermetic runs never pop notifications
     monkeypatch.setenv("LIMEN_MAIN_GREEN_THROTTLE", "100000")
@@ -597,24 +595,51 @@ def test_jam_red_path_notifies_reruns_and_skips_heal_task(tmp_path, monkeypatch,
     stamp["run_id"] = 29581455210
     (tmp_path / "logs" / "main-green.json").write_text(json.dumps(stamp), encoding="utf-8")
 
-    monkeypatch.setattr(m, "classify_red_run", lambda rid: ("ci-jam", "runner never started (Actions quota)"))
-    monkeypatch.setattr(m, "_visibility_drift", lambda repo: True)  # the real 2026-07-17 cause
+    failure_type = type(m.classify_ci_failure([]))
+    monkeypatch.setattr(
+        m, "classify_red_run", lambda rid: failure_type("runner_startup_jam", "unknown startup jam", True)
+    )
     monkeypatch.setattr(m, "_fetch_open_prs", lambda: [])
     seen = {}
-    monkeypatch.setattr(m, "attempt_reruns", lambda ids, now=None: seen.setdefault("ids", ids) and [])
+    monkeypatch.setattr(
+        m, "attempt_reruns", lambda ids, now=None, enabled=False: seen.update(ids=ids, enabled=enabled) or []
+    )
+    monkeypatch.setattr(m, "_emit_ci_condition", lambda *args: None)
     monkeypatch.setattr(
         m, "_emit_heal_task", lambda *a, **k: (_ for _ in ()).throw(AssertionError("heal emitted for jam"))
     )
 
-    assert m.main([]) == 1
+    assert m.main(["--recover-jam"]) == 1
     out = capsys.readouterr().out
-    assert "[ci-jam]" in out and "jam recovery" in out
-    assert "L-CARD-FRAUD" not in out and "payment failure" not in out.lower()  # the mislabel is gone
+    assert "[runner_startup_jam]" in out and "recovery" in out
     assert seen["ids"] == [29581455210]  # the trunk run is the first rerun target
-    relief = json.loads((tmp_path / "logs" / "vigilia" / "relief-state.json").read_text())
-    assert "ci-jam" in relief  # onset recorded (dedup) even with notifications killed
-    # the notification names the drift + its real fix (restore public), never a payment chore
-    assert "VISIBILITY DRIFT" in relief["ci-jam"]["message"] and "restore" in relief["ci-jam"]["message"].lower()
+    assert seen["enabled"] is True
+
+
+def test_account_billing_lock_never_reruns_even_when_recovery_flag_is_present(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_MAIN_GREEN_THROTTLE", "100000")
+    m = _load()
+    _seed(tmp_path, "failure")
+    stamp = json.loads((tmp_path / "logs" / "main-green.json").read_text())
+    stamp["run_id"] = 32478480232
+    (tmp_path / "logs" / "main-green.json").write_text(json.dumps(stamp))
+    failure_type = type(m.classify_ci_failure([]))
+    monkeypatch.setattr(
+        m,
+        "classify_red_run",
+        lambda _rid: failure_type("account_billing_lock", "GitHub reports an account billing lock", False),
+    )
+    monkeypatch.setattr(m, "_fetch_open_prs", lambda: [])
+    monkeypatch.setattr(m, "_emit_ci_condition", lambda *args: None)
+    seen = {}
+    monkeypatch.setattr(
+        m,
+        "attempt_reruns",
+        lambda ids, now=None, enabled=False: seen.update(ids=ids, enabled=enabled) or [],
+    )
+    assert m.main(["--recover-jam"]) == 1
+    assert seen == {"ids": [32478480232], "enabled": False}
 
 
 def test_green_clears_jam_state_and_notification(tmp_path, monkeypatch, capsys):

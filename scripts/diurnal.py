@@ -78,6 +78,7 @@ except ImportError:
 import _root
 
 PHASES = ("morning", "midday", "evening")
+SUMMARY_NOTIFICATION_IDS = {"morning": "limen.summary.morning", "midday": "limen.summary.midday"}
 REGISTRY_REL = "institutio/governance/diurnal.yaml"
 MARKER_RX = "<!-- diurnal:{phase}:start -->"
 MARKER_END = "<!-- diurnal:{phase}:end -->"
@@ -1040,8 +1041,18 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
 
     if phase in ("morning", "midday") and _on("LIMEN_DIURNAL_PUSH") and _notify is not None:
         text = headline(phase, rendered, ctx)
-        if phase != "midday" or ctx.get("drift"):
-            _notify.notify_once(root, f"diurnal:{phase}:{today}", text, title=f"LIMEN · {phase}")
+        active_ids = ",".join(_notify.active_conditions(root)) or "none"
+        snapshot_time = now.strftime("%H:%M")
+        _notify.emit_event_v1(
+            root,
+            stable_id=SUMMARY_NOTIFICATION_IDS[phase],
+            transition="summary",
+            subject_key=today,
+            event_id=f"diurnal-{phase}-{today}",
+            facts={"snapshot_time": snapshot_time, "summary": text, "active_alert_ids": active_ids},
+            evidence_ref=str(state_dir(root) / f"{today}-{phase}.json"),
+            producer="scripts/diurnal.py",
+        )
         _prune_notify_keys(root)
 
     write_index(root)

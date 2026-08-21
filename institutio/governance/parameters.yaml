@@ -347,6 +347,12 @@ parameters:
     self_update: none
     owner: vitals
     note: "Declared cadence of the heartbeat's independent fast wave. It refreshes VIGILIA sampled_at, phase-sensitive diurnal checks, and organ-health even while the main beat is inside a slow bounded rung."
+  LIMEN_WAKE_STATE:
+    default: "FullWake"
+    env: LIMEN_WAKE_STATE
+    self_update: none
+    owner: vitals
+    note: "Observed wake state attached to each explicit VIGILIA sample. Sleep, DarkWake, and MaintenanceDarkWake samples cannot page; FullWake time is the staleness denominator."
   LIMEN_VITALS_SAMPLE_TIMEOUT:
     default: 30
     env: LIMEN_VITALS_SAMPLE_TIMEOUT
@@ -4274,6 +4280,12 @@ parameters:
     self_update: none
     owner: observatory
     note: "Master on/off for the registry-declared OBSERVATORY legibility-and-traction sensor (observatory-run in sensors.yaml). Ships DARK (0): the organ is registered but idle until armed by lever L-OBSERVATORY-ACTIVATE. 1 runs the whole loop (collect→analyze→reconcile→brief) DRY on its declared cadence. Proposal writes remain a separate armed valve (OBSERVATORY_APPLY)."
+  LIMEN_OBSERVE_RECEIPT:
+    default: "logs/observe-once.json"
+    env: LIMEN_OBSERVE_RECEIPT
+    self_update: none
+    owner: observatory
+    note: "Optional private destination for the counts-only `limen observe --once` receipt. The default is the gitignored runtime log seat; probe output and private facts are never persisted in this receipt."
   LIMEN_BEAT_OBSERVATORY:
     default: 24
     env: LIMEN_BEAT_OBSERVATORY

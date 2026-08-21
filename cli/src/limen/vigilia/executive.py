@@ -13,6 +13,9 @@ from __future__ import annotations
 import fcntl
 import json
 import os
+import hashlib
+import subprocess
+import time
 from collections.abc import Callable
 from datetime import datetime, timezone
 from pathlib import Path
@@ -22,6 +25,19 @@ from . import continuity, integrity, params, vitals
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+def _boot_identity() -> str:
+    try:
+        result = subprocess.run(["sysctl", "-n", "kern.boottime"], capture_output=True, text=True, timeout=3)
+        return hashlib.sha256(result.stdout.strip().encode()).hexdigest()[:20]
+    except (OSError, subprocess.SubprocessError):
+        return "unavailable"
+
+
+def _active_monotonic() -> float:
+    clock = getattr(time, "CLOCK_UPTIME_RAW", time.CLOCK_MONOTONIC)
+    return time.clock_gettime(clock)
 
 
 def _status_dir() -> Path:
@@ -110,6 +126,9 @@ def sample_vitals() -> dict:
         status.update(
             {
                 "sampled_at": sampled_at,
+                "boot_identity": _boot_identity(),
+                "sampled_monotonic_seconds": round(_active_monotonic(), 3),
+                "wake_state": os.environ.get("LIMEN_WAKE_STATE", "FullWake"),
                 "vitals": observed,
             }
         )

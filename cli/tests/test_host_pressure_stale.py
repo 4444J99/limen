@@ -7,8 +7,10 @@ from __future__ import annotations
 
 import json
 import os
+import hashlib
 import subprocess
 import sys
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -34,11 +36,17 @@ def run_stale(tmp_path: Path, env: dict | None = None):
 def write_status(tmp_path: Path, sampled_at: datetime, completed_at: datetime | None = None) -> None:
     seat = tmp_path / "logs" / "vigilia"
     seat.mkdir(parents=True, exist_ok=True)
+    boot = subprocess.run(["sysctl", "-n", "kern.boottime"], capture_output=True, text=True, timeout=3)
+    age = max(0.0, (datetime.now(timezone.utc) - sampled_at).total_seconds())
+    active_now = time.clock_gettime(getattr(time, "CLOCK_UPTIME_RAW", time.CLOCK_MONOTONIC))
     (seat / "status.json").write_text(
         json.dumps(
             {
                 "sampled_at": sampled_at.isoformat(),
                 "completed_at": completed_at.isoformat() if completed_at else None,
+                "boot_identity": hashlib.sha256(boot.stdout.strip().encode()).hexdigest()[:20],
+                "sampled_monotonic_seconds": active_now - age,
+                "wake_state": "FullWake",
             }
         )
     )
@@ -181,3 +189,23 @@ def test_sampler_timeout_is_inside_staleness_grace(tmp_path):
     )
 
     assert proc.returncode == 0, proc.stdout + proc.stderr
+
+
+def test_darkwake_never_pages(tmp_path):
+    write_status(tmp_path, datetime.now(timezone.utc) - timedelta(days=1))
+    path = tmp_path / "logs" / "vigilia" / "status.json"
+    payload = json.loads(path.read_text())
+    payload["wake_state"] = "MaintenanceDarkWake"
+    path.write_text(json.dumps(payload))
+    proc = run_stale(tmp_path)
+    assert proc.returncode == 0
+    assert "cannot page" in proc.stdout
+
+
+def test_legacy_metadata_gets_sample_first_grace(tmp_path):
+    seat = tmp_path / "logs" / "vigilia"
+    seat.mkdir(parents=True)
+    (seat / "status.json").write_text(json.dumps({"sampled_at": "2020-01-01T00:00:00Z"}))
+    proc = run_stale(tmp_path, env={"LIMEN_NOTIFY": "0"})
+    assert proc.returncode == 0
+    assert "sample-first refresh" in proc.stdout
