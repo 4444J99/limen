@@ -17,7 +17,6 @@ C ungated-effector: scripts/credential-wall.py performs `gh issue edit` in-proce
 C ungated-effector: scripts/creds-hydrate.py performs `gh secret set` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
 C ungated-effector: scripts/npm-audit-autofix.py performs `gh pr create` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
 C ungated-effector: scripts/npm-audit-autofix.py performs `gh pr merge` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
-C ungated-effector: scripts/overnight-watch.py performs `gh issue create` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
 C ungated-effector: scripts/pip-audit-autofix.py performs `gh pr create` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
 C ungated-effector: scripts/pip-audit-autofix.py performs `gh pr merge` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists
 C ungated-effector: scripts/profile-bio-sync.py performs `gh api -X PATCH` in-process, where the PreToolUse(Bash) guard is structurally blind — no command string ever exists

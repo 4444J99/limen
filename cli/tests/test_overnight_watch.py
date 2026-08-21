@@ -325,7 +325,6 @@ def test_pause_marker_exits_zero_with_blocked_receipt_before_expensive_work(tmp_
         raise AssertionError("paused watch reached an expensive probe")
 
     monkeypatch.setattr(module, "build_snapshot", forbidden)
-    monkeypatch.setattr(module, "heal", forbidden)
     monkeypatch.setattr(module, "append_trial_observation", forbidden)
     monkeypatch.setattr(module, "maybe_finalize_trial", forbidden)
 
@@ -384,6 +383,22 @@ def test_watch_self_recycles_when_rss_cap_is_exceeded(tmp_path, monkeypatch):
 
     assert module.main(["--watch", "--interval", "999"]) == 0
     assert calls["run_once"] == 1
+
+
+def test_attached_watch_has_a_finite_default_sample_bound(tmp_path, monkeypatch):
+    module = _fresh_module(tmp_path, monkeypatch, LIMEN_WATCH_RSS_MB=0)
+    calls = {"run_once": 0}
+    monkeypatch.setattr(module, "stop_for_autonomy_pause", lambda **_kwargs: None)
+
+    def fake_run_once(*, dry_run, json_output):
+        calls["run_once"] += 1
+        return 0
+
+    monkeypatch.setattr(module, "run_once", fake_run_once)
+
+    assert module.DEFAULT_WATCH_MAX_SAMPLES == 12
+    assert module.main(["--watch", "--interval", "1", "--max-samples", "1"]) == 0
+    assert calls == {"run_once": 1}
 
 
 def test_pause_marker_blocks_new_unattended_trial(tmp_path, monkeypatch):
@@ -1715,79 +1730,32 @@ def test_alert_state_resolves(tmp_path, monkeypatch):
     assert json.loads(module.ALERT_PATH.read_text())["active"] is False
 
 
-def _mock_missing_service(module, monkeypatch, *, bootstrap_rc=0, watchdog_missing=False):
-    """launchctl print fails (service booted out); record bootstrap attempts."""
+def _mock_missing_service(module, monkeypatch):
+    """launchctl print fails (service booted out); record diagnostic calls."""
     calls = []
 
     def fake_run(args, timeout=10):
         calls.append(args)
         if args[:2] == ["launchctl", "print"]:
-            missing = "com.limen.watchdog" in args[2] and watchdog_missing
-            if "com.limen.heartbeat" in args[2] or missing:
+            if "com.limen.heartbeat" in args[2]:
                 return _CP(args, rc=1, stderr='Could not find service "x" in domain for user gui: 501')
             return _CP(args, rc=0, stdout=_launchd_output())
-        if args[:2] == ["launchctl", "bootstrap"]:
-            return _CP(args, rc=bootstrap_rc)
         return _CP(args, rc=1, stderr="unexpected command")
 
     monkeypatch.setattr(module, "run", fake_run)
     return calls
 
 
-def _bootstrap_calls(calls):
-    return [args for args in calls if args[:2] == ["launchctl", "bootstrap"]]
-
-
-def test_heal_bootstraps_missing_service(tmp_path, monkeypatch):
-    module = _fresh_module(tmp_path, monkeypatch)
-    calls = _mock_missing_service(module, monkeypatch, watchdog_missing=True)
-    _write_heartbeat(module)
-    monkeypatch.setattr(module, "governor_mode", lambda: "dispatch")
-    plists = tmp_path / "LaunchAgents"
-    plists.mkdir()
-    (plists / "com.limen.heartbeat.plist").write_text("<plist/>", encoding="utf-8")
-    (plists / "com.limen.watchdog.plist").write_text("<plist/>", encoding="utf-8")
-    monkeypatch.setattr(module, "LAUNCH_AGENTS", plists)
-
-    assert module.run_once(dry_run=False, json_output=False) == 1
-    bootstraps = _bootstrap_calls(calls)
-    assert len(bootstraps) == 2
-    assert bootstraps[0][3].endswith("com.limen.heartbeat.plist")
-    assert bootstraps[1][3].endswith("com.limen.watchdog.plist")
-    assert json.loads(module.STATE_PATH.read_text())["last_heal_at"]
-
-
-def test_heal_respects_governor_pause(tmp_path, monkeypatch):
+def test_missing_service_is_reported_without_launchctl_mutation(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch)
     calls = _mock_missing_service(module, monkeypatch)
     _write_heartbeat(module)
-    monkeypatch.setattr(module, "governor_mode", lambda: "paused")
 
     assert module.run_once(dry_run=False, json_output=False) == 1
-    assert not _bootstrap_calls(calls)
-
-
-def test_heal_respects_cooldown(tmp_path, monkeypatch):
-    module = _fresh_module(tmp_path, monkeypatch)
-    calls = _mock_missing_service(module, monkeypatch)
-    _write_heartbeat(module)
-    monkeypatch.setattr(module, "governor_mode", lambda: "dispatch")
-    module.STATE_PATH.write_text(
-        json.dumps({"latest_tick": None, "stale_tick_count": 0, "last_heal_at": module.iso_now()}),
-        encoding="utf-8",
+    assert all(
+        args[:2] not in (["launchctl", "bootstrap"], ["launchctl", "bootout"], ["launchctl", "kickstart"])
+        for args in calls
     )
-
-    assert module.run_once(dry_run=False, json_output=False) == 1
-    assert not _bootstrap_calls(calls)
-
-
-def test_heal_disabled_by_env(tmp_path, monkeypatch):
-    module = _fresh_module(tmp_path, monkeypatch, LIMEN_OVERNIGHT_WATCH_HEAL=0)
-    calls = _mock_missing_service(module, monkeypatch)
-    _write_heartbeat(module)
-
-    assert module.run_once(dry_run=False, json_output=False) == 1
-    assert not _bootstrap_calls(calls)
 
 
 def test_no_heal_when_service_loaded_but_unhealthy(tmp_path, monkeypatch):
@@ -1805,7 +1773,10 @@ def test_no_heal_when_service_loaded_but_unhealthy(tmp_path, monkeypatch):
     _write_heartbeat(module)
 
     assert module.run_once(dry_run=False, json_output=False) == 1
-    assert not _bootstrap_calls(calls)
+    assert all(
+        args[:2] not in (["launchctl", "bootstrap"], ["launchctl", "bootout"], ["launchctl", "kickstart"])
+        for args in calls
+    )
 
 
 def test_host_pressure_read_only_mode_is_forwarded(tmp_path, monkeypatch):
@@ -1845,7 +1816,6 @@ def test_normal_receipt_snapshot_keeps_host_pressure_read_only(tmp_path, monkeyp
 
     monkeypatch.setattr(module, "build_snapshot", fake_snapshot)
     monkeypatch.setattr(module, "write_receipts", lambda _snapshot: None)
-    monkeypatch.setattr(module, "heal", lambda _snapshot: [])
     monkeypatch.setattr(module, "append_trial_observation", lambda _snapshot: None)
     monkeypatch.setattr(module, "maybe_finalize_trial", lambda: None)
 

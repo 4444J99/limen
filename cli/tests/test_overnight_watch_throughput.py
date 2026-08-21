@@ -1,9 +1,9 @@
-"""Tests for the overnight monitor's throughput-collapse predicate + effector.
+"""Tests for the overnight monitor's throughput-collapse diagnostic.
 
 2026-07-08 incident: the fleet idled a full night at ~5% of baseline while every liveness
 alert stayed green. These tests pin the movement-vs-progress fix: a derived throughput floor
-that fires only on genuine silent stall (open work, no sanctioned suppression), and an effector
-that remediates rather than parking the alert on the operator.
+that fires only on genuine silent stall (open work, no sanctioned suppression). The diagnostic
+is read-only and leaves remediation to an explicit operator command.
 """
 
 from __future__ import annotations
@@ -14,14 +14,6 @@ import json
 from pathlib import Path
 
 SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "overnight-watch.py"
-
-
-class _CP:
-    def __init__(self, args, rc=0, stdout="", stderr=""):
-        self.args = args
-        self.returncode = rc
-        self.stdout = stdout
-        self.stderr = stderr
 
 
 def _fresh_module(tmp_path, monkeypatch, **env):
@@ -179,87 +171,14 @@ def test_collapse_becomes_an_alert(tmp_path, monkeypatch):
     assert "throughput-collapse" in {a["id"] for a in alerts}
 
 
-# ---------------------------------------------------------------- plist drift
-def test_plist_drift_detected_and_reinstalled(tmp_path, monkeypatch):
+def test_throughput_alert_exposes_no_automatic_host_or_issue_effector(tmp_path, monkeypatch):
     module = _fresh_module(tmp_path, monkeypatch)
-    agents = tmp_path / "LaunchAgents"
-    agents.mkdir()
-    live = agents / "com.limen.heartbeat.plist"
-    live.write_text("<key>LIMEN_CAMPAIGN_WAKE_TIMEOUT</key><string>120</string>", encoding="utf-8")
-    committed = tmp_path / "container" / "launchd" / "com.limen.heartbeat.plist"
-    committed.parent.mkdir(parents=True)
-    committed.write_text("<key>LIMEN_CAMPAIGN_WAKE_TIMEOUT</key><string>300</string>", encoding="utf-8")
-    monkeypatch.setattr(module, "LAUNCH_AGENTS", agents)
-    monkeypatch.setattr(module, "COMMITTED_PLIST", committed)
 
-    drift = module.plist_drift()
-    assert drift == [{"key": "LIMEN_CAMPAIGN_WAKE_TIMEOUT", "live": "120", "committed": "300"}]
-
-    calls = []
-    monkeypatch.setattr(module, "run", lambda args, timeout=10: calls.append(args) or _CP(args, rc=0))
-    monkeypatch.setattr(module.time, "sleep", lambda *_: None)
-    action = module.reinstall_plist()
-    assert action["ok"] is True
-    assert live.read_text() == committed.read_text()  # committed copied over the drifted live one
-    assert any(a[:2] == ["launchctl", "bootout"] for a in calls)
-    assert any(a[:2] == ["launchctl", "bootstrap"] for a in calls)
-
-
-# ---------------------------------------------------------------- effector
-def _heal_snapshot(alert_id):
-    return {
-        "timestamp": "2026-07-09T12:00:00+00:00",
-        "alerts": [{"id": alert_id, "evidence": "x"}],
-        "launchd": {"ok": True},
-    }
-
-
-def test_collapse_heal_kickstarts_then_escalates_on_recurrence(tmp_path, monkeypatch):
-    module = _fresh_module(tmp_path, monkeypatch)
-    monkeypatch.setattr(module, "governor_mode", lambda: "dispatch")
-    calls = []
-
-    def fake_run(args, timeout=10):
-        calls.append(args)
-        if args[:3] == ["gh", "issue", "list"]:
-            return _CP(args, rc=0, stdout="[]")
-        return _CP(args, rc=0, stdout="https://github.com/organvm/limen/issues/999")
-
-    monkeypatch.setattr(module, "run", fake_run)
-
-    # First occurrence: kickstart, no escalation yet.
-    snap1 = _heal_snapshot("throughput-collapse")
-    actions1 = module.heal(snap1)
-    assert any(a.get("action") == "kickstart" for a in actions1)
-    assert not any(a.get("action") == "escalate-issue" for a in actions1)
-    module.update_state(snap1)  # persists collapse_heal_attempts=1
-
-    # Second occurrence past cooldown: kickstart AND escalate to the issues mirror.
-    monkeypatch.setattr(module, "HEAL_COOLDOWN_SEC", 0)
-    snap2 = _heal_snapshot("throughput-collapse")
-    actions2 = module.heal(snap2)
-    assert any(a.get("action") == "kickstart" for a in actions2)
-    esc = [a for a in actions2 if a.get("action") == "escalate-issue"]
-    assert esc and esc[0]["ok"] is True
-    assert any(a[:3] == ["gh", "issue", "create"] for a in calls)
-
-
-def test_escalation_dedupes_on_existing_issue(tmp_path, monkeypatch):
-    module = _fresh_module(tmp_path, monkeypatch)
-    monkeypatch.setattr(module, "governor_mode", lambda: "dispatch")
-    monkeypatch.setattr(module, "HEAL_COOLDOWN_SEC", 0)
-    created = []
-
-    def fake_run(args, timeout=10):
-        if args[:3] == ["gh", "issue", "list"]:
-            return _CP(args, rc=0, stdout='[{"number": 42}]')
-        if args[:3] == ["gh", "issue", "create"]:
-            created.append(args)
-        return _CP(args, rc=0)
-
-    monkeypatch.setattr(module, "run", fake_run)
-    module.STATE_PATH.write_text(json.dumps({"collapse_heal_attempts": 1}), encoding="utf-8")
-    actions = module.heal(_heal_snapshot("throughput-collapse"))
-    esc = [a for a in actions if a.get("action") == "escalate-issue"]
-    assert esc and esc[0].get("deduped") is True
-    assert not created  # an open issue already exists — never open a duplicate
+    for name in (
+        "bootstrap_service",
+        "reinstall_plist",
+        "kickstart_service",
+        "escalate_issue",
+        "heal",
+    ):
+        assert not hasattr(module, name)

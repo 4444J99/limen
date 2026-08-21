@@ -60,7 +60,6 @@ python3 -m py_compile $(python3 scripts/verify.py --print-files py-syntax)
 bash -n $(python3 scripts/verify.py --print-files bash-syntax)
 if command -v plutil >/dev/null; then
   plutil -lint container/launchd/com.user.netmeter.plist
-  plutil -lint container/launchd/com.limen.overnight-watch.plist
 fi
 
 step "Validate Cvrsvs Honorvm seed contracts"

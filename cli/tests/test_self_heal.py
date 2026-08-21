@@ -199,6 +199,51 @@ def test_respects_limit_cap(tmp_path, monkeypatch):
     assert len(yaml.safe_load(p.read_text())["tasks"]) == 1, "must emit at most --limit tasks"
 
 
+@pytest.mark.parametrize("dry_run", [False, True], ids=["live", "dry-run"])
+def test_partition_refusal_skips_partner_row_without_suppressing_valid_rows(tmp_path, monkeypatch, capsys, dry_run):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    prs = [
+        *_PRS,
+        {"number": 88, "repository": {"nameWithOwner": "4444J99/victoroff-os"}, "url": "u/88"},
+    ]
+
+    def fake_gh(args, timeout=60):
+        if args[:2] == ["search", "prs"]:
+            return _R(json.dumps(prs))
+        if args[:2] == ["pr", "view"] and int(args[2]) == 88:
+            return _R(json.dumps(_VIEW[6]))
+        return _fake_gh(args, timeout=timeout)
+
+    monkeypatch.setattr(m, "gh", fake_gh)
+    monkeypatch.setattr(
+        m,
+        "heuristics_may_promote",
+        lambda repo, root=None: repo != "4444J99/victoroff-os",
+    )
+    argv = ["self-heal", "--tasks", str(p)]
+    if dry_run:
+        argv.append("--dry-run")
+    monkeypatch.setattr(sys, "argv", argv)
+
+    assert m.main() == 0
+    output = capsys.readouterr().out
+    assert "partition-skipped=1" in output
+    tasks = yaml.safe_load(p.read_text())["tasks"]
+    ids = {task["id"] for task in tasks}
+    if dry_run:
+        assert ids == set()
+        assert "HEAL-cifix-organvm-exporter-54" in output
+        assert "HEAL-rebase-organvm-scale-6" in output
+    else:
+        assert ids == {
+            "HEAL-cifix-organvm-exporter-54",
+            "HEAL-rebase-organvm-scale-6",
+        }
+    assert all("victoroff" not in task_id for task_id in ids)
+
+
 def test_fresh_live_chronic_repo_check_freezes_repeat_heal(tmp_path, monkeypatch, capsys):
     m = _load(tmp_path, monkeypatch)
     p = tmp_path / "tasks.yaml"
