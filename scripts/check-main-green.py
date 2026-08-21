@@ -36,8 +36,8 @@ trunk-health proxy for pr-gate. This sensor reads it (`gh run list --workflow ci
   GitHub's generic "payments failed OR spending limit" string. **Nothing was owed** — the fix was to
   restore the repo to its registry-desired public visibility, NOT to pay anything. So on a jam the
   sensor (a) checks `_visibility_drift(repo)` — private-but-registry-says-public — and, if so, notifies
-  ONCE via scripts/_notify.py naming the DRIFT and its real fix (restore public → free Actions), never
-  a billing/payment chore; a neutral "Actions quota/infra jam" message otherwise; and (b) behind
+  ONCE via scripts/_notify.py naming the independently proven DRIFT and its registry fix, without
+  claiming that drift caused the admission failure; a cause-unverified message otherwise; and (b) behind
   ``LIMEN_CI_JAM_RERUN`` (default armed) attempts a bounded ``gh run rerun --failed`` per jammed run
   with per-run exponential backoff — harmless while the jam persists, and the FIRST beat after the
   drift/quota clears re-greens main and the jammed PR heads with zero hands (merge-drain then lands
@@ -98,9 +98,7 @@ JAM_RERUN_CAP = int(os.environ.get("LIMEN_CI_JAM_RERUN_CAP", "6"))
 JAM_STATE = ROOT / "logs" / "vigilia" / "ci-jam-state.json"
 JAM_KEY = "ci-jam"
 CI_EVENT_IDS = {
-    "account_billing_lock": "limen.ci.account_billing_lock",
-    "payment_failure": "limen.ci.payment_failure",
-    "spending_limit": "limen.ci.spending_limit",
+    "provider_runner_admission": "limen.ci.provider_runner_admission",
     "quota": "limen.ci.quota",
     "visibility_drift": "limen.ci.visibility_drift",
     "runner_startup_jam": "limen.ci.runner_startup_jam",
@@ -110,11 +108,13 @@ CI_EVENT_IDS = {
 # The estate registry: a repo classed here as public but observed private is a VISIBILITY DRIFT —
 # on the Free plan that silently meters its CI into the never-started jam (the 2026-07-17 root cause).
 ESTATE = ROOT / "institutio" / "github" / "estate.yaml"
-# GitHub's generic never-started string — payment failure OR (more often) an exhausted quota /
-# $0 spending limit. It does NOT imply a bill is owed; on 2026-07-17 nothing was owed and the true
-# cause was a private repo metering the Free tier. Used only to distinguish a quota/infra jam from
-# a real test failure — never to attribute a payment problem.
-_QUOTA_RE = re.compile(r"payments? have failed|spending limit", re.IGNORECASE)
+# GitHub's generic billing-related admission string is provider text, not an account diagnosis.
+# It is used only as corroboration that the job never entered a runner; cause and remediation stay
+# unverified until current account, budget, repository, and provider evidence establish them.
+_ADMISSION_ANNOTATION_RE = re.compile(
+    r"payments? have failed|spending limit|locked due to a billing issue",
+    re.IGNORECASE,
+)
 _RUN_ID_RE = re.compile(r"/actions/runs/(\d+)")
 # Mirrors limen.dispatch._ACTIVE_SUPERSEDER_STATUSES (parity asserted in test_check_main_green.py so a
 # drift is a red test, not silent). A HEAL-mainred singleton in one of these states is already being
@@ -505,10 +505,8 @@ def classify_red_run(run_id: int | str):
 def _visibility_drift(repo: str) -> bool:
     """True iff ``repo`` is observed PRIVATE while the estate registry desires it PUBLIC.
 
-    The 2026-07-17 root cause: organvm/limen was flipped private against `estate.yaml` (which classes
-    it public), so its CI silently metered the Free tier into the never-started jam. This is the
-    real, actionable cause of a quota jam — its fix is 'restore public → free Actions', never a
-    payment. Fail-closed to False (no false drift alarm) on any read error.
+    This is an independently provable registry drift with its own fix. It is not, by itself, proof
+    of why a runner-admission failure occurred. Fail-closed to False on any read error.
     """
     private = _gh_json(["api", f"repos/{repo}", "--jq", ".private"], None)
     if private is not True:
@@ -876,9 +874,8 @@ def main(argv=None) -> int:
     print(f"check-main-green: RED{tag} — main {WORKFLOW} {conclusion} @ {head}{blast} ({url})")
 
     if klass != "executed_code_failure":
-        # Name the REAL cause. The 2026-07-17 jam was VISIBILITY DRIFT — a registry-public repo
-        # observed private, silently metering the Free tier — whose fix is 'restore public', never a
-        # payment. Check for that first; fall back to a neutral quota/infra message. Never a card lever.
+        # Emit the structured observation. Provider annotation categories never assert an account
+        # cause, remediation, or human owner; independently proven visibility drift remains distinct.
         _emit_ci_condition(klass, "onset", v.get("run_id") or 0)
         run_ids = [int(v.get("run_id") or 0)] + jammed_pr_run_ids(prs, required, _fresh_since())
         results = attempt_reruns([rid for rid in run_ids if rid], enabled=args.recover_jam and failure.retry_allowed)

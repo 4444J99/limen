@@ -215,15 +215,17 @@ def test_every_vendor_record_is_well_formed():
 
 
 def test_gemini_status_is_homed_in_the_register():
-    """The umbrella's whole point: Gemini's two breakages are DATA, not tribal knowledge."""
+    """Gemini's observed auth failures stay data without inventing a shared billing cause."""
     gem = census.by_name("gemini")
     assert gem is not None
     assert gem.status.available is False
+    assert gem.status.state == "needs_auth"
     # (1) the sunset free OAuth client is recorded as a dead path — nothing may route into it.
     assert "oauth_code_assist" in gem.status.deprecated_paths
     assert "gemini" in census.deprecated_paths()
-    # (2) the suspended API-key project is recorded, with the lever that owns the human atom.
-    assert "CONSUMER_SUSPENDED" in gem.status.note
+    # (2) the latest registered-key observation and current credential owner supersede the old 403.
+    assert "API_KEY_INVALID" in gem.status.note
+    assert "no current billing cause" in gem.status.note
     assert gem.status.lever == "L-FLEET-CAPACITY"
     # live auth is the API key (not the dead OAuth path), and creds-hydrate's op:// source is homed.
     assert gem.auth_mode == "api_key"

@@ -5,8 +5,46 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def test_discharged_card_hold_cannot_own_later_billing_failures():
+    """Do not turn a historical repair into a permanent causal routing rule."""
+    registry = json.loads((ROOT / "his-hand-levers.json").read_text(encoding="utf-8"))
+    rows = [row for row in registry["levers"] if row.get("id") == "L-CARD-FRAUD-HOLD"]
+
+    assert len(rows) == 1
+    assert rows[0]["status"] == "discharged"
+    assert rows[0]["issue"] == 182
+    assert "must not be cited" in rows[0]["label"]
+
+    card_prose = " ".join(
+        str(rows[0].get(field) or "") for field in ("label", "unlocks", "source_task", "gate", "note")
+    ).lower()
+    assert "this root lever already owns" not in card_prose
+    assert "clearing the hold should restore" not in card_prose
+    assert "billing restoration" not in card_prose
+
+    gitvs = (ROOT / "scripts/gitvs.py").read_text(encoding="utf-8")
+    sensors = (ROOT / "institutio/governance/sensors.yaml").read_text(encoding="utf-8")
+    estate = yaml.safe_load((ROOT / "institutio/github/estate.yaml").read_text(encoding="utf-8"))
+    ladder = json.loads((ROOT / "organ-ladder.json").read_text(encoding="utf-8"))
+    chronic = json.loads((ROOT / "scripts/heal-chronic-receipts.json").read_text(encoding="utf-8"))
+    assert "→ L-CARD-FRAUD-HOLD (#182)" not in gitvs
+    assert "roots: L-CARD-FRAUD-HOLD (#182)" not in sensors
+    assert not any(
+        effector.get("kind") == "file-atom" and effector.get("target") == "L-CARD-FRAUD-HOLD"
+        for effector in estate["resource_types"]["actions_usage"]["effector"]
+    )
+    assert "billing_keystone" not in estate["human_atoms"]
+    assert all("card-0186" not in lever.lower() for lever in ladder["your_levers"])
+    start_here = (ROOT / "START-HERE.md").read_text(encoding="utf-8").lower()
+    human_actions = start_here.split("## only these need the human", 1)[1]
+    assert "card-0186 santander call" not in human_actions
+    assert not any(row.get("lever") == "L-CARD-FRAUD-HOLD" for row in chronic)
 
 
 def test_arca_key_escrow_gate_has_one_canonical_owner_receipt():

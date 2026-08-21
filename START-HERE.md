@@ -49,5 +49,5 @@ bypass. Dry-run first, reversible, **gated on user go-ahead.** This is the highe
 6. Surface the 5 `needs_human` atoms as a decision list.
 
 ## Only these need the human
-card-0186 Santander call · Nelnet recert · `consolidate-github --apply` & `setup-rulesets --apply`
-triggers · monetization signups.
+Nelnet recert · `consolidate-github --apply` & `setup-rulesets --apply` triggers · monetization
+signups. The historical card-0186 hold was discharged 2026-07-17 and is not a current action.

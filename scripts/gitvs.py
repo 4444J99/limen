@@ -81,6 +81,7 @@ WORKFLOWS = ROOT / ".github" / "workflows"
 
 REQUIRED_RESOURCE_FIELDS = ("identity", "desired", "observe", "effector", "status", "owner", "note")
 VALID_STATUS = {"active", "envisioned"}
+TERMINAL_LEVER_STATUSES = frozenset({"discharged", "retired", "done", "closed"})
 REQUIRED_CLASS_FIELDS = ("match", "visibility", "branch_protection", "required_checks", "owner", "note")
 VALID_VISIBILITY = {"public", "private", "any"}
 VALID_MATCH_FACT_KEYS = {"fork", "archived", "private"}  # census-fact keys a class may match on
@@ -1742,6 +1743,14 @@ def seo_floor_gaps(rows: list[dict], estate: dict) -> list[str]:
     return gaps
 
 
+def _lever_is_open(lever: dict) -> bool:
+    """Return whether a human lever may still own current work."""
+    if str(lever.get("discharged") or "").strip():
+        return False
+    status = str(lever.get("status") or "").strip().lower()
+    return status not in TERMINAL_LEVER_STATUSES
+
+
 def _homed_levers() -> set[str]:
     """Lever ids present (and open) in his-hand-levers.json — so the doctor can CITE a homed atom
     (App un-installed → L-LIMENBOT-INSTALL) instead of counting it as a failure. Absent file → empty."""
@@ -1752,7 +1761,7 @@ def _homed_levers() -> set[str]:
     levers = data.get("levers", data) if isinstance(data, dict) else data
     out: set[str] = set()
     for lv in levers if isinstance(levers, list) else []:
-        if isinstance(lv, dict) and lv.get("id"):
+        if isinstance(lv, dict) and lv.get("id") and _lever_is_open(lv):
             out.add(str(lv["id"]))
     return out
 
@@ -2299,7 +2308,7 @@ def _lever_index() -> dict[str, dict]:
     return {
         str(lv["id"]): lv
         for lv in (levers if isinstance(levers, list) else [])
-        if isinstance(lv, dict) and lv.get("id")
+        if isinstance(lv, dict) and lv.get("id") and _lever_is_open(lv)
     }
 
 
@@ -2597,7 +2606,7 @@ def classify_estate(estate: dict, *, fresh: bool, sample_max: int, emit: bool, o
     return 0
 
 
-# ── the Meter: Actions spend telemetry + the account-billing canary ─────────────────────────────
+# ── the Meter: Actions spend telemetry + runner-admission observation ───────────────────────────
 USAGE_DOC = ROOT / "docs" / "github-actions-usage.json"
 USAGE_STAMP = ROOT / "logs" / "gh-usage.json"
 
@@ -2638,11 +2647,12 @@ def _usage_month(org: str, year: int, month: int) -> dict | None:
     }
 
 
-def _billing_canary(repo: str) -> tuple[bool | None, str]:
-    """True ⟺ the newest completed Actions run on `repo` did NOT die on the account-billing wall
-    (the literal 'recent account payments have failed / spending limit' job annotation — the exact
-    text every blocked session used to re-diagnose in chat). A NORMAL CI failure stays green: this
-    canary reads only the billing block. None ⟺ unreadable (SKIP, never a faked verdict)."""
+def _runner_admission_observation(repo: str) -> tuple[bool | None, str]:
+    """Observe, without diagnosing, GitHub's billing-related runner-admission annotation.
+
+    True means the provider text was present, not that the account is billing-locked. False means
+    it was absent from the newest completed run. None means the evidence was unreadable.
+    """
     r = _gh_user(
         [
             "api",
@@ -2662,29 +2672,31 @@ def _billing_canary(repo: str) -> tuple[bool | None, str]:
     if not run_id:
         return None, "no completed runs"
     if conclusion != "failure":
-        return True, f"newest run {run_id} concluded '{conclusion}'"
-    rj = _gh_user(["api", f"/repos/{repo}/actions/runs/{run_id}/jobs"], timeout=30)
-    try:
-        jobs = (json.loads(rj.stdout or "{}").get("jobs") or []) if rj.returncode == 0 else []
-    except json.JSONDecodeError:
-        jobs = []
+        return False, f"newest run {run_id} concluded '{conclusion}'"
+    rj = _gh_user(
+        ["api", "--paginate", f"/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100", "--jq", ".jobs[].id"],
+        timeout=30,
+    )
+    if rj.returncode != 0:
+        return None, "jobs unreadable"
+    job_ids = [j.strip() for j in (rj.stdout or "").splitlines() if j.strip()]
     annotations: list[dict] = []
-    for job in jobs[:5]:
-        ra = _gh_user(["api", f"/repos/{repo}/check-runs/{job.get('id')}/annotations"], timeout=30)
-        try:
-            annotations.extend(json.loads(ra.stdout or "[]") if ra.returncode == 0 else [])
-        except json.JSONDecodeError:
-            continue
-    failure = classify_ci_failure(jobs, annotations)
-    if failure.classification in {"account_billing_lock", "payment_failure", "spending_limit"}:
-        return False, f"run {run_id}: {failure.detail}"
-    return True, f"newest run {run_id} failed, but not on the billing wall"
+    for jid in job_ids:
+        ra = _gh_user(
+            ["api", "--paginate", f"/repos/{repo}/check-runs/{jid}/annotations?per_page=100", "--jq", ".[].message"],
+            timeout=30,
+        )
+        if ra.returncode != 0:
+            return None, f"annotations unreadable for job {jid}"
+        annotations.extend({"message": message} for message in (ra.stdout or "").splitlines() if message)
+    failure = classify_ci_failure([{"conclusion": "failure", "steps": []}], annotations)
+    if failure.classification == "provider_runner_admission":
+        return True, f"run {run_id}: {failure.detail}"
+    return False, f"newest run {run_id} failed without the matching admission annotation"
 
 
 def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False) -> int:
-    """The Meter: projected monthly NET Actions spend vs the declared budget AND the billing canary.
-    Exit 0 ⟺ within budget and no account-billing block; offline/unreadable → SKIP exit 0 (the
-    fail-open sibling-organ contract). Writes the durable doc + volatile stamp (the census idiom)."""
+    """Meter Actions spend and preserve runner-admission text without inferring account state."""
     if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
         print("[gitvs] usage: SKIP (offline)")
         return 77 if strict else 0
@@ -2696,24 +2708,33 @@ def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False) 
             f"[gitvs] usage: SKIP (billing usage endpoint unreadable for {org} — needs the user-scoped keyring token)"
         )
         return 77 if strict else 0
-    canary_repo = os.environ.get("LIMEN_BILLING_CANARY_REPO") or "organvm/limen"
-    canary_green, canary_detail = _billing_canary(canary_repo)
+    probe_repo = os.environ.get("LIMEN_RUNNER_ADMISSION_PROBE_REPO") or "organvm/limen"
+    admission_present, admission_detail = _runner_admission_observation(probe_repo)
     budget_default = ((estate.get("budgets") or {}).get("actions_spend") or {}).get("monthly_net_usd_max", 25)
     try:
         budget = float(os.environ.get("LIMEN_ACTIONS_BUDGET") or budget_default)
     except ValueError:
         budget = float(budget_default)
     days_in_month = calendar.monthrange(now.year, now.month)[1]
-    projected = round(month_data["net_usd_total"] / max(now.day, 1) * days_in_month, 2)
+    actions_product = (month_data.get("by_product") or {}).get("actions") or {}
+    actions_net = round(float(actions_product.get("net_usd") or 0.0), 2)
+    projected = round(actions_net / max(now.day, 1) * days_in_month, 2)
     doc = {
-        "schema": "limen.github_actions_usage.v1",
+        "schema": "limen.github_actions_usage.v2",
         "org": org,
         "month": f"{now.year:04d}-{now.month:02d}",
         "as_of_day": now.day,
         **month_data,
-        "net_usd_projected_month_end": projected,
+        "actions_net_usd_mtd": actions_net,
+        "actions_net_usd_projected_month_end": projected,
         "budget_net_usd": budget,
-        "billing_canary": {"repo": canary_repo, "green": canary_green, "detail": canary_detail},
+        "runner_admission_observation": {
+            "repo": probe_repo,
+            "annotation_present": admission_present,
+            "detail": admission_detail,
+            "account_cause_verified": False,
+            "remediation_verified": False,
+        },
     }
     try:
         USAGE_DOC.parent.mkdir(parents=True, exist_ok=True)
@@ -2721,7 +2742,12 @@ def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False) 
         USAGE_STAMP.parent.mkdir(parents=True, exist_ok=True)
         USAGE_STAMP.write_text(
             json.dumps(
-                {"month": doc["month"], "net": doc["net_usd_total"], "projected": projected, "canary": canary_green},
+                {
+                    "month": doc["month"],
+                    "actions_net": actions_net,
+                    "actions_projected": projected,
+                    "admission_annotation_present": admission_present,
+                },
                 sort_keys=True,
             )
             + "\n"
@@ -2733,18 +2759,24 @@ def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False) 
     fails: list[str] = []
     if projected > budget:
         fails.append(f"projected ${projected} exceeds budget ${budget}")
-    if canary_green is False:
-        fails.append(f"billing canary RED on {canary_repo} ({canary_detail}) → L-CARD-FRAUD-HOLD (#182)")
-    if (check or strict) and fails:
-        print(f"✗ gitvs usage: {'; '.join(fails)} — see {USAGE_DOC.relative_to(ROOT)}")
-        return 1
-    if strict and canary_green is None:
-        print("[gitvs] usage: SKIP (billing canary unreadable)")
+    if admission_present is True:
+        fails.append(
+            f"runner admission annotation observed on {probe_repo} ({admission_detail}); "
+            "account cause and remediation are unverified"
+        )
+    if strict and admission_present is None:
+        print("[gitvs] usage: SKIP (runner-admission observation unreadable)")
         return 77
-    canary_word = "green" if canary_green else ("RED" if canary_green is False else "unreadable")
+    if fails:
+        marker = "✗" if check or strict else "~"
+        print(f"{marker} gitvs usage: {'; '.join(fails)} — see {USAGE_DOC.relative_to(ROOT)}")
+        return 1 if check or strict else 0
+    admission_word = (
+        "present" if admission_present is True else ("absent" if admission_present is False else "unreadable")
+    )
     print(
-        f"✓ gitvs usage: net MTD ${doc['net_usd_total']}, projected ${projected} vs budget ${budget}, "
-        f"canary {canary_word} → {USAGE_DOC.relative_to(ROOT)}"
+        f"✓ gitvs usage: Actions net MTD ${actions_net}, projected ${projected} vs budget ${budget}, "
+        f"runner-admission annotation {admission_word} → {USAGE_DOC.relative_to(ROOT)}"
     )
     return 0
 
@@ -2773,11 +2805,17 @@ def main(argv: list[str] | None = None) -> int:
     pk.add_argument("--sample-max", type=int, default=2000, help="tree-path sample cap per private repo")
     pk.add_argument("--emit-overrides", action="store_true", help="print ready-to-paste repo_overrides YAML")
     pk.add_argument("--repo", help="classify a single owner/repo only")
-    pu = sub.add_parser("usage", help="Actions spend telemetry + the account-billing canary (the Meter)")
+    pu = sub.add_parser("usage", help="Actions spend telemetry + runner-admission observation (the Meter)")
     pu.add_argument(
-        "--check", action="store_true", help="exit 1 when projected spend exceeds budget or the canary is red"
+        "--check",
+        action="store_true",
+        help="exit 1 when projected Actions spend exceeds budget or the admission annotation is present",
     )
-    pu.add_argument("--strict", action="store_true", help="exit 77 when live usage or canary evidence is unavailable")
+    pu.add_argument(
+        "--strict",
+        action="store_true",
+        help="exit 77 when live usage or runner-admission evidence is unavailable",
+    )
     pu.add_argument("--print", action="store_true", help="print the usage doc JSON to stdout too")
     ppd = sub.add_parser("pr-debt", help="exact paginated open-PR custody and owner-route predicate")
     ppd.add_argument("--check", action="store_true", help="exit 1 unless enumeration is exhaustive and typed")

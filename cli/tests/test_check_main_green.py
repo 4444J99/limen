@@ -510,8 +510,9 @@ def _classify_with(monkeypatch, m, jobs, annotations):
 def test_classify_jam_from_zero_steps_and_quota_annotation(monkeypatch):
     m = _load()
     klass, detail = _classify_with(monkeypatch, m, _jobs(steps=0), [{"message": QUOTA_ANNOTATION}])
-    assert klass == "payment_failure"
-    assert "payment failure" in detail.lower()
+    assert klass == "provider_runner_admission"
+    assert "cause and remediation unverified" in detail.lower()
+    assert "card" not in detail.lower() and "issue #182" not in detail.lower()
 
 
 def test_classify_jam_when_zero_steps_without_quota_text(monkeypatch):
@@ -616,7 +617,7 @@ def test_unknown_startup_jam_reruns_only_with_explicit_flag(tmp_path, monkeypatc
     assert seen["enabled"] is True
 
 
-def test_account_billing_lock_never_reruns_even_when_recovery_flag_is_present(tmp_path, monkeypatch):
+def test_provider_admission_observation_never_reruns_even_when_recovery_flag_is_present(tmp_path, monkeypatch):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("LIMEN_MAIN_GREEN_THROTTLE", "100000")
     m = _load()
@@ -628,7 +629,11 @@ def test_account_billing_lock_never_reruns_even_when_recovery_flag_is_present(tm
     monkeypatch.setattr(
         m,
         "classify_red_run",
-        lambda _rid: failure_type("account_billing_lock", "GitHub reports an account billing lock", False),
+        lambda _rid: failure_type(
+            "provider_runner_admission",
+            "provider runner-admission annotation observed; cause and remediation unverified",
+            False,
+        ),
     )
     monkeypatch.setattr(m, "_fetch_open_prs", lambda: [])
     monkeypatch.setattr(m, "_emit_ci_condition", lambda *args: None)
@@ -640,6 +645,30 @@ def test_account_billing_lock_never_reruns_even_when_recovery_flag_is_present(tm
     )
     assert m.main(["--recover-jam"]) == 1
     assert seen == {"ids": [32478480232], "enabled": False}
+
+
+def test_generic_jam_emits_only_runner_startup_observation(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_NOTIFY", "0")
+    monkeypatch.setenv("LIMEN_MAIN_GREEN_THROTTLE", "100000")
+    m = _load()
+    _seed(tmp_path, "failure")
+    stamp = json.loads((tmp_path / "logs" / "main-green.json").read_text())
+    stamp["run_id"] = 29581455210
+    (tmp_path / "logs" / "main-green.json").write_text(json.dumps(stamp), encoding="utf-8")
+    failure_type = type(m.classify_ci_failure([]))
+    monkeypatch.setattr(
+        m,
+        "classify_red_run",
+        lambda _rid: failure_type("runner_startup_jam", "failed jobs have zero steps", True),
+    )
+    monkeypatch.setattr(m, "_fetch_open_prs", lambda: [])
+    monkeypatch.setattr(m, "attempt_reruns", lambda _ids, now=None, enabled=False: [])
+    emitted = []
+    monkeypatch.setattr(m, "_emit_ci_condition", lambda classification, *_args: emitted.append(classification))
+
+    assert m.main([]) == 1
+    assert emitted == ["runner_startup_jam"]
 
 
 def test_green_clears_jam_state_and_notification(tmp_path, monkeypatch, capsys):

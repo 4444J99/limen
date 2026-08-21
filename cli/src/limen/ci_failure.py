@@ -29,12 +29,21 @@ def classify_ci_failure(
     if any(job.get("steps") for job in failed):
         return CIFailure("executed_code_failure", "one or more failed jobs executed steps", False)
     text = " ".join(str(row.get("message") or "") for row in annotations).lower()
-    if "account is locked due to a billing issue" in text or "account locked due to a billing issue" in text:
-        return CIFailure("account_billing_lock", "GitHub reports an account billing lock", False)
-    if "payments have failed" in text or "payment has failed" in text:
-        return CIFailure("payment_failure", "GitHub reports a payment failure", False)
-    if "spending limit" in text:
-        return CIFailure("spending_limit", "GitHub reports a spending limit", False)
+    if any(
+        phrase in text
+        for phrase in (
+            "account is locked due to a billing issue",
+            "account locked due to a billing issue",
+            "payments have failed",
+            "payment has failed",
+            "spending limit",
+        )
+    ):
+        return CIFailure(
+            "provider_runner_admission",
+            "provider billing-related runner-admission annotation observed; account cause and remediation unverified",
+            False,
+        )
     if "quota" in text or "included minutes" in text or "actions minutes" in text:
         return CIFailure("quota", "GitHub reports an Actions quota gate", False)
     if visibility_drift:

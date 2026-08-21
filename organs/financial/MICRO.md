@@ -19,7 +19,7 @@ tracked as a first-class Member in the entity registry:
 Person                   Entity                  Purpose
 ────────────────────────────────────────────────────────────────────
 Anthony J. Padavano     anthony-personal        Principal — revenue, bills, loans
-├─ Santander checking   (card-0186 fraud hold)
+├─ Santander checking   (historical card-0186 hold discharged 2026-07-17)
 ├─ iCloud email         (a.j.padavano@icloud)
 ├─ Gmail                (80+ obligations flow through)
 └─ Apple Developer      (WWDC, app store)
@@ -159,7 +159,7 @@ or bank portal.
 
 ### Accounts to register (next)
 
-1. Credit cards — Santander card-0186 (fraud hold), any other active cards
+1. Credit cards — Santander card-0186 and any other active cards (current state must be re-observed)
 2. Student loans — Nelnet / Dept of Education (default risk detected)
 3. Brokerage — any existing investment accounts
 4. Retirement — any IRA, 401(k), or equivalent
@@ -262,50 +262,44 @@ Top obligations by priority:
 | 95 | Security — credential change — Dept of Education | anthony-personal | VERIFY the change was yours |
 | 90 | Fraud alert — Santander Bank | anthony-personal | Verify sender; call card number |
 | 88 | Student loan — default risk | anthony-personal | Log in at nelnet.studentaid.gov |
-| 82 | Billing — payment failed — Anthropic | anthony-personal | Root cause: card-0186 hold |
-| 82 | Billing — payment failed — Google Cloud | anthony-personal | Root cause: card-0186 hold |
+| 82 | Historical billing alert — Anthropic | anthony-personal | Re-query current subscription state; do not reuse the discharged card diagnosis |
+| 82 | Historical billing alert — Google Cloud | anthony-personal | Re-query current project state; do not reuse the discharged card diagnosis |
 | 78 | Stripe KYC — dead LLC | sovereign-systems-llc | Prefer individual rail instead |
 
-**The card-0186 fraud hold is the keystone.** One call to Santander clears the hold
-and cascades into Anthropic, Google Cloud, and GitHub autopay unblocking. It is the
-single highest-leverage financial action Anthony can take.
+**Historical correction:** the card-0186 hold was discharged on 2026-07-17. It is
+not a current principal gate and does not explain later vendor failures without new
+causal evidence.
 
 ## Next Principal Gates (Priority-Ranked)
 
 The smallest high-value actions, in order of impact:
 
-### P0 — Clear the card-0186 fraud hold (keystone)
-- One phone call to Santander
-- Unlocks Anthropic, Google Cloud, GitHub autopay
-- Tracked as L-CARD-FRAUD-HOLD in his-hand-levers.json
-- **Est. time:** 15 minutes. **Impact:** unblocks ~3 cascaded billing failures.
-
-### P1 — Enter known balances
+### P0 — Enter known balances
 - Cash, credit cards, loans, investment accounts
 - Even approximate amounts are better than unknown
 - **Est. time:** 30 minutes. **Impact:** unlocks real net worth, runway, trend tracking.
 
-### P2 — Deploy MONETA
+### P1 — Deploy MONETA
 - `docker build -t moneta . && docker run` on a $0 host
 - Set `MINT_BTC_ADDRESS` from a self-custodied wallet
 - **Est. time:** 1 hour. **Impact:** enables sovereign product revenue intake.
 
-### P3 — Deploy ChatGPT Exporter
+### P2 — Deploy ChatGPT Exporter
 - `git push` + `wrangler deploy` (Cloudflare Workers)
 - Live page + Pro tier via Ko-fi/Lemon Squeezy/MONETA
 - **Est. time:** 30 minutes. **Impact:** starts the revenue pipeline.
 
-### P4 — Decide the entity route
+### P3 — Decide the entity route
 - Revive LLC / dissolve LLC / operate as individual only
 - Set entity path for institutional revenue
 - **Est. time:** 1-2 hours research + decision. **Impact:** determines tax structure for all product revenue.
 
-### P5 — Register investment accounts
+### P4 — Register investment accounts
 - Add brokerage, retirement, crypto accounts to entities.yaml
 - Even without balance automation — just knowing they exist is step 1
 - **Est. time:** 20 minutes. **Impact:** portfolio completeness in the dashboard.
 
-Once P0-P3 are done, the office moves from structurally complete to financially
+Once P0-P2 are done, the office moves from structurally complete to financially
 useful: real runway, real reserves, real tax estimates, real allocation decisions
 prepared before they are urgent.
 

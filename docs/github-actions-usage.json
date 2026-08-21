@@ -1,49 +1,52 @@
 {
+  "actions_net_usd_mtd": 20.27,
+  "actions_net_usd_projected_month_end": 29.92,
   "actions_top_repos_minutes": {
-    "application-pipeline": 128,
-    "domus": 371,
-    "domus-genoma": 272,
-    "hospes": 3728,
-    "limen": 35689,
-    "metasystem-master": 186,
+    "application-pipeline": 136,
+    "domus": 406,
+    "domus-genoma": 331,
+    "hospes": 4670,
+    "limen": 37143,
+    "metasystem-master": 237,
     "my-knowledge-base": 118,
-    "organvm-corpvs-testamentvm": 608,
+    "organvm-corpvs-testamentvm": 632,
     "the-thing-without-a-name": 836,
-    "universal-mail--automation": 184
+    "universal-mail--automation": 187
   },
-  "as_of_day": 19,
-  "billing_canary": {
-    "detail": "newest run 32257115044 concluded 'skipped'",
-    "green": true,
-    "repo": "organvm/limen"
-  },
+  "as_of_day": 21,
   "budget_net_usd": 25.0,
   "by_product": {
     "actions": {
-      "gross_usd": 267.14,
-      "net_usd": 13.84,
-      "quantity": 44044.55
+      "gross_usd": 283.41,
+      "net_usd": 20.27,
+      "quantity": 46781.74
     },
     "code_quality": {
-      "gross_usd": 7.45,
-      "net_usd": 7.45,
-      "quantity": 132.73
+      "gross_usd": 8.1,
+      "net_usd": 8.1,
+      "quantity": 133.06
     },
     "ghas": {
-      "gross_usd": 28.45,
-      "net_usd": 28.45,
-      "quantity": 1.16
+      "gross_usd": 31.61,
+      "net_usd": 31.61,
+      "quantity": 1.29
     },
     "git_lfs": {
-      "gross_usd": 0.96,
+      "gross_usd": 1.03,
       "net_usd": 0.0,
-      "quantity": 10184.28
+      "quantity": 10970.39
     }
   },
-  "gross_usd_total": 304.0,
+  "gross_usd_total": 324.15,
   "month": "2026-08",
-  "net_usd_projected_month_end": 81.15,
-  "net_usd_total": 49.74,
+  "net_usd_total": 59.98,
   "org": "organvm",
-  "schema": "limen.github_actions_usage.v1"
+  "runner_admission_observation": {
+    "account_cause_verified": false,
+    "annotation_present": true,
+    "detail": "run 32502961288: provider billing-related admission annotation present; cause unverified",
+    "remediation_verified": false,
+    "repo": "organvm/limen"
+  },
+  "schema": "limen.github_actions_usage.v2"
 }

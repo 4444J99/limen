@@ -9,12 +9,13 @@ from limen.ci_failure import classify_ci_failure
 ZERO_STEP = [{"conclusion": "failure", "steps": []}]
 
 
-def test_exact_billing_lock_is_not_retryable():
+def test_billing_related_provider_annotation_is_observation_not_diagnosis():
     result = classify_ci_failure(
         ZERO_STEP,
         [{"message": "The job was not started because your account is locked due to a billing issue."}],
     )
-    assert result.classification == "account_billing_lock"
+    assert result.classification == "provider_runner_admission"
+    assert "cause and remediation unverified" in result.detail
     assert result.retry_allowed is False
 
 
@@ -30,10 +31,10 @@ def test_only_unknown_zero_step_startup_jam_is_retryable():
     assert result.retry_allowed is True
 
 
-def test_known_financial_and_quota_classes_never_retry():
+def test_provider_admission_and_quota_annotations_never_retry():
     cases = {
-        "Recent account payments have failed": "payment_failure",
-        "Your spending limit must be increased": "spending_limit",
+        "Recent account payments have failed": "provider_runner_admission",
+        "Your spending limit must be increased": "provider_runner_admission",
         "Actions minutes quota exhausted": "quota",
     }
     for message, expected in cases.items():
