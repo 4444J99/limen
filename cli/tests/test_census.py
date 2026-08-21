@@ -219,6 +219,7 @@ def test_gemini_status_is_homed_in_the_register():
     gem = census.by_name("gemini")
     assert gem is not None
     assert gem.status.available is False
+    assert gem.status.state == "needs_auth"
     # (1) the sunset free OAuth client is recorded as a dead path — nothing may route into it.
     assert "oauth_code_assist" in gem.status.deprecated_paths
     assert "gemini" in census.deprecated_paths()

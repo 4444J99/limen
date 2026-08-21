@@ -2674,11 +2674,21 @@ def _runner_admission_observation(repo: str) -> tuple[bool | None, str]:
         return None, "no completed runs"
     if conclusion != "failure":
         return False, f"newest run {run_id} concluded '{conclusion}'"
-    rj = _gh_user(["api", f"/repos/{repo}/actions/runs/{run_id}/jobs", "--jq", ".jobs[].id"], timeout=30)
-    job_ids = [j.strip() for j in (rj.stdout or "").splitlines() if j.strip()] if rj.returncode == 0 else []
-    for jid in job_ids[:5]:
-        ra = _gh_user(["api", f"/repos/{repo}/check-runs/{jid}/annotations", "--jq", ".[].message"], timeout=30)
-        text = (ra.stdout or "") if ra.returncode == 0 else ""
+    rj = _gh_user(
+        ["api", "--paginate", f"/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100", "--jq", ".jobs[].id"],
+        timeout=30,
+    )
+    if rj.returncode != 0:
+        return None, "jobs unreadable"
+    job_ids = [j.strip() for j in (rj.stdout or "").splitlines() if j.strip()]
+    for jid in job_ids:
+        ra = _gh_user(
+            ["api", "--paginate", f"/repos/{repo}/check-runs/{jid}/annotations?per_page=100", "--jq", ".[].message"],
+            timeout=30,
+        )
+        if ra.returncode != 0:
+            return None, f"annotations unreadable for job {jid}"
+        text = ra.stdout or ""
         if any(phrase in text.lower() for phrase in RUNNER_ADMISSION_ANNOTATION_PHRASES):
             return True, f"run {run_id}: provider billing-related admission annotation present; cause unverified"
     return False, f"newest run {run_id} failed without the matching admission annotation"
@@ -2753,13 +2763,13 @@ def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False) 
             f"runner admission annotation observed on {probe_repo} ({admission_detail}); "
             "account cause and remediation are unverified"
         )
+    if strict and admission_present is None:
+        print("[gitvs] usage: SKIP (runner-admission observation unreadable)")
+        return 77
     if fails:
         marker = "✗" if check or strict else "~"
         print(f"{marker} gitvs usage: {'; '.join(fails)} — see {USAGE_DOC.relative_to(ROOT)}")
         return 1 if check or strict else 0
-    if strict and admission_present is None:
-        print("[gitvs] usage: SKIP (runner-admission observation unreadable)")
-        return 77
     admission_word = (
         "present" if admission_present is True else ("absent" if admission_present is False else "unreadable")
     )

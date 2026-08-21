@@ -617,6 +617,27 @@ def test_jam_red_path_notifies_reruns_and_skips_heal_task(tmp_path, monkeypatch,
     assert "VISIBILITY DRIFT" in relief["ci-jam"]["message"] and "restore" in relief["ci-jam"]["message"].lower()
 
 
+def test_generic_jam_does_not_claim_provider_annotation(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_NOTIFY", "0")
+    monkeypatch.setenv("LIMEN_MAIN_GREEN_THROTTLE", "100000")
+    m = _load()
+    _seed(tmp_path, "failure")
+    stamp = json.loads((tmp_path / "logs" / "main-green.json").read_text())
+    stamp["run_id"] = 29581455210
+    (tmp_path / "logs" / "main-green.json").write_text(json.dumps(stamp), encoding="utf-8")
+    monkeypatch.setattr(m, "classify_red_run", lambda _rid: ("ci-jam", "failed jobs have zero steps"))
+    monkeypatch.setattr(m, "_visibility_drift", lambda _repo: False)
+    monkeypatch.setattr(m, "_fetch_open_prs", lambda: [])
+    monkeypatch.setattr(m, "attempt_reruns", lambda _ids, now=None: [])
+
+    assert m.main([]) == 1
+    relief = json.loads((tmp_path / "logs" / "vigilia" / "relief-state.json").read_text())
+    message = relief["ci-jam"]["message"].lower()
+    assert "no matching provider annotation was observed" in message
+    assert "runner-admission message was observed" not in message
+
+
 def test_green_clears_jam_state_and_notification(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("LIMEN_NOTIFY", "0")

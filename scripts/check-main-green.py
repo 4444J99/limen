@@ -866,10 +866,16 @@ def main(argv=None) -> int:
                 "proven drift; the runner-admission cause remains unverified."
             )
         else:
-            msg = (
-                "GitHub Actions runs fail before any step executes. A provider runner-admission message "
-                "was observed, but account cause and remediation are unverified; bounded reruns remain armed."
-            )
+            if "annotation observed" in detail:
+                msg = (
+                    "GitHub Actions runs fail before any step executes. A provider runner-admission message "
+                    "was observed, but account cause and remediation are unverified; bounded reruns remain armed."
+                )
+            else:
+                msg = (
+                    "GitHub Actions runs fail before any step executes. No matching provider annotation was "
+                    "observed; bounded reruns remain armed."
+                )
         _notify.notify_once(ROOT, JAM_KEY, msg, title="LIMEN trunk CI")
         run_ids = [int(v.get("run_id") or 0)] + jammed_pr_run_ids(prs, required, _fresh_since())
         results = attempt_reruns([rid for rid in run_ids if rid])

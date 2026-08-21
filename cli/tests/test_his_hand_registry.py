@@ -41,6 +41,9 @@ def test_discharged_card_hold_cannot_own_later_billing_failures():
     )
     assert "billing_keystone" not in estate["human_atoms"]
     assert all("card-0186" not in lever.lower() for lever in ladder["your_levers"])
+    start_here = (ROOT / "START-HERE.md").read_text(encoding="utf-8").lower()
+    human_actions = start_here.split("## only these need the human", 1)[1]
+    assert "card-0186 santander call" not in human_actions
     assert not any(row.get("lever") == "L-CARD-FRAUD-HOLD" for row in chronic)
 
 
