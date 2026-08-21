@@ -135,6 +135,14 @@ def assess(agent):
 def restore(agent, dry_run=False, settle_tries=3, settle_s=2.0):
     """Bring a down agent back: (re-place quarantined plist) -> bootstrap -> kickstart -> re-probe."""
     label = agent["label"]
+    if label in {"com.limen.heartbeat", "com.limen.watchdog"}:
+        return {
+            "label": label,
+            "action": "retired",
+            "ok": True,
+            "steps": [],
+            "detail": "resident Limen scheduler retired; run limen observe --once --scope host",
+        }
     plist, state = find_plist(label)
     if plist is None:
         return {
@@ -144,7 +152,7 @@ def restore(agent, dry_run=False, settle_tries=3, settle_s=2.0):
             "steps": [],
             "detail": (
                 f"no plist for {label} in {LAUNCHAGENTS_DIR} or {DISABLED_DIR} — "
-                "regenerate it (scripts/gen-launchd-plist.sh) then re-run"
+                "restore it only through that non-retired agent's declared owner"
             ),
         }
     active = LAUNCHAGENTS_DIR / f"{label}.plist"

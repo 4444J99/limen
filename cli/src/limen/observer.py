@@ -23,6 +23,8 @@ def _digest(path: Path) -> str | None:
 def _boot_identity() -> str:
     try:
         result = subprocess.run(["sysctl", "-n", "kern.boottime"], capture_output=True, text=True, timeout=3)
+        if result.returncode != 0 or not result.stdout.strip():
+            return "unavailable"
         return hashlib.sha256(result.stdout.strip().encode()).hexdigest()[:20]
     except (OSError, subprocess.SubprocessError):
         return "unavailable"
@@ -52,13 +54,27 @@ def _run(command: list[str], *, cwd: Path, timeout: int) -> dict[str, Any]:
     }
 
 
-def observe_once(root: Path, scope: str, *, emit: bool = False) -> dict[str, Any]:
-    del emit  # Observation never gains effectors; --emit only enables registered notification summaries upstream.
+HOST_PROBES = [
+    ("harness-root-probe", [sys.executable, "scripts/harness-root-probe.py"], 120),
+    ("background-items-census", [sys.executable, "scripts/background-items-census.py", "--check"], 60),
+    ("sensor-canary", [sys.executable, "scripts/beat-sensors.py", "--canary"], 60),
+    ("orphan-watcher", [sys.executable, "scripts/orphan-watchers.py", "--check"], 60),
+    ("tcc-track-c", [sys.executable, "scripts/tcc-track-c-closeout.py", "--probe", "--json"], 300),
+    ("dialogs-silenced", ["bash", "scripts/dialogs-silenced.sh", "--agent-curable-only"], 120),
+    ("cloud-storage-doctor", [sys.executable, "scripts/cloud-storage-doctor.py", "--check"], 180),
+    ("horrevm-custody", [sys.executable, "scripts/horrevm-custody.py", "--status"], 240),
+    ("live-checkout-currency", [sys.executable, "scripts/check-live-checkout.py"], 90),
+    ("hot-cache", ["bash", "scripts/verify-hot-cache.sh"], 300),
+    ("residue-census", [sys.executable, "scripts/residue-census.py"], 180),
+    ("notify-gate", [sys.executable, "scripts/check-notify-gate.py"], 60),
+    ("host-pressure-freshness", [sys.executable, "scripts/host-pressure-stale.py", "--read-only"], 15),
+    ("notification-registry-parity", [sys.executable, "scripts/check-notification-registry.py"], 20),
+]
+
+
+def observe_once(root: Path, scope: str) -> dict[str, Any]:
     probes = {
-        "host": [
-            ("host-pressure-freshness", [sys.executable, "scripts/host-pressure-stale.py", "--read-only"], 15),
-            ("notification-registry-parity", [sys.executable, "scripts/check-notification-registry.py"], 20),
-        ],
+        "host": HOST_PROBES,
         "remote": [
             ("main-exact-head-ci", [sys.executable, "scripts/check-main-green.py", "--exact-head-check"], 45),
             ("github-estate-parity", [sys.executable, "scripts/gitvs.py", "doctor", "--parity-only"], 45),
@@ -76,12 +92,12 @@ def observe_once(root: Path, scope: str, *, emit: bool = False) -> dict[str, Any
         state: sum(1 for result in results.values() if result["status"] == state)
         for state in ("passed", "failed", "timed_out")
     }
-    runtime_files = [
-        root / "scripts" / "host-pressure-stale.py",
-        root / "scripts" / "check-main-green.py",
-        root / "scripts" / "gitvs.py",
-        Path(__file__),
-    ]
+    runtime_files = {Path(__file__)}
+    for _, command, _ in selected:
+        for argument in command[1:]:
+            candidate = root / argument
+            if argument.startswith("scripts/") and candidate.is_file():
+                runtime_files.add(candidate)
     receipt = {
         "schema": "limen.observe_once.v1",
         "scope": scope,
@@ -95,7 +111,7 @@ def observe_once(root: Path, scope: str, *, emit: bool = False) -> dict[str, Any
             json.dumps(
                 {
                     str(path.relative_to(root)) if path.is_relative_to(root) else str(path): _digest(path)
-                    for path in runtime_files
+                    for path in sorted(runtime_files)
                 },
                 sort_keys=True,
             ).encode()

@@ -15,6 +15,8 @@ REGISTRY = ROOT / "institutio" / "governance" / "notification-events.limen.json"
 OWNERSHIP = ROOT / "institutio" / "governance" / "heartbeat-ownership.json"
 SENSORS = ROOT / "institutio" / "governance" / "sensors.yaml"
 PRODUCER_ID_RE = re.compile(r"stable_id\s*=\s*[\"'](limen\.[a-z0-9_.-]+)[\"']")
+EVENT_LITERAL_RE = re.compile(r"[\"'](limen\.[a-z0-9_.-]+)[\"']")
+NON_EVENT_PROTOCOL_IDS = {"limen.notification_events.v1"}
 
 
 def main() -> int:
@@ -39,7 +41,9 @@ def main() -> int:
                 if f'"{stable_id}"' in source or f"'{stable_id}'" in source:
                     discovered.setdefault(stable_id, set()).add(str(path.relative_to(ROOT)))
             undeclared_calls.update(PRODUCER_ID_RE.findall(source))
-    undeclared = undeclared_calls - set(events)
+            if "emit_event_v1" in source:
+                undeclared_calls.update(EVENT_LITERAL_RE.findall(source))
+    undeclared = undeclared_calls - set(events) - NON_EVENT_PROTOCOL_IDS
     if undeclared:
         errors.append(f"undeclared producer IDs: {sorted(undeclared)}")
     unreachable = set(events) - set(discovered)
