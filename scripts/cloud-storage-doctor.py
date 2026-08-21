@@ -309,7 +309,7 @@ def load_registry() -> dict | None:
         return None
 
 
-def check(*, strict: bool = False) -> int:
+def check(*, strict: bool = False, write: bool = True) -> int:
     reg = load_registry()
     if not reg or not isinstance(reg.get("rails"), dict):
         return 1
@@ -335,11 +335,12 @@ def check(*, strict: bool = False) -> int:
         "exit": exit_code,
     }
     report = _mask(report)
-    try:
-        OUT.parent.mkdir(parents=True, exist_ok=True)
-        OUT.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    except OSError as exc:
-        print(f"health log unwritable ({exc}) — report to stdout only")
+    if write:
+        try:
+            OUT.parent.mkdir(parents=True, exist_ok=True)
+            OUT.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+        except OSError as exc:
+            print(f"health log unwritable ({exc}) — report to stdout only")
     for rid, res in report["rails"].items():
         marker = {"match": "ok", "drift": "DRIFT", "unknown": "unknown"}[res["verdict"]]
         line = f"  {rid}: {marker} [{res['declared']}]"
@@ -411,6 +412,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="HORREVM storage-rails doctor")
     parser.add_argument("--check", action="store_true", help="evaluate rails vs declarations (default)")
     parser.add_argument("--strict", action="store_true", help="exit 77 when any declared rail is unknown")
+    parser.add_argument("--no-write", action="store_true", help="report only; write no health log")
     parser.add_argument("--doctor", action="store_true", help="registry schema self-check (no host probes)")
     parser.add_argument("--baseline", action="store_true", help="print an accepted_remnants block (never writes)")
     args = parser.parse_args()
@@ -418,7 +420,7 @@ def main() -> int:
         return doctor()
     if args.baseline:
         return baseline()
-    return check(strict=args.strict)
+    return check(strict=args.strict, write=not args.no_write)
 
 
 if __name__ == "__main__":

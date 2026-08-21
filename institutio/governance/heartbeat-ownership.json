@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
-  "retired_runtime": "com.limen.heartbeat",
+  "runtime": "com.limen.heartbeat",
+  "runtime_mode": "resource_bounded_read_only_one_shot",
   "rungs": {
     "enactment-audit": {"owner":"cloud_or_broker","timeout_seconds":120,"receipt":"cloud-routine exact-head receipt","predicate":"routine succeeds at immutable runtime SHA"},
     "github-estate-reconcile": {"owner":"explicit_maintenance","timeout_seconds":300,"receipt":"gitvs reconcile receipt","predicate":"operator explicitly arms reconcile"},
@@ -21,7 +22,7 @@
     "harness-root-probe": {"owner":"observe_host","timeout_seconds":30,"receipt":"observe-once counts receipt","predicate":"host root probe succeeds"},
     "bifrons-portal": {"owner":"observe_remote","timeout_seconds":60,"receipt":"observe-once counts receipt","predicate":"portal read succeeds"},
     "observation-feed": {"owner":"cloud_or_broker","timeout_seconds":90,"receipt":"cloud-routine exact-head receipt","predicate":"feed digest is current"},
-    "launch-agent-liveness": {"owner":"retired","timeout_seconds":10,"receipt":"heartbeat retirement receipt","predicate":"label plist and descendants are absent"},
+    "launch-agent-liveness": {"owner":"scheduled_contract","timeout_seconds":10,"receipt":"Domus heartbeat verification receipt","predicate":"label and plist are either jointly absent for containment or jointly present and Rule #55a compliant; legacy descendants remain absent"},
     "background-items-census": {"owner":"observe_host","timeout_seconds":30,"receipt":"observe-once counts receipt","predicate":"background census succeeds"},
     "sensor-canary": {"owner":"observe_host","timeout_seconds":30,"receipt":"observe-once counts receipt","predicate":"canary predicate succeeds"},
     "orphan-watcher": {"owner":"observe_host","timeout_seconds":30,"receipt":"observe-once counts receipt","predicate":"no owned orphan is active"},
@@ -34,7 +35,7 @@
     "daily-execution": {"owner":"explicit_maintenance","timeout_seconds":1800,"receipt":"daily execution receipt","predicate":"explicit fire boundary is honored"},
     "conversion-funnel": {"owner":"cloud_or_broker","timeout_seconds":120,"receipt":"cloud-routine exact-head receipt","predicate":"funnel read succeeds"},
     "opportunity-brief": {"owner":"cloud_or_broker","timeout_seconds":120,"receipt":"cloud-routine exact-head receipt","predicate":"brief receipt is current"},
-    "beat-freshness": {"owner":"retired","timeout_seconds":10,"receipt":"heartbeat retirement receipt","predicate":"resident heartbeat is absent"},
+    "beat-freshness": {"owner":"scheduled_contract","timeout_seconds":10,"receipt":"heartbeat counts-only receipt","predicate":"one-shot runtime digest matches the pinned merged SHA and no resident descendant survives"},
     "live-checkout-currency": {"owner":"observe_host","timeout_seconds":60,"receipt":"observe-once counts receipt","predicate":"runtime content digest matches"},
     "decorum": {"owner":"cloud_or_broker","timeout_seconds":120,"receipt":"cloud-routine exact-head receipt","predicate":"voice predicate succeeds"},
     "ideal-forms-distance": {"owner":"cloud_or_broker","timeout_seconds":120,"receipt":"cloud-routine exact-head receipt","predicate":"distance predicate succeeds"},

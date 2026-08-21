@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -50,6 +51,31 @@ def test_output_ceiling_terminates_during_execution(tmp_path: Path) -> None:
             stderr_ceiling=1024,
         )
     assert raised.value.kind == "output"
+
+
+def test_rss_ceiling_terminates_process_group(tmp_path: Path) -> None:
+    with pytest.raises(BoundedSubprocessError, match="resource") as raised:
+        run_bounded_subprocess(
+            [sys.executable, "-c", "import time; payload=bytearray(32*1024*1024); time.sleep(10)"],
+            cwd=tmp_path,
+            timeout_seconds=5,
+            stdout_ceiling=1024,
+            stderr_ceiling=1024,
+            rss_ceiling=8 * 1024 * 1024,
+        )
+    assert raised.value.kind == "resource"
+
+
+def test_cpu_limit_is_applied_to_child(tmp_path: Path) -> None:
+    result = run_bounded_subprocess(
+        [sys.executable, "-c", "while True: pass"],
+        cwd=tmp_path,
+        timeout_seconds=5,
+        stdout_ceiling=1024,
+        stderr_ceiling=1024,
+        cpu_seconds=1,
+    )
+    assert result.returncode in {-signal.SIGKILL, -signal.SIGXCPU}
 
 
 def test_exited_wrapper_does_not_leave_a_pipe_holding_descendant(

@@ -633,6 +633,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Canonical read-side Limen state root for estate and lifecycle ledgers. Lets tests or isolated worktrees read from one root while writing redacted receipts elsewhere."
+  LIMEN_HEARTBEAT_STATE_ROOT:
+    default: "~/.local/share/limen/heartbeat"
+    env: LIMEN_HEARTBEAT_STATE_ROOT
+    self_update: none
+    owner: continuity
+    note: "Private state, single-flight lock, bounded audit, and receipt root for the reviewed one-shot heartbeat. Tests and canaries point this at an isolated temporary directory; the public receipt remains under the exact Limen runtime root."
   LIMEN_OUTPUT_ROOT:
     default: "$LIMEN_ROOT"
     env: LIMEN_OUTPUT_ROOT

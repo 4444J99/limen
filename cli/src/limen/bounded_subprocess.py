@@ -7,6 +7,7 @@ on POSIX sessions, process groups, and signals.
 from __future__ import annotations
 
 import os
+import resource
 import selectors
 import signal
 import subprocess
@@ -17,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-FailureKind = Literal["invalid", "output", "timeout", "unavailable"]
+FailureKind = Literal["invalid", "output", "resource", "timeout", "unavailable"]
 
 
 class BoundedSubprocessError(RuntimeError):
@@ -85,6 +86,8 @@ def run_bounded_subprocess(
     stderr_ceiling: int,
     env: Mapping[str, str] | None = None,
     input_bytes: bytes | None = None,
+    cpu_seconds: int | None = None,
+    rss_ceiling: int | None = None,
 ) -> BoundedCompletedProcess:
     """Run one command while terminating it as soon as either output cap is crossed."""
 
@@ -100,10 +103,23 @@ def run_bounded_subprocess(
         or not isinstance(stderr_ceiling, int)
         or stderr_ceiling < 0
         or (input_bytes is not None and not isinstance(input_bytes, bytes))
+        or (
+            cpu_seconds is not None
+            and (isinstance(cpu_seconds, bool) or not isinstance(cpu_seconds, int) or cpu_seconds <= 0)
+        )
+        or (
+            rss_ceiling is not None
+            and (isinstance(rss_ceiling, bool) or not isinstance(rss_ceiling, int) or rss_ceiling <= 0)
+        )
     ):
         raise BoundedSubprocessError("invalid")
     if not _supports_posix_process_groups():
         raise BoundedSubprocessError("unavailable")
+
+    def apply_child_limits() -> None:
+        if cpu_seconds is not None:
+            resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds))
+
     try:
         process = subprocess.Popen(
             list(command),
@@ -113,6 +129,7 @@ def run_bounded_subprocess(
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             start_new_session=True,
+            preexec_fn=apply_child_limits if cpu_seconds is not None else None,
         )
     except OSError as exc:
         raise BoundedSubprocessError("unavailable") from exc
@@ -138,6 +155,26 @@ def run_bounded_subprocess(
     deadline = time.monotonic() + timeout_seconds
     streams: dict[int, tuple[str, object]] = {}
 
+    def process_group_rss() -> int:
+        try:
+            observed = subprocess.run(
+                ["ps", "-axo", "pgid=,rss="],
+                capture_output=True,
+                text=True,
+                timeout=0.5,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise BoundedSubprocessError("unavailable") from exc
+        if observed.returncode != 0:
+            raise BoundedSubprocessError("unavailable")
+        total_kib = 0
+        for line in observed.stdout.splitlines():
+            fields = line.split()
+            if len(fields) == 2 and fields[0].isdigit() and fields[1].isdigit() and int(fields[0]) == process.pid:
+                total_kib += int(fields[1])
+        return total_kib * 1024
+
     def register_stream(stream: object, events: int, label: str) -> None:
         descriptor = stream.fileno()  # type: ignore[attr-defined]
         os.set_blocking(descriptor, False)
@@ -157,6 +194,8 @@ def run_bounded_subprocess(
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise BoundedSubprocessError("timeout")
+            if rss_ceiling is not None and process_group_rss() > rss_ceiling:
+                raise BoundedSubprocessError("resource")
             events = selector.select(timeout=min(remaining, 0.1))
             if not events:
                 continue

@@ -130,3 +130,9 @@ def test_receipt_written_pii_clean(tmp_path, monkeypatch):
     assert receipt["counts"]["estate"] == 1
     assert "sekrit" not in json.dumps(receipt)  # argv tails never reach the receipt
     assert receipt["rows"][0]["rendered_as"] == "node"
+
+
+def test_no_receipt_mode_leaves_runtime_source_immutable(tmp_path, monkeypatch):
+    m, _agents, registry_path = load_module(tmp_path, monkeypatch)
+    assert run_main(m, registry_path, monkeypatch, "--check", "--no-receipt") == 0
+    assert not (tmp_path / "logs" / "background-items-census.json").exists()

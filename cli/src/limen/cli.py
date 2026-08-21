@@ -137,6 +137,24 @@ def observe(once: bool, scope: str, json_output: bool) -> None:
         raise click.exceptions.Exit(1)
 
 
+@main.command("heartbeat")
+@click.option("--once", "once", is_flag=True, required=True, help="Run one resource-bounded scheduled tick")
+@click.option("--json-output", is_flag=True)
+def heartbeat(once: bool, json_output: bool) -> None:
+    """Run at most one due read-only probe, then exit without resident children."""
+    del once
+    from limen.heartbeat import heartbeat_once, is_system_failure
+
+    receipt = heartbeat_once(resolve_limen_repo_root())
+    if json_output:
+        click.echo(json.dumps(receipt, indent=2, sort_keys=True))
+    else:
+        probe = receipt.get("probe") or "none"
+        click.echo(f"heartbeat: {receipt['status']} probe={probe}")
+    if is_system_failure(receipt):
+        raise click.exceptions.Exit(1)
+
+
 def _host_owner() -> tuple[str, int]:
     pid = os.getppid()
     label = os.environ.get("LIMEN_HOST_ADMISSION_OWNER") or os.environ.get("LIMEN_SESSION_ID")
