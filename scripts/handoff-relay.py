@@ -32,6 +32,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", CODE_ROOT))
 sys.path.insert(0, str(CODE_ROOT / "cli" / "src"))
 
 from limen.capacity import PAID_AGENT_ORDER, agent_status, canonical_agent, lane_throughput_cap  # noqa: E402
+from limen.conduct.client import client_from_env  # noqa: E402
 from limen.dispatch import (
     LOCAL_CHECKOUT_AGENTS,
     _down_lanes,
@@ -49,7 +50,7 @@ from limen.dispatch import (
     chronic_dispatch_reason,
     task_passes_value_gate,
 )  # noqa: E402
-from limen.io import load_limen_file  # noqa: E402
+from limen.io import load_limen_file, load_limen_text  # noqa: E402
 from limen.models import LimenFile, Task  # noqa: E402
 from limen.progress_selection import HOLD_LABELS  # noqa: E402
 from limen.runtime_requirements import task_execution_ready  # noqa: E402
@@ -94,14 +95,29 @@ def _load_json(path: Path, default: Any) -> Any:
         return default
 
 
+def _load_canonical_board() -> dict[str, Any]:
+    """Fetch authenticated keeper custody; the public aggregate is never board truth."""
+    payload = client_from_env().private_board()
+    if not isinstance(payload, dict):
+        raise ValueError("canonical keeper returned a non-object board")
+    board = payload.get("board") if isinstance(payload.get("board"), dict) else payload
+    if not isinstance(board, dict):
+        raise ValueError("canonical keeper response contains no board object")
+    return board
+
+
 def _load_board() -> dict[str, Any] | None:
-    """Load the keeper projection while preserving unavailable versus genuinely empty."""
+    """Load and validate one authenticated canonical keeper snapshot."""
     try:
         import yaml
     except Exception:
         return None
     try:
-        board = yaml.safe_load(TASKS.read_text())
+        board = _load_canonical_board()
+        raw = yaml.safe_dump(board, sort_keys=False)
+        # Dispatch consumes LimenFile, so a merely parseable object is not proof that
+        # keeper custody is usable. Validate the exact authenticated snapshot returned.
+        load_limen_text(raw, name="authenticated-private-board")
     except Exception:
         return None
     return board if isinstance(board, dict) else None

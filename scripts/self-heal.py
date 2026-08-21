@@ -57,6 +57,7 @@ from limen.conduct.client import BrokerQuotaExhausted  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
 from limen.intake import contract_fields, github_existing_pr_contract  # noqa: E402
 from limen.models import DispatchLogEntry, Task  # noqa: E402
+from limen.partition_lanes import heuristics_may_promote  # noqa: E402
 from limen.tabularius import apply_limen_file_sync  # noqa: E402
 from _pr_scan import (  # noqa: E402
     enumerate_open_prs_result,
@@ -560,8 +561,12 @@ def main():
     chronic = live_chronic_groups()
     frozen = []
     sick = []
+    partition_skipped = 0
     review_fb = 0
     for repo, num, url, verdict, failing_checks in rows:
+        if not heuristics_may_promote(repo):
+            partition_skipped += 1
+            continue
         chronic_hits = sorted(check for check in failing_checks if (repo, check) in chronic)
         if verdict == "CI-RED" and failing_checks and len(chronic_hits) == len(failing_checks):
             frozen.append((repo, num, chronic_hits))
@@ -620,7 +625,8 @@ def main():
             f"ci-red={b['CI-RED']} conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} "
             f"stale-core={b['STALE-CORE']} stale-base={b['STALE-BASE']} "
             f"review-feedback={review_fb} "
-            f"chronic-frozen={len(frozen)} | would-emit={len(would)} would-retire={would_retire} already-queued={dup}"
+            f"chronic-frozen={len(frozen)} partition-skipped={partition_skipped} "
+            f"| would-emit={len(would)} would-retire={would_retire} already-queued={dup}"
         )
         print("| heal task id (would emit) | kind | repo | pr |")
         print("|---|---|---|---|")
@@ -725,6 +731,7 @@ def main():
         f"[self-heal] {ts} window={len(prs)}/{len(allprs)} ready={b['READY']} ci-red={b['CI-RED']} "
         f"conflict={b['CONFLICT']} ci-pending={b['CI-PENDING']} stale-core={b['STALE-CORE']} "
         f"stale-base={b['STALE-BASE']} review-feedback={review_fb} chronic-frozen={len(frozen)} "
+        f"partition-skipped={partition_skipped} "
         f"| emitted={len(emitted)} retired={len(retired)}"
         f"{'' if retire_ok else ' (retire SKIPPED: ' + retire_why + ')'} (limit={limit})"
     )

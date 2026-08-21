@@ -61,6 +61,7 @@ def _configure(mod, monkeypatch, tmp_path, board):
     monkeypatch.setattr(mod, "USAGE", usage)
     monkeypatch.setattr(mod, "OVERNIGHT", overnight)
     monkeypatch.setattr(mod, "SELF_HEAL", logs / "self-heal.log")
+    monkeypatch.setattr(mod, "_load_canonical_board", lambda: board)
     monkeypatch.setattr(mod, "_now", lambda: dt.datetime(2026, 7, 12, 12, 5, tzinfo=dt.timezone.utc))
     # The fixture represents a healthy provider receipt without requiring host binaries.
     monkeypatch.setattr(mod, "agent_status", lambda _agent: {"reachable": True})
@@ -998,6 +999,51 @@ def test_admission_preserves_generated_buildout_registry_gate(monkeypatch):
 
     assert admission["admissible"] == 0
     assert admission["reason_counts"] == {"admission_blocked": 1}
+
+
+def test_load_board_rejects_parseable_but_schema_invalid_keeper_projection(monkeypatch, tmp_path):
+    mod = _load()
+    monkeypatch.setattr(
+        mod,
+        "_load_canonical_board",
+        lambda: {"version": "1.0", "tasks": [{"id": "INVALID-MISSING-REQUIRED-FIELDS"}]},
+    )
+
+    assert mod._load_board() is None
+
+
+def test_load_board_uses_authenticated_keeper_not_empty_public_aggregate(monkeypatch, tmp_path):
+    mod = _load()
+    mod.TASKS = tmp_path / "tasks.yaml"
+    mod.TASKS.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": "limen.public_board_projection.v1",
+                "portal": {"public_projection": {"total": 1}},
+                "tasks": [],
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    canonical = _board([_task("CANONICAL")])
+    monkeypatch.setattr(mod, "_load_canonical_board", lambda: canonical)
+
+    board = mod._load_board()
+
+    assert board is not None
+    assert [task["id"] for task in board["tasks"]] == ["CANONICAL"]
+
+
+def test_load_board_fails_closed_when_authenticated_keeper_is_unavailable(monkeypatch):
+    mod = _load()
+
+    def unavailable():
+        raise RuntimeError("keeper unavailable")
+
+    monkeypatch.setattr(mod, "_load_canonical_board", unavailable)
+
+    assert mod._load_board() is None
 
 
 def test_build_preserves_keeper_unavailable_in_admission(monkeypatch, tmp_path):

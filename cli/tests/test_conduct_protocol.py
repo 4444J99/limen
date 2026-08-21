@@ -7,6 +7,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
+from jsonschema import Draft202012Validator
 
 from limen.conduct import (
     AgentIdentityV1,
@@ -262,7 +263,7 @@ def test_executor_attempt_schema_matches_python_runtime() -> None:
     }
 
 
-def test_work_packet_schema_exposes_optional_work_loan_compatibly() -> None:
+def test_exact_serialized_work_packet_validates_against_published_schema() -> None:
     schema_path = Path(__file__).resolve().parents[2] / "spec" / "contracts" / "conduct" / "work-packet-v1.schema.json"
     schema = json.loads(schema_path.read_text(encoding="utf-8"))
     assert schema == {
@@ -271,6 +272,13 @@ def test_work_packet_schema_exposes_optional_work_loan_compatibly() -> None:
     }
     assert "work_loan" not in schema["required"]
     assert "campaign" not in schema["required"]
+    base = packet(work_id="schema-storage", conductor=identity("codex"))
+    values = base.model_dump(mode="json")
+    values["required_capabilities"] = ["code", "local-worktree"]
+    values["storage_envelope_claims"] = [storage_claim().model_dump(mode="json")]
+    serialized = WorkPacketV1.model_validate(values).model_dump(mode="json")
+    assert serialized["storage_envelope_claims"]
+    Draft202012Validator(schema).validate(serialized)
 
 
 def test_run_receipt_schema_exposes_optional_campaign_compatibly() -> None:

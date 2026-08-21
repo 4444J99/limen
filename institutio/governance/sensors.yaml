@@ -1731,27 +1731,19 @@ sensors:
 
   self-heal-stale:
     section: "0o4"
-    title: "self-heal repair factory is alive — logs/self-heal.log is still being refreshed, not silently dead"
+    title: "self-heal repair factory is alive — the last successful cloud maintenance receipt is fresh"
     gate: LIMEN_SELF_HEAL_STALE
     default: "1"
     source: [metabolize]
     owner: heal
-    # The 2026-08-09 sibling of host-pressure-stale: the beat ticked while the self-heal PR-repair
-    # factory silently stopped. The daily quota wall (BrokerQuotaExhausted → EX_TEMPFAIL) exits
-    # self-heal.py BEFORE the success-path summary write, so the HEAL beat ran, every reader of
-    # logs/self-heal.log reported all-clear, and refused PRs stopped becoming HEAL tasks for ~26h.
-    # This rung watches the WRITER, not the PRs: self-heal.py runs every C_HEAL=6 beats (~3h
-    # worst-case tempo), so 6h = ~2 windows is stale without false-positiving a slow beat. Reuses
-    # the generic scripts/state-freshness.py with --field mtime (self-heal.log carries no timestamp
-    # body field — the file's own mtime IS the writer's heartbeat). Read-only; advisory; onset-deduped.
-    # Step-gated on when_env LIMEN_SELF_HEAL so a deliberately-off factory (LIMEN_SELF_HEAL=0)
-    # doesn't alarm on a log that is stale by design.
+    # Freshness belongs to the bounded, operator-dispatched cloud workflow. Local log mtime can be
+    # refreshed without a successful remote pass and therefore is not custody evidence. This probe
+    # reads only the latest successful workflow_dispatch receipt and fails closed when it is absent,
+    # stale, or cannot be queried. Read-only; advisory; onset-deduped.
     steps:
-      - command: 'python3 scripts/state-freshness.py --file logs/self-heal.log --field mtime --max-age-seconds 21600 --key self-heal-stale --label "self-heal repair factory"'
-        when_env: LIMEN_SELF_HEAL
-        when_default: "1"
+      - command: 'python3 scripts/cloud-maintenance-freshness.py --repo organvm/limen --max-age-seconds 21600'
         severity: advisory
-        escalation: "logs/self-heal.log has stopped refreshing — the PR-repair factory is dead (the daily quota wall exits self-heal.py before its success-path write, 2026-08-09 ~26h-silent incident): check `python3 scripts/self-heal.py --scan 30` and the heartbeat (C_HEAL=6 beats)"
+        escalation: "No fresh successful cloud-maintenance receipt exists — dispatch `.github/workflows/cloud-maintenance.yml` at the exact current main SHA and inspect its counts-only receipt"
 
   closeout-reconcile:
     section: "0z"
@@ -2478,4 +2470,3 @@ sensors:
       - command: "python3 scripts/covenant-attribution.py --check"
         severity: advisory
         escalation: "a memory atom/MEMORY.md changed with NO keeper receipt — a session wrote memory directly; route captures through the memoria lane (memory-ticket.py)"
-

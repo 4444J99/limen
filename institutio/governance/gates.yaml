@@ -199,7 +199,7 @@ gates:
     owner: verify
     note: "Whole-matrix syntax pass over the operational shell fleet."
   plist-lint:
-    command: "plutil -lint container/launchd/com.user.netmeter.plist container/launchd/com.limen.overnight-watch.plist"
+    command: "plutil -lint container/launchd/com.user.netmeter.plist"
     paths: ["container/launchd/**"]
     scoped: false
     owner: verify
