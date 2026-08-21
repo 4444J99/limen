@@ -511,8 +511,8 @@ def test_classify_jam_from_zero_steps_and_quota_annotation(monkeypatch):
     m = _load()
     klass, detail = _classify_with(monkeypatch, m, _jobs(steps=0), [{"message": QUOTA_ANNOTATION}])
     assert klass == "ci-jam"
-    # detail names the quota/never-started cause — never "payment failure" or a card lever
-    assert "quota" in detail.lower() or "never started" in detail.lower()
+    # Detail preserves runner admission as the observation — never a payment cause or card lever.
+    assert "admission" in detail.lower() or "never started" in detail.lower()
     assert "card" not in detail.lower() and "payment failure" not in detail.lower()
 
 

@@ -4161,7 +4161,7 @@ parameters:
     env: LIMEN_GH_USAGE
     self_update: none
     owner: gitvs
-    note: "Gate for the github-actions-usage beat sensor (the Meter: scripts/gitvs.py usage --check). Projects monthly NET Actions spend against budgets.actions_spend and reads the account-billing canary (the literal 'payments have failed' run annotation that used to be re-diagnosed in chat every session). Advisory, fail-open offline. 0 disables the pass."
+    note: "Gate for the github-actions-usage beat sensor (the Meter: scripts/gitvs.py usage --check). Projects monthly NET Actions spend against budgets.actions_spend and records GitHub's runner-admission annotation without treating it as an account diagnosis. Advisory, fail-open offline. 0 disables the pass."
   LIMEN_BEAT_GH_USAGE:
     default: 24
     env: LIMEN_BEAT_GH_USAGE
@@ -4256,12 +4256,12 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Monthly NET Actions spend ceiling (USD) for gitvs.py usage --check. Empty/unset ⇒ derived from estate.yaml budgets.actions_spend.monthly_net_usd_max (the registry owns the default; this env is the operator override). Mirrors orgs.canonical.actions_spending_limit_usd — the GitHub-side spending limit is his-hand (the runbook step 2)."
-  LIMEN_BILLING_CANARY_REPO:
+  LIMEN_RUNNER_ADMISSION_PROBE_REPO:
     default: "organvm/limen"
-    env: LIMEN_BILLING_CANARY_REPO
+    env: LIMEN_RUNNER_ADMISSION_PROBE_REPO
     self_update: none
     owner: gitvs
-    note: "PRIVATE repo whose newest completed Actions run the billing canary reads for the account-billing block annotation. The conductor (private since 2026-07-16) is the natural canary: its CI runs every PR, so a billing wall surfaces within one beat."
+    note: "Repository whose newest completed Actions run is inspected for GitHub's billing-related runner-admission annotation. Presence records provider text only; it does not establish account state, causal ownership, or remediation."
   LIMEN_REVIEW_GATE:
     default: 0
     env: LIMEN_REVIEW_GATE
@@ -4735,11 +4735,11 @@ parameters:
     note: "Beat gate for the heal-convergence report (scripts/heal-convergence.py --check) run each beat by metabolize.sh section 0g (RETRO-0708-HEAL-RECEIPT-OUTCOME; retro findings 1-2). CHRONIC rung: open heal PRs (title-prefixed '[limen HEAL-') grouped by (repo, failing check); >=3 PRs older than 48h on the SAME check = the healer is re-spending capacity on a wall (growth-auditor #16-#22 / theoria #492-#500 class) -> exit 1. COVERAGE rung: archived heal receipts must carry the {outcome: already_green|fixed|gave_up, failing_checks} field derived MECHANICALLY post-run by async-run-one.py (gh pr view of the target PR - never agent prose), reported as a ratio so the 855-emitted-vs-384-receipts gap class is a number. verify-whole runs the fixture test (fixture PRs + fixture clock - deterministic); live counts stay beat-side. Set 0 to silence."
 
   LIMEN_CHRONIC_RECEIPTS:
-    default: "scripts/heal-chronic-receipts.json"  # git-tracked exemption registry for billing-blocked heal groups
+    default: "scripts/heal-chronic-receipts.json"  # git-tracked exemption registry for externally blocked heal groups
     env: LIMEN_CHRONIC_RECEIPTS
     self_update: none
     owner: tabularius
-    note: "Path to the chronic-receipt registry (scripts/heal-chronic-receipts.json) read by scripts/heal-convergence.py. Each entry exempts a (repo, check) chronic group from the exit-1 gate when CI is externally blocked (e.g. billing hold under L-CARD-FRAUD-HOLD). Entries must carry repo, check, lever, issue, and reason. Set to an alternate path to override."
+    note: "Path to the chronic-receipt registry (scripts/heal-chronic-receipts.json) read by scripts/heal-convergence.py. Each entry exempts a (repo, check) chronic group from the exit-1 gate only when a current external blocker has an active owner and evidence. Terminal historical levers are invalid owners. Entries must carry repo, check, lever, issue, and reason. Set to an alternate path to override."
 
   LIMEN_FORK_SAFETY_CHECK:
     default: "1"               # ON — prove the macOS 26.6 atfork/os_log crash stays fixed each beat

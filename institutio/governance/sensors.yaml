@@ -371,7 +371,7 @@ sensors:
 
   github-actions-usage:
     section: "heartbeat"
-    title: "Actions spend telemetry — projected monthly net within budget AND the account-billing canary green"
+    title: "Actions spend telemetry — projected Actions net within budget plus runner-admission observation"
     gate: LIMEN_GH_USAGE
     default: "1"
     source: [heartbeat]
@@ -385,7 +385,7 @@ sensors:
     steps:
       - command: "python3 scripts/gitvs.py usage --check"
         severity: advisory
-        escalation: "Actions spend over budget or the account-billing canary is red — read docs/github-actions-usage.json and diagnose the current account/budget evidence; never route a later incident to discharged L-CARD-FRAUD-HOLD (#182) without new causal proof"
+        escalation: "Actions spend is over budget or GitHub emitted a runner-admission annotation — read docs/github-actions-usage.json; the annotation alone proves neither account cause nor remediation"
     omega_eligible:
       - label: "GitHub Actions budget"
         rung_id: sensor.github.actions-budget

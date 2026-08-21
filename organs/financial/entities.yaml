@@ -86,7 +86,7 @@ entities:
         institution: "Santander"
         type: checking
         balance_known: false
-        notes: "card-0186 fraud hold blocks autopay (see his-hand-levers.json L-CARD-FRAUD-HOLD)"
+        notes: "historical card-0186 fraud hold discharged 2026-07-17; current account state must be re-observed"
       - id: icloud-email
         institution: "Apple (iCloud)"
         type: receivable
