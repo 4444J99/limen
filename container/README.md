@@ -4,8 +4,7 @@
 workflow `wf_6fd8a8f7-9fb`).
 
 ## The idea
-`~/Workspace/limen` **already is** the container — it's the git repo the live `com.limen.heartbeat`
-launchd agent points at, and every hardcoded path (the `$LIMEN_ROOT`-relative lock, the
+`~/Workspace/limen` **already is** the container and every hardcoded path (the `$LIMEN_ROOT`-relative lock, the
 `dispatch.py` `~/Workspace/.home-cartridge/Code` cart-root, the worktrees root) resolves from it.
 So we don't *move* anything — we **fold the scattered slots into it**:
 
@@ -13,7 +12,6 @@ So we don't *move* anything — we **fold the scattered slots into it**:
 |---|---|---|
 | `~/.limen.env` | absolute **symlink → `limen/env/limen.env`** | bash `.` follows symlinks transparently |
 | `~/.claude/settings.json` | absolute **symlink → `limen/container/claude/settings.json`** | Claude reads through symlinks |
-| `~/Library/LaunchAgents/com.limen.heartbeat.plist` | **real file, rewritten in place** (byte-identical) | launchd is hostile to symlinked plists (0/10 here are symlinks) |
 | `~/.zshrc .zshenv .zprofile .bashrc` | **scrubbed** of the leaked `GEMINI_API_KEY` line | the leak; conductor never read them anyway |
 
 Left real & untouched: `~/Workspace/.home-cartridge` (live co-tenant, hardcoded), `~/.limen-worktrees`, `~/.gemini`.
@@ -29,7 +27,7 @@ one heartbeat tick, then backs up to Archive4T + T7Recovery (mountpoint-guarded)
 the irreversible step so rollback is total.
 
 ## Safety invariants (from the adversarial judges)
-- plist stays a **real file** (never a symlink) — content-rewritten byte-identical, reloaded via bootout/bootstrap.
+- the retired heartbeat plist is never recreated; host observation is an explicit one-shot command.
 - `~/.limen.env` symlink uses an **absolute** target (a relative one dangles and silently drops the gemini lane).
 - secret value is **never printed**; the 4 rc `*.premigrate` backups live in `backup/` at `chmod 700`.
 - backups are **mountpoint-guarded** — an unplugged volume is SKIPPED, never created on the internal disk (which would leak the secret).

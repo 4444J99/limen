@@ -116,6 +116,28 @@ main.add_command(conduct_group)
 main.add_command(fanout_group)
 
 
+@main.command("observe")
+@click.option("--once", "once", is_flag=True, required=True, help="Run one bounded observation pass")
+@click.option("--scope", type=click.Choice(["host", "remote", "all"]), default="all", show_default=True)
+@click.option("--emit", is_flag=True, help="Allow registered summary emission; probes remain read-only")
+@click.option("--json-output", is_flag=True)
+def observe(once: bool, scope: str, emit: bool, json_output: bool) -> None:
+    """Observe declared host and remote predicates without dispatch, healing, or sync."""
+    del once
+    from limen.observer import observe_once
+
+    receipt = observe_once(resolve_limen_repo_root(), scope, emit=emit)
+    if json_output:
+        click.echo(json.dumps(receipt, indent=2, sort_keys=True))
+    else:
+        counts = receipt["counts"]
+        click.echo(
+            f"observe {scope}: {counts['passed']} passed, {counts['failed']} failed, {counts['timed_out']} timed out"
+        )
+    if receipt["counts"]["failed"] or receipt["counts"]["timed_out"]:
+        raise click.exceptions.Exit(1)
+
+
 def _host_owner() -> tuple[str, int]:
     pid = os.getppid()
     label = os.environ.get("LIMEN_HOST_ADMISSION_OWNER") or os.environ.get("LIMEN_SESSION_ID")
