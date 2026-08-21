@@ -243,9 +243,9 @@ DEFAULT_MAP: list[dict] = [
         # across the estate via sync-marketplace-config.py) reads secrets.ANTHROPIC_API_KEY in every
         # repo. ONE org secret with visibility=all lands it estate-wide — never a 307-repo fan-out,
         # never a paste. gh_secret-only: presence-guarded, so once set the beat never touches op again.
-        # ARMING: mint an API key at console.anthropic.com into the op:// item below (a vendor act
-        # gated behind the card hold #182 — the Anthropic spend limit is frozen on the same card);
-        # until then --apply prints an honest SKIP each beat, which is the owed-work signal.
+        # ARMING: mint an API key at console.anthropic.com into the op:// item below (a vendor act).
+        # Verify current provider state when acting; historical card events do not prove a present
+        # cause or remediation. Until then --apply prints an honest SKIP, which is the owed-work signal.
         "lane": "anthropic (org CI review key)",
         "ref": "op://Personal/Anthropic API Key/credential",
         "gh_secret": {"org": "organvm", "name": "ANTHROPIC_API_KEY", "visibility": "all"},
