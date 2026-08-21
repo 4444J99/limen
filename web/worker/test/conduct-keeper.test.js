@@ -3058,6 +3058,17 @@ test("exceptional task transitions require exact structured evidence", () => {
   });
   assert.equal(apply(task({ status: "dispatched" }), pr).status, "done");
 
+  const closedPr = event("failed_blocked", "done", {
+    lifecycle_repair: "pr-closed-reconcile",
+    pr_observed_state: "closed",
+    pr_observed_ref: "organvm/limen#1265",
+  });
+  assert.equal(apply(task({ status: "failed_blocked" }), closedPr).status, "done");
+  const forgedClosedPr = structuredClone(closedPr);
+  forgedClosedPr.event_id += ":forged";
+  forgedClosedPr.intent.log.pr_observed_ref = "other/repo#1265";
+  assert.throws(() => apply(task({ status: "failed_blocked" }), forgedClosedPr), /cannot transition/);
+
   const routine = event("needs_human", "done", {
     lifecycle_repair: "routine-recovered",
     routine_name: "mesh",

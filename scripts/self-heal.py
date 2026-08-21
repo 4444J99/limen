@@ -594,7 +594,7 @@ def main():
         # unauthorized run that reported 0 here would be indistinguishable from a drained backlog,
         # which is the exact ambiguity that hid the dead valve.
         candidates = retirement_candidates(tasks, open_pr_nums)
-        would_retire = len(candidates) if retire_ok else 0
+        would_retire = min(len(candidates), limit) if retire_ok else 0
         record_valve_effect(
             "heal-retirement",
             authorized=retire_ok,
@@ -655,7 +655,7 @@ def main():
         # The denominator is computed unconditionally; only ACTING is gated on retire_ok. That
         # asymmetry is the point — see retirement_candidates.
         candidates = retirement_candidates(lf.tasks, open_pr_nums)
-        for t, repo, num in candidates if retire_ok else []:  # see RETIREMENT SAFETY at the enumeration
+        for t, repo, num in candidates[:limit] if retire_ok else []:  # see RETIREMENT SAFETY above
             try:
                 from limen.tabularius import refuse_unfunded_partner_lane
 

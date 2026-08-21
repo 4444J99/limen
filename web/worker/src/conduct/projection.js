@@ -147,13 +147,14 @@ const ENUM_STRUCTURED_LOG_FIELDS = new Map([
     "human-gate-reconcile",
     "fleet-debt-park",
     "pr-observed-terminal",
+    "pr-closed-reconcile",
     "routine-recovered",
     "provider-terminal",
     "stale-successor-hold",
     "recurrence-reopen",
   ])],
   ["fleet_debt_source", new Set(["dispatch-verify", "prior-chronic-log", "repeated-noop"])],
-  ["pr_observed_state", new Set(["open", "merged"])],
+  ["pr_observed_state", new Set(["open", "closed", "merged", "not_found"])],
   ["routine_observed_state", new Set(["down", "recovered"])],
   ["execution_result_kind", new Set(["done", "failed", "failed_blocked"])],
   ["liveness_evidence", new Set([
@@ -494,6 +495,16 @@ function isLifecycleRepairAuthorized(task, nextStatus, log, patch) {
     return priorStatus === "dispatched"
       && nextStatus === "done"
       && ["open", "merged"].includes(String(log?.pr_observed_state || ""))
+      && Boolean(match)
+      && (!taskRepo || match[1] === taskRepo);
+  }
+  if (marker === "pr-closed-reconcile") {
+    const match = String(log?.pr_observed_ref || "")
+      .match(/^([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)#[1-9][0-9]*$/);
+    const taskRepo = String(patch.repo ?? task.repo ?? "");
+    return ["open", "dispatched", "failed", "failed_blocked", "needs_human"].includes(priorStatus)
+      && nextStatus === "done"
+      && ["closed", "merged", "not_found"].includes(String(log?.pr_observed_state || ""))
       && Boolean(match)
       && (!taskRepo || match[1] === taskRepo);
   }
