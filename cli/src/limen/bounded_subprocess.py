@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-FailureKind = Literal["invalid", "output", "resource", "timeout", "unavailable"]
+FailureKind = Literal["descendants", "invalid", "output", "resource", "timeout", "unavailable"]
 
 
 class BoundedSubprocessError(RuntimeError):
@@ -175,6 +175,28 @@ def run_bounded_subprocess(
                 total_kib += int(fields[1])
         return total_kib * 1024
 
+    def surviving_process_group_pids() -> list[int]:
+        try:
+            observed = subprocess.run(
+                ["ps", "-axo", "pid=,pgid="],
+                capture_output=True,
+                text=True,
+                timeout=0.5,
+                check=False,
+            )
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise BoundedSubprocessError("unavailable") from exc
+        if observed.returncode != 0:
+            raise BoundedSubprocessError("unavailable")
+        survivors: list[int] = []
+        for line in observed.stdout.splitlines():
+            fields = line.split()
+            if len(fields) == 2 and fields[0].isdigit() and fields[1].isdigit() and int(fields[1]) == process.pid:
+                pid = int(fields[0])
+                if pid != process.pid:
+                    survivors.append(pid)
+        return survivors
+
     def register_stream(stream: object, events: int, label: str) -> None:
         descriptor = stream.fileno()  # type: ignore[attr-defined]
         os.set_blocking(descriptor, False)
@@ -242,6 +264,8 @@ def run_bounded_subprocess(
             returncode = process.wait(timeout=max(0.001, deadline - time.monotonic()))
         except subprocess.TimeoutExpired as exc:
             raise BoundedSubprocessError("timeout") from exc
+        if surviving_process_group_pids():
+            raise BoundedSubprocessError("descendants")
     except BoundedSubprocessError:
         _terminate_process_group(process)
         raise

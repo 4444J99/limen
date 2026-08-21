@@ -878,7 +878,8 @@ def main(argv=None) -> int:
         # cause, remediation, or human owner; independently proven visibility drift remains distinct.
         _emit_ci_condition(klass, "onset", v.get("run_id") or 0)
         run_ids = [int(v.get("run_id") or 0)] + jammed_pr_run_ids(prs, required, _fresh_since())
-        results = attempt_reruns([rid for rid in run_ids if rid], enabled=args.recover_jam and failure.retry_allowed)
+        recover_jam = args.recover_jam or os.environ.get("LIMEN_CI_JAM_RERUN", "1").strip() == "1"
+        results = attempt_reruns([rid for rid in run_ids if rid], enabled=recover_jam and failure.retry_allowed)
         rerun = sum(1 for r in results if r.get("action") == "rerun")
         backoff = sum(1 for r in results if r.get("action") == "backoff")
         print(f"  → recovery ({detail or klass}): rerun={rerun} backoff={backoff} of {len(results)} target(s)")

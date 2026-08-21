@@ -63,30 +63,57 @@ def _run(command: list[str], *, cwd: Path, timeout: int) -> dict[str, Any]:
 
 
 HOST_PROBES = [
-    ("harness-root-probe", [sys.executable, "scripts/harness-root-probe.py"], 120),
-    ("background-items-census", [sys.executable, "scripts/background-items-census.py", "--check"], 60),
-    ("sensor-canary", [sys.executable, "scripts/beat-sensors.py", "--canary"], 60),
-    ("orphan-watcher", [sys.executable, "scripts/orphan-watchers.py", "--check"], 60),
-    ("tcc-track-c", [sys.executable, "scripts/tcc-track-c-closeout.py", "--probe", "--json"], 300),
-    ("dialogs-silenced", ["bash", "scripts/dialogs-silenced.sh", "--agent-curable-only"], 120),
-    ("cloud-storage-doctor", [sys.executable, "scripts/cloud-storage-doctor.py", "--check"], 180),
-    ("horrevm-custody", [sys.executable, "scripts/horrevm-custody.py", "--status"], 240),
-    ("live-checkout-currency", [sys.executable, "scripts/check-live-checkout.py"], 90),
-    ("hot-cache", ["bash", "scripts/verify-hot-cache.sh"], 300),
-    ("residue-census", [sys.executable, "scripts/residue-census.py"], 180),
-    ("notify-gate", [sys.executable, "scripts/check-notify-gate.py"], 60),
+    ("harness-root-probe", [sys.executable, "scripts/harness-root-probe.py"], 30),
+    (
+        "background-items-census",
+        [sys.executable, "scripts/background-items-census.py", "--check", "--no-receipt"],
+        30,
+    ),
+    ("sensor-canary", [sys.executable, "scripts/beat-sensors.py", "--canary"], 30),
+    ("orphan-watcher", [sys.executable, "scripts/orphan-watchers.py", "--check"], 30),
+    (
+        "tcc-track-c",
+        [sys.executable, "scripts/tcc-track-c-closeout.py", "--probe", "--json", "--no-write"],
+        60,
+    ),
+    ("dialogs-silenced", ["bash", "scripts/dialogs-silenced.sh", "--agent-curable-only"], 30),
+    (
+        "cloud-storage-doctor",
+        [sys.executable, "scripts/cloud-storage-doctor.py", "--check", "--no-write"],
+        60,
+    ),
+    ("horrevm-custody", [sys.executable, "scripts/horrevm-custody.py", "--status"], 60),
+    (
+        "live-checkout-currency",
+        [sys.executable, "scripts/check-live-checkout.py", "--no-receipt"],
+        60,
+    ),
+    ("hot-cache", ["bash", "scripts/verify-hot-cache.sh"], 30),
+    ("residue-census", [sys.executable, "scripts/residue-census.py"], 60),
+    ("notify-gate", [sys.executable, "scripts/check-notify-gate.py"], 30),
     ("host-pressure-freshness", [sys.executable, "scripts/host-pressure-stale.py", "--read-only"], 15),
     ("notification-registry-parity", [sys.executable, "scripts/check-notification-registry.py"], 20),
+]
+
+REMOTE_PROBES = [
+    (
+        "github-estate-census",
+        [sys.executable, "scripts/github-estate-census.py", "--check-repositories", "--json"],
+        120,
+    ),
+    ("github-actions-usage", [sys.executable, "scripts/gitvs.py", "usage", "--check", "--no-write"], 60),
+    ("estate-audit-posture", [sys.executable, "scripts/estate-audit-posture.py", "--check"], 120),
+    ("bifrons-portal", [sys.executable, "scripts/bifrons-organ.py", "--check"], 60),
+    ("arca-freshness", [sys.executable, "scripts/arca-freshness.py"], 60),
+    ("main-exact-head-ci", [sys.executable, "scripts/check-main-green.py", "--exact-head-check"], 45),
+    ("github-estate-parity", [sys.executable, "scripts/gitvs.py", "doctor", "--parity-only"], 45),
 ]
 
 
 def observe_once(root: Path, scope: str) -> dict[str, Any]:
     probes = {
         "host": HOST_PROBES,
-        "remote": [
-            ("main-exact-head-ci", [sys.executable, "scripts/check-main-green.py", "--exact-head-check"], 45),
-            ("github-estate-parity", [sys.executable, "scripts/gitvs.py", "doctor", "--parity-only"], 45),
-        ],
+        "remote": REMOTE_PROBES,
     }
     selected = (
         probes["host"]

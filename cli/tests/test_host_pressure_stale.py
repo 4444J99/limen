@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "host-pressure-stale.py"
 
 
-def run_stale(tmp_path: Path, env: dict | None = None):
+def run_stale(tmp_path: Path, env: dict | None = None, extra_args: list[str] | None = None):
     child_env = os.environ.copy()
     child_env["LIMEN_ROOT"] = str(tmp_path)
     child_env["LIMEN_NOTIFY"] = "0"  # dedup bookkeeping only — hermetic runs never pop notifications
@@ -30,7 +30,9 @@ def run_stale(tmp_path: Path, env: dict | None = None):
     child_env.pop("LIMEN_HOST_PRESSURE_STALE", None)
     if env:
         child_env.update(env)
-    return subprocess.run([sys.executable, str(SCRIPT)], capture_output=True, text=True, env=child_env)
+    return subprocess.run(
+        [sys.executable, str(SCRIPT), *(extra_args or [])], capture_output=True, text=True, env=child_env
+    )
 
 
 def write_status(tmp_path: Path, sampled_at: datetime, completed_at: datetime | None = None) -> None:
@@ -99,6 +101,19 @@ def test_unreadable_sample_timestamp_fails(tmp_path):
     (seat / "status.json").write_text("{not json")
     proc = run_stale(tmp_path)
     assert proc.returncode == 1
+
+
+def test_read_only_boot_mismatch_is_a_finding_not_permanent_grace(tmp_path):
+    write_status(tmp_path, datetime.now(timezone.utc))
+    status_path = tmp_path / "logs" / "vigilia" / "status.json"
+    status = json.loads(status_path.read_text())
+    status["boot_identity"] = "prior-boot"
+    status_path.write_text(json.dumps(status))
+
+    proc = run_stale(tmp_path, extra_args=["--read-only"])
+
+    assert proc.returncode == 1
+    assert "requires one bounded sample-first refresh" in proc.stdout
 
 
 def test_budget_reads_shared_env_file(tmp_path):

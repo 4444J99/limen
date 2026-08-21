@@ -110,6 +110,35 @@ def test_exited_wrapper_does_not_leave_a_pipe_holding_descendant(
         pytest.fail("bounded subprocess cleanup left its descendant alive")
 
 
+def test_exited_wrapper_census_kills_detached_pipe_free_descendant(tmp_path: Path) -> None:
+    child_pid_path = tmp_path / "detached-child.pid"
+    script = (
+        "import subprocess, sys\n"
+        "child = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)'], "
+        "stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n"
+        "open(sys.argv[1], 'w', encoding='utf-8').write(str(child.pid))\n"
+    )
+    with pytest.raises(BoundedSubprocessError, match="descendants") as raised:
+        run_bounded_subprocess(
+            [sys.executable, "-c", script, str(child_pid_path)],
+            cwd=tmp_path,
+            timeout_seconds=2,
+            stdout_ceiling=1024,
+            stderr_ceiling=1024,
+        )
+    assert raised.value.kind == "descendants"
+    child_pid = int(child_pid_path.read_text())
+    deadline = time.monotonic() + 2
+    while time.monotonic() < deadline:
+        try:
+            os.kill(child_pid, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.02)
+    else:
+        pytest.fail("post-run process census left a detached descendant alive")
+
+
 def test_stream_oserror_is_closed_as_an_unavailable_boundary(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

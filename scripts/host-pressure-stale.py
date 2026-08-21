@@ -169,7 +169,7 @@ def main(argv: list[str] | None = None) -> int:
         boot_identity = payload.get("boot_identity")
         sampled_monotonic = payload.get("sampled_monotonic_seconds")
         if boot_identity != _boot_identity() or not isinstance(sampled_monotonic, (int, float)):
-            print("host-pressure-stale: grace — reboot/legacy metadata requires one bounded sample-first refresh")
+            print("host-pressure-stale: STALE — reboot/legacy metadata requires one bounded sample-first refresh")
             if not args.read_only:
                 try:
                     subprocess.run(
@@ -181,7 +181,8 @@ def main(argv: list[str] | None = None) -> int:
                     )
                 except (OSError, subprocess.SubprocessError):
                     pass
-            return 0
+                return 0
+            return 1
         sampled_raw = payload.get("sampled_at") or payload.get("completed_at") or payload.get("ts") or ""
         if not sampled_raw:
             return _stale(

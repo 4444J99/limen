@@ -203,6 +203,10 @@ def run_beat() -> dict:
             "continuity": continuity_status,
             "integrity": integrity_status,
         }
+        sample_source = early if early_is_new_success else current
+        for key in ("boot_identity", "sampled_monotonic_seconds", "wake_state"):
+            if sample_source.get(key) is not None:
+                result[key] = sample_source[key]
         if sample_error is not None:
             result["sample_error"] = sample_error
             if sample_error_at is not None:

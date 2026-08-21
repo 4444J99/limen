@@ -507,6 +507,7 @@ def test_executive_run_beat_aggregates_and_writes(tmp_path, monkeypatch):
 
     status = executive.run_beat()
     assert set(status) >= {"institution", "sampled_at", "completed_at", "vitals", "continuity", "integrity"}
+    assert set(status) >= {"boot_identity", "sampled_monotonic_seconds", "wake_state"}
     assert "ts" not in status
     assert (tmp_path / "status.json").exists()
     assert "vitals=L1/ok" in executive.summary_line(status)

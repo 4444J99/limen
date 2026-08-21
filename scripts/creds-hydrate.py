@@ -780,6 +780,7 @@ def probe_cred(entry: dict, value: str, timeout: int = 6) -> tuple[str, str]:
         # materialized env (GMAIL_USER), never hardcoded. Rejection (AUTHENTICATIONFAILED)
         # is a DEAD credential; an offline/DNS/socket failure stays fail-open (never cry wolf).
         import imaplib
+
         host = spec.get("host", "imap.gmail.com")
         user = _env_value(spec.get("user_env", "IMAP_USER")) or os.getenv(spec.get("user_env", "IMAP_USER") or "", "")
         if not user:
@@ -1053,11 +1054,17 @@ def main() -> int:
                     # downstream is starving. Surface it as loud as a dead token so the beat log
                     # flags it — never let a required credential rot green. (Root cause: the op://
                     # item is not readable — vault grant / field name / item moved. Wall #320, #261.)
-                    print(f"  ✗ {e['lane']:28} {','.join(envs)} — REQUIRED, NOT materialized "
-                          f"(op:// read is failing → check {e.get('ref', 'the op:// item')} is readable)")
+                    print(
+                        f"  ✗ {e['lane']:28} {','.join(envs)} — REQUIRED, NOT materialized "
+                        f"(op:// read is failing → check {e.get('ref', 'the op:// item')} is readable)"
+                    )
                     any_invalid = True
                 else:
-                    tail = " (REQUIRED — will alarm once the floor is configured)" if e.get("required") else " (run --apply)"
+                    tail = (
+                        " (REQUIRED — will alarm once the floor is configured)"
+                        if e.get("required")
+                        else " (run --apply)"
+                    )
                     print(f"  ? {e['lane']:28} {','.join(envs) or '(file only)'} — not materialized{tail}")
                 continue
             state, detail = probe_cred(e, val)
@@ -1212,7 +1219,7 @@ def main() -> int:
     if apply:
         print(
             f"creds-hydrate: {hydrated} hydrated, {skipped} skipped. "
-            "Validate with a bounded host observation: limen observe --once --scope host"
+            "Validate with the credential verifier: python3 scripts/creds-hydrate.py --verify"
         )
         if skipped:
             print(

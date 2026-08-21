@@ -33,6 +33,26 @@ def test_host_observer_executes_every_host_owned_rung():
     assert expected <= {name for name, _command, _timeout in observer.HOST_PROBES}
 
 
+def test_remote_observer_executes_every_remote_owned_rung():
+    ownership = json.loads(
+        (Path(__file__).resolve().parents[2] / "institutio/governance/heartbeat-ownership.json").read_text()
+    )["rungs"]
+    expected = {name for name, row in ownership.items() if row["owner"] == "observe_remote"}
+    assert expected <= {name for name, _command, _timeout in observer.REMOTE_PROBES}
+
+
+def test_owned_probe_timeouts_match_registry_and_commands_are_report_only():
+    ownership = json.loads(
+        (Path(__file__).resolve().parents[2] / "institutio/governance/heartbeat-ownership.json").read_text()
+    )["rungs"]
+    for name, command, timeout in observer.HOST_PROBES + observer.REMOTE_PROBES:
+        if name in ownership and ownership[name]["owner"] in {"observe_host", "observe_remote"}:
+            assert timeout == ownership[name]["timeout_seconds"]
+        assert not {"--apply", "--emit", "--record", "dispatch"} & set(command)
+    commands = {name: command for name, command, _timeout in observer.HOST_PROBES + observer.REMOTE_PROBES}
+    assert "--no-write" in commands["github-actions-usage"]
+
+
 def test_boot_identity_rejects_nonzero_probe(monkeypatch):
     monkeypatch.setattr(
         observer.subprocess,

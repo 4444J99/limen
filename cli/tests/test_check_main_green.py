@@ -671,6 +671,30 @@ def test_generic_jam_emits_only_runner_startup_observation(tmp_path, monkeypatch
     assert emitted == ["runner_startup_jam"]
 
 
+def test_registered_default_jam_valve_enables_bounded_rerun(tmp_path, monkeypatch):
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_MAIN_GREEN_THROTTLE", "100000")
+    monkeypatch.setenv("LIMEN_CI_JAM_RERUN", "1")
+    m = _load()
+    _seed(tmp_path, "failure")
+    stamp = json.loads((tmp_path / "logs" / "main-green.json").read_text())
+    stamp["run_id"] = 29581455210
+    (tmp_path / "logs" / "main-green.json").write_text(json.dumps(stamp))
+    failure_type = type(m.classify_ci_failure([]))
+    monkeypatch.setattr(m, "classify_red_run", lambda _rid: failure_type("runner_startup_jam", "zero steps", True))
+    monkeypatch.setattr(m, "_fetch_open_prs", lambda: [])
+    monkeypatch.setattr(m, "_emit_ci_condition", lambda *_args: None)
+    seen = {}
+    monkeypatch.setattr(
+        m,
+        "attempt_reruns",
+        lambda ids, now=None, enabled=False: seen.update(ids=ids, enabled=enabled) or [],
+    )
+
+    assert m.main([]) == 1
+    assert seen == {"ids": [29581455210], "enabled": True}
+
+
 def test_green_clears_jam_state_and_notification(tmp_path, monkeypatch, capsys):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("LIMEN_NOTIFY", "0")

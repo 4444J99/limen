@@ -2708,7 +2708,7 @@ def _runner_admission_observation(repo: str) -> tuple[bool | None, str]:
     return False, f"newest run {run_id} failed without the matching admission annotation"
 
 
-def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False) -> int:
+def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False, write: bool = True) -> int:
     """Meter Actions spend and preserve runner-admission text without inferring account state."""
     if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
         print("[gitvs] usage: SKIP (offline)")
@@ -2749,24 +2749,25 @@ def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False) 
             "remediation_verified": False,
         },
     }
-    try:
-        USAGE_DOC.parent.mkdir(parents=True, exist_ok=True)
-        USAGE_DOC.write_text(json.dumps(doc, indent=2, sort_keys=True) + "\n")
-        USAGE_STAMP.parent.mkdir(parents=True, exist_ok=True)
-        USAGE_STAMP.write_text(
-            json.dumps(
-                {
-                    "month": doc["month"],
-                    "actions_net": actions_net,
-                    "actions_projected": projected,
-                    "admission_annotation_present": admission_present,
-                },
-                sort_keys=True,
+    if write:
+        try:
+            USAGE_DOC.parent.mkdir(parents=True, exist_ok=True)
+            USAGE_DOC.write_text(json.dumps(doc, indent=2, sort_keys=True) + "\n")
+            USAGE_STAMP.parent.mkdir(parents=True, exist_ok=True)
+            USAGE_STAMP.write_text(
+                json.dumps(
+                    {
+                        "month": doc["month"],
+                        "actions_net": actions_net,
+                        "actions_projected": projected,
+                        "admission_annotation_present": admission_present,
+                    },
+                    sort_keys=True,
+                )
+                + "\n"
             )
-            + "\n"
-        )
-    except Exception as e:  # observability must never break the beat
-        print(f"[gitvs] note: usage doc write skipped ({str(e)[:80]})")
+        except Exception as e:  # observability must never break the beat
+            print(f"[gitvs] note: usage doc write skipped ({str(e)[:80]})")
     if print_json:
         print(json.dumps(doc, indent=2, sort_keys=True))
     fails: list[str] = []
@@ -2830,6 +2831,7 @@ def main(argv: list[str] | None = None) -> int:
         help="exit 77 when live usage or runner-admission evidence is unavailable",
     )
     pu.add_argument("--print", action="store_true", help="print the usage doc JSON to stdout too")
+    pu.add_argument("--no-write", action="store_true", help="report only; write no usage receipt")
     ppd = sub.add_parser("pr-debt", help="exact paginated open-PR custody and owner-route predicate")
     ppd.add_argument("--check", action="store_true", help="exit 1 unless enumeration is exhaustive and typed")
     ppd.add_argument("--json", action="store_true", help="print the redacted machine-readable census")
@@ -2863,6 +2865,7 @@ def main(argv: list[str] | None = None) -> int:
             parity_only=bool(args.parity_only),
             offline=offline,
             strict=bool(args.strict),
+            write=not bool(args.no_write),
         )
 
     if args.cmd == "reconcile":

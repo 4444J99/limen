@@ -68,6 +68,25 @@ def test_usage_projects_actions_product_not_all_github_products(tmp_path, monkey
     assert doc["actions_net_usd_projected_month_end"] < doc["budget_net_usd"]
 
 
+def test_usage_no_write_preserves_immutable_observer_source(tmp_path, monkeypatch) -> None:
+    module = _load()
+    monkeypatch.setattr(module.shutil, "which", lambda _command: "/usr/bin/gh")
+    monkeypatch.setattr(module, "owners", lambda _estate: ["organvm"])
+    monkeypatch.setattr(
+        module,
+        "_usage_month",
+        lambda *_args: {"by_product": {"actions": {"net_usd": 0.0}}, "net_usd_total": 0.0},
+    )
+    monkeypatch.setattr(module, "_runner_admission_observation", lambda _repo: (False, "annotation absent"))
+    monkeypatch.setattr(module, "USAGE_DOC", tmp_path / "usage.json")
+    monkeypatch.setattr(module, "USAGE_STAMP", tmp_path / "usage-stamp.json")
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+
+    assert module.usage({}, check=True, print_json=False, write=False) == 0
+    assert not module.USAGE_DOC.exists()
+    assert not module.USAGE_STAMP.exists()
+
+
 def test_runner_admission_observation_paginates_and_preserves_unreadable_evidence(monkeypatch) -> None:
     module = _load()
     calls: list[list[str]] = []

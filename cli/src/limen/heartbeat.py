@@ -22,7 +22,7 @@ CONTRACT_RELATIVE_PATH = Path("spec/scheduled-process-contracts.json")
 STATE_SCHEMA = "limen.heartbeat_state.v1"
 PRIVATE_RECEIPT_SCHEMA = "limen.heartbeat_private_receipt.v1"
 PUBLIC_RECEIPT_SCHEMA = "limen.heartbeat_public_receipt.v1"
-SYSTEM_FAILURES = frozenset({"invalid", "output", "resource", "timeout", "unavailable"})
+SYSTEM_FAILURES = frozenset({"descendants", "invalid", "output", "resource", "timeout", "unavailable"})
 Clock = Callable[[], float]
 
 
@@ -312,6 +312,7 @@ def heartbeat_once(
             "duration_ms": 0,
             "returncode": None,
             "output_bytes": 0,
+            "surviving_descendant_count": 0,
             "runtime_sha": runtime_sha,
             "runtime_digest": runtime_digest,
             "contract_digest": contract_digest,
@@ -426,6 +427,7 @@ def heartbeat_once(
             "duration_ms": duration_ms,
             "returncode": returncode,
             "output_bytes": output_bytes,
+            "surviving_descendant_count": 0,
             "runtime_sha": runtime_sha,
             "runtime_digest": runtime_digest,
             "contract_digest": contract_digest,
