@@ -58,6 +58,25 @@ class RefResult:
 m._git = lambda _args: RefResult()
 assert m.remote_branches() == ["alpha", "zeta"]
 print("remote enumeration: PASS (sorted + deduplicated)")
+
+# gh_head_states resolves duplicate headRefNames to the maximum mergedAt epoch
+import json, subprocess
+class SubprocessResult:
+    returncode = 0
+    stdout = json.dumps([
+        {"headRefName": "dup-branch", "state": "MERGED", "mergedAt": "2026-06-01T00:00:00Z"},
+        {"headRefName": "dup-branch", "state": "MERGED", "mergedAt": "2026-08-15T00:00:00Z"},
+        {"headRefName": "single-branch", "state": "MERGED", "mergedAt": "2026-07-01T00:00:00Z"},
+        {"headRefName": "open-branch", "state": "OPEN", "mergedAt": None},
+    ])
+m.subprocess.run = lambda *args, **kwargs: SubprocessResult()
+m.shutil.which = lambda cmd: "/usr/bin/gh"
+merged, open_, online = m.gh_head_states(pr_limit=10)
+assert online is True
+assert open_ == {"open-branch"}
+expected_epoch = m._merged_at_epoch("2026-08-15T00:00:00Z")
+assert merged.get("dup-branch") == expected_epoch, f"Expected {expected_epoch}, got {merged.get('dup-branch')}"
+print("gh_head_states deduplication: PASS (maximum mergedAt epoch retained)")
 PY
 rc=$?
 [ "$rc" = 0 ] || exit 1
