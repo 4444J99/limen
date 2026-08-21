@@ -4,20 +4,20 @@ portal:
   description: 'Aggregate operational health; authenticated board details are private.'
   public_projection:
     schema_version: 'limen.public_board_projection.v1'
-    generated_at: '2026-08-16T00:56:30.268Z'
-    total: 3165
-    completed: 1816
+    generated_at: '2026-08-21T11:29:44.671Z'
+    total: 3184
+    completed: 1817
     active: 0
-    completion_rate: 0.574
+    completion_rate: 0.571
     by_status:
-      done: 1357
+      done: 1358
       archived: 459
-      needs_human: 117
-      failed_blocked: 366
-      open: 866
+      needs_human: 118
+      failed_blocked: 365
+      open: 884
     by_priority:
-      high: 1313
-      critical: 79
+      high: 1326
+      critical: 85
       medium: 1692
       low: 80
       backlog: 1
