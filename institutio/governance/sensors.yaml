@@ -152,7 +152,7 @@ sensors:
     steps:
       - command: "python3 scripts/enactment-audit.py --check"
         severity: advisory
-        escalation: "un-enacted fleet flag above — wire it in heartbeat-loop.sh, or kickstart the daemon (launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat)"
+        escalation: "un-enacted fleet flag above — repair its current on-demand or remote owner, then run `limen observe --once --scope host`; never recreate the retired heartbeat"
 
   github-estate-reconcile:
     section: "heartbeat"
@@ -1432,7 +1432,7 @@ sensors:
     steps:
       - command: "python3 scripts/host-pressure-stale.py --read-only"
         severity: advisory
-        escalation: "VITALS gauge missed VITALS_STALE_BEATS declared sample cadences — the throttle/shed valve may be flying blind; check `python3 -m limen.vigilia sample`, logs/vigilia/fast-wave.log, and the heartbeat LaunchAgent (2026-07-15 host-thrash incident: exogenous load stacked while nothing watched the watcher)"
+        escalation: "VITALS gauge missed VITALS_STALE_BEATS declared sample cadences — run the explicit `python3 -m limen.vigilia sample` maintenance path and inspect historical logs/vigilia/fast-wave.log evidence; never recreate the retired heartbeat"
 
   runtime-lag:
     section: "0o3"
@@ -1959,7 +1959,7 @@ sensors:
     steps:
       - command: "python3 scripts/check-beat-freshness.py"
         severity: advisory
-        escalation: "the resident heartbeat daemon predates its own loop body — every loop-body merge since is dead code; run `launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat` (the output names the exact timestamps)"
+        escalation: "the retired heartbeat must remain absent; verify immutable observer runtime digests with `limen observe --once --scope host` instead of restarting a resident scheduler"
 
   live-checkout-currency:
     section: "0z4b"

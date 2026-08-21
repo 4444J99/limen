@@ -74,7 +74,13 @@ def test_runner_admission_observation_paginates_and_preserves_unreadable_evidenc
     responses = iter(
         [
             subprocess.CompletedProcess([], 0, '{"id": 77, "conclusion": "failure"}', ""),
-            subprocess.CompletedProcess([], 0, "101\n102\n", ""),
+            subprocess.CompletedProcess(
+                [],
+                0,
+                '[{"id": 101, "conclusion": "failure", "steps": []}, '
+                '{"id": 102, "conclusion": "failure", "steps": []}]',
+                "",
+            ),
             subprocess.CompletedProcess([], 0, "ordinary failure\n", ""),
             subprocess.CompletedProcess([], 0, "spending limit reached\n", ""),
         ]
@@ -87,6 +93,7 @@ def test_runner_admission_observation_paginates_and_preserves_unreadable_evidenc
     monkeypatch.setattr(module, "_gh_user", fake_gh)
     assert module._runner_admission_observation("example/repo")[0] is True
     assert all("--paginate" in call for call in calls[1:])
+    assert "--slurp" in calls[1]
 
     responses = iter(
         [
@@ -95,6 +102,26 @@ def test_runner_admission_observation_paginates_and_preserves_unreadable_evidenc
         ]
     )
     assert module._runner_admission_observation("example/repo") == (None, "jobs unreadable")
+
+
+def test_runner_admission_preserves_executed_step_evidence(monkeypatch) -> None:
+    module = _load()
+    responses = iter(
+        [
+            subprocess.CompletedProcess([], 0, '{"id": 77, "conclusion": "failure"}', ""),
+            subprocess.CompletedProcess(
+                [],
+                0,
+                '[{"id": 101, "conclusion": "failure", "steps": [{"name": "pytest"}]}]',
+                "",
+            ),
+            subprocess.CompletedProcess([], 0, "spending limit reached\n", ""),
+        ]
+    )
+    monkeypatch.setattr(module, "_gh_user", lambda *_args, **_kwargs: next(responses))
+    present, detail = module._runner_admission_observation("example/repo")
+    assert present is False
+    assert "without the matching admission annotation" in detail
 
 
 def test_usage_strict_prefers_unreadable_admission_over_budget_failure(tmp_path, monkeypatch, capsys) -> None:

@@ -923,6 +923,33 @@ def test_dispatch_health_blocks_when_generated_plist_drifts_from_installed(tmp_p
     assert "LIMEN_CAMPAIGN_WAKE_TIMEOUT" in drift[0]["evidence"]
 
 
+def test_dispatch_health_accepts_verified_retirement_state(tmp_path: Path):
+    dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_retired")
+    snapshot = {
+        "generated_heartbeat_plist": {"present": False, "env": {}},
+        "heartbeat_plist": {"present": False, "env": {}},
+        "launchd": {"present": False, "running": False, "state": "missing", "env": {}},
+        "watchdog_plist": {"present": False},
+        "watchdog_launchd": {"present": False, "running": False, "state": "missing"},
+        "live_root_git": {"present": False, "dirty_entries": 0},
+        "watchdog": {
+            "healthy": True,
+            "last_line": "[watchdog] HEALTHY — heartbeat retired; run limen observe --once --scope host",
+        },
+        "async_probe": {"requested": False},
+        "prompt_packets": {"conductor_required_packets": 0},
+        "always_working": {"present": True, "required_open_count": 0},
+    }
+
+    blockers = dispatch.derive_blockers(snapshot)
+
+    assert not {item["id"] for item in blockers} & {
+        "heartbeat-plist-missing",
+        "heartbeat-launchd-not-running",
+        "heartbeat-watchdog-unhealthy",
+    }
+
+
 def test_dispatch_health_blocks_on_unresolved_prompt_packets(tmp_path: Path):
     dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_prompt_gate")
     dispatch.ROOT = tmp_path

@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from limen import observer
+from limen.bounded_subprocess import BoundedCompletedProcess, BoundedSubprocessError
 
 
 def test_observer_writes_counts_only_receipt(tmp_path, monkeypatch):
@@ -39,6 +40,32 @@ def test_boot_identity_rejects_nonzero_probe(monkeypatch):
         lambda *_args, **_kwargs: observer.subprocess.CompletedProcess([], 1, "", "unknown oid"),
     )
     assert observer._boot_identity() == "unavailable"
+
+
+def test_probe_uses_bounded_runner(monkeypatch, tmp_path):
+    calls = []
+
+    def bounded(command, **kwargs):
+        calls.append((command, kwargs))
+        return BoundedCompletedProcess(returncode=0, stdout=b"ok", stderr=b"")
+
+    monkeypatch.setattr(observer, "run_bounded_subprocess", bounded)
+    result = observer._run(["probe"], cwd=tmp_path, timeout=7)
+    assert result["status"] == "passed"
+    assert result["output_bytes"] == 2
+    assert calls[0][1]["stdout_ceiling"] == observer.PROBE_STDOUT_CEILING
+    assert calls[0][1]["stderr_ceiling"] == observer.PROBE_STDERR_CEILING
+
+
+def test_probe_reports_output_ceiling_failure(monkeypatch, tmp_path):
+    def exceeds(*_args, **_kwargs):
+        raise BoundedSubprocessError("output")
+
+    monkeypatch.setattr(observer, "run_bounded_subprocess", exceeds)
+    result = observer._run(["probe"], cwd=tmp_path, timeout=7)
+    assert result["status"] == "failed"
+    assert result["failure_kind"] == "output"
+    assert result["output_bytes"] is None
 
 
 def test_runtime_digest_covers_every_executed_probe(tmp_path, monkeypatch):

@@ -6,11 +6,16 @@ import hashlib
 import json
 import os
 from pathlib import Path
-import signal
 import subprocess
 import sys
 import time
 from typing import Any
+
+from limen.bounded_subprocess import BoundedSubprocessError, run_bounded_subprocess
+
+
+PROBE_STDOUT_CEILING = 256 * 1024
+PROBE_STDERR_CEILING = 256 * 1024
 
 
 def _digest(path: Path) -> str | None:
@@ -32,25 +37,28 @@ def _boot_identity() -> str:
 
 def _run(command: list[str], *, cwd: Path, timeout: int) -> dict[str, Any]:
     started = time.monotonic()
-    process = subprocess.Popen(
-        command, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True
-    )
     try:
-        stdout, stderr = process.communicate(timeout=timeout)
-        status = "passed" if process.returncode == 0 else "failed"
-    except subprocess.TimeoutExpired:
-        os.killpg(process.pid, signal.SIGTERM)
-        try:
-            stdout, stderr = process.communicate(timeout=2)
-        except subprocess.TimeoutExpired:
-            os.killpg(process.pid, signal.SIGKILL)
-            stdout, stderr = process.communicate()
-        status = "timed_out"
+        result = run_bounded_subprocess(
+            command,
+            cwd=cwd,
+            timeout_seconds=timeout,
+            stdout_ceiling=PROBE_STDOUT_CEILING,
+            stderr_ceiling=PROBE_STDERR_CEILING,
+        )
+    except BoundedSubprocessError as exc:
+        status = "timed_out" if exc.kind == "timeout" else "failed"
+        return {
+            "status": status,
+            "returncode": None,
+            "duration_ms": round((time.monotonic() - started) * 1000),
+            "output_bytes": None,
+            "failure_kind": exc.kind,
+        }
     return {
-        "status": status,
-        "returncode": process.returncode,
+        "status": "passed" if result.returncode == 0 else "failed",
+        "returncode": result.returncode,
         "duration_ms": round((time.monotonic() - started) * 1000),
-        "output_bytes": len(stdout.encode()) + len(stderr.encode()),
+        "output_bytes": len(result.stdout) + len(result.stderr),
     }
 
 

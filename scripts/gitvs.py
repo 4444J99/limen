@@ -2674,12 +2674,25 @@ def _runner_admission_observation(repo: str) -> tuple[bool | None, str]:
     if conclusion != "failure":
         return False, f"newest run {run_id} concluded '{conclusion}'"
     rj = _gh_user(
-        ["api", "--paginate", f"/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100", "--jq", ".jobs[].id"],
+        [
+            "api",
+            "--paginate",
+            "--slurp",
+            f"/repos/{repo}/actions/runs/{run_id}/jobs?per_page=100",
+            "--jq",
+            "map(.jobs[]) | map({id, conclusion, steps})",
+        ],
         timeout=30,
     )
     if rj.returncode != 0:
         return None, "jobs unreadable"
-    job_ids = [j.strip() for j in (rj.stdout or "").splitlines() if j.strip()]
+    try:
+        jobs = json.loads(rj.stdout or "[]")
+    except json.JSONDecodeError:
+        return None, "jobs unparseable"
+    if not isinstance(jobs, list):
+        return None, "jobs unparseable"
+    job_ids = [str(job.get("id")) for job in jobs if isinstance(job, dict) and job.get("id")]
     annotations: list[dict] = []
     for jid in job_ids:
         ra = _gh_user(
@@ -2689,7 +2702,7 @@ def _runner_admission_observation(repo: str) -> tuple[bool | None, str]:
         if ra.returncode != 0:
             return None, f"annotations unreadable for job {jid}"
         annotations.extend({"message": message} for message in (ra.stdout or "").splitlines() if message)
-    failure = classify_ci_failure([{"conclusion": "failure", "steps": []}], annotations)
+    failure = classify_ci_failure((job for job in jobs if isinstance(job, dict)), annotations)
     if failure.classification == "provider_runner_admission":
         return True, f"run {run_id}: {failure.detail}"
     return False, f"newest run {run_id} failed without the matching admission annotation"
