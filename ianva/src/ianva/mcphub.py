@@ -30,13 +30,19 @@ LOGFILE = paths.LOG_DIR / "backend.log"
 def materialize_settings(upstreams: list[Upstream], path: Path | None = None, bearer: str | None = None) -> Path:
     """Write the aggregator settings (MCPHub mcp_settings shape) from ianva's upstream set.
 
-    Bearer policy is ALWAYS written explicitly, because MCPHub defaults
+    Bearer and OAuth-server policy are ALWAYS written explicitly, because MCPHub defaults
     `routing.enableBearerAuth` to **true** when the key is absent (verified in its
     sseService.js / auth.js: `systemConfig?.routing?.enableBearerAuth ?? true`). So an omitted
     systemConfig does NOT mean "open" — it means the global /mcp route demands a bearer and every
     agent gets 401. Therefore:
       * bearer given (cloud face)  -> enableBearerAuth:true + bearerKeys:[bearer]  (must present it)
-      * no bearer (loopback local) -> enableBearerAuth:false                        (open on 127.0.0.1)"""
+      * no bearer (loopback local) -> enableBearerAuth:false                        (open on 127.0.0.1)
+
+    MCPHub also defaults its own OAuth authorization-server face to enabled.  ianva is a
+    loopback transport gateway, not an OAuth issuer: disabling that advertisement prevents
+    clients from mistaking MCPHub's dashboard authorization flow for a prerequisite to the
+    open local `/mcp` endpoint.  This does not disable MCPHub's OAuth *client* support for
+    authenticated upstreams or cloud-face bearer enforcement."""
     path = path or paths.MCPHUB_SETTINGS
     path.parent.mkdir(parents=True, exist_ok=True)
     servers: dict[str, dict] = {}
@@ -55,7 +61,10 @@ def materialize_settings(upstreams: list[Upstream], path: Path | None = None, be
         servers[u.name] = entry
     settings: dict = {"mcpServers": servers}
     routing = {"enableBearerAuth": True, "bearerKeys": [bearer]} if bearer else {"enableBearerAuth": False}
-    settings["systemConfig"] = {"routing": routing}
+    settings["systemConfig"] = {
+        "routing": routing,
+        "oauthServer": {"enabled": False},
+    }
     path.write_text(json.dumps(settings, indent=2) + "\n")
     return path
 
