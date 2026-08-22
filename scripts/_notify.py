@@ -432,7 +432,13 @@ def emit_event_v1(
             check=False,
             env=env,
         )
+        if completed.returncode != 0:
+            return DeliveryReceipt(
+                "failed", stable_id, event_id, {}, f"Domus broker exited {completed.returncode}"
+            )
         payload = json.loads(completed.stdout or "{}")
+        if not isinstance(payload, dict):
+            return DeliveryReceipt("failed", stable_id, event_id, {}, "invalid Domus broker response")
         status = payload.get("status")
         if status not in {"delivered", "deduped", "recorded", "withheld", "cleared", "failed"}:
             status = "failed"

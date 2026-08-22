@@ -30,6 +30,8 @@ def _now() -> datetime:
 def _boot_identity() -> str:
     try:
         result = subprocess.run(["sysctl", "-n", "kern.boottime"], capture_output=True, text=True, timeout=3)
+        if result.returncode != 0 or not result.stdout.strip():
+            return "unavailable"
         return hashlib.sha256(result.stdout.strip().encode()).hexdigest()[:20]
     except (OSError, subprocess.SubprocessError):
         return "unavailable"

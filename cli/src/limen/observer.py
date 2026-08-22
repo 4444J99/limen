@@ -89,7 +89,7 @@ HOST_PROBES = [
         60,
     ),
     ("hot-cache", ["bash", "scripts/verify-hot-cache.sh"], 30),
-    ("residue-census", [sys.executable, "scripts/residue-census.py"], 60),
+    ("residue-census", [sys.executable, "scripts/residue-census.py", "--check"], 60),
     ("notify-gate", [sys.executable, "scripts/check-notify-gate.py"], 30),
     ("host-pressure-freshness", [sys.executable, "scripts/host-pressure-stale.py", "--read-only"], 15),
     ("notification-registry-parity", [sys.executable, "scripts/check-notification-registry.py"], 20),
@@ -157,4 +157,9 @@ def observe_once(root: Path, scope: str) -> dict[str, Any]:
     temporary = receipt_path.with_suffix(f"{receipt_path.suffix}.tmp.{os.getpid()}")
     temporary.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
     os.replace(temporary, receipt_path)
+    receipt["failures"] = {
+        name: {key: result.get(key) for key in ("status", "returncode", "failure_kind") if result.get(key) is not None}
+        for name, result in results.items()
+        if result["status"] != "passed"
+    }
     return receipt

@@ -188,7 +188,7 @@ def main(argv: list[str] | None = None) -> int:
     report["kickstarts"] = kicked
 
     notified: list[str] = []
-    if report["relieve"]:
+    if args.apply and report["relieve"]:
         legacy_onset = _notify.notify_once(root, SHED_ONSET_KEY, "structured host-pressure onset", enabled=False)
         restart_count = sum(1 for item in kicked if item.get("ok"))
         _notify.emit_event_v1(
@@ -208,7 +208,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         if legacy_onset:
             notified.append(SHED_ONSET_KEY)
-    else:
+    elif args.apply:
         _notify.clear_condition(root, SHED_ONSET_KEY)
         _notify.emit_event_v1(
             root,
@@ -226,15 +226,16 @@ def main(argv: list[str] | None = None) -> int:
             enabled=enabled,
         )
     current_hog_keys = set()
-    for hog in report["root_hogs"]:
-        key = f"root-hog-{hog['pid']}"
-        current_hog_keys.add(key)
-        msg = f"Root process holds {hog['rss_mb'] / 1024:.1f} GiB ({hog['command'][:60]}) — run: {hog['one_liner']}"
-        if _notify.notify_once(root, key, msg, enabled=enabled):
-            notified.append(key)
-    for key in _notify.active_conditions(root):
-        if key.startswith("root-hog-") and key not in current_hog_keys:
-            _notify.clear_condition(root, key)  # hog gone — next onset re-fires
+    if args.apply:
+        for hog in report["root_hogs"]:
+            key = f"root-hog-{hog['pid']}"
+            current_hog_keys.add(key)
+            msg = f"Root process holds {hog['rss_mb'] / 1024:.1f} GiB ({hog['command'][:60]}) — run: {hog['one_liner']}"
+            if _notify.notify_once(root, key, msg, enabled=enabled):
+                notified.append(key)
+        for key in _notify.active_conditions(root):
+            if key.startswith("root-hog-") and key not in current_hog_keys:
+                _notify.clear_condition(root, key)  # hog gone — next onset re-fires
     report["notified"] = notified
 
     if args.json:

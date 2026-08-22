@@ -133,6 +133,9 @@ def observe(once: bool, scope: str, json_output: bool) -> None:
         click.echo(
             f"observe {scope}: {counts['passed']} passed, {counts['failed']} failed, {counts['timed_out']} timed out"
         )
+        for name, failure in receipt.get("failures", {}).items():
+            detail = failure.get("failure_kind") or failure.get("returncode")
+            click.echo(f"  - {name}: {failure['status']} ({detail})")
     if receipt["counts"]["failed"] or receipt["counts"]["timed_out"]:
         raise click.exceptions.Exit(1)
 

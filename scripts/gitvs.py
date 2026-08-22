@@ -2865,7 +2865,6 @@ def main(argv: list[str] | None = None) -> int:
             parity_only=bool(args.parity_only),
             offline=offline,
             strict=bool(args.strict),
-            write=not bool(args.no_write),
         )
 
     if args.cmd == "reconcile":
@@ -2887,6 +2886,7 @@ def main(argv: list[str] | None = None) -> int:
             check=bool(args.check),
             print_json=bool(args.print),
             strict=bool(args.strict),
+            write=not bool(args.no_write),
         )
 
     if args.cmd == "pr-debt":

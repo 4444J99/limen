@@ -22,7 +22,7 @@ show). Card refs use the established last-4 shorthand.*
 ## Summary
 
 - **Known recurring total: $495.26/mo** (+ Cloudflare variable $0–24/mo) — matches the estimated "$500+".
-- Vendors: 6 recurring · 4 pay-per-use/credits ($0 recurring found) · 2 failures attributed to the card hold at snapshot close.
+- Vendors: 6 recurring · 4 pay-per-use/credits ($0 recurring found) · 2 provider failures observed at snapshot close.
 - **Recommended end state after decisions below: ~$430–495/mo** (cut ≈ $0–68/mo). Corrected
   2026-07-09: the AI subs are parallel capacity pools the fleet exhausts (Claude Max dry in ~2
   days/week) — cutting them cuts capacity, not waste. The savings live in routing cheap tiers to

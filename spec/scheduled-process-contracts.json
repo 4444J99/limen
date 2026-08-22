@@ -23,8 +23,8 @@
         "nice": 15,
         "process_type": "Background",
         "run_at_load": false,
-        "start_interval_seconds": 900,
-        "throttle_interval_seconds": 900
+        "start_interval_seconds": 300,
+        "throttle_interval_seconds": 300
       },
       "limits": {
         "cpu_seconds_per_tick": 60,
@@ -37,7 +37,7 @@
       "owner": "organvm/limen#2528",
       "probes": [
         {
-          "cadence_seconds": 900,
+          "cadence_seconds": 1800,
           "command": ["python", "scripts/host-pressure-stale.py", "--read-only"],
           "cost": "cheap",
           "name": "host-pressure-freshness",
@@ -108,7 +108,7 @@
         },
         {
           "cadence_seconds": 21600,
-          "command": ["python", "scripts/residue-census.py"],
+          "command": ["python", "scripts/residue-census.py", "--check"],
           "cost": "heavy",
           "name": "residue-census",
           "timeout_seconds": 90

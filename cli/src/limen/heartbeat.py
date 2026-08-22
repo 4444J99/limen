@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -119,6 +120,13 @@ def _load_contract(root: Path) -> tuple[dict[str, Any], str]:
         if any(value in {"--apply", "--emit", "--live", "dispatch"} for value in command):
             raise HeartbeatContractError(f"probe is not read-only: {name}")
         names.add(name)
+    required_fires = sum(86_400 / probe["cadence_seconds"] for probe in probes)
+    available_fires = 86_400 / launchd["start_interval_seconds"]
+    if math.ceil(required_fires) > math.floor(available_fires):
+        raise HeartbeatContractError(
+            f"probe cadences are unschedulable: need {math.ceil(required_fires)} fires/day, "
+            f"have {math.floor(available_fires)}"
+        )
     return contract, _sha256(path)
 
 
@@ -208,7 +216,12 @@ def _command(root: Path, declared: list[str]) -> list[str]:
 
 
 def _runtime_identity(root: Path, contract_digest: str, probe: dict[str, Any] | None) -> tuple[str, str]:
-    files = [root / CONTRACT_RELATIVE_PATH, Path(__file__)]
+    files = [
+        root / CONTRACT_RELATIVE_PATH,
+        Path(__file__),
+        Path(__file__).with_name("bounded_subprocess.py"),
+        Path(__file__).with_name("host_admission.py"),
+    ]
     if probe is not None:
         for value in probe["command"]:
             if value.startswith("scripts/"):
@@ -370,6 +383,9 @@ def heartbeat_once(
                     reason = ",".join(str(value) for value in decision.get("reasons") or ["host-pressure"])
                 else:
                     lease = decision.get("lease")
+                    if lease is None:
+                        status = "deferred"
+                        reason = "admission-returned-no-lease"
             if probe["cost"] == "cheap" or lease is not None:
                 started = time.monotonic()
                 try:
@@ -402,10 +418,11 @@ def heartbeat_once(
                     reason = str(exc)
                     system_failure = True
                 duration_ms = round((time.monotonic() - started) * 1000)
-            state["probes"][probe["name"]] = {
-                "last_attempt_epoch": now,
-                "last_status": status,
-            }
+            if status != "deferred":
+                state["probes"][probe["name"]] = {
+                    "last_attempt_epoch": now,
+                    "last_status": status,
+                }
         if system_failure:
             state["consecutive_system_failures"] += 1
         elif status not in {"disabled"}:

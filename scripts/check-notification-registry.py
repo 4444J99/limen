@@ -8,7 +8,10 @@ from pathlib import Path
 import re
 import sys
 
-import yaml
+try:
+    import yaml
+except ModuleNotFoundError:  # optional outside the managed Limen environment
+    yaml = None
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "institutio" / "governance" / "notification-events.limen.json"
@@ -20,6 +23,9 @@ NON_EVENT_PROTOCOL_IDS = {"limen.notification_events.v1"}
 
 
 def main() -> int:
+    if yaml is None:
+        print("notification-registry: SKIP — PyYAML unavailable")
+        return 0
     errors: list[str] = []
     registry = json.loads(REGISTRY.read_text())
     events = registry.get("events") or {}

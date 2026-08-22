@@ -118,7 +118,9 @@ def run_bounded_subprocess(
 
     def apply_child_limits() -> None:
         if cpu_seconds is not None:
-            resource.setrlimit(resource.RLIMIT_CPU, (cpu_seconds, cpu_seconds))
+            _soft, hard = resource.getrlimit(resource.RLIMIT_CPU)
+            effective = cpu_seconds if hard == resource.RLIM_INFINITY else min(cpu_seconds, hard)
+            resource.setrlimit(resource.RLIMIT_CPU, (effective, hard))
 
     try:
         process = subprocess.Popen(
@@ -131,7 +133,7 @@ def run_bounded_subprocess(
             start_new_session=True,
             preexec_fn=apply_child_limits if cpu_seconds is not None else None,
         )
-    except OSError as exc:
+    except (OSError, subprocess.SubprocessError) as exc:
         raise BoundedSubprocessError("unavailable") from exc
     if (
         process.stdout is None or process.stderr is None or (input_bytes is not None and process.stdin is None)
@@ -153,6 +155,7 @@ def run_bounded_subprocess(
     stderr_size = 0
     input_offset = 0
     deadline = time.monotonic() + timeout_seconds
+    next_rss_check = 0.0
     streams: dict[int, tuple[str, object]] = {}
 
     def process_group_rss() -> int:
@@ -212,13 +215,20 @@ def run_bounded_subprocess(
                 register_stream(process.stdin, selectors.EVENT_WRITE, "stdin")
             else:
                 process.stdin.close()
-        while any(label != "stdin" for label, _stream in streams.values()):
-            remaining = deadline - time.monotonic()
+        while process.poll() is None or any(label != "stdin" for label, _stream in streams.values()):
+            now = time.monotonic()
+            remaining = deadline - now
             if remaining <= 0:
                 raise BoundedSubprocessError("timeout")
-            if rss_ceiling is not None and process_group_rss() > rss_ceiling:
-                raise BoundedSubprocessError("resource")
-            events = selector.select(timeout=min(remaining, 0.1))
+            if rss_ceiling is not None and process.poll() is None and now >= next_rss_check:
+                next_rss_check = now + 1.0
+                if process_group_rss() > rss_ceiling:
+                    raise BoundedSubprocessError("resource")
+            if streams:
+                events = selector.select(timeout=min(remaining, 0.1))
+            else:
+                time.sleep(min(remaining, 0.1))
+                events = []
             if not events:
                 continue
             for key, _mask in events:
@@ -260,10 +270,7 @@ def run_bounded_subprocess(
                     if stderr_size > stderr_ceiling:
                         raise BoundedSubprocessError("output")
                     stderr_chunks.append(chunk)
-        try:
-            returncode = process.wait(timeout=max(0.001, deadline - time.monotonic()))
-        except subprocess.TimeoutExpired as exc:
-            raise BoundedSubprocessError("timeout") from exc
+        returncode = process.wait(timeout=max(0.001, deadline - time.monotonic()))
         if surviving_process_group_pids():
             raise BoundedSubprocessError("descendants")
     except BoundedSubprocessError:

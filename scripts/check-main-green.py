@@ -497,9 +497,13 @@ def classify_red_run(run_id: int | str):
     jobs = data.get("jobs") if isinstance(data, dict) else None
     if not isinstance(jobs, list) or not jobs:
         return type(classify_ci_failure([]))("executed_code_failure", "classification evidence unavailable", False)
-    failed = [j for j in jobs if isinstance(j, dict) and (j.get("conclusion") or "") in ("failure", "startup_failure")]
-    ann = _gh_json(["api", f"repos/{REPO}/check-runs/{failed[0].get('id')}/annotations"], []) if failed else []
-    return classify_ci_failure(failed, ann if isinstance(ann, list) else [], visibility_drift=_visibility_drift(REPO))
+    failed = [j for j in jobs if isinstance(j, dict) and (j.get("conclusion") or "") in RED]
+    annotations: list[dict] = []
+    for job in failed:
+        observed = _gh_json(["api", f"repos/{REPO}/check-runs/{job.get('id')}/annotations"], [])
+        if isinstance(observed, list):
+            annotations.extend(item for item in observed if isinstance(item, dict))
+    return classify_ci_failure(failed, annotations, visibility_drift=_visibility_drift(REPO))
 
 
 def _visibility_drift(repo: str) -> bool:

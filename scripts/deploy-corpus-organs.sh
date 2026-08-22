@@ -37,8 +37,11 @@ fi
 LIMEN_ROOT="$LIVE" python3 "$LIVE/scripts/corpus-view.py" 2>&1 | tail -1 || true
 
 # 4. exercise the installed on-demand observation surface once.
-PYTHONPATH="$LIVE/cli/src${PYTHONPATH:+:$PYTHONPATH}" python3 -m limen observe --once --scope host \
-  && echo "[deploy] bounded host observation complete"
+if ! PYTHONPATH="$LIVE/cli/src${PYTHONPATH:+:$PYTHONPATH}" python3 -m limen observe --once --scope host; then
+  echo "[deploy] bounded host observation failed" >&2
+  exit 1
+fi
+echo "[deploy] bounded host observation complete"
 
 echo "[deploy] DONE. Knowledge base: http://127.0.0.1:8788/corpus.html"
 echo "[deploy] Corpus commands are installed for explicit on-demand use; no scheduler was created."
