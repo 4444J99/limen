@@ -64,18 +64,18 @@ scout/fieldwork vetting; adoption and every send stay human-gated.
 
 | dependency | used across our repos |
 |---|---|
-| pytest | 9 |
+| pytest | 10 |
 | pyyaml | 7 |
+| playwright | 6 |
 | pytest-cov | 6 |
-| playwright | 5 |
-| typescript | 5 |
+| typescript | 6 |
 | beautifulsoup4 | 4 |
 | cryptography | 4 |
 | ruff | 4 |
+| test | 4 |
 | tsx | 4 |
+| vitest | 4 |
 | eslint | 3 |
-| httpx | 3 |
-| jsonschema | 3 |
 
 ## Backflow (the inward product)
 

@@ -39,7 +39,8 @@ LIMEN_REMOTE_REAP_EVERY_MIN minutes, logs logs/reap-remote-branches.jsonl.
 Env: LIMEN_ROOT, LIMEN_REMOTE_REAP_REPO_ROOT (optional target repository; receipts remain
      under LIMEN_ROOT), LIMEN_REMOTE_REAP_APPLY (0), LIMEN_REMOTE_REAP_MAX (100),
      LIMEN_REMOTE_REAP_EVERY_MIN (30), LIMEN_REMOTE_REAP_GRACE_MIN (1440),
-     LIMEN_REMOTE_REAP_PROTECT (extra protected branch names), LIMEN_OFFLINE.
+     LIMEN_REMOTE_REAP_PR_LIMIT (3000), LIMEN_REMOTE_REAP_PROTECT (extra protected branch names),
+     LIMEN_OFFLINE.
 """
 
 from __future__ import annotations
@@ -253,13 +254,15 @@ def _merged_at_epoch(iso: str | None) -> float | None:
         return None
 
 
-def gh_head_states() -> tuple[dict[str, float | None], set[str], bool]:
+def gh_head_states(pr_limit: int | None = None) -> tuple[dict[str, float | None], set[str], bool]:
     """(merged_heads→mergedAt_epoch, open_heads, online). Fail-safe: offline/no gh → ({}, ∅, False)."""
     if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
         return {}, set(), False
+    if pr_limit is None:
+        pr_limit = _int_env("LIMEN_REMOTE_REAP_PR_LIMIT", 3000, minimum=1)
     try:
         res = subprocess.run(
-            ["gh", "pr", "list", "--state", "all", "--json", "headRefName,state,mergedAt", "--limit", "800"],
+            ["gh", "pr", "list", "--state", "all", "--json", "headRefName,state,mergedAt", "--limit", str(pr_limit)],
             cwd=str(LIMEN_ROOT),
             capture_output=True,
             text=True,
@@ -271,6 +274,12 @@ def gh_head_states() -> tuple[dict[str, float | None], set[str], bool]:
         prs = json.loads(res.stdout)
     except Exception:
         return {}, set(), False
+    if len(prs) >= pr_limit:
+        print(
+            f"[reap-remote-branches] WARN — gh returned {len(prs)} PRs at the --limit ceiling ({pr_limit}); "
+            "older PRs are out of view, so some heads may be misreported as live-work. "
+            "Raise LIMEN_REMOTE_REAP_PR_LIMIT or pass --limit."
+        )
     merged: dict[str, float | None] = {}
     open_: set[str] = set()
     for p in prs:
@@ -278,7 +287,12 @@ def gh_head_states() -> tuple[dict[str, float | None], set[str], bool]:
         if not head:
             continue
         if p.get("state") == "MERGED":
-            merged[head] = _merged_at_epoch(p.get("mergedAt"))
+            epoch = _merged_at_epoch(p.get("mergedAt"))
+            if head not in merged:
+                merged[head] = epoch
+            elif epoch is not None:
+                prev = merged[head]
+                merged[head] = epoch if prev is None else max(prev, epoch)
         elif p.get("state") == "OPEN":
             open_.add(head)
     return merged, open_, True
@@ -396,6 +410,12 @@ def main() -> int:
     )
     ap.add_argument("--force", action="store_true", help="ignore the self-throttle")
     ap.add_argument("--max", type=int, default=_int_env("LIMEN_REMOTE_REAP_MAX", 100, minimum=1))
+    ap.add_argument(
+        "--limit",
+        type=int,
+        default=_int_env("LIMEN_REMOTE_REAP_PR_LIMIT", 3000, minimum=1),
+        help="how many recent PRs to query from gh (default: 3000)",
+    )
     args = ap.parse_args()
 
     every_min = _float_env("LIMEN_REMOTE_REAP_EVERY_MIN", 30.0, minimum=0.0)
@@ -405,7 +425,7 @@ def main() -> int:
     dref = default_ref()
     dname = default_name(dref)
     checked = checked_out_branches()
-    merged, open_, online = gh_head_states()
+    merged, open_, online = gh_head_states(pr_limit=args.limit)
 
     # THE DOUBLE-DARK GATE: --apply alone is not enough. Remote deletes are irreversible, so the arming
     # env flag defaults OFF (unlike the local reaper). An unarmed --apply degrades to a dry-run.

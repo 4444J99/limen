@@ -10,12 +10,12 @@
 
 ## Coverage
 
-- Source scope: `partial:recent:2`; target: `recent:2`; horizon days: `2`; pending files: `0`; source errors: `20`; unsupported: `0`; unresolved units: `21`.
-- Prompt occurrences: `1455`; operator: `613`; derived: `842`.
-- Ask atoms: `1542` across `1033` lineages; current intents: `1542`.
-- Assessed atoms: `0`; excluded occurrences: `842`.
-- Dispositions: `unassessed` 1542.
-- Speech acts: `ask` 1409, `constraint` 91, `correction` 32, `acceptance_criterion` 9, `human_gate` 1.
+- Source scope: `partial:recent:2`; target: `recent:2`; horizon days: `2`; pending files: `38`; source errors: `53`; unsupported: `0`; unresolved units: `92`.
+- Prompt occurrences: `1571`; operator: `674`; derived: `872`.
+- Ask atoms: `2302` across `1404` lineages; current intents: `2302`.
+- Assessed atoms: `0`; excluded occurrences: `872`.
+- Dispositions: `unassessed` 2302.
+- Speech acts: `ask` 2119, `constraint` 124, `correction` 44, `acceptance_criterion` 14, `human_gate` 1.
 - Validation: `FAIL`.
 
 ## Dynamic Priority Contract
@@ -35,56 +35,56 @@ Priority is recomputed from evidence and lineage on every projection. The runtim
 
 | Rank | Atom | Kind | Authority | Score | Reasons | Disposition | Evidence |
 |---:|---|---|---|---:|---|---|---|
-| 1 | `pa-037582804664ee526baeb4c8` | `ask` | `operator` | 76.894 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 2 | `pa-3539cd959b485ec082f19381` | `ask` | `operator` | 76.893 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 3 | `pa-ea8eaace5e09582da6d2393e` | `ask` | `operator` | 76.892 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 4 | `pa-684f20cba4d3ae8ada17c2ed` | `ask` | `operator` | 76.891 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 5 | `pa-e7fbac3ee80c93f2fa227de5` | `ask` | `operator` | 76.891 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 6 | `pa-de878cdea5657e70daf4b60c` | `ask` | `operator` | 76.888 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 7 | `pa-00762aff6be5336d4a302d1f` | `ask` | `operator` | 76.887 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 8 | `pa-1f7186ae00fdd521a7b2e832` | `ask` | `operator` | 76.885 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 9 | `pa-c961d153e5f2e60f821cae91` | `ask` | `operator` | 76.884 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 10 | `pa-9c0187f680a4bc7e52a1f39c` | `ask` | `operator` | 76.73 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 11 | `pa-f1f91503b819d702317ba282` | `ask` | `operator` | 76.728 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 12 | `pa-ee9febc0bd2a713d90300960` | `ask` | `operator` | 76.722 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 13 | `pa-33223c15fd8c1f1fb0097cbe` | `ask` | `operator` | 76.721 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 14 | `pa-be971ae861945e29529f0793` | `ask` | `operator` | 76.721 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 15 | `pa-02c2b63c65e81bab183a0af2` | `ask` | `operator` | 76.717 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 16 | `pa-9aadf4977bbb10d9c9c43657` | `ask` | `operator` | 76.717 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 17 | `pa-175f74f84e1446aeac3b6e21` | `ask` | `operator` | 76.695 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 18 | `pa-964842c961280dc21b827dbf` | `ask` | `operator` | 76.578 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 19 | `pa-14f4a853f4eb73520abbe462` | `ask` | `operator` | 76.528 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 20 | `pa-a2266d5f088ead38c2714517` | `ask` | `operator` | 76.528 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 21 | `pa-3e939f8fd55c0e50e2123c67` | `ask` | `operator` | 76.213 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 22 | `pa-87486b7886b70fac8d7f5edc` | `ask` | `operator` | 76.213 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 23 | `pa-74f5b19648e3acb1df47c071` | `ask` | `operator` | 76.212 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 24 | `pa-fa1c028a2c37ff02ce82078c` | `ask` | `operator` | 76.211 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 25 | `pa-ff9b81c68e776fe157a7331b` | `ask` | `operator` | 76.208 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 26 | `pa-06ac1a092e548f782408885e` | `ask` | `operator` | 76.202 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 27 | `pa-ce2506e8f2f52aad7e80df1d` | `ask` | `operator` | 76.045 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 28 | `pa-45f0f7c3d39cce1d1293fcba` | `ask` | `operator` | 76.044 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 29 | `pa-bf73c078d4f738c5f35b4f15` | `ask` | `operator` | 76.04 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 30 | `pa-a55b9aab13e3be37ca50cbb2` | `ask` | `operator` | 76.037 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 31 | `pa-1be91baec5f8fdf73d20234a` | `ask` | `operator` | 76.036 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 32 | `pa-037582f111af67b080f5116d` | `ask` | `operator` | 76.035 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 33 | `pa-482e1c15990f6aea9295fad1` | `ask` | `operator` | 76.0 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 34 | `pa-62a92327a9870aa3e9674334` | `ask` | `operator` | 75.999 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 35 | `pa-1589f0301bfe014162206d3e` | `ask` | `operator` | 75.998 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 36 | `pa-8e114a3b0ffc635d825a892a` | `ask` | `operator` | 75.998 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 37 | `pa-95993ffb26600df135790df5` | `ask` | `operator` | 75.998 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 38 | `pa-98fe51cbfc6c6a27c7ebe3b7` | `correction` | `operator` | 75.902 | `recency`, `magnitude`, `operator_emphasis` | `unassessed` | none |
-| 39 | `pa-0d0ae075eb10df4e8dabda20` | `ask` | `operator` | 75.883 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 40 | `pa-fb9080842e5e8b05de1266a6` | `ask` | `operator` | 75.861 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 41 | `pa-8162315c53f59f717c804cb9` | `ask` | `operator` | 75.849 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 42 | `pa-2ca14c2b55b478609147ee02` | `ask` | `operator` | 75.847 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 43 | `pa-8a3dada7e531843ead19ea2c` | `ask` | `operator` | 75.847 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 44 | `pa-ce2ec328ea6fa2ac730a3b37` | `ask` | `operator` | 75.846 | `recency`, `recurrence`, `operator_emphasis` | `unassessed` | none |
-| 45 | `pa-d3d4a3a0f23a7c3f739d7fba` | `correction` | `operator` | 75.785 | `recency`, `magnitude`, `operator_emphasis` | `unassessed` | none |
-| 46 | `pa-8c4dd1bd6db57cd848d9b857` | `constraint` | `operator` | 75.775 | `magnitude`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 47 | `pa-686e897ec3fa08e487e406e8` | `acceptance_criterion` | `operator` | 75.711 | `magnitude`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 48 | `pa-3b8003a0b38c9ea494ebfbb2` | `ask` | `operator` | 75.709 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 49 | `pa-6660550a4e630571cb09f858` | `ask` | `operator` | 75.708 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
-| 50 | `pa-96ead39e80d3fdf14bc441b5` | `ask` | `operator` | 75.707 | `recurrence`, `recency`, `operator_emphasis` | `unassessed` | none |
+| 1 | `pa-01e3a2e3649cdc35303c6b19` | `ask` | `operator` | 78.266 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 2 | `pa-4456cb94d8ec1346af6e83a6` | `ask` | `operator` | 78.266 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 3 | `pa-590cca5a597aa975a429b7f6` | `ask` | `operator` | 78.266 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 4 | `pa-9ac66db3eb03cad86db7dc31` | `ask` | `operator` | 78.266 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 5 | `pa-c595a0741c5fe51cd5f7ea71` | `ask` | `operator` | 78.266 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 6 | `pa-da699df691768e37d95fc881` | `ask` | `operator` | 78.266 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 7 | `pa-00340cb367d69dc9a20f1a9d` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 8 | `pa-0350c7cbda6bcb9081fd9719` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 9 | `pa-03b0011a2c1fc8e2540b3145` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 10 | `pa-0ec986e49aeac825b8133378` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 11 | `pa-103665bf8c2e294b616fbba9` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 12 | `pa-11872365c3aedd22c6ce2332` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 13 | `pa-19c5eb657dd24c3da70b11a9` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 14 | `pa-1d82ae7047ccf59680b89ec6` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 15 | `pa-1deb600387e2815d93b86b2b` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 16 | `pa-1e10181b9c6a695932e36053` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 17 | `pa-25f8f0ab4bdd2390a1508e4a` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 18 | `pa-2dcd5157a219d06b88000c56` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 19 | `pa-3374380d71f546ff3c04c291` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 20 | `pa-354b6718935fa356e62cce13` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 21 | `pa-387d0cbfadf4f14d5b876a08` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 22 | `pa-3c6a6eaedab8207ff256c85f` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 23 | `pa-3d4df58786aaf45d20c28e00` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 24 | `pa-3e5f14ba82547b550846d729` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 25 | `pa-4faba04c50d33e8c85d83df7` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 26 | `pa-52001fb3b52c83345eb8419a` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 27 | `pa-55a3eccb2a8f0022d9f3e820` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 28 | `pa-5684b0e0962a4e75df488a90` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 29 | `pa-5b144413c3c95a8ae8924580` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 30 | `pa-642d9ac08d57bbc4f955e301` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 31 | `pa-65f7270a1fb9b5f63cda6e89` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 32 | `pa-697f821b8d89807cdc1b3645` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 33 | `pa-6d2a938fb888b7c82af2f38c` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 34 | `pa-6dd48044a4e9d7488113e34d` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 35 | `pa-6eef3d99178d4cca26c2d607` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 36 | `pa-6efb2a8e4c3c9b472ee96f38` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 37 | `pa-7e5c7cecb764c44428b6190c` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 38 | `pa-819951455985e4be59e4ead4` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 39 | `pa-874612efa9eb564e9f8ff0ad` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 40 | `pa-892fb313cf70fb3266ddd1f4` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 41 | `pa-89d2ceed33f6c3f5d8c33654` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 42 | `pa-8a3e1bd523f2743a4b4ff045` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 43 | `pa-8b97588d79c5147758a7a307` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 44 | `pa-8fade73657751ce417f3a40d` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 45 | `pa-8faffbf2c2267ef0c111706a` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 46 | `pa-9215ba7c1053dae2197f9e74` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 47 | `pa-956e7bcadadde5554b039a19` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 48 | `pa-95b16597452c25e4ae508cd7` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 49 | `pa-9cb314445aa27269b62ca6c9` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
+| 50 | `pa-9d66a40fe193871295426de3` | `ask` | `operator` | 78.103 | `recurrence`, `recency`, `magnitude` | `unassessed` | none |
 
 ## Commands
 
