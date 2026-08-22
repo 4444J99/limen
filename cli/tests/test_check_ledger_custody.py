@@ -112,7 +112,7 @@ def _findings(mod, prefix: str) -> list[str]:
         return mod.check_a_passengers("github-pr-debt", spec, baseline)
     if prefix == "B":
         return mod.check_b_touchers("github-pr-debt", spec)
-    return mod.check_c_series("github-pr-debt", spec)
+    return mod.check_c_series("github-pr-debt", spec, baseline)
 
 
 # ── A: the recorded defect — an unrelated commit carrying the ledger ──────────────
@@ -204,6 +204,24 @@ def test_c_accepts_a_forward_series(mod, repo):
         _commit(repo, KEEPER_SUBJECT)
 
     assert _findings(mod, "C") == []
+
+
+def test_c_exempts_an_immutable_baselined_duplicate_but_not_a_fresh_one(mod, repo):
+    stamp = "2026-08-06T03:17:46Z"
+    _write_ledger(repo, 1293, stamp)
+    _commit(repo, KEEPER_SUBJECT)
+    _write_ledger(repo, 1301, stamp)
+    historic = _commit(repo, "feat: merged passenger")
+    _write_baseline(repo, f"{historic} github-pr-debt")
+    _commit(repo, "chore: record immutable history")
+
+    assert _findings(mod, "C") == []
+
+    _write_ledger(repo, 1302, stamp)
+    _commit(repo, KEEPER_SUBJECT)
+    found = _findings(mod, "C")
+    assert len(found) == 1
+    assert "two rows, one observation" in found[0]
 
 
 # ── the predicate as a whole, through its real surface ────────────────────────────

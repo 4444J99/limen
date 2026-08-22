@@ -86,6 +86,11 @@ def _read_jsonl(path: Path) -> list[dict]:
     return rows
 
 
+def _incident_key(row: dict) -> tuple[object, object, object, object]:
+    """Return the stable event identity used to make failed ship retries idempotent."""
+    return (row.get("observed_at"), row.get("root"), row.get("pid"), row.get("action"))
+
+
 def cmd_probe(args: argparse.Namespace) -> int:
     root = Path(args.root or ROOT)
     pid, available = _occupancy(root)
@@ -156,11 +161,20 @@ def cmd_ship(args: argparse.Namespace) -> int:
     else:
         ledger = {"schema": SCHEMA, "incidents": []}
 
-    ledger["incidents"] = list(ledger.get("incidents") or []) + [
-        {k: v for k, v in r.items() if k != "shipped"} for r in unshipped
-    ]
-    ledger["incident_count"] = len(ledger["incidents"])
-    ledger["generated_at"] = _now()
+    existing = list(ledger.get("incidents") or [])
+    candidates = existing + [{k: v for k, v in r.items() if k != "shipped"} for r in unshipped]
+    incidents: list[dict] = []
+    seen: set[tuple[object, object, object, object]] = set()
+    for row in candidates:
+        key = _incident_key(row)
+        if key in seen:
+            continue
+        seen.add(key)
+        incidents.append(row)
+    if incidents != existing:
+        ledger["generated_at"] = _now()
+    ledger["incidents"] = incidents
+    ledger["incident_count"] = len(incidents)
     ledger["schema"] = SCHEMA
 
     if args.dry_run:

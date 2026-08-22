@@ -329,6 +329,23 @@ def test_ship_is_a_noop_with_nothing_recorded(tmp_path):
     assert "nothing to ship" in proc.stdout
 
 
+def test_failed_ship_retry_does_not_duplicate_the_ledger(tmp_path):
+    """ship-docs can fail after the candidate ledger is written; retrying must be byte-idempotent."""
+    _organ(tmp_path, "record", "--root", str(tmp_path), "--pid", "99", "--action", "skipped-unpark")
+
+    first = _organ(tmp_path, "ship")
+    assert first.returncode == 1
+    ledger_path = tmp_path / "docs/receipts/session-contention-ledger.json"
+    first_bytes = ledger_path.read_bytes()
+
+    second = _organ(tmp_path, "ship")
+    assert second.returncode == 1
+    assert ledger_path.read_bytes() == first_bytes
+    ledger = json.loads(first_bytes)
+    assert ledger["incident_count"] == 1
+    assert len(ledger["incidents"]) == 1
+
+
 # ── the probe ─────────────────────────────────────────────────────────────────────
 
 
