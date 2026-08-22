@@ -3798,6 +3798,12 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Extra branch names (space-separated) reap-remote-branches.py NEVER deletes, on top of the built-in trunks (main/master/develop/trunk) and the default branch. Empty by default."
+  LIMEN_REMOTE_REAP_PR_LIMIT:
+    default: 3000
+    env: LIMEN_REMOTE_REAP_PR_LIMIT
+    self_update: none
+    owner: gitvs
+    note: "How many RECENT PRs reap-remote-branches.py reads for proof 2 (merged PR). Defaults to 3000 so older PRs in large repos are not masked."
   LIMEN_REAP_CORE:
     default: "limen session-meta sovereign-systems--elevate-align portfolio portvs universal-mail--automation"
     env: LIMEN_REAP_CORE

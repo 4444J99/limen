@@ -1515,6 +1515,27 @@
       ],
       "note": "Candidate template: /tmp/settings.json.tmpl.candidate-611a4757 (render-validated: chezmoi execute-template + jq green; 504->416 lines). If /tmp was cleared, regenerate deterministically: python3 /tmp/tmpl-candidate-611a4757.py against the committed tmpl, or re-derive from memory project-inline-settings-guards-dead.md (records the full fix pattern). After apply, guard-liveness-check.sh must print ALL PASS and the next session's gh-pr-comment probe should inject preflight context. Residual nuance: liturgy line 51 still says the hook blocks all *.plist; the dispatcher denies only LaunchAgents/LaunchDaemons paths and advises on other .plist (that line edit was itself classifier-gated).",
       "issue": 1897
+    },
+    {
+      "id": "L-GITHUB-PR2532-HISTORY-REMOVAL",
+      "label": "Remove the contaminated PR #2532 object history through GitHub's sensitive-data removal channel after the clean replacement is durable.",
+      "owner": "yours",
+      "cost": "one bounded GitHub Support or sensitive-data-removal request, followed by an access check",
+      "unlocks": "removes the raw operator-request artifact and private path material retained by pull-request refs or caches even after the branch is superseded",
+      "source_task": "notification/runtime closeout clean replacement; privacy owner issue #2537",
+      "gate": "historical object and pull-request-ref removal is a GitHub account/support action that agents cannot prove or complete through normal repository writes",
+      "status": "open",
+      "added": "2026-08-22",
+      "steps": [
+        "Wait for the clean replacement PR to own every safe intended change and for PR #2532 to be closed unmerged.",
+        "Use GitHub's sensitive-data removal or Support workflow for the contaminated #2532 commit history; never paste the raw artifact into the request or another tracked surface.",
+        "Verify the original blob and retained pull-request commit surfaces are no longer publicly retrievable, then attach only the redacted removal receipt to issue #2537."
+      ],
+      "note": "Deleting a branch or closing a pull request alone is not accepted as historical removal. The raw body and private paths remain private corpus evidence and must not be recopied into issues, PR bodies, or commits.",
+      "issue": 2537,
+      "sovereignty": {
+        "reason": "identity"
+      }
     }
   ]
 }

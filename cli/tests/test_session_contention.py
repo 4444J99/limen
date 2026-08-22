@@ -288,6 +288,7 @@ def test_record_appends_one_incident(tmp_path):
     assert len(rows) == 1
     assert rows[0]["pid"] == 99
     assert rows[0]["action"] == "skipped-reset-hard"
+    assert rows[0]["event_id"].startswith("contention-")
     assert rows[0]["shipped"] is False
 
 
@@ -312,6 +313,26 @@ def test_record_distinguishes_a_new_session(tmp_path):
     assert len(rows) == 2, "a different occupant is a different incident"
 
 
+def test_same_second_recurrences_receive_distinct_event_ids(tmp_path, monkeypatch):
+    spec = importlib.util.spec_from_file_location("session_contention_under_test", ORGAN)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    monkeypatch.setattr(module, "_now", lambda: "2026-08-22T12:00:00Z")
+
+    for pid, action in ((99, "skipped-unpark"), (100, "skipped-stash"), (99, "skipped-unpark")):
+        assert module.cmd_record(SimpleNamespace(root=str(tmp_path), pid=pid, action=action)) == 0
+
+    rows = [
+        json.loads(line)
+        for line in (tmp_path / "logs/session-contention.jsonl").read_text().splitlines()
+        if line.strip()
+    ]
+    assert len(rows) == 3
+    assert {row["observed_at"] for row in rows} == {"2026-08-22T12:00:00Z"}
+    assert len({row["event_id"] for row in rows}) == 3
+
+
 def test_ship_dry_run_builds_the_ledger_without_committing(tmp_path):
     _organ(tmp_path, "record", "--root", str(tmp_path), "--pid", "99", "--action", "skipped-unpark")
     proc = _organ(tmp_path, "ship", "--dry-run")
@@ -327,6 +348,45 @@ def test_ship_is_a_noop_with_nothing_recorded(tmp_path):
     proc = _organ(tmp_path, "ship", "--dry-run")
     assert proc.returncode == 0
     assert "nothing to ship" in proc.stdout
+
+
+def test_failed_ship_retry_does_not_duplicate_the_ledger(tmp_path):
+    """ship-docs can fail after the candidate ledger is written; retrying must be byte-idempotent."""
+    _organ(tmp_path, "record", "--root", str(tmp_path), "--pid", "99", "--action", "skipped-unpark")
+
+    first = _organ(tmp_path, "ship")
+    assert first.returncode == 1
+    ledger_path = tmp_path / "docs/receipts/session-contention-ledger.json"
+    first_bytes = ledger_path.read_bytes()
+
+    second = _organ(tmp_path, "ship")
+    assert second.returncode == 1
+    assert ledger_path.read_bytes() == first_bytes
+    ledger = json.loads(first_bytes)
+    assert ledger["incident_count"] == 1
+    assert len(ledger["incidents"]) == 1
+
+
+def test_legacy_rows_use_a_digest_identity_for_failed_ship_retry(tmp_path):
+    legacy = {
+        "observed_at": "2026-08-21T13:18:59Z",
+        "root": str(tmp_path),
+        "pid": 99,
+        "action": "skipped-unpark",
+    }
+    log = tmp_path / "logs/session-contention.jsonl"
+    log.parent.mkdir(parents=True)
+    log.write_text(json.dumps({**legacy, "shipped": False}) + "\n")
+    ledger = tmp_path / "docs/receipts/session-contention-ledger.json"
+    ledger.parent.mkdir(parents=True)
+    ledger.write_text(json.dumps({"schema": "limen.session_contention_ledger.v1", "incidents": [legacy]}))
+
+    proc = _organ(tmp_path, "ship", "--dry-run")
+
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    rendered = json.loads(proc.stdout)
+    assert rendered["incident_count"] == 1
+    assert rendered["incidents"] == [legacy]
 
 
 # ── the probe ─────────────────────────────────────────────────────────────────────

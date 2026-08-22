@@ -177,8 +177,8 @@ def check_b_touchers(ledger_id: str, spec: dict[str, Any]) -> list[str]:
     return findings
 
 
-def check_c_series(ledger_id: str, spec: dict[str, Any]) -> list[str]:
-    """Committed rows are distinct and strictly ordered by the ledger's own clock."""
+def check_c_series(ledger_id: str, spec: dict[str, Any], baseline: set[tuple[str, str]]) -> list[str]:
+    """Non-baselined committed rows are distinct and strictly ordered by the ledger's own clock."""
     series_key = spec.get("series_key")
     if not series_key:
         return []
@@ -186,28 +186,39 @@ def check_c_series(ledger_id: str, spec: dict[str, Any]) -> list[str]:
     rows.reverse()  # git log is newest-first; walk forward in time
     findings: list[str] = []
     seen: dict[str, str] = {}
-    previous: tuple[str, str] | None = None
+    high_water: tuple[str, str] | None = None
     for sha, _subject in rows:
+        baselined = (sha, ledger_id) in baseline
         data = blob_at(sha, spec["path"])
         if data is None:
-            findings.append(f"[C] {ledger_id}: {sha[:8]} committed an unreadable ledger")
+            if not baselined:
+                findings.append(f"[C] {ledger_id}: {sha[:8]} committed an unreadable ledger")
             continue
         stamp = data.get(series_key)
         if not isinstance(stamp, str) or not stamp:
             # Pre-keeper commits may predate the field; that is history, not a live violation.
+            continue
+        if baselined:
+            # Baselining suppresses findings against immutable history; it must not erase
+            # that row from the ordering state used to judge every fresh successor, nor
+            # lower a later high-water mark established by an earlier committed row.
+            seen.setdefault(stamp, sha)
+            if high_water is None or stamp > high_water[1]:
+                high_water = (sha, stamp)
             continue
         if stamp in seen:
             findings.append(
                 f"[C] {ledger_id}: {sha[:8]} re-ships the census already committed as "
                 f"{seen[stamp][:8]} ({series_key}={stamp}) — two rows, one observation"
             )
-        elif previous and stamp <= previous[1]:
+        elif high_water and stamp <= high_water[1]:
             findings.append(
                 f"[C] {ledger_id}: {sha[:8]} carries {series_key}={stamp}, not later than "
-                f"{previous[0][:8]}'s {previous[1]} — the series is out of order"
+                f"{high_water[0][:8]}'s {high_water[1]} — the series is out of order"
             )
         seen.setdefault(stamp, sha)
-        previous = (sha, stamp)
+        if high_water is None or stamp > high_water[1]:
+            high_water = (sha, stamp)
     return findings
 
 
@@ -244,7 +255,7 @@ def main() -> int:
         baseline = load_baseline(spec.get("baseline"))
         findings.extend(check_a_passengers(ledger_id, spec, baseline))
         findings.extend(check_b_touchers(ledger_id, spec))
-        findings.extend(check_c_series(ledger_id, spec))
+        findings.extend(check_c_series(ledger_id, spec, baseline))
 
     if findings:
         sys.stdout.write(f"check-ledger-custody: FAIL — {len(findings)} finding(s)\n\n")

@@ -7,6 +7,10 @@
 # default branch and has an explicit recovery owner. A fresh PR violation is reverted instead.
 #
 # Each line: <full sha> <ledger id>   # subject
+9dce7c3a723aa1c67d6d27201fa3c39a8e1ad5dc github-pr-debt  # merged passenger; recovery owner #2337
+dedd045c5a7500154f157899e83055ecbae02a31 session-contention  # merged passenger; recovery owner #2337
+e5763e8b2286e156dfe76d7a1f253841a37205ee session-contention  # merged duplicate census; recovery owner #2337
+6e7d16fc5af2fe450d3da3df1312326178e3c93f session-contention  # merged passenger; recovery owner #2337
 0f44105e8c5d79a73f04937aee5a8808190e60d4 github-pr-debt  # docs(gitvs): record exact-owner lifecycle fixed point (#1541)
 46296655793beebf5ac3274dac9e5aafd701550f github-pr-debt  # docs: preserve laptop-wide recovery continuation (#1495)
 ad0565a4ad9062625db6c7a81734dc9384dd9c2b github-pr-debt  # feat: close PR lifecycle estate at fixed point (#1508)

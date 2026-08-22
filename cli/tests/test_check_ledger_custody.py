@@ -112,7 +112,7 @@ def _findings(mod, prefix: str) -> list[str]:
         return mod.check_a_passengers("github-pr-debt", spec, baseline)
     if prefix == "B":
         return mod.check_b_touchers("github-pr-debt", spec)
-    return mod.check_c_series("github-pr-debt", spec)
+    return mod.check_c_series("github-pr-debt", spec, baseline)
 
 
 # ── A: the recorded defect — an unrelated commit carrying the ledger ──────────────
@@ -204,6 +204,70 @@ def test_c_accepts_a_forward_series(mod, repo):
         _commit(repo, KEEPER_SUBJECT)
 
     assert _findings(mod, "C") == []
+
+
+def test_c_exempts_an_immutable_baselined_duplicate_but_not_a_fresh_one(mod, repo):
+    stamp = "2026-08-06T03:17:46Z"
+    _write_ledger(repo, 1293, stamp)
+    _commit(repo, KEEPER_SUBJECT)
+    _write_ledger(repo, 1301, stamp)
+    historic = _commit(repo, "feat: merged passenger")
+    _write_baseline(repo, f"{historic} github-pr-debt")
+    _commit(repo, "chore: record immutable history")
+
+    assert _findings(mod, "C") == []
+
+    _write_ledger(repo, 1302, stamp)
+    _commit(repo, KEEPER_SUBJECT)
+    found = _findings(mod, "C")
+    assert len(found) == 1
+    assert "two rows, one observation" in found[0]
+
+
+def test_c_keeps_a_baselined_row_as_duplicate_state(mod, repo):
+    stamp = "2026-08-06T03:17:46Z"
+    _write_ledger(repo, 1293, stamp)
+    historic = _commit(repo, "feat: immutable historical census")
+    _write_baseline(repo, f"{historic} github-pr-debt")
+    _commit(repo, "chore: record immutable history")
+
+    _write_ledger(repo, 1301, stamp)
+    _commit(repo, KEEPER_SUBJECT)
+
+    found = _findings(mod, "C")
+    assert len(found) == 1
+    assert "two rows, one observation" in found[0]
+
+
+def test_c_keeps_a_baselined_row_as_ordering_state(mod, repo):
+    _write_ledger(repo, 1293, "2026-08-06T03:17:46Z")
+    historic = _commit(repo, "feat: immutable historical census")
+    _write_baseline(repo, f"{historic} github-pr-debt")
+    _commit(repo, "chore: record immutable history")
+
+    _write_ledger(repo, 1301, "2026-08-05T01:00:00Z")
+    _commit(repo, KEEPER_SUBJECT)
+
+    found = _findings(mod, "C")
+    assert len(found) == 1
+    assert "out of order" in found[0]
+
+
+def test_c_baseline_cannot_lower_the_series_high_water(mod, repo):
+    _write_ledger(repo, 1293, "2026-08-10T00:00:00Z")
+    high_water = _commit(repo, KEEPER_SUBJECT)
+    _write_ledger(repo, 1294, "2026-08-05T00:00:00Z")
+    historic = _commit(repo, "feat: immutable older census")
+    _write_baseline(repo, f"{historic} github-pr-debt")
+    _commit(repo, "chore: record immutable history")
+
+    _write_ledger(repo, 1301, "2026-08-07T00:00:00Z")
+    _commit(repo, KEEPER_SUBJECT)
+
+    found = _findings(mod, "C")
+    assert len(found) == 1
+    assert high_water[:8] in found[0]
+    assert "2026-08-10T00:00:00Z" in found[0]
 
 
 # ── the predicate as a whole, through its real surface ────────────────────────────

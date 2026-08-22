@@ -35,10 +35,12 @@ local, ship separately, and the durable record is a normal PR like every other b
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
 import sys
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -86,6 +88,25 @@ def _read_jsonl(path: Path) -> list[dict]:
     return rows
 
 
+def _incident_digest(row: dict) -> str:
+    payload = {key: value for key, value in row.items() if key != "shipped"}
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _incident_key(row: dict) -> str:
+    """Return the recorded event ID, with a stable digest for legacy rows."""
+    event_id = row.get("event_id")
+    if isinstance(event_id, str) and event_id:
+        return event_id
+    return f"legacy-{_incident_digest(row)}"
+
+
 def cmd_probe(args: argparse.Namespace) -> int:
     root = Path(args.root or ROOT)
     pid, available = _occupancy(root)
@@ -121,6 +142,7 @@ def cmd_record(args: argparse.Namespace) -> int:
         break
 
     incident = {
+        "event_id": f"contention-{uuid.uuid4()}",
         "observed_at": _now(),
         "root": root,
         "pid": args.pid,
@@ -156,11 +178,27 @@ def cmd_ship(args: argparse.Namespace) -> int:
     else:
         ledger = {"schema": SCHEMA, "incidents": []}
 
-    ledger["incidents"] = list(ledger.get("incidents") or []) + [
-        {k: v for k, v in r.items() if k != "shipped"} for r in unshipped
-    ]
-    ledger["incident_count"] = len(ledger["incidents"])
-    ledger["generated_at"] = _now()
+    existing = list(ledger.get("incidents") or [])
+    candidates = existing + [{k: v for k, v in r.items() if k != "shipped"} for r in unshipped]
+    incidents: list[dict] = []
+    seen: dict[str, str] = {}
+    for row in candidates:
+        key = _incident_key(row)
+        digest = _incident_digest(row)
+        if key in seen:
+            if seen[key] != digest:
+                print(
+                    "session-contention: event_id collision in incident evidence "
+                    f"({key}) — refusing to rewrite the ledger"
+                )
+                return 1
+            continue
+        seen[key] = digest
+        incidents.append(row)
+    if incidents != existing:
+        ledger["generated_at"] = _now()
+    ledger["incidents"] = incidents
+    ledger["incident_count"] = len(incidents)
     ledger["schema"] = SCHEMA
 
     if args.dry_run:
