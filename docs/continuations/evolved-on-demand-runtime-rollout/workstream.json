@@ -1,19 +1,5 @@
 {
   "branch": "work/evolved-on-demand-runtime-rollout",
-  "acceptance": {
-    "activation": "only through a reviewed Domus plan hash built from exact merged Limen and Domus heads",
-    "heartbeat": "com.limen.heartbeat is a non-resident read-only one-shot with hard wall CPU RSS output single-flight and pressure-admission bounds",
-    "legacy": "com.limen.watchdog heartbeat-loop.sh fast-wave and host-pressure-watchdog remain absent",
-    "merge_custody": "the acting agent merges exact heads through repository policy; Anthony is not a merge gate",
-    "provider_state": "issue 182 is not a billing or rollout gate and provider text does not prove account cause",
-    "runtime_proof": "one controlled fire plus scheduled fires preserve zero descendants and immutable source while ordinary findings do not trip the kill switch"
-  },
-  "dependencies": {
-    "corpvs_contract_pr": 546,
-    "domus_admission_pr": 371,
-    "limen_runtime_head": "b2ca3e8d4491c489a690aba708ee6ac7d1a3939d",
-    "limen_runtime_pr": 2528
-  },
   "contract": {
     "authorization": {
       "approval_mode": "never",
@@ -51,6 +37,7 @@
       "README.md",
       "manifest.md",
       "workstream.json",
+      "rollout-acceptance.json",
       "workstream-contract.py",
       "intent.md",
       "runtime.md",
