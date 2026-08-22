@@ -224,6 +224,35 @@ def test_c_exempts_an_immutable_baselined_duplicate_but_not_a_fresh_one(mod, rep
     assert "two rows, one observation" in found[0]
 
 
+def test_c_keeps_a_baselined_row_as_duplicate_state(mod, repo):
+    stamp = "2026-08-06T03:17:46Z"
+    _write_ledger(repo, 1293, stamp)
+    historic = _commit(repo, "feat: immutable historical census")
+    _write_baseline(repo, f"{historic} github-pr-debt")
+    _commit(repo, "chore: record immutable history")
+
+    _write_ledger(repo, 1301, stamp)
+    _commit(repo, KEEPER_SUBJECT)
+
+    found = _findings(mod, "C")
+    assert len(found) == 1
+    assert "two rows, one observation" in found[0]
+
+
+def test_c_keeps_a_baselined_row_as_ordering_state(mod, repo):
+    _write_ledger(repo, 1293, "2026-08-06T03:17:46Z")
+    historic = _commit(repo, "feat: immutable historical census")
+    _write_baseline(repo, f"{historic} github-pr-debt")
+    _commit(repo, "chore: record immutable history")
+
+    _write_ledger(repo, 1301, "2026-08-05T01:00:00Z")
+    _commit(repo, KEEPER_SUBJECT)
+
+    found = _findings(mod, "C")
+    assert len(found) == 1
+    assert "out of order" in found[0]
+
+
 # ── the predicate as a whole, through its real surface ────────────────────────────
 
 
