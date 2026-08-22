@@ -139,11 +139,27 @@ def codex_skill_budget() -> dict | None:
 
         con = sqlite3.connect(f"file:{LOGDB}?mode=ro&immutable=1", uri=True, timeout=1.5)
         try:
-            row = con.execute(
-                "SELECT ts, feedback_log_body FROM logs "
+            rows = con.execute(
+                "SELECT ts, feedback_log_body, process_uuid FROM logs "
                 "WHERE feedback_log_body LIKE '%truncated skill metadata%' "
-                "ORDER BY ts DESC LIMIT 1"
-            ).fetchone()
+                "ORDER BY ts DESC, ts_nanos DESC LIMIT 100"
+            ).fetchall()
+            row = next(
+                (
+                    candidate
+                    for candidate in rows
+                    if candidate[1]
+                    and re.search(r"budget_limit=\d+", candidate[1])
+                    and re.search(r"total_skills=\d+", candidate[1])
+                    and re.search(r"truncated_description_chars_per_skill=\d+", candidate[1])
+                ),
+                None,
+            )
+            process_started_at = None
+            if row and row[2]:
+                process_started_at = con.execute(
+                    "SELECT MIN(ts) FROM logs WHERE process_uuid = ?", (row[2],)
+                ).fetchone()[0]
         finally:
             con.close()
     except Exception:
@@ -162,6 +178,7 @@ def codex_skill_budget() -> dict | None:
         ts = None
     return {
         "ts": ts,  # epoch of Codex's most recent truncation — the enactment witness
+        "process_started_at": process_started_at,
         "budget_tokens": _num("budget_limit"),
         "total_skills": _num("total_skills"),
         "chars_per_skill": _num("truncated_description_chars_per_skill"),
@@ -406,7 +423,9 @@ def run(mode: str, quiet: bool) -> int:
             applied_at = LEDGER.stat().st_mtime if LEDGER.is_file() else None
         except OSError:
             applied_at = None
-        truncated_after_slim = bool(trunc_ts and applied_at and trunc_ts > applied_at)
+        process_started_at = b.get("process_started_at")
+        stale_process = bool(applied_at and process_started_at is not None and process_started_at < int(applied_at))
+        truncated_after_slim = bool(trunc_ts and applied_at and trunc_ts > applied_at and not stale_process)
         emitted = ""
         if trunc_ts:
             import time as _time
@@ -415,7 +434,13 @@ def run(mode: str, quiet: bool) -> int:
             emitted = (
                 f"; Codex last truncated {when} ({b.get('total_skills')} skills @ "
                 f"{b.get('chars_per_skill')} chars/skill)"
-                + (" — AFTER the last slim" if truncated_after_slim else " — none since the last slim")
+                + (
+                    " — AFTER the last slim"
+                    if truncated_after_slim
+                    else " — from a session already active at the last slim"
+                    if stale_process and trunc_ts > applied_at
+                    else " — none since the last slim"
+                )
             )
         if over or truncated_after_slim:
             reasons = []
