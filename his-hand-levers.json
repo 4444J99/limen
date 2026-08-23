@@ -1515,6 +1515,29 @@
       ],
       "note": "Candidate template: /tmp/settings.json.tmpl.candidate-611a4757 (render-validated: chezmoi execute-template + jq green; 504->416 lines). If /tmp was cleared, regenerate deterministically: python3 /tmp/tmpl-candidate-611a4757.py against the committed tmpl, or re-derive from memory project-inline-settings-guards-dead.md (records the full fix pattern). After apply, guard-liveness-check.sh must print ALL PASS and the next session's gh-pr-comment probe should inject preflight context. Residual nuance: liturgy line 51 still says the hook blocks all *.plist; the dispatcher denies only LaunchAgents/LaunchDaemons paths and advises on other .plist (that line edit was itself classifier-gated).",
       "issue": 1897
+    },
+    {
+      "id": "L-GITHUB-PR2532-HISTORY-REMOVAL",
+      "label": "Remove the contaminated PR #2532 object history through GitHub's sensitive-data removal channel after the clean replacement is durable.",
+      "owner": "yours",
+      "cost": "two private custody copies, one bounded GitHub Support or sensitive-data-removal request, and one executable postflight receipt",
+      "unlocks": "removes the raw operator-request artifact and private path material retained by pull-request refs or caches even after the branch is superseded",
+      "source_task": "notification/runtime closeout clean replacement; privacy owner issue #2537",
+      "gate": "historical object and pull-request-ref removal is a GitHub account/support action; release remains false until the exact target has two-copy custody and scripts/check-sensitive-history-removal.py emits a merged immutable postflight receipt",
+      "status": "open",
+      "added": "2026-08-22",
+      "steps": [
+        "In a private limen.sensitive_history_removal_packet.v1, bind repository organvm/limen, PR #2532, original head 6526fd06a06e598bd02e92ba912ea55af09e713c, artifact blob 3c305f2375dd5efd055d86e631b132a0823ac67e, path ORIGINAL_REQUEST.md, refs/pull/2532/head, refs/heads/codex/limen-closeout-20260822, and the bounded Pages URLs. Record the private reachability scan plus two readable, restore-verified artifact copies on distinct device identities; the packet and copy paths never enter git or chat.",
+        "After clean replacement PR #2538 is durable and PR #2532 is closed unmerged, run `python3 scripts/check-sensitive-history-removal.py preflight --packet \"$PRIVATE_REMOVAL_PACKET\"`. Proceed only if it proves both custody copies, the sealed head/blob identities, the unchanged closed-unmerged PR object, and both exact public refs.",
+        "Submit one GitHub sensitive-data-removal or Support request bound to PR #2532, its original head/blob, and the two target refs. Never paste the artifact body or private custody paths into the request or another tracked surface.",
+        "After GitHub reports completion, run `python3 scripts/check-sensitive-history-removal.py postflight --packet \"$PRIVATE_REMOVAL_PACKET\" --apply --receipt docs/receipts/privacy/pr-2532-history-removal.json`. The predicate must prove the exact PR/branch refs and blob API/page/raw surfaces absent and the bounded unauthenticated Pages probes clean.",
+        "Open and merge the redacted receipt through protected rails, then link that immutable commit to issue #2537. Close this lever only after the committed receipt reports pass; closing/deleting the branch or PR alone is never sufficient."
+      ],
+      "note": "The canonical predicate reads private evidence but emits only exact public object identities, counts, HTTP statuses, and booleans. The raw body, private packet, custody paths, device identities, and content digest stay private. Existing third-party clones remain outside GitHub's deletion boundary.",
+      "issue": 2537,
+      "sovereignty": {
+        "reason": "identity"
+      }
     }
   ]
 }

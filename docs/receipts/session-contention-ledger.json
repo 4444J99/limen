@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-17T19:26:55Z",
+  "generated_at": "2026-08-21T13:18:59Z",
   "incident_count": 34,
   "incidents": [
     {
@@ -111,24 +111,6 @@
       "root": "/Users/4jp/Workspace/limen"
     },
     {
-      "action": "skipped-stash-push",
-      "observed_at": "2026-08-10T12:51:20Z",
-      "pid": 90173,
-      "root": "/Users/4jp/Workspace/limen"
-    },
-    {
-      "action": "skipped-stash-push",
-      "observed_at": "2026-08-10T12:51:20Z",
-      "pid": 90173,
-      "root": "/Users/4jp/Workspace/limen"
-    },
-    {
-      "action": "skipped-stash-push",
-      "observed_at": "2026-08-10T12:51:20Z",
-      "pid": 90173,
-      "root": "/Users/4jp/Workspace/limen"
-    },
-    {
       "action": "skipped-reset-hard",
       "observed_at": "2026-08-12T22:59:05Z",
       "pid": 95485,
@@ -180,6 +162,48 @@
       "action": "skipped-unpark",
       "observed_at": "2026-08-17T19:10:59Z",
       "pid": 34107,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-unpark",
+      "observed_at": "2026-08-18T14:46:30Z",
+      "pid": 23735,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-unpark",
+      "observed_at": "2026-08-19T13:11:49Z",
+      "pid": 11758,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-stash-push",
+      "observed_at": "2026-08-19T15:11:52Z",
+      "pid": 21891,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-unpark",
+      "observed_at": "2026-08-19T17:45:31Z",
+      "pid": 21012,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-unpark",
+      "observed_at": "2026-08-19T18:27:14Z",
+      "pid": 32483,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-reattach",
+      "observed_at": "2026-08-19T21:07:13Z",
+      "pid": 93787,
+      "root": "/Users/4jp/Workspace/limen"
+    },
+    {
+      "action": "skipped-unpark",
+      "observed_at": "2026-08-20T18:50:00Z",
+      "pid": 85164,
       "root": "/Users/4jp/Workspace/limen"
     }
   ],
