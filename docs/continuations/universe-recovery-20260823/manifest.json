@@ -1,0 +1,312 @@
+{
+  "schema_version": "limen.universe_recovery_manifest.v1",
+  "generated_at": "2026-08-23T16:00:00Z",
+  "launch_digest": "b2e0bbccd1f23e70c96c049d358d55bd796c7b9a29f7a19685a80d5f74d4047a",
+  "census_digest": "4e399bc6cd3c69c7bc8dc7119213dd0d6c95d081e221eb2086804cecc0e66438",
+  "cursor_receipts": [
+    {
+      "schema_version": "limen.universe_cursor_receipt.v1",
+      "surface": "repositories",
+      "total_count": 319,
+      "observed_count": 319,
+      "page_count": 4,
+      "complete": false,
+      "errors": ["current-exhaustive-rederivation-pending"]
+    },
+    {
+      "schema_version": "limen.universe_cursor_receipt.v1",
+      "surface": "openPullRequests",
+      "total_count": 949,
+      "observed_count": 949,
+      "page_count": 10,
+      "complete": false,
+      "errors": ["current-exhaustive-rederivation-pending"]
+    },
+    {
+      "schema_version": "limen.universe_cursor_receipt.v1",
+      "surface": "namedLineage.reviewThreads",
+      "total_count": 156,
+      "observed_count": 156,
+      "page_count": 2,
+      "complete": true,
+      "errors": []
+    }
+  ],
+  "sources": [
+    {
+      "schema_version": "limen.recovery_source_coverage.v1",
+      "source_instance_id": "launch-snapshot",
+      "source_kind": "github-estate",
+      "enumeration_complete": false,
+      "owner": "organvm/limen:run-758d8e6df21df2184a68bf9757128219",
+      "predicate": "python3 scripts/github-estate-census.py --check",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/source-projection.json",
+      "blocker": "current exhaustive repository PR ref and closure census remains to be re-derived"
+    },
+    {
+      "schema_version": "limen.recovery_source_coverage.v1",
+      "source_instance_id": "named-review-lineage",
+      "source_kind": "github-review-lineage",
+      "enumeration_complete": true,
+      "owner": "organvm/limen:run-cabb7b07c5fc1647e16eb59e65e21b47",
+      "predicate": "all thread and comment cursors reconcile to totalCount",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/explorations/review-admission.md"
+    },
+    {
+      "schema_version": "limen.recovery_source_coverage.v1",
+      "source_instance_id": "agy-artifacts",
+      "source_kind": "private-artifact-set",
+      "enumeration_complete": true,
+      "owner": "organvm/limen:universe-recovery-20260823",
+      "predicate": "12 Markdown artifacts and 12 metadata records remain retained",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/source-projection.json"
+    },
+    {
+      "schema_version": "limen.recovery_source_coverage.v1",
+      "source_instance_id": "agy-git-bundle",
+      "source_kind": "git-bundle",
+      "enumeration_complete": true,
+      "owner": "organvm/limen:universe-recovery-20260823",
+      "predicate": "git bundle verify succeeds and manifest contains 659 refs",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/source-projection.json"
+    },
+    {
+      "schema_version": "limen.recovery_source_coverage.v1",
+      "source_instance_id": "limen-stashes",
+      "source_kind": "git-stashes",
+      "enumeration_complete": true,
+      "owner": "organvm/limen:universe-recovery-20260823",
+      "predicate": "26 stashes remain present without pop or drop",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/source-projection.json"
+    },
+    {
+      "schema_version": "limen.recovery_source_coverage.v1",
+      "source_instance_id": "collaboration-beta-dirty-state",
+      "source_kind": "human-protected-worktree",
+      "enumeration_complete": true,
+      "owner": "collaboration-operations-platform:work/platform-beta-20260802",
+      "predicate": "47 paths remain untouched until paired custody is available",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/source-projection.json"
+    },
+    {
+      "schema_version": "limen.recovery_source_coverage.v1",
+      "source_instance_id": "Archive4T",
+      "source_kind": "paired-custody-volume",
+      "enumeration_complete": false,
+      "owner": "his-hand-levers:universe-recovery-custody-volumes",
+      "predicate": "mount and identity-verify Archive4T",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/closeout.md",
+      "blocker": "volume not mounted at launch"
+    },
+    {
+      "schema_version": "limen.recovery_source_coverage.v1",
+      "source_instance_id": "T7Recovery",
+      "source_kind": "paired-custody-volume",
+      "enumeration_complete": false,
+      "owner": "his-hand-levers:universe-recovery-custody-volumes",
+      "predicate": "mount and identity-verify T7Recovery",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/closeout.md",
+      "blocker": "volume not mounted at launch"
+    }
+  ],
+  "baseline_keys": [
+    "source:launch-snapshot",
+    "source:named-review-lineage",
+    "source:agy-artifacts",
+    "source:agy-git-bundle",
+    "source:limen-stashes",
+    "source:collaboration-beta-dirty-state",
+    "source:Archive4T",
+    "source:T7Recovery",
+    "organvm/limen:pull-request:2542@95bc0a572bb4ec2aaffcc75e696c7aac71935a75"
+  ],
+  "newcomer_keys": [],
+  "dispositions": [
+    {
+      "schema_version": "limen.recovery_disposition_receipt.v1",
+      "item_key": "source:launch-snapshot",
+      "item_kind": "source_instance",
+      "source_digest": "b2e0bbccd1f23e70c96c049d358d55bd796c7b9a29f7a19685a80d5f74d4047a",
+      "owner": "organvm/limen:run-758d8e6df21df2184a68bf9757128219",
+      "predicate": "rederive every current cursor and denominator",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/source-projection.json",
+      "terminal_class": "owned_active"
+    },
+    {
+      "schema_version": "limen.recovery_disposition_receipt.v1",
+      "item_key": "source:named-review-lineage",
+      "item_kind": "source_instance",
+      "source_digest": "594875fcf611ff8cfaf1fccb7a0266f200bee7785f8e820adfad0bac525aa1ff",
+      "owner": "organvm/limen:run-cabb7b07c5fc1647e16eb59e65e21b47",
+      "predicate": "all 156 review threads have explicit correction or disposition receipts",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/explorations/review-admission.md",
+      "terminal_class": "owned_active"
+    },
+    {
+      "schema_version": "limen.recovery_disposition_receipt.v1",
+      "item_key": "source:agy-artifacts",
+      "item_kind": "source_instance",
+      "source_digest": "15bdaa2cdf5be5a968db21147659f602acae4b9db7b96396ded1018a669f5d41",
+      "owner": "organvm/limen:universe-recovery-20260823",
+      "predicate": "retain and privately ingest the complete artifact set",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/source-projection.json",
+      "terminal_class": "owned_active"
+    },
+    {
+      "schema_version": "limen.recovery_disposition_receipt.v1",
+      "item_key": "source:agy-git-bundle",
+      "item_kind": "source_instance",
+      "source_digest": "6e70155a94de48e73ebd2a69806f4b879c671e244a9898e597a07eb869c4963b",
+      "owner": "organvm/limen:universe-recovery-20260823",
+      "predicate": "retain the verified bundle until paired restore succeeds",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/source-projection.json",
+      "terminal_class": "owned_active"
+    },
+    {
+      "schema_version": "limen.recovery_disposition_receipt.v1",
+      "item_key": "source:limen-stashes",
+      "item_kind": "source_instance",
+      "source_digest": "374dd63a6f99d7a1a67f42ab9ce46eaac7bf3db02cd7402ba24f20f31d812678",
+      "owner": "organvm/limen:universe-recovery-20260823",
+      "predicate": "classify every stash without pop or drop",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/source-projection.json",
+      "terminal_class": "owned_active"
+    },
+    {
+      "schema_version": "limen.recovery_disposition_receipt.v1",
+      "item_key": "source:collaboration-beta-dirty-state",
+      "item_kind": "source_instance",
+      "source_digest": "86c033764e2f0994dec31fc3681e20ead1b7f5df381ba8dcd7df2e3d306e8591",
+      "owner": "collaboration-operations-platform:work/platform-beta-20260802",
+      "predicate": "paired custody precedes any coherent recovery commit",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/source-projection.json",
+      "terminal_class": "owned_active"
+    },
+    {
+      "schema_version": "limen.recovery_disposition_receipt.v1",
+      "item_key": "source:Archive4T",
+      "item_kind": "source_instance",
+      "source_digest": "f594ff3b48486f047cb77fd5179720cea58579973ee0540fbe9ed28799986bac",
+      "owner": "his-hand-levers:universe-recovery-custody-volumes",
+      "predicate": "mount and identity-verify Archive4T",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/closeout.md",
+      "terminal_class": "blocked"
+    },
+    {
+      "schema_version": "limen.recovery_disposition_receipt.v1",
+      "item_key": "source:T7Recovery",
+      "item_kind": "source_instance",
+      "source_digest": "01a354a4c3d5ad63d20edb1d4d98792ac1cb3e6ebd80570b7a087b2db9d98668",
+      "owner": "his-hand-levers:universe-recovery-custody-volumes",
+      "predicate": "mount and identity-verify T7Recovery",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/closeout.md",
+      "terminal_class": "blocked"
+    },
+    {
+      "schema_version": "limen.recovery_disposition_receipt.v1",
+      "item_key": "organvm/limen:pull-request:2542@95bc0a572bb4ec2aaffcc75e696c7aac71935a75",
+      "item_kind": "pull_request",
+      "source_digest": "9443769f43e7b4f8cc28d43858b30c407e7c8df63639cdc003485237005c91ca",
+      "owner": "organvm/limen:pull-request:2542",
+      "predicate": "resolve three current threads and obtain executed merge admission on the exact head",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/explorations/review-admission.md",
+      "terminal_class": "owned_active"
+    }
+  ],
+  "review_closures": [
+    {
+      "schema_version": "limen.review_lineage_closure.v2",
+      "repository": "organvm/limen",
+      "pull_request": 2542,
+      "observed_at": "2026-08-23T16:00:00Z",
+      "head_sha": "95bc0a572bb4ec2aaffcc75e696c7aac71935a75",
+      "base_ref": "main",
+      "base_sha": "f034e3e659c8c8c3b9469b7b66e32c2bc03fdb64",
+      "merge_sha": null,
+      "review_decision": null,
+      "checks_digest": "9443769f43e7b4f8cc28d43858b30c407e7c8df63639cdc003485237005c91ca",
+      "cursor_receipts": [
+        {
+          "schema_version": "limen.universe_cursor_receipt.v1",
+          "surface": "reviewThreads",
+          "total_count": 3,
+          "observed_count": 3,
+          "page_count": 1,
+          "complete": true,
+          "errors": []
+        },
+        {
+          "schema_version": "limen.universe_cursor_receipt.v1",
+          "surface": "statusCheckRollup.contexts",
+          "total_count": 13,
+          "observed_count": 13,
+          "page_count": 1,
+          "complete": true,
+          "errors": []
+        },
+        {
+          "schema_version": "limen.universe_cursor_receipt.v1",
+          "surface": "reviewThreads/PRRT_kwDOStELdc6bgNOC/comments",
+          "total_count": 1,
+          "observed_count": 1,
+          "page_count": 1,
+          "complete": true,
+          "errors": []
+        },
+        {
+          "schema_version": "limen.universe_cursor_receipt.v1",
+          "surface": "reviewThreads/PRRT_kwDOStELdc6bgOfm/comments",
+          "total_count": 1,
+          "observed_count": 1,
+          "page_count": 1,
+          "complete": true,
+          "errors": []
+        },
+        {
+          "schema_version": "limen.universe_cursor_receipt.v1",
+          "surface": "reviewThreads/PRRT_kwDOStELdc6bgOfq/comments",
+          "total_count": 1,
+          "observed_count": 1,
+          "page_count": 1,
+          "complete": true,
+          "errors": []
+        }
+      ],
+      "threads": [
+        {
+          "schema_version": "limen.review_thread_closure.v2",
+          "thread_id": "PRRT_kwDOStELdc6bgNOC",
+          "resolved": false,
+          "outdated": false,
+          "disposition": "pending",
+          "receipt": null,
+          "comment_ids": ["discussion_r3838868341"]
+        },
+        {
+          "schema_version": "limen.review_thread_closure.v2",
+          "thread_id": "PRRT_kwDOStELdc6bgOfm",
+          "resolved": false,
+          "outdated": false,
+          "disposition": "pending",
+          "receipt": null,
+          "comment_ids": ["discussion_r3838875738"]
+        },
+        {
+          "schema_version": "limen.review_thread_closure.v2",
+          "thread_id": "PRRT_kwDOStELdc6bgOfq",
+          "resolved": false,
+          "outdated": false,
+          "disposition": "pending",
+          "receipt": null,
+          "comment_ids": ["discussion_r3838875741"]
+        }
+      ],
+      "unresolved_current": 3,
+      "unresolved_outdated": 0,
+      "lifecycle_stage": "open",
+      "corrective_owner": null,
+      "terminal": false
+    }
+  ],
+  "reap_journals": []
+}

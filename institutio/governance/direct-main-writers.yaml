@@ -91,8 +91,8 @@ surfaces:
     disposition: gated-genesis-founding-push-new-private-repo-only
     expected: {git_push: 1, push_literal: 1}
   scripts/reap-remote-branches.py:
-    disposition: nondefault-branch-deletion-only
-    expected: {git_push: 3, push_literal: 1}
+    disposition: read-only-legacy-classifier-string-only
+    expected: {git_push: 1}
   scripts/reap_acceptance.py:
     disposition: receipt-string-only
     expected: {git_push: 1}

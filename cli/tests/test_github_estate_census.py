@@ -82,6 +82,9 @@ def test_census_normalizes_distinct_work_kinds_and_registry_report() -> None:
                 "name_with_owner": "renamed-owner/repo",
                 "private": False,
                 "default_branch": "main",
+                "default_sha": "a" * 40,
+                "repository_id": "R_repo_1",
+                "archived": True,
                 "connection_totals": {kind: len(value) for kind, value in nodes.items()},
             }
         ],
@@ -94,6 +97,11 @@ def test_census_normalizes_distinct_work_kinds_and_registry_report() -> None:
     assert full["source_report"]["normalized_leaf_count"] == 6
     assert full["summary"]["kind_counts"] == {"branch": 2, "check": 2, "issue": 1, "pull_request": 1}
     assert full["summary"]["debt_counts"] == {"branch": 1, "check": 1, "issue": 1}
+    assert full["repositories"][0]["repository_id"] == "R_repo_1"
+    assert full["repositories"][0]["default_ref"] == "refs/heads/main"
+    assert full["repositories"][0]["default_sha"] == "a" * 40
+    assert full["repositories"][0]["archived"] is True
+    assert len(full["repositories"][0]["default_generation"]) == 64
     assert tracked["source_report"]["semantic_status"] == "ready"
 
 

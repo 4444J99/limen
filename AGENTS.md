@@ -197,6 +197,15 @@ per invocation. A `&&`/`;`/pipe chain forces the judge to guess about the whole 
 chain also short-circuits — hiding which member failed. Shell **scripts** chain freely inside
 their own bodies; the rule binds the top-level judged invocation, not script internals.
 
+**8. Landing proof is positive and repository-qualified.**
+A closed-unmerged PR, the absence of an open PR, branch age, a lower branch count, or walkthrough
+metadata is never proof that work landed or may be deleted. Landing requires the exact repository,
+ref tip, and default generation plus either ancestry/merge proof or reviewed tree/patch-equivalence
+to a named successor. Every historical review finding remains lifecycle debt until its correction or
+evidence-backed disposition is bound to the relevant head and default result. Destructive cleanup
+requires separate custody and review-closure proof; census or prose may observe these facts but may
+never set completion.
+
 ### Standing Corrections (from insights reports 2026-06-23 → 2026-07-17)
 
 Six recurring failures distilled from six insights reports into lane-neutral rules. Enforced by

@@ -1,0 +1,34 @@
+{
+  "schema_version": "limen.work_packet.v1",
+  "root_run_id": "run-758d8e6df21df2184a68bf9757128219",
+  "parent_run_id": "run-758d8e6df21df2184a68bf9757128219",
+  "work_id": "universe-recovery-reaping-audit",
+  "work_key": "organvm-limen-universe-recovery-reaping-audit",
+  "intent": {
+    "objective": "Read-only audit of existing remote/local branch reaping, acceptance registries, custody guards, and schemas. Return concrete extension points and test files for repository-qualified RefDispositionV2, one-use capabilities, CAS deletion, and write-ahead reconciliation.",
+    "output_shape": "found, not_found, confidence, exact file and symbol references"
+  },
+  "execution": {
+    "base": "f034e3e659c8c8c3b9469b7b66e32c2bc03fdb64",
+    "scope": "scripts/reap-remote-branches.py,scripts/reap_acceptance.py,cli/src/limen,cli/tests,spec,docs/remote-branch-reap-acceptance*"
+  },
+  "intent_hash": "",
+  "execution_hash": "",
+  "initiator": {"schema_version": "limen.agent_identity.v1", "agent": "codex", "surface": "native", "session_id": "01a02f60-498f-7732-a532-853019d6a146", "native_run_id": null, "provider_identity": "codex"},
+  "conductor": {"schema_version": "limen.agent_identity.v1", "agent": "codex", "surface": "native", "session_id": "01a02f60-498f-7732-a532-853019d6a146", "native_run_id": null, "provider_identity": "codex"},
+  "preferred_agent": "codex",
+  "required_capabilities": ["inspect"],
+  "resource_claims": [{"schema_version": "limen.resource_claim.v1", "key": "repository/organvm/limen/reaping", "mode": "shared"}],
+  "predicate": "git diff --exit-code",
+  "receipt_target": "git:organvm/limen:docs/continuations/universe-recovery-20260823/explorations/reaping.md",
+  "work_loan": {"schema_version": "limen.work_loan.v1", "source_origin": "human_prompt", "horizon": "present", "value_case": "Locate the existing deletion safety surface so the protective implementation extends one owner and cannot create a parallel unsafe tracker.", "budget_cost": 2, "owner_surface": "organvm/limen"},
+  "campaign": null,
+  "authority": {"schema_version": "limen.authority_envelope.v1", "actions": ["inspect"], "repositories": ["organvm/limen"], "path_prefixes": ["cli", "docs", "scripts", "spec"], "external_effects": [], "may_delegate": false},
+  "deadline": "2026-08-24T00:00:00-04:00",
+  "spend": {"schema_version": "limen.spend_envelope.v1", "unit": "runs", "limit": 2, "reserve": 0},
+  "retry": {"schema_version": "limen.retry_policy.v1", "max_attempts": 1, "transient_only": true},
+  "depth": 1,
+  "fanout": {"schema_version": "limen.fanout_bounds.v1", "max_children": 0, "max_depth": 0},
+  "effect": "read",
+  "task_id": null
+}
