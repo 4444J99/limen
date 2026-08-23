@@ -1,0 +1,43 @@
+{
+  "dependencies": {
+    "corpvs_contract_pr": 546,
+    "domus_admission_pr": 371,
+    "limen_runtime_pr": 2528
+  },
+  "expected_rung_count": 43,
+  "merge_custody": "acting_agent_via_repository_policy",
+  "predicates": [
+    {
+      "command": "python3 scripts/check-heartbeat-rollout.py --registry-only",
+      "phase": "pre_merge",
+      "proves": "exactly 43 legacy rungs have explicit successor owners and all observe_host and observe_remote rungs have timeout-matched coverage"
+    },
+    {
+      "command": "domus-limen-runtime plan-heartbeat --sha <merged-limen-sha>",
+      "phase": "post_merge_pre_activation",
+      "proves": "the candidate is merged and the reviewed Domus plan digest binds the exact immutable runtime"
+    },
+    {
+      "command": "domus-limen-runtime activate-heartbeat --sha <merged-limen-sha> --expected-plan-sha256 <reviewed-plan-sha256>",
+      "phase": "activation",
+      "proves": "only the digest-matched reviewed one-shot LaunchAgent is installed and loaded"
+    },
+    {
+      "command": "domus-limen-runtime verify-heartbeat",
+      "phase": "post_activation",
+      "proves": "the installed plist label runtime and receipt match the exact merged plan"
+    },
+    {
+      "command": "python3 scripts/check-heartbeat-rollout.py --require-active --expected-sha <merged-limen-sha> --min-fires 3",
+      "phase": "scheduled_proof",
+      "proves": "the latest three interval-spaced fires use the exact merged SHA, remain enabled, have acceptable bounded outcomes, and leave zero descendants"
+    },
+    {
+      "command": "python3 scripts/check-beat-freshness.py",
+      "phase": "legacy_absence",
+      "proves": "com.limen.watchdog heartbeat-loop fast-wave and host-pressure-watchdog are not active and no local resident producer was recreated"
+    }
+  ],
+  "provider_state_rule": "issue 182 is not a billing or rollout gate; provider text alone does not prove account cause ownership or remedy",
+  "schema": "limen.heartbeat_rollout_acceptance.v1"
+}
