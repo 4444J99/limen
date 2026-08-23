@@ -42,6 +42,7 @@ instruction_surfaces:
   budget_bytes: 32768        # min consumer default cap (codex project_doc_max_bytes default)
   ceiling_bytes: 33792       # measured 32,740 B (2026-08-06, debt paid: Claude note + ritual prose stratified) + slack; shrink-only
   slack_bytes: 2048          # max dead headroom (S3) — re-measure and lower ceiling when exceeded
+  debt: "AGENTS.md landing-proof correction exceeds the default Codex budget; owner docs must stratify it into the recovery doctrine after the protective PR lands"
   surfaces:
     - AGENTS.md
   consumers:
@@ -505,6 +506,26 @@ gates:
     paths: ["cli/src/limen/github_estate_census.py", "cli/tests/test_github_estate_census.py", "scripts/github-estate-census.py", "scripts/tests/test_github_estate_census_custody.py", "institutio/governance/gates.yaml"]
     owner: positioning-program
     note: "The exhaustive estate census keeps raw private repository evidence only in its gitignored custody receipt, atomically replaces permissive files or symlinks, and enforces owner-only mode 0600; the tracked ledger remains redacted."
+  universe-recovery-control-plane-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_universe_recovery.py cli/tests/test_remote_reap.py cli/tests/test_review_lineage_github.py cli/tests/test_ci_failure.py -q"
+    paths:
+      - "cli/src/limen/universe_recovery.py"
+      - "cli/src/limen/remote_reap.py"
+      - "cli/src/limen/review_lineage_github.py"
+      - "cli/src/limen/ci_failure.py"
+      - "cli/tests/conftest.py"
+      - "cli/tests/test_universe_recovery.py"
+      - "cli/tests/test_remote_reap.py"
+      - "cli/tests/test_review_lineage_github.py"
+      - "cli/tests/test_ci_failure.py"
+      - "scripts/remote-reap-plan.py"
+      - "scripts/remote-reap-verify.py"
+      - "scripts/remote-reap-effect.py"
+      - "scripts/universe-recovery.py"
+      - "docs/continuations/universe-recovery-20260823"
+      - "docs/architecture/source-of-truth-and-local-cache.md"
+    owner: tabularius
+    note: "Recovery remains effect-separated and fail-closed: repository-qualified ref proofs, exact review pagination, zero-step runner admission, one-use signed CAS deletion, crash reconciliation, and the read-only aggregate predicate stay independently testable."
   estate-classification-test:
     command: "python3 scripts/tests/estate-classification.test.py"
     paths: ["scripts/estate-classification.py", "scripts/tests/estate-classification.test.py", "institutio/github/estate.yaml", "institutio/github/access.yaml", "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json", "scripts/gitvs.py"]

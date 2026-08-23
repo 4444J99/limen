@@ -1,0 +1,49 @@
+{
+  "schema_version": "limen.run_receipt.v1",
+  "receipt_id": "universe-recovery-review-admission-audit-terminal-receipt",
+  "run_id": "run-cabb7b07c5fc1647e16eb59e65e21b47",
+  "lease_id": "lease-1012-cabb7b07c5fc1647",
+  "lease_generation": 1012,
+  "executor": {
+    "schema_version": "limen.agent_identity.v1",
+    "agent": "codex",
+    "surface": "direct",
+    "session_id": "01a02f60-498f-7732-a532-853019d6a146",
+    "native_run_id": null,
+    "provider_identity": "codex"
+  },
+  "provider_identity": "codex",
+  "observed_heads_before": {"organvm/limen": "f034e3e659c8c8c3b9469b7b66e32c2bc03fdb64"},
+  "observed_heads_after": {"organvm/limen": "f034e3e659c8c8c3b9469b7b66e32c2bc03fdb64"},
+  "changed_paths": [],
+  "provider_run_url": null,
+  "predicate": {
+    "command": "git diff --exit-code",
+    "exit_code": 0,
+    "summary": "Read-only audit made no repository mutation; findings were handed to the parent capsule.",
+    "observed_at": "2026-08-23T16:45:00Z"
+  },
+  "checks": [
+    {
+      "name": "PR 2542 runner admission",
+      "status": "failure",
+      "url": "https://github.com/organvm/limen/pull/2542",
+      "head": "95bc0a572bb4ec2aaffcc75e696c7aac71935a75"
+    }
+  ],
+  "reviews": [
+    {
+      "provider": "github",
+      "head": "95bc0a572bb4ec2aaffcc75e696c7aac71935a75",
+      "disposition": "commented",
+      "unresolved_threads": 3,
+      "fully_paginated": true,
+      "url": "https://github.com/organvm/limen/pull/2542"
+    }
+  ],
+  "spend": {"runs": 1},
+  "child_runs": [],
+  "campaign": null,
+  "outcome": "succeeded",
+  "completed_at": "2026-08-23T16:45:00Z"
+}

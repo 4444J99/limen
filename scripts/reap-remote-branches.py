@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""reap-remote-branches.py — the REMOTE-branch reaper (the GITVS `remote_branch` effector).
+"""reap-remote-branches.py — frozen legacy remote-branch classifier.
 
 reap-branches.py reaps the LOCAL branch ref left after a squash-merge; this is its remote sibling —
 the one genuinely-new mutator GITVS owns. It reaps a provably-landed `origin/<branch>` past a grace
@@ -23,22 +23,21 @@ Everything not provably landed FAILS SAFE to KEEP (open PR → inflight; merged-
 livework; real work not on default, no PR → livework — surfaced, never deleted). NEVER reaps the default
 branch, a configured-protected branch, or a branch checked out in any local worktree.
 
-DOUBLE-DARK by construction (remote deletes are irreversible): dry-run unless BOTH `--apply` AND
-LIMEN_REMOTE_REAP_APPLY=1 (default "0", unlike the local reaper's "1"). --apply also requires a matching
-human acceptance/archive/redaction event in docs/remote-branch-reap-acceptance.jsonl (the shared
-reap_acceptance covenant) OR a standing grant for the two machine-proved landed classes.
+The mutation path is permanently disabled. This legacy surface classifies only the current local
+remote-tracking cache and never fetches, prunes, writes logs, issues authority, or deletes. New
+deletion flows only through the repository-qualified planner, verifier, one-use capability, and
+exact-tip CAS effector.
 
 Offline / no gh → proof-2 (merged-PR) is skipped, so only ancestor-proven branches are candidates; any
 unknown → KEEP. Bounded (--max), fails OPEN per-branch, self-throttles to once per
 LIMEN_REMOTE_REAP_EVERY_MIN minutes, logs logs/reap-remote-branches.jsonl.
 
   python3 scripts/reap-remote-branches.py            # dry-run (WOULD-reap list; mutates nothing)
-  python3 scripts/reap-remote-branches.py --apply    # DELETE landed remote branches (needs LIMEN_REMOTE_REAP_APPLY=1)
+  python3 scripts/reap-remote-branches.py --apply    # denied: legacy effector is frozen
   python3 scripts/reap-remote-branches.py --check     # exit 1 iff a landed remote branch lingers past grace
 
-Env: LIMEN_ROOT, LIMEN_REMOTE_REAP_REPO_ROOT (optional target repository; receipts remain
-     under LIMEN_ROOT), LIMEN_REMOTE_REAP_APPLY (0), LIMEN_REMOTE_REAP_MAX (100),
-     LIMEN_REMOTE_REAP_EVERY_MIN (30), LIMEN_REMOTE_REAP_GRACE_MIN (1440),
+Env: LIMEN_ROOT, LIMEN_REMOTE_REAP_REPO_ROOT (optional target repository),
+     LIMEN_REMOTE_REAP_MAX (100), LIMEN_REMOTE_REAP_GRACE_MIN (1440),
      LIMEN_REMOTE_REAP_PR_LIMIT (3000), LIMEN_REMOTE_REAP_PROTECT (extra protected branch names),
      LIMEN_OFFLINE.
 """
@@ -68,9 +67,6 @@ from reap_acceptance import (  # noqa: E402
 
 HOME = os.environ.get("HOME", str(Path.home()))
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", f"{HOME}/Workspace/limen")).resolve()
-LOG = LIMEN_ROOT / "logs" / "reap-remote-branches.jsonl"
-STATE = LIMEN_ROOT / "logs" / "reap-remote-branches-state.json"
-MARKER = LIMEN_ROOT / "logs" / ".reap-remote-branches-last"
 LEDGER = LIMEN_ROOT / "docs" / "remote-branch-hygiene.md"
 # docs/remote-branch-reap-acceptance.jsonl — the human acceptance ledger (named for check-removal-acceptance).
 REMOTE_REAP_ACCEPTANCE = LIMEN_ROOT / "docs" / "remote-branch-reap-acceptance.jsonl"
@@ -396,37 +392,9 @@ def _landed_age_s(
     return float("inf") if tip_ct is None else now - tip_ct
 
 
-def _delete_remote(branch: str) -> tuple[bool, str]:
-    """Delete origin/<branch>. Primary: git push origin --delete (never a force). Fallback: gh api DELETE
-    (respects an org ruleset's deletion-protection more cleanly). Returns (ok, detail)."""
-    r = _git(["push", "origin", "--delete", branch], timeout=90)
-    if r.returncode == 0:
-        return True, "git push --delete"
-    if shutil.which("gh"):
-        slug = _git(["remote", "get-url", "origin"]).stdout.strip()
-        # owner/repo from an https or ssh remote url
-        repo = ""
-        if "github.com" in slug:
-            repo = slug.split("github.com", 1)[1].lstrip(":/").removesuffix(".git")
-        if repo:
-            g = subprocess.run(
-                ["gh", "api", "-X", "DELETE", f"repos/{repo}/git/refs/heads/{branch}"],
-                capture_output=True,
-                text=True,
-                timeout=60,
-                env=_GIT_ENV,
-            )
-            if g.returncode == 0:
-                return True, "gh api DELETE"
-            return False, (g.stderr or r.stderr).strip()[:120]
-    return False, (r.stderr or "").strip()[:120]
-
-
 def main() -> int:
     ap = argparse.ArgumentParser(description="Reap provably-landed REMOTE branches (loss-free, double-dark).")
-    ap.add_argument(
-        "--apply", action="store_true", help="delete landed remote branches (needs LIMEN_REMOTE_REAP_APPLY=1)"
-    )
+    ap.add_argument("--apply", action="store_true", help="denied: use a verified one-use capability effector")
     ap.add_argument(
         "--check", action="store_true", help="exit 1 if any landed remote branch lingers past grace (read-only)"
     )
@@ -440,28 +408,17 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    every_min = _float_env("LIMEN_REMOTE_REAP_EVERY_MIN", 30.0, minimum=0.0)
+    if args.apply:
+        print(
+            "[reap-remote-branches] legacy --apply is disabled — staying DARK. "
+            "Use the repository-qualified planner, verifier, one-use capability, and sole CAS effector."
+        )
+        return 2
 
-    if not args.check:
-        _git(["fetch", "--prune", "--quiet", "origin"], timeout=120)
     dref = default_ref()
     dname = default_name(dref)
     checked = checked_out_branches()
     merged, open_, online = gh_head_states(pr_limit=args.limit)
-
-    # THE DOUBLE-DARK GATE: --apply alone is not enough. Remote deletes are irreversible, so the arming
-    # env flag defaults OFF (unlike the local reaper). An unarmed --apply degrades to a dry-run.
-    armed = args.apply and _bool_env("LIMEN_REMOTE_REAP_APPLY", default=False)
-    if args.apply and not armed:
-        print(
-            "[reap-remote-branches] --apply given but LIMEN_REMOTE_REAP_APPLY!=1 — staying DARK (dry-run). "
-            "Remote deletes are not reflog-recoverable; arm deliberately."
-        )
-
-    if armed and not args.force and not args.check and MARKER.exists():
-        if (time.time() - MARKER.stat().st_mtime) / 60.0 < every_min:
-            print(f"[reap-remote-branches] ran < {every_min:g}min ago — skip (--force to override)")
-            return 0
 
     reap: list[tuple[str, str]] = []
     inflight: list[str] = []
@@ -490,7 +447,7 @@ def main() -> int:
         if lingering:
             print(
                 f"[reap-remote-branches] FAIL — {len(lingering)} landed remote branch(es) lingering past grace "
-                "(review docs/remote-branch-reap-acceptance.md, then --apply with LIMEN_REMOTE_REAP_APPLY=1):"
+                "(review and route each through the V2 planner/verifier/capability flow):"
             )
             for b, why in sorted(lingering)[:20]:
                 print(f"  landed  origin/{b}  ({why})")
@@ -504,7 +461,7 @@ def main() -> int:
         )
         return 0
 
-    mode = "APPLY(armed)" if armed else "dry-run"
+    mode = "read-only legacy classifier"
     online_note = "online" if online else "offline(gh proof-2 skipped)"
     print(
         f"[reap-remote-branches] {mode}; default={dref}; {online_note}; "
@@ -512,67 +469,17 @@ def main() -> int:
     )
 
     done = 0
-    reaped_names: list[str] = []
-    acceptance = load_reap_acceptance()
     for b, why in reap:
         if done >= args.max:
             print(f"[reap-remote-branches] hit --max={args.max}; 'origin/{b}' and any remainder LEFT for next run")
             break
-        print(f"  {'REAP' if armed else 'WOULD reap'}: origin/{b}  ({why})")
-        if armed:
-            accepted, accept_reason = reap_accepted(b, why, acceptance)
-            if not accepted:
-                print(f"    KEEP origin/{b}: {accept_reason}")
-                kept_reasons[accept_reason] = kept_reasons.get(accept_reason, 0) + 1
-                continue
-            ok, detail = _delete_remote(b)
-            if not ok:
-                print(f"    FAIL delete origin/{b}: {detail}")
-                continue
-            reaped_names.append(b)
+        print(f"  WOULD reap after V2 verification: origin/{b}  ({why})")
         done += 1
-
-    if armed:
-        try:
-            MARKER.parent.mkdir(parents=True, exist_ok=True)
-            MARKER.write_text(str(time.time()))
-            with LOG.open("a") as fh:
-                fh.write(
-                    json.dumps(
-                        {
-                            "ts": time.time(),
-                            "default": dref,
-                            "online": online,
-                            "reaped": reaped_names,
-                            "inflight": sorted(inflight),
-                            "advanced": sorted(advanced),
-                            "livework": sorted(livework),
-                            "kept_reasons": kept_reasons,
-                        }
-                    )
-                    + "\n"
-                )
-            STATE.write_text(
-                json.dumps(
-                    {
-                        "ts": time.time(),
-                        "default": dref,
-                        "online": online,
-                        "reaped_this_run": reaped_names,
-                        "inflight": sorted(inflight),
-                        "advanced": sorted(advanced),
-                        "livework": sorted(livework),
-                    },
-                    indent=2,
-                )
-            )
-        except Exception as e:  # observability must never break the beat
-            print(f"[reap-remote-branches] note: stamp/log write skipped ({str(e)[:80]})")
 
     kr = ", ".join(f"{k}={n}" for k, n in sorted(kept_reasons.items())) or "none"
     print(
-        f"[reap-remote-branches] {'reaped' if armed else 'would reap'} "
-        f"{len(reaped_names) if armed else done} remote branch(es); kept {sum(kept_reasons.values())} ({kr})."
+        f"[reap-remote-branches] would reap {done} remote branch(es) after V2 verification; "
+        f"kept {sum(kept_reasons.values())} ({kr})."
     )
     # REQUIRED_ACCEPTANCE_PROOF_FIELDS is imported to bind this surface to the shared covenant contract.
     _ = REQUIRED_ACCEPTANCE_PROOF_FIELDS
