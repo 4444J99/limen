@@ -19,3 +19,4 @@ ff5de9dc7af4a8162d44c8db51542bf5fcb684b5 github-pr-debt  # Type PR lifecycle deb
 38e4fdca05839de229c55801e46cc3b4eea6b018 session-contention  # protected-branch update race; recovery owner #2337
 04514b1caa86db01737cf8dbbe12830866e9fc5a session-contention  # merged passenger; recovery owner #2337
 f2558c297477f466a381a2eff9ec95c9866f551c session-contention  # merged passenger; recovery owner #2337
+4c3f6742639f725a840f4579e600512d3b12116a session-contention  # merged passenger; recovery owner #2538
