@@ -1320,23 +1320,48 @@ def source_adapter_contract() -> dict[str, Any]:
 
 
 def _relative_role_parts(source: str, locator: str) -> tuple[str, ...] | None:
-    roots = {
-        "agy-cli-conversations": (".gemini", "antigravity-cli", "conversations"),
-        "codex-attachments": (".codex", "attachments"),
-        "codex-sessions": (".codex", "sessions"),
-        "claude-file-history": (".claude", "file-history"),
-        "claude-plans": (".claude", "plans"),
-        "claude-projects": (".claude", "projects"),
-        "claude-tasks": (".claude", "tasks"),
-        "opencode-db": (".local", "share", "opencode"),
+    roots: dict[str, tuple[tuple[str, ...], ...]] = {
+        "agy-cli-conversations": (
+            (".gemini", "antigravity-cli", "conversations"),
+            (".agent-runtime", "gemini", "antigravity-cli", "conversations"),
+        ),
+        "codex-attachments": (
+            (".codex", "attachments"),
+            (".agent-runtime", "codex", "attachments"),
+        ),
+        "codex-sessions": (
+            (".codex", "sessions"),
+            (".agent-runtime", "codex", "sessions"),
+        ),
+        "claude-file-history": (
+            (".claude", "file-history"),
+            (".agent-runtime", "claude", "file-history"),
+        ),
+        "claude-plans": (
+            (".claude", "plans"),
+            (".agent-runtime", "claude", "plans"),
+        ),
+        "claude-projects": (
+            (".claude", "projects"),
+            (".agent-runtime", "claude", "projects"),
+        ),
+        "claude-tasks": (
+            (".claude", "tasks"),
+            (".agent-runtime", "claude", "tasks"),
+        ),
+        "opencode-db": (
+            (".local", "share", "opencode"),
+            (".agent-runtime", "opencode"),
+        ),
     }
-    root = roots.get(source)
-    if root is None:
+    candidate_roots = roots.get(source)
+    if candidate_roots is None:
         return None
     parts = PurePath(locator).parts
-    for index in range(len(parts) - len(root) + 1):
-        if tuple(parts[index : index + len(root)]) == root:
-            return tuple(parts[index + len(root) :])
+    for root in candidate_roots:
+        for index in range(len(parts) - len(root) + 1):
+            if tuple(parts[index : index + len(root)]) == root:
+                return tuple(parts[index + len(root) :])
     return None
 
 

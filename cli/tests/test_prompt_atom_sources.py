@@ -7305,3 +7305,22 @@ def test_isolated_source_home_rejects_symlink_escape(tmp_path: Path, monkeypatch
     assert rows == []
     assert rows.discovery_errors
     assert any(marker in rows.discovery_errors[0][1] for marker in ("symlink hop", "escapes isolated source home"))
+
+
+def test_relative_role_parts_supports_agent_runtime_roots():
+    from limen import prompt_sources
+
+    claude_standard = "/home/user/.claude/projects/proj/session.jsonl"
+    claude_runtime = "/workspace/limen/.agent-runtime/claude/projects/proj/session.jsonl"
+    assert prompt_sources._relative_role_parts("claude-projects", claude_standard) == ("proj", "session.jsonl")
+    assert prompt_sources._relative_role_parts("claude-projects", claude_runtime) == ("proj", "session.jsonl")
+
+    codex_standard = "/home/user/.codex/sessions/2026/08/08/rollout.jsonl"
+    codex_runtime = "/workspace/limen/.agent-runtime/codex/sessions/2026/08/08/rollout.jsonl"
+    assert prompt_sources._relative_role_parts("codex-sessions", codex_standard) == (
+        "2026",
+        "08",
+        "08",
+        "rollout.jsonl",
+    )
+    assert prompt_sources._relative_role_parts("codex-sessions", codex_runtime) == ("2026", "08", "08", "rollout.jsonl")
