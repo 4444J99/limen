@@ -1,60 +1,55 @@
-# Project: VLTIMA 5-Primitive Kernel Mapping & Organ Execution
+# Project: Platform Security & Permissions Census (Horizon 2)
 
 ## Architecture
-The system consists of two primary organ domains and ecosystem governance integration:
-1. **Representation Organ (`organs/representation/`)**:
-   - Implements the VLTIMA 5-primitive kernel (`Member · Mandate · Standing · Standard · Governance`).
-   - Powers career and literary opportunity intake, candidate intake, multi-mode packet generation (11 render modes), authority packets, publication readiness audit, and delivery execution adapters (`direct_email`, `local_outbox`, `submission_form`).
-   - Deterministic validation entrypoint: `organs/representation/validate-representation.py`.
-2. **Observation Organ (`organs/observation/`)**:
-   - Implements the VLTIMA 5-primitive kernel across 3 facets: OBSERVATORY (Rank 15: legibility & field analysis), BIFRONS (Rank 16: star ↔ contribution portal), and DECORVM (Rank 17: surface quality federator).
-   - Unified telemetry aggregation engine (`cli/src/limen/observation/` + `scripts/observation-feed.py`) collecting system vitals (`limen.vigilia.vitals`), Bifrons portal status (`scripts/bifrons-organ.py`), and Observatory briefs (`cli/src/limen/observatory/brief.py`).
-   - Emits schema-checked records (`limen.observation.feed.v1`) to `logs/observation/feed.jsonl` and `logs/observation/feed-latest.json`.
-   - Deterministic validation entrypoint: `organs/observation/validate-observation.py`.
-3. **Governance & Verification Infrastructure (`institutio/governance/`, `scripts/`)**:
-   - `gates.yaml`: Declarative gate registry checked by `scripts/verify-scoped.sh` and `scripts/check-gates.py`.
-   - `sensors.yaml`: Heartbeat sensors for scheduled telemetry.
-   - `check-agent-docs.py`: Doc drift and canonical state rules.
-   - `no-tasks-on-me.sh` & `credential-wall.py`: Lifecycle closure and credential security.
+- **Governance & Policy Layer (`institutio/`)**:
+  - `github/access.yaml`: Partner partitioning, `role_ceiling: push`, banned admin grants, engine repo protection.
+  - `github/estate.yaml`: App permissions least privilege, audience classification (`world`, `collab`, `self`).
+  - `collaboration-operations/platform.yaml`: Operation-private records hub, zero external collaborator grants, dedicated actor partition lanes.
+  - `governance/direct-main-writers.yaml`: Remote enforcement ruleset, zero bypass actors.
+  - `governance/mail-tiers.yaml`: Subtractive 3-tier email authorization (`no_reply`, `hold`, `safe`).
+  - `governance/outbound-effectors.yaml`: Proof-of-observation receipts for external side-effects (`mail.send`, `github.comment`).
+  - `governance/covenant.yaml`: Single-writer covenants for memory and board projections.
+
+- **Conduct Protocol RBAC Layer (`cli/src/limen/conduct/` & `web/worker/src/conduct/`)**:
+  - `ConductRole`: `observer`, `conductor`, `executor`, `compatibility`.
+  - Constant-time HMAC bearer authentication (`hmac.compare_digest`).
+  - Broker method RBAC: `register`, `submit`, `split`, `claim`, `heartbeat`, `report`, `harvest`, `adopt`, `cancel`, `request_stop`.
+  - Authority envelope attenuation (`AuthorityEnvelopeV1`): actions, repositories, path prefixes, external effects, delegation.
+
+- **Notification & Effector Layer (`scripts/_notify.py`, `scripts/check-notify-gate.py`)**:
+  - Effector chokepoint: `_root_may_speak` liveness check.
+  - RFC 8785 canonical digest deduplication (`logs/vigilia/event-notifications.json`).
+  - AST flow-sensitive bypass scanner (`check-notify-gate.py`).
 
 ## Feature Inventory
 | # | Feature | Description | Milestone | Source |
 |---|---------|-------------|-----------|--------|
-| 1 | Representation Bare Validator | `validate-representation.py` defaults to `--fleet` and exits 0 deterministically | M1 | R1, Explorer 1 |
-| 2 | Representation 5-Primitive Mapping | Complete 5-primitive schema (`representation.v3`), records, opportunities, approvals | M1 | R1, Explorer 1 |
-| 3 | Career & Opportunity Pipeline | Opportunity ingestion, candidate intake, 11 packet modes, publication readiness, stack generation | M1 | R1, Explorer 1 |
-| 4 | Observation Feed Schema | Canonical schema `limen.observation.feed.v1` for telemetry records | M2 | R2, Explorer 2 |
-| 5 | Observation Telemetry Collector | Self-feeding collector aggregating Vitals, Bifrons, and Observatory into `logs/observation/` | M2 | R2, Explorer 2 |
-| 6 | Observation Organ Validator | `validate-observation.py` enforcing Rules #1–6 (Standing, Human Gate, 5-Primitive, Evidence, No-Overreach, Feed Schema) | M2 | R2, Explorer 2 |
-| 7 | Governance Gates & Sensors | Register representation and observation gates/sensors in `gates.yaml` and `sensors.yaml` | M2 | R1, R2, Explorer 1, 2, 3 |
-| 8 | Whole Repository & Protocol Verification | All acceptance criteria verified (representation validation, observation feed, verify-scoped, check-agent-docs, no-tasks-on-me, credential-wall) | M3 | AC, Explorer 3 |
+| 1 | Conduct RBAC & Authority Attenuation | Strict method-level RBAC, path normalization (no `..`), harvest role checks | M1 | Survey 1, Survey 2 |
+| 2 | Role Literals & Fallback Mechanics | Non-recursive scans, sensor role defaulting, role alias parity in gitvs/constellation | M1 | Survey 2 |
+| 3 | Notification Authorization & Gates | Effector chokepoints, `_root_may_speak`, event dedup, AST bypass scan | M2 | Survey 1, Survey 3 |
+| 4 | Outbound Effector & Governance Policies | Observation proof receipts, mail tiers, partner access ceilings (`push`), zero direct-main bypass | M2 | Survey 1, Survey 3 |
+| 5 | Full Security Test Grid & Closeout | 25+ hermetic test suites, verify-scoped.sh, no-tasks-on-me.sh, credential-wall.py | M3 | Survey 1, 2, 3 |
 
 ## Milestones
 | # | Name | Scope | Dependencies | Status |
 |---|------|-------|-------------|--------|
-| M1 | Representation Organ Vertical Slice & Validation | `organs/representation/validate-representation.py`, `organs/representation/representation_substrate.py`, validation & tests | none | DONE |
-| M2 | Observation Organ Autonomous Self-Feed Loop | `cli/src/limen/observation/`, `scripts/observation-feed.py`, `organs/observation/validate-observation.py`, `sensors.yaml`, `gates.yaml`, tests | M1 | READY |
-| M3 | E2E Testing & Acceptance Criteria Verification | E2E test suite, scoped verification, doc check, lifecycle closure, terminal verification | M1, M2 | PLANNED |
+| 1 | M1: RBAC Matrix & Role Hardening | `cli/src/limen/conduct/`, `scripts/check-sensors.py`, `gitvs.py`, `constellation_registry_enumerator.py` | none | IN_PROGRESS |
+| 2 | M2: Notification Auth & Policy Audit | `scripts/_notify.py`, `scripts/check-notify-gate.py`, `institutio/governance/`, `scripts/hooks/` | M1 | PLANNED |
+| 3 | M3: Security Test Grid & Closeout | Full security test execution, scoped verification, zero dangling state | M2 | PLANNED |
 
 ## Interface Contracts
-### Representation Substrate ↔ Ecosystem
-- Validator entrypoint: `python3 organs/representation/validate-representation.py [--fleet] [--quiet]`
-- Schema: `representation.v3`
-- Mode renderers: `packet`, `authority-packet`, `literary-packet`, `publication-readiness`, `publication-stack`, `handoff-audit`
-- Gate in `gates.yaml`: `representation-records`, `representation-substrate-test`
+### ConductPrincipal ↔ Broker RBAC
+- `ConductRole`: Literal["observer", "conductor", "executor", "compatibility"]
+- `_require_role(principal, *roles)`: Raises `ConductConflict` if `principal.roles.isdisjoint(roles)`
+- `AuthorityEnvelopeV1.validate_paths`: Must reject `..` and non-normalized relative path prefixes
 
-### Observation Telemetry ↔ Ecosystem
-- Feed schema: `limen.observation.feed.v1`
-  - Fields: `schema`, `observed_at`, `source`, `vitals` (level, action, load_per_core, swap_used_gib, ram_gib), `bifrons` (stars, dossiers, resonance_edges, awaiting_gate), `observatory` (hero, external_gaps, internal_gaps, top_mechanism), `status` (ok, degraded, shed)
-- Output destinations: `logs/observation/feed.jsonl` (append-only), `logs/observation/feed-latest.json`
-- Collector entrypoint: `python3 scripts/observation-feed.py [--emit] [--check] [--json]`
-- Validator entrypoint: `python3 organs/observation/validate-observation.py [--fleet] [--quiet]`
-- Gate in `gates.yaml`: `observation-records`, `observation-feed-test`
+### Sensor Role Defaulting
+- `VALID_OMEGA_ROLE = {"input", "owner_receipt"}`
+- Empty role string `""` or `None` consistently defaults to `"input"`
 
 ## Code Layout
-- Representation Organ: `organs/representation/`
-- Observation Organ: `organs/observation/`
-- Observation CLI/Package: `cli/src/limen/observation/`
-- Observation Scripts: `scripts/observation-feed.py`
-- Tests: `cli/tests/test_representation_substrate.py`, `cli/tests/test_observation_feed.py`
-- Governance: `institutio/governance/gates.yaml`, `institutio/governance/sensors.yaml`
+- `cli/src/limen/conduct/`: Auth, models, broker, canary implementation
+- `cli/tests/`: Security and permissions unit tests
+- `institutio/`: Declarative governance, access, and security policies
+- `scripts/`: Policy checkers, notification gates, and hook guards
+- `web/worker/src/conduct/`: Cloudflare Worker conduct keeper implementation
