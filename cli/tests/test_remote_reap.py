@@ -18,8 +18,18 @@ from limen.remote_reap import (
     reconcile_effect,
     remote_tip,
     remote_url_digest,
+    validate_disposition_evidence,
 )
-from limen.universe_recovery import ReapJournalV1, ReapPlanV1, issue_reap_capability
+from limen.universe_recovery import (
+    CursorReceiptV1,
+    CustodyProofV1,
+    RefDispositionV2,
+    ReapJournalV1,
+    ReapPlanV1,
+    ReviewLineageClosureV2,
+    canonical_digest,
+    issue_reap_capability,
+)
 
 
 NOW = datetime(2026, 8, 23, 16, 0, tzinfo=UTC)
@@ -120,6 +130,7 @@ def test_exact_unchanged_tip_deletes_and_verifies_absence(tmp_path: Path):
         plan=plan,
         capability=capability,
         journal_path=journal_path,
+        redemption_path=tmp_path / "redemptions.json",
         signing_material=b"fixture-material",
         observed_at=NOW + timedelta(minutes=1),
     )
@@ -151,6 +162,7 @@ def test_advanced_tip_is_preserved_before_delete(tmp_path: Path):
             plan=plan,
             capability=capability,
             journal_path=journal_path,
+            redemption_path=tmp_path / "redemptions.json",
             signing_material=b"fixture-material",
             observed_at=NOW + timedelta(minutes=1),
         )
@@ -171,6 +183,7 @@ def test_completed_capability_is_idempotent_only_while_ref_remains_absent(tmp_pa
         plan=plan,
         capability=capability,
         journal_path=journal_path,
+        redemption_path=tmp_path / "redemptions.json",
         signing_material=b"fixture-material",
         observed_at=NOW + timedelta(minutes=1),
     )
@@ -179,11 +192,46 @@ def test_completed_capability_is_idempotent_only_while_ref_remains_absent(tmp_pa
         plan=plan,
         capability=capability,
         journal_path=journal_path,
+        redemption_path=tmp_path / "redemptions.json",
         signing_material=b"fixture-material",
         observed_at=NOW + timedelta(minutes=2),
     )
 
     assert first.state == second.state == "completed"
+
+
+def test_capability_cannot_be_replayed_from_a_copied_verified_journal(tmp_path: Path):
+    checkout, tip = repository(tmp_path)
+    plan, capability = admitted(checkout, tip)
+    journal_path = tmp_path / "journal.json"
+    copied_journal_path = tmp_path / "copied-journal.json"
+    redemption_path = tmp_path / "redemptions.json"
+    verified = journal(capability=capability, state="verified", detail="verified", observed_at=NOW)
+    atomic_json(journal_path, verified.model_dump(mode="json"))
+    atomic_json(copied_journal_path, verified.model_dump(mode="json"))
+    apply_capability(
+        repository_root=checkout,
+        plan=plan,
+        capability=capability,
+        journal_path=journal_path,
+        redemption_path=redemption_path,
+        signing_material=b"fixture-material",
+        observed_at=NOW + timedelta(minutes=1),
+    )
+    git(checkout, "push", "origin", f"{tip}:refs/heads/topic")
+
+    with pytest.raises(RuntimeError, match="already been redeemed"):
+        apply_capability(
+            repository_root=checkout,
+            plan=plan,
+            capability=capability,
+            journal_path=copied_journal_path,
+            redemption_path=redemption_path,
+            signing_material=b"fixture-material",
+            observed_at=NOW + timedelta(minutes=2),
+        )
+
+    assert remote_tip(checkout, "refs/heads/topic") == tip
 
 
 def test_wrong_repository_origin_is_denied(tmp_path: Path):
@@ -206,11 +254,49 @@ def test_wrong_repository_origin_is_denied(tmp_path: Path):
             plan=plan,
             capability=capability,
             journal_path=journal_path,
+            redemption_path=tmp_path / "redemptions.json",
             signing_material=b"fixture-material",
             observed_at=NOW + timedelta(minutes=1),
         )
 
     assert remote_tip(second, "refs/heads/topic") == second_tip
+
+
+def test_completed_journal_cannot_be_applied_to_an_absent_ref_in_another_repository(tmp_path: Path):
+    first_root = tmp_path / "first"
+    second_root = tmp_path / "second"
+    first_root.mkdir()
+    second_root.mkdir()
+    first, tip = repository(first_root)
+    second, _second_tip = repository(second_root)
+    plan, capability = admitted(first, tip)
+    journal_path = tmp_path / "journal.json"
+    redemption_path = tmp_path / "redemptions.json"
+    atomic_json(
+        journal_path,
+        journal(capability=capability, state="verified", detail="verified", observed_at=NOW).model_dump(mode="json"),
+    )
+    apply_capability(
+        repository_root=first,
+        plan=plan,
+        capability=capability,
+        journal_path=journal_path,
+        redemption_path=redemption_path,
+        signing_material=b"fixture-material",
+        observed_at=NOW + timedelta(minutes=1),
+    )
+    git(second, "push", "origin", ":refs/heads/topic")
+
+    with pytest.raises(RuntimeError, match="origin"):
+        apply_capability(
+            repository_root=second,
+            plan=plan,
+            capability=capability,
+            journal_path=journal_path,
+            redemption_path=redemption_path,
+            signing_material=b"fixture-material",
+            observed_at=NOW + timedelta(minutes=2),
+        )
 
 
 def test_failed_effect_is_journaled_and_reconciled_without_retry(tmp_path: Path):
@@ -233,6 +319,7 @@ def test_failed_effect_is_journaled_and_reconciled_without_retry(tmp_path: Path)
             plan=plan,
             capability=capability,
             journal_path=journal_path,
+            redemption_path=tmp_path / "redemptions.json",
             signing_material=b"fixture-material",
             observed_at=NOW + timedelta(minutes=1),
             runner=reject_push,
@@ -240,7 +327,112 @@ def test_failed_effect_is_journaled_and_reconciled_without_retry(tmp_path: Path)
 
     crashed = load_model(journal_path, ReapJournalV1)
     assert crashed.state == "crashed"
-    reconciled = reconcile_effect(repository_root=checkout, current=crashed)
+    reconciled = reconcile_effect(
+        repository_root=checkout,
+        current=crashed,
+        capability=capability,
+        redemption_path=tmp_path / "redemptions.json",
+    )
     assert reconciled.state == "crashed"
     assert "same capability requires owner review" in reconciled.detail
     assert remote_tip(checkout, "refs/heads/topic") == tip
+
+
+def test_verifier_recomputes_live_landing_and_custody_evidence():
+    default_tip = "c" * 40
+    tip = "b" * 40
+    repository_name = "organvm/example"
+    generation = canonical_digest(
+        {
+            "repository": repository_name,
+            "default_ref": "main",
+            "default_sha": default_tip,
+            "archived": False,
+        }
+    )
+    commit_digest = canonical_digest({"repository": repository_name, "ref": "refs/heads/topic", "tip": tip})
+    custody = CustodyProofV1(
+        repository=repository_name,
+        ref="refs/heads/topic",
+        tip=tip,
+        disposition="not_required_landed",
+        source_digest=commit_digest,
+        restore_tested=False,
+        verified_at=NOW,
+        predicate="live exact-landing proof",
+    )
+    disposition = RefDispositionV2(
+        key=f"{repository_name}/refs/heads/topic@{tip}",
+        repository=repository_name,
+        repository_id="R_example_0001",
+        ref="refs/heads/topic",
+        tip=tip,
+        default_ref="refs/heads/main",
+        default_tip=default_tip,
+        default_generation=generation,
+        commit_digest=commit_digest,
+        custody_proof_digest=canonical_digest(custody),
+        pull_requests=(7,),
+        custody_disposition="not_required_landed",
+        delivery_disposition="exact_landed",
+        owner=repository_name,
+        predicate="git merge-base --is-ancestor",
+        receipt="git:organvm/example:receipt.json",
+        census_digest="d" * 64,
+        grace_satisfied_at=NOW,
+    )
+    review = ReviewLineageClosureV2(
+        repository=repository_name,
+        pull_request=7,
+        observed_at=NOW,
+        head_sha=tip,
+        base_ref="main",
+        base_sha="a" * 40,
+        merge_sha=default_tip,
+        checks_digest="e" * 64,
+        cursor_receipts=(
+            CursorReceiptV1(surface="reviewThreads", total_count=0, observed_count=0, page_count=1, complete=True),
+        ),
+        threads=(),
+        unresolved_current=0,
+        unresolved_outdated=0,
+        lifecycle_stage="main_verified",
+        terminal=True,
+    )
+
+    def live(command, **_kwargs):
+        if command[:5] == ["git", "-C", "/unused", "remote", "get-url"]:
+            return subprocess.CompletedProcess(command, 0, "git@github.com:organvm/example.git\n", "")
+        if command[:3] == ["git", "-C", "/unused"] and "ls-remote" in command:
+            ref = command[-1]
+            live_tip = default_tip if ref == "refs/heads/main" else tip
+            return subprocess.CompletedProcess(command, 0, f"{live_tip}\t{ref}\n", "")
+        if command[:3] == ["gh", "api", f"repos/{repository_name}"]:
+            return subprocess.CompletedProcess(
+                command,
+                0,
+                '{"node_id":"R_example_0001","default_branch":"main","archived":false}',
+                "",
+            )
+        if command[:3] == ["gh", "api", f"repos/{repository_name}/compare/{tip}...{default_tip}"]:
+            return subprocess.CompletedProcess(command, 0, '{"merge_base_commit":{"sha":"' + tip + '"}}', "")
+        if command[:3] == ["gh", "api", f"repos/{repository_name}/pulls/7"]:
+            return subprocess.CompletedProcess(command, 0, '{"merged":true,"head":{"sha":"' + tip + '"}}', "")
+        raise AssertionError(command)
+
+    validate_disposition_evidence(
+        repository_root=Path("/unused"),
+        disposition=disposition,
+        review=review,
+        custody=custody,
+        runner=live,
+    )
+    stale = disposition.model_copy(update={"default_tip": "f" * 40})
+    with pytest.raises(ValueError, match="default generation"):
+        validate_disposition_evidence(
+            repository_root=Path("/unused"),
+            disposition=stale,
+            review=review,
+            custody=custody,
+            runner=live,
+        )

@@ -492,11 +492,15 @@ def open_pr_impact(
 def classify_red_run(run_id: int | str):
     """Fetch GitHub evidence and apply the shared classifier."""
     if not run_id:
-        return type(classify_ci_failure([]))("executed_code_failure", "classification evidence unavailable", False)
+        return type(classify_ci_failure([]))(
+            "executed_code_failure", "classification evidence unavailable", False, "CI_CODE_RED", True, False
+        )
     data = _gh_json(["api", f"repos/{REPO}/actions/runs/{run_id}/jobs"], None)
     jobs = data.get("jobs") if isinstance(data, dict) else None
     if not isinstance(jobs, list) or not jobs:
-        return type(classify_ci_failure([]))("executed_code_failure", "classification evidence unavailable", False)
+        return type(classify_ci_failure([]))(
+            "executed_code_failure", "classification evidence unavailable", False, "CI_CODE_RED", True, False
+        )
     failed = [j for j in jobs if isinstance(j, dict) and (j.get("conclusion") or "") in RED]
     annotations: list[dict] = []
     for job in failed:

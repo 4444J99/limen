@@ -11,9 +11,9 @@ class CIFailure:
     classification: str
     detail: str
     retry_allowed: bool
-    execution_result: str
-    code_red: bool
-    merge_admissible: bool
+    execution_result: str = "CI_UNKNOWN"
+    code_red: bool = False
+    merge_admissible: bool = False
 
     def __iter__(self):
         yield self.classification

@@ -144,10 +144,48 @@ class RefDispositionV2(ProtocolModel):
     @property
     def reap_eligible(self) -> bool:
         return bool(
-            self.delivery_disposition in {"exact_landed", "equivalent_landed"}
+            self.delivery_disposition == "exact_landed"
             and self.custody_disposition in {"paired_verified", "not_required_landed"}
             and not set(self.lane_protection) & {"active-human", "protected", "livework"}
         )
+
+
+class CustodyCopyV1(ProtocolModel):
+    device_id_digest: str
+    content_digest: str
+
+    _digests = field_validator("device_id_digest", "content_digest")(_digest)
+
+
+class CustodyProofV1(ProtocolModel):
+    schema_version: Literal["limen.remote_reap_custody_proof.v1"] = "limen.remote_reap_custody_proof.v1"
+    repository: str
+    ref: str
+    tip: str
+    disposition: CustodyDisposition
+    source_digest: str
+    copies: tuple[CustodyCopyV1, ...] = ()
+    restore_tested: bool
+    verified_at: datetime
+    predicate: str
+
+    _text = field_validator("repository", "ref", "predicate")(_nonblank)
+    _tip = field_validator("tip")(_git_oid)
+    _source = field_validator("source_digest")(_digest)
+    _verified = field_validator("verified_at")(_aware)
+
+    @model_validator(mode="after")
+    def proof_is_sufficient(self) -> "CustodyProofV1":
+        if self.disposition == "paired_verified":
+            devices = {copy.device_id_digest for copy in self.copies}
+            contents = {copy.content_digest for copy in self.copies}
+            if len(self.copies) < 2 or len(devices) < 2 or contents != {self.source_digest}:
+                raise ValueError("paired custody requires two devices with identical verified content")
+            if not self.restore_tested:
+                raise ValueError("paired custody requires a successful restore test")
+        elif self.disposition == "not_required_landed" and self.copies:
+            raise ValueError("not-required landing custody cannot claim external copies")
+        return self
 
 
 ThreadDisposition = Literal["corrected", "rejected", "superseded", "pending"]
@@ -484,7 +522,7 @@ def evaluate_recovery(manifest: UniverseRecoveryManifestV1) -> RecoveryEvaluatio
     open_reviews = sum(not row.terminal for row in manifest.review_closures)
     if open_reviews:
         errors.append(f"nonterminal-review-lineages:{open_reviews}")
-    unreconciled = sum(row.state in {"applying", "crashed"} for row in manifest.reap_journals)
+    unreconciled = sum(row.state != "completed" for row in manifest.reap_journals)
     if unreconciled:
         errors.append(f"unreconciled-reap-effects:{unreconciled}")
     stable_payload = manifest.model_dump(mode="json", exclude={"generated_at"})

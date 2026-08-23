@@ -9,9 +9,12 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from limen.universe_recovery import (
+    CustodyCopyV1,
+    CustodyProofV1,
     CursorReceiptV1,
     RefDispositionV2,
     ReapCapabilityV1,
+    ReapJournalState,
     ReapJournalV1,
     ReapPlanV1,
     RecoveryDispositionReceiptV1,
@@ -193,6 +196,22 @@ def test_unreconciled_crash_blocks_fixed_point():
     assert evaluate_recovery(manifest(reap_journals=(journal,))).errors == ("unreconciled-reap-effects:1",)
 
 
+@pytest.mark.parametrize("state", ["planned", "verified", "applying", "crashed"])
+def test_every_noncompleted_reap_journal_blocks_fixed_point(state: ReapJournalState):
+    journal = ReapJournalV1(
+        effect_id="remote-reap-effect-0001",
+        capability_id="remote-reap-capability-0001",
+        repository="organvm/limen",
+        ref="refs/heads/topic",
+        expected_tip=TIP,
+        state=state,
+        updated_at=NOW,
+        detail="not terminal",
+    )
+
+    assert evaluate_recovery(manifest(reap_journals=(journal,))).errors == ("unreconciled-reap-effects:1",)
+
+
 def test_capability_is_plan_bound_expiring_and_exact_tip_cas_only():
     material = b"fixture-material"
     reap_plan = plan()
@@ -232,6 +251,32 @@ def test_ref_disposition_is_repository_qualified_and_proof_bound():
     with pytest.raises(ValueError, match="named review lineage"):
         disposition(pull_requests=())
     assert disposition(lane_protection=("active-human",)).reap_eligible is False
+    assert disposition(delivery_disposition="equivalent_landed", tree_digest="1" * 64).reap_eligible is False
+
+
+def test_paired_custody_requires_two_distinct_verified_devices_and_restore():
+    source_digest = "7" * 64
+    copies = (
+        CustodyCopyV1(device_id_digest="8" * 64, content_digest=source_digest),
+        CustodyCopyV1(device_id_digest="9" * 64, content_digest=source_digest),
+    )
+    proof = CustodyProofV1(
+        repository="organvm/limen",
+        ref="refs/heads/topic",
+        tip=TIP,
+        disposition="paired_verified",
+        source_digest=source_digest,
+        copies=copies,
+        restore_tested=True,
+        verified_at=NOW,
+        predicate="scripts/paired-custody.py --restore-test",
+    )
+
+    assert len(proof.copies) == 2
+    with pytest.raises(ValueError, match="two devices"):
+        CustodyProofV1.model_validate(proof.model_dump(mode="json") | {"copies": copies[:1]})
+    with pytest.raises(ValueError, match="restore test"):
+        CustodyProofV1.model_validate(proof.model_dump(mode="json") | {"restore_tested": False})
 
 
 def test_forged_or_wrong_plan_capability_is_rejected():
