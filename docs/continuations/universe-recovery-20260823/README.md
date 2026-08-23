@@ -1,7 +1,7 @@
 # Universe Recovery Continuation Capsule
 
 This capsule owns the protective control-plane tranche of the 2026-08-23 universe recovery
-program. It is deliberately nonterminal: no remote/local reaping, bulk PR closure, deployment,
+program. It is deliberately nonterminal: no remote reaping, bulk PR closure, deployment,
 activation, merge, or cleanup is authorized by this branch.
 
 ## Exact lane
@@ -23,6 +23,12 @@ for observation only. New deletion requires, in order, a stdout-only plan, indep
 verification, a short-lived signed repository-qualified capability, exact-tip server CAS through
 the sole effector, and post-effect absence verification. Archive4T and T7Recovery were not mounted
 at launch, so source deletion and original-source cleanup remain prohibited.
+
+On 2026-08-23, direct human authorization was applied to seven exact, ledger-proven **local**
+landed branches. They were removed from the local cache only; no remote ref, source, stash, or
+worktree was reaped. The reconciliation is in
+[worktree-and-ref-reconciliation.md](worktree-and-ref-reconciliation.md); it does not relax the
+remote-effect freeze.
 
 ## One launch command
 
