@@ -31,12 +31,12 @@
 ## Next deepen steps
 
 1. ✅ **Macro/micro faces deepened** — excellent, showable, polished (2026-07-03 beat)
-2. **P0: Clear card-0186 fraud hold** — one call to Santander; keystone for 3+ cascaded billing failures
-3. **P1: Enter balances** — principal fills `balance` + `as_of` in `entities.yaml` (unlocks real position tracking)
-4. **P2: Deploy MONETA** — `docker build + docker run` on $0 host; set `MINT_BTC_ADDRESS`
-5. **P3: Deploy Exporter** — 'git push' + 'wrangler deploy'; first dollar via MONETA or Ko-fi
+2. ✅ **Historical card-0186 hold discharged** — terminal receipt dated 2026-07-17
+3. **P0: Enter balances** — principal fills `balance` + `as_of` in `entities.yaml` (unlocks real position tracking)
+4. **P1: Deploy MONETA** — `docker build + docker run` on $0 host; set `MINT_BTC_ADDRESS`
+5. **P2: Deploy Exporter** — 'git push' + 'wrangler deploy'; first dollar via MONETA or Ko-fi
 6. ✅ **Self-feed wired** — `financial-organ.py` runs every 8 beats; auto-advances maturity as slices land
 7. ✅ **Web JSON dashboard** — `financial-standing.json` written to web face each beat
 8. ✅ **Balance journal** — `balances-history.json` persists time-series of snapshots
-9. **P4: Decide entity route** — revive LLC / dissolve / individual-only; sets tax structure
-10. **P5: Register investment accounts** — brokerage, retirement, crypto, credit accounts
+9. **P3: Decide entity route** — revive LLC / dissolve / individual-only; sets tax structure
+10. **P4: Register investment accounts** — brokerage, retirement, crypto, credit accounts

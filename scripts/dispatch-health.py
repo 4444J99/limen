@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Record canonical campaign-heartbeat health without mutating the live daemon.
+"""Record canonical on-demand runtime health without mutating host services.
 
 This receipt answers a narrow conductor question: does the code we just verified
-match the Limen root that launchd is actually running, and are heartbeat plus
-campaign-wake boundaries healthy enough to trust?
+match the Limen root under review, and is the legacy heartbeat/watchdog pair
+either fully retired or coherently present during migration?
 
 It is read-only. It does not restart launchd, edit plist files, touch
 tasks.yaml, switch branches, or repair credentials.
@@ -39,6 +39,8 @@ HEARTBEAT_PLIST = Path(
     os.environ.get("LIMEN_HEARTBEAT_PLIST", HOME / "Library" / "LaunchAgents" / "com.limen.heartbeat.plist")
 )
 LAUNCHD_LABEL = os.environ.get("LIMEN_HEARTBEAT_LABEL", "com.limen.heartbeat")
+WATCHDOG_PLIST = HOME / "Library" / "LaunchAgents" / "com.limen.watchdog.plist"
+WATCHDOG_LABEL = "com.limen.watchdog"
 IGNORED_GENERATED_RECEIPTS = {
     "docs/conductor-tranche.md",
     "docs/dispatch-health.md",
@@ -295,11 +297,19 @@ def parse_launchd_print(text: str) -> dict[str, Any]:
     }
 
 
-def launchd_snapshot() -> dict[str, Any]:
-    result = run_command(["launchctl", "print", f"gui/{os.getuid()}/{LAUNCHD_LABEL}"], timeout=8)
+def _launchd_label_snapshot(label: str) -> dict[str, Any]:
+    result = run_command(["launchctl", "print", f"gui/{os.getuid()}/{label}"], timeout=8)
     parsed = parse_launchd_print(str(result.get("stdout") or ""))
     parsed["probe"] = command_summary(result)
     return parsed
+
+
+def launchd_snapshot() -> dict[str, Any]:
+    return _launchd_label_snapshot(LAUNCHD_LABEL)
+
+
+def watchdog_launchd_snapshot() -> dict[str, Any]:
+    return _launchd_label_snapshot(WATCHDOG_LABEL)
 
 
 def git_output(root: Path, args: list[str], timeout: int = 12) -> str | None:
@@ -534,16 +544,33 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
     loaded = snapshot["launchd"]
     git = snapshot["live_root_git"]
     watchdog = snapshot["watchdog"]
+    watchdog_plist = snapshot.get("watchdog_plist") or {"present": None}
+    watchdog_launchd = snapshot.get("watchdog_launchd") or {"present": None, "running": None, "state": "unknown"}
     prompt_packets = snapshot["prompt_packets"]
     always_working = snapshot["always_working"]
+    watchdog_text = f"{watchdog.get('first_line') or ''} {watchdog.get('last_line') or ''}".lower()
+    heartbeat_retired = (
+        not generated.get("present")
+        and not plist.get("present")
+        and not loaded.get("present")
+        and not loaded.get("running")
+        and loaded.get("state") == "missing"
+        and watchdog_plist.get("present") is False
+        and watchdog_launchd.get("present") is False
+        and watchdog_launchd.get("running") is False
+        and watchdog_launchd.get("state") == "missing"
+        and watchdog.get("healthy") is True
+        and "heartbeat retired" in watchdog_text
+    )
 
-    if not plist.get("present"):
-        blockers.append({"id": "heartbeat-plist-missing", "evidence": "LaunchAgent plist was not found."})
-    elif plist.get("keep_alive") is not True:
-        blockers.append({"id": "heartbeat-keepalive-not-true", "evidence": "LaunchAgent KeepAlive is not true."})
+    if not heartbeat_retired:
+        if not plist.get("present"):
+            blockers.append({"id": "heartbeat-plist-missing", "evidence": "LaunchAgent plist was not found."})
+        elif plist.get("keep_alive") is not True:
+            blockers.append({"id": "heartbeat-keepalive-not-true", "evidence": "LaunchAgent KeepAlive is not true."})
 
-    if not loaded.get("running"):
-        blockers.append({"id": "heartbeat-launchd-not-running", "evidence": f"launchd state is {loaded.get('state')}."})
+        if not loaded.get("running"):
+            blockers.append({"id": "heartbeat-launchd-not-running", "evidence": f"launchd state is {loaded.get('state')}."})
 
     if generated.get("present") and plist.get("present"):
         generated_env = generated.get("env") or {}
@@ -561,7 +588,7 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
                 evidence += f", +{len(drift) - 4} more"
             blockers.append({"id": "heartbeat-generated-plist-env-drift", "evidence": evidence})
 
-    if not watchdog.get("healthy"):
+    if not heartbeat_retired and not watchdog.get("healthy"):
         blockers.append(
             {
                 "id": "heartbeat-watchdog-unhealthy",
@@ -638,6 +665,8 @@ def build_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         "generated_heartbeat_plist": generated_plist_snapshot(),
         "heartbeat_plist": plist,
         "launchd": launchd,
+        "watchdog_plist": read_plist(WATCHDOG_PLIST),
+        "watchdog_launchd": watchdog_launchd_snapshot(),
         "live_root_git": git_snapshot(LIVE_ROOT),
         "verified_worktree": git_snapshot(ROOT),
         "watchdog": watchdog_snapshot(),
@@ -658,6 +687,8 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
     live = snapshot["live_root_git"]
     verified = snapshot["verified_worktree"]
     watchdog = snapshot["watchdog"]
+    watchdog_plist = snapshot.get("watchdog_plist") or {}
+    watchdog_launchd = snapshot.get("watchdog_launchd") or {}
     async_probe = snapshot["async_probe"]
     prompt_packets = snapshot["prompt_packets"]
     always_working = snapshot["always_working"]
@@ -692,6 +723,8 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         f"- Loaded LIMEN_WORKTREES: `{(loaded.get('env') or {}).get('LIMEN_WORKTREES')}`.",
         f"- Loaded LIMEN_WORKTREE_ROOT: `{(loaded.get('env') or {}).get('LIMEN_WORKTREE_ROOT')}`.",
         f"- Loaded LIMEN_CAMPAIGN_WAKE_TIMEOUT: `{(loaded.get('env') or {}).get('LIMEN_CAMPAIGN_WAKE_TIMEOUT')}`.",
+        f"- Watchdog plist present: `{watchdog_plist.get('present')}`.",
+        f"- Watchdog launchd state: `{watchdog_launchd.get('state')}` pid `{watchdog_launchd.get('pid')}`.",
         f"- Watchdog dry-run healthy: `{watchdog.get('healthy')}`; `{watchdog.get('first_line')}`.",
         "",
         "## Legacy Manual Async Diagnostic",

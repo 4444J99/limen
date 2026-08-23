@@ -310,7 +310,6 @@
     "source": "logs/usage-limits.json, logs/usage.json, logs/ledger.json (assessed 2026-06-23)"
   },
   "your_levers": [
-    "card-0186 Santander fraud hold — keystone: the whole stack's billing rides on it (one call clears it; also frees Anthropic/GitHub autopay)",
     "financial identity — receiving real money (bank/KYC for a payout rail or a signed deal) is genuinely yours",
     "the send / the signature — outbound emails and any contract: I draft, you send/sign (reversible-only invariant)",
     "institutional logins — D2L (education), and privileged/filing acts with Micah (legal)"

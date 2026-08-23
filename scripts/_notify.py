@@ -29,7 +29,6 @@ import subprocess
 import sys
 import tempfile
 import time
-import urllib.request
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -54,6 +53,22 @@ class NotificationResult:
     identifier: str
     reserved: bool = False
     reason: str | None = None
+
+
+@dataclass(frozen=True)
+class DeliveryReceipt:
+    """Channel-aware receipt returned by the machine-global Domus broker."""
+
+    status: Literal["delivered", "deduped", "recorded", "withheld", "cleared", "failed"]
+    stable_id: str
+    event_id: str
+    channels: dict[str, str]
+    reason: str | None = None
+
+
+NOTIFICATION_REGISTRY = (
+    Path(__file__).resolve().parents[1] / "institutio" / "governance" / "notification-events.limen.json"
+)
 
 
 def _state_path(root: Path | str) -> Path:
@@ -326,13 +341,13 @@ def _root_may_speak(root: Path | str) -> bool:
 
 
 def _deliver(message: str, title: str) -> bool:
-    """Invoke the one machine-global macOS notification effector."""
+    """Delegate legacy delivery to the one machine-global Domus transport."""
     try:
-        msg = message.replace('"', "'")
-        ttl = title.replace('"', "'")
+        broker = os.environ.get("DOMUS_NOTIFY_BIN", str(Path.home() / ".local" / "bin" / "domus-notify"))
         delivered = subprocess.run(
-            ["osascript", "-e", f'display notification "{msg}" with title "{ttl}"'],
+            [broker, "--title", title, "--message", message],
             capture_output=True,
+            text=True,
             timeout=10,
             check=False,
         )
@@ -347,21 +362,89 @@ def notify_ntfy(
     title: str = "LIMEN",
     tags: str = "limen",
 ) -> bool:
-    """Deliver an opt-in ntfy push through the same liveness and kill-switch gate."""
+    """Delegate the legacy ntfy-only route to the Domus broker."""
     topic = os.environ.get("LIMEN_NTFY_TOPIC")
     if not topic or not _enabled(None) or not _root_may_speak(root):
         return False
-    base = os.environ.get("LIMEN_NTFY_URL", "https://ntfy.sh").rstrip("/")
     try:
-        request = urllib.request.Request(
-            f"{base}/{topic}",
-            data=message.encode("utf-8"),
-            headers={"Title": title, "Tags": tags},
+        event_id = hashlib.sha256(f"{title}\0{message}\0{tags}".encode()).hexdigest()
+        receipt = emit_event_v1(
+            root,
+            stable_id="limen.legacy.ntfy",
+            transition="milestone",
+            subject_key=tags,
+            event_id=f"legacy-ntfy-{event_id[:20]}",
+            facts={"title": title, "message": message},
+            evidence_ref="legacy-notify-ntfy",
+            producer="scripts/_notify.py",
         )
-        with urllib.request.urlopen(request, timeout=10):
-            return True
+        return receipt.channels.get("ntfy") == "delivered"
     except Exception:
         return False
+
+
+def emit_event_v1(
+    root: Path | str,
+    *,
+    stable_id: str,
+    transition: str,
+    subject_key: str,
+    event_id: str,
+    facts: dict[str, str | int | float | bool | None],
+    evidence_ref: str,
+    producer: str,
+    observed_at: str | None = None,
+    enabled: bool | None = None,
+    level: str | None = None,
+) -> DeliveryReceipt:
+    """Validate at the broker boundary and return its channel-aware receipt."""
+    if not _root_may_speak(root):
+        return DeliveryReceipt("withheld", stable_id, event_id, {}, "root is not the live organism")
+    event = {
+        "event_id": event_id,
+        "transition": transition,
+        "subject_key": subject_key,
+        "observed_at": observed_at or datetime.now().astimezone().isoformat(timespec="seconds"),
+        "stable_id": stable_id,
+        "facts": facts,
+        "evidence_ref": evidence_ref,
+        "producer": producer,
+        "owner": "limen",
+    }
+    broker = os.environ.get("DOMUS_NOTIFY_BIN", str(Path.home() / ".local" / "bin" / "domus-notify"))
+    command = [broker, "emit", "--event-json", "-"]
+    if level:
+        command.extend(["--level", level])
+    env = dict(os.environ)
+    env["DOMUS_NOTIFY_REGISTRY"] = str(NOTIFICATION_REGISTRY)
+    if os.environ.get("LIMEN_NTFY_TOPIC") and not env.get("DOMUS_NOTIFY_NTFY_URL"):
+        base = os.environ.get("LIMEN_NTFY_URL", "https://ntfy.sh").rstrip("/")
+        env["DOMUS_NOTIFY_NTFY_URL"] = f"{base}/{os.environ['LIMEN_NTFY_TOPIC']}"
+    if not _enabled(enabled):
+        env["DOMUS_NOTIFY"] = "0"
+    try:
+        completed = subprocess.run(
+            command,
+            input=json.dumps(event),
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+            env=env,
+        )
+        if completed.returncode != 0:
+            return DeliveryReceipt(
+                "failed", stable_id, event_id, {}, f"Domus broker exited {completed.returncode}"
+            )
+        payload = json.loads(completed.stdout or "{}")
+        if not isinstance(payload, dict):
+            return DeliveryReceipt("failed", stable_id, event_id, {}, "invalid Domus broker response")
+        status = payload.get("status")
+        if status not in {"delivered", "deduped", "recorded", "withheld", "cleared", "failed"}:
+            status = "failed"
+        return DeliveryReceipt(status, stable_id, event_id, dict(payload.get("channels") or {}), payload.get("reason"))
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        return DeliveryReceipt("failed", stable_id, event_id, {}, f"Domus broker unavailable ({exc})")
 
 
 def notify(

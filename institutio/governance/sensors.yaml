@@ -147,12 +147,12 @@ sensors:
     title: "verify enactment — every declared-ON fleet flag is actually LIVE (not just merged)"
     gate: LIMEN_ENACTMENT_CHECK
     default: "1"
-    source: [metabolize, heartbeat]   # heartbeat-loop.sh runs it inline too (the live-loop home)
+    source: [metabolize, heartbeat]
     owner: tabularius
     steps:
       - command: "python3 scripts/enactment-audit.py --check"
         severity: advisory
-        escalation: "un-enacted fleet flag above — wire it in heartbeat-loop.sh, or kickstart the daemon (launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat)"
+        escalation: "un-enacted fleet flag above — repair its current on-demand or remote owner, then run `limen observe --once --scope host`; do not route side effects into the read-only scheduled heartbeat"
 
   github-estate-reconcile:
     section: "heartbeat"
@@ -371,7 +371,7 @@ sensors:
 
   github-actions-usage:
     section: "heartbeat"
-    title: "Actions spend telemetry — projected monthly net within budget AND the account-billing canary green"
+    title: "Actions spend telemetry — projected Actions net within budget plus runner-admission observation"
     gate: LIMEN_GH_USAGE
     default: "1"
     source: [heartbeat]
@@ -385,7 +385,7 @@ sensors:
     steps:
       - command: "python3 scripts/gitvs.py usage --check"
         severity: advisory
-        escalation: "Actions spend over budget or the account-billing canary is red — read docs/github-actions-usage.json; roots: L-CARD-FRAUD-HOLD (#182) then L-ORG-TEAM-UPGRADE (docs/github-estate-runbook.md)"
+        escalation: "Actions spend is over budget or GitHub emitted a runner-admission annotation — read docs/github-actions-usage.json; the annotation alone proves neither account cause nor remediation"
     omega_eligible:
       - label: "GitHub Actions budget"
         rung_id: sensor.github.actions-budget
@@ -1432,7 +1432,7 @@ sensors:
     steps:
       - command: "python3 scripts/host-pressure-stale.py --read-only"
         severity: advisory
-        escalation: "VITALS gauge missed VITALS_STALE_BEATS declared sample cadences — the throttle/shed valve may be flying blind; check `python3 -m limen.vigilia sample`, logs/vigilia/fast-wave.log, and the heartbeat LaunchAgent (2026-07-15 host-thrash incident: exogenous load stacked while nothing watched the watcher)"
+        escalation: "VITALS gauge missed its declared sample cadence — inspect the one-shot heartbeat receipt and run the explicit `python3 -m limen.vigilia sample` maintenance path; do not restore the legacy resident fast wave"
 
   runtime-lag:
     section: "0o3"
@@ -1934,22 +1934,15 @@ sensors:
 
   beat-freshness:
     section: "0z4a"
-    title: "beat freshness — the resident daemon must be newer than the loop body it runs"
+    title: "beat freshness — containment or the reviewed one-shot scheduler must match its pinned immutable runtime"
     gate: LIMEN_BEAT_FRESHNESS
     default: "1"
     source: [metabolize, heartbeat]
     owner: substrate
-    # The 2026-08-06 -> 08-07 lesson, codified: heartbeat-loop.sh is a resident `while true`
-    # under KeepAlive that never re-execs, so a merged loop-body edit is dead code until
-    # `launchctl kickstart`. Seven flywheel PRs sat inert for 18h behind exactly this (and the
-    # 15-day starvation ended on the same unrun restart atom). This predicate compares the
-    # running process's start time against the loop file's mtime on disk and alarms with the
-    # one-command remedy. It runs as a re-exec'd CHILD each pass, so it reads current code even
-    # when its parent daemon is the stale party — the failure it detects cannot silence it,
-    # provided the stale body already carries a sensor pass (both sources declared for reach).
-    # Deliberately no auto-kickstart: the sensor may sit in the process tree it would kill,
-    # and a mid-beat self-restart could interrupt a merge rung. Dead daemon = liveness's
-    # verdict (LAUNCH_AGENT_LIVENESS), not this one's.
+    # The legacy KeepAlive loop could execute stale code indefinitely. Its successor is loaded
+    # but not resident: launchd invokes one immutable merged runtime, one due read-only probe
+    # runs inside hard resource ceilings, and the process exits. The predicate also accepts the
+    # zero-runtime containment state while a reviewed exact head is not yet activated.
     cadence:
       env: LIMEN_BEAT_FRESHNESS_CADENCE
       default: 4
@@ -1959,7 +1952,7 @@ sensors:
     steps:
       - command: "python3 scripts/check-beat-freshness.py"
         severity: advisory
-        escalation: "the resident heartbeat daemon predates its own loop body — every loop-body merge since is dead code; run `launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat` (the output names the exact timestamps)"
+        escalation: "run `domus-limen-runtime verify-heartbeat`; if the contract or runtime digest is not exact, use `retire-heartbeat` and reactivate only from a reviewed plan hash"
 
   live-checkout-currency:
     section: "0z4b"

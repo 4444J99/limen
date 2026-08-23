@@ -115,11 +115,11 @@ if [ "$rc" = 0 ] && [ "$wiped" = 0 ]; then
   echo "VERDICT: ✓ FREE PATH SAFE — the bearer token works and your Keychain survived." >&2
   echo "  Activate it (subscription-billed, fleet-isolated, no API \$):" >&2
   echo "    bash scripts/set-credential.sh LIMEN_CLAUDE_AUTH_TOKEN   # paste the SAME token" >&2
-  echo "    launchctl kickstart -k gui/\$(id -u)/com.limen.heartbeat" >&2
+  echo "    limen observe --once --scope host" >&2
   echo "  Then confirm the next claude-lane runs bill to your SUBSCRIPTION (not API credits) on the usage view." >&2
 else
   echo "VERDICT: ✗ NOT the free path (call rc=$rc, keychain_wiped=$wiped) — use the documented-safe fallback." >&2
   [ "$wiped" = 1 ] && echo "  Your interactive Keychain was deleted (#37512) — run \`claude /login\` ONCE to restore it." >&2
   echo "    bash scripts/set-credential.sh LIMEN_CLAUDE_API_KEY     # an Anthropic Console API key (API-billed)" >&2
-  echo "    launchctl kickstart -k gui/\$(id -u)/com.limen.heartbeat" >&2
+  echo "    limen observe --once --scope host" >&2
 fi

@@ -23,7 +23,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import hashlib
+import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -32,6 +35,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import _notify  # noqa: E402
 
 STALE_KEY = "vitals-stale"
+
+
+def _boot_identity() -> str:
+    try:
+        result = subprocess.run(["sysctl", "-n", "kern.boottime"], capture_output=True, text=True, timeout=3)
+        return hashlib.sha256(result.stdout.strip().encode()).hexdigest()[:20]
+    except (OSError, subprocess.SubprocessError):
+        return "unavailable"
+
+
+def _active_monotonic() -> float:
+    return time.clock_gettime(getattr(time, "CLOCK_UPTIME_RAW", time.CLOCK_MONOTONIC))
 
 
 def _root() -> Path:
@@ -147,6 +162,27 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         payload = json.loads(status_path.read_text())
+        wake_state = str(payload.get("wake_state") or "legacy")
+        if wake_state in {"Sleep", "MaintenanceDarkWake", "DarkWake"}:
+            print(f"host-pressure-stale: grace — wake_state={wake_state} cannot page")
+            return 0
+        boot_identity = payload.get("boot_identity")
+        sampled_monotonic = payload.get("sampled_monotonic_seconds")
+        if boot_identity != _boot_identity() or not isinstance(sampled_monotonic, (int, float)):
+            print("host-pressure-stale: STALE — reboot/legacy metadata requires one bounded sample-first refresh")
+            if not args.read_only:
+                try:
+                    subprocess.run(
+                        [sys.executable, "-m", "limen.vigilia", "sample"],
+                        cwd=_root(),
+                        timeout=30,
+                        capture_output=True,
+                        check=False,
+                    )
+                except (OSError, subprocess.SubprocessError):
+                    pass
+                return 0
+            return 1
         sampled_raw = payload.get("sampled_at") or payload.get("completed_at") or payload.get("ts") or ""
         if not sampled_raw:
             return _stale(
@@ -162,7 +198,7 @@ def main(argv: list[str] | None = None) -> int:
             read_only=args.read_only,
         )
 
-    age_s = (datetime.now(timezone.utc) - sampled_at).total_seconds()
+    age_s = max(0.0, _active_monotonic() - float(sampled_monotonic))
     if age_s >= stale_after_s:
         return _stale(
             f"host-pressure-stale: STALE — vitals record is {age_s / 60:.0f} min old "

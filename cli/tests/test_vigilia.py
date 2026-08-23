@@ -257,17 +257,10 @@ def test_heartbeat_vitals_leaves_provider_admission_to_the_campaign_supervisor()
     assert "VITALS_THROTTLE" not in heartbeat
 
 
-def test_launchd_heartbeat_has_no_legacy_provider_or_worker_configuration():
-    generator = (Path(__file__).resolve().parents[2] / "scripts" / "gen-launchd-plist.sh").read_text(encoding="utf-8")
-    template = (
-        Path(__file__).resolve().parents[2] / "container" / "launchd" / "com.limen.heartbeat.plist.tmpl"
-    ).read_text(encoding="utf-8")
-
-    assert "LIMEN_CAMPAIGN_WAKE_TIMEOUT" in generator
-    assert "LIMEN_CAMPAIGN_WAKE_TIMEOUT" in template
-    for legacy in ("LIMEN_LANES", "LIMEN_DISPATCH_LANES", "LIMEN_LOCAL_LIMIT", "LIMEN_ASYNC_MAX"):
-        assert legacy not in generator
-        assert legacy not in template
+def test_launchd_heartbeat_generator_and_template_are_retired():
+    root = Path(__file__).resolve().parents[2]
+    assert not (root / "scripts/gen-launchd-plist.sh").exists()
+    assert not (root / "container/launchd/com.limen.heartbeat.plist.tmpl").exists()
 
 
 # ---------------------------------------------------------------- continuity
@@ -514,6 +507,7 @@ def test_executive_run_beat_aggregates_and_writes(tmp_path, monkeypatch):
 
     status = executive.run_beat()
     assert set(status) >= {"institution", "sampled_at", "completed_at", "vitals", "continuity", "integrity"}
+    assert set(status) >= {"boot_identity", "sampled_monotonic_seconds", "wake_state"}
     assert "ts" not in status
     assert (tmp_path / "status.json").exists()
     assert "vitals=L1/ok" in executive.summary_line(status)

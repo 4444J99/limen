@@ -337,7 +337,7 @@ def liveness_rung(params: dict) -> list[dict]:
                     f"daemon pid {pid} started {int(time.time() - start)}s ago but its wiring "
                     f"({newest_src.name if newest_src else '?'}) changed {drift}s more recently "
                     f"— running stale env; kickstart to load "
-                    f"(launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat)"
+                    "(limen observe --once --scope host)"
                 ),
             }
         ]

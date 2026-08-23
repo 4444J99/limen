@@ -48,6 +48,8 @@ bypass. Dry-run first, reversible, **gated on user go-ahead.** This is the highe
 5. One-container cutover (`container/migrate.sh` S4–S13) under external backup.
 6. Surface the 5 `needs_human` atoms as a decision list.
 
-## Only these need the human
-card-0186 Santander call · Nelnet recert · `consolidate-github --apply` & `setup-rulesets --apply`
-triggers · monetization signups.
+## Bootstrap shortlist needing the human
+Nelnet recert · `consolidate-github --apply` & `setup-rulesets --apply` triggers · monetization
+signups. This is only the bootstrap shortlist; [`his-hand-levers.json`](his-hand-levers.json) is
+the authoritative registry for every open or `needs_human` action. The historical card-0186 hold
+was discharged 2026-07-17 and is not a current action.

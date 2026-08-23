@@ -29,8 +29,10 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import socket
 import subprocess
 import sys
+from datetime import datetime
 from pathlib import Path
 
 SOURCE_ROOT = Path(__file__).resolve().parents[1]
@@ -136,7 +138,9 @@ def main(argv: list[str] | None = None) -> int:
     enabled = False if args.no_notify else None
 
     if args.notify_test:
-        fired = _notify.notify_once(root, f"notify-test-{os.getpid()}", "host-relief notification path live", enabled=enabled)
+        fired = _notify.notify_once(
+            root, f"notify-test-{os.getpid()}", "host-relief notification path live", enabled=enabled
+        )
         print(f"host-relief: notify-test fired={fired}")
         return 0
 
@@ -184,22 +188,54 @@ def main(argv: list[str] | None = None) -> int:
     report["kickstarts"] = kicked
 
     notified: list[str] = []
-    if report["relieve"]:
-        did = ", ".join(f"{k['label']} restarted" for k in kicked if k.get("ok")) or "fleet load shed by the gate"
-        if _notify.notify_once(root, SHED_ONSET_KEY, f"Host pressure critical — {did}. Details: logs/vigilia/", enabled=enabled):
+    if args.apply and report["relieve"]:
+        legacy_onset = _notify.notify_once(root, SHED_ONSET_KEY, "structured host-pressure onset", enabled=False)
+        restart_count = sum(1 for item in kicked if item.get("ok"))
+        _notify.emit_event_v1(
+            root,
+            stable_id="limen.host.pressure",
+            transition="onset",
+            subject_key=socket.gethostname(),
+            event_id=f"host-pressure-{socket.gethostname()}-{gate_action}",
+            facts={
+                "snapshot_time": datetime.now().astimezone().strftime("%H:%M"),
+                "gate_state": gate_action,
+                "restart_count": restart_count,
+            },
+            evidence_ref="logs/vigilia/status.json",
+            producer="scripts/host-relief.py",
+            enabled=enabled,
+        )
+        if legacy_onset:
             notified.append(SHED_ONSET_KEY)
-    else:
+    elif args.apply:
         _notify.clear_condition(root, SHED_ONSET_KEY)
+        _notify.emit_event_v1(
+            root,
+            stable_id="limen.host.pressure",
+            transition="clear",
+            subject_key=socket.gethostname(),
+            event_id=f"host-pressure-clear-{socket.gethostname()}-{os.getpid()}",
+            facts={
+                "snapshot_time": datetime.now().astimezone().strftime("%H:%M"),
+                "gate_state": gate_action,
+                "restart_count": 0,
+            },
+            evidence_ref="logs/vigilia/status.json",
+            producer="scripts/host-relief.py",
+            enabled=enabled,
+        )
     current_hog_keys = set()
-    for hog in report["root_hogs"]:
-        key = f"root-hog-{hog['pid']}"
-        current_hog_keys.add(key)
-        msg = f"Root process holds {hog['rss_mb'] / 1024:.1f} GiB ({hog['command'][:60]}) — run: {hog['one_liner']}"
-        if _notify.notify_once(root, key, msg, enabled=enabled):
-            notified.append(key)
-    for key in _notify.active_conditions(root):
-        if key.startswith("root-hog-") and key not in current_hog_keys:
-            _notify.clear_condition(root, key)  # hog gone — next onset re-fires
+    if args.apply:
+        for hog in report["root_hogs"]:
+            key = f"root-hog-{hog['pid']}"
+            current_hog_keys.add(key)
+            msg = f"Root process holds {hog['rss_mb'] / 1024:.1f} GiB ({hog['command'][:60]}) — run: {hog['one_liner']}"
+            if _notify.notify_once(root, key, msg, enabled=enabled):
+                notified.append(key)
+        for key in _notify.active_conditions(root):
+            if key.startswith("root-hog-") and key not in current_hog_keys:
+                _notify.clear_condition(root, key)  # hog gone — next onset re-fires
     report["notified"] = notified
 
     if args.json:

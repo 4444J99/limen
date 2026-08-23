@@ -135,3 +135,14 @@ def test_doctor_flags_bad_registry(tmp_path, monkeypatch):
 def test_doctor_ok_on_shipped_registry():
     mod = _load()
     assert mod.doctor() == 0
+
+
+def test_check_no_write_leaves_runtime_source_immutable(tmp_path, monkeypatch):
+    mod = _load()
+    output = tmp_path / "health.json"
+    monkeypatch.setattr(mod, "OUT", output)
+    monkeypatch.setattr(mod, "load_registry", lambda: {"rails": {}})
+    monkeypatch.setattr(mod, "_run", lambda *_args, **_kwargs: (0, ""))
+    monkeypatch.setattr(mod, "cloudstorage_census", lambda _rails: [])
+    assert mod.check(write=False) == 0
+    assert not output.exists()
