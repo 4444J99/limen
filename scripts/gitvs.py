@@ -391,7 +391,7 @@ def _owner_repo_inventory(owner: str, token: str | None) -> dict | None:
             query = (
                 "query($login:String!,$cursor:String){"
                 f"{root_kind}(login:$login){{repositories(first:100,after:$cursor{affiliation}){{"
-                "totalCount nodes{nameWithOwner isPrivate isArchived pullRequests(states:OPEN){totalCount}}"
+                "totalCount nodes{id nameWithOwner isPrivate isArchived pullRequests(states:OPEN){totalCount}}"
                 "pageInfo{hasNextPage endCursor}}}}"
             )
             args = ["api", "graphql", "-f", f"query={query}", "-F", f"login={owner}"]
@@ -419,6 +419,7 @@ def _owner_repo_inventory(owner: str, token: str | None) -> dict | None:
                         return None
                     repositories[name] = {
                         "name_with_owner": name,
+                        "repository_id": node.get("id"),
                         "private": bool(node.get("isPrivate")),
                         "archived": bool(node.get("isArchived")),
                         "open_pr_total": int((node.get("pullRequests") or {})["totalCount"]),
