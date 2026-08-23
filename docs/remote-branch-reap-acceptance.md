@@ -17,7 +17,8 @@ Each JSONL event must be one object with:
   "accepted_at": "2026-07-10T18:30:00Z",
   "branch": "example/topic-branch",
   "accepted": true,
-  "reason": "landed-ancestor",
+  "reason": "operator-reviewed redundant topic branch",
+  "reap_classification": "landed-ancestor",
   "tip": "0123456789abcdef0123456789abcdef01234567",
   "archive_status": "landed_on_default_verified",
   "archive_proof": "origin/example/topic-branch is reachable from origin/main at <default-sha>",
@@ -27,7 +28,10 @@ Each JSONL event must be one object with:
 ```
 
 Required proof fields are `accepted_at`, `archive_proof`, and `redaction_proof`.
-`accepted: true` without those fields is incomplete and will not authorize deletion.
+Every per-branch `accepted: true` event also carries `reap_classification`, whose only valid
+values are `landed-ancestor` and `landed-pr-merged`. The value must equal the classifier's
+live reason for the exact current tip. `reason` remains descriptive context and never grants
+authority. Missing or mismatched classification and proof fields will not authorize deletion.
 
 Accepted archive statuses and redaction reviews are defined in
 `scripts/reap-remote-branches.py`; the common cases are `landed_on_default_verified` for an
@@ -43,8 +47,8 @@ reviewed the branch, archive/storage proof, and redaction proof.
 ## Standing grant (landed classes only)
 
 A single ledger event with `"standing": true` and `"branch": "*"` covers every remote branch
-the classifier itself proves landed — reason `landed-pr-merged` (PR MERGED per `gh` AND the
-tip not advanced past mergedAt) or `landed-ancestor` (the remote tip reachable from the
+the classifier itself proves landed — reason `landed-pr-merged` (a MERGED PR's recorded
+`headRefOid` exactly equals the current remote tip) or `landed-ancestor` (the remote tip reachable from the
 default ref). The machine proof is the archive proof; the grant delegates the per-branch human
 key for exactly those two classes and nothing else. Any other class still requires a
 per-branch, tip-matched acceptance event. This mirrors the local branch reaper's standing

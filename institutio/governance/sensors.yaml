@@ -341,7 +341,7 @@ sensors:
       env: LIMEN_SESSION_CONTENTION_TIMEOUT
       default: 300
     steps:
-      - command: "python3 scripts/session-contention.py ship"
+      - command: "python3 scripts/session-contention.py ship --apply"
         severity: advisory
         escalation: "a session-contention incident was recorded but could not be promoted to the committed ledger — the fleet rewrote a tree a live session was working in and the evidence is still local-only (logs/session-contention.jsonl); IF-SESSION-NON-CONTENTION counts unshipped incidents, so its probe already reports the distance"
 

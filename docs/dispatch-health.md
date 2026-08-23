@@ -1,6 +1,6 @@
 # Campaign Heartbeat Health
 
-Generated: `2026-08-19T13:39:07+00:00`
+Generated: `2026-08-21T14:23:26+00:00`
 
 Status: `blocked`
 
@@ -22,12 +22,12 @@ Status: `blocked`
 - Plist LIMEN_WORKTREES: `/Volumes/Scratch/limen-worktrees`.
 - Plist LIMEN_WORKTREE_ROOT: `/Volumes/Scratch/limen-worktrees`.
 - Plist LIMEN_CAMPAIGN_WAKE_TIMEOUT: `300`.
-- Loaded launchd state: `running` pid `1278`.
+- Loaded launchd state: `running` pid `56094`.
 - Loaded LIMEN_ROOT: `/Users/4jp/Workspace/limen`.
 - Loaded LIMEN_WORKTREES: `/Volumes/Scratch/limen-worktrees`.
 - Loaded LIMEN_WORKTREE_ROOT: `/Volumes/Scratch/limen-worktrees`.
 - Loaded LIMEN_CAMPAIGN_WAKE_TIMEOUT: `300`.
-- Watchdog dry-run healthy: `False`; `[watchdog] 2026-08-19T13:39:08.392013+00:00 UNHEALTHY sig=beating`.
+- Watchdog dry-run healthy: `False`; `[watchdog] 2026-08-21T14:23:27.618790+00:00 UNHEALTHY sig=beating`.
 
 ## Legacy Manual Async Diagnostic
 
@@ -60,30 +60,48 @@ Status: `blocked`
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main [behind 1]`.
-- HEAD: `e5763e8b2286e156dfe76d7a1f253841a37205ee`.
-- origin/main: `2cd267128ff6b564d10be58256559af3219f7118`.
-- Matches origin/main: `False`; ahead `0` behind `1`.
-- Dirty entries: `7`.
+- Branch: `main`; status `## main...origin/main`.
+- HEAD: `3902a539cd57863e4f811d70ee6f9e34112afbcb`.
+- origin/main: `3902a539cd57863e4f811d70ee6f9e34112afbcb`.
+- Matches origin/main: `True`; ahead `0` behind `0`.
+- Dirty entries: `21`.
+- Ignored generated receipt dirty entries: `4`.
+  - `docs/dispatch-health.md`
+  - `docs/receipts/tcc-track-c-1703/closeout-latest.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260821T114510Z.json`
+  - `docs/receipts/tcc-track-c-1703/closeout-20260821T132430Z.json`
+  - `ORIGINAL_REQUEST.md`
   - `docs/RECLASSIFY-PROPOSAL.md`
   - `docs/branch-hygiene.md`
+  - `docs/capacity-fill.md`
+  - `docs/diurnal/2026-08-20.md`
   - `docs/diurnal/INDEX.md`
+  - `docs/github-actions-usage.json`
+  - `docs/github-estate-census.json`
+  - `docs/prompt-atom-ledger.md`
+  - `docs/prompt-authority-seal.json`
+  - `docs/receipts/session-contention-ledger.json`
+  - `docs/remote-branch-reap-acceptance.jsonl`
+  - `institutio/governance/parameters.yaml`
   - `logs/overnight-watch.md`
-  - `mcp/uv.lock`
-  - `docs/diurnal/2026-08-19.md`
-  - `dump.rdb`
+  - `organs/contributions/MIRROR.md`
+  - `organs/contributions/opportunities.json`
+  - `organs/financial/cashflow.md`
+  - `scripts/reap-remote-branches.py`
+  - `scripts/tests/reap-remote-branches.test.sh`
+  - `docs/diurnal/2026-08-21.md`
+  - `studium/ledger/studium-2026-08-20.md`
 
 ## Verified Worktree
 
 - Verified worktree: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main [behind 1]`.
-- HEAD matches origin/main: `False`.
+- Branch: `main`; status `## main...origin/main`.
+- HEAD matches origin/main: `True`.
 
 ## Blockers
 
 - `heartbeat-watchdog-unhealthy`:   ok  not-wedged: {"reason": "no PARALLEL beats in window", "recent_pr_counts": [], "max_fails_threshold": 3}
-- `live-root-not-at-origin-main`: live root branch main head e5763e8b2286 differs from origin/main 2cd267128ff6.
-- `live-root-dirty`: live root has 7 dirty entries.
+- `live-root-dirty`: live root has 21 dirty entries.
 - `always-working-reconciliation-missing`: No current always-working reconciliation receipt is available.
 
 ## Commands

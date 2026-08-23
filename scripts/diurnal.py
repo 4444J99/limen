@@ -279,12 +279,37 @@ def r_owed_mail(root: Path, spec: dict, ctx: dict) -> Rendered:
 def r_organ_liveness(root: Path, spec: dict, ctx: dict) -> Rendered:
     data = _load_json(root / "logs" / "organ-health.json") or {}
     summary = data.get("summary") or {}
-    not_green = sum(int(summary.get(k, 0) or 0) for k in ("stale", "down"))
-    down = [o.get("rung") or o.get("key") for o in (data.get("organs") or []) if o.get("status") == "down"][:6]
-    lines = [
-        f"{summary.get('green', '?')}/{summary.get('total', '?')} green · "
-        f"{summary.get('stale', 0)} stale · {summary.get('down', 0)} down"
-    ]
+    organs = [o for o in (data.get("organs") or []) if isinstance(o, dict)]
+    observed_counts = {
+        status: sum(1 for organ in organs if organ.get("status") == status)
+        for status in ("green", "gated", "stale", "down", "unknown")
+    }
+
+    def count(status: str) -> int:
+        value = summary.get(status)
+        if isinstance(value, int) and value >= 0:
+            return value
+        return observed_counts[status]
+
+    gated = count("gated")
+    green = count("green")
+    # New organ-health receipts expose `live = green + gated`; keep older receipts readable when
+    # their summary omitted the explicit green count and the detailed organ rows are unavailable.
+    if green == 0 and not organs and isinstance(summary.get("live"), int):
+        green = max(int(summary["live"]) - gated, 0)
+    stale = count("stale")
+    down_count = count("down")
+    unknown = count("unknown")
+    total = summary.get("total") if isinstance(summary.get("total"), int) else len(organs)
+    unclassified = max(int(total) - (green + gated + stale + down_count + unknown), 0)
+    not_green = stale + down_count + unknown + unclassified
+    status_bits = [f"{green}/{total} green", f"{gated} gated", f"{stale} stale", f"{down_count} down"]
+    if unknown:
+        status_bits.append(f"{unknown} unknown")
+    if unclassified:
+        status_bits.append(f"{unclassified} unclassified")
+    down = [o.get("rung") or o.get("key") for o in organs if o.get("status") == "down"][:6]
+    lines = [" · ".join(status_bits)]
     if down:
         lines.append("  down: " + ", ".join(str(d) for d in down))
     return Rendered("organs", spec["title"], lines, metric=not_green, exception=bool(down))
@@ -357,6 +382,13 @@ def _render_cap(rows: list, lines: list[str]) -> list[str]:
     cap = _int("LIMEN_DIURNAL_CLAIM_RENDER_MAX", 5)
     if len(rows) <= cap:
         return lines
+    unknown = sum(1 for row in rows if isinstance(row, dict) and row.get("verdict") == "unknown")
+    if unknown:
+        scored = len(rows) - unknown
+        return lines[:cap] + [
+            f"… and {len(rows) - cap} more evaluated, not shown "
+            f"({scored} scored; {unknown} unknown excluded from streaks)"
+        ]
     return lines[:cap] + [f"… and {len(rows) - cap} more scored, not shown (all {len(rows)} accrue streaks)"]
 
 
@@ -369,7 +401,7 @@ def r_claims(root: Path, spec: dict, ctx: dict) -> Rendered:
 
 # What MOVED is the news; a noop is the absence of news. When the render cap elides, it must
 # elide noops — the reverse would hide the day's only real signal behind sections that did nothing.
-_VERDICT_ORDER = {"missed": 0, "held": 1, "noop": 2}
+_VERDICT_ORDER = {"missed": 0, "held": 1, "unknown": 2, "noop": 3}
 
 
 def _by_news(scored: list[dict]) -> list[dict]:
@@ -394,15 +426,19 @@ def r_claim_scores(root: Path, spec: dict, ctx: dict) -> Rendered:
     scored = ctx.get("scored") or []
     if not scored:
         return Rendered("score", spec["title"], ["no morning emission to score"])
-    tally = {"held": 0, "missed": 0, "noop": 0}
+    tally = {"held": 0, "missed": 0, "noop": 0, "unknown": 0}
     lines = []
     for s in _by_news(scored):
         tally[s["verdict"]] = tally.get(s["verdict"], 0) + 1
-        lines.append(f"{s['id']}. [{s['verdict']}] {s['text']} ({s['was']} → {s['now']})")
+        now = "unknown" if s["verdict"] == "unknown" else s["now"]
+        lines.append(f"{s['id']}. [{s['verdict']}] {s['text']} ({s['was']} → {now})")
     # The tally counts EVERY scored section; only the per-claim listing is capped. A summary
     # derived from the visible rows would understate the day and mis-denominate the streaks.
     lines = _render_cap(scored, lines)
-    lines.append(f"— held {tally['held']} · missed {tally['missed']} · noop {tally['noop']}")
+    tally_line = f"— held {tally['held']} · missed {tally['missed']} · noop {tally['noop']}"
+    if tally["unknown"]:
+        tally_line += f" · unknown {tally['unknown']}"
+    lines.append(tally_line)
     return Rendered("score", spec["title"], lines)
 
 
@@ -648,7 +684,9 @@ def score_claims(claims: list[dict], rendered: list[Rendered]) -> list[dict]:
         # Claims written before `acted_when` rode on the claim default to the original rule, so a
         # morning emitted by the previous version still scores correctly in tonight's evening.
         if now is None:
-            verdict = "noop"
+            # A missing observation cannot prove movement or stasis. Calling it `noop` advanced a
+            # cut streak from no evidence; `unknown` stays visible while moving no streak at all.
+            verdict = "unknown"
         elif c.get("acted_when", "metric_decreased") == "metric_changed":
             # No direction is declared for this rule, so there is no wrong way to move: the only
             # failure it can express is not moving at all. Never emits `missed` — by design.
@@ -686,6 +724,8 @@ def apply_cuts(
     for s in scored:
         key = s["section"]
         rec = scores.setdefault(key, {"noop_streak": 0, "cut": False})
+        if s["verdict"] == "unknown":
+            continue
         if s["verdict"] == "noop":
             rec["noop_streak"] = int(rec.get("noop_streak", 0)) + 1
         else:
@@ -972,7 +1012,7 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
             # can neither manufacture a proposal nor resolve one by failing to observe it.
             if engaged and not dry_run:
                 ctx["proposal_book"] = record_proposals(root, proposed, today)
-            ctx["carry"] = [s["text"] for s in scored if s["verdict"] in ("missed", "noop")][:5]
+            ctx["carry"] = [s["text"] for s in scored if s["verdict"] in ("missed", "noop", "unknown")][:5]
             if not engaged:
                 ctx["carry"].insert(0, "day UNSCORED (no commits) — no streak moved, no cut fired")
 

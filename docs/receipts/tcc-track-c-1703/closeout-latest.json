@@ -38,16 +38,16 @@
       "rotating_identity_active_grants": 30,
       "stable_host": 1,
       "unhosted_configured_ingresses": 0,
-      "unrelated": 269,
+      "unrelated": 271,
       "visible_app_management_path_rows": 3
     },
     "unhosted_configured_ingresses": 0,
     "unrelated_grants_preserved": true,
     "visible_app_management_path_rows": 3
   },
-  "observed_at": "2026-08-19T17:47:58Z",
+  "observed_at": "2026-08-21T13:24:30Z",
   "paths": {
-    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260819T174758Z.json",
+    "receipt": "docs/receipts/tcc-track-c-1703/closeout-20260821T132430Z.json",
     "status": "logs/tcc-track-c-status.json"
   },
   "post_audit": {
@@ -75,7 +75,7 @@
         "rotating_identity_active_grants": 30,
         "stable_host": 1,
         "unhosted_configured_ingresses": 0,
-        "unrelated": 269,
+        "unrelated": 271,
         "visible_app_management_path_rows": 3
       },
       "unhosted_configured_ingresses": 0,

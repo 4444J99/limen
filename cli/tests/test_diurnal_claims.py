@@ -104,6 +104,35 @@ def test_what_moved_survives_the_elision(mod, tmp_path, monkeypatch):
     assert "[missed]" in lines[0], "the one section that moved must not be the one elided"
 
 
+def test_a_missing_metric_is_unknown_and_moves_no_streak(mod, tmp_path):
+    sections = _sections(s0={**_sections()["s0"], "cuttable": False})
+    claims = [c for c in mod.build_claims(tmp_path, sections, _rendered(mod, sections)) if c["section"] == "s0"]
+    probe = _rendered(mod, sections)
+    next(row for row in probe if row.key == "s0").metric = None
+
+    scored = mod.score_claims(claims, probe)
+    assert scored[0]["verdict"] == "unknown"
+    scores = {"s0": {"noop_streak": 4, "cut": False}}
+    mod.apply_cuts(tmp_path, sections, scored, scores, 5, 1, True, probe)
+    assert scores["s0"]["noop_streak"] == 4
+    lines = mod.r_claim_scores(tmp_path, {"title": "score"}, {"scored": scored}).lines
+    assert "(7 → unknown)" in lines[0]
+    assert lines[-1] == "— held 0 · missed 0 · noop 0 · unknown 1"
+
+
+def test_organ_liveness_classifies_gated_organs_and_keeps_them_out_of_not_green(mod, tmp_path):
+    health = tmp_path / "logs" / "organ-health.json"
+    health.parent.mkdir(parents=True)
+    health.write_text(
+        '{"summary":{"total":81,"green":4,"gated":3,"stale":28,"down":46},"organs":[]}',
+        encoding="utf-8",
+    )
+
+    rendered = mod.r_organ_liveness(tmp_path, {"title": "organs"}, {})
+    assert rendered.lines[0] == "4/81 green · 3 gated · 28 stale · 46 down"
+    assert rendered.metric == 74
+
+
 # ── 2 · staleness is not a shield ──────────────────────────────────────────────────
 
 
