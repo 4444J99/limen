@@ -145,7 +145,11 @@ def determine_status(vitals_data: dict[str, Any], bifrons_data: dict[str, Any], 
         return "shed"
     if v_action == "throttle":
         return "degraded"
-    if "degraded" in str(vitals_data.get("status", "")) or "degraded" in str(obs_data.get("status", "")):
+    if (
+        "degraded" in str(vitals_data.get("status", ""))
+        or "degraded" in str(bifrons_data.get("status", ""))
+        or "degraded" in str(obs_data.get("status", ""))
+    ):
         return "degraded"
     return "ok"
 
