@@ -17,13 +17,13 @@ if str(CLI_SRC) not in sys.path:
 
 from limen.remote_reap import (  # noqa: E402
     atomic_json,
-    github_repository_slug,
     journal,
     load_model,
-    remote_tip,
     remote_url_digest,
+    validate_disposition_evidence,
 )
 from limen.universe_recovery import (  # noqa: E402
+    CustodyProofV1,
     RefDispositionV2,
     ReapPlanV1,
     ReviewLineageClosureV2,
@@ -37,6 +37,7 @@ def main() -> int:
     parser.add_argument("--repository-root", type=Path, required=True)
     parser.add_argument("--disposition", type=Path, required=True)
     parser.add_argument("--review-closure", type=Path, required=True)
+    parser.add_argument("--custody-receipt", type=Path, required=True)
     parser.add_argument("--plan", type=Path, required=True)
     parser.add_argument("--capability-output", type=Path, required=True)
     parser.add_argument("--journal-output", type=Path, required=True)
@@ -51,21 +52,20 @@ def main() -> int:
     try:
         disposition = load_model(args.disposition, RefDispositionV2)
         review = load_model(args.review_closure, ReviewLineageClosureV2)
+        custody = load_model(args.custody_receipt, CustodyProofV1)
         plan = load_model(args.plan, ReapPlanV1)
         if not disposition.reap_eligible:
             raise ValueError("ref disposition is not reap eligible")
-        if github_repository_slug(args.repository_root) != disposition.repository:
-            raise ValueError("repository identity does not match the disposition")
-        if not review.terminal or review.repository != disposition.repository:
-            raise ValueError("review closure is nonterminal or belongs to another repository")
-        if review.pull_request not in disposition.pull_requests:
-            raise ValueError("review closure is not named by the ref disposition")
+        validate_disposition_evidence(
+            repository_root=args.repository_root,
+            disposition=disposition,
+            review=review,
+            custody=custody,
+        )
         if disposition.grace_satisfied_at is None or now < disposition.grace_satisfied_at:
             raise ValueError("remote reap grace has not elapsed")
         if disposition.expires_at is not None and now >= disposition.expires_at:
             raise ValueError("ref disposition has expired")
-        if remote_tip(args.repository_root, disposition.ref) != disposition.tip:
-            raise ValueError("live remote ref does not match the disposition")
         expected = {
             "repository": disposition.repository,
             "repository_id": disposition.repository_id,
@@ -73,7 +73,7 @@ def main() -> int:
             "ref": disposition.ref,
             "live_tip": disposition.tip,
             "disposition_digest": canonical_digest(disposition),
-            "custody_receipt_digest": disposition.custody_proof_digest,
+            "custody_receipt_digest": canonical_digest(custody),
             "review_closure_digest": canonical_digest(review),
         }
         for field, value in expected.items():

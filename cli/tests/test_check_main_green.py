@@ -530,8 +530,11 @@ def test_classify_real_failure_when_steps_executed(monkeypatch):
 def test_classify_fails_open_to_ci_fail(monkeypatch):
     m = _load()
     monkeypatch.setattr(m, "_gh_json", lambda args, default: default)  # API unavailable
-    assert m.classify_red_run(123).classification == "executed_code_failure"
-    assert m.classify_red_run(0).classification == "executed_code_failure"
+    for result in (m.classify_red_run(123), m.classify_red_run(0)):
+        assert result.classification == "executed_code_failure"
+        assert result.execution_result == "CI_CODE_RED"
+        assert result.code_red is True
+        assert result.merge_admissible is False
 
 
 def test_jammed_pr_run_ids_extracts_filters_and_dedups():

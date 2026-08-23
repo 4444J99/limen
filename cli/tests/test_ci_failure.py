@@ -3,10 +3,18 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from limen.ci_failure import classify_ci_failure
+from limen.ci_failure import CIFailure, classify_ci_failure
 
 
 ZERO_STEP = [{"conclusion": "failure", "steps": []}]
+
+
+def test_legacy_three_argument_failure_construction_remains_compatible():
+    result = CIFailure("executed_code_failure", "legacy caller", False)
+
+    assert result.execution_result == "CI_UNKNOWN"
+    assert result.code_red is False
+    assert result.merge_admissible is False
 
 
 def test_billing_related_provider_annotation_is_observation_not_diagnosis():
