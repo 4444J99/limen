@@ -1,17 +1,17 @@
 """Custody regressions for the private GitHub estate census receipt."""
+
 from __future__ import annotations
 
 import importlib.util
 import json
 import stat
+import subprocess
 import sys
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SPEC = importlib.util.spec_from_file_location(
-    "github_estate_census", ROOT / "scripts" / "github-estate-census.py"
-)
+SPEC = importlib.util.spec_from_file_location("github_estate_census", ROOT / "scripts" / "github-estate-census.py")
 assert SPEC and SPEC.loader
 MODULE = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = MODULE
@@ -84,3 +84,30 @@ def test_repository_only_check_rejects_incomplete_denominator(monkeypatch):
     monkeypatch.setattr(sys, "argv", ["github-estate-census.py", "--check-repositories", "--json"])
 
     assert MODULE.main() == 1
+
+
+def test_metadata_carries_live_default_commit_oid_into_generation_input():
+    tip = "a" * 40
+
+    class Gitvs:
+        @staticmethod
+        def _gh_user(_args, timeout):
+            assert timeout == 90
+            payload = {
+                "data": {
+                    "repository": {
+                        "issues": {"totalCount": 0},
+                        "refs": {"totalCount": 1},
+                        "defaultBranchRef": {
+                            "name": "main",
+                            "target": {"oid": tip, "statusCheckRollup": {"state": "SUCCESS"}},
+                        },
+                    }
+                }
+            }
+            return subprocess.CompletedProcess([], 0, json.dumps(payload), "")
+
+    result = MODULE._metadata(Gitvs(), "organvm/limen")
+
+    assert result is not None
+    assert result["default_sha"] == tip
