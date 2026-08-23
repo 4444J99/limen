@@ -146,17 +146,45 @@ PY
 if command -v gh >/dev/null 2>&1 && [ -z "${LIMEN_OFFLINE:-}" ]; then
   slug="$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null || true)"
   if [ -n "$slug" ]; then
-    open_n=0; closed_n=0
-    while IFS= read -r num; do
-      [ -n "$num" ] || continue
-      state="$(gh api "repos/$slug/issues/$num" --jq .state 2>/dev/null || true)"
-      case "$state" in
-        open)   open_n=$((open_n + 1)) ;;
-        closed) closed_n=$((closed_n + 1)) ;;
-        *)      bad "lever issue #$num is a DANGLING pointer (no such issue on $slug)" ;;
-      esac
-    done < <(python3 -c 'import json,sys;[print(l["issue"]) for l in json.load(open(sys.argv[1])).get("levers",[]) if isinstance(l.get("issue"),int)]' "$REGISTRY")
-    ok "graph: $open_n levers owed (open), $closed_n pulled (closed), 0 dangling"
+    issue_pages="$(mktemp "${TMPDIR:-/tmp}/limen-lever-issues.XXXXXX")"
+    trap 'rm -f "$issue_pages"' EXIT
+    if gh api --paginate --slurp "repos/$slug/issues?state=all&per_page=100" >"$issue_pages" 2>/dev/null; then
+      if ! python3 - "$REGISTRY" "$issue_pages" "$slug" <<'PY'; then fail=1; fi
+import json, sys
+
+registry, pages_path, slug = sys.argv[1:]
+levers = json.load(open(registry, encoding="utf-8")).get("levers", [])
+pages = json.load(open(pages_path, encoding="utf-8"))
+rows = []
+for page in pages if isinstance(pages, list) else []:
+    rows.extend(page if isinstance(page, list) else [page])
+states = {
+    row.get("number"): row.get("state")
+    for row in rows
+    if isinstance(row, dict) and isinstance(row.get("number"), int)
+}
+open_n = closed_n = 0
+missing = []
+for lever in levers:
+    number = lever.get("issue")
+    if not isinstance(number, int):
+        continue
+    state = states.get(number)
+    if state == "open":
+        open_n += 1
+    elif state == "closed":
+        closed_n += 1
+    else:
+        missing.append(number)
+if missing:
+    for number in missing:
+        print(f"FAIL  lever issue #{number} is a DANGLING pointer (no such issue on {slug})")
+    raise SystemExit(1)
+print(f"ok    graph: {open_n} levers owed (open), {closed_n} pulled (closed), 0 dangling")
+PY
+    else
+      bad "unable to enumerate the lever issue graph on $slug"
+    fi
   fi
 else
   printf 'note  %s\n' "offline — skipped GitHub open/closed check (pointer-presence still enforced)"
