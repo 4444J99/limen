@@ -1538,6 +1538,27 @@
       "sovereignty": {
         "reason": "identity"
       }
+    },
+    {
+      "id": "L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES",
+      "label": "Mount and identity-verify Archive4T and T7Recovery before universe-recovery source cleanup or deletion.",
+      "owner": "yours",
+      "cost": "connect both custody devices and allow one read-only identity and restore-readiness verification",
+      "unlocks": "paired byte-verified custody and restore testing for retained Agy artifacts, Git objects, stashes, dirty worktrees, plans, and task logs",
+      "source_task": "Universe Recovery protective control plane; organvm/limen PR #2543",
+      "gate": "the two external custody volumes are physically absent; an agent cannot mount or attest device identity without the devices",
+      "status": "needs_human",
+      "added": "2026-08-23",
+      "steps": [
+        "Connect Archive4T and T7Recovery without moving or deleting any source material.",
+        "Run the capsule's paired-custody identity and restore-readiness predicate after PR #2543 is protected-merged and default-present.",
+        "Close this lever only after the recovery manifest carries two distinct verified device identities and successful bounded restore receipts."
+      ],
+      "note": "This gate blocks source deletion and destructive cleanup only. Read-only census, review correction, and protective implementation continue independently. Private device paths and identities remain outside git and chat.",
+      "issue": 2543,
+      "sovereignty": {
+        "reason": "identity"
+      }
     }
   ]
 }
