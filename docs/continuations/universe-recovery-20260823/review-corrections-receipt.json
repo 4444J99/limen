@@ -1,0 +1,85 @@
+{
+  "schema_version": "limen.run_receipt.v1",
+  "receipt_id": "universe-recovery-pr2543-review-corrections-terminal-receipt",
+  "run_id": "run-cefca4d857ac8c2e2ab023231ca772bd",
+  "lease_id": "lease-1014-cefca4d857ac8c2e",
+  "lease_generation": 1014,
+  "executor": {
+    "schema_version": "limen.agent_identity.v1",
+    "agent": "codex",
+    "surface": "direct",
+    "session_id": "e6316b52-80c3-481c-b38d-d226fc8c3b1c",
+    "native_run_id": null,
+    "provider_identity": "codex"
+  },
+  "provider_identity": "codex",
+  "observed_heads_before": {
+    "organvm/limen": "35d0d2695140fc58268b45938e9749ac320cab1f"
+  },
+  "observed_heads_after": {
+    "organvm/limen": "0ae3228695b51401949dc9ed71b6b6c45bbf2d30"
+  },
+  "changed_paths": [
+    "cli/src/limen/ci_failure.py",
+    "cli/src/limen/remote_reap.py",
+    "cli/src/limen/review_lineage_github.py",
+    "cli/src/limen/universe_recovery.py",
+    "cli/tests/test_check_main_green.py",
+    "cli/tests/test_ci_failure.py",
+    "cli/tests/test_remote_reap.py",
+    "cli/tests/test_review_lineage_github.py",
+    "cli/tests/test_universe_recovery.py",
+    "docs/continuations/universe-recovery-20260823/README.md",
+    "docs/continuations/universe-recovery-20260823/review-corrections-packet-projection.json",
+    "scripts/check-main-green.py",
+    "scripts/github-estate-census.py",
+    "scripts/gitvs.py",
+    "scripts/remote-reap-effect.py",
+    "scripts/remote-reap-plan.py",
+    "scripts/remote-reap-verify.py",
+    "scripts/tests/test_github_estate_census_custody.py",
+    "scripts/universe-recovery.py"
+  ],
+  "provider_run_url": "https://github.com/organvm/limen/pull/2543",
+  "predicate": {
+    "command": "bash scripts/run-pytest-hermetic.sh cli/tests/test_universe_recovery.py cli/tests/test_remote_reap.py cli/tests/test_ci_failure.py cli/tests/test_check_main_green.py -q",
+    "exit_code": 0,
+    "summary": "All eleven review findings were corrected in two exact-tree batches; the packet predicate passed 75 tests on 0ae3228695b51401949dc9ed71b6b6c45bbf2d30.",
+    "observed_at": "2026-08-23T17:33:52Z"
+  },
+  "checks": [
+    {
+      "name": "expanded-census-review-regressions",
+      "status": "success",
+      "url": null,
+      "head": "0ae3228695b51401949dc9ed71b6b6c45bbf2d30"
+    },
+    {
+      "name": "ruff-format",
+      "status": "success",
+      "url": null,
+      "head": "0ae3228695b51401949dc9ed71b6b6c45bbf2d30"
+    },
+    {
+      "name": "hosted-ci-zero-step-admission",
+      "status": "pending",
+      "url": "https://github.com/organvm/limen/actions/runs/32655173557",
+      "head": "0ae3228695b51401949dc9ed71b6b6c45bbf2d30"
+    }
+  ],
+  "reviews": [
+    {
+      "provider": "github",
+      "head": "0ae3228695b51401949dc9ed71b6b6c45bbf2d30",
+      "disposition": "commented",
+      "unresolved_threads": 0,
+      "fully_paginated": true,
+      "url": "https://github.com/organvm/limen/pull/2543"
+    }
+  ],
+  "spend": {"runs": 1},
+  "child_runs": [],
+  "campaign": null,
+  "outcome": "succeeded",
+  "completed_at": "2026-08-23T17:33:52Z"
+}
