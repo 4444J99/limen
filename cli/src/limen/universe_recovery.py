@@ -133,6 +133,8 @@ class RefDispositionV2(ProtocolModel):
             raise ValueError("ref disposition key must be repository/ref@tip")
         if not self.ref.startswith("refs/") or not self.default_ref.startswith("refs/"):
             raise ValueError("ref names must be fully qualified")
+        if self.ref == self.default_ref:
+            raise ValueError("the repository default ref is never reap eligible")
         if self.delivery_disposition == "equivalent_landed" and not (self.tree_digest or self.patch_digest):
             raise ValueError("equivalent landing requires a tree or patch digest")
         if self.delivery_disposition in {"exact_landed", "equivalent_landed"} and self.grace_satisfied_at is None:
@@ -255,7 +257,12 @@ class ReviewLineageClosureV2(ProtocolModel):
         if (current, outdated) != (self.unresolved_current, self.unresolved_outdated):
             raise ValueError("unresolved review counts must match the complete thread set")
         complete = all(receipt.complete for receipt in self.cursor_receipts)
-        expected = complete and current == 0 and outdated == 0 and self.review_decision != "CHANGES_REQUESTED"
+        expected = (
+            complete
+            and current == 0
+            and outdated == 0
+            and self.review_decision not in {"CHANGES_REQUESTED", "REVIEW_REQUIRED"}
+        )
         if self.terminal != expected:
             raise ValueError("terminal review state requires complete cursors and zero unresolved threads")
         if self.lifecycle_stage in {"merged", "main_verified", "runtime_verified", "terminal"} and not expected:
@@ -461,14 +468,23 @@ def cas_delete_command(capability: ReapCapabilityV1) -> tuple[str, ...]:
     )
 
 
+def bound_reap_expiry(requested_expiry: datetime, evidence_expiry: datetime | None) -> datetime:
+    """Clamp one capability plan to the lifetime of its underlying evidence."""
+
+    requested = _aware(requested_expiry)
+    if evidence_expiry is None:
+        return requested
+    return min(requested, _aware(evidence_expiry))
+
+
 class UniverseRecoveryManifestV1(ProtocolModel):
     schema_version: Literal["limen.universe_recovery_manifest.v1"] = "limen.universe_recovery_manifest.v1"
     generated_at: datetime
     launch_digest: str
     census_digest: str
-    cursor_receipts: tuple[CursorReceiptV1, ...]
-    sources: tuple[SourceCoverageV1, ...]
-    baseline_keys: tuple[str, ...]
+    cursor_receipts: tuple[CursorReceiptV1, ...] = Field(min_length=1)
+    sources: tuple[SourceCoverageV1, ...] = Field(min_length=1)
+    baseline_keys: tuple[str, ...] = Field(min_length=1)
     newcomer_keys: tuple[str, ...] = ()
     dispositions: tuple[RecoveryDispositionReceiptV1, ...]
     review_closures: tuple[ReviewLineageClosureV2, ...] = ()
@@ -498,6 +514,21 @@ class RecoveryEvaluationV1(ProtocolModel):
     expected_items: int = Field(ge=0)
     disposed_items: int = Field(ge=0)
     errors: tuple[str, ...]
+
+
+class RecoveryStableObservationV1(ProtocolModel):
+    """A separately persisted first observation for the two-census fixed point."""
+
+    schema_version: Literal["limen.universe_recovery_stable_observation.v1"] = (
+        "limen.universe_recovery_stable_observation.v1"
+    )
+    stable_digest: str
+    observed_at: datetime
+    manifest_receipt: str
+
+    _stable_digest = field_validator("stable_digest")(_digest)
+    _observed = field_validator("observed_at")(_aware)
+    _receipt = field_validator("manifest_receipt")(_nonblank)
 
 
 def evaluate_recovery(manifest: UniverseRecoveryManifestV1) -> RecoveryEvaluationV1:

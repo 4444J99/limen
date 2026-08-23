@@ -66,6 +66,8 @@ def main() -> int:
             raise ValueError("remote reap grace has not elapsed")
         if disposition.expires_at is not None and now >= disposition.expires_at:
             raise ValueError("ref disposition has expired")
+        if disposition.expires_at is not None and plan.expires_at > disposition.expires_at:
+            raise ValueError("reap plan outlives its disposition evidence")
         expected = {
             "repository": disposition.repository,
             "repository_id": disposition.repository_id,

@@ -273,6 +273,7 @@ def _metadata(gitvs, repo: str) -> dict[str, Any] | None:
             "issues": int((repository.get("issues") or {})["totalCount"]),
             "branches": int((repository.get("refs") or {})["totalCount"]),
             "default_branch": default_ref.get("name"),
+            "default_sha": target.get("oid"),
             "checks": check_nodes,
         }
     except (KeyError, TypeError, ValueError, json.JSONDecodeError):
@@ -390,8 +391,11 @@ def collect(*, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
         return (
             {
                 "name_with_owner": repo,
+                "repository_id": row.get("repository_id"),
                 "private": bool(row["private"]),
+                "archived": bool(row.get("archived")),
                 "default_branch": default_branch,
+                "default_sha": metadata.get("default_sha") if metadata is not None else None,
                 "connection_totals": totals,
             },
             local,

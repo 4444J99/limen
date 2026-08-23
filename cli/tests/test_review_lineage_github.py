@@ -84,6 +84,20 @@ def test_unresolved_outdated_thread_blocks_closure():
     assert result.unresolved_outdated == 1
 
 
+@pytest.mark.parametrize("decision", ["REVIEW_REQUIRED", "CHANGES_REQUESTED"])
+def test_outstanding_review_decisions_block_closure(decision):
+    result = build_review_lineage(
+        repository="organvm/limen",
+        pull_request=2542,
+        metadata=metadata(review_decision=decision),
+        fetch_threads=pages([]),
+        fetch_comments={},
+        fetch_checks=pages([{"id": "check-1"}]),
+    )
+
+    assert result.terminal is False
+
+
 def test_missing_nested_comment_cursor_fails_closed():
     result = build_review_lineage(
         repository="organvm/limen",

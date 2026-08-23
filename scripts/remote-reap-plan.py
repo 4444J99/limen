@@ -29,6 +29,7 @@ from limen.universe_recovery import (  # noqa: E402
     RefDispositionV2,
     ReapPlanV1,
     ReviewLineageClosureV2,
+    bound_reap_expiry,
     canonical_digest,
 )
 
@@ -58,6 +59,8 @@ def main() -> int:
             raise ValueError("remote reap grace has not elapsed")
         if disposition.expires_at is not None and now >= disposition.expires_at:
             raise ValueError("ref disposition has expired")
+        requested_expiry = now + timedelta(minutes=max(1, min(args.expires_min, 60)))
+        plan_expiry = bound_reap_expiry(requested_expiry, disposition.expires_at)
         plan = ReapPlanV1(
             plan_id=f"plan-{canonical_digest(disposition)[:32]}",
             repository=disposition.repository,
@@ -70,7 +73,7 @@ def main() -> int:
             review_closure_digest=canonical_digest(review),
             grace_satisfied_at=disposition.grace_satisfied_at,
             planned_at=now,
-            expires_at=now + timedelta(minutes=max(1, min(args.expires_min, 60))),
+            expires_at=plan_expiry,
         )
     except Exception as exc:
         print(f"remote-reap-plan: denied: {exc}", file=sys.stderr)

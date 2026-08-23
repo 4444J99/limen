@@ -82,7 +82,7 @@ def build_review_lineage(
         complete
         and unresolved_current == 0
         and unresolved_outdated == 0
-        and metadata.get("review_decision") != "CHANGES_REQUESTED"
+        and metadata.get("review_decision") not in {"CHANGES_REQUESTED", "REVIEW_REQUIRED"}
     )
     return ReviewLineageClosureV2(
         repository=repository,

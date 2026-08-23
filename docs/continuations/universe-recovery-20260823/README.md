@@ -31,7 +31,9 @@ python3 scripts/universe-recovery.py --check --manifest docs/continuations/unive
 ```
 
 The expected launch result is nonzero until the listed source, review, and census debt has durable
-terminal receipts. The checker is read-only and writes no repairs or effects.
+terminal receipts. Even a clean manifest remains nonterminal until a separately persisted
+`stable-observation.json` from an earlier exhaustive census has the same stable digest and predates
+the current manifest. The checker is read-only and writes no repairs, observations, or effects.
 
 ## Next bounded wave
 

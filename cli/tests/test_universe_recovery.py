@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import json
+import subprocess
+import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-import sys
 
 import pytest
 
@@ -18,10 +20,12 @@ from limen.universe_recovery import (
     ReapJournalV1,
     ReapPlanV1,
     RecoveryDispositionReceiptV1,
+    RecoveryStableObservationV1,
     ReviewLineageClosureV2,
     ReviewThreadClosureV2,
     SourceCoverageV1,
     UniverseRecoveryManifestV1,
+    bound_reap_expiry,
     cas_delete_command,
     evaluate_recovery,
     issue_reap_capability,
@@ -240,6 +244,11 @@ def test_capability_is_plan_bound_expiring_and_exact_tip_cas_only():
         )
 
 
+def test_reap_expiry_is_clamped_to_the_underlying_disposition():
+    assert bound_reap_expiry(NOW + timedelta(hours=1), NOW + timedelta(minutes=5)) == NOW + timedelta(minutes=5)
+    assert bound_reap_expiry(NOW + timedelta(minutes=5), NOW + timedelta(hours=1)) == NOW + timedelta(minutes=5)
+
+
 def test_ref_disposition_is_repository_qualified_and_proof_bound():
     row = disposition()
 
@@ -252,6 +261,47 @@ def test_ref_disposition_is_repository_qualified_and_proof_bound():
         disposition(pull_requests=())
     assert disposition(lane_protection=("active-human",)).reap_eligible is False
     assert disposition(delivery_disposition="equivalent_landed", tree_digest="1" * 64).reap_eligible is False
+    with pytest.raises(ValueError, match="default ref"):
+        disposition(ref="refs/heads/main", key=f"organvm/limen/refs/heads/main@{TIP}")
+
+
+def test_manifest_rejects_a_vacuous_recovery_denominator():
+    with pytest.raises(ValueError, match="at least 1 item"):
+        UniverseRecoveryManifestV1(
+            generated_at=NOW,
+            launch_digest=DIGEST,
+            census_digest="d" * 64,
+            cursor_receipts=(),
+            sources=(),
+            baseline_keys=(),
+            dispositions=(),
+        )
+
+
+def test_read_only_predicate_requires_a_prior_matching_stable_observation(tmp_path: Path):
+    current = manifest(generated_at=NOW + timedelta(minutes=1))
+    result = evaluate_recovery(current)
+    manifest_path = tmp_path / "manifest.json"
+    prior_path = tmp_path / "prior.json"
+    manifest_path.write_text(json.dumps(current.model_dump(mode="json")), encoding="utf-8")
+    command = [
+        sys.executable,
+        str(Path(__file__).resolve().parents[2] / "scripts" / "universe-recovery.py"),
+        "--check",
+        "--manifest",
+        str(manifest_path),
+        "--prior-observation",
+        str(prior_path),
+    ]
+
+    assert subprocess.run(command, check=False, capture_output=True).returncode == 1
+    prior = RecoveryStableObservationV1(
+        stable_digest=result.stable_digest,
+        observed_at=NOW,
+        manifest_receipt="git:organvm/limen:first-observation.json",
+    )
+    prior_path.write_text(prior.model_dump_json(), encoding="utf-8")
+    assert subprocess.run(command, check=False, capture_output=True).returncode == 0
 
 
 def test_paired_custody_requires_two_distinct_verified_devices_and_restore():
