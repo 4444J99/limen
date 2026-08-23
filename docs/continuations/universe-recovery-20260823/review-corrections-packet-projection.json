@@ -1,0 +1,20 @@
+{
+  "schema_version": "limen.work_packet_redacted_projection.v1",
+  "run_id": "run-cefca4d857ac8c2e2ab023231ca772bd",
+  "lease_id": "lease-1014-cefca4d857ac8c2e",
+  "lease_generation": 1014,
+  "work_id": "universe-recovery-pr2543-review-corrections",
+  "work_key": "organvm-limen-pr2543-review-corrections-20260823",
+  "intent_hash": "1905a75deb80e9f11a554e055749fdd5d1a481c44730c66f5612297e6d3b3600",
+  "execution_hash": "b6a0366c1c7de4ce428423827f2e218e244b08b40995f2a538c8fc9e1a575228",
+  "branch": "recovery/universe-20260823",
+  "base": "35d0d2695140fc58268b45938e9749ac320cab1f",
+  "paths": [
+    "cli",
+    "scripts",
+    "docs/continuations/universe-recovery-20260823"
+  ],
+  "predicate": "bash scripts/run-pytest-hermetic.sh cli/tests/test_universe_recovery.py cli/tests/test_remote_reap.py cli/tests/test_ci_failure.py cli/tests/test_check_main_green.py -q",
+  "effect": "write",
+  "private_coordinates_committed": false
+}

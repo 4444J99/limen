@@ -28,10 +28,18 @@ def main() -> int:
     parser.add_argument("--plan", type=Path)
     parser.add_argument("--capability", type=Path)
     args = parser.parse_args()
+    redemption_path = Path(os.environ.get("LIMEN_ROOT", str(ROOT))) / "logs/remote-reap-redemptions.json"
     try:
         current = load_model(args.journal, ReapJournalV1)
         if args.reconcile:
-            reconciled = reconcile_effect(repository_root=args.repository_root, current=current)
+            if args.capability is None:
+                parser.error("--reconcile requires --capability")
+            reconciled = reconcile_effect(
+                repository_root=args.repository_root,
+                current=current,
+                capability=load_model(args.capability, ReapCapabilityV1),
+                redemption_path=redemption_path,
+            )
             atomic_json(args.journal, reconciled.model_dump(mode="json"))
             print(f"remote-reap-effect: reconciled state={reconciled.state}")
             return 0 if reconciled.state == "completed" else 1
@@ -47,6 +55,7 @@ def main() -> int:
             plan=load_model(args.plan, ReapPlanV1),
             capability=load_model(args.capability, ReapCapabilityV1),
             journal_path=args.journal,
+            redemption_path=redemption_path,
             signing_material=signing_material.encode(),
         )
     except Exception as exc:

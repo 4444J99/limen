@@ -6,16 +6,22 @@ import json
 import os
 import subprocess
 import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import UTC, datetime
+import fcntl
 from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import urlparse
 
 from limen.universe_recovery import (
+    CustodyProofV1,
+    RefDispositionV2,
     ReapCapabilityV1,
     ReapJournalState,
     ReapJournalV1,
     ReapPlanV1,
+    ReviewLineageClosureV2,
     canonical_digest,
     cas_delete_command,
     verify_reap_capability,
@@ -57,6 +63,26 @@ def load_model(path: Path, model):
     return model.model_validate(json.loads(path.read_text(encoding="utf-8")))
 
 
+@contextmanager
+def locked_redemptions(path: Path) -> Iterator[dict[str, Any]]:
+    """Lock the keeper-owned capability-spend registry across one effect."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lock_path = path.with_suffix(path.suffix + ".lock")
+    with lock_path.open("a+", encoding="utf-8") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        try:
+            if path.exists():
+                value = json.loads(path.read_text(encoding="utf-8"))
+                if not isinstance(value, dict):
+                    raise RuntimeError("remote-reap redemption registry is malformed")
+            else:
+                value = {}
+            yield value
+        finally:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+
+
 def remote_url(repository_root: Path, *, runner: Runner = subprocess.run) -> str:
     process = runner(
         ["git", "-C", str(repository_root), "remote", "get-url", "origin"],
@@ -89,6 +115,89 @@ def github_repository_slug(repository_root: Path, *, runner: Runner = subprocess
     if slug.count("/") != 1 or any(part in {"", ".", ".."} for part in slug.split("/")):
         raise RuntimeError("repository origin has no unambiguous owner/repository identity")
     return slug
+
+
+def _gh_json(arguments: list[str], *, runner: Runner = subprocess.run) -> dict[str, Any]:
+    process = runner(
+        ["gh", "api", *arguments],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+    if process.returncode != 0:
+        raise RuntimeError("GitHub evidence query failed")
+    value = json.loads(process.stdout)
+    if not isinstance(value, dict):
+        raise RuntimeError("GitHub evidence response is malformed")
+    return value
+
+
+def validate_disposition_evidence(
+    *,
+    repository_root: Path,
+    disposition: RefDispositionV2,
+    review: ReviewLineageClosureV2,
+    custody: CustodyProofV1,
+    runner: Runner = subprocess.run,
+) -> None:
+    """Recompute every live fact that can authorize capability issuance."""
+
+    slug = github_repository_slug(repository_root, runner=runner)
+    if slug != disposition.repository:
+        raise ValueError("repository identity does not match the disposition")
+    metadata = _gh_json([f"repos/{slug}"], runner=runner)
+    default_branch = str(metadata.get("default_branch") or "")
+    default_ref = f"refs/heads/{default_branch}"
+    default_tip = remote_tip(repository_root, default_ref, runner=runner)
+    archived = bool(metadata.get("archived"))
+    generation = canonical_digest(
+        {
+            "repository": slug,
+            "default_ref": default_branch,
+            "default_sha": default_tip,
+            "archived": archived,
+        }
+    )
+    if disposition.repository_id is not None and metadata.get("node_id") != disposition.repository_id:
+        raise ValueError("repository node identity does not match the disposition")
+    if (disposition.default_ref, disposition.default_tip, disposition.default_generation) != (
+        default_ref,
+        default_tip,
+        generation,
+    ):
+        raise ValueError("live default generation does not match the disposition")
+    if remote_tip(repository_root, disposition.ref, runner=runner) != disposition.tip:
+        raise ValueError("live remote ref does not match the disposition")
+    commit_digest = canonical_digest({"repository": slug, "ref": disposition.ref, "tip": disposition.tip})
+    if disposition.commit_digest != commit_digest:
+        raise ValueError("commit digest does not match the live repository/ref/tip")
+    if disposition.delivery_disposition != "exact_landed":
+        raise ValueError("equivalent landing is not yet eligible for automated deletion")
+    comparison = _gh_json(
+        [f"repos/{slug}/compare/{disposition.tip}...{disposition.default_tip}"],
+        runner=runner,
+    )
+    if (comparison.get("merge_base_commit") or {}).get("sha") != disposition.tip:
+        raise ValueError("live default ancestry does not prove exact landing")
+    if not review.terminal or review.repository != slug or review.pull_request not in disposition.pull_requests:
+        raise ValueError("review closure is nonterminal or not named by the disposition")
+    if review.lifecycle_stage not in {"main_verified", "runtime_verified", "terminal"}:
+        raise ValueError("review lineage has not reached main verification")
+    pull = _gh_json([f"repos/{slug}/pulls/{review.pull_request}"], runner=runner)
+    if not pull.get("merged") or (pull.get("head") or {}).get("sha") != disposition.tip:
+        raise ValueError("live pull request does not prove the exact tip merged")
+    if canonical_digest(custody) != disposition.custody_proof_digest:
+        raise ValueError("custody proof digest does not match the disposition")
+    if (custody.repository, custody.ref, custody.tip, custody.disposition) != (
+        disposition.repository,
+        disposition.ref,
+        disposition.tip,
+        disposition.custody_disposition,
+    ):
+        raise ValueError("custody proof does not bind the disposition")
+    if custody.source_digest != commit_digest:
+        raise ValueError("custody proof source digest does not match the live ref")
 
 
 def remote_tip(
@@ -150,6 +259,7 @@ def apply_capability(
     plan: ReapPlanV1,
     capability: ReapCapabilityV1,
     journal_path: Path,
+    redemption_path: Path,
     signing_material: bytes,
     observed_at: datetime | None = None,
     runner: Runner = subprocess.run,
@@ -165,90 +275,132 @@ def apply_capability(
     )
     current = load_model(journal_path, ReapJournalV1)
     _journal_matches(current, capability)
-    if current.state == "completed":
-        if remote_tip(repository_root, capability.ref, runner=runner) is None:
-            return current
-        raise RuntimeError("completed reap journal conflicts with a live ref")
-    if current.state != "verified":
-        raise RuntimeError(f"reap journal requires reconciliation before apply: {current.state}")
     if remote_url_digest(repository_root, runner=runner) != capability.remote_url_digest:
         raise RuntimeError("repository origin does not match the capability")
-    live_tip = remote_tip(repository_root, capability.ref, runner=runner)
-    if live_tip != capability.live_tip:
-        raise RuntimeError("live ref tip does not match the capability")
+    with locked_redemptions(redemption_path) as redemptions:
+        spent = redemptions.get(capability.capability_id)
+        if spent is not None:
+            if (spent.get("repository"), spent.get("ref"), spent.get("tip")) != (
+                capability.repository,
+                capability.ref,
+                capability.live_tip,
+            ):
+                raise RuntimeError("reap capability redemption record does not match authority")
+            if (
+                spent.get("state") == "completed"
+                and current.state == "completed"
+                and remote_tip(repository_root, capability.ref, runner=runner) is None
+            ):
+                return current
+            raise RuntimeError("reap capability has already been redeemed")
+        if current.state != "verified":
+            raise RuntimeError(f"reap journal requires reconciliation before apply: {current.state}")
+        live_tip = remote_tip(repository_root, capability.ref, runner=runner)
+        if live_tip != capability.live_tip:
+            raise RuntimeError("live ref tip does not match the capability")
 
-    applying = journal(
-        capability=capability,
-        state="applying",
-        detail="exact-tip CAS deletion admitted",
-        observed_at=observed_at,
-    )
-    atomic_json(journal_path, applying.model_dump(mode="json"))
-    try:
-        command = cas_delete_command(capability)
-        process = runner(
-            [command[0], "-C", str(repository_root), *command[1:]],
-            capture_output=True,
-            text=True,
-            timeout=90,
-            check=False,
-        )
-        if process.returncode != 0:
-            raise RuntimeError("exact-tip CAS deletion was rejected")
-        if remote_tip(repository_root, capability.ref, runner=runner) is not None:
-            raise RuntimeError("remote ref remains after deletion")
-    except Exception as exc:
-        crashed = journal(
+        redemptions[capability.capability_id] = {
+            "repository": capability.repository,
+            "ref": capability.ref,
+            "tip": capability.live_tip,
+            "state": "applying",
+        }
+        atomic_json(redemption_path, redemptions)
+        applying = journal(
             capability=capability,
-            state="crashed",
-            detail=str(exc),
+            state="applying",
+            detail="exact-tip CAS deletion admitted",
+            observed_at=observed_at,
+        )
+        atomic_json(journal_path, applying.model_dump(mode="json"))
+        try:
+            command = cas_delete_command(capability)
+            process = runner(
+                [command[0], "-C", str(repository_root), *command[1:]],
+                capture_output=True,
+                text=True,
+                timeout=90,
+                check=False,
+            )
+            if process.returncode != 0:
+                raise RuntimeError("exact-tip CAS deletion was rejected")
+            if remote_tip(repository_root, capability.ref, runner=runner) is not None:
+                raise RuntimeError("remote ref remains after deletion")
+        except Exception as exc:
+            redemptions[capability.capability_id]["state"] = "crashed"
+            atomic_json(redemption_path, redemptions)
+            crashed = journal(
+                capability=capability,
+                state="crashed",
+                detail=str(exc),
+                observed_at=utc_now(),
+            )
+            atomic_json(journal_path, crashed.model_dump(mode="json"))
+            raise
+        redemptions[capability.capability_id]["state"] = "completed"
+        atomic_json(redemption_path, redemptions)
+        completed = journal(
+            capability=capability,
+            state="completed",
+            detail="exact-tip CAS deletion and post-effect absence verified",
             observed_at=utc_now(),
         )
-        atomic_json(journal_path, crashed.model_dump(mode="json"))
-        raise
-    completed = journal(
-        capability=capability,
-        state="completed",
-        detail="exact-tip CAS deletion and post-effect absence verified",
-        observed_at=utc_now(),
-    )
-    atomic_json(journal_path, completed.model_dump(mode="json"))
-    return completed
+        atomic_json(journal_path, completed.model_dump(mode="json"))
+        return completed
 
 
 def reconcile_effect(
     *,
     repository_root: Path,
     current: ReapJournalV1,
+    capability: ReapCapabilityV1,
+    redemption_path: Path,
     observed_at: datetime | None = None,
     runner: Runner = subprocess.run,
 ) -> ReapJournalV1:
     """Classify an interrupted effect without issuing or consuming new authority."""
 
+    _journal_matches(current, capability)
+    if remote_url_digest(repository_root, runner=runner) != capability.remote_url_digest:
+        raise RuntimeError("repository origin does not match the capability")
     if current.state not in {"applying", "crashed"}:
         return current
     observed_at = (observed_at or utc_now()).astimezone(UTC)
-    tip = remote_tip(repository_root, current.ref, runner=runner)
-    if tip is None:
-        return current.model_copy(
-            update={
-                "state": "completed",
-                "updated_at": observed_at,
-                "detail": "reconciled: remote ref is absent",
-            }
-        )
-    if tip == current.expected_tip:
-        return current.model_copy(
-            update={
-                "state": "crashed",
-                "updated_at": observed_at,
-                "detail": "reconciled: expected ref still exists; same capability requires owner review",
-            }
-        )
-    return current.model_copy(
-        update={
-            "state": "crashed",
-            "updated_at": observed_at,
-            "detail": "reconciled: ref advanced; deletion denied and successor owner required",
-        }
-    )
+    with locked_redemptions(redemption_path) as redemptions:
+        spent = redemptions.get(capability.capability_id)
+        if spent is None:
+            raise RuntimeError("reap capability redemption record is missing")
+        if (spent.get("repository"), spent.get("ref"), spent.get("tip")) != (
+            capability.repository,
+            capability.ref,
+            capability.live_tip,
+        ):
+            raise RuntimeError("reap capability redemption record does not match authority")
+        tip = remote_tip(repository_root, current.ref, runner=runner)
+        if tip is None:
+            result = current.model_copy(
+                update={
+                    "state": "completed",
+                    "updated_at": observed_at,
+                    "detail": "reconciled: remote ref is absent",
+                }
+            )
+        elif tip == current.expected_tip:
+            result = current.model_copy(
+                update={
+                    "state": "crashed",
+                    "updated_at": observed_at,
+                    "detail": "reconciled: expected ref still exists; same capability requires owner review",
+                }
+            )
+        else:
+            result = current.model_copy(
+                update={
+                    "state": "crashed",
+                    "updated_at": observed_at,
+                    "detail": "reconciled: ref advanced; deletion denied and successor owner required",
+                }
+            )
+        spent["state"] = result.state
+        atomic_json(redemption_path, redemptions)
+    return result
