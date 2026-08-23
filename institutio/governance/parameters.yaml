@@ -3767,7 +3767,13 @@ parameters:
     env: LIMEN_REMOTE_REAP_APPLY
     self_update: none
     owner: gitvs
-    note: "DOUBLE-DARK arming for scripts/reap-remote-branches.py: even with --apply, a remote branch is deleted only when this is 1. Defaults 0 (unlike the local reaper's LIMEN_BRANCH_REAP_APPLY=1) because a remote delete is NOT reflog-recoverable — arm it deliberately."
+    note: "Retired compatibility input. The legacy classifier denies --apply regardless of this value; new deletion requires a signed repository-qualified one-use capability."
+  LIMEN_REMOTE_REAP_CAPABILITY_KEY:
+    default: ""
+    env: LIMEN_REMOTE_REAP_CAPABILITY_KEY
+    self_update: none
+    owner: tabularius
+    note: "Keeper-injected HMAC key used only by the independent remote-reap verifier and sole effector. Empty fails closed; the value never enters plans, journals, capabilities, logs, commits, or transcripts."
   LIMEN_REMOTE_REAP_REPO_ROOT:
     default: "$LIMEN_ROOT"
     env: LIMEN_REMOTE_REAP_REPO_ROOT

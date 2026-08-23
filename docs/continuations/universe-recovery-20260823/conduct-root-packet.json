@@ -1,0 +1,125 @@
+{
+  "schema_version": "limen.work_packet_redacted_projection.v1",
+  "root_run_id": null,
+  "parent_run_id": null,
+  "work_id": "universe-recovery-20260823",
+  "work_key": "organvm-limen-universe-recovery-20260823",
+  "intent": {
+    "objective": "Recover and account for the Agy-touched universe by first landing fail-closed census, review-lineage, zero-step admission, and repository-qualified reaping controls, then drive bounded repository recovery packets to durable receipts without destructive cleanup while custody volumes are unavailable.",
+    "source": "direct-human-request-2026-08-23",
+    "terminal_predicate": "python3 scripts/universe-recovery.py --check"
+  },
+  "execution": {
+    "base": "f034e3e659c8c8c3b9469b7b66e32c2bc03fdb64",
+    "branch": "recovery/universe-20260823",
+    "worktree": "<isolated-limen-worktree>",
+    "phase": "protective-control-plane"
+  },
+  "intent_hash": "",
+  "execution_hash": "",
+  "initiator": {
+    "schema_version": "limen.agent_identity.v1",
+    "agent": "codex",
+    "surface": "native",
+    "session_id": "01a02f60-498f-7732-a532-853019d6a146",
+    "native_run_id": null,
+    "provider_identity": "codex"
+  },
+  "conductor": {
+    "schema_version": "limen.agent_identity.v1",
+    "agent": "codex",
+    "surface": "native",
+    "session_id": "01a02f60-498f-7732-a532-853019d6a146",
+    "native_run_id": null,
+    "provider_identity": "codex"
+  },
+  "preferred_agent": "codex",
+  "required_capabilities": [
+    "code",
+    "conduct",
+    "github-api",
+    "inspect",
+    "review"
+  ],
+  "resource_claims": [
+    {
+      "schema_version": "limen.resource_claim.v1",
+      "key": "repository/organvm/limen/branch/recovery/universe-20260823",
+      "mode": "exclusive"
+    }
+  ],
+  "storage_envelope_claims": [
+    {
+      "schema_version": "limen.prima_materia_resource_claim.v1",
+      "claim_id": "universeRecovery20260823Root",
+      "source_instance_id": "limenWorktreeF034E3E659C8",
+      "operation_id": "protectiveControlPlane",
+      "hydrated_inputs_bytes": 139001856,
+      "workspace_bytes": 268435456,
+      "temporary_expansion_bytes": 268435456,
+      "output_bytes": 16777216,
+      "encryption_chunking_bytes": 0,
+      "rollback_bytes": 16777216,
+      "memory_bytes": 1073741824,
+      "file_count": 10000,
+      "network_bytes": 67108864,
+      "wall_time_seconds": 604800,
+      "effective_from": "2026-08-23T16:11:57Z",
+      "effective_until": "2026-08-30T20:00:00-04:00",
+      "rollback_until": "2026-09-06T20:00:00-04:00"
+    }
+  ],
+  "predicate": "python3 scripts/universe-recovery.py --check",
+  "receipt_target": "git:organvm/limen:docs/continuations/universe-recovery-20260823/run-receipt.json",
+  "work_loan": {
+    "schema_version": "limen.work_loan.v1",
+    "source_origin": "human_prompt",
+    "horizon": "present",
+    "value_case": "Prevent irreversible loss and false landing claims across the declared repository universe while converting the recovery program into bounded, reproducible control-plane and repository receipts.",
+    "budget_cost": 16,
+    "owner_surface": "organvm/limen"
+  },
+  "campaign": null,
+  "authority": {
+    "schema_version": "limen.authority_envelope.v1",
+    "actions": [
+      "code",
+      "conduct",
+      "inspect",
+      "review"
+    ],
+    "repositories": [
+      "organvm/limen"
+    ],
+    "path_prefixes": [
+      "AGENTS.md",
+      "cli",
+      "docs",
+      "institutio",
+      "scripts",
+      "spec"
+    ],
+    "external_effects": [],
+    "may_delegate": true
+  },
+  "deadline": "2026-08-30T20:00:00-04:00",
+  "spend": {
+    "schema_version": "limen.spend_envelope.v1",
+    "unit": "runs",
+    "limit": 16,
+    "reserve": 0
+  },
+  "retry": {
+    "schema_version": "limen.retry_policy.v1",
+    "max_attempts": 2,
+    "transient_only": true
+  },
+  "depth": 0,
+  "fanout": {
+    "schema_version": "limen.fanout_bounds.v1",
+    "max_children": 3,
+    "max_depth": 1
+  },
+  "effect": "write",
+  "task_id": null
+}

@@ -22,3 +22,7 @@ source of truth. A local checkout is a disposable cache or staging area; it is n
   it does not make repository/API/PR custody unavailable and is not by itself an external stop
   condition. Verify live permissions and current receipts, continue every available local or remote
   predicate, and name the narrow failing surface without stalling unrelated closeout work.
+- Classify a concluded failure with no executed job steps as `CI_ZERO_STEP_ADMISSION`. It is neither
+  green nor code-red and cannot satisfy merge, activation, deployment, or runtime admission. Record
+  the exact run/job receipt, attempt the documented runner bootstrap once, and leave unrelated
+  repository lanes moving without polling or repeatedly rerunning the same unchanged head.

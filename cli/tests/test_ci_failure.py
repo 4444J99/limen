@@ -15,6 +15,9 @@ def test_billing_related_provider_annotation_is_observation_not_diagnosis():
         [{"message": "The job was not started because your account is locked due to a billing issue."}],
     )
     assert result.classification == "provider_runner_admission"
+    assert result.execution_result == "CI_ZERO_STEP_ADMISSION"
+    assert result.code_red is False
+    assert result.merge_admissible is False
     assert "cause and remediation unverified" in result.detail
     assert result.retry_allowed is False
 
@@ -22,12 +25,16 @@ def test_billing_related_provider_annotation_is_observation_not_diagnosis():
 def test_executed_failure_is_distinct_from_startup_gate():
     result = classify_ci_failure([{"conclusion": "failure", "steps": [{"name": "pytest"}]}])
     assert result.classification == "executed_code_failure"
+    assert result.execution_result == "CI_CODE_RED"
+    assert result.code_red is True
+    assert result.merge_admissible is False
     assert result.retry_allowed is False
 
 
 def test_only_unknown_zero_step_startup_jam_is_retryable():
     result = classify_ci_failure(ZERO_STEP)
     assert result.classification == "runner_startup_jam"
+    assert result.execution_result == "CI_ZERO_STEP_ADMISSION"
     assert result.retry_allowed is True
 
 
@@ -40,3 +47,19 @@ def test_provider_admission_and_quota_annotations_never_retry():
     for message, expected in cases.items():
         result = classify_ci_failure(ZERO_STEP, [{"message": message}])
         assert (result.classification, result.retry_allowed) == (expected, False)
+        assert result.execution_result == "CI_ZERO_STEP_ADMISSION"
+        assert result.code_red is False
+        assert result.merge_admissible is False
+
+
+def test_mixed_executed_and_zero_step_failures_remain_code_red():
+    result = classify_ci_failure(
+        [
+            {"conclusion": "failure", "steps": []},
+            {"conclusion": "failure", "steps": [{"name": "pytest"}]},
+        ],
+        [{"message": "The job was not started because your account is locked due to a billing issue."}],
+    )
+
+    assert result.execution_result == "CI_CODE_RED"
+    assert result.classification == "executed_code_failure"
