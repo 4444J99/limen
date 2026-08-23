@@ -66,6 +66,8 @@ SOVEREIGN_REASONS = {
     "governance_choice",  # the script CAN do it; only he may DECIDE/CONSENT (persistence-arm, self-mod, spend, protection)
 }
 
+TERMINAL_LEVER_STATUSES = frozenset({"discharged", "retired", "done", "closed"})
+
 # Conservative derivation signals, ordered most-concretely-irreducible first
 # (first match wins). A signal fires only on explicit, unambiguous prose — when
 # in doubt, no match => the lever falls through to UNCLASSIFIED rather than being
@@ -111,8 +113,11 @@ def load_registry(path: str) -> dict:
 
 
 def is_open(lever: dict) -> bool:
-    """A lever is OPEN unless it carries a `discharged` stamp (obligations-view.py:54 semantics)."""
-    return not str(lever.get("discharged", "")).strip()
+    """Use the registry's canonical terminal semantics, including legacy discharge stamps."""
+    if str(lever.get("discharged", "")).strip():
+        return False
+    status = str(lever.get("status") or "").strip().lower()
+    return status not in TERMINAL_LEVER_STATUSES
 
 
 def evidence_blob(lever: dict) -> str:

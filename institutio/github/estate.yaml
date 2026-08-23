@@ -167,12 +167,12 @@ resource_types:
   actions_usage:
     identity: derived
     desired: ["rate_limit_headroom_ok", "actions_budget_ok"]
-    observe: "gh api /rate_limit"
+    observe: "gh api /rate_limit + current Billing usage-summary/budgets APIs + exact-run job annotations"
     effector:
-      - {kind: file-atom, target: L-CARD-FRAUD-HOLD}
+      - {kind: delegate, argv: [python3, scripts/gitvs.py, usage, --check]}
     status: active
     owner: gitvs
-    note: "Public repos = free unlimited Actions; the keystone was account-level billing (#182), not per-repo minutes."
+    note: "Measure current Actions spend and preserve runner-admission annotations as observations. Provider billing text does not prove account state or a human remedy; terminal levers never own a later incident."
   org:
     identity: derived
     desired: ["plan_ok", "repo_custody", "enterprise_subscription"]
@@ -284,7 +284,7 @@ orgs:
     repos: sole_owner
     actions_spending_limit_usd: 25
     owner: gitvs
-    note: "The one repo-holding org (307 repos) — sole owner of the SYSTEM estate. Dual-estate custody (2026-07-29): collaboration-born products are personally-owned assets whose custody home is the personal account (see the repo_custody resource type; membership derives from the constellation register) — sole_owner reads 'all SYSTEM code lives here', not 'no repo may live on the personal estate'. Spending limit + plan are account-level his-hand acts (GitHub billing UI, cited via L-CARD-FRAUD-HOLD / the runbook) — the doctor observes, never mutates billing."
+    note: "The one repo-holding org (307 repos) — sole owner of the SYSTEM estate. Dual-estate custody (2026-07-29): collaboration-born products are personally-owned assets whose custody home is the personal account (see the repo_custody resource type; membership derives from the constellation register) — sole_owner reads 'all SYSTEM code lives here', not 'no repo may live on the personal estate'. Spending limit + plan are current account observations; any new human action requires its own evidenced owner. The doctor observes, never mutates billing."
   shelves:
     match: ["organvm-*", "meta-organvm"]
     plan_ok: ["free"]
@@ -973,7 +973,7 @@ integrations:
       - {kind: delegate, argv: [python3, scripts/sync-marketplace-config.py]}
     status: active                         # workflow at the conductor root; fan-out via sync-marketplace-config.py
     owner: gitvs
-    note: "The Claude lane of the review engine: auto-review on PR open + @claude mention ping-pong (anthropics/claude-code-action@v1). Needs the ORG-level ANTHROPIC_API_KEY secret — landed by creds-hydrate's gh-org sink, never a paste. Private repos opt in via the LIMEN_CLAUDE_REVIEW Actions variable until billing (#182) clears."
+    note: "The Claude lane of the review engine: auto-review on PR open + @claude mention ping-pong (anthropics/claude-code-action@v1). Needs the ORG-level ANTHROPIC_API_KEY secret — landed by creds-hydrate's gh-org sink, never a paste. Private repos opt in via the LIMEN_CLAUDE_REVIEW Actions variable when their current runner and spend predicates pass."
   review-fanout:
     category: review
     app_slug: "github-actions"             # posts via the native Actions token; no marketplace install
@@ -1068,7 +1068,7 @@ budgets:
   actions_minutes:
     budget: unlimited_public
     owner: gitvs
-    note: "Public repos = free unlimited; private-repo minutes now BILL (the conductor went private 2026-07-16) — metered by actions_spend below; the durable fix was account-level billing (#182/#265)."
+    note: "Public and private usage are measured separately; actions_spend below is the current budget predicate. A provider admission message never routes to a historical lever by default."
   actions_spend:
     monthly_net_usd_max: 25                # mirrors orgs.canonical.actions_spending_limit_usd; env override LIMEN_ACTIONS_BUDGET
     owner: gitvs
@@ -1084,8 +1084,7 @@ budgets:
 human_atoms:
   app_creation:            {lever: "L-LIMENBOT-INSTALL", doc: "docs/github-app-architecture.md", hand: "his — generates a private key, installs the App"}
   branch_protection:       {lever: "L-BRANCH-PROTECTION", issue: "#257", hand: "his — org-lever to arm protection fleet-wide"}
-  billing_keystone:        {issue: "#182", hand: "his — card 0186 fraud hold (root of billing-gated private-repo CI)"}
-  gemini_billing_downstream: {issue: "#265"}
+  gemini_credential_recovery: {issue: "#265", hand: "his — mint a replacement credential; current provider cause must be re-observed after mint"}
   enterprise_cancel:       {lever: "L-ORG-TEAM-UPGRADE", doc: "docs/github-estate-runbook.md", hand: "his — Team upgrade on organvm ($4/mo, arms #257); the enterprise itself was emptied by machine 2026-07-17 (#1185: 0 orgs, 0 consumed licenses)"}
   copilot_restore:         {doc: "docs/github-estate-runbook.md", hand: "DONE 2026-07-17 (#1186 closed) — Copilot Pro granted FREE under the maintainer program; privacy set (public-code match Blocked, AI training Disabled). Org Business seats remain a possible future lever; individual Pro needs none."}
 

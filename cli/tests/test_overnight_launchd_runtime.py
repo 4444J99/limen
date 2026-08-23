@@ -13,8 +13,6 @@ STABLE_HOST = "/Users/4jp/Applications/DomusAgentHost.app/Contents/MacOS/DomusAg
 CONTROL_PLISTS = (
     "com.limen.claude-stub-heal.plist",
     "com.limen.creds-hydrate.plist",
-    "com.limen.heartbeat.plist",
-    "com.limen.watchdog.plist",
 )
 
 

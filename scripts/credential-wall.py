@@ -65,7 +65,7 @@ def _load_default_map() -> list[dict]:
 # enabled, probe) come live from DEFAULT_MAP; only this low-churn editorial note lives here, so the
 # table stays honest about who must act without re-deriving it from prose each session.
 LANE_META: dict[str, dict] = {
-    "gemini": {"issue": "#265", "hand": "his — account-gated re-mint (downstream of #182)"},
+    "gemini": {"issue": "#265", "hand": "his — vendor account re-mint; verify current provider state at action time"},
     "gh/copilot/jules": {"issue": "—", "hand": "none — keyring-derived, self-heals every beat (#251)"},
     "cloudflare (wrangler deploy)": {"issue": "—", "hand": "none — token valid + headless via cf-wrangler.sh (#518); phantom re-mint lever retired 2026-07-01"},
     "cloudflare (a-i-chat--exporter CI secret)": {"issue": "—", "hand": "none — organ-owned gh_secret sink; lands once op can read (gated on the non-blocking SA vault-grant on #320)"},

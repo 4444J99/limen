@@ -109,3 +109,20 @@ def test_duplicate_event_allows_source_state_to_advance(tmp_path, monkeypatch):
 
     assert mod.main() == 0
     assert json.loads(state_path.read_text(encoding="utf-8"))["stages"]["organvm/limen::MONETA"] == "deploy-ready"
+
+
+def test_shipping_24_crosses_10_with_truthful_observation(tmp_path, monkeypatch, capsys):
+    mod, _, state_path = _setup(tmp_path, monkeypatch, [], state={"stages": {}, "ship_bucket": 0})
+    mod.VIEW.write_text(json.dumps({"products": [], "ships_24h": {"total": 24}}))
+    captured = {}
+    monkeypatch.setattr(
+        mod,
+        "emit_event_v1",
+        lambda *args, **kwargs: captured.update(kwargs) or SimpleNamespace(status="recorded"),
+    )
+    assert mod.main() == 0
+    assert captured["stable_id"] == "limen.shipping.threshold"
+    assert captured["facts"]["threshold"] == 10
+    assert captured["facts"]["observed"] == 24
+    assert "crossed 10; 24 observed at" in capsys.readouterr().out
+    assert json.loads(state_path.read_text())["ship_bucket"] == 10

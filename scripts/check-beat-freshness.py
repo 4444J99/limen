@@ -1,97 +1,125 @@
 #!/usr/bin/env python3
-"""Beat freshness — the resident daemon must be newer than the loop body it runs.
-
-The 2026-08-06 -> 08-07 lesson: seven flywheel PRs merged, the governor self-restored,
-every wire was connected — and zero dispatch happened for 18 more hours, because
-`scripts/heartbeat-loop.sh` is a resident `while true` under launchd KeepAlive that
-never re-execs, and the running process predated the merged loop body by three days.
-Bash parses the loop once; edits to the file on disk never reach a live loop. The
-15-day starvation before it ended the same way: the one restart atom sat unrun with
-nothing alarming on it.
-
-This predicate is that alarm. Exit 1 ⟺ the running `heartbeat-loop.sh` process
-started BEFORE the loop file's last content change on disk (mtime — which is also
-what a sync-release checkout rewrite updates), meaning the daemon is executing a
-stale body. The remedy is always the same single command, printed in the output:
-
-    launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat
-
-Deliberately NOT auto-kickstarting: the sensor may run inside the very process tree
-it would kill, and a mid-beat self-restart could interrupt a merge rung. Advisory
-alarm + one visible command is the whole cure.
-
-Exit 0: fresh (daemon newer than the file), or no daemon running (LAUNCH_AGENT_LIVENESS
-owns dead-daemon detection — this predicate answers only "is the live one stale"),
-or gated off via LIMEN_BEAT_FRESHNESS=0.
-"""
+"""Verify safe containment or the evolved Rule-#55a one-shot heartbeat."""
 
 from __future__ import annotations
 
 import os
-import subprocess
-import time
-from datetime import datetime, timezone
 from pathlib import Path
+import plistlib
+import re
+import subprocess
 
-ROOT = Path(__file__).resolve().parents[1]
-LOOP = ROOT / "scripts" / "heartbeat-loop.sh"
-KICKSTART = "launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat"
+
+HEARTBEAT_LABEL = "com.limen.heartbeat"
+WATCHDOG_LABEL = "com.limen.watchdog"
+HEARTBEAT_PLIST = Path.home() / "Library" / "LaunchAgents" / f"{HEARTBEAT_LABEL}.plist"
+WATCHDOG_PLIST = Path.home() / "Library" / "LaunchAgents" / f"{WATCHDOG_LABEL}.plist"
+PUBLIC_RECEIPT = Path.home() / ".local" / "share" / "limen" / "heartbeat" / "public-latest.json"
+PROCESS_PATTERNS = (
+    "scripts/heartbeat-loop.sh",
+    "scripts/watchdog.py",
+    "fast-wave",
+    "host-pressure-watchdog",
+)
 
 
-def _daemon_start_epoch() -> float | None:
-    """Start time of the oldest running heartbeat-loop.sh process, or None."""
-    pids = subprocess.run(
-        ["pgrep", "-f", "scripts/heartbeat-loop.sh"],
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    starts: list[float] = []
-    for pid in pids.stdout.split():
-        etime = subprocess.run(
-            ["ps", "-o", "etime=", "-p", pid],
+def _resident_pids() -> list[int]:
+    pids: set[int] = set()
+    for pattern in PROCESS_PATTERNS:
+        result = subprocess.run(
+            ["pgrep", "-f", pattern],
             capture_output=True,
             text=True,
             timeout=30,
+            check=False,
         )
-        raw = etime.stdout.strip()
-        if not raw:
-            continue
-        # etime forms: [[dd-]hh:]mm:ss — parse to seconds-of-age, derive start epoch.
-        days, rest = (raw.split("-", 1) + [""])[:2] if "-" in raw else ("0", raw)
-        parts = [int(p) for p in rest.split(":")]
-        while len(parts) < 3:
-            parts.insert(0, 0)
-        age = int(days) * 86400 + parts[0] * 3600 + parts[1] * 60 + parts[2]
-        starts.append(time.time() - age)
-    return min(starts) if starts else None
+        pids.update(int(value) for value in result.stdout.split() if value.isdigit())
+    return sorted(pids)
+
+
+def _label_loaded(label: str) -> bool:
+    result = subprocess.run(
+        ["launchctl", "print", f"gui/{os.getuid()}/{label}"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+    )
+    return result.returncode == 0
+
+
+def _legacy_findings() -> list[str]:
+    findings = []
+    if _label_loaded(WATCHDOG_LABEL):
+        findings.append(f"label:{WATCHDOG_LABEL}")
+    if os.path.lexists(WATCHDOG_PLIST):
+        findings.append(f"plist:{WATCHDOG_PLIST.name}")
+    pids = _resident_pids()
+    if pids:
+        findings.append(f"processes:{len(pids)}")
+    return findings
+
+
+def _one_shot_findings() -> list[str]:
+    findings = _legacy_findings()
+    loaded = _label_loaded(HEARTBEAT_LABEL)
+    installed = os.path.lexists(HEARTBEAT_PLIST)
+    if loaded != installed:
+        findings.append("heartbeat-label-plist-partial")
+        return findings
+    if not loaded:
+        return findings
+    if HEARTBEAT_PLIST.is_symlink() or not HEARTBEAT_PLIST.is_file():
+        findings.append("heartbeat-plist-unsafe")
+        return findings
+    try:
+        with HEARTBEAT_PLIST.open("rb") as handle:
+            plist = plistlib.load(handle)
+    except (OSError, plistlib.InvalidFileException):
+        findings.append("heartbeat-plist-unreadable")
+        return findings
+    arguments = plist.get("ProgramArguments") or []
+    checks = {
+        "keepalive": plist.get("KeepAlive", False) is False,
+        "runatload": plist.get("RunAtLoad", False) is False,
+        "interval": isinstance(plist.get("StartInterval"), int) and plist["StartInterval"] >= 300,
+        "process-type": plist.get("ProcessType") == "Background",
+        "low-priority-io": plist.get("LowPriorityIO") is True,
+        "nice": isinstance(plist.get("Nice"), int) and plist["Nice"] >= 5,
+        "one-shot-command": len(arguments) >= 3 and arguments[1:] == ["heartbeat", "--once"],
+    }
+    findings.extend(f"contract:{name}" for name, passed in checks.items() if not passed)
+    if checks["one-shot-command"]:
+        match = re.search(r"/runtimes/([0-9a-f]{40})/venv/bin/limen$", arguments[0])
+        if not match:
+            findings.append("runtime-not-immutable")
+        else:
+            try:
+                import json
+
+                receipt = json.loads(PUBLIC_RECEIPT.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                findings.append("receipt-unreadable")
+            else:
+                if receipt.get("runtime_sha") != match.group(1):
+                    findings.append("runtime-sha-drift")
+    return findings
 
 
 def main() -> int:
     if os.environ.get("LIMEN_BEAT_FRESHNESS", "1") == "0":
         print("  beat-freshness: gated off (LIMEN_BEAT_FRESHNESS=0) — skip")
         return 0
-    try:
-        file_mtime = LOOP.stat().st_mtime
-    except OSError as exc:
-        print(f"  beat-freshness: cannot stat {LOOP}: {exc}")
-        return 1
-    started = _daemon_start_epoch()
-    if started is None:
+    findings = _one_shot_findings()
+    if findings:
         print(
-            "  beat-freshness: no heartbeat-loop.sh process — liveness is LAUNCH_AGENT_LIVENESS's verdict, not staleness — skip"
+            "  beat-freshness: FAIL — heartbeat safety contract is not proven "
+            f"({', '.join(findings)}); run domus-limen-runtime verify-heartbeat"
         )
-        return 0
-    fmt = lambda t: datetime.fromtimestamp(t, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")  # noqa: E731
-    if started >= file_mtime:
-        print(f"  beat-freshness: OK — daemon started {fmt(started)} ≥ loop body changed {fmt(file_mtime)}")
-        return 0
-    print(
-        f"  beat-freshness: STALE — daemon started {fmt(started)} but scripts/heartbeat-loop.sh "
-        f"changed {fmt(file_mtime)}; the resident loop never re-reads its body, so every loop-body "
-        f"merge since then is dead code until: {KICKSTART}"
-    )
-    return 1
+        return 1
+    state = "active one-shot" if os.path.lexists(HEARTBEAT_PLIST) else "safely contained"
+    print(f"  beat-freshness: OK — heartbeat {state}; no legacy resident descendants")
+    return 0
 
 
 if __name__ == "__main__":

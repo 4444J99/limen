@@ -65,7 +65,7 @@ def test_the_live_organism_still_speaks(tmp_path, monkeypatch):
     monkeypatch.setattr(mod.subprocess, "run", lambda cmd, **kw: calls.append(cmd))
 
     assert mod.notify_once(body, "k", "msg", enabled=True) is True
-    assert len(calls) == 1 and calls[0][0] == "osascript"
+    assert len(calls) == 1 and calls[0][0].endswith("domus-notify")
 
 
 def test_a_worktree_root_is_withheld(tmp_path, monkeypatch):

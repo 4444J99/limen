@@ -123,7 +123,7 @@
 | Rent / housing | Monthly | Unknown | Check or ACH |
 | Insurance premiums | Monthly/Annual | Unknown | ACH or card |
 | Subscriptions (Apple, Netflix, etc.) | Monthly | Unknown | Card on file |
-| Credit card (Santander card-0186) | Monthly | Unknown | ACH — currently blocked by fraud hold |
+| Credit card (Santander card-0186) | Monthly | Unknown | ACH — historical hold discharged 2026-07-17; current state unknown |
 
 ### 3B. Business obligations (paid from LLC — when active)
 

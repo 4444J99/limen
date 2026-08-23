@@ -347,6 +347,12 @@ parameters:
     self_update: none
     owner: vitals
     note: "Declared cadence of the heartbeat's independent fast wave. It refreshes VIGILIA sampled_at, phase-sensitive diurnal checks, and organ-health even while the main beat is inside a slow bounded rung."
+  LIMEN_WAKE_STATE:
+    default: "FullWake"
+    env: LIMEN_WAKE_STATE
+    self_update: none
+    owner: vitals
+    note: "Observed wake state attached to each explicit VIGILIA sample. Sleep, DarkWake, and MaintenanceDarkWake samples cannot page; FullWake time is the staleness denominator."
   LIMEN_VITALS_SAMPLE_TIMEOUT:
     default: 30
     env: LIMEN_VITALS_SAMPLE_TIMEOUT
@@ -627,6 +633,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Canonical read-side Limen state root for estate and lifecycle ledgers. Lets tests or isolated worktrees read from one root while writing redacted receipts elsewhere."
+  LIMEN_HEARTBEAT_STATE_ROOT:
+    default: "~/.local/share/limen/heartbeat"
+    env: LIMEN_HEARTBEAT_STATE_ROOT
+    self_update: none
+    owner: continuity
+    note: "Private state, single-flight lock, bounded audit, and receipt root for the reviewed one-shot heartbeat. Tests and canaries point this at an isolated temporary directory; the public receipt remains under the exact Limen runtime root."
   LIMEN_OUTPUT_ROOT:
     default: "$LIMEN_ROOT"
     env: LIMEN_OUTPUT_ROOT
@@ -2700,18 +2712,6 @@ parameters:
     self_update: none
     owner: censor
     note: "Archived /insights snapshot directory scanned by insight-cadence.py's suggestion-coverage gatherer: every snapshot must appear in a `reports` list in censor/insights-suggestions.jsonl or it is surfaced as an unaudited report each due tier. Fails open when absent (CI / other hosts)."
-  LIMEN_LOOP_SELF_KICKSTART:
-    default: "1"               # ON — a merged loop-body rung loads itself instead of waiting on a human
-    env: LIMEN_LOOP_SELF_KICKSTART
-    self_update: none
-    owner: limen-daemon
-    note: "Whether heartbeat-loop.sh restarts its own daemon when logs/.loop-update-pending says its script changed under it. A `while true` loop never re-reads itself, and launchd's KeepAlive only restarts on EXIT — which this loop never does — so a merged rung stayed inert indefinitely. Three touchpoints existed for that marker and none acted: sync-release.sh sets it on a loop-body ff, enactment-audit.py reports it RED with the exact kickstart command, and the loop clears it at startup. The flag was cleared by the very restart it was meant to cause and nothing caused that restart, so every loop-body edit waited on a human reading a log line (measured 2026-08-07: the #2016 board-publication rung merged, fast-forwarded onto disk, and stayed dark behind a daemon 5h15m older than its own wiring — the repair for a 12-day board freeze shipped and did not run). Self-limiting without a counter: the replacement process clears the marker at startup, so it fires at most once per loop-body change. No-ops when the label is not launchd-managed. Set 0 to require a manual kickstart."
-  LIMEN_LOOP_KICKSTART_SETTLE:
-    default: 5                 # seconds to wait for launchd's SIGTERM after a self-load kickstart
-    env: LIMEN_LOOP_KICKSTART_SETTLE
-    self_update: none
-    owner: limen-daemon
-    note: "How long heartbeat-loop.sh waits after asking launchctl to kickstart itself, giving launchd's SIGTERM time to land before the beat would otherwise continue on the stale body. Not a correctness dependency — if the kill never arrives the beat simply runs and the marker is still set for the next one — so this is a politeness window, not a race fix. Parameterised because the rung's own test suite (cli/tests/test_loop_self_load.py) executes the real extracted rung and would otherwise pay five real seconds per case; a test that is slow for no information gets skipped and then rots."
   LIMEN_HEARTBEAT_PLIST:
     default: "~/Library/LaunchAgents/com.limen.heartbeat.plist"
     env: LIMEN_HEARTBEAT_PLIST
@@ -4161,7 +4161,7 @@ parameters:
     env: LIMEN_GH_USAGE
     self_update: none
     owner: gitvs
-    note: "Gate for the github-actions-usage beat sensor (the Meter: scripts/gitvs.py usage --check). Projects monthly NET Actions spend against budgets.actions_spend and reads the account-billing canary (the literal 'payments have failed' run annotation that used to be re-diagnosed in chat every session). Advisory, fail-open offline. 0 disables the pass."
+    note: "Gate for the github-actions-usage beat sensor (the Meter: scripts/gitvs.py usage --check). Projects monthly NET Actions spend against budgets.actions_spend and records GitHub's runner-admission annotation without treating it as an account diagnosis. Advisory, fail-open offline. 0 disables the pass."
   LIMEN_BEAT_GH_USAGE:
     default: 24
     env: LIMEN_BEAT_GH_USAGE
@@ -4256,12 +4256,12 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Monthly NET Actions spend ceiling (USD) for gitvs.py usage --check. Empty/unset ⇒ derived from estate.yaml budgets.actions_spend.monthly_net_usd_max (the registry owns the default; this env is the operator override). Mirrors orgs.canonical.actions_spending_limit_usd — the GitHub-side spending limit is his-hand (the runbook step 2)."
-  LIMEN_BILLING_CANARY_REPO:
+  LIMEN_RUNNER_ADMISSION_PROBE_REPO:
     default: "organvm/limen"
-    env: LIMEN_BILLING_CANARY_REPO
+    env: LIMEN_RUNNER_ADMISSION_PROBE_REPO
     self_update: none
     owner: gitvs
-    note: "PRIVATE repo whose newest completed Actions run the billing canary reads for the account-billing block annotation. The conductor (private since 2026-07-16) is the natural canary: its CI runs every PR, so a billing wall surfaces within one beat."
+    note: "Repository whose newest completed Actions run is inspected for GitHub's billing-related runner-admission annotation. Presence records provider text only; it does not establish account state, causal ownership, or remediation."
   LIMEN_REVIEW_GATE:
     default: 0
     env: LIMEN_REVIEW_GATE
@@ -4274,6 +4274,12 @@ parameters:
     self_update: none
     owner: observatory
     note: "Master on/off for the registry-declared OBSERVATORY legibility-and-traction sensor (observatory-run in sensors.yaml). Ships DARK (0): the organ is registered but idle until armed by lever L-OBSERVATORY-ACTIVATE. 1 runs the whole loop (collect→analyze→reconcile→brief) DRY on its declared cadence. Proposal writes remain a separate armed valve (OBSERVATORY_APPLY)."
+  LIMEN_OBSERVE_RECEIPT:
+    default: "logs/observe-once.json"
+    env: LIMEN_OBSERVE_RECEIPT
+    self_update: none
+    owner: observatory
+    note: "Optional private destination for the counts-only `limen observe --once` receipt. The default is the gitignored runtime log seat; probe output and private facts are never persisted in this receipt."
   LIMEN_BEAT_OBSERVATORY:
     default: 24
     env: LIMEN_BEAT_OBSERVATORY
@@ -4735,11 +4741,11 @@ parameters:
     note: "Beat gate for the heal-convergence report (scripts/heal-convergence.py --check) run each beat by metabolize.sh section 0g (RETRO-0708-HEAL-RECEIPT-OUTCOME; retro findings 1-2). CHRONIC rung: open heal PRs (title-prefixed '[limen HEAL-') grouped by (repo, failing check); >=3 PRs older than 48h on the SAME check = the healer is re-spending capacity on a wall (growth-auditor #16-#22 / theoria #492-#500 class) -> exit 1. COVERAGE rung: archived heal receipts must carry the {outcome: already_green|fixed|gave_up, failing_checks} field derived MECHANICALLY post-run by async-run-one.py (gh pr view of the target PR - never agent prose), reported as a ratio so the 855-emitted-vs-384-receipts gap class is a number. verify-whole runs the fixture test (fixture PRs + fixture clock - deterministic); live counts stay beat-side. Set 0 to silence."
 
   LIMEN_CHRONIC_RECEIPTS:
-    default: "scripts/heal-chronic-receipts.json"  # git-tracked exemption registry for billing-blocked heal groups
+    default: "scripts/heal-chronic-receipts.json"  # git-tracked exemption registry for externally blocked heal groups
     env: LIMEN_CHRONIC_RECEIPTS
     self_update: none
     owner: tabularius
-    note: "Path to the chronic-receipt registry (scripts/heal-chronic-receipts.json) read by scripts/heal-convergence.py. Each entry exempts a (repo, check) chronic group from the exit-1 gate when CI is externally blocked (e.g. billing hold under L-CARD-FRAUD-HOLD). Entries must carry repo, check, lever, issue, and reason. Set to an alternate path to override."
+    note: "Path to the chronic-receipt registry (scripts/heal-chronic-receipts.json) read by scripts/heal-convergence.py. Each entry exempts a (repo, check) chronic group from the exit-1 gate only when a current external blocker has an active owner and evidence. Terminal historical levers are invalid owners. Entries must carry repo, check, lever, issue, and reason. Set to an alternate path to override."
 
   LIMEN_FORK_SAFETY_CHECK:
     default: "1"               # ON — prove the macOS 26.6 atfork/os_log crash stays fixed each beat

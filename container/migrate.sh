@@ -2,10 +2,9 @@
 # migrate.sh — fold the scattered conductor into ONE in-place container (~/Workspace/limen).
 #
 # DECIDED PATH: git-deploy / zero-move (workflow wf_6fd8a8f7-9fb, 5 paths, adversarially judged).
-# The repo STAYS where the live launchd plist already points. OS-pinned slots that are
+# The repo STAYS in place. OS-pinned slots that are
 # symlink-transparent (~/.limen.env, ~/.claude/settings.json) become ABSOLUTE symlinks INTO the
-# container. The launchd plist is content-rewritten IN PLACE as a REAL file (launchd is hostile to
-# symlinked plists — verified 0/10 LaunchAgents are symlinks). The 4 leaked GEMINI_API_KEY rc lines
+# container. The retired heartbeat LaunchAgent is never recreated. The 4 leaked GEMINI_API_KEY rc lines
 # are scrubbed (matched by KEY NAME, never value).
 #
 # SAFE: copy->verify->rename, NEVER delete-first. Idempotent (re-runnable). A deploy.json ledger is
@@ -23,10 +22,7 @@ CONT="$ROOT/container"
 ENVDIR="$ROOT/env"
 BK="$CONT/backup"
 STATE="$CONT/state/deploy.json"
-PLIST="$HOME/Library/LaunchAgents/com.limen.heartbeat.plist"
 LOCKD="$ROOT/logs/.saturate.lock.d"
-LABEL="com.limen.heartbeat"
-GUI="gui/$(id -u)"
 BRANCH="heal/conductor-restart-2026-06-16"
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 RC_FILES=("$HOME/.zshrc" "$HOME/.zshenv" "$HOME/.zprofile" "$HOME/.bashrc")
@@ -54,7 +50,6 @@ sha(){ shasum -a 256 "$1" 2>/dev/null | awk '{print $1}'; }
 say "0  PREFLIGHT (read-only — aborts on any fail)"
 [ "$(git -C "$ROOT" rev-parse --show-toplevel 2>/dev/null)" = "$ROOT" ] || die "git toplevel != $ROOT"
 [ "$(git -C "$ROOT" rev-parse --abbrev-ref HEAD)" = "$BRANCH" ] || warn "branch != $BRANCH (continuing)"
-launchctl print "$GUI/$LABEL" >/dev/null 2>&1 || die "launchd agent $LABEL not LOADED (load it first)"
 free=$(df -g / | awk 'NR==2{print $4}'); [ "${free:-0}" -gt 80 ] || die "internal free ${free}GiB <= 80 (hard rule)"
 [ -e "$HOME/.limen.env" ] || die "~/.limen.env missing"
 if [ ! -L "$HOME/.limen.env" ]; then
@@ -63,7 +58,7 @@ if [ ! -L "$HOME/.limen.env" ]; then
 fi
 [ -e "$LOCKD" ] && die "stale lock present: $LOCKD (clear it first)"
 if has_step COMPLETE; then ok "deploy.json marked COMPLETE — verifying desired state"; fi
-ok "preflight passed (free=${free}GiB, agent loaded)"
+ok "preflight passed (free=${free}GiB; heartbeat remains retired)"
 ledger set ts "\"$TS\""
 
 # ---------------------------------------------------------------- Step 1: CHECKPOINT untracked brain
@@ -85,10 +80,6 @@ ledger step S1
 # ---------------------------------------------------------------- Step 2: container machinery (additive)
 say "2  CONTAINER machinery (in-repo, no OS slot touched)"
 mkdir -p "$CONT"/{launchd,claude,state,backup}; chmod 700 "$BK"
-# canonical byte-identical plist copy
-if [ ! -f "$CONT/launchd/$LABEL.plist" ] || ! cmp -s "$PLIST" "$CONT/launchd/$LABEL.plist"; then
-  cp -p "$PLIST" "$CONT/launchd/$LABEL.plist"; fi
-plutil -lint "$CONT/launchd/$LABEL.plist" >/dev/null || die "canonical plist failed plutil -lint"
 # merged claude settings = user settings + allow-rules rescued (read-only) from the misplaced Archive4T copy
 A4T="/Volumes/Archive4T/.claude/settings.json"
 python3 - "$HOME/.claude/settings.json" "$A4T" "$CONT/claude/settings.json" <<'PY'
@@ -102,7 +93,7 @@ d.setdefault("permissions",{})["allow"]=sorted(allow)
 json.dump(d,open(out,"w"),indent=2)
 PY
 python3 -m json.tool "$CONT/claude/settings.json" >/dev/null || die "merged settings.json invalid"
-ok "machinery written (plist canonical + merged settings)"
+ok "machinery written (merged settings; no heartbeat plist)"
 ledger step S2
 
 # ---------------------------------------------------------------- Step 3: SECRET into container (copy->verify)
@@ -163,36 +154,12 @@ ledger step S6
 say "7  ledger flushed before cutover"
 ledger step S7-ledgered
 
-# ---------------------------------------------------------------- Step 8: PLIST rewrite in place (near-irreversible)
-say "8  PLIST content-rewrite IN PLACE (the one near-irreversible touch)"
-printf '   This overwrites the loaded launchd plist with a BYTE-IDENTICAL canonical copy.\n'
-printf '   Press ENTER to proceed, Ctrl-C to stop (rollback.sh undoes everything above).\n'; read -r _ || true
-cmp -s "$PLIST" "$CONT/launchd/$LABEL.plist" || warn "live plist differs from canonical — installing canonical"
-[ -e "$BK/$LABEL.plist.premigrate" ] || cp -p "$PLIST" "$BK/$LABEL.plist.premigrate"
-ledger slot plist "{\"pre\":\"real\",\"bak\":\"$BK/$LABEL.plist.premigrate\",\"bak_sha\":\"$(sha "$BK/$LABEL.plist.premigrate")\"}"
-cp "$CONT/launchd/$LABEL.plist" "$PLIST"
-plutil -lint "$PLIST" >/dev/null || die "installed plist failed lint — run rollback.sh"
-ledger step S8-plist
-ok "plist installed (real file, byte-identical paths)"
-
-# ---------------------------------------------------------------- Step 9-10: hold lock, reload launchd
-say "9  acquire shared lock + reload launchd"
-mkdir "$LOCKD" 2>/dev/null || true
-launchctl bootout "$GUI/$LABEL" 2>/dev/null || launchctl unload "$PLIST" 2>/dev/null || true
-launchctl bootstrap "$GUI" "$PLIST" || die "bootstrap failed — run rollback.sh"
-launchctl print "$GUI/$LABEL" >/dev/null 2>&1 || die "agent not loaded after reload — run rollback.sh"
-ledger step S10-reloaded
-ok "launchd reloaded, agent loaded"
-
-# ---------------------------------------------------------------- Step 11: prove with one tick
-say "11 release lock + prove wiring with one tick (kickstart, NO -k)"
-rmdir "$LOCKD" 2>/dev/null || true
-[ -e "$LOCKD" ] && die "lock dir lingered"
-launchctl kickstart "$GUI/$LABEL" || warn "kickstart returned nonzero (check logs)"
-sleep 5
-tail -n 6 "$ROOT/logs/heartbeat.out.log" 2>/dev/null || true
-[ -e "$LOCKD" ] && warn "lock dir present after tick (tick may still be running)"
-ledger step S11-proven
+# ---------------------------------------------------------------- Steps 8-11: retired local scheduler boundary
+say "8-11  heartbeat scheduler remains retired"
+command -v domus-limen-runtime >/dev/null 2>&1 || die "domus-limen-runtime is required"
+domus-limen-runtime retire-heartbeat >/dev/null || die "heartbeat retirement verification failed"
+ledger step S11-heartbeat-retired
+ok "heartbeat label, plist, and descendants absent"
 
 # ---------------------------------------------------------------- Step 12: backups (mountpoint-guarded)
 say "12 backups to frozen tiers (mountpoint-GUARDED)"

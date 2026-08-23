@@ -78,6 +78,7 @@ except ImportError:
 import _root
 
 PHASES = ("morning", "midday", "evening")
+SUMMARY_NOTIFICATION_IDS = {"morning": "limen.summary.morning", "midday": "limen.summary.midday"}
 REGISTRY_REL = "institutio/governance/diurnal.yaml"
 MARKER_RX = "<!-- diurnal:{phase}:start -->"
 MARKER_END = "<!-- diurnal:{phase}:end -->"
@@ -1020,6 +1021,24 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
     (state_dir(root) / f"{today}-{phase}.json").write_text(
         json.dumps(sidecar, indent=2, sort_keys=True), encoding="utf-8"
     )
+    if phase in ("morning", "midday") and _on("LIMEN_DIURNAL_PUSH") and _notify is not None:
+        text = headline(phase, rendered, ctx)
+        active_ids = ",".join(_notify.active_conditions(root)) or "none"
+        snapshot_time = now.strftime("%H:%M")
+        delivery = _notify.emit_event_v1(
+            root,
+            stable_id=SUMMARY_NOTIFICATION_IDS[phase],
+            transition="summary",
+            subject_key=today,
+            event_id=f"diurnal-{phase}-{today}",
+            facts={"snapshot_time": snapshot_time, "summary": text, "active_alert_ids": active_ids},
+            evidence_ref=str(state_dir(root) / f"{today}-{phase}.json"),
+            producer="scripts/diurnal.py",
+        )
+        if delivery.status == "failed":
+            print(f"diurnal: {phase} delivery failed — phase state not advanced")
+            return 1
+        _prune_notify_keys(root)
     # `engaged` rides only on evening rows — it is the evening that scores, and only a scored day
     # advances the cut runway. Its ABSENCE on a morning/midday row is meaningful, not missing data,
     # so it is written conditionally rather than defaulted to False: a reader counting the runway
@@ -1037,12 +1056,6 @@ def emit(root: Path, phase: str, dry_run: bool) -> int:
     state = load_state(root)
     state.setdefault("last_run", {})[phase] = today
     save_state(root, state)
-
-    if phase in ("morning", "midday") and _on("LIMEN_DIURNAL_PUSH") and _notify is not None:
-        text = headline(phase, rendered, ctx)
-        if phase != "midday" or ctx.get("drift"):
-            _notify.notify_once(root, f"diurnal:{phase}:{today}", text, title=f"LIMEN · {phase}")
-        _prune_notify_keys(root)
 
     write_index(root)
 

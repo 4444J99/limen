@@ -713,70 +713,8 @@ while true; do
   worked=0
   VITALS_PRESSURE=0
   echo "──── beat $c $(date '+%F %T') ────"
-  # LOOP-BODY SELF-LOAD — a `while true` daemon never re-reads its own script, so a merged rung sits
-  # on disk INERT until something restarts the process. Three touchpoints existed for that fact and
-  # not one of them acted: sync-release.sh SETS logs/.loop-update-pending on a loop-body ff,
-  # enactment-audit.py reports it RED with the exact kickstart command, and this script clears it at
-  # startup (see the rm above the loop). So the flag was cleared by the very restart it was meant to
-  # cause, nothing caused that restart, and every loop-body edit silently waited on a human noticing
-  # a log line. A signal with no effector: every observable looks healthy while nothing happens.
-  #
-  # launchd does not cover this. KeepAlive restarts on EXIT and this loop never exits, so the process
-  # can outlive its own script indefinitely. Measured 2026-08-07: the board-publication rung (#2016)
-  # merged, fast-forwarded onto disk, and stayed dark behind a daemon 5h15m older than its own wiring
-  # — while that rung was the fix for a 12-day board freeze that had put the 100/day jules target out
-  # of reach (#1995). The repair shipped and did not run.
-  #
-  # SELF-LIMITING FOR FREE: the replacement process clears the marker at startup, so this can fire at
-  # most once per loop-body change — the restart destroys its own trigger. No debounce, no counter, no
-  # restart loop. Placed at the TOP of the beat deliberately: the previous beat finished cleanly and
-  # this one has done nothing yet, so nothing is cut in half. Waiting one tempo interval is far
-  # cheaper than aborting a beat mid-flight, which is what a post-sync placement would do.
-  #
-  # IT ALSO RUNS WHILE AUTONOMY IS PAUSED, and that is a decision, not an oversight. This rung sits
-  # ABOVE the `autonomy-governor.py mode` check below, so a paused beat still reloads its own body.
-  # Observed empirically 2026-08-07 (five sandbox drives printed the self-load line before "autonomy
-  # paused by governor"), and left that way on purpose for two reasons:
-  #
-  #   · The pause governs OUTWARD action — dispatching, spending, sending, writing to the keeper.
-  #     Loading the code this process is already supposed to be running is none of those. It is the
-  #     same reasoning the SessionEnd drain below states for itself: "even when autonomy is paused".
-  #   · A paused beat that could not reload its own body would be the worst case available. A pause
-  #     is exactly when a fix is most likely to be merged and least likely to be noticed as dark, so
-  #     gating self-load on the governor would let the daemon drift arbitrarily far from its own
-  #     script and then resume, on release, still running the stale body.
-  #
-  # Reversing this would be defensible — someone may argue a pause should freeze everything — but it
-  # must be an argued reversal, not a silent reordering. `test_loop_self_load.py` asserts the order.
-  if [ "${LIMEN_LOOP_SELF_KICKSTART:-1}" = "1" ] && [ -f "$LIMEN_ROOT/logs/.loop-update-pending" ]; then
-    _kick_label="${LIMEN_HEARTBEAT_LABEL:-com.limen.heartbeat}"
-    # ASK LAUNCHD FOR THE LABEL, do not grep its table. `launchctl list | grep -q "$_kick_label"`
-    # was wrong twice over, and both were verified against the live table rather than reasoned about:
-    #   1. the label is a REGEX there, and the default is full of dots — pattern `com.limen.heartbeat`
-    #      matches the string `comXlimenXheartbeat`;
-    #   2. `grep -F` fixes only the first: as a substring it still matches a DIFFERENT job, e.g.
-    #      `com.limen.heartbeat-loop`, so the obvious fixed-string patch is not enough either.
-    # The damage is not a stray kickstart — `-k` names $_kick_label, so it targets the right label
-    # and simply fails when that label is unmanaged. It is that the guard takes the TRUE branch, so
-    # the else-branch below never clears logs/.loop-update-pending. The marker survives, and the rung
-    # that this file's own header calls "SELF-LIMITING FOR FREE — the restart destroys its own
-    # trigger" retries every single beat forever instead of firing at most once.
-    # `launchctl list <label>` is an exact lookup: 0 when that job exists, non-zero (113) otherwise.
-    if launchctl list "$_kick_label" >/dev/null 2>&1; then
-      echo "── loop-body self-load: wiring changed under a running loop — kickstart $_kick_label ──"
-      beat_run self-load-kickstart launchctl kickstart -k "gui/$(id -u)/$_kick_label" || true
-      # launchd's SIGTERM lands here; `trap cleanup EXIT` releases the lock so the replacement starts
-      # clean. If the kill somehow does not arrive we simply run this beat and retry on the next.
-      # Settle window is a parameter so the rung's own test suite can run it at 0 instead of paying
-      # five real seconds per case — a test that is slow for no reason gets skipped, then rots.
-      sleep "${LIMEN_LOOP_KICKSTART_SETTLE:-5}"
-    else
-      # A hand-run loop (tests, a foreground debug session) has no label to kickstart. Clear the
-      # marker so this does not log the same impossible instruction every beat forever.
-      echo "── loop-body self-load: marker set but $_kick_label is not launchd-managed — restart by hand ──"
-      rm -f "$LIMEN_ROOT/logs/.loop-update-pending" 2>/dev/null || true
-    fi
-  fi
+  # The launchd heartbeat and its self-kickstart doctrine are retired. A manual invocation
+  # executes exactly the checked-out source; bounded sensing is `limen observe --once`.
   # Drain local SessionEnd work while this process owns the singleton, even when
   # autonomy is paused or the network is offline. The consumer remains bounded
   # and fail-open so lifecycle work cannot wedge the daemon.
@@ -917,7 +855,7 @@ while true; do
     # dark: 2026-07-21 → 22h blind (opportunity + all scheduled sensors 22-24h stale while the beat
     # idled at MAX tempo). Monitoring must NOT be gated by dispatch mode. Cheap, cadence-gated, and
     # timeout-bounded per sensors.yaml; the expensive dispatch/mine/route work stays gated below.
-    # Loop-body edit — effective only after `launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat`.
+    # This legacy loop is explicit-only; bounded sensing uses `limen observe --once`.
     # The block itself now lives in run_monitoring() so the paused branch above can call it too.
     run_monitoring
 
@@ -930,8 +868,7 @@ while true; do
     # impossible in observe because the jules-dispatch rung self-gates on
     # `autonomy-governor.py dispatch-ok` (logs/autonomy-policy.json is the single valve).
     # Wall-clock throttled (hourly), per-sensor timeout-bounded by the registry, `|| true`
-    # guarded: a failing sensor never fails the beat. Loop-body edit — effective only after
-    # `launchctl kickstart -k gui/$(id -u)/com.limen.heartbeat`.
+    # guarded: a failing sensor never fails the beat.
     #
     # THE PASS'S OUTPUT IS THE PRODUCT — it must not be piped away. 57 sensors emit well over a
     # hundred lines here and `| tail -5` kept five, so every finding from every sensor but the last

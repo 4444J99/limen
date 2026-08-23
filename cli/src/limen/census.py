@@ -339,18 +339,18 @@ VENDORS: tuple[Vendor, ...] = (
         budget=Budget(10, "runs", "24h", "operator board cap until live vendor meter", "calibrated"),
         status=Status(
             available=False,
-            state="suspended",
-            # Two independent breakages, both homed here so the fleet stops guessing:
-            #  1) API-key project: 403 CONSUMER_SUSPENDED (Google project suspended behind the
-            #     card-0186 billing hold). Fix path is upstream billing, not a token re-mint.
+            state="needs_auth",
+            # Two observed breakages, kept distinct so the fleet stops inventing a shared cause:
+            #  1) The registered API key returned 400 API_KEY_INVALID on 2026-08-07. The current
+            #     evidenced action is a replacement credential, not a billing attribution.
             #  2) "Sign in with Google" / Code-Assist-for-individuals OAuth client: SUNSET
             #     2026-06-18 for all individuals -> migrate to Antigravity (agy), or use an API
-            #     key from a NON-suspended project, or Vertex AI.
+            #     key, or Vertex AI.
             note=(
-                "API-key project suspended (403 CONSUMER_SUSPENDED, card-0186 hold); free "
-                "Sign-in-with-Google Code-Assist OAuth sunset 2026-06-18 -> Antigravity/API-key/Vertex"
+                "registered key rejected with 400 API_KEY_INVALID on 2026-08-07; no current billing "
+                "cause established; Sign-in-with-Google Code-Assist OAuth sunset 2026-06-18"
             ),
-            lever="L-FLEET-CAPACITY",  # upstream root: L-CARD-FRAUD-HOLD
+            lever="L-FLEET-CAPACITY",
             deprecated_paths=("oauth_code_assist",),
         ),
         execution=_execution(

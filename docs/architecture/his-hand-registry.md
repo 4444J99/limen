@@ -85,10 +85,10 @@ superseded by the above: the app-pw is already generated. Gmail also already wor
 in-session use; this only revives the headless **autonomous** lane.)* [[gmail-mutation-cascade-avenues]]
 [[excavate-before-redoing-solved-work]]
 
-### 4. card-0186 Santander hold / Nelnet — *not required for dollar #1*
-Already in `your_levers`: *"Stripe = DEFERRED — blocked by the card-0186 Santander hold; one call clears it
-(also frees Anthropic + GitHub autopay)."* **Owner:** you. **Cheapest path:** one Santander call to clear
-the fraud hold. Defers the subscription/Stripe path only — individual MoR rails (item 1) are unblocked.
+### 4. card-0186 Santander hold / Nelnet — *terminal history; not required for dollar #1*
+The card-0186 hold was discharged 2026-07-17 and was removed from active `your_levers`. It owns no
+current provider failure or remedy. Nelnet remains independently owned where its live registry says
+so; any later billing incident requires current evidence and a new owner.
 
 ### 5. Time Machine — *optional*
 No completed backup. Data already has **3 copies** (iCloud + Archive4T + Backblaze), so TM is a

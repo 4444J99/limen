@@ -516,11 +516,9 @@ def build_dashboard(entities: dict, revenue: dict, obligations: dict, classified
     lines.append("## Next deepen steps")
     lines.append("")
     lines.append("1. ✅ **Macro/micro faces deepened** — excellent, showable, polished (2026-07-03 beat)")
+    lines.append("2. ✅ **Historical card-0186 hold discharged** — terminal receipt dated 2026-07-17")
     lines.append(
-        "2. **P0: Clear card-0186 fraud hold** — one call to Santander; keystone for 3+ cascaded billing failures"
-    )
-    lines.append(
-        "3. **P1: Enter balances** — principal fills `balance` + `as_of` in `entities.yaml` (unlocks real position tracking)"
+        "3. **P0: Enter balances** — principal fills `balance` + `as_of` in `entities.yaml` (unlocks real position tracking)"
     )
     lines.append("4. **P2: Deploy MONETA** — `docker build + docker run` on $0 host; set `MINT_BTC_ADDRESS`")
     lines.append("5. **P3: Deploy Exporter** — 'git push' + 'wrangler deploy'; first dollar via MONETA or Ko-fi")

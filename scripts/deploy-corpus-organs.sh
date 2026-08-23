@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# deploy-corpus-organs.sh — the ONE-TIME deploy that moves the corpus organs out of the staged
-# worktree and into the LIVE daemon (the un-caged executor). After this runs once, the heartbeat
-# pushes + converges every beat with NO interactive classifier in its path — forever.
+# deploy-corpus-organs.sh — one-time installation of corpus commands followed by one explicit,
+# bounded host observation. It does not install or restart a resident scheduler.
 #
 # Run this from BYPASS/AGENTS mode (or directly in a terminal). It is idempotent + additive: re-running
 # is safe. It does NOT force-push, delete refs, or merge.
 #
-#   bash scripts/deploy-corpus-organs.sh            # deploy + enable + restart the daemon
+#   bash scripts/deploy-corpus-organs.sh            # deploy + observe once
 #   LIMEN_ENABLE_LIVE_SYNTHESIS=0 bash scripts/...  # deploy, but leave live synthesis OFF (no spend)
 set -uo pipefail
 
@@ -18,7 +17,7 @@ echo "[deploy] source : $SRC"
 echo "[deploy] live   : $LIVE/scripts"
 
 # 1. deploy the organs into the live checkout (additive; the daemon reads from here).
-for f in capture.sh corpus-converge.py corpus-view.py heartbeat-loop.sh; do
+for f in capture.sh corpus-converge.py corpus-view.py; do
   cp "$SRC/$f" "$LIVE/scripts/$f" && echo "[deploy] ✓ $f"
 done
 chmod +x "$LIVE/scripts/capture.sh" "$LIVE/scripts/corpus-converge.py" "$LIVE/scripts/corpus-view.py" 2>/dev/null || true
@@ -37,8 +36,12 @@ fi
 # 3. publish the visible page immediately (no wait for the first beat).
 LIMEN_ROOT="$LIVE" python3 "$LIVE/scripts/corpus-view.py" 2>&1 | tail -1 || true
 
-# 4. restart the daemon so heartbeat-loop.sh re-reads with the new voices wired in.
-launchctl kickstart -k "gui/$(id -u)/com.limen.heartbeat" && echo "[deploy] daemon restarted"
+# 4. exercise the installed on-demand observation surface once.
+if ! PYTHONPATH="$LIVE/cli/src${PYTHONPATH:+:$PYTHONPATH}" python3 -m limen observe --once --scope host; then
+  echo "[deploy] bounded host observation failed" >&2
+  exit 1
+fi
+echo "[deploy] bounded host observation complete"
 
 echo "[deploy] DONE. Knowledge base: http://127.0.0.1:8788/corpus.html"
-echo "[deploy] The daemon now captures (off-disk) + converges his WORDS every beat, un-caged."
+echo "[deploy] Corpus commands are installed for explicit on-demand use; no scheduler was created."

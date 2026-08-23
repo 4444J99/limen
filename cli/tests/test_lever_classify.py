@@ -80,6 +80,10 @@ def test_discharged_levers_are_skipped():
     dead = _lever(id="L-DEAD", label="regenerate and email the report", discharged="2026-07-18 done")
     assert m.is_open(dead) is False
     assert m.cmd_check([dead]) == 0
+    for status in m.TERMINAL_LEVER_STATUSES:
+        terminal = _lever(id=f"L-{status.upper()}", label="regenerate and email the report", status=status.upper())
+        assert m.is_open(terminal) is False
+        assert m.cmd_check([terminal]) == 0
 
 
 def test_every_sovereign_reason_is_a_boundary_not_a_task():

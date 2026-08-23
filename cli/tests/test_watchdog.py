@@ -178,7 +178,7 @@ def test_heal_not_triggered_without_env_gate(tmp_path, monkeypatch):
     assert calls == []  # flag alone is not enough
 
 
-def test_heal_triggered_with_both_gates(tmp_path, monkeypatch):
+def test_heal_remains_disabled_with_both_legacy_gates(tmp_path, monkeypatch):
     m = _fresh_module(tmp_path, monkeypatch, LIMEN_WATCHDOG_HEAL=1)
     _write_logs(m)
     _mock_system(m, monkeypatch, pid_alive=False)
@@ -186,5 +186,4 @@ def test_heal_triggered_with_both_gates(tmp_path, monkeypatch):
     monkeypatch.setattr(m, "heal", lambda: (calls.append(1), (True, "kickstarted"))[1])
     monkeypatch.setattr(sys, "argv", ["watchdog", "--heal"])
     m.main()
-    assert calls == [1]
-    assert any("HEAL ok" in line for line in m.WDLOG.read_text().splitlines())
+    assert calls == []

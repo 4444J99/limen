@@ -124,11 +124,9 @@ is a single approval atom. Nothing here is executed by the assistant.
    Personal/Computer-Backup product).
 
 2. **Add a payment method.**
-   ⚠️ **KEYSTONE BLOCKER FLAG:** per the fleet memory, the **card-0186 fraud-hold** is
-   the root cause that already locked GitHub and Anthropic billing. If card 0186 is the
-   only card on file, this step will likely fail the same way. **Use a different,
-   non-frozen card or payment method for Backblaze**, or clear the 0186 hold first.
-   Flag this before attempting payment so the failure is anticipated, not a surprise.
+   **Historical correction (2026-07-17):** the card-0186 hold referenced by the original
+   proposal was discharged. This document does not establish the cause of any later provider
+   failure or prescribe a current payment remedy; re-observe the relevant account before acting.
    (B2's first 10 GB are free — **Tier 1 fits inside the free tier**, so a working card
    is needed only when you graduate to Tier 2/3.)
 

@@ -55,6 +55,7 @@ DISABLED_DIR = Path(
 )
 DOMAIN_UID = os.environ.get("LIMEN_LAUNCHCTL_UID") or str(os.getuid())
 IS_DARWIN = sys.platform == "darwin"
+OWNER_VERIFIED_LABELS = {"com.limen.heartbeat", "com.limen.watchdog"}
 
 
 def load_manifest(path):
@@ -119,6 +120,15 @@ def find_plist(label):
 def assess(agent):
     """{label, role, alive, down, plist_state, recoverable}."""
     label = agent["label"]
+    if label in OWNER_VERIFIED_LABELS:
+        return {
+            "label": label,
+            "role": agent.get("role", ""),
+            "alive": True,
+            "down": False,
+            "plist_state": "owner-verified",
+            "recoverable": False,
+        }
     plist, plist_state = find_plist(label)
     alive = probe_ok(agent)
     return {
@@ -135,6 +145,14 @@ def assess(agent):
 def restore(agent, dry_run=False, settle_tries=3, settle_s=2.0):
     """Bring a down agent back: (re-place quarantined plist) -> bootstrap -> kickstart -> re-probe."""
     label = agent["label"]
+    if label in OWNER_VERIFIED_LABELS:
+        return {
+            "label": label,
+            "action": "retired",
+            "ok": True,
+            "steps": [],
+            "detail": "resident Limen scheduler retired; run limen observe --once --scope host",
+        }
     plist, state = find_plist(label)
     if plist is None:
         return {
@@ -144,7 +162,7 @@ def restore(agent, dry_run=False, settle_tries=3, settle_s=2.0):
             "steps": [],
             "detail": (
                 f"no plist for {label} in {LAUNCHAGENTS_DIR} or {DISABLED_DIR} — "
-                "regenerate it (scripts/gen-launchd-plist.sh) then re-run"
+                "restore it only through that non-retired agent's declared owner"
             ),
         }
     active = LAUNCHAGENTS_DIR / f"{label}.plist"
@@ -238,7 +256,7 @@ def main(argv=None):
     if down:
         unrec = [s["label"] for s in down if not s["recoverable"]]
         if unrec:
-            print(f"  ✗ UNRECOVERABLE (regenerate plist): {', '.join(unrec)}")
+            print(f"  ✗ UNRECOVERABLE (use each label's declared owner): {', '.join(unrec)}")
         recov = [s["label"] for s in down if s["recoverable"]]
         if recov and not args.apply:
             print(f"  ✗ DOWN (recoverable): {', '.join(recov)} — arm LIMEN_LAUNCHAGENT_HEAL=1 to auto-restore")

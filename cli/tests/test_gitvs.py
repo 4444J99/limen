@@ -24,6 +24,172 @@ def _result(payload: dict, returncode: int = 0) -> subprocess.CompletedProcess:
     return subprocess.CompletedProcess([], returncode, json.dumps(payload), "")
 
 
+def test_terminal_human_levers_cannot_be_current_gitvs_owners(tmp_path, monkeypatch) -> None:
+    module = _load()
+    rows = [{"id": "L-OPEN", "status": "open", "issue": 1}]
+    rows.extend(
+        {"id": f"L-{status.upper()}", "status": status, "issue": 2} for status in module.TERMINAL_LEVER_STATUSES
+    )
+    rows.append({"id": "L-LEGACY", "discharged": "2026-07-17", "issue": 3})
+    (tmp_path / "his-hand-levers.json").write_text(json.dumps({"levers": rows}), encoding="utf-8")
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+
+    assert module._homed_levers() == {"L-OPEN"}
+    assert set(module._lever_index()) == {"L-OPEN"}
+    assert module._cite("L-DISCHARGED", module._lever_index()) == "L-DISCHARGED (cited)"
+
+
+def test_usage_projects_actions_product_not_all_github_products(tmp_path, monkeypatch) -> None:
+    module = _load()
+    monkeypatch.setattr(module.shutil, "which", lambda _command: "/usr/bin/gh")
+    monkeypatch.setattr(module, "owners", lambda _estate: ["organvm"])
+    monkeypatch.setattr(
+        module,
+        "_usage_month",
+        lambda *_args: {
+            "by_product": {
+                "actions": {"net_usd": 0.5},
+                "code_quality": {"net_usd": 100.0},
+            },
+            "net_usd_total": 100.5,
+        },
+    )
+    monkeypatch.setattr(module, "_runner_admission_observation", lambda _repo: (False, "annotation absent"))
+    monkeypatch.setattr(module, "USAGE_DOC", tmp_path / "usage.json")
+    monkeypatch.setattr(module, "USAGE_STAMP", tmp_path / "usage-stamp.json")
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+
+    estate = {"budgets": {"actions_spend": {"monthly_net_usd_max": 25}}}
+    assert module.usage(estate, check=True, print_json=False) == 0
+    doc = json.loads(module.USAGE_DOC.read_text(encoding="utf-8"))
+    assert doc["schema"] == "limen.github_actions_usage.v2"
+    assert doc["actions_net_usd_mtd"] == 0.5
+    assert doc["net_usd_total"] == 100.5
+    assert doc["actions_net_usd_projected_month_end"] < doc["budget_net_usd"]
+
+
+def test_usage_no_write_preserves_immutable_observer_source(tmp_path, monkeypatch) -> None:
+    module = _load()
+    monkeypatch.setattr(module.shutil, "which", lambda _command: "/usr/bin/gh")
+    monkeypatch.setattr(module, "owners", lambda _estate: ["organvm"])
+    monkeypatch.setattr(
+        module,
+        "_usage_month",
+        lambda *_args: {"by_product": {"actions": {"net_usd": 0.0}}, "net_usd_total": 0.0},
+    )
+    monkeypatch.setattr(module, "_runner_admission_observation", lambda _repo: (False, "annotation absent"))
+    monkeypatch.setattr(module, "USAGE_DOC", tmp_path / "usage.json")
+    monkeypatch.setattr(module, "USAGE_STAMP", tmp_path / "usage-stamp.json")
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+
+    assert module.usage({}, check=True, print_json=False, write=False) == 0
+    assert not module.USAGE_DOC.exists()
+    assert not module.USAGE_STAMP.exists()
+
+
+def test_runner_admission_observation_paginates_and_preserves_unreadable_evidence(monkeypatch) -> None:
+    module = _load()
+    calls: list[list[str]] = []
+    responses = iter(
+        [
+            subprocess.CompletedProcess([], 0, '{"id": 77, "conclusion": "failure"}', ""),
+            subprocess.CompletedProcess(
+                [],
+                0,
+                '[{"id": 101, "conclusion": "failure", "steps": []}, '
+                '{"id": 102, "conclusion": "failure", "steps": []}]',
+                "",
+            ),
+            subprocess.CompletedProcess([], 0, "ordinary failure\n", ""),
+            subprocess.CompletedProcess([], 0, "spending limit reached\n", ""),
+        ]
+    )
+
+    def fake_gh(args, timeout=30):
+        calls.append(args)
+        return next(responses)
+
+    monkeypatch.setattr(module, "_gh_user", fake_gh)
+    assert module._runner_admission_observation("example/repo")[0] is True
+    assert all("--paginate" in call for call in calls[1:])
+    assert "--slurp" in calls[1]
+
+    responses = iter(
+        [
+            subprocess.CompletedProcess([], 0, '{"id": 77, "conclusion": "failure"}', ""),
+            subprocess.CompletedProcess([], 1, "", "unavailable"),
+        ]
+    )
+    assert module._runner_admission_observation("example/repo") == (None, "jobs unreadable")
+
+
+def test_runner_admission_preserves_executed_step_evidence(monkeypatch) -> None:
+    module = _load()
+    responses = iter(
+        [
+            subprocess.CompletedProcess([], 0, '{"id": 77, "conclusion": "failure"}', ""),
+            subprocess.CompletedProcess(
+                [],
+                0,
+                '[{"id": 101, "conclusion": "failure", "steps": [{"name": "pytest"}]}]',
+                "",
+            ),
+            subprocess.CompletedProcess([], 0, "spending limit reached\n", ""),
+        ]
+    )
+    monkeypatch.setattr(module, "_gh_user", lambda *_args, **_kwargs: next(responses))
+    present, detail = module._runner_admission_observation("example/repo")
+    assert present is False
+    assert "without the matching admission annotation" in detail
+
+
+def test_usage_strict_prefers_unreadable_admission_over_budget_failure(tmp_path, monkeypatch, capsys) -> None:
+    module = _load()
+    monkeypatch.setattr(module.shutil, "which", lambda _command: "/usr/bin/gh")
+    monkeypatch.setattr(module, "owners", lambda _estate: ["organvm"])
+    monkeypatch.setattr(
+        module,
+        "_usage_month",
+        lambda *_args: {"by_product": {"actions": {"net_usd": 100.0}}, "net_usd_total": 100.0},
+    )
+    monkeypatch.setattr(module, "_runner_admission_observation", lambda _repo: (None, "jobs unreadable"))
+    monkeypatch.setattr(module, "USAGE_DOC", tmp_path / "usage.json")
+    monkeypatch.setattr(module, "USAGE_STAMP", tmp_path / "usage-stamp.json")
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+
+    assert module.usage({}, check=True, print_json=False, strict=True) == 77
+    assert "observation unreadable" in capsys.readouterr().out
+
+
+def test_usage_reports_provider_admission_text_without_account_diagnosis(tmp_path, monkeypatch, capsys) -> None:
+    module = _load()
+    monkeypatch.setattr(module.shutil, "which", lambda _command: "/usr/bin/gh")
+    monkeypatch.setattr(module, "owners", lambda _estate: ["organvm"])
+    monkeypatch.setattr(
+        module,
+        "_usage_month",
+        lambda *_args: {"by_product": {"actions": {"net_usd": 0.0}}, "net_usd_total": 0.0},
+    )
+    monkeypatch.setattr(
+        module,
+        "_runner_admission_observation",
+        lambda _repo: (True, "provider billing-related admission annotation present; cause unverified"),
+    )
+    monkeypatch.setattr(module, "USAGE_DOC", tmp_path / "usage.json")
+    monkeypatch.setattr(module, "USAGE_STAMP", tmp_path / "usage-stamp.json")
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+
+    assert module.usage({}, check=True, print_json=False) == 1
+    output = capsys.readouterr().out.lower()
+    assert "account cause and remediation are unverified" in output
+    assert "account is locked" not in output
+    doc = json.loads(module.USAGE_DOC.read_text(encoding="utf-8"))
+    observation = doc["runner_admission_observation"]
+    assert observation["annotation_present"] is True
+    assert observation["account_cause_verified"] is False
+    assert observation["remediation_verified"] is False
+
+
 def test_owner_open_pr_counts_paginates_repository_totals(monkeypatch) -> None:
     module = _load()
     pages = [

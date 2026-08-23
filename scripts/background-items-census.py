@@ -189,13 +189,15 @@ def print_report(report):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--check", action="store_true", help="exit 1 if any UNDECLARED plist exists")
+    parser.add_argument("--no-receipt", action="store_true", help="report only; write no receipt")
     parser.add_argument("--registry", default=str(DEFAULT_REGISTRY), help="registry override (tests)")
     args = parser.parse_args()
 
     registry = load_registry(args.registry)
     report = build_report(registry)
     print_report(report)
-    write_receipt(report)
+    if not args.no_receipt:
+        write_receipt(report)
 
     if args.check and report["undeclared"]:
         print(

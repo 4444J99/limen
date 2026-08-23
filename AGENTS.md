@@ -277,9 +277,9 @@ Full doctrine: [`docs/architecture/dynamic-provider-selection.md`](docs/architec
 
 ## Source of Truth and Local Cache
 
-The remote owner is the source of truth; a local checkout is a disposable cache, and one failed
-GitHub surface never generalizes into "GitHub is blocked."
-Full doctrine: [`docs/architecture/source-of-truth-and-local-cache.md`](docs/architecture/source-of-truth-and-local-cache.md).
+Remote is authoritative; local is cache. Provider errors are observations, not proof of account
+lock or remedy. Without current account/budget/usage/repo evidence, report only runner admission
+failed, cause and remedy unverified. [Doctrine](docs/architecture/source-of-truth-and-local-cache.md).
 
 ## Run-and-Gun Substrate
 

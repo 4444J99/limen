@@ -5,6 +5,10 @@ receipt sweep, 90–120 days ending 2026-07-08. Amounts are receipt-verified unl
 `-` = no receipt found (the `balance_known: false` pattern — principal fills in what email doesn't
 show). Card refs use the established last-4 shorthand.*
 
+> **Historical snapshot, not current account state.** The observation window ended 2026-07-08.
+> The card-0186 hold was discharged 2026-07-17; no row below may be reused as a current diagnosis
+> or remediation without a fresh provider/account query.
+
 > **The cancel/keep verdict is a PREDICATE, not this prose.** Run
 > `python3 scripts/vendor-cancel-advisor.py` (add `--json`). It decides KEEP / CANCEL-CANDIDATE per
 > vendor from UTILIZATION ONLY (rate-limit health + headroom across resets in `logs/usage.json`) —
@@ -18,7 +22,7 @@ show). Card refs use the established last-4 shorthand.*
 ## Summary
 
 - **Known recurring total: $495.26/mo** (+ Cloudflare variable $0–24/mo) — matches the estimated "$500+".
-- Vendors: 6 recurring · 4 pay-per-use/credits ($0 recurring found) · 2 currently failing on the card-0186 hold.
+- Vendors: 6 recurring · 4 pay-per-use/credits ($0 recurring found) · 2 provider failures observed at snapshot close.
 - **Recommended end state after decisions below: ~$430–495/mo** (cut ≈ $0–68/mo). Corrected
   2026-07-09: the AI subs are parallel capacity pools the fleet exhausts (Claude Max dry in ~2
   days/week) — cutting them cuts capacity, not waste. The savings live in routing cheap tiers to
@@ -42,16 +46,16 @@ per-message transcripts and the opencode session DB, 30-day window):
 
 | Rank | Vendor | Product / Tier | $/mo | Cadence | Status | Keep/Cancel | Next step | Notes |
 |---|---|---|---|---|---|---|---|---|
-| 1 | Anthropic | Claude Max 20x | 217.75 | monthly, 18th | **paused** — Jun 18 charge failed | **KEEP** | resolve card-0186 hold (existing lever), payment resumes | $200 + NY tax. Fleet-native flat-rate sub; heavy agentic use makes this the best token arbitrage in the stack. The last sub to ever cancel (plan Phase 4). |
+| 1 | Anthropic | Claude Max 20x | 217.75 | monthly, 18th | **historical 2026-07-08:** paused after Jun 18 charge failed | **KEEP** | re-query current subscription state; historical hold is discharged | $200 + NY tax. Fleet-native flat-rate sub; heavy agentic use makes this the best token arbitrage in the stack. The last sub to ever cancel (plan Phase 4). |
 | 2 | OpenAI | ChatGPT Pro | ~200 (inferred) | monthly | active | **KEEP** (corrected) | L-AI-SPEND-OPENAI below | No receipt emails found (billing possibly via Apple/other rail — verify at chatgpt.com/settings). Second frontier capacity pool: Codex caps carry the fleet when the Claude pool exhausts (~2 days into its weekly window). Cutting it cuts capacity, not waste. |
-| 3 | GitHub | Enterprise Cloud usage (meta-organvm) | 45.73 | monthly usage cycle | **billing failing** (card-0186) | **REVIEW** | L-AI-SPEND-GHE below | $42 + tax. Not an AI sub per se — org infra. Itemization is in the receipt PDF only. Review whether Enterprise features are load-bearing vs Team/Free. |
+| 3 | GitHub | Enterprise Cloud usage (meta-organvm) | 45.73 | monthly usage cycle | **historical 2026-07-08:** provider billing failure observed | **REVIEW** | re-query current plan/account state | $42 + tax. Not an AI sub per se — org infra. Itemization is in the receipt PDF only. Review whether Enterprise features are load-bearing vs Team/Free. |
 | 4 | Warp | Build plan | 21.78 | monthly, 10th | active | **KEEP if used** (corrected) | L-AI-SPEND-WARP below | $20 + tax, card-0920. Operator reports active use — another capacity pool, cheap at measured arbitrage levels. Cancel only if it goes idle in practice. |
 | 5 | Anomaly | OpenCode Go | 10.00 | monthly, ~31st | active | **KEEP** | — | Cheap lane diversity: opencode is a registered fleet lane in the dispatch cascade. $10/mo is the cheapest working vendor lane in the stack. |
 | 6 | Cloudflare | Workers/Pages usage | 0–24.20 | monthly, variable | active | **KEEP** | — | Infra, not AI spend — hosts the live limen runtime (Worker + Pages). Usage-priced. |
 | 7 | Perplexity | credits | - | credits | out of credits (Jun 29) | **NO ACTION** | — | No receipts found → no recurring sub detected; credit-exhaustion emails only. Do not add auto-refill. |
 | 8 | xAI | Grok tasks / API | - | - | active use, no receipts | **VERIFY $0** | check x.ai billing page | Heavy Grok scheduled-task use Apr–Jul but zero receipts to this inbox — confirm nothing bills elsewhere (X Premium rail). |
 | 9 | OpenRouter | prepaid credits | - | ad hoc | account active | **NO ACTION** | — | Newsletter-only; no charges found. This is the Phase 2 open-weight API rail — spend will appear here *by design* later, displacing subscription dollars. |
-| 10 | Google | Gemini / GCP AI | 0 | — | **suspended** (CONSUMER_SUSPENDED; card-0186 cascade) | **NO ACTION** | existing card-hold lever | Nothing billing while suspended. Restore is downstream of the card fix, already registered. |
+| 10 | Google | Gemini / GCP AI | 0 | — | **historical 2026-07-08:** CONSUMER_SUSPENDED | **NO ACTION from this snapshot** | current credential recovery is issue #265 | Later evidence superseded this row with API_KEY_INVALID; no current billing cause is established. |
 
 ## Decisions (his-hand)
 
@@ -67,8 +71,8 @@ pool that utilization data shows persistently idle; never cancel a pool that hit
 |---|---|---|
 | `L-AI-SPEND-OPENAI` | **KEEP Pro** (reversed from "downgrade"). Codex is the fleet's second frontier pool and the relief valve for Claude's ~2-day exhaustion. Revisit only if pool-utilization data (rate-limit % in `logs/usage.json`) shows sustained low use across resets. | $0 |
 | `L-AI-SPEND-WARP` | Operator's call on utilization: if Warp is in active use it stays ($22 is capacity-cheap at these arbitrage levels); cancel only if idle in practice. | $0 to −$21.78 |
-| `L-AI-SPEND-GHE` | github.com → meta-organvm → Billing: open the receipt PDF itemization; if Enterprise-only features (SAML/audit-log/etc.) are not load-bearing, downgrade to Team/Free. Infra, not an AI capacity pool — the overlap logic does apply here. Also unblocks one of the two card-0186 billing failures. | **−$0 to −$45.73** |
-| *(existing)* card-0186 hold | Already registered as its own lever — resolving it un-pauses Claude Max (the fleet's primary pool, currently in paused-grace) and clears the GitHub billing failure. Upstream of everything above. | — |
+| `L-AI-SPEND-GHE` | Historical decision row: inspect current plan/account evidence before acting; the July card attribution is not reusable. | **unknown until re-query** |
+| *(terminal history)* card-0186 hold | Discharged 2026-07-17. It owns no current vendor failure or remedy. | — |
 
 **The real relief for the 2-day Claude exhaustion is routing, not cancellation:** ~10.4% of Claude
 tokens are haiku-class (see [`token-usage.md`](token-usage.md)) — moving that tier onto the

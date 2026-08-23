@@ -21,7 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from _notify import NotificationResult, notify_event, notify_ntfy
+from _notify import NotificationResult, emit_event_v1, notify_event, notify_ntfy
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 LOGS = ROOT / "logs"
@@ -75,6 +75,7 @@ def main():
     prev_bucket = prev.get("ship_bucket", 0) if prev.get("ship_date") == today else 0
 
     events = []
+    structured_results = []
     cur_stages = {}
     for p in view.get("products", []):
         repo, stage = p.get("repo", ""), p.get("stage", "")
@@ -93,11 +94,26 @@ def main():
     ships = (view.get("ships_24h") or {}).get("total", 0)
     cur_bucket = max([b for b in SHIP_BUCKETS if ships >= b], default=0)
     if cur_bucket > prev_bucket:
-        events.append(("shipping", f"{ships} PRs shipped in the last 24h across the fleet"))
+        observed_at = datetime.now()
+        receipt = emit_event_v1(
+            ROOT,
+            stable_id="limen.shipping.threshold",
+            transition="milestone",
+            subject_key=f"{today}:{cur_bucket}",
+            event_id=f"shipping-{today}-{cur_bucket}",
+            facts={"threshold": cur_bucket, "observed": ships, "snapshot_time": observed_at.strftime("%H:%M")},
+            evidence_ref=str(VIEW),
+            producer="scripts/notify-events.py",
+        )
+        structured_results.append(receipt)
+        print(f"[notify:{receipt.status}] shipping: crossed {cur_bucket}; {ships} observed at {observed_at:%H:%M}")
 
     results = [_emit(f"LIMEN {title}", msg) for title, msg in events]
 
-    if all(_event_settled(result) for result in results):
+    structured_settled = all(
+        result.status in {"delivered", "deduped", "recorded", "withheld"} for result in structured_results
+    )
+    if all(_event_settled(result) for result in results) and structured_settled:
         STATE.write_text(
             json.dumps(
                 {

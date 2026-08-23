@@ -569,7 +569,7 @@ if git merge --ff-only "origin/$BRANCH" --quiet 2>/dev/null; then
     # the conductor's OWN loop body changed; organs are already current. Do NOT exit (KeepAlive=false
     # would leave it dead) — flag for a deliberate kickstart to load the new loop.
     touch "$ROOT/logs/.loop-update-pending" 2>/dev/null || true
-    echo "sync-release: heartbeat-loop.sh itself changed — kickstart to load it: launchctl kickstart -k gui/\$(id -u)/com.limen.heartbeat"
+    echo "sync-release: heartbeat-loop.sh changed; the resident scheduler is retired. Run: limen observe --once --scope host"
   fi
 else
   [ "$stashed" = 1 ] && git stash pop --quiet 2>/dev/null || true
