@@ -1462,7 +1462,7 @@
       "unlocks": "authenticated LaunchDarkly hosted tool discovery instead of a transport-only startup warning",
       "source_task": "attached-alert closeout #2120; domus-genoma PR #366; limen PR #2124",
       "gate": "OAuth browser consent acts as your hosted LaunchDarkly identity and cannot be completed headlessly on your behalf",
-      "condition": "active only when codex mcp list --json reports auth_needed for launchdarkly",
+      "condition": "active only when codex mcp list --json reports not_logged_in, auth_needed, or reauthentication required for launchdarkly; the same generic not_logged_in label on ianva is not evidence that its open loopback endpoint requires OAuth",
       "status": "open",
       "added": "2026-08-08",
       "steps": [
