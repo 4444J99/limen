@@ -32,6 +32,7 @@ import os
 import shutil
 import sqlite3
 import subprocess
+import sys
 from contextlib import closing
 from pathlib import Path
 
@@ -68,20 +69,54 @@ def metabolize_estate() -> dict:
 
 
 def _alchemia_ok() -> bool:
-    """Return True iff the alchemia Python module is importable (not just on PATH).
+    """Return True iff the alchemia Python module is importable or functional.
 
-    The alchemia shim at /opt/homebrew/bin/alchemia can exist while the package is not pip-installed
-    — in that case every `alchemia stars sync` call dies with ModuleNotFoundError, silently swallowed
-    by the engine's fail-open subprocess wrapper. This probe catches that gap.
+    Probes direct module import, the alchemia CLI on PATH, or virtualenv search
+    when running in isolated environments.
     """
+    # 1. Direct Python module import check in current environment
     try:
-        subprocess.run(  # noqa: S603
-            [shutil.which("alchemia") or "alchemia", "--help"],
-            check=True, capture_output=True, timeout=10,
-        )
+        import alchemia  # type: ignore # noqa: F401
+
         return True
-    except (OSError, subprocess.CalledProcessError, subprocess.SubprocessError):
-        return False
+    except ImportError:
+        pass
+
+    # 2. Check via CLI if functional on PATH
+    alchemia_bin = shutil.which("alchemia")
+    if alchemia_bin:
+        try:
+            res = subprocess.run(
+                [alchemia_bin, "--help"],
+                check=False,
+                capture_output=True,
+                timeout=10,
+            )
+            if res.returncode == 0:
+                return True
+        except (OSError, subprocess.SubprocessError):
+            pass
+
+    # 3. Check virtualenv site-packages if VIRTUAL_ENV exists or sys.prefix != sys.base_prefix
+    venv_root = os.environ.get("VIRTUAL_ENV") or (
+        sys.prefix if sys.prefix != getattr(sys, "base_prefix", sys.prefix) else None
+    )
+    if venv_root:
+        venv_bin = Path(venv_root) / "bin" / "alchemia"
+        if venv_bin.exists():
+            try:
+                res = subprocess.run(
+                    [str(venv_bin), "--help"],
+                    check=False,
+                    capture_output=True,
+                    timeout=10,
+                )
+                if res.returncode == 0:
+                    return True
+            except (OSError, subprocess.SubprocessError):
+                pass
+
+    return False
 
 
 def portal_counts() -> dict:
@@ -101,8 +136,7 @@ def portal_counts() -> dict:
     }
     by_state: dict[str, int] = {}
     if not PORTAL_DB.exists():
-        return {"counts": counts, "by_state": by_state, "present": False, "status": "absent",
-                "exchange_rows": 0}
+        return {"counts": counts, "by_state": by_state, "present": False, "status": "absent", "exchange_rows": 0}
     try:
         with closing(sqlite3.connect(f"file:{PORTAL_DB}?mode=ro", uri=True)) as conn:
             conn.row_factory = sqlite3.Row
@@ -123,10 +157,14 @@ def portal_counts() -> dict:
             except sqlite3.OperationalError:
                 pass
     except sqlite3.Error:
-        return {"counts": counts, "by_state": by_state, "present": False, "status": "unreadable",
-                "exchange_rows": 0}
-    return {"counts": counts, "by_state": by_state, "present": True, "status": "present",
-            "exchange_rows": exchange_rows}
+        return {"counts": counts, "by_state": by_state, "present": False, "status": "unreadable", "exchange_rows": 0}
+    return {
+        "counts": counts,
+        "by_state": by_state,
+        "present": True,
+        "status": "present",
+        "exchange_rows": exchange_rows,
+    }
 
 
 def run_beat() -> str:
@@ -136,7 +174,9 @@ def run_beat() -> str:
     try:
         subprocess.run(  # noqa: S603
             ["organvm", "portal", "metabolize", "--budget", str(BUDGET), "--db", str(PORTAL_DB)],
-            check=False, capture_output=True, timeout=int(os.environ.get("LIMEN_BIFRONS_TIMEOUT", "180")),
+            check=False,
+            capture_output=True,
+            timeout=int(os.environ.get("LIMEN_BIFRONS_TIMEOUT", "180")),
         )
         return "ran"
     except (OSError, subprocess.SubprocessError) as exc:
@@ -174,8 +214,7 @@ def render(portal: dict) -> str:
         "",
         "## The human gate (a valve, not a wall)",
         "",
-        f"- **{awaiting}** contribution(s) prepared and pooling at the gate "
-        "(`PATCH_PREPARED`/`HUMAN_APPROVED`).",
+        f"- **{awaiting}** contribution(s) prepared and pooling at the gate (`PATCH_PREPARED`/`HUMAN_APPROVED`).",
         f"- **{counts['backflow_signal']}** backflow signal(s) metabolized through the seven organs.",
         "- The autonomous loop runs to `HUMAN_APPROVED`; only the upstream PR is his hand.",
         "",
@@ -193,16 +232,23 @@ def write_signal(estate: dict, portal: dict, beat: str) -> None:
     counts = portal["counts"]
     by_state = portal["by_state"]
     SIGNAL.parent.mkdir(parents=True, exist_ok=True)
-    SIGNAL.write_text(json.dumps({
-        "organ": "bifrons",
-        "beat": beat,
-        "portal_present": portal["present"],
-        "counts": counts,
-        "exchanges_by_state": by_state,
-        "prepared_awaiting_gate": sum(by_state.get(s, 0) for s in _AWAITING),
-        "snapshots_crawled": estate["snapshots"],
-        "portal_md": "organs/observation/bifrons/PORTAL.md",
-    }, indent=2, sort_keys=True) + "\n")
+    SIGNAL.write_text(
+        json.dumps(
+            {
+                "organ": "bifrons",
+                "beat": beat,
+                "portal_present": portal["present"],
+                "counts": counts,
+                "exchanges_by_state": by_state,
+                "prepared_awaiting_gate": sum(by_state.get(s, 0) for s in _AWAITING),
+                "snapshots_crawled": estate["snapshots"],
+                "portal_md": "organs/observation/bifrons/PORTAL.md",
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
 
 
 def doctor() -> int:
@@ -256,9 +302,11 @@ def main() -> int:
     if changed:
         PORTAL_MD.write_text(body)
     write_signal(estate, portal, beat)
-    print(f"bifrons: PORTAL.md {'re-rendered' if changed else 'unchanged'} "
-          f"(beat={beat}; {portal['counts']['external_repo']} stars, "
-          f"{portal['counts']['resonance_edge']} edges)")
+    print(
+        f"bifrons: PORTAL.md {'re-rendered' if changed else 'unchanged'} "
+        f"(beat={beat}; {portal['counts']['external_repo']} stars, "
+        f"{portal['counts']['resonance_edge']} edges)"
+    )
     return 0
 
 

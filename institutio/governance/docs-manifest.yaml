@@ -158,6 +158,8 @@ sanctioned:
   - {path: github-universe-mission.md, kind: doc, owner: gitvs, why: "doctrine for cross-repo github universe sweeps"}
   - {path: prima-materia-alpha-omega.md, kind: doc, owner: organvm, why: "Prima Materia alpha-to-omega custody specification"}
   - {path: record-keeper-covenant.md, kind: doc, owner: tabularius, why: "Record-Keeper Covenant testament and single-writer doctrine"}
+  - {path: TEST_INFRA.md, kind: doc, owner: fleet, why: "E2E testing infrastructure docs"}
+  - {path: TEST_READY.md, kind: doc, owner: fleet, why: "E2E testing readiness docs"}
 
 grandfathered:
   - {path: health-office, target_home: "organvm/domus:docs/health-office/", why: "personal-office records in a public repo — bound to scripts/health-organ.py + his-hand-levers.json; moves when the organ relocates"}
