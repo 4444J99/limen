@@ -1,0 +1,102 @@
+{
+  "schema_version": "limen.run_receipt.v1",
+  "receipt_id": "universe-recovery-20260823-protective-tranche-receipt",
+  "run_id": "run-758d8e6df21df2184a68bf9757128219",
+  "lease_id": "lease-1009-758d8e6df21df218",
+  "lease_generation": 1009,
+  "executor": {
+    "schema_version": "limen.agent_identity.v1",
+    "agent": "codex",
+    "surface": "direct",
+    "session_id": "01a02f60-498f-7732-a532-853019d6a146",
+    "native_run_id": null,
+    "provider_identity": "codex"
+  },
+  "provider_identity": "codex",
+  "observed_heads_before": {
+    "organvm/limen": "f034e3e659c8c8c3b9469b7b66e32c2bc03fdb64"
+  },
+  "observed_heads_after": {
+    "organvm/limen": "96c1a47017efe346867817b476a66c8043c96a0d"
+  },
+  "changed_paths": [
+    "AGENTS.md",
+    "cli/src/limen/ci_failure.py",
+    "cli/src/limen/github_estate_census.py",
+    "cli/src/limen/remote_reap.py",
+    "cli/src/limen/review_lineage_github.py",
+    "cli/src/limen/universe_recovery.py",
+    "cli/tests/conftest.py",
+    "cli/tests/test_ci_failure.py",
+    "cli/tests/test_github_estate_census.py",
+    "cli/tests/test_remote_reap.py",
+    "cli/tests/test_review_lineage_github.py",
+    "cli/tests/test_universe_recovery.py",
+    "docs/architecture/source-of-truth-and-local-cache.md",
+    "docs/continuations/universe-recovery-20260823/README.md",
+    "docs/continuations/universe-recovery-20260823/closeout.md",
+    "docs/continuations/universe-recovery-20260823/conduct-root-packet.json",
+    "docs/continuations/universe-recovery-20260823/explorations/census-receipt.json",
+    "docs/continuations/universe-recovery-20260823/explorations/census.md",
+    "docs/continuations/universe-recovery-20260823/explorations/reaping-receipt.json",
+    "docs/continuations/universe-recovery-20260823/explorations/reaping.md",
+    "docs/continuations/universe-recovery-20260823/explorations/review-admission-receipt.json",
+    "docs/continuations/universe-recovery-20260823/explorations/review-admission.md",
+    "docs/continuations/universe-recovery-20260823/explore-census-packet.json",
+    "docs/continuations/universe-recovery-20260823/explore-reaping-packet.json",
+    "docs/continuations/universe-recovery-20260823/explore-review-admission-packet.json",
+    "docs/continuations/universe-recovery-20260823/intent.md",
+    "docs/continuations/universe-recovery-20260823/manifest.json",
+    "docs/continuations/universe-recovery-20260823/runtime.md",
+    "docs/continuations/universe-recovery-20260823/source-projection.json",
+    "institutio/governance/direct-main-writers.yaml",
+    "institutio/governance/gates.yaml",
+    "institutio/governance/parameters.yaml",
+    "institutio/governance/ungated-effectors-baseline.txt",
+    "scripts/reap-remote-branches.py",
+    "scripts/remote-reap-effect.py",
+    "scripts/remote-reap-plan.py",
+    "scripts/remote-reap-verify.py",
+    "scripts/universe-recovery.py"
+  ],
+  "provider_run_url": "https://github.com/organvm/limen/pull/2543",
+  "predicate": {
+    "command": "python3 scripts/universe-recovery.py --check",
+    "exit_code": 1,
+    "summary": "Protective tranche is durable; aggregate remains nonterminal with incomplete-cursors:2, incomplete-sources:3, and nonterminal-review-lineages:1.",
+    "observed_at": "2026-08-23T17:00:00Z"
+  },
+  "checks": [
+    {
+      "name": "local scoped verification",
+      "status": "success",
+      "url": null,
+      "head": "96c1a47017efe346867817b476a66c8043c96a0d"
+    },
+    {
+      "name": "PR 2543 hosted admission",
+      "status": "pending",
+      "url": "https://github.com/organvm/limen/pull/2543",
+      "head": "96c1a47017efe346867817b476a66c8043c96a0d"
+    }
+  ],
+  "reviews": [
+    {
+      "provider": "github",
+      "head": "96c1a47017efe346867817b476a66c8043c96a0d",
+      "disposition": "none",
+      "unresolved_threads": 0,
+      "fully_paginated": false,
+      "url": "https://github.com/organvm/limen/pull/2543"
+    }
+  ],
+  "spend": {"runs": 4},
+  "child_runs": [
+    "run-554895d74fb8d081fe09140873bd69ba",
+    "run-2b97e99e55fe0735118a7760b1874702",
+    "run-cabb7b07c5fc1647e16eb59e65e21b47"
+  ],
+  "campaign": null,
+  "outcome": "blocked",
+  "completed_at": "2026-08-23T17:00:00Z"
+}
