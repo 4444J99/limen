@@ -69,10 +69,16 @@ class SubprocessResult:
         {"headRefName": "single-branch", "headRefOid": "c" * 40, "state": "MERGED", "mergedAt": "2026-07-01T00:00:00Z"},
         {"headRefName": "open-branch", "headRefOid": "d" * 40, "state": "OPEN", "mergedAt": None},
     ])
-m.subprocess.run = lambda *args, **kwargs: SubprocessResult()
+observed_run = {}
+def fake_run(*args, **kwargs):
+    observed_run.update(kwargs)
+    return SubprocessResult()
+m.subprocess.run = fake_run
 m.shutil.which = lambda cmd: "/usr/bin/gh"
+m.repository_root = lambda: Path("/configured/repository")
 merged, open_, online = m.gh_head_states(pr_limit=10)
 assert online is True
+assert observed_run["cwd"] == "/configured/repository"
 assert open_ == {"open-branch"}
 expected_epoch = m._merged_at_epoch("2026-08-15T00:00:00Z")
 assert merged["dup-branch"] == {"a" * 40: m._merged_at_epoch("2026-06-01T00:00:00Z"), "b" * 40: expected_epoch}
@@ -89,6 +95,27 @@ m._remote_tip_sha = lambda _branch: "e" * 40
 reused = m.gather_facts("dup-branch", "origin/main", set(), merged, set(), "main")
 assert reused.pr_merged_raw is True and reused.pr_merged_safe is False
 print("gh head matching: PASS (exact tip required across reused names)")
+
+# Per-branch acceptance binds descriptive context separately from the executable classifier reason.
+m._remote_tip_sha = lambda _branch: "f" * 40
+event = {
+    "branch": "topic",
+    "accepted": True,
+    "accepted_at": "2026-08-22T12:00:00Z",
+    "reason": "human-readable reconciliation context",
+    "reap_classification": "landed-ancestor",
+    "tip": "f" * 40,
+    "archive_status": "landed_on_default_verified",
+    "archive_proof": "exact tip is reachable from the default ref",
+    "redaction_review": "not_required_landed_ref",
+    "redaction_proof": "only the redundant remote pointer is removed",
+}
+assert m.reap_accepted("topic", "landed-ancestor", [event])[0] is True
+missing = dict(event); missing.pop("reap_classification")
+assert m.reap_accepted("topic", "landed-ancestor", [missing]) == (False, "incomplete-remote-branch-reap-acceptance")
+mismatched = dict(event, reap_classification="landed-pr-merged")
+assert m.reap_accepted("topic", "landed-ancestor", [mismatched]) == (False, "incomplete-remote-branch-reap-acceptance")
+print("acceptance classification: PASS (exact classifier reason required)")
 PY
 rc=$?
 [ "$rc" = 0 ] || exit 1

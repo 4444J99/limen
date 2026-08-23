@@ -267,7 +267,7 @@ def check_incidents() -> tuple[list[str], int]:
     if unshipped_breaches:
         findings.append(
             f"[INCIDENT] {unshipped_breaches} breach(es) recorded on this host and not yet shipped — "
-            f"run `python3 scripts/session-contention.py ship`"
+            f"run `python3 scripts/session-contention.py ship --apply`"
         )
     return findings, total
 

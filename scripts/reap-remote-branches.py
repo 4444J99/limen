@@ -184,11 +184,14 @@ def reap_accepted(branch: str, reason: str, acceptance_events: list[dict]) -> tu
                 continue
             if event.get("accepted") is not True:
                 continue
-            if event.get("reason") and event.get("reason") != reason:
-                continue
             if event.get("tip") and event.get("tip") != tip:
                 continue
         matched_candidate = True
+        if not standing and event.get("reap_classification") != reason:
+            # `reason` is descriptive human context. Authorization binds separately to the
+            # classifier's executable vocabulary so a plausible narrative can never substitute
+            # for the exact landed proof that selected this branch on this run.
+            continue
         archive_ok = event.get("archive_verified") is True or event.get("archive_status") in ACCEPTED_ARCHIVE_STATUSES
         if not archive_ok:
             continue
@@ -274,7 +277,7 @@ def gh_head_states(
                 "--limit",
                 str(pr_limit),
             ],
-            cwd=str(LIMEN_ROOT),
+            cwd=str(repository_root()),
             capture_output=True,
             text=True,
             timeout=60,

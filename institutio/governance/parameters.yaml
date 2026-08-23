@@ -6167,7 +6167,7 @@ parameters:
     env: LIMEN_SESSION_CONTENTION_SHIP
     self_update: none
     owner: substrate
-    note: "Master on/off for the `session-contention-ship` rung that promotes locally-recorded contention incidents into the committed ledger. 0 leaves incidents in logs/session-contention.jsonl, which IF-SESSION-NON-CONTENTION's probe still counts as distance — so disabling this hides the evidence from git, never from the predicate."
+    note: "Master on/off for the `session-contention-ship` rung that explicitly invokes `ship --apply` to promote changed locally-recorded contention evidence into the committed ledger. The ship command is read-only without --apply and no-ops when the evidence already exists. 0 leaves incidents in logs/session-contention.jsonl, which IF-SESSION-NON-CONTENTION's probe still counts as distance — so disabling this hides the evidence from git, never from the predicate."
   LIMEN_BEAT_SESSION_CONTENTION:
     default: 12
     env: LIMEN_BEAT_SESSION_CONTENTION

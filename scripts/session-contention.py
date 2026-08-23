@@ -21,7 +21,8 @@ event. This is that something.
                         a session legitimately sitting in the live checkout for six hours is
                         one incident, not one per beat. Fail-open and fast — this runs inside
                         the beat and must never be able to stop it.
-  ship                  promote unshipped incidents into the committed ledger via ship-docs.sh.
+  ship [--apply]        preview unshipped incidents by default; --apply promotes changed evidence
+                        into the committed ledger via ship-docs.sh.
                         Separate from `record` on purpose: recording must be instant and local,
                         while durability is a git operation that can be slow, can fail, and can
                         be retried on the next beat without losing anything.
@@ -195,13 +196,19 @@ def cmd_ship(args: argparse.Namespace) -> int:
             continue
         seen[key] = digest
         incidents.append(row)
-    if incidents != existing:
-        ledger["generated_at"] = _now()
+    ledger_changed = incidents != existing
+    if not ledger_changed:
+        print("session-contention: evidence already present in the ledger — no write or ship needed")
+        return 0
+
+    ledger["generated_at"] = _now()
     ledger["incidents"] = incidents
     ledger["incident_count"] = len(incidents)
     ledger["schema"] = SCHEMA
 
-    if args.dry_run:
+    if not args.apply:
+        if not args.dry_run:
+            print("session-contention: preview only — pass --apply to write and ship changed evidence")
         print(json.dumps(ledger, indent=2, sort_keys=True))
         return 0
 
@@ -242,8 +249,12 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--action", required=True, help="what the daemon declined to do, e.g. skipped-reset")
     r.set_defaults(fn=cmd_record)
 
-    s = sub.add_parser("ship", help="promote unshipped incidents into the committed ledger")
-    s.add_argument("--dry-run", action="store_true")
+    s = sub.add_parser("ship", help="preview unshipped incidents; --apply promotes changed evidence")
+    mode = s.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--apply", action="store_true", help="write the changed ledger, invoke its keeper, and mark the log"
+    )
+    mode.add_argument("--dry-run", action="store_true", help="explicit preview alias (the default is also read-only)")
     s.set_defaults(fn=cmd_ship)
 
     args = parser.parse_args(argv)

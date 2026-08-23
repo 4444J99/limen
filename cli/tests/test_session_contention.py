@@ -344,6 +344,17 @@ def test_ship_dry_run_builds_the_ledger_without_committing(tmp_path):
     assert not (tmp_path / "docs/receipts/session-contention-ledger.json").exists()
 
 
+def test_ship_defaults_to_a_read_only_preview(tmp_path):
+    _organ(tmp_path, "record", "--root", str(tmp_path), "--pid", "99", "--action", "skipped-unpark")
+    proc = _organ(tmp_path, "ship")
+
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "preview only" in proc.stdout
+    assert not (tmp_path / "docs/receipts/session-contention-ledger.json").exists()
+    row = json.loads((tmp_path / "logs/session-contention.jsonl").read_text().splitlines()[0])
+    assert row["shipped"] is False
+
+
 def test_ship_is_a_noop_with_nothing_recorded(tmp_path):
     proc = _organ(tmp_path, "ship", "--dry-run")
     assert proc.returncode == 0
@@ -354,17 +365,20 @@ def test_failed_ship_retry_does_not_duplicate_the_ledger(tmp_path):
     """ship-docs can fail after the candidate ledger is written; retrying must be byte-idempotent."""
     _organ(tmp_path, "record", "--root", str(tmp_path), "--pid", "99", "--action", "skipped-unpark")
 
-    first = _organ(tmp_path, "ship")
+    first = _organ(tmp_path, "ship", "--apply")
     assert first.returncode == 1
     ledger_path = tmp_path / "docs/receipts/session-contention-ledger.json"
     first_bytes = ledger_path.read_bytes()
 
-    second = _organ(tmp_path, "ship")
-    assert second.returncode == 1
+    second = _organ(tmp_path, "ship", "--apply")
+    assert second.returncode == 0
+    assert "evidence already present" in second.stdout
     assert ledger_path.read_bytes() == first_bytes
     ledger = json.loads(first_bytes)
     assert ledger["incident_count"] == 1
     assert len(ledger["incidents"]) == 1
+    row = json.loads((tmp_path / "logs/session-contention.jsonl").read_text().splitlines()[0])
+    assert row["shipped"] is False
 
 
 def test_legacy_rows_use_a_digest_identity_for_failed_ship_retry(tmp_path):
@@ -384,8 +398,8 @@ def test_legacy_rows_use_a_digest_identity_for_failed_ship_retry(tmp_path):
     proc = _organ(tmp_path, "ship", "--dry-run")
 
     assert proc.returncode == 0, proc.stdout + proc.stderr
-    rendered = json.loads(proc.stdout)
-    assert rendered["incident_count"] == 1
+    assert "evidence already present" in proc.stdout
+    rendered = json.loads(ledger.read_text())
     assert rendered["incidents"] == [legacy]
 
 

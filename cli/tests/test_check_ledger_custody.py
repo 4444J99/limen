@@ -270,6 +270,17 @@ def test_c_baseline_cannot_lower_the_series_high_water(mod, repo):
     assert "2026-08-10T00:00:00Z" in found[0]
 
 
+def test_c_exempts_an_immutable_baselined_unreadable_row(mod, repo):
+    ledger = repo / LEDGER_REL
+    ledger.parent.mkdir(parents=True, exist_ok=True)
+    ledger.write_text("{not valid json\n", encoding="utf-8")
+    historic = _commit(repo, "feat: immutable malformed historical census")
+    _write_baseline(repo, f"{historic} github-pr-debt")
+    _commit(repo, "chore: record immutable history")
+
+    assert _findings(mod, "C") == []
+
+
 # ── the predicate as a whole, through its real surface ────────────────────────────
 
 
