@@ -58,19 +58,36 @@ def _point_at(mod, home: Path) -> None:
     mod.LOGDB = home / "logs_2.sqlite"
 
 
-def _write_trunc_log(home: Path, ts: int, total_skills: int = 133, chars_per_skill: int = 169) -> None:
+def _write_trunc_log(
+    home: Path,
+    ts: int,
+    total_skills: int = 133,
+    chars_per_skill: int = 169,
+    process_started_at: int | None = None,
+) -> None:
     """Seed a synthetic Codex render log with one 'truncated skill metadata' row at epoch `ts`."""
     import sqlite3
 
     con = sqlite3.connect(home / "logs_2.sqlite")
     try:
-        con.execute("CREATE TABLE IF NOT EXISTS logs (ts INTEGER, feedback_log_body TEXT)")
+        con.execute(
+            "CREATE TABLE IF NOT EXISTS logs "
+            "(ts INTEGER, ts_nanos INTEGER DEFAULT 0, feedback_log_body TEXT, process_uuid TEXT)"
+        )
+        if process_started_at is not None:
+            con.execute(
+                "INSERT INTO logs (ts, feedback_log_body, process_uuid) VALUES (?, ?, ?)",
+                (process_started_at, "session start", "fixture-process"),
+            )
         body = (
             "truncated skill metadata to fit skills context budget "
             f"budget_limit=5440 total_skills={total_skills} "
             f"truncated_description_chars_per_skill={chars_per_skill} truncated_skill_descriptions=132"
         )
-        con.execute("INSERT INTO logs (ts, feedback_log_body) VALUES (?, ?)", (ts, body))
+        con.execute(
+            "INSERT INTO logs (ts, feedback_log_body, process_uuid) VALUES (?, ?, ?)",
+            (ts, body, "fixture-process"),
+        )
         con.commit()
     finally:
         con.close()
@@ -177,4 +194,21 @@ def test_check_passes_when_no_truncation_since_slim(tmp_path, monkeypatch):
     assert mod.run("apply", quiet=True) == 0
     applied_at = mod.LEDGER.stat().st_mtime
     _write_trunc_log(tmp_path, ts=int(applied_at) - 1000)  # last truncation was before we slimmed
+    assert mod.run("check", quiet=True) == 0
+
+
+def test_check_ignores_compaction_from_session_started_before_slim(tmp_path, monkeypatch):
+    """An already-running session has a frozen catalog and cannot observe the live distillation."""
+    mod = _load()
+    _point_at(mod, _synthetic_home(tmp_path))
+    monkeypatch.setattr(mod, "CAP_OVERRIDE", "80")
+
+    assert mod.run("apply", quiet=True) == 0
+    applied_at = mod.LEDGER.stat().st_mtime
+    _write_trunc_log(
+        tmp_path,
+        ts=int(applied_at) + 1000,
+        process_started_at=int(applied_at) - 1000,
+    )
+
     assert mod.run("check", quiet=True) == 0

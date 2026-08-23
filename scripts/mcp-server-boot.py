@@ -297,7 +297,9 @@ def _normalize(name: str, spec: dict) -> dict:
         "command": command,
         "args": spec.get("args") or [],
         "env": spec.get("env") or {},
+        "cwd": spec.get("cwd"),
         "url": url,
+        "bearer_token_env_var": spec.get("bearer_token_env_var") or spec.get("bearerTokenEnvVar"),
         "disabled": bool(spec.get("disabled")) or spec.get("enabled") is False,
     }
 
@@ -392,10 +394,21 @@ def _probe_stdio(server: dict, timeout: int) -> tuple[bool, str]:
     command = server["command"]
     if not command:
         return False, "no command"
-    if not shutil.which(command):
+    cwd = server.get("cwd")
+    if cwd is not None and (not isinstance(cwd, str) or not Path(cwd).is_dir()):
+        return False, "working directory not found"
+    resolved = command
+    if os.sep in command or bool(os.altsep and os.altsep in command):
+        candidate = Path(command)
+        if not candidate.is_absolute() and cwd:
+            candidate = Path(cwd) / candidate
+        if not candidate.is_file() or not os.access(candidate, os.X_OK):
+            return False, f"command not found: {command}"
+        resolved = str(candidate)
+    elif not shutil.which(command):
         return False, f"command not found: {command}"
 
-    argv = [command, *[str(a) for a in server["args"]]]
+    argv = [resolved, *[str(a) for a in server["args"]]]
     env = {**os.environ, **{str(k): str(v) for k, v in server["env"].items()}}
     init = json.dumps(
         {
@@ -416,6 +429,7 @@ def _probe_stdio(server: dict, timeout: int) -> tuple[bool, str]:
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             env=env,
+            cwd=cwd,
             text=True,
             start_new_session=True,
         )
@@ -492,6 +506,16 @@ def _apply_codex_semantic_state(
 ) -> dict:
     """Overlay Codex authentication truth on a successful HTTP transport probe."""
     if result["agent"] != "codex" or result["transport"] != "http" or not result["ok"]:
+        return result
+    parsed_url = urlparse(result.get("url") or "")
+    if (
+        result["name"].casefold() == "ianva"
+        and parsed_url.hostname in {"127.0.0.1", "::1", "localhost"}
+        and not result.get("bearer_token_env_var")
+    ):
+        # Codex reports the generic `not_logged_in` label for authless HTTP MCPs too.
+        # ianva's open loopback face is intentionally transport-only; treating that label
+        # as hosted OAuth would recreate the dashboard-auth false positive this predicate owns.
         return result
     if status_error:
         return {

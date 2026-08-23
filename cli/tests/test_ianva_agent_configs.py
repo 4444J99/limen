@@ -22,6 +22,14 @@ def _entry_map():
     return {entry.key: entry for entry in build_entries(Endpoint(bearer="test-bearer"))}
 
 
+def test_open_loopback_codex_entry_does_not_require_cloud_bearer():
+    codex = {entry.key: entry for entry in build_entries(Endpoint())}["codex"]
+
+    assert f"[mcp_servers.{SERVER_NAME}]" in codex.rendered
+    assert 'url = "http://127.0.0.1:7666/mcp"' in codex.rendered
+    assert "bearer_token_env_var" not in codex.rendered
+
+
 def test_ianva_primary_target_transport_drift_guard_against_census():
     targets = {target.key: target for target in AGENTS}
     assert PRIMARY <= targets.keys()

@@ -169,6 +169,52 @@ def test_probe_all_distinguishes_oauth_from_reachability(monkeypatch: pytest.Mon
     assert (authenticated["ok"], authenticated["state"]) == (True, "authenticated")
 
 
+def test_open_loopback_ianva_does_not_inherit_hosted_oauth_semantics(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_module(monkeypatch, tmp_path / "codex")
+    monkeypatch.setattr(module, "_codex_mcp_statuses", lambda: ({"ianva": "auth_needed"}, None))
+    monkeypatch.setattr(module, "_probe_http", lambda _url, _timeout: (True, "reachable"))
+    server = {
+        "agent": "codex",
+        "name": "ianva",
+        "transport": "http",
+        "url": "http://127.0.0.1:7666/mcp",
+        "bearer_token_env_var": None,
+    }
+
+    [result] = module.probe_all([server], timeout=1)
+
+    assert (result["ok"], result["state"]) == (True, "reachable")
+
+
+def test_stdio_probe_resolves_relative_command_against_declared_cwd(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_module(monkeypatch, tmp_path / "codex")
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    client = runtime / "client"
+    client.write_text("#!/bin/sh\nexit 0\n")
+    client.chmod(0o755)
+    server = {
+        "agent": "codex",
+        "name": "computer-use",
+        "transport": "stdio",
+        "command": "./client",
+        "args": [],
+        "env": {},
+        "cwd": str(runtime),
+    }
+
+    ok, detail = module._probe_stdio(server, timeout=1)
+
+    assert ok is True
+    assert detail == "boots (clean start, no handshake)"
+
+
 def test_bearer_status_requires_the_named_environment_value(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
