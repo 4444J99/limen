@@ -1,0 +1,54 @@
+{
+  "schema_version": "limen.run_receipt.v1",
+  "receipt_id": "universe-recovery-custody-lever-terminal-receipt",
+  "run_id": "run-d204534054e61ab8f1dda0968fb04865",
+  "lease_id": "lease-1013-d204534054e61ab8",
+  "lease_generation": 1013,
+  "executor": {
+    "schema_version": "limen.agent_identity.v1",
+    "agent": "codex",
+    "surface": "direct",
+    "session_id": "a9b5ddf4-21ce-4952-8b1e-3e8a510e3dda",
+    "native_run_id": null,
+    "provider_identity": "codex"
+  },
+  "provider_identity": "codex",
+  "observed_heads_before": {
+    "organvm/limen": "69ad9e3f954f56e9549dff73e3d2101c9e022625"
+  },
+  "observed_heads_after": {
+    "organvm/limen": "7c83b19fd4126bd7b2e280542853a0749f1094cc"
+  },
+  "changed_paths": [
+    "his-hand-levers.json",
+    "docs/continuations/universe-recovery-20260823/manifest.json",
+    "docs/continuations/universe-recovery-20260823/custody-lever-packet-projection.json"
+  ],
+  "provider_run_url": "https://github.com/organvm/limen/pull/2543",
+  "predicate": {
+    "command": "python3 scripts/check-operator-gates.py --check",
+    "exit_code": 0,
+    "summary": "The two absent custody volumes now have one exact human lever and the manifest points to it.",
+    "observed_at": "2026-08-23T17:08:00Z"
+  },
+  "checks": [
+    {
+      "name": "operator-gates",
+      "status": "success",
+      "url": null,
+      "head": "7c83b19fd4126bd7b2e280542853a0749f1094cc"
+    },
+    {
+      "name": "machine-wide heavy admission",
+      "status": "pending",
+      "url": null,
+      "head": "7c83b19fd4126bd7b2e280542853a0749f1094cc"
+    }
+  ],
+  "reviews": [],
+  "spend": {"runs": 1},
+  "child_runs": [],
+  "campaign": null,
+  "outcome": "succeeded",
+  "completed_at": "2026-08-23T17:08:00Z"
+}
