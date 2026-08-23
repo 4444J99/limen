@@ -107,6 +107,15 @@
       "predicate": "mount and identity-verify T7Recovery",
       "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/closeout.md",
       "blocker": "volume not mounted at launch"
+    },
+    {
+      "schema_version": "limen.recovery_source_coverage.v1",
+      "source_instance_id": "discovered-worktree-debt-20260823",
+      "source_kind": "worktree-debt-census",
+      "enumeration_complete": true,
+      "owner": "organvm/limen:universe-recovery-20260823",
+      "predicate": "each discovered nonterminal worktree has a native owner and terminal predicate",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/worktree-and-ref-reconciliation.md"
     }
   ],
   "baseline_keys": [
@@ -120,7 +129,11 @@
     "source:T7Recovery",
     "organvm/limen:pull-request:2542@95bc0a572bb4ec2aaffcc75e696c7aac71935a75"
   ],
-  "newcomer_keys": [],
+  "newcomer_keys": [
+    "organvm/limen:ref:recovery/agy-project-md-20260823@c84d1ad0033d6a28befe7976ee47d2cf9ab3a69c",
+    "source:worktree-debt-m1-repos",
+    "source:worktree-debt-career-pass-20260728"
+  ],
   "dispositions": [
     {
       "schema_version": "limen.recovery_disposition_receipt.v1",
@@ -210,6 +223,36 @@
       "owner": "organvm/limen:pull-request:2542",
       "predicate": "resolve three current threads and obtain executed merge admission on the exact head",
       "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/explorations/review-admission.md",
+      "terminal_class": "owned_active"
+    },
+    {
+      "schema_version": "limen.recovery_disposition_receipt.v1",
+      "item_key": "organvm/limen:ref:recovery/agy-project-md-20260823@c84d1ad0033d6a28befe7976ee47d2cf9ab3a69c",
+      "item_kind": "ref",
+      "source_digest": "8338ad8e963d37207eef1447d258518cd45999eb119a576c2f4edc185a2dbc3c",
+      "owner": "organvm/limen:universe-recovery-20260823",
+      "predicate": "prove landing or preserve the exact tip through a recovery PR or blocker",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/worktree-and-ref-reconciliation.md",
+      "terminal_class": "owned_active"
+    },
+    {
+      "schema_version": "limen.recovery_disposition_receipt.v1",
+      "item_key": "source:worktree-debt-m1-repos",
+      "item_kind": "source_instance",
+      "source_digest": "bcc633b04006a0a2ee4090b632d25b703115d35ab66a6c38781c9463d574cae7",
+      "owner": "organvm/limen:universe-recovery-20260823",
+      "predicate": "identify the non-Git path or record its filesystem-owner blocker without deleting it",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/worktree-and-ref-reconciliation.md",
+      "terminal_class": "owned_active"
+    },
+    {
+      "schema_version": "limen.recovery_disposition_receipt.v1",
+      "item_key": "source:worktree-debt-career-pass-20260728",
+      "item_kind": "source_instance",
+      "source_digest": "4d7bda3923ab0c2d05b7de1a1bc7d301428cfdd2dd233414b53392125f88d309",
+      "owner": "organvm/limen:universe-recovery-20260823",
+      "predicate": "obtain a native preservation or landing receipt before any worktree cleanup",
+      "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/worktree-and-ref-reconciliation.md",
       "terminal_class": "owned_active"
     }
   ],
