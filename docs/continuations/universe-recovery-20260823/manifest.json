@@ -93,7 +93,7 @@
       "source_instance_id": "Archive4T",
       "source_kind": "paired-custody-volume",
       "enumeration_complete": false,
-      "owner": "his-hand-levers:universe-recovery-custody-volumes",
+      "owner": "his-hand-levers:L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES",
       "predicate": "mount and identity-verify Archive4T",
       "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/closeout.md",
       "blocker": "volume not mounted at launch"
@@ -103,7 +103,7 @@
       "source_instance_id": "T7Recovery",
       "source_kind": "paired-custody-volume",
       "enumeration_complete": false,
-      "owner": "his-hand-levers:universe-recovery-custody-volumes",
+      "owner": "his-hand-levers:L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES",
       "predicate": "mount and identity-verify T7Recovery",
       "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/closeout.md",
       "blocker": "volume not mounted at launch"
@@ -187,7 +187,7 @@
       "item_key": "source:Archive4T",
       "item_kind": "source_instance",
       "source_digest": "f594ff3b48486f047cb77fd5179720cea58579973ee0540fbe9ed28799986bac",
-      "owner": "his-hand-levers:universe-recovery-custody-volumes",
+      "owner": "his-hand-levers:L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES",
       "predicate": "mount and identity-verify Archive4T",
       "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/closeout.md",
       "terminal_class": "blocked"
@@ -197,7 +197,7 @@
       "item_key": "source:T7Recovery",
       "item_kind": "source_instance",
       "source_digest": "01a354a4c3d5ad63d20edb1d4d98792ac1cb3e6ebd80570b7a087b2db9d98668",
-      "owner": "his-hand-levers:universe-recovery-custody-volumes",
+      "owner": "his-hand-levers:L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES",
       "predicate": "mount and identity-verify T7Recovery",
       "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/closeout.md",
       "terminal_class": "blocked"
