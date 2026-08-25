@@ -656,6 +656,11 @@ gates:
       - "institutio/governance/gates.yaml"
     owner: positioning-program
     note: "PSP-P04-W02 stays bounded to one named team/pipeline with finite acceptance and handoff; PSP-P04-W03 binds a finite declared-day capacity model, scheduled-only response targets, internal decision ownership, exact artifacts/exclusions/escalation, and explicit renewal/exit with no hidden on-call, unlimited implementation, or executive substitution."
+  profile-engine-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_profile_engine.py cli/tests/test_sync_readme.py -q"
+    paths: ["scripts/_profile.py", "scripts/profile-visuals.py", "scripts/sync-readme.py", "scripts/profile-verify.py", "scripts/profile-build.sh", "scripts/templates/profile-workflow.yml", "cli/tests/test_profile_engine.py", "cli/tests/test_sync_readme.py", "institutio/governance/gates.yaml"]
+    owner: positioning-program
+    note: "The public profile engine enumerates both personal-owner and organization public repository identities without double-counting case-insensitive coordinates, while organization repository, original, fork, star, and language aggregates remain organization-only."
   research-adjudication-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_positioning_program.py scripts/tests/test_positioning_research_adjudication.py -q && python3 scripts/positioning-research-adjudication.py --check"
     paths: [".github/workflows/pr-gate.yml", "cli/tests/test_positioning_program.py", "docs/positioning/claims-ledger.md", "docs/positioning/evidence/flagship-evidence.yaml", "docs/positioning/program/ISSUE-INDEX.md", "docs/positioning/program/RESEARCH-ADJUDICATION.md", "docs/positioning/program/research-adjudication.json", "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json", "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json", "institutio/positioning/github-map.json", "institutio/positioning/program.yaml", "scripts/positioning-program.py", "scripts/positioning-research-adjudication.py", "scripts/tests/test_positioning_research_adjudication.py", "institutio/governance/gates.yaml"]

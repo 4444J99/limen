@@ -150,6 +150,11 @@ EXPECTED_PROFILE_METADATA_RESULT = {
     "blog": "https://organvm.github.io/portfolio/",
 }
 EXPECTED_LIVE_PROFILE_BLOG = "https://organvm-vii-kerygma.github.io/portfolio/"
+LIVE_PROFILE_PERSONAL_PUBLIC_REPOS = 9
+LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS = 226
+LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS = 197
+LIVE_PROFILE_ORGANIZATION_FORKS = 29
+LIVE_PROFILE_TOTAL_PUBLIC_REPOS = 235
 LIVE_REFERENCE_ISSUE_NUMBER = 1245
 LIMEN_CANONICAL_REPOSITORY = LIMEN_REPOSITORY_IDENTITY.canonical_coordinate
 LIMEN_HISTORICAL_REPOSITORY = LIMEN_REPOSITORY_IDENTITY.historical_aliases[0]
@@ -1905,8 +1910,9 @@ def validate_live_profile_observations(
         errors.append("live profile metadata response must be a mapping")
         profile = {}
     live_profile_expectations = {
-        key: EXPECTED_PROFILE_METADATA_RESULT[key] for key in ("login", "id", "type", "public_repos", "created_at")
+        key: EXPECTED_PROFILE_METADATA_RESULT[key] for key in ("login", "id", "type", "created_at")
     }
+    live_profile_expectations["public_repos"] = LIVE_PROFILE_PERSONAL_PUBLIC_REPOS
     live_profile_expectations["blog"] = EXPECTED_LIVE_PROFILE_BLOG
     for key, expected in live_profile_expectations.items():
         if type(profile.get(key)) is not type(expected) or profile.get(key) != expected:
@@ -1956,10 +1962,30 @@ def validate_live_profile_observations(
         errors.append("live profile manifest and API follower counts must agree")
     if stat_value("member_since") != "2016":
         errors.append("live profile manifest tenure must remain bound to the account creation year")
-    if stat_value("ecosystem_public_repos") != 227:
-        errors.append("live profile manifest ecosystem public repository count must remain 227")
-    if stat_value("ecosystem_original_repos") != 198:
-        errors.append("live profile manifest ecosystem original repository count must remain 198")
+    current_organization_repos = stat_value("ecosystem_public_repos")
+    if current_organization_repos != LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS:
+        errors.append(
+            "live profile manifest ecosystem public repository count must remain "
+            f"{LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS}"
+        )
+    if stat_value("ecosystem_original_repos") != LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS:
+        errors.append(
+            "live profile manifest ecosystem original repository count must remain "
+            f"{LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS}"
+        )
+    if stat_value("ecosystem_forks") != LIVE_PROFILE_ORGANIZATION_FORKS:
+        errors.append(f"live profile manifest ecosystem fork count must remain {LIVE_PROFILE_ORGANIZATION_FORKS}")
+    if (
+        _nonnegative_integer(current_personal_repos)
+        and _nonnegative_integer(current_organization_repos)
+        and current_personal_repos + current_organization_repos != LIVE_PROFILE_TOTAL_PUBLIC_REPOS
+    ):
+        errors.append(
+            "live profile public repository total must remain "
+            f"{LIVE_PROFILE_TOTAL_PUBLIC_REPOS} "
+            f"({LIVE_PROFILE_PERSONAL_PUBLIC_REPOS} personal plus "
+            f"{LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS} organization)"
+        )
     manifest_contributions = stat_value("contributions_last_year")
     if not _nonnegative_integer(manifest_contributions) or manifest_contributions < PROFILE_RENDERED_CONTRIBUTIONS:
         errors.append(
