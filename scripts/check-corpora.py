@@ -96,6 +96,9 @@ def check_a_schema(doc: dict) -> None:
             fail("A", f"corpus {cid!r} references undeclared store {store!r}")
 
 
+SCAN_ROOTS = ("scripts", "cli/src", "mcp/src", "ianva/src", "apps", "organs")
+
+
 def check_b_roots(doc: dict) -> dict[str, Path]:
     """Resolve store roots, deriving absence severity from the CUSTODY axis.
 
@@ -123,7 +126,8 @@ def check_b_roots(doc: dict) -> dict[str, Path]:
     forced_host = os.environ.get("LIMEN_CORPORA_HOST") == "1"
     for name, store in (doc.get("stores") or {}).items():
         root = roots[name]
-        if root.is_dir():
+        is_store_present = root.is_dir() and (not store.get("git") or (root / ".git").is_dir())
+        if is_store_present:
             continue
         res = resolver.resolve(str(store.get("root", "")))
         if res.state == reference_state.UNACCOUNTED:
@@ -141,11 +145,15 @@ def check_b_roots(doc: dict) -> dict[str, Path]:
 
 def check_c_disk_parity(doc: dict, roots: dict[str, Path]) -> None:
     corpora = doc.get("corpora") or {}
+    stores = doc.get("stores") or {}
 
     # every declared row that lives at a store root directory actually exists
     for cid, row in corpora.items():
-        root = roots.get(str(row.get("store")))
-        if root is None or not root.is_dir():
+        store_name = str(row.get("store"))
+        root = roots.get(store_name)
+        store = stores.get(store_name) or {}
+        is_store_present = root is not None and root.is_dir() and (not store.get("git") or (root / ".git").is_dir())
+        if not is_store_present:
             continue
         target = root / row["path"] if row.get("path") else root / cid
         if not target.exists():
@@ -200,22 +208,24 @@ def collect_root_literals(doc: dict) -> set[str]:
     found: set[str] = set()
     if not dirnames:
         return found
-    for path in sorted(ROOT.glob("scripts/*.py")) + sorted(ROOT.glob("organs/**/*.py")):
-        rel = path.relative_to(ROOT).as_posix()
-        if rel in RESOLVER_EXEMPT:
-            continue
-        try:
-            tree = ast.parse(path.read_text(encoding="utf-8"))
-        except (OSError, SyntaxError):
-            continue
-        docstrings = _docstring_nodes(tree)
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Constant) or not isinstance(node.value, str):
+    scan_roots = [ROOT / d for d in SCAN_ROOTS if (ROOT / d).exists()]
+    for base in scan_roots:
+        for path in sorted(base.rglob("*.py")):
+            rel = path.relative_to(ROOT).as_posix()
+            if rel in RESOLVER_EXEMPT:
                 continue
-            if id(node) in docstrings:
+            try:
+                tree = ast.parse(path.read_text(encoding="utf-8"))
+            except (OSError, SyntaxError):
                 continue
-            if any(d in node.value for d in dirnames):
-                found.add(f"{rel}::{node.value}")
+            docstrings = _docstring_nodes(tree)
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Constant) or not isinstance(node.value, str):
+                    continue
+                if id(node) in docstrings:
+                    continue
+                if any(d in node.value for d in dirnames):
+                    found.add(f"{rel}::{node.value}")
     return found
 
 
@@ -236,37 +246,39 @@ def check_d_resolver_sole(doc: dict, baseline: set[str]) -> None:
     if not dirnames:
         return
 
-    for path in sorted(ROOT.glob("scripts/*.py")) + sorted(ROOT.glob("organs/**/*.py")):
-        rel = path.relative_to(ROOT).as_posix()
-        if rel in RESOLVER_EXEMPT:
-            continue
-        try:
-            source = path.read_text(encoding="utf-8")
-            tree = ast.parse(source)
-        except (OSError, SyntaxError):
-            continue
-        docstrings = _docstring_nodes(tree)
-        # Key on the literal's VALUE, not its line. A line number is a position,
-        # and any edit above shifts it — baselining by line makes an unrelated
-        # insertion look like a new violation (observed while testing this very
-        # check). The literal itself is stable under refactoring.
-        hits: dict[str, int] = {}
-        for node in ast.walk(tree):
-            if not isinstance(node, ast.Constant) or not isinstance(node.value, str):
+    scan_roots = [ROOT / d for d in SCAN_ROOTS if (ROOT / d).exists()]
+    for base in scan_roots:
+        for path in sorted(base.rglob("*.py")):
+            rel = path.relative_to(ROOT).as_posix()
+            if rel in RESOLVER_EXEMPT:
                 continue
-            if id(node) in docstrings:
+            try:
+                source = path.read_text(encoding="utf-8")
+                tree = ast.parse(source)
+            except (OSError, SyntaxError):
                 continue
-            if any(d in node.value for d in dirnames):
-                hits.setdefault(node.value, node.lineno)
-        for literal, lineno in sorted(hits.items()):
-            key = f"{rel}::{literal}"
-            if key in baseline:
-                continue
-            fail(
-                "D",
-                f"{rel}:{lineno} hardcodes a corpus root in a string literal "
-                f"({literal!r}) — import scripts/corpus_resolve.py instead",
-            )
+            docstrings = _docstring_nodes(tree)
+            # Key on the literal's VALUE, not its line. A line number is a position,
+            # and any edit above shifts it — baselining by line makes an unrelated
+            # insertion look like a new violation (observed while testing this very
+            # check). The literal itself is stable under refactoring.
+            hits: dict[str, int] = {}
+            for node in ast.walk(tree):
+                if not isinstance(node, ast.Constant) or not isinstance(node.value, str):
+                    continue
+                if id(node) in docstrings:
+                    continue
+                if any(d in node.value for d in dirnames):
+                    hits.setdefault(node.value, node.lineno)
+            for literal, lineno in sorted(hits.items()):
+                key = f"{rel}::{literal}"
+                if key in baseline:
+                    continue
+                fail(
+                    "D",
+                    f"{rel}:{lineno} hardcodes a corpus root in a string literal "
+                    f"({literal!r}) — import scripts/corpus_resolve.py instead",
+                )
 
 
 def check_e_freshness(doc: dict, roots: dict[str, Path], strict: bool) -> None:

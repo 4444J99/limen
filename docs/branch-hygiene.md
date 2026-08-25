@@ -10,7 +10,19 @@ empty-branch-is-a-todo), so they are **kept, never auto-deleted** — this is th
 location instead of hanging invisibly.
 Resolve each: open a PR and land it, or delete the branch by hand if the intention is abandoned.
 
+## Decided — closed PR, work preserved (3) — reapable, awaiting acceptance
+
+A human CLOSED these PRs unmerged and the local tip is still that PR's exact head, so
+GitHub preserves the commit at `refs/pull/N/head` — `git fetch origin pull/N/head`
+recovers it. Deleting the local ref loses nothing. These are NOT unfulfilled intentions:
+the intention was already decided against. They are reap candidates gated on
+`docs/branch-reap-acceptance.jsonl`, not on anyone re-deciding them.
+
+- `codex/limen-closeout-20260822` — 6526fd06a fix(closeout): preserve ledger ordering and unique branch custody
+- `feat/notification-registry` — ae62c6cd1 feat: add truthful notification registry
+- `work/on-demand-runtime-rollout-closeout` — e7c2f1629 Merge branch 'fix/discharge-card-hold' into work/on-demand-runtime-rollout-closeout
+
 ## Live-work branches (1) — decide each
 
-- `feat/notification-registry` — ae62c6cd1 feat: add truthful notification registry
+- `recovery/agy-project-md-20260823` — c84d1ad00 preserve: orphaned Agy project delta
 
