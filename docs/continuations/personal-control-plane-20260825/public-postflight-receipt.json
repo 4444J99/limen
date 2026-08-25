@@ -1,0 +1,58 @@
+{
+  "app_access_census": "exact_target_installation_unavailable_fail_closed",
+  "baseline_manifest_sha256": "fa01006109242a29e5585a4d13890f26484e52f620e12a05922b77144d1addfb",
+  "bundle": {
+    "ref_count": 2058,
+    "restore_verified": true,
+    "sha256": "052e11926e87eeeffb8307d8307ca22466d35b71be1fd75ca1d7d04da0ae7af3"
+  },
+  "captured_at": "2026-08-25T18:33:09.051450+00:00",
+  "coordinate_resolution": {
+    "anonymous_new_coordinate_redirects": 0,
+    "anonymous_old_coordinate_redirects": 1,
+    "canonical_coordinate": "4444J99/limen",
+    "old_and_new_repository_id": 1255213941,
+    "verified_at": "2026-08-25T18:37:05Z"
+  },
+  "denominators": {
+    "branches": 10,
+    "environments": 2,
+    "issues": 500,
+    "open_pull_requests": 2,
+    "releases": 1,
+    "review_threads": 21,
+    "tags": 1,
+    "unresolved_current_review_threads": 6,
+    "unresolved_outdated_review_threads": 0,
+    "workflows": 24
+  },
+  "invariant_comparison": {
+    "failures": 0,
+    "passed": true
+  },
+  "postflight_manifest_sha256": "2e221948e3ebd06ab314b5e57d999c66d7e9ca385144778e1751c84e610e210b",
+  "private_paths_and_protected_lane_digests_published": false,
+  "protected_lanes": {
+    "attributed_deltas": 3,
+    "transfer_actor_touched": false
+  },
+  "repository_identity": {
+    "canonical_coordinate": "4444J99/limen",
+    "historical_aliases": [
+      "organvm/limen"
+    ],
+    "repository_id": 1255213941,
+    "schema_version": "limen.repository_identity.v1"
+  },
+  "schema_version": "limen.repository_transfer_postflight_receipt.v1",
+  "semantic_restorations": {
+    "compensation_labels": 3,
+    "non_owner_assignments_lost": 0,
+    "restored_typed_issues": 2,
+    "restored_type_catalog_entries": 3
+  },
+  "workflow_freeze": {
+    "disabled": 16,
+    "policy": "institutio/github/workflow-transfer-policy.json"
+  }
+}

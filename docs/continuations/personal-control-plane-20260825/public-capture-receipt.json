@@ -1,29 +1,29 @@
 {
   "app_access_census": "unavailable_fail_closed",
-  "captured_at": "2026-08-25T15:31:37.616381+00:00",
+  "captured_at": "2026-08-25T18:14:37.475159+00:00",
   "default_sha": "f034e3e659c8c8c3b9469b7b66e32c2bc03fdb64",
   "final_private_recapture_required_after_ref_or_review_change": true,
   "denominators": {
     "branches": 10,
     "environments": 2,
     "issues": 500,
-    "open_pull_requests": 3,
+    "open_pull_requests": 2,
     "releases": 1,
-    "review_threads": 27,
+    "review_threads": 21,
     "tags": 1,
-    "unresolved_current_review_threads": 16,
+    "unresolved_current_review_threads": 6,
     "unresolved_outdated_review_threads": 0,
     "workflows": 24
   },
   "fallback_destination": "4444J99/limen-control",
   "git_bundle": {
-    "ref_count": 2059,
-    "refs_sha256": "5bee5fe20d77b68126d14ac4937363e5593652a8b9ba912a1472e2dfc2d90d9a",
+    "ref_count": 2058,
+    "refs_sha256": "d8791c2db720a343cbd93356e1ecc310b5c8c77abd885c761a2106a05914d999",
     "restore_verified": true,
-    "sha256": "ae7a3091eee2b0c88d919fcd24068e8a288b9ad032514195ee3ec5b58830cde3",
-    "size_bytes": 122786474
+    "sha256": "052e11926e87eeeffb8307d8307ca22466d35b71be1fd75ca1d7d04da0ae7af3",
+    "size_bytes": 124261107
   },
-  "manifest_sha256": "89c873ef9447b4483472757de725560648674d093c56bd28d4e20e30896a39ca",
+  "manifest_sha256": "fa01006109242a29e5585a4d13890f26484e52f620e12a05922b77144d1addfb",
   "observed_coordinate": "organvm/limen",
   "preferred_destination": "4444J99/limen",
   "private_custody_included": true,
