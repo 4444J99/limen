@@ -24,7 +24,7 @@
     {"path": ".github/workflows/deploy-worker.yml", "class": "deployment", "app_dependent": false},
     {"path": ".github/workflows/deploy.yml", "class": "scheduled_deployment", "app_dependent": false},
     {"path": ".github/workflows/fleet-gate.yml", "class": "agent_dispatch_and_write", "app_dependent": true},
-    {"path": ".github/workflows/limen-agent.yml", "class": "remote_agent_dispatch", "app_dependent": true},
+    {"path": ".github/workflows/limen-agent.yml", "class": "secretless_remote_verification", "app_dependent": false, "recovery_ci": true},
     {"path": ".github/workflows/limen-warp-oz.yml", "class": "paid_agent_dispatch", "app_dependent": false, "zero_spend_prohibited": true},
     {"path": ".github/workflows/operate.yml", "class": "repository_write", "app_dependent": true},
     {"path": ".github/workflows/pr-review-fanout.yml", "class": "review_automation", "app_dependent": true},
