@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from limen import heartbeat
 from limen.bounded_subprocess import BoundedCompletedProcess, BoundedSubprocessError
 from limen.notification_effect import DeliveryReceipt
@@ -282,3 +284,25 @@ def test_contract_initialization_failure_writes_receipts_and_disables(tmp_path):
     assert disabled == [True]
     assert json.loads((state_root / "public-latest.json").read_text())["status"] == "failed"
     assert list((state_root / "receipts").glob("*.json"))
+
+
+def test_contract_initialization_failure_disables_before_receipt_storage(tmp_path, monkeypatch):
+    root = tmp_path / "missing-contract-root"
+    root.mkdir()
+    disabled = []
+
+    def fail_receipt(*_args, **_kwargs):
+        assert disabled == [True]
+        raise OSError("receipt storage unavailable")
+
+    monkeypatch.setattr(heartbeat, "_initialization_failure_receipt", fail_receipt)
+
+    with pytest.raises(OSError, match="receipt storage unavailable"):
+        heartbeat.heartbeat_once(
+            root,
+            state_root=tmp_path / "state",
+            clock=lambda: 1_000_000,
+            disable_launch_agent=lambda: disabled.append(True),
+        )
+
+    assert disabled == [True]
