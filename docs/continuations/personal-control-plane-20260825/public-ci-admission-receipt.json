@@ -1,0 +1,84 @@
+{
+  "admission_passed": true,
+  "admission_result": "CI_EXECUTED_STEP_ADMISSION",
+  "aggregate_failure": {
+    "classification": "code_predicate_failure_after_admission",
+    "focused_reproduction": "scripts/tests/omega.test.sh exited 1",
+    "job": "verify",
+    "step": "Run whole-repo verification (verify-whole.sh)"
+  },
+  "controller": {
+    "repository": "4444J99/limen",
+    "sha": "f034e3e659c8c8c3b9469b7b66e32c2bc03fdb64"
+  },
+  "jobs": [
+    {
+      "conclusion": "success",
+      "executed_steps": 10,
+      "id": 97926381857,
+      "name": "worker",
+      "runner_id": 1000029560
+    },
+    {
+      "conclusion": "success",
+      "executed_steps": 12,
+      "id": 97926381978,
+      "name": "web",
+      "runner_id": 1000029559
+    },
+    {
+      "conclusion": "success",
+      "executed_steps": 22,
+      "id": 97926382081,
+      "name": "python",
+      "runner_id": 1000029561
+    },
+    {
+      "conclusion": "skipped",
+      "executed_steps": 0,
+      "id": 97926383006,
+      "name": "compat",
+      "runner_id": null
+    },
+    {
+      "conclusion": "failure",
+      "executed_steps": 9,
+      "id": 97927133229,
+      "name": "verify",
+      "runner_id": 1000029562
+    }
+  ],
+  "observed_at": "2026-08-25T18:53:34Z",
+  "private_evidence_published": false,
+  "receipt_digest": "81cb750884fa0db050d0fba25c9a100268771c5d5e43059167051563bf187aa7",
+  "repository_identity": {
+    "canonical_coordinate": "4444J99/limen",
+    "historical_aliases": [
+      "organvm/limen"
+    ],
+    "repository_id": 1255213941,
+    "schema_version": "limen.repository_identity.v1"
+  },
+  "retry_performed": false,
+  "schema_version": "limen.ci_admission_receipt.v1",
+  "target": {
+    "repository": "4444J99/limen",
+    "sha": "f034e3e659c8c8c3b9469b7b66e32c2bc03fdb64"
+  },
+  "workflow": {
+    "conclusion": "failure",
+    "event": "workflow_dispatch",
+    "head_branch": "main",
+    "id": 289200060,
+    "path": ".github/workflows/ci.yml",
+    "run_attempt": 1,
+    "run_id": 32885966196,
+    "status": "completed",
+    "url": "https://github.com/4444J99/limen/actions/runs/32885966196"
+  },
+  "zero_spend": {
+    "github_hosted_standard_runners": true,
+    "paid_workflow_disabled": true,
+    "repository_public": true
+  }
+}

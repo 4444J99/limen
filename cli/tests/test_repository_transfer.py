@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -19,6 +20,7 @@ from limen.repository_transfer import (
     invariant_projection,
     protected_state_deltas,
     public_receipt,
+    transfer_type_label,
     verify_existing_bundle,
 )
 
@@ -59,6 +61,142 @@ def test_transfer_comparison_ignores_only_coordinate_and_observation_time() -> N
 
     after["github"]["default_sha"] = "c" * 40
     assert compare_manifests(manifest, after) == ["transfer invariant changed: github"]
+
+
+def _org_transfer_manifest() -> dict[str, Any]:
+    return {
+        "captured_at": "before",
+        "identity": LIMEN_REPOSITORY_IDENTITY.model_dump(mode="json"),
+        "github": {
+            "observed_coordinate": "organvm/limen",
+            "repository_settings": {
+                "id": 1_255_213_941,
+                "name": "limen",
+                "full_name": "organvm/limen",
+                "custom_properties": {},
+            },
+            "rulesets": {
+                "available": True,
+                "value": [
+                    {
+                        "available": True,
+                        "value": {
+                            "id": 7,
+                            "rules": [
+                                {
+                                    "type": "pull_request",
+                                    "parameters": {
+                                        "required_review_thread_resolution": True,
+                                        "dismissal_restriction": {
+                                            "enabled": False,
+                                            "allowed_actors": [],
+                                        },
+                                    },
+                                }
+                            ],
+                        },
+                    }
+                ],
+            },
+            "issues": {
+                "count": 1,
+                "numbers": [11],
+                "records": [
+                    {
+                        "number": 11,
+                        "issue_type": {"id": 3, "node_id": "IT_3", "name": "Bug Report"},
+                        "labels": ["existing"],
+                    }
+                ],
+                "types": {
+                    "available": True,
+                    "value": [{"id": 3, "node_id": "IT_3", "name": "Bug Report"}],
+                },
+            },
+            "labels": [{"id": 1, "name": "existing", "color": "ffffff"}],
+        },
+        "protected_state": {"checkouts": {}, "paths": {}},
+        "git_bundle": {"sha256": "b" * 64},
+    }
+
+
+@pytest.mark.parametrize(
+    "post_types",
+    [
+        {"available": False, "error_class": "github_api_unavailable"},
+        {"available": True, "value": []},
+    ],
+)
+def test_org_to_personal_postflight_accepts_only_exact_semantic_normalizations(
+    post_types: dict[str, Any],
+) -> None:
+    before = _org_transfer_manifest()
+    after = json.loads(json.dumps(before))
+    after["captured_at"] = "after"
+    github = after["github"]
+    github["repository_settings"]["custom_properties"] = None
+    del github["rulesets"]["value"][0]["value"]["rules"][0]["parameters"]["dismissal_restriction"]
+    github["issues"]["types"] = post_types
+    github["issues"]["records"][0]["issue_type"] = None
+    github["issues"]["records"][0]["labels"].append("transfer-type/bug-report")
+    github["labels"].append({"id": 2, "name": "transfer-type/bug-report", "color": "ffffff"})
+
+    assert transfer_type_label("  Bug / Report  ") == "transfer-type/bug-report"
+    assert compare_manifests(before, after) == []
+
+
+@pytest.mark.parametrize(
+    "restriction",
+    [
+        {"enabled": True, "allowed_actors": []},
+        {"enabled": False, "allowed_actors": [{"actor_id": 1}]},
+        {"enabled": False, "allowed_actors": [], "unexpected": True},
+    ],
+)
+def test_postflight_rejects_nonempty_or_enabled_dismissal_restriction(
+    restriction: dict[str, object],
+) -> None:
+    before = _org_transfer_manifest()
+    after = json.loads(json.dumps(before))
+    parameters = after["github"]["rulesets"]["value"][0]["value"]["rules"][0]["parameters"]
+    parameters["dismissal_restriction"] = restriction
+
+    assert compare_manifests(before, after) == ["transfer invariant changed: github"]
+
+
+@pytest.mark.parametrize("compensation", [None, "transfer-type/bug", "transfer-type/Bug-Report"])
+def test_postflight_rejects_absent_or_wrong_issue_type_compensation(compensation: str | None) -> None:
+    before = _org_transfer_manifest()
+    after = json.loads(json.dumps(before))
+    github = after["github"]
+    github["issues"]["types"] = {"available": False}
+    github["issues"]["records"][0]["issue_type"] = None
+    if compensation is not None:
+        github["issues"]["records"][0]["labels"].append(compensation)
+        github["labels"].append({"id": 2, "name": compensation, "color": "ffffff"})
+
+    assert compare_manifests(before, after) == ["transfer invariant changed: github"]
+
+
+def test_postflight_rejects_changed_native_issue_type_semantics() -> None:
+    before = _org_transfer_manifest()
+    after = json.loads(json.dumps(before))
+    after["github"]["issues"]["records"][0]["issue_type"] = {
+        "id": 9,
+        "node_id": "IT_9",
+        "name": "Feature Request",
+    }
+
+    assert compare_manifests(before, after) == ["transfer invariant changed: github"]
+
+
+def test_postflight_rejects_loss_of_nonempty_custom_properties() -> None:
+    before = _org_transfer_manifest()
+    after = json.loads(json.dumps(before))
+    before["github"]["repository_settings"]["custom_properties"] = {"control-plane": "limen"}
+    after["github"]["repository_settings"]["custom_properties"] = None
+
+    assert compare_manifests(before, after) == ["transfer invariant changed: github"]
 
 
 def test_public_receipt_contains_digests_and_denominators_not_private_state(tmp_path: Path) -> None:

@@ -921,6 +921,156 @@ def invariant_projection(manifest: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+_TRANSFER_TYPE_LABEL_PREFIX = "transfer-type/"
+_DISABLED_DISMISSAL_RESTRICTION = {"enabled": False, "allowed_actors": []}
+
+
+def transfer_type_label(type_name: str) -> str:
+    """Return the deterministic compensation label for a native issue type."""
+
+    normalized = re.sub(r"[^a-z0-9]+", "-", type_name.strip().casefold()).strip("-")
+    if not normalized:
+        raise ValueError("issue type name does not contain a label-safe atom")
+    return f"{_TRANSFER_TYPE_LABEL_PREFIX}{normalized}"
+
+
+def _native_issue_type_semantics(value: Any) -> str | None:
+    if not isinstance(value, Mapping) or not isinstance(value.get("name"), str):
+        return None
+    try:
+        return transfer_type_label(value["name"])
+    except ValueError:
+        return None
+
+
+def _native_type_catalog(value: Any) -> list[str] | None:
+    if not isinstance(value, Mapping) or value.get("available") is not True:
+        return None
+    rows = value.get("value")
+    if not isinstance(rows, list):
+        return None
+    names = [_native_issue_type_semantics(row) for row in rows]
+    if any(name is None for name in names) or len(set(names)) != len(names):
+        return None
+    return sorted(name for name in names if name is not None)
+
+
+def _label_names(value: Any) -> list[str] | None:
+    if not isinstance(value, list):
+        return None
+    names: list[str] = []
+    for row in value:
+        if not isinstance(row, Mapping) or not isinstance(row.get("name"), str):
+            return None
+        names.append(row["name"])
+    return names
+
+
+def _remove_exact_labels(value: Any, names: set[str]) -> Any:
+    if not isinstance(value, list):
+        return value
+    return [
+        row
+        for row in value
+        if not (isinstance(row, Mapping) and isinstance(row.get("name"), str) and row["name"] in names)
+    ]
+
+
+def _normalize_pull_request_restrictions(value: Any) -> Any:
+    if isinstance(value, list):
+        return [_normalize_pull_request_restrictions(item) for item in value]
+    if not isinstance(value, dict):
+        return value
+    normalized = {key: _normalize_pull_request_restrictions(item) for key, item in value.items()}
+    if normalized.get("type") != "pull_request":
+        return normalized
+    if normalized.get("dismissal_restriction") == _DISABLED_DISMISSAL_RESTRICTION:
+        normalized.pop("dismissal_restriction")
+    parameters = normalized.get("parameters")
+    if isinstance(parameters, dict) and parameters.get("dismissal_restriction") == _DISABLED_DISMISSAL_RESTRICTION:
+        parameters.pop("dismissal_restriction")
+    return normalized
+
+
+def _normalize_post_transfer_projection_pair(expected: dict[str, Any], observed: dict[str, Any]) -> None:
+    expected_github = expected.get("github")
+    observed_github = observed.get("github")
+    if not isinstance(expected_github, dict) or not isinstance(observed_github, dict):
+        return
+
+    before_settings = expected_github.get("repository_settings")
+    after_settings = observed_github.get("repository_settings")
+    if (
+        isinstance(before_settings, dict)
+        and isinstance(after_settings, dict)
+        and before_settings.get("custom_properties") == {}
+        and after_settings.get("custom_properties") is None
+    ):
+        after_settings["custom_properties"] = {}
+
+    expected_github["rulesets"] = _normalize_pull_request_restrictions(expected_github.get("rulesets"))
+    observed_github["rulesets"] = _normalize_pull_request_restrictions(observed_github.get("rulesets"))
+
+    before_issues = expected_github.get("issues")
+    after_issues = observed_github.get("issues")
+    if not isinstance(before_issues, dict) or not isinstance(after_issues, dict):
+        return
+
+    compensation_labels: set[str] = set()
+    before_catalog = _native_type_catalog(before_issues.get("types"))
+    after_catalog = _native_type_catalog(after_issues.get("types"))
+    if before_catalog is not None:
+        if after_catalog is not None and (after_catalog or not before_catalog):
+            before_issues["types"] = {"semantic_types": before_catalog}
+            after_issues["types"] = {"semantic_types": after_catalog}
+        else:
+            after_label_names = _label_names(observed_github.get("labels"))
+            if after_label_names is not None and all(after_label_names.count(name) == 1 for name in before_catalog):
+                compensation_labels.update(before_catalog)
+                semantic_types = {"semantic_types": before_catalog}
+                before_issues["types"] = semantic_types
+                after_issues["types"] = dict(semantic_types)
+
+    before_records = before_issues.get("records")
+    after_records = after_issues.get("records")
+    if isinstance(before_records, list) and isinstance(after_records, list):
+        after_by_number = {
+            row.get("number"): row
+            for row in after_records
+            if isinstance(row, dict) and isinstance(row.get("number"), int)
+        }
+        for before_row in before_records:
+            if not isinstance(before_row, dict):
+                continue
+            after_row = after_by_number.get(before_row.get("number"))
+            if not isinstance(after_row, dict):
+                continue
+            before_type = _native_issue_type_semantics(before_row.get("issue_type"))
+            after_type = _native_issue_type_semantics(after_row.get("issue_type"))
+            if before_type is None:
+                continue
+            before_row["issue_type"] = {"semantic_type": before_type}
+            if after_type is not None:
+                after_row["issue_type"] = {"semantic_type": after_type}
+                continue
+            after_labels = after_row.get("labels")
+            if (
+                after_row.get("issue_type") is None
+                and isinstance(after_labels, list)
+                and after_labels.count(before_type) == 1
+            ):
+                after_row["issue_type"] = {"semantic_type": before_type}
+                compensation_labels.add(before_type)
+                before_labels = before_row.get("labels")
+                if isinstance(before_labels, list):
+                    before_row["labels"] = [name for name in before_labels if name != before_type]
+                after_row["labels"] = [name for name in after_labels if name != before_type]
+
+    if compensation_labels:
+        expected_github["labels"] = _remove_exact_labels(expected_github.get("labels"), compensation_labels)
+        observed_github["labels"] = _remove_exact_labels(observed_github.get("labels"), compensation_labels)
+
+
 def protected_state_deltas(
     before: Mapping[str, Any],
     after: Mapping[str, Any],
@@ -1010,6 +1160,7 @@ def compare_manifests(
 ) -> list[str]:
     expected = invariant_projection(before)
     observed = invariant_projection(after)
+    _normalize_post_transfer_projection_pair(expected, observed)
     failures: list[str] = []
     if expected != observed:
         for key in sorted(set(expected) | set(observed)):
