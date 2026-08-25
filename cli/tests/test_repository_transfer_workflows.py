@@ -36,6 +36,7 @@ def test_enable_predicates_are_stricter_for_apps_and_release() -> None:
     by_path = {value["path"]: value for value in policy["freeze"]}
 
     ci = MODULE._required_predicates(policy, by_path[".github/workflows/ci.yml"])
+    worker = MODULE._required_predicates(policy, by_path[".github/workflows/limen-agent.yml"])
     reviewer = MODULE._required_predicates(policy, by_path[".github/workflows/claude-review.yml"])
     release = MODULE._required_predicates(policy, by_path[".github/workflows/pypi.yml"])
 
@@ -44,6 +45,15 @@ def test_enable_predicates_are_stricter_for_apps_and_release() -> None:
     assert "public_repository_verified" in ci
     assert "github_hosted_standard_runner_verified" in ci
     assert "zero_spend_policy_verified" in ci
+    assert by_path[".github/workflows/limen-agent.yml"] == {
+        "path": ".github/workflows/limen-agent.yml",
+        "class": "secretless_remote_verification",
+        "app_dependent": False,
+        "recovery_ci": True,
+    }
+    assert worker == ci
+    assert "repository_secrets_verified" not in worker
+    assert "exact_repository_app_access_verified" not in worker
     assert "exact_repository_app_access_verified" in reviewer
     assert "pypi_trusted_publisher_owner_updated" in release
     assert by_path[".github/workflows/limen-warp-oz.yml"]["zero_spend_prohibited"] is True
