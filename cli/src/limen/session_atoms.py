@@ -41,18 +41,18 @@ def _v2_state_present(store_root: Path) -> bool:
 def _load_owner_module(module_path: str) -> ModuleType:
     path = Path(module_path)
     if path.is_symlink() or not path.is_file():
-        raise AtomStreamError("session-meta atoms_store.py is missing or is a symlink")
+        raise AtomStreamError("session_meta atoms_store.py is missing or is a symlink")
     name = f"_limen_session_atoms_{abs(hash(path.resolve()))}"
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
-        raise AtomStreamError("session-meta atoms-store module cannot be loaded")
+        raise AtomStreamError("session_meta atoms-store module cannot be loaded")
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
     try:
         spec.loader.exec_module(module)
     except Exception as exc:
         sys.modules.pop(name, None)
-        raise AtomStreamError(f"session-meta atoms-store module failed to load: {exc}") from exc
+        raise AtomStreamError(f"session_meta atoms-store module failed to load: {exc}") from exc
     return module
 
 
