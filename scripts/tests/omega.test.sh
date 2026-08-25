@@ -360,6 +360,8 @@ def sample(at):
         "launchd": {"ok": True, "state": "running", "env": {}}, "log_age_sec": 0,
         "heartbeat": {"latest_tick": {"timestamp": at.isoformat(timespec="seconds")}},
         "worker_count": 0, "heartbeat_child_count": 0, "stale_tick_count": 0,
+        "resident_fast_wave": {"alive": True, "pid": "101"},
+        "resident_host_pressure_watchdog": {"alive": True, "pid": "102"},
         "handoff_relay": {"ok": True, "check_returncode": 0},
         "value_gate": {"returncode": 0}, "dispatch_control": {"allow_dispatch": True},
         "plist_drift": [], "throughput": {"below_floor": False},

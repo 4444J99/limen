@@ -14,7 +14,11 @@ import xml.dom.minidom
 from collections import Counter
 from pathlib import Path
 
-SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "_profile.py"
+import yaml
+
+
+ROOT = Path(__file__).resolve().parents[2]
+SCRIPT = ROOT / "scripts" / "_profile.py"
 
 
 def load():
@@ -105,6 +109,96 @@ def test_current_streak_holds_when_today_empty_but_yesterday_active():
     assert P.current_streak(days, today=today) == 2
 
 
+# --- fact collection --------------------------------------------------------
+
+
+def test_collect_facts_indexes_personal_repos_without_polluting_org_aggregates(monkeypatch):
+    personal_repositories = [
+        {
+            "full_name": f"4444J99/personal-{index:02d}",
+            "private": False,
+            "fork": False,
+            "language": "Rust",
+            "stargazers_count": 1000,
+        }
+        for index in range(9)
+    ]
+    # Pagination overlap and GitHub's case-insensitive coordinates must not
+    # enlarge the identity denominator or replace the first observed spelling.
+    personal_repositories.append(
+        {
+            "full_name": "4444j99/PERSONAL-00",
+            "private": False,
+            "fork": False,
+            "language": "Rust",
+            "stargazers_count": 1000,
+        }
+    )
+    organization_repositories = [
+        {
+            "full_name": f"organvm/original-{index:03d}",
+            "private": False,
+            "fork": False,
+            "language": "Python",
+            "stargazers_count": 1,
+        }
+        for index in range(197)
+    ] + [
+        {
+            "full_name": f"organvm/fork-{index:03d}",
+            "private": False,
+            "fork": True,
+            "language": "TypeScript",
+            "stargazers_count": 1,
+        }
+        for index in range(29)
+    ]
+    calls = []
+
+    def fake_gh_json(path, *, paginate=False, timeout=90):
+        calls.append((path, paginate, timeout))
+        if path == "users/4444J99":
+            return {
+                "name": "Test Builder",
+                "public_repos": 9,
+                "followers": 41,
+                "created_at": "2016-12-27T17:24:06Z",
+            }
+        if path == "users/4444J99/repos?type=owner&per_page=100":
+            return personal_repositories
+        if path == "users/4444J99/orgs":
+            return [{"login": "organvm"}]
+        if path == "orgs/organvm":
+            return {"public_repos": 226}
+        if path == "orgs/organvm/repos?type=public&per_page=100":
+            return organization_repositories
+        raise AssertionError(f"unexpected GitHub API path: {path}")
+
+    monkeypatch.setattr(P, "FALLBACK_ORGS", ["organvm"])
+    monkeypatch.setattr(P, "gh_json", fake_gh_json)
+    monkeypatch.setattr(P, "fetch_calendar_days", lambda _login: [])
+    monkeypatch.setattr(P, "fetch_calendar_total", lambda _login: None)
+
+    facts = P.collect_facts("4444J99")
+
+    assert facts.get("personal_public_repos") == 9
+    assert facts.get("ecosystem_public_repos") == 226
+    assert facts.get("ecosystem_original_repos") == 197
+    assert facts.get("ecosystem_forks") == 29
+    assert facts.get("ecosystem_stars") == 226
+    assert facts.get("ecosystem_classified_repos") == 197
+    assert facts.languages == Counter({"Python": 197})
+    assert len(facts.public_repos) == 235
+    assert facts.public_repos[:9] == [f"4444J99/personal-{index:02d}" for index in range(9)]
+    assert facts.public_repos[9] == "organvm/fork-000"
+    assert "4444j99/PERSONAL-00" not in facts.public_repos
+    assert (
+        "users/4444J99/repos?type=owner&per_page=100",
+        True,
+        90,
+    ) in calls
+
+
 # --- provability predicate --------------------------------------------------
 
 
@@ -168,3 +262,23 @@ def test_manifest_shape_and_attest_tags():
 def test_text_on_contrast_picks_dark_for_light():
     assert P._text_on("#f1e05a") == "#0d1117"  # JavaScript yellow -> dark text
     assert P._text_on("#3572A5") == "#ffffff"  # Python blue -> light text
+
+
+def test_profile_engine_gate_selects_the_exact_hermetic_tests():
+    gates = yaml.safe_load((ROOT / "institutio" / "governance" / "gates.yaml").read_text(encoding="utf-8"))
+    gate = gates["gates"]["profile-engine-test"]
+
+    assert gate["command"] == (
+        "bash scripts/run-pytest-hermetic.sh cli/tests/test_profile_engine.py cli/tests/test_sync_readme.py -q"
+    )
+    assert gate["paths"] == [
+        "scripts/_profile.py",
+        "scripts/profile-visuals.py",
+        "scripts/sync-readme.py",
+        "scripts/profile-verify.py",
+        "scripts/profile-build.sh",
+        "scripts/templates/profile-workflow.yml",
+        "cli/tests/test_profile_engine.py",
+        "cli/tests/test_sync_readme.py",
+        "institutio/governance/gates.yaml",
+    ]
