@@ -15,6 +15,13 @@ once to the personal coordinate. The final private preflight and postflight mani
 cleanly after exact semantic restoration of GitHub's organization-only issue types. The accepted,
 redacted proof is [public-postflight-receipt.json](public-postflight-receipt.json).
 
+The authenticated post-transfer access census is independently green: no direct collaborator
+grant, team grant, or pending invitation exists after excluding only the personal owner's automatic
+access. [public-access-receipt.json](public-access-receipt.json) preserves that denominator without
+publishing principals or permission records. Transfer manifest v3 makes the same census mandatory
+and fail-closed for future captures and workflow restoration; the earlier v2 preflight is preserved
+unchanged as historical evidence rather than rewritten.
+
 The recovery CI path is pinned to GitHub's standard `ubuntu-latest` public runner. A zero-step job
 is `CI_ZERO_STEP_ADMISSION`, is not retryable, and cannot satisfy admission. A successful remote
 receipt must bind the exact workflow, run, job, runner ID, executed-step count, controller SHA,

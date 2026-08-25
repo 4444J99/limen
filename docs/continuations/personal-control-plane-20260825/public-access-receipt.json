@@ -1,0 +1,29 @@
+{
+  "historical_scope": {
+    "pre_transfer_access_denominator": "not_present_in_v2_manifest_and_not_retroactively_inferred",
+    "post_transfer_access_denominator": "live_authenticated_exhaustive_census"
+  },
+  "observed_at": "2026-08-25T19:29:28Z",
+  "policy": {
+    "mode": "never_grant",
+    "satisfied": true,
+    "source": "institutio/github/access.yaml"
+  },
+  "repository_identity": {
+    "canonical_coordinate": "4444J99/limen",
+    "repository_id": 1255213941,
+    "schema_version": "limen.repository_identity.v1"
+  },
+  "schema_version": "limen.repository_access_policy_receipt.v1",
+  "unexpected_access_denominators": {
+    "direct_grants": 0,
+    "pending_invitations": 0,
+    "team_grants": 0,
+    "total": 0
+  },
+  "v3_control": {
+    "future_preflight_and_workflow_restore_require_access_census": true,
+    "owner_automatic_access_is_not_a_grant": true,
+    "permission_records_remain_private": true
+  }
+}

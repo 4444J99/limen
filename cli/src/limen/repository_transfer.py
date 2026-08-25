@@ -201,6 +201,125 @@ def _deploy_key_record(raw: Mapping[str, Any]) -> dict[str, Any]:
     return _select(raw, ("id", "title", "key", "read_only", "created_at", "verified"))
 
 
+def _permission_map(raw: Any) -> dict[str, bool]:
+    if not isinstance(raw, Mapping):
+        return {}
+    return {
+        str(name): value
+        for name, value in sorted(raw.items(), key=lambda item: str(item[0]))
+        if isinstance(value, bool)
+    }
+
+
+def _collaborator_access_record(raw: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "id": raw.get("id"),
+        "node_id": raw.get("node_id"),
+        "login": raw.get("login"),
+        "type": raw.get("type"),
+        "role_name": raw.get("role_name"),
+        "permissions": _permission_map(raw.get("permissions")),
+    }
+
+
+def _team_access_record(raw: Mapping[str, Any]) -> dict[str, Any]:
+    organization = raw.get("organization") or {}
+    return {
+        "id": raw.get("id"),
+        "node_id": raw.get("node_id"),
+        "slug": raw.get("slug"),
+        "organization_id": organization.get("id") if isinstance(organization, Mapping) else None,
+        "organization_login": organization.get("login") if isinstance(organization, Mapping) else None,
+        "permission": raw.get("permission"),
+        "permissions": _permission_map(raw.get("permissions")),
+    }
+
+
+def _invitation_access_record(raw: Mapping[str, Any]) -> dict[str, Any]:
+    invitee = raw.get("invitee") or {}
+    email = raw.get("email")
+    return {
+        "id": raw.get("id"),
+        "node_id": raw.get("node_id"),
+        "invitee_id": invitee.get("id") if isinstance(invitee, Mapping) else None,
+        "invitee_login": invitee.get("login") if isinstance(invitee, Mapping) else None,
+        "invitee_email_sha256": (
+            hashlib.sha256(email.encode()).hexdigest() if isinstance(email, str) and email else None
+        ),
+        "role_name": raw.get("role_name"),
+        "permissions": raw.get("permissions"),
+        "created_at": raw.get("created_at"),
+        "expired": raw.get("expired"),
+    }
+
+
+def _repository_access_census(
+    client: GhClient,
+    identity: RepositoryIdentityV1,
+    coordinate: str,
+    metadata: Mapping[str, Any],
+) -> dict[str, Any]:
+    owner = metadata.get("owner") or {}
+    owner_login = owner.get("login") if isinstance(owner, Mapping) else None
+    owner_id = owner.get("id") if isinstance(owner, Mapping) else None
+    if not isinstance(owner_login, str) or not owner_login or not isinstance(owner_id, int):
+        raise TransferCaptureError("repository metadata omitted its owner identity")
+
+    raw_collaborators = client.list(f"/repos/{coordinate}/collaborators?affiliation=direct&per_page=100")
+    raw_teams = client.list(f"/repos/{coordinate}/teams?per_page=100")
+    raw_invitations = client.list(f"/repos/{coordinate}/invitations?per_page=100")
+    if any(not isinstance(row, Mapping) for row in (*raw_collaborators, *raw_teams, *raw_invitations)):
+        raise TransferCaptureError("repository access census contains a non-object row")
+
+    collaborators = [_collaborator_access_record(row) for row in raw_collaborators]
+    direct_grants = [
+        row
+        for row in collaborators
+        if not (
+            row.get("id") == owner_id
+            and isinstance(row.get("login"), str)
+            and row["login"].casefold() == owner_login.casefold()
+        )
+    ]
+    teams = [_team_access_record(row) for row in raw_teams]
+    invitations = [_invitation_access_record(row) for row in raw_invitations]
+
+    def exact_sorted(rows: list[dict[str, Any]], identity_key: str, label: str) -> list[dict[str, Any]]:
+        identities = [row.get(identity_key) for row in rows]
+        if any(value is None for value in identities) or len(identities) != len(set(identities)):
+            raise TransferCaptureError(f"repository access census contains invalid or duplicate {label} identities")
+        return sorted(rows, key=lambda row: (str(row.get(identity_key)).casefold(), str(row.get("id") or "")))
+
+    direct_grants = exact_sorted(direct_grants, "login", "collaborator")
+    teams = exact_sorted(teams, "id", "team")
+    invitations = exact_sorted(invitations, "id", "invitation")
+    unexpected_count = len(direct_grants) + len(teams) + len(invitations)
+    census = {
+        "schema_version": "limen.repository_access_census.v1",
+        "policy": {
+            "source": "institutio/github/access.yaml",
+            "mode": "never_grant",
+            "canonical_coordinate": identity.canonical_coordinate,
+            "satisfied": unexpected_count == 0,
+        },
+        "repository_owner": {"id": owner_id, "login": owner_login},
+        "direct_grants": direct_grants,
+        "team_grants": teams,
+        "pending_invitations": invitations,
+        "denominators": {
+            "direct_grants": len(direct_grants),
+            "team_grants": len(teams),
+            "pending_invitations": len(invitations),
+            "unexpected_access": unexpected_count,
+        },
+    }
+    if unexpected_count:
+        raise TransferCaptureError(
+            f"repository violates never-grant access policy with {unexpected_count} unexpected access record(s)"
+        )
+    return census
+
+
 def _names_only(result: dict[str, Any], key: str) -> dict[str, Any]:
     if not result.get("available"):
         return result
@@ -612,6 +731,7 @@ def capture_github_manifest(
                 ruleset["value"] = _without_github_links(ruleset["value"])
     else:
         rulesets = ruleset_summaries
+    access = _repository_access_census(client, identity, coordinate, metadata)
 
     return {
         "identity": identity.model_dump(mode="json"),
@@ -658,6 +778,7 @@ def capture_github_manifest(
         },
         "environments": sorted(environments, key=lambda value: value["name"]),
         "apps": _installation_records(client, identity.repository_id),
+        "access": access,
         "webhooks": webhooks,
         "deploy_keys": deploy_keys,
     }
@@ -888,6 +1009,11 @@ def invariant_projection(manifest: Mapping[str, Any]) -> dict[str, Any]:
     github = dict(manifest["github"])
     github.pop("observed_coordinate", None)
     github.pop("apps", None)
+    access = github.get("access")
+    if isinstance(access, dict):
+        access = dict(access)
+        access.pop("repository_owner", None)
+        github["access"] = access
     settings = dict(github["repository_settings"])
     settings.pop("full_name", None)
     settings.pop("name", None)
@@ -1192,7 +1318,7 @@ def build_manifest(
     protected_state = capture_protected_state(checkouts, protected_paths)
     bound_bundle = bind_bundle_to_github_manifest(github, bundle)
     return {
-        "schema_version": "limen.repository_transfer_manifest.v2",
+        "schema_version": "limen.repository_transfer_manifest.v3",
         "captured_at": datetime.now(UTC).isoformat(),
         "identity": identity.model_dump(mode="json"),
         "github": github,
@@ -1208,7 +1334,7 @@ def public_receipt(manifest: Mapping[str, Any], manifest_sha256: str) -> dict[st
     disabled_workflows = sum(value.get("state") == "disabled_manually" for value in workflow_states)
     apps = github.get("apps") or {}
     return {
-        "schema_version": "limen.repository_transfer_capture_receipt.v2",
+        "schema_version": "limen.repository_transfer_capture_receipt.v3",
         "receipt_role": "pre_transfer_preflight_snapshot",
         "final_private_recapture_required_after_ref_or_review_change": True,
         "captured_at": manifest["captured_at"],
@@ -1234,6 +1360,9 @@ def public_receipt(manifest: Mapping[str, Any], manifest_sha256: str) -> dict[st
             ),
             "workflows": len(github["actions"]["workflow_states"]),
             "environments": len(github["environments"]),
+            "direct_access_grants": github["access"]["denominators"]["direct_grants"],
+            "team_access_grants": github["access"]["denominators"]["team_grants"],
+            "pending_access_invitations": github["access"]["denominators"]["pending_invitations"],
         },
         "workflow_freeze": {
             "disabled": disabled_workflows,
