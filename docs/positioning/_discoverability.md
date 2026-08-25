@@ -63,18 +63,18 @@ gh api -X PUT repos/organvm/universal-mail--automation/topics \
 gh repo edit organvm/universal-mail--automation --description "Autonomous inbox triage for Gmail + Apple Mail — classifies threads, tracks every owed reply, drafts voice-matched responses. Draft-only, never sends."
 ```
 
-## Self-Healing Agent Fleet Infrastructure — `organvm/limen`
+## Self-Healing Agent Fleet Infrastructure — `4444J99/limen`
 
 - **Recommended topics:** agent-orchestration, autonomous-systems, fleet-management, self-healing, infrastructure-automation, autonomic-ops, heartbeat-driven, organ-architecture, agent-reliability
 - **Recommended description:** Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation, and explicit human gates on a heartbeat.
 
 ```sh
 # apply topics (his hand — outward-facing public change):
-gh api -X PUT repos/organvm/limen/topics \
+gh api -X PUT repos/4444J99/limen/topics \
   -H 'Accept: application/vnd.github+json' \
   -f 'names[]=agent-orchestration' -f 'names[]=autonomous-systems' -f 'names[]=fleet-management' -f 'names[]=self-healing' -f 'names[]=infrastructure-automation' -f 'names[]=autonomic-ops' -f 'names[]=heartbeat-driven' -f 'names[]=organ-architecture' -f 'names[]=agent-reliability'
 # apply description:
-gh repo edit organvm/limen --description "Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation, and explicit human gates on a heartbeat."
+gh repo edit 4444J99/limen --description "Self-healing agent fleet — autonomic organs for health, credentials, state sync, failure escalation, and explicit human gates on a heartbeat."
 ```
 
 ## Portfolio & Case Studies — 16 Systems — `organvm-vii-kerygma/portfolio`

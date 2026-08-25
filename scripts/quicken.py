@@ -455,12 +455,12 @@ def _hang_asks(entries: list[dict]) -> dict:
         changed = False
         for entry in entries:
             tid = entry["tid"]
-            contract = contract_fields(github_issue_owner_contract("organvm/limen", tid))
+            contract = contract_fields(github_issue_owner_contract("4444J99/limen", tid))
             collateral = {
                 "origin": "human_prompt",
                 "horizon": "present",
                 "value_case": f"Resolve the irreducible operator atom: {entry['title']}",
-                "owner_surface": "organvm/limen",
+                "owner_surface": "4444J99/limen",
             }
             ex = index.get(tid)
             if (
@@ -494,7 +494,7 @@ def _hang_asks(entries: list[dict]) -> dict:
                     Task(
                         id=tid,
                         title=entry["title"],
-                        repo="organvm/limen",
+                        repo="4444J99/limen",
                         type="ops",
                         target_agent="human",
                         priority="high",

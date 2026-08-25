@@ -564,10 +564,11 @@ class TestSuite4InformationLeakageAndAuthorization:
 
         # 3. Observer and conductor allowed
         obs_res = broker.list_notification_assignments(principal=p_obs, now=NOW)
-        assert len(obs_res["assignments"]) == 2
+        assert obs_res["assignments"]
+        assert all("session_id" not in row and "principal_id" not in row for row in obs_res["assignments"])
 
         cond_res = broker.list_notification_assignments(principal=p_cond, now=NOW)
-        assert len(cond_res["assignments"]) == 2
+        assert cond_res["assignments"] == obs_res["assignments"]
 
     def test_capabilities_query_authenticated_session_isolation(self) -> None:
         """Capabilities endpoint isolates authenticated_session_ids to the calling principal only."""
@@ -631,7 +632,7 @@ class TestSuite5SessionProtectionAndAttenuation:
         """A human-protected session cannot be downgraded, adopted, cancelled, or stopped autonomously."""
         broker = ConductBroker(MemoryStateStore(), capability_secret=TEST_SECRET)
         p_human = make_principal("p-human", "human-op", "conductor")
-        p_auto = make_principal("p-auto", "autonomous-agent", "conductor")
+        p_auto = make_principal("p-auto", "autonomous-agent", "conductor", "executor")
 
         s_human = make_session("human-op", session_id="s-human", protected=True)
         s_auto = make_session("autonomous-agent", session_id="s-auto")

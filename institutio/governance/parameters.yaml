@@ -922,7 +922,7 @@ parameters:
     owner: continuity
     note: "Optional retained sandbox root for done-insight-cadence.sh verification. Blank means create a private temporary proof root and retain it for inspection instead of deleting it."
   LIMEN_CURRENT_SESSION_FANOUT_REPO:
-    default: "organvm/limen"
+    default: "4444J99/limen"
     env: LIMEN_CURRENT_SESSION_FANOUT_REPO
     self_update: none
     owner: continuity
@@ -2141,13 +2141,43 @@ parameters:
     owner: health
     note: "Minimum logged observations before the learning department surfaces a pattern (avoids inferring from noise)."
   LIMEN_GITHUB_ACTIONS_REPO:
-    default: "organvm/limen"
+    default: "4444J99/limen"
     env: LIMEN_GITHUB_ACTIONS_REPO
     self_update: none
     owner: dispatch
     note: "Fallback repository used by capacity health probes for the GitHub Actions lane when no explicit health repo is configured."
-  LIMEN_GITHUB_ACTIONS_HEALTH_REPO:
+  LIMEN_CANONICAL_REPOSITORY:
+    default: "4444J99/limen"
+    env: LIMEN_CANONICAL_REPOSITORY
+    self_update: none
+    owner: gitvs
+    note: "Current live coordinate for stable repository ID 1255213941. Historical evidence retains the coordinate captured when it was emitted."
+  LIMEN_HISTORICAL_REPOSITORY:
     default: "organvm/limen"
+    env: LIMEN_HISTORICAL_REPOSITORY
+    self_update: none
+    owner: gitvs
+    note: "Singular compatibility spelling used while historical Limen receipts are normalized through RepositoryIdentityV1."
+  LIMEN_REPOSITORY_IDENTITY:
+    default: "institutio/github/repository-identity.json"
+    env: LIMEN_REPOSITORY_IDENTITY
+    self_update: none
+    owner: gitvs
+    note: "Tracked RepositoryIdentityV1 registry binding the stable numeric repository ID, canonical coordinate, and historical aliases."
+  LIMEN_TRANSFER_FALLBACK_COORDINATE:
+    default: "4444J99/limen-control"
+    env: LIMEN_TRANSFER_FALLBACK_COORDINATE
+    self_update: none
+    owner: gitvs
+    note: "Prescribed destination only if GitHub refuses the preferred personal coordinate before any transfer mutation; it is not canonical until the stable repository actually lands there."
+  LIMEN_GITHUB_TARGET_REPO:
+    default: ""
+    env: LIMEN_GITHUB_TARGET_REPO
+    self_update: none
+    owner: gitvs
+    note: "Exact OWNER/REPO target required by GitHub App token minting; absence or conflict with --repo fails closed."
+  LIMEN_GITHUB_ACTIONS_HEALTH_REPO:
+    default: "4444J99/limen"
     env: LIMEN_GITHUB_ACTIONS_HEALTH_REPO
     self_update: none
     owner: dispatch
@@ -4269,7 +4299,7 @@ parameters:
     owner: gitvs
     note: "Monthly NET Actions spend ceiling (USD) for gitvs.py usage --check. Empty/unset ⇒ derived from estate.yaml budgets.actions_spend.monthly_net_usd_max (the registry owns the default; this env is the operator override). Mirrors orgs.canonical.actions_spending_limit_usd — the GitHub-side spending limit is his-hand (the runbook step 2)."
   LIMEN_RUNNER_ADMISSION_PROBE_REPO:
-    default: "organvm/limen"
+    default: "4444J99/limen"
     env: LIMEN_RUNNER_ADMISSION_PROBE_REPO
     self_update: none
     owner: gitvs
@@ -5317,11 +5347,11 @@ parameters:
     note: "Which workflow check-main-green.py reads as the main-trunk-health proxy. Default ci.yml (runs the same pytest as pr-gate, on push:[main]); pr-gate.yml itself runs on pull_request only so it never runs on main."
 
   LIMEN_MAIN_GREEN_REPO:
-    default: "organvm/limen"   # the repo whose main trunk is watched
+    default: "4444J99/limen"   # the repo whose main trunk is watched
     env: LIMEN_MAIN_GREEN_REPO
     self_update: none
     owner: tabularius
-    note: "Repo (owner/name) whose main-branch CI check-main-green.py watches and, when armed, emits the HEAL-mainred task for. Default organvm/limen. Derived so the sensor survives relocation."
+    note: "Repo (owner/name) whose main-branch CI check-main-green.py watches and, when armed, emits the HEAL-mainred task for. Default 4444J99/limen. Derived so the sensor survives relocation."
   LIMEN_MAIN_GREEN_WEDGE_K:
     default: 5                 # >= K fresh PRs sharing one failing required check = queue-wedge blast radius
     env: LIMEN_MAIN_GREEN_WEDGE_K

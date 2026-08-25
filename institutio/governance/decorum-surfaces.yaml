@@ -108,7 +108,7 @@ polish:
 # LIMEN_DECORUM_APPLY), GitHub ISSUES (the self-closing tracked-to-closure sink — the primary durable
 # home, LIMEN_DECORUM_ISSUES_APPLY), and recurrence PRECEDENTS (the 'ever' ratchet, shares the task valve).
 effector:
-  receipt_repo: organvm/limen     # where non-repo-scoped tickets/issues are homed (SEO findings name their own repo)
+  receipt_repo: 4444J99/limen     # where non-repo-scoped tickets/issues are homed (SEO findings name their own repo)
   issue_floor: medium             # mirror findings at/above this severity to issues (low lure-gaps stay backlog-only)
   recurrence_sweeps: 4            # a finding class persisting this many sweeps — or recurring after a clear — earns a precedent
 

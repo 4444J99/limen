@@ -31,6 +31,12 @@ from urllib.parse import parse_qs, quote, urlparse
 
 
 ROOT = Path(__file__).resolve().parents[4]
+CLI_SRC = ROOT / "cli" / "src"
+if str(CLI_SRC) not in sys.path:
+    sys.path.insert(0, str(CLI_SRC))
+
+from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY  # noqa: E402
+
 PACKAGE = ROOT / "docs/positioning/foundry/psp-c11"
 AUDIT = PACKAGE / "technical-readiness-audit.json"
 SNAPSHOT = PACKAGE / "product-candidate-snapshot.json"
@@ -915,6 +921,23 @@ def _sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
+def _normalize_limen_url(value: object) -> object:
+    """Normalize only for identity comparison; source-lock evidence stays byte-unchanged."""
+
+    if not isinstance(value, str):
+        return value
+    normalized = value
+    for alias in LIMEN_REPOSITORY_IDENTITY.historical_aliases:
+        normalized = normalized.replace(
+            f"api.github.com/repos/{alias}",
+            f"api.github.com/repos/{LIMEN_REPOSITORY_IDENTITY.canonical_coordinate}",
+        ).replace(
+            f"github.com/{alias}",
+            f"github.com/{LIMEN_REPOSITORY_IDENTITY.canonical_coordinate}",
+        )
+    return normalized
+
+
 def _graphql_heads(
     repositories: list[str],
     collection: LiveCollection | None = None,
@@ -1011,16 +1034,23 @@ def verify_w01_live_receipt(collection: LiveCollection | None = None) -> None:
     if (
         verification.get("status") != "pass"
         or verification.get("work_id") != "PSP-P13-W01"
-        or verification.get("receipt_url") != SOURCE_LOCK["w01_receipt"]
+        or _normalize_limen_url(verification.get("receipt_url")) != _normalize_limen_url(SOURCE_LOCK["w01_receipt"])
         or verification.get("receipt_sha256") != SOURCE_LOCK["w01_receipt_sha256"]
     ):
         raise AuditError("accepted W01 marked receipt verification drifted")
     comment = _run_json(
-        ["gh", "api", "repos/organvm/limen/issues/comments/5295999920"],
+        [
+            "gh",
+            "api",
+            f"repos/{LIMEN_REPOSITORY_IDENTITY.canonical_coordinate}/issues/comments/5295999920",
+        ],
         collection=collection,
     )
     body = comment.get("body")
-    if comment.get("html_url") != SOURCE_LOCK["w01_receipt"] or not isinstance(body, str):
+    if (
+        _normalize_limen_url(comment.get("html_url")) != _normalize_limen_url(SOURCE_LOCK["w01_receipt"])
+        or not isinstance(body, str)
+    ):
         raise AuditError("accepted W01 marked receipt resolution drifted")
     match = re.search(
         r"<!--\s*positioning-receipt:PSP-P13-W01\s*-->\s*```json\s*(\{.*?\})\s*```",
@@ -1034,10 +1064,16 @@ def verify_w01_live_receipt(collection: LiveCollection | None = None) -> None:
     except (json.JSONDecodeError, AuditError) as exc:
         raise AuditError("accepted W01 marked receipt block is invalid") from exc
     canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    observed_heads = receipt.get("observed_heads") if isinstance(receipt, dict) else None
+    observed_repository = next(iter(observed_heads), None) if isinstance(observed_heads, dict) else None
     if (
         not isinstance(receipt, dict)
         or receipt.get("acceptance_sha256") != SOURCE_LOCK["w01_acceptance_sha256"]
-        or (receipt.get("observed_heads") or {}).get("organvm/limen") != SOURCE_LOCK["w01_accepted_head"]
+        or not isinstance(observed_heads, dict)
+        or len(observed_heads) != 1
+        or not isinstance(observed_repository, str)
+        or not LIMEN_REPOSITORY_IDENTITY.accepts(observed_repository)
+        or observed_heads.get(observed_repository) != SOURCE_LOCK["w01_accepted_head"]
         or hashlib.sha256(canonical).hexdigest() != SOURCE_LOCK["w01_receipt_sha256"]
     ):
         raise AuditError("accepted W01 marked receipt binding drifted")
@@ -1429,7 +1465,7 @@ def accepted_w01_candidate_projection_digest(collection: LiveCollection | None =
     if collection is None:
         return _accepted_w01_candidate_projection_local()
     content = _fetch_repository_blob(
-        "organvm/limen",
+        LIMEN_REPOSITORY_IDENTITY.canonical_coordinate,
         SOURCE_LOCK["w01_accepted_head"],
         W01_SNAPSHOT_PATH,
         collection,

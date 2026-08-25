@@ -790,7 +790,7 @@ def _named_lane_blocker(
     blocker_id: str,
     reason: str,
     *,
-    owner: str = "organvm/limen",
+    owner: str = "4444J99/limen",
     failed_predicate: str = "python3 scripts/always-working.py --json",
     next_command: str = "python3 scripts/always-working.py --write",
 ) -> dict[str, str]:
@@ -1055,7 +1055,7 @@ def _active_owner_outcome(task: Task, owner_state: str) -> dict[str, Any]:
                 f"exact owner packet {task.id} is {owner_state} without a live worker or result receipt"
                 + (f" ({receipt})" if receipt else "")
             ),
-            owner=str(task.repo or "organvm/limen"),
+            owner=str(task.repo or "4444J99/limen"),
             failed_predicate=str(task.predicate or ""),
             next_command=(
                 _targeted_recovery_command(task, reservation_id)
@@ -1159,7 +1159,7 @@ def _drain_and_dispatch_one_owner_task(
             "blocker": _named_lane_blocker(
                 "overnight-owner-conduct-unavailable",
                 f"authenticated conduct is unavailable for exact owner packet {task.id}: {exc}",
-                owner=str(task.repo or "organvm/limen"),
+                owner=str(task.repo or "4444J99/limen"),
                 failed_predicate=str(task.predicate or ""),
                 next_command="PYTHONPATH=cli/src limen conduct capabilities",
             ),
@@ -1194,7 +1194,7 @@ def _drain_and_dispatch_one_owner_task(
                     "blocker": _named_lane_blocker(
                         "overnight-owner-ticket-drain-failed",
                         (f"TABVLARIVS returned no canonical receipt for exact owner packet {task.id}: {keeper_error}"),
-                        owner=str(task.repo or "organvm/limen"),
+                        owner=str(task.repo or "4444J99/limen"),
                         failed_predicate="python3 scripts/check-tabularius.py",
                         next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
                     ),
@@ -1207,7 +1207,7 @@ def _drain_and_dispatch_one_owner_task(
                     "blocker": _named_lane_blocker(
                         "overnight-owner-canonical-task-invalid",
                         f"keeper receipt for exact owner packet {task.id} is invalid: {exc}",
-                        owner=str(task.repo or "organvm/limen"),
+                        owner=str(task.repo or "4444J99/limen"),
                         failed_predicate="python3 scripts/validate-task-board.py --tasks tasks.yaml",
                         next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
                     ),
@@ -1220,7 +1220,7 @@ def _drain_and_dispatch_one_owner_task(
                     "blocker": _named_lane_blocker(
                         "overnight-owner-ticket-drain-failed",
                         f"TABVLARIVS could not drain exact owner packet {task.id} (exit {keeper.returncode})",
-                        owner=str(task.repo or "organvm/limen"),
+                        owner=str(task.repo or "4444J99/limen"),
                         failed_predicate="python3 scripts/check-tabularius.py",
                         next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
                     ),
@@ -1233,7 +1233,7 @@ def _drain_and_dispatch_one_owner_task(
                 "blocker": _named_lane_blocker(
                     "overnight-owner-canonical-receipt-missing",
                     f"exact owner packet {task.id} has no fresh canonical remote task receipt",
-                    owner=str(task.repo or "organvm/limen"),
+                    owner=str(task.repo or "4444J99/limen"),
                     failed_predicate="python3 scripts/check-tabularius.py",
                     next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
                 ),
@@ -1244,7 +1244,7 @@ def _drain_and_dispatch_one_owner_task(
                 "blocker": _named_lane_blocker(
                     "overnight-owner-canonical-contract-mismatch",
                     f"canonical remote task receipt for {task.id} changed its execution contract",
-                    owner=str(task.repo or "organvm/limen"),
+                    owner=str(task.repo or "4444J99/limen"),
                     failed_predicate=str(task.predicate or ""),
                     next_command="PYTHONPATH=cli/src python3 scripts/overnight-watch.py --dry-run --json",
                 ),
@@ -1268,7 +1268,7 @@ def _drain_and_dispatch_one_owner_task(
             "blocker": _named_lane_blocker(
                 "overnight-owner-ticket-not-drained",
                 f"exact owner packet {task.id} did not become an open board task after its keeper pass",
-                owner=str(task.repo or "organvm/limen"),
+                owner=str(task.repo or "4444J99/limen"),
                 failed_predicate="python3 scripts/check-tabularius.py",
                 next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
             ),
@@ -1284,7 +1284,7 @@ def _drain_and_dispatch_one_owner_task(
                 "blocker": _named_lane_blocker(
                     "overnight-owner-conduct-reservation-failed",
                     str(exc),
-                    owner=str(task.repo or "organvm/limen"),
+                    owner=str(task.repo or "4444J99/limen"),
                     failed_predicate=str(task.predicate or ""),
                     next_command="PYTHONPATH=cli/src python3 scripts/overnight-watch.py --json",
                 ),
@@ -1304,7 +1304,7 @@ def _drain_and_dispatch_one_owner_task(
             "blocker": _named_lane_blocker(
                 "overnight-owner-packet-terminal",
                 f"exact owner packet {task.id} became terminal ({current_state}) before launch",
-                owner=str(task.repo or "organvm/limen"),
+                owner=str(task.repo or "4444J99/limen"),
                 failed_predicate=str(task.predicate or ""),
                 next_command=str(task.receipt_target or ""),
             ),
@@ -1364,7 +1364,7 @@ def _drain_and_dispatch_one_owner_task(
             "blocker": _named_lane_blocker(
                 "overnight-owner-execution-contract-mismatch",
                 str(dispatch_blocker.get("reason") or "selected owner execution contract changed before reserve"),
-                owner=str(task.repo or "organvm/limen"),
+                owner=str(task.repo or "4444J99/limen"),
                 failed_predicate=str(task.predicate or ""),
                 next_command="PYTHONPATH=cli/src python3 scripts/overnight-watch.py --dry-run --json",
             ),
@@ -1385,7 +1385,7 @@ def _drain_and_dispatch_one_owner_task(
                 f"exact owner packet {task.id} produced no durable targeted launch "
                 f"(exit {dispatched.returncode}, launched {launched_count}){named_refusal}"
             ),
-            owner=str(task.repo or "organvm/limen"),
+            owner=str(task.repo or "4444J99/limen"),
             failed_predicate=str(task.predicate or ""),
             next_command=_exact_task_command(task),
         ),
@@ -1414,7 +1414,7 @@ def _submit_one_owner_task(task: Task) -> dict[str, Any]:
                 "blocker": _named_lane_blocker(
                     "overnight-owner-packet-terminal",
                     f"exact owner packet {task.id} is terminal ({state}) while its receipt remains unresolved",
-                    owner=str(task.repo or "organvm/limen"),
+                    owner=str(task.repo or "4444J99/limen"),
                     failed_predicate=str(task.predicate or ""),
                     next_command=str(task.receipt_target or ""),
                 ),
@@ -1521,7 +1521,7 @@ def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str,
         key=lambda item: (_priority_order(item.get("priority")), str(item.get("id") or "")),
     )
     local_admission: dict[str, Any] | None = None
-    first_owner = "organvm/limen"
+    first_owner = "4444J99/limen"
     for item in candidates:
         packet = item.get("assignment_packet") if isinstance(item.get("assignment_packet"), dict) else {}
         if packet.get("repo"):
@@ -1598,7 +1598,7 @@ def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str,
                         "blocker": _named_lane_blocker(
                             "overnight-owner-remote-projection-unavailable",
                             f"canonical remote task lookup failed for {task.id}: {exc}",
-                            owner=str(task.repo or "organvm/limen"),
+                            owner=str(task.repo or "4444J99/limen"),
                             failed_predicate="python3 scripts/check-tabularius.py",
                             next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
                         ),
@@ -1614,7 +1614,7 @@ def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str,
                             "blocker": _named_lane_blocker(
                                 "overnight-owner-canonical-contract-mismatch",
                                 f"canonical remote task {task.id} changed its execution contract",
-                                owner=str(task.repo or "organvm/limen"),
+                                owner=str(task.repo or "4444J99/limen"),
                                 failed_predicate=str(task.predicate or ""),
                                 next_command="PYTHONPATH=cli/src python3 scripts/overnight-watch.py --dry-run --json",
                             ),
@@ -1678,7 +1678,7 @@ def lane_switch_snapshot(snapshot: dict[str, Any], *, submit: bool) -> dict[str,
                     "blocker": _named_lane_blocker(
                         "overnight-owner-ticket-rejected",
                         "TABVLARIVS rejected the selected owner packet before it entered the inbox",
-                        owner=str(task.repo or "organvm/limen"),
+                        owner=str(task.repo or "4444J99/limen"),
                         failed_predicate=str(task.predicate or ""),
                         next_command="PYTHONPATH=cli/src python3 scripts/tabularius-organ.py",
                     ),

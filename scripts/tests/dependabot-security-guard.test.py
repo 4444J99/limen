@@ -20,6 +20,9 @@ assert SPEC and SPEC.loader
 m = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(m)
 
+missing_repo = m._gh(["api"], app_only=True)
+assert missing_repo.returncode == 1 and "requires exact repository" in missing_repo.stderr
+
 
 # --- 1. discover: env override wins, limen excluded ---
 os.environ["LIMEN_DEPENDABOT_GUARD_REPOS"] = "organvm/a:organvm/b:organvm/limen"
@@ -31,17 +34,19 @@ finally:
 
 # --- fake gh keyed on a per-repo posture map ---
 def make_fake_gh(posture: dict, calls: list):
-    def fake_gh(args, timeout=60):
+    def fake_gh(args, timeout=60, *, repo=None, app_only=False):
         calls.append(list(args))
+        if any(value in {"POST", "PUT", "PATCH", "DELETE"} for value in args):
+            assert app_only is True, args
         # observe: security-updates status
         if args[:1] == ["api"] and len(args) >= 2 and args[1].startswith("/repos/") and "--jq" in args:
-            repo = args[1][len("/repos/"):]
+            repo = args[1][len("/repos/") :]
             sec = posture.get(repo, {}).get("security_updates", "unknown")
             val = {"on": "enabled", "off": "disabled"}.get(sec, "")
             return subprocess.CompletedProcess(args, 0, val, "")
         # observe: vulnerability-alerts (204 on / 404 off)
         if args[:1] == ["api"] and len(args) >= 2 and args[1].endswith("/vulnerability-alerts") and "-X" not in args:
-            repo = args[1][len("/repos/"):-len("/vulnerability-alerts")]
+            repo = args[1][len("/repos/") : -len("/vulnerability-alerts")]
             al = posture.get(repo, {}).get("alerts", "unknown")
             if al == "on":
                 return subprocess.CompletedProcess(args, 0, "", "")
@@ -50,6 +55,7 @@ def make_fake_gh(posture: dict, calls: list):
             return subprocess.CompletedProcess(args, 1, "", "timeout")  # unknown
         # enable actions
         return subprocess.CompletedProcess(args, 0, "", "")
+
     return fake_gh
 
 
@@ -59,15 +65,15 @@ def enabled_repos(calls: list) -> list:
     out = []
     for c in calls:
         if c[:1] == ["api"] and "PUT" in c and c[-1].endswith("/automated-security-fixes"):
-            out.append(c[-1][len("/repos/"):-len("/automated-security-fixes")])
+            out.append(c[-1][len("/repos/") : -len("/automated-security-fixes")])
     return sorted(out)
 
 
 # --- 2/3/4. observe mapping + drift + --check exit codes ---
 posture = {
-    "organvm/a": {"security_updates": "on", "alerts": "on"},     # clean
-    "organvm/b": {"security_updates": "off", "alerts": "on"},    # DRIFT (fixes off)
-    "organvm/c": {"security_updates": "on", "alerts": "off"},    # DRIFT (alerts off)
+    "organvm/a": {"security_updates": "on", "alerts": "on"},  # clean
+    "organvm/b": {"security_updates": "off", "alerts": "on"},  # DRIFT (fixes off)
+    "organvm/c": {"security_updates": "on", "alerts": "off"},  # DRIFT (alerts off)
     "organvm/d": {"security_updates": "unknown", "alerts": "unknown"},  # blip → NOT drift
 }
 calls: list = []

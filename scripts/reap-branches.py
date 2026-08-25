@@ -289,8 +289,29 @@ def _merged_at_epoch(iso: str | None) -> float | None:
         return None
 
 
-def gh_head_states() -> tuple[dict[str, float | None], dict[str, str], dict[str, set[str]], bool]:
-    """(merged heads, open head→exact SHA, closed-unmerged head→{exact SHAs}, online).
+@dataclass(frozen=True)
+class ClosedPullRef:
+    number: int
+    head_oid: str
+
+    @property
+    def ref(self) -> str:
+        return f"refs/pull/{self.number}/head"
+
+
+@dataclass(frozen=True)
+class DecidedBranch:
+    branch: str
+    pull_number: int
+    pull_head_oid: str
+
+    @property
+    def pull_ref(self) -> str:
+        return f"refs/pull/{self.pull_number}/head"
+
+
+def gh_head_states() -> tuple[dict[str, float | None], dict[str, str], dict[str, tuple[ClosedPullRef, ...]], bool]:
+    """(merged heads, open head→exact SHA, closed head→pull-ref records, online).
 
     Branch names are reusable. An open PR protects a local ref only when that ref still points at
     the PR's exact remote head; a stale same-name ancestor must remain reapable.
@@ -318,7 +339,7 @@ def gh_head_states() -> tuple[dict[str, float | None], dict[str, str], dict[str,
                 "--state",
                 "all",
                 "--json",
-                "headRefName,headRefOid,state,mergedAt",
+                "number,headRefName,headRefOid,state,mergedAt",
                 "--limit",
                 str(pr_limit),
             ],
@@ -346,7 +367,7 @@ def gh_head_states() -> tuple[dict[str, float | None], dict[str, str], dict[str,
         )
     merged: dict[str, float | None] = {}
     open_: dict[str, str] = {}
-    closed: dict[str, set[str]] = {}
+    closed_lists: dict[str, list[ClosedPullRef]] = {}
     for p in prs:
         head = p.get("headRefName")
         if not head:
@@ -358,8 +379,13 @@ def gh_head_states() -> tuple[dict[str, float | None], dict[str, str], dict[str,
             open_[head] = str(p.get("headRefOid") or "")
         elif state == "CLOSED":
             oid = str(p.get("headRefOid") or "")
-            if oid:  # an empty OID would match an unreadable local tip — never record it
-                closed.setdefault(head, set()).add(oid)
+            number = p.get("number")
+            if oid and isinstance(number, int) and number > 0:
+                closed_lists.setdefault(head, []).append(ClosedPullRef(number=number, head_oid=oid))
+    closed = {
+        head: tuple(sorted(records, key=lambda record: (record.number, record.head_oid)))
+        for head, records in closed_lists.items()
+    }
     return merged, open_, closed, True
 
 
@@ -375,6 +401,8 @@ class Facts:
     # conservative value, so an un-updated caller can only KEEP a branch, never reap one.
     pr_closed_safe: bool = False  # proof 3: CLOSED-unmerged PR whose headRefOid IS the local tip
     pr_closed_raw: bool = False  # a CLOSED-unmerged PR exists for this head (advance-report case)
+    pr_closed_number: int | None = None
+    pr_closed_head_oid: str | None = None
 
 
 @dataclass(frozen=True)
@@ -422,7 +450,7 @@ def gather_facts(
     merged: dict[str, float | None],
     open_: dict[str, str] | set[str],
     dname: str,
-    closed: dict[str, set[str]] | None = None,
+    closed: dict[str, tuple[ClosedPullRef, ...]] | None = None,
 ) -> Facts:
     """Compute the branch's Facts via git + the precomputed gh maps. Every git/parse failure → the
     conservative value (which makes the branch HARDER to reap, never easier)."""
@@ -449,9 +477,13 @@ def gather_facts(
         # time → fail safe (treat as advanced → keep). A clean merge has tip_ct <= mergedAt.
         pr_merged_safe = bool(merged_at is not None and tip_ct is not None and tip_ct <= merged_at + ADVANCED_BUFFER_S)
     # Proof 3. Unreadable tip → tip_oid == "" → no match, so a git failure KEEPS the branch.
-    closed_oids = (closed or {}).get(branch, set())
-    pr_closed_raw = bool(closed_oids)
-    pr_closed_safe = bool(tip_oid and tip_oid in closed_oids)
+    closed_records = (closed or {}).get(branch, ())
+    pr_closed_raw = bool(closed_records)
+    matched_closed = next(
+        (record for record in closed_records if tip_oid and record.head_oid == tip_oid),
+        None,
+    )
+    pr_closed_safe = matched_closed is not None
     return Facts(
         is_ancestor=is_ancestor,
         pr_merged_safe=pr_merged_safe,
@@ -461,7 +493,22 @@ def gather_facts(
         protected=(branch == dname or branch in BASE_PROTECT or branch in EXTRA_PROTECT),
         pr_closed_safe=pr_closed_safe,
         pr_closed_raw=pr_closed_raw,
+        pr_closed_number=(matched_closed.number if matched_closed else None),
+        pr_closed_head_oid=(matched_closed.head_oid if matched_closed else None),
     )
+
+
+def pull_ref_matches_local_tip(branch: str, decided: DecidedBranch) -> bool:
+    """Revalidate exact local and GitHub pull refs immediately before deletion."""
+
+    local = _git(["rev-parse", f"refs/heads/{branch}"])
+    if local.returncode != 0 or local.stdout.strip() != decided.pull_head_oid:
+        return False
+    remote = _git(["ls-remote", "--exit-code", "origin", decided.pull_ref], timeout=30)
+    if remote.returncode != 0:
+        return False
+    fields = remote.stdout.strip().split()
+    return len(fields) == 2 and fields[0] == decided.pull_head_oid and fields[1] == decided.pull_ref
 
 
 def _landed_age_s(branch: str, merged: dict[str, float | None], now: float) -> float:
@@ -499,7 +546,7 @@ def write_ledger(
     advanced: list[str],
     inflight_n: int,
     closed_advanced: list[str] | None = None,
-    decided: list[str] | None = None,
+    decided: list[DecidedBranch] | None = None,
 ) -> None:
     """Regenerate the durable, git-tracked home for KEPT-BUT-UNDECIDED branches. Deterministic
     (sorted, stable per-branch descriptors, no volatile clock) so re-runs produce no diff unless a
@@ -529,8 +576,12 @@ def write_ledger(
         lines.append("the intention was already decided against. They are reap candidates gated on")
         lines.append("`docs/branch-reap-acceptance.jsonl`, not on anyone re-deciding them.")
         lines.append("")
-        for b in sorted(decided):
-            lines.append(f"- `{b}` — {_branch_tip_desc(b)}")
+        for record in sorted(decided, key=lambda value: value.branch):
+            lines.append(
+                f"- `{record.branch}` — PR #{record.pull_number} `{record.pull_ref}` @ "
+                f"`{record.pull_head_oid}`; local tip matches exact pull head — "
+                f"{_branch_tip_desc(record.branch)}"
+            )
         lines.append("")
     if closed_advanced:
         lines.append(f"## Closed-but-advanced ({len(closed_advanced)}) — has commits the closed PR never saw")
@@ -607,7 +658,7 @@ def main() -> int:
     livework: list[str] = []
     advanced: list[str] = []
     closed_advanced: list[str] = []
-    decided: list[str] = []
+    decided: list[DecidedBranch] = []
     kept_reasons: dict[str, int] = {}
     for b in branches:
         f = gather_facts(b, dref, checked, merged, open_, dname, closed)
@@ -617,7 +668,15 @@ def main() -> int:
             if v.landed:
                 landed_reap.append((b, v.reason))
             else:
-                decided.append(b)
+                if f.pr_closed_number is None or f.pr_closed_head_oid is None:
+                    raise RuntimeError("decided branch lacks exact pull-ref custody")
+                decided.append(
+                    DecidedBranch(
+                        branch=b,
+                        pull_number=f.pr_closed_number,
+                        pull_head_oid=f.pr_closed_head_oid,
+                    )
+                )
         else:
             kept_reasons[v.reason] = kept_reasons.get(v.reason, 0) + 1
             if v.reason == "inflight":
@@ -700,12 +759,20 @@ def main() -> int:
     done = 0
     reaped_names: list[str] = []
     branch_reap_acceptance = load_branch_reap_acceptance()
+    decided_by_branch = {record.branch: record for record in decided}
     for b, why in reap:
         if done >= args.max:
             print(f"[reap-branches] hit --max={args.max}; '{b}' and any remainder LEFT for next run")
             break
         print(f"  {'REAP' if args.apply else 'WOULD reap'}: {b}  ({why})")
         if args.apply:
+            decided_record = decided_by_branch.get(b)
+            if decided_record is not None and not pull_ref_matches_local_tip(b, decided_record):
+                print(f"    KEEP {b}: closed-pull-ref-drift-or-unavailable")
+                kept_reasons["closed-pull-ref-drift-or-unavailable"] = (
+                    kept_reasons.get("closed-pull-ref-drift-or-unavailable", 0) + 1
+                )
+                continue
             accepted, accept_reason = branch_reap_accepted(b, why, branch_reap_acceptance)
             if not accepted:
                 print(f"    KEEP {b}: {accept_reason}")
@@ -735,7 +802,7 @@ def main() -> int:
                             "inflight": sorted(inflight),
                             "advanced": sorted(advanced),
                             "closed_advanced": sorted(closed_advanced),
-                            "decided": sorted(decided),
+                            "decided": [record.__dict__ for record in sorted(decided, key=lambda value: value.branch)],
                             "livework": sorted(livework),
                             "kept_reasons": kept_reasons,
                         }
@@ -755,7 +822,7 @@ def main() -> int:
                             "inflight": sorted(inflight),
                             "advanced": sorted(advanced),
                             "closed_advanced": sorted(closed_advanced),
-                            "decided": sorted(decided),
+                            "decided": [record.__dict__ for record in sorted(decided, key=lambda value: value.branch)],
                             "livework": sorted(livework),
                         },
                         indent=2,

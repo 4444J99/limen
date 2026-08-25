@@ -144,23 +144,28 @@ def validate_disposition_evidence(
     """Recompute every live fact that can authorize capability issuance."""
 
     slug = github_repository_slug(repository_root, runner=runner)
-    if slug != disposition.repository:
+    if not disposition.repository_identity.accepts(slug) or not disposition.repository_identity.accepts(
+        disposition.repository
+    ):
         raise ValueError("repository identity does not match the disposition")
     metadata = _gh_json([f"repos/{slug}"], runner=runner)
+    canonical_slug = str(metadata.get("full_name") or slug)
+    if metadata.get(
+        "id"
+    ) != disposition.repository_identity.repository_id or not disposition.repository_identity.accepts(canonical_slug):
+        raise ValueError("stable repository identity does not match the disposition")
     default_branch = str(metadata.get("default_branch") or "")
     default_ref = f"refs/heads/{default_branch}"
     default_tip = remote_tip(repository_root, default_ref, runner=runner)
     archived = bool(metadata.get("archived"))
     generation = canonical_digest(
         {
-            "repository": slug,
+            "repository_id": disposition.repository_identity.repository_id,
             "default_ref": default_branch,
             "default_sha": default_tip,
             "archived": archived,
         }
     )
-    if disposition.repository_id is not None and metadata.get("node_id") != disposition.repository_id:
-        raise ValueError("repository node identity does not match the disposition")
     if (disposition.default_ref, disposition.default_tip, disposition.default_generation) != (
         default_ref,
         default_tip,
@@ -169,7 +174,13 @@ def validate_disposition_evidence(
         raise ValueError("live default generation does not match the disposition")
     if remote_tip(repository_root, disposition.ref, runner=runner) != disposition.tip:
         raise ValueError("live remote ref does not match the disposition")
-    commit_digest = canonical_digest({"repository": slug, "ref": disposition.ref, "tip": disposition.tip})
+    commit_digest = canonical_digest(
+        {
+            "repository_id": disposition.repository_identity.repository_id,
+            "ref": disposition.ref,
+            "tip": disposition.tip,
+        }
+    )
     if disposition.commit_digest != commit_digest:
         raise ValueError("commit digest does not match the live repository/ref/tip")
     if disposition.delivery_disposition != "exact_landed":
@@ -180,7 +191,12 @@ def validate_disposition_evidence(
     )
     if (comparison.get("merge_base_commit") or {}).get("sha") != disposition.tip:
         raise ValueError("live default ancestry does not prove exact landing")
-    if not review.terminal or review.repository != slug or review.pull_request not in disposition.pull_requests:
+    if (
+        not review.terminal
+        or review.repository_identity != disposition.repository_identity
+        or not review.repository_identity.accepts(review.repository)
+        or review.pull_request not in disposition.pull_requests
+    ):
         raise ValueError("review closure is nonterminal or not named by the disposition")
     if review.lifecycle_stage not in {"main_verified", "runtime_verified", "terminal"}:
         raise ValueError("review lineage has not reached main verification")
@@ -303,6 +319,12 @@ def apply_capability(
             "repository": capability.repository,
             "ref": capability.ref,
             "tip": capability.live_tip,
+            # ``apply_capability`` has verified the HMAC and its exact plan before
+            # this keeper-owned record is written.  Persist the authenticated
+            # capability/origin binding so a later crash reconciler never has to
+            # trust fields supplied by an unverified capability document.
+            "capability_digest": canonical_digest(capability),
+            "remote_url_digest": capability.remote_url_digest,
             "state": "applying",
         }
         atomic_json(redemption_path, redemptions)
@@ -358,11 +380,16 @@ def reconcile_effect(
     observed_at: datetime | None = None,
     runner: Runner = subprocess.run,
 ) -> ReapJournalV1:
-    """Classify an interrupted effect without issuing or consuming new authority."""
+    """Classify an interrupted effect from its authenticated redemption binding.
+
+    Reconciliation deliberately does not mint or consume authority.  The
+    capability is instead matched byte-for-byte (minus its signature field, as
+    defined by :func:`canonical_digest`) to the binding persisted only after the
+    original HMAC/plan verification succeeded.  Old or incomplete redemption
+    rows fail closed and require a fresh owner-reviewed plan.
+    """
 
     _journal_matches(current, capability)
-    if remote_url_digest(repository_root, runner=runner) != capability.remote_url_digest:
-        raise RuntimeError("repository origin does not match the capability")
     if current.state not in {"applying", "crashed"}:
         return current
     observed_at = (observed_at or utc_now()).astimezone(UTC)
@@ -376,6 +403,14 @@ def reconcile_effect(
             capability.live_tip,
         ):
             raise RuntimeError("reap capability redemption record does not match authority")
+        authenticated_digest = spent.get("capability_digest")
+        authenticated_origin = spent.get("remote_url_digest")
+        if not isinstance(authenticated_digest, str) or not isinstance(authenticated_origin, str):
+            raise RuntimeError("reap capability redemption record lacks authenticated origin binding")
+        if authenticated_digest != canonical_digest(capability):
+            raise RuntimeError("reap capability does not match its authenticated redemption binding")
+        if remote_url_digest(repository_root, runner=runner) != authenticated_origin:
+            raise RuntimeError("repository origin does not match the authenticated redemption binding")
         tip = remote_tip(repository_root, current.ref, runner=runner)
         if tip is None:
             result = current.model_copy(

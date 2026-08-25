@@ -95,8 +95,8 @@ def main() -> int:
     surfaces = data.get("surfaces") or {}
     failures: list[str] = []
 
-    if data.get("protected_repository") != "organvm/limen" or data.get("protected_branch") != "main":
-        failures.append("registry must protect organvm/limen main")
+    if data.get("protected_repository") != "4444J99/limen" or data.get("protected_branch") != "main":
+        failures.append("registry must protect 4444J99/limen main")
     remote = data.get("remote_enforcement") or {}
     if remote.get("required_rules") != ["pull_request"] or remote.get("bypass_actors") != []:
         failures.append("remote enforcement must require pull_request with no bypass actors")

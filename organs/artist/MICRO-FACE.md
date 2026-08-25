@@ -225,7 +225,7 @@ A-MAVS-OLEVM is rank 7 on the VLTIMA institutional census:
   "rank": 7,
   "pillar": "artist",
   "organ": "A-MAVS-OLEVM (Poiesis)",
-  "repo": "organvm/limen",
+  "repo": "4444J99/limen",
   "home": "organs/artist/",
   "maturity": 70,
   "stage": "maturing",

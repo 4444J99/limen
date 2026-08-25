@@ -1,5 +1,5 @@
 # board-partition-baseline — client/partner work already published on the PUBLIC board
-# (organvm/limen is public and tasks.yaml is tracked). Known and owned rather than
+# (4444J99/limen is public and tasks.yaml is tracked). Known and owned rather than
 # silently tolerated. The gate fails on any NEW finding; this list may only SHRINK.
 #
 # This file names task ids and repo slugs, and it is committed to the SAME public repo as

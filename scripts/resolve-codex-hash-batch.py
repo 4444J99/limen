@@ -24,7 +24,7 @@ PRIORITY_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-priority-map.json"
 SESSION_INDEX = PRIVATE_ROOT / "lifecycle" / "prompt-lifecycle-index.json"
 BATCH_RESOLUTION_RECEIPTS = ROOT / "docs" / "prompt-batch-resolution-receipts.json"
 
-OWNER_REPO = "organvm/limen"
+OWNER_REPO = "4444J99/limen"
 SUPPORTED_LANE = "hash-review"
 
 

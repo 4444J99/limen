@@ -11,6 +11,7 @@ from collections.abc import Mapping
 from typing import Any, cast
 
 from limen.github_estate_census import ConnectionCensus, PageFetcher, paginate_exact
+from limen.repository_identity import RepositoryIdentityV1
 from limen.universe_recovery import (
     CursorReceiptV1,
     ReviewLineageClosureV2,
@@ -33,6 +34,7 @@ def _cursor_receipt(surface: str, census: ConnectionCensus) -> CursorReceiptV1:
 
 def build_review_lineage(
     *,
+    repository_identity: RepositoryIdentityV1,
     repository: str,
     pull_request: int,
     metadata: Mapping[str, Any],
@@ -85,6 +87,7 @@ def build_review_lineage(
         and metadata.get("review_decision") not in {"CHANGES_REQUESTED", "REVIEW_REQUIRED"}
     )
     return ReviewLineageClosureV2(
+        repository_identity=repository_identity,
         repository=repository,
         pull_request=pull_request,
         observed_at=metadata["observed_at"],

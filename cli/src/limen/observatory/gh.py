@@ -1,7 +1,7 @@
 """The ONLY shell-out boundary in OBSERVATORY.
 
-Copies GITVS's proven ``gh`` idiom (``scripts/gitvs.py``): a cascade token
-(App → PAT → gh keyring) and thin subprocess wrappers that **fail OPEN** — offline
+Uses native user auth for its cross-repository, read-only searches and thin subprocess wrappers
+that **fail OPEN** — offline
 or with ``gh`` absent they return ``returncode 1`` and never raise, so a network
 fault degrades the beat to SKIP instead of crashing it.
 
@@ -20,28 +20,26 @@ import json
 import os
 import shutil
 import subprocess
-from pathlib import Path
-
-from . import config
-
-
-def _root() -> Path:
-    return config.repo_root()
 
 
 def token() -> str | None:
-    """Mint a token via the shared ``gh-app-token.sh`` cascade. None when exhausted."""
+    """Return a non-secret marker when native read-only gh auth is available."""
     if os.environ.get("LIMEN_OFFLINE"):
         return None
-    script = _root() / "scripts" / "gh-app-token.sh"
-    if not script.exists():
+    if not shutil.which("gh"):
         return None
+    env = {key: value for key, value in os.environ.items() if key not in {"GH_TOKEN", "GITHUB_TOKEN"}}
     try:
-        r = subprocess.run(["bash", str(script)], capture_output=True, text=True, timeout=45)
+        r = subprocess.run(
+            ["gh", "auth", "status", "--hostname", "github.com"],
+            capture_output=True,
+            text=True,
+            timeout=20,
+            env=env,
+        )
     except Exception:
         return None
-    tok = (r.stdout or "").strip()
-    return tok if r.returncode == 0 and tok else None
+    return "user-native" if r.returncode == 0 else None
 
 
 def gh(args: list[str], tok: str | None, timeout: int = 60) -> subprocess.CompletedProcess:
@@ -49,7 +47,10 @@ def gh(args: list[str], tok: str | None, timeout: int = 60) -> subprocess.Comple
     if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
         return subprocess.CompletedProcess(args, 1, "", "offline")
     env = {**os.environ}
-    if tok:
+    if tok == "user-native" or tok is None:
+        env.pop("GH_TOKEN", None)
+        env.pop("GITHUB_TOKEN", None)
+    elif tok:
         env["GH_TOKEN"] = tok
         env["GITHUB_TOKEN"] = tok
     try:

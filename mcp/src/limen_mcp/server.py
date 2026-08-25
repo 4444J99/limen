@@ -298,8 +298,8 @@ def _register_submitter(client: Any, identity: AgentIdentityV1) -> None:
 
 
 def _board_owner() -> str:
-    repo = os.environ.get("LIMEN_GITHUB_REPO", "organvm/limen").strip()
-    return repo if re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo) else "organvm/limen"
+    repo = os.environ.get("LIMEN_GITHUB_REPO", "4444J99/limen").strip()
+    return repo if re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo) else "4444J99/limen"
 
 
 def _task_packet(

@@ -44,7 +44,13 @@ def main() -> int:
         for path in base.rglob("*.py"):
             if path == Path(__file__):
                 continue
-            source = path.read_text(errors="ignore")
+            try:
+                source = path.read_text(errors="ignore")
+            except OSError:
+                # Fleet roots can change while the bounded scan is walking them.
+                # One unreadable or concurrently removed file does not make every
+                # remaining producer unreachable.
+                continue
             for stable_id in events:
                 if f'"{stable_id}"' in source or f"'{stable_id}'" in source:
                     discovered.setdefault(stable_id, set()).add(str(path.relative_to(ROOT)))

@@ -118,13 +118,13 @@ PR_DEBT_SCHEMA = "limen.github_pr_debt.v2"
 
 
 # ── auth (reuse the cascade; never touch App creds directly) ───────────────────────────────────
-def _token() -> str | None:
-    """Mint a token via the gh-app-token.sh cascade (App → PAT → gh). None if every path is exhausted."""
+def _token(repo: str) -> str | None:
+    """Mint one exact-repository token. None when the scoped cascade is exhausted."""
     if os.environ.get("LIMEN_OFFLINE"):
         return None
     try:
         r = subprocess.run(
-            ["bash", str(ROOT / "scripts" / "gh-app-token.sh")],
+            ["bash", str(ROOT / "scripts" / "gh-app-token.sh"), "--repo", repo],
             capture_output=True,
             text=True,
             timeout=45,
@@ -136,13 +136,16 @@ def _token() -> str | None:
 
 
 def _gh(args: list[str], token: str | None, timeout: int = 60) -> subprocess.CompletedProcess:
-    """Run a `gh` command with the cascade token exported. Fails OPEN (returncode 1), never raises."""
+    """Run gh with an explicitly selected identity; never inherit ambient token fallback."""
     if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
         return subprocess.CompletedProcess(args, 1, "", "offline")
+    if token == "user-native":  # allow-secret: identity selector only
+        return _gh_user(args, timeout=timeout)
+    if token is None:
+        return subprocess.CompletedProcess(args, 1, "", "exact-repository token unavailable")
     env = {**os.environ}
-    if token:
-        env["GH_TOKEN"] = token
-        env["GITHUB_TOKEN"] = token
+    env["GH_TOKEN"] = token
+    env["GITHUB_TOKEN"] = token
     try:
         return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout, env=env)
     except Exception as e:  # fail open
@@ -176,11 +179,11 @@ def _gh_login() -> str | None:
     return _GH_LOGIN_CACHE["login"]
 
 
-def _token_path() -> str:
+def _token_path(repo: str) -> str:
     """Which cascade path resolves (app|pat|gh|none) — prints NO secret."""
     try:
         r = subprocess.run(
-            ["bash", str(ROOT / "scripts" / "gh-app-token.sh"), "--which"],
+            ["bash", str(ROOT / "scripts" / "gh-app-token.sh"), "--repo", repo, "--which"],
             capture_output=True,
             text=True,
             timeout=20,
@@ -1111,15 +1114,17 @@ def observe(estate: dict) -> dict:
     """Build the actual-state ledger. Every block is fail-open: a gh/parse failure degrades to null,
     never raises; `online` records whether the live rungs ran. Counts + names only (the _scrub firewall —
     no secret VALUE is ever read here)."""
-    token = _token()
+    token = "user-native" if _gh_login() is not None else None  # allow-secret: identity selector only
     online = token is not None and shutil.which("gh") is not None
+    controller_repo = "4444J99/limen"
+    controller_token_path = _token_path(controller_repo)
     led: dict = {
         "schema": LEDGER_SCHEMA,
         "online": bool(online),
         "app": {
             "installed": None,
             "slug": (estate.get("app") or {}).get("slug"),
-            "token_path": _token_path(),
+            "token_path": controller_token_path,
             "installations": None,
         },
         "repos": {"total": None, "by_class": {}},
@@ -1149,13 +1154,10 @@ def observe(estate: dict) -> dict:
                 "complete": True,
             }
 
-    # App installations (permissions posture; over-grant is class D).
-    if online:
-        r = _gh(["api", "/app/installations", "--jq", "length"], token, timeout=30)
-        if r.returncode == 0 and (r.stdout or "").strip().isdigit():
-            n = int(r.stdout.strip())
-            led["app"]["installed"] = n > 0
-            led["app"]["installations"] = n
+    # Exact controller App reachability. Org-wide App access is a separate user-scoped census;
+    # an installation token must never be broadened into an estate token.
+    led["app"]["installed"] = controller_token_path == "app"
+    led["app"]["installations"] = 1 if controller_token_path == "app" else None
 
     # Repo census by class — the FULL estate (org route; private repos included when the token can
     # see them). Aggregate counts land in the public ledger; per-repo facts go to the gitignored
@@ -1318,6 +1320,15 @@ def _effector_defects(rt_name: str, effectors: object, *, require_reachable: boo
         if not isinstance(argv, list) or not argv or not all(isinstance(arg, str) and arg for arg in argv):
             defects.append(f"{where}: {kind} requires a non-empty string argv list")
             continue
+        argv_from_env = effector.get("argv_from_env") or {}
+        if not isinstance(argv_from_env, dict) or not all(
+            isinstance(flag, str) and flag.startswith("--") and isinstance(env_name, str) and env_name
+            for flag, env_name in argv_from_env.items()
+        ):
+            defects.append(f"{where}: argv_from_env must map --flags to environment-variable names")
+        required_env = effector.get("required_env") or []
+        if not isinstance(required_env, list) or not all(isinstance(name, str) and name for name in required_env):
+            defects.append(f"{where}: required_env must be a list of environment-variable names")
         if require_reachable:
             for arg in argv[1:]:
                 candidate = ROOT / arg
@@ -1857,7 +1868,7 @@ def posture_window(eligible: list[str], size: int, ordinal: int) -> list[str]:
 def _protection_probe(
     repos: list[str],
     estate: dict,
-    token: str | None,  # allow-secret (type annotation, no value)
+    token: str | None,  # allow-secret: legacy test identity selector; live code mints per repository
 ) -> dict[str, str]:
     """Class A's Lens: live branch-protection state per repo → 'protected' | 'missing' |
     'plan-gated' | 'unreadable'. Canonical-org repos ride the App token; personal/shelf owners
@@ -1866,14 +1877,15 @@ def _protection_probe(
     out: dict[str, str] = {}
     for repo in repos:
         canonical = _org_class(repo.split("/", 1)[0], estate)[0] == "canonical"
+        scoped_token = token if token is not None else (_token(repo) if canonical else None)
         args = ["api", f"/repos/{repo}", "--jq", ".default_branch"]
-        r = _gh(args, token, timeout=30) if canonical else _gh_user(args, timeout=30)
+        r = _gh(args, scoped_token, timeout=30) if canonical else _gh_user(args, timeout=30)
         if r.returncode != 0 or not (r.stdout or "").strip():
             out[repo] = "unreadable"
             continue
         branch = r.stdout.strip().splitlines()[0]
         args = ["api", f"/repos/{repo}/branches/{branch}/protection", "--jq", ".url"]
-        r = _gh(args, token, timeout=30) if canonical else _gh_user(args, timeout=30)
+        r = _gh(args, scoped_token, timeout=30) if canonical else _gh_user(args, timeout=30)
         if r.returncode == 0:
             out[repo] = "protected"
             continue
@@ -2240,7 +2252,7 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool, strict: bool = Fal
             skips.append(
                 f"[A protection-missing] rotating window: {len(window)}/{len(eligible)} eligible probed this run"
             )
-        probe = _protection_probe(window, estate, _token())
+        probe = _protection_probe(window, estate, None)
         by_owner_private = {str(r_.get("full_name")): bool(r_.get("private")) for r_ in rows}
         for repo_, state in sorted(probe.items()):
             if state == "protected":
@@ -2327,14 +2339,37 @@ def _effector_label(effector: dict) -> str:
     if kind == "file-atom":
         return f"file-atom:{effector.get('target', '')}"
     argv = effector.get("argv") or []
-    return f"{kind}:{shlex.join(argv)}" if isinstance(argv, list) else kind
+    if not isinstance(argv, list):
+        return kind
+    env_flags = effector.get("argv_from_env") or {}
+    suffix = (
+        ""
+        if not isinstance(env_flags, dict)
+        else "".join(f" {flag} ${{{env_name}}}" for flag, env_name in env_flags.items())
+    )
+    return f"{kind}:{shlex.join(argv)}{suffix}"
 
 
-def _run_effector(effector: dict) -> str:
-    """Invoke the exact adapter command declared by the registry, if its executable is reachable."""
+def _run_effector(effector: dict) -> tuple[int, str]:
+    """Invoke one registry adapter and return its real exit status plus bounded detail."""
     argv = effector.get("argv") or []
     if not isinstance(argv, list) or not argv:
-        return "BLOCKED invalid argv"
+        return 2, "BLOCKED invalid argv"
+    expanded_argv = list(argv)
+    argv_from_env = effector.get("argv_from_env") or {}
+    if not isinstance(argv_from_env, dict):
+        return 2, "BLOCKED invalid argv_from_env"
+    for flag, env_name in argv_from_env.items():
+        value = os.environ.get(str(env_name), "")
+        if not value:
+            return 78, f"BLOCKED missing environment binding {env_name}"
+        expanded_argv.extend((str(flag), value))
+    required_env = effector.get("required_env") or []
+    if not isinstance(required_env, list):
+        return 2, "BLOCKED invalid required_env"
+    for env_name in required_env:
+        if not os.environ.get(str(env_name), ""):
+            return 78, f"BLOCKED missing required environment {env_name}"
     executable = argv[0]
     if os.path.sep in executable:
         executable_path = Path(executable)
@@ -2344,19 +2379,20 @@ def _run_effector(effector: dict) -> str:
     else:
         available = shutil.which(executable) is not None
     if not available:
-        return f"BLOCKED missing executable {executable}"
+        return 127, f"BLOCKED missing executable {executable}"
     try:
         r = subprocess.run(
-            argv,
+            expanded_argv,
             cwd=ROOT,
             capture_output=True,
             text=True,
             timeout=int(os.environ.get("LIMEN_GITVS_TIMEOUT", "120")),
         )
         tail = (r.stdout or r.stderr or "").strip().splitlines()
-        return (tail[-1] if tail else f"exit={r.returncode}")[:200]
-    except Exception as e:  # fail open — a delegate must never break the reconcile loop
-        return f"skipped ({str(e)[:80]})"
+        detail = (tail[-1] if tail else f"exit={r.returncode}")[:200]
+        return r.returncode, detail
+    except Exception as e:  # contain the adapter failure, then surface it through reconcile's status
+        return 1, f"skipped ({str(e)[:80]})"
 
 
 def reconcile(estate: dict, *, apply: bool) -> int:
@@ -2364,13 +2400,16 @@ def reconcile(estate: dict, *, apply: bool) -> int:
     Walk every active registry owner (resource type or ecosystem integration) and route its structured
     effectors. Executable adapter, argv, and any human approval lever live in estate.yaml, so a new tool
     or policy is a data change, never a target-name exception in this engine. DRY by default (report the
-    plan, mutate nothing). Always exit 0: reconcile is advisory and must be fail-open in the beat."""
+    plan, mutate nothing). Dry runs are advisory; apply returns the first nonzero adapter status so
+    a denied or crashed effect can never be represented as acted."""
     registries = (
         ("resource", estate.get("resource_types") or {}),
         ("integration", estate.get("integrations") or {}),
     )
     levers = _lever_index()
     acted: list[str] = []  # ran (apply) or planned (dry)
+    failed: list[str] = []
+    failure_status = 0
     cited: list[str] = []
     skipped: list[str] = []
     declared = 0
@@ -2403,9 +2442,15 @@ def reconcile(estate: dict, *, apply: bool) -> int:
                         skipped.append(f"{owner}: {label} gated by {_cite(lever, levers)}")
                         continue
                     if apply:
-                        acted.append(f"{owner} {label} → {_run_effector(effector)}")
+                        status, detail = _run_effector(effector)
+                        if status == 0:
+                            acted.append(f"{owner} {label} → {detail}")
+                        else:
+                            failed.append(f"{owner} {label} → exit={status}: {detail}")
+                            if failure_status == 0:
+                                failure_status = status if 0 < status < 256 else 1
                     else:
-                        note = "  (reap: still needs its own dark-arming to delete)" if kind == "reap" else ""
+                        note = "  (reap: requires exact private capability bindings)" if kind == "reap" else ""
                         acted.append(f"WOULD {owner} {label}{note}")
                 else:
                     skipped.append(f"{owner}: unknown sink '{kind}'")
@@ -2414,15 +2459,17 @@ def reconcile(estate: dict, *, apply: bool) -> int:
     print(
         f"[gitvs] reconcile ({mode}): {declared} registry owners → "
         f"{len(acted)} effector(s) {'ran' if apply else 'planned'}, "
-        f"{len(cited)} file-atom(s) cited, {len(skipped)} skipped."
+        f"{len(failed)} failed, {len(cited)} file-atom(s) cited, {len(skipped)} skipped."
     )
     for line in acted:
         print(f"   {'✓' if apply else '·'} {line}")
     for c in cited:
         print(f"   ⚑ owed  {c}")
+    for line in failed:
+        print(f"   ✗ fail  {line}")
     for s in skipped:
         print(f"   ~ skip  {s}")
-    return 0
+    return failure_status
 
 
 # ── the Classifier: propose per-repo publication decisions (rules R1–R9) ─────────────────────────
@@ -2493,7 +2540,6 @@ def classify_estate(estate: dict, *, fresh: bool, sample_max: int, emit: bool, o
         return 1
 
     pp = _pubpolicy()
-    token = _token()
     value = _registry_repo_set(ROOT / "value-repos.json")
     seeded = _registry_repo_set(ROOT / "positioning-seeds.json")
     stars_floor = int(os.environ.get("LIMEN_GITVS_PORTAL_STARS", "3"))
@@ -2524,7 +2570,7 @@ def classify_estate(estate: dict, *, fresh: bool, sample_max: int, emit: bool, o
         elif row.get("archived"):
             d.update(proposed_class="frozen", rule="R3", rationale="archived (census fact)")
         elif private:
-            hist, n = _path_histogram(full, token, pp, sample_max)
+            hist, n = _path_histogram(full, _token(full), pp, sample_max)
             d["path_histogram"] = hist
             d["paths_sampled"] = n
             risky = hist.get("internal_strategy", 0) + hist.get("personal_pii", 0) + hist.get("secret", 0)
@@ -2722,7 +2768,7 @@ def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False, 
             f"[gitvs] usage: SKIP (billing usage endpoint unreadable for {org} — needs the user-scoped keyring token)"
         )
         return 77 if strict else 0
-    probe_repo = os.environ.get("LIMEN_RUNNER_ADMISSION_PROBE_REPO") or "organvm/limen"
+    probe_repo = os.environ.get("LIMEN_RUNNER_ADMISSION_PROBE_REPO") or "4444J99/limen"
     admission_present, admission_detail = _runner_admission_observation(probe_repo)
     budget_default = ((estate.get("budgets") or {}).get("actions_spend") or {}).get("monthly_net_usd_max", 25)
     try:

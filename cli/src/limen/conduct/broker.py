@@ -6,9 +6,10 @@ import copy
 import base64
 import hashlib
 import hmac
+import json
 import secrets
 from datetime import datetime, timedelta
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from typing import Any, Callable
 
 from limen.conduct.models import (
@@ -31,6 +32,11 @@ from limen.conduct.models import (
 from limen.conduct.resources import conflicting_keys, parse_resource, sorted_claims
 from limen.conduct.store import MemoryStateStore, StateStore
 from limen.work_loan import packet_is_non_capacity_projection, packet_work_loan_missing, work_loan_denial
+
+
+_DEFAULT_NOTIFICATION_REGISTRY = (
+    Path(__file__).resolve().parents[4] / "institutio" / "governance" / "notification-events.limen.json"
+)
 
 
 class ConductError(RuntimeError):
@@ -212,6 +218,7 @@ class ConductBroker:
         lease_ttl: timedelta = timedelta(minutes=15),
         capability_secret: str | bytes | None = None,
         runtime_identity: dict[str, str] | None = None,
+        notification_registry_path: Path | str | None = None,
     ):
         self.store = store
         self.session_ttl = session_ttl
@@ -220,6 +227,7 @@ class ConductBroker:
         secret = capability_secret or secrets.token_bytes(32)
         self.capability_secret = secret.encode("utf-8") if isinstance(secret, str) else secret
         self.runtime_identity = _validate_runtime_identity(runtime_identity)
+        self.notification_registry_path = Path(notification_registry_path or _DEFAULT_NOTIFICATION_REGISTRY)
 
     def register(
         self,
@@ -235,6 +243,7 @@ class ConductBroker:
         with self.store.transaction() as state:
             state.setdefault("receipt_index", {})
             state.setdefault("session_principals", {})
+            state.setdefault("session_principal_roles", {})
             current = state["sessions"].get(session.session_id)
             if current:
                 prior = ConductorSessionV1.model_validate(current)
@@ -284,6 +293,7 @@ class ConductBroker:
             session = session.model_copy(update={"supersedes": None})
             state["sessions"][session.session_id] = _dump(session)
             state["session_principals"][session.session_id] = principal.principal_id
+            state["session_principal_roles"][session.session_id] = sorted(principal.roles)
             _event(
                 state,
                 "session.registered",
@@ -1374,7 +1384,7 @@ class ConductBroker:
         principal: ConductPrincipalV1 | None = None,
         now: datetime | None = None,
     ) -> dict[str, Any]:
-        """List notification routing, event mappings, and channel assignments."""
+        """List the registry-owned event-to-channel notification routes."""
         resolved = (
             principal
             if principal is not None
@@ -1382,21 +1392,49 @@ class ConductBroker:
         )
         self._require_role(resolved, "observer", "conductor")
         now = now or utc_now()
-        with self.store.transaction() as state:
-            return {
-                "schema_version": "limen.notification_assignments.v1",
-                "generated_at": now.isoformat(),
-                "assignments": [
-                    {
-                        "session_id": session_id,
-                        "principal_id": principal_id,
-                        "agent": ConductorSessionV1.model_validate(state["sessions"][session_id]).identity.agent
-                        if session_id in state.get("sessions", {})
-                        else None,
-                    }
-                    for session_id, principal_id in sorted(state.get("session_principals", {}).items())
-                ],
-            }
+        try:
+            registry = json.loads(self.notification_registry_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ConductError("notification registry is unavailable or malformed") from exc
+        namespace = registry.get("namespace") if isinstance(registry, dict) else None
+        registry_version = registry.get("schema_version") if isinstance(registry, dict) else None
+        events = registry.get("events") if isinstance(registry, dict) else None
+        if not isinstance(namespace, str) or not isinstance(registry_version, int) or not isinstance(events, dict):
+            raise ConductError("notification registry is unavailable or malformed")
+        assignments: list[dict[str, Any]] = []
+        for event_id, definition in sorted(events.items()):
+            if not isinstance(event_id, str) or not isinstance(definition, dict):
+                raise ConductError("notification registry is unavailable or malformed")
+            channels = definition.get("channels")
+            templates = definition.get("templates")
+            if not isinstance(channels, list) or not all(isinstance(channel, str) for channel in channels):
+                raise ConductError("notification registry is unavailable or malformed")
+            if not isinstance(templates, dict):
+                raise ConductError("notification registry is unavailable or malformed")
+            assignments.append(
+                {
+                    "event_id": event_id,
+                    "class": definition.get("class"),
+                    "severity": definition.get("severity"),
+                    "owner": definition.get("owner"),
+                    "privacy": definition.get("privacy"),
+                    "channels": list(channels),
+                    "dedupe_key": definition.get("dedupe_key"),
+                    "recovery": definition.get("recovery"),
+                    "title": definition.get("title"),
+                    "templates": copy.deepcopy(templates),
+                }
+            )
+        return {
+            "schema_version": "limen.notification_assignments.v1",
+            "generated_at": now.isoformat(),
+            "registry_namespace": namespace,
+            "registry_schema_version": registry_version,
+            "registry_digest": canonical_hash(
+                {"namespace": namespace, "schema_version": registry_version, "events": events}
+            ),
+            "assignments": assignments,
+        }
 
     def list_assignments(
         self,
@@ -1620,6 +1658,20 @@ class ConductBroker:
             if session.quota_remaining == 0:
                 continue
             if packet.required_capabilities - session.capabilities:
+                continue
+            role_snapshot = (state.get("session_principal_roles") or {}).get(session.session_id)
+            if role_snapshot is None:
+                # Backward compatibility is safe only for the deterministic local
+                # principal: its roles are derived from the same capability set.
+                # An older authenticated session without a role snapshot must
+                # re-register instead of being guessed into executor authority.
+                local = self._local_principal(session.identity, session.capabilities)
+                if (state.get("session_principals") or {}).get(session.session_id) != local.principal_id:
+                    continue
+                registered_roles = set(local.roles)
+            else:
+                registered_roles = set(role_snapshot)
+            if registered_roles.isdisjoint({"executor", "compatibility"}):
                 continue
             if (
                 packet.execution.get("local_heavy_allowed") is False

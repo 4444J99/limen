@@ -9,7 +9,7 @@ and the prevalence signal OBSERVATORY was missing. Read-only; requires push acce
 (the traffic API 403s otherwise — recorded, never fatal).
 
     python scripts/traffic-collect.py                 # value-repos.json + 4444J99/4444J99
-    python scripts/traffic-collect.py --repos organvm/limen
+    python scripts/traffic-collect.py --repos 4444J99/limen
 """
 
 from __future__ import annotations

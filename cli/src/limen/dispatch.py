@@ -101,6 +101,7 @@ from limen.remote_execution import (
     resolve_pushed_sha,
     verification_context_for_task,
 )
+from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY
 from limen.model_selection import (  # the shared model vocabulary — also used by the non-bypassable `claude` shim
     _BUILD_FROM_PLAN_CLASS,
     _CLAUDE_TIER_ORDER,
@@ -2315,7 +2316,7 @@ def _call_warp_oz(agent: str, task: Task, dry_run: bool) -> bool | str:
     )
     gh = os.environ.get("LIMEN_WARP_OZ_BIN", "gh")
     workflow = os.environ.get("LIMEN_WARP_OZ_WORKFLOW", "limen-warp-oz.yml")
-    dispatch_repo = os.environ.get("LIMEN_WARP_OZ_REPO", "organvm/limen")
+    dispatch_repo = os.environ.get("LIMEN_WARP_OZ_REPO", "4444J99/limen")
     intent = (
         "Planning only: return a build packet and do not implement."
         if requested_profile.planning_only
@@ -3302,7 +3303,7 @@ def _local_repo_matches(repo: str | None, identity: str) -> bool:
         return False
     if _github_repo_identity(_github_slug_from_local_repo(path)) == identity:
         return True
-    if identity != "organvm/limen":
+    if not LIMEN_REPOSITORY_IDENTITY.accepts(identity):
         return False
 
     roots = {
@@ -3324,7 +3325,11 @@ def _local_repo_matches(repo: str | None, identity: str) -> bool:
 
 def _limen_repo_task(task: Task) -> bool:
     """Limen-root PR repair has repeatedly triggered prohibited broad local checks."""
-    return _github_repo_identity(task.repo) == "organvm/limen" or _local_repo_matches(task.repo, "organvm/limen")
+    identity = _github_repo_identity(task.repo)
+    return bool(identity and LIMEN_REPOSITORY_IDENTITY.accepts(identity)) or _local_repo_matches(
+        task.repo,
+        LIMEN_REPOSITORY_IDENTITY.canonical_coordinate,
+    )
 
 
 def _organvm_engine_task(task: Task) -> bool:

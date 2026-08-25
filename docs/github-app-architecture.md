@@ -1,25 +1,25 @@
-# GitHub: billing + identity architecture (the durable fix)
+# GitHub App exact-repository identity architecture
 
 Update verified 2026-07-06:
 
 - `organvm` now holds 301 repos.
 - GitHub consolidation gates report `0` source repos and `0` collision groups outside `organvm`.
 - `limen[bot]` is still blocked on App creation/install plus secret hydration. The installed `organvm` Apps are `claude`, `google-labs-jules`, `oz-by-warp`, and `chatgpt-codex-connector`.
-- `scripts/gh-app-token.sh --which` currently resolves to `pat (GITHUB_TOKEN fallback)`, not the App path.
+- `scripts/gh-app-token.sh --repo OWNER/REPO --which` reports the credential path without printing a token.
 
 Status as of 2026-06-20. This is the **settled** conclusion — not new research. It answers, once,
 "we don't need enterprise, do we? we don't even need all these orgs? we need the user profile…
 and something beyond it."
 
-## Billing (keystone — DONE)
+## Runner admission diagnosis
 
-The root cause of fleet CI going dark was **account-level billing**, not architecture. Account
-`4444J99` was billing-locked → GitHub Actions disabled account-wide → no PR could merge anywhere.
+Provider errors are observations, not proof that an account is billing locked. A failed Actions
+job with no runner and no executed steps is durably classified as `provider_runner_admission` /
+`CI_ZERO_STEP_ADMISSION`; the account cause and remedy remain unverified unless authoritative
+account, budget, usage, and repository evidence proves them.
 
-- **Paid 2026-06-19** (card 0186). Actions re-enabled (`actions/permissions` → `enabled:true`).
-- The lock is **account-level**: consolidating repos / moving orgs does **not** fix it. The one
-  human atom was "settle the balance," and it's done.
-- Keep CI repos **public** → free unlimited Actions, so a future billing hiccup can't re-dark them.
+Keep standard-runner CI repositories public so their runner surface remains zero-cost. Moving the
+controller changes which repository admits the runner; it does not by itself prove recovery.
 
 ## Identity (architecture — the remaining durable fix, staged here)
 
@@ -31,14 +31,13 @@ The root cause of fleet CI going dark was **account-level billing**, not archite
 
 ### Why a GitHub App, not a PAT
 
-A **PAT acts as the human**: it shares their 5k/hr limit and **dies the instant the personal
-account is billing-locked** — exactly what took CI down. A **GitHub App** is a first-class machine
-identity:
+A **PAT acts as the human** and shares that account's authorization and rate-limit surface. A
+**GitHub App** is a first-class machine identity:
 
 - its own actor (`limen[bot]`), independent of any human account,
 - per-repo **least-privilege, auto-expiring** installation tokens,
 - 15k/hr rate limit,
-- survives a personal-account lock — so a future lock **can't** down the fleet.
+- selects the installation for one exact target repository before minting.
 
 (A bot *user* account is the inferior alternative; a fine-grained PAT is only a bootstrap.)
 
@@ -47,18 +46,21 @@ identity:
 `scripts/gh-app-token.sh` is the executable identity. Any GitHub caller gets its token via:
 
 ```sh
-GITHUB_TOKEN=$(bash scripts/gh-app-token.sh)   # drop-in for gh / the mining API / git push
+GITHUB_TOKEN=$(bash scripts/gh-app-token.sh --repo OWNER/REPO)
 ```
 
-It **cascades** (cascade-fallback-principle) so nothing breaks before the App exists:
+Credential selection is fail-closed at the App boundary:
 
 1. **App** — if `GITHUB_APP_ID` + `GITHUB_APP_PRIVATE_KEY` are set → mint a short-lived
-   installation token (RS256 JWT via `openssl` → `/app/installations/{id}/access_tokens`).
-   Installation id is **derived** at run-time if not pinned ("names are outputs").
-2. **PAT** — else emit `GITHUB_TOKEN` unchanged (today's bootstrap).
+   token only after `GET /repos/OWNER/REPO/installation` resolves one installation and the
+   repository's numeric ID/full name match. A configured installation ID is an assertion and must
+   equal the resolved ID. The token request contains exactly that one numeric repository ID.
+2. **PAT** — only when App credentials are absent, emit `GITHUB_TOKEN` unchanged.
 3. **gh** — else `gh auth token`.
 
-`bash scripts/gh-app-token.sh --which` reports which path *would* be used, printing no secret.
+When App credentials are present, missing/invalid targeting or mint failure exits nonzero without
+falling back to PAT or `gh`. `bash scripts/gh-app-token.sh --repo OWNER/REPO --which` reports which
+path would be used, printing no secret.
 
 ## The one human atom (to flip identity from PAT → App)
 
@@ -78,9 +80,9 @@ Everything below is the irreducible manual step a script cannot do (it generates
    bash scripts/set-credential.sh GITHUB_APP_ID
    bash scripts/set-credential.sh GITHUB_APP_PRIVATE_KEY   # paste full PEM, or store the .pem and give its path
    bash scripts/set-credential.sh --check                  # names only; confirms the App keys are present
-   # GITHUB_APP_INSTALLATION_ID is optional — derived if omitted
+   # GITHUB_APP_INSTALLATION_ID is optional — when set it must match the exact repository
    ```
-4. Verify: `bash scripts/gh-app-token.sh --verify-app` → `app verified (limen[bot] installation token mint succeeds)`.
+4. Verify: `bash scripts/gh-app-token.sh --repo 4444J99/limen --verify-app`.
 5. **Let the Enterprise trial lapse.** No migration, no payment. (Do NOT delete `organvm` — it
    now holds 301 repos; the earlier "delete the empty organvm" note is stale.)
 

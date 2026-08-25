@@ -124,18 +124,18 @@ leaves:
   - schema_version: limen.fanout_leaf.v1
     work_id: leaf-docs
     idempotency_key: campaign-20260720/leaf-docs
-    owner_repository: organvm/limen
+    owner_repository: 4444J99/limen
     exact_base: 0000000000000000000000000000000000000000
     topic_branch: work/leaf-docs
     allowed_paths: [docs]
     resource_claims:
-      - {key: "path/organvm/limen/0000000000000000000000000000000000000000/docs", mode: exclusive}
+      - {key: "path/4444J99/limen/0000000000000000000000000000000000000000/docs", mode: exclusive}
     dependencies: []
     required_capabilities: [code]
     intended_effect: update one bounded document
     effect: write
     predicate: python3 scripts/check-docs.py
-    receipt_target: github:organvm/limen:pr
+    receipt_target: github:4444J99/limen:pr
     deadline: 2026-07-21T00:00:00Z
     retry: {max_attempts: 2, transient_only: true}
     spend: {unit: runs, limit: 2, reserve: 0}

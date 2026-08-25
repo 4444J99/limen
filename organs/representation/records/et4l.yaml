@@ -144,7 +144,7 @@ sources:
   - id: remote-et4l-chamber
     source_type: remote_repo
     privacy_level: public
-    source_ref: https://github.com/organvm/limen/blob/main/organs/artist/chambers/et4l.yaml
+    source_ref: https://github.com/4444J99/limen/blob/main/organs/artist/chambers/et4l.yaml
     captured_at: "2026-07-08T00:00:00Z"
     claim_ids:
       - et4l-artist-chamber
@@ -153,7 +153,7 @@ sources:
   - id: remote-artist-kernel
     source_type: remote_repo
     privacy_level: public
-    source_ref: https://github.com/organvm/limen/blob/main/organs/artist/KERNEL.md
+    source_ref: https://github.com/4444J99/limen/blob/main/organs/artist/KERNEL.md
     captured_at: "2026-07-08T00:00:00Z"
     claim_ids:
       - et4l-exhibition-logic
@@ -162,7 +162,7 @@ sources:
   - id: web-limen-artist-organ
     source_type: web
     privacy_level: public
-    source_ref: https://github.com/organvm/limen/tree/main/organs/artist
+    source_ref: https://github.com/4444J99/limen/tree/main/organs/artist
     captured_at: "2026-07-08T00:00:00Z"
     claim_ids:
       - et4l-public-proof

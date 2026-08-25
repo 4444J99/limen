@@ -20,6 +20,12 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CLI_SRC = ROOT / "cli" / "src"
+if str(CLI_SRC) not in sys.path:
+    sys.path.insert(0, str(CLI_SRC))
+
+from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY  # noqa: E402
+
 ARTIFACT_PATH = ROOT / "docs/positioning/program/research-adjudication.json"
 RECEIPT_PATH = ROOT / "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json"
 PROGRAM_PATH = ROOT / "institutio/positioning/program.yaml"
@@ -61,16 +67,12 @@ CREDENTIAL_FIELD_COMPACT_RE = re.compile(
 CAMEL_CASE_BOUNDARY_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
 EXPECTED_ARTIFACT_SHAPE_SHA256 = "dd72a7aaa85e4de558dc6465b822baec0e40d81518f6276a0fe90c283064c448"
 EXPECTED_RECEIPT_SHAPE_SHA256 = "56db1b1ae7a42f181fcb38ef327738e56bc0dc1cdd45962b122a0103158a1985"
-EXPECTED_CLAIM_CITATION_CONTRACT_SHA256 = (
-    "e01caa94bfb7c59b27ecf497ba039c728c3944c94369f4ed2bc35754f30b36f3"
-)
+EXPECTED_CLAIM_CITATION_CONTRACT_SHA256 = "e01caa94bfb7c59b27ecf497ba039c728c3944c94369f4ed2bc35754f30b36f3"
 EXPECTED_CLAIM_COUNT = 13
 EXPECTED_API_RECEIPT_SOURCES = {
     "profile_metadata": "https://api.github.com/users/4444J99",
     "public_organization_repository_counts": "https://docs.github.com/en/graphql/reference/orgs",
-    "public_original_organization_repository_counts": (
-        "https://docs.github.com/en/graphql/reference/queries#search"
-    ),
+    "public_original_organization_repository_counts": ("https://docs.github.com/en/graphql/reference/queries#search"),
     "contribution_calendar_fresh_observation": (
         "https://docs.github.com/en/graphql/reference/users#contributioncalendar"
     ),
@@ -131,9 +133,7 @@ PROFILE_RUNS_API_URL = (
     "profile.yml/runs?event=schedule&status=completed&per_page=10"
 )
 PROFILE_MAIN_COMMIT_API_URL = "https://api.github.com/repos/4444J99/4444J99/commits/main"
-PROFILE_MANIFEST_RAW_URL = (
-    "https://raw.githubusercontent.com/4444J99/4444J99/main/assets/stats-manifest.json"
-)
+PROFILE_MANIFEST_RAW_URL = "https://raw.githubusercontent.com/4444J99/4444J99/main/assets/stats-manifest.json"
 PROFILE_CONTRIBUTION_QUERY = (
     'query { user(login:"4444J99") { contributionsCollection { contributionCalendar '
     "{ totalContributions weeks { contributionDays { contributionCount date } } } } } }"
@@ -149,16 +149,42 @@ EXPECTED_PROFILE_METADATA_RESULT = {
     "updated_at": "2026-08-09T16:58:24Z",
     "blog": "https://organvm.github.io/portfolio/",
 }
+EXPECTED_LIVE_PROFILE_BLOG = "https://organvm-vii-kerygma.github.io/portfolio/"
 LIVE_REFERENCE_ISSUE_NUMBER = 1245
-LIVE_REFERENCE_URL = f"https://github.com/organvm/limen/issues/{LIVE_REFERENCE_ISSUE_NUMBER}"
+LIMEN_CANONICAL_REPOSITORY = LIMEN_REPOSITORY_IDENTITY.canonical_coordinate
+LIMEN_HISTORICAL_REPOSITORY = LIMEN_REPOSITORY_IDENTITY.historical_aliases[0]
+LIVE_REFERENCE_URL = f"https://github.com/{LIMEN_CANONICAL_REPOSITORY}/issues/{LIVE_REFERENCE_ISSUE_NUMBER}"
 LIVE_REFERENCE_API_URL = (
-    f"https://api.github.com/repos/organvm/limen/issues/{LIVE_REFERENCE_ISSUE_NUMBER}"
+    f"https://api.github.com/repos/{LIMEN_CANONICAL_REPOSITORY}/issues/{LIVE_REFERENCE_ISSUE_NUMBER}"
 )
 EXPECTED_LIVE_REFERENCE = {
     "issue": LIVE_REFERENCE_URL,
     "issue_state": "open",
     "role": "profile-engine follow-up owner; it does not replace the post-merge projection gate",
 }
+
+
+def canonical_live_repository(repository: str) -> str:
+    if LIMEN_REPOSITORY_IDENTITY.accepts(repository):
+        return LIMEN_CANONICAL_REPOSITORY
+    return repository
+
+
+def normalize_limen_url(value: object) -> object:
+    if not isinstance(value, str):
+        return value
+    normalized = value
+    for historical_repository in LIMEN_REPOSITORY_IDENTITY.historical_aliases:
+        normalized = normalized.replace(
+            f"api.github.com/repos/{historical_repository}",
+            f"api.github.com/repos/{LIMEN_CANONICAL_REPOSITORY}",
+        ).replace(
+            f"github.com/{historical_repository}",
+            f"github.com/{LIMEN_CANONICAL_REPOSITORY}",
+        )
+    return normalized
+
+
 EXPECTED_HTTP_RECEIPTS = {
     "current_profile_blog_field": ("https://organvm.github.io/portfolio/", 404),
     "canonical_transferred_portfolio_pages": (
@@ -174,13 +200,9 @@ EXPECTED_HTTP_REPRODUCTIONS = {
     )
     for receipt_id, (url, _status) in EXPECTED_HTTP_RECEIPTS.items()
 }
-EXPECTED_HTTP_RECEIPT_KEYS = frozenset(
-    {"id", "url", "status", "observed_at", "reproduction"}
-)
+EXPECTED_HTTP_RECEIPT_KEYS = frozenset({"id", "url", "status", "observed_at", "reproduction"})
 EXPECTED_API_RECEIPT_KEYS = {
-    "profile_metadata": frozenset(
-        {"id", "source", "reproduction", "observed_at", "result"}
-    ),
+    "profile_metadata": frozenset({"id", "source", "reproduction", "observed_at", "result"}),
     "public_organization_repository_counts": frozenset(
         {"id", "source", "query", "observed_at", "organization_count", "counts", "total"}
     ),
@@ -190,21 +212,16 @@ EXPECTED_API_RECEIPT_KEYS = {
     "contribution_calendar_fresh_observation": frozenset(
         {"id", "source", "reproduction", "observed_at", "result", "interpretation"}
     ),
-    "w01_public_safe_census": frozenset(
-        {"id", "source", "reproduction", "observed_at", "result", "privacy"}
-    ),
+    "w01_public_safe_census": frozenset({"id", "source", "reproduction", "observed_at", "result", "privacy"}),
 }
-EXPECTED_CONTRIBUTION_RESULT_KEYS = frozenset(
-    {"starts_at", "ends_at", "total_contributions", "sum_of_daily_counts"}
-)
+EXPECTED_CONTRIBUTION_RESULT_KEYS = frozenset({"starts_at", "ends_at", "total_contributions", "sum_of_daily_counts"})
 EXPECTED_W01_RESULT = {
     "organization_count": 10,
     "accessible_repository_count": 314,
     "public_repository_count": 235,
     "private_repository_count": 79,
     "profile_basis_reconciliation": (
-        "8 personal public repositories + 227 public organization repositories = "
-        "235 public repositories"
+        "8 personal public repositories + 227 public organization repositories = 235 public repositories"
     ),
 }
 EXPECTED_DAILY_RECEIPT_KEYS = frozenset(
@@ -217,9 +234,7 @@ EXPECTED_DAILY_RECEIPT_KEYS = frozenset(
         "bounded_interpretation",
     }
 )
-EXPECTED_DAILY_RUN_KEYS = frozenset(
-    {"run_id", "url", "created_at", "event", "conclusion", "resulting_head"}
-)
+EXPECTED_DAILY_RUN_KEYS = frozenset({"run_id", "url", "created_at", "event", "conclusion", "resulting_head"})
 EXPECTED_PUBLIC_SOURCES: dict[str, dict[str, object]] = {
     "PROFILE_README": {
         "repository": "4444J99/4444J99",
@@ -292,16 +307,12 @@ EXPECTED_PUBLIC_SOURCES: dict[str, dict[str, object]] = {
     "GITHUB_CONTRIBUTIONS": {
         "url": "https://docs.github.com/en/account-and-profile/reference/profile-contributions-reference"
     },
-    "GITHUB_GRAPHQL": {
-        "url": "https://docs.github.com/en/graphql/reference/users#contributioncalendar"
-    },
+    "GITHUB_GRAPHQL": {"url": "https://docs.github.com/en/graphql/reference/users#contributioncalendar"},
     "GITHUB_REPOSITORIES": {"url": "https://docs.github.com/en/rest/repos/repos"},
     "GITHUB_TRANSFER": {
         "url": "https://docs.github.com/en/repositories/creating-and-managing-repositories/transferring-a-repository"
     },
-    "GITHUB_OCTOVERSE_2023": {
-        "url": "https://github.blog/news-insights/research/the-state-of-open-source-and-ai/"
-    },
+    "GITHUB_OCTOVERSE_2023": {"url": "https://github.blog/news-insights/research/the-state-of-open-source-and-ai/"},
     "PORTFOLIO_IDENTITY": {
         "repository": PORTFOLIO_CANONICAL_SLUG,
         "repository_id": PORTFOLIO_REPOSITORY_ID,
@@ -365,10 +376,7 @@ EXPECTED_PUBLIC_PROFILE = {
     "default_branch": "main",
     "head": EXPECTED_PUBLIC_SOURCES["PROFILE_README"]["head"],
     "head_committed_at": "2026-08-10T08:06:01Z",
-    "head_url": (
-        f"https://github.com/{PROFILE_REPOSITORY}/commit/"
-        f"{EXPECTED_PUBLIC_SOURCES['PROFILE_README']['head']}"
-    ),
+    "head_url": (f"https://github.com/{PROFILE_REPOSITORY}/commit/{EXPECTED_PUBLIC_SOURCES['PROFILE_README']['head']}"),
     "readme": {
         "blob": EXPECTED_PUBLIC_SOURCES["PROFILE_README"]["blob"],
         "url": EXPECTED_PUBLIC_SOURCES["PROFILE_README"]["url"],
@@ -409,10 +417,7 @@ EXPECTED_PORTFOLIO_REPOSITORY_IDENTITY_RECEIPT = {
     "default_branch": "main",
     "archived": False,
     "head": "85bfaa84287e4a3b90b49187caa4313c4edda1aa",
-    "head_url": (
-        "https://github.com/organvm-vii-kerygma/portfolio/commit/"
-        "85bfaa84287e4a3b90b49187caa4313c4edda1aa"
-    ),
+    "head_url": ("https://github.com/organvm-vii-kerygma/portfolio/commit/85bfaa84287e4a3b90b49187caa4313c4edda1aa"),
     "source": f"https://api.github.com/repositories/{PORTFOLIO_REPOSITORY_ID}",
     "observed_at": "2026-08-10T19:21:11Z",
     "registry_disposition": "canonical_owner_corrected_by_stable_repository_id",
@@ -576,13 +581,10 @@ def _exact_typed_value(value: object, expected: object) -> bool:
     if type(value) is not type(expected):
         return False
     if isinstance(expected, dict):
-        return set(value) == set(expected) and all(
-            _exact_typed_value(value[key], expected[key]) for key in expected
-        )
+        return set(value) == set(expected) and all(_exact_typed_value(value[key], expected[key]) for key in expected)
     if isinstance(expected, list):
         return len(value) == len(expected) and all(
-            _exact_typed_value(item, expected_item)
-            for item, expected_item in zip(value, expected, strict=True)
+            _exact_typed_value(item, expected_item) for item, expected_item in zip(value, expected, strict=True)
         )
     return value == expected
 
@@ -613,17 +615,14 @@ def _credential_shaped_field(value: str) -> bool:
     separated = CAMEL_CASE_BOUNDARY_RE.sub("_", value)
     compact = re.sub(r"[^A-Za-z0-9]", "", value)
     return (
-        CREDENTIAL_FIELD_RE.search(separated) is not None
-        or CREDENTIAL_FIELD_COMPACT_RE.fullmatch(compact) is not None
+        CREDENTIAL_FIELD_RE.search(separated) is not None or CREDENTIAL_FIELD_COMPACT_RE.fullmatch(compact) is not None
     )
 
 
 def _credential_free_public_tree(value: object) -> bool:
     if isinstance(value, dict):
         return all(
-            isinstance(key, str)
-            and not _credential_shaped_field(key)
-            and _credential_free_public_tree(child)
+            isinstance(key, str) and not _credential_shaped_field(key) and _credential_free_public_tree(child)
             for key, child in value.items()
         )
     if isinstance(value, list):
@@ -724,11 +723,7 @@ def _public_contract_shape_sha256(value: object) -> str:
 def _accepted_dependency_contract(work_id: str) -> dict[str, Any]:
     return {
         "work_id": work_id,
-        **{
-            key: value
-            for key, value in ACCEPTED_DEPENDENCIES[work_id].items()
-            if key != "issue_number"
-        },
+        **{key: value for key, value in ACCEPTED_DEPENDENCIES[work_id].items() if key != "issue_number"},
     }
 
 
@@ -744,9 +739,7 @@ def _artifact_claim_projection(claims: list[object]) -> list[dict[str, Any]]:
             {
                 "id": claim.get("id"),
                 "layers": {
-                    layer: (claim.get(layer) or {}).get("disposition")
-                    if isinstance(claim.get(layer), dict)
-                    else None
+                    layer: (claim.get(layer) or {}).get("disposition") if isinstance(claim.get(layer), dict) else None
                     for layer in LAYERS
                 },
                 "publishable_status": integration.get("publishable_status"),
@@ -768,19 +761,14 @@ def _claim_citation_contract(claims: list[object]) -> dict[str, dict[str, object
         claim_id = claim.get("id")
         key = claim_id if isinstance(claim_id, str) else f"invalid-id-{index}"
         projection[key] = {
-            layer: claim[layer].get("citations")
-            if isinstance(claim.get(layer), dict)
-            else None
-            for layer in LAYERS
+            layer: claim[layer].get("citations") if isinstance(claim.get(layer), dict) else None for layer in LAYERS
         }
     return projection
 
 
 def _ledger_claim_projection(ledger: str) -> list[dict[str, str]]:
     section = ledger.partition("## 9. Research-criticism import")[2].partition("## Never-publish list")[0]
-    row_re = re.compile(
-        r"^\| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \|$"
-    )
+    row_re = re.compile(r"^\| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \| `([^`]+)` \|$")
     rows: list[dict[str, str]] = []
     for line in section.splitlines():
         match = row_re.fullmatch(line)
@@ -894,22 +882,19 @@ def validate_bundle(
         if not re.fullmatch(r"[0-9a-f]{64}", str(dependency.get("canonical_receipt_sha256") or "")):
             errors.append(f"dependency {work_id} needs its canonical receipt SHA-256")
     try:
-        if _git_blob_oid(W01_TRACKED_RECEIPT_PATH) != ACCEPTED_DEPENDENCIES["PSP-P02-W01"][
-            "tracked_receipt_blob"
-        ]:
+        if _git_blob_oid(W01_TRACKED_RECEIPT_PATH) != ACCEPTED_DEPENDENCIES["PSP-P02-W01"]["tracked_receipt_blob"]:
             errors.append("tracked W01 receipt blob differs from the accepted binding")
-        if _git_blob_oid(CLAIMS_LEDGER_PATH) != ACCEPTED_DEPENDENCIES["PSP-P02-W05"][
-            "claims_ledger_blob"
-        ]:
+        if _git_blob_oid(CLAIMS_LEDGER_PATH) != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["claims_ledger_blob"]:
             errors.append("claims-ledger blob differs from the accepted W05 binding")
     except OSError as exc:
         errors.append(f"cannot read accepted dependency artifact: {exc}")
     if not isinstance(flagship_evidence_text, str):
         errors.append("flagship evidence source bytes must be text")
     else:
-        if _git_blob_oid_bytes(flagship_evidence_text.encode()) != ACCEPTED_DEPENDENCIES[
-            "PSP-P02-W05"
-        ]["flagship_evidence_blob"]:
+        if (
+            _git_blob_oid_bytes(flagship_evidence_text.encode())
+            != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["flagship_evidence_blob"]
+        ):
             errors.append("flagship-evidence blob differs from the accepted W05 binding")
         try:
             parsed_flagship_evidence = yaml.safe_load(flagship_evidence_text)
@@ -922,8 +907,10 @@ def validate_bundle(
         "receipt.formal_completion.live_reference",
         errors,
     )
-    if live_reference != EXPECTED_LIVE_REFERENCE:
-        errors.append("the profile-engine live reference must bind the exact open organvm/limen#1245 contract")
+    normalized_live_reference = dict(live_reference)
+    normalized_live_reference["issue"] = normalize_limen_url(normalized_live_reference.get("issue"))
+    if normalized_live_reference != EXPECTED_LIVE_REFERENCE:
+        errors.append("the profile-engine live reference must bind the exact open 4444J99/limen#1245 contract")
 
     privacy = _mapping(receipt.get("privacy_review"), "receipt.privacy_review", errors)
     if not _exact_typed_mapping(privacy, EXPECTED_PRIVACY_REVIEW):
@@ -956,9 +943,7 @@ def validate_bundle(
         expected_vocabulary = list(DISPOSITION_VOCABULARIES[layer])
         if vocabulary != expected_vocabulary:
             errors.append(f"{layer} disposition vocabulary must match the canonical ordered vocabulary")
-        disposition_tokens[layer] = (
-            frozenset(vocabulary) if _string_token_list(vocabulary) else frozenset()
-        )
+        disposition_tokens[layer] = frozenset(vocabulary) if _string_token_list(vocabulary) else frozenset()
 
     sources = artifact.get("sources")
     if not isinstance(sources, dict) or not sources:
@@ -1027,8 +1012,7 @@ def validate_bundle(
     )
     if (
         flagship_source.get("head") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["accepted_head"]
-        or flagship_source.get("blob")
-        != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["flagship_evidence_blob"]
+        or flagship_source.get("blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["flagship_evidence_blob"]
     ):
         errors.append("flagship-evidence source must bind the accepted W05 head and blob")
 
@@ -1095,9 +1079,7 @@ def validate_bundle(
     except (TypeError, ValueError):
         citation_contract_sha256 = ""
     if citation_contract_sha256 != EXPECTED_CLAIM_CITATION_CONTRACT_SHA256:
-        errors.append(
-            "all 13 claims must match the accepted exact per-layer citation contract"
-        )
+        errors.append("all 13 claims must match the accepted exact per-layer citation contract")
 
     artifact_projection = _artifact_claim_projection(claims)
     w05_import = _mapping(
@@ -1143,11 +1125,7 @@ def validate_bundle(
     if not isinstance(axes, list):
         errors.append("lavrea_axis_audit must be a list")
         axes = []
-    axis_tokens = [
-        row.get("axis")
-        for row in axes
-        if isinstance(row, dict) and _text(row.get("axis"))
-    ]
+    axis_tokens = [row.get("axis") for row in axes if isinstance(row, dict) and _text(row.get("axis"))]
     axis_names = set(axis_tokens)
     if axis_names != LAVREA_AXES or len(axes) != len(LAVREA_AXES):
         errors.append("LAVREA audit must cover each of the eight axes exactly once")
@@ -1180,9 +1158,7 @@ def validate_bundle(
         errors.append("W05 contract must bind the accepted claims-ledger blob")
     if w05.get("accepted_projection") != "docs/positioning/evidence/flagship-evidence.yaml#w08_research_import":
         errors.append("W05 contract must name the accepted 13-claim projection")
-    if w05.get("accepted_projection_blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"][
-        "flagship_evidence_blob"
-    ]:
+    if w05.get("accepted_projection_blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["flagship_evidence_blob"]:
         errors.append("W05 contract must bind the accepted flagship-evidence blob")
     if w05.get("source_claim_ids") != claim_ids:
         errors.append("W05 contract claim IDs must match adjudicated claim order")
@@ -1226,9 +1202,7 @@ def validate_bundle(
     retired_work = [row.get("id") for row in work_rows if row.get("target_repo") == PORTFOLIO_RETIRED_SLUG]
     if retired_work:
         errors.append(f"work packets still use the retired portfolio slug: {', '.join(map(str, retired_work))}")
-    canonical_work_ids = [
-        str(row.get("id")) for row in work_rows if row.get("target_repo") == PORTFOLIO_CANONICAL_SLUG
-    ]
+    canonical_work_ids = [str(row.get("id")) for row in work_rows if row.get("target_repo") == PORTFOLIO_CANONICAL_SLUG]
 
     relay = _mapping(
         artifact.get("repository_drift_relay"),
@@ -1257,9 +1231,7 @@ def validate_bundle(
         receipt_identity,
         EXPECTED_PORTFOLIO_REPOSITORY_IDENTITY_RECEIPT,
     ):
-        errors.append(
-            "portfolio repository identity receipt must match its complete accepted typed value contract"
-        )
+        errors.append("portfolio repository identity receipt must match its complete accepted typed value contract")
     if receipt_identity.get("github_repository_id") != PORTFOLIO_REPOSITORY_ID:
         errors.append("live receipt must carry the stable portfolio repository ID")
     if receipt_identity.get("canonical_slug") != PORTFOLIO_CANONICAL_SLUG:
@@ -1277,17 +1249,11 @@ def validate_bundle(
     for work_id in canonical_work_ids:
         mapped = _mapping(issues.get(work_id), f"issue_map.issues.{work_id}", errors)
         number = mapped.get("number")
-        if (
-            not isinstance(number, int)
-            or isinstance(number, bool)
-            or number <= 0
-        ):
+        if not isinstance(number, int) or isinstance(number, bool) or number <= 0:
             errors.append(f"{work_id} issue number must be a positive non-boolean integer")
             continue
         if number in issue_number_owners:
-            errors.append(
-                f"issue number {number} is duplicated by {issue_number_owners[number]} and {work_id}"
-            )
+            errors.append(f"issue number {number} is duplicated by {issue_number_owners[number]} and {work_id}")
         else:
             issue_number_owners[number] = work_id
         expected_issue_rows.append({"work_id": work_id, "issue": number})
@@ -1361,23 +1327,17 @@ def validate_bundle(
             api_receipts[receipt_id] = row
         expected_keys = EXPECTED_API_RECEIPT_KEYS.get(receipt_id)
         if expected_keys is not None and set(row) != expected_keys:
-            errors.append(
-                f"API query receipt {receipt_id} must contain exactly {sorted(expected_keys)!r}"
-            )
+            errors.append(f"API query receipt {receipt_id} must contain exactly {sorted(expected_keys)!r}")
         if not _credential_free_https_url(row.get("source")):
             errors.append(f"API query receipt {receipt_id} needs a credential-free HTTPS source")
         expected_source = EXPECTED_API_RECEIPT_SOURCES.get(receipt_id)
         if expected_source is not None and row.get("source") != expected_source:
-            errors.append(
-                f"API query receipt {receipt_id} must bind its exact expected source endpoint"
-            )
+            errors.append(f"API query receipt {receipt_id} must bind its exact expected source endpoint")
         if _rfc3339(row.get("observed_at")) is None:
             errors.append(f"API query receipt {receipt_id} needs an RFC3339 observation time")
         metadata = [row[key] for key in ("reproduction", "query") if key in row]
         if not metadata or any(not _safe_public_metadata(value) for value in metadata):
-            errors.append(
-                f"API query receipt {receipt_id} needs safe nonempty reproduction or query metadata"
-            )
+            errors.append(f"API query receipt {receipt_id} needs safe nonempty reproduction or query metadata")
     if len(api_rows) != len(EXPECTED_API_RECEIPT_IDS) or set(api_receipts) != EXPECTED_API_RECEIPT_IDS:
         errors.append("API query receipts must contain the exact unique expected ID set")
 
@@ -1391,11 +1351,7 @@ def validate_bundle(
         errors.append("profile metadata result must match the exact typed public observation")
         profile_metadata_result = {}
     profile_claim = next(
-        (
-            claim
-            for claim in claims
-            if isinstance(claim, dict) and claim.get("id") == "profile-portfolio-link"
-        ),
+        (claim for claim in claims if isinstance(claim, dict) and claim.get("id") == "profile-portfolio-link"),
         {},
     )
     if (
@@ -1406,7 +1362,9 @@ def validate_bundle(
         or _rfc3339(profile_metadata_result.get("created_at")) is None
         or _rfc3339(profile_metadata_result.get("updated_at")) is None
     ):
-        errors.append("profile metadata result must reconcile identity, repository count, blog claim, and tenure inputs")
+        errors.append(
+            "profile metadata result must reconcile identity, repository count, blog claim, and tenure inputs"
+        )
 
     org_public = _mapping(
         api_receipts.get("public_organization_repository_counts"),
@@ -1472,9 +1430,7 @@ def validate_bundle(
     elif total_contributions != sum_of_daily_counts:
         errors.append("fresh contribution total must equal its daily-count sum")
     elif total_contributions != PROFILE_FRESH_CONTRIBUTIONS:
-        errors.append(
-            f"fresh contribution total must preserve the recorded {PROFILE_FRESH_CONTRIBUTIONS} observation"
-        )
+        errors.append(f"fresh contribution total must preserve the recorded {PROFILE_FRESH_CONTRIBUTIONS} observation")
     contribution_observed_at = _rfc3339(contribution_receipt.get("observed_at"))
     contribution_start = _iso_date(contributions.get("starts_at"))
     contribution_end = _iso_date(contributions.get("ends_at"))
@@ -1498,8 +1454,7 @@ def validate_bundle(
         errors,
     )
     if contribution_claim.get("exact_public_wording") != PROFILE_CONTRIBUTION_WORDING or (
-        f"{PROFILE_RENDERED_CONTRIBUTIONS:,}"
-        not in str(contribution_integration.get("public_wording") or "")
+        f"{PROFILE_RENDERED_CONTRIBUTIONS:,}" not in str(contribution_integration.get("public_wording") or "")
     ):
         errors.append("contribution claim wording must remain bound to the rendered observation")
     if w01_result.get("public_repository_count") != 8 + 227:
@@ -1520,9 +1475,7 @@ def validate_bundle(
             continue
         http[receipt_id] = row
         if set(row) != EXPECTED_HTTP_RECEIPT_KEYS:
-            errors.append(
-                f"HTTP receipt {receipt_id} must contain exactly {sorted(EXPECTED_HTTP_RECEIPT_KEYS)!r}"
-            )
+            errors.append(f"HTTP receipt {receipt_id} must contain exactly {sorted(EXPECTED_HTTP_RECEIPT_KEYS)!r}")
     if len(http_rows) != len(http) or set(http) != set(EXPECTED_HTTP_RECEIPTS):
         errors.append("HTTP receipts must contain each expected endpoint exactly once")
     for receipt_id, (expected_url, expected_status) in EXPECTED_HTTP_RECEIPTS.items():
@@ -1534,13 +1487,8 @@ def validate_bundle(
         if _rfc3339(row.get("observed_at")) is None:
             errors.append(f"HTTP receipt {receipt_id} needs an RFC3339 observation time")
         reproduction = row.get("reproduction")
-        if (
-            not _safe_public_metadata(reproduction)
-            or reproduction != EXPECTED_HTTP_REPRODUCTIONS[receipt_id]
-        ):
-            errors.append(
-                f"HTTP receipt {receipt_id} must safely reproduce the exact endpoint URL without credentials"
-            )
+        if not _safe_public_metadata(reproduction) or reproduction != EXPECTED_HTTP_REPRODUCTIONS[receipt_id]:
+            errors.append(f"HTTP receipt {receipt_id} must safely reproduce the exact endpoint URL without credentials")
 
     daily = _mapping(
         receipt.get("daily_generation_receipt"),
@@ -1620,9 +1568,7 @@ def validate_bundle(
         errors.append("claims-ledger integration must record the exact 13-claim comparison")
     if ledger.get("integration_artifact") != str(ARTIFACT_PATH.relative_to(ROOT)):
         errors.append("receipt must point to the tracked formalization artifact")
-    if ledger.get("accepted_projection_blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"][
-        "flagship_evidence_blob"
-    ]:
+    if ledger.get("accepted_projection_blob") != ACCEPTED_DEPENDENCIES["PSP-P02-W05"]["flagship_evidence_blob"]:
         errors.append("claims-ledger integration must bind the accepted flagship-evidence projection blob")
 
     required_doc_fragments = (
@@ -1770,15 +1716,12 @@ def validate_live_sources(
         return ["cannot verify public sources without a source mapping"]
     errors: list[str] = []
     repositories = sorted(
-        {
-            str(expected["repository"])
-            for expected in EXPECTED_PUBLIC_SOURCES.values()
-            if "repository" in expected
-        }
+        {str(expected["repository"]) for expected in EXPECTED_PUBLIC_SOURCES.values() if "repository" in expected}
     )
     for repository in repositories:
+        live_coordinate = canonical_live_repository(repository)
         try:
-            live_repository = fetch(["api", f"repos/{repository}"])
+            live_repository = fetch(["api", f"repos/{live_coordinate}"])
         except AdjudicationError as exc:
             errors.append(f"cannot verify public source repository {repository}: {exc}")
             continue
@@ -1786,7 +1729,7 @@ def validate_live_sources(
             errors.append(f"public source repository {repository} response must be a mapping")
             continue
         if (
-            live_repository.get("full_name") != repository
+            canonical_live_repository(str(live_repository.get("full_name") or "")) != live_coordinate
             or live_repository.get("private") is not False
             or live_repository.get("visibility") != "public"
         ):
@@ -1798,7 +1741,7 @@ def validate_live_sources(
         head = expected.get("head")
         if not all(isinstance(value, str) for value in (repository, path, head)):
             continue
-        endpoint = f"repos/{repository}/contents/{quote(path, safe='/')}?ref={head}"
+        endpoint = f"repos/{canonical_live_repository(repository)}/contents/{quote(path, safe='/')}?ref={head}"
         try:
             live_content = fetch(["api", endpoint])
         except AdjudicationError as exc:
@@ -1810,7 +1753,7 @@ def validate_live_sources(
         if (
             live_content.get("type") != "file"
             or live_content.get("path") != path
-            or live_content.get("html_url") != expected.get("url")
+            or normalize_limen_url(live_content.get("html_url")) != normalize_limen_url(expected.get("url"))
         ):
             errors.append(f"public source {source_id} must resolve its exact accepted repository path")
         expected_blob = expected.get("blob")
@@ -1822,10 +1765,10 @@ def validate_live_sources(
 def validate_live_reference(
     fetch: Callable[[list[str]], Any] = _gh_json,
 ) -> list[str]:
-    """Verify the exact organvm/limen follow-up issue remains an open issue."""
+    """Verify the exact canonical Limen follow-up issue remains an open issue."""
 
     try:
-        issue = fetch(["api", f"repos/organvm/limen/issues/{LIVE_REFERENCE_ISSUE_NUMBER}"])
+        issue = fetch(["api", f"repos/{LIMEN_CANONICAL_REPOSITORY}/issues/{LIVE_REFERENCE_ISSUE_NUMBER}"])
     except AdjudicationError as exc:
         return [f"cannot resolve profile-engine live reference: {exc}"]
     if not isinstance(issue, dict):
@@ -1835,11 +1778,14 @@ def validate_live_reference(
         "number": LIVE_REFERENCE_ISSUE_NUMBER,
         "html_url": LIVE_REFERENCE_URL,
         "url": LIVE_REFERENCE_API_URL,
-        "repository_url": "https://api.github.com/repos/organvm/limen",
+        "repository_url": f"https://api.github.com/repos/{LIMEN_CANONICAL_REPOSITORY}",
         "state": "open",
     }
     for key, value in expected.items():
-        if issue.get(key) != value:
+        observed = (
+            normalize_limen_url(issue.get(key)) if key in {"html_url", "url", "repository_url"} else issue.get(key)
+        )
+        if observed != value:
             errors.append(f"profile-engine live reference {key} must remain {value!r}")
     if issue.get("pull_request") is not None:
         errors.append("profile-engine live reference must remain an issue, not a pull request")
@@ -1857,13 +1803,13 @@ def validate_live_dependencies(
     for work_id, expected in ACCEPTED_DEPENDENCIES.items():
         issue_number = expected["issue_number"]
         try:
-            issue = fetch(["api", f"repos/organvm/limen/issues/{issue_number}"])
+            issue = fetch(["api", f"repos/{LIMEN_CANONICAL_REPOSITORY}/issues/{issue_number}"])
             comment_pages = fetch(
                 [
                     "api",
                     "--paginate",
                     "--slurp",
-                    f"repos/organvm/limen/issues/{issue_number}/comments?per_page=100",
+                    f"repos/{LIMEN_CANONICAL_REPOSITORY}/issues/{issue_number}/comments?per_page=100",
                 ]
             )
         except AdjudicationError as exc:
@@ -1886,11 +1832,7 @@ def validate_live_dependencies(
                     )
                     continue
                 comment_id = row.get("id")
-                if (
-                    not isinstance(comment_id, int)
-                    or isinstance(comment_id, bool)
-                    or comment_id <= 0
-                ):
+                if not isinstance(comment_id, int) or isinstance(comment_id, bool) or comment_id <= 0:
                     errors.append(
                         f"accepted dependency {work_id} comment page[{page_index}][{row_index}] needs a positive integer id"
                     )
@@ -1902,7 +1844,15 @@ def validate_live_dependencies(
             errors.append(f"accepted dependency {work_id} has no marked receipt")
             continue
         latest = max(marked, key=lambda row: row["id"])
-        if latest.get("html_url") != expected["marked_receipt"]:
+        live_receipt_url = str(latest.get("html_url") or "").replace(
+            f"github.com/{LIMEN_HISTORICAL_REPOSITORY}/",
+            f"github.com/{LIMEN_CANONICAL_REPOSITORY}/",
+        )
+        expected_receipt_url = str(expected["marked_receipt"]).replace(
+            f"github.com/{LIMEN_HISTORICAL_REPOSITORY}/",
+            f"github.com/{LIMEN_CANONICAL_REPOSITORY}/",
+        )
+        if live_receipt_url != expected_receipt_url:
             errors.append(f"accepted dependency {work_id} latest marked receipt URL differs")
         blocks = RECEIPT_BLOCK_RE.findall(str(latest.get("body") or ""))
         parsed: list[dict[str, Any]] = []
@@ -1954,8 +1904,11 @@ def validate_live_profile_observations(
     if not isinstance(profile, dict):
         errors.append("live profile metadata response must be a mapping")
         profile = {}
-    for key in ("login", "id", "type", "public_repos", "created_at", "blog"):
-        expected = EXPECTED_PROFILE_METADATA_RESULT[key]
+    live_profile_expectations = {
+        key: EXPECTED_PROFILE_METADATA_RESULT[key] for key in ("login", "id", "type", "public_repos", "created_at")
+    }
+    live_profile_expectations["blog"] = EXPECTED_LIVE_PROFILE_BLOG
+    for key, expected in live_profile_expectations.items():
         if type(profile.get(key)) is not type(expected) or profile.get(key) != expected:
             errors.append(f"live profile metadata {key} must remain {expected!r}")
     for key in ("followers", "following"):
@@ -2050,31 +2003,19 @@ def validate_live_profile_observations(
         errors.append("live profile workflow must expose eight recent successful scheduled runs")
     else:
         for _created_at, run in latest_eight:
-            if (
-                run.get("event") != "schedule"
-                or run.get("status") != "completed"
-                or run.get("conclusion") != "success"
-            ):
-                errors.append(
-                    f"live scheduled workflow run {run['id']} must be a completed scheduled success"
-                )
+            if run.get("event") != "schedule" or run.get("status") != "completed" or run.get("conclusion") != "success":
+                errors.append(f"live scheduled workflow run {run['id']} must be a completed scheduled success")
         if len({created_at.date() for created_at, _run in latest_eight}) != 8:
             errors.append("live profile workflow must expose one recent scheduled success per UTC day")
         else:
             observed_days = sorted(created_at.date() for created_at, _run in latest_eight)
-            expected_days = [
-                observed_days[0] + timedelta(days=offset) for offset in range(8)
-            ]
+            expected_days = [observed_days[0] + timedelta(days=offset) for offset in range(8)]
             if observed_days != expected_days:
-                errors.append(
-                    "live profile workflow scheduled successes must cover eight consecutive UTC days"
-                )
+                errors.append("live profile workflow scheduled successes must cover eight consecutive UTC days")
     latest_run = latest_eight[0][1] if latest_eight else {}
     latest_created_at = latest_eight[0][0] if latest_eight else None
     if latest_created_at is not None and not (
-        observed_now - timedelta(hours=48)
-        <= latest_created_at
-        <= observed_now + timedelta(minutes=5)
+        observed_now - timedelta(hours=48) <= latest_created_at <= observed_now + timedelta(minutes=5)
     ):
         errors.append("latest successful scheduled profile run must be within 48 hours")
 
@@ -2098,8 +2039,7 @@ def validate_live_profile_observations(
     trigger_head = latest_run.get("head_sha") if latest_run else None
     if isinstance(trigger_head, str) and HEAD_RE.fullmatch(trigger_head) and current_head:
         trigger_compare_url = (
-            f"https://api.github.com/repos/{PROFILE_REPOSITORY}/compare/"
-            f"{trigger_head}...{current_head}"
+            f"https://api.github.com/repos/{PROFILE_REPOSITORY}/compare/{trigger_head}...{current_head}"
         )
         trigger_comparison = fetch_public(
             "profile scheduled-run trigger continuity",
@@ -2120,24 +2060,17 @@ def validate_live_profile_observations(
                 errors.append("live scheduled-run trigger comparison must retain the trigger base head")
             if not isinstance(trigger_merge_base, dict) or trigger_merge_base.get("sha") != trigger_head:
                 errors.append("latest scheduled run trigger must remain the live main merge base")
-            if trigger_status == "identical" and (
-                current_head != trigger_head or trigger_ahead_by != 0
-            ):
+            if trigger_status == "identical" and (current_head != trigger_head or trigger_ahead_by != 0):
                 errors.append("identical trigger comparison must retain the trigger head")
             if trigger_status == "ahead" and (
-                not isinstance(trigger_ahead_by, int)
-                or isinstance(trigger_ahead_by, bool)
-                or trigger_ahead_by <= 0
+                not isinstance(trigger_ahead_by, int) or isinstance(trigger_ahead_by, bool) or trigger_ahead_by <= 0
             ):
                 errors.append("ahead trigger comparison needs a positive commit distance")
 
     accepted_profile = receipt.get("public_profile")
     accepted_head = accepted_profile.get("head") if isinstance(accepted_profile, dict) else None
     if isinstance(accepted_head, str) and HEAD_RE.fullmatch(accepted_head) and current_head:
-        compare_url = (
-            f"https://api.github.com/repos/{PROFILE_REPOSITORY}/compare/"
-            f"{accepted_head}...{current_head}"
-        )
+        compare_url = f"https://api.github.com/repos/{PROFILE_REPOSITORY}/compare/{accepted_head}...{current_head}"
         comparison = fetch_public("profile main-line continuity", compare_url)
         if not isinstance(comparison, dict):
             errors.append("live profile comparison response must be a mapping")
@@ -2154,21 +2087,15 @@ def validate_live_profile_observations(
                 errors.append("live profile comparison must retain the accepted base head")
             if not isinstance(merge_base, dict) or merge_base.get("sha") != accepted_head:
                 errors.append("live profile accepted head must remain the merge base")
-            if comparison_status == "identical" and (
-                current_head != accepted_head or ahead_by != 0
-            ):
+            if comparison_status == "identical" and (current_head != accepted_head or ahead_by != 0):
                 errors.append("identical live profile comparison must retain the accepted head")
             if comparison_status == "ahead" and (
-                not isinstance(ahead_by, int)
-                or isinstance(ahead_by, bool)
-                or ahead_by <= 0
+                not isinstance(ahead_by, int) or isinstance(ahead_by, bool) or ahead_by <= 0
             ):
                 errors.append("ahead live profile comparison needs a positive commit distance")
 
     try:
-        contribution_payload = gh_fetch(
-            ["api", "graphql", "-f", f"query={PROFILE_CONTRIBUTION_QUERY}"]
-        )
+        contribution_payload = gh_fetch(["api", "graphql", "-f", f"query={PROFILE_CONTRIBUTION_QUERY}"])
     except AdjudicationError as exc:
         errors.append(f"cannot reproduce live contribution calendar: {exc}")
         contribution_payload = None
@@ -2241,9 +2168,7 @@ def validate_live_profile_observations(
         if set(observation) != {"status", "url"}:
             errors.append(f"live HTTP receipt {receipt_id} response must contain only status and URL")
         if observation.get("status") != expected_status or observation.get("url") != url:
-            errors.append(
-                f"live HTTP receipt {receipt_id} must remain {expected_status} at its exact endpoint"
-            )
+            errors.append(f"live HTTP receipt {receipt_id} must remain {expected_status} at its exact endpoint")
     return errors
 
 

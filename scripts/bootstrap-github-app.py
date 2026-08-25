@@ -44,7 +44,7 @@ def shell_value(value: str) -> str:
     return shlex.quote(value)
 
 
-def write_env(keys: dict[str, str]) -> None:
+def write_env(keys: dict[str, str | None]) -> None:
     ENV_FILE.parent.mkdir(parents=True, exist_ok=True)
     if not ENV_FILE.exists():
         ENV_FILE.touch(mode=0o600)
@@ -55,7 +55,8 @@ def write_env(keys: dict[str, str]) -> None:
         if not any(line.startswith(f"{key}=") or line.startswith(f"export {key}=") for key in keys)
     ]
     for key, value in keys.items():
-        filtered.append(f"export {key}={shell_value(value)}")
+        if value is not None:
+            filtered.append(f"export {key}={shell_value(value)}")
     tmp = ENV_FILE.with_suffix(f"{ENV_FILE.suffix}.tmp")
     tmp.write_text("\n".join(filtered).rstrip() + "\n", encoding="utf-8")
     tmp.chmod(0o600)
@@ -109,9 +110,9 @@ def find_installation(org: str, slug: str) -> dict[str, Any] | None:
     return None
 
 
-def verify_app_token() -> bool:
+def verify_app_token(repo: str) -> bool:
     proc = subprocess.run(
-        ["bash", "scripts/gh-app-token.sh", "--verify-app"],
+        ["bash", "scripts/gh-app-token.sh", "--repo", repo, "--verify-app"],
         cwd=ROOT,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -259,11 +260,17 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--org", default="organvm")
     parser.add_argument("--app-name", default="limen-bot")
+    parser.add_argument(
+        "--verify-repo",
+        default=None,
+        help="exact OWNER/REPO used to resolve and verify the App installation token",
+    )
     parser.add_argument("--key-path", type=Path, default=DEFAULT_KEY_PATH)
     parser.add_argument("--timeout", type=int, default=900, help="seconds to wait for GitHub callback")
     parser.add_argument("--install-timeout", type=int, default=900, help="seconds to wait for org install")
     parser.add_argument("--no-open", action="store_true", help="print the local URL instead of opening a browser")
     args = parser.parse_args()
+    verify_repo = args.verify_repo or os.environ.get("LIMEN_GITHUB_TARGET_REPO") or f"{args.org}/limen"
 
     port = reserve_loopback_port()
     server = BootstrapServer(("127.0.0.1", port), BootstrapHandler, org=args.org, app_name=args.app_name)
@@ -311,11 +318,10 @@ def main() -> int:
         print("App is created and credentials are stored, but installation was not observed yet.", file=sys.stderr)
         return 3
 
-    install_id = str(install.get("id") or "")
-    write_env({"GITHUB_APP_INSTALLATION_ID": install_id})
-    print(f"Stored installation id for {slug} on {args.org} (id hidden in output policy: name only).")
+    write_env({"GITHUB_APP_INSTALLATION_ID": None})
+    print(f"Observed {slug} on {args.org}; exact repository installations resolve at token-mint time.")
 
-    if verify_app_token():
+    if verify_app_token(verify_repo):
         return 0
     print("App exists but token verification failed; check permissions/install target.", file=sys.stderr)
     return 1

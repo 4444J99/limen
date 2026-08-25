@@ -282,7 +282,7 @@ def main() -> int:
         print(f"arca-freshness: FAIL — {repo}")
         for f in findings:
             print(f"  · {f}")
-        print("  owner: organvm/limen#2072 (vault shape) · #719 L-ARCA-KEY-ESCROW (key escrow)")
+        print("  owner: 4444J99/limen#2072 (vault shape) · #719 L-ARCA-KEY-ESCROW (key escrow)")
     return 0 if ok else 1
 
 

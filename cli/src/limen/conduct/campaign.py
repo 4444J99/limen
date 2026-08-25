@@ -405,7 +405,7 @@ def campaign_packets(
             f"python3 scripts/conduct-pr-campaign.py validate --current {receipt_path} "
             f"--digest {census.snapshot_digest}"
         ),
-        receipt_target=f"git:organvm/limen:{receipt_path}",
+        receipt_target=f"git:4444J99/limen:{receipt_path}",
         work_loan=WorkLoanV1(
             source_origin="system_debt",
             horizon="present",
@@ -470,7 +470,7 @@ class CampaignPacketFactory:
                     f"python3 scripts/conduct-pr-campaign.py validate --current {self.receipt_path} "
                     f"--digest {self.census.snapshot_digest} --repo {shlex.quote(repo)}"
                 ),
-                receipt_target=f"git:organvm/limen:{self.receipt_path}",
+                receipt_target=f"git:4444J99/limen:{self.receipt_path}",
                 work_loan=WorkLoanV1(
                     source_origin="system_debt",
                     horizon="present",

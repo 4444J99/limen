@@ -50,7 +50,12 @@ def main() -> int:
         print("DEFECT: ACCESS registry unparseable — class H parity owns this; fix institutio/github/access.yaml")
         return 1
 
-    token = gitvs._token()
+    # The collaborator census spans multiple repositories and organization-level rolls, so it
+    # cannot truthfully reuse one repository-scoped App token.  Read through the authenticated
+    # operator identity; exact-repository App tokens remain confined to single-target operations.
+    token = (  # allow-secret: identity selector only
+        None if os.environ.get("LIMEN_OFFLINE") else ("user-native" if gitvs._gh_login() else None)
+    )
     online = token is not None and shutil.which("gh") is not None
     census = gitvs._collaborator_census(estate, access, token, online)
     if not census.get("complete"):

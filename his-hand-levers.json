@@ -997,20 +997,22 @@
     },
     {
       "id": "L-CONSTELLATION-OVERLAY-RESTORE",
-      "label": "Restore the private constellation overlay from the T7 evacuation archive \u2014 one cp, then the constellation-registry gate goes green on this host",
+      "label": "Reconcile the private constellation overlay from authoritative private sources; preserve the current rows and add only evidence-backed people with real pipeline slugs and honest protocol/channel states",
       "source_task": "full-heal-expand-evolve estate plan 2026-08-06 (docs/plans/2026-08-06-full-heal-expand-evolve.md, issue #1922) \u2014 storm-heal session, classifier-blocked private-person-records write rerouted to this lever",
       "owner": "yours",
       "category": "estate-restore",
-      "cost": "~10 seconds, one copy command (T7Recovery volume must be mounted)",
+      "cost": "one bounded private-estate reconciliation; the relevant custody source must be mounted or otherwise available",
       "status": "open",
       "added": "2026-08-06",
       "gate": "background-session classifier hard-blocks writes into _people-private (private person-records class); an interactive human shell is the sanctioned writer",
       "steps": [
-        "cp -p '/Volumes/T7Recovery/laptop-evacuation/20260727/objects/repo_people-private/9f7c23d428eafa0c7fc6732f700dbd99acef2c1126e8a31d21887a4dec797a21/registry-private.yaml' '/Volumes/T7Recovery/laptop-evacuation/20260727/objects/repo_people-private/9f7c23d428eafa0c7fc6732f700dbd99acef2c1126e8a31d21887a4dec797a21/atlas.html' /Users/4jp/Workspace/_people-private/constellation/",
-        "python3 organs/consulting/constellation/check.py  # exit 0 confirms the estate is whole"
+        "Create an owner-only temporary overlay inside the private estate and preserve the current three rows byte-for-byte; never overwrite the live file with an older snapshot.",
+        "Merge only rows supported by current private person records or a verified custody source until the private slug denominator exactly matches the 15-row public register. Every pipeline_slug must resolve to a real private lane, and protocol_state/channel_state must be observed facts rather than placeholders.",
+        "Validate the temporary overlay with LIMEN_CONSTELLATION_OVERLAY set to that file and `python3 organs/consulting/constellation/validate-constellation.py --quiet`; install it atomically only after exit 0.",
+        "From the Limen root, run `python3 organs/consulting/constellation/validate-constellation.py --quiet` and `python3 organs/consulting/constellation/check.py registry`; both must exit 0 against the installed private overlay."
       ],
       "unlocks": "constellation-registry Rule #6 (15 publicly-indexed people regain private backing; dossier lanes stop failing with 'no pipeline_slug in overlay'); local verify-scoped green on any organs/consulting diff",
-      "note": "2026-08-06: _people-private/constellation/ was left empty by the 2026-07-27 laptop evacuation (correspondence/ and opportunities/ were restored, constellation/ was not). Single unambiguous snapshot on the archive (Jul 22-25). Discovered when the lint-scope chore made organs/consulting/** implicate the gate for the first time.",
+      "note": "Corrected 2026-08-25 after live verification disproved the old one-copy recipe: the public register has 15 slugs while the installed private overlay and private people store have only three matching lanes. The older custody snapshot predates the current denominator and cannot safely replace the live overlay. Synthetic MISSING/dormant rows are forbidden because downstream dossier consumers treat pipeline_slug and channel state as real private facts.",
       "issue": 1925,
       "sovereignty": {
         "reason": "governance_choice"
@@ -1424,7 +1426,7 @@
       "status": "open",
       "added": "2026-08-08",
       "steps": [
-        "Add organvm/limen and organvm/organvm-corpvs-testamentvm to the hosted routine session's allowed repositories; do not add the obsolete a-organvm route.",
+        "Add 4444J99/limen and organvm/organvm-corpvs-testamentvm to the hosted routine session's allowed repositories; do not add the obsolete a-organvm route.",
         "Run one bounded fleet-audit or Jules-curation delivery.",
         "Done when the delivery emits CloudRoutineReceiptV1 observations from both canonical sources with no access-denied finding."
       ],
@@ -1542,10 +1544,10 @@
     {
       "id": "L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES",
       "label": "Mount and identity-verify Archive4T and T7Recovery before universe-recovery source cleanup or deletion.",
-      "owner": "yours",
+      "owner": "Anthony",
       "cost": "connect both custody devices and allow one read-only identity and restore-readiness verification",
       "unlocks": "paired byte-verified custody and restore testing for retained Agy artifacts, Git objects, stashes, dirty worktrees, plans, and task logs",
-      "source_task": "Universe Recovery protective control plane; organvm/limen PR #2543",
+      "source_task": "Universe Recovery protective control plane; external-estate custody owner issue #688",
       "gate": "the two external custody volumes are physically absent; an agent cannot mount or attest device identity without the devices",
       "status": "needs_human",
       "added": "2026-08-23",
@@ -1554,7 +1556,30 @@
         "Run the capsule's paired-custody identity and restore-readiness predicate after PR #2543 is protected-merged and default-present.",
         "Close this lever only after the recovery manifest carries two distinct verified device identities and successful bounded restore receipts."
       ],
-      "note": "This gate blocks source deletion and destructive cleanup only. Read-only census, review correction, and protective implementation continue independently. Private device paths and identities remain outside git and chat.",
+      "note": "Issue #688 is the separately closeable custody owner and already records the physical-volume and paired-restore predicate; PR #2543 is only the implementation rail and merging it cannot pull this lever. This gate blocks source deletion and destructive cleanup only. Read-only census, review correction, and protective implementation continue independently. Private device paths and identities remain outside git and chat.",
+      "issue": 688,
+      "sovereignty": {
+        "reason": "identity"
+      }
+    },
+    {
+      "id": "L-LIMEN-PERSONAL-CONTROL-PLANE-TRANSFER",
+      "label": "DISCHARGED 2026-08-25: transfer stable GitHub repository ID 1255213941 from organvm/limen to the personal Limen control plane.",
+      "owner": "system execution; Anthony orchestrates the ideal form",
+      "cost": "one GitHub repository-transfer effect plus its immediate read-only postflight; zero dollars",
+      "unlocks": "public GitHub-hosted runner admission for the supra-organization controller while organizations retain their domain products, policies, environments, and deployments",
+      "source_task": "Return Limen to the Personal Control Plane; implementation and review rail PR #2543",
+      "gate": "discharged by Anthony's explicit 2026-08-25 delegation of technical transfer, merge, activation, deployment, installation, and restart effects",
+      "status": "discharged",
+      "added": "2026-08-25",
+      "steps": [
+        "After every branch, PR, and review mutation has stopped, create one fresh private v2 manifest and Git bundle. Verify its sidecar digest and restore proof, confirm every live ref and open-PR head is bound, confirm the repository is public ID 1255213941 at the captured default SHA, and confirm all 16 transfer-sensitive workflows remain disabled. Perform no further ref or review mutation before transfer.",
+        "Transfer organvm/limen to 4444J99/limen. If GitHub refuses that destination before any mutation, transfer only to 4444J99/limen-control; never create a mirror, relay, duplicate registry, paid runner, budget increase, or overage.",
+        "Immediately capture and compare the post-transfer estate: both coordinates and the anonymous redirect, numeric repository ID, default SHA, every ref and open-PR head, issues and releases, settings, protected lanes, and re-queried App access. Restore transfer-lost issue types and non-owner assignments from private custody before acceptance.",
+        "Re-enable only manual CI after one private content-hashed receipt binds the repository, public visibility, exact SHA, workflow-state, GitHub-hosted standard-runner, and zero-spend predicates. Restore exactly that one workflow, dispatch the transferred default SHA once, require a nonzero runner ID and executed steps, and do not retry CI_ZERO_STEP_ADMISSION.",
+        "Leave every App-dependent, deployment, release, review, agent-dispatch, and scheduled workflow disabled until its individual policy predicates pass. Update the PyPI trusted-publisher owner before release automation resumes."
+      ],
+      "note": "This discharge records execution authority only; it does not assert that the transfer or postflight has happened. The continuation capsule owns those technical effects through their predicates. Private source, credentials, protected-lane digests, process commands, notification contents, and custody metadata remain outside git and chat. Transfer is necessary topology repair but is not recovery or notification completion.",
       "issue": 2543,
       "sovereignty": {
         "reason": "identity"

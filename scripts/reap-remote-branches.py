@@ -411,7 +411,8 @@ def main() -> int:
     if args.apply:
         print(
             "[reap-remote-branches] legacy --apply is disabled — staying DARK. "
-            "Use the repository-qualified planner, verifier, one-use capability, and sole CAS effector."
+            "Redeem one repository-qualified signed plan through `scripts/gitvs.py reconcile --apply` "
+            "with the private repository-root, journal, plan, and capability bindings."
         )
         return 2
 

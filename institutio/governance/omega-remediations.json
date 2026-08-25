@@ -5,19 +5,19 @@
       "external_effects": [],
       "may_delegate": false,
       "path_prefixes": ["."],
-      "repositories": ["organvm/limen"],
+      "repositories": ["4444J99/limen"],
       "schema_version": "limen.authority_envelope.v1"
     },
     "effect": "read",
     "output_ceiling_bytes": 65536,
-    "receipt_target": "github:organvm/limen:issue:1571",
+    "receipt_target": "github:4444J99/limen:issue:1571",
     "required_capabilities": ["shell"],
     "work_loan": {
       "budget_cost": 1,
       "due_at": null,
       "external_deadline": false,
       "horizon": "present",
-      "owner_surface": "github:organvm/limen:issue:1571",
+      "owner_surface": "github:4444J99/limen:issue:1571",
       "schema_version": "limen.work_loan.v1",
       "source_origin": "system_debt",
       "value_case": "Close one strict-Omega predicate without shrinking a declared capability."

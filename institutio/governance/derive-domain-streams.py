@@ -39,7 +39,7 @@ WHICH CHANNELS BECOME ROWS (policy constants below, with provenance)
       MACHINERY       process/system lanes that get NO launch surface (the T3 analogue).
 
 PUBLIC-SAFE BY CONSTRUCTION
-    Everything emitted lands in the public organvm/limen tree. Inputs are code and a committed
+    Everything emitted lands in the public 4444J99/limen tree. Inputs are code and a committed
     registry (no personal data), and the generator additionally REFUSES to write any output
     matching an email / phone / social-handle pattern — same belt-and-braces as the constellation
     twin, because a future roster edit must not be able to leak through this path.

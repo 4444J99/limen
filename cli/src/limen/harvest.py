@@ -216,6 +216,9 @@ def _with_remote_state(run: RemoteRun, state: RemoteState, detail: str) -> Remot
         request_id=run.request_id,
         observed_at=datetime.now(timezone.utc).isoformat(),
         detail=detail,
+        actions_job=run.actions_job,
+        admission_result=run.admission_result,
+        retry_allowed=run.retry_allowed,
     )
 
 
@@ -536,7 +539,7 @@ def check_remote_harvest(
                 observed.pending_identity and observed.state is RemoteState.SUBMITTED
             ):
                 observed, receipt_path = lifecycle.recover(request, observed)
-            if observed.state is RemoteState.SUCCEEDED:
+            if observed.state in {RemoteState.SUCCEEDED, RemoteState.FAILED}:
                 receipt, receipt_path = lifecycle.harvest(request, observed)
             else:
                 receipt = RemoteReceipt(

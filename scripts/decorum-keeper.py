@@ -473,7 +473,7 @@ def apply_effector(reg: dict, verdict: dict, armed: bool) -> dict:
     if not findings:
         return plan
     cap = int(os.environ.get("LIMEN_DECORUM_MAX", "8"))
-    receipt_repo = (reg.get("effector") or {}).get("receipt_repo", "organvm/limen")
+    receipt_repo = (reg.get("effector") or {}).get("receipt_repo", "4444J99/limen")
     prio_map = {"critical": "high", "high": "high", "medium": "medium", "low": "low"}
 
     # group findings by (lane, surface) → one ticket, details listed in context
@@ -579,7 +579,7 @@ def mirror_issues(reg: dict, verdict: dict, armed: bool) -> dict:
     import re
     eff = reg.get("effector") or {}
     plan = {"armed": armed, "repo": None, "created": [], "closed": [], "kept": 0, "vetoed": [], "note": None}
-    repo = eff.get("receipt_repo", "organvm/limen")
+    repo = eff.get("receipt_repo", "4444J99/limen")
     plan["repo"] = repo
     order = ((reg.get("verdict") or {}).get("severity_order")) or ["low", "medium", "high", "critical"]
     floor = eff.get("issue_floor", "medium")

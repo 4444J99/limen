@@ -25,6 +25,12 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CLI_SRC = ROOT / "cli" / "src"
+if str(CLI_SRC) not in sys.path:
+    sys.path.insert(0, str(CLI_SRC))
+
+from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY  # noqa: E402
+
 INDEX = ROOT / "docs/positioning/evidence/flagship-evidence.yaml"
 MATRIX = ROOT / "docs/positioning/flagship-proof-set.yaml"
 CLAIMS_LEDGER = ROOT / "docs/positioning/claims-ledger.md"
@@ -63,9 +69,7 @@ ALLOWED_PUBLIC_HOSTS = frozenset(
 MAX_RESPONSE_BYTES = 2_000_000
 FULL_SHA1_RE = re.compile(r"[0-9a-f]{40}")
 REPOSITORY_RE = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
-REPOSITORY_TOKEN_RE = re.compile(
-    r"(?=(?<![A-Za-z0-9_.-])([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)(?![A-Za-z0-9_.-]))"
-)
+REPOSITORY_TOKEN_RE = re.compile(r"(?=(?<![A-Za-z0-9_.-])([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)(?![A-Za-z0-9_.-]))")
 PREDECESSOR_RECEIPTS = {"w03": "PSP-P02-W03", "w04": "PSP-P02-W04"}
 
 
@@ -165,11 +169,7 @@ def public_artifact_identity_errors(index: dict[str, Any], *, root: Path = ROOT)
     texts = [json.dumps(index, ensure_ascii=False, sort_keys=True)]
     evidence_root = root / "docs/positioning/evidence"
     try:
-        texts.extend(
-            path.read_text(encoding="utf-8")
-            for path in sorted(evidence_root.rglob("*"))
-            if path.is_file()
-        )
+        texts.extend(path.read_text(encoding="utf-8") for path in sorted(evidence_root.rglob("*")) if path.is_file())
         texts.append((root / "docs/positioning/claims-ledger.md").read_text(encoding="utf-8"))
     except (OSError, UnicodeError) as exc:
         return [f"cannot inspect public evidence identity surfaces: {exc}"]
@@ -213,7 +213,9 @@ def read_bounded_body(response: Any, *, error_body: bool = False) -> bytes:
 
 def fetch(url: str) -> tuple[int, bytes]:
     url = validate_public_fetch_url(url)
-    request = urllib.request.Request(url, headers={"Accept": "application/vnd.github+json", "User-Agent": "limen-evidence-verifier"})
+    request = urllib.request.Request(
+        url, headers={"Accept": "application/vnd.github+json", "User-Agent": "limen-evidence-verifier"}
+    )
     try:
         with SAFE_OPENER.open(request, timeout=20) as response:
             payload = read_bounded_body(response)
@@ -297,6 +299,36 @@ def w08_projection_sha256(claims: list[object]) -> str:
     return hashlib.sha256(encoded).hexdigest()
 
 
+def repository_coordinates_match(left: object, right: object) -> bool:
+    if not isinstance(left, str) or not isinstance(right, str):
+        return False
+    if LIMEN_REPOSITORY_IDENTITY.accepts(left) and LIMEN_REPOSITORY_IDENTITY.accepts(right):
+        return True
+    return left == right
+
+
+def workflow_url_binding(value: object, *, api: bool) -> tuple[str, str] | None:
+    if not isinstance(value, str):
+        return None
+    hostname = r"api\.github\.com/repos" if api else r"github\.com"
+    match = re.fullmatch(
+        rf"https://{hostname}/([^/]+/[^/]+)/actions/runs/([0-9]+)",
+        value,
+    )
+    return (match.group(1), match.group(2)) if match is not None else None
+
+
+def workflow_urls_match(left: object, right: object, *, api: bool) -> bool:
+    left_binding = workflow_url_binding(left, api=api)
+    right_binding = workflow_url_binding(right, api=api)
+    return (
+        left_binding is not None
+        and right_binding is not None
+        and repository_coordinates_match(left_binding[0], right_binding[0])
+        and left_binding[1] == right_binding[1]
+    )
+
+
 def workflow_binding_errors(packet: dict[str, Any], source: dict[str, Any]) -> list[str]:
     """Bind both workflow URLs to the selected public repository and one run ID."""
 
@@ -304,13 +336,15 @@ def workflow_binding_errors(packet: dict[str, Any], source: dict[str, Any]) -> l
     repository = packet.get("public_repository")
     if not isinstance(repository, str) or not repository:
         return [f"{label}: public_repository is required before workflow binding"]
-    api_url = source.get("api_url")
-    human_url = source.get("url")
-    api_pattern = rf"https://api\.github\.com/repos/{re.escape(repository)}/actions/runs/([0-9]+)"
-    human_pattern = rf"https://github\.com/{re.escape(repository)}/actions/runs/([0-9]+)"
-    api_match = re.fullmatch(api_pattern, api_url) if isinstance(api_url, str) else None
-    human_match = re.fullmatch(human_pattern, human_url) if isinstance(human_url, str) else None
-    if api_match is None or human_match is None or api_match.group(1) != human_match.group(1):
+    api_binding = workflow_url_binding(source.get("api_url"), api=True)
+    human_binding = workflow_url_binding(source.get("url"), api=False)
+    if (
+        api_binding is None
+        or human_binding is None
+        or not repository_coordinates_match(api_binding[0], repository)
+        or not repository_coordinates_match(human_binding[0], repository)
+        or api_binding[1] != human_binding[1]
+    ):
         return [f"{label}: workflow API and human URLs must bind one run in public_repository"]
     return []
 
@@ -319,10 +353,10 @@ def dependency_issue_api_url(value: object) -> str:
     """Return the API URL for one repository-owned dependency issue."""
 
     url = validate_public_fetch_url(value)
-    match = re.fullmatch(r"https://github\.com/organvm/limen/issues/([0-9]+)", url)
-    if match is None:
-        raise EvidenceError("dependency issue must be an organvm/limen issue URL")
-    return f"https://api.github.com/repos/organvm/limen/issues/{match.group(1)}"
+    match = re.fullmatch(r"https://github\.com/([^/]+/[^/]+)/issues/([0-9]+)", url)
+    if match is None or not LIMEN_REPOSITORY_IDENTITY.accepts(match.group(1)):
+        raise EvidenceError("dependency issue must belong to the stable Limen repository identity")
+    return f"https://api.github.com/repos/{LIMEN_REPOSITORY_IDENTITY.canonical_coordinate}/issues/{match.group(2)}"
 
 
 def verify_positioning_work_receipt(work_id: str) -> None:
@@ -395,9 +429,7 @@ def verify_dependency_states(
     return errors
 
 
-def validate_workflow_run_response(
-    packet: dict[str, Any], source: dict[str, Any], run: object
-) -> list[str]:
+def validate_workflow_run_response(packet: dict[str, Any], source: dict[str, Any], run: object) -> list[str]:
     """Validate the live workflow response against the selected public repository."""
 
     label = str(packet.get("id") or "packet")
@@ -406,11 +438,11 @@ def validate_workflow_run_response(
     errors: list[str] = []
     repository = run.get("repository")
     full_name = repository.get("full_name") if isinstance(repository, dict) else None
-    if full_name != packet.get("public_repository"):
+    if not repository_coordinates_match(full_name, packet.get("public_repository")):
         errors.append(f"{label}: workflow response repository does not match public_repository")
-    if run.get("html_url") != source.get("url"):
+    if not workflow_urls_match(run.get("html_url"), source.get("url"), api=False):
         errors.append(f"{label}: workflow response html_url does not match the human receipt URL")
-    if run.get("url") != source.get("api_url"):
+    if not workflow_urls_match(run.get("url"), source.get("api_url"), api=True):
         errors.append(f"{label}: workflow response API URL does not match the indexed receipt")
     return errors
 
@@ -659,7 +691,7 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
                 packet_text = (root / packet_path).read_text(encoding="utf-8")
             except OSError as exc:
                 errors.append(f"{label}: cannot load packet Markdown: {exc}")
-        if packet.get("public_repository") != selected.get(label):
+        if not repository_coordinates_match(packet.get("public_repository"), selected.get(label)):
             errors.append(f"{label}: public_repository must match the W03-selected public repository")
         if not isinstance(packet.get("bounded_claim"), str) or not packet["bounded_claim"].strip():
             errors.append(f"{label}: bounded_claim must be nonempty")
@@ -725,7 +757,9 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
                 errors.append(f"{label}: metrics must use an exact, dated comparison")
             if metric.get("status") not in {"verified", "repository_asserted_with_public_anchor"}:
                 errors.append(f"{label}: invalid metric status")
-            if isinstance(metric.get("observed_value"), bool) or not isinstance(metric.get("observed_value"), (int, float)):
+            if isinstance(metric.get("observed_value"), bool) or not isinstance(
+                metric.get("observed_value"), (int, float)
+            ):
                 errors.append(f"{label}: observed metric values must be numeric")
             try:
                 validate_public_fetch_url(metric.get("source_url"))
@@ -773,13 +807,13 @@ def validate_index(index: dict[str, Any], *, root: Path = ROOT) -> list[str]:
                             re.compile(path_regex)
                         except re.error as exc:
                             errors.append(f"{label}: count observation path_regex is invalid: {exc}")
-                    if isinstance(metric.get("observed_value"), bool) or not isinstance(metric.get("observed_value"), int):
+                    if isinstance(metric.get("observed_value"), bool) or not isinstance(
+                        metric.get("observed_value"), int
+                    ):
                         errors.append(f"{label}: term-count observed_value must be an integer")
             terms = metric.get("corroborating_terms")
             if count_observation is not None and (
-                not isinstance(terms, list)
-                or not terms
-                or any(not isinstance(term, str) or not term for term in terms)
+                not isinstance(terms, list) or not terms or any(not isinstance(term, str) or not term for term in terms)
             ):
                 errors.append(f"{label}: term-count metric needs nonempty corroborating_terms")
         if packet_text is not None:

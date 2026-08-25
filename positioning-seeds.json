@@ -8,7 +8,7 @@
   "authorship": "Architected and directed by one person through a governed, multi-agent production system.",
   "_flagships_note": "The Level-1 set selected in docs/positioning/portfolio-information-architecture.md. Repository entries reuse their judgment-layer seeds; inline entries are separately verified public surfaces and do not change value-repos.json funding priorities.",
   "flagships": [
-   "organvm/limen",
+   "4444J99/limen",
    "organvm/public-record-data-scrapper",
    "organvm/a-i-chat--exporter",
    {
@@ -33,7 +33,7 @@
     ],
     "expensive_problem": "Software sellers need a sovereign licensing path that does not depend on a hosted marketplace.",
     "cta_client": "Inspect the live mint",
-    "details_url": "https://github.com/organvm/limen/blob/main/docs/positioning/claims-ledger.md#2-product-claims"
+    "details_url": "https://github.com/4444J99/limen/blob/main/docs/positioning/claims-ledger.md#2-product-claims"
    }
   ],
   "_bio_note": "The GitHub sidebar bio. STABLE IDENTITY ONLY — never a count that changes daily (repos / code files / tests / CI workflows). Volatile numbers live in the README, which regenerates; the bio does not, so any count baked here rots. always-working.py checks the live bio against this value and flags drift. <=160 chars (GitHub's limit).",
@@ -58,7 +58,7 @@
   "shelves": {
    "heading": "The library — one system, eight shelves",
    "lead": "One creator, one library. The engine room (organvm) holds the machine that builds everything; each shelf org holds one kind of finished work.",
-   "note": "Shelves are populating — the estate migration is registry-driven from organvm/limen.",
+   "note": "Shelves are populating — the estate migration is registry-driven from 4444J99/limen.",
    "rows": [
     {"org": "organvm-i-theoria", "label": "I · THEORIA", "blurb": "Epistemological frameworks and recursive systems"},
     {"org": "organvm-ii-poiesis", "label": "II · POIESIS", "blurb": "Generative art and interactive systems"},
@@ -626,7 +626,7 @@
     "technical-writing"
    ]
   },
-  "organvm/limen": {
+  "4444J99/limen": {
    "display_name": "Self-Healing Agent Fleet Infrastructure",
    "what_it_is": "A living ladder of self-* organs (self-sustaining, self-routing, self-feeding, self-healing) that automates recurring fleet maintenance on a heartbeat: monitoring liveness, reaping stale work, syncing state, and escalating failures. Built-in organs include proprioception, VIGILIA federation, branch-reap, clone-lifecycle, credential durability, and health monitoring.",
    "frontdoor_summary": "A live orchestration and governance system operating in its owner's environment since May 2026, with explicit failure states and human gates.",

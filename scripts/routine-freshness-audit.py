@@ -290,12 +290,12 @@ def hang_down_atoms(down_rows: list[dict]) -> dict:
             )
 
             ex = index.get(tid)
-            contract = contract_fields(github_issue_owner_contract("organvm/limen", tid))
+            contract = contract_fields(github_issue_owner_contract("4444J99/limen", tid))
             collateral = {
                 "origin": "obligation",
                 "horizon": "present",
                 "value_case": f"Restore delivery for the declared cloud routine {name}",
-                "owner_surface": "organvm/limen",
+                "owner_surface": "4444J99/limen",
             }
             if (
                 ex
@@ -343,7 +343,7 @@ def hang_down_atoms(down_rows: list[dict]) -> dict:
                     Task(
                         id=tid,
                         title=f"Routine '{name}' is DOWN — check claude.ai session",
-                        repo="organvm/limen",
+                        repo="4444J99/limen",
                         type="ops",
                         target_agent="human",
                         priority="high",
