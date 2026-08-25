@@ -21,6 +21,7 @@ def _app_environment(tmp_path: Path, **overrides: str) -> tuple[dict[str, str], 
     _executable(
         binaries / "openssl",
         """#!/usr/bin/env bash
+cat >/dev/null
 if [ "${1:-}" = "base64" ]; then
   printf 'eA=='
 else
