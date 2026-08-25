@@ -69,7 +69,7 @@ candidate_screen:
       - organvm-vii-kerygma/portfolio
       - organvm/universal-mail--automation
     explicit_additions:
-      - {candidate_id: limen, source_set: manifest_primary_proof, candidate_identity: "repository:organvm/limen"}
+      - {candidate_id: limen, source_set: manifest_primary_proof, candidate_identity: "repository:4444J99/limen"}
       - {candidate_id: recursive_engine, source_set: current_public_entry_point, candidate_identity: "repository:organvm/recursive-engine--generative-entity"}
       - {candidate_id: metasystem_master, source_set: current_public_entry_point, candidate_identity: "repository:organvm/metasystem-master"}
       - {candidate_id: public_process, source_set: current_public_entry_point, candidate_identity: "repository:organvm-vi-koinonia/public-process"}
@@ -153,8 +153,8 @@ candidates:
   - id: limen
     name: Limen
     kind: repository
-    repository: organvm/limen
-    public_url: https://github.com/organvm/limen
+    repository: 4444J99/limen
+    public_url: https://github.com/4444J99/limen
     source_sets: [manifest_primary_proof]
     status: selected
     eligible: true
@@ -164,7 +164,7 @@ candidates:
     flagship_claim:
       statement: "Governed multi-agent delivery with public operating, failure, and verification receipts."
       assertion_class: implemented_capability
-      subject_repository: organvm/limen
+      subject_repository: 4444J99/limen
       includes: [agent_delivery_governance, public_operating_receipts, public_failure_receipts, exact_head_verification]
       excludes: [adoption, customer_outcomes, market_leadership]
       evidence_basis: [public_source_implementation, exact_head_workflow, candidate_bound_public_endpoint]

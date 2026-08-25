@@ -58,6 +58,7 @@ sys.path.insert(0, str(ROOT / "cli" / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
 from limen.io import load_limen_file  # noqa: E402
+from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY  # noqa: E402
 
 OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
 
@@ -69,6 +70,14 @@ BASELINE = ROOT / "institutio" / "governance" / "heal-retirement-baseline.txt"
 # Runaway guard on REST pagination, not a coverage cap: pagination proves its own completeness
 # by ending on a short page, so this only bounds a pathological loop. 20 pages = 2000 PRs.
 MAX_PAGES = int(os.environ.get("LIMEN_HEAL_RETIREMENT_MAX_PAGES", "20"))
+
+
+def _canonical_limen_coordinate(coordinate: str) -> str | None:
+    """Resolve current and historical Limen coordinates to one stable identity."""
+
+    if not LIMEN_REPOSITORY_IDENTITY.accepts(coordinate):
+        return None
+    return LIMEN_REPOSITORY_IDENTITY.canonical_coordinate
 
 
 def baseline_ids() -> set[str]:
@@ -106,7 +115,7 @@ def open_pr_set() -> tuple[set[tuple[str, int]], str]:
         Measured 2026-08-09 with two lanes sweeping PRs: ``graphql 0/5000`` while ``core
         4887/5000`` — so the search path returned an empty list for hours while REST was fine.
         A gate that goes dark whenever the fleet is busy is a gate nobody can trust.
-      * **The scope makes it cheap.** This predicate only judges ``organvm/limen`` tasks, so it
+      * **The scope makes it cheap.** This predicate only judges ``4444J99/limen`` tasks, so it
         enumerates that one repo: 175 open PRs, two pages.
 
     No author filter: a HEAL task can name a PR opened by anyone (dependabot, a collaborator), and
@@ -114,7 +123,7 @@ def open_pr_set() -> tuple[set[tuple[str, int]], str]:
     are still open.
     """
     prs: set[tuple[str, int]] = set()
-    for repo in ("organvm/limen",):  # the repos find_violations judges; widen both together
+    for repo in ("4444J99/limen",):  # the repos find_violations judges; widen both together
         page = 1
         while True:
             r = subprocess.run(
@@ -141,13 +150,19 @@ def open_pr_set() -> tuple[set[tuple[str, int]], str]:
 
 
 def find_violations(tasks, open_set: set[tuple[str, int]]) -> list[tuple[str, str, int, str]]:
+    canonical_open_set = {
+        (canonical, number)
+        for coordinate, number in open_set
+        if (canonical := _canonical_limen_coordinate(coordinate)) is not None
+    }
     out = []
     for t in active_heal_tasks(tasks):
         parts = t.id.split("-")
         if not parts[-1].isdigit():
             continue
         num, repo = int(parts[-1]), (t.repo or "")
-        if repo == "organvm/limen" and (repo, num) not in open_set:
+        canonical_repo = _canonical_limen_coordinate(repo)
+        if canonical_repo is not None and (canonical_repo, num) not in canonical_open_set:
             out.append((t.id, repo, num, t.status))
     return out
 

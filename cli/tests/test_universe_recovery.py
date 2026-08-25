@@ -31,12 +31,18 @@ from limen.universe_recovery import (
     issue_reap_capability,
     verify_reap_capability,
 )
+from limen.repository_identity import RepositoryIdentityV1
 
 
 NOW = datetime(2026, 8, 23, 16, 0, tzinfo=UTC)
 DIGEST = "a" * 64
 TIP = "b" * 40
 BASE = "c" * 40
+IDENTITY = RepositoryIdentityV1(
+    repository_id=1255213941,
+    canonical_coordinate="4444J99/limen",
+    historical_aliases=("organvm/limen",),
+)
 
 
 def cursor(surface: str = "repositories") -> CursorReceiptV1:
@@ -58,6 +64,7 @@ def review(*, terminal: bool = True, outdated: bool = False) -> ReviewLineageClo
         current = 0 if outdated else 1
         outdated_count = 1 if outdated else 0
     return ReviewLineageClosureV2(
+        repository_identity=IDENTITY,
         repository="organvm/limen",
         pull_request=1,
         observed_at=NOW,
@@ -115,7 +122,7 @@ def plan() -> ReapPlanV1:
     return ReapPlanV1(
         plan_id="remote-reap-plan-0001",
         repository="organvm/limen",
-        repository_id="R_repo_0001",
+        repository_id=1255213941,
         remote_url_digest=DIGEST,
         ref="refs/heads/topic",
         live_tip=TIP,
@@ -130,9 +137,9 @@ def plan() -> ReapPlanV1:
 
 def disposition(**updates) -> RefDispositionV2:
     values = {
-        "key": f"organvm/limen/refs/heads/topic@{TIP}",
+        "key": IDENTITY.stable_key(f"refs/heads/topic@{TIP}"),
+        "repository_identity": IDENTITY,
         "repository": "organvm/limen",
-        "repository_id": "R_repo_0001",
         "ref": "refs/heads/topic",
         "tip": TIP,
         "default_ref": "refs/heads/main",
@@ -176,6 +183,32 @@ def test_unresolved_outdated_review_blocks_terminal_state():
 
     assert open_review.unresolved_outdated == 1
     assert result.errors == ("nonterminal-review-lineages:1",)
+
+
+def test_landed_pull_request_requires_terminal_closure_for_exact_head():
+    item_key = f"organvm/limen:pull-request:1@{TIP}"
+    landed_pull = RecoveryDispositionReceiptV1(
+        item_key=item_key,
+        item_kind="pull_request",
+        source_digest=DIGEST,
+        owner="organvm/limen:pull-request:1",
+        predicate="exact head landed and review lineage is terminal",
+        receipt="git:organvm/limen:docs/receipts/pull-1.json",
+        terminal_class="exact_landed",
+    )
+
+    missing = evaluate_recovery(manifest(baseline_keys=(item_key,), dispositions=(landed_pull,), review_closures=()))
+    wrong_head = review().model_copy(update={"head_sha": "d" * 40})
+    mismatched = evaluate_recovery(
+        manifest(baseline_keys=(item_key,), dispositions=(landed_pull,), review_closures=(wrong_head,))
+    )
+    matched = evaluate_recovery(
+        manifest(baseline_keys=(item_key,), dispositions=(landed_pull,), review_closures=(review(),))
+    )
+
+    assert "missing-terminal-review-lineages:1" in missing.errors
+    assert "missing-terminal-review-lineages:1" in mismatched.errors
+    assert matched.ok is True
 
 
 def test_post_merge_new_review_requires_corrective_owner():
@@ -253,7 +286,7 @@ def test_ref_disposition_is_repository_qualified_and_proof_bound():
     row = disposition()
 
     assert row.reap_eligible is True
-    with pytest.raises(ValueError, match="repository/ref@tip"):
+    with pytest.raises(ValueError, match="canonical or a historical alias"):
         disposition(repository="organvm/other")
     with pytest.raises(ValueError, match="tree or patch digest"):
         disposition(delivery_disposition="equivalent_landed")
@@ -262,7 +295,7 @@ def test_ref_disposition_is_repository_qualified_and_proof_bound():
     assert disposition(lane_protection=("active-human",)).reap_eligible is False
     assert disposition(delivery_disposition="equivalent_landed", tree_digest="1" * 64).reap_eligible is False
     with pytest.raises(ValueError, match="default ref"):
-        disposition(ref="refs/heads/main", key=f"organvm/limen/refs/heads/main@{TIP}")
+        disposition(ref="refs/heads/main", key=IDENTITY.stable_key(f"refs/heads/main@{TIP}"))
 
 
 def test_manifest_rejects_a_vacuous_recovery_denominator():

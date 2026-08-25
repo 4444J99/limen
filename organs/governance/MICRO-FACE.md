@@ -27,8 +27,8 @@ of truth; any crossing is flagged and surfaced to the human fiduciaries.
 
 | Repo | Organ | Entity | Cursus | Roles |
 |---|---|---|---|---|
-| `organvm/limen` | Aerarium / Cvrsvs Honorvm | Cind & Sol Foundation | BETA | Standing Clerk, Sequencing Auditor, Entity Registrar, Compliance Sentinel |
-| `organvm/limen` | Publication Policy (disclosure court) | Cind & Sol Foundation | INCUBATOR | Content Disposition |
+| `4444J99/limen` | Aerarium / Cvrsvs Honorvm | Cind & Sol Foundation | BETA | Standing Clerk, Sequencing Auditor, Entity Registrar, Compliance Sentinel |
+| `4444J99/limen` | Publication Policy (disclosure court) | Cind & Sol Foundation | INCUBATOR | Content Disposition |
 
 ---
 
@@ -82,7 +82,7 @@ On every governance beat, this matrix is the boundary that neither entity may cr
   operational status; a dead-LLC remains an LLC under governance.
 - **Status:** active (legal entity exists; payment rail blocked)
 
-### Aerarium / Cvrsvs Honorvm (`organvm/limen`)
+### Aerarium / Cvrsvs Honorvm (`4444J99/limen`)
 
 - **Entity:** Cind & Sol Foundation
 - **Cursus standing:** BETA
@@ -95,7 +95,7 @@ On every governance beat, this matrix is the boundary that neither entity may cr
 The governance office's own repo is the first subject of its own rules. It cannot advance to
 STABLE without satisfying its own BETA → STABLE prerequisites.
 
-### Publication Policy (`organvm/limen`)
+### Publication Policy (`4444J99/limen`)
 
 - **Entity:** Cind & Sol Foundation
 - **Cursus standing:** INCUBATOR
@@ -156,13 +156,13 @@ Checks:
 ## Dogfooding: the organ governs itself first
 
 This governance office governs itself before it governs anything else. Every rule applies to
-`organvm/limen`'s governance directory:
+`4444J99/limen`'s governance directory:
 
 | Rule | Subject | Status |
 |---|---|---|
 | Every repo must have a `seed.yaml` with valid cursus standing | `organs/governance/seed.yaml` — BETA | PASS |
 | Every entity must be registered with mandates and boundary | Cind & Sol + Sovereign Systems in `entities.yaml` | PASS |
-| Every repo must reference a known entity | `organvm/limen` → `cind-and-sol-foundation` | PASS |
+| Every repo must reference a known entity | `4444J99/limen` → `cind-and-sol-foundation` | PASS |
 | Promotion status must match implementation status | `BETA` = `BETA` | PASS |
 | No split-office declarations | Both repos hold one office each | PASS |
 | Entity mandates within allowed set | All mandates in `allowed_mandates` for their types | PASS |
@@ -182,7 +182,7 @@ Aerarium / Cvrsvs Honorvm is rank 5 on the VLTIMA institutional census. Source:
   "rank": 5,
   "pillar": "governance",
   "organ": "Aerarium / Cvrsvs Honorvm",
-  "repo": "organvm/limen",
+  "repo": "4444J99/limen",
   "home": "organs/governance/",
   "maturity": 75,
   "stage": "maturing",

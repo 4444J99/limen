@@ -144,7 +144,7 @@ def _already_captured(sid: str) -> bool:
 
 
 def _default_repo() -> str:
-    """org/repo from the working checkout's origin, defaulting to organvm/limen."""
+    """org/repo from the working checkout's origin, defaulting to 4444J99/limen."""
     try:
         out = subprocess.run(
             ["git", "remote", "get-url", "origin"], capture_output=True, text=True, timeout=5
@@ -154,7 +154,7 @@ def _default_repo() -> str:
             return f"{m.group(1)}/{m.group(2)}"
     except Exception:
         pass
-    return "organvm/limen"
+    return "4444J99/limen"
 
 
 def capture(sid: str, repo: str | None) -> int:
@@ -193,7 +193,7 @@ def _doctor() -> int:
     c1 = extract_claim(
         [rec("mid narration"), rec("result: shipped the organ via PR #1211 (commit 361e6eff)"),
          rec("just a trailing note")],
-        "s1", "organvm/limen",
+        "s1", "4444J99/limen",
     )
     check("c1.closed", c1["closed"], True)
     check("c1.receipts_has_pr", "PR #1211" in c1["receipts"] or any("1211" in r for r in c1["receipts"]), True)

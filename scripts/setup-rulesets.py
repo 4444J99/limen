@@ -8,7 +8,7 @@ For each repo that currently has open author PRs, configure the default branch s
   • allow_auto_merge = true  (so a PR armed with --auto merges itself the instant CI is green)
   • delete_branch_on_merge = false  (source branches are retained for receipt-backed reaping)
 
-For organvm/limen only, keep the classic required check to `pr-gate` with
+For 4444J99/limen only, keep the classic required check to `pr-gate` with
 strict:false/enforce_admins:true, and idempotently ensure a default-branch ruleset holding a
 zero-approval pull-request rule with no bypass actors: every mutation, including Tabularius board
 publication, must enter through a PR. The native merge queue was removed 2026-08-06
@@ -32,7 +32,7 @@ import subprocess
 import sys
 from collections import OrderedDict
 
-MERGE_QUEUE_REPO = "organvm/limen"
+MERGE_QUEUE_REPO = "4444J99/limen"
 # Historical name retained: this is the live ruleset's identity on GitHub (id 19147990) and
 # renaming it would churn every external reference for zero behavioral gain. The queue rule
 # itself was removed 2026-08-06; only the pull_request rule remains.
@@ -446,7 +446,7 @@ def main():
         if MERGE_QUEUE_REPO in repos:
             print(
                 "After the Limen workflow lands and --apply succeeds: "
-                "`scripts/await-pr.sh <n> --repo organvm/limen --merge` → exact-head queue rail."
+                "`scripts/await-pr.sh <n> --repo 4444J99/limen --merge` → exact-head queue rail."
             )
         if any(repo != MERGE_QUEUE_REPO for repo in repos):
             print("For non-queue repos: `gh pr merge <n> --auto --squash` on green PRs.")

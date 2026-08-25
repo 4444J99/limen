@@ -32,7 +32,7 @@ WHAT IS DERIVED, FROM WHAT
             (e.g. the old per-project ones) is drift exactly like a hand-edited one.
 
 PUBLIC-SAFE BY CONSTRUCTION
-    Everything emitted lands in the public organvm/limen tree. Inputs are already the register's
+    Everything emitted lands in the public 4444J99/limen tree. Inputs are already the register's
     PUBLIC-SAFE HALF (first-name slugs only), and the generator additionally REFUSES to write any
     output matching an email / phone / social-handle pattern — belt and braces, because a future
     register edit must not be able to leak through this path. Corpus material (atom statement

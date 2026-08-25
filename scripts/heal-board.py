@@ -68,7 +68,7 @@ ACTIVE = {"open", "dispatched", "in_progress", "needs_human"}
 # state). Issue #2054 says in terms that no Cloudflare support case, billing change, plan
 # change or operator action is required, so pointing a reader at a lever sends them to a
 # human action the owner explicitly ruled out. Cite the engineering owner instead.
-QUOTA_OWNER = "organvm/limen#2054 (conduct persistence write amplification)"
+QUOTA_OWNER = "4444J99/limen#2054 (conduct persistence write amplification)"
 EX_TEMPFAIL = 75  # sysexits(3): the request is valid, the service is temporarily unable to honour it
 NEEDS_HUMAN_LABEL = "needs-human"
 DISPATCHABLE = {"open", "dispatched", "in_progress"}

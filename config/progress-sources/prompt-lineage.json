@@ -1,7 +1,7 @@
 {
   "max_age_seconds": 86400,
   "owner": {
-    "id": "organvm/limen",
+    "id": "4444J99/limen",
     "surface": "prompt-work-lineage"
   },
   "report_path": "logs/progress-sources/prompt-lineage.json",

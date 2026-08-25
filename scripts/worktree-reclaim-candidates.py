@@ -209,8 +209,8 @@ def governance_context(
             "requires a matching human acceptance/redaction/archive proof event in "
             "docs/worktree-reclaim-acceptance.jsonl."
         ),
-        "repo": "organvm/limen",
-        "repo_in_value_tier": "organvm/limen" in set(repos),
+        "repo": "4444J99/limen",
+        "repo_in_value_tier": "4444J99/limen" in set(repos),
         "value_repo_count": len(repos),
         "prompt_attack_path": {
             "family": "worktree_lifecycle",

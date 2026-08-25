@@ -622,7 +622,7 @@ def test_canonical_task_projection_uses_rest_ref_and_sha_pinned_raw_blob(monkeyp
 
     projection = tabularius.fetch_canonical_task_projection("T-REMOTE", timeout=17)
 
-    assert projection.repository == "organvm/limen"
+    assert projection.repository == "4444J99/limen"
     assert projection.branch == "tabularius/board-projection"
     assert projection.head_sha == head
     assert projection.task is not None
@@ -630,10 +630,10 @@ def test_canonical_task_projection_uses_rest_ref_and_sha_pinned_raw_blob(monkeyp
     assert projection.task.status == "dispatched"
     assert requested == [
         (
-            "https://api.github.com/repos/organvm/limen/git/ref/heads/tabularius%2Fboard-projection",
+            "https://api.github.com/repos/4444J99/limen/git/ref/heads/tabularius%2Fboard-projection",
             17,
         ),
-        (f"https://raw.githubusercontent.com/organvm/limen/{head}/tasks.yaml", 17),
+        (f"https://raw.githubusercontent.com/4444J99/limen/{head}/tasks.yaml", 17),
     ]
 
 

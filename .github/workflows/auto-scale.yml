@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   auto-scale:
-    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
       GITHUB_TOKEN: ${{ github.token }}

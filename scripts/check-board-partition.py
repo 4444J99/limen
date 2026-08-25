@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """BOARD-PARTITION predicate — client work must not ride the public board.
 
-``tasks.yaml`` is 5.8 MB, tracked, and lives in a PUBLIC repo (``organvm/limen``). It is the
+``tasks.yaml`` is 5.8 MB, tracked, and lives in a PUBLIC repo (``4444J99/limen``). It is the
 largest published artifact in the estate and it was not a consumer of a single publication gate.
 Thirteen scripts derive from ``scripts/publication-policy.py``, whose own doctrine says:
 
@@ -193,7 +193,7 @@ def _baseline_label() -> str:
 def _write_baseline(current: list[str]) -> None:
     header = (
         "# board-partition-baseline — client/partner work already published on the PUBLIC board\n"
-        "# (organvm/limen is public and tasks.yaml is tracked). Known and owned rather than\n"
+        "# (4444J99/limen is public and tasks.yaml is tracked). Known and owned rather than\n"
         "# silently tolerated. The gate fails on any NEW finding; this list may only SHRINK.\n"
         "#\n"
         "# This file names task ids and repo slugs, and it is committed to the SAME public repo as\n"

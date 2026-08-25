@@ -21,7 +21,7 @@
 # optional `match_facts` (diffed against the census facts: fork/archived/private). First-match-wins,
 # most-specific first; an explicit override row outranks every class.
 #
-# THIS FILE IS WORLD-READABLE (organvm/limen is public). Private repo NAMES are accepted precedent
+# THIS FILE IS WORLD-READABLE (4444J99/limen is public). Private repo NAMES are accepted precedent
 # (value-repos.json already names them); rationale text is the leak surface — keep every `why:` terse
 # and clinical. Sensitive rationale lives in the gitignored overlay institutio/github/estate.private.yaml
 # (shallow-merged into repo_overrides at load time when present; arca-sealed for durability).
@@ -31,6 +31,20 @@
 # predicate — the check-gates.py analogue for the GitHub plane.
 
 schema_version: 0.1
+
+# Limen is the personal supra-organization controller: it governs every organization and cannot
+# be owned by one governed child. Numeric GitHub identity survives transfers; only live routing
+# follows the canonical coordinate. Organizations continue to own their domain products, policies,
+# environments, and deployments. Historical receipts keep the coordinate they observed.
+control_plane:
+  repository_identity_registry: institutio/github/repository-identity.json
+  repository_id: 1255213941
+  canonical_coordinate: 4444J99/limen
+  historical_aliases: [organvm/limen]
+  custody: personal_supra_organization
+  governed_organization_scope: domain_products_policies_and_deployments
+  owner: gitvs
+  note: "Stable repository identity and live controller routing for Limen; aliases are evidence, not rewrite targets."
 
 pr_debt_policy:
   active_owner_max_age_hours: 168
@@ -53,7 +67,7 @@ pr_debt_policy:
 # never on an unused-scope under-grant. Install owners are DERIVED (do not pin an install list).
 app:
   slug: "limen[bot]"                       # working handle — final name via nomenclator (see naming note)
-  token_source: "scripts/gh-app-token.sh"  # the executable identity (App → PAT → gh cascade)
+  token_source: "scripts/gh-app-token.sh"  # exact-repository App identity; mutation paths require App-only minting
   bootstrap: "scripts/bootstrap-github-app.py"
   architecture_doc: "docs/github-app-architecture.md"
   expected_permissions:
@@ -64,7 +78,7 @@ app:
   posture: least_privilege
   install_owners_derived: true
   owner: gitvs
-  note: "The one human atom (App creation + install) is his-hand (L-LIMENBOT-INSTALL); the token cascade already ships in gh-app-token.sh, so the fleet runs on the PAT fallback until the App is born."
+  note: "The one human atom (App creation + install) is his-hand (L-LIMENBOT-INSTALL). App-dependent mutation paths remain frozen until exact-repository App minting succeeds; read-only bootstrap probes may use the legacy user credential only when App credentials are absent."
 
 # ── the resource graph ───────────────────────────────────────────────────────────────────────
 # Every GitHub thing is a Resource: an addressable node with a derived identity, a declared desired
@@ -122,10 +136,17 @@ resource_types:
     desired: ["reaped_when_landed_past_grace"]
     observe: "scripts/reap-branches.py::classify (remote refs)"
     effector:
-      - {kind: reap, argv: [python3, scripts/reap-remote-branches.py, --apply]}
+      - kind: reap
+        argv: [python3, scripts/remote-reap-effect.py, --apply]
+        argv_from_env:
+          --repository-root: LIMEN_REMOTE_REAP_REPOSITORY_ROOT
+          --journal: LIMEN_REMOTE_REAP_JOURNAL
+          --plan: LIMEN_REMOTE_REAP_PLAN
+          --capability: LIMEN_REMOTE_REAP_CAPABILITY
+        required_env: [LIMEN_REMOTE_REAP_CAPABILITY_KEY]
     status: active                         # reaper landed (#901) → the wiring-integrity law now holds it
     owner: gitvs
-    note: "The ~730 unresolved orphaned remote branches; the reaper (reap-remote-branches.py, #901) is live, so this is now active and the reconcile loop dispatches it. Ships DOUBLE-DARK (--apply AND LIMEN_REMOTE_REAP_APPLY=1) — remote deletes are not reflog-recoverable — so reconcile --apply plans it but the delete still needs its own dark-arming."
+    note: "The legacy fleet classifier is read-only. Reconcile can redeem exactly one keeper-signed, repository-qualified plan through remote-reap-effect.py only when all four private artifact bindings and the keeper capability key are present; missing bindings return nonzero and are never reported as acted. The sole mutation is exact-tip CAS deletion, followed by an absence proof."
   local_branch:
     identity: derived
     desired: ["reaped_when_landed"]
@@ -634,7 +655,7 @@ license_policy:
 # reference is a red check, not a silent typo). First-match-wins; put the most specific class first.
 classes:
   conductor:
-    match: ["organvm/limen"]
+    match: ["4444J99/limen"]
     visibility: public                     # 2026-07-22 owner decision: conductor stays public (free-tier CI dependency; resolves the observed-public drift); supersedes the 2026-07-16 private flip
     branch_protection: required
     required_checks: ["pr-gate", "python", "web", "worker"]

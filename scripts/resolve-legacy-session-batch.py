@@ -17,7 +17,7 @@ from urllib.parse import quote
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 BATCH_RESOLUTION_RECEIPTS = ROOT / "docs" / "prompt-batch-resolution-receipts.json"
 SCAN_SCRIPT = ROOT / "scripts" / "scan-legacy-session-batch.py"
-OWNER_REPO = "organvm/limen"
+OWNER_REPO = "4444J99/limen"
 
 
 def utc_now() -> str:
@@ -220,7 +220,7 @@ def build_receipt(batch_id: str) -> dict[str, Any]:
         "/Users/4jp/Workspace/limen/.worktrees, or /Users/4jp/Workspace/limen/.claude/worktrees at review time"
     )
     if merged_numbers:
-        evidence.append("gh api branch lookup and gh pr list --head against organvm/limen found merged PR receipts for " + ", ".join(merged_numbers))
+        evidence.append("gh api branch lookup and gh pr list --head against 4444J99/limen found merged PR receipts for " + ", ".join(merged_numbers))
     if closed_numbers:
         evidence.append("closed unmerged PR receipts were recorded but not treated as landed proof for " + ", ".join(closed_numbers))
     if live_branches:

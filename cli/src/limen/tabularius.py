@@ -238,7 +238,7 @@ def refuse_unfunded_partner_lane(repo: object, task_id: object) -> None:
     """A NEW row attributed to an unfunded partner lane cannot enter this board.
 
     THE PUBLICATION HALF OF THE PARTNER BOUNDARY. This board is not a private ledger: the
-    projection is written by the Worker to ``organvm/limen`` on ``tabularius/board-projection``
+    projection is written by the Worker to ``4444J99/limen`` on ``tabularius/board-projection``
     (the worker's declared repo/branch/path vars in wrangler.toml), that head enters the merge
     queue, and it
     lands on ``main`` — a PUBLIC repo. Accepting a client engagement here IS publishing it, and no
@@ -476,7 +476,7 @@ def fetch_canonical_task_projection(
     raw file at that immutable commit, and parse only the requested task block.
     """
 
-    owner = (repository or os.environ.get("LIMEN_GITHUB_REPO", "").strip() or "organvm/limen").strip()
+    owner = (repository or os.environ.get("LIMEN_GITHUB_REPO", "").strip() or "4444J99/limen").strip()
     if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", owner):
         raise ValueError("canonical projection repository must be owner/repo")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/-]{0,127}", task_id):
@@ -1273,7 +1273,7 @@ def _submit_compatibility_ticket(
     except Exception as exc:
         raise RuntimeError("conduct broker registration returned no canonical session identity") from exc
     identity = registered_session.identity
-    owner = os.environ.get("LIMEN_GITHUB_REPO", "").strip() or "organvm/limen"
+    owner = os.environ.get("LIMEN_GITHUB_REPO", "").strip() or "4444J99/limen"
     execution = {"adapter": "tabularius", "projection": "tasks.yaml", "observed_heads": {}}
     work_key = f"task-compat-{canonical_hash({'intent': intent, 'execution': execution})}"
     packet = WorkPacketV1(

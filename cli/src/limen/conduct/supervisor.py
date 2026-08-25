@@ -493,12 +493,12 @@ def compile_omega_packets(
         horizon="present",
         value_case="Close every currently failing typed strict-Omega rung without capability shrinkage.",
         budget_cost=total_cost,
-        owner_surface="github:organvm/limen:issue:1571",
+        owner_surface="github:4444J99/limen:issue:1571",
     )
     root_campaign = CampaignPacketV1(
         campaign_id=campaign_id,
         failed_predicate="strict Omega and its unchanged two-pass proof hold",
-        owner="github:organvm/limen:issue:1571",
+        owner="github:4444J99/limen:issue:1571",
         next_action="Harvest every typed child receipt, re-evaluate exact remote main, and select one finite boundary.",
         output_ceiling_bytes=65_536,
     )
@@ -520,7 +520,7 @@ def compile_omega_packets(
         conductor=identity,
         required_capabilities=frozenset({"conduct"}),
         predicate="python3 scripts/omega-two-pass.py --check",
-        receipt_target="github:organvm/limen:issue:1571",
+        receipt_target="github:4444J99/limen:issue:1571",
         work_loan=root_loan,
         campaign=root_campaign,
         authority=AuthorityEnvelopeV1(

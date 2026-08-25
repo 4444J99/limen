@@ -938,13 +938,13 @@ def consolidation_gate_blockers(blockers: list[dict[str, Any]]) -> dict[str, Any
             category="github_app_identity",
             status="needs_human_gate",
             evidence=(
-                f"`gh-app-token --which` resolves to `{app.get('gh_app_token_which') or 'unavailable'}`; "
+                f"`gh-app-token --repo 4444J99/limen --which` resolves to `{app.get('gh_app_token_which') or 'unavailable'}`; "
                 f"{len(installed)} org Apps are installed, and `limen[bot]` is not wired."
             ),
             owner="limen[bot] App identity",
             route=(
                 "Create/install the org GitHub App and hydrate credentials via `scripts/set-credential.sh`; "
-                "verify `bash scripts/gh-app-token.sh --which` reports the App path."
+                "verify `bash scripts/gh-app-token.sh --repo 4444J99/limen --which` reports the App path."
             ),
             source="consolidation-gates",
             details={

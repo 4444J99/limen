@@ -812,6 +812,12 @@ TASKS: list[dict] = [
 ]
 
 
+def _canonical_limen_coordinate(value: str) -> str:
+    """Route newly emitted tasks and receipts to the stable current Limen coordinate."""
+
+    return value.replace("organvm/limen", "4444J99/limen")
+
+
 def _receipt_for(row: dict) -> str:
     """Derive the durable receipt target from the task's own predicate shape.
 
@@ -820,18 +826,18 @@ def _receipt_for(row: dict) -> str:
     the instance file, and stage/decision moves at the register row itself.
     """
     if row.get("receipt"):
-        return row["receipt"]
+        return _canonical_limen_coordinate(row["receipt"])
     predicate = row["predicate"]
     if " proto " in predicate:
         return f"git:organvm/relationship-pipeline:out/{row['slug']}"
     if " dossier " in predicate:
         return f"git:{row['repo']}:docs/brainstorm-dossier.md"
     if " funnel " in predicate:
-        return f"git:organvm/limen:{predicate.split()[-1]}"
+        return f"git:4444J99/limen:{predicate.split()[-1]}"
     if " corpus-refresh" in predicate:
         return "git:organvm/conversation-corpus-engine:README.md"
     if any(k in predicate for k in (" stage ", " face-state ", " decision-packet ", " casestudy ")):
-        return "git:organvm/limen:organs/consulting/constellation/registry.yaml"
+        return "git:4444J99/limen:organs/consulting/constellation/registry.yaml"
     return f"git:{row['repo']}:README.md"
 
 
@@ -933,7 +939,7 @@ def main() -> int:
         fields = dict(
             id=row["id"],
             title=row["title"],
-            repo=row["repo"],
+            repo=_canonical_limen_coordinate(row["repo"]),
             type=row["type"],
             target_agent=args.agent,
             workstream="consulting",

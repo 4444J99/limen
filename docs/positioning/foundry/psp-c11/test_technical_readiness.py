@@ -346,7 +346,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         with mock.patch.object(MODULE, "_fetch_repository_blob", return_value=content) as fetch:
             self.assertEqual(expected, MODULE.accepted_w01_candidate_projection_digest(collection))
         fetch.assert_called_once_with(
-            "organvm/limen",
+            MODULE.LIMEN_REPOSITORY_IDENTITY.canonical_coordinate,
             MODULE.SOURCE_LOCK["w01_accepted_head"],
             MODULE.W01_SNAPSHOT_PATH,
             collection,
@@ -396,19 +396,35 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         verification = {
             "status": "pass",
             "work_id": "PSP-P13-W01",
-            "receipt_url": MODULE.SOURCE_LOCK["w01_receipt"],
+            "receipt_url": MODULE.SOURCE_LOCK["w01_receipt"].replace(
+                "github.com/organvm/limen",
+                f"github.com/{MODULE.LIMEN_REPOSITORY_IDENTITY.canonical_coordinate}",
+            ),
             "receipt_sha256": MODULE.hashlib.sha256(canonical).hexdigest(),
         }
         comment = {
-            "html_url": MODULE.SOURCE_LOCK["w01_receipt"],
+            "html_url": verification["receipt_url"],
             "body": "<!-- positioning-receipt:PSP-P13-W01 -->\n```json\n" + json.dumps(receipt) + "\n```",
         }
         with mock.patch.dict(
             MODULE.SOURCE_LOCK,
             {"w01_receipt_sha256": verification["receipt_sha256"]},
         ):
-            with mock.patch.object(MODULE, "_run_json", side_effect=[verification, comment]):
+            with mock.patch.object(MODULE, "_run_json", side_effect=[verification, comment]) as run:
                 MODULE.verify_w01_live_receipt()
+            self.assertEqual(
+                [
+                    "gh",
+                    "api",
+                    f"repos/{MODULE.LIMEN_REPOSITORY_IDENTITY.canonical_coordinate}/issues/comments/5295999920",
+                ],
+                run.call_args_list[1].args[0],
+            )
+            self.assertEqual("organvm/limen", next(iter(receipt["observed_heads"])))
+            self.assertEqual(
+                "https://github.com/organvm/limen/issues/2265#issuecomment-5295999920",
+                MODULE.SOURCE_LOCK["w01_receipt"],
+            )
             wrong_digest = copy.deepcopy(verification)
             wrong_digest["receipt_sha256"] = "0" * 64
             with (

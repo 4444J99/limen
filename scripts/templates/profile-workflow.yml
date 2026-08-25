@@ -1,7 +1,7 @@
 # Canonical copy of the self-updating profile workflow. This file is DEPLOYED to
 # 4444J99/4444J99/.github/workflows/profile.yml (by scripts/profile-publish.sh). It keeps the
 # profile README + self-hosted assets regenerated daily from live GitHub data, using the engine
-# in organvm/limen as the single source of truth (no vendored copy — the profile repo checks the
+# in 4444J99/limen as the single source of truth (no vendored copy — the profile repo checks the
 # engine out at run time). Every number is re-verified before any commit.
 name: profile
 
@@ -24,10 +24,10 @@ jobs:
       - name: Checkout profile repo
         uses: actions/checkout@v4
 
-      - name: Checkout the engine (organvm/limen)
+      - name: Checkout the engine (4444J99/limen)
         uses: actions/checkout@v4
         with:
-          repository: organvm/limen
+          repository: 4444J99/limen
           path: .engine
 
       - uses: actions/setup-python@v5

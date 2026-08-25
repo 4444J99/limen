@@ -304,7 +304,9 @@ def build_snapshot() -> dict[str, Any]:
     py_env = {"PYTHONPATH": str(ROOT / "cli" / "src")}
     consolidation_command = run_command([sys.executable, "scripts/consolidate-github.py"], env=py_env)
     rewrite_command = run_command([sys.executable, "scripts/rewrite-owners.py"], env=py_env)
-    app_which_command = run_command(["bash", "scripts/gh-app-token.sh", "--which"])
+    app_which_command = run_command(
+        ["bash", "scripts/gh-app-token.sh", "--repo", "4444J99/limen", "--which"]
+    )
     installations_command = run_command(
         ["gh", "api", "/orgs/organvm/installations", "--jq", ".installations[] | .app_slug"],
         timeout=60,
@@ -431,7 +433,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "3. Only after the human transfer gate, run `PYTHONPATH=cli/src python3 scripts/consolidate-github.py --apply`.",
         "4. Only after transfer, run `PYTHONPATH=cli/src python3 scripts/rewrite-owners.py --apply --emit-remotes /tmp/limen-remotes.sh`.",
         "5. Wire `limen[bot]` only after the GitHub App exists, is installed on `organvm`, and `GITHUB_APP_ID`/`GITHUB_APP_PRIVATE_KEY` are hydrated.",
-        "6. Require `bash scripts/gh-app-token.sh --which` to report `app (limen[bot] installation token)` before calling the App path wired.",
+        "6. Require `bash scripts/gh-app-token.sh --repo 4444J99/limen --which` to report the App path wired before calling it.",
         "",
         "## Probe Commands",
         "",

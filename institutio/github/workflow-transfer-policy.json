@@ -1,0 +1,54 @@
+{
+  "schema_version": "limen.workflow_transfer_policy.v1",
+  "repository_identity": "institutio/github/repository-identity.json",
+  "leave_active_during_freeze": [
+    ".github/workflows/moneta.yml",
+    ".github/workflows/pr-gate.yml",
+    ".github/workflows/validate.yaml",
+    "dynamic/github-code-scanning/codeql"
+  ],
+  "observe_and_requery_after_transfer": [
+    {"path": "dynamic/agents/copilot-pull-request-reviewer", "class": "github_managed_review_surface", "reason": "not an Actions workflow file; organization-installed access must not be assumed after transfer"},
+    {"path": "dynamic/copilot-swe-agent/copilot", "class": "github_managed_agent_surface", "reason": "not an Actions workflow file; organization-installed access must not be assumed after transfer"},
+    {"path": "dynamic/dependabot/dependabot-updates", "class": "github_managed_dependency_surface", "reason": "not an Actions workflow file; preserve security policy and re-query repository ownership behavior"},
+    {"path": "dynamic/dependabot/update-graph", "class": "github_managed_dependency_surface", "reason": "not an Actions workflow file; preserve security policy and re-query repository ownership behavior"}
+  ],
+  "freeze": [
+    {"path": ".github/workflows/auto-scale.yml", "class": "schedule_and_write", "app_dependent": false},
+    {"path": ".github/workflows/ci.yml", "class": "scheduled_heavy_ci", "app_dependent": false, "recovery_ci": true},
+    {"path": ".github/workflows/claude-review.yml", "class": "review_automation", "app_dependent": true},
+    {"path": ".github/workflows/cloud-maintenance.yml", "class": "cloud_mutation", "app_dependent": false},
+    {"path": ".github/workflows/conductor-report.yml", "class": "scheduled_reporting", "app_dependent": false},
+    {"path": ".github/workflows/deploy-api.yml", "class": "deployment", "app_dependent": false},
+    {"path": ".github/workflows/deploy-danse.yml", "class": "deployment", "app_dependent": false},
+    {"path": ".github/workflows/deploy-worker.yml", "class": "deployment", "app_dependent": false},
+    {"path": ".github/workflows/deploy.yml", "class": "scheduled_deployment", "app_dependent": false},
+    {"path": ".github/workflows/fleet-gate.yml", "class": "agent_dispatch_and_write", "app_dependent": true},
+    {"path": ".github/workflows/limen-agent.yml", "class": "remote_agent_dispatch", "app_dependent": true},
+    {"path": ".github/workflows/limen-warp-oz.yml", "class": "paid_agent_dispatch", "app_dependent": false, "zero_spend_prohibited": true},
+    {"path": ".github/workflows/operate.yml", "class": "repository_write", "app_dependent": true},
+    {"path": ".github/workflows/pr-review-fanout.yml", "class": "review_automation", "app_dependent": true},
+    {"path": ".github/workflows/pypi.yml", "class": "release", "app_dependent": false, "trusted_publisher_owner_bound": true},
+    {"path": ".github/workflows/xdist-cells-diag.yml", "class": "scheduled_diagnostic_tombstone", "app_dependent": false, "non_enableable_tombstone": true}
+  ],
+  "enable_predicates": {
+    "base": [
+      "repository_transferred",
+      "repository_id_verified",
+      "default_sha_verified",
+      "workflow_state_matches_manifest"
+    ],
+    "recovery_ci": [
+      "public_repository_verified",
+      "github_hosted_standard_runner_verified",
+      "zero_spend_policy_verified"
+    ],
+    "effectful": [
+      "repository_secrets_verified",
+      "environment_bindings_verified",
+      "exact_predicates_verified"
+    ],
+    "app_dependent": ["exact_repository_app_access_verified"],
+    "release": ["pypi_trusted_publisher_owner_updated"]
+  }
+}

@@ -295,6 +295,7 @@ verify-resolver-test
 verify-parallel-test
 agent-docs
 github-estate-census-custody-test
+remote-execution-admission-test
 positioning-foundry-technical-readiness-test
 positioning-foundry-technical-readiness-public-live
 flagship-proof-set-test

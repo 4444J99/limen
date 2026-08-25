@@ -8,7 +8,7 @@ evidence and owner-routed gate are recorded in
 
 ## Limen's concurrency rail
 
-`organvm/limen` has one targeted native merge-queue ruleset. It serializes only the final
+`4444J99/limen` has one targeted native merge-queue ruleset. It serializes only the final
 integration step, and its zero-approval `pull_request` rule blocks every direct default-branch
 write with no bypass actors. Concurrent agents keep working and proving their own exact PR heads
 without repeatedly merging a moving `main`.
@@ -65,7 +65,7 @@ required checks must explicitly subscribe to it or the queue cannot receive thei
 The script is dry-run by default. For every selected repository it reports the planned classic
 protection and repository settings. `--apply` is the only mutation switch.
 
-For `organvm/limen`, apply performs these idempotent operations:
+For `4444J99/limen`, apply performs these idempotent operations:
 
 1. Enable and read-back verify the repository switch that permits explicitly authorized Actions
    workflows to create pull requests.
@@ -89,14 +89,14 @@ Read-only targeted preview:
 
 ```bash
 cd ~/Workspace/limen
-python3 scripts/setup-rulesets.py --repo organvm/limen
+python3 scripts/setup-rulesets.py --repo 4444J99/limen
 ```
 
 Explicit targeted apply:
 
 ```bash
 cd ~/Workspace/limen
-python3 scripts/setup-rulesets.py --apply --repo organvm/limen
+python3 scripts/setup-rulesets.py --apply --repo 4444J99/limen
 ```
 
 Re-running the apply updates the named ruleset rather than creating a duplicate. The script makes no
@@ -105,11 +105,11 @@ remote mutation without the exact `--apply` token.
 ## Reversibility
 
 - Queue ruleset:
-  `gh api -X DELETE /repos/organvm/limen/rulesets/<ruleset-id>`
+  `gh api -X DELETE /repos/4444J99/limen/rulesets/<ruleset-id>`
 - Classic branch protection:
-  `gh api -X DELETE /repos/organvm/limen/branches/main/protection`
+  `gh api -X DELETE /repos/4444J99/limen/branches/main/protection`
 - Auto-merge:
-  `gh api -X PATCH /repos/organvm/limen -F allow_auto_merge=false`
+  `gh api -X PATCH /repos/4444J99/limen -F allow_auto_merge=false`
 
 On 2026-07-18, PR #1247 merged the queue-aware workflow and repository integration rail. Ruleset
 `19147990` was then installed and read-back verified with an active GraphQL merge queue. Classic

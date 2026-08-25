@@ -39,7 +39,7 @@ mints on payment. The valve opens; no sale was lost while it was closed.
 First consumer in production is my fork of the ChatGPT Exporter userscript — its Buy Pro
 button opens a live mint today.
 
-Source (MIT, part of a larger open agent-ops repo): https://github.com/organvm/limen/tree/main/moneta
+Source (MIT, part of a larger open agent-ops repo): https://github.com/4444J99/limen/tree/main/moneta
 Live mint: https://mint.4444j99.dev/
 Landing: see `docs/moneta/index.html` in the repo
 
@@ -84,7 +84,7 @@ wallet custody, and open the valve later without losing a buyer.
 
     docker build -t moneta . && docker run -p 8787:8787 --env-file .env -v "$PWD/.data:/app/.data" moneta
 
-Source (MIT): https://github.com/organvm/limen/tree/main/moneta · Live instance: https://mint.4444j99.dev/
+Source (MIT): https://github.com/4444J99/limen/tree/main/moneta · Live instance: https://mint.4444j99.dev/
 
 ---
 
@@ -106,7 +106,7 @@ opens; no sale was lost while it was closed.
 
 5/ Live today powering Buy Pro on my ChatGPT Exporter fork:
 https://chatgpt-exporter-e08.pages.dev/ · mint: https://mint.4444j99.dev/ · source:
-https://github.com/organvm/limen/tree/main/moneta
+https://github.com/4444J99/limen/tree/main/moneta
 
 ---
 

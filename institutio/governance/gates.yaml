@@ -350,6 +350,11 @@ gates:
     paths: ["scripts/check-live-checkout.py", "scripts/tests/live-checkout-currency.test.sh", "institutio/governance/sensors.yaml"]
     owner: substrate
     note: "The deployment-currency probe must persist its answer: coherent/drift/unverifiable-here are three RECORDED states, never two plus a silence. `unverifiable-here` is the load-bearing case — a consumer that cannot establish currency must be able to tell that apart from established-fine, which is the 2026-08-07 defect class in one assertion. The receipt body carries no wall-clock, so consecutive runs are byte-identical and every diff is a real change."
+  heartbeat-notification-contract:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_heartbeat_supervisor.py cli/tests/test_notification_effect.py cli/tests/test_notify_body_gate.py cli/tests/test_notification_registry.py -q"
+    paths: ["cli/src/limen/heartbeat.py", "cli/src/limen/notification_effect.py", "scripts/_notify.py", "spec/scheduled-process-contracts.json", "institutio/governance/notification-events.limen.json", "scripts/check-notification-registry.py", "cli/tests/test_heartbeat_supervisor.py", "cli/tests/test_notification_effect.py", "cli/tests/test_notify_body_gate.py", "cli/tests/test_notification_registry.py"]
+    owner: observe_host
+    note: "The bounded one-shot heartbeat may select at most one re-derivable NotificationEventV1 per fire. Its receipts bind the stable event digest and truthful Domus v2 submission status, disabled notification effects spawn no broker, and legacy delivered claims are downgraded to submitted_unverified."
   review-harvest-test:
     command: "bash scripts/tests/check-review-harvest.test.sh"
     paths: ["scripts/check-review-harvest.py", "scripts/tests/check-review-harvest.test.sh", "scripts/check-review-engine.py"]
@@ -526,6 +531,24 @@ gates:
       - "docs/architecture/source-of-truth-and-local-cache.md"
     owner: tabularius
     note: "Recovery remains effect-separated and fail-closed: repository-qualified ref proofs, exact review pagination, zero-step runner admission, one-use signed CAS deletion, crash reconciliation, and the read-only aggregate predicate stay independently testable."
+  remote-execution-admission-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_remote_execution.py cli/tests/test_gh_app_token.py -q"
+    paths:
+      - ".github/workflows/limen-agent.yml"
+      - "cli/src/limen/harvest.py"
+      - "cli/src/limen/remote_execution.py"
+      - "cli/src/limen/remote_predicate.py"
+      - "cli/tests/test_remote_execution.py"
+      - "cli/tests/test_gh_app_token.py"
+      - "scripts/gh-app-token.sh"
+      - "scripts/bootstrap-github-app.py"
+      - "scripts/consolidation-gates.py"
+      - "scripts/conductor-tranche.py"
+      - "scripts/session-blockers-ledger.py"
+      - "docs/github-app-architecture.md"
+      - "institutio/governance/gates.yaml"
+    owner: tabularius
+    note: "Remote completion binds the exact workflow, run, deterministic job, nonzero runner, executed steps, and receipt digest; App credentials mint only one exact-repository token and never broaden on targeting failure."
   estate-classification-test:
     command: "python3 scripts/tests/estate-classification.test.py"
     paths: ["scripts/estate-classification.py", "scripts/tests/estate-classification.test.py", "institutio/github/estate.yaml", "institutio/github/access.yaml", "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json", "scripts/gitvs.py"]

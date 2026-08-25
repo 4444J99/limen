@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 # runner-install.sh — register a SELF-HOSTED Actions runner for the organvm org on this Mac.
 #
-# WHY: the conductor (organvm/limen) went private 2026-07-16, so its CI bills paid minutes —
-# 37k min (~$223) in July alone at the hosted rate. A self-hosted runner on the always-on Mac is
-# the $0 lane (economic-ground-truth: all exec = $0 capex). Workflows opt in via
-#   runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
-# so ONE org/repo Actions variable (LIMEN_RUNS_ON=self-hosted) flips the fleet and unsetting it
-# reverts to hosted — no workflow edits either way.
+# WHY: this remains an optional zero-cash lane for private organization repositories. The public
+# personal Limen controller must use GitHub-hosted public-repository runners and must never attach
+# this machine. Private organization workflows may opt in explicitly. Limen's public workflows
+# are pinned to `ubuntu-latest`; this tool never changes them and no repository variable reroutes
+# them.
 #
 # THE SECURITY INVARIANT (non-negotiable): self-hosted runners serve PRIVATE repos ONLY. A public
 # repo lets any fork PR execute arbitrary code on this Mac. This script asserts the org's default

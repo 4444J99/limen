@@ -792,7 +792,7 @@ async function compatibilityPacket(env, intent, task) {
   const executionHash = await canonicalHash(execution);
   const operationHash = await canonicalHash({ intent: canonicalIntent, execution });
   const workId = `worker-task-${operationHash.slice(0, 32)}`;
-  const repository = String(env.LIMEN_GITHUB_REPO || "organvm/limen");
+  const repository = String(env.LIMEN_GITHUB_REPO || "4444J99/limen");
   const deadline = new Date(Date.now() + 5 * 60 * 1000).toISOString();
   return {
     session: {

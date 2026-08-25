@@ -77,7 +77,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 LOCKD = ROOT / "logs" / ".queue.lock.d"
 STAMP = ROOT / "logs" / "main-green.json"
 WORKFLOW = os.environ.get("LIMEN_MAIN_GREEN_WORKFLOW", "ci.yml")
-REPO = os.environ.get("LIMEN_MAIN_GREEN_REPO", "organvm/limen")
+REPO = os.environ.get("LIMEN_MAIN_GREEN_REPO", "4444J99/limen")
 # The merge queue's validation workflow: every no-bypass main commit is a fast-forward to a group
 # commit this workflow proved as a merge_group run at the SAME sha (see _queue_proof_url).
 QUEUE_PROOF_WORKFLOW = "pr-gate.yml"

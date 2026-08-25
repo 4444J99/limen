@@ -56,7 +56,7 @@
     "_doc": "Faces rendered by a dedicated live-API engine with their OWN provability predicate — NOT SSOT-compared here (their basis differs from the corpus curated SSOT, so a comparison would manufacture false drift). VVLTVS defers to the engine's own predicate.",
     "profile-4444J99": {
       "path": "4444J99/4444J99/README.md",
-      "owner": "organvm/limen scripts/_profile.py + profile-visuals.py + sync-readme.py + profile-verify.py",
+      "owner": "4444J99/limen scripts/_profile.py + profile-visuals.py + sync-readme.py + profile-verify.py",
       "basis": "live-public-gh-api (organvm ecosystem aggregate) + repo-attested CI",
       "provability": "every number is in 4444J99/4444J99/assets/stats-manifest.json (api-attested = re-run the query; repo-attested = the repo's own CI); scripts/profile-verify.py is the predicate (exit 0 iff no third-party widget, no remote image, no unprovable number). Regenerated daily by .github/workflows/profile.yml.",
       "note": "Replaces the former profile-bio face (which bound the now-retired system-vars register)."

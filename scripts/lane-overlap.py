@@ -52,7 +52,7 @@ from functools import partial
 from pathlib import Path
 
 ROOT = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[1])
-DEFAULT_REPO = os.environ.get("LIMEN_GITHUB_REPO") or "organvm/limen"
+DEFAULT_REPO = os.environ.get("LIMEN_GITHUB_REPO") or "4444J99/limen"
 BASE = "origin/main"
 
 

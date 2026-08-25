@@ -98,9 +98,9 @@ def source_location_text(source_counts: dict[str, Any]) -> str:
 
 def repo_candidates(root: str) -> list[str]:
     if root.startswith("limen-"):
-        return ["organvm/limen"]
+        return ["4444J99/limen"]
     if root.startswith("studium-") or "organvm-limen" in root:
-        return ["organvm/limen"]
+        return ["4444J99/limen"]
     if "session-meta" in root:
         return ["organvm/session-meta", "4444J99/session-meta"]
     if "hokage-chess" in root:
@@ -287,7 +287,7 @@ def choose_pr(prs: list[dict[str, Any]]) -> dict[str, Any] | None:
 
 
 def predicate_for(repo: str | None) -> str:
-    if repo == "organvm/limen":
+    if repo == "4444J99/limen":
         return "bash scripts/verify-whole.sh after branch rehydration"
     if repo == "organvm/session-meta":
         return "session-meta issue/PR review predicate after branch rehydration"

@@ -34,7 +34,7 @@ class FakeStrategy:
         self._seq = [before, after]
         self._i = 0
 
-    def high_advisories(self, d):
+    def high_advisories(self, d, *, env=None):
         r = self._seq[min(self._i, len(self._seq) - 1)]
         self._i += 1
         return r
@@ -42,7 +42,7 @@ class FakeStrategy:
     def derive(self, adv):
         return {"name": adv["name"], "pin": ">=1.0.0 <2.0.0", "disposition": "auto"}
 
-    def apply(self, d, pins):
+    def apply(self, d, pins, *, env=None):
         pass
 
     def snapshot_overrides(self, d):
@@ -78,7 +78,8 @@ finally:
 
 # --- 2. enumeration: env override wins, limen self-discarded ---
 import os
-os.environ["LIMEN_ESTATE_AUDIT_REPOS"] = "organvm/a:organvm/b:organvm/limen"
+
+os.environ["LIMEN_ESTATE_AUDIT_REPOS"] = "organvm/a:organvm/b:organvm/limen:4444J99/limen"
 try:
     repos = m.discover_audit_repos()
     assert repos == ["organvm/a", "organvm/b"], repos  # limen discarded (heals locally)
@@ -86,118 +87,141 @@ finally:
     del os.environ["LIMEN_ESTATE_AUDIT_REPOS"]
 
 # --- 2b. estate skip: repo_overrides class archived/frozen is excluded ---
-skip = m._skip_repos({"repo_overrides": {"organvm/old": {"class": "archived"}, "organvm/x": {"class": "governed_public"}}})
+skip = m._skip_repos(
+    {"repo_overrides": {"organvm/old": {"class": "archived"}, "organvm/x": {"class": "governed_public"}}}
+)
 assert skip == {"organvm/old"}, skip
 
 # --- 3. PnpmStrategy parses the pnpm `advisories` schema → normalized shape ---
 pnpm = m.PnpmStrategy()
-pnpm._audit_json = lambda d: {"advisories": {
-    "1": {"module_name": "js-yaml", "severity": "high", "vulnerable_versions": ">=4.0.0 <4.3.0",
-          "patched_versions": ">=4.3.0", "url": "https://x"},
-    "2": {"module_name": "lodash", "severity": "moderate", "vulnerable_versions": "<1.0.0",
-          "patched_versions": ">=1.0.0"},  # moderate ignored
-}}
+pnpm._audit_json = lambda d, *, env=None: {
+    "advisories": {
+        "1": {
+            "module_name": "js-yaml",
+            "severity": "high",
+            "vulnerable_versions": ">=4.0.0 <4.3.0",
+            "patched_versions": ">=4.3.0",
+            "url": "https://x",
+        },
+        "2": {
+            "module_name": "lodash",
+            "severity": "moderate",
+            "vulnerable_versions": "<1.0.0",
+            "patched_versions": ">=1.0.0",
+        },  # moderate ignored
+    }
+}
 advs = pnpm.high_advisories(Path("/x"))
 assert [a["name"] for a in advs] == ["js-yaml"], advs
 assert advs[0]["range"] == ">=4.0.0 <4.3.0" and advs[0]["fixable"] is True
 
-# --- 4. per-run cap respected + NO-AUTO-MERGE on the armed path ---
+# --- 3b. pnpm apply cannot execute lifecycle scripts or .pnpmfile.cjs hooks ---
+_orun = m.subprocess.run
+try:
+    with tempfile.TemporaryDirectory() as td:
+        project = Path(td)
+        (project / "package.json").write_text("{}\n", encoding="utf-8")
+        pnpm_calls = []
+
+        def fake_pnpm_run(args, **kwargs):
+            pnpm_calls.append(list(args))
+            return subprocess.CompletedProcess(args, 0, "", "")
+
+        m.subprocess.run = fake_pnpm_run
+        pnpm.apply(project, {"js-yaml": ">=4.3.0"}, env={"PATH": "/bin"})
+        assert pnpm_calls == [
+            [
+                "pnpm",
+                "install",
+                "--no-frozen-lockfile",
+                "--ignore-scripts",
+                "--ignore-pnpmfile",
+            ]
+        ], pnpm_calls
+finally:
+    m.subprocess.run = _orun
+
+# --- 4. per-run cap respected; armed compute never crosses the absent finalizer ---
 calls = []
 
 
-def fake_gh(args, timeout=60):
-    calls.append(list(args))
-    # default_branch / clone / pr create all "succeed"
-    if args[:1] == ["api"]:
-        return subprocess.CompletedProcess(args, 0, "main", "")
-    return subprocess.CompletedProcess(args, 0, "", "")
+def fake_public_clone(repo, target, *, env):
+    calls.append(["clone", repo])
+    assert target.is_dir()
+    assert "GITHUB_TOKEN" not in env and "GH_TOKEN" not in env and "SSH_AUTH_SOCK" not in env
+    assert env["GIT_CONFIG_NOSYSTEM"] == "1" and env["NPM_CONFIG_IGNORE_SCRIPTS"] == "true"
+    return subprocess.CompletedProcess([repo], 0, "", "")
 
 
-def fake_git(cwd, *args, timeout=120):
-    calls.append(["git", *args])
-    return subprocess.CompletedProcess(args, 0, "", "")
+def fake_heal_project(d, *, target_env=None):
+    assert target_env is not None
+    return {
+        "strategy": "npm",
+        "tier1": {"sharp": ">=0.35.0 <1.0.0"},
+        "tier2": ["js-yaml"],
+        "human": [],
+        "clean": False,
+        "changed": True,
+    }
 
 
-_og, _ogit, _ohp, _opd = m._gh, m._bounded_git, m.heal_project, m._npm_project_dirs
+_oclone, _ohp, _opd, _owr = m._public_clone, m.heal_project, m._npm_project_dirs, m._worktree_root
 try:
-    m._gh = fake_gh
-    m._bounded_git = fake_git
-    m._npm_project_dirs = lambda root: [root]
-    m.heal_project = lambda d: {"strategy": "npm", "tier1": {"sharp": ">=0.35.0 <1.0.0"},
-                                "tier2": ["js-yaml"], "human": [], "clean": False, "changed": True}
-    os.environ["LIMEN_ESTATE_AUDIT_REPOS"] = "organvm/a:organvm/b:organvm/c"
-    os.environ[m.APPLY_ENV] = "1"
-    m.DEFAULT_CAP = 2  # cap below the 3 discovered
-    rc = m.run(apply=True, as_json=True)
-    # exactly 2 repos processed (cap), each opened a PR, and NO `gh pr merge` ever issued
-    pr_creates = [c for c in calls if c[:2] == ["pr", "create"]]
-    pr_merges = [c for c in calls if c[:2] == ["pr", "merge"]]
-    assert len(pr_creates) == 2, f"expected 2 PR creates (cap), got {len(pr_creates)}"
-    assert pr_merges == [], f"NO auto-merge allowed, got {pr_merges}"
-    assert rc == 1  # Tier-1 outstanding
+    with tempfile.TemporaryDirectory() as td:
+        worktree_root = Path(td)
+        m._public_clone = fake_public_clone
+        m._worktree_root = lambda: worktree_root
+        m._npm_project_dirs = lambda root: [root]
+        m.heal_project = fake_heal_project
+        os.environ["LIMEN_ESTATE_AUDIT_REPOS"] = "organvm/a:organvm/b:organvm/c"
+        os.environ[m.APPLY_ENV] = "1"
+        m.DEFAULT_CAP = 2
+        rc = m.run(apply=True, as_json=True)
+        assert calls == [["clone", "organvm/a"], ["clone", "organvm/b"]], calls
+        assert rc == 1
+        assert list(worktree_root.iterdir()) == [], "armed compute must leave no target clone or home"
 finally:
-    m._gh, m._bounded_git, m.heal_project, m._npm_project_dirs = _og, _ogit, _ohp, _opd
+    m._public_clone, m.heal_project, m._npm_project_dirs, m._worktree_root = _oclone, _ohp, _opd, _owr
     os.environ.pop("LIMEN_ESTATE_AUDIT_REPOS", None)
     os.environ.pop(m.APPLY_ENV, None)
 
-# --- 5. dry-run makes no durable writes (no gh/git mutations; disposable clone removed) ---
+# --- 5. dry-run makes no durable writes and disposes its clone + secretless HOME ---
 calls.clear()
-_og2, _ohp2, _owr2 = m._gh, m.heal_project, m._worktree_root
 try:
     with tempfile.TemporaryDirectory() as td:
         worktree_root = Path(td)
-
-        def fake_clone_gh(args, timeout=60):
-            calls.append(list(args))
-            if args[:1] == ["api"]:
-                return subprocess.CompletedProcess(args, 0, "main", "")
-            if args[:2] == ["repo", "clone"]:
-                assert Path(args[3]).is_dir()
-            return subprocess.CompletedProcess(args, 0, "", "")
-
-        m._gh = fake_clone_gh
-        m._bounded_git = fake_git
+        m._public_clone = fake_public_clone
         m._worktree_root = lambda: worktree_root
-        os.environ["LIMEN_ESTATE_AUDIT_REPOS"] = "organvm/a"
-        m.heal_project = lambda d: {"strategy": "npm", "tier1": {"sharp": ">=0.35.0 <1.0.0"},
-                                    "tier2": [], "human": [], "clean": False, "changed": True}
         m._npm_project_dirs = lambda root: [root]
-        rc = m.run(apply=False, as_json=False)
-        assert [c for c in calls if c[:2] == ["pr", "create"]] == [], "dry-run must not open PRs"
-        assert [c for c in calls if c and c[0] == "git" and "push" in c] == [], "dry-run must not push"
-        assert list(worktree_root.iterdir()) == [], "dry-run clone must reach an absent fixed point"
+        m.heal_project = fake_heal_project
+        report = m.heal_repo("organvm/a", apply=False)
+        assert report["error"] is None, report
+        assert report["clone_cleanup"] == "removed", report
+        assert "trusted finalizer required" in report["note"], report
+        assert list(worktree_root.iterdir()) == [], "dry-run must reach an absent fixed point"
 finally:
-    m._gh, m.heal_project, m._worktree_root = _og2, _ohp2, _owr2
-    os.environ.pop("LIMEN_ESTATE_AUDIT_REPOS", None)
+    m._public_clone, m.heal_project, m._npm_project_dirs, m._worktree_root = _oclone, _ohp, _opd, _owr
 
-# --- 6. failed clone residue is removed only when this invocation created its target ---
-_og3, _owr3 = m._gh, m._worktree_root
+# --- 6. failed public clone residue is removed only when this invocation created its target ---
 try:
     with tempfile.TemporaryDirectory() as td:
         worktree_root = Path(td)
 
-        def fake_failed_clone(args, timeout=60):
-            if args[:1] == ["api"]:
-                return subprocess.CompletedProcess(args, 0, "main", "")
-            if args[:2] == ["repo", "clone"]:
-                target = Path(args[3])
-                assert target.is_dir()
-                (target / "partial").write_text("generated clone residue", encoding="utf-8")
-                return subprocess.CompletedProcess(args, 1, "", "checkout failed")
-            return subprocess.CompletedProcess(args, 0, "", "")
+        def fake_failed_clone(repo, target, *, env):
+            (target / "partial").write_text("generated clone residue", encoding="utf-8")
+            return subprocess.CompletedProcess([repo], 1, "", "checkout failed")
 
-        m._gh = fake_failed_clone
+        m._public_clone = fake_failed_clone
         m._worktree_root = lambda: worktree_root
         report = m.heal_repo("organvm/a", apply=False)
-        assert report["error"] == "clone failed", report
+        assert report["error"] == "public secretless clone failed", report
         assert report["clone_cleanup"] == "removed", report
         assert "clone_retained" not in report, report
         assert list(worktree_root.iterdir()) == [], "owned failed clone residue must be removed"
 finally:
-    m._gh, m._worktree_root = _og3, _owr3
+    m._public_clone, m._worktree_root = _oclone, _owr
 
 # --- 7. cleanup refuses a matching target without current-invocation ownership ---
-_owr_guard = m._worktree_root
 try:
     with tempfile.TemporaryDirectory() as td:
         worktree_root = Path(td)
@@ -208,40 +232,21 @@ try:
         assert cleaned is False and detail == "refused-unowned-target", (cleaned, detail)
         assert target.is_dir(), "unowned target must remain untouched"
 finally:
-    m._worktree_root = _owr_guard
+    m._worktree_root = _owr
 
-# --- 8. an armed push failure retains the local commit surface for custody ---
-_og4, _ogit4, _ohp4, _opd4, _owr4 = (
-    m._gh, m._bounded_git, m.heal_project, m._npm_project_dirs, m._worktree_root
-)
+# --- 8. apply is explicitly refused until a trusted App-only finalizer exists ---
 try:
     with tempfile.TemporaryDirectory() as td:
         worktree_root = Path(td)
-
-        def fake_armed_gh(args, timeout=60):
-            if args[:1] == ["api"]:
-                return subprocess.CompletedProcess(args, 0, "main", "")
-            if args[:2] == ["repo", "clone"]:
-                assert Path(args[3]).is_dir()
-            return subprocess.CompletedProcess(args, 0, "", "")
-
-        def fake_push_failure(cwd, *args, timeout=120):
-            rc = 1 if args[:1] == ("push",) else 0
-            return subprocess.CompletedProcess(args, rc, "", "push failed" if rc else "")
-
-        m._gh = fake_armed_gh
-        m._bounded_git = fake_push_failure
+        m._public_clone = fake_public_clone
         m._worktree_root = lambda: worktree_root
         m._npm_project_dirs = lambda root: [root]
-        m.heal_project = lambda d: {"strategy": "npm", "tier1": {"sharp": ">=0.35.0 <1.0.0"},
-                                    "tier2": [], "human": [], "clean": True, "changed": True}
+        m.heal_project = fake_heal_project
         report = m.heal_repo("organvm/a", apply=True)
-        assert report["error"] == "push failed", report
-        assert report["clone_retained"].startswith("estate-audit-a-"), report
-        assert len(list(worktree_root.iterdir())) == 1, "unpushed local surface must remain"
+        assert report["error"] == "trusted finalizer unavailable; cross-repository write refused", report
+        assert report["pr"] is None and "remote_branch" not in report, report
+        assert list(worktree_root.iterdir()) == [], "refused finalizer must leave no local custody debt"
 finally:
-    m._gh, m._bounded_git, m.heal_project, m._npm_project_dirs, m._worktree_root = (
-        _og4, _ogit4, _ohp4, _opd4, _owr4
-    )
+    m._public_clone, m.heal_project, m._npm_project_dirs, m._worktree_root = _oclone, _ohp, _opd, _owr
 
 print("PASS: estate-audit-heal.test.py")

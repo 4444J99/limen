@@ -217,6 +217,19 @@ def test_principal_for_identity_and_session_always_enforces_ownership() -> None:
     assert "conductor" in p_sess_fb.roles  # derived from session capabilities
 
 
+def test_conductor_only_session_cannot_receive_executor_lease() -> None:
+    broker = ConductBroker(MemoryStateStore(), capability_secret="test-secret")
+    principal = make_principal("p-conductor-only", "codex", "conductor")
+    session = make_session("codex", capabilities=frozenset({"conduct"}))
+    broker.register(session, principal=principal, now=NOW)
+    packet = make_packet(work_id="conductor-only", conductor=session.identity).model_copy(
+        update={"required_capabilities": frozenset({"conduct"})}
+    )
+
+    with pytest.raises(ConductConflict, match="no healthy native lane"):
+        broker.submit(packet, principal=principal, now=NOW)
+
+
 # ---------------------------------------------------------------------------
 # 2. Observer Role Permissions Matrix Tests
 # ---------------------------------------------------------------------------
@@ -265,7 +278,9 @@ def test_observer_role_can_read_graph_harvest_task_run_and_capabilities() -> Non
     # 5. List notification assignments with observer principal
     notifs = broker.list_notification_assignments(principal=p_obs, now=NOW)
     assert notifs["schema_version"] == "limen.notification_assignments.v1"
-    assert len(notifs["assignments"]) == 2
+    assert notifs["registry_namespace"] == "limen"
+    assert any(row["event_id"] == "limen.ci.provider_runner_admission" for row in notifs["assignments"])
+    assert all("session_id" not in row and "principal_id" not in row for row in notifs["assignments"])
 
 
 def test_observer_role_cannot_perform_mutations() -> None:
@@ -773,19 +788,23 @@ def test_notifications_list_assignments_role_validation() -> None:
 
     # Observer can list assignments
     res_obs = broker.list_notification_assignments(principal=p_obs, now=NOW)
-    assert len(res_obs["assignments"]) == 2
-    assert res_obs["assignments"][0]["agent"] in {"codex", "jules"}
+    assert res_obs["assignments"]
+    provider_route = next(
+        row for row in res_obs["assignments"] if row["event_id"] == "limen.ci.provider_runner_admission"
+    )
+    assert provider_route["channels"] == ["macos", "ntfy"]
+    assert provider_route["class"] == "integrity"
 
     # Conductor can list assignments
     res_cond = broker.list_notification_assignments(principal=p_cond, now=NOW)
-    assert len(res_cond["assignments"]) == 2
+    assert res_cond["assignments"] == res_obs["assignments"]
 
     # list_assignments alias works identically
     assert broker.list_assignments(principal=p_obs, now=NOW) == res_obs
 
     # Unauthenticated caller defaults to observer fallback and succeeds
     res_anon = broker.list_notification_assignments(principal=None, now=NOW)
-    assert len(res_anon["assignments"]) == 2
+    assert res_anon["assignments"] == res_obs["assignments"]
 
     # Executor alone is rejected
     with pytest.raises(ConductConflict, match="lacks required observer/conductor role"):
