@@ -130,7 +130,8 @@ mint_app_token() {
   jwt="${signing_input}.${sig}"
 
   # Resolve exactly the target repository's installation. Never list installations and pick one.
-  local installation_resp inst pinned repo_resp repo_id full_name repo_name request_body
+  local installation_resp inst pinned repo_resp repo_id full_name repo_name
+  local bootstrap_body bootstrap_resp bootstrap_tok request_body resp tok
   installation_resp=$(curl -fsS -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" \
                            "$API/repos/$TARGET_REPO/installation" 2>/dev/null) || {
     log "no GitHub App installation resolves for exact target $TARGET_REPO"; return 1; }
@@ -142,10 +143,27 @@ mint_app_token() {
     log "pinned installation id does not match exact target $TARGET_REPO"; return 1
   fi
 
-  # Bind the scoped token body to GitHub's numeric repository identity and verify the coordinate.
-  repo_resp=$(curl -fsS -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" \
+  # App JWTs are valid for installation endpoints, not the general repository metadata endpoint.
+  # First mint against exactly one repository name, then use that installation token to verify
+  # the stable numeric repository identity and exact coordinate.
+  repo_name="${TARGET_REPO#*/}"
+  [ -n "$repo_name" ] || { log "exact target repository name is empty"; return 1; }
+  bootstrap_body=$(printf '{"repositories":["%s"]}' "$repo_name")
+
+  # Bootstrap with a token restricted to the one repository name.  This is the minimum
+  # installation authority capable of reading the general repository metadata endpoint.
+  bootstrap_resp=$(curl -fsS -X POST -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" \
+                        -H "Content-Type: application/json" --data "$bootstrap_body" \
+                        "$API/app/installations/${inst}/access_tokens" 2>/dev/null) || {
+    log "repository-name-scoped installation token request rejected"; return 1; }
+  bootstrap_tok=$(printf '%s' "$bootstrap_resp" | json_field token) || {
+    log "repository-name-scoped installation token missing from API response"; return 1; }
+  [ -z "$bootstrap_tok" ] && {
+    log "repository-name-scoped installation token missing from API response"; return 1; }
+
+  repo_resp=$(curl -fsS -H "Authorization: Bearer $bootstrap_tok" -H "Accept: application/vnd.github+json" \
                    "$API/repos/$TARGET_REPO" 2>/dev/null) || {
-    log "exact target repository identity is unavailable"; return 1; }
+    log "exact target repository identity is unavailable to its installation token"; return 1; }
   repo_id=$(printf '%s' "$repo_resp" | json_field id) || {
     log "exact target repository response is missing one numeric id"; return 1; }
   full_name=$(printf '%s' "$repo_resp" | json_field full_name) || {
@@ -153,19 +171,18 @@ mint_app_token() {
   [[ "$repo_id" =~ ^[0-9]+$ ]] || { log "exact target repository id is invalid"; return 1; }
   [ "$full_name" = "$TARGET_REPO" ] || {
     log "repository identity mismatch: requested $TARGET_REPO"; return 1; }
-  repo_name="${TARGET_REPO#*/}"
-  [ -n "$repo_name" ] || { log "exact target repository name is empty"; return 1; }
-  request_body=$(printf '{"repository_ids":[%s]}' "$repo_id")
 
-  # Exchange the JWT for a short-lived token restricted to that one numeric repository ID.
-  local resp tok
+  # Return a fresh token bound to the verified stable numeric repository identity.  The
+  # name-scoped bootstrap token is never emitted to callers.
+  request_body=$(printf '{"repository_ids":[%s]}' "$repo_id")
   resp=$(curl -fsS -X POST -H "Authorization: Bearer $jwt" -H "Accept: application/vnd.github+json" \
               -H "Content-Type: application/json" --data "$request_body" \
               "$API/app/installations/${inst}/access_tokens" 2>/dev/null) || {
-    log "installation token request rejected (App id/key/installation mismatch?)"; return 1; }
+    log "numeric-repository-scoped installation token request rejected"; return 1; }
   tok=$(printf '%s' "$resp" | json_field token) || {
-    log "installation token missing from API response"; return 1; }
-  [ -z "$tok" ] && { log "installation token missing from API response"; return 1; }
+    log "numeric-repository-scoped installation token missing from API response"; return 1; }
+  [ -z "$tok" ] && {
+    log "numeric-repository-scoped installation token missing from API response"; return 1; }
   printf '%s\n' "$tok"
 }
 

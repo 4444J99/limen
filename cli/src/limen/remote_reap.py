@@ -223,13 +223,17 @@ def remote_tip(
     runner: Runner = subprocess.run,
 ) -> str | None:
     process = runner(
-        ["git", "-C", str(repository_root), "ls-remote", "--refs", "origin", ref],
+        ["git", "-C", str(repository_root), "ls-remote", "--exit-code", "--refs", "origin", ref],
         capture_output=True,
         text=True,
         timeout=60,
         check=False,
     )
-    if process.returncode not in {0, 2}:
+    if process.returncode == 2:
+        if process.stdout.strip():
+            raise RuntimeError("remote ref no-match observation returned unexpected rows")
+        return None
+    if process.returncode != 0:
         raise RuntimeError("remote ref observation failed")
     rows = [line.split() for line in process.stdout.splitlines() if line.strip()]
     matches = [row[0] for row in rows if len(row) == 2 and row[1] == ref]
@@ -390,13 +394,18 @@ def reconcile_effect(
     """
 
     _journal_matches(current, capability)
-    if current.state not in {"applying", "crashed"}:
+    if current.state not in {"verified", "applying", "crashed"}:
         return current
     observed_at = (observed_at or utc_now()).astimezone(UTC)
     with locked_redemptions(redemption_path) as redemptions:
         spent = redemptions.get(capability.capability_id)
         if spent is None:
+            if current.state == "verified":
+                return current
             raise RuntimeError("reap capability redemption record is missing")
+        spent_state = spent.get("state")
+        if spent_state not in {"applying", "crashed", "completed"}:
+            raise RuntimeError("reap capability redemption record has an invalid state")
         if (spent.get("repository"), spent.get("ref"), spent.get("tip")) != (
             capability.repository,
             capability.ref,

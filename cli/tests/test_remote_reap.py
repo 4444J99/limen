@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from datetime import UTC, datetime, timedelta
@@ -62,6 +63,21 @@ def test_non_github_repository_identity_is_denied():
 
     with pytest.raises(RuntimeError, match="canonical GitHub"):
         github_repository_slug(Path("/unused"), runner=observe)
+
+
+def test_remote_tip_uses_explicit_no_match_exit_code_contract():
+    def no_match(command, **_kwargs):
+        assert "--exit-code" in command
+        return subprocess.CompletedProcess(command, 2, "", "")
+
+    assert remote_tip(Path("/unused"), "refs/heads/absent", runner=no_match) is None
+
+    def transport_failure(command, **_kwargs):
+        assert "--exit-code" in command
+        return subprocess.CompletedProcess(command, 1, "", "transport failed")
+
+    with pytest.raises(RuntimeError, match="observation failed"):
+        remote_tip(Path("/unused"), "refs/heads/unknown", runner=transport_failure)
 
 
 def git(cwd: Path, *args: str) -> str:
@@ -350,6 +366,74 @@ def test_failed_effect_is_journaled_and_reconciled_without_retry(tmp_path: Path)
     assert reconciled.state == "crashed"
     assert "same capability requires owner review" in reconciled.detail
     assert remote_tip(checkout, "refs/heads/topic") == tip
+
+
+@pytest.mark.parametrize("redemption_state", ["applying", "crashed", "completed"])
+def test_verified_journal_reconciles_authenticated_spend(tmp_path: Path, redemption_state: str):
+    checkout, tip = repository(tmp_path)
+    _plan, capability = admitted(checkout, tip)
+    redemption_path = tmp_path / "redemptions.json"
+    current = journal(capability=capability, state="verified", detail="verified", observed_at=NOW)
+    atomic_json(
+        redemption_path,
+        {
+            capability.capability_id: {
+                "repository": capability.repository,
+                "ref": capability.ref,
+                "tip": capability.live_tip,
+                "capability_digest": canonical_digest(capability),
+                "remote_url_digest": capability.remote_url_digest,
+                "state": redemption_state,
+            }
+        },
+    )
+
+    reconciled = reconcile_effect(
+        repository_root=checkout,
+        current=current,
+        capability=capability,
+        redemption_path=redemption_path,
+        observed_at=NOW + timedelta(minutes=1),
+    )
+
+    assert reconciled.state == "crashed"
+    assert "same capability requires owner review" in reconciled.detail
+    redemptions = json.loads(redemption_path.read_text(encoding="utf-8"))
+    assert redemptions[capability.capability_id]["state"] == "crashed"
+
+
+def test_verified_journal_reconciles_deleted_ref_to_completed(tmp_path: Path):
+    checkout, tip = repository(tmp_path)
+    _plan, capability = admitted(checkout, tip)
+    redemption_path = tmp_path / "redemptions.json"
+    current = journal(capability=capability, state="verified", detail="verified", observed_at=NOW)
+    atomic_json(
+        redemption_path,
+        {
+            capability.capability_id: {
+                "repository": capability.repository,
+                "ref": capability.ref,
+                "tip": capability.live_tip,
+                "capability_digest": canonical_digest(capability),
+                "remote_url_digest": capability.remote_url_digest,
+                "state": "applying",
+            }
+        },
+    )
+    git(checkout, "push", "origin", ":refs/heads/topic")
+
+    reconciled = reconcile_effect(
+        repository_root=checkout,
+        current=current,
+        capability=capability,
+        redemption_path=redemption_path,
+        observed_at=NOW + timedelta(minutes=1),
+    )
+
+    assert reconciled.state == "completed"
+    assert "remote ref is absent" in reconciled.detail
+    redemptions = json.loads(redemption_path.read_text(encoding="utf-8"))
+    assert redemptions[capability.capability_id]["state"] == "completed"
 
 
 def test_verifier_recomputes_live_landing_and_custody_evidence():

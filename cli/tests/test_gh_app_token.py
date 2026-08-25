@@ -38,12 +38,25 @@ done
 case " $* " in
   *"/app/installations/77/access_tokens"*)
     [ "${MOCK_TOKEN_FAILURE:-0}" = "0" ] || exit 22
-    printf '{"token":"app-token"}'
+    case " $* " in
+      *'{"repositories":["project"]}'*)
+        printf '{"token":"bootstrap-token"}'
+        ;;
+      *'{"repository_ids":[125]}'*)
+        [ "${MOCK_FINAL_TOKEN_FAILURE:-0}" = "0" ] || exit 22
+        printf '{"token":"app-token"}'
+        ;;
+      *) exit 25 ;;
+    esac
     ;;
   *"/repos/acme/project/installation"*)
     printf '{"id":%s}' "${MOCK_INSTALLATION_ID:-77}"
     ;;
   *"/repos/acme/project"*)
+    case " $* " in
+      *"Authorization: Bearer bootstrap-token"*) ;;
+      *) exit 24 ;;
+    esac
     printf '{"id":%s,"full_name":"%s"}' "${MOCK_REPOSITORY_ID:-125}" "${MOCK_FULL_NAME:-acme/project}"
     ;;
   *)
@@ -98,7 +111,12 @@ def test_app_token_resolves_exact_installation_and_scopes_one_numeric_repository
     assert "https://api.fixture.invalid/repos/acme/project/installation" in calls
     assert "https://api.fixture.invalid/repos/acme/project" in calls
     assert "https://api.fixture.invalid/app/installations/77/access_tokens" in calls
+    assert '{"repositories":["project"]}' in calls
     assert '{"repository_ids":[125]}' in calls
+    assert "Authorization: Bearer bootstrap-token" in calls
+    assert calls.count("/app/installations/77/access_tokens") == 2
+    assert calls.index("/app/installations/77/access_tokens") < calls.rindex("/repos/acme/project")
+    assert calls.rindex("/app/installations/77/access_tokens") > calls.rindex("/repos/acme/project")
     assert "must-not-fallback" not in result.stdout + result.stderr + calls
 
 
@@ -141,7 +159,7 @@ def test_repository_identity_mismatch_fails_closed_before_token_mint(tmp_path: P
     assert result.returncode == 1
     assert result.stdout == ""
     assert "repository identity mismatch" in result.stderr
-    assert "/access_tokens" not in log.read_text(encoding="utf-8")
+    assert "/access_tokens" in log.read_text(encoding="utf-8")
 
 
 def test_app_token_request_failure_never_broadens_to_pat(tmp_path: Path) -> None:
@@ -156,6 +174,24 @@ def test_app_token_request_failure_never_broadens_to_pat(tmp_path: Path) -> None
     assert result.returncode == 1
     assert result.stdout == ""
     assert "refusing PAT/gh" in result.stderr
+
+
+def test_numeric_repository_token_failure_never_emits_bootstrap_token_or_broadens_to_pat(tmp_path: Path) -> None:
+    env, log = _app_environment(
+        tmp_path,
+        MOCK_FINAL_TOKEN_FAILURE="1",
+        GITHUB_TOKEN="must-not-fallback",
+    )
+
+    result = _run(env, "--repo", "acme/project")
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "numeric-repository-scoped installation token request rejected" in result.stderr
+    assert "refusing PAT/gh" in result.stderr
+    calls = log.read_text(encoding="utf-8")
+    assert "Authorization: Bearer bootstrap-token" in calls
+    assert "must-not-fallback" not in result.stdout + result.stderr + calls
 
 
 def test_pat_fallback_remains_available_only_when_app_credentials_are_absent(tmp_path: Path) -> None:
