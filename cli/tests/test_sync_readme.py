@@ -58,7 +58,7 @@ def test_profile_renderer_emits_maturity_and_verified_proof_without_raw_dicts():
     assert "{'claim':" not in rendered
     assert "Architected and directed by one person" in rendered
     assert "Solves —" not in rendered
-    assert "https://github.com/organvm/limen/blob/main/docs/positioning/example.md" in rendered
+    assert "https://github.com/4444J99/limen/blob/main/docs/positioning/example.md" in rendered
 
 
 def test_profile_generator_refuses_forbidden_overclaim(tmp_path: Path):

@@ -174,11 +174,12 @@ def _live_profile_fixture():
 
     stats = {}
     for name, value in {
-        "personal_public_repos": 8,
+        "personal_public_repos": MODULE.LIVE_PROFILE_PERSONAL_PUBLIC_REPOS,
         "followers": 41,
         "member_since": "2016",
-        "ecosystem_public_repos": 227,
-        "ecosystem_original_repos": 198,
+        "ecosystem_public_repos": MODULE.LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS,
+        "ecosystem_original_repos": MODULE.LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS,
+        "ecosystem_forks": MODULE.LIVE_PROFILE_ORGANIZATION_FORKS,
         "contributions_last_year": 33203,
     }.items():
         stats[name] = {
@@ -209,6 +210,7 @@ def _live_profile_fixture():
     public_payloads = {
         MODULE.PROFILE_USER_API_URL: {
             **MODULE.EXPECTED_PROFILE_METADATA_RESULT,
+            "public_repos": MODULE.LIVE_PROFILE_PERSONAL_PUBLIC_REPOS,
             "blog": MODULE.EXPECTED_LIVE_PROFILE_BLOG,
             "updated_at": "2026-08-12T08:00:00Z",
         },
@@ -258,6 +260,22 @@ def _live_profile_fixture():
 
 def test_tracked_adjudication_bundle_passes_static_contract() -> None:
     assert _errors(_bundle()) == []
+
+
+def test_historical_profile_receipt_counts_remain_frozen_while_live_counts_advance() -> None:
+    assert MODULE.EXPECTED_PROFILE_METADATA_RESULT["public_repos"] == 8
+    rendered = MODULE.EXPECTED_PUBLIC_PROFILE["stats_manifest"]["rendered_values"]
+    assert rendered["personal_public_repositories"] == 8
+    assert rendered["ecosystem_public_repositories"] == 227
+    assert rendered["ecosystem_original_repositories"] == 198
+    assert MODULE.EXPECTED_W01_RESULT["profile_basis_reconciliation"] == (
+        "8 personal public repositories + 227 public organization repositories = 235 public repositories"
+    )
+    assert MODULE.LIVE_PROFILE_PERSONAL_PUBLIC_REPOS == 9
+    assert MODULE.LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS == 226
+    assert MODULE.LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS == 197
+    assert MODULE.LIVE_PROFILE_ORGANIZATION_FORKS == 29
+    assert MODULE.LIVE_PROFILE_TOTAL_PUBLIC_REPOS == 235
 
 
 @pytest.mark.parametrize("filename", ("research-adjudication.json", "w08-receipt.json"))
@@ -1241,8 +1259,12 @@ def test_live_profile_observations_fail_neutrally_on_drift_and_malformed_payload
         )
 
     changed_profile = copy.deepcopy(public_payloads)
-    changed_profile[MODULE.PROFILE_USER_API_URL]["public_repos"] = 9
-    assert any("live profile metadata public_repos must remain 8" in error for error in validate(changed_profile))
+    changed_profile[MODULE.PROFILE_USER_API_URL]["public_repos"] = 8
+    assert any("live profile metadata public_repos must remain 9" in error for error in validate(changed_profile))
+
+    changed_forks = copy.deepcopy(public_payloads)
+    changed_forks[MODULE.PROFILE_MANIFEST_RAW_URL]["stats"]["ecosystem_forks"]["value"] = 28
+    assert "live profile manifest ecosystem fork count must remain 29" in validate(changed_forks)
 
     missing_runs = copy.deepcopy(public_payloads)
     missing_runs[MODULE.PROFILE_RUNS_API_URL] = {"workflow_runs": []}
