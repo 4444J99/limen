@@ -320,17 +320,28 @@ def _repository_access_census(
     return census
 
 
-def _names_only(result: dict[str, Any], key: str) -> dict[str, Any]:
+def _required_connection(result: dict[str, Any], key: str, label: str) -> dict[str, Any]:
     if not result.get("available"):
-        return result
+        raise TransferCaptureError(f"{label} census is unavailable")
     payload = result.get("value")
-    if not isinstance(payload, dict):
-        raise TransferCaptureError(f"expected object while collecting {key}")
-    values = payload.get(key, [])
-    if not isinstance(values, list):
-        raise TransferCaptureError(f"expected list while collecting {key}")
-    names = sorted(str(value.get("name")) for value in values if isinstance(value, dict) and value.get("name"))
-    return {"available": True, "names": names, "total_count": payload.get("total_count", len(names))}
+    if not isinstance(payload, dict) or not isinstance(payload.get(key), list):
+        raise TransferCaptureError(f"{label} census is malformed")
+    total_count = payload.get("total_count")
+    if not isinstance(total_count, int) or total_count != len(payload[key]):
+        raise TransferCaptureError(f"{label} census denominator is incomplete")
+    return payload
+
+
+def _names_only(result: dict[str, Any], key: str) -> dict[str, Any]:
+    payload = _required_connection(result, key, key)
+    values = payload[key]
+    if any(not isinstance(value, Mapping) or not isinstance(value.get("name"), str) for value in values):
+        raise TransferCaptureError(f"{key} census contains a nameless or non-object row")
+    names = sorted(value["name"] for value in values)
+    total_count = payload.get("total_count")
+    if not isinstance(total_count, int) or total_count != len(names) or len(names) != len(set(names)):
+        raise TransferCaptureError(f"{key} census denominator or identity is invalid")
+    return {"available": True, "names": names, "total_count": total_count}
 
 
 def _review_comments(client: GhClient, thread_id: str, first_page: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -669,33 +680,35 @@ def capture_github_manifest(
         f"/repos/{coordinate}/environments?per_page=100",
         "environments",
     )
+    environment_payload = _required_connection(environments_result, "environments", "repository environments")
     environments: list[dict[str, Any]] = []
-    if environments_result.get("available"):
-        for environment in environments_result["value"].get("environments") or []:
-            name = str(environment.get("name"))
-            environments.append(
-                {
-                    "name": name,
-                    "id": environment.get("id"),
-                    "node_id": environment.get("node_id"),
-                    "protection_rules": environment.get("protection_rules"),
-                    "deployment_branch_policy": environment.get("deployment_branch_policy"),
-                    "secret_names": _names_only(
-                        client.optional_connection(
-                            f"/repos/{coordinate}/environments/{name}/secrets?per_page=100",
-                            "secrets",
-                        ),
+    for environment in environment_payload["environments"]:
+        if not isinstance(environment, Mapping) or not isinstance(environment.get("name"), str):
+            raise TransferCaptureError("repository environments census contains a nameless or non-object row")
+        name = str(environment.get("name"))
+        environments.append(
+            {
+                "name": name,
+                "id": environment.get("id"),
+                "node_id": environment.get("node_id"),
+                "protection_rules": environment.get("protection_rules"),
+                "deployment_branch_policy": environment.get("deployment_branch_policy"),
+                "secret_names": _names_only(
+                    client.optional_connection(
+                        f"/repos/{coordinate}/environments/{name}/secrets?per_page=100",
                         "secrets",
                     ),
-                    "variable_names": _names_only(
-                        client.optional_connection(
-                            f"/repos/{coordinate}/environments/{name}/variables?per_page=100",
-                            "variables",
-                        ),
+                    "secrets",
+                ),
+                "variable_names": _names_only(
+                    client.optional_connection(
+                        f"/repos/{coordinate}/environments/{name}/variables?per_page=100",
                         "variables",
                     ),
-                }
-            )
+                    "variables",
+                ),
+            }
+        )
 
     labels = sorted(
         (
