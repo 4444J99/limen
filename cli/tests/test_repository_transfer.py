@@ -33,6 +33,26 @@ def test_gh_client_fails_closed_on_incomplete_pagination_shape() -> None:
         GhClient(runner=runner).list("/repos/example/repo/issues")
 
 
+@pytest.mark.parametrize(
+    "result",
+    [
+        {"available": False, "error_class": "github_api_unavailable"},
+        {"available": True, "value": {}},
+        {"available": True, "value": {"total_count": 1, "environments": []}},
+    ],
+)
+def test_required_environment_census_rejects_unavailable_or_incomplete_results(result: dict[str, Any]) -> None:
+    with pytest.raises(TransferCaptureError, match="repository environments census"):
+        transfer._required_connection(result, "environments", "repository environments")
+
+
+def test_secret_and_variable_name_censuses_reject_unavailable_results() -> None:
+    with pytest.raises(TransferCaptureError, match="secrets census is unavailable"):
+        transfer._names_only({"available": False}, "secrets")
+    with pytest.raises(TransferCaptureError, match="variables census is unavailable"):
+        transfer._names_only({"available": False}, "variables")
+
+
 def test_repository_access_census_excludes_only_the_personal_owner() -> None:
     class Client:
         def list(self, endpoint: str) -> list[dict[str, Any]]:
