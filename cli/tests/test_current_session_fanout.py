@@ -273,7 +273,7 @@ def test_current_session_fanout_emits_plan_02_executor_criteria_and_safe_markdow
     plan_02 = next(packet for packet in snap["planner_packets"] if packet["theme"] == "full-fleet-overnight")
 
     assert plan_02["id"] == "PLAN-02-ea38d4d8"
-    assert plan_02["owner_packet"]["owner_repo"] == "organvm/limen"
+    assert plan_02["owner_packet"]["owner_repo"] == "4444J99/limen"
     assert any("canonical census execution profiles" in item for item in plan_02["owner_packet"]["criteria"])
     assert any(
         "dispatch-async.py --lanes auto --dry-run" in item

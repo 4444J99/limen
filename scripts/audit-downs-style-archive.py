@@ -25,7 +25,7 @@ from urllib.parse import urljoin, urlparse
 
 BASE_URL = "https://www.downsstyle.com"
 SITEMAP_URL = f"{BASE_URL}/sitemap.xml"
-USER_AGENT = "DownsStyleArchiveAudit/1.0 (+https://github.com/organvm/limen)"
+USER_AGENT = "DownsStyleArchiveAudit/1.0 (+https://github.com/4444J99/limen)"
 POST_PATH = re.compile(
     r"^/(?P<collection>[^/]+)/(?P<year>\d{4})/(?P<month>\d{1,2})/"
     r"(?P<day>\d{1,2})/(?P<slug>[^/?#]+)/?$"

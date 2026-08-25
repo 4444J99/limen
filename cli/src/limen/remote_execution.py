@@ -52,6 +52,10 @@ from limen.remote_predicate import (
 VERIFICATION_CONTEXT_VERSION = "limen.verification-context.v1"
 VERIFICATION_ONLY_LABEL = "mode:verification-only"
 IMPLEMENTATION_TASK_TYPES = frozenset({"build", "code", "implementation"})
+DETERMINISTIC_COMPUTE_JOB = "deterministic-compute"
+CI_EXECUTED_STEP_ADMISSION = "CI_EXECUTED_STEP_ADMISSION"
+CI_ZERO_STEP_ADMISSION = "CI_ZERO_STEP_ADMISSION"
+CI_RUNNER_ID_ADMISSION = "CI_RUNNER_ID_ADMISSION"
 
 
 class RemoteExecutionError(RuntimeError):
@@ -71,6 +75,42 @@ class RemoteState(StrEnum):
     @property
     def terminal(self) -> bool:
         return self in {self.SUCCEEDED, self.FAILED, self.BLOCKED, self.ABSENT}
+
+
+@dataclass(frozen=True)
+class ActionsJobObservation:
+    """Exact, terminal GitHub Actions job and runner observation.
+
+    GitHub can mark a run failed without ever admitting its job to a runner.  The run conclusion
+    alone is therefore not execution evidence: harvest must bind the exact deterministic job,
+    runner, and the number of steps that actually left the skipped state.
+    """
+
+    job_id: int
+    name: str
+    url: str
+    runner_id: int
+    runner_name: str
+    executed_step_count: int
+
+    def __post_init__(self) -> None:
+        if (
+            isinstance(self.job_id, bool)
+            or self.job_id <= 0
+            or self.name != DETERMINISTIC_COMPUTE_JOB
+            or not self.url.startswith("https://github.com/")
+            or isinstance(self.runner_id, bool)
+            or self.runner_id < 0
+            or isinstance(self.executed_step_count, bool)
+            or self.executed_step_count < 0
+        ):
+            raise ValueError("Actions job observation is invalid")
+        if not isinstance(self.runner_name, str):
+            raise ValueError("Actions runner name is invalid")
+
+    @property
+    def admitted(self) -> bool:
+        return self.runner_id > 0 and bool(self.runner_name.strip()) and self.executed_step_count > 0
 
 
 def verification_context_for_task(task: object, tasks_by_id: Mapping[str, object]) -> dict[str, object]:
@@ -387,6 +427,9 @@ class RemoteRun:
     request_id: str
     observed_at: str
     detail: str = ""
+    actions_job: ActionsJobObservation | None = None
+    admission_result: str = ""
+    retry_allowed: bool = True
 
     def __post_init__(self) -> None:
         if not self.provider_run_id or not self.request_id:
@@ -414,6 +457,36 @@ class RemoteRun:
             raise ValueError("remote run observation timestamp is invalid") from exc
         if observed.tzinfo is None:
             raise ValueError("remote run observation timestamp must be timezone-aware")
+        if self.actions_job is not None and not isinstance(self.actions_job, ActionsJobObservation):
+            raise ValueError("remote run Actions job observation is invalid")
+        if self.actions_job is not None and self.actions_job.url.rstrip("/") != (
+            f"{self.url.rstrip('/')}/job/{self.actions_job.job_id}"
+        ):
+            raise ValueError("remote run Actions job does not bind its exact run URL")
+        if not isinstance(self.retry_allowed, bool):
+            raise ValueError("remote run retry policy is invalid")
+        if self.admission_result == CI_EXECUTED_STEP_ADMISSION:
+            if self.actions_job is None or not self.actions_job.admitted:
+                raise ValueError("executed-step admission requires an admitted runner and executed steps")
+        elif self.admission_result == CI_ZERO_STEP_ADMISSION:
+            if (
+                self.state is not RemoteState.BLOCKED
+                or self.actions_job is None
+                or self.actions_job.executed_step_count != 0
+                or self.retry_allowed
+            ):
+                raise ValueError("zero-step admission must be blocked and non-retryable")
+        elif self.admission_result == CI_RUNNER_ID_ADMISSION:
+            if (
+                self.state is not RemoteState.BLOCKED
+                or self.actions_job is None
+                or self.actions_job.executed_step_count <= 0
+                or self.actions_job.admitted
+                or self.retry_allowed
+            ):
+                raise ValueError("runner admission must be blocked and non-retryable")
+        elif self.admission_result:
+            raise ValueError("remote run admission result is invalid")
 
     @property
     def pending_identity(self) -> bool:
@@ -466,6 +539,7 @@ class RemoteReceipt:
     predicate: PredicateReceipt | None = None
     outputs: tuple[DurableOutput, ...] = ()
     observed_sha: str | None = None
+    workflow_receipt_digest: str | None = None
     observed_at: str = field(default_factory=lambda: _now())
     detail: str = ""
     schema_version: str = SCHEMA_VERSION
@@ -491,6 +565,8 @@ class RemoteReceipt:
             raise ValueError("receipt state does not match embedded run state")
         if self.predicate and self.predicate.command_digest != self.request.predicate_digest:
             raise ValueError("predicate receipt does not match requested predicate")
+        if self.workflow_receipt_digest is not None and not DIGEST_RE.fullmatch(self.workflow_receipt_digest):
+            raise ValueError("workflow receipt digest is invalid")
 
     @property
     def done(self) -> bool:
@@ -500,6 +576,10 @@ class RemoteReceipt:
             or self.predicate is None
             or not self.predicate.passed
             or self.predicate.exit_code != 0
+            or self.run.actions_job is None
+            or not self.run.actions_job.admitted
+            or self.run.admission_result != CI_EXECUTED_STEP_ADMISSION
+            or not self.workflow_receipt_digest
         ):
             return False
         target = ReceiptTarget.parse(self.request.receipt_target)
@@ -531,6 +611,7 @@ class RemoteReceipt:
             "predicate": asdict(self.predicate) if self.predicate else None,
             "outputs": [output.identity() for output in self.outputs],
             "observed_sha": self.observed_sha,
+            "workflow_receipt_digest": self.workflow_receipt_digest,
             "observed_at": self.observed_at,
             "detail": self.detail,
             "done": self.done,
@@ -809,6 +890,9 @@ _REMOTE_RUN_FIELDS = frozenset(
         "request_id",
         "observed_at",
         "detail",
+        "actions_job",
+        "admission_result",
+        "retry_allowed",
     }
 )
 _REMOTE_RECEIPT_FIELDS = frozenset(
@@ -820,6 +904,7 @@ _REMOTE_RECEIPT_FIELDS = frozenset(
         "predicate",
         "outputs",
         "observed_sha",
+        "workflow_receipt_digest",
         "observed_at",
         "detail",
         "done",
@@ -931,6 +1016,42 @@ def validate_remote_submission_harvest(
         or not isinstance(run.get("observed_at"), str)
     ):
         raise RemoteExecutionError("remote receipt contains malformed complete metadata")
+    try:
+        job_row = run.get("actions_job")
+        serialized_job = ActionsJobObservation(**job_row) if isinstance(job_row, dict) else None
+        serialized_run = RemoteRun(
+            provider=str(run["provider"]),
+            provider_run_id=str(run["provider_run_id"]),
+            url=str(run["url"]),
+            base_sha=str(run["base_sha"]),
+            control_repo=str(run["control_repo"]),
+            control_ref=str(run["control_ref"]),
+            control_ref_kind=str(run["control_ref_kind"]),
+            control_sha=str(run["control_sha"]),
+            workflow_id=run["workflow_id"],
+            workflow_path=str(run["workflow_path"]),
+            workflow_event=str(run["workflow_event"]),
+            verification_context_digest=str(run["verification_context_digest"]),
+            state=RemoteState(str(run["state"])),
+            request_id=str(run["request_id"]),
+            observed_at=str(run["observed_at"]),
+            detail=str(run.get("detail") or ""),
+            actions_job=serialized_job,
+            admission_result=str(run.get("admission_result") or ""),
+            retry_allowed=run.get("retry_allowed", True),
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RemoteExecutionError("remote receipt Actions job admission is malformed") from exc
+    workflow_receipt_digest = payload.get("workflow_receipt_digest")
+    if payload.get("done") and (
+        serialized_run.state is not RemoteState.SUCCEEDED
+        or serialized_run.actions_job is None
+        or not serialized_run.actions_job.admitted
+        or serialized_run.admission_result != CI_EXECUTED_STEP_ADMISSION
+        or not isinstance(workflow_receipt_digest, str)
+        or not DIGEST_RE.fullmatch(workflow_receipt_digest)
+    ):
+        raise RemoteExecutionError("done remote receipt lacks exact job, runner, steps, or receipt digest")
 
     request_identity = {
         "provider": "provider",
@@ -1035,6 +1156,13 @@ def load_receipt(path: Path, request: RemoteRequest) -> RemoteReceipt:
             request_id=str(run_row["request_id"]),
             observed_at=str(run_row["observed_at"]),
             detail=str(run_row.get("detail") or ""),
+            actions_job=(
+                ActionsJobObservation(**run_row["actions_job"])
+                if isinstance(run_row.get("actions_job"), dict)
+                else None
+            ),
+            admission_result=str(run_row.get("admission_result") or ""),
+            retry_allowed=run_row.get("retry_allowed", True),
         )
         predicate_row = payload.get("predicate")
         predicate = PredicateReceipt(**predicate_row) if isinstance(predicate_row, dict) else None
@@ -1049,6 +1177,9 @@ def load_receipt(path: Path, request: RemoteRequest) -> RemoteReceipt:
             predicate=predicate,
             outputs=outputs,
             observed_sha=str(payload["observed_sha"]) if payload.get("observed_sha") else None,
+            workflow_receipt_digest=(
+                str(payload["workflow_receipt_digest"]) if payload.get("workflow_receipt_digest") else None
+            ),
             observed_at=str(payload.get("observed_at") or _now()),
             detail=str(payload.get("detail") or ""),
             schema_version=str(payload.get("schema_version") or ""),
@@ -1514,12 +1645,138 @@ class GitHubWorkflowAdapter:
             return replace_run(run, RemoteState.UNKNOWN, "provider status JSON invalid")
         if not isinstance(row, dict):
             return replace_run(run, RemoteState.UNKNOWN, "provider status is not an object")
-        return _run_from_actions(request, run.request_id, row, self.control_repo)
+        observed = _run_from_actions(request, run.request_id, row, self.control_repo)
+        if run.actions_job is not None and observed.state.terminal:
+            return _run_with_actions_job(
+                observed,
+                run.actions_job,
+                admission_result=run.admission_result,
+                retry_allowed=run.retry_allowed,
+                detail=run.detail,
+            )
+        return observed
+
+    def _observe_deterministic_job(self, request: RemoteRequest, run: RemoteRun) -> ActionsJobObservation:
+        if not run.provider_run_id.isdigit() or run.state not in {RemoteState.SUCCEEDED, RemoteState.FAILED}:
+            raise RemoteExecutionError("Actions job admission requires one completed numeric run")
+        result = self.runner(
+            [
+                self.gh_binary,
+                "api",
+                "--method",
+                "GET",
+                "--paginate",
+                "--slurp",
+                f"repos/{request.control_repo}/actions/runs/{run.provider_run_id}/jobs",
+                "-f",
+                "per_page=100",
+            ],
+            120,
+        )
+        _require_success(result, "workflow job census")
+        try:
+            pages = json.loads(result.stdout or "[]")
+        except json.JSONDecodeError as exc:
+            raise RemoteExecutionError("workflow job census returned invalid JSON") from exc
+        if isinstance(pages, dict):
+            pages = [pages]
+        if not isinstance(pages, list) or not pages:
+            raise RemoteExecutionError("workflow job census returned no exact page")
+
+        jobs: list[dict[str, object]] = []
+        total_counts: set[int] = set()
+        for page in pages:
+            if not isinstance(page, dict):
+                raise RemoteExecutionError("workflow job census page is malformed")
+            page_jobs = page.get("jobs")
+            raw_total = page.get("total_count")
+            if (
+                not isinstance(page_jobs, list)
+                or isinstance(raw_total, bool)
+                or not isinstance(raw_total, int)
+                or raw_total < 0
+                or any(not isinstance(item, dict) for item in page_jobs)
+            ):
+                raise RemoteExecutionError("workflow job census page lacks exact total and job rows")
+            total_counts.add(raw_total)
+            jobs.extend(page_jobs)
+        if len(total_counts) != 1 or total_counts.pop() != len(jobs):
+            raise RemoteExecutionError("workflow job census pagination is incomplete or contradictory")
+
+        job_ids = [item.get("id") for item in jobs]
+        if any(isinstance(item, bool) or not isinstance(item, int) or item <= 0 for item in job_ids) or len(
+            job_ids
+        ) != len(set(job_ids)):
+            raise RemoteExecutionError("workflow job census contains invalid or duplicate job identity")
+        matches = [item for item in jobs if item.get("name") == DETERMINISTIC_COMPUTE_JOB]
+        if len(matches) != 1:
+            raise RemoteExecutionError("workflow job census did not select exactly one deterministic-compute job")
+        row = matches[0]
+        raw_job_id = row.get("id")
+        if isinstance(raw_job_id, bool) or not isinstance(raw_job_id, int) or raw_job_id <= 0:
+            raise RemoteExecutionError("workflow job census contains invalid job identity")
+        job_id = raw_job_id
+        run_id = row.get("run_id")
+        job_url = str(row.get("html_url") or "")
+        expected_url = f"{run.url}/job/{job_id}"
+        if str(run_id or "") != run.provider_run_id or job_url.rstrip("/") != expected_url:
+            raise RemoteExecutionError("workflow job does not bind the exact Actions run and URL")
+        steps = row.get("steps")
+        if not isinstance(steps, list) or any(not isinstance(item, dict) for item in steps):
+            raise RemoteExecutionError("workflow job steps are malformed")
+        if any(str(item.get("status") or "") not in {"completed"} for item in steps):
+            raise RemoteExecutionError("terminal workflow job contains a nonterminal step")
+        executed_steps = sum(1 for item in steps if str(item.get("conclusion") or "") != "skipped")
+        raw_runner_id = row.get("runner_id")
+        runner_id = raw_runner_id if isinstance(raw_runner_id, int) and not isinstance(raw_runner_id, bool) else 0
+        return ActionsJobObservation(
+            job_id=job_id,
+            name=DETERMINISTIC_COMPUTE_JOB,
+            url=expected_url,
+            runner_id=runner_id,
+            runner_name=str(row.get("runner_name") or ""),
+            executed_step_count=executed_steps,
+        )
 
     def harvest(self, request: RemoteRequest, run: RemoteRun) -> RemoteReceipt:
         observed = self.probe(request, run)
+        if observed.state in {RemoteState.SUCCEEDED, RemoteState.FAILED} and observed.actions_job is None:
+            job = self._observe_deterministic_job(request, observed)
+            if job.executed_step_count == 0:
+                observed = _run_with_actions_job(
+                    observed,
+                    job,
+                    admission_result=CI_ZERO_STEP_ADMISSION,
+                    retry_allowed=False,
+                    state=RemoteState.BLOCKED,
+                    detail="CI_ZERO_STEP_ADMISSION: deterministic-compute executed zero steps; retry forbidden",
+                )
+            elif not job.admitted:
+                observed = _run_with_actions_job(
+                    observed,
+                    job,
+                    admission_result=CI_RUNNER_ID_ADMISSION,
+                    retry_allowed=False,
+                    state=RemoteState.BLOCKED,
+                    detail="CI_RUNNER_ID_ADMISSION: deterministic-compute lacks a nonzero runner identity",
+                )
+            else:
+                observed = _run_with_actions_job(
+                    observed,
+                    job,
+                    admission_result=CI_EXECUTED_STEP_ADMISSION,
+                    retry_allowed=observed.retry_allowed,
+                    detail=observed.detail,
+                )
+        if observed.state is RemoteState.BLOCKED:
+            return RemoteReceipt(request, observed, RemoteState.BLOCKED, detail=observed.detail)
         if observed.state is RemoteState.FAILED:
-            return RemoteReceipt(request, observed, RemoteState.FAILED, detail="workflow failed; no artifact required")
+            return RemoteReceipt(
+                request,
+                observed,
+                RemoteState.FAILED,
+                detail="workflow failed after deterministic-compute executed admitted steps; no artifact required",
+            )
         if observed.state is not RemoteState.SUCCEEDED:
             return RemoteReceipt(request, observed, observed.state, detail=observed.detail)
         with tempfile.TemporaryDirectory(prefix="limen-remote-receipt-") as directory:
@@ -1591,7 +1848,7 @@ def discover_adapters(
             continue
         provider = vendor.name
         gh = env.get("LIMEN_GITHUB_ACTIONS_BIN", vendor.binary)
-        repo = env.get("LIMEN_GITHUB_ACTIONS_REPO", "organvm/limen")
+        repo = env.get("LIMEN_GITHUB_ACTIONS_REPO", "4444J99/limen")
         workflow = env.get("LIMEN_GITHUB_ACTIONS_WORKFLOW", "limen-agent.yml")
         configured_ref = env.get("LIMEN_GITHUB_ACTIONS_CONTROL_REF")
         if binary_finder(gh) is None:
@@ -1804,6 +2061,7 @@ def _receipt_from_workflow_payload(
         predicate=PredicateReceipt(request.predicate_digest, exit_code == 0, exit_code, output_digest),
         outputs=outputs,
         observed_sha=request.base_sha,
+        workflow_receipt_digest=receipt_digest,
         detail="terminal attested workflow receipt",
     )
 
@@ -1902,6 +2160,41 @@ def replace_run(run: RemoteRun, state: RemoteState, detail: str) -> RemoteRun:
         request_id=run.request_id,
         observed_at=_now(),
         detail=detail,
+        actions_job=run.actions_job,
+        admission_result=run.admission_result,
+        retry_allowed=run.retry_allowed,
+    )
+
+
+def _run_with_actions_job(
+    run: RemoteRun,
+    job: ActionsJobObservation,
+    *,
+    admission_result: str,
+    retry_allowed: bool,
+    detail: str,
+    state: RemoteState | None = None,
+) -> RemoteRun:
+    return RemoteRun(
+        provider=run.provider,
+        provider_run_id=run.provider_run_id,
+        url=run.url,
+        base_sha=run.base_sha,
+        control_repo=run.control_repo,
+        control_ref=run.control_ref,
+        control_ref_kind=run.control_ref_kind,
+        control_sha=run.control_sha,
+        workflow_id=run.workflow_id,
+        workflow_path=run.workflow_path,
+        workflow_event=run.workflow_event,
+        verification_context_digest=run.verification_context_digest,
+        state=state or run.state,
+        request_id=run.request_id,
+        observed_at=_now(),
+        detail=detail,
+        actions_job=job,
+        admission_result=admission_result,
+        retry_allowed=retry_allowed,
     )
 
 
@@ -1922,6 +2215,9 @@ def _same_run_observation(left: RemoteRun, right: RemoteRun) -> bool:
         and left.state is right.state
         and left.request_id == right.request_id
         and left.detail == right.detail
+        and left.actions_job == right.actions_job
+        and left.admission_result == right.admission_result
+        and left.retry_allowed == right.retry_allowed
     )
 
 

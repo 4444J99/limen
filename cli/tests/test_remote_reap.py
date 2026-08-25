@@ -20,6 +20,7 @@ from limen.remote_reap import (
     remote_url_digest,
     validate_disposition_evidence,
 )
+from limen.repository_identity import RepositoryIdentityV1
 from limen.universe_recovery import (
     CursorReceiptV1,
     CustodyProofV1,
@@ -33,6 +34,11 @@ from limen.universe_recovery import (
 
 
 NOW = datetime(2026, 8, 23, 16, 0, tzinfo=UTC)
+EXAMPLE_IDENTITY = RepositoryIdentityV1(
+    repository_id=123456789,
+    canonical_coordinate="4444J99/example",
+    historical_aliases=("organvm/example",),
+)
 
 
 @pytest.mark.parametrize(
@@ -92,7 +98,7 @@ def admitted(checkout: Path, tip: str):
     plan = ReapPlanV1(
         plan_id="remote-reap-plan-0001",
         repository="organvm/example",
-        repository_id="R_example_0001",
+        repository_id=EXAMPLE_IDENTITY.repository_id,
         remote_url_digest=remote_url_digest(checkout),
         ref="refs/heads/topic",
         live_tip=tip,
@@ -327,6 +333,14 @@ def test_failed_effect_is_journaled_and_reconciled_without_retry(tmp_path: Path)
 
     crashed = load_model(journal_path, ReapJournalV1)
     assert crashed.state == "crashed"
+    forged = capability.model_copy(update={"remote_url_digest": "f" * 64})
+    with pytest.raises(RuntimeError, match="authenticated redemption binding"):
+        reconcile_effect(
+            repository_root=checkout,
+            current=crashed,
+            capability=forged,
+            redemption_path=tmp_path / "redemptions.json",
+        )
     reconciled = reconcile_effect(
         repository_root=checkout,
         current=crashed,
@@ -344,13 +358,19 @@ def test_verifier_recomputes_live_landing_and_custody_evidence():
     repository_name = "organvm/example"
     generation = canonical_digest(
         {
-            "repository": repository_name,
+            "repository_id": EXAMPLE_IDENTITY.repository_id,
             "default_ref": "main",
             "default_sha": default_tip,
             "archived": False,
         }
     )
-    commit_digest = canonical_digest({"repository": repository_name, "ref": "refs/heads/topic", "tip": tip})
+    commit_digest = canonical_digest(
+        {
+            "repository_id": EXAMPLE_IDENTITY.repository_id,
+            "ref": "refs/heads/topic",
+            "tip": tip,
+        }
+    )
     custody = CustodyProofV1(
         repository=repository_name,
         ref="refs/heads/topic",
@@ -362,9 +382,9 @@ def test_verifier_recomputes_live_landing_and_custody_evidence():
         predicate="live exact-landing proof",
     )
     disposition = RefDispositionV2(
-        key=f"{repository_name}/refs/heads/topic@{tip}",
+        key=EXAMPLE_IDENTITY.stable_key(f"refs/heads/topic@{tip}"),
+        repository_identity=EXAMPLE_IDENTITY,
         repository=repository_name,
-        repository_id="R_example_0001",
         ref="refs/heads/topic",
         tip=tip,
         default_ref="refs/heads/main",
@@ -382,6 +402,7 @@ def test_verifier_recomputes_live_landing_and_custody_evidence():
         grace_satisfied_at=NOW,
     )
     review = ReviewLineageClosureV2(
+        repository_identity=EXAMPLE_IDENTITY,
         repository=repository_name,
         pull_request=7,
         observed_at=NOW,
@@ -411,7 +432,7 @@ def test_verifier_recomputes_live_landing_and_custody_evidence():
             return subprocess.CompletedProcess(
                 command,
                 0,
-                '{"node_id":"R_example_0001","default_branch":"main","archived":false}',
+                '{"id":123456789,"full_name":"4444J99/example","default_branch":"main","archived":false}',
                 "",
             )
         if command[:3] == ["gh", "api", f"repos/{repository_name}/compare/{tip}...{default_tip}"]:

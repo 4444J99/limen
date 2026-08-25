@@ -23,15 +23,15 @@
     "command_timeout_seconds": 30.0
   },
   "owner_routing": {
-    "default_owner": "organvm/limen",
+    "default_owner": "4444J99/limen",
     "default_route": "TABVLARIVS/prompt-atom-intake",
     "default_next_command": "python3 scripts/prompt-atom-ledger.py --scan --all --write",
     "sources": {
       "agy-cli-conversations": {
-        "owner": "organvm/limen#641",
+        "owner": "4444J99/limen#641",
         "route": "issue:641",
         "failed_predicate": "agy-native-prompt-adapter-complete",
-        "next_command": "gh issue view 641 --repo organvm/limen"
+        "next_command": "gh issue view 641 --repo 4444J99/limen"
       }
     }
   },

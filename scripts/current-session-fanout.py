@@ -455,20 +455,20 @@ def origin_repo_slug() -> str:
             timeout=10,
         )
     except (OSError, subprocess.SubprocessError):
-        return "organvm/limen"
+        return "4444J99/limen"
     if result.returncode != 0:
-        return "organvm/limen"
+        return "4444J99/limen"
     remote = result.stdout.strip()
     match = re.search(r"github\.com[:/]([^/\s]+)/([^/\s]+?)(?:\.git)?$", remote)
     if not match:
-        return "organvm/limen"
+        return "4444J99/limen"
     return f"{match.group(1)}/{match.group(2)}"
 
 
 def owner_packet_for_theme(theme: str) -> dict[str, Any]:
     if theme == "full-fleet-overnight":
         return {
-            "owner_repo": "organvm/limen",
+            "owner_repo": "4444J99/limen",
             "owner_ledger": "docs/current-session-fanout.md",
             "criteria": [
                 "derive lane inventory and role eligibility from canonical census execution profiles",
@@ -487,7 +487,7 @@ def owner_packet_for_theme(theme: str) -> dict[str, Any]:
         }
     if theme == "repo-salvage-consolidation":
         return {
-            "owner_repo": "organvm/limen",
+            "owner_repo": "4444J99/limen",
             "owner_ledger": "docs/current-session-fanout/repo-salvage-consolidation-plan-04.md",
             "criteria": [
                 "derive repo roots from configured substrate paths, not a fixed drive name or hand-maintained list",
@@ -506,7 +506,7 @@ def owner_packet_for_theme(theme: str) -> dict[str, Any]:
             ],
         }
     return {
-        "owner_repo": "organvm/limen",
+        "owner_repo": "4444J99/limen",
         "owner_ledger": "docs/current-session-fanout.md",
         "criteria": [
             "derive this owner packet from all user turns and all detected plan sources",

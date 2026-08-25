@@ -28,6 +28,7 @@ import argparse
 import ast
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -79,6 +80,37 @@ def expand(path: str) -> Path:
     return Path(path).expanduser()
 
 
+def is_git_worktree(root: Path) -> bool:
+    """Return true only when Git resolves ``root`` as a real worktree.
+
+    Linked worktrees and submodules carry a ``.git`` *file*, while ordinary
+    clones usually carry a directory.  Asking Git itself avoids treating the
+    representation detail as repository identity and also rejects malformed
+    ``.git`` files or accidentally recreated ordinary directories.
+    """
+
+    if not root.is_dir():
+        return False
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "--git-dir", "--is-inside-work-tree"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=5,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    rows = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    return result.returncode == 0 and bool(rows) and rows[-1] == "true"
+
+
+def is_store_present(root: Path | None, store: dict) -> bool:
+    if root is None or not root.is_dir():
+        return False
+    return not store.get("git") or is_git_worktree(root)
+
+
 def check_a_schema(doc: dict) -> None:
     for name, store in (doc.get("stores") or {}).items():
         for field in ("root", "remote", "owner", "note"):
@@ -126,8 +158,11 @@ def check_b_roots(doc: dict) -> dict[str, Path]:
     forced_host = os.environ.get("LIMEN_CORPORA_HOST") == "1"
     for name, store in (doc.get("stores") or {}).items():
         root = roots[name]
-        is_store_present = root.is_dir() and (not store.get("git") or (root / ".git").is_dir())
-        if is_store_present:
+        if is_store_present(root, store):
+            continue
+        if root.exists():
+            reason = "is not a valid Git worktree" if store.get("git") else "is not a directory"
+            fail("B", f"store {name!r} root exists but {reason}: {root}")
             continue
         res = resolver.resolve(str(store.get("root", "")))
         if res.state == reference_state.UNACCOUNTED:
@@ -152,8 +187,7 @@ def check_c_disk_parity(doc: dict, roots: dict[str, Path]) -> None:
         store_name = str(row.get("store"))
         root = roots.get(store_name)
         store = stores.get(store_name) or {}
-        is_store_present = root is not None and root.is_dir() and (not store.get("git") or (root / ".git").is_dir())
-        if not is_store_present:
+        if not is_store_present(root, store):
             continue
         target = root / row["path"] if row.get("path") else root / cid
         if not target.exists():
@@ -162,7 +196,8 @@ def check_c_disk_parity(doc: dict, roots: dict[str, Path]) -> None:
     # every corpus-shaped directory on disk has a row  ← the Perplexity catch
     declared_dirs = {cid for cid, row in corpora.items() if not row.get("path")}
     for store_name, root in roots.items():
-        if not root.is_dir():
+        store = stores.get(store_name) or {}
+        if not is_store_present(root, store):
             continue
         # only stores whose corpora are top-level dirs participate
         if not any(r.get("store") == store_name and not r.get("path") for r in corpora.values()):

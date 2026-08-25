@@ -259,6 +259,12 @@
   "review_closures": [
     {
       "schema_version": "limen.review_lineage_closure.v2",
+      "repository_identity": {
+        "schema_version": "limen.repository_identity.v1",
+        "repository_id": 1255213941,
+        "canonical_coordinate": "4444J99/limen",
+        "historical_aliases": ["organvm/limen"]
+      },
       "repository": "organvm/limen",
       "pull_request": 2542,
       "observed_at": "2026-08-23T16:00:00Z",

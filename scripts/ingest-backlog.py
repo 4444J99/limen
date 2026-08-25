@@ -53,7 +53,7 @@ from limen.tabularius import submit_task_upsert  # noqa: E402
 
 SRC_DEFAULT = HERE / "studium" / "expansion-backlog.yaml"
 # the Studium lives in this repo; the fleet authors arcs into studium/ and opens a PR here.
-REPO = os.environ.get("LIMEN_STUDIUM_REPO", "organvm/limen")
+REPO = os.environ.get("LIMEN_STUDIUM_REPO", "4444J99/limen")
 # in-flight elsewhere (lane 1 authors the Odyssey directly this session) — never double-release it.
 EXCLUDE_IDS = {"studium-deepen-odyssey"}
 

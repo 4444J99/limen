@@ -256,7 +256,7 @@ def _details_url(target: str, seed: dict) -> str:
     explicit = str(seed.get("details_url") or "").strip()
     if explicit:
         return explicit
-    return f"https://github.com/organvm/limen/blob/main/docs/positioning/{_slug(target)}.md"
+    return f"https://github.com/4444J99/limen/blob/main/docs/positioning/{_slug(target)}.md"
 
 
 def _frontdoor_systems(repos_seeds: list[tuple[str, dict]], frontdoor: dict) -> list[tuple[str, dict]]:

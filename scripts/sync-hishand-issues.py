@@ -192,10 +192,10 @@ def wall_body(levers: list[dict]) -> str:
         "pull that lever — nothing here is ever auto-pulled or nagged. The credential/secret/login/"
         "env subset has its own machine-generated Wall (#320); this Wall covers the rest.",
         "",
-        "_Source of truth: [`his-hand-levers.json`](https://github.com/organvm/limen/blob/main/his-hand-levers.json). "
+        "_Source of truth: [`his-hand-levers.json`](https://github.com/4444J99/limen/blob/main/his-hand-levers.json). "
         "Regenerate: `python3 scripts/sync-hishand-issues.py --wall --apply`. If this table and the "
         "registry disagree, the registry wins. Live filter: "
-        "<https://github.com/organvm/limen/labels/needs-human>._",
+        "<https://github.com/4444J99/limen/labels/needs-human>._",
         "",
         "| Lever | What it unlocks | Cost | Issue |",
         "|---|---|---|---|",

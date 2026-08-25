@@ -396,7 +396,7 @@ def test_substrate_packet_is_one_control_host_reclaim_tranche(monkeypatch, tmp_p
     ) in packet["task"]
     assert packet["task"].count("--apply") == 1
     assert "reclaim-generated-state.py" not in packet["task"]
-    assert packet["receipt_target"] == "git:organvm/limen:docs/worktree-preservation-receipts.json"
+    assert packet["receipt_target"] == "git:4444J99/limen:docs/worktree-preservation-receipts.json"
     assert (
         "execution:control-host"
         in mod._task_from_item({"id": "SUBSTRATE", "workstream": "substrate", "assignment_packet": packet})["labels"]
@@ -667,7 +667,7 @@ def test_contribution_balance_receipt_assigns_review_first(monkeypatch):
     assert receipt["evidence"]["shares"]["reviews"] == 0.0061
     assert "substantive PR review" in receipt["assignment_packet"]["task"]
     assert "~/Workspace/limen/docs/github-contribution-balance.md" in receipt["existing_receipts"]
-    assert "https://github.com/organvm/limen/issues/687" in receipt["existing_receipts"]
+    assert "https://github.com/4444J99/limen/issues/687" in receipt["existing_receipts"]
 
 
 def test_credential_wall_receipt_requires_historical_tombstone(monkeypatch, tmp_path):

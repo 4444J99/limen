@@ -200,7 +200,7 @@ def build_kernel(workdir: Path) -> Path | None:
             "- Google Drive `limen-custody/` — this arca-vault mirror + sealed inventories + this kernel.\n"
             "- Dropbox `limen-custody/` — this kernel + this card.\n\n"
             "## Restore order\n"
-            "1. New machine: sign into GitHub; clone organvm/limen; read CLAUDE.md + his-hand-levers.json.\n"
+            "1. New machine: sign into GitHub; clone 4444J99/limen; read CLAUDE.md + his-hand-levers.json.\n"
             "2. ARCA key: macOS Keychain item `limen-arca-vault` (escrow per lever L-ARCA-KEY-ESCROW).\n"
             "3. `bash scripts/arca.sh unseal kernel.tar.enc <dest>` recovers this kernel's bundle.\n"
             "4. Backblaze restore for bulk; Drive `limen-custody/arca-vault/` for the sealed private estate.\n\n"

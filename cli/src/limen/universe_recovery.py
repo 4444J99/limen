@@ -16,6 +16,7 @@ import rfc8785
 from pydantic import Field, field_validator, model_validator
 
 from limen.conduct.models import ProtocolModel
+from limen.repository_identity import RepositoryIdentityV1
 
 
 _HEX = frozenset("0123456789abcdef")
@@ -94,8 +95,8 @@ class RefDispositionV2(ProtocolModel):
 
     schema_version: Literal["limen.ref_disposition.v2"] = "limen.ref_disposition.v2"
     key: str
+    repository_identity: RepositoryIdentityV1
     repository: str
-    repository_id: str | None = None
     ref: str
     tip: str
     default_ref: str
@@ -129,8 +130,11 @@ class RefDispositionV2(ProtocolModel):
 
     @model_validator(mode="after")
     def identity_and_proof_are_bound(self) -> "RefDispositionV2":
-        if self.key != f"{self.repository}/{self.ref}@{self.tip}":
-            raise ValueError("ref disposition key must be repository/ref@tip")
+        expected_key = self.repository_identity.stable_key(f"{self.ref}@{self.tip}")
+        if self.key != expected_key:
+            raise ValueError("ref disposition key must be stable repository ID/ref@tip")
+        if not self.repository_identity.accepts(self.repository):
+            raise ValueError("repository coordinate is not canonical or a historical alias")
         if not self.ref.startswith("refs/") or not self.default_ref.startswith("refs/"):
             raise ValueError("ref names must be fully qualified")
         if self.ref == self.default_ref:
@@ -150,6 +154,12 @@ class RefDispositionV2(ProtocolModel):
             and self.custody_disposition in {"paired_verified", "not_required_landed"}
             and not set(self.lane_protection) & {"active-human", "protected", "livework"}
         )
+
+    @property
+    def repository_id(self) -> int:
+        """Compatibility accessor backed by the stable identity envelope."""
+
+        return self.repository_identity.repository_id
 
 
 class CustodyCopyV1(ProtocolModel):
@@ -217,6 +227,7 @@ class ReviewThreadClosureV2(ProtocolModel):
 
 class ReviewLineageClosureV2(ProtocolModel):
     schema_version: Literal["limen.review_lineage_closure.v2"] = "limen.review_lineage_closure.v2"
+    repository_identity: RepositoryIdentityV1
     repository: str
     pull_request: int = Field(gt=0)
     observed_at: datetime
@@ -252,6 +263,8 @@ class ReviewLineageClosureV2(ProtocolModel):
 
     @model_validator(mode="after")
     def closure_matches_threads(self) -> "ReviewLineageClosureV2":
+        if not self.repository_identity.accepts(self.repository):
+            raise ValueError("repository coordinate is not canonical or a historical alias")
         current = sum(not thread.resolved and not thread.outdated for thread in self.threads)
         outdated = sum(not thread.resolved and thread.outdated for thread in self.threads)
         if (current, outdated) != (self.unresolved_current, self.unresolved_outdated):
@@ -337,7 +350,7 @@ class ReapPlanV1(ProtocolModel):
     schema_version: Literal["limen.remote_reap_plan.v1"] = "limen.remote_reap_plan.v1"
     plan_id: str
     repository: str
-    repository_id: str | None = None
+    repository_id: int | None = Field(default=None, gt=0)
     remote_url_digest: str
     ref: str
     live_tip: str
@@ -369,7 +382,7 @@ class ReapCapabilityV1(ProtocolModel):
     capability_id: str
     plan_digest: str
     repository: str
-    repository_id: str | None = None
+    repository_id: int | None = Field(default=None, gt=0)
     remote_url_digest: str
     ref: str
     live_tip: str
@@ -531,6 +544,23 @@ class RecoveryStableObservationV1(ProtocolModel):
     _receipt = field_validator("manifest_receipt")(_nonblank)
 
 
+def _pull_request_disposition_identity(
+    row: RecoveryDispositionReceiptV1,
+) -> tuple[str, int, str] | None:
+    """Parse the exact repository/PR/head identity carried by a PR denominator."""
+
+    if row.item_kind != "pull_request":
+        return None
+    repository, marker, remainder = row.item_key.partition(":pull-request:")
+    number, at, head_sha = remainder.partition("@")
+    if marker != ":pull-request:" or not repository or at != "@" or not number.isdigit():
+        return None
+    try:
+        return repository, int(number), _git_oid(head_sha)
+    except ValueError:
+        return None
+
+
 def evaluate_recovery(manifest: UniverseRecoveryManifestV1) -> RecoveryEvaluationV1:
     errors: list[str] = []
     expected = set((*manifest.baseline_keys, *manifest.newcomer_keys))
@@ -553,6 +583,31 @@ def evaluate_recovery(manifest: UniverseRecoveryManifestV1) -> RecoveryEvaluatio
     open_reviews = sum(not row.terminal for row in manifest.review_closures)
     if open_reviews:
         errors.append(f"nonterminal-review-lineages:{open_reviews}")
+    landed_pull_requests = [
+        row
+        for row in manifest.dispositions
+        if row.item_kind == "pull_request" and row.terminal_class in {"exact_landed", "equivalent_landed"}
+    ]
+    invalid_landed_pull_keys = 0
+    missing_review_lineages = 0
+    for disposition in landed_pull_requests:
+        identity = _pull_request_disposition_identity(disposition)
+        if identity is None:
+            invalid_landed_pull_keys += 1
+            continue
+        repository, pull_request, head_sha = identity
+        if not any(
+            closure.terminal
+            and closure.pull_request == pull_request
+            and closure.head_sha == head_sha
+            and closure.repository_identity.accepts(repository)
+            for closure in manifest.review_closures
+        ):
+            missing_review_lineages += 1
+    if invalid_landed_pull_keys:
+        errors.append(f"invalid-landed-pull-request-keys:{invalid_landed_pull_keys}")
+    if missing_review_lineages:
+        errors.append(f"missing-terminal-review-lineages:{missing_review_lineages}")
     unreconciled = sum(row.state != "completed" for row in manifest.reap_journals)
     if unreconciled:
         errors.append(f"unreconciled-reap-effects:{unreconciled}")

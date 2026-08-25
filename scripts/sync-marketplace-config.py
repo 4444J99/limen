@@ -5,11 +5,11 @@ Harnessing a free Marketplace App has two halves: the OAuth INSTALL (the human a
 lever, L-INTEGRATION-<APP>) and the CONFIG (the machine-ownable half — this script). For each ACTIVE
 integration in institutio/github/estate.yaml, this ensures the app's `config_file` is present in every
 repo of its `install_scope` classes. The config SOURCE is the conductor repo's own copy
-(organvm/limen/.coderabbit.yaml, renovate.json, …) — so "push" means: copy the conductor's live config
+(4444J99/limen/.coderabbit.yaml, renovate.json, …) — so "push" means: copy the conductor's live config
 into a target repo via a COMPLIANT PR (never a force-push, never a direct-to-main write).
 
 The three target kinds, one contract:
-  - CONDUCTOR (organvm/limen == this repo): the config lives at the repo root already → a local check;
+  - CONDUCTOR (4444J99/limen == this repo): the config lives at the repo root already → a local check;
     an absent source is a red (the config the fan-out copies is missing).
   - governed_public repos: push via the GitHub contents API on a fresh branch + `gh pr create`
     (cross-repo). The merge organs (merge-drain / merge-policy) land the PR — this only opens it.
@@ -37,7 +37,7 @@ import yaml
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT = SCRIPT_DIR.parent.resolve()
 ESTATE = Path(os.environ.get("LIMEN_GITVS_ESTATE") or (ROOT / "institutio" / "github" / "estate.yaml"))
-CONDUCTOR_REPO = "organvm/limen"  # derived identity of this repo (the config SOURCE); see _conductor_repo()
+CONDUCTOR_REPO = "4444J99/limen"  # derived identity of this repo (the config SOURCE); see _conductor_repo()
 
 
 def _bool_env(name: str, default: bool) -> bool:
@@ -69,17 +69,38 @@ def load_estate() -> dict:
         return {}
 
 
-def _gh(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
-    """gh with the cascade token; fail-open (returncode 1), never raises."""
+def _gh(
+    args: list[str],
+    timeout: int = 60,
+    *,
+    repo: str | None = None,
+    app_only: bool = False,
+) -> subprocess.CompletedProcess:
+    """Run gh with exact-repository auth; mutations require an App-only token."""
+    if app_only and repo is None:
+        return subprocess.CompletedProcess(args, 1, "", "App-only GitHub call requires exact repository")
     if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
         return subprocess.CompletedProcess(args, 1, "", "offline")
     env = {**os.environ}
-    try:
-        tok = subprocess.run(["bash", str(SCRIPT_DIR / "gh-app-token.sh")], capture_output=True, text=True, timeout=45)
-        if tok.returncode == 0 and tok.stdout.strip():
+    if repo is None:
+        env.pop("GH_TOKEN", None)
+        env.pop("GITHUB_TOKEN", None)
+    else:
+        try:
+            token_command = ["bash", str(SCRIPT_DIR / "gh-app-token.sh"), "--repo", repo]
+            if app_only:
+                token_command.append("--app-only")
+            tok = subprocess.run(
+                token_command,
+                capture_output=True,
+                text=True,
+                timeout=45,
+            )
+            if tok.returncode != 0 or not tok.stdout.strip():
+                return subprocess.CompletedProcess(args, 1, "", "exact-repository token unavailable")
             env["GH_TOKEN"] = env["GITHUB_TOKEN"] = tok.stdout.strip()
-    except Exception:
-        pass
+        except Exception as exc:
+            return subprocess.CompletedProcess(args, 1, "", str(exc))
     try:
         return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout, env=env)
     except Exception as e:
@@ -101,7 +122,7 @@ def _class_globs(estate: dict, class_name: str) -> list[str]:
 
 def _repo_has_file(repo: str, path: str) -> bool | None:
     """Does `repo` already carry `path`? True/False online; None if it can't be determined (fail-open)."""
-    r = _gh(["api", f"/repos/{repo}/contents/{path}", "--jq", ".path"], timeout=30)
+    r = _gh(["api", f"/repos/{repo}/contents/{path}", "--jq", ".path"], timeout=30, repo=repo)
     if r.returncode == 0 and (r.stdout or "").strip():
         return True
     if "Not Found" in (r.stderr or "") or "404" in (r.stderr or ""):
@@ -142,15 +163,21 @@ def _push_config(repo: str, path: str, content: str, app: str) -> str:
     force-pushes, never writes to the default branch — the merge organs land the PR. Idempotent-safe:
     caller has already confirmed the file is absent."""
     branch = f"gitvs/integration-{app}"
-    base = _gh(["api", f"/repos/{repo}", "--jq", ".default_branch"], timeout=20)
+    base = _gh(["api", f"/repos/{repo}", "--jq", ".default_branch"], timeout=20, repo=repo)
     default = (base.stdout or "").strip() or "main"
-    sha = _gh(["api", f"/repos/{repo}/git/ref/heads/{default}", "--jq", ".object.sha"], timeout=20)
+    sha = _gh(
+        ["api", f"/repos/{repo}/git/ref/heads/{default}", "--jq", ".object.sha"],
+        timeout=20,
+        repo=repo,
+    )
     head_sha = (sha.stdout or "").strip()
     if not head_sha:
         return f"{repo}: could not read {default} head"
     mk = _gh(
         ["api", "-X", "POST", f"/repos/{repo}/git/refs", "-f", f"ref=refs/heads/{branch}", "-f", f"sha={head_sha}"],
         timeout=20,
+        repo=repo,
+        app_only=True,
     )
     if mk.returncode != 0 and "already exists" not in (mk.stderr or ""):
         return f"{repo}: branch create failed"
@@ -171,6 +198,8 @@ def _push_config(repo: str, path: str, content: str, app: str) -> str:
             f"branch={branch}",
         ],
         timeout=30,
+        repo=repo,
+        app_only=True,
     )
     if put.returncode != 0:
         return f"{repo}: contents PUT failed"
@@ -191,6 +220,8 @@ def _push_config(repo: str, path: str, content: str, app: str) -> str:
             f"the moment the Marketplace app is installed. Config sourced from {_conductor_repo()}.",
         ],
         timeout=45,
+        repo=repo,
+        app_only=True,
     )
     return f"{repo}: PR opened" if pr.returncode == 0 else f"{repo}: PR create failed ({(pr.stderr or '')[:60]})"
 

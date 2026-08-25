@@ -30,7 +30,7 @@ def graph_and_map():
     graph = MODULE.index_program(MODULE.load_manifest(MANIFEST))
     mapping = {
         "schema_version": MODULE.MAP_SCHEMA,
-        "repository": "organvm/limen",
+        "repository": "4444J99/limen",
         "milestone": {
             "number": 1,
             "title": graph["program"]["issue_projection"]["milestone"],
@@ -379,7 +379,7 @@ def test_packet_seed_carries_the_human_model_override_and_is_not_a_lease() -> No
     assert seed["execution_requirements"]["reasoning_class"] == "routine"
     assert seed["execution_requirements"]["model_override"]["slug"] == "gpt-5.6-luna"
     assert seed["execution_requirements"]["model_override"]["effort"] == "medium"
-    assert seed["receipt_target"] == "github:organvm/limen:issue:11"
+    assert seed["receipt_target"] == "github:4444J99/limen:issue:11"
 
 
 def test_w08_packet_seed_owns_summary_machine_artifact_and_dated_receipt() -> None:
@@ -411,7 +411,7 @@ def test_work_receipt_is_bound_to_current_acceptance_and_non_circular_predicate(
             "lease_id": "lease-453-b776a6ce0c29eccd",
             "executor": "copilot",
         },
-        "observed_heads": {"organvm/limen": "a" * 40},
+        "observed_heads": {"4444J99/limen": "a" * 40},
         "changed_paths": [],
         "predicate": {
             "command": "python3 scripts/check-claim-adjudication.py",
@@ -424,11 +424,23 @@ def test_work_receipt_is_bound_to_current_acceptance_and_non_circular_predicate(
             ).hexdigest(),
             "observed_at": "2026-08-09T12:00:00Z",
         },
-        "evidence_urls": ["https://github.com/organvm/limen/issues/1"],
+        "evidence_urls": ["https://github.com/4444J99/limen/issues/1"],
         "rollback": {"invoked": False, "state": "not needed"},
     }
 
     assert MODULE.validate_work_receipt(receipt, work_id, graph) == receipt
+
+    historical = copy.deepcopy(receipt)
+    historical["observed_heads"] = {"organvm/limen": "a" * 40}
+    historical["evidence_urls"] = ["https://github.com/organvm/limen/issues/1"]
+    before = MODULE.json.dumps(historical, sort_keys=True, separators=(",", ":"))
+    assert MODULE.validate_work_receipt(historical, work_id, graph) == historical
+    assert MODULE.json.dumps(historical, sort_keys=True, separators=(",", ":")) == before
+
+    unregistered_alias = copy.deepcopy(receipt)
+    unregistered_alias["observed_heads"] = {"4444J99/limen-control": "a" * 40}
+    with pytest.raises(MODULE.ProgramError, match="exactly the packet target repository"):
+        MODULE.validate_work_receipt(unregistered_alias, work_id, graph)
 
     stale = copy.deepcopy(receipt)
     stale["acceptance_sha256"] = "0" * 64
@@ -462,7 +474,7 @@ def test_forged_receipts_fail_exact_corruption_shapes() -> None:
             "lease_id": "lease-453-b776a6ce0c29eccd",
             "executor": "agy",
         },
-        "observed_heads": {"organvm/limen": "a" * 40},
+        "observed_heads": {"4444J99/limen": "a" * 40},
         "changed_paths": [],
         "predicate": {
             "command": command,
@@ -473,12 +485,12 @@ def test_forged_receipts_fail_exact_corruption_shapes() -> None:
             "command_output_sha256": MODULE.hashlib.sha256(f"{command}\npass\n".encode()).hexdigest(),
             "observed_at": "2026-08-09T12:00:00Z",
         },
-        "evidence_urls": ["https://github.com/organvm/limen/issues/1"],
+        "evidence_urls": ["https://github.com/4444J99/limen/issues/1"],
         "rollback": {"invoked": False, "state": "not needed"},
     }
     MODULE.validate_work_receipt(receipt, work_id, graph)
     cases = [
-        ("all-zero head", lambda r: r["observed_heads"].update({"organvm/limen": "0" * 40}), "invalid exact head"),
+        ("all-zero head", lambda r: r["observed_heads"].update({"4444J99/limen": "0" * 40}), "invalid exact head"),
         ("echo stub", lambda r: r["predicate"].update({"command": "echo ok"}), "shell stub"),
         (
             "fabricated lease",
@@ -513,7 +525,7 @@ def test_w07_receipt_requires_five_reader_records_and_decision_evidence() -> Non
             "lease_id": "lease-453-b776a6ce0c29eccd",
             "executor": "agy",
         },
-        "observed_heads": {"organvm/limen": "a" * 40},
+        "observed_heads": {"4444J99/limen": "a" * 40},
         "changed_paths": [],
         "predicate": {
             "command": "python3 docs/positioning/program/validate_p03_w07_blinded_reader.py responses.json",
@@ -528,7 +540,7 @@ def test_w07_receipt_requires_five_reader_records_and_decision_evidence() -> Non
             ).hexdigest(),
             "observed_at": "2026-08-09T12:00:00Z",
         },
-        "evidence_urls": ["https://github.com/organvm/limen/issues/1"],
+        "evidence_urls": ["https://github.com/4444J99/limen/issues/1"],
         "rollback": {"invoked": False, "state": "not needed"},
     }
     with pytest.raises(MODULE.ProgramError, match="five valid records"):
@@ -574,6 +586,20 @@ def test_phase_exit_gate_is_explicit_executable_and_not_circular() -> None:
             parity_digest="d" * 64,
         )
         == receipt
+    )
+
+    historical = copy.deepcopy(receipt)
+    historical["observed_heads"] = {"organvm/limen": "a" * 40}
+    assert (
+        MODULE.validate_phase_receipt(
+            historical,
+            phase_id,
+            graph,
+            child_receipt_digest="b" * 64,
+            remote_state_digest="c" * 64,
+            parity_digest="d" * 64,
+        )
+        == historical
     )
     assert "--phase-proof PSP-P00" in MODULE.body_for(phase_id, graph, graph_and_map()[1])
 
@@ -1373,8 +1399,8 @@ def test_marker_discovery_ignores_program_label_and_exposes_duplicates_and_orpha
 
     assert discovered[orphan_id]["number"] == 9003
     assert calls == [
-        ("organvm/limen", "issues?state=all&sort=created&direction=asc"),
-        ("organvm/limen", "issues?state=all&sort=created&direction=asc"),
+        ("4444J99/limen", "issues?state=all&sort=created&direction=asc"),
+        ("4444J99/limen", "issues?state=all&sort=created&direction=asc"),
     ]
 
 

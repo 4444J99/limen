@@ -431,7 +431,7 @@ def emit_gaps(gap_texts: list[str], origin: str, apply: bool) -> int:
         task = dict(
             id=gid,
             title=g[:120],
-            repo="organvm/limen",
+            repo="4444J99/limen",
             created=_now().date(),
             status="open",
             target_agent="any",
@@ -441,7 +441,7 @@ def emit_gaps(gap_texts: list[str], origin: str, apply: bool) -> int:
             horizon="past",
             value_case=f"Preserve and close the prompt-corpus gap surfaced from {origin}",
             context=f"corpus gap surfaced by convergence of {origin}",
-            **contract_fields(github_pr_contract("organvm/limen", gid)),
+            **contract_fields(github_pr_contract("4444J99/limen", gid)),
         )
         if apply:
             submit_task_upsert(tasks_path, task, agent="corpus-converge", session_id=session_id)

@@ -559,7 +559,7 @@ def validate_dependency_ledger(value: object, contract: dict[str, Any]) -> dict[
         raise P14Error(f"dependency ledger schema_version must be {LEDGER_SCHEMA}")
     if ledger.get("authoritative_registry") != "institutio/positioning/program.yaml":
         raise P14Error("dependency ledger must bind the canonical program registry")
-    if ledger.get("program_repository") != "organvm/limen":
+    if ledger.get("program_repository") != "4444J99/limen":
         raise P14Error("dependency ledger repository drift")
     if ledger.get("counts_as_closure") is not False:
         raise P14Error("dependency ledger preparation must not count as closure")

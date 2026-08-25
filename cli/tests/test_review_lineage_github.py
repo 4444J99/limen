@@ -9,6 +9,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from limen.review_lineage_github import build_review_lineage
+from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY
 
 
 def pages(nodes, *, page_size=100):
@@ -55,6 +56,7 @@ def test_more_than_one_hundred_threads_and_comments_are_exhaustive():
     }
 
     result = build_review_lineage(
+        repository_identity=LIMEN_REPOSITORY_IDENTITY,
         repository="organvm/limen",
         pull_request=2542,
         metadata=metadata(),
@@ -72,6 +74,7 @@ def test_more_than_one_hundred_threads_and_comments_are_exhaustive():
 def test_unresolved_outdated_thread_blocks_closure():
     thread = {"id": "thread-outdated", "isResolved": False, "isOutdated": True}
     result = build_review_lineage(
+        repository_identity=LIMEN_REPOSITORY_IDENTITY,
         repository="organvm/limen",
         pull_request=2542,
         metadata=metadata(),
@@ -87,6 +90,7 @@ def test_unresolved_outdated_thread_blocks_closure():
 @pytest.mark.parametrize("decision", ["REVIEW_REQUIRED", "CHANGES_REQUESTED"])
 def test_outstanding_review_decisions_block_closure(decision):
     result = build_review_lineage(
+        repository_identity=LIMEN_REPOSITORY_IDENTITY,
         repository="organvm/limen",
         pull_request=2542,
         metadata=metadata(review_decision=decision),
@@ -100,6 +104,7 @@ def test_outstanding_review_decisions_block_closure(decision):
 
 def test_missing_nested_comment_cursor_fails_closed():
     result = build_review_lineage(
+        repository_identity=LIMEN_REPOSITORY_IDENTITY,
         repository="organvm/limen",
         pull_request=2542,
         metadata=metadata(),
@@ -129,6 +134,7 @@ def test_missing_nested_comment_cursor_fails_closed():
 def test_post_merge_unresolved_review_requires_corrective_owner():
     with pytest.raises(ValueError, match="corrective owner"):
         build_review_lineage(
+            repository_identity=LIMEN_REPOSITORY_IDENTITY,
             repository="organvm/limen",
             pull_request=2542,
             metadata=metadata(lifecycle_stage="merged"),

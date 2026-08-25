@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -79,6 +80,93 @@ def test_a_worktree_root_is_withheld(tmp_path, monkeypatch):
 
     assert mod.notify_once(wt, "k", "msg", enabled=True) is True
     assert calls == []
+
+
+def test_event_effect_disabled_short_circuits_before_liveness_or_spawn(tmp_path, monkeypatch):
+    mod = _load_notify()
+    monkeypatch.setattr(
+        mod,
+        "_root_may_speak",
+        lambda *_args: (_ for _ in ()).throw(AssertionError("liveness probed")),
+    )
+    monkeypatch.setattr(
+        mod.subprocess,
+        "run",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("broker spawned")),
+    )
+
+    receipt = mod.emit_event_v1(
+        tmp_path,
+        stable_id="limen.heartbeat.finding",
+        transition="onset",
+        subject_key="probe",
+        event_id="evt-disabled",
+        facts={"probe": "probe"},
+        evidence_ref="test",
+        producer="test",
+        enabled=False,
+    )
+
+    assert receipt.status == "withheld"
+    assert receipt.broker_invoked is False
+
+
+def test_event_effect_accepts_domus_v2_submitted_receipt(tmp_path, monkeypatch):
+    mod = _load_notify()
+    monkeypatch.setattr(mod, "_root_may_speak", lambda *_args: True)
+    payload = {
+        "schema": "domus.notification_delivery_receipt.v2",
+        "status": "submitted",
+        "channels": {"macos": "submitted"},
+    }
+    monkeypatch.setattr(
+        mod.subprocess,
+        "run",
+        lambda command, **_kwargs: subprocess.CompletedProcess(command, 0, json.dumps(payload), ""),
+    )
+
+    receipt = mod.emit_event_v1(
+        tmp_path,
+        stable_id="limen.heartbeat.finding",
+        transition="onset",
+        subject_key="probe",
+        event_id="evt-v2",
+        facts={"probe": "probe"},
+        evidence_ref="test",
+        producer="test",
+        enabled=True,
+    )
+
+    assert receipt.status == "submitted"
+    assert receipt.broker_schema == "domus.notification_delivery_receipt.v2"
+    assert receipt.channels == {"macos": "submitted"}
+    assert receipt.accepted is True
+
+
+def test_event_effect_maps_legacy_delivered_to_submitted_unverified(tmp_path, monkeypatch):
+    mod = _load_notify()
+    monkeypatch.setattr(mod, "_root_may_speak", lambda *_args: True)
+    payload = {"status": "delivered", "channels": {"macos": "delivered"}}
+    monkeypatch.setattr(
+        mod.subprocess,
+        "run",
+        lambda command, **_kwargs: subprocess.CompletedProcess(command, 0, json.dumps(payload), ""),
+    )
+
+    receipt = mod.emit_event_v1(
+        tmp_path,
+        stable_id="limen.heartbeat.finding",
+        transition="onset",
+        subject_key="probe",
+        event_id="evt-v1",
+        facts={"probe": "probe"},
+        evidence_ref="test",
+        producer="test",
+        enabled=True,
+    )
+
+    assert receipt.status == "submitted_unverified"
+    assert receipt.channels == {"macos": "submitted_unverified"}
 
 
 # ── CI-RED HYSTERESIS (the rotating-window re-fire guard) ────────────────────────────────────────

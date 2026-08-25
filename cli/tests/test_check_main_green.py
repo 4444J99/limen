@@ -35,7 +35,7 @@ def _seed(tmp: Path, conclusion: str) -> None:
                 "checked_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                 "conclusion": conclusion,
                 "head_sha": "deadbeef" * 5,
-                "url": "https://github.com/organvm/limen/actions/runs/1",
+                "url": "https://github.com/4444J99/limen/actions/runs/1",
             }
         ),
         encoding="utf-8",
@@ -95,15 +95,15 @@ def test_red_verdict_emits_one_idempotent_task(tmp_path):
     tasks = load_limen_file(tmp_path / "tasks.yaml").tasks
     assert len(tasks) == 1
     # SYMPTOM-scoped id (no SHA) so a moving red trunk converges on one task — limen#895
-    assert tasks[0].id == "HEAL-mainred-organvm-limen"
+    assert tasks[0].id == "HEAL-mainred-4444j99-limen"
     assert "deadbeef" in tasks[0].title  # the SHA lives in the title, not the id
     assert tasks[0].priority == "critical" and "mainred" in tasks[0].labels
     assert "deadbeef" * 5 in tasks[0].predicate
     assert "gh pr list" not in tasks[0].predicate
     assert tasks[0].origin == "system_debt"
     assert tasks[0].horizon == "present"
-    assert tasks[0].value_case == (f"Restore organvm/limen protected main to green at exact head {'deadbeef' * 5}")
-    assert tasks[0].owner_surface == "organvm/limen"
+    assert tasks[0].value_case == (f"Restore 4444J99/limen protected main to green at exact head {'deadbeef' * 5}")
+    assert tasks[0].owner_surface == "4444J99/limen"
     # idempotent: a second run adds nothing
     run(tmp_path, apply=True)
     assert len(load_limen_file(tmp_path / "tasks.yaml").tasks) == 1
@@ -123,7 +123,7 @@ def test_moving_red_trunk_converges_on_one_task(tmp_path):
     run(tmp_path, apply=True)
     tasks = load_limen_file(tmp_path / "tasks.yaml").tasks
     assert len(tasks) == 1  # still ONE canonical task
-    assert tasks[0].id == "HEAL-mainred-organvm-limen"
+    assert tasks[0].id == "HEAL-mainred-4444j99-limen"
     assert "feedface" * 5 in tasks[0].predicate
     assert "deadbeef" * 5 not in tasks[0].predicate
 
@@ -188,7 +188,7 @@ def test_recurrence_reopens_healed_task(tmp_path):
     run(tmp_path, apply=True)
     tasks = load_limen_file(tasks_path).tasks
     assert len(tasks) == 1
-    assert tasks[0].id == "HEAL-mainred-organvm-limen"
+    assert tasks[0].id == "HEAL-mainred-4444j99-limen"
     assert tasks[0].status == "open"  # reopened
     assert tasks[0].dispatch_log[-1].lifecycle_repair == "recurrence-reopen"
 
@@ -293,7 +293,7 @@ def _run_row(head, *, conclusion="success", status="completed", event="push"):
         "conclusion": conclusion,
         "status": status,
         "headSha": head,
-        "url": "https://github.com/organvm/limen/actions/runs/1",
+        "url": "https://github.com/4444J99/limen/actions/runs/1",
         "event": event,
     }
 
@@ -539,7 +539,7 @@ def test_classify_fails_open_to_ci_fail(monkeypatch):
 
 def test_jammed_pr_run_ids_extracts_filters_and_dedups():
     m = _load()
-    url = "https://github.com/organvm/limen/actions/runs/{}/job/9"
+    url = "https://github.com/4444J99/limen/actions/runs/{}/job/9"
 
     def pr(number, name, concl, run, draft=False, updated="2026-07-17T00:00:00Z"):
         return {
@@ -725,7 +725,7 @@ def test_visibility_drift_detects_registry_public_but_observed_private(tmp_path,
     (est / "estate.yaml").write_text(
         "classes:\n"
         "  conductor:\n"
-        '    match: ["organvm/limen"]\n'
+        '    match: ["4444J99/limen"]\n'
         "    visibility: public\n"
         "  operation_private:\n"
         '    match: ["organvm/arca"]\n'
@@ -734,12 +734,12 @@ def test_visibility_drift_detects_registry_public_but_observed_private(tmp_path,
     m = _load()  # ESTATE now resolves under tmp LIMEN_ROOT
 
     def observed(private):
-        return lambda args, default: private if args[:2] == ["api", "repos/organvm/limen"] else default
+        return lambda args, default: private if args[:2] == ["api", "repos/4444J99/limen"] else default
 
     monkeypatch.setattr(m, "_gh_json", observed(True))
-    assert m._visibility_drift("organvm/limen") is True  # registry public, observed private → DRIFT
+    assert m._visibility_drift("4444J99/limen") is True  # registry public, observed private → DRIFT
     monkeypatch.setattr(m, "_gh_json", observed(False))
-    assert m._visibility_drift("organvm/limen") is False  # already public → no drift
+    assert m._visibility_drift("4444J99/limen") is False  # already public → no drift
     # a repo the registry WANTS private, observed private, is not a drift
     monkeypatch.setattr(m, "_gh_json", lambda args, default: True if "arca" in args[1] else default)
     assert m._visibility_drift("organvm/arca") is False

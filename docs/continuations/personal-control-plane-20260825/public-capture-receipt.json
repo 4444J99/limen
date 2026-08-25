@@ -1,0 +1,46 @@
+{
+  "app_access_census": "unavailable_fail_closed",
+  "captured_at": "2026-08-25T15:31:37.616381+00:00",
+  "default_sha": "f034e3e659c8c8c3b9469b7b66e32c2bc03fdb64",
+  "final_private_recapture_required_after_ref_or_review_change": true,
+  "denominators": {
+    "branches": 10,
+    "environments": 2,
+    "issues": 500,
+    "open_pull_requests": 3,
+    "releases": 1,
+    "review_threads": 27,
+    "tags": 1,
+    "unresolved_current_review_threads": 16,
+    "unresolved_outdated_review_threads": 0,
+    "workflows": 24
+  },
+  "fallback_destination": "4444J99/limen-control",
+  "git_bundle": {
+    "ref_count": 2059,
+    "refs_sha256": "5bee5fe20d77b68126d14ac4937363e5593652a8b9ba912a1472e2dfc2d90d9a",
+    "restore_verified": true,
+    "sha256": "ae7a3091eee2b0c88d919fcd24068e8a288b9ad032514195ee3ec5b58830cde3",
+    "size_bytes": 122786474
+  },
+  "manifest_sha256": "89c873ef9447b4483472757de725560648674d093c56bd28d4e20e30896a39ca",
+  "observed_coordinate": "organvm/limen",
+  "preferred_destination": "4444J99/limen",
+  "private_custody_included": true,
+  "private_paths_and_protected_lane_digests_published": false,
+  "receipt_role": "pre_transfer_preflight_snapshot",
+  "repository_identity": {
+    "canonical_coordinate": "4444J99/limen",
+    "historical_aliases": [
+      "organvm/limen"
+    ],
+    "repository_id": 1255213941,
+    "schema_version": "limen.repository_identity.v1"
+  },
+  "schema_version": "limen.repository_transfer_capture_receipt.v2",
+  "workflow_freeze": {
+    "disabled": 16,
+    "intentionally_active": 8,
+    "policy": "institutio/github/workflow-transfer-policy.json"
+  }
+}

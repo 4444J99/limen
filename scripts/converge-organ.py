@@ -17,6 +17,7 @@ Gated OFF by default (LIMEN_CONVERGE=1). Bounded (LIMEN_CONVERGE_LIMIT, default 
 Read-mostly: the only tasks.yaml write is appending bounded gap-tasks, under the lock. Fail-open —
 never crashes the heartbeat. ([[alchemical-convergence-method]], [[distillation-not-reduction]])
 """
+
 from __future__ import annotations
 
 import argparse
@@ -35,6 +36,7 @@ PR_RE = re.compile(r"github\.com/[^/\s]+/[^/\s]+/pull/\d+")
 def _load_yaml(path: Path) -> dict:
     try:
         import yaml
+
         return yaml.safe_load(path.read_text()) or {}
     except Exception:
         return {}
@@ -55,26 +57,37 @@ def find_multiverses(tasks: list[dict]) -> list[dict]:
             if url in seen:
                 continue
             agent = e.get("agent") or "?"
-            seen[url] = {"id": f"{t.get('id')}:{agent}",
-                         "text": str(e.get("output") or sid),
-                         "source": f"{agent} {url}"}
+            seen[url] = {
+                "id": f"{t.get('id')}:{agent}",
+                "text": str(e.get("output") or sid),
+                "source": f"{agent} {url}",
+            }
         if len(seen) >= 2:  # ≥2 distinct PRs = a real multiverse
-            out.append({"id": t.get("id"),
-                        "idea": t.get("title") or t.get("id"),
-                        "shots": list(seen.values())})
+            out.append({"id": t.get("id"), "idea": t.get("title") or t.get("id"), "shots": list(seen.values())})
     return out
 
 
 def _kit(live: bool):
     from limen.converge import _build_dry_run_kit  # offline, always available
+
     if not live:
         return _build_dry_run_kit()
     try:  # opt-in real synthesis; fall back to offline if anthropic/key missing
-        from limen.converge import AnthropicSynthesizer, DeterministicScorer, LexicalGapFinder, \
-            LexicalRanker, NoopPromoter
-        return {"ranker": LexicalRanker(), "synthesizer": AnthropicSynthesizer(),
-                "scorer": DeterministicScorer(), "promoter": NoopPromoter(),
-                "gap_finder": LexicalGapFinder()}
+        from limen.converge import (
+            AnthropicSynthesizer,
+            DeterministicScorer,
+            LexicalGapFinder,
+            LexicalRanker,
+            NoopPromoter,
+        )
+
+        return {
+            "ranker": LexicalRanker(),
+            "synthesizer": AnthropicSynthesizer(),
+            "scorer": DeterministicScorer(),
+            "promoter": NoopPromoter(),
+            "gap_finder": LexicalGapFinder(),
+        }
     except Exception as exc:
         print(f"[converge] live kit unavailable ({exc}); using offline kit")
         return _build_dry_run_kit()
@@ -91,6 +104,7 @@ def _emit_gaps(gap_texts: list[str], origin_id: str, apply: bool) -> int:
     from limen.io import load_limen_file
     from limen.intake import contract_fields, github_pr_contract
     from limen.tabularius import pending_task_ids, submit_task_upsert
+
     tasks_path = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
     now = datetime.datetime.now(datetime.timezone.utc)
     try:
@@ -108,7 +122,7 @@ def _emit_gaps(gap_texts: list[str], origin_id: str, apply: bool) -> int:
         task = dict(
             id=gid,
             title=g[:120],
-            repo="organvm/limen",
+            repo="4444J99/limen",
             created=now.date(),
             status="open",
             target_agent="any",
@@ -118,7 +132,7 @@ def _emit_gaps(gap_texts: list[str], origin_id: str, apply: bool) -> int:
             horizon="past",
             value_case=f"Close the divergent implementation gap surfaced from {origin_id}",
             context=f"gap surfaced by converge from {origin_id}",
-            **contract_fields(github_pr_contract("organvm/limen", gid)),
+            **contract_fields(github_pr_contract("4444J99/limen", gid)),
         )
         if apply:
             submit_task_upsert(tasks_path, task, agent="converge-organ", session_id=session_id)
@@ -155,17 +169,27 @@ def main(argv: list[str] | None = None) -> int:
             continue
         gaps = _emit_gaps(r.next_shots, mv["id"], args.apply) if args.apply else len(r.next_shots)
         total_gaps += gaps
-        rec = {"ts": datetime.datetime.now(datetime.timezone.utc).isoformat(), "idea_id": mv["id"],
-               "idea": mv["idea"], "shots": len(shots), "score": round(r.score, 3),
-               "promoted": r.promoted, "cited_losers": [s.id for s in r.cited_losers],
-               "gaps_emitted": gaps}
+        rec = {
+            "ts": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+            "idea_id": mv["id"],
+            "idea": mv["idea"],
+            "shots": len(shots),
+            "score": round(r.score, 3),
+            "promoted": r.promoted,
+            "cited_losers": [s.id for s in r.cited_losers],
+            "gaps_emitted": gaps,
+        }
         if args.apply:
             with log_path.open("a") as f:
                 f.write(json.dumps(rec) + "\n")
-        print(f"[converge] {mv['id']}: {len(shots)} shots → score {r.score:.2f} "
-              f"promoted={r.promoted} losers={len(r.cited_losers)} gaps={gaps}")
-    print(f"[converge] {len(multiverses)} multiverses distilled, {total_gaps} gaps "
-          f"{'emitted' if args.apply else '(dry-run)'}")
+        print(
+            f"[converge] {mv['id']}: {len(shots)} shots → score {r.score:.2f} "
+            f"promoted={r.promoted} losers={len(r.cited_losers)} gaps={gaps}"
+        )
+    print(
+        f"[converge] {len(multiverses)} multiverses distilled, {total_gaps} gaps "
+        f"{'emitted' if args.apply else '(dry-run)'}"
+    )
     return 0
 
 

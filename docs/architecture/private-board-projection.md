@@ -1,6 +1,6 @@
 # Private canonical board and public aggregate projection
 
-`organvm/limen` is public. The full task board therefore cannot be a tracked GitHub
+`4444J99/limen` is public. The full task board therefore cannot be a tracked GitHub
 artifact. The board contract is now additive:
 
 - the authenticated `CONDUCT_KEEPER` Durable Object stores the canonical full board in

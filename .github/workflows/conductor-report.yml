@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   conductor-report:
-    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
     steps:

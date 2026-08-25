@@ -26,18 +26,18 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
+CLI_SRC = ROOT / "cli" / "src"
+if str(CLI_SRC) not in sys.path:
+    sys.path.insert(0, str(CLI_SRC))
+
+from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY  # noqa: E402
+
 MATRIX = ROOT / "docs/positioning/flagship-proof-set.yaml"
 CENSUS = ROOT / "docs/github-estate-census.json"
 ESTATE = ROOT / "institutio/github/estate.yaml"
 ACCESS = ROOT / "institutio/github/access.yaml"
-W02_RELAY = (
-    ROOT
-    / "docs/receipts/positioning/relays/2026-08-10-psp-p02-w02-estate-classification-preflight.md"
-)
-W03_RELAY = (
-    ROOT
-    / "docs/receipts/positioning/relays/2026-08-10-psp-p02-w03-flagship-proof-preflight.md"
-)
+W02_RELAY = ROOT / "docs/receipts/positioning/relays/2026-08-10-psp-p02-w02-estate-classification-preflight.md"
+W03_RELAY = ROOT / "docs/receipts/positioning/relays/2026-08-10-psp-p02-w03-flagship-proof-preflight.md"
 SCHEMA = "limen.positioning_flagship_proof_set.v1"
 RELAY_SCHEMA = "limen.positioning_flagship_relay_binding.v1"
 WORK_ID = "PSP-P02-W03"
@@ -73,6 +73,10 @@ WORKFLOW_API_PATH_RE = re.compile(
     r"repos/([^/\s]+/[^/\s]+)/actions/runs/([1-9][0-9]*)\Z",
     re.IGNORECASE,
 )
+WORKFLOW_DISPLAY_URL_RE = re.compile(
+    r"https://github\.com/([^/\s]+/[^/\s]+)/actions/runs/([1-9][0-9]*)\Z",
+    re.IGNORECASE,
+)
 HEAD_RE = re.compile(r"[0-9a-f]{40}\Z")
 DIGEST_RE = re.compile(r"[0-9a-f]{64}\Z")
 RECEIPT_BLOCK_RE = re.compile(
@@ -86,7 +90,7 @@ RELAY_BINDING_RE = re.compile(
 )
 WORKFLOW_PATH_RE = re.compile(r"\.github/workflows/[^/\s]+\.(?:yml|yaml)\Z")
 WORKFLOW_HEAD_BINDINGS = {"current_default_branch", "dated_default_branch_snapshot"}
-DATED_SNAPSHOT_REPOSITORIES = {"organvm/limen"}
+DATED_SNAPSHOT_REPOSITORIES = {"4444j99/limen", "organvm/limen"}
 CLAIM_KEYS = {
     "statement",
     "assertion_class",
@@ -128,7 +132,7 @@ EXPLICIT_ENDPOINT_BINDINGS = {
 EXPLICIT_ADDITION_BINDINGS = {
     "limen": {
         "source_set": "manifest_primary_proof",
-        "candidate_identity": "repository:organvm/limen",
+        "candidate_identity": "repository:4444J99/limen",
     },
     "recursive_engine": {
         "source_set": "current_public_entry_point",
@@ -269,16 +273,20 @@ def public_https_url(value: object) -> bool:
     ):
         return False
     hostname = hostname.casefold()
-    if "." not in hostname or hostname == "localhost" or hostname.endswith(
-        (
-            ".localhost",
-            ".local",
-            ".internal",
-            ".home",
-            ".lan",
-            ".example",
-            ".invalid",
-            ".test",
+    if (
+        "." not in hostname
+        or hostname == "localhost"
+        or hostname.endswith(
+            (
+                ".localhost",
+                ".local",
+                ".internal",
+                ".home",
+                ".lan",
+                ".example",
+                ".invalid",
+                ".test",
+            )
         )
     ):
         return False
@@ -346,6 +354,23 @@ def github_repository_from_anchor_url(value: object) -> str | None:
     return None
 
 
+def stable_repository_key(value: object) -> str | None:
+    """Return a comparison key that preserves one repository across owner transfers."""
+
+    if not isinstance(value, str) or not REPOSITORY_RE.fullmatch(value):
+        return None
+    if LIMEN_REPOSITORY_IDENTITY.accepts(value):
+        return LIMEN_REPOSITORY_IDENTITY.canonical_coordinate.casefold()
+    return value.casefold()
+
+
+def repository_in_public_census(repository: object, public_canonical: dict[str, str]) -> bool:
+    key = stable_repository_key(repository)
+    return key is not None and key in {
+        stable_repository_key(public_repository) for public_repository in public_canonical.values()
+    }
+
+
 def validate_public_anchor_custody(
     anchor: object,
     public_canonical: dict[str, str],
@@ -362,18 +387,14 @@ def validate_public_anchor_custody(
     if parsed.query or parsed.fragment:
         errors.append(f"{prefix}: evidence URL must not contain query or fragment data")
     repository = github_repository_from_anchor_url(url)
-    if repository is not None and repository.casefold() not in public_canonical:
+    if repository is not None and not repository_in_public_census(repository, public_canonical):
         errors.append(f"{prefix}: evidence repository is not present in the tracked public census")
     return errors
 
 
 def repository_workflow_api_path(value: object, repository: object) -> str | None:
     match = WORKFLOW_API_PATH_RE.fullmatch(str(value or ""))
-    if (
-        match is None
-        or not isinstance(repository, str)
-        or match.group(1).casefold() != repository.casefold()
-    ):
+    if match is None or stable_repository_key(match.group(1)) != stable_repository_key(repository):
         return None
     return str(value)
 
@@ -385,6 +406,15 @@ def workflow_run_id(api_path: object, repository: object) -> str | None:
     match = WORKFLOW_API_PATH_RE.fullmatch(path)
     assert match is not None
     return match.group(2)
+
+
+def workflow_display_url_matches(value: object, repository: object, run_id: object) -> bool:
+    match = WORKFLOW_DISPLAY_URL_RE.fullmatch(str(value or ""))
+    return (
+        match is not None
+        and stable_repository_key(match.group(1)) == stable_repository_key(repository)
+        and match.group(2) == str(run_id)
+    )
 
 
 def validate_selected_claim(claim: object, repository: object, prefix: str) -> list[str]:
@@ -423,17 +453,14 @@ def validate_selected_claim(claim: object, repository: object, prefix: str) -> l
     return errors
 
 
-def validate_workflow_anchor(
-    anchor: dict[str, Any], candidate: dict[str, Any], anchor_prefix: str
-) -> list[str]:
+def validate_workflow_anchor(anchor: dict[str, Any], candidate: dict[str, Any], anchor_prefix: str) -> list[str]:
     errors: list[str] = []
     repository = candidate.get("repository")
     run_id = workflow_run_id(anchor.get("github_api_path"), repository)
     if run_id is None:
         errors.append(f"{anchor_prefix}: workflow API path must be bound to the candidate repository")
         return errors
-    expected_url = f"https://github.com/{repository}/actions/runs/{run_id}"
-    if anchor.get("url") != expected_url:
+    if not workflow_display_url_matches(anchor.get("url"), repository, run_id):
         errors.append(f"{anchor_prefix}: workflow display URL must match its repository-bound run")
     identity = anchor.get("workflow_identity")
     if not isinstance(identity, dict) or set(identity) != {"id", "path", "name"}:
@@ -513,8 +540,7 @@ def expected_relay_bindings(matrix: dict[str, Any]) -> dict[str, dict[str, Any]]
         if isinstance(candidate, dict) and candidate.get("status") == "alternate"
     ]
     excluded_count = sum(
-        isinstance(candidate, dict) and candidate.get("status") == "excluded"
-        for candidate in candidates
+        isinstance(candidate, dict) and candidate.get("status") == "excluded" for candidate in candidates
     )
     candidate_screen = matrix.get("candidate_screen")
     if not isinstance(candidate_screen, dict):
@@ -667,9 +693,7 @@ def validate_formal_contract(matrix: dict[str, Any]) -> list[str]:
     return errors
 
 
-def validate_source_projection(
-    matrix: dict[str, Any], candidates: list[dict[str, Any]]
-) -> tuple[list[str], set[str]]:
+def validate_source_projection(matrix: dict[str, Any], candidates: list[dict[str, Any]]) -> tuple[list[str], set[str]]:
     """Bind the candidate denominator to the tracked W01/W02 public sources."""
 
     errors: list[str] = []
@@ -754,9 +778,7 @@ def validate_source_projection(
     if len(set(addition_ids)) != len(addition_ids):
         errors.append("source projection contains duplicate explicit candidate additions")
 
-    candidate_by_id = {
-        str(candidate.get("id")): candidate for candidate in candidates if isinstance(candidate, dict)
-    }
+    candidate_by_id = {str(candidate.get("id")): candidate for candidate in candidates if isinstance(candidate, dict)}
     actual_w02_repositories = sorted(
         str(candidate.get("repository"))
         for candidate in candidates
@@ -784,9 +806,7 @@ def validate_source_projection(
         and isinstance(candidate.get("repository"), str)
         and candidate["repository"].casefold() in set(w02_keys)
     } | set(addition_ids)
-    actual_ids = {
-        str(candidate.get("id")) for candidate in candidates if isinstance(candidate, dict)
-    }
+    actual_ids = {str(candidate.get("id")) for candidate in candidates if isinstance(candidate, dict)}
     if projected_ids != actual_ids or len(projected_ids) != len(candidates):
         errors.append("candidate matrix does not equal the authoritative source projection")
 
@@ -912,13 +932,15 @@ def validate_matrix(
             errors.append(f"{prefix}: repository candidates need a valid owner/repository slug")
         elif isinstance(repository, str) and repository:
             repositories.append(repository)
-            if public_canonical.get(repository.casefold()) != repository:
+            if not repository_in_public_census(repository, public_canonical):
                 errors.append(f"{prefix}: repository identity is not present in the tracked public census")
             if public_url != f"https://github.com/{repository}":
                 errors.append(f"{prefix}: public_url must be the canonical public GitHub repository URL")
         source_sets = candidate.get("source_sets")
-        if not isinstance(source_sets, list) or not source_sets or not all(
-            isinstance(source_set, str) and source_set for source_set in source_sets
+        if (
+            not isinstance(source_sets, list)
+            or not source_sets
+            or not all(isinstance(source_set, str) and source_set for source_set in source_sets)
         ):
             errors.append(f"{prefix}: source_sets must be a nonempty string list")
         repository_maturity = candidate.get("repository_maturity")
@@ -980,18 +1002,12 @@ def validate_matrix(
             if candidate.get("hard_gate_failures"):
                 errors.append(f"{prefix}: selected candidate has hard-gate failures")
             candidate_total = candidate.get("weighted_total")
-            if strict_int(minimum_total) and (
-                not strict_int(candidate_total) or candidate_total < minimum_total
-            ):
+            if strict_int(minimum_total) and (not strict_int(candidate_total) or candidate_total < minimum_total):
                 errors.append(f"{prefix}: selected score is below the minimum")
             if isinstance(scores, dict):
                 for dimension, minimum in dimension_minima.items():
                     dimension_score = scores.get(dimension)
-                    if (
-                        not strict_int(minimum)
-                        or not strict_int(dimension_score)
-                        or dimension_score < minimum
-                    ):
+                    if not strict_int(minimum) or not strict_int(dimension_score) or dimension_score < minimum:
                         errors.append(f"{prefix}: {dimension} is below the selected minimum")
 
             live_anchors = [anchor for anchor in anchors if isinstance(anchor, dict) and anchor.get("live") is True]
@@ -1013,9 +1029,7 @@ def validate_matrix(
                     errors.extend(validate_workflow_anchor(anchor, candidate, anchor_prefix))
                 url = anchor.get("url")
                 if not public_https_url(url):
-                    errors.append(
-                        f"{anchor_prefix}: live anchor URL must use a credential-free public HTTPS hostname"
-                    )
+                    errors.append(f"{anchor_prefix}: live anchor URL must use a credential-free public HTTPS hostname")
                 if not anchor.get("reproduction"):
                     errors.append(f"{anchor_prefix}: live anchor needs a reproduction command")
                 observed = parse_time(anchor.get("observed_at"))
@@ -1050,9 +1064,7 @@ def validate_matrix(
     )
     if duplicate_endpoint_identities:
         errors.append(f"duplicate endpoint identities: {', '.join(duplicate_endpoint_identities)}")
-    duplicate_endpoint_urls = sorted(
-        name for name, count in collections.Counter(endpoint_urls).items() if count > 1
-    )
+    duplicate_endpoint_urls = sorted(name for name, count in collections.Counter(endpoint_urls).items() if count > 1)
     if duplicate_endpoint_urls:
         errors.append(f"duplicate endpoint URLs: {', '.join(duplicate_endpoint_urls)}")
     duplicate_roles = sorted(role for role, members in selected_roles.items() if len(members) > 1)
@@ -1088,9 +1100,7 @@ def github_pages(path: str) -> list[dict[str, Any]]:
     page = 1
     while True:
         separator = "&" if "?" in path else "?"
-        value = command_json(
-            ["gh", "api", f"{path}{separator}per_page=100&page={page}"]
-        )
+        value = command_json(["gh", "api", f"{path}{separator}per_page=100&page={page}"])
         if not isinstance(value, list):
             raise ProofSetError("GitHub receipt query returned a non-list")
         rows.extend(row for row in value if isinstance(row, dict))
@@ -1114,11 +1124,11 @@ def live_w02_dependency_snapshot() -> dict[str, Any]:
     """Resolve the accepted W02 issue, PR, and latest canonical marked receipt."""
 
     try:
-        pull_request = command_json(["gh", "api", "repos/organvm/limen/pulls/2307"])
-        issue = command_json(["gh", "api", "repos/organvm/limen/issues/2174"])
-        w03_issue = command_json(["gh", "api", "repos/organvm/limen/issues/2175"])
-        comments = github_pages("repos/organvm/limen/issues/2174/comments")
-        current_main = command_json(["gh", "api", "repos/organvm/limen/commits/main"])
+        pull_request = command_json(["gh", "api", "repos/4444J99/limen/pulls/2307"])
+        issue = command_json(["gh", "api", "repos/4444J99/limen/issues/2174"])
+        w03_issue = command_json(["gh", "api", "repos/4444J99/limen/issues/2175"])
+        comments = github_pages("repos/4444J99/limen/issues/2174/comments")
+        current_main = command_json(["gh", "api", "repos/4444J99/limen/commits/main"])
     except ProofSetError as exc:
         raise ProofSetError("accepted W02 formal state is unavailable") from exc
     if not all(isinstance(value, dict) for value in (pull_request, issue, w03_issue, current_main)):
@@ -1152,7 +1162,7 @@ def live_w02_dependency_snapshot() -> dict[str, Any]:
             [
                 "gh",
                 "api",
-                f"repos/organvm/limen/compare/{merge_head}...{current_main_head}",
+                f"repos/4444J99/limen/compare/{merge_head}...{current_main_head}",
             ]
         )
     except ProofSetError as exc:
@@ -1177,9 +1187,7 @@ def live_w02_dependency_snapshot() -> dict[str, Any]:
     }
 
 
-def validate_live_formal_dependency(
-    matrix: dict[str, Any], observed: dict[str, Any] | None = None
-) -> list[str]:
+def validate_live_formal_dependency(matrix: dict[str, Any], observed: dict[str, Any] | None = None) -> list[str]:
     dependency = matrix.get("dependency_snapshot")
     if not isinstance(dependency, dict):
         return ["live W02 binding requires the formal dependency snapshot"]
@@ -1208,7 +1216,12 @@ def validate_live_formal_dependency(
         "receipt_observed_head": "receipt observed head",
     }
     for observed_key, dependency_key in comparisons.items():
-        if observed.get(observed_key) != dependency.get(dependency_key):
+        observed_value = observed.get(observed_key)
+        dependency_value = dependency.get(dependency_key)
+        if observed_key == "receipt_url":
+            observed_value = str(observed_value).replace("github.com/organvm/limen/", "github.com/4444J99/limen/")
+            dependency_value = str(dependency_value).replace("github.com/organvm/limen/", "github.com/4444J99/limen/")
+        if observed_value != dependency_value:
             errors.append(f"accepted W02 {labels[observed_key]} differs from the formal snapshot")
     if observed.get("receipt_observed_head") != observed.get("pull_request_merge_head"):
         errors.append("accepted W02 receipt observed head differs from its merged pull request head")
@@ -1273,24 +1286,15 @@ def live_w02_snapshot() -> dict[str, Any]:
         raise ProofSetError("authoritative W02 live projection is unavailable") from exc
     if len(rows) != len(classified):
         raise ProofSetError("authoritative W02 live projection has inconsistent coverage")
-    public_pairs = [
-        (row, result)
-        for row, result in zip(rows, classified, strict=True)
-        if row.get("private") is False
-    ]
+    public_pairs = [(row, result) for row, result in zip(rows, classified, strict=True) if row.get("private") is False]
     return {
         "front_door_repositories": sorted(
             str(row.get("full_name"))
             for row, result in public_pairs
             if result.get("public_relevance") == "front_door_proof"
         ),
-        "metadata": {
-            str(row.get("full_name")).casefold(): row for row, _ in public_pairs
-        },
-        "maturity": {
-            str(row.get("full_name")).casefold(): result.get("maturity")
-            for row, result in public_pairs
-        },
+        "metadata": {str(row.get("full_name")).casefold(): row for row, _ in public_pairs},
+        "maturity": {str(row.get("full_name")).casefold(): result.get("maturity") for row, result in public_pairs},
     }
 
 
@@ -1304,7 +1308,7 @@ def validate_live(matrix: dict[str, Any]) -> list[str]:
     except ProofSetError as exc:
         return [str(exc)]
 
-    projection = ((matrix.get("candidate_screen") or {}).get("source_projection") or {})
+    projection = (matrix.get("candidate_screen") or {}).get("source_projection") or {}
     expected_w02 = projection.get("w02_front_door_proof_repositories")
     observed_w02 = w02.get("front_door_repositories") or []
     if isinstance(expected_w02, list) and sorted(expected_w02) != sorted(observed_w02):
@@ -1350,9 +1354,7 @@ def validate_live(matrix: dict[str, Any]) -> list[str]:
                 continue
             kind = anchor.get("kind")
             if kind == "workflow_run":
-                api_path = repository_workflow_api_path(
-                    anchor.get("github_api_path"), candidate.get("repository")
-                )
+                api_path = repository_workflow_api_path(anchor.get("github_api_path"), candidate.get("repository"))
                 if api_path is None:
                     errors.append(f"{candidate_id}: workflow anchor needs its repository-bound API path")
                     continue
@@ -1375,8 +1377,9 @@ def validate_live(matrix: dict[str, Any]) -> list[str]:
                 if run.get("head_sha") != anchor.get("observed_head"):
                     errors.append(f"{candidate_id}: workflow anchor head does not match the matrix")
                 run_id = workflow_run_id(api_path, repository)
-                expected_url = f"https://github.com/{repository}/actions/runs/{run_id}"
-                if anchor.get("url") != expected_url or run.get("html_url") != expected_url:
+                if not workflow_display_url_matches(
+                    anchor.get("url"), repository, run_id
+                ) or not workflow_display_url_matches(run.get("html_url"), repository, run_id):
                     errors.append(f"{candidate_id}: workflow display URL does not match the pinned run")
                 identity = anchor.get("workflow_identity") or {}
                 if (
@@ -1386,17 +1389,12 @@ def validate_live(matrix: dict[str, Any]) -> list[str]:
                 ):
                     errors.append(f"{candidate_id}: workflow identity differs from the pinned workflow")
                 default_branch = default_branches.get(repository_key)
-                if (
-                    run.get("head_branch") != default_branch
-                    or anchor.get("observed_default_branch") != default_branch
-                ):
+                if run.get("head_branch") != default_branch or anchor.get("observed_default_branch") != default_branch:
                     errors.append(f"{candidate_id}: workflow run is not bound to the repository default branch")
                 if anchor.get("head_binding") == "current_default_branch":
                     if repository_key not in current_heads and default_branch:
                         try:
-                            commit = command_json(
-                                ["gh", "api", f"repos/{repository}/commits/{default_branch}"]
-                            )
+                            commit = command_json(["gh", "api", f"repos/{repository}/commits/{default_branch}"])
                         except ProofSetError:
                             errors.append(f"{candidate_id}: current default-branch head is unavailable")
                             continue

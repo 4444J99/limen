@@ -306,12 +306,12 @@ def _upsert_starved_atom(lane: str, info: dict) -> None:
             return
         lf = load_limen_file(LEDGER)
         index = {t.id: t for t in lf.tasks}
-        contract = contract_fields(github_issue_owner_contract("organvm/limen", tid))
+        contract = contract_fields(github_issue_owner_contract("4444J99/limen", tid))
         collateral = {
             "origin": "system_debt",
             "horizon": "present",
             "value_case": f"Restore dispatch continuity for the starved {lane} lane",
-            "owner_surface": "organvm/limen",
+            "owner_surface": "4444J99/limen",
         }
         changed = False
         ex = index.get(tid)
@@ -338,7 +338,7 @@ def _upsert_starved_atom(lane: str, info: dict) -> None:
                 Task(
                     id=tid,
                     title=f"Lane '{lane}' starved: silent >{gap_str} with open queue + ok budget",
-                    repo="organvm/limen",
+                    repo="4444J99/limen",
                     type="ops",
                     target_agent="human",
                     priority="high",

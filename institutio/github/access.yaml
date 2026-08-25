@@ -21,7 +21,7 @@ policy:
   role_ceiling: push                      # anything above push = drift, even if declared
   never_grant_classes: [vault_private, conductor]
   never_grant_repos:                      # engine/system repos in otherwise-grantable classes
-    - organvm/limen
+    - 4444J99/limen
     - organvm/relationship-pipeline
     - organvm/arca
     - organvm-i-theoria/conversation-corpus-engine

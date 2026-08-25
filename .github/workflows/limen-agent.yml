@@ -86,7 +86,9 @@ permissions:
 
 jobs:
   deterministic-compute:
-    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}   # the 37k-min/mo whale — one variable flip routes it to the $0 self-hosted lane
+    # The personal controller is public: use GitHub's standard hosted runner and never admit a
+    # public target to the operator's self-hosted machine.
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
       LIMEN_REQUEST_ID: ${{ inputs.request_id }}

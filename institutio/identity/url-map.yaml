@@ -97,7 +97,7 @@ entries:
     description: >
       Limen dashboard -- the owner/client/public surface for the task intake system.
       Today served at limen-dashboard.pages.dev (Cloudflare Pages, auto-deploys on
-      organvm/limen web/app build via deploy.yml on merge to main).
+      4444J99/limen web/app build via deploy.yml on merge to main).
       Intended custom domain limen.4444j99.dev once attached.
     current_url: https://limen-dashboard.pages.dev/
     canonical_secondary:

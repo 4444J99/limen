@@ -1,7 +1,7 @@
 schema_version: career.portal.v1
 id: limen-career-network
 host:
-  surface: organvm/limen
+  surface: 4444J99/limen
   organ: representation
   kind: composed_portal
   new_service: false
@@ -11,10 +11,10 @@ owners:
   public_evidence: 4444j99/portfolio
   inbound_mail_and_delivery: organvm/universal-mail--automation
   opportunity_crm_and_submission: organvm/application-pipeline
-  relationship_posture: organvm/limen:organs/social
-  representation_surface: organvm/limen:organs/representation
-  external_mapping: organvm/limen:organs/observation/bifrons
-  contribution_lifecycle: organvm/limen:organs/contributions
+  relationship_posture: 4444J99/limen:organs/social
+  representation_surface: 4444J99/limen:organs/representation
+  external_mapping: 4444J99/limen:organs/observation/bifrons
+  contribution_lifecycle: 4444J99/limen:organs/contributions
   content_distribution: organvm-vii-kerygma/social-automation
 
 edges:
