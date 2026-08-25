@@ -20,6 +20,12 @@ denominators, verified restore bundle, semantic issue-type restoration, workflow
 attributed protected-lane deltas. The private preflight/postflight manifests, their sidecars, and
 the private attribution receipt remain the authoritative detailed evidence.
 
+[public-access-receipt.json](public-access-receipt.json) records the separate live post-transfer
+access predicate: zero direct grants, team grants, or pending invitations after excluding only the
+personal repository owner's automatic access. The historical v2 transfer manifest did not contain
+that denominator, so it is not retroactively inferred. Manifest v3 now makes the complete access
+census and the `never_grant` policy mandatory before any future transfer or workflow restoration.
+
 Recovery CI is the one restored transfer-sensitive workflow. Its first manual run on the
 transferred default SHA proved real public-runner admission and executed steps without a retry;
 [public-ci-admission-receipt.json](public-ci-admission-receipt.json) records that proof and the

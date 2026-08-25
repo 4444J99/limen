@@ -153,18 +153,18 @@ def test_predicate_receipt_hashes_structured_exact_target_evidence(tmp_path: Pat
         )
 
 
-def test_v1_manifest_is_rejected_even_when_its_digest_is_valid(tmp_path: Path) -> None:
+def test_v2_manifest_is_rejected_even_when_its_digest_is_valid(tmp_path: Path) -> None:
     private = tmp_path / ".limen-private"
     private.mkdir()
     path = private / "manifest.json"
     manifest = {
-        "schema_version": "limen.repository_transfer_manifest.v1",
+        "schema_version": "limen.repository_transfer_manifest.v2",
         "identity": MODULE.LIMEN_REPOSITORY_IDENTITY.model_dump(mode="json"),
     }
     path.write_text(json.dumps(manifest))
     path.with_suffix(".json.sha256").write_text(MODULE.canonical_sha256(manifest) + "\n")
 
-    with pytest.raises(MODULE.WorkflowTransferError, match="predates the complete v2"):
+    with pytest.raises(MODULE.WorkflowTransferError, match="predates the complete v3"):
         MODULE._private_manifest(path)
 
 
@@ -266,6 +266,75 @@ def test_mutation_failure_keeps_intent_and_writes_terminal_failure(
     assert receipt["failure"]["error_class"] == "WorkflowTransferError"
     assert receipt["after_states_available"] is False
     assert receipt["after_observation_failure"]["error_class"] == "WorkflowTransferError"
+
+
+@pytest.mark.parametrize(
+    ("live_state", "expected_status", "expected_incomplete"),
+    [
+        ("disabled_manually", "succeeded", []),
+        ("active", "failed", [".github/workflows/ci.yml"]),
+    ],
+)
+def test_interrupted_mutation_reconciliation_binds_live_state_without_replaying_effect(
+    tmp_path: Path,
+    monkeypatch,
+    live_state: str,
+    expected_status: str,
+    expected_incomplete: list[str],
+) -> None:
+    manifest, before, plan = _mutation_fixture()
+    receipt_path = tmp_path / "freeze-receipt.json"
+    intent = MODULE._operation_intent(
+        repo="organvm/limen",
+        manifest=manifest,
+        operation="disable",
+        before=before,
+        plan=plan,
+    )
+    MODULE._write_receipt(MODULE._intent_path(receipt_path), intent, immutable=True)
+    monkeypatch.setattr(
+        MODULE,
+        "_set_state",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("effect replayed")),
+    )
+
+    receipt = MODULE._reconcile_interrupted_journal(
+        repo="organvm/limen",
+        manifest=manifest,
+        receipt_path=receipt_path,
+        observed=[{"id": 42, "path": ".github/workflows/ci.yml", "state": live_state}],
+    )
+
+    assert receipt["status"] == expected_status
+    assert receipt["intent_sha256"] == MODULE.canonical_sha256(intent)
+    assert receipt["reconciliation"]["observed_without_mutation"] is True
+    assert receipt["reconciliation"]["incomplete_paths"] == expected_incomplete
+    assert json.loads(receipt_path.read_text()) == receipt
+
+
+def test_interrupted_mutation_reconciliation_rejects_tampered_intent(tmp_path: Path) -> None:
+    manifest, before, plan = _mutation_fixture()
+    receipt_path = tmp_path / "freeze-receipt.json"
+    intent_path = MODULE._intent_path(receipt_path)
+    intent = MODULE._operation_intent(
+        repo="organvm/limen",
+        manifest=manifest,
+        operation="disable",
+        before=before,
+        plan=plan,
+    )
+    intent["selected_paths"] = [".github/workflows/tampered.yml"]
+    intent_path.write_text(json.dumps(intent))
+
+    with pytest.raises(MODULE.WorkflowTransferError, match="invalid or not bound"):
+        MODULE._reconcile_interrupted_journal(
+            repo="organvm/limen",
+            manifest=manifest,
+            receipt_path=receipt_path,
+            observed=before,
+        )
+
+    assert not receipt_path.exists()
 
 
 def test_existing_intent_or_terminal_path_blocks_mutation_without_overwrite(

@@ -590,9 +590,8 @@ def heartbeat_once(
     try:
         contract, contract_digest = _load_contract(root)
     except HeartbeatContractError as exc:
-        failure_receipt = _initialization_failure_receipt(root, state_root, now, str(exc))
         disable_launch_agent()
-        return failure_receipt
+        return _initialization_failure_receipt(root, state_root, now, str(exc))
     lock, lock_state = _acquire_lock(state_root, now)
     if lock is None:
         fail_closed = lock_state != "coalesced"

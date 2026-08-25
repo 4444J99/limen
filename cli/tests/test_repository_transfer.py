@@ -33,6 +33,83 @@ def test_gh_client_fails_closed_on_incomplete_pagination_shape() -> None:
         GhClient(runner=runner).list("/repos/example/repo/issues")
 
 
+def test_repository_access_census_excludes_only_the_personal_owner() -> None:
+    class Client:
+        def list(self, endpoint: str) -> list[dict[str, Any]]:
+            if "/collaborators?" in endpoint:
+                return [
+                    {
+                        "id": 24_796_448,
+                        "node_id": "OWNER",
+                        "login": "4444J99",
+                        "type": "User",
+                        "role_name": "admin",
+                        "permissions": {"admin": True, "push": True, "pull": True},
+                    }
+                ]
+            return []
+
+    census = transfer._repository_access_census(
+        Client(),
+        LIMEN_REPOSITORY_IDENTITY,
+        "4444J99/limen",
+        {"owner": {"id": 24_796_448, "login": "4444J99"}},
+    )
+
+    assert census["policy"]["satisfied"] is True
+    assert census["direct_grants"] == []
+    assert census["team_grants"] == []
+    assert census["pending_invitations"] == []
+    assert census["denominators"]["unexpected_access"] == 0
+
+
+@pytest.mark.parametrize("surface", ["collaborator", "team", "invitation"])
+def test_repository_access_census_fails_closed_on_every_grant_surface(surface: str) -> None:
+    class Client:
+        def list(self, endpoint: str) -> list[dict[str, Any]]:
+            if surface == "collaborator" and "/collaborators?" in endpoint:
+                return [
+                    {
+                        "id": 99,
+                        "node_id": "USER_99",
+                        "login": "unexpected-writer",
+                        "type": "User",
+                        "role_name": "write",
+                        "permissions": {"push": True, "pull": True},
+                    }
+                ]
+            if surface == "team" and "/teams?" in endpoint:
+                return [
+                    {
+                        "id": 88,
+                        "node_id": "TEAM_88",
+                        "slug": "unexpected-team",
+                        "permission": "push",
+                        "permissions": {"push": True, "pull": True},
+                        "organization": {"id": 1, "login": "organvm"},
+                    }
+                ]
+            if surface == "invitation" and "/invitations?" in endpoint:
+                return [
+                    {
+                        "id": 77,
+                        "node_id": "INVITE_77",
+                        "invitee": {"id": 66, "login": "pending-writer"},
+                        "role_name": "write",
+                        "permissions": "write",
+                    }
+                ]
+            return []
+
+    with pytest.raises(TransferCaptureError, match="never-grant access policy"):
+        transfer._repository_access_census(
+            Client(),
+            LIMEN_REPOSITORY_IDENTITY,
+            "4444J99/limen",
+            {"owner": {"id": 24_796_448, "login": "4444J99"}},
+        )
+
+
 def test_transfer_comparison_ignores_only_coordinate_and_observation_time() -> None:
     manifest = {
         "captured_at": "before",
@@ -219,6 +296,13 @@ def test_public_receipt_contains_digests_and_denominators_not_private_state(tmp_
             ],
             "actions": {"workflow_states": []},
             "apps": {"available": False},
+            "access": {
+                "denominators": {
+                    "direct_grants": 0,
+                    "team_grants": 0,
+                    "pending_invitations": 0,
+                }
+            },
             "environments": [],
         },
         "protected_state": {
@@ -234,6 +318,9 @@ def test_public_receipt_contains_digests_and_denominators_not_private_state(tmp_
     assert receipt["denominators"]["review_threads"] == 2
     assert receipt["denominators"]["unresolved_current_review_threads"] == 1
     assert receipt["denominators"]["unresolved_outdated_review_threads"] == 1
+    assert receipt["denominators"]["direct_access_grants"] == 0
+    assert receipt["denominators"]["team_access_grants"] == 0
+    assert receipt["denominators"]["pending_access_invitations"] == 0
     assert "secret" not in rendered
     assert "state_digest" not in rendered
     assert "tree_sha256" not in rendered

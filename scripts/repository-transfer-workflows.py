@@ -113,6 +113,9 @@ def _private_manifest(path: Path) -> dict[str, Any]:
         raise WorkflowTransferError("transfer manifest repository identity differs from runtime")
     settings = (manifest.get("github") or {}).get("repository_settings") or {}
     actions = (manifest.get("github") or {}).get("actions") or {}
+    access = (manifest.get("github") or {}).get("access") or {}
+    access_policy = access.get("policy") or {}
+    access_denominators = access.get("denominators") or {}
     required_settings = {
         "description",
         "homepage",
@@ -123,12 +126,16 @@ def _private_manifest(path: Path) -> dict[str, Any]:
     }
     bundle = manifest.get("git_bundle") or {}
     if (
-        manifest.get("schema_version") != "limen.repository_transfer_manifest.v2"
+        manifest.get("schema_version") != "limen.repository_transfer_manifest.v3"
         or not required_settings.issubset(settings)
         or "fork_pr_contributor_approval" not in actions
+        or access.get("schema_version") != "limen.repository_access_census.v1"
+        or access_policy.get("mode") != "never_grant"
+        or access_policy.get("satisfied") is not True
+        or access_denominators.get("unexpected_access") != 0
         or bundle.get("restore_verified") is not True
     ):
-        raise WorkflowTransferError("transfer manifest predates the complete v2 capture contract")
+        raise WorkflowTransferError("transfer manifest predates the complete v3 capture contract")
     return manifest
 
 
@@ -364,6 +371,115 @@ def _require_new_receipt_pair(path: Path) -> tuple[Path, Path]:
     return receipt_path, intent_path
 
 
+def _load_interrupted_intent(
+    *,
+    repo: str,
+    manifest: dict[str, Any],
+    receipt_path: Path,
+) -> tuple[Path, dict[str, Any]]:
+    resolved_receipt = _receipt_target(receipt_path)
+    intent_path = _intent_path(resolved_receipt)
+    if resolved_receipt.exists() or resolved_receipt.is_symlink():
+        raise WorkflowTransferError("interrupted workflow operation already has a terminal receipt")
+    if intent_path.is_symlink() or not intent_path.is_file():
+        raise WorkflowTransferError("interrupted workflow operation has no regular intent file")
+    intent = _load(intent_path)
+    payload = {key: value for key, value in intent.items() if key != "intent_payload_sha256"}
+    transitions = intent.get("transitions")
+    selected_paths = intent.get("selected_paths")
+    operation = intent.get("operation")
+    desired = "active" if operation == "enable" else "disabled_manually"
+    allowed_source = "disabled_manually" if operation == "enable" else "active"
+    if (
+        intent.get("schema_version") != "limen.repository_transfer_workflow_intent.v1"
+        or intent.get("intent_payload_sha256") != canonical_sha256(payload)
+        or intent.get("repository_identity") != manifest["identity"]
+        or str(intent.get("observed_repo") or "").casefold() != repo.casefold()
+        or intent.get("manifest_sha256") != canonical_sha256(manifest)
+        or operation not in {"enable", "disable"}
+        or not isinstance(selected_paths, list)
+        or not selected_paths
+        or selected_paths != sorted(selected_paths)
+        or any(not isinstance(path, str) or not path for path in selected_paths)
+        or not isinstance(transitions, list)
+        or len(transitions) != len(selected_paths)
+        or not isinstance(intent.get("before_states_sha256"), str)
+    ):
+        raise WorkflowTransferError("interrupted workflow intent is invalid or not bound to this operation")
+    transition_paths: list[str] = []
+    transition_ids: list[int] = []
+    for transition in transitions:
+        if not isinstance(transition, dict):
+            raise WorkflowTransferError("interrupted workflow intent contains a malformed transition")
+        path = transition.get("path")
+        workflow_id = transition.get("id")
+        mutation_required = transition.get("mutation_required")
+        source = transition.get("from")
+        target = transition.get("to")
+        if (
+            not isinstance(path, str)
+            or not path
+            or not isinstance(workflow_id, int)
+            or not isinstance(mutation_required, bool)
+            or target != desired
+            or (mutation_required and source != allowed_source)
+            or (not mutation_required and source != desired)
+        ):
+            raise WorkflowTransferError("interrupted workflow intent contains an invalid transition")
+        transition_paths.append(path)
+        transition_ids.append(workflow_id)
+    if (
+        sorted(transition_paths) != selected_paths
+        or len(transition_paths) != len(set(transition_paths))
+        or len(transition_ids) != len(set(transition_ids))
+    ):
+        raise WorkflowTransferError("interrupted workflow intent transition identity is ambiguous")
+    return resolved_receipt, intent
+
+
+def _reconcile_interrupted_journal(
+    *,
+    repo: str,
+    manifest: dict[str, Any],
+    receipt_path: Path,
+    observed: list[dict[str, Any]],
+) -> dict[str, Any]:
+    resolved_receipt, intent = _load_interrupted_intent(
+        repo=repo,
+        manifest=manifest,
+        receipt_path=receipt_path,
+    )
+    observed_by_path = {row.get("path"): row for row in observed if isinstance(row, dict)}
+    if len(observed_by_path) != len(observed):
+        raise WorkflowTransferError("live workflow census contains duplicate paths")
+    incomplete: list[str] = []
+    for transition in intent["transitions"]:
+        live = observed_by_path.get(transition["path"])
+        if live is None or live.get("id") != transition["id"]:
+            raise WorkflowTransferError("live workflow identity differs from interrupted intent")
+        if live.get("state") != transition["to"]:
+            incomplete.append(transition["path"])
+    failure: WorkflowTransferError | None = None
+    if incomplete:
+        failure = WorkflowTransferError(
+            f"interrupted workflow operation left {len(incomplete)} selected workflow(s) incomplete"
+        )
+    receipt = _terminal_receipt(
+        intent=intent,
+        status="failed" if failure is not None else "succeeded",
+        after=observed,
+        failure=failure,
+    )
+    receipt["reconciliation"] = {
+        "schema_version": "limen.repository_transfer_workflow_reconciliation.v1",
+        "interrupted_intent_sha256": canonical_sha256(intent),
+        "observed_without_mutation": True,
+        "incomplete_paths": sorted(incomplete),
+    }
+    _write_receipt(resolved_receipt, receipt)
+    return receipt
+
+
 def _mutate_with_journal(
     *,
     repo: str,
@@ -429,14 +545,15 @@ def main() -> int:
     operation.add_argument("--freeze", action="store_true")
     operation.add_argument("--check", action="store_true")
     operation.add_argument("--enable", action="append", metavar="WORKFLOW_PATH")
+    operation.add_argument("--reconcile", action="store_true")
     parser.add_argument("--predicate-receipt", type=Path)
     args = parser.parse_args()
 
     try:
         manifest = _private_manifest(args.manifest.expanduser().resolve())
-        if (args.freeze or args.enable) and args.receipt is None:
+        if (args.freeze or args.enable or args.reconcile) and args.receipt is None:
             raise WorkflowTransferError("workflow mutations require a new durable --receipt path")
-        if args.receipt is not None:
+        if args.receipt is not None and not args.reconcile:
             _require_new_receipt_pair(args.receipt)
         metadata = _gh_json([f"/repos/{args.repo}"])
         if metadata.get("id") != LIMEN_REPOSITORY_IDENTITY.repository_id:
@@ -452,6 +569,18 @@ def main() -> int:
         if len(live) != len(before) or len(initial) != len(manifest["github"]["actions"]["workflow_states"]):
             raise WorkflowTransferError("workflow census contains duplicate paths")
         _require_exact_partitions(live, initial, partition)
+
+        if args.reconcile:
+            if args.receipt is None:
+                raise WorkflowTransferError("workflow reconciliation receipt path disappeared after preflight")
+            receipt = _reconcile_interrupted_journal(
+                repo=args.repo,
+                manifest=manifest,
+                receipt_path=args.receipt,
+                observed=before,
+            )
+            print(f"repository-transfer-workflows: PASS reconciled_status={receipt['status']}")
+            return 0
 
         selected: list[str]
         action: str

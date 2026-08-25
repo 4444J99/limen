@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import datetime as dt
 import importlib.util
+import json
 import sys
 import xml.dom.minidom
 from collections import Counter
@@ -282,3 +283,31 @@ def test_profile_engine_gate_selects_the_exact_hermetic_tests():
         "cli/tests/test_sync_readme.py",
         "institutio/governance/gates.yaml",
     ]
+
+
+def test_profile_workflow_keeps_render_read_only_and_write_token_in_finalizer():
+    workflow = yaml.safe_load((ROOT / "scripts" / "templates" / "profile-workflow.yml").read_text())
+    render = workflow["jobs"]["render"]
+    finalizer = workflow["jobs"]["finalize"]
+
+    assert workflow["permissions"] == {}
+    assert render["permissions"] == {"contents": "read"}
+    assert finalizer["permissions"] == {"contents": "write"}
+    checkout_steps = [
+        step
+        for job in (render, finalizer)
+        for step in job["steps"]
+        if str(step.get("uses", "")).startswith("actions/checkout@")
+    ]
+    assert checkout_steps
+    assert all(step.get("with", {}).get("persist-credentials") is False for step in checkout_steps)
+    render_step = next(step for step in render["steps"] if step.get("name") == "Render provable, self-hosted profile")
+    clear_step = next(
+        step for step in finalizer["steps"] if step.get("name") == "Clear generated paths before exact restore"
+    )
+    commit_step = next(step for step in finalizer["steps"] if step.get("name") == "Commit if changed")
+    assert render_step["env"]["GH_TOKEN"] == "${{ github.token }}"
+    assert "secrets." not in json.dumps(render)
+    assert commit_step["env"]["GH_TOKEN"] == "${{ github.token }}"
+    assert clear_step["run"] == "rm -rf README.md assets"
+    assert "gh auth setup-git" in commit_step["run"]
