@@ -768,22 +768,35 @@ class PullRequestReceiptAdapter:
         root = Path(__file__).resolve().parents[3]
         completed = subprocess.run(
             [
-                str(root / "scripts" / "await-pr.sh"),
-                match.group(2),
+                str(root / "scripts" / "merge-drain.py"),
                 "--repo",
                 match.group(1),
-                "--merge",
+                "--pr",
+                match.group(2),
+                "--expected-head",
+                str(check["head"]),
             ],
             cwd=root,
             text=True,
             capture_output=True,
+            timeout=240,
             check=False,
         )
-        if completed.returncode != 0:
+        output = (completed.stdout + completed.stderr).strip()
+        if completed.returncode == 0 and output.endswith(": MERGED"):
+            result["merged"] = True
+            result["merge_submission"] = "merged"
+        elif completed.returncode == 0 and ": QUEUED" in output:
+            result["merge_submission"] = "queued"
+        elif completed.returncode == 2 and ": DEFERRED" in output:
+            result["merge_submission"] = "deferred"
+        elif completed.returncode == 3 and ": REFUSED" in output:
+            result["merge_submission"] = "refused"
+        else:
             raise FanoutError(
-                f"merge queue rejected {check['url']}: {(completed.stdout + completed.stderr).strip()[-1000:]}"
+                f"merge submission returned no durable verdict for {check['url']} "
+                f"(exit {completed.returncode}): {output[-1000:]}"
             )
-        result["merged"] = True
         return result
 
 

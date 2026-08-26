@@ -16,7 +16,7 @@ including Tabularius board publication, must enter through a PR. The native merg
 (proven-at-submission rail): its serialized re-validation lane re-derived proofs the scoped local
 gates had already produced, and its evict-to-back failure mode turned a GitHub Actions incident
 into a day-long merge outage for green PRs. Direct squash on green required checks is the rail;
-merge-policy.sh / await-pr.sh detect queue absence and use MERGE-MODE: direct automatically.
+merge-policy.sh / targeted merge-drain submission detect queue absence and use MERGE-MODE: direct automatically.
 
 SAFE: dry-run by default — prints the exact per-repo plan and executes NOTHING. Reversible:
 branch protection can be removed. `--apply` is GATED on the user.
@@ -508,7 +508,8 @@ def main():
         if any(_is_limen_repo(repo) for repo in repos):
             print(
                 "After the Limen workflow lands and --apply succeeds: "
-                "`scripts/await-pr.sh <n> --repo 4444J99/limen --merge` → exact-head queue rail."
+                "`scripts/merge-drain.py --repo 4444J99/limen --pr <n> --expected-head <sha>` "
+                "→ one-shot exact-head queue submission."
             )
         if any(not _is_limen_repo(repo) for repo in repos):
             print("For non-queue repos: `gh pr merge <n> --auto --squash` on green PRs.")

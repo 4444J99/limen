@@ -1,4 +1,4 @@
-"""The organ must land its own pages, not merely hand them off.
+"""The organ observes its receipts once; the recurring merge drain owns landing.
 
 `shipped.json` recorded a digest per page and nothing else — so it could say a page had been HANDED
 OFF but never whether the handoff COMPLETED. On 2026-08-02 that produced five open, CLEARED,
@@ -38,8 +38,6 @@ def root(tmp_path: Path) -> Path:
     (tmp_path / "logs" / "diurnal").mkdir(parents=True)
     (tmp_path / "scripts").mkdir(parents=True)
     (tmp_path / "scripts" / "ship-docs.sh").write_text("", encoding="utf-8")
-    (tmp_path / "scripts" / "merge-policy.sh").write_text("", encoding="utf-8")
-    (tmp_path / "scripts" / "await-pr.sh").write_text("", encoding="utf-8")
     (tmp_path / "docs" / "diurnal").mkdir(parents=True)
     return tmp_path
 
@@ -71,55 +69,44 @@ def test_a_bare_digest_receipt_still_dedupes(mod, root):
 # ── the reap ───────────────────────────────────────────────────────────────────────
 
 
-def test_reap_merges_an_open_cleared_pr(mod, root, capsys):
+def test_reap_observes_open_pr_once_without_submitting_or_waiting(mod, root, capsys):
     calls: list[str] = []
 
     def fake_run(cmd, _root, timeout=0):
         calls.append(cmd)
         if "gh pr view" in cmd:
             return 0, "OPEN\n"
-        if "merge-policy.sh" in cmd:
-            return 0, "VERDICT: CLEARED"
-        if "await-pr.sh" in cmd:
-            return 0, "MERGED"
-        return 0, ""
+        raise AssertionError(f"unexpected effect from diurnal receipt observer: {cmd}")
 
     mod._run = fake_run  # noqa: SLF001
-    assert mod.reap_shipped(root, {"docs/diurnal/2026-08-01.md": {"digest": "d", "pr": 1750}}) == 1
-    assert any("await-pr.sh" in c and "1750 --merge" in c for c in calls)
-    assert "MERGED" in capsys.readouterr().out
+    assert mod.reap_shipped(root, {"docs/diurnal/2026-08-01.md": {"digest": "d", "pr": 1750}}) == 0
+    assert calls == ["gh pr view 1750 --json state --jq .state"]
+    assert capsys.readouterr().out == ""
 
 
-def test_reap_leaves_a_pr_merge_policy_does_not_clear(mod, root):
-    """HOLD and BLOCKED are the predicate's answer, and the organ does not argue with it."""
+def test_reap_leaves_an_open_pr_to_the_recurring_merge_drain(mod, root):
 
     def fake_run(cmd, _root, timeout=0):
         if "gh pr view" in cmd:
             return 0, "OPEN\n"
-        if "merge-policy.sh" in cmd:
-            return 2, "VERDICT: HOLD"
-        if "await-pr.sh" in cmd:
-            raise AssertionError("must not wait on a PR the policy did not clear")
-        return 0, ""
+        raise AssertionError("receipt observation must not attempt merge policy or wait")
 
     mod._run = fake_run  # noqa: SLF001
     assert mod.reap_shipped(root, {"p": {"digest": "d", "pr": 99}}) == 0
 
 
-def test_reap_skips_a_pr_that_is_no_longer_open(mod, root):
+def test_reap_counts_an_already_merged_pr(mod, root):
     def fake_run(cmd, _root, timeout=0):
         if "gh pr view" in cmd:
             return 0, "MERGED\n"
-        if "merge-policy.sh" in cmd:
-            raise AssertionError("a closed PR must not reach merge-policy")
-        return 0, ""
+        raise AssertionError("a merged PR must not reach another command")
 
     mod._run = fake_run  # noqa: SLF001
-    assert mod.reap_shipped(root, {"p": {"digest": "d", "pr": 42}}) == 0
+    assert mod.reap_shipped(root, {"p": {"digest": "d", "pr": 42}}) == 1
 
 
 def test_reap_is_bounded_per_run(mod, root, monkeypatch):
-    """A backlog must not stall the beat — the rest are retried next phase."""
+    """A backlog must not stall the beat — only a bounded read-only window is observed."""
     monkeypatch.setenv("LIMEN_DIURNAL_REAP_MAX", "2")
     seen: list[int] = []
 
