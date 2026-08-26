@@ -152,14 +152,14 @@ def observe_once(root: Path, scope: str) -> dict[str, Any]:
             ).encode()
         ).hexdigest(),
     }
-    receipt_path = Path(os.environ.get("LIMEN_OBSERVE_RECEIPT", root / "logs" / "observe-once.json"))
-    receipt_path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = receipt_path.with_suffix(f"{receipt_path.suffix}.tmp.{os.getpid()}")
-    temporary.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
-    os.replace(temporary, receipt_path)
     receipt["failures"] = {
         name: {key: result.get(key) for key in ("status", "returncode", "failure_kind") if result.get(key) is not None}
         for name, result in results.items()
         if result["status"] != "passed"
     }
+    receipt_path = Path(os.environ.get("LIMEN_OBSERVE_RECEIPT", root / "logs" / "observe-once.json"))
+    receipt_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = receipt_path.with_suffix(f"{receipt_path.suffix}.tmp.{os.getpid()}")
+    temporary.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+    os.replace(temporary, receipt_path)
     return receipt

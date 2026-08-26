@@ -14,7 +14,13 @@ CLI_SRC = ROOT / "cli" / "src"
 if str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
 
-from limen.remote_reap import apply_capability, atomic_json, load_model, reconcile_effect  # noqa: E402
+from limen.remote_reap import (  # noqa: E402
+    apply_capability,
+    atomic_json,
+    keeper_redemption_path,
+    load_model,
+    reconcile_effect,
+)
 from limen.universe_recovery import ReapCapabilityV1, ReapJournalV1, ReapPlanV1  # noqa: E402
 
 
@@ -28,7 +34,7 @@ def main() -> int:
     parser.add_argument("--plan", type=Path)
     parser.add_argument("--capability", type=Path)
     args = parser.parse_args()
-    redemption_path = Path(os.environ.get("LIMEN_ROOT", str(ROOT))) / "logs/remote-reap-redemptions.json"
+    redemption_path = keeper_redemption_path()
     try:
         current = load_model(args.journal, ReapJournalV1)
         if args.reconcile:

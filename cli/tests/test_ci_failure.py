@@ -39,6 +39,15 @@ def test_executed_failure_is_distinct_from_startup_gate():
     assert result.retry_allowed is False
 
 
+def test_timed_out_job_with_executed_steps_is_code_red():
+    result = classify_ci_failure([{"conclusion": "timed_out", "steps": [{"name": "pytest"}]}])
+
+    assert result.classification == "executed_code_failure"
+    assert result.execution_result == "CI_CODE_RED"
+    assert result.code_red is True
+    assert result.retry_allowed is False
+
+
 def test_only_unknown_zero_step_startup_jam_is_retryable():
     result = classify_ci_failure(ZERO_STEP)
     assert result.classification == "runner_startup_jam"

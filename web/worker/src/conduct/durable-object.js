@@ -300,12 +300,21 @@ export class ConductKeeperDurableObject {
         run_id: decodeIdentifier(match[1], "root_run_id"),
       }), 200, this.env);
     }
-    match = path.match(/^\/api\/conduct\/runs\/([^/]+)\/(adopt|cancel|request-stop)$/);
+    match = path.match(/^\/api\/conduct\/runs\/([^/]+)\/adopt$/);
+    if (match && request.method === "POST") {
+      requireRole(principal, "conductor", "executor");
+      const body = await parseBody(request);
+      return json(await this.service.call("adopt", {
+        run_id: decodeIdentifier(match[1], "run_id"),
+        session_id: bodyIdentifier(body, "session_id"),
+        principal,
+      }), 200, this.env);
+    }
+    match = path.match(/^\/api\/conduct\/runs\/([^/]+)\/(cancel|request-stop)$/);
     if (match && request.method === "POST") {
       requireRole(principal, "conductor");
       const body = await parseBody(request);
       const operation = {
-        adopt: "adopt",
         cancel: "cancel",
         "request-stop": "request_stop",
       }[match[2]];

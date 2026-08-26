@@ -28,6 +28,7 @@ export function emptyConductState() {
     schema_version: "limen.conduct_state.v1",
     sessions: {},
     session_principals: {},
+    session_principal_roles: {},
     runs: {},
     leases: {},
     work_index: {},
@@ -220,6 +221,7 @@ function validateLoadedState(input) {
   for (const field of [
     "sessions",
     "session_principals",
+    "session_principal_roles",
     "runs",
     "leases",
     "work_index",
@@ -463,6 +465,7 @@ export class ConductKernel {
     }
     this.state.sessions[session.session_id] = stored;
     this.state.session_principals[session.session_id] = principal.principal_id;
+    this.state.session_principal_roles[session.session_id] = [...principal.roles].sort();
     this.recordEvent("session.registered", {
       session_id: session.session_id,
       agent: session.identity.agent,
@@ -656,7 +659,9 @@ export class ConductKernel {
     }
     const leaseId = `lease-${generation}-${runId.slice(4, 20)}`;
     let executorPrincipalId = this.state.session_principals[executor.session_id];
-    if (isTaskCompatibilityPacket(packet)) executorPrincipalId = principal.principal_id;
+    if (isTaskCompatibilityPacket(packet) || packet.intent?.kind === "fanout-root") {
+      executorPrincipalId = principal.principal_id;
+    }
     if (!executorPrincipalId) {
       throw new ConductError("selected executor session has no authenticated principal binding");
     }
@@ -1421,13 +1426,10 @@ export class ConductKernel {
     const run = this.state.runs[runId];
     const adopter = this.state.sessions[adopterSessionId];
     if (!run || !adopter) throw new ConductError("run or adopter session not found", 404);
-    const { principal, enforced } = this.principalForIdentity(adopter.identity, requestedPrincipal);
-    this.requireRole(principal, "conductor");
+    const { principal } = this.principalForIdentity(adopter.identity, requestedPrincipal);
+    this.requireRole(principal, "conductor", "executor");
     if (this.state.session_principals[adopterSessionId] !== principal.principal_id) {
       throw new ConductError("adopter session is not bound to the authenticated principal", 403);
-    }
-    if (enforced && run.conductor_principal_id !== principal.principal_id) {
-      throw new ConductError("only the owning conductor principal may recover a run", 403);
     }
     const priorSession = this.state.sessions[run.conductor_session_id];
     if (priorSession) {
@@ -1591,7 +1593,7 @@ export class ConductKernel {
     excludeSessions = new Set(),
     ignoreRequiredSession = false,
   } = {}) {
-    if (isTaskCompatibilityPacket(packet)) {
+    if (isTaskCompatibilityPacket(packet) || packet.intent?.kind === "fanout-root") {
       return {
         session_id: "tabularius-conduct-keeper",
         identity: {
@@ -1614,6 +1616,19 @@ export class ConductKernel {
       if (!session.accepting_work || this.now - asDate(session.heartbeat_at) > this.sessionTtlMs) return false;
       if (session.quota_remaining === 0) return false;
       if (packet.required_capabilities.some((capability) => !session.capabilities.includes(capability))) return false;
+      const roleSnapshot = this.state.session_principal_roles[session.session_id];
+      let registeredRoles;
+      if (roleSnapshot === undefined) {
+        // Older local-development sessions may be reconstructed because their
+        // deterministic principal is derived from the same stored identity.
+        // Authenticated sessions without a role snapshot must re-register.
+        const local = this.principalForIdentity(session.identity, null).principal;
+        if (this.state.session_principals[session.session_id] !== local.principal_id) return false;
+        registeredRoles = new Set(local.roles);
+      } else {
+        registeredRoles = new Set(roleSnapshot);
+      }
+      if (!["executor", "compatibility"].some((role) => registeredRoles.has(role))) return false;
       if (packet.execution?.local_heavy_allowed === false
           && (session.capabilities.includes("local-heavy")
             || session.capabilities.includes("local-worktree"))) return false;

@@ -195,7 +195,7 @@ def test_hang_down_atoms_creates_task(tmp_path, monkeypatch):
     assert task.origin == "obligation"
     assert task.horizon == "present"
     assert task.value_case == "Restore delivery for the declared cloud routine atom-backlog-triage"
-    assert task.owner_surface == "organvm/limen"
+    assert task.owner_surface == "4444J99/limen"
 
 
 def test_hang_down_atoms_idempotent(tmp_path, monkeypatch):
