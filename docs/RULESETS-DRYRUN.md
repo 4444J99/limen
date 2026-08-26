@@ -15,9 +15,9 @@ The ruleset targets `~DEFAULT_BRANCH` and contains exactly one rule:
 - `pull_request` with `squash` as the only allowed merge method, zero required approvals, no
   code-owner or last-push approval, mandatory review-thread resolution, and no bypass actors.
 
-Classic default-branch protection owns the registry-declared required checks:
+Classic default-branch protection owns the registry-declared always-on check:
 
-- contexts: `pr-gate`, `python`, `web`, and `worker`
+- context: `pr-gate`
 - `strict:false`
 - `enforce_admins:true`
 - no human-review requirement
@@ -28,8 +28,9 @@ tickets coalesce while that PR is in flight. There is no direct-push exception.
 
 ## Queue CI contract
 
-`.github/workflows/pr-gate.yml` remains the scoped orchestration check. The three `ci.yml` jobs are
-independent required exact-head receipts.
+`.github/workflows/pr-gate.yml` remains the always-on scoped orchestration check. The three
+path-filtered `ci.yml` jobs are additive exact-head receipts when implicated; making them global
+required contexts would strand content-only and Tabularius board PRs in `expected` forever.
 
 - On `pull_request`, `scripts/verify.py --changed` requires a resolvable base and retains
   `--skip-ci-covered pr-gate.yml:pr-gate`. The PR's full CI children remain independently owned
@@ -51,7 +52,7 @@ For `4444J99/limen`, apply performs these idempotent operations:
    weaker setting is touched.
 3. Enable and read-back verify auto-merge while preserving source branches
    (`delete_branch_on_merge=false`).
-4. Write and read-back verify classic protection with the four checks declared by the conductor
+4. Write and read-back verify classic protection with the always-on check declared by the conductor
    class in `institutio/github/estate.yaml`, `strict:false`, `enforce_admins:true`, no required
    review, and no actor restriction.
 
@@ -91,5 +92,5 @@ remote mutation without the exact `--apply` token.
   `gh api -X PATCH /repos/4444J99/limen -F allow_auto_merge=false`
 
 Ruleset `19147990` retains its historical name so external receipts remain stable. The native queue
-rule was removed on 2026-08-06; the active contract is direct squash only after all four required
-checks pass and every review thread is resolved.
+rule was removed on 2026-08-06; the active contract is direct squash only after the always-on scoped
+gate passes and every review thread is resolved. Conditional CI children remain additional evidence.

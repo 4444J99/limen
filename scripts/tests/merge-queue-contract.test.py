@@ -81,38 +81,32 @@ def test_workflow_event_contract() -> None:
 
 def test_targeted_ruleset_and_classic_protection_contract() -> None:
     module = load_setup_module()
-    assert module.checks_for_repo("4444J99/limen") == ["pr-gate", "python", "web", "worker"]
+    assert module.checks_for_repo("4444J99/limen") == ["pr-gate"]
 
-    protection = module.classic_protection_body(["pr-gate", "python", "web", "worker"])
+    protection = module.classic_protection_body(["pr-gate"])
     assert protection["required_status_checks"] == {
         "strict": False,
-        "contexts": ["pr-gate", "python", "web", "worker"],
+        "contexts": ["pr-gate"],
     }
     assert protection["enforce_admins"] is True
     assert protection["required_pull_request_reviews"] is None
     assert module.classic_protection_contract_holds(
         {
-            "required_status_checks": {
-                "strict": False,
-                "contexts": ["pr-gate", "python", "web", "worker"],
-            },
+            "required_status_checks": {"strict": False, "contexts": ["pr-gate"]},
             "enforce_admins": {"enabled": True},
             "required_pull_request_reviews": None,
             "restrictions": None,
         },
-        ["pr-gate", "python", "web", "worker"],
+        ["pr-gate"],
     )
     assert not module.classic_protection_contract_holds(
         {
-            "required_status_checks": {
-                "strict": False,
-                "contexts": ["pr-gate", "python", "web", "worker"],
-            },
+            "required_status_checks": {"strict": False, "contexts": ["pr-gate"]},
             "enforce_admins": {"enabled": False},
             "required_pull_request_reviews": None,
             "restrictions": None,
         },
-        ["pr-gate", "python", "web", "worker"],
+        ["pr-gate"],
     )
 
     ruleset = module.default_ruleset_body()
