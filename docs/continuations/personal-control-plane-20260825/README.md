@@ -5,14 +5,16 @@ This capsule governs the durable move of repository ID `1255213941` from `organv
 deployment, installation, and restart effects to the system lane on 2026-08-25. It does not
 authorize a mirror, duplicate registry, budget change, paid runner, overage, or predicate bypass.
 
-The content-hashed pre-transfer preflight snapshot is summarized in
-[public-capture-receipt.json](public-capture-receipt.json). It proves the capture machinery and its
-private counterpart includes the
-complete Git bundle and restore proof, every ref and open-PR head, review threads, releases, issue
-denominator and assignments, labels, rulesets, branch protection, workflow and Actions settings,
-environment/secret/variable names, hooks, keys, App census result, and protected-lane snapshots.
-Private source, credentials, process commands, custody metadata, and protected-lane digests are not
-published.
+The historical v2 pre-transfer snapshot is summarized in
+[public-capture-receipt.json](public-capture-receipt.json). Its narrower evidence covers the
+verified Git bundle, refs and then-open PR heads, then-open PR review threads, releases, issue
+identity/assignment denominators, and the other transfer settings listed in that immutable receipt.
+Neither that receipt nor its historical private manifest is retroactively expanded. The unmerged
+manifest v3 interface now requires every open, closed, and merged PR head plus lifecycle/content
+digests and fully paginated review threads/comments; it also requires issue lifecycle/content,
+normalized milestone, and fully paginated comment evidence. Future public v3 receipts expose only
+the resulting PR, review, and issue-comment denominators. Private source, credentials, process
+commands, content, custody metadata, and protected-lane digests are not published.
 
 The transfer is complete. [public-postflight-receipt.json](public-postflight-receipt.json) records
 the redacted acceptance proof: the stable repository ID, canonical coordinate and redirect, exact
