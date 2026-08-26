@@ -475,7 +475,7 @@ class ConductBroker:
                 state["resource_generations"][claim.key] = prior + 1
             lease_id = f"lease-{generation}-{run_id.removeprefix('run-')[:16]}"
             executor_principal_id = state["session_principals"].get(executor.session_id)
-            if _is_task_compatibility_packet(packet):
+            if _is_task_compatibility_packet(packet) or packet.intent.get("kind") == "fanout-root":
                 executor_principal_id = principal.principal_id
             if not executor_principal_id:
                 raise ConductConflict("selected executor session has no authenticated principal binding")
@@ -1628,7 +1628,7 @@ class ConductBroker:
         exclude_sessions: frozenset[str] = frozenset(),
         ignore_required_session: bool = False,
     ) -> ConductorSessionV1:
-        if _is_task_compatibility_packet(packet):
+        if _is_task_compatibility_packet(packet) or packet.intent.get("kind") == "fanout-root":
             identity = AgentIdentityV1(
                 agent="tabularius",
                 surface="keeper",
@@ -1639,7 +1639,7 @@ class ConductBroker:
                 session_id=identity.session_id,
                 identity=identity,
                 origin="relay",
-                capabilities=frozenset({"board-write"}),
+                capabilities=frozenset({"board-write", "conduct"}),
                 transport="keeper",
                 harvest_method="projection-receipt",
                 concurrency=1024,

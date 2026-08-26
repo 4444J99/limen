@@ -5,16 +5,19 @@ import subprocess
 import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
+import limen.remote_reap as remote_reap
 from limen.remote_reap import (
     apply_capability,
     atomic_json,
     github_repository_slug,
     journal,
+    keeper_redemption_path,
     load_model,
     reconcile_effect,
     remote_tip,
@@ -40,6 +43,14 @@ EXAMPLE_IDENTITY = RepositoryIdentityV1(
     canonical_coordinate="4444J99/example",
     historical_aliases=("organvm/example",),
 )
+
+
+def test_keeper_redemption_path_ignores_environment_overrides(monkeypatch):
+    monkeypatch.setenv("HOME", "/tmp/attacker-home")
+    monkeypatch.setenv("LIMEN_ROOT", "/tmp/attacker-limen")
+    monkeypatch.setattr(remote_reap.pwd, "getpwuid", lambda _uid: SimpleNamespace(pw_dir="/keeper/home"))
+
+    assert keeper_redemption_path() == Path("/keeper/home/.local/state/limen/keeper/remote-reap-redemptions.json")
 
 
 @pytest.mark.parametrize(
@@ -532,6 +543,15 @@ def test_verifier_recomputes_live_landing_and_custody_evidence():
         custody=custody,
         runner=live,
     )
+    wrong_review_head = review.model_copy(update={"head_sha": "f" * 40})
+    with pytest.raises(ValueError, match="review closure"):
+        validate_disposition_evidence(
+            repository_root=Path("/unused"),
+            disposition=disposition,
+            review=wrong_review_head,
+            custody=custody,
+            runner=live,
+        )
     stale = disposition.model_copy(update={"default_tip": "f" * 40})
     with pytest.raises(ValueError, match="default generation"):
         validate_disposition_evidence(

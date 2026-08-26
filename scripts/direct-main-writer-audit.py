@@ -60,6 +60,7 @@ def counts(path: Path) -> dict[str, int]:
         re.findall(
             r"""(?:\[\s*["']push["']|
                     \[\s*["']git["']\s*,\s*["']push["']|
+                    \(\s*["']git["']\s*,\s*["']push["']|
                     push_args\s*=\s*\[\s*["']push["'])""",
             source,
             re.X,

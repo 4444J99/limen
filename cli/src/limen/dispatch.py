@@ -3301,7 +3301,14 @@ def _local_repo_matches(repo: str | None, identity: str) -> bool:
     path = _local_repo_candidate(repo)
     if path is None:
         return False
-    if _github_repo_identity(_github_slug_from_local_repo(path)) == identity:
+    origin_identity = _github_repo_identity(_github_slug_from_local_repo(path))
+    if origin_identity == identity:
+        return True
+    if (
+        origin_identity
+        and LIMEN_REPOSITORY_IDENTITY.accepts(identity)
+        and LIMEN_REPOSITORY_IDENTITY.accepts(origin_identity)
+    ):
         return True
     if not LIMEN_REPOSITORY_IDENTITY.accepts(identity):
         return False

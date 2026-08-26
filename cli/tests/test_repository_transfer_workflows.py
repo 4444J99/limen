@@ -101,7 +101,76 @@ def test_enable_target_is_single_governed_non_tombstone_and_zero_spend_safe() ->
         MODULE._enable_target(["paid.yml"], rows)
 
 
-def test_predicate_receipt_hashes_structured_exact_target_evidence(tmp_path: Path) -> None:
+def test_predicate_receipt_hashes_structured_exact_target_evidence(tmp_path: Path, monkeypatch) -> None:
+    private = tmp_path / ".limen-private"
+    private.mkdir()
+    path = private / "predicate.json"
+    workflow = {"id": 42, "path": ".github/workflows/ci.yml"}
+    manifest = {"github": {"default_sha": "a" * 40}}
+    predicate = "repository_transferred"
+    proof = {
+        "schema_version": "limen.workflow_enable_predicate_evidence.v1",
+        "predicate": predicate,
+        "repository_id": 1_255_213_941,
+        "canonical_coordinate": "4444J99/limen",
+        "default_sha": "a" * 40,
+        "workflow_path": workflow["path"],
+        "workflow_id": workflow["id"],
+        "command": "gh api repos/4444J99/limen",
+        "exit_code": 0,
+        "observed_at": "2026-08-25T12:00:00+00:00",
+    }
+    receipt = {
+        "schema_version": "limen.workflow_enable_evidence.v1",
+        "repository_id": 1_255_213_941,
+        "observed_coordinate": "4444J99/limen",
+        "canonical_coordinate": "4444J99/limen",
+        "default_sha": "a" * 40,
+        "workflow_path": workflow["path"],
+        "workflow_id": workflow["id"],
+        "predicates": {
+            predicate: {
+                "satisfied": True,
+                "evidence": proof,
+                "evidence_sha256": MODULE.canonical_sha256(proof),
+            }
+        },
+    }
+    path.write_text(json.dumps(receipt))
+    path.with_suffix(".json.sha256").write_text(MODULE.canonical_sha256(receipt) + "\n")
+    verified: list[str] = []
+    monkeypatch.setattr(
+        MODULE,
+        "_verify_live_enable_predicate",
+        lambda name, _proof, **_kwargs: verified.append(name),
+    )
+
+    assert (
+        MODULE._predicate_evidence(
+            path,
+            required={predicate},
+            repo="4444J99/limen",
+            workflow=workflow,
+            manifest=manifest,
+        )
+        == receipt
+    )
+    assert verified == [predicate]
+
+    receipt["predicates"][predicate]["evidence_sha256"] = "b" * 64
+    path.write_text(json.dumps(receipt))
+    path.with_suffix(".json.sha256").write_text(MODULE.canonical_sha256(receipt) + "\n")
+    with pytest.raises(MODULE.WorkflowTransferError, match="lacks durable evidence"):
+        MODULE._predicate_evidence(
+            path,
+            required={predicate},
+            repo="4444J99/limen",
+            workflow=workflow,
+            manifest=manifest,
+        )
+
+
+def test_predicate_receipt_fails_when_live_verifier_rejects(tmp_path: Path, monkeypatch) -> None:
     private = tmp_path / ".limen-private"
     private.mkdir()
     path = private / "predicate.json"
@@ -139,21 +208,12 @@ def test_predicate_receipt_hashes_structured_exact_target_evidence(tmp_path: Pat
     path.write_text(json.dumps(receipt))
     path.with_suffix(".json.sha256").write_text(MODULE.canonical_sha256(receipt) + "\n")
 
-    assert (
-        MODULE._predicate_evidence(
-            path,
-            required={predicate},
-            repo="4444J99/limen",
-            workflow=workflow,
-            manifest=manifest,
-        )
-        == receipt
-    )
+    def reject_live(*_args, **_kwargs):
+        raise MODULE.WorkflowTransferError("live predicate drifted")
 
-    receipt["predicates"][predicate]["evidence_sha256"] = "b" * 64
-    path.write_text(json.dumps(receipt))
-    path.with_suffix(".json.sha256").write_text(MODULE.canonical_sha256(receipt) + "\n")
-    with pytest.raises(MODULE.WorkflowTransferError, match="lacks durable evidence"):
+    monkeypatch.setattr(MODULE, "_verify_live_enable_predicate", reject_live)
+
+    with pytest.raises(MODULE.WorkflowTransferError, match="live predicate drifted"):
         MODULE._predicate_evidence(
             path,
             required={predicate},
@@ -345,6 +405,52 @@ def test_interrupted_mutation_reconciliation_rejects_tampered_intent(tmp_path: P
         )
 
     assert not receipt_path.exists()
+
+
+def test_main_returns_nonzero_for_failed_reconciliation(tmp_path: Path, monkeypatch) -> None:
+    workflow = {"id": 42, "path": ".github/workflows/ci.yml", "state": "active"}
+    manifest = {
+        "identity": MODULE.LIMEN_REPOSITORY_IDENTITY.model_dump(mode="json"),
+        "github": {"actions": {"workflow_states": [workflow]}},
+    }
+    policy = {
+        "freeze": [{"path": workflow["path"], "class": "recovery_ci"}],
+        "leave_active_during_freeze": [],
+        "observe_and_requery_after_transfer": [],
+    }
+    monkeypatch.setattr(MODULE, "_private_manifest", lambda _path: manifest)
+    monkeypatch.setattr(
+        MODULE,
+        "_gh_json",
+        lambda _arguments: {
+            "id": MODULE.LIMEN_REPOSITORY_IDENTITY.repository_id,
+            "full_name": MODULE.LIMEN_REPOSITORY_IDENTITY.canonical_coordinate,
+        },
+    )
+    monkeypatch.setattr(MODULE, "_load", lambda _path: policy)
+    monkeypatch.setattr(MODULE, "_workflow_rows", lambda _repo: [workflow])
+    monkeypatch.setattr(MODULE, "_require_exact_partitions", lambda *_args: None)
+    monkeypatch.setattr(
+        MODULE,
+        "_reconcile_interrupted_journal",
+        lambda **_kwargs: {"status": "failed"},
+    )
+    monkeypatch.setattr(
+        MODULE.sys,
+        "argv",
+        [
+            str(MODULE.SCRIPT if hasattr(MODULE, "SCRIPT") else "repository-transfer-workflows.py"),
+            "--manifest",
+            str(tmp_path / "manifest.json"),
+            "--repo",
+            "4444J99/limen",
+            "--receipt",
+            str(tmp_path / "reconciled.json"),
+            "--reconcile",
+        ],
+    )
+
+    assert MODULE.main() == 1
 
 
 def test_existing_intent_or_terminal_path_blocks_mutation_without_overwrite(

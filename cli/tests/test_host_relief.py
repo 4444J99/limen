@@ -73,7 +73,7 @@ def test_shed_plans_kickstart_for_over_ceiling_agent(tmp_path):
 
 
 def test_root_hog_escalated_with_preformed_one_liner(tmp_path):
-    proc = run_relief(tmp_path, "--gate-action", "shed", "--check")
+    proc = run_relief(tmp_path, "--gate-action", "shed", "--apply")
     report = json.loads(proc.stdout)
     hogs = report["root_hogs"]
     assert [h["pid"] for h in hogs] == [10899]  # bztransmit; launchd (pid 1) and non-root Chrome excluded
@@ -90,16 +90,16 @@ def test_apply_with_fixtures_stays_plan_only(tmp_path):
 
 def test_ok_gate_stands_by_and_clears_conditions(tmp_path):
     # onset under shed...
-    first = json.loads(run_relief(tmp_path, "--gate-action", "shed", "--check").stdout)
+    first = json.loads(run_relief(tmp_path, "--gate-action", "shed", "--apply").stdout)
     assert "shed-onset" in first["notified"]
     # ...dedup on repeat...
-    second = json.loads(run_relief(tmp_path, "--gate-action", "shed", "--check").stdout)
+    second = json.loads(run_relief(tmp_path, "--gate-action", "shed", "--apply").stdout)
     assert second["notified"] == []
     # ...ok clears shed-onset (root hog keys clear when the hog is gone), so a future onset re-fires
-    ok = json.loads(run_relief(tmp_path, "--gate-action", "ok", "--check").stdout)
+    ok = json.loads(run_relief(tmp_path, "--gate-action", "ok", "--apply").stdout)
     assert ok["relieve"] is False
     assert ok["root_hogs"] == []  # gate ok — hogs are not escalated outside pressure
-    third = json.loads(run_relief(tmp_path, "--gate-action", "shed", "--check").stdout)
+    third = json.loads(run_relief(tmp_path, "--gate-action", "shed", "--apply").stdout)
     assert "shed-onset" in third["notified"]
 
 
@@ -114,6 +114,6 @@ def test_throttle_reports_but_does_not_relieve(tmp_path):
 
 
 def test_notify_state_written_under_limen_root(tmp_path):
-    run_relief(tmp_path, "--gate-action", "shed", "--check")
+    run_relief(tmp_path, "--gate-action", "shed", "--apply")
     state = json.loads((tmp_path / "logs" / "vigilia" / "relief-state.json").read_text())
     assert "shed-onset" in state and "root-hog-10899" in state

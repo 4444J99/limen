@@ -571,8 +571,14 @@ def test_declared_conductor_identity_matches_after_principal_binding() -> None:
     """
     broker = ConductBroker(MemoryStateStore(), capability_secret="test-capability-secret")
     relay_principal = principal("principal-relay", "codex", "observer", "conductor")
+    executor_principal = principal("principal-relay-executor", "jules", "observer", "executor")
     requested = session("claude", session_id="relay-session")
     broker.register(requested, principal=relay_principal, now=NOW)
+    broker.register(
+        session("jules", session_id="relay-executor-session"),
+        principal=executor_principal,
+        now=NOW,
+    )
     reserved = broker.submit(
         packet(work_id="relay-declared-identity", conductor=requested.identity),
         principal=relay_principal,

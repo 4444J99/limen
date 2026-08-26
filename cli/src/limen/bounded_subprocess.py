@@ -215,7 +215,7 @@ def run_bounded_subprocess(
                 register_stream(process.stdin, selectors.EVENT_WRITE, "stdin")
             else:
                 process.stdin.close()
-        while process.poll() is None or any(label != "stdin" for label, _stream in streams.values()):
+        while any(label != "stdin" for label, _stream in streams.values()) or process.poll() is None:
             now = time.monotonic()
             remaining = deadline - now
             if remaining <= 0:

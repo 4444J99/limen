@@ -87,7 +87,7 @@ tasks:
     assert task["origin"] == "human_prompt"
     assert task["horizon"] == "present"
     assert task["value_case"] == f"Resolve the irreducible operator atom: {atom}"
-    assert task["owner_surface"] == "organvm/limen"
+    assert task["owner_surface"] == "4444J99/limen"
 
     after_backfill = tasks.read_text(encoding="utf-8")
     repeated = quicken.hang_residue([{"state": "STALLED", "title": title, "decision": {"residue": atom}}])
