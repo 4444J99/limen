@@ -12,10 +12,12 @@ import os
 import re
 import stat
 import subprocess
+import tempfile
 from collections.abc import Callable, Iterable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import quote
 
 import rfc8785
 
@@ -199,6 +201,173 @@ def _webhook_record(raw: Mapping[str, Any]) -> dict[str, Any]:
 
 def _deploy_key_record(raw: Mapping[str, Any]) -> dict[str, Any]:
     return _select(raw, ("id", "title", "key", "read_only", "created_at", "verified"))
+
+
+def _required_object_value(result: dict[str, Any], label: str) -> dict[str, Any]:
+    """Return one readable object without allowing an unavailable envelope into a manifest."""
+
+    if not result.get("available"):
+        raise TransferCaptureError(f"{label} census is unavailable")
+    payload = result.get("value")
+    if not isinstance(payload, Mapping):
+        raise TransferCaptureError(f"{label} census is malformed")
+    return _without_github_links(dict(payload))
+
+
+def _required_record_values(result: dict[str, Any], label: str) -> list[Mapping[str, Any]]:
+    """Return a fully paginated readable record list or fail the transfer capture."""
+
+    if not result.get("available"):
+        raise TransferCaptureError(f"{label} census is unavailable")
+    payload = result.get("value")
+    if not isinstance(payload, list) or any(not isinstance(value, Mapping) for value in payload):
+        raise TransferCaptureError(f"{label} census is malformed")
+    return payload
+
+
+def _required_webhook_census(client: GhClient, coordinate: str) -> dict[str, Any]:
+    raw = _required_record_values(
+        client.optional_list(f"/repos/{coordinate}/hooks?per_page=100"),
+        "repository webhooks",
+    )
+    records = [_webhook_record(value) for value in raw]
+    ids = [value.get("id") for value in records]
+    if (
+        any(not isinstance(value, int) or value <= 0 for value in ids)
+        or len(ids) != len(set(ids))
+        or any(
+            not isinstance(value.get("active"), bool)
+            or not isinstance(value.get("events"), list)
+            or any(not isinstance(event, str) for event in value.get("events") or [])
+            or not isinstance(value.get("config"), Mapping)
+            for value in records
+        )
+    ):
+        raise TransferCaptureError("repository webhooks census is incomplete")
+    return {"available": True, "value": sorted(records, key=lambda value: int(value["id"]))}
+
+
+def _required_deploy_key_census(client: GhClient, coordinate: str) -> dict[str, Any]:
+    raw = _required_record_values(
+        client.optional_list(f"/repos/{coordinate}/keys?per_page=100"),
+        "repository deploy keys",
+    )
+    records = [_deploy_key_record(value) for value in raw]
+    ids = [value.get("id") for value in records]
+    if (
+        any(not isinstance(value, int) or value <= 0 for value in ids)
+        or len(ids) != len(set(ids))
+        or any(
+            not isinstance(value.get("title"), str)
+            or not isinstance(value.get("key"), str)
+            or not isinstance(value.get("read_only"), bool)
+            for value in records
+        )
+    ):
+        raise TransferCaptureError("repository deploy keys census is incomplete")
+    return {"available": True, "value": sorted(records, key=lambda value: int(value["id"]))}
+
+
+def _required_branch_protection_census(
+    client: GhClient,
+    coordinate: str,
+    branch_rows: list[Any],
+) -> dict[str, dict[str, Any]]:
+    if any(
+        not isinstance(value, Mapping)
+        or not isinstance(value.get("name"), str)
+        or not isinstance(value.get("protected"), bool)
+        for value in branch_rows
+    ):
+        raise TransferCaptureError("repository branches census contains a nameless or non-object row")
+    names = [str(value["name"]) for value in branch_rows]
+    if len(names) != len(set(names)):
+        raise TransferCaptureError("repository branches census contains duplicate identities")
+
+    protection: dict[str, dict[str, Any]] = {}
+    for branch in sorted(branch_rows, key=lambda value: str(value["name"])):
+        if branch.get("protected") is True:
+            name = str(branch["name"])
+            encoded_name = quote(name, safe="")
+            protection[name] = {
+                "available": True,
+                "value": _required_object_value(
+                    client.optional_object(f"/repos/{coordinate}/branches/{encoded_name}/protection"),
+                    f"protected branch {name}",
+                ),
+            }
+    return protection
+
+
+def _required_actions_settings(client: GhClient, coordinate: str) -> dict[str, Any]:
+    prefix = f"/repos/{coordinate}/actions/permissions"
+    permissions_value = _required_object_value(
+        client.optional_object(prefix),
+        "GitHub Actions permissions",
+    )
+    allowed_actions = permissions_value.get("allowed_actions")
+    if (
+        not isinstance(permissions_value.get("enabled"), bool)
+        or allowed_actions not in {"all", "local_only", "selected"}
+        or not isinstance(permissions_value.get("sha_pinning_required"), bool)
+    ):
+        raise TransferCaptureError("GitHub Actions permissions census is incomplete")
+    permissions = {"available": True, "value": permissions_value}
+
+    workflow_permissions_value = _required_object_value(
+        client.optional_object(f"{prefix}/workflow"),
+        "GitHub Actions workflow permissions",
+    )
+    if workflow_permissions_value.get("default_workflow_permissions") not in {"read", "write"} or not isinstance(
+        workflow_permissions_value.get("can_approve_pull_request_reviews"), bool
+    ):
+        raise TransferCaptureError("GitHub Actions workflow permissions census is incomplete")
+    workflow_permissions = {"available": True, "value": workflow_permissions_value}
+
+    if allowed_actions == "selected":
+        selected_value = _required_object_value(
+            client.optional_object(f"{prefix}/selected-actions"),
+            "GitHub Actions selected actions",
+        )
+        if (
+            not isinstance(selected_value.get("github_owned_allowed"), bool)
+            or not isinstance(selected_value.get("verified_allowed"), bool)
+            or not isinstance(selected_value.get("patterns_allowed"), list)
+            or any(not isinstance(value, str) for value in selected_value.get("patterns_allowed") or [])
+        ):
+            raise TransferCaptureError("GitHub Actions selected actions census is incomplete")
+        selected_actions: dict[str, Any] = {"available": True, "value": selected_value}
+    else:
+        selected_actions = dict(_SELECTED_ACTIONS_NOT_APPLICABLE)
+
+    fork_approval_value = _required_object_value(
+        client.optional_object(f"{prefix}/fork-pr-contributor-approval"),
+        "GitHub Actions fork PR contributor approval",
+    )
+    if not isinstance(fork_approval_value.get("approval_policy"), str) or not fork_approval_value["approval_policy"]:
+        raise TransferCaptureError("GitHub Actions fork PR contributor approval census is incomplete")
+    fork_approval = {"available": True, "value": fork_approval_value}
+
+    retention_value = _required_object_value(
+        client.optional_object(f"{prefix}/artifact-and-log-retention"),
+        "GitHub Actions artifact and log retention",
+    )
+    if (
+        not isinstance(retention_value.get("days"), int)
+        or retention_value["days"] <= 0
+        or not isinstance(retention_value.get("maximum_allowed_days"), int)
+        or retention_value["maximum_allowed_days"] <= 0
+    ):
+        raise TransferCaptureError("GitHub Actions artifact and log retention census is incomplete")
+    retention = {"available": True, "value": retention_value}
+
+    return {
+        "permissions": permissions,
+        "workflow_permissions": workflow_permissions,
+        "selected_actions": selected_actions,
+        "fork_pr_contributor_approval": fork_approval,
+        "artifact_and_log_retention": retention,
+    }
 
 
 def _permission_map(raw: Any) -> dict[str, bool]:
@@ -682,15 +851,8 @@ def capture_github_manifest(
     )
     issue_types = client.optional_list(f"/orgs/{owner}/issue-types?per_page=100")
 
-    branch_protection: dict[str, Any] = {}
     branch_rows = client.list(f"/repos/{coordinate}/branches?per_page=100")
-    for branch in sorted(branch_rows, key=lambda item: str(item.get("name"))):
-        if branch.get("protected"):
-            name = str(branch["name"])
-            protection = client.optional_object(f"/repos/{coordinate}/branches/{name}/protection")
-            if protection.get("available"):
-                protection["value"] = _without_github_links(protection["value"])
-            branch_protection[name] = protection
+    branch_protection = _required_branch_protection_census(client, coordinate, branch_rows)
 
     workflows = client.connection(f"/repos/{coordinate}/actions/workflows?per_page=100", "workflows")
     workflow_states = sorted(
@@ -752,14 +914,9 @@ def capture_github_manifest(
         (_release_record(value) for value in client.list(f"/repos/{coordinate}/releases?per_page=100")),
         key=lambda item: int(item.get("id") or 0),
     )
-    webhooks = client.optional_list(f"/repos/{coordinate}/hooks?per_page=100")
-    if webhooks.get("available"):
-        webhooks["value"] = [_webhook_record(value) for value in webhooks.get("value") or [] if isinstance(value, dict)]
-    deploy_keys = client.optional_list(f"/repos/{coordinate}/keys?per_page=100")
-    if deploy_keys.get("available"):
-        deploy_keys["value"] = [
-            _deploy_key_record(value) for value in deploy_keys.get("value") or [] if isinstance(value, dict)
-        ]
+    webhooks = _required_webhook_census(client, coordinate)
+    deploy_keys = _required_deploy_key_census(client, coordinate)
+    actions_settings = _required_actions_settings(client, coordinate)
     rulesets = _required_ruleset_census(client, coordinate)
     access = _repository_access_census(client, identity, coordinate, metadata)
 
@@ -782,15 +939,7 @@ def capture_github_manifest(
         "branch_protection": branch_protection,
         "actions": {
             "workflow_states": workflow_states,
-            "permissions": client.optional_object(f"/repos/{coordinate}/actions/permissions"),
-            "workflow_permissions": client.optional_object(f"/repos/{coordinate}/actions/permissions/workflow"),
-            "selected_actions": client.optional_object(f"/repos/{coordinate}/actions/permissions/selected-actions"),
-            "fork_pr_contributor_approval": client.optional_object(
-                f"/repos/{coordinate}/actions/permissions/fork-pr-contributor-approval"
-            ),
-            "artifact_and_log_retention": client.optional_object(
-                f"/repos/{coordinate}/actions/permissions/artifact-and-log-retention"
-            ),
+            **actions_settings,
             "secret_names": _names_only(
                 client.optional_connection(
                     f"/repos/{coordinate}/actions/secrets?per_page=100",
@@ -884,51 +1033,58 @@ def create_verified_bundle(
     *,
     runner: Runner = subprocess.run,
 ) -> dict[str, Any]:
-    import tempfile
-
     bundle_path.parent.mkdir(parents=True, exist_ok=True)
-    bundle_path.unlink(missing_ok=True)
-    with tempfile.TemporaryDirectory(prefix="limen-transfer-bundle-") as raw_temp:
-        temp = Path(raw_temp)
-        mirror = temp / "source.git"
-        restore = temp / "restore.git"
+    with tempfile.TemporaryDirectory(
+        prefix=f".{bundle_path.name}.",
+        dir=bundle_path.parent,
+    ) as raw_candidate_parent:
+        candidate = Path(raw_candidate_parent) / "replacement.bundle"
+        with tempfile.TemporaryDirectory(prefix="limen-transfer-bundle-") as raw_temp:
+            temp = Path(raw_temp)
+            mirror = temp / "source.git"
+            restore = temp / "restore.git"
 
-        commands = (
-            ["git", "clone", "--mirror", f"https://github.com/{coordinate}.git", str(mirror)],
-            ["git", "-C", str(mirror), "fetch", "origin", "+refs/pull/*/head:refs/pull/*/head"],
-            ["git", "-C", str(mirror), "bundle", "create", str(bundle_path), "--all"],
-            ["git", "-C", str(mirror), "bundle", "verify", str(bundle_path)],
-            ["git", "clone", "--mirror", str(bundle_path), str(restore)],
-        )
-        for command in commands:
-            result = runner(command, capture_output=True, text=True, check=False)
-            if result.returncode != 0:
-                raise TransferCaptureError(f"Git bundle command failed: {command[1]}")
-
-        def refs(root: Path) -> list[str]:
-            result = runner(
-                ["git", "-C", str(root), "for-each-ref", "--format=%(refname) %(objectname)"],
-                capture_output=True,
-                text=True,
-                check=False,
+            commands = (
+                ["git", "clone", "--mirror", f"https://github.com/{coordinate}.git", str(mirror)],
+                ["git", "-C", str(mirror), "fetch", "origin", "+refs/pull/*/head:refs/pull/*/head"],
+                ["git", "-C", str(mirror), "bundle", "create", str(candidate), "--all"],
+                ["git", "-C", str(mirror), "bundle", "verify", str(candidate)],
+                ["git", "clone", "--mirror", str(candidate), str(restore)],
             )
-            if result.returncode != 0:
-                raise TransferCaptureError("Git bundle ref enumeration failed")
-            return sorted(line for line in result.stdout.splitlines() if line)
+            for command in commands:
+                result = runner(command, capture_output=True, text=True, check=False)
+                if result.returncode != 0:
+                    raise TransferCaptureError(f"Git bundle command failed: {command[1]}")
 
-        source_refs = refs(mirror)
-        restored_refs = refs(restore)
-        if source_refs != restored_refs:
-            raise TransferCaptureError("restored Git bundle refs differ from source mirror")
+            def refs(root: Path) -> list[str]:
+                result = runner(
+                    ["git", "-C", str(root), "for-each-ref", "--format=%(refname) %(objectname)"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                if result.returncode != 0:
+                    raise TransferCaptureError("Git bundle ref enumeration failed")
+                return sorted(line for line in result.stdout.splitlines() if line)
 
-    return {
-        "sha256": file_sha256(bundle_path),
-        "size_bytes": bundle_path.stat().st_size,
-        "ref_count": len(source_refs),
-        "refs_sha256": canonical_sha256(source_refs),
-        "restore_verified": True,
-        "_refs": source_refs,
-    }
+            source_refs = refs(mirror)
+            restored_refs = refs(restore)
+            if source_refs != restored_refs:
+                raise TransferCaptureError("restored Git bundle refs differ from source mirror")
+
+        receipt = {
+            "sha256": file_sha256(candidate),
+            "size_bytes": candidate.stat().st_size,
+            "ref_count": len(source_refs),
+            "refs_sha256": canonical_sha256(source_refs),
+            "restore_verified": True,
+            "_refs": source_refs,
+        }
+        try:
+            os.replace(candidate, bundle_path)
+        except OSError as exc:
+            raise TransferCaptureError("verified Git bundle replacement failed") from exc
+        return receipt
 
 
 def verify_existing_bundle(
@@ -936,8 +1092,6 @@ def verify_existing_bundle(
     *,
     runner: Runner = subprocess.run,
 ) -> dict[str, Any]:
-    import tempfile
-
     verify = runner(
         ["git", "bundle", "verify", str(bundle_path)],
         capture_output=True,
@@ -1079,6 +1233,12 @@ def invariant_projection(manifest: Mapping[str, Any]) -> dict[str, Any]:
 
 _TRANSFER_TYPE_LABEL_PREFIX = "transfer-type/"
 _DISABLED_DISMISSAL_RESTRICTION = {"enabled": False, "allowed_actors": []}
+_SELECTED_ACTIONS_NOT_APPLICABLE = {
+    "available": True,
+    "applicable": False,
+    "reason": "allowed_actions_policy_is_not_selected",
+    "value": None,
+}
 
 
 def transfer_type_label(type_name: str) -> str:
@@ -1148,6 +1308,19 @@ def _normalize_pull_request_restrictions(value: Any) -> Any:
     return normalized
 
 
+def _normalize_inapplicable_selected_actions(github: dict[str, Any]) -> None:
+    actions = github.get("actions")
+    if not isinstance(actions, dict):
+        return
+    permissions = actions.get("permissions")
+    if not isinstance(permissions, Mapping) or permissions.get("available") is not True:
+        return
+    policy = permissions.get("value")
+    if not isinstance(policy, Mapping) or policy.get("allowed_actions") not in {"all", "local_only"}:
+        return
+    actions["selected_actions"] = dict(_SELECTED_ACTIONS_NOT_APPLICABLE)
+
+
 def _normalize_post_transfer_projection_pair(expected: dict[str, Any], observed: dict[str, Any]) -> None:
     expected_github = expected.get("github")
     observed_github = observed.get("github")
@@ -1166,6 +1339,8 @@ def _normalize_post_transfer_projection_pair(expected: dict[str, Any], observed:
 
     expected_github["rulesets"] = _normalize_pull_request_restrictions(expected_github.get("rulesets"))
     observed_github["rulesets"] = _normalize_pull_request_restrictions(observed_github.get("rulesets"))
+    _normalize_inapplicable_selected_actions(expected_github)
+    _normalize_inapplicable_selected_actions(observed_github)
 
     before_issues = expected_github.get("issues")
     after_issues = observed_github.get("issues")
