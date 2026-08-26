@@ -639,6 +639,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "Ignored local private cartridge root (parent of session-corpus, photos-universe, etc.). Full media-dedup paths/hashes live here and are never committed; public receipts carry aggregates only."
+  LIMEN_PRIVATE_MAIL_STORY:
+    default: "$LIMEN_ROOT/.limen-private/mail-story"
+    env: LIMEN_PRIVATE_MAIL_STORY
+    self_update: none
+    owner: mail
+    note: "Ignored private cartridge for mail-story atoms and snapshots; tracked reports retain only redacted counts and hashes."
+  LIMEN_MAIL_ENVELOPE_INDEX:
+    default: "~/Library/Mail/V10/MailData/Envelope Index"
+    env: LIMEN_MAIL_ENVELOPE_INDEX
+    self_update: none
+    owner: mail
+    note: "Read-only Apple Mail Envelope Index path used by mail-story-ledger.py for local metadata inventory; never mutates provider mail."
   LIMEN_PRIVATE_SESSION_CORPUS:
     default: "$LIMEN_ROOT/.limen-private/session-corpus"
     env: LIMEN_PRIVATE_SESSION_CORPUS
@@ -933,6 +945,54 @@ parameters:
     self_update: none
     owner: continuity
     note: "When 1 (default), session-orient.py refreshes origin with a hard-bounded 3s fetch before deriving ahead/behind, so the Git line reports a fresh comparison rather than one against whatever origin/main happened to sit on disk — the mechanism behind two sessions running gates against a 19-commits-behind checkout. Set 0 (or LIMEN_OFFLINE) to skip the network entirely; the section then labels itself 'refs STALE' rather than silently reading like parity. The label, not the fetch, is the invariant: a stale read that announces itself is safe."
+  LIMEN_LIFECYCLE_EXACT_SIZE_TARGET_LIMIT:
+    default: 32
+    env: LIMEN_LIFECYCLE_EXACT_SIZE_TARGET_LIMIT
+    self_update: none
+    owner: continuity
+    note: "Maximum worktree target count for exact recursive lifecycle-pressure size scans; larger inventories use bounded disk/sample accounting."
+  LIMEN_LIFECYCLE_DU_TIMEOUT_SECONDS:
+    default: 3
+    env: LIMEN_LIFECYCLE_DU_TIMEOUT_SECONDS
+    self_update: none
+    owner: continuity
+    note: "Per-run timeout for disk-usage based lifecycle-pressure worktree size accounting before falling back to sampling."
+  LIMEN_LIFECYCLE_SIZE_SAMPLE_TARGET_LIMIT:
+    default: 16
+    env: LIMEN_LIFECYCLE_SIZE_SAMPLE_TARGET_LIMIT
+    self_update: none
+    owner: continuity
+    note: "Maximum worktree roots sampled when lifecycle-pressure cannot complete exact or du-backed size accounting."
+  LIMEN_LIFECYCLE_SIZE_SAMPLE_FILE_LIMIT:
+    default: 2000
+    env: LIMEN_LIFECYCLE_SIZE_SAMPLE_FILE_LIMIT
+    self_update: none
+    owner: continuity
+    note: "Maximum files sampled during lifecycle-pressure fallback size accounting."
+  LIMEN_LIFECYCLE_SIZE_SAMPLE_SECONDS:
+    default: 2
+    env: LIMEN_LIFECYCLE_SIZE_SAMPLE_SECONDS
+    self_update: none
+    owner: continuity
+    note: "Total seconds allowed for lifecycle-pressure fallback size sampling."
+  LIMEN_PR_STATUS_TTL_MIN:
+    default: 30
+    env: LIMEN_PR_STATUS_TTL_MIN
+    self_update: none
+    owner: dashboard
+    note: "Freshness window for public PR-status aggregate cache; avoids live GitHub fetches on every static dashboard build."
+  LIMEN_PR_STATUS_REQUEST_TIMEOUT_MS:
+    default: 4000
+    env: LIMEN_PR_STATUS_REQUEST_TIMEOUT_MS
+    self_update: none
+    owner: dashboard
+    note: "Per-request timeout for PR-status GitHub API reads; failures reuse cached aggregate counts when available."
+  LIMEN_PR_STATUS_TOTAL_TIMEOUT_MS:
+    default: 20000
+    env: LIMEN_PR_STATUS_TOTAL_TIMEOUT_MS
+    self_update: none
+    owner: dashboard
+    note: "Total network budget for stale PR-status refresh before falling back to cached or partial aggregate counts."
   LIMEN_INSIGHT_CADENCE_VERIFY_ROOT:
     default: ""
     env: LIMEN_INSIGHT_CADENCE_VERIFY_ROOT

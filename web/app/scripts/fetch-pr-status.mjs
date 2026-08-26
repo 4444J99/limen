@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { execFileSync } from "child_process";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -28,7 +28,27 @@ function resolveGitHubToken() {
 const GITHUB_TOKEN = resolveGitHubToken();
 const outPath = join(__dirname, "..", "public", "pr-status.json");
 const previous = existsSync(outPath) ? JSON.parse(readFileSync(outPath, "utf8")) : null;
-const REQUEST_TIMEOUT_MS = Number(process.env.LIMEN_PR_STATUS_REQUEST_TIMEOUT_MS || 15_000);
+const requestTimeoutMs = Number(process.env.LIMEN_PR_STATUS_REQUEST_TIMEOUT_MS || 4000);
+const totalTimeoutMs = Number(process.env.LIMEN_PR_STATUS_TOTAL_TIMEOUT_MS || 20000);
+const deadlineMs = Date.now() + totalTimeoutMs;
+
+function hasBudget() {
+  return Date.now() < deadlineMs;
+}
+
+async function fetchWithBudget(url, headers) {
+  if (!hasBudget()) return null;
+  const controller = new AbortController();
+  const remaining = Math.max(1, deadlineMs - Date.now());
+  const timer = setTimeout(() => controller.abort(), Math.min(requestTimeoutMs, remaining));
+  try {
+    return await fetch(url, { headers, signal: controller.signal });
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 function previousRepo(repo) {
   return previous?.repos?.find((item) => item.repo === repo) || null;
@@ -39,11 +59,9 @@ async function fetchPRs(repo) {
   const headers = { Accept: "application/vnd.github.v3+json" };
   if (GITHUB_TOKEN) headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
 
-  let res;
-  try {
-    res = await fetch(url, { headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
-  } catch (error) {
-    console.error(`Failed to fetch PRs for ${repo}: ${error instanceof Error ? error.message : "network error"}`);
+  const res = await fetchWithBudget(url, headers);
+  if (res === null) {
+    console.error(`Failed to fetch PRs for ${repo}: timeout or network error`);
     return null;
   }
   if (!res.ok) {
@@ -71,10 +89,8 @@ async function fetchCheckRuns(repo, headSha) {
   const headers = { Accept: "application/vnd.github.v3+json" };
   if (GITHUB_TOKEN) headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
 
-  let res;
-  try {
-    res = await fetch(url, { headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
-  } catch {
+  const res = await fetchWithBudget(url, headers);
+  if (res === null) {
     return null;
   }
   if (!res.ok) return null;
@@ -102,10 +118,17 @@ async function main() {
   }
   console.log("Fetching PR status for", REPOS.length, "repos...");
   const results = [];
+  let partial = false;
 
   for (const repo of REPOS) {
+    if (!hasBudget()) {
+      partial = true;
+      console.log(`  ${repo}: skipped, total fetch budget exhausted`);
+      continue;
+    }
     const prs = await fetchPRs(repo);
     if (prs === null) {
+      partial = true;
       const fallback = previousRepo(repo);
       if (fallback) {
         results.push({ ...fallback, stale: true, error: "fetch_failed" });
@@ -118,7 +141,13 @@ async function main() {
     }
     const prsWithChecks = [];
     for (const pr of prs) {
+      if (!hasBudget()) {
+        partial = true;
+        prsWithChecks.push({ ...pr, checks: null });
+        continue;
+      }
       const checks = await fetchCheckRuns(repo, pr.head);
+      if (checks === null) partial = true;
       prsWithChecks.push({ ...pr, checks });
     }
     results.push({ repo, prs: prsWithChecks, count: prsWithChecks.length });
@@ -131,18 +160,25 @@ async function main() {
     0
   );
 
+  let summary = {
+    total_repos: REPOS.length,
+    total_open_prs: totalPRs,
+    prs_with_failing_ci: totalFailed,
+  };
+  if (partial && previous?.summary) {
+    summary = previous.summary;
+    console.log("PR status fetch partial; reused cached aggregate summary.");
+  }
+
   const output = {
     generated_at: new Date().toISOString(),
     repos: [],
-    summary: {
-      total_repos: REPOS.length,
-      total_open_prs: totalPRs,
-      prs_with_failing_ci: totalFailed,
-    },
+    summary,
   };
 
+  mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, JSON.stringify(output, null, 2));
-  console.log(`Wrote ${outPath} (${totalPRs} PRs across ${REPOS.length} repos)`);
+  console.log(`Wrote ${outPath} (${summary.total_open_prs} PRs across ${REPOS.length} repos)`);
 }
 
 main().catch((e) => {

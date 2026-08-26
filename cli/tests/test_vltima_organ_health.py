@@ -36,7 +36,6 @@ def test_loop_defines_vltima_cadence_and_gates_lane():
 
     assert 'C_VLTIMA="${LIMEN_BEAT_VLTIMA:-' in text
     assert "LIMEN_VLTIMA:-0" in text
-    assert "scripts/vltima-organ.py\" --write" in text
+    assert 'scripts/vltima-organ.py" --write' in text
     assert "stamp vltima" in text
     assert "--materialize-private" not in re.search(r"if due_voice vltima.*?fi", text, re.S).group(0)
-

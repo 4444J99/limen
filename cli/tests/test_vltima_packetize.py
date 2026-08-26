@@ -82,4 +82,3 @@ def test_render_markdown_preserves_non_dispatch_contract() -> None:
     assert "v1 never mutates `tasks.yaml`" in markdown
     assert "`candidate` is not `queued`" in markdown
     assert "VLTIMA-PACKET" in markdown
-
