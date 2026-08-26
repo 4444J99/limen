@@ -38,6 +38,7 @@ NOW = datetime(2026, 8, 23, 16, 0, tzinfo=UTC)
 DIGEST = "a" * 64
 TIP = "b" * 40
 BASE = "c" * 40
+SIGNING_MATERIAL = b"k" * 32
 IDENTITY = RepositoryIdentityV1(
     repository_id=1255213941,
     canonical_coordinate="4444J99/limen",
@@ -196,7 +197,7 @@ def test_unresolved_outdated_review_blocks_terminal_state():
 
 
 def test_landed_pull_request_requires_terminal_closure_for_exact_head():
-    item_key = f"organvm/limen:pull-request:1@{TIP}"
+    item_key = IDENTITY.stable_key(f"pull-request:1@{TIP}")
     landed_pull = RecoveryDispositionReceiptV1(
         item_key=item_key,
         item_kind="pull_request",
@@ -219,6 +220,50 @@ def test_landed_pull_request_requires_terminal_closure_for_exact_head():
     assert "missing-terminal-review-lineages:1" in missing.errors
     assert "missing-terminal-review-lineages:1" in mismatched.errors
     assert matched.ok is True
+
+
+def test_pull_request_recovery_keys_reject_coordinate_only_legacy_identity():
+    with pytest.raises(ValueError, match="github-repository:<id>"):
+        RecoveryDispositionReceiptV1(
+            item_key=f"organvm/limen:pull-request:1@{TIP}",
+            item_kind="pull_request",
+            source_digest=DIGEST,
+            owner="organvm/limen:pull-request:1",
+            predicate="exact head landed and review lineage is terminal",
+            receipt="git:organvm/limen:docs/receipts/pull-1.json",
+            terminal_class="exact_landed",
+        )
+
+
+def test_landed_pull_request_requires_the_same_numeric_repository_identity():
+    item_key = IDENTITY.stable_key(f"pull-request:1@{TIP}")
+    landed_pull = RecoveryDispositionReceiptV1(
+        item_key=item_key,
+        item_kind="pull_request",
+        source_digest=DIGEST,
+        owner="github-repository:1255213941/pull-request:1",
+        predicate="exact head landed and review lineage is terminal",
+        receipt="git:organvm/limen:docs/receipts/pull-1.json",
+        terminal_class="exact_landed",
+    )
+    wrong_identity = RepositoryIdentityV1(
+        repository_id=999_999_999,
+        canonical_coordinate=IDENTITY.canonical_coordinate,
+        historical_aliases=IDENTITY.historical_aliases,
+    )
+    wrong_repository_review = ReviewLineageClosureV2.model_validate(
+        review().model_dump(mode="json") | {"repository_identity": wrong_identity.model_dump(mode="json")}
+    )
+
+    result = evaluate_recovery(
+        manifest(
+            baseline_keys=(item_key,),
+            dispositions=(landed_pull,),
+            review_closures=(wrong_repository_review,),
+        )
+    )
+
+    assert "missing-terminal-review-lineages:1" in result.errors
 
 
 def test_post_merge_new_review_requires_corrective_owner():
@@ -260,7 +305,7 @@ def test_every_noncompleted_reap_journal_blocks_fixed_point(state: ReapJournalSt
 
 
 def test_capability_is_plan_bound_expiring_and_exact_tip_cas_only():
-    material = b"fixture-material"
+    material = SIGNING_MATERIAL
     reap_plan = plan()
     capability = issue_reap_capability(
         reap_plan,
@@ -285,6 +330,39 @@ def test_capability_is_plan_bound_expiring_and_exact_tip_cas_only():
             signing_material=material,
             observed_at=NOW + timedelta(hours=2),
         )
+
+
+def test_reap_capability_key_requires_32_encoded_bytes_for_issue_and_verify():
+    reap_plan = plan()
+    with pytest.raises(ValueError, match="at least 32 encoded bytes"):
+        issue_reap_capability(
+            reap_plan,
+            capability_id="remote-reap-capability-short-key",
+            issued_by="tabularius-keeper",
+            signing_material=b"k" * 31,
+            issued_at=NOW,
+        )
+
+    capability = issue_reap_capability(
+        reap_plan,
+        capability_id="remote-reap-capability-32-byte-key",
+        issued_by="tabularius-keeper",
+        signing_material=b"k" * 32,
+        issued_at=NOW,
+    )
+    with pytest.raises(ValueError, match="at least 32 encoded bytes"):
+        verify_reap_capability(
+            capability,
+            plan=reap_plan,
+            signing_material=b"k" * 31,
+            observed_at=NOW,
+        )
+    verify_reap_capability(
+        capability,
+        plan=reap_plan,
+        signing_material=b"k" * 32,
+        observed_at=NOW,
+    )
 
 
 def test_reap_expiry_is_clamped_to_the_underlying_disposition():
@@ -378,7 +456,7 @@ def test_forged_or_wrong_plan_capability_is_rejected():
         reap_plan,
         capability_id="remote-reap-capability-0001",
         issued_by="tabularius-keeper",
-        signing_material=b"fixture-material",
+        signing_material=SIGNING_MATERIAL,
         issued_at=NOW,
     )
     forged = ReapCapabilityV1.model_validate(capability.model_dump(mode="json") | {"signature": "0" * 64})
@@ -387,14 +465,14 @@ def test_forged_or_wrong_plan_capability_is_rejected():
         verify_reap_capability(
             forged,
             plan=reap_plan,
-            signing_material=b"fixture-material",
+            signing_material=SIGNING_MATERIAL,
             observed_at=NOW,
         )
     with pytest.raises(ValueError, match="signature"):
         verify_reap_capability(
             capability,
             plan=reap_plan,
-            signing_material=b"other-fixture-material",
+            signing_material=b"different-fixture-material-32bytes",
             observed_at=NOW,
         )
 

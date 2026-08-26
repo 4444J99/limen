@@ -544,117 +544,571 @@ def _names_only(result: dict[str, Any], key: str) -> dict[str, Any]:
     return {"available": True, "names": names, "total_count": total_count}
 
 
-def _review_comments(client: GhClient, thread_id: str, first_page: Mapping[str, Any]) -> list[dict[str, Any]]:
-    connection = dict(first_page)
-    comments: list[dict[str, Any]] = []
-    query = """
-      query($thread: ID!, $after: String) {
-        node(id: $thread) {
-          ... on PullRequestReviewThread {
-            comments(first: 100, after: $after) {
-              nodes { id databaseId body author { login } createdAt updatedAt }
-              pageInfo { hasNextPage endCursor }
-            }
-          }
-        }
-      }
-    """
-    while True:
-        for raw in connection.get("nodes") or []:
-            comments.append(
-                {
-                    "id": raw.get("id"),
-                    "database_id": raw.get("databaseId"),
-                    "author": (raw.get("author") or {}).get("login"),
-                    "body_sha256": hashlib.sha256(str(raw.get("body") or "").encode()).hexdigest(),
-                    "created_at": raw.get("createdAt"),
-                    "updated_at": raw.get("updatedAt"),
-                }
-            )
-        page = connection.get("pageInfo") or {}
-        if not page.get("hasNextPage"):
-            return comments
-        cursor = page.get("endCursor")
-        if not cursor:
-            raise TransferCaptureError("review comment pagination omitted end cursor")
-        data = client.graphql(query, {"thread": thread_id, "after": cursor})
-        node = data.get("node") or {}
-        connection = node.get("comments") or {}
+_PULL_REQUEST_PAGE_SIZE = 50
+_REVIEW_PAGE_SIZE = 20
+_ISSUE_PAGE_SIZE = 50
+_OID_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
-def collect_review_threads(client: GhClient, owner: str, repo: str, number: int) -> list[dict[str, Any]]:
-    query = """
-      query($owner: String!, $repo: String!, $number: Int!, $after: String) {
-        repository(owner: $owner, name: $repo) {
-          pullRequest(number: $number) {
-            reviewThreads(first: 100, after: $after) {
-              nodes {
-                id isResolved isOutdated path line startLine originalLine originalStartLine diffSide
-                comments(first: 100) {
-                  nodes { id databaseId body author { login } createdAt updatedAt }
-                  pageInfo { hasNextPage endCursor }
-                }
-              }
-              pageInfo { hasNextPage endCursor }
-            }
-          }
-        }
-      }
-    """
-    cursor: str | None = None
-    threads: list[dict[str, Any]] = []
-    while True:
-        data = client.graphql(
-            query,
-            {"owner": owner, "repo": repo, "number": number, "after": cursor},
-        )
-        repository = data.get("repository") or {}
-        pull_request = repository.get("pullRequest") or {}
-        connection = pull_request.get("reviewThreads") or {}
-        for raw in connection.get("nodes") or []:
-            thread_id = str(raw.get("id") or "")
-            if not thread_id:
-                raise TransferCaptureError(f"PR #{number} review thread omitted node ID")
-            threads.append(
-                {
-                    "id": thread_id,
-                    "is_resolved": bool(raw.get("isResolved")),
-                    "is_outdated": bool(raw.get("isOutdated")),
-                    "path": raw.get("path"),
-                    "line": raw.get("line"),
-                    "start_line": raw.get("startLine"),
-                    "original_line": raw.get("originalLine"),
-                    "original_start_line": raw.get("originalStartLine"),
-                    "diff_side": raw.get("diffSide"),
-                    "comments": _review_comments(client, thread_id, raw.get("comments") or {}),
-                }
-            )
-        page = connection.get("pageInfo") or {}
-        if not page.get("hasNextPage"):
-            return sorted(threads, key=lambda item: item["id"])
-        cursor = page.get("endCursor")
-        if not cursor:
-            raise TransferCaptureError(f"PR #{number} review pagination omitted end cursor")
+def _connection_page(connection: Any, label: str) -> tuple[list[Mapping[str, Any]], int, bool, str | None]:
+    """Validate one GraphQL connection page without trusting truthy coercions."""
+
+    if not isinstance(connection, Mapping):
+        raise TransferCaptureError(f"{label} pagination omitted its connection")
+    nodes = connection.get("nodes")
+    total_count = connection.get("totalCount")
+    page_info = connection.get("pageInfo")
+    if (
+        not isinstance(nodes, list)
+        or any(not isinstance(node, Mapping) for node in nodes)
+        or not isinstance(total_count, int)
+        or total_count < 0
+        or not isinstance(page_info, Mapping)
+        or not isinstance(page_info.get("hasNextPage"), bool)
+    ):
+        raise TransferCaptureError(f"{label} pagination is malformed")
+    has_next = page_info["hasNextPage"]
+    cursor = page_info.get("endCursor")
+    if cursor is not None and (not isinstance(cursor, str) or not cursor):
+        raise TransferCaptureError(f"{label} pagination returned an invalid end cursor")
+    if has_next and cursor is None:
+        raise TransferCaptureError(f"{label} pagination omitted end cursor")
+    return nodes, total_count, has_next, cursor
 
 
-def _issue_record(raw: Mapping[str, Any]) -> dict[str, Any]:
-    issue_type = raw.get("type")
+def _node_identity(raw: Mapping[str, Any], label: str) -> str:
+    value = raw.get("id")
+    if not isinstance(value, str) or not value:
+        raise TransferCaptureError(f"{label} omitted node identity")
+    return value
+
+
+def _database_identity(raw: Mapping[str, Any], label: str) -> int:
+    value = raw.get("databaseId")
+    if not isinstance(value, int) or value <= 0:
+        raise TransferCaptureError(f"{label} omitted database identity")
+    return value
+
+
+def _required_timestamp(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise TransferCaptureError(f"{label} omitted timestamp")
+    return value
+
+
+def _optional_timestamp(value: Any, label: str) -> str | None:
+    if value is None:
+        return None
+    return _required_timestamp(value, label)
+
+
+def _body_digest(value: Any, label: str) -> str:
+    if value is None:
+        value = ""
+    if not isinstance(value, str):
+        raise TransferCaptureError(f"{label} content is malformed")
+    return hashlib.sha256(value.encode()).hexdigest()
+
+
+def _author_login(raw: Any, label: str) -> str | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, Mapping):
+        raise TransferCaptureError(f"{label} author is malformed")
+    login = raw.get("login")
+    if login is not None and (not isinstance(login, str) or not login):
+        raise TransferCaptureError(f"{label} author identity is malformed")
+    return login
+
+
+def _milestone_record(raw: Any, label: str) -> dict[str, Any] | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, Mapping):
+        raise TransferCaptureError(f"{label} milestone is malformed")
+    milestone_id = _node_identity(raw, f"{label} milestone")
+    number = raw.get("number")
+    state = raw.get("state")
+    if not isinstance(number, int) or number <= 0 or state not in {"OPEN", "CLOSED"}:
+        raise TransferCaptureError(f"{label} milestone identity or state is malformed")
     return {
-        "number": raw.get("number"),
-        "id": raw.get("id"),
-        "node_id": raw.get("node_id"),
-        "state": raw.get("state"),
-        "state_reason": raw.get("state_reason"),
-        "issue_type": (_select(issue_type, ("id", "node_id", "name")) if isinstance(issue_type, dict) else issue_type),
-        "assignees": sorted(
-            str(value.get("login"))
-            for value in raw.get("assignees") or []
-            if isinstance(value, dict) and value.get("login")
-        ),
-        "labels": sorted(
-            str(value.get("name")) for value in raw.get("labels") or [] if isinstance(value, dict) and value.get("name")
+        "id": milestone_id,
+        "number": number,
+        "state": state.lower(),
+        "title_sha256": _body_digest(raw.get("title"), f"{label} milestone title"),
+        "description_sha256": _body_digest(raw.get("description"), f"{label} milestone description"),
+        "due_on": _optional_timestamp(raw.get("dueOn"), f"{label} milestone due date"),
+        "created_at": _required_timestamp(raw.get("createdAt"), f"{label} milestone created"),
+        "updated_at": _required_timestamp(raw.get("updatedAt"), f"{label} milestone updated"),
+        "closed_at": _optional_timestamp(raw.get("closedAt"), f"{label} milestone closed"),
+    }
+
+
+def _comment_record(raw: Mapping[str, Any], label: str) -> dict[str, Any]:
+    return {
+        "id": _node_identity(raw, label),
+        "database_id": _database_identity(raw, label),
+        "author": _author_login(raw.get("author"), label),
+        "body_sha256": _body_digest(raw.get("body"), f"{label} body"),
+        "created_at": _required_timestamp(raw.get("createdAt"), f"{label} created"),
+        "updated_at": _required_timestamp(raw.get("updatedAt"), f"{label} updated"),
+    }
+
+
+def _collect_comments(
+    client: GhClient,
+    *,
+    node_id: str,
+    first_page: Any,
+    label: str,
+    query: str,
+) -> list[dict[str, Any]]:
+    connection = first_page
+    expected_total: int | None = None
+    comments: list[dict[str, Any]] = []
+    identities: set[str] = set()
+    while True:
+        nodes, total_count, has_next, cursor = _connection_page(connection, label)
+        if expected_total is None:
+            expected_total = total_count
+        elif total_count != expected_total:
+            raise TransferCaptureError(f"{label} pagination total changed during capture")
+        for raw in nodes:
+            record = _comment_record(raw, label)
+            if record["id"] in identities:
+                raise TransferCaptureError(f"{label} pagination contains duplicate identities")
+            identities.add(record["id"])
+            comments.append(record)
+        if not has_next:
+            break
+        data = client.graphql(query, {"node": node_id, "after": cursor})
+        node = data.get("node")
+        if not isinstance(node, Mapping):
+            raise TransferCaptureError(f"{label} pagination omitted its node")
+        connection = node.get("comments")
+    if expected_total != len(comments):
+        raise TransferCaptureError(f"{label} pagination count mismatch")
+    return sorted(comments, key=lambda value: value["id"])
+
+
+_REVIEW_COMMENT_QUERY = f"""
+  query($node: ID!, $after: String) {{
+    node(id: $node) {{
+      ... on PullRequestReviewThread {{
+        comments(first: {_REVIEW_PAGE_SIZE}, after: $after) {{
+          totalCount
+          nodes {{ id databaseId body author {{ login }} createdAt updatedAt }}
+          pageInfo {{ hasNextPage endCursor }}
+        }}
+      }}
+    }}
+  }}
+"""
+
+
+_ISSUE_COMMENT_QUERY = f"""
+  query($node: ID!, $after: String) {{
+    node(id: $node) {{
+      ... on Issue {{
+        comments(first: {_ISSUE_PAGE_SIZE}, after: $after) {{
+          totalCount
+          nodes {{ id databaseId body author {{ login }} createdAt updatedAt }}
+          pageInfo {{ hasNextPage endCursor }}
+        }}
+      }}
+    }}
+  }}
+"""
+
+
+def _review_thread_record(client: GhClient, raw: Mapping[str, Any], pull_number: int) -> dict[str, Any]:
+    thread_id = _node_identity(raw, f"PR #{pull_number} review thread")
+    if not isinstance(raw.get("isResolved"), bool) or not isinstance(raw.get("isOutdated"), bool):
+        raise TransferCaptureError(f"PR #{pull_number} review thread state is malformed")
+    return {
+        "id": thread_id,
+        "is_resolved": raw["isResolved"],
+        "is_outdated": raw["isOutdated"],
+        "path": raw.get("path"),
+        "line": raw.get("line"),
+        "start_line": raw.get("startLine"),
+        "original_line": raw.get("originalLine"),
+        "original_start_line": raw.get("originalStartLine"),
+        "diff_side": raw.get("diffSide"),
+        "comments": _collect_comments(
+            client,
+            node_id=thread_id,
+            first_page=raw.get("comments"),
+            label=f"PR #{pull_number} review comments",
+            query=_REVIEW_COMMENT_QUERY,
         ),
     }
+
+
+_REVIEW_THREAD_QUERY = f"""
+  query($node: ID!, $after: String) {{
+    node(id: $node) {{
+      ... on PullRequest {{
+        reviewThreads(first: {_REVIEW_PAGE_SIZE}, after: $after) {{
+          totalCount
+          nodes {{
+            id isResolved isOutdated path line startLine originalLine originalStartLine diffSide
+            comments(first: {_REVIEW_PAGE_SIZE}) {{
+              totalCount
+              nodes {{ id databaseId body author {{ login }} createdAt updatedAt }}
+              pageInfo {{ hasNextPage endCursor }}
+            }}
+          }}
+          pageInfo {{ hasNextPage endCursor }}
+        }}
+      }}
+    }}
+  }}
+"""
+
+
+def _collect_review_threads(
+    client: GhClient,
+    *,
+    pull_id: str,
+    pull_number: int,
+    first_page: Any,
+) -> list[dict[str, Any]]:
+    connection = first_page
+    expected_total: int | None = None
+    threads: list[dict[str, Any]] = []
+    identities: set[str] = set()
+    while True:
+        nodes, total_count, has_next, cursor = _connection_page(
+            connection,
+            f"PR #{pull_number} review threads",
+        )
+        if expected_total is None:
+            expected_total = total_count
+        elif total_count != expected_total:
+            raise TransferCaptureError(f"PR #{pull_number} review thread total changed during capture")
+        for raw in nodes:
+            record = _review_thread_record(client, raw, pull_number)
+            if record["id"] in identities:
+                raise TransferCaptureError(f"PR #{pull_number} review pagination contains duplicate identities")
+            identities.add(record["id"])
+            threads.append(record)
+        if not has_next:
+            break
+        data = client.graphql(_REVIEW_THREAD_QUERY, {"node": pull_id, "after": cursor})
+        node = data.get("node")
+        if not isinstance(node, Mapping):
+            raise TransferCaptureError(f"PR #{pull_number} review pagination omitted pull request")
+        connection = node.get("reviewThreads")
+    if expected_total != len(threads):
+        raise TransferCaptureError(f"PR #{pull_number} review pagination count mismatch")
+    return sorted(threads, key=lambda value: value["id"])
+
+
+def _pull_request_record(client: GhClient, raw: Mapping[str, Any]) -> dict[str, Any]:
+    pull_id = _node_identity(raw, "pull request")
+    database_id = _database_identity(raw, "pull request")
+    number = raw.get("number")
+    state = raw.get("state")
+    if not isinstance(number, int) or number <= 0 or state not in {"OPEN", "CLOSED", "MERGED"}:
+        raise TransferCaptureError("pull request number or lifecycle state is malformed")
+    head_sha = raw.get("headRefOid")
+    base_sha = raw.get("baseRefOid")
+    if not isinstance(head_sha, str) or _OID_RE.fullmatch(head_sha) is None:
+        raise TransferCaptureError(f"PR #{number} omitted its exact head")
+    if not isinstance(base_sha, str) or _OID_RE.fullmatch(base_sha) is None:
+        raise TransferCaptureError(f"PR #{number} omitted its exact base")
+    merge_commit = raw.get("mergeCommit")
+    if merge_commit is not None and not isinstance(merge_commit, Mapping):
+        raise TransferCaptureError(f"PR #{number} merge commit is malformed")
+    merge_sha = merge_commit.get("oid") if isinstance(merge_commit, Mapping) else None
+    if merge_sha is not None and (not isinstance(merge_sha, str) or _OID_RE.fullmatch(merge_sha) is None):
+        raise TransferCaptureError(f"PR #{number} merge commit identity is malformed")
+    merged_at = _optional_timestamp(raw.get("mergedAt"), f"PR #{number} merged")
+    if state == "MERGED" and (merged_at is None or merge_sha is None):
+        raise TransferCaptureError(f"PR #{number} merged lifecycle evidence is incomplete")
+    if not isinstance(raw.get("isDraft"), bool):
+        raise TransferCaptureError(f"PR #{number} draft state is malformed")
+    head_repository = raw.get("headRepository")
+    if head_repository is not None and not isinstance(head_repository, Mapping):
+        raise TransferCaptureError(f"PR #{number} head repository is malformed")
+    return {
+        "number": number,
+        "id": pull_id,
+        "database_id": database_id,
+        "state": state.lower(),
+        "is_draft": raw["isDraft"],
+        "review_decision": raw.get("reviewDecision"),
+        "author": _author_login(raw.get("author"), f"PR #{number}"),
+        "title_sha256": _body_digest(raw.get("title"), f"PR #{number} title"),
+        "body_sha256": _body_digest(raw.get("body"), f"PR #{number} body"),
+        "created_at": _required_timestamp(raw.get("createdAt"), f"PR #{number} created"),
+        "updated_at": _required_timestamp(raw.get("updatedAt"), f"PR #{number} updated"),
+        "closed_at": _optional_timestamp(raw.get("closedAt"), f"PR #{number} closed"),
+        "merged_at": merged_at,
+        "merge_sha": merge_sha,
+        "head_sha": head_sha,
+        "head_ref": raw.get("headRefName"),
+        "head_repository": head_repository.get("nameWithOwner") if isinstance(head_repository, Mapping) else None,
+        "base_sha": base_sha,
+        "base_ref": raw.get("baseRefName"),
+        "milestone": _milestone_record(raw.get("milestone"), f"PR #{number}"),
+        "review_threads": _collect_review_threads(
+            client,
+            pull_id=pull_id,
+            pull_number=number,
+            first_page=raw.get("reviewThreads"),
+        ),
+    }
+
+
+_PULL_REQUESTS_QUERY = f"""
+  query($owner: String!, $repo: String!, $after: String) {{
+    repository(owner: $owner, name: $repo) {{
+      pullRequests(
+        first: {_PULL_REQUEST_PAGE_SIZE}
+        after: $after
+        states: [OPEN, CLOSED, MERGED]
+        orderBy: {{field: CREATED_AT, direction: ASC}}
+      ) {{
+        totalCount
+        nodes {{
+          id databaseId number state isDraft reviewDecision title body createdAt updatedAt closedAt mergedAt
+          author {{ login }}
+          headRefOid headRefName headRepository {{ nameWithOwner }}
+          baseRefOid baseRefName mergeCommit {{ oid }}
+          milestone {{ id number title description state dueOn createdAt updatedAt closedAt }}
+          reviewThreads(first: {_REVIEW_PAGE_SIZE}) {{
+            totalCount
+            nodes {{
+              id isResolved isOutdated path line startLine originalLine originalStartLine diffSide
+              comments(first: {_REVIEW_PAGE_SIZE}) {{
+                totalCount
+                nodes {{ id databaseId body author {{ login }} createdAt updatedAt }}
+                pageInfo {{ hasNextPage endCursor }}
+              }}
+            }}
+            pageInfo {{ hasNextPage endCursor }}
+          }}
+        }}
+        pageInfo {{ hasNextPage endCursor }}
+      }}
+    }}
+  }}
+"""
+
+
+def collect_pull_requests(client: GhClient, owner: str, repo: str) -> list[dict[str, Any]]:
+    cursor: str | None = None
+    expected_total: int | None = None
+    pulls: list[dict[str, Any]] = []
+    node_ids: set[str] = set()
+    numbers: set[int] = set()
+    while True:
+        data = client.graphql(_PULL_REQUESTS_QUERY, {"owner": owner, "repo": repo, "after": cursor})
+        repository = data.get("repository")
+        if not isinstance(repository, Mapping):
+            raise TransferCaptureError("pull request pagination omitted repository")
+        nodes, total_count, has_next, cursor = _connection_page(
+            repository.get("pullRequests"),
+            "pull requests",
+        )
+        if expected_total is None:
+            expected_total = total_count
+        elif total_count != expected_total:
+            raise TransferCaptureError("pull request pagination total changed during capture")
+        for raw in nodes:
+            record = _pull_request_record(client, raw)
+            if record["id"] in node_ids or record["number"] in numbers:
+                raise TransferCaptureError("pull request pagination contains duplicate identities")
+            node_ids.add(record["id"])
+            numbers.add(record["number"])
+            pulls.append(record)
+        if not has_next:
+            break
+    if expected_total != len(pulls):
+        raise TransferCaptureError("pull request pagination count mismatch")
+    return sorted(pulls, key=lambda value: value["number"])
+
+
+def _issue_named_values(
+    client: GhClient,
+    *,
+    issue_id: str,
+    issue_number: int,
+    field: str,
+    first_page: Any,
+) -> list[str]:
+    if field not in {"assignees", "labels"}:
+        raise ValueError("unsupported issue connection")
+    value_field = "login" if field == "assignees" else "name"
+    query = f"""
+      query($node: ID!, $after: String) {{
+        node(id: $node) {{
+          ... on Issue {{
+            {field}(first: {_ISSUE_PAGE_SIZE}, after: $after) {{
+              totalCount
+              nodes {{ id {value_field} }}
+              pageInfo {{ hasNextPage endCursor }}
+            }}
+          }}
+        }}
+      }}
+    """
+    connection = first_page
+    expected_total: int | None = None
+    identities: set[str] = set()
+    values: list[str] = []
+    while True:
+        nodes, total_count, has_next, cursor = _connection_page(
+            connection,
+            f"issue #{issue_number} {field}",
+        )
+        if expected_total is None:
+            expected_total = total_count
+        elif total_count != expected_total:
+            raise TransferCaptureError(f"issue #{issue_number} {field} total changed during capture")
+        for raw in nodes:
+            identity = _node_identity(raw, f"issue #{issue_number} {field}")
+            value = raw.get(value_field)
+            if identity in identities or not isinstance(value, str) or not value:
+                raise TransferCaptureError(f"issue #{issue_number} {field} contain invalid identities")
+            identities.add(identity)
+            values.append(value)
+        if not has_next:
+            break
+        data = client.graphql(query, {"node": issue_id, "after": cursor})
+        node = data.get("node")
+        if not isinstance(node, Mapping):
+            raise TransferCaptureError(f"issue #{issue_number} {field} pagination omitted issue")
+        connection = node.get(field)
+    if expected_total != len(values) or len({value.casefold() for value in values}) != len(values):
+        raise TransferCaptureError(f"issue #{issue_number} {field} pagination count or identity mismatch")
+    return sorted(values, key=str.casefold)
+
+
+def _issue_record(client: GhClient, raw: Mapping[str, Any]) -> dict[str, Any]:
+    issue_id = _node_identity(raw, "issue")
+    database_id = _database_identity(raw, "issue")
+    number = raw.get("number")
+    state = raw.get("state")
+    if not isinstance(number, int) or number <= 0 or state not in {"OPEN", "CLOSED"}:
+        raise TransferCaptureError("issue number or lifecycle state is malformed")
+    if not isinstance(raw.get("locked"), bool):
+        raise TransferCaptureError(f"issue #{number} lock state is malformed")
+    issue_type = raw.get("issueType")
+    if issue_type is not None:
+        if not isinstance(issue_type, Mapping):
+            raise TransferCaptureError(f"issue #{number} type is malformed")
+        type_id = _node_identity(issue_type, f"issue #{number} type")
+        type_name = issue_type.get("name")
+        if not isinstance(type_name, str) or not type_name:
+            raise TransferCaptureError(f"issue #{number} type name is malformed")
+        normalized_type: dict[str, Any] | None = {"id": type_id, "name": type_name}
+    else:
+        normalized_type = None
+    comments = _collect_comments(
+        client,
+        node_id=issue_id,
+        first_page=raw.get("comments"),
+        label=f"issue #{number} comments",
+        query=_ISSUE_COMMENT_QUERY,
+    )
+    return {
+        "number": number,
+        "id": issue_id,
+        "database_id": database_id,
+        "state": state.lower(),
+        "state_reason": raw.get("stateReason"),
+        "locked": raw["locked"],
+        "author": _author_login(raw.get("author"), f"issue #{number}"),
+        "title_sha256": _body_digest(raw.get("title"), f"issue #{number} title"),
+        "body_sha256": _body_digest(raw.get("body"), f"issue #{number} body"),
+        "created_at": _required_timestamp(raw.get("createdAt"), f"issue #{number} created"),
+        "updated_at": _required_timestamp(raw.get("updatedAt"), f"issue #{number} updated"),
+        "closed_at": _optional_timestamp(raw.get("closedAt"), f"issue #{number} closed"),
+        "issue_type": normalized_type,
+        "milestone": _milestone_record(raw.get("milestone"), f"issue #{number}"),
+        "assignees": _issue_named_values(
+            client,
+            issue_id=issue_id,
+            issue_number=number,
+            field="assignees",
+            first_page=raw.get("assignees"),
+        ),
+        "labels": _issue_named_values(
+            client,
+            issue_id=issue_id,
+            issue_number=number,
+            field="labels",
+            first_page=raw.get("labels"),
+        ),
+        "comments": comments,
+    }
+
+
+_ISSUES_QUERY = f"""
+  query($owner: String!, $repo: String!, $after: String) {{
+    repository(owner: $owner, name: $repo) {{
+      issues(
+        first: {_ISSUE_PAGE_SIZE}
+        after: $after
+        states: [OPEN, CLOSED]
+        orderBy: {{field: CREATED_AT, direction: ASC}}
+      ) {{
+        totalCount
+        nodes {{
+          id databaseId number state stateReason locked title body createdAt updatedAt closedAt
+          author {{ login }}
+          issueType {{ id name }}
+          milestone {{ id number title description state dueOn createdAt updatedAt closedAt }}
+          assignees(first: {_ISSUE_PAGE_SIZE}) {{
+            totalCount nodes {{ id login }} pageInfo {{ hasNextPage endCursor }}
+          }}
+          labels(first: {_ISSUE_PAGE_SIZE}) {{
+            totalCount nodes {{ id name }} pageInfo {{ hasNextPage endCursor }}
+          }}
+          comments(first: {_ISSUE_PAGE_SIZE}) {{
+            totalCount
+            nodes {{ id databaseId body author {{ login }} createdAt updatedAt }}
+            pageInfo {{ hasNextPage endCursor }}
+          }}
+        }}
+        pageInfo {{ hasNextPage endCursor }}
+      }}
+    }}
+  }}
+"""
+
+
+def collect_issues(client: GhClient, owner: str, repo: str) -> list[dict[str, Any]]:
+    cursor: str | None = None
+    expected_total: int | None = None
+    issues: list[dict[str, Any]] = []
+    node_ids: set[str] = set()
+    numbers: set[int] = set()
+    while True:
+        data = client.graphql(_ISSUES_QUERY, {"owner": owner, "repo": repo, "after": cursor})
+        repository = data.get("repository")
+        if not isinstance(repository, Mapping):
+            raise TransferCaptureError("issue pagination omitted repository")
+        nodes, total_count, has_next, cursor = _connection_page(repository.get("issues"), "issues")
+        if expected_total is None:
+            expected_total = total_count
+        elif total_count != expected_total:
+            raise TransferCaptureError("issue pagination total changed during capture")
+        for raw in nodes:
+            record = _issue_record(client, raw)
+            if record["id"] in node_ids or record["number"] in numbers:
+                raise TransferCaptureError("issue pagination contains duplicate identities")
+            node_ids.add(record["id"])
+            numbers.add(record["number"])
+            issues.append(record)
+        if not has_next:
+            break
+    if expected_total != len(issues):
+        raise TransferCaptureError("issue pagination count mismatch")
+    return sorted(issues, key=lambda value: value["number"])
 
 
 def _release_record(raw: Mapping[str, Any]) -> dict[str, Any]:
@@ -825,30 +1279,8 @@ def capture_github_manifest(
     branches = sorted((_ref_record(value) for value in branches_raw), key=lambda item: str(item["ref"]))
     tags = sorted((_ref_record(value) for value in tags_raw), key=lambda item: str(item["ref"]))
 
-    pulls_raw = client.list(f"/repos/{coordinate}/pulls?state=open&per_page=100")
-    pulls: list[dict[str, Any]] = []
-    for raw in sorted(pulls_raw, key=lambda item: int(item["number"])):
-        number = int(raw["number"])
-        head = raw.get("head") or {}
-        head_repo = head.get("repo") or {}
-        pulls.append(
-            {
-                "number": number,
-                "id": raw.get("id"),
-                "node_id": raw.get("node_id"),
-                "head_sha": head.get("sha"),
-                "head_ref": head.get("ref"),
-                "head_repository": head_repo.get("full_name"),
-                "base_sha": (raw.get("base") or {}).get("sha"),
-                "review_threads": collect_review_threads(client, owner, repo, number),
-            }
-        )
-
-    all_issues_raw = client.list(f"/repos/{coordinate}/issues?state=all&per_page=100")
-    issues = sorted(
-        (_issue_record(value) for value in all_issues_raw if not value.get("pull_request")),
-        key=lambda item: int(item["number"]),
-    )
+    pulls = collect_pull_requests(client, owner, repo)
+    issues = collect_issues(client, owner, repo)
     issue_types = client.optional_list(f"/orgs/{owner}/issue-types?per_page=100")
 
     branch_rows = client.list(f"/repos/{coordinate}/branches?per_page=100")
@@ -927,7 +1359,7 @@ def capture_github_manifest(
         "default_sha": default_sha,
         "refs": {"branches": branches, "tags": tags},
         "releases": releases,
-        "open_pull_requests": pulls,
+        "pull_requests": pulls,
         "issues": {
             "count": len(issues),
             "numbers": [value["number"] for value in issues],
@@ -1149,7 +1581,7 @@ def bind_bundle_to_github_manifest(
     github: Mapping[str, Any],
     bundle: Mapping[str, Any] | None,
 ) -> dict[str, Any] | None:
-    """Require the restored bundle to contain every captured branch, tag, and open-PR tip."""
+    """Require the restored bundle to contain every captured branch, tag, and PR tip."""
 
     if bundle is None:
         return None
@@ -1171,12 +1603,25 @@ def bind_bundle_to_github_manifest(
         for row in (github.get("refs") or {}).get(section) or []:
             if isinstance(row, Mapping) and isinstance(row.get("ref"), str) and isinstance(row.get("tip"), str):
                 expected[row["ref"]] = row["tip"]
-    for pull_request in github.get("open_pull_requests") or []:
-        if isinstance(pull_request, Mapping):
-            number = pull_request.get("number")
-            head_sha = pull_request.get("head_sha")
-            if isinstance(number, int) and isinstance(head_sha, str):
-                expected[f"refs/pull/{number}/head"] = head_sha
+    pull_requests = github.get("pull_requests")
+    if not isinstance(pull_requests, list):
+        raise TransferCaptureError("GitHub manifest omitted its all-state pull-request census")
+    pull_numbers: set[int] = set()
+    for pull_request in pull_requests:
+        if not isinstance(pull_request, Mapping):
+            raise TransferCaptureError("GitHub pull-request census contains a non-object row")
+        number = pull_request.get("number")
+        head_sha = pull_request.get("head_sha")
+        if (
+            not isinstance(number, int)
+            or number <= 0
+            or number in pull_numbers
+            or not isinstance(head_sha, str)
+            or _OID_RE.fullmatch(head_sha) is None
+        ):
+            raise TransferCaptureError("GitHub pull-request census contains an invalid identity or head")
+        pull_numbers.add(number)
+        expected[f"refs/pull/{number}/head"] = head_sha
     default_branch = str((github.get("repository_settings") or {}).get("default_branch") or "")
     if expected.get(f"refs/heads/{default_branch}") != github.get("default_sha"):
         raise TransferCaptureError("GitHub default SHA differs from its captured branch ref")
@@ -1534,7 +1979,11 @@ def build_manifest(
 
 def public_receipt(manifest: Mapping[str, Any], manifest_sha256: str) -> dict[str, Any]:
     github = manifest["github"]
-    threads = [thread for pull_request in github["open_pull_requests"] for thread in pull_request["review_threads"]]
+    pull_requests = github["pull_requests"]
+    threads = [thread for pull_request in pull_requests for thread in pull_request["review_threads"]]
+    review_comments = [comment for thread in threads for comment in thread["comments"]]
+    issues = github["issues"]["records"]
+    issue_comments = [comment for issue in issues for comment in issue["comments"]]
     workflow_states = github["actions"]["workflow_states"]
     disabled_workflows = sum(value.get("state") == "disabled_manually" for value in workflow_states)
     apps = github.get("apps") or {}
@@ -1554,13 +2003,20 @@ def public_receipt(manifest: Mapping[str, Any], manifest_sha256: str) -> dict[st
             "branches": len(github["refs"]["branches"]),
             "tags": len(github["refs"]["tags"]),
             "releases": len(github["releases"]),
-            "issues": github["issues"]["count"],
-            "open_pull_requests": len(github["open_pull_requests"]),
-            "review_threads": len(threads),
-            "unresolved_current_review_threads": sum(
+            "issues_total": github["issues"]["count"],
+            "issues_open": sum(value["state"] == "open" for value in issues),
+            "issues_closed": sum(value["state"] == "closed" for value in issues),
+            "issue_comments_total": len(issue_comments),
+            "pull_requests_total": len(pull_requests),
+            "pull_requests_open": sum(value["state"] == "open" for value in pull_requests),
+            "pull_requests_closed": sum(value["state"] == "closed" for value in pull_requests),
+            "pull_requests_merged": sum(value["state"] == "merged" for value in pull_requests),
+            "review_threads_total": len(threads),
+            "review_comments_total": len(review_comments),
+            "review_threads_unresolved_current": sum(
                 not value["is_resolved"] and not value["is_outdated"] for value in threads
             ),
-            "unresolved_outdated_review_threads": sum(
+            "review_threads_unresolved_outdated": sum(
                 not value["is_resolved"] and value["is_outdated"] for value in threads
             ),
             "workflows": len(github["actions"]["workflow_states"]),

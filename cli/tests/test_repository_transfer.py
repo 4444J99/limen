@@ -15,6 +15,8 @@ from limen.repository_transfer import (
     bind_bundle_to_github_manifest,
     canonical_sha256,
     capture_protected_state,
+    collect_issues,
+    collect_pull_requests,
     compare_manifests,
     file_sha256,
     invariant_projection,
@@ -31,6 +33,314 @@ def test_gh_client_fails_closed_on_incomplete_pagination_shape() -> None:
 
     with pytest.raises(TransferCaptureError, match="expected list page"):
         GhClient(runner=runner).list("/repos/example/repo/issues")
+
+
+def _graphql_connection(
+    nodes: list[dict[str, Any]],
+    *,
+    total: int | None = None,
+    has_next: bool = False,
+    cursor: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "totalCount": len(nodes) if total is None else total,
+        "nodes": nodes,
+        "pageInfo": {"hasNextPage": has_next, "endCursor": cursor},
+    }
+
+
+def _review_comment(index: int, *, thread: int = 1) -> dict[str, Any]:
+    return {
+        "id": f"review-comment-{thread}-{index}",
+        "databaseId": thread * 10_000 + index,
+        "body": f"review body {thread}/{index}",
+        "author": {"login": "reviewer"},
+        "createdAt": "2026-08-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+    }
+
+
+def _review_thread(index: int, *, comments: dict[str, Any] | None = None) -> dict[str, Any]:
+    return {
+        "id": f"review-thread-{index}",
+        "isResolved": index % 2 == 0,
+        "isOutdated": False,
+        "path": "cli/src/limen/repository_transfer.py",
+        "line": index,
+        "startLine": None,
+        "originalLine": index,
+        "originalStartLine": None,
+        "diffSide": "RIGHT",
+        "comments": comments if comments is not None else _graphql_connection([]),
+    }
+
+
+def _pull_request_node(
+    number: int,
+    *,
+    state: str = "OPEN",
+    review_threads: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    closed_at = None if state == "OPEN" else "2026-08-03T00:00:00Z"
+    merged_at = "2026-08-03T00:00:00Z" if state == "MERGED" else None
+    return {
+        "id": f"pull-{number}",
+        "databaseId": number,
+        "number": number,
+        "state": state,
+        "isDraft": False,
+        "title": f"Pull request {number}",
+        "body": f"Pull body {number}",
+        "createdAt": "2026-08-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "closedAt": closed_at,
+        "mergedAt": merged_at,
+        "author": {"login": "author"},
+        "headRefOid": f"{number:040x}",
+        "headRefName": f"topic-{number}",
+        "headRepository": {"nameWithOwner": "4444J99/limen"},
+        "baseRefOid": "f" * 40,
+        "baseRefName": "main",
+        "mergeCommit": {"oid": "e" * 40} if state == "MERGED" else None,
+        "milestone": None,
+        "reviewThreads": review_threads if review_threads is not None else _graphql_connection([]),
+    }
+
+
+def _issue_comment(index: int) -> dict[str, Any]:
+    return {
+        "id": f"issue-comment-{index}",
+        "databaseId": index,
+        "body": f"issue comment {index}",
+        "author": {"login": "commenter"},
+        "createdAt": "2026-08-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+    }
+
+
+def _issue_node(number: int, *, comments: dict[str, Any] | None = None) -> dict[str, Any]:
+    return {
+        "id": f"issue-{number}",
+        "databaseId": number,
+        "number": number,
+        "state": "CLOSED",
+        "stateReason": "COMPLETED",
+        "locked": False,
+        "title": f"Issue {number}",
+        "body": f"Issue body {number}",
+        "createdAt": "2026-08-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "closedAt": "2026-08-03T00:00:00Z",
+        "author": {"login": "author"},
+        "issueType": {"id": "issue-type-1", "name": "Bug"},
+        "milestone": {
+            "id": "milestone-1",
+            "number": 1,
+            "title": "Release",
+            "description": "Release description",
+            "state": "CLOSED",
+            "dueOn": "2026-08-31T00:00:00Z",
+            "createdAt": "2026-08-01T00:00:00Z",
+            "updatedAt": "2026-08-02T00:00:00Z",
+            "closedAt": "2026-08-03T00:00:00Z",
+        },
+        "assignees": _graphql_connection([{"id": "user-1", "login": "assignee"}]),
+        "labels": _graphql_connection([{"id": "label-1", "name": "bug"}]),
+        "comments": comments if comments is not None else _graphql_connection([]),
+    }
+
+
+def test_pull_request_census_includes_all_states_and_follows_only_overflowing_nested_cursors() -> None:
+    first_comments = _graphql_connection(
+        [_review_comment(index) for index in range(1, 21)],
+        total=21,
+        has_next=True,
+        cursor="review-comments-20",
+    )
+    first_threads = _graphql_connection(
+        [_review_thread(index, comments=first_comments if index == 1 else None) for index in range(1, 21)],
+        total=21,
+        has_next=True,
+        cursor="review-threads-20",
+    )
+
+    class Client:
+        def __init__(self) -> None:
+            self.calls: list[dict[str, Any]] = []
+
+        def graphql(self, query: str, variables: dict[str, Any]) -> dict[str, Any]:
+            self.calls.append(dict(variables))
+            if "pullRequests(" in query:
+                return {
+                    "repository": {
+                        "pullRequests": _graphql_connection(
+                            [
+                                _pull_request_node(1, review_threads=first_threads),
+                                _pull_request_node(2, state="CLOSED"),
+                                _pull_request_node(3, state="MERGED"),
+                            ]
+                        )
+                    }
+                }
+            if "... on PullRequestReviewThread" in query:
+                assert variables == {"node": "review-thread-1", "after": "review-comments-20"}
+                return {"node": {"comments": _graphql_connection([_review_comment(21)], total=21)}}
+            if "... on PullRequest" in query:
+                assert variables == {"node": "pull-1", "after": "review-threads-20"}
+                return {"node": {"reviewThreads": _graphql_connection([_review_thread(21)], total=21)}}
+            raise AssertionError("unexpected GraphQL query")
+
+    client = Client()
+    pulls = collect_pull_requests(client, "4444J99", "limen")
+
+    assert [pull["state"] for pull in pulls] == ["open", "closed", "merged"]
+    assert len(pulls[0]["review_threads"]) == 21
+    assert len(pulls[0]["review_threads"][0]["comments"]) == 21
+    assert pulls[0]["title_sha256"] == transfer.hashlib.sha256(b"Pull request 1").hexdigest()
+    assert pulls[0]["body_sha256"] == transfer.hashlib.sha256(b"Pull body 1").hexdigest()
+    assert len(client.calls) == 3
+
+
+def test_101_pull_requests_use_three_outer_requests_without_n_plus_one_calls() -> None:
+    pulls = [_pull_request_node(number) for number in range(1, 102)]
+    pages = {
+        None: _graphql_connection(pulls[:50], total=101, has_next=True, cursor="pull-50"),
+        "pull-50": _graphql_connection(pulls[50:100], total=101, has_next=True, cursor="pull-100"),
+        "pull-100": _graphql_connection(pulls[100:], total=101),
+    }
+
+    class Client:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def graphql(self, query: str, variables: dict[str, Any]) -> dict[str, Any]:
+            assert "states: [OPEN, CLOSED, MERGED]" in query
+            self.calls += 1
+            return {"repository": {"pullRequests": pages[variables["after"]]}}
+
+    client = Client()
+    result = collect_pull_requests(client, "4444J99", "limen")
+
+    assert len(result) == 101
+    assert client.calls == 3
+
+
+@pytest.mark.parametrize(
+    ("connection", "message"),
+    [
+        (_graphql_connection([_pull_request_node(1)], total=2), "count mismatch"),
+        (
+            _graphql_connection([_pull_request_node(1)], total=2, has_next=True, cursor=None),
+            "omitted end cursor",
+        ),
+        (
+            _graphql_connection([_pull_request_node(1), _pull_request_node(1)], total=2),
+            "duplicate identities",
+        ),
+    ],
+)
+def test_pull_request_outer_pagination_fails_closed_on_count_cursor_or_identity_errors(
+    connection: dict[str, Any],
+    message: str,
+) -> None:
+    class Client:
+        def graphql(self, _query: str, _variables: dict[str, Any]) -> dict[str, Any]:
+            return {"repository": {"pullRequests": connection}}
+
+    with pytest.raises(TransferCaptureError, match=message):
+        collect_pull_requests(Client(), "4444J99", "limen")
+
+
+def test_nested_review_pagination_requires_an_overflow_cursor() -> None:
+    nested = _graphql_connection([_review_thread(1)], total=2, has_next=True, cursor=None)
+
+    class Client:
+        def graphql(self, _query: str, _variables: dict[str, Any]) -> dict[str, Any]:
+            return {"repository": {"pullRequests": _graphql_connection([_pull_request_node(1, review_threads=nested)])}}
+
+    with pytest.raises(TransferCaptureError, match="review threads pagination omitted end cursor"):
+        collect_pull_requests(Client(), "4444J99", "limen")
+
+
+def test_issue_census_hashes_content_normalizes_milestones_and_paginates_comments() -> None:
+    first_comments = _graphql_connection(
+        [_issue_comment(index) for index in range(1, 51)],
+        total=51,
+        has_next=True,
+        cursor="issue-comments-50",
+    )
+
+    class Client:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def graphql(self, query: str, variables: dict[str, Any]) -> dict[str, Any]:
+            self.calls += 1
+            if "issues(" in query:
+                return {"repository": {"issues": _graphql_connection([_issue_node(7, comments=first_comments)])}}
+            assert "... on Issue" in query
+            assert variables == {"node": "issue-7", "after": "issue-comments-50"}
+            return {"node": {"comments": _graphql_connection([_issue_comment(51)], total=51)}}
+
+    client = Client()
+    issues = collect_issues(client, "4444J99", "limen")
+
+    assert len(issues) == 1
+    assert issues[0]["title_sha256"] == transfer.hashlib.sha256(b"Issue 7").hexdigest()
+    assert issues[0]["body_sha256"] == transfer.hashlib.sha256(b"Issue body 7").hexdigest()
+    assert issues[0]["milestone"] == {
+        "id": "milestone-1",
+        "number": 1,
+        "state": "closed",
+        "title_sha256": transfer.hashlib.sha256(b"Release").hexdigest(),
+        "description_sha256": transfer.hashlib.sha256(b"Release description").hexdigest(),
+        "due_on": "2026-08-31T00:00:00Z",
+        "created_at": "2026-08-01T00:00:00Z",
+        "updated_at": "2026-08-02T00:00:00Z",
+        "closed_at": "2026-08-03T00:00:00Z",
+    }
+    assert len(issues[0]["comments"]) == 51
+    assert client.calls == 2
+
+
+@pytest.mark.parametrize(
+    ("comments", "message"),
+    [
+        (
+            _graphql_connection([_issue_comment(1)], total=2, has_next=True, cursor=None),
+            "comments pagination omitted end cursor",
+        ),
+        (_graphql_connection([_issue_comment(1)], total=2), "comments pagination count mismatch"),
+    ],
+)
+def test_issue_comment_pagination_fails_closed_on_cursor_or_count_errors(
+    comments: dict[str, Any],
+    message: str,
+) -> None:
+    class Client:
+        def graphql(self, _query: str, _variables: dict[str, Any]) -> dict[str, Any]:
+            return {"repository": {"issues": _graphql_connection([_issue_node(1, comments=comments)])}}
+
+    with pytest.raises(TransferCaptureError, match=message):
+        collect_issues(Client(), "4444J99", "limen")
+
+
+def test_issue_comment_pagination_rejects_duplicate_nested_identity() -> None:
+    first = _graphql_connection(
+        [_issue_comment(1)],
+        total=2,
+        has_next=True,
+        cursor="comment-1",
+    )
+
+    class Client:
+        def graphql(self, query: str, _variables: dict[str, Any]) -> dict[str, Any]:
+            if "issues(" in query:
+                return {"repository": {"issues": _graphql_connection([_issue_node(1, comments=first)])}}
+            return {"node": {"comments": _graphql_connection([_issue_comment(1)], total=2)}}
+
+    with pytest.raises(TransferCaptureError, match="duplicate identities"):
+        collect_issues(Client(), "4444J99", "limen")
 
 
 @pytest.mark.parametrize(
@@ -352,6 +662,48 @@ def test_transfer_comparison_ignores_only_coordinate_and_observation_time() -> N
     assert compare_manifests(manifest, after) == ["transfer invariant changed: github"]
 
 
+@pytest.mark.parametrize("surface", ["pull_request_body", "issue_title", "issue_comment_body"])
+def test_transfer_comparison_rejects_captured_content_digest_changes(surface: str) -> None:
+    manifest = {
+        "captured_at": "before",
+        "identity": LIMEN_REPOSITORY_IDENTITY.model_dump(mode="json"),
+        "github": {
+            "observed_coordinate": "organvm/limen",
+            "repository_settings": {"name": "limen", "full_name": "organvm/limen"},
+            "pull_requests": [
+                {
+                    "number": 1,
+                    "title_sha256": "a" * 64,
+                    "body_sha256": "b" * 64,
+                    "review_threads": [],
+                }
+            ],
+            "issues": {
+                "count": 1,
+                "records": [
+                    {
+                        "number": 2,
+                        "title_sha256": "c" * 64,
+                        "body_sha256": "d" * 64,
+                        "comments": [{"id": "comment-1", "body_sha256": "e" * 64}],
+                    }
+                ],
+            },
+        },
+        "protected_state": {"checkouts": {}, "paths": {}},
+        "git_bundle": {"sha256": "f" * 64},
+    }
+    after = json.loads(json.dumps(manifest))
+    if surface == "pull_request_body":
+        after["github"]["pull_requests"][0]["body_sha256"] = "0" * 64
+    elif surface == "issue_title":
+        after["github"]["issues"]["records"][0]["title_sha256"] = "0" * 64
+    else:
+        after["github"]["issues"]["records"][0]["comments"][0]["body_sha256"] = "0" * 64
+
+    assert compare_manifests(manifest, after) == ["transfer invariant changed: github"]
+
+
 def _org_transfer_manifest() -> dict[str, Any]:
     return {
         "captured_at": "before",
@@ -564,14 +916,23 @@ def test_public_receipt_contains_digests_and_denominators_not_private_state(tmp_
             "default_sha": "a" * 40,
             "refs": {"branches": [{"ref": "refs/heads/main"}], "tags": []},
             "releases": [],
-            "issues": {"count": 2},
-            "open_pull_requests": [
+            "issues": {
+                "count": 2,
+                "records": [
+                    {"state": "open", "comments": [{"body_sha256": "sensitive-comment-digest"}]},
+                    {"state": "closed", "comments": []},
+                ],
+            },
+            "pull_requests": [
                 {
+                    "state": "open",
                     "review_threads": [
-                        {"is_resolved": False, "is_outdated": False},
-                        {"is_resolved": False, "is_outdated": True},
-                    ]
-                }
+                        {"is_resolved": False, "is_outdated": False, "comments": [{}]},
+                        {"is_resolved": False, "is_outdated": True, "comments": []},
+                    ],
+                },
+                {"state": "closed", "review_threads": []},
+                {"state": "merged", "review_threads": []},
             ],
             "actions": {"workflow_states": []},
             "apps": {"available": False},
@@ -594,15 +955,22 @@ def test_public_receipt_contains_digests_and_denominators_not_private_state(tmp_
     receipt = public_receipt(manifest, canonical_sha256(manifest))
 
     rendered = json.dumps(receipt)
-    assert receipt["denominators"]["review_threads"] == 2
-    assert receipt["denominators"]["unresolved_current_review_threads"] == 1
-    assert receipt["denominators"]["unresolved_outdated_review_threads"] == 1
+    assert receipt["denominators"]["pull_requests_total"] == 3
+    assert receipt["denominators"]["pull_requests_open"] == 1
+    assert receipt["denominators"]["pull_requests_closed"] == 1
+    assert receipt["denominators"]["pull_requests_merged"] == 1
+    assert receipt["denominators"]["review_threads_total"] == 2
+    assert receipt["denominators"]["review_comments_total"] == 1
+    assert receipt["denominators"]["review_threads_unresolved_current"] == 1
+    assert receipt["denominators"]["review_threads_unresolved_outdated"] == 1
+    assert receipt["denominators"]["issue_comments_total"] == 1
     assert receipt["denominators"]["direct_access_grants"] == 0
     assert receipt["denominators"]["team_access_grants"] == 0
     assert receipt["denominators"]["pending_access_invitations"] == 0
     assert "secret" not in rendered
     assert "state_digest" not in rendered
     assert "tree_sha256" not in rendered
+    assert "sensitive-comment-digest" not in rendered
     assert "agy" not in rendered
     assert "opencode" not in rendered
 
@@ -745,7 +1113,7 @@ def test_bundle_refresh_replace_interruption_preserves_the_previous_verified_bun
     assert list(tmp_path.iterdir()) == [bundle]
 
 
-def test_verified_bundle_is_bound_to_every_github_ref_and_open_pr_head() -> None:
+def test_verified_bundle_is_bound_to_every_github_ref_and_all_state_pr_head() -> None:
     github = {
         "repository_settings": {"default_branch": "main"},
         "default_sha": "a" * 40,
@@ -753,21 +1121,27 @@ def test_verified_bundle_is_bound_to_every_github_ref_and_open_pr_head() -> None
             "branches": [{"ref": "refs/heads/main", "tip": "a" * 40}],
             "tags": [{"ref": "refs/tags/v1", "tip": "b" * 40}],
         },
-        "open_pull_requests": [{"number": 7, "head_sha": "c" * 40}],
+        "pull_requests": [
+            {"number": 7, "state": "open", "head_sha": "c" * 40},
+            {"number": 8, "state": "closed", "head_sha": "d" * 40},
+            {"number": 9, "state": "merged", "head_sha": "e" * 40},
+        ],
     }
     bundle = {
-        "sha256": "d" * 64,
+        "sha256": "f" * 64,
         "restore_verified": True,
         "_refs": [
             f"refs/heads/main {'a' * 40}",
             f"refs/pull/7/head {'c' * 40}",
+            f"refs/pull/8/head {'d' * 40}",
+            f"refs/pull/9/head {'e' * 40}",
             f"refs/tags/v1 {'b' * 40}",
         ],
     }
 
     bound = bind_bundle_to_github_manifest(github, bundle)
 
-    assert bound == {"sha256": "d" * 64, "restore_verified": True}
+    assert bound == {"sha256": "f" * 64, "restore_verified": True}
     bad = json.loads(json.dumps(bundle))
     bad["_refs"][1] = f"refs/pull/7/head {'e' * 40}"
     with pytest.raises(TransferCaptureError, match="differs from captured GitHub refs"):

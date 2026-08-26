@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import re
 from datetime import UTC, datetime
 from typing import Any, Literal
 
@@ -20,6 +21,10 @@ from limen.repository_identity import RepositoryIdentityV1
 
 
 _HEX = frozenset("0123456789abcdef")
+_PULL_REQUEST_KEY = re.compile(
+    r"^github-repository:(?P<repository_id>[1-9][0-9]*)/"
+    r"pull-request:(?P<pull_request>[1-9][0-9]*)@(?P<head_sha>[0-9a-f]{40}|[0-9a-f]{64})$"
+)
 
 
 def canonical_digest(value: Any) -> str:
@@ -305,6 +310,12 @@ class RecoveryDispositionReceiptV1(ProtocolModel):
     _key = field_validator("item_key", "owner", "predicate", "receipt")(_nonblank)
     _source = field_validator("source_digest")(_digest)
 
+    @model_validator(mode="after")
+    def pull_request_keys_use_stable_repository_identity(self) -> "RecoveryDispositionReceiptV1":
+        if self.item_kind == "pull_request" and _PULL_REQUEST_KEY.fullmatch(self.item_key) is None:
+            raise ValueError("pull-request recovery keys must use github-repository:<id>/pull-request:<number>@<head>")
+        return self
+
 
 class SourceCoverageV1(ProtocolModel):
     schema_version: Literal["limen.recovery_source_coverage.v1"] = "limen.recovery_source_coverage.v1"
@@ -419,6 +430,8 @@ def issue_reap_capability(
 ) -> ReapCapabilityV1:
     """Issue a plan-bound capability; signing material remains keeper-owned."""
 
+    signing_material = require_reap_capability_key(signing_material)
+
     unsigned = {
         "schema_version": "limen.remote_reap_capability.v1",
         "capability_id": capability_id,
@@ -446,6 +459,7 @@ def verify_reap_capability(
     signing_material: bytes,
     observed_at: datetime,
 ) -> None:
+    signing_material = require_reap_capability_key(signing_material)
     payload = capability.model_dump(mode="json", exclude={"signature"})
     expected_signature = hmac.new(signing_material, rfc8785.dumps(payload), hashlib.sha256).hexdigest()
     if not hmac.compare_digest(expected_signature, capability.signature):
@@ -479,6 +493,14 @@ def cas_delete_command(capability: ReapCapabilityV1) -> tuple[str, ...]:
         "origin",
         f":refs/heads/{branch}",
     )
+
+
+def require_reap_capability_key(signing_material: bytes) -> bytes:
+    """Reject capability keys with less than 256 bits of encoded key material."""
+
+    if not isinstance(signing_material, bytes) or len(signing_material) < 32:
+        raise ValueError("reap capability key must contain at least 32 encoded bytes")
+    return signing_material
 
 
 def bound_reap_expiry(requested_expiry: datetime, evidence_expiry: datetime | None) -> datetime:
@@ -546,17 +568,20 @@ class RecoveryStableObservationV1(ProtocolModel):
 
 def _pull_request_disposition_identity(
     row: RecoveryDispositionReceiptV1,
-) -> tuple[str, int, str] | None:
+) -> tuple[int, int, str] | None:
     """Parse the exact repository/PR/head identity carried by a PR denominator."""
 
     if row.item_kind != "pull_request":
         return None
-    repository, marker, remainder = row.item_key.partition(":pull-request:")
-    number, at, head_sha = remainder.partition("@")
-    if marker != ":pull-request:" or not repository or at != "@" or not number.isdigit():
+    match = _PULL_REQUEST_KEY.fullmatch(row.item_key)
+    if match is None:
         return None
     try:
-        return repository, int(number), _git_oid(head_sha)
+        return (
+            int(match.group("repository_id")),
+            int(match.group("pull_request")),
+            _git_oid(match.group("head_sha")),
+        )
     except ValueError:
         return None
 
@@ -595,12 +620,12 @@ def evaluate_recovery(manifest: UniverseRecoveryManifestV1) -> RecoveryEvaluatio
         if identity is None:
             invalid_landed_pull_keys += 1
             continue
-        repository, pull_request, head_sha = identity
+        repository_id, pull_request, head_sha = identity
         if not any(
             closure.terminal
             and closure.pull_request == pull_request
             and closure.head_sha == head_sha
-            and closure.repository_identity.accepts(repository)
+            and closure.repository_identity.repository_id == repository_id
             for closure in manifest.review_closures
         ):
             missing_review_lineages += 1

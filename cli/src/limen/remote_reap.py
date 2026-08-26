@@ -25,6 +25,7 @@ from limen.universe_recovery import (
     ReviewLineageClosureV2,
     canonical_digest,
     cas_delete_command,
+    require_reap_capability_key,
     verify_reap_capability,
 )
 
@@ -295,6 +296,7 @@ def apply_capability(
 ) -> ReapJournalV1:
     """Redeem one verified capability and prove the exact ref is absent."""
 
+    signing_material = require_reap_capability_key(signing_material)
     observed_at = (observed_at or utc_now()).astimezone(UTC)
     verify_reap_capability(
         capability,

@@ -127,7 +127,7 @@
     "source:collaboration-beta-dirty-state",
     "source:Archive4T",
     "source:T7Recovery",
-    "organvm/limen:pull-request:2542@95bc0a572bb4ec2aaffcc75e696c7aac71935a75"
+    "github-repository:1255213941/pull-request:2542@95bc0a572bb4ec2aaffcc75e696c7aac71935a75"
   ],
   "newcomer_keys": [
     "organvm/limen:ref:recovery/agy-project-md-20260823@c84d1ad0033d6a28befe7976ee47d2cf9ab3a69c",
@@ -217,10 +217,10 @@
     },
     {
       "schema_version": "limen.recovery_disposition_receipt.v1",
-      "item_key": "organvm/limen:pull-request:2542@95bc0a572bb4ec2aaffcc75e696c7aac71935a75",
+      "item_key": "github-repository:1255213941/pull-request:2542@95bc0a572bb4ec2aaffcc75e696c7aac71935a75",
       "item_kind": "pull_request",
       "source_digest": "9443769f43e7b4f8cc28d43858b30c407e7c8df63639cdc003485237005c91ca",
-      "owner": "organvm/limen:pull-request:2542",
+      "owner": "github-repository:1255213941/pull-request:2542",
       "predicate": "resolve three current threads and obtain executed merge admission on the exact head",
       "receipt": "git:organvm/limen:docs/continuations/universe-recovery-20260823/explorations/review-admission.md",
       "terminal_class": "owned_active"
