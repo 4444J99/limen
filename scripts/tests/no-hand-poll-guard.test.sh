@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Hermetic deny/pass matrix for scripts/hooks/no-hand-poll-guard.sh. The NEGATIVE cases are
-# the deliverable: the guard exists to kill hand-rolled PR poll loops without ever blocking
-# the sanctioned waiter, bounded retries, build sleeps, or multi-PR iteration.
+# the deliverable: the guard kills retired synchronous waiters and hand-rolled PR poll loops
+# without blocking bounded retries, build sleeps, or multi-PR iteration.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
@@ -23,9 +23,12 @@ assert_denied 'while true; do gh run view 123; sleep 5; done'
 assert_denied 'while :; do gh api repos/o/r/pulls/7; sleep 15; done'
 assert_denied '(while true; do gh pr checks 9; sleep 20; done) &'
 
+# The retired compatibility path is mechanically denied even before its own fail-closed exit.
+assert_denied 'scripts/await-pr.sh 1872 --merge'
+assert_denied 'bash scripts/await-pr.sh 1879 --merge'
+
 # Legitimate lanes — must never block (the deliverable)
-assert_passes 'scripts/await-pr.sh 1872 --merge'                       # the sanctioned waiter
-assert_passes 'bash scripts/await-pr.sh 1879 --merge'
+assert_passes 'scripts/merge-drain.py --repo o/r --pr 7 --expected-head aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 assert_passes 'sleep 5'                                                # bare sleep
 assert_passes 'gh pr view 1872 --json state'                           # bare probe
 assert_passes 'gh pr checks 1872'
@@ -39,9 +42,11 @@ assert_passes 'ls -la'                                                 # no slee
 # Escape hatch
 out="$(payload 'while true; do gh pr checks 9; sleep 20; done' | LIMEN_ALLOW_PR_POLL=1 "$HOOK")"
 [ -z "$out" ] || { printf 'expected escape hatch to pass\nout: %s\n' "$out" >&2; exit 1; }
+out="$(payload 'scripts/await-pr.sh 9 --merge' | LIMEN_ALLOW_PR_POLL=1 "$HOOK")"
+printf '%s' "$out" | grep -q '"permissionDecision":"deny"' || { printf 'retired waiter escaped hatch\n' >&2; exit 1; }
 
 # Fail-open: undecodable payload exits 0 silently
 out="$(printf 'not-json' | "$HOOK")"
 [ -z "$out" ] || { printf 'expected fail-open on bad payload\nout: %s\n' "$out" >&2; exit 1; }
 
-echo "no-hand-poll-guard.test: OK (6 deny, 11 pass, hatch + fail-open)"
+echo "no-hand-poll-guard.test: OK (8 deny, 10 pass, bounded hatch + fail-open)"

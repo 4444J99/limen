@@ -544,6 +544,34 @@ def _names_only(result: dict[str, Any], key: str) -> dict[str, Any]:
     return {"available": True, "names": names, "total_count": total_count}
 
 
+def _environment_record(client: GhClient, coordinate: str, environment: Any) -> dict[str, Any]:
+    if not isinstance(environment, Mapping) or not isinstance(environment.get("name"), str):
+        raise TransferCaptureError("repository environments census contains a nameless or non-object row")
+    name = str(environment["name"])
+    encoded_name = quote(name, safe="")
+    return {
+        "name": name,
+        "id": environment.get("id"),
+        "node_id": environment.get("node_id"),
+        "protection_rules": environment.get("protection_rules"),
+        "deployment_branch_policy": environment.get("deployment_branch_policy"),
+        "secret_names": _names_only(
+            client.optional_connection(
+                f"/repos/{coordinate}/environments/{encoded_name}/secrets?per_page=100",
+                "secrets",
+            ),
+            "secrets",
+        ),
+        "variable_names": _names_only(
+            client.optional_connection(
+                f"/repos/{coordinate}/environments/{encoded_name}/variables?per_page=100",
+                "variables",
+            ),
+            "variables",
+        ),
+    }
+
+
 _PULL_REQUEST_PAGE_SIZE = 50
 _REVIEW_PAGE_SIZE = 20
 _ISSUE_PAGE_SIZE = 50
@@ -721,6 +749,98 @@ _ISSUE_COMMENT_QUERY = f"""
 """
 
 
+_PULL_REQUEST_COMMENT_QUERY = f"""
+  query($node: ID!, $after: String) {{
+    node(id: $node) {{
+      ... on PullRequest {{
+        comments(first: {_REVIEW_PAGE_SIZE}, after: $after) {{
+          totalCount
+          nodes {{ id databaseId body author {{ login }} createdAt updatedAt }}
+          pageInfo {{ hasNextPage endCursor }}
+        }}
+      }}
+    }}
+  }}
+"""
+
+
+def _pull_request_review_record(raw: Mapping[str, Any], pull_number: int) -> dict[str, Any]:
+    label = f"PR #{pull_number} review"
+    state = raw.get("state")
+    if not isinstance(state, str) or not state:
+        raise TransferCaptureError(f"{label} state is malformed")
+    commit = raw.get("commit")
+    if commit is not None and not isinstance(commit, Mapping):
+        raise TransferCaptureError(f"{label} commit is malformed")
+    commit_sha = commit.get("oid") if isinstance(commit, Mapping) else None
+    if commit_sha is not None and (not isinstance(commit_sha, str) or _OID_RE.fullmatch(commit_sha) is None):
+        raise TransferCaptureError(f"{label} commit identity is malformed")
+    return {
+        "id": _node_identity(raw, label),
+        "author": _author_login(raw.get("author"), label),
+        "state": state.lower(),
+        "body_sha256": _body_digest(raw.get("body"), f"{label} body"),
+        "created_at": _required_timestamp(raw.get("createdAt"), f"{label} created"),
+        "updated_at": _required_timestamp(raw.get("updatedAt"), f"{label} updated"),
+        "submitted_at": _optional_timestamp(raw.get("submittedAt"), f"{label} submitted"),
+        "published_at": _optional_timestamp(raw.get("publishedAt"), f"{label} published"),
+        "commit_sha": commit_sha,
+    }
+
+
+_PULL_REQUEST_REVIEW_QUERY = f"""
+  query($node: ID!, $after: String) {{
+    node(id: $node) {{
+      ... on PullRequest {{
+        reviews(first: {_REVIEW_PAGE_SIZE}, after: $after) {{
+          totalCount
+          nodes {{
+            id state body author {{ login }} createdAt updatedAt submittedAt publishedAt commit {{ oid }}
+          }}
+          pageInfo {{ hasNextPage endCursor }}
+        }}
+      }}
+    }}
+  }}
+"""
+
+
+def _collect_pull_request_reviews(
+    client: GhClient,
+    *,
+    pull_id: str,
+    pull_number: int,
+    first_page: Any,
+) -> list[dict[str, Any]]:
+    connection = first_page
+    expected_total: int | None = None
+    reviews: list[dict[str, Any]] = []
+    identities: set[str] = set()
+    label = f"PR #{pull_number} reviews"
+    while True:
+        nodes, total_count, has_next, cursor = _connection_page(connection, label)
+        if expected_total is None:
+            expected_total = total_count
+        elif total_count != expected_total:
+            raise TransferCaptureError(f"{label} pagination total changed during capture")
+        for raw in nodes:
+            record = _pull_request_review_record(raw, pull_number)
+            if record["id"] in identities:
+                raise TransferCaptureError(f"{label} pagination contains duplicate identities")
+            identities.add(record["id"])
+            reviews.append(record)
+        if not has_next:
+            break
+        data = client.graphql(_PULL_REQUEST_REVIEW_QUERY, {"node": pull_id, "after": cursor})
+        node = data.get("node")
+        if not isinstance(node, Mapping):
+            raise TransferCaptureError(f"{label} pagination omitted pull request")
+        connection = node.get("reviews")
+    if expected_total != len(reviews):
+        raise TransferCaptureError(f"{label} pagination count mismatch")
+    return sorted(reviews, key=lambda value: value["id"])
+
+
 def _review_thread_record(client: GhClient, raw: Mapping[str, Any], pull_number: int) -> dict[str, Any]:
     thread_id = _node_identity(raw, f"PR #{pull_number} review thread")
     if not isinstance(raw.get("isResolved"), bool) or not isinstance(raw.get("isOutdated"), bool):
@@ -853,6 +973,19 @@ def _pull_request_record(client: GhClient, raw: Mapping[str, Any]) -> dict[str, 
         "base_sha": base_sha,
         "base_ref": raw.get("baseRefName"),
         "milestone": _milestone_record(raw.get("milestone"), f"PR #{number}"),
+        "comments": _collect_comments(
+            client,
+            node_id=pull_id,
+            first_page=raw.get("comments"),
+            label=f"PR #{number} comments",
+            query=_PULL_REQUEST_COMMENT_QUERY,
+        ),
+        "reviews": _collect_pull_request_reviews(
+            client,
+            pull_id=pull_id,
+            pull_number=number,
+            first_page=raw.get("reviews"),
+        ),
         "review_threads": _collect_review_threads(
             client,
             pull_id=pull_id,
@@ -878,6 +1011,18 @@ _PULL_REQUESTS_QUERY = f"""
           headRefOid headRefName headRepository {{ nameWithOwner }}
           baseRefOid baseRefName mergeCommit {{ oid }}
           milestone {{ id number title description state dueOn createdAt updatedAt closedAt }}
+          comments(first: {_REVIEW_PAGE_SIZE}) {{
+            totalCount
+            nodes {{ id databaseId body author {{ login }} createdAt updatedAt }}
+            pageInfo {{ hasNextPage endCursor }}
+          }}
+          reviews(first: {_REVIEW_PAGE_SIZE}) {{
+            totalCount
+            nodes {{
+              id state body author {{ login }} createdAt updatedAt submittedAt publishedAt commit {{ oid }}
+            }}
+            pageInfo {{ hasNextPage endCursor }}
+          }}
           reviewThreads(first: {_REVIEW_PAGE_SIZE}) {{
             totalCount
             nodes {{
@@ -1306,34 +1451,9 @@ def capture_github_manifest(
         "environments",
     )
     environment_payload = _required_connection(environments_result, "environments", "repository environments")
-    environments: list[dict[str, Any]] = []
-    for environment in environment_payload["environments"]:
-        if not isinstance(environment, Mapping) or not isinstance(environment.get("name"), str):
-            raise TransferCaptureError("repository environments census contains a nameless or non-object row")
-        name = str(environment.get("name"))
-        environments.append(
-            {
-                "name": name,
-                "id": environment.get("id"),
-                "node_id": environment.get("node_id"),
-                "protection_rules": environment.get("protection_rules"),
-                "deployment_branch_policy": environment.get("deployment_branch_policy"),
-                "secret_names": _names_only(
-                    client.optional_connection(
-                        f"/repos/{coordinate}/environments/{name}/secrets?per_page=100",
-                        "secrets",
-                    ),
-                    "secrets",
-                ),
-                "variable_names": _names_only(
-                    client.optional_connection(
-                        f"/repos/{coordinate}/environments/{name}/variables?per_page=100",
-                        "variables",
-                    ),
-                    "variables",
-                ),
-            }
-        )
+    environments = [
+        _environment_record(client, coordinate, environment) for environment in environment_payload["environments"]
+    ]
 
     labels = sorted(
         (
@@ -1980,6 +2100,8 @@ def build_manifest(
 def public_receipt(manifest: Mapping[str, Any], manifest_sha256: str) -> dict[str, Any]:
     github = manifest["github"]
     pull_requests = github["pull_requests"]
+    pull_request_comments = [comment for pull_request in pull_requests for comment in pull_request["comments"]]
+    pull_request_reviews = [review for pull_request in pull_requests for review in pull_request["reviews"]]
     threads = [thread for pull_request in pull_requests for thread in pull_request["review_threads"]]
     review_comments = [comment for thread in threads for comment in thread["comments"]]
     issues = github["issues"]["records"]
@@ -2011,6 +2133,8 @@ def public_receipt(manifest: Mapping[str, Any], manifest_sha256: str) -> dict[st
             "pull_requests_open": sum(value["state"] == "open" for value in pull_requests),
             "pull_requests_closed": sum(value["state"] == "closed" for value in pull_requests),
             "pull_requests_merged": sum(value["state"] == "merged" for value in pull_requests),
+            "pull_request_comments_total": len(pull_request_comments),
+            "pull_request_reviews_total": len(pull_request_reviews),
             "review_threads_total": len(threads),
             "review_comments_total": len(review_comments),
             "review_threads_unresolved_current": sum(

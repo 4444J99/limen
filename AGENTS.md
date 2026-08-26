@@ -139,14 +139,12 @@ ask the operator to choose between options the system can resolve, and do not gu
 registry already holds. Options are a decision forced by a genuine human-gated lever, not a
 default delivery posture.
 
-**2. Bounded CI waits and scoped verification.**
-`scripts/verify-scoped.sh` is the default pre-push gate; it runs only the gates implicated by the
-diff. Never run the full test suite as a default local gate — scope it. Never hand-roll a
-background poll loop on a PR gate; the one sanctioned synchronous waiter is
-`scripts/await-pr.sh`. Polling non-required checks or running unimplicated gates is waste and
-masks genuine failures. Once an implicated predicate passes for an unchanged exact head, record and
-reuse that receipt; do not rerun suites merely to accumulate reassurance. A changed head or a
-specific observed failure is required before another test.
+**2. No synchronous CI waits; scoped verification.**
+`scripts/verify-scoped.sh` is the default pre-push gate; run only implicated gates. There is no synchronous waiter
+on a PR gate. After exact-tree verification, submit at most once with
+`scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA` and return control.
+`QUEUED` is GitHub ownership, never a `MERGED` receipt. Never retry, re-arm, poll non-required
+checks, or rerun a green exact-head predicate without a changed head or observed failure.
 
 Treat one exact tree as one verification batch, not a per-finding waterfall. Batch independent
 corrections, then let the scoped resolver run eligible gates concurrently within each resource
@@ -176,8 +174,10 @@ lane is isolated in its own worktree and topic branch. A newer `main` must never
 unbounded merge/rebase → full-CI → newer-`main` loop. Preserve the exact-head CI receipt and use
 the repository's merge queue: GitHub composes that immutable head with the latest base and queued
 predecessors, then `pr-gate` verifies the synthetic `merge_group`. `BEHIND` is queueable only when
-the live queue rail is proven active; without that proof it remains fail-closed. Use
-`scripts/await-pr.sh --merge`, never `--admin`, force-push, or repeated branch rewrites. Direct
+the live queue rail is proven active; without that proof it remains fail-closed. Use one exact-head
+`scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA` submission; never
+`scripts/await-pr.sh`, never `--admin`, force-push, repeated branch rewrites, or a session-held merge
+watch. Direct
 `main` writes are forbidden, including board snapshots: Tabularius coalesces the local projection
 and publishes it through its stable, fast-forward-only PR branch. The repository's no-bypass
 `pull_request` rule makes that boundary remote-enforced. The full executable contract is

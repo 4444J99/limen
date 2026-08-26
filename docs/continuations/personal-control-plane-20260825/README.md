@@ -52,6 +52,7 @@ unavailable.
 2. Correct the observed aggregate fixture and live profile-count shards in the combined #2543
    batch, run the deterministic worker against that exact head, and clear every current/outdated
    review thread.
-3. Continue through [runtime.md](runtime.md) and [closeout.md](closeout.md). The system lane merges via
-   `scripts/await-pr.sh`, activates the heartbeat plan, installs merged artifacts, deploys, and
-   re-enables effectful workflows only as their exact predicates pass.
+3. Continue through [runtime.md](runtime.md) and [closeout.md](closeout.md). The system lane submits
+   one exact head through `scripts/merge-drain.py`, returns control, and activates the heartbeat
+   plan only from a later repository-qualified `MERGED` receipt. It installs merged artifacts,
+   deploys, and re-enables effectful workflows only as their exact predicates pass.

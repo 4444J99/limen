@@ -183,7 +183,6 @@ diff-hygiene
 merge-policy-test
 merge-queue-contract-test
 direct-main-writer-contract
-await-pr-test
 check-params
 check-gates
 check-note-links' scripts/merge-policy.sh
