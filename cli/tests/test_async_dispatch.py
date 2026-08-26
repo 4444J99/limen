@@ -263,6 +263,7 @@ def _remote_harvest_fixture(tmp_path):
         "state": metadata["remote_state"],
         "request_id": request_id,
         "observed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "run_attempt": 1,
         "detail": "submission observed; not completion",
         "actions_job": None,
         "admission_result": "",
