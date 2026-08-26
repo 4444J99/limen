@@ -92,6 +92,159 @@ def test_required_ruleset_census_reads_every_detail() -> None:
     assert all("_links" not in row["value"] for row in census["value"])
 
 
+def test_protected_branch_census_fails_closed_when_details_are_unreadable() -> None:
+    class Client:
+        def optional_object(self, _endpoint: str) -> dict[str, Any]:
+            return {"available": False, "error_class": "github_api_unavailable"}
+
+    with pytest.raises(TransferCaptureError, match="protected branch main census is unavailable"):
+        transfer._required_branch_protection_census(
+            Client(),
+            "4444J99/limen",
+            [{"name": "main", "protected": True}],
+        )
+
+
+def test_protected_branch_census_reads_details_and_encodes_branch_identity() -> None:
+    class Client:
+        def __init__(self) -> None:
+            self.endpoint = ""
+
+        def optional_object(self, endpoint: str) -> dict[str, Any]:
+            self.endpoint = endpoint
+            return {
+                "available": True,
+                "value": {"required_pull_request_reviews": {"required_approving_review_count": 1}, "_links": {}},
+            }
+
+    client = Client()
+    census = transfer._required_branch_protection_census(
+        client,
+        "4444J99/limen",
+        [{"name": "release/next", "protected": True}],
+    )
+
+    assert client.endpoint.endswith("/branches/release%2Fnext/protection")
+    assert census == {
+        "release/next": {
+            "available": True,
+            "value": {"required_pull_request_reviews": {"required_approving_review_count": 1}},
+        }
+    }
+
+
+@pytest.mark.parametrize(
+    ("surface", "label"),
+    [
+        ("hooks", "repository webhooks"),
+        ("keys", "repository deploy keys"),
+    ],
+)
+def test_hook_and_deploy_key_censuses_fail_closed_when_unreadable(surface: str, label: str) -> None:
+    class Client:
+        def optional_list(self, endpoint: str) -> dict[str, Any]:
+            assert f"/{surface}?" in endpoint
+            return {"available": False, "error_class": "github_api_unavailable"}
+
+    capture = transfer._required_webhook_census if surface == "hooks" else transfer._required_deploy_key_census
+    with pytest.raises(TransferCaptureError, match=f"{label} census is unavailable"):
+        capture(Client(), "4444J99/limen")
+
+
+def _actions_settings_responses(*, allowed_actions: str = "all") -> dict[str, dict[str, Any]]:
+    prefix = "/repos/4444J99/limen/actions/permissions"
+    return {
+        prefix: {
+            "available": True,
+            "value": {"enabled": True, "allowed_actions": allowed_actions, "sha_pinning_required": False},
+        },
+        f"{prefix}/workflow": {
+            "available": True,
+            "value": {"default_workflow_permissions": "read", "can_approve_pull_request_reviews": True},
+        },
+        f"{prefix}/selected-actions": {
+            "available": True,
+            "value": {
+                "github_owned_allowed": True,
+                "verified_allowed": False,
+                "patterns_allowed": ["actions/*"],
+            },
+        },
+        f"{prefix}/fork-pr-contributor-approval": {
+            "available": True,
+            "value": {"approval_policy": "first_time_contributors"},
+        },
+        f"{prefix}/artifact-and-log-retention": {
+            "available": True,
+            "value": {"days": 90, "maximum_allowed_days": 90},
+        },
+    }
+
+
+def test_actions_census_derives_selected_actions_inapplicability_from_readable_policy() -> None:
+    class Client:
+        def __init__(self) -> None:
+            self.responses = _actions_settings_responses()
+            self.requested: list[str] = []
+
+        def optional_object(self, endpoint: str) -> dict[str, Any]:
+            self.requested.append(endpoint)
+            return self.responses[endpoint]
+
+    client = Client()
+    settings = transfer._required_actions_settings(client, "4444J99/limen")
+
+    assert settings["selected_actions"] == {
+        "available": True,
+        "applicable": False,
+        "reason": "allowed_actions_policy_is_not_selected",
+        "value": None,
+    }
+    assert all(not endpoint.endswith("/selected-actions") for endpoint in client.requested)
+
+
+def test_actions_census_preserves_v3_readable_envelope_when_selected_actions_apply() -> None:
+    class Client:
+        def __init__(self) -> None:
+            self.responses = _actions_settings_responses(allowed_actions="selected")
+
+        def optional_object(self, endpoint: str) -> dict[str, Any]:
+            return self.responses[endpoint]
+
+    settings = transfer._required_actions_settings(Client(), "4444J99/limen")
+
+    assert settings["selected_actions"] == {
+        "available": True,
+        "value": {
+            "github_owned_allowed": True,
+            "verified_allowed": False,
+            "patterns_allowed": ["actions/*"],
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    "suffix",
+    ["", "/workflow", "/selected-actions", "/fork-pr-contributor-approval", "/artifact-and-log-retention"],
+)
+def test_actions_census_fails_closed_when_an_applicable_setting_is_unreadable(suffix: str) -> None:
+    prefix = "/repos/4444J99/limen/actions/permissions"
+
+    class Client:
+        def __init__(self) -> None:
+            self.responses = _actions_settings_responses(allowed_actions="selected")
+            self.responses[f"{prefix}{suffix}"] = {
+                "available": False,
+                "error_class": "github_api_unavailable",
+            }
+
+        def optional_object(self, endpoint: str) -> dict[str, Any]:
+            return self.responses[endpoint]
+
+    with pytest.raises(TransferCaptureError, match="census is unavailable"):
+        transfer._required_actions_settings(Client(), "4444J99/limen")
+
+
 def test_repository_access_census_excludes_only_the_personal_owner() -> None:
     class Client:
         def list(self, endpoint: str) -> list[dict[str, Any]]:
@@ -256,6 +409,73 @@ def _org_transfer_manifest() -> dict[str, Any]:
     }
 
 
+def test_v3_readable_surface_envelopes_remain_comparison_compatible() -> None:
+    hook = {
+        "id": 11,
+        "type": "Repository",
+        "name": "web",
+        "active": True,
+        "events": ["push"],
+        "config": {"content_type": "json", "url": "https://example.invalid/hook"},
+        "created_at": "2026-08-25T00:00:00Z",
+        "updated_at": "2026-08-25T00:00:00Z",
+    }
+    deploy_key = {
+        "id": 12,
+        "title": "read-only mirror",
+        "key": "ssh-ed25519 public-material",
+        "read_only": True,
+        "created_at": "2026-08-25T00:00:00Z",
+        "verified": True,
+    }
+    branch_detail = {"required_pull_request_reviews": {"required_approving_review_count": 1}}
+    action_responses = _actions_settings_responses()
+
+    class Client:
+        def optional_list(self, endpoint: str) -> dict[str, Any]:
+            if "/hooks?" in endpoint:
+                return {"available": True, "value": [hook]}
+            if "/keys?" in endpoint:
+                return {"available": True, "value": [deploy_key]}
+            raise AssertionError(f"unexpected list endpoint: {endpoint}")
+
+        def optional_object(self, endpoint: str) -> dict[str, Any]:
+            if "/branches/main/protection" in endpoint:
+                return {"available": True, "value": branch_detail}
+            return action_responses[endpoint]
+
+    client = Client()
+    before = _org_transfer_manifest()
+    before_github = before["github"]
+    before_github["webhooks"] = {"available": True, "value": [transfer._webhook_record(hook)]}
+    before_github["deploy_keys"] = {"available": True, "value": [transfer._deploy_key_record(deploy_key)]}
+    before_github["branch_protection"] = {
+        "main": {"available": True, "value": branch_detail},
+    }
+    before_github["actions"] = transfer._required_actions_settings(client, "4444J99/limen")
+    before_github["actions"]["selected_actions"] = {
+        "available": False,
+        "error_class": "github_api_unavailable",
+        "error_digest": "legacy-409-digest",
+    }
+
+    after = json.loads(json.dumps(before))
+    after_github = after["github"]
+    after_github["webhooks"] = transfer._required_webhook_census(client, "4444J99/limen")
+    after_github["deploy_keys"] = transfer._required_deploy_key_census(client, "4444J99/limen")
+    after_github["branch_protection"] = transfer._required_branch_protection_census(
+        client,
+        "4444J99/limen",
+        [{"name": "main", "protected": True}],
+    )
+    after_github["actions"] = transfer._required_actions_settings(client, "4444J99/limen")
+
+    assert isinstance(after_github["webhooks"], dict)
+    assert isinstance(after_github["deploy_keys"], dict)
+    assert after_github["actions"]["permissions"]["available"] is True
+    assert compare_manifests(before, after) == []
+
+
 @pytest.mark.parametrize(
     "post_types",
     [
@@ -409,6 +629,120 @@ def test_existing_bundle_is_restored_before_it_is_accepted(tmp_path: Path) -> No
     assert receipt["restore_verified"] is True
     assert receipt["ref_count"] >= 1
     assert receipt["sha256"] == file_sha256(bundle)
+
+
+def _bundle_refresh_runner(
+    *,
+    fail_stage: str | None = None,
+    mismatch_restored_refs: bool = False,
+):
+    def runner(command: list[str], **_kwargs: Any) -> subprocess.CompletedProcess[str]:
+        stage: str
+        stdout = ""
+        if command[:3] == ["git", "clone", "--mirror"]:
+            stage = "clone_source" if str(command[3]).startswith("https://") else "clone_restore"
+        elif "fetch" in command:
+            stage = "fetch_pull_refs"
+        elif "bundle" in command and "create" in command:
+            stage = "bundle_create"
+        elif "bundle" in command and "verify" in command:
+            stage = "bundle_verify"
+        elif "for-each-ref" in command:
+            stage = "source_refs" if Path(command[2]).name == "source.git" else "restored_refs"
+            tip = "b" * 40 if stage == "restored_refs" and mismatch_restored_refs else "a" * 40
+            stdout = f"refs/heads/main {tip}\n"
+        else:  # pragma: no cover - protects this test double from silent command growth
+            raise AssertionError(f"unexpected bundle command: {command}")
+
+        if stage == fail_stage:
+            return subprocess.CompletedProcess(command, 1, "", f"failed at {stage}")
+        if stage == "bundle_create":
+            Path(command[-2]).write_bytes(b"new verified bundle")
+        return subprocess.CompletedProcess(command, 0, stdout, "")
+
+    return runner
+
+
+@pytest.mark.parametrize(
+    "fail_stage",
+    [
+        "clone_source",
+        "fetch_pull_refs",
+        "bundle_create",
+        "bundle_verify",
+        "clone_restore",
+        "source_refs",
+        "restored_refs",
+        "restored_ref_mismatch",
+    ],
+)
+def test_bundle_refresh_failure_preserves_the_previous_verified_bundle(tmp_path: Path, fail_stage: str) -> None:
+    bundle = tmp_path / "source.bundle"
+    bundle.write_bytes(b"previous verified bundle")
+    runner = _bundle_refresh_runner(
+        fail_stage=None if fail_stage == "restored_ref_mismatch" else fail_stage,
+        mismatch_restored_refs=fail_stage == "restored_ref_mismatch",
+    )
+
+    with pytest.raises(TransferCaptureError):
+        transfer.create_verified_bundle("4444J99/limen", bundle, runner=runner)
+
+    assert bundle.read_bytes() == b"previous verified bundle"
+    assert list(tmp_path.iterdir()) == [bundle]
+
+
+def test_bundle_refresh_replaces_only_after_the_candidate_is_restored_and_verified(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    bundle = tmp_path / "source.bundle"
+    bundle.write_bytes(b"previous verified bundle")
+    real_replace = transfer.os.replace
+    replacement_observations: list[tuple[Path, Path]] = []
+
+    def checked_replace(source: str | Path, destination: str | Path) -> None:
+        source_path = Path(source)
+        destination_path = Path(destination)
+        assert source_path.read_bytes() == b"new verified bundle"
+        assert destination_path.read_bytes() == b"previous verified bundle"
+        replacement_observations.append((source_path, destination_path))
+        real_replace(source, destination)
+
+    monkeypatch.setattr(transfer.os, "replace", checked_replace)
+
+    receipt = transfer.create_verified_bundle(
+        "4444J99/limen",
+        bundle,
+        runner=_bundle_refresh_runner(),
+    )
+
+    assert replacement_observations
+    assert bundle.read_bytes() == b"new verified bundle"
+    assert receipt["sha256"] == file_sha256(bundle)
+    assert receipt["restore_verified"] is True
+
+
+def test_bundle_refresh_replace_interruption_preserves_the_previous_verified_bundle(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    bundle = tmp_path / "source.bundle"
+    bundle.write_bytes(b"previous verified bundle")
+
+    def interrupted_replace(_source: str | Path, _destination: str | Path) -> None:
+        raise OSError("simulated interruption")
+
+    monkeypatch.setattr(transfer.os, "replace", interrupted_replace)
+
+    with pytest.raises(TransferCaptureError, match="replacement failed"):
+        transfer.create_verified_bundle(
+            "4444J99/limen",
+            bundle,
+            runner=_bundle_refresh_runner(),
+        )
+
+    assert bundle.read_bytes() == b"previous verified bundle"
+    assert list(tmp_path.iterdir()) == [bundle]
 
 
 def test_verified_bundle_is_bound_to_every_github_ref_and_open_pr_head() -> None:
