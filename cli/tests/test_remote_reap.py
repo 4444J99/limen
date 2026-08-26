@@ -38,6 +38,7 @@ from limen.universe_recovery import (
 
 
 NOW = datetime(2026, 8, 23, 16, 0, tzinfo=UTC)
+SIGNING_MATERIAL = b"k" * 32
 EXAMPLE_IDENTITY = RepositoryIdentityV1(
     repository_id=123456789,
     canonical_coordinate="4444J99/example",
@@ -140,7 +141,7 @@ def admitted(checkout: Path, tip: str):
         plan,
         capability_id="remote-reap-capability-0001",
         issued_by="tabularius-keeper",
-        signing_material=b"fixture-material",
+        signing_material=SIGNING_MATERIAL,
         issued_at=NOW,
     )
     return plan, capability
@@ -164,12 +165,46 @@ def test_exact_unchanged_tip_deletes_and_verifies_absence(tmp_path: Path):
         capability=capability,
         journal_path=journal_path,
         redemption_path=tmp_path / "redemptions.json",
-        signing_material=b"fixture-material",
+        signing_material=SIGNING_MATERIAL,
         observed_at=NOW + timedelta(minutes=1),
     )
 
     assert completed.state == "completed"
     assert remote_tip(checkout, "refs/heads/topic") is None
+
+
+def test_effect_rejects_31_byte_key_before_journal_write_or_remote_effect(tmp_path: Path):
+    checkout, tip = repository(tmp_path)
+    plan, capability = admitted(checkout, tip)
+    journal_path = tmp_path / "journal.json"
+    redemption_path = tmp_path / "redemptions.json"
+    verified = journal(
+        capability=capability,
+        state="verified",
+        detail="verified fixture",
+        observed_at=NOW,
+    )
+    atomic_json(journal_path, verified.model_dump(mode="json"))
+    journal_before = journal_path.read_bytes()
+
+    def unexpected_effect(*_args, **_kwargs):
+        raise AssertionError("short capability key reached a remote effect")
+
+    with pytest.raises(ValueError, match="at least 32 encoded bytes"):
+        apply_capability(
+            repository_root=checkout,
+            plan=plan,
+            capability=capability,
+            journal_path=journal_path,
+            redemption_path=redemption_path,
+            signing_material=b"k" * 31,
+            observed_at=NOW + timedelta(minutes=1),
+            runner=unexpected_effect,
+        )
+
+    assert journal_path.read_bytes() == journal_before
+    assert not redemption_path.exists()
+    assert remote_tip(checkout, "refs/heads/topic") == tip
 
 
 def test_advanced_tip_is_preserved_before_delete(tmp_path: Path):
@@ -196,7 +231,7 @@ def test_advanced_tip_is_preserved_before_delete(tmp_path: Path):
             capability=capability,
             journal_path=journal_path,
             redemption_path=tmp_path / "redemptions.json",
-            signing_material=b"fixture-material",
+            signing_material=SIGNING_MATERIAL,
             observed_at=NOW + timedelta(minutes=1),
         )
 
@@ -217,7 +252,7 @@ def test_completed_capability_is_idempotent_only_while_ref_remains_absent(tmp_pa
         capability=capability,
         journal_path=journal_path,
         redemption_path=tmp_path / "redemptions.json",
-        signing_material=b"fixture-material",
+        signing_material=SIGNING_MATERIAL,
         observed_at=NOW + timedelta(minutes=1),
     )
     second = apply_capability(
@@ -226,7 +261,7 @@ def test_completed_capability_is_idempotent_only_while_ref_remains_absent(tmp_pa
         capability=capability,
         journal_path=journal_path,
         redemption_path=tmp_path / "redemptions.json",
-        signing_material=b"fixture-material",
+        signing_material=SIGNING_MATERIAL,
         observed_at=NOW + timedelta(minutes=2),
     )
 
@@ -248,7 +283,7 @@ def test_capability_cannot_be_replayed_from_a_copied_verified_journal(tmp_path: 
         capability=capability,
         journal_path=journal_path,
         redemption_path=redemption_path,
-        signing_material=b"fixture-material",
+        signing_material=SIGNING_MATERIAL,
         observed_at=NOW + timedelta(minutes=1),
     )
     git(checkout, "push", "origin", f"{tip}:refs/heads/topic")
@@ -260,7 +295,7 @@ def test_capability_cannot_be_replayed_from_a_copied_verified_journal(tmp_path: 
             capability=capability,
             journal_path=copied_journal_path,
             redemption_path=redemption_path,
-            signing_material=b"fixture-material",
+            signing_material=SIGNING_MATERIAL,
             observed_at=NOW + timedelta(minutes=2),
         )
 
@@ -288,7 +323,7 @@ def test_wrong_repository_origin_is_denied(tmp_path: Path):
             capability=capability,
             journal_path=journal_path,
             redemption_path=tmp_path / "redemptions.json",
-            signing_material=b"fixture-material",
+            signing_material=SIGNING_MATERIAL,
             observed_at=NOW + timedelta(minutes=1),
         )
 
@@ -315,7 +350,7 @@ def test_completed_journal_cannot_be_applied_to_an_absent_ref_in_another_reposit
         capability=capability,
         journal_path=journal_path,
         redemption_path=redemption_path,
-        signing_material=b"fixture-material",
+        signing_material=SIGNING_MATERIAL,
         observed_at=NOW + timedelta(minutes=1),
     )
     git(second, "push", "origin", ":refs/heads/topic")
@@ -327,7 +362,7 @@ def test_completed_journal_cannot_be_applied_to_an_absent_ref_in_another_reposit
             capability=capability,
             journal_path=journal_path,
             redemption_path=redemption_path,
-            signing_material=b"fixture-material",
+            signing_material=SIGNING_MATERIAL,
             observed_at=NOW + timedelta(minutes=2),
         )
 
@@ -353,7 +388,7 @@ def test_failed_effect_is_journaled_and_reconciled_without_retry(tmp_path: Path)
             capability=capability,
             journal_path=journal_path,
             redemption_path=tmp_path / "redemptions.json",
-            signing_material=b"fixture-material",
+            signing_material=SIGNING_MATERIAL,
             observed_at=NOW + timedelta(minutes=1),
             runner=reject_push,
         )
