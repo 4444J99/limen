@@ -17,12 +17,13 @@ to `main`; it does not serialize thought, editing, review, or exact-head verific
    `pr-gate` runs every scoped gate implicated by that synthetic composition.
 4. `BEHIND` means queueable only when the live repository reports an active queue. An absent,
    unreadable, or partially configured queue fails closed. `DIRTY` always remains a real conflict.
-5. `scripts/await-pr.sh <PR> --merge` is the only synchronous operator effect path. It binds the
-   request to `MERGE-HEAD`, enqueues once, and waits finitely for the PR's actual `MERGED` state. It
-   never equates "enqueue accepted" with "merged," never uses `--admin`, and never re-enqueues a
-   removal.
-6. `scripts/merge-drain.py` applies the same predicate immediately before each effect. It does not
-   pre-approve a batch and then mutate under stale assumptions.
+5. Agent and provider sessions never wait on PR state. They may submit one exact head once with
+   `scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA`, then return control.
+   `QUEUED` proves durable GitHub ownership only; it is never promoted into a `MERGED` receipt.
+   `scripts/await-pr.sh` is a fail-closed compatibility circuit breaker for stale instructions.
+6. `scripts/merge-drain.py` applies the same predicate immediately before each effect. Its one-shot
+   mode never polls or retries; its recurring beat mode owns later observation and applies bounded
+   work without keeping an agent/provider session alive.
 7. Tabularius never pushes `main`. It keeps the sealed board dirty locally, publishes only
    `tasks.yaml` to the stable `tabularius/board-projection` branch with normal fast-forward commits,
    and opens one exact-head PR. Newer local state coalesces while that PR is in flight. A stale
@@ -47,7 +48,7 @@ author branch.
 
 ```bash
 scripts/merge-policy.sh <PR> --expected-head <SHA>
-scripts/await-pr.sh <PR> --merge
+scripts/merge-drain.py --repo OWNER/NAME --pr <PR> --expected-head <SHA>
 ```
 
 Queue settings are declared and applied idempotently by `scripts/setup-rulesets.py`. The rollout

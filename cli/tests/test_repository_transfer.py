@@ -75,10 +75,37 @@ def _review_thread(index: int, *, comments: dict[str, Any] | None = None) -> dic
     }
 
 
+def _pull_request_comment(index: int, *, pull: int = 1) -> dict[str, Any]:
+    return {
+        "id": f"pull-comment-{pull}-{index}",
+        "databaseId": pull * 10_000 + index,
+        "body": f"pull comment {pull}/{index}",
+        "author": {"login": "commenter"},
+        "createdAt": "2026-08-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+    }
+
+
+def _pull_request_review(index: int, *, pull: int = 1, state: str = "APPROVED") -> dict[str, Any]:
+    return {
+        "id": f"pull-review-{pull}-{index}",
+        "state": state,
+        "body": f"pull review {pull}/{index}",
+        "author": {"login": "reviewer"},
+        "createdAt": "2026-08-01T00:00:00Z",
+        "updatedAt": "2026-08-02T00:00:00Z",
+        "submittedAt": "2026-08-01T00:00:00Z",
+        "publishedAt": "2026-08-01T00:00:00Z",
+        "commit": {"oid": f"{index:040x}"},
+    }
+
+
 def _pull_request_node(
     number: int,
     *,
     state: str = "OPEN",
+    comments: dict[str, Any] | None = None,
+    reviews: dict[str, Any] | None = None,
     review_threads: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     closed_at = None if state == "OPEN" else "2026-08-03T00:00:00Z"
@@ -103,6 +130,8 @@ def _pull_request_node(
         "baseRefName": "main",
         "mergeCommit": {"oid": "e" * 40} if state == "MERGED" else None,
         "milestone": None,
+        "comments": comments if comments is not None else _graphql_connection([]),
+        "reviews": reviews if reviews is not None else _graphql_connection([]),
         "reviewThreads": review_threads if review_threads is not None else _graphql_connection([]),
     }
 
@@ -151,17 +180,29 @@ def _issue_node(number: int, *, comments: dict[str, Any] | None = None) -> dict[
 
 
 def test_pull_request_census_includes_all_states_and_follows_only_overflowing_nested_cursors() -> None:
-    first_comments = _graphql_connection(
+    first_thread_comments = _graphql_connection(
         [_review_comment(index) for index in range(1, 21)],
         total=21,
         has_next=True,
         cursor="review-comments-20",
     )
     first_threads = _graphql_connection(
-        [_review_thread(index, comments=first_comments if index == 1 else None) for index in range(1, 21)],
+        [_review_thread(index, comments=first_thread_comments if index == 1 else None) for index in range(1, 21)],
         total=21,
         has_next=True,
         cursor="review-threads-20",
+    )
+    first_pull_comments = _graphql_connection(
+        [_pull_request_comment(index) for index in range(1, 21)],
+        total=21,
+        has_next=True,
+        cursor="pull-comments-20",
+    )
+    first_pull_reviews = _graphql_connection(
+        [_pull_request_review(index) for index in range(1, 21)],
+        total=21,
+        has_next=True,
+        cursor="pull-reviews-20",
     )
 
     class Client:
@@ -175,7 +216,12 @@ def test_pull_request_census_includes_all_states_and_follows_only_overflowing_ne
                     "repository": {
                         "pullRequests": _graphql_connection(
                             [
-                                _pull_request_node(1, review_threads=first_threads),
+                                _pull_request_node(
+                                    1,
+                                    comments=first_pull_comments,
+                                    reviews=first_pull_reviews,
+                                    review_threads=first_threads,
+                                ),
                                 _pull_request_node(2, state="CLOSED"),
                                 _pull_request_node(3, state="MERGED"),
                             ]
@@ -185,9 +231,15 @@ def test_pull_request_census_includes_all_states_and_follows_only_overflowing_ne
             if "... on PullRequestReviewThread" in query:
                 assert variables == {"node": "review-thread-1", "after": "review-comments-20"}
                 return {"node": {"comments": _graphql_connection([_review_comment(21)], total=21)}}
-            if "... on PullRequest" in query:
+            if "reviewThreads(" in query:
                 assert variables == {"node": "pull-1", "after": "review-threads-20"}
                 return {"node": {"reviewThreads": _graphql_connection([_review_thread(21)], total=21)}}
+            if "reviews(" in query:
+                assert variables == {"node": "pull-1", "after": "pull-reviews-20"}
+                return {"node": {"reviews": _graphql_connection([_pull_request_review(21)], total=21)}}
+            if "comments(" in query:
+                assert variables == {"node": "pull-1", "after": "pull-comments-20"}
+                return {"node": {"comments": _graphql_connection([_pull_request_comment(21)], total=21)}}
             raise AssertionError("unexpected GraphQL query")
 
     client = Client()
@@ -196,9 +248,12 @@ def test_pull_request_census_includes_all_states_and_follows_only_overflowing_ne
     assert [pull["state"] for pull in pulls] == ["open", "closed", "merged"]
     assert len(pulls[0]["review_threads"]) == 21
     assert len(pulls[0]["review_threads"][0]["comments"]) == 21
+    assert len(pulls[0]["comments"]) == 21
+    assert len(pulls[0]["reviews"]) == 21
+    assert pulls[0]["reviews"][0]["state"] == "approved"
     assert pulls[0]["title_sha256"] == transfer.hashlib.sha256(b"Pull request 1").hexdigest()
     assert pulls[0]["body_sha256"] == transfer.hashlib.sha256(b"Pull body 1").hexdigest()
-    assert len(client.calls) == 3
+    assert len(client.calls) == 5
 
 
 def test_101_pull_requests_use_three_outer_requests_without_n_plus_one_calls() -> None:
@@ -260,6 +315,41 @@ def test_nested_review_pagination_requires_an_overflow_cursor() -> None:
 
     with pytest.raises(TransferCaptureError, match="review threads pagination omitted end cursor"):
         collect_pull_requests(Client(), "4444J99", "limen")
+
+
+@pytest.mark.parametrize("field", ["comments", "reviews"])
+def test_pull_request_comment_and_review_pagination_require_overflow_cursors(field: str) -> None:
+    node = _pull_request_node(1)
+    node[field] = _graphql_connection(
+        [_pull_request_comment(1) if field == "comments" else _pull_request_review(1)],
+        total=2,
+        has_next=True,
+        cursor=None,
+    )
+
+    class Client:
+        def graphql(self, _query: str, _variables: dict[str, Any]) -> dict[str, Any]:
+            return {"repository": {"pullRequests": _graphql_connection([node])}}
+
+    with pytest.raises(TransferCaptureError, match=rf"{field} pagination omitted end cursor"):
+        collect_pull_requests(Client(), "4444J99", "limen")
+
+
+def test_pull_request_reviews_reject_duplicate_identity_and_malformed_state() -> None:
+    duplicate = _graphql_connection([_pull_request_review(1), _pull_request_review(1)], total=2)
+    malformed = _graphql_connection([_pull_request_review(1, state="")])
+
+    class Client:
+        def __init__(self, reviews: dict[str, Any]) -> None:
+            self.reviews = reviews
+
+        def graphql(self, _query: str, _variables: dict[str, Any]) -> dict[str, Any]:
+            return {"repository": {"pullRequests": _graphql_connection([_pull_request_node(1, reviews=self.reviews)])}}
+
+    with pytest.raises(TransferCaptureError, match="duplicate identities"):
+        collect_pull_requests(Client(duplicate), "4444J99", "limen")
+    with pytest.raises(TransferCaptureError, match="review state is malformed"):
+        collect_pull_requests(Client(malformed), "4444J99", "limen")
 
 
 def test_issue_census_hashes_content_normalizes_milestones_and_paginates_comments() -> None:
@@ -361,6 +451,27 @@ def test_secret_and_variable_name_censuses_reject_unavailable_results() -> None:
         transfer._names_only({"available": False}, "secrets")
     with pytest.raises(TransferCaptureError, match="variables census is unavailable"):
         transfer._names_only({"available": False}, "variables")
+
+
+def test_environment_nested_endpoints_encode_the_name_as_one_path_segment() -> None:
+    class Client:
+        def __init__(self) -> None:
+            self.endpoints: list[tuple[str, str]] = []
+
+        def optional_connection(self, endpoint: str, key: str) -> dict[str, Any]:
+            self.endpoints.append((endpoint, key))
+            return {"available": True, "value": {"total_count": 0, key: []}}
+
+    client = Client()
+    name = "prod/a#b?c% d/雪"
+    record = transfer._environment_record(client, "4444J99/limen", {"name": name, "id": 7})
+
+    encoded = "prod%2Fa%23b%3Fc%25%20d%2F%E9%9B%AA"
+    assert record["name"] == name
+    assert client.endpoints == [
+        (f"/repos/4444J99/limen/environments/{encoded}/secrets?per_page=100", "secrets"),
+        (f"/repos/4444J99/limen/environments/{encoded}/variables?per_page=100", "variables"),
+    ]
 
 
 def test_required_ruleset_census_rejects_unavailable_summary() -> None:
@@ -662,7 +773,17 @@ def test_transfer_comparison_ignores_only_coordinate_and_observation_time() -> N
     assert compare_manifests(manifest, after) == ["transfer invariant changed: github"]
 
 
-@pytest.mark.parametrize("surface", ["pull_request_body", "issue_title", "issue_comment_body"])
+@pytest.mark.parametrize(
+    "surface",
+    [
+        "pull_request_body",
+        "pull_request_comment_body",
+        "pull_request_review_body",
+        "pull_request_review_state",
+        "issue_title",
+        "issue_comment_body",
+    ],
+)
 def test_transfer_comparison_rejects_captured_content_digest_changes(surface: str) -> None:
     manifest = {
         "captured_at": "before",
@@ -675,6 +796,8 @@ def test_transfer_comparison_rejects_captured_content_digest_changes(surface: st
                     "number": 1,
                     "title_sha256": "a" * 64,
                     "body_sha256": "b" * 64,
+                    "comments": [{"id": "pull-comment-1", "body_sha256": "1" * 64}],
+                    "reviews": [{"id": "pull-review-1", "body_sha256": "2" * 64, "state": "approved"}],
                     "review_threads": [],
                 }
             ],
@@ -696,6 +819,12 @@ def test_transfer_comparison_rejects_captured_content_digest_changes(surface: st
     after = json.loads(json.dumps(manifest))
     if surface == "pull_request_body":
         after["github"]["pull_requests"][0]["body_sha256"] = "0" * 64
+    elif surface == "pull_request_comment_body":
+        after["github"]["pull_requests"][0]["comments"][0]["body_sha256"] = "0" * 64
+    elif surface == "pull_request_review_body":
+        after["github"]["pull_requests"][0]["reviews"][0]["body_sha256"] = "0" * 64
+    elif surface == "pull_request_review_state":
+        after["github"]["pull_requests"][0]["reviews"][0]["state"] = "changes_requested"
     elif surface == "issue_title":
         after["github"]["issues"]["records"][0]["title_sha256"] = "0" * 64
     else:
@@ -926,13 +1055,15 @@ def test_public_receipt_contains_digests_and_denominators_not_private_state(tmp_
             "pull_requests": [
                 {
                     "state": "open",
+                    "comments": [{"body_sha256": "private-pull-comment"}],
+                    "reviews": [{"body_sha256": "private-review", "state": "approved"}],
                     "review_threads": [
                         {"is_resolved": False, "is_outdated": False, "comments": [{}]},
                         {"is_resolved": False, "is_outdated": True, "comments": []},
                     ],
                 },
-                {"state": "closed", "review_threads": []},
-                {"state": "merged", "review_threads": []},
+                {"state": "closed", "comments": [], "reviews": [], "review_threads": []},
+                {"state": "merged", "comments": [], "reviews": [], "review_threads": []},
             ],
             "actions": {"workflow_states": []},
             "apps": {"available": False},
@@ -959,6 +1090,8 @@ def test_public_receipt_contains_digests_and_denominators_not_private_state(tmp_
     assert receipt["denominators"]["pull_requests_open"] == 1
     assert receipt["denominators"]["pull_requests_closed"] == 1
     assert receipt["denominators"]["pull_requests_merged"] == 1
+    assert receipt["denominators"]["pull_request_comments_total"] == 1
+    assert receipt["denominators"]["pull_request_reviews_total"] == 1
     assert receipt["denominators"]["review_threads_total"] == 2
     assert receipt["denominators"]["review_comments_total"] == 1
     assert receipt["denominators"]["review_threads_unresolved_current"] == 1
@@ -970,6 +1103,8 @@ def test_public_receipt_contains_digests_and_denominators_not_private_state(tmp_
     assert "secret" not in rendered
     assert "state_digest" not in rendered
     assert "tree_sha256" not in rendered
+    assert "private-pull-comment" not in rendered
+    assert "private-review" not in rendered
     assert "sensitive-comment-digest" not in rendered
     assert "agy" not in rendered
     assert "opencode" not in rendered
@@ -1337,3 +1472,35 @@ def test_manifest_cli_rejects_colliding_frozen_artifact_paths_before_network(tmp
 
     assert result.returncode == 1
     assert "pairwise distinct" in result.stderr
+
+
+@pytest.mark.parametrize("flag", ["--protected-checkout", "--protected-path"])
+def test_manifest_cli_rejects_duplicate_protected_lane_names_before_bundle_or_network(
+    tmp_path: Path,
+    flag: str,
+) -> None:
+    private = tmp_path / ".limen-private"
+    private.mkdir()
+
+    result = subprocess.run(
+        [
+            "python3",
+            "scripts/repository-transfer-manifest.py",
+            "--output",
+            str(private / "manifest.json"),
+            "--existing-bundle",
+            str(private / "missing-bundle"),
+            flag,
+            f"agy={tmp_path / 'first'}",
+            flag,
+            f"agy={tmp_path / 'second'}",
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 1
+    assert f"{flag} repeats protected lane name 'agy'" in result.stderr
+    assert "missing-bundle" not in result.stderr

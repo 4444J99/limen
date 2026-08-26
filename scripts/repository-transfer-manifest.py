@@ -42,6 +42,15 @@ def _require_private(path: Path) -> None:
         raise TransferCaptureError("full transfer manifest and bundle must remain under .limen-private")
 
 
+def _unique_named_paths(values: list[tuple[str, Path]], flag: str) -> dict[str, Path]:
+    result: dict[str, Path] = {}
+    for name, path in values:
+        if name in result:
+            raise TransferCaptureError(f"{flag} repeats protected lane name {name!r}")
+        result[name] = path
+    return result
+
+
 def _write_text(path: Path, value: str, *, private: bool) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
@@ -83,6 +92,8 @@ def main() -> int:
         public_path = args.public_receipt.expanduser().resolve() if args.public_receipt else None
         baseline_path = args.verify_against.expanduser().resolve() if args.verify_against else None
         attribution_path = args.protected_attribution.expanduser().resolve() if args.protected_attribution else None
+        protected_checkouts = _unique_named_paths(args.protected_checkout, "--protected-checkout")
+        protected_paths = _unique_named_paths(args.protected_path, "--protected-path")
         if bundle_path is not None:
             _require_private(bundle_path)
         if existing_bundle is not None:
@@ -120,8 +131,8 @@ def main() -> int:
             client=GhClient(),
             identity=LIMEN_REPOSITORY_IDENTITY,
             coordinate=args.repo,
-            checkouts=dict(args.protected_checkout),
-            protected_paths=dict(args.protected_path),
+            checkouts=protected_checkouts,
+            protected_paths=protected_paths,
             bundle=bundle,
         )
         digest = canonical_sha256(manifest)

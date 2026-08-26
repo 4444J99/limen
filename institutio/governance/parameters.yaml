@@ -2717,7 +2717,7 @@ parameters:
     env: LIMEN_ALLOW_PR_POLL
     self_update: none
     owner: limen-daemon
-    note: "Break-glass for scripts/hooks/no-hand-poll-guard.sh: 1 disables the PreToolUse deny of hand-rolled PR/CI poll loops (loop + gh state probe + sleep in one command). Mirrors LIMEN_ALLOW_LIVE_COMMIT; leave 0 — the deny is the charter's sanctioned-waiter rule (scripts/await-pr.sh; 2026-07-15 endless-watcher incident) made mechanical, for every lane whose hooks run the guard."
+    note: "Break-glass for scripts/hooks/no-hand-poll-guard.sh: 1 disables only a false-positive deny of a hand-rolled PR/CI-shaped loop. It never permits the retired scripts/await-pr.sh path. Mirrors LIMEN_ALLOW_LIVE_COMMIT; leave 0."
   LIMEN_OUTBOUND_REGISTRY:
     default: "institutio/governance/outbound-effectors.yaml"
     env: LIMEN_OUTBOUND_REGISTRY
@@ -5035,7 +5035,7 @@ parameters:
     env: LIMEN_ORPHAN_WATCHER_MIN_AGE
     self_update: none
     owner: tabularius
-    note: "Age floor (seconds of ps etime) below which a parentless watcher shell is spared. 1800 sits deliberately ABOVE scripts/await-pr.sh's 1200 s deadline (LIMEN_AWAIT_PR_TIMEOUT): a healthy sanctioned wait can never be classified reapable; only a poll shell that outlived both its session and the sanctioned deadline qualifies."
+    note: "Age floor (seconds of ps etime) below which a parentless historical watcher shell is spared. New synchronous PR waiters are forbidden; this conservative floor governs cleanup of legacy shells only."
 
   LIMEN_CRITICAL_AGENTS_FILE:
     default: ""                # empty = spec/critical-launch-agents.json; also the --agents-file flag
@@ -5755,31 +5755,12 @@ parameters:
     owner: continuity
     note: "Maximum residue rows retained in the census artifact and ledger (newest first). A cap, not a filter — raise it if the estate ever carries more unwalked sessions than this."
 
-  # --- await-pr: the one sanctioned synchronous PR-gate waiter -------------------
-  LIMEN_AWAIT_PR_TIMEOUT:
-    default: 1200
-    env: LIMEN_AWAIT_PR_TIMEOUT
-    self_update: none
-    owner: verify
-    note: "Hard deadline (seconds) for scripts/await-pr.sh, the ONE sanctioned synchronous waiter on a PR merge gate (2026-07-15 endless-watcher incident: sessions hand-rolled unbounded background poll loops that outlived them). 20 min covers a full pr-gate run; anything longer belongs to the beat's merge rung (scripts/merge-drain.py via scripts/drain.sh), not a longer wait."
-  LIMEN_AWAIT_PR_INTERVAL:
-    default: 45
-    env: LIMEN_AWAIT_PR_INTERVAL
-    self_update: none
-    owner: verify
-    note: "Poll interval (seconds) between merge-policy.sh runs inside scripts/await-pr.sh. 45 s keeps a full 20-min wait under ~30 GitHub reads while every poll prints a loud one-liner."
-  LIMEN_AWAIT_PR_MAX_OBS_FAILURES:
-    default: 3
-    env: LIMEN_AWAIT_PR_MAX_OBS_FAILURES
-    self_update: none
-    owner: verify
-    note: "Consecutive FAILED queue observations scripts/await-pr.sh tolerates before QUEUE-FAILED becomes terminal. A poll that could not be completed is not evidence about the queue — the mirror of pr-debt-trend.py's 'silence is not improvement'. One `dial tcp …: i/o timeout` was terminal here until 2026-08-02, and because the waiter never re-enqueues after a terminal verdict it stranded #1775 and #1777 at queue positions 3 and 2; both merged untouched minutes later. 3 rides out a blip; LIMEN_AWAIT_PR_TIMEOUT still bounds the wait, so this can never become an unbounded retry."
   LIMEN_MERGE_POLICY_BIN:
     default: ""                # empty = scripts/merge-policy.sh; set only in tests
     env: LIMEN_MERGE_POLICY_BIN
     self_update: none
     owner: merge-policy
-    note: "Test seam: overrides the merge-policy predicate binary consumed by scripts/await-pr.sh (and the governor's pause-release completion). Empty (the default) resolves to scripts/merge-policy.sh; tests point it at a scripted-verdict stub so the verdict matrix is hermetic. Never set on the live host."
+    note: "Test seam for the governor's pause-release completion. Empty resolves to scripts/merge-policy.sh; tests point it at a scripted-verdict stub so the verdict matrix is hermetic. Never set on the live host."
 
   # --- disk-capacity sensor (sensors.yaml 0g7) ------------------------------------
   LIMEN_DISK_CAPACITY:
@@ -6263,19 +6244,13 @@ parameters:
     env: LIMEN_DIURNAL_REAP_MAX
     self_update: none
     owner: diurnal
-    note: "How many of the organ's own still-open page PRs it merges per run. ship-docs.sh exits 2 when merge-policy has not cleared within its wait, handing the PR to the beat's merge rung (drain.sh) — which sits below the pause gate in heartbeat-loop.sh and had not run since 2026-07-22, so five CLEARED non-deploy PRs accumulated across three days. The organ now closes its own loop; this caps the work so a backlog cannot stall the beat, and the remainder is retried next phase."
-  LIMEN_DIURNAL_REAP_TIMEOUT:
-    default: 600
-    env: LIMEN_DIURNAL_REAP_TIMEOUT
-    self_update: none
-    owner: diurnal
-    note: "Timeout (seconds) for each scripts/await-pr.sh --merge invocation during the reap. Separate from LIMEN_DIURNAL_TIMEOUT because a merge-queue round-trip is minutes, not seconds, while an emission is seconds. await-pr.sh is the one sanctioned waiter and carries its own hard deadline; this bounds the subprocess around it. Past the deadline the PR simply stays open and is retried."
+    note: "Maximum receipt-owned page PRs observed once per phase for an already-MERGED result. The recurring merge drain owns landing; this cap prevents read-only reconciliation from dominating the beat."
   LIMEN_DIURNAL_SHIP:
     default: "1"
     env: LIMEN_DIURNAL_SHIP
     self_update: none
     owner: diurnal
-    note: "Whether the organ lands its own emission on main via scripts/ship-docs.sh. 0 = pages stay on disk. docs/diurnal/ is a tracked directory but the emission arrives untracked, and capture.sh — the beat's only committing rung — refuses in-place commits on the live default branch and diverts to a side ref, so without this the organ's whole output is local-only (Rule #2) and re-lost daily. ship-docs refuses deploy-trigger paths, so a page can never blind-deploy the site; publication is additionally held whenever logs/AUTONOMY_PAUSED prohibits merge, the same marker await-pr.sh reads."
+    note: "Whether the organ lands its own emission on main via scripts/ship-docs.sh. 0 = pages stay on disk. docs/diurnal/ is tracked but each emission arrives untracked, and capture.sh refuses an in-place default-branch commit. ship-docs refuses deploy-trigger paths, and logs/AUTONOMY_PAUSED still prohibits merge."
   LIMEN_DIURNAL_MORNING_HOUR:
     default: 6
     env: LIMEN_DIURNAL_MORNING_HOUR

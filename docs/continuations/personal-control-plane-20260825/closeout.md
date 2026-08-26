@@ -15,7 +15,8 @@ predicates hold:
    OpenCode state.
 4. Manual CI on the transferred default SHA has a nonzero runner ID and at least one executed step.
 5. PR #2543, then PR #2542, are exact-head green and have zero unresolved current or outdated review
-   threads before the system lane uses `scripts/await-pr.sh <number> --merge`.
+   threads before the system lane uses one exact-head
+   `scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA` submission.
 6. Notification artifacts land, the exact merged artifacts are installed by the system lane, and
    one unique local delivery plus three successful fires at least 300 seconds apart prove zero
    descendants and no legacy watchdog residue.

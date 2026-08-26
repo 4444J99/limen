@@ -412,9 +412,8 @@ def main() -> int:
         ("Engage the Real Problem First", "The registry owns the answer", "the registry-owns-the-answer rule"),
         (
             "Merge & Branch Protocol",
-            "scripts/await-pr.sh",
-            "the sanctioned-waiter rule (never hand-roll a background PR poll loop; "
-            "scripts/await-pr.sh is the one bounded, loud waiter)",
+            "no synchronous waiter",
+            "the no-synchronous-waiter rule (submit one exact head and return control)",
         ),
         (
             "Closeout Definition",
@@ -530,7 +529,8 @@ def main() -> int:
         discipline_section = section(agents_text, "Session Discipline")
         for phrase, label in [
             ("scripts/verify-scoped.sh", "bounded-CI-waits rule (verify-scoped.sh is the default gate)"),
-            ("scripts/await-pr.sh", "bounded-CI-waits rule (await-pr.sh is the one sanctioned waiter)"),
+            ("no synchronous waiter", "bounded-CI rule (agent/provider sessions never wait on PR state)"),
+            ("scripts/merge-drain.py", "one-shot exact-head merge submission rule"),
             ("BLOCKED: <atom>", "no-stall/BLOCKED-once rule"),
             ("his-hand-levers.json", "durable-homing rule (human-gated atoms file in his-hand-levers.json)"),
             ("registry already owns the answer", "derive/no-menu rule (registry owns the answer)"),
@@ -554,7 +554,8 @@ def main() -> int:
         for phrase, label in [
             ("Session Discipline", "Session Discipline section pointer"),
             ("verify-scoped.sh", "bounded-CI-waits rule"),
-            ("await-pr.sh", "bounded-CI-waits sanctioned-waiter rule"),
+            ("no synchronous", "no-synchronous-PR-wait rule"),
+            ("merge-drain.py", "one-shot exact-head submission rule"),
             ("BLOCKED:", "no-stall/BLOCKED-once rule"),
         ]:
             if phrase not in tmpl_text:

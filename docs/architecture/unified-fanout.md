@@ -102,8 +102,8 @@ the pushed head. Harvest fails closed on any omission or moved base/head.
 
 Landing adapters are discovered through the `limen.fanout_landing` Python entry-point group. The
 built-in adapter accepts the exact-head GitHub PR receipt created by the execution adapter. `--merge`
-calls the single sanctioned `scripts/await-pr.sh --merge` path. Direct shared-checkout landing is not
-an adapter surface.
+submits that head exactly once through targeted `scripts/merge-drain.py` mode and returns `queued`
+or `merged`; it never waits or retries. Direct shared-checkout landing is not an adapter surface.
 
 ## Minimal example
 

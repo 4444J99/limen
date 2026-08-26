@@ -367,9 +367,9 @@ gates:
     note: "The clobber check in the verify skill must count removals correctly, because sessions copy that line verbatim to answer 'did my branch delete someone else's work?'. Both obvious one-liners are wrong in opposite directions: `grep '^-'` over-counts by the `--- a/<file>` header (noisy), and the tidier `grep -E '^-[^-]'` UNDER-counts — a removed BLANK line is a lone `-` and a removed `--flag` line renders `---flag`, so on a 3-removal fixture it reports 1. Under-counting hides the clobber the check exists to find, and that pattern shipped for one merge. The assertion is scoped to a runnable `git diff … | grep` recipe line, not any mention: the prose names the bad pattern on purpose so the trap stays recorded."
   await-pr-test:
     command: "bash scripts/tests/await-pr.test.sh"
-    paths: ["scripts/await-pr.sh", "scripts/tests/await-pr.test.sh", "scripts/merge-policy.sh"]
+    paths: ["scripts/await-pr.sh", "scripts/tests/await-pr.test.sh"]
     owner: verify
-    note: "The one sanctioned PR-gate waiter stays bounded and loud: CLEARED/FAILED/TIMEOUT/REFUSED-PAUSED verdict matrix, CI-red terminal (never waited out), single-instance lock, pause-marker refusal (2026-07-15 endless-watcher incident)."
+    note: "The retired synchronous-waiter path fails immediately with exit 64 and points stale callers to one exact-head merge-drain submission; no polling implementation remains."
   verify-resolver-test:
     command: "bash scripts/tests/verify-resolver.test.sh"
     paths: ["scripts/verify.py", "scripts/tests/verify-resolver.test.sh", "institutio/governance/gates.yaml"]
