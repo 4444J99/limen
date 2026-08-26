@@ -1111,7 +1111,7 @@ human_atoms:
 
 # ── consumers-derive ratchets (armed per-PR as each consumer converts — the gates.yaml discipline) ──
 ratchets:
-  setup_rulesets_derives_checks: false     # ARM when setup-rulesets.py reads classes[].required_checks
+  setup_rulesets_derives_checks: true      # setup-rulesets.py reads the first matching classes[].required_checks row
   session_pressure_derives_remote: false   # ARM when session-lifecycle-pressure.py delegates remote-branch counts to the census ledger
   visibility_gate_armed: true
   # Doctor rung Q (audience intent). Report-only by construction — it emits cites, never a flip
