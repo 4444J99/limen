@@ -569,6 +569,8 @@ def _publish_remote_attempt(
             deadline_monotonic=deadline_monotonic,
         )
     except CampaignRelayError as exc:
+        if exc.code == "relay_startup_timeout":
+            raise
         raise CampaignRelayError(
             "relay_attempt_publication_failed",
             "campaign relay remote attempt could not be prepared",
@@ -595,7 +597,11 @@ def _publish_remote_attempt(
             receipt,
             deadline_monotonic=deadline_monotonic,
         )
-    except CampaignRelayError:
+    except CampaignRelayError as exc:
+        if exc.code == "relay_startup_timeout":
+            raise
+        if publication_error is not None and publication_error.code == "relay_startup_timeout":
+            raise publication_error
         if publication_error is not None:
             raise CampaignRelayError(
                 "relay_attempt_publication_failed",
@@ -603,6 +609,8 @@ def _publish_remote_attempt(
             ) from publication_error
         raise
     if observed is None:
+        if publication_error is not None and publication_error.code == "relay_startup_timeout":
+            raise publication_error
         raise CampaignRelayError(
             "relay_attempt_publication_failed",
             "campaign relay remote attempt ref is missing after publication",

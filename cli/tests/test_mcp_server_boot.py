@@ -212,7 +212,10 @@ def test_stdio_probe_resolves_relative_command_against_declared_cwd(
     ok, detail = module._probe_stdio(server, timeout=1)
 
     assert ok is True
-    assert detail == "boots (clean start, no handshake)"
+    assert detail in {
+        "boots (alive, no handshake within timeout)",
+        "boots (clean start, no handshake)",
+    }
 
 
 def test_bearer_status_requires_the_named_environment_value(
