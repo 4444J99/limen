@@ -658,14 +658,14 @@ classes:
     match: ["4444J99/limen"]
     visibility: public                     # 2026-07-22 owner decision: conductor stays public (free-tier CI dependency; resolves the observed-public drift); supersedes the 2026-07-16 private flip
     branch_protection: required
-    required_checks: ["pr-gate", "python", "web", "worker"]
+    required_checks: ["pr-gate"]            # sole always-on context; ci.yml children are path-filtered receipts
     app_installed: required
     secret_hygiene: enforced
     stale_branch_grace_min: 60             # reuses the reap-branches grace default
     archive_policy: never
     seo: {description: required, topics_min: 5, homepage: required, readme: portal}
     owner: gitvs
-    note: "The live daemon body: strictest posture. required_checks mirror the ci.yml / pr-gate.yml job ids."
+    note: "The live daemon body: strictest posture. pr-gate is always-on; path-filtered CI children remain additive exact-head receipts and cannot be global required contexts."
   contrib_fork:
     match: ["**"]
     match_facts: {fork: true}
