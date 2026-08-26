@@ -90,4 +90,3 @@ def test_render_ideal_doc_records_autopoietic_loop(tmp_path: Path, monkeypatch) 
     assert "# VLTIMA Ideal Form" in markdown
     assert "Doctrine becomes work only through bounded packets" in markdown
     assert "No `tasks.yaml` mutation in v1" in markdown
-

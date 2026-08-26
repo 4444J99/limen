@@ -103,4 +103,3 @@ def test_build_certainty_counts_unowned_dispatchable_as_zero(tmp_path: Path) -> 
     assert certainty["coverage"]["claim_count"] == 1
     assert certainty["coverage"]["owner_status_counts"] == {"owned_current": 1}
     assert certainty["coverage"]["unowned_dispatchable_count"] == 0
-
