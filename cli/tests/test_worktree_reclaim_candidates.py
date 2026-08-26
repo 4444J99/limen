@@ -57,11 +57,12 @@ def test_packet_governance_cites_agent_score_authorities() -> None:
     mod = load_candidates()
 
     gate = mod.governance_context(
-        value_repos=["organvm/limen"],
+        value_repos=["4444J99/limen"],
         score_summary={"ledger_present": True, "records_sampled": 7, "by_grade": {"worth_it": 5}, "sunk": 0},
     )
 
     assert gate["repo_in_value_tier"] is True
+    assert gate["repo"] == "4444J99/limen"
     assert gate["prompt_attack_path"]["family"] == "worktree_lifecycle"
     assert gate["prompt_attack_path"]["score"] == 32
     assert "scripts/score-dispatch.py" in gate["authority_sources"]

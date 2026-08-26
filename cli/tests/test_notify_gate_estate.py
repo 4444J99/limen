@@ -616,19 +616,17 @@ def test_ntfy_delivery_honors_liveness_and_kill_switch(tmp_path, monkeypatch):
     mod = _load("_notify_ntfy_gate", SCRIPTS / "_notify.py")
     calls = []
 
-    class Response:
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *_args):
-            return False
-
     monkeypatch.setenv("LIMEN_NTFY_TOPIC", "test-topic")
     monkeypatch.setattr(mod, "_root_may_speak", lambda _root: True)
+
+    def emit_event(*args, **kwargs):
+        calls.append((args, kwargs))
+        return SimpleNamespace(channels={"ntfy": "submitted"})
+
     monkeypatch.setattr(
-        mod.urllib.request,
-        "urlopen",
-        lambda request, timeout: calls.append((request, timeout)) or Response(),
+        mod,
+        "emit_event_v1",
+        emit_event,
     )
 
     monkeypatch.setenv("LIMEN_NOTIFY", "0")

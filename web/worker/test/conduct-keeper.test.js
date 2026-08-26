@@ -563,6 +563,86 @@ test("principal-bound executor claims are recoverable and secret from conductors
   assert.equal(first.capability_token, second.capability_token);
 });
 
+test("executor selection excludes conductor-only authenticated sessions", async () => {
+  const service = new SerializedConductService(new MemoryConductStore(), {
+    clock: () => NOW,
+    capabilitySecret: "worker-role-selection-secret",
+  });
+  const conductorPrincipal = principalMeta(
+    "role-only-conductor",
+    "codex",
+    ["observer", "conductor"],
+  );
+  const executorPrincipal = principalMeta(
+    "role-only-executor",
+    "jules",
+    ["observer", "executor"],
+  );
+  const conductor = await service.call("register", {
+    session: session("spoofed", { sessionId: "role-only-conductor-session" }),
+    principal: conductorPrincipal,
+  });
+  const executor = await service.call("register", {
+    session: session("spoofed", { sessionId: "role-only-executor-session" }),
+    principal: executorPrincipal,
+  });
+
+  const reserved = await service.call("submit", {
+    packet: await packet({
+      workId: "role-qualified-executor",
+      conductor: conductor.identity,
+      preferredAgent: "codex",
+    }),
+    principal: conductorPrincipal,
+  });
+
+  assert.equal(reserved.lease.executor.session_id, executor.session_id);
+});
+
+test("healthy executor principal may adopt after the original conductor is absent", async () => {
+  const store = new MemoryConductStore();
+  const service = new SerializedConductService(store, {
+    clock: () => NOW,
+    capabilitySecret: "worker-cross-principal-adoption-secret",
+  });
+  const conductorPrincipal = principalMeta(
+    "adoption-original-conductor",
+    "codex",
+    ["observer", "conductor"],
+  );
+  const executorPrincipal = principalMeta(
+    "adoption-successor-executor",
+    "jules",
+    ["observer", "executor"],
+  );
+  const conductor = await service.call("register", {
+    session: session("spoofed", { sessionId: "adoption-original-session" }),
+    principal: conductorPrincipal,
+  });
+  const adopter = await service.call("register", {
+    session: session("spoofed", { sessionId: "adoption-successor-session" }),
+    principal: executorPrincipal,
+  });
+  const reserved = await service.call("submit", {
+    packet: await packet({ workId: "cross-principal-adoption", conductor: conductor.identity }),
+    principal: conductorPrincipal,
+  });
+  const stale = store.snapshot();
+  stale.sessions[conductor.session_id].heartbeat_at = new Date(
+    NOW.getTime() - 60 * 60 * 1000,
+  ).toISOString();
+  await store.save(stale);
+
+  const adopted = await service.call("adopt", {
+    run_id: reserved.run_id,
+    session_id: adopter.session_id,
+    principal: executorPrincipal,
+  });
+
+  assert.equal(adopted.status, "adopted");
+  assert.equal(adopted.conductor_session_id, adopter.session_id);
+});
+
 test("full-mesh canary read edge preserves Worker protocol parity", async () => {
   const runtimeHead = "a".repeat(40);
   const runtimeIdentity = {
@@ -793,8 +873,13 @@ test("declared conductor identity matches its principal-bound session (#1408)", 
     capabilitySecret: "worker-relay-identity-secret",
   });
   const relayPrincipal = principalMeta("principal-relay", "codex", ["observer", "conductor"]);
+  const executorPrincipal = principalMeta("principal-relay-executor", "jules", ["observer", "executor"]);
   const declared = session("claude", { sessionId: "relay-session" });
   await service.call("register", { session: declared, principal: relayPrincipal });
+  await service.call("register", {
+    session: session("spoofed", { sessionId: "relay-executor-session", capabilities: ["code"] }),
+    principal: executorPrincipal,
+  });
   // The relay submits the identity it declared (agent "claude", surface "cli"),
   // not the token-bound register echo — pre-fix this 409'd and froze board writes.
   const reserved = await service.call("submit", {

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import pwd
 import subprocess
 import tempfile
 from collections.abc import Iterator
@@ -29,6 +30,13 @@ from limen.universe_recovery import (
 
 
 Runner = Callable[..., subprocess.CompletedProcess[str]]
+
+
+def keeper_redemption_path() -> Path:
+    """Return the non-overridable keeper-owned capability-spend registry."""
+
+    account_home = Path(pwd.getpwuid(os.getuid()).pw_dir)
+    return account_home / ".local" / "state" / "limen" / "keeper" / "remote-reap-redemptions.json"
 
 
 def utc_now() -> datetime:
@@ -196,6 +204,7 @@ def validate_disposition_evidence(
         or review.repository_identity != disposition.repository_identity
         or not review.repository_identity.accepts(review.repository)
         or review.pull_request not in disposition.pull_requests
+        or review.head_sha != disposition.tip
     ):
         raise ValueError("review closure is nonterminal or not named by the disposition")
     if review.lifecycle_stage not in {"main_verified", "runtime_verified", "terminal"}:

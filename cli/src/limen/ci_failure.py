@@ -26,7 +26,7 @@ def classify_ci_failure(
     *,
     visibility_drift: bool = False,
 ) -> CIFailure:
-    failed = [job for job in jobs if str(job.get("conclusion") or "") in {"failure", "startup_failure"}]
+    failed = [job for job in jobs if str(job.get("conclusion") or "") in {"failure", "startup_failure", "timed_out"}]
     if not failed:
         return CIFailure("unknown", "no failed jobs were available", False, "CI_UNKNOWN", False, False)
     if any(job.get("steps") for job in failed):

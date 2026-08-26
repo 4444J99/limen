@@ -136,5 +136,5 @@ def test_the_quota_condition_names_a_live_owner_not_the_retired_lever():
 
     for organ in ("scripts/heal-board.py", "scripts/self-heal.py", "scripts/heal-dispatch.py"):
         text = (ROOT / organ).read_text(encoding="utf-8")
-        assert 'QUOTA_OWNER = "organvm/limen#2054' in text, f"{organ} must cite the live engineering owner"
+        assert 'QUOTA_OWNER = "4444J99/limen#2054' in text, f"{organ} must cite the live engineering owner"
         assert "QUOTA_LEVER" not in text, f"{organ} must not resurrect the retired lever constant"

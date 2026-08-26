@@ -560,7 +560,7 @@ def test_github_actions_lane_requires_configured_workflow(tmp_path: Path, monkey
     lanes = select_lanes("auto", board)
 
     assert status["reachable"] is False
-    assert "workflow=limen-agent.yml@organvm/limen unavailable" in status["detail"]
+    assert "workflow=limen-agent.yml@4444J99/limen unavailable" in status["detail"]
     assert "github_actions" not in lanes
 
 
@@ -580,7 +580,7 @@ def test_github_actions_lane_uses_configured_executor_workflow(tmp_path: Path, m
     status = agent_status("github_actions")
 
     assert status["reachable"] is True
-    assert "workflow=custom-agent.yml@organvm/limen" in status["detail"]
+    assert "workflow=custom-agent.yml@4444J99/limen" in status["detail"]
 
 
 def test_route_distributes_local_work_and_reaches_extended_fleet(tmp_path: Path) -> None:
@@ -2334,7 +2334,7 @@ def test_warp_auto_dispatch_sends_dynamic_profile_without_model_override(monkeyp
 
     result = D._call_warp_oz("warp", task, False)
 
-    assert result == "warp-oz:organvm/limen:limen-warp-oz.yml"
+    assert result == "warp-oz:4444J99/limen:limen-warp-oz.yml"
     assert any(arg.startswith("execution_profile={") for arg in captured)
     assert not any(arg.startswith("model=") for arg in captured)
     receipt = D._MODEL_SELECTION_RECEIPTS.pop(task.id)

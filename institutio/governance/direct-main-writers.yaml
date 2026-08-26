@@ -43,6 +43,9 @@ surfaces:
   cli/src/limen/tabularius.py:
     disposition: remote-keeper-relay-no-git-writer
     expected: {}
+  cli/src/limen/universe_recovery.py:
+    disposition: exact-tip-force-with-lease-nondefault-ref-capability-only
+    expected: {push_literal: 1}
   mcp/src/limen_mcp/server.py:
     disposition: repository-mutations-deferred-to-tabularius
     expected: {}

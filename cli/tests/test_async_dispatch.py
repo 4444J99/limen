@@ -264,6 +264,9 @@ def _remote_harvest_fixture(tmp_path):
         "request_id": request_id,
         "observed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "detail": "submission observed; not completion",
+        "actions_job": None,
+        "admission_result": "",
+        "retry_allowed": True,
     }
     receipt: dict[str, object] = {
         "schema_version": SCHEMA_VERSION,
@@ -273,6 +276,7 @@ def _remote_harvest_fixture(tmp_path):
         "predicate": None,
         "outputs": [],
         "observed_sha": None,
+        "workflow_receipt_digest": None,
         "observed_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "detail": "submission observed; not completion",
         "done": False,
