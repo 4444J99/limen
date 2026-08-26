@@ -144,19 +144,22 @@ def run(
     state: RemoteState = RemoteState.RUNNING,
     *,
     run_id: str = "42",
+    run_attempt: int | None = None,
     detail: str = "running",
     observed_at: str = NOW,
 ) -> RemoteRun:
+    observed_attempt = run_attempt if run_attempt is not None else (None if run_id.startswith("pending:") else 1)
     job = (
         ActionsJobObservation(
             job_id=420,
+            run_attempt=observed_attempt,
             name="deterministic-compute",
             url=f"https://github.com/organvm/limen/actions/runs/{run_id}/job/420",
             runner_id=7,
             runner_name="GitHub Actions 7",
             executed_step_count=5,
         )
-        if state in {RemoteState.SUCCEEDED, RemoteState.FAILED}
+        if state in {RemoteState.SUCCEEDED, RemoteState.FAILED} and observed_attempt is not None
         else None
     )
     return RemoteRun(
@@ -175,6 +178,7 @@ def run(
         state=state,
         request_id=req.request_id,
         observed_at=observed_at,
+        run_attempt=observed_attempt,
         detail=detail,
         actions_job=job,
         admission_result=CI_EXECUTED_STEP_ADMISSION if job else "",
@@ -980,11 +984,13 @@ def exact_actions_row(
     req: RemoteRequest,
     *,
     run_id: int = 42,
+    run_attempt: int = 1,
     status: str = "queued",
     conclusion: str | None = None,
 ) -> dict[str, object]:
     return {
         "id": run_id,
+        "run_attempt": run_attempt,
         "html_url": f"https://github.com/{req.control_repo}/actions/runs/{run_id}",
         "display_title": f"remote:{req.request_id}:{req.task_id}",
         "head_branch": req.control_ref,
@@ -1002,6 +1008,7 @@ def exact_actions_job(
     req: RemoteRequest,
     *,
     run_id: int = 42,
+    run_attempt: int = 1,
     job_id: int = 420,
     runner_id: int = 7,
     runner_name: str = "GitHub Actions 7",
@@ -1010,6 +1017,7 @@ def exact_actions_job(
     return {
         "id": job_id,
         "run_id": run_id,
+        "run_attempt": run_attempt,
         "name": "deterministic-compute",
         "html_url": f"https://github.com/{req.control_repo}/actions/runs/{run_id}/job/{job_id}",
         "runner_id": runner_id,
@@ -1226,6 +1234,42 @@ def test_terminal_workflow_failure_requires_no_artifact() -> None:
     assert receipt.run.actions_job.executed_step_count == 2
     assert receipt.run.admission_result == CI_EXECUTED_STEP_ADMISSION
     assert not any(args[1:3] == ("run", "download") for args in calls)
+
+
+def test_terminal_rerun_recensuses_job_admission_for_changed_attempt() -> None:
+    req = request()
+    prior_attempt = run(req, RemoteState.FAILED, run_attempt=1)
+    job_census_paths: list[str] = []
+
+    def runner(argv: object, _timeout: int) -> CommandResult:
+        args = tuple(argv)  # type: ignore[arg-type]
+        if args[1] == "api" and args[-3].endswith("/jobs"):
+            job_census_paths.append(args[-3])
+            job = exact_actions_job(
+                req,
+                run_attempt=2,
+                job_id=421,
+                runner_id=0,
+                runner_name="",
+                steps=[],
+            )
+            return CommandResult(args, 0, json.dumps([{"total_count": 1, "jobs": [job]}]))
+        return CommandResult(
+            args,
+            0,
+            json.dumps(exact_actions_row(req, run_attempt=2, status="completed", conclusion="failure")),
+        )
+
+    receipt = _actions_adapter(runner).harvest(req, prior_attempt)
+
+    assert job_census_paths == ["repos/organvm/limen/actions/runs/42/attempts/2/jobs"]
+    assert receipt.state is RemoteState.BLOCKED
+    assert receipt.run.run_attempt == 2
+    assert receipt.run.admission_result == CI_ZERO_STEP_ADMISSION
+    assert receipt.run.actions_job is not None
+    assert receipt.run.actions_job.run_attempt == 2
+    assert receipt.run.actions_job.job_id == 421
+    assert receipt.run.retry_allowed is False
 
 
 def test_successful_workflow_without_artifact_is_blocked() -> None:

@@ -332,6 +332,37 @@ def _required_connection(result: dict[str, Any], key: str, label: str) -> dict[s
     return payload
 
 
+def _required_ruleset_census(client: GhClient, coordinate: str) -> dict[str, Any]:
+    result = client.optional_list(f"/repos/{coordinate}/rulesets?per_page=100")
+    if not result.get("available"):
+        raise TransferCaptureError("repository rulesets census is unavailable")
+    summaries = result.get("value")
+    if not isinstance(summaries, list):
+        raise TransferCaptureError("repository rulesets census is malformed")
+
+    ruleset_ids: list[int] = []
+    for summary in summaries:
+        if not isinstance(summary, Mapping):
+            raise TransferCaptureError("repository rulesets census contains a non-object row")
+        ruleset_id = summary.get("id")
+        if not isinstance(ruleset_id, int) or ruleset_id <= 0:
+            raise TransferCaptureError("repository rulesets census contains an invalid identity")
+        ruleset_ids.append(ruleset_id)
+    if len(ruleset_ids) != len(set(ruleset_ids)):
+        raise TransferCaptureError("repository rulesets census contains duplicate identities")
+
+    rulesets: list[dict[str, Any]] = []
+    for ruleset_id in sorted(ruleset_ids):
+        detail = client.optional_object(f"/repos/{coordinate}/rulesets/{ruleset_id}")
+        if not detail.get("available"):
+            raise TransferCaptureError(f"repository ruleset {ruleset_id} detail census is unavailable")
+        payload = detail.get("value")
+        if not isinstance(payload, Mapping) or payload.get("id") != ruleset_id:
+            raise TransferCaptureError(f"repository ruleset {ruleset_id} detail census is malformed")
+        rulesets.append({"available": True, "value": _without_github_links(dict(payload))})
+    return {"available": True, "value": rulesets}
+
+
 def _names_only(result: dict[str, Any], key: str) -> dict[str, Any]:
     payload = _required_connection(result, key, key)
     values = payload[key]
@@ -729,21 +760,7 @@ def capture_github_manifest(
         deploy_keys["value"] = [
             _deploy_key_record(value) for value in deploy_keys.get("value") or [] if isinstance(value, dict)
         ]
-    ruleset_summaries = client.optional_list(f"/repos/{coordinate}/rulesets?per_page=100")
-    if ruleset_summaries.get("available"):
-        rulesets: dict[str, Any] = {
-            "available": True,
-            "value": [
-                client.optional_object(f"/repos/{coordinate}/rulesets/{value['id']}")
-                for value in ruleset_summaries.get("value") or []
-                if isinstance(value, dict) and value.get("id")
-            ],
-        }
-        for ruleset in rulesets["value"]:
-            if ruleset.get("available"):
-                ruleset["value"] = _without_github_links(ruleset["value"])
-    else:
-        rulesets = ruleset_summaries
+    rulesets = _required_ruleset_census(client, coordinate)
     access = _repository_access_census(client, identity, coordinate, metadata)
 
     return {

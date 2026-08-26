@@ -87,6 +87,7 @@ class ActionsJobObservation:
     """
 
     job_id: int
+    run_attempt: int
     name: str
     url: str
     runner_id: int
@@ -97,6 +98,8 @@ class ActionsJobObservation:
         if (
             isinstance(self.job_id, bool)
             or self.job_id <= 0
+            or isinstance(self.run_attempt, bool)
+            or self.run_attempt <= 0
             or self.name != DETERMINISTIC_COMPUTE_JOB
             or not self.url.startswith("https://github.com/")
             or isinstance(self.runner_id, bool)
@@ -426,6 +429,7 @@ class RemoteRun:
     state: RemoteState
     request_id: str
     observed_at: str
+    run_attempt: int | None = None
     detail: str = ""
     actions_job: ActionsJobObservation | None = None
     admission_result: str = ""
@@ -457,8 +461,17 @@ class RemoteRun:
             raise ValueError("remote run observation timestamp is invalid") from exc
         if observed.tzinfo is None:
             raise ValueError("remote run observation timestamp must be timezone-aware")
+        if self.pending_identity:
+            if self.run_attempt is not None:
+                raise ValueError("pending remote run cannot claim an Actions attempt")
+        elif self.run_attempt is not None and (
+            isinstance(self.run_attempt, bool) or not isinstance(self.run_attempt, int) or self.run_attempt <= 0
+        ):
+            raise ValueError("remote run Actions attempt must be positive")
         if self.actions_job is not None and not isinstance(self.actions_job, ActionsJobObservation):
             raise ValueError("remote run Actions job observation is invalid")
+        if self.actions_job is not None and self.actions_job.run_attempt != self.run_attempt:
+            raise ValueError("remote run Actions job does not bind its exact attempt")
         if self.actions_job is not None and self.actions_job.url.rstrip("/") != (
             f"{self.url.rstrip('/')}/job/{self.actions_job.job_id}"
         ):
@@ -889,6 +902,7 @@ _REMOTE_RUN_FIELDS = frozenset(
         "state",
         "request_id",
         "observed_at",
+        "run_attempt",
         "detail",
         "actions_job",
         "admission_result",
@@ -1035,6 +1049,7 @@ def validate_remote_submission_harvest(
             state=RemoteState(str(run["state"])),
             request_id=str(run["request_id"]),
             observed_at=str(run["observed_at"]),
+            run_attempt=run["run_attempt"],
             detail=str(run.get("detail") or ""),
             actions_job=serialized_job,
             admission_result=str(run.get("admission_result") or ""),
@@ -1155,6 +1170,7 @@ def load_receipt(path: Path, request: RemoteRequest) -> RemoteReceipt:
             state=RemoteState(str(run_row["state"])),
             request_id=str(run_row["request_id"]),
             observed_at=str(run_row["observed_at"]),
+            run_attempt=run_row["run_attempt"],
             detail=str(run_row.get("detail") or ""),
             actions_job=(
                 ActionsJobObservation(**run_row["actions_job"])
@@ -1484,6 +1500,7 @@ class GitHubWorkflowAdapter:
             state=RemoteState.SUBMITTED,
             request_id=request.request_id,
             observed_at=_now(),
+            run_attempt=None,
             detail="durable submission intent; provider mutation not yet confirmed",
         )
 
@@ -1646,7 +1663,7 @@ class GitHubWorkflowAdapter:
         if not isinstance(row, dict):
             return replace_run(run, RemoteState.UNKNOWN, "provider status is not an object")
         observed = _run_from_actions(request, run.request_id, row, self.control_repo)
-        if run.actions_job is not None and observed.state.terminal:
+        if run.actions_job is not None and observed.state.terminal and run.run_attempt == observed.run_attempt:
             return _run_with_actions_job(
                 observed,
                 run.actions_job,
@@ -1667,7 +1684,7 @@ class GitHubWorkflowAdapter:
                 "GET",
                 "--paginate",
                 "--slurp",
-                f"repos/{request.control_repo}/actions/runs/{run.provider_run_id}/jobs",
+                f"repos/{request.control_repo}/actions/runs/{run.provider_run_id}/attempts/{run.run_attempt}/jobs",
                 "-f",
                 "per_page=100",
             ],
@@ -1717,10 +1734,15 @@ class GitHubWorkflowAdapter:
             raise RemoteExecutionError("workflow job census contains invalid job identity")
         job_id = raw_job_id
         run_id = row.get("run_id")
+        run_attempt = row.get("run_attempt")
         job_url = str(row.get("html_url") or "")
         expected_url = f"{run.url}/job/{job_id}"
-        if str(run_id or "") != run.provider_run_id or job_url.rstrip("/") != expected_url:
-            raise RemoteExecutionError("workflow job does not bind the exact Actions run and URL")
+        if (
+            str(run_id or "") != run.provider_run_id
+            or run_attempt != run.run_attempt
+            or job_url.rstrip("/") != expected_url
+        ):
+            raise RemoteExecutionError("workflow job does not bind the exact Actions run, attempt, and URL")
         steps = row.get("steps")
         if not isinstance(steps, list) or any(not isinstance(item, dict) for item in steps):
             raise RemoteExecutionError("workflow job steps are malformed")
@@ -1731,6 +1753,7 @@ class GitHubWorkflowAdapter:
         runner_id = raw_runner_id if isinstance(raw_runner_id, int) and not isinstance(raw_runner_id, bool) else 0
         return ActionsJobObservation(
             job_id=job_id,
+            run_attempt=run.run_attempt,
             name=DETERMINISTIC_COMPUTE_JOB,
             url=expected_url,
             runner_id=runner_id,
@@ -2116,6 +2139,9 @@ def _run_from_actions(
     url = str(row["html_url"])
     status = str(row.get("status") or "").lower()
     conclusion = str(row.get("conclusion") or "").lower()
+    run_attempt = row.get("run_attempt")
+    if isinstance(run_attempt, bool) or not isinstance(run_attempt, int) or run_attempt <= 0:
+        raise RemoteExecutionError("Actions row lacks a positive run attempt")
     if status == "completed":
         state = RemoteState.SUCCEEDED if conclusion == "success" else RemoteState.FAILED
     elif status in {"queued", "waiting", "pending", "requested"}:
@@ -2138,6 +2164,7 @@ def _run_from_actions(
         state=state,
         request_id=request_id,
         observed_at=_now(),
+        run_attempt=run_attempt,
         detail=conclusion or status,
     )
 
@@ -2159,6 +2186,7 @@ def replace_run(run: RemoteRun, state: RemoteState, detail: str) -> RemoteRun:
         state=state,
         request_id=run.request_id,
         observed_at=_now(),
+        run_attempt=run.run_attempt,
         detail=detail,
         actions_job=run.actions_job,
         admission_result=run.admission_result,
@@ -2191,6 +2219,7 @@ def _run_with_actions_job(
         state=state or run.state,
         request_id=run.request_id,
         observed_at=_now(),
+        run_attempt=run.run_attempt,
         detail=detail,
         actions_job=job,
         admission_result=admission_result,
@@ -2214,6 +2243,7 @@ def _same_run_observation(left: RemoteRun, right: RemoteRun) -> bool:
         and left.verification_context_digest == right.verification_context_digest
         and left.state is right.state
         and left.request_id == right.request_id
+        and left.run_attempt == right.run_attempt
         and left.detail == right.detail
         and left.actions_job == right.actions_job
         and left.admission_result == right.admission_result
