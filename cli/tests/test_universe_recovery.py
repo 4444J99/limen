@@ -168,6 +168,16 @@ def test_valid_fixed_point_is_stable_when_only_timestamp_changes():
     assert first.stable_digest == second.stable_digest
 
 
+def test_valid_fixed_point_is_stable_when_review_observation_time_changes():
+    first = evaluate_recovery(manifest())
+    refreshed_review = review().model_copy(update={"observed_at": NOW + timedelta(minutes=1)})
+    second = evaluate_recovery(manifest(review_closures=(refreshed_review,)))
+
+    assert first.ok is True
+    assert second.ok is True
+    assert first.stable_digest == second.stable_digest
+
+
 def test_missing_newcomer_and_unknown_disposition_fail_closed():
     missing = evaluate_recovery(manifest(newcomer_keys=("organvm/new#1@" + TIP,)))
     unknown_row = manifest().dispositions[0].model_copy(update={"terminal_class": "unknown"})

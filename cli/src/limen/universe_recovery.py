@@ -611,7 +611,13 @@ def evaluate_recovery(manifest: UniverseRecoveryManifestV1) -> RecoveryEvaluatio
     unreconciled = sum(row.state != "completed" for row in manifest.reap_journals)
     if unreconciled:
         errors.append(f"unreconciled-reap-effects:{unreconciled}")
-    stable_payload = manifest.model_dump(mode="json", exclude={"generated_at"})
+    stable_payload = manifest.model_dump(
+        mode="json",
+        exclude={
+            "generated_at": True,
+            "review_closures": {"__all__": {"observed_at"}},
+        },
+    )
     return RecoveryEvaluationV1(
         ok=not errors,
         stable_digest=canonical_digest(stable_payload),

@@ -53,6 +53,45 @@ def test_secret_and_variable_name_censuses_reject_unavailable_results() -> None:
         transfer._names_only({"available": False}, "variables")
 
 
+def test_required_ruleset_census_rejects_unavailable_summary() -> None:
+    class Client:
+        def optional_list(self, _endpoint: str) -> dict[str, Any]:
+            return {"available": False, "error_class": "github_api_unavailable"}
+
+    with pytest.raises(TransferCaptureError, match="repository rulesets census is unavailable"):
+        transfer._required_ruleset_census(Client(), "4444J99/limen")
+
+
+def test_required_ruleset_census_rejects_unavailable_detail() -> None:
+    class Client:
+        def optional_list(self, _endpoint: str) -> dict[str, Any]:
+            return {"available": True, "value": [{"id": 7}]}
+
+        def optional_object(self, _endpoint: str) -> dict[str, Any]:
+            return {"available": False, "error_class": "github_api_unavailable"}
+
+    with pytest.raises(TransferCaptureError, match="ruleset 7 detail census is unavailable"):
+        transfer._required_ruleset_census(Client(), "4444J99/limen")
+
+
+def test_required_ruleset_census_reads_every_detail() -> None:
+    class Client:
+        def optional_list(self, _endpoint: str) -> dict[str, Any]:
+            return {"available": True, "value": [{"id": 9}, {"id": 7}]}
+
+        def optional_object(self, endpoint: str) -> dict[str, Any]:
+            ruleset_id = int(endpoint.rsplit("/", 1)[-1])
+            return {
+                "available": True,
+                "value": {"id": ruleset_id, "name": f"ruleset-{ruleset_id}", "_links": {"html": {}}},
+            }
+
+    census = transfer._required_ruleset_census(Client(), "4444J99/limen")
+
+    assert [row["value"]["id"] for row in census["value"]] == [7, 9]
+    assert all("_links" not in row["value"] for row in census["value"])
+
+
 def test_repository_access_census_excludes_only_the_personal_owner() -> None:
     class Client:
         def list(self, endpoint: str) -> list[dict[str, Any]]:
