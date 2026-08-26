@@ -815,6 +815,7 @@ time.sleep(30)
 
 def test_startup_timeout_uses_the_entry_reserved_cleanup_deadline_for_terminal_receipt(
     effector_repo,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     root, predecessor, _provider, _predecessor_deadline = effector_repo
     reservation = reserve_relay(
@@ -823,6 +824,16 @@ def test_startup_timeout_uses_the_entry_reserved_cleanup_deadline_for_terminal_r
         exact_remote_main=_git(root, "rev-parse", "HEAD"),
     )
     spawned: list[subprocess.Popen[bytes]] = []
+    real_monotonic = time.monotonic
+
+    class ExpiringClock:
+        expired_value: float | None = None
+
+        def monotonic(self) -> float:
+            return real_monotonic() if self.expired_value is None else self.expired_value
+
+    clock = ExpiringClock()
+    monkeypatch.setattr(relay_core, "time", clock)
 
     def spawn(_command, **kwargs):
         process = subprocess.Popen(
@@ -840,12 +851,15 @@ def test_startup_timeout_uses_the_entry_reserved_cleanup_deadline_for_terminal_r
             start_new_session=True,
         )
         spawned.append(process)
+        # Expire the startup budget deterministically after spawn while leaving the separately
+        # reserved cleanup/terminal-receipt budget available.
+        clock.expired_value = real_monotonic() + 21
         return process
 
     launch = launch_reserved_relay(
         root,
         reservation.receipt.relay_id,
-        timeout_seconds=1,
+        timeout_seconds=20,
         process_factory=spawn,
         lane_selector=lambda _root: ("codex",),
     )
@@ -855,6 +869,37 @@ def test_startup_timeout_uses_the_entry_reserved_cleanup_deadline_for_terminal_r
     assert len(spawned) == 1
     assert spawned[0].poll() is not None
     assert _read_relay(root, launch.receipt.relay_id) == launch.receipt
+
+
+def test_remote_attempt_publication_preserves_startup_timeout(
+    effector_repo,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    root, predecessor, _provider, _predecessor_deadline = effector_repo
+    reservation = reserve_relay(
+        root,
+        predecessor,
+        exact_remote_main=_git(root, "rev-parse", "HEAD"),
+    )
+
+    def deadline_expired(*_args, **_kwargs):
+        raise CampaignRelayError(
+            "relay_startup_timeout",
+            "injected absolute startup deadline",
+        )
+
+    monkeypatch.setattr(relay_publication, "_git_with_input", deadline_expired)
+
+    with pytest.raises(CampaignRelayError) as raised:
+        relay_publication._publish_remote_attempt(
+            root,
+            reservation.receipt,
+            controller_pid=1,
+            controller_process_started="fixture-controller",
+            deadline_monotonic=time.monotonic() + 1,
+        )
+
+    assert raised.value.code == "relay_startup_timeout"
 
 
 def test_startup_stream_read_error_after_partial_bytes_fails_closed(
@@ -1710,6 +1755,7 @@ def test_capacity_denial_keeps_attempt_unconsumed_and_refreshes_its_base(
 
 def test_capacity_census_consumes_the_entry_time_startup_deadline(
     effector_repo,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     root, predecessor, _provider, _deadline = effector_repo
     reservation = reserve_relay(
@@ -1718,24 +1764,33 @@ def test_capacity_census_consumes_the_entry_time_startup_deadline(
         exact_remote_main=_git(root, "rev-parse", "HEAD"),
     )
 
-    def slow_capacity(_root):
-        time.sleep(1.05)
+    real_monotonic = time.monotonic
+
+    class ExpiringClock:
+        expired_value: float | None = None
+
+        def monotonic(self) -> float:
+            return real_monotonic() if self.expired_value is None else self.expired_value
+
+    clock = ExpiringClock()
+    monkeypatch.setattr(relay_core, "time", clock)
+
+    def expire_capacity(_root):
+        clock.expired_value = real_monotonic() + 2
         return ("codex",)
 
-    started = time.monotonic()
     with pytest.raises(CampaignRelayError) as raised:
         launch_reserved_relay(
             root,
             reservation.receipt.relay_id,
             timeout_seconds=1,
-            lane_selector=slow_capacity,
+            lane_selector=expire_capacity,
             process_factory=lambda *_args, **_kwargs: pytest.fail(
                 "an expired startup deadline must not spawn a provider"
             ),
         )
 
     assert raised.value.code == "relay_startup_timeout"
-    assert time.monotonic() - started < 1.5
     current = _read_relay(root, reservation.receipt.relay_id)
     assert current.state == "reserved"
     assert current.attempts == 0
