@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import rfc8785Vectors from "../../../spec/contracts/conduct/rfc8785-vectors.json" with { type: "json" };
+import notificationRegistry from "../../../institutio/governance/notification-events.limen.json" with { type: "json" };
 import { authorizeConductRequest } from "../src/conduct/auth.js";
 import {
   ConductKeeperDurableObject,
@@ -502,6 +503,74 @@ test("task-run HTTP route exposes the bounded lookup to conductor principals", a
   assert.deepEqual(calls, [["task_run", { task_id: "HTTP-TASK" }]]);
 });
 
+test("deployed notification assignments match the client schema and require observation authority", async () => {
+  const store = new MemoryConductStore();
+  const service = new SerializedConductService(store, { clock: () => NOW });
+  const observerPrincipal = principalMeta(
+    "notification-observer",
+    "codex",
+    ["observer"],
+  );
+  const conductorPrincipal = principalMeta(
+    "notification-conductor",
+    "claude",
+    ["conductor"],
+  );
+  const result = await service.call("list_notification_assignments", {
+    principal: observerPrincipal,
+  });
+
+  assert.equal(result.schema_version, "limen.notification_assignments.v1");
+  assert.equal(result.generated_at, NOW.toISOString());
+  assert.equal(result.registry_namespace, notificationRegistry.namespace);
+  assert.equal(result.registry_schema_version, notificationRegistry.schema_version);
+  assert.equal(result.registry_digest, await canonicalHash({
+    namespace: notificationRegistry.namespace,
+    schema_version: notificationRegistry.schema_version,
+    events: notificationRegistry.events,
+  }));
+  assert.ok(result.assignments.some((row) =>
+    row.event_id === "limen.ci.provider_runner_admission"
+      && row.channels.includes("macos")));
+  assert.ok(result.assignments.every((row) =>
+    !("session_id" in row) && !("principal_id" in row)));
+  assert.deepEqual(
+    await service.call("list_assignments", { principal: conductorPrincipal }),
+    result,
+  );
+  await assert.rejects(
+    service.call("list_notification_assignments", {
+      principal: principalMeta("notification-executor", "jules", ["executor"]),
+    }),
+    /observer\/conductor role/,
+  );
+  assert.equal(store.saveCount, 0);
+
+  const durable = Object.create(ConductKeeperDurableObject.prototype);
+  durable.env = {};
+  const calls = [];
+  durable.service = {
+    async call(operation, payload) {
+      calls.push([operation, payload]);
+      return result;
+    },
+  };
+  const response = await durable.route(
+    new Request("https://limen.example/api/conduct/notifications/assignments"),
+    observerPrincipal,
+  );
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), result);
+  assert.deepEqual(calls, [["list_notification_assignments", { principal: observerPrincipal }]]);
+  await assert.rejects(
+    durable.route(
+      new Request("https://limen.example/api/conduct/notifications/assignments"),
+      principalMeta("notification-route-executor", "jules", ["executor"]),
+    ),
+    /observer\/conductor role/,
+  );
+});
+
 test("principal-bound executor claims are recoverable and secret from conductors", async () => {
   const store = new MemoryConductStore();
   const service = new SerializedConductService(store, {
@@ -623,9 +692,29 @@ test("healthy executor principal may adopt after the original conductor is absen
     session: session("spoofed", { sessionId: "adoption-successor-session" }),
     principal: executorPrincipal,
   });
-  const reserved = await service.call("submit", {
-    packet: await packet({ workId: "cross-principal-adoption", conductor: conductor.identity }),
+  const cancellable = await service.call("submit", {
+    packet: await packet({
+      workId: "cross-principal-adoption-cancel",
+      conductor: conductor.identity,
+      resource: "path/organvm/limen/main/cli/adoption-cancel",
+    }),
     principal: conductorPrincipal,
+  });
+  const stoppable = await service.call("submit", {
+    packet: await packet({
+      workId: "cross-principal-adoption-stop",
+      conductor: conductor.identity,
+      resource: "path/organvm/limen/main/cli/adoption-stop",
+    }),
+    principal: conductorPrincipal,
+  });
+  const capabilityToken = await leaseCapability(service, stoppable, executorPrincipal);
+  await service.call("heartbeat", {
+    lease_id: stoppable.lease.lease_id,
+    capability_token: capabilityToken,
+    generation: stoppable.lease.generation,
+    principal: executorPrincipal,
+    observed_heads: { pr: "abc123" },
   });
   const stale = store.snapshot();
   stale.sessions[conductor.session_id].heartbeat_at = new Date(
@@ -633,14 +722,79 @@ test("healthy executor principal may adopt after the original conductor is absen
   ).toISOString();
   await store.save(stale);
 
-  const adopted = await service.call("adopt", {
-    run_id: reserved.run_id,
+  const adoptedCancellable = await service.call("adopt", {
+    run_id: cancellable.run_id,
+    session_id: adopter.session_id,
+    principal: executorPrincipal,
+  });
+  const adoptedStoppable = await service.call("adopt", {
+    run_id: stoppable.run_id,
     session_id: adopter.session_id,
     principal: executorPrincipal,
   });
 
-  assert.equal(adopted.status, "adopted");
-  assert.equal(adopted.conductor_session_id, adopter.session_id);
+  assert.equal(adoptedCancellable.status, "adopted");
+  assert.equal(adoptedCancellable.conductor_session_id, adopter.session_id);
+  assert.equal(adoptedStoppable.status, "adopted");
+  assert.equal(adoptedStoppable.conductor_session_id, adopter.session_id);
+  assert.equal(store.snapshot().runs[stoppable.run_id].status, "running");
+  assert.equal((await service.call("cancel", {
+    run_id: cancellable.run_id,
+    session_id: adopter.session_id,
+    principal: executorPrincipal,
+  })).status, "cancelled");
+  assert.equal(store.snapshot().runs[stoppable.run_id].status, "running");
+  assert.deepEqual(await service.call("request_stop", {
+    run_id: stoppable.run_id,
+    session_id: adopter.session_id,
+    principal: executorPrincipal,
+  }), {
+    status: "stop_requested",
+    run_id: stoppable.run_id,
+    cooperative: true,
+  });
+});
+
+test("deployed management routes admit an executor that owns an adopted run", async () => {
+  const durable = Object.create(ConductKeeperDurableObject.prototype);
+  durable.env = {};
+  const calls = [];
+  durable.service = {
+    async call(operation, payload) {
+      calls.push([operation, payload]);
+      return { status: operation === "cancel" ? "cancelled" : "stop_requested" };
+    },
+  };
+  const executorPrincipal = principalMeta(
+    "adopted-route-executor",
+    "jules",
+    ["executor"],
+  );
+
+  for (const [suffix, operation] of [["cancel", "cancel"], ["request-stop", "request_stop"]]) {
+    const response = await durable.route(
+      new Request(`https://limen.example/api/conduct/runs/adopted-run/${suffix}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ session_id: "adopted-executor-session" }),
+      }),
+      executorPrincipal,
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).status, operation === "cancel" ? "cancelled" : "stop_requested");
+  }
+  assert.deepEqual(calls, [
+    ["cancel", {
+      run_id: "adopted-run",
+      session_id: "adopted-executor-session",
+      principal: executorPrincipal,
+    }],
+    ["request_stop", {
+      run_id: "adopted-run",
+      session_id: "adopted-executor-session",
+      principal: executorPrincipal,
+    }],
+  ]);
 });
 
 test("full-mesh canary read edge preserves Worker protocol parity", async () => {

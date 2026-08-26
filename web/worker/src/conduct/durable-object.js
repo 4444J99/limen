@@ -203,6 +203,10 @@ export class ConductKeeperDurableObject {
       requireRole(principal, "observer");
       return json(await this.service.call("capabilities"), 200, this.env);
     }
+    if (path === "/api/conduct/notifications/assignments" && request.method === "GET") {
+      requireRole(principal, "observer", "conductor");
+      return json(await this.service.call("list_notification_assignments", { principal }), 200, this.env);
+    }
     if (path === "/api/conduct/sessions" && request.method === "POST") {
       requireRole(principal, "conductor", "executor");
       const body = await parseBody(request);
@@ -312,7 +316,7 @@ export class ConductKeeperDurableObject {
     }
     match = path.match(/^\/api\/conduct\/runs\/([^/]+)\/(cancel|request-stop)$/);
     if (match && request.method === "POST") {
-      requireRole(principal, "conductor");
+      requireRole(principal, "conductor", "executor");
       const body = await parseBody(request);
       const operation = {
         cancel: "cancel",

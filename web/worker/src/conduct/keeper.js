@@ -1,4 +1,5 @@
 import { ChunkedDurableStateStore } from "./durable-store.js";
+import notificationRegistry from "../../../../institutio/governance/notification-events.limen.json" with { type: "json" };
 import { conflictingKeys, parseResource, sortedClaims } from "./resources.js";
 import {
   canonicalHash,
@@ -247,6 +248,7 @@ export class ConductKernel {
       leaseTtlMs = 15 * 60 * 1000,
       capabilitySecret = null,
       runtimeIdentity = null,
+      notificationAssignments = notificationRegistry,
     } = {},
   ) {
     this.state = validateLoadedState(input);
@@ -257,6 +259,7 @@ export class ConductKernel {
     this.leaseTtlMs = leaseTtlMs;
     this.capabilitySecret = capabilitySecret;
     this.runtimeIdentity = runtimeIdentity;
+    this.notificationAssignments = clone(notificationAssignments);
     this.projectionEvents = [];
     this.mutated = false;
   }
@@ -287,6 +290,8 @@ export class ConductKernel {
         payload.receipt,
       );
       case "harvest": return this.harvest(payload.run_id);
+      case "list_notification_assignments": return this.listNotificationAssignments(payload.principal);
+      case "list_assignments": return this.listNotificationAssignments(payload.principal);
       case "adopt": return this.adopt(payload.run_id, payload.session_id, payload.principal);
       case "cancel": return this.cancel(payload.run_id, payload.session_id, payload.principal);
       case "request_stop": return this.requestStop(payload.run_id, payload.session_id, payload.principal);
@@ -1422,6 +1427,68 @@ export class ConductKernel {
     };
   }
 
+  async listNotificationAssignments(requestedPrincipal = null) {
+    const { principal } = this.principalForIdentity(
+      { agent: "anonymous", surface: "read" },
+      requestedPrincipal,
+    );
+    this.requireRole(principal, "observer", "conductor");
+    const registry = this.notificationAssignments;
+    const namespace = registry?.namespace;
+    const registryVersion = registry?.schema_version;
+    const events = registry?.events;
+    if (
+      typeof namespace !== "string"
+      || !Number.isSafeInteger(registryVersion)
+      || !events
+      || typeof events !== "object"
+      || Array.isArray(events)
+    ) {
+      throw new ConductError("notification registry is unavailable or malformed", 500);
+    }
+    const assignments = [];
+    for (const [eventId, definition] of Object.entries(events)
+      .sort(([left], [right]) => left.localeCompare(right))) {
+      if (
+        typeof eventId !== "string"
+        || !definition
+        || typeof definition !== "object"
+        || Array.isArray(definition)
+        || !Array.isArray(definition.channels)
+        || !definition.channels.every((channel) => typeof channel === "string")
+        || !definition.templates
+        || typeof definition.templates !== "object"
+        || Array.isArray(definition.templates)
+      ) {
+        throw new ConductError("notification registry is unavailable or malformed", 500);
+      }
+      assignments.push({
+        event_id: eventId,
+        class: definition.class,
+        severity: definition.severity,
+        owner: definition.owner,
+        privacy: definition.privacy,
+        channels: [...definition.channels],
+        dedupe_key: definition.dedupe_key,
+        recovery: definition.recovery,
+        title: definition.title,
+        templates: clone(definition.templates),
+      });
+    }
+    return {
+      schema_version: "limen.notification_assignments.v1",
+      generated_at: this.timestamp,
+      registry_namespace: namespace,
+      registry_schema_version: registryVersion,
+      registry_digest: await canonicalHash({
+        namespace,
+        schema_version: registryVersion,
+        events,
+      }),
+      assignments,
+    };
+  }
+
   adopt(runId, adopterSessionId, requestedPrincipal = null) {
     const run = this.state.runs[runId];
     const adopter = this.state.sessions[adopterSessionId];
@@ -1459,7 +1526,7 @@ export class ConductKernel {
     const requester = this.state.sessions[requesterSessionId];
     if (!requester) throw new ConductError("requester session is not registered");
     const { principal, enforced } = this.principalForIdentity(requester.identity, requestedPrincipal);
-    this.requireRole(principal, "conductor");
+    this.requireRole(principal, "conductor", "executor");
     if (run.conductor_session_id !== requesterSessionId) {
       throw new ConductError("only the current conductor may cancel a reservation");
     }
@@ -1496,7 +1563,7 @@ export class ConductKernel {
     const requester = this.state.sessions[requesterSessionId];
     if (!requester) throw new ConductError("requester session is not registered");
     const { principal, enforced } = this.principalForIdentity(requester.identity, requestedPrincipal);
-    this.requireRole(principal, "conductor");
+    this.requireRole(principal, "conductor", "executor");
     if (run.conductor_session_id !== requesterSessionId) {
       throw new ConductError("only the current conductor may request stop");
     }
@@ -1858,6 +1925,7 @@ export class SerializedConductService {
       capabilitySecret = "development-only-capability-secret",
       steadyHeartbeatPersistence = true,
       runtimeIdentity = null,
+      notificationAssignments = notificationRegistry,
     } = {},
   ) {
     this.store = store;
@@ -1870,6 +1938,7 @@ export class SerializedConductService {
       leaseTtlMs,
       capabilitySecret,
       runtimeIdentity,
+      notificationAssignments,
     };
     this.tail = Promise.resolve();
   }

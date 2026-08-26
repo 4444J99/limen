@@ -37,6 +37,7 @@ from collections import OrderedDict
 import yaml
 
 MERGE_QUEUE_REPO = "4444J99/limen"
+MERGE_QUEUE_REPO_KEY = MERGE_QUEUE_REPO.casefold()
 ROOT = Path(__file__).resolve().parents[1]
 ESTATE = ROOT / "institutio" / "github" / "estate.yaml"
 # Historical name retained: this is the live ruleset's identity on GitHub (id 19147990) and
@@ -106,6 +107,15 @@ class EstateContractError(RuntimeError):
     """The declared GitHub estate cannot safely determine a repository's merge checks."""
 
 
+def _repo_coordinate_key(repo):
+    """Return the case-insensitive identity key GitHub uses for OWNER/REPO coordinates."""
+    return repo.strip().casefold()
+
+
+def _is_limen_repo(repo):
+    return _repo_coordinate_key(repo) == MERGE_QUEUE_REPO_KEY
+
+
 def _load_estate():
     try:
         document = yaml.safe_load(ESTATE.read_text(encoding="utf-8"))
@@ -117,9 +127,7 @@ def _load_estate():
 
 
 def _repo_facts(repo):
-    observed, error = gh_json_checked(
-        ["repo", "view", repo, "--json", "isArchived,isFork,isPrivate"]
-    )
+    observed, error = gh_json_checked(["repo", "view", repo, "--json", "isArchived,isFork,isPrivate"])
     if error or not isinstance(observed, dict):
         raise EstateContractError(f"cannot derive repository facts for {repo}: {error or 'unexpected response'}")
     return {
@@ -131,7 +139,16 @@ def _repo_facts(repo):
 
 def _class_for_repo(document, repo, facts=None):
     classes = document["classes"]
-    override = (document.get("repo_overrides") or {}).get(repo)
+    repo_key = _repo_coordinate_key(repo)
+    overrides = document.get("repo_overrides") or {}
+    override = next(
+        (
+            row
+            for coordinate, row in overrides.items()
+            if isinstance(coordinate, str) and _repo_coordinate_key(coordinate) == repo_key
+        ),
+        None,
+    )
     if isinstance(override, dict) and override.get("class"):
         name = override["class"]
         row = classes.get(name)
@@ -145,7 +162,7 @@ def _class_for_repo(document, repo, facts=None):
             continue
         patterns = row.get("match")
         if not isinstance(patterns, list) or not any(
-            isinstance(pattern, str) and fnmatchcase(repo, pattern) for pattern in patterns
+            isinstance(pattern, str) and fnmatchcase(repo_key, pattern.casefold()) for pattern in patterns
         ):
             continue
         expected_facts = row.get("match_facts")
@@ -265,7 +282,7 @@ def actions_workflow_permissions_body():
 
 def ensure_actions_pr_permissions(repo):
     """Enable and verify the repository switch required for GITHUB_TOKEN-created pull requests."""
-    if repo != MERGE_QUEUE_REPO:
+    if not _is_limen_repo(repo):
         return True
     body = actions_workflow_permissions_body()
     result = gh_input("PUT", f"/repos/{repo}/actions/permissions/workflow", body)
@@ -280,7 +297,7 @@ def ensure_actions_pr_permissions(repo):
 
 def ensure_default_ruleset(repo):
     """Idempotently create/update and read-after-write verify Limen's default-branch ruleset."""
-    if repo != MERGE_QUEUE_REPO:
+    if not _is_limen_repo(repo):
         return True
     existing, error = gh_json_checked(["api", f"/repos/{repo}/rulesets"])
     if error or not isinstance(existing, list):
@@ -373,10 +390,13 @@ def main():
     no_ci = []
     failures = []
     for repo in repos:
-        info = gh_json(
-            ["repo", "view", repo, "--json", "defaultBranchRef,isArchived,isFork,isPrivate"],
-            default={},
-        ) or {}
+        info = (
+            gh_json(
+                ["repo", "view", repo, "--json", "defaultBranchRef,isArchived,isFork,isPrivate"],
+                default={},
+            )
+            or {}
+        )
         branch = (info.get("defaultBranchRef") or {}).get("name") or "main"
         facts = {
             "archived": info.get("isArchived"),
@@ -400,7 +420,7 @@ def main():
                 f"  {repo}@{branch}: require {len(checks)} check(s) {checks[:4]}"
                 f"{'…' if len(checks) > 4 else ''} · no human review · allow_auto_merge=true"
             )
-        if repo == MERGE_QUEUE_REPO:
+        if _is_limen_repo(repo):
             print(
                 "      + default-branch PR-only ruleset (zero approvals, threads resolved, no bypass, squash-only; "
                 "queue-free proven-at-submission rail)"
@@ -411,7 +431,7 @@ def main():
         # Install and read-after-write verify the no-bypass rule before touching the weaker
         # classic branch-protection surface. A rejected ruleset can therefore never be hidden by
         # a later successful API call.
-        if repo == MERGE_QUEUE_REPO:
+        if _is_limen_repo(repo):
             prerequisites_ok = True
             if not ensure_actions_pr_permissions(repo):
                 failures.append(f"{repo}:actions-pr-permission")
@@ -485,12 +505,12 @@ def main():
     )
     if not APPLY:
         print("\nDRY-RUN — nothing changed. Re-run with --apply (GATED) to configure.")
-        if MERGE_QUEUE_REPO in repos:
+        if any(_is_limen_repo(repo) for repo in repos):
             print(
                 "After the Limen workflow lands and --apply succeeds: "
                 "`scripts/await-pr.sh <n> --repo 4444J99/limen --merge` → exact-head queue rail."
             )
-        if any(repo != MERGE_QUEUE_REPO for repo in repos):
+        if any(not _is_limen_repo(repo) for repo in repos):
             print("For non-queue repos: `gh pr merge <n> --auto --squash` on green PRs.")
     if failures:
         print("\nAPPLY FAILED: " + ", ".join(failures), file=sys.stderr)
