@@ -1,41 +1,23 @@
 # setup-rulesets.py — live merge-gate contract
 
-**Updated:** 2026-07-18 · **Status:** LIVE FOR USER/AUTHENTICATED AGENT PRs — the no-bypass queue
-ruleset, classic protection, auto-merge, and branch-retention settings are active and verified.
-Actions-created pull requests remain blocked by the owning organization policy; the exact live
-evidence and owner-routed gate are recorded in
-[`concurrency-rail-live-receipt.json`](receipts/concurrency-rail-live-receipt.json).
+**Updated:** 2026-08-26 · **Status:** SOURCE CONTRACT — `--apply` installs and verifies the declared
+state; the live read-back, not this document, is the operational receipt.
 
 ## Limen's concurrency rail
 
-`4444J99/limen` has one targeted native merge-queue ruleset. It serializes only the final
-integration step, and its zero-approval `pull_request` rule blocks every direct default-branch
-write with no bypass actors. Concurrent agents keep working and proving their own exact PR heads
-without repeatedly merging a moving `main`.
+`4444J99/limen` uses a queue-free proven-at-submission rail. Its zero-approval `pull_request` rule
+blocks every direct default-branch write, requires every review thread to be resolved, and has no
+bypass actors. Concurrent agents prove immutable PR heads without repeatedly rewriting them against
+a moving `main`.
 
-The ruleset targets `~DEFAULT_BRANCH` and contains two rules:
+The ruleset targets `~DEFAULT_BRANCH` and contains exactly one rule:
 
 - `pull_request` with `squash` as the only allowed merge method, zero required approvals, no
-  code-owner/last-push/thread-resolution requirement, and no bypass actors;
-- `merge_queue` with the parameters below.
+  code-owner or last-push approval, mandatory review-thread resolution, and no bypass actors.
 
-| Setting | Value |
-|---|---:|
-| merge method | `SQUASH` |
-| grouping strategy | `HEADGREEN` |
-| required-check timeout | 60 minutes |
-| concurrent queue builds | 4 |
-| maximum PRs merged per group | 1 |
-| minimum PRs per group | 1 |
-| minimum-size wait | 0 minutes |
+Classic default-branch protection owns the registry-declared required checks:
 
-`HEADGREEN` plus a one-PR merge group proves the head synthetic integration commit. A maximum of
-four groups may build concurrently, but GitHub merges them one at a time. This keeps the integration
-window serialized without turning the whole agent fleet into one serial lane.
-
-Classic default-branch protection remains the owner of the required check:
-
-- context: `pr-gate`
+- contexts: `pr-gate`, `python`, `web`, and `worker`
 - `strict:false`
 - `enforce_admins:true`
 - no human-review requirement
@@ -46,19 +28,14 @@ tickets coalesce while that PR is in flight. There is no direct-push exception.
 
 ## Queue CI contract
 
-`.github/workflows/pr-gate.yml` is the only required workflow triggered by
-`merge_group: checks_requested`.
+`.github/workflows/pr-gate.yml` remains the scoped orchestration check. The three `ci.yml` jobs are
+independent required exact-head receipts.
 
 - On `pull_request`, `scripts/verify.py --changed` requires a resolvable base and retains
   `--skip-ci-covered pr-gate.yml:pr-gate`. The PR's full CI children remain independently owned
   exact-head receipts.
-- On `merge_group`, `scripts/verify.py --changed --integration` compares the checked-out synthetic
-  group commit with `github.event.merge_group.base_sha`. Integration mode fails closed if that base
-  cannot resolve, runs every implicated scoped gate, does not use `--skip-ci-covered`, and does not
-  restart the whole PR matrix merely because `main` advanced.
-
-GitHub documents `merge_group` as a separate event whose `GITHUB_SHA` is the synthetic group commit;
-required checks must explicitly subscribe to it or the queue cannot receive their result.
+- The `merge_group` event remains a fail-closed compatibility path if a future live queue is
+  deliberately installed; the active ruleset does not install a queue rule.
 
 ## What setup-rulesets.py changes
 
@@ -69,19 +46,21 @@ For `4444J99/limen`, apply performs these idempotent operations:
 
 1. Enable and read-back verify the repository switch that permits explicitly authorized Actions
    workflows to create pull requests.
-2. Create or update `limen-default-merge-queue`, then read-back verify the exact active,
-   squash-only, no-bypass `pull_request` and `merge_queue` rules. A failure stops here before any
+2. Create or update the historically named `limen-default-merge-queue` ruleset, then read-back
+   verify the exact active, squash-only, thread-resolved, no-bypass `pull_request` rule. A failure stops here before any
    weaker setting is touched.
 3. Enable and read-back verify auto-merge while preserving source branches
    (`delete_branch_on_merge=false`).
-4. Write and read-back verify classic protection with required context `pr-gate`, `strict:false`,
-   `enforce_admins:true`, no required review, and no actor restriction.
+4. Write and read-back verify classic protection with the four checks declared by the conductor
+   class in `institutio/github/estate.yaml`, `strict:false`, `enforce_admins:true`, no required
+   review, and no actor restriction.
 
 The source branches remain after merge so removal stays with receipt-backed reaping. The queue ruleset
 prohibits direct default-branch writes, including admin and automation writers.
 
-Other repositories retain the existing detected-check behavior and do not receive a merge-queue
-ruleset.
+Every selected repository derives its checks from the first matching estate class. Fact-qualified
+classes use live repository facts; explicit repository overrides win. Other repositories do not
+receive Limen's PR-only ruleset.
 
 ## Commands
 
@@ -104,15 +83,13 @@ remote mutation without the exact `--apply` token.
 
 ## Reversibility
 
-- Queue ruleset:
+- PR-only ruleset:
   `gh api -X DELETE /repos/4444J99/limen/rulesets/<ruleset-id>`
 - Classic branch protection:
   `gh api -X DELETE /repos/4444J99/limen/branches/main/protection`
 - Auto-merge:
   `gh api -X PATCH /repos/4444J99/limen -F allow_auto_merge=false`
 
-On 2026-07-18, PR #1247 merged the queue-aware workflow and repository integration rail. Ruleset
-`19147990` was then installed and read-back verified with an active GraphQL merge queue. Classic
-`pr-gate` protection remains `strict:false` and `enforce_admins:true`; the active ruleset now owns
-the no-bypass pull-request edge. The closeout receipt PR itself is the real queue exercise and
-becomes terminal only when GitHub records its successful `merge_group` run and merged exact head.
+Ruleset `19147990` retains its historical name so external receipts remain stable. The native queue
+rule was removed on 2026-08-06; the active contract is direct squash only after all four required
+checks pass and every review thread is resolved.
