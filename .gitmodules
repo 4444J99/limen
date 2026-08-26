@@ -1,0 +1,3 @@
+[submodule ".staged-heal/domus-genoma-work"]
+	path = .staged-heal/domus-genoma-work
+	url = https://github.com/organvm/domus-genoma.git

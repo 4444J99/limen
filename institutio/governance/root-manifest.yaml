@@ -23,6 +23,7 @@ sanctioned:
   - {path: .gemini, kind: dir, owner: conduct, why: "Gemini lane config"}
   - {path: .github, kind: dir, owner: fleet, why: "workflows + templates"}
   - {path: .gitignore, kind: config, owner: fleet, why: "ignore rules"}
+  - {path: .gitmodules, kind: config, owner: continuity, why: "registers the preserved Domus custody gitlink so Git tooling can traverse the repository safely"}
   - {path: .ruff.toml, kind: config, owner: fleet, why: "lint config (py311, line-length 120)"}
   - {path: AGENTS.md, kind: doc, owner: docs, why: "dispatch/task contract — agent-instruction standard requires root placement"}
   - {path: CLAUDE.md, kind: doc, owner: docs, why: "Claude operating charter — agent-instruction standard requires root placement"}
