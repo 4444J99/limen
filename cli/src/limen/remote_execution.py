@@ -1674,7 +1674,12 @@ class GitHubWorkflowAdapter:
         return observed
 
     def _observe_deterministic_job(self, request: RemoteRequest, run: RemoteRun) -> ActionsJobObservation:
-        if not run.provider_run_id.isdigit() or run.state not in {RemoteState.SUCCEEDED, RemoteState.FAILED}:
+        expected_run_attempt = run.run_attempt
+        if (
+            not run.provider_run_id.isdigit()
+            or run.state not in {RemoteState.SUCCEEDED, RemoteState.FAILED}
+            or expected_run_attempt is None
+        ):
             raise RemoteExecutionError("Actions job admission requires one completed numeric run")
         result = self.runner(
             [
@@ -1684,7 +1689,7 @@ class GitHubWorkflowAdapter:
                 "GET",
                 "--paginate",
                 "--slurp",
-                f"repos/{request.control_repo}/actions/runs/{run.provider_run_id}/attempts/{run.run_attempt}/jobs",
+                f"repos/{request.control_repo}/actions/runs/{run.provider_run_id}/attempts/{expected_run_attempt}/jobs",
                 "-f",
                 "per_page=100",
             ],
@@ -1734,12 +1739,12 @@ class GitHubWorkflowAdapter:
             raise RemoteExecutionError("workflow job census contains invalid job identity")
         job_id = raw_job_id
         run_id = row.get("run_id")
-        run_attempt = row.get("run_attempt")
+        job_run_attempt = row.get("run_attempt")
         job_url = str(row.get("html_url") or "")
         expected_url = f"{run.url}/job/{job_id}"
         if (
             str(run_id or "") != run.provider_run_id
-            or run_attempt != run.run_attempt
+            or job_run_attempt != expected_run_attempt
             or job_url.rstrip("/") != expected_url
         ):
             raise RemoteExecutionError("workflow job does not bind the exact Actions run, attempt, and URL")
@@ -1753,7 +1758,7 @@ class GitHubWorkflowAdapter:
         runner_id = raw_runner_id if isinstance(raw_runner_id, int) and not isinstance(raw_runner_id, bool) else 0
         return ActionsJobObservation(
             job_id=job_id,
-            run_attempt=run.run_attempt,
+            run_attempt=expected_run_attempt,
             name=DETERMINISTIC_COMPUTE_JOB,
             url=expected_url,
             runner_id=runner_id,
