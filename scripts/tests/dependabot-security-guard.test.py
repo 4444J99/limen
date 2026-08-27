@@ -13,12 +13,17 @@ import os
 import subprocess
 from pathlib import Path
 
+import yaml
+
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "scripts" / "dependabot-security-guard.py"
 SPEC = importlib.util.spec_from_file_location("dependabot_security_guard", SOURCE)
 assert SPEC and SPEC.loader
 m = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(m)
+
+estate = yaml.safe_load((ROOT / "institutio/github/estate.yaml").read_text())
+assert estate["app"]["expected_permissions"]["administration"] == "write"
 
 missing_repo = m._gh(["api"], app_only=True)
 assert missing_repo.returncode == 1 and "requires exact repository" in missing_repo.stderr

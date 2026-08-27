@@ -534,6 +534,8 @@ def main() -> int:
     if any(value is not None for value in one_shot):
         if not all(value is not None for value in one_shot):
             ap.error("--repo, --pr, and --expected-head are required together")
+        if a.dry_run:
+            ap.error("--dry-run cannot be combined with one-shot merge submission")
         if (
             not isinstance(a.expected_head, str)
             or len(a.expected_head) != 40

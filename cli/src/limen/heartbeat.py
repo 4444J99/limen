@@ -600,8 +600,25 @@ def heartbeat_once(
     try:
         contract, contract_digest = _load_contract(root)
     except HeartbeatContractError as exc:
-        disable_launch_agent()
-        return _initialization_failure_receipt(root, state_root, now, str(exc))
+        initialization_receipt: dict[str, Any] | None = None
+        receipt_error: Exception | None = None
+        try:
+            initialization_receipt = _initialization_failure_receipt(root, state_root, now, str(exc))
+        except Exception as storage_error:
+            receipt_error = storage_error
+        try:
+            disable_launch_agent()
+        except Exception as disable_error:
+            if receipt_error is not None:
+                raise HeartbeatContractError(
+                    "heartbeat initialization failed; receipt storage and launchd kill switch also failed"
+                ) from disable_error
+            raise
+        if receipt_error is not None:
+            raise receipt_error
+        if initialization_receipt is None:
+            raise HeartbeatContractError("heartbeat initialization failure receipt is unavailable")
+        return initialization_receipt
     lock, lock_state = _acquire_lock(state_root, now)
     if lock is None:
         fail_closed = lock_state != "coalesced"

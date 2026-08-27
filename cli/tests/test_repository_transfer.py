@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import importlib.util
 import json
+import os
+import stat
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -25,6 +28,17 @@ from limen.repository_transfer import (
     transfer_type_label,
     verify_existing_bundle,
 )
+
+
+TRANSFER_SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "repository-transfer-manifest.py"
+
+
+def _load_transfer_script():
+    spec = importlib.util.spec_from_file_location("repository_transfer_manifest_uut", TRANSFER_SCRIPT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 def test_gh_client_fails_closed_on_incomplete_pagination_shape() -> None:
@@ -1472,6 +1486,29 @@ def test_manifest_cli_rejects_colliding_frozen_artifact_paths_before_network(tmp
 
     assert result.returncode == 1
     assert "pairwise distinct" in result.stderr
+
+
+def test_private_manifest_mode_is_restrictive_before_the_first_write(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    module = _load_transfer_script()
+    private_root = tmp_path / ".limen-private"
+    private_root.mkdir(mode=0o755)
+    target = private_root / "nested" / "manifest.json"
+    observed_modes: list[int] = []
+    real_fdopen = module.os.fdopen
+
+    def checked_fdopen(descriptor, *args, **kwargs):
+        observed_modes.append(stat.S_IMODE(os.fstat(descriptor).st_mode))
+        return real_fdopen(descriptor, *args, **kwargs)
+
+    monkeypatch.setattr(module.os, "fdopen", checked_fdopen)
+    module._write_text(target, "private payload\n", private=True)
+
+    assert observed_modes == [0o600]
+    assert stat.S_IMODE(target.stat().st_mode) == 0o600
+    assert stat.S_IMODE(private_root.stat().st_mode) == 0o700
+    assert stat.S_IMODE(target.parent.stat().st_mode) == 0o700
 
 
 @pytest.mark.parametrize("flag", ["--protected-checkout", "--protected-path"])

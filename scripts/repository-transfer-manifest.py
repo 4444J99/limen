@@ -8,6 +8,7 @@ import json
 import os
 import sys
 from pathlib import Path
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -53,13 +54,31 @@ def _unique_named_paths(values: list[tuple[str, Path]], flag: str) -> dict[str, 
 
 def _write_text(path: Path, value: str, *, private: bool) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    if private:
+        protected_directories: list[Path] = []
+        current = path.parent
+        while True:
+            protected_directories.append(current)
+            if current.name == ".limen-private":
+                break
+            if current.parent == current:
+                raise TransferCaptureError("private transfer artifact has no .limen-private ancestor")
+            current = current.parent
+        for directory in reversed(protected_directories):
+            directory.chmod(0o700)
+    descriptor, raw = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    temporary = Path(raw)
     try:
-        temporary.write_text(value, encoding="utf-8")
-        if private:
-            temporary.chmod(0o600)
+        os.fchmod(descriptor, 0o600 if private else 0o644)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            descriptor = -1
+            handle.write(value)
+            handle.flush()
+            os.fsync(handle.fileno())
         temporary.replace(path)
     finally:
+        if descriptor >= 0:
+            os.close(descriptor)
         temporary.unlink(missing_ok=True)
 
 

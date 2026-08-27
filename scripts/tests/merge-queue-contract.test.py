@@ -306,8 +306,8 @@ def test_dry_run_never_calls_mutating_seams() -> None:
         mock.patch.object(module, "target_repos", return_value=["4444J99/limen"]),
         mock.patch.object(
             module,
-            "gh_json",
-            return_value={"defaultBranchRef": {"name": "main"}},
+            "repository_plan",
+            return_value=("main", {"archived": False, "fork": False, "private": False}),
         ),
         mock.patch.object(module, "gh") as gh_call,
         mock.patch.object(module, "gh_input") as gh_input_call,
@@ -324,6 +324,38 @@ def test_dry_run_never_calls_mutating_seams() -> None:
     copilot_call.assert_not_called()
 
 
+def test_repository_plan_failure_refuses_all_mutations() -> None:
+    module = load_setup_module()
+    module.APPLY = True
+    with (
+        mock.patch.object(module, "target_repos", return_value=["4444J99/limen"]),
+        mock.patch.object(module, "gh_json_checked", return_value=(None, "rate limit exhausted")),
+        mock.patch.object(module, "gh") as repo_mutation,
+        mock.patch.object(module, "gh_input") as ruleset_mutation,
+        contextlib.redirect_stdout(io.StringIO()),
+    ):
+        assert module.main() == 1
+    repo_mutation.assert_not_called()
+    ruleset_mutation.assert_not_called()
+
+    for incomplete in (
+        {"defaultBranchRef": None, "isArchived": False, "isFork": False, "isPrivate": False},
+        {
+            "defaultBranchRef": {"name": "trunk"},
+            "isArchived": None,
+            "isFork": False,
+            "isPrivate": False,
+        },
+    ):
+        with mock.patch.object(module, "gh_json_checked", return_value=(incomplete, "")):
+            try:
+                module.repository_plan("4444J99/limen")
+            except module.EstateContractError:
+                pass
+            else:
+                raise AssertionError("incomplete repository facts must fail closed")
+
+
 def test_apply_aggregates_ruleset_failure_and_skips_weaker_mutations() -> None:
     module = load_setup_module()
     module.APPLY = True
@@ -335,7 +367,11 @@ def test_apply_aggregates_ruleset_failure_and_skips_weaker_mutations() -> None:
 
     with (
         mock.patch.object(module, "target_repos", return_value=["4444J99/limen"]),
-        mock.patch.object(module, "gh_json", return_value={"defaultBranchRef": {"name": "main"}}),
+        mock.patch.object(
+            module,
+            "repository_plan",
+            return_value=("main", {"archived": False, "fork": False, "private": False}),
+        ),
         mock.patch.object(module, "gh") as weaker_repo_mutation,
         mock.patch.object(module, "gh_input") as weaker_classic_mutation,
         mock.patch.object(module, "ensure_actions_pr_permissions", return_value=True),
@@ -370,13 +406,8 @@ def test_fast_lane_apply_clears_remote_checks_and_disables_auto_merge() -> None:
         mock.patch.object(module, "target_repos", return_value=["4444J99/limen"]),
         mock.patch.object(
             module,
-            "gh_json",
-            return_value={
-                "defaultBranchRef": {"name": "main"},
-                "isArchived": False,
-                "isFork": False,
-                "isPrivate": False,
-            },
+            "repository_plan",
+            return_value=("main", {"archived": False, "fork": False, "private": False}),
         ),
         mock.patch.object(module, "gh", return_value=success) as repo_mutation,
         mock.patch.object(module, "gh_input", return_value=success) as protection_mutation,
@@ -413,6 +444,7 @@ def main() -> None:
     test_actions_permissions_are_explicit_and_verified()
     test_ruleset_apply_is_idempotent_and_targeted()
     test_dry_run_never_calls_mutating_seams()
+    test_repository_plan_failure_refuses_all_mutations()
     test_apply_aggregates_ruleset_failure_and_skips_weaker_mutations()
     test_fast_lane_apply_clears_remote_checks_and_disables_auto_merge()
     test_apply_seam_has_one_protection_write_plus_one_readback()
