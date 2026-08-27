@@ -639,6 +639,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Private state, single-flight lock, bounded audit, and receipt root for the reviewed one-shot heartbeat. Tests and canaries point this at an isolated temporary directory; the public receipt remains under the exact Limen runtime root."
+  LIMEN_HEARTBEAT_REVIEWED_RUNTIME_DIGEST:
+    default: ""
+    env: LIMEN_HEARTBEAT_REVIEWED_RUNTIME_DIGEST
+    self_update: none
+    owner: continuity
+    note: "Lowercase SHA-256 of the complete reviewed heartbeat artifact set. The Domus activation planner injects it into the byte-verified immutable LaunchAgent plist; each fire validates and emits the same binding instead of a probe-dependent digest."
   LIMEN_OUTPUT_ROOT:
     default: "$LIMEN_ROOT"
     env: LIMEN_OUTPUT_ROOT

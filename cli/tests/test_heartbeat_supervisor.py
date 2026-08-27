@@ -63,6 +63,26 @@ def test_contract_is_a_one_shot_resource_contract():
     assert "--no-write" in commands["tcc-track-c"]
 
 
+def test_runtime_identity_uses_reviewed_digest_for_every_probe(monkeypatch):
+    contract, contract_digest = heartbeat._load_contract(ROOT)
+    reviewed_digest = "a" * 64
+    monkeypatch.setenv(heartbeat.REVIEWED_RUNTIME_DIGEST_ENV, reviewed_digest)
+
+    idle_identity = heartbeat._runtime_identity(ROOT, contract, contract_digest, None)
+    probe_identity = heartbeat._runtime_identity(ROOT, contract, contract_digest, contract["probes"][0])
+
+    assert idle_identity[1] == reviewed_digest
+    assert probe_identity[1] == reviewed_digest
+
+
+def test_runtime_identity_rejects_malformed_reviewed_digest(monkeypatch):
+    contract, contract_digest = heartbeat._load_contract(ROOT)
+    monkeypatch.setenv(heartbeat.REVIEWED_RUNTIME_DIGEST_ENV, "A" * 64)
+
+    with pytest.raises(heartbeat.HeartbeatContractError, match="lowercase SHA-256"):
+        heartbeat._runtime_identity(ROOT, contract, contract_digest, None)
+
+
 def test_cheap_probe_passes_without_heavy_admission(tmp_path, monkeypatch):
     calls = []
     monkeypatch.setattr(

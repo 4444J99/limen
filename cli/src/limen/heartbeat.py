@@ -26,6 +26,7 @@ NOTIFICATION_REGISTRY_RELATIVE_PATH = Path("institutio/governance/notification-e
 STATE_SCHEMA = "limen.heartbeat_state.v1"
 PRIVATE_RECEIPT_SCHEMA = "limen.heartbeat_private_receipt.v1"
 PUBLIC_RECEIPT_SCHEMA = "limen.heartbeat_public_receipt.v1"
+REVIEWED_RUNTIME_DIGEST_ENV = "LIMEN_HEARTBEAT_REVIEWED_RUNTIME_DIGEST"
 SYSTEM_FAILURES = frozenset({"descendants", "invalid", "output", "resource", "timeout", "unavailable"})
 NOTIFICATION_STABLE_ID = "limen.heartbeat.finding"
 NOTIFICATION_SEVERITY_ORDER = {"urgent": 0, "normal": 1, "summary": 2}
@@ -156,6 +157,15 @@ def _default_state_root() -> Path:
     return Path(configured).expanduser() if configured else Path.home() / ".local" / "share" / "limen" / "heartbeat"
 
 
+def _reviewed_runtime_digest() -> str | None:
+    configured = os.environ.get(REVIEWED_RUNTIME_DIGEST_ENV)
+    if configured is None:
+        return None
+    if len(configured) != 64 or any(character not in "0123456789abcdef" for character in configured):
+        raise HeartbeatContractError(f"{REVIEWED_RUNTIME_DIGEST_ENV} must be a lowercase SHA-256")
+    return configured
+
+
 def _initial_state() -> dict[str, Any]:
     return {
         "schema": STATE_SCHEMA,
@@ -253,7 +263,7 @@ def _runtime_identity(
                 files.append(root / value)
     rows = {str(path.relative_to(root)) if path.is_relative_to(root) else path.name: _sha256(path) for path in files}
     rows["contract"] = contract_digest
-    runtime_digest = hashlib.sha256(json.dumps(rows, sort_keys=True).encode()).hexdigest()
+    runtime_digest = _reviewed_runtime_digest() or hashlib.sha256(json.dumps(rows, sort_keys=True).encode()).hexdigest()
     receipt = root.parent / "receipt.json"
     runtime_sha = "development"
     try:
@@ -508,7 +518,7 @@ def _initialization_failure_receipt(root: Path, state_root: Path, now: float, re
     rows = {
         str(path.relative_to(root)) if path.is_relative_to(root) else path.name: _sha256(path) for path in runtime_files
     }
-    runtime_digest = _canonical_digest(rows)
+    runtime_digest = _reviewed_runtime_digest() or _canonical_digest(rows)
     run_id = uuid.uuid4().hex
     receipt = {
         "schema": PRIVATE_RECEIPT_SCHEMA,
