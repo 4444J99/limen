@@ -204,11 +204,68 @@ def test_third_system_failure_disables_launch_agent(tmp_path, monkeypatch):
         state_root=tmp_path,
         clock=lambda: 1_000_000,
         disable_launch_agent=lambda: disabled.append(True),
+        notification_emitter=lambda _root, candidate: DeliveryReceipt(
+            "submitted",
+            candidate.event["stable_id"],
+            candidate.event["event_id"],
+            {"macos": "submitted"},
+        ),
     )
     assert receipt["status"] == "failed"
     assert receipt["consecutive_system_failures"] == 3
     assert receipt["disabled"] is True
     assert receipt["surviving_descendant_count"] == "unknown"
+    assert disabled == [True]
+
+
+def test_kill_switch_keeps_bounded_sender_until_pending_notification_is_accepted(tmp_path, monkeypatch):
+    _state(tmp_path, failures=2)
+    monkeypatch.setattr(
+        heartbeat,
+        "run_bounded_subprocess",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(BoundedSubprocessError("timeout")),
+    )
+    disabled = []
+    attempts = []
+
+    def emit(_root, candidate):
+        attempts.append(candidate.event["event_id"])
+        if len(attempts) == 1:
+            return DeliveryReceipt(
+                "failed",
+                candidate.event["stable_id"],
+                candidate.event["event_id"],
+                {},
+                "synthetic broker outage",
+            )
+        return DeliveryReceipt(
+            "submitted",
+            candidate.event["stable_id"],
+            candidate.event["event_id"],
+            {"macos": "submitted"},
+        )
+
+    first = heartbeat.heartbeat_once(
+        ROOT,
+        state_root=tmp_path,
+        clock=lambda: 1_000_000,
+        disable_launch_agent=lambda: disabled.append(True),
+        notification_emitter=emit,
+    )
+    assert first["disabled"] is True
+    assert first["notification_event_accepted_count"] == 0
+    assert disabled == []
+
+    second = heartbeat.heartbeat_once(
+        ROOT,
+        state_root=tmp_path,
+        clock=lambda: 1_000_300,
+        disable_launch_agent=lambda: disabled.append(True),
+        notification_emitter=emit,
+    )
+    assert second["status"] == "disabled"
+    assert second["notification_event_accepted_count"] == 1
+    assert attempts == [attempts[0], attempts[0]]
     assert disabled == [True]
 
 

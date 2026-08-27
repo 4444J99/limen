@@ -55,13 +55,28 @@ LIFECYCLE_LABELS = frozenset(
         "lifecycle:superseded",
     }
 )
+_QUEUE_STATE_QUERY = """
+query($owner:String!,$name:String!,$number:Int!){
+  repository(owner:$owner,name:$name){
+    pullRequest(number:$number){
+      state
+      headRefOid
+      mergeStateStatus
+      isInMergeQueue
+      autoMergeRequest{enabledAt}
+    }
+  }
+}
+""".strip()
 
 
 def merge_prohibition() -> str | None:
     try:
         text = (ROOT / "logs" / "AUTONOMY_PAUSED").read_text(encoding="utf-8", errors="replace")
-    except OSError:
+    except FileNotFoundError:
         return None
+    except OSError as exc:
+        return f"AUTONOMY_PAUSED unreadable ({type(exc).__name__})"
     for line in text.splitlines():
         if line.lower().startswith("prohibitions:") and "merge" in line.lower():
             return line.strip()
@@ -324,28 +339,52 @@ def assess(rn):
 
 def _queue_state(repo, num):
     """Return exact live PR state before a queue effect; ``None`` fails closed."""
+    if repo.count("/") != 1:
+        return None
+    owner, name = repo.split("/", 1)
+    if not owner or not name:
+        return None
     r = gh(
         [
-            "pr",
-            "view",
-            str(num),
-            "-R",
-            repo,
-            "--json",
-            "state,headRefOid,mergeStateStatus,autoMergeRequest",
+            "api",
+            "graphql",
+            "-f",
+            f"query={_QUEUE_STATE_QUERY}",
+            "-F",
+            f"owner={owner}",
+            "-F",
+            f"name={name}",
+            "-F",
+            f"number={num}",
         ],
         timeout=40,
     )
     if r.returncode != 0:
         return None
     try:
-        d = json.loads(r.stdout)
+        payload = json.loads(r.stdout)
     except (TypeError, ValueError):
+        return None
+    if not isinstance(payload, dict) or payload.get("errors"):
+        return None
+    data = payload.get("data")
+    repository = data.get("repository") if isinstance(data, dict) else None
+    d = repository.get("pullRequest") if isinstance(repository, dict) else None
+    if (
+        not isinstance(d, dict)
+        or not isinstance(d.get("state"), str)
+        or not isinstance(d.get("headRefOid"), str)
+        or not isinstance(d.get("mergeStateStatus"), str)
+        or not isinstance(d.get("isInMergeQueue"), bool)
+        or "autoMergeRequest" not in d
+    ):
         return None
     return {
         "state": str(d.get("state") or ""),
         "head": str(d.get("headRefOid") or ""),
-        "queued": d.get("autoMergeRequest") is not None or d.get("mergeStateStatus") == "QUEUED",
+        "queued": (
+            d["isInMergeQueue"] or d.get("autoMergeRequest") is not None or d.get("mergeStateStatus") == "QUEUED"
+        ),
     }
 
 

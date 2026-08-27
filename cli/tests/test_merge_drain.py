@@ -309,6 +309,42 @@ def test_submit_one_is_idempotent_for_already_queued_head(monkeypatch, capsys):
     assert ": QUEUED — already owned by GitHub" in capsys.readouterr().out
 
 
+def test_queue_state_uses_authoritative_merge_queue_membership(monkeypatch):
+    mod = _load()
+    calls = []
+
+    def fake_gh(args, timeout=60):
+        calls.append((args, timeout))
+        return _R(
+            json.dumps(
+                {
+                    "data": {
+                        "repository": {
+                            "pullRequest": {
+                                "state": "OPEN",
+                                "headRefOid": "c" * 40,
+                                "mergeStateStatus": "CLEAN",
+                                "isInMergeQueue": True,
+                                "autoMergeRequest": None,
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+    monkeypatch.setattr(mod, "gh", fake_gh)
+
+    assert mod._queue_state("4444J99/limen", 2543) == {
+        "state": "OPEN",
+        "head": "c" * 40,
+        "queued": True,
+    }
+    assert calls[0][0][:2] == ["api", "graphql"]
+    assert "isInMergeQueue" in calls[0][0][3]
+    assert calls[0][1] == 40
+
+
 def test_submit_one_refuses_merge_prohibiting_pause_before_github(monkeypatch, tmp_path, capsys):
     mod = _load()
     head = "d" * 40
@@ -326,3 +362,19 @@ def test_submit_one_refuses_merge_prohibiting_pause_before_github(monkeypatch, t
 
     assert mod.submit_one("4444J99/limen", 2543, head) == 3
     assert capsys.readouterr().out.strip().endswith("REFUSED — prohibitions: dispatch, merge")
+
+
+def test_submit_one_refuses_when_pause_marker_is_unreadable(monkeypatch, tmp_path, capsys):
+    mod = _load()
+    head = "e" * 40
+    marker = tmp_path / "logs" / "AUTONOMY_PAUSED"
+    marker.mkdir(parents=True)
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        mod,
+        "_queue_state",
+        lambda *args: (_ for _ in ()).throw(AssertionError("unreadable pause must refuse before GitHub")),
+    )
+
+    assert mod.submit_one("4444J99/limen", 2543, head) == 3
+    assert capsys.readouterr().out.strip().endswith("REFUSED — AUTONOMY_PAUSED unreadable (IsADirectoryError)")
