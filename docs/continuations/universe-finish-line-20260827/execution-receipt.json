@@ -30,7 +30,9 @@
   "pull_requests": {
     "original": "https://github.com/4444J99/limen/pull/2542",
     "successor": "https://github.com/4444J99/limen/pull/2548",
-    "original_disposition": "protected-open-pending-successor-landing"
+    "successor_head": "c368a0769a438b0323fd7a706d9270c8196030a4",
+    "successor_merge_commit": "b08301f8ef56991f5e469da437d054605b0987b2",
+    "original_disposition": "closed-superseded-with-range-diff-landing-proof"
   },
   "verification": [
     {
@@ -77,12 +79,28 @@
       "command": "python3 scripts/github-estate-census.py --write --check --json --workers 2",
       "result": "independent generation reproduced the exact remote denominator and all leaf/debt partitions; only the clean local session-worktree disposition changed",
       "exit_code": 0
+    },
+    {
+      "command": "python3 -m pytest cli/tests/test_bounded_subprocess.py cli/tests/test_transfer_script_coordinates.py cli/tests/test_tcc_app_management_fixture.py -q",
+      "result": "23 passed after repairing the two exact hosted PR #2549 failures and importing the merged PR #2548 correction",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -m pytest tests/e2e/verify_ecosystem_prs.py tests/e2e/test_pr_remediation_pipeline.py tests/e2e/test_ecosystem_liveness.py -q",
+      "result": "164 tests independently reproduced from the preserved Agy verification corpus",
+      "exit_code": 0
+    },
+    {
+      "command": "scripts/verify-scoped.sh",
+      "result": "all 35 cheap gates passed; local heavy verification was not admitted because the machine-wide swap-fraction guard returned exit 75",
+      "exit_code": 75
     }
   ],
   "outcome": "nonterminal_durable_continuation",
   "destructive_effects": [],
   "external_effects": [
     "pushed successor branch and opened pull request 2548",
+    "merged pull request 2548 at an exact matched head and recorded pull request 2542 supersession proof",
     "pushed the universe finish-line branch and opened pull request 2549"
   ]
 }

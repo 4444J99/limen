@@ -1,21 +1,21 @@
 {
   "schema_version": "limen.continuation_blockers.v1",
   "capsule_id": "universe-finish-line-20260827",
-  "observed_at": "2026-08-27T16:31:53.473770Z",
+  "observed_at": "2026-08-27T17:23:00Z",
   "terminal": false,
   "blockers": [
     {
       "id": "authenticated-conduct-environment",
       "owner": "credential-wall",
       "predicate": "limen conduct capabilities returns authenticated live capabilities and permits human-protected registration",
-      "evidence": "LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN were absent after the documented bootstrap",
+      "evidence": "live bootstrap on 2026-08-27 again raised BrokerUnavailable because LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN are not configured; the credential wall itself passes all 27 registered atoms",
       "next_command": "limen conduct capabilities"
     },
     {
       "id": "agy-claim-inventory",
       "owner": "agy-handoff-source",
       "predicate": "every claimed repository and PR number reconciles to live state and local custody with no duplicate or missing claim",
-      "evidence": "the preserved handoff contains Agy artifacts but not the source inventory behind the 160-plus merge claim",
+      "evidence": "the approved handoff and shared residue are preserved and its 164-test claim independently passed; the handoff still supplies only a bounded explicit merge roster, while its residue manifest classifies 173 diagnostic PRs, not 173 merges, so the 160-plus aggregate remains unsupported until every unique repository and PR pair is live-reconciled",
       "next_command": "python3 scripts/universe-recovery.py --check --manifest docs/continuations/universe-recovery-20260823/manifest.json"
     },
     {
@@ -57,21 +57,21 @@
       "id": "shared-checkout-residue",
       "owner": "human-protected-shared-limen-lane",
       "predicate": "the preservation receipt remains readable and the shared checkout is clean on a fast-forwarded default without discarding unrelated work",
-      "evidence": "custody is proven, but the shared checkout intentionally remains dirty and was not reset",
+      "evidence": "custody readback is proven for a 10572-byte tracked patch and 1469103-byte untracked archive, but the shared checkout intentionally remains dirty and was not reset",
       "next_command": "python3 scripts/worktree-preserve-dirty.py --worktree \"$LIMEN_ROOT\" --json"
     },
     {
-      "id": "successor-heavy-admission",
-      "owner": "machine-wide-host-admission",
-      "predicate": "the unchanged exact PR #2548 head receives the remaining admitted heavy-gate receipt",
-      "evidence": "13 cheap scoped gates passed; the heavy wave exited 75 because swap use exceeded the configured fraction",
-      "next_command": "limen host-admission status --cwd . --json"
+      "id": "universe-finish-hosted-admission",
+      "owner": "pull-request-2549",
+      "predicate": "the updated exact PR #2549 head passes its hosted pr-gate and lands through the matched-head merge rail",
+      "evidence": "all 35 local cheap scoped gates pass; the local heavy wave remains correctly unadmitted at exit 75 because of the machine-wide swap-fraction guard",
+      "next_command": "gh pr checks 2549 --repo 4444J99/limen"
     },
     {
       "id": "notification-visible-canary",
       "owner": "human-operator",
       "predicate": "a separate recording-backend receipt exists and one submitted macOS canary has an operator-observed confirmation receipt",
-      "evidence": "macOS submission is implemented but visible delivery has not been claimed or observed; ntfy is not configured",
+      "evidence": "the installed checkout still runs the legacy notifier: --status was accepted as a no-argument emit and returned no change quiet; the corrected status/canary implementation is pending PR #2549 landing and installation",
       "next_command": "PYTHONPATH=cli/src python3 scripts/notify-events.py --status"
     },
     {
