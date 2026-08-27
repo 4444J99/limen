@@ -3,7 +3,10 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+import sys
 from types import SimpleNamespace
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -289,6 +292,35 @@ def test_submit_one_deferred_is_terminal_for_the_invocation(monkeypatch, capsys)
 
     assert mod.submit_one("4444J99/limen", 2543, head) == 2
     assert capsys.readouterr().out.strip().endswith(": DEFERRED — CI-PENDING")
+
+
+def test_one_shot_dry_run_is_rejected_before_submission(monkeypatch):
+    mod = _load()
+    head = "a" * 40
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "merge-drain.py",
+            "--repo",
+            "4444J99/limen",
+            "--pr",
+            "2543",
+            "--expected-head",
+            head,
+            "--dry-run",
+        ],
+    )
+    monkeypatch.setattr(
+        mod,
+        "submit_one",
+        lambda *_args: (_ for _ in ()).throw(AssertionError("rejected dry-run must not submit a merge")),
+    )
+
+    with pytest.raises(SystemExit) as raised:
+        mod.main()
+
+    assert raised.value.code == 2
 
 
 def test_submit_one_is_idempotent_for_already_queued_head(monkeypatch, capsys):
