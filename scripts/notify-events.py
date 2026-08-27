@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
 
 from _notify import NotificationResult, emit_event_v1, notify_event, notify_ntfy
+from _ships_24h import read_ships_24h
 from limen.universe_recovery import UniverseBaselineReceiptV1
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
@@ -33,6 +34,9 @@ VIEW = LOGS / "money-view.json"
 STATE = LOGS / ".notify-state.json"
 BASELINE = ROOT / "docs" / "receipts" / "universe-baseline.json"
 CANARY_RECEIPT = LOGS / "notification-canary-receipt.json"
+RECORDING_CANARY_RECEIPT = LOGS / "notification-recording-canary-receipt.json"
+CANARY_RECORDING = LOGS / "notification-recording-canary.jsonl"
+CANARY_RECORDING_LEDGER = LOGS / "notification-recording-canary-ledger.json"
 SHIP_BUCKETS = [10, 25, 50, 100]
 _LOUD = {"deploy-ready", "live", "monetized"}
 MAX_BASELINE_AGE_HOURS = 24.0
@@ -194,7 +198,10 @@ def _status_payload():
             "remaining_branch_debt": branches.blocked + branches.protected + branches.unaccounted,
             "remaining_worktree_debt": worktrees.blocked + worktrees.protected + worktrees.unaccounted,
         }
-    canary = _load(CANARY_RECEIPT, None)
+    canary = {
+        "recording": _load(RECORDING_CANARY_RECEIPT, None),
+        "macos": _load(CANARY_RECEIPT, None),
+    }
     return {
         "schema": "limen.notification-status.v1",
         "observed_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
@@ -212,42 +219,87 @@ def _status_payload():
     }
 
 
-def _write_canary(payload):
-    CANARY_RECEIPT.parent.mkdir(parents=True, exist_ok=True)
-    CANARY_RECEIPT.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    CANARY_RECEIPT.chmod(stat.S_IRUSR | stat.S_IWUSR)
+def _write_canary(payload, path):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+
+
+def _recording_contains_event(path, event_id):
+    try:
+        lines = Path(path).read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return False
+    for line in lines:
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(row, dict) and isinstance(row.get("event"), dict):
+            if row["event"].get("event_id") == event_id:
+                return True
+    return False
 
 
 def _run_canary(mode):
     observed = datetime.now(UTC)
     stamp = observed.strftime("%Y%m%dT%H%M%SZ")
     event_id = f"notification-canary-{mode}-{stamp}"
+    canary_receipt = RECORDING_CANARY_RECEIPT if mode == "recording" else CANARY_RECEIPT
+    broker_environ = None
+    if mode == "recording":
+        broker_environ = dict(os.environ)
+        broker_environ.update(
+            {
+                "DOMUS_NOTIFY": "0",
+                "DOMUS_NOTIFY_RECORDING": str(CANARY_RECORDING),
+                "DOMUS_NOTIFY_RECORDING_LEDGER": str(CANARY_RECORDING_LEDGER),
+            }
+        )
     receipt = emit_event_v1(
         ROOT,
         stable_id="limen.notification.canary",
-        transition="diagnostic",
+        transition="milestone",
         subject_key=event_id,
         event_id=event_id,
         facts={"canary_mode": mode, "snapshot_time": observed.strftime("%H:%M")},
-        evidence_ref=str(CANARY_RECEIPT),
+        evidence_ref=str(canary_receipt),
         producer="scripts/notify-events.py",
         observed_at=observed.isoformat().replace("+00:00", "Z"),
-        level="silent" if mode == "recording" else "normal",
+        level="normal",
+        environ=broker_environ,
     )
+    broker_accepted = receipt.status in {
+        "submitted",
+        "submitted_unverified",
+        "deduped",
+        "recorded",
+    }
+    recording_accepted = (
+        receipt.status == "recorded" and _recording_contains_event(CANARY_RECORDING, event_id)
+        if mode == "recording"
+        else None
+    )
+    canary_accepted = recording_accepted if mode == "recording" else broker_accepted
     payload = {
         "schema": "limen.notification-canary-receipt.v1",
         "event_id": event_id,
         "mode": mode,
         "submitted_at": observed.isoformat().replace("+00:00", "Z"),
         "broker_status": receipt.status,
+        "broker_accepted": broker_accepted,
+        "broker_invoked": receipt.broker_invoked,
+        "reason": receipt.reason,
         "channels": receipt.channels,
-        "recording_accepted": receipt.status in {"submitted", "submitted_unverified", "deduped", "recorded"},
+        "recording_accepted": recording_accepted,
+        "recording_evidence": str(CANARY_RECORDING) if mode == "recording" else None,
         "visible_acceptance": "pending_operator" if mode == "macos" else "not_applicable_recording_only",
         "visible_observed_at": None,
     }
-    _write_canary(payload)
+    _write_canary(payload, canary_receipt)
     print(json.dumps(payload, indent=2, sort_keys=True))
-    return 0 if payload["recording_accepted"] else 1
+    return 0 if canary_accepted else 1
 
 
 def _confirm_macos_canary(event_id):
@@ -257,7 +309,7 @@ def _confirm_macos_canary(event_id):
         return 1
     payload["visible_acceptance"] = "observed_by_operator"
     payload["visible_observed_at"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
-    _write_canary(payload)
+    _write_canary(payload, CANARY_RECEIPT)
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0
 
@@ -307,7 +359,7 @@ def main(argv=None):
                 events.append(("milestone", f"{p.get('product')} reached {stage}"))
 
     # ship milestone (rolling 24h; only fire when crossing a NEW higher bucket today)
-    ships = (view.get("ships_24h") or {}).get("total", 0)
+    ships, _, _ = read_ships_24h(ROOT)
     cur_bucket = max([b for b in SHIP_BUCKETS if ships >= b], default=0)
     if cur_bucket > prev_bucket:
         observed_at = datetime.now()
@@ -322,7 +374,7 @@ def main(argv=None):
                     "observed": ships,
                     "snapshot_time": observed_at.strftime("%H:%M"),
                 },
-                "evidence_ref": str(VIEW),
+                "evidence_ref": str(ROOT / "logs" / "ships-24h.json"),
                 "producer": "scripts/notify-events.py",
             }
         )
@@ -359,7 +411,7 @@ def main(argv=None):
         print("[notify] source state withheld — an event reservation was not established")
     if not events:
         print("[notify] no change — quiet")
-    return 0
+    return 0 if structured_settled else 1
 
 
 if __name__ == "__main__":

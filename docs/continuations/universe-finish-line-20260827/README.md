@@ -1,16 +1,15 @@
 # Universe Finish-Line Continuation Capsule
 
-This capsule owns the implementation and evidence tranche started on 2026-08-27. It is
-deliberately nonterminal: it does not authorize a merge, deployment, branch deletion, worktree
-reclamation, shared-checkout reset, notification canary acceptance, or closure of pull request
-#2542.
+This capsule owns the implementation and evidence campaign started on 2026-08-27. It is
+nonterminal at the universe level: default-ref normalization and Agy reconciliation are complete,
+while default-health repair, PR/branch/worktree drain, recurring-notification installation, and
+the operator-visible canary remain separately receipted predicates.
 
 ## Exact lane
 
-- Branch: `corrective/universe-finish-line-20260827`
-- Base: `origin/main@8773db631e9c4b2fe00abbb032e758b5264ffc7f`
-- Implementation commit: `740d5c720ab5612d2b2e2d04f4d5b845c4e636b8`
-- Review owner: [PR #2549](https://github.com/4444J99/limen/pull/2549)
+- Branch: `corrective/agy-handoff-reconciliation-20260827`
+- Current merged base: `origin/main@91eedfac8ef8edd8b0dee5eb6b6b805cdec2a575`
+- Predecessor review owner: merged [PR #2549](https://github.com/4444J99/limen/pull/2549)
 - Executor: native Codex direct session, human protected by policy
 - Writer scope: the isolated universe-finish Limen worktree only
 - Conduct state: unavailable because the authenticated broker environment was not present
@@ -45,6 +44,17 @@ PR #2542 lanes remain observation-only.
 - Supplied the GitHub Actions token to the existing live research-adjudication probe without
   weakening the gate. The remaining live failure is source-profile drift, not token absence or the
   ruleset fixture.
+- Reconciled all 49 explicit Agy handoff claims by repository-qualified PR identity: 38 live
+  merges, four exact-head supersessions, one protected active PR, and six invalid repository rows.
+- Normalized the complete 320-repository denominator to `refs/heads/main`: 17 exact branch
+  renames, one empty-repository bootstrap, and two history-preserving default switches. The fresh
+  exhaustive census reports zero missing default SHAs.
+- Repaired the notification canaries, split recording and visible receipts, derived shipping
+  owners from the canonical registry, and observed 81 merges across ten owner accounts in the live
+  24-hour refresh. The recording canary passed exact-event readback and the macOS canary is
+  truthfully pending operator-visible confirmation.
+- Repaired and merged the machine-global broker's absent-ntfy semantics in Domus PR #378; repeat
+  estate events now dedupe instead of failing an unconfigured channel.
 
 ## Frozen observations
 
@@ -59,14 +69,12 @@ Four persisted exhaustive remote generations are retained:
 
 The original two-leaf change is preserved as live estate movement, not normalized away. The third
 generation also stops emitting a synthetic check leaf for an explicit no-required-check policy, so
-its leaf denominator is intentionally policy-aware. The latest aggregate reports 308 stable
-repositories of 320, 766 protected open PRs, 9,993 unaccounted non-default branches, 110
-unaccounted local roots, 95 unaccounted worktrees, two local census failures, and 20,301 aggregate
-unaccounted leaves. The independent second policy-aware generation reproduced every remote count.
-Its local projection moved one current worktree from custody-risk blocked to clean-but-nonterminal,
-yielding 111 unaccounted local roots, 96 unaccounted worktrees, and 20,304 aggregate unaccounted
-leaves. That explained local transition is preserved rather than normalized away; the aggregate is
-correctly `complete: false`.
+its leaf denominator is intentionally policy-aware. The post-normalization generation reports 308
+stable repositories of 320, 767 protected open PRs, 9,997 unaccounted non-default branches, 113
+unaccounted local roots, 97 unaccounted worktrees, two local census failures, and 20,317 aggregate
+unaccounted leaves. All 320 remote repository packets and all 1,280 connections are exhaustive;
+the aggregate remains correctly `complete: false` because the local and debt partitions are not
+terminal.
 
 The current immutable cleanup dry plan contains seven candidates with digest
 `8b0217df440fbfb61ae4f7aa045915032a4b7d8c64b0c40780ae08141deb4f19`; strict worktree debt reports
@@ -74,11 +82,16 @@ six debt items. No candidate was applied because the aggregate truth plane is in
 
 The approved Agy handoff and its shared-checkout artifacts were recovered after this capsule was
 first written. Its `164/164` test claim is reproducible: 26 explicitly targeted harness tests plus
-111 remediation-pipeline and 27 liveness tests passed. That does not substantiate the separate
-aggregate `160+` merge claim: the handoff contains a bounded explicit roster, while the residue
-manifest describes 173 *diagnostic* PRs rather than 173 merges. The complete 1,469,103-byte
-untracked payload plus the 10,572-byte tracked patch remain readback-verified in the private
-content-addressed preservation archive while repository-qualified reconciliation proceeds.
+111 remediation-pipeline and 27 liveness tests passed. The repository-qualified
+[Agy reconciliation](agy-claim-reconciliation.json) is now exhaustive over all 49 explicit
+`repository + PR number` rows: 38 are live merges, four were closed with exact-head successor
+landing proof, one is a registry-owned open PR, and six used the nonexistent
+`4444J99/styx-launch-package` identity. That path is actually a linked worktree of
+`4444J99/peer-audited--behavioral-blockchain`; five rows duplicate claims already made under the
+real repository and the sixth was superseded by PR #946. The separate `160+` aggregate remains
+invalid rather than unexamined. The complete 1,469,103-byte shared-checkout payload plus its
+10,572-byte tracked patch remain readback-verified, and the newly discovered 455-byte dirty patch
+in the mislabeled worktree has its own content-addressed private preservation receipt.
 
 The final session-custody check proves this branch is fully pushed and the worktree is clean. It
 still fails on two landed local branches that carry standing authorization in the branch-reap
@@ -93,6 +106,9 @@ aggregate census is incomplete.
   implicated files passed, and the next hosted generation passed every executed check before merge.
 - Preserved Agy verification corpus: `164 passed` across the documented 26 + 111 + 27 partition;
   the additional shared-checkout remediation/diagnostic shard passed `114` tests.
+- Agy claim reconciliation: all 49 explicit keys accounted, zero unaccounted; 38 live merges,
+  four exact-head supersessions, one owned open PR, six invalid repository-qualified rows, and
+  three surviving remote heads (two landed, one owned open).
 - The first exact-tree scoped wave exposed five cheap-shard defects: static typing, resolver
   selection parity, two census-backed flagship projections, and formatting. All five were repaired;
   their implicated reruns passed (174-file mypy, 43 proof-set tests, 42 evidence tests, resolver
@@ -107,6 +123,10 @@ aggregate census is incomplete.
   fail-closed at `complete: false`.
 - `notify-events.py --status`: `count unavailable/incomplete`; ntfy `not_configured`; macOS
   `submission_only_visible_delivery_unverified`.
+- Notification-focused batch: 56 tests passed; the installed Domus broker batch passed 3 tests;
+  the bounded live one-shot completed all four stages and a repeat integrity event deduped.
+- Main normalization: all 320 repository receipts report `refs/heads/main`, with zero null default
+  SHAs, zero failed remote connections, and zero remote unaccounted leaves.
 
 The unchanged green shards from the scoped wave remain reusable receipts. The admission-gated
 heavy wave has not run: live host status denied admission at a 0.3704 swap fraction. The branch

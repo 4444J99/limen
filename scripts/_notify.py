@@ -32,7 +32,7 @@ import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Mapping
 
 # The liveness guard lives next to this file ON DISK. Resolving it by path rather than by
 # `import _root` is the whole point — see _load_root().
@@ -416,6 +416,7 @@ def emit_event_v1(
     observed_at: str | None = None,
     enabled: bool | None = None,
     level: str | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> DeliveryReceipt:
     """Validate at the broker boundary and return its channel-aware receipt."""
     if not _enabled(enabled):
@@ -452,7 +453,7 @@ def emit_event_v1(
     command = [broker, "emit", "--event-json", "-"]
     if level:
         command.extend(["--level", level])
-    env = dict(os.environ)
+    env = dict(os.environ if environ is None else environ)
     env["DOMUS_NOTIFY_REGISTRY"] = str(NOTIFICATION_REGISTRY)
     if os.environ.get("LIMEN_NTFY_TOPIC") and not env.get("DOMUS_NOTIFY_NTFY_URL"):
         base = os.environ.get("LIMEN_NTFY_URL", "https://ntfy.sh").rstrip("/")

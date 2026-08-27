@@ -1,0 +1,498 @@
+{
+  "schema_version": "limen.main_normalization_plan.v1",
+  "generated_at": "2026-08-27T17:43:00Z",
+  "source_generation": "e9d7f66763f824338dd57e18331dc6abc3aeb9fbc1b649b98c0dcc28a6c8161b",
+  "repository_denominator": 320,
+  "intent": "normalize every live repository default to a single branch named main without history rewriting or branch deletion",
+  "safety": {
+    "exact_default_sha_cas": true,
+    "existing_main_must_be_absent": true,
+    "archived_state_restored": true,
+    "open_pr_bases_verified_after_rename": true,
+    "force_push": false,
+    "branch_deletion": false,
+    "direct_default_content_change": false
+  },
+  "ready_count": 17,
+  "blocked_count": 3,
+  "ready": [
+    {
+      "repository": "organvm-ii-poiesis/a-mavs-olevm",
+      "private": false,
+      "expected": {
+        "archived": false,
+        "default_branch": "master",
+        "default_sha": "477d62305943049f638be8fd46d74bd89f4d582f",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 5,
+      "open_pr_base_branches": [
+        "master"
+      ],
+      "operation": [
+        "rename exact default branch to main",
+        "verify default and exact SHA"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "organvm-iii-ergon/a-i-chat--exporter",
+      "private": false,
+      "expected": {
+        "archived": false,
+        "default_branch": "master",
+        "default_sha": "900da0fa256b443b3fe976963c9b2c67e8c09176",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 11,
+      "open_pr_base_branches": [
+        "master"
+      ],
+      "operation": [
+        "rename exact default branch to main",
+        "verify default and exact SHA"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "organvm-iii-ergon/anon-hookup-now",
+      "private": false,
+      "expected": {
+        "archived": false,
+        "default_branch": "master",
+        "default_sha": "129e26836b579e7f5b459a5c4b23119bd94e2865",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 0,
+      "open_pr_base_branches": [],
+      "operation": [
+        "rename exact default branch to main",
+        "verify default and exact SHA"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "organvm-iii-ergon/enterprise-plugin",
+      "private": false,
+      "expected": {
+        "archived": false,
+        "default_branch": "master",
+        "default_sha": "f59ad9524fab2d44097409a9c33eeb715c979f73",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 0,
+      "open_pr_base_branches": [],
+      "operation": [
+        "rename exact default branch to main",
+        "verify default and exact SHA"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "organvm-iii-ergon/gens",
+      "private": false,
+      "expected": {
+        "archived": false,
+        "default_branch": "master",
+        "default_sha": "c4780a5fd5b97f66baa2bb108c6e404c331daab1",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 0,
+      "open_pr_base_branches": [],
+      "operation": [
+        "rename exact default branch to main",
+        "verify default and exact SHA"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "organvm-iii-ergon/life-my--midst--in",
+      "private": false,
+      "expected": {
+        "archived": false,
+        "default_branch": "master",
+        "default_sha": "0c80e657579101aeae039b2d6c6213acc2626f63",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 6,
+      "open_pr_base_branches": [
+        "master"
+      ],
+      "operation": [
+        "rename exact default branch to main",
+        "verify default and exact SHA"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "organvm-iii-ergon/vox",
+      "private": false,
+      "expected": {
+        "archived": false,
+        "default_branch": "master",
+        "default_sha": "085a6ecfa170f7ff07f8a845a3d537781e1bfb33",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 1,
+      "open_pr_base_branches": [
+        "master"
+      ],
+      "operation": [
+        "rename exact default branch to main",
+        "verify default and exact SHA"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "organvm/camel",
+      "private": false,
+      "expected": {
+        "archived": true,
+        "default_branch": "master",
+        "default_sha": "b547bc49f5cc1a9b742ae34d953e72fc100b9ad1",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 0,
+      "open_pr_base_branches": [],
+      "operation": [
+        "set archived=false",
+        "rename exact default branch to main",
+        "verify default and exact SHA",
+        "set archived=true",
+        "verify archived"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "organvm/content-engine--asset-amplifier--a-organvm-legacy",
+      "private": false,
+      "expected": {
+        "archived": true,
+        "default_branch": "feature/stripe-checkout",
+        "default_sha": "5c3ed9ef3a0a7c63d891e287118fa79fb5fe30f4",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 0,
+      "open_pr_base_branches": [],
+      "operation": [
+        "set archived=false",
+        "rename exact default branch to main",
+        "verify default and exact SHA",
+        "set archived=true",
+        "verify archived"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "organvm/contrib--dapr-dapr--4444j99-fork",
+      "private": false,
+      "expected": {
+        "archived": true,
+        "default_branch": "master",
+        "default_sha": "f7427a1290f333420f172b826b16d4e1f4cabd57",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 0,
+      "open_pr_base_branches": [],
+      "operation": [
+        "set archived=false",
+        "rename exact default branch to main",
+        "verify default and exact SHA",
+        "set archived=true",
+        "verify archived"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "private-repository-001",
+      "private": true,
+      "expected": {
+        "archived": false,
+        "default_branch": "redacted-private-default",
+        "default_sha": "redacted-private-sha",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 70,
+        "protected": 0,
+        "custody_risk": 1,
+        "exact_default": 1
+      },
+      "open_pr_count": 62,
+      "open_pr_base_branches": [
+        "redacted-private-default"
+      ],
+      "operation": [
+        "rename exact default branch to main",
+        "verify default and exact SHA"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "private-repository-002",
+      "private": true,
+      "expected": {
+        "archived": true,
+        "default_branch": "redacted-private-default",
+        "default_sha": "redacted-private-sha",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 0,
+      "open_pr_base_branches": [],
+      "operation": [
+        "set archived=false",
+        "rename exact default branch to main",
+        "verify default and exact SHA",
+        "set archived=true",
+        "verify archived"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "private-repository-003",
+      "private": true,
+      "expected": {
+        "archived": false,
+        "default_branch": "redacted-private-default",
+        "default_sha": "redacted-private-sha",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 0,
+      "open_pr_base_branches": [],
+      "operation": [
+        "rename exact default branch to main",
+        "verify default and exact SHA"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "organvm/k6",
+      "private": false,
+      "expected": {
+        "archived": true,
+        "default_branch": "master",
+        "default_sha": "be36b5557116a6322e21537ffe72728e92190e71",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 0,
+      "open_pr_base_branches": [],
+      "operation": [
+        "set archived=false",
+        "rename exact default branch to main",
+        "verify default and exact SHA",
+        "set archived=true",
+        "verify archived"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "organvm/metasystem-master",
+      "private": false,
+      "expected": {
+        "archived": false,
+        "default_branch": "master",
+        "default_sha": "7b5fbac49b50993878f6842e4e7648491a8a662c",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 13,
+      "open_pr_base_branches": [
+        "master"
+      ],
+      "operation": [
+        "rename exact default branch to main",
+        "verify default and exact SHA"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "private-repository-004",
+      "private": true,
+      "expected": {
+        "archived": false,
+        "default_branch": "redacted-private-default",
+        "default_sha": "redacted-private-sha",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 4,
+      "open_pr_base_branches": [
+        "redacted-private-default"
+      ],
+      "operation": [
+        "rename exact default branch to main",
+        "verify default and exact SHA"
+      ],
+      "deletion": false
+    },
+    {
+      "repository": "private-repository-005",
+      "private": true,
+      "expected": {
+        "archived": false,
+        "default_branch": "redacted-private-default",
+        "default_sha": "redacted-private-sha",
+        "main_absent": true
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 6,
+      "open_pr_base_branches": [
+        "redacted-private-default"
+      ],
+      "operation": [
+        "rename exact default branch to main",
+        "verify default and exact SHA"
+      ],
+      "deletion": false
+    }
+  ],
+  "blocked": [
+    {
+      "repository": "private-repository-006",
+      "reason": "declared default main has no branch ref; requires empty-repository root bootstrap",
+      "observed": {
+        "archived": false,
+        "default_branch": "redacted-private-default",
+        "default_sha": null,
+        "main_present": false,
+        "main_sha": null
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 0
+    },
+    {
+      "repository": "organvm/4-ivi374-F0Rivi4",
+      "reason": "main already exists at a different SHA; branch rename is unsafe",
+      "observed": {
+        "archived": true,
+        "default_branch": "feat-initial-swarm-scaffold",
+        "default_sha": "b6efd6e0d5a73cdb25c94352e3d3de7e60bb9f3f",
+        "main_present": true,
+        "main_sha": "5d2c054d7397196b6b736b209504e9b9ce503419"
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 1
+    },
+    {
+      "repository": "private-repository-007",
+      "reason": "main already exists at a different SHA; branch rename is unsafe",
+      "observed": {
+        "archived": false,
+        "default_branch": "redacted-private-default",
+        "default_sha": "redacted-private-sha",
+        "main_present": true,
+        "main_sha": "redacted-private-sha"
+      },
+      "local_custody": {
+        "total": 0,
+        "protected": 0,
+        "custody_risk": 0,
+        "exact_default": 0
+      },
+      "open_pr_count": 14
+    }
+  ]
+}

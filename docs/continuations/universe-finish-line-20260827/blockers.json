@@ -1,7 +1,7 @@
 {
   "schema_version": "limen.continuation_blockers.v1",
   "capsule_id": "universe-finish-line-20260827",
-  "observed_at": "2026-08-27T17:23:00Z",
+  "observed_at": "2026-08-27T18:13:00Z",
   "terminal": false,
   "blockers": [
     {
@@ -12,11 +12,11 @@
       "next_command": "limen conduct capabilities"
     },
     {
-      "id": "agy-claim-inventory",
-      "owner": "agy-handoff-source",
-      "predicate": "every claimed repository and PR number reconciles to live state and local custody with no duplicate or missing claim",
-      "evidence": "the approved handoff and shared residue are preserved and its 164-test claim independently passed; the handoff still supplies only a bounded explicit merge roster, while its residue manifest classifies 173 diagnostic PRs, not 173 merges, so the 160-plus aggregate remains unsupported until every unique repository and PR pair is live-reconciled",
-      "next_command": "python3 scripts/universe-recovery.py --check --manifest docs/continuations/universe-recovery-20260823/manifest.json"
+      "id": "unstable-default-health",
+      "owner": "universe-default-repair",
+      "predicate": "all 320 exact refs/heads/main receipts report green required checks or an explicit valid no-required-check policy",
+      "evidence": "post-normalization exhaustive generation has 308 stable repositories, 11 red defaults, and one unknown policy result",
+      "next_command": "python3 scripts/github-estate-census.py --write --check --json --workers 2"
     },
     {
       "id": "default-profile-source-drift",
@@ -50,7 +50,7 @@
       "id": "branch-and-worktree-debt",
       "owner": "universe-drain",
       "predicate": "strict worktree debt and the remote-reap verifier pass, then a regenerated immutable cleanup plan is empty",
-      "evidence": "strict debt reports six items and the unapplied plan contains seven candidates",
+      "evidence": "fresh aggregate reports 9997 non-default branches, 113 unaccounted local roots, and 97 unaccounted worktrees; destructive cleanup remains plan-and-CAS only",
       "next_command": "python3 scripts/worktree-debt.py --strict --fail-on-debt --json"
     },
     {
@@ -61,17 +61,10 @@
       "next_command": "python3 scripts/worktree-preserve-dirty.py --worktree \"$LIMEN_ROOT\" --json"
     },
     {
-      "id": "universe-finish-hosted-admission",
-      "owner": "pull-request-2549",
-      "predicate": "the updated exact PR #2549 head passes its hosted pr-gate and lands through the matched-head merge rail",
-      "evidence": "all 35 local cheap scoped gates pass; the local heavy wave remains correctly unadmitted at exit 75 because of the machine-wide swap-fraction guard",
-      "next_command": "gh pr checks 2549 --repo 4444J99/limen"
-    },
-    {
       "id": "notification-visible-canary",
       "owner": "human-operator",
       "predicate": "a separate recording-backend receipt exists and one submitted macOS canary has an operator-observed confirmation receipt",
-      "evidence": "the installed checkout still runs the legacy notifier: --status was accepted as a no-argument emit and returned no change quiet; the corrected status/canary implementation is pending PR #2549 landing and installation",
+      "evidence": "recording event notification-canary-recording-20260827T180542Z passed exact readback; macOS event notification-canary-macos-20260827T180547Z is submitted with visible acceptance pending; bounded schedule plan 50e1d0eae1ed314949930b41ae3637ef3e8f1c0178e89639b6bd35b378fc6568 awaits exact merged runtime installation",
       "next_command": "PYTHONPATH=cli/src python3 scripts/notify-events.py --status"
     },
     {
