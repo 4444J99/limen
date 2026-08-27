@@ -182,7 +182,7 @@ DEFAULT_MAP: list[dict] = [
         "env": ["CLOUDFLARE_API_TOKEN"],
         # gh_secret sink: deploy.yml's dashboard Cloudflare Pages step (the derived owned rail after
         # the Firebase/GCP road-not-taken) reads this repo secret — the organ lands it, never a paste.
-        "gh_secret": {"repo": "organvm/limen", "name": "CLOUDFLARE_API_TOKEN"},
+        "gh_secret": {"repo": "4444J99/limen", "name": "CLOUDFLARE_API_TOKEN"},
         "enabled": True,
         # validity probe: GET /accounts. This works for BOTH token kinds — the earlier
         # /user/tokens/verify endpoint is USER-token-only and returns code 1000 "Invalid API
@@ -209,7 +209,7 @@ DEFAULT_MAP: list[dict] = [
         "ref": "op://Personal/GCP Deploy SA/credential",
         "gh_secret": [
             {"repo": "organvm/media-ark", "name": "GCP_SA_KEY"},
-            {"repo": "organvm/limen", "name": "GCP_SA_KEY"},
+            {"repo": "4444J99/limen", "name": "GCP_SA_KEY"},
         ],
         "enabled": False,
     },

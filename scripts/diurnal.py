@@ -1175,7 +1175,7 @@ def _prune_notify_keys(root: Path) -> None:
 def _merge_prohibited(root: Path) -> str | None:
     """The pause that binds publication is the MARKER, not the governor's mode.
 
-    Mirrors await-pr.sh's guard verbatim in intent: a marker whose `prohibitions:` line names
+    Mirrors the targeted merge-drain guard verbatim in intent: a marker whose `prohibitions:` line names
     merge binds every actor, the beat included. The governor's *window* pause is a different
     thing — it withdraws DISPATCH, the authority to spend other agents' capacity. Recording what
     the machine already observed spends nothing, sends nothing, deletes nothing. Conflating the
@@ -1244,30 +1244,12 @@ def unshipped_pages(root: Path) -> list[str]:
 
 
 def reap_shipped(root: Path, receipts: dict[str, dict]) -> int:
-    """Merge the organ's OWN still-open page PRs. Returns how many reached MERGED.
+    """Observe already-recorded page PRs once; the recurring merge drain owns landing.
 
-    ship-docs.sh self-merges only if merge-policy clears within its own wait; otherwise it exits 2
-    and hands the PR to "the beat's merge rung, per the charter". That rung is drain.sh, called at
-    scripts/heartbeat-loop.sh:466 — 113 lines BELOW the paused branch's `continue` at line 353.
-    Autonomy has been window-paused since 2026-07-22, so the named owner has not run once. Five
-    CLEARED, non-deploy, organ-authored PRs sat open across three days while shipped.json reported
-    every page published: the receipt recorded the HANDOFF, not the LANDING.
-
-    So the organ closes its own loop, which is the ownership its own module docstring claims. This
-    is not a general un-pausing and deliberately is not one:
-
-      * scope — only PRs this organ opened, recorded by number in its own receipts;
-      * class — ship-docs.sh REFUSES deploy-trigger paths, so no page here can reach the live site;
-      * authority — the gate is _merge_prohibited(), the pause MARKER, exactly as the shipping path
-        already reads it and for the reason written there: a window pause withdraws dispatch, not
-        the machine's record of what it already observed. await-pr.sh independently refuses to
-        start under a merge-prohibiting marker, so the guard holds even if this one were wrong.
-
-    Bounded on purpose. merge-policy is only consulted for PRs still open, at most
-    LIMEN_DIURNAL_REAP_MAX per run, and the merge itself goes through await-pr.sh — the one
-    sanctioned waiter, with its own hard deadline. A hand-rolled poll loop here is exactly the
-    banned pattern (the 2026-07-15 endless-watcher incident); anything past the deadline stays a
-    PR and is retried next phase.
+    This organ must never turn its phase cadence into a hidden merge retry loop.  It reads each
+    receipt-owned PR at most once per phase only to reconcile an already-MERGED result.  OPEN PRs
+    remain durably owned by GitHub and ``scripts/merge-drain.py`` without launching another
+    process that waits, submits, or retries.
     """
     prs = sorted({r["pr"] for r in receipts.values() if isinstance(r.get("pr"), int)})
     if not prs:
@@ -1275,22 +1257,9 @@ def reap_shipped(root: Path, receipts: dict[str, dict]) -> int:
     merged = 0
     for pr in prs[: _int("LIMEN_DIURNAL_REAP_MAX", 3)]:
         rc, out = _run(f"gh pr view {pr} --json state --jq .state", root, timeout=60)
-        if rc != 0 or out.strip() != "OPEN":
-            continue  # already merged or closed — the receipt is stale, not the PR
-        rc, _ = _run(f"bash {shlex.quote(str(root / 'scripts' / 'merge-policy.sh'))} {pr}", root, timeout=180)
-        if rc != 0:
-            print(f"diurnal: PR #{pr} not cleared (merge-policy exit {rc}) — left for the next phase")
-            continue
-        rc, out = _run(
-            f"bash {shlex.quote(str(root / 'scripts' / 'await-pr.sh'))} {pr} --merge",
-            root,
-            timeout=_int("LIMEN_DIURNAL_REAP_TIMEOUT", 600),
-        )
-        if rc == 0:
+        if rc == 0 and out.strip() == "MERGED":
             merged += 1
             print(f"diurnal: PR #{pr} MERGED — the page is on main")
-        else:
-            print(f"diurnal: PR #{pr} still open after await-pr (exit {rc}) — retried next phase")
     return merged
 
 

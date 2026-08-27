@@ -37,7 +37,7 @@ AGENT_LOGINS = {
     "llamapreview[bot]",
 }
 
-DEFAULT_REPOS = ["organvm/limen", "organvm/organvm-scrutator"]
+DEFAULT_REPOS = ["4444J99/limen", "organvm/organvm-scrutator"]
 
 
 def _gh(args: list[str], timeout: int = 45) -> subprocess.CompletedProcess:

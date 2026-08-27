@@ -12,8 +12,18 @@ order-independent without rewriting every direct writer.
 
 import json
 import os
+import sys
+from pathlib import Path
 
 import pytest
+
+
+# Editable installs point at the primary checkout and are not worktree-safe.
+# Always test the exact checkout that owns this conftest before test modules
+# import ``limen`` during collection.
+LOCAL_SRC = str(Path(__file__).resolve().parents[1] / "src")
+if LOCAL_SRC not in sys.path:
+    sys.path.insert(0, LOCAL_SRC)
 
 
 @pytest.fixture(scope="session")

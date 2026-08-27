@@ -11,36 +11,40 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent)
 LEDGER_DOC = ROOT / "docs" / "repo-surface-ledger.md"
 PORTAL_DIR = ROOT / "public-portal"
 
+
 def parse_ledger_doc(doc_text: str) -> dict:
     repos = []
-    
+
     in_repos_table = False
     for line in doc_text.splitlines():
         if "## Repo Surfaces" in line:
             in_repos_table = True
             continue
-        
+
         if in_repos_table and line.startswith("| `"):
             # | `repo` | `branch` | dirty | `remote` | products | tests | deploys | visibility | location | remote class | disposition | gate |
             parts = [p.strip().strip("`") for p in line.split("|")[1:-1]]
             if len(parts) >= 12:
-                repos.append({
-                    "path_label": parts[0],
-                    "branch": parts[1],
-                    "remote_hash": parts[3],
-                    "visibility_state": parts[7],
-                    "classification": {
-                        "location": parts[8],
-                        "remote": parts[9],
-                        "disposition": parts[10],
+                repos.append(
+                    {
+                        "path_label": parts[0],
+                        "branch": parts[1],
+                        "remote_hash": parts[3],
+                        "visibility_state": parts[7],
+                        "classification": {
+                            "location": parts[8],
+                            "remote": parts[9],
+                            "disposition": parts[10],
+                        },
                     }
-                })
-    
+                )
+
     return {"repos": repos, "repo_count": len(repos), "generated_at": "extracted from ledger"}
+
 
 def build_html(data: dict) -> str:
     repos = data.get("repos", [])
-    
+
     # Group by location, then disposition
     grouped = {}
     for repo in repos:
@@ -80,14 +84,18 @@ def build_html(data: dict) -> str:
                 branch = repo.get("branch", "unknown")
                 remote = repo.get("remote_hash", "none")
                 vis = repo.get("visibility_state", "unknown")
-                
+
                 # Link resolving logic
                 if name.startswith("~/Workspace/"):
                     repo_name = name.split("/")[-1]
                 else:
                     repo_name = name
-                link = f"https://github.com/organvm/{repo_name}"
-                
+                link = (
+                    "https://github.com/4444J99/limen"
+                    if repo_name == "limen"
+                    else f"https://github.com/organvm/{repo_name}"
+                )
+
                 html.append("    <div class='repo-card'>")
                 html.append(f"        <strong><a href='{link}'>{name}</a></strong>")
                 html.append("        <div style='margin-top: 0.5rem;'>")
@@ -96,34 +104,36 @@ def build_html(data: dict) -> str:
                 html.append(f"            <span class='tag'>vis: {vis}</span>")
                 html.append("        </div>")
                 html.append("    </div>")
-    
-    html.extend([
-        "</body>",
-        "</html>"
-    ])
-    
+
+    html.extend(["</body>", "</html>"])
+
     return "\n".join(html)
+
 
 def main():
     PORTAL_DIR.mkdir(exist_ok=True)
-    
+
     if not LEDGER_DOC.exists():
         print(f"Error: Ledger doc {LEDGER_DOC} not found. Run scripts/repo-surface-ledger.py --write first.")
         return 1
-        
+
     doc_text = LEDGER_DOC.read_text(encoding="utf-8")
     data = parse_ledger_doc(doc_text)
-    
+
     html_content = build_html(data)
-    
+
     index_path = PORTAL_DIR / "index.html"
     index_path.write_text(html_content, encoding="utf-8")
-    
+
     readme_path = PORTAL_DIR / "README.md"
-    readme_path.write_text(f"# VLTA / PORTUS\n\nGenerated portal for {data.get('repo_count', 0)} repos.\nSee `index.html` for the full view.\n", encoding="utf-8")
-    
+    readme_path.write_text(
+        f"# VLTA / PORTUS\n\nGenerated portal for {data.get('repo_count', 0)} repos.\nSee `index.html` for the full view.\n",
+        encoding="utf-8",
+    )
+
     print(f"Portal built successfully at {PORTAL_DIR} with {data.get('repo_count', 0)} repos.")
     return 0
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

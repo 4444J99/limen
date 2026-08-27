@@ -102,8 +102,8 @@ the pushed head. Harvest fails closed on any omission or moved base/head.
 
 Landing adapters are discovered through the `limen.fanout_landing` Python entry-point group. The
 built-in adapter accepts the exact-head GitHub PR receipt created by the execution adapter. `--merge`
-calls the single sanctioned `scripts/await-pr.sh --merge` path. Direct shared-checkout landing is not
-an adapter surface.
+submits that head exactly once through targeted `scripts/merge-drain.py` mode and returns `queued`
+or `merged`; it never waits or retries. Direct shared-checkout landing is not an adapter surface.
 
 ## Minimal example
 
@@ -124,18 +124,18 @@ leaves:
   - schema_version: limen.fanout_leaf.v1
     work_id: leaf-docs
     idempotency_key: campaign-20260720/leaf-docs
-    owner_repository: organvm/limen
+    owner_repository: 4444J99/limen
     exact_base: 0000000000000000000000000000000000000000
     topic_branch: work/leaf-docs
     allowed_paths: [docs]
     resource_claims:
-      - {key: "path/organvm/limen/0000000000000000000000000000000000000000/docs", mode: exclusive}
+      - {key: "path/4444J99/limen/0000000000000000000000000000000000000000/docs", mode: exclusive}
     dependencies: []
     required_capabilities: [code]
     intended_effect: update one bounded document
     effect: write
     predicate: python3 scripts/check-docs.py
-    receipt_target: github:organvm/limen:pr
+    receipt_target: github:4444J99/limen:pr
     deadline: 2026-07-21T00:00:00Z
     retry: {max_attempts: 2, transient_only: true}
     spend: {unit: runs, limit: 2, reserve: 0}

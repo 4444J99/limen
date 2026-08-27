@@ -54,6 +54,25 @@ else
   fail=$((fail+1)); echo "  case3 double-dark: FAIL"; echo "$out" | sed 's/^/    /'
 fi
 
+# ── Case 4: App-only mutation helpers fail without one exact target repository ──
+if python3 - "$EFF" <<'PY'
+import importlib.util
+import sys
+
+spec = importlib.util.spec_from_file_location("sync_marketplace_config", sys.argv[1])
+assert spec and spec.loader
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+result = module._gh(["api"], app_only=True)
+assert result.returncode == 1
+assert "requires exact repository" in result.stderr
+PY
+then
+  pass=$((pass+1)); echo "  case4 App-only exact target: PASS"
+else
+  fail=$((fail+1)); echo "  case4 App-only exact target: FAIL"
+fi
+
 echo
 if [ "$fail" -eq 0 ]; then echo "sync-marketplace-config.test.sh: PASS ($pass checks)"; else
   echo "sync-marketplace-config.test.sh: FAIL ($fail failed, $pass ok)"; exit 1; fi

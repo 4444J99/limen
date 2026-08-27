@@ -1,0 +1,14 @@
+{
+  "schema_version": "limen.repository_identity_registry.v1",
+  "transfer_fallback_coordinate": "4444J99/limen-control",
+  "repositories": [
+    {
+      "schema_version": "limen.repository_identity.v1",
+      "repository_id": 1255213941,
+      "canonical_coordinate": "4444J99/limen",
+      "historical_aliases": [
+        "organvm/limen"
+      ]
+    }
+  ]
+}

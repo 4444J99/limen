@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/4444J99/limen/blob/main/spec/contracts/repository-identity-v1.schema.json",
+  "title": "RepositoryIdentityV1",
+  "description": "Structural wire schema. Consumers MUST also run the RepositoryIdentityV1 semantic validator; JSON Schema uniqueItems cannot express GitHub's case-insensitive cross-field coordinate uniqueness.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repository_id",
+    "canonical_coordinate",
+    "historical_aliases"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "limen.repository_identity.v1"
+    },
+    "repository_id": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "canonical_coordinate": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+    },
+    "historical_aliases": {
+      "type": "array",
+      "uniqueItems": true,
+      "x-limen-case-insensitive-unique": true,
+      "description": "Coordinates are additionally required to be unique case-insensitively by the RepositoryIdentityV1 semantic validator.",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"
+      }
+    }
+  }
+}

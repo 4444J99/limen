@@ -369,7 +369,7 @@ def test_upsert_idempotent_writes_once(tmp_path, monkeypatch):
     assert starved_tasks[0]["origin"] == "system_debt"
     assert starved_tasks[0]["horizon"] == "present"
     assert starved_tasks[0]["value_case"] == "Restore dispatch continuity for the starved jules lane"
-    assert starved_tasks[0]["owner_surface"] == "organvm/limen"
+    assert starved_tasks[0]["owner_surface"] == "4444J99/limen"
 
 
 # ── artifact + voice stamp ────────────────────────────────────────────────────

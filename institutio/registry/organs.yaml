@@ -23,7 +23,7 @@ organs:
 
   - name: index-nominum
     layer: spine
-    home: organvm/limen (scripts/nomenclator.py) + IRF-IDX-002
+    home: 4444J99/limen (scripts/nomenclator.py) + IRF-IDX-002
     status: built
     role: "Naming institution (U>V…). CI gate already fails on bad names."
     residual: []

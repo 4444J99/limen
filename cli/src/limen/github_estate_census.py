@@ -13,12 +13,26 @@ from limen.progress_source_registry import REPORT_SCHEMA
 
 SCHEMA = "limen.github-estate-census.v1"
 SOURCE_ID = "github-estate"
-CONNECTION_KINDS = ("pull_requests", "issues", "branches", "checks")
+CONNECTION_KINDS = (
+    "pull_requests",
+    "issues",
+    "branches",
+    "checks",
+)
+PAGINATED_CONNECTION_KINDS = (
+    *CONNECTION_KINDS,
+    "closed_pull_requests",
+    "review_threads",
+    "review_comments",
+)
 _IDENTITY_FIELD = {
     "pull_requests": "number",
+    "closed_pull_requests": "number",
     "issues": "number",
     "branches": "name",
     "checks": "id",
+    "review_threads": "id",
+    "review_comments": "id",
 }
 _GREEN_CHECK_RESULTS = frozenset({"success", "neutral", "skipped"})
 _CUSTODY_CLASSES = frozenset({"preservation", "active_custody", "owner_route"})
@@ -73,7 +87,7 @@ class ConnectionCensus:
 def paginate_exact(kind: str, fetch_page: PageFetcher, *, expected_total: int | None = None) -> ConnectionCensus:
     """Page one GitHub connection and reconcile every cursor against totalCount."""
 
-    if kind not in CONNECTION_KINDS:
+    if kind not in PAGINATED_CONNECTION_KINDS:
         raise ValueError(f"unsupported connection kind: {kind}")
     if expected_total == 0:
         return ConnectionCensus(kind, 0, 0, True, None, ())
@@ -226,6 +240,41 @@ def _tracked_leaf(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _repository_record(repository: dict[str, Any]) -> dict[str, Any]:
+    """Normalize repository generation facts without assuming they are available."""
+
+    name = str(repository["name_with_owner"])
+    default_branch = str(repository.get("default_branch") or "") or None
+    default_sha = str(repository.get("default_sha") or "") or None
+    return {
+        "name_with_owner": name,
+        "repository_id": repository.get("repository_id"),
+        "private": bool(repository.get("private")),
+        "archived": bool(repository.get("archived")),
+        "default_ref": f"refs/heads/{default_branch}" if default_branch else None,
+        "default_sha": default_sha,
+        "default_generation": _canonical_sha256(
+            {
+                "repository": name,
+                "default_ref": default_branch,
+                "default_sha": default_sha,
+                "archived": bool(repository.get("archived")),
+            }
+        ),
+    }
+
+
+def _tracked_repository(row: dict[str, Any]) -> dict[str, Any]:
+    if not row["private"]:
+        return row
+    return {
+        "repository_key": sha256(str(row["name_with_owner"]).encode()).hexdigest(),
+        "private": True,
+        "archived": row["archived"],
+        "default_generation": row["default_generation"],
+    }
+
+
 def build_github_estate_census(
     repositories: list[dict[str, Any]],
     fetch_connection: ConnectionFetcher,
@@ -244,6 +293,7 @@ def build_github_estate_census(
         failures.append({"scope": "repositories", "error": "repository-total-not-reconciled"})
 
     seen_repositories: set[str] = set()
+    repository_rows: list[dict[str, Any]] = []
     leaves: list[dict[str, Any]] = []
     cursor_rows: list[dict[str, Any]] = []
     for repository in sorted(repositories, key=lambda row: str(row.get("name_with_owner") or "")):
@@ -253,6 +303,7 @@ def build_github_estate_census(
             failures.append({"scope": "repositories", "error": "duplicate-or-missing-repository-identity"})
             continue
         seen_repositories.add(repo)
+        repository_rows.append(_repository_record(repository))
         private = bool(repository.get("private"))
         default_branch = str(repository.get("default_branch") or "") or None
         totals = repository.get("connection_totals") or {}
@@ -329,6 +380,7 @@ def build_github_estate_census(
         },
         "failures": failures,
         "cursors": cursor_rows,
+        "repositories": repository_rows,
         "leaves": leaves,
     }
     tracked = {
@@ -336,6 +388,7 @@ def build_github_estate_census(
         "source_report": source_report,
         "summary": full["summary"],
         "failure_count": len(failures),
+        "repositories": [_tracked_repository(row) for row in repository_rows],
         "leaves": [_tracked_leaf(row) for row in leaves],
     }
     return full, tracked

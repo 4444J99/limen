@@ -247,7 +247,7 @@ def test_frontdoor_renders_both_doors_and_systems(tmp_path: Path):
     assert "repository-asserted: 3,399 passing tests" not in fd
     assert "verified: four collectors implemented" in fd
     assert "Architected and directed by one person" in fd
-    assert "https://github.com/organvm/limen/blob/main/docs/positioning/public-record-data-scrapper.md" in fd
+    assert "https://github.com/4444J99/limen/blob/main/docs/positioning/public-record-data-scrapper.md" in fd
 
 
 def test_frontdoor_uses_curated_flagships_and_verified_external_surfaces(tmp_path: Path):

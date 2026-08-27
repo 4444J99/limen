@@ -4,7 +4,7 @@
 `money-view.py` and `omni-view.py` used to count "ships in the last 24h" by grep-parsing
 `logs/merge-drain.log` for `_TS_RE`/`_PR_RE` matches. That log is written ONLY by the batch
 `merge-drain.py` daemon's own merges. But this repo's real merge protocol has individual sessions
-self-merge their own green PRs directly (`merge-policy.sh` -> `await-pr.sh --merge`), which never
+self-merge their own green PRs through the one-shot exact-head merge-drain path, which never
 touches that log — so the count structurally missed most of the fleet's real throughput. Measured
 2026-08-15: `merge-drain.log` showed `merged=0` on every beat all day while `gh` showed 63 real
 merges. `notify-events.py`'s ship-milestone push (10/25/50/100 in 24h) could never fire from real

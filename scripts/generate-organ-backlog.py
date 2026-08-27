@@ -176,7 +176,7 @@ def _plan(tasks: list[Task], floor_base: int, max_new: int, board: object | None
         info["no_organs"] = True
         return [], info
 
-    # An organ may legitimately span two repositories — BIFRONS carries "organvm/limen (beat) +
+    # An organ may legitimately span two repositories — BIFRONS carries "4444J99/limen (beat) +
     # organvm-engine/alchemia/ontologia (loop)" — and one `repo` field cannot say that, so for
     # those rows the value is prose, not a slug. Every generated task carries a github_pr_contract
     # keyed on an exact owner/repo, so such an organ cannot have one built for it: skip it and SAY
@@ -198,7 +198,7 @@ def _plan(tasks: list[Task], floor_base: int, max_new: int, board: object | None
 
     existing = {t.id for t in tasks}
     lever_keys = {k for k, *_ in (_SCAFFOLD_LEVERS + _BUILDING_LEVERS + _MATURING_LEVERS)}
-    # dedup handle is (pillar, lever) — many organs share one repo (organvm/limen), so scope by pillar.
+    # dedup handle is (pillar, lever) — many organs share one repo (4444J99/limen), so scope by pillar.
     active_pairs = set()
     for t in tasks:
         if t.status in _ACTIVE and t.labels and t.labels[0] in lever_keys:

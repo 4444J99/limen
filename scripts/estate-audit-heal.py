@@ -12,13 +12,14 @@ framework-major-held advisory that `overrides` can't move (root overrides don't 
 resolutions) — and is **deferred to Dependabot** (present on 9/9 estate repos), recorded not fought.
 So the organ can never ship a fix it didn't watch work.
 
-Safety: cross-repo PRs are OPENED, never auto-merged (mass cross-repo merges are a human-gated lever).
-Double-dark: dry-run by default; armed via ``--apply`` AND ``LIMEN_ESTATE_AUDIT_HEAL_APPLY=1``. Per-run
-repo cap (``LIMEN_ESTATE_AUDIT_MAX``, default 5). Fail-open on missing gh/npm/pnpm/offline.
+Safety: target inspection uses an explicit public HTTPS clone plus a credential-free environment;
+package lifecycle scripts never run. Cross-repository writes remain disabled until a separately
+reviewed trusted finalizer consumes a content-hashed intent with an App-only exact-repository token.
+Per-run repo cap (``LIMEN_ESTATE_AUDIT_MAX``, default 5). Fail-open on missing gh/npm/pnpm/offline.
 
   python3 scripts/estate-audit-heal.py --check     # dry-run: per-repo Tier-1/Tier-2 plan, no writes
   python3 scripts/estate-audit-heal.py --json        # machine-readable plan
-  python3 scripts/estate-audit-heal.py --apply       # armed (also needs the env lever): open fix PRs
+  python3 scripts/estate-audit-heal.py --apply       # computes fixes, then fails closed: finalizer absent
 """
 
 from __future__ import annotations
@@ -30,6 +31,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -38,7 +40,7 @@ SCRIPT_DIR = ROOT / "scripts"
 APPLY_ENV = "LIMEN_ESTATE_AUDIT_HEAL_APPLY"
 DEFAULT_CAP = int(os.environ.get("LIMEN_ESTATE_AUDIT_MAX", "5") or "5")
 OWNER = os.environ.get("LIMEN_ESTATE_AUDIT_OWNER", "organvm")
-SELF_REPO = "organvm/limen"  # limen heals itself via the local npm-audit-autofix sensor
+SELF_REPOS = {"4444J99/limen", "organvm/limen"}  # stable identity plus historical redirect
 STAMP = ROOT / "logs" / "estate-audit-heal.json"  # durable verdict so the posture rollup reads it cheaply
 
 
@@ -50,6 +52,7 @@ def _now() -> datetime:
 # Reuse the merged v1 pure core (parse_advisories / patched_pin / derive_override)
 # via the importlib-vendoring pattern (apply-visibility.py:46-53).
 # ---------------------------------------------------------------------------
+
 
 def _load_core():
     # Import the SIBLING v1 organ from this script's own directory (the worktree copy), not
@@ -69,39 +72,88 @@ core = _load_core()
 # gh with the cascade token; fail-open (mirrors sync-marketplace-config.py:72-86)
 # ---------------------------------------------------------------------------
 
-def _gh(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
+
+def _gh(args: list[str], timeout: int = 60, *, repo: str | None = None) -> subprocess.CompletedProcess:
     if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
         return subprocess.CompletedProcess(args, 1, "", "offline")
     env = {**os.environ}
-    try:
-        tok = subprocess.run(
-            ["bash", str(SCRIPT_DIR / "gh-app-token.sh")], capture_output=True, text=True, timeout=45
-        )
-        if tok.returncode == 0 and tok.stdout.strip():
+    if repo is None:
+        env.pop("GH_TOKEN", None)
+        env.pop("GITHUB_TOKEN", None)
+    else:
+        try:
+            tok = subprocess.run(
+                ["bash", str(SCRIPT_DIR / "gh-app-token.sh"), "--repo", repo],
+                capture_output=True,
+                text=True,
+                timeout=45,
+            )
+            if tok.returncode != 0 or not tok.stdout.strip():
+                return subprocess.CompletedProcess(args, 1, "", "exact-repository token unavailable")
             env["GH_TOKEN"] = env["GITHUB_TOKEN"] = tok.stdout.strip()
-    except Exception:
-        pass
+        except Exception as exc:
+            return subprocess.CompletedProcess(args, 1, "", str(exc))
     try:
         return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout, env=env)
     except Exception as e:
         return subprocess.CompletedProcess(args, 1, "", str(e))
 
 
-def _bounded_git(cwd: Path, *args: str, timeout: int = 120) -> subprocess.CompletedProcess:
-    return subprocess.run(["git", "-C", str(cwd), *args], capture_output=True, text=True, timeout=timeout)
+def _secretless_target_env(home: Path) -> dict[str, str]:
+    """Minimal environment for package-manager compute over untrusted target contents."""
+
+    env = {key: os.environ[key] for key in ("PATH", "LANG", "LC_ALL", "TMPDIR") if os.environ.get(key)}
+    env.update(
+        {
+            "HOME": str(home),
+            "CI": "1",
+            "GIT_CONFIG_NOSYSTEM": "1",
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_TERMINAL_PROMPT": "0",
+            "GIT_ASKPASS": "/usr/bin/false",
+            "SSH_ASKPASS": "/usr/bin/false",
+            "NPM_CONFIG_USERCONFIG": os.devnull,
+            "npm_config_userconfig": os.devnull,
+            "NPM_CONFIG_IGNORE_SCRIPTS": "true",
+            "npm_config_ignore_scripts": "true",
+            "PNPM_CONFIG_IGNORE_SCRIPTS": "true",
+        }
+    )
+    return env
+
+
+def _public_clone(repo: str, target: Path, *, env: dict[str, str]) -> subprocess.CompletedProcess:
+    """Clone one public target over HTTPS with every ambient Git credential source disabled."""
+
+    return subprocess.run(
+        [
+            "git",
+            "-c",
+            "credential.helper=",
+            "clone",
+            "--depth=1",
+            f"https://github.com/{repo}.git",
+            str(target),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=180,
+        env=env,
+    )
 
 
 # ---------------------------------------------------------------------------
 # PackageManager strategies — npm and pnpm differ in audit schema + apply mechanism
 # ---------------------------------------------------------------------------
 
+
 class NpmStrategy:
     name = "npm"
     lockfile = "package-lock.json"
 
-    def high_advisories(self, project_dir: Path) -> list[dict] | None:
+    def high_advisories(self, project_dir: Path, *, env: dict[str, str] | None = None) -> list[dict] | None:
         """Return LEAF high/critical advisories, or None on fail-open (npm absent / bad json)."""
-        audit = core.run_audit(project_dir)  # npm audit --json
+        audit = core.run_audit(project_dir, env=env)  # npm audit --json
         if audit is None:
             return None
         return core.parse_advisories(audit)
@@ -109,7 +161,7 @@ class NpmStrategy:
     def derive(self, advisory: dict) -> dict:
         return core.derive_override(advisory)
 
-    def apply(self, project_dir: Path, pins: dict[str, str]) -> None:
+    def apply(self, project_dir: Path, pins: dict[str, str], *, env: dict[str, str] | None = None) -> None:
         """Merge pins into package.json `overrides` (never clobber) + FULL npm install.
 
         The manual sweep proved `npm install --package-lock-only` does NOT propagate overrides across
@@ -122,7 +174,12 @@ class NpmStrategy:
         data["overrides"] = overrides
         pkg.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
         subprocess.run(
-            ["npm", "install"], cwd=str(project_dir), capture_output=True, text=True, timeout=600
+            ["npm", "install", "--ignore-scripts"],
+            cwd=str(project_dir),
+            capture_output=True,
+            text=True,
+            timeout=600,
+            env=env,
         )
 
     def reset_overrides(self, project_dir: Path, overrides: dict) -> None:
@@ -145,13 +202,17 @@ class PnpmStrategy:
     name = "pnpm"
     lockfile = "pnpm-lock.yaml"
 
-    def _audit_json(self, project_dir: Path) -> dict | None:
+    def _audit_json(self, project_dir: Path, *, env: dict[str, str] | None = None) -> dict | None:
         if not shutil.which("pnpm"):
             return None
         try:
             proc = subprocess.run(
-                ["pnpm", "audit", "--json"], cwd=str(project_dir),
-                capture_output=True, text=True, timeout=180,
+                ["pnpm", "audit", "--json"],
+                cwd=str(project_dir),
+                capture_output=True,
+                text=True,
+                timeout=180,
+                env=env,
             )
         except (FileNotFoundError, subprocess.SubprocessError, OSError):
             return None
@@ -163,10 +224,10 @@ class PnpmStrategy:
         except (ValueError, json.JSONDecodeError):
             return None
 
-    def high_advisories(self, project_dir: Path) -> list[dict] | None:
+    def high_advisories(self, project_dir: Path, *, env: dict[str, str] | None = None) -> list[dict] | None:
         """pnpm audit --json uses an `advisories` map keyed by id; each has module_name/severity/
         vulnerable_versions. Normalize to the same shape parse_advisories emits (name/severity/range)."""
-        audit = self._audit_json(project_dir)
+        audit = self._audit_json(project_dir, env=env)
         if audit is None:
             return None
         out: list[dict] = []
@@ -176,13 +237,15 @@ class PnpmStrategy:
             sev = str(adv.get("severity", "")).lower()
             if sev not in core.HIGH_SEVERITIES:
                 continue
-            out.append({
-                "name": adv.get("module_name", ""),
-                "severity": sev,
-                "range": str(adv.get("vulnerable_versions", "")),
-                "fixable": bool(adv.get("patched_versions") and adv.get("patched_versions") != "<0.0.0"),
-                "urls": [adv.get("url")] if adv.get("url") else [],
-            })
+            out.append(
+                {
+                    "name": adv.get("module_name", ""),
+                    "severity": sev,
+                    "range": str(adv.get("vulnerable_versions", "")),
+                    "fixable": bool(adv.get("patched_versions") and adv.get("patched_versions") != "<0.0.0"),
+                    "urls": [adv.get("url")] if adv.get("url") else [],
+                }
+            )
         # de-dup by name (pnpm lists multiple ranges per package)
         seen: dict[str, dict] = {}
         for a in out:
@@ -193,15 +256,8 @@ class PnpmStrategy:
         # Reuse the same within-major pin derivation; pnpm honors range values in pnpm.overrides.
         return core.derive_override(advisory)
 
-    def apply(self, project_dir: Path, pins: dict[str, str]) -> None:
-        """Prefer pnpm's own fixer (writes native pnpm.overrides), then a full install. `pnpm audit
-        --fix` handles pnpm's range-keyed override grammar better than hand-derived keys."""
-        try:
-            subprocess.run(["pnpm", "audit", "--fix"], cwd=str(project_dir),
-                           capture_output=True, text=True, timeout=180)
-        except (FileNotFoundError, subprocess.SubprocessError, OSError):
-            pass
-        # Also merge our derived pins into pnpm.overrides as a fallback for what --fix missed.
+    def apply(self, project_dir: Path, pins: dict[str, str], *, env: dict[str, str] | None = None) -> None:
+        """Apply derived overrides without executing target-owned pnpm hooks."""
         pkg = project_dir / "package.json"
         data = json.loads(pkg.read_text(encoding="utf-8"))
         pnpm_block = dict(data.get("pnpm") or {})
@@ -211,8 +267,20 @@ class PnpmStrategy:
         pnpm_block["overrides"] = overrides
         data["pnpm"] = pnpm_block
         pkg.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-        subprocess.run(["pnpm", "install", "--no-frozen-lockfile"], cwd=str(project_dir),
-                       capture_output=True, text=True, timeout=600)
+        subprocess.run(
+            [
+                "pnpm",
+                "install",
+                "--no-frozen-lockfile",
+                "--ignore-scripts",
+                "--ignore-pnpmfile",
+            ],
+            cwd=str(project_dir),
+            capture_output=True,
+            text=True,
+            timeout=600,
+            env=env,
+        )
 
     def snapshot_overrides(self, project_dir: Path) -> dict:
         try:
@@ -234,17 +302,25 @@ def strategy_for(project_dir: Path) -> NpmStrategy | PnpmStrategy | None:
 # The verify-gated heal — the load-bearing invariant
 # ---------------------------------------------------------------------------
 
-def heal_project(project_dir: Path) -> dict:
+
+def heal_project(project_dir: Path, *, target_env: dict[str, str] | None = None) -> dict:
     """Apply derived fixes, RE-AUDIT, and split into Tier-1 (verified cleared) vs Tier-2 (persists →
     Dependabot). Returns {strategy, tier1: {pkg: pin}, tier2: [pkg], human: [pkg], clean: bool,
     changed: bool}. Mutates project_dir only when there is something to fix (armed callers clone first)."""
     strat = strategy_for(project_dir)
     if strat is None:
         return {"strategy": None, "tier1": {}, "tier2": [], "human": [], "clean": True, "changed": False}
-    before = strat.high_advisories(project_dir)
+    before = strat.high_advisories(project_dir, env=target_env)
     if before is None:
-        return {"strategy": strat.name, "tier1": {}, "tier2": [], "human": [], "clean": True,
-                "changed": False, "note": "audit unavailable (fail-open)"}
+        return {
+            "strategy": strat.name,
+            "tier1": {},
+            "tier2": [],
+            "human": [],
+            "clean": True,
+            "changed": False,
+            "note": "audit unavailable (fail-open)",
+        }
     before_names = {a["name"] for a in before}
     if not before_names:
         return {"strategy": strat.name, "tier1": {}, "tier2": [], "human": [], "clean": True, "changed": False}
@@ -259,12 +335,18 @@ def heal_project(project_dir: Path) -> dict:
             human.append(ov["name"])
 
     if not pins:
-        return {"strategy": strat.name, "tier1": {}, "tier2": sorted(before_names),
-                "human": sorted(human), "clean": False, "changed": False}
+        return {
+            "strategy": strat.name,
+            "tier1": {},
+            "tier2": sorted(before_names),
+            "human": sorted(human),
+            "clean": False,
+            "changed": False,
+        }
 
     original = strat.snapshot_overrides(project_dir)
-    strat.apply(project_dir, pins)
-    after = strat.high_advisories(project_dir) or []
+    strat.apply(project_dir, pins, env=target_env)
+    after = strat.high_advisories(project_dir, env=target_env) or []
     after_names = {a["name"] for a in after}
     cleared = before_names - after_names
     tier1 = {n: pins[n] for n in cleared if n in pins}
@@ -273,12 +355,19 @@ def heal_project(project_dir: Path) -> dict:
     # left intact since it is pnpm-native and self-consistent).
     if isinstance(strat, NpmStrategy):
         strat.reset_overrides(project_dir, {**original, **tier1})
-        subprocess.run(["npm", "install"], cwd=str(project_dir), capture_output=True, text=True, timeout=600)
+        subprocess.run(
+            ["npm", "install", "--ignore-scripts"],
+            cwd=str(project_dir),
+            capture_output=True,
+            text=True,
+            timeout=600,
+            env=target_env,
+        )
 
     return {
         "strategy": strat.name,
         "tier1": tier1,
-        "tier2": sorted(after_names),   # still vulnerable after our fix → defer to Dependabot
+        "tier2": sorted(after_names),  # still vulnerable after our fix → defer to Dependabot
         "human": sorted(human),
         "clean": not after_names,
         "changed": bool(tier1),
@@ -288,6 +377,7 @@ def heal_project(project_dir: Path) -> dict:
 # ---------------------------------------------------------------------------
 # Estate enumeration (derive, don't pin)
 # ---------------------------------------------------------------------------
+
 
 def discover_audit_repos() -> list[str]:
     """Repos in OWNER whose CI runs npm/pnpm audit. Derived via one `gh search code` per manager.
@@ -299,8 +389,21 @@ def discover_audit_repos() -> list[str]:
         found = set()
         for term in ("npm audit", "pnpm audit"):
             # `path:` scopes to workflow files; `--filename` globs are unsupported by gh search.
-            r = _gh(["search", "code", "--owner", OWNER, term, "path:.github/workflows",
-                     "--json", "repository", "--limit", "50"], timeout=90)
+            r = _gh(
+                [
+                    "search",
+                    "code",
+                    "--owner",
+                    OWNER,
+                    term,
+                    "path:.github/workflows",
+                    "--json",
+                    "repository",
+                    "--limit",
+                    "50",
+                ],
+                timeout=90,
+            )
             if r.returncode != 0:
                 continue
             try:
@@ -311,7 +414,7 @@ def discover_audit_repos() -> list[str]:
             except (ValueError, json.JSONDecodeError):
                 continue
     # limen heals itself locally via the npm-audit-autofix sensor; never double-cover it here.
-    found.discard(SELF_REPO)
+    found.difference_update(SELF_REPOS)
     return sorted(found)
 
 
@@ -328,6 +431,7 @@ def _skip_repos(estate: dict) -> set[str]:
 # Per-repo clone + heal + cross-repo PR (armed path). No auto-merge.
 # ---------------------------------------------------------------------------
 
+
 def _worktree_root() -> Path:
     wt = os.environ.get("LIMEN_WORKTREES") or str(Path.home() / "Workspace" / ".limen-worktrees")
     Path(wt).mkdir(parents=True, exist_ok=True)
@@ -337,8 +441,8 @@ def _worktree_root() -> Path:
 def _cleanup_owned_clone(clone_dir: Path, *, owned_by_invocation: bool) -> tuple[bool, str]:
     """Remove only a clone target created by this organ in the current invocation.
 
-    Estate audit clones are disposable execution caches. Detection/no-value runs have no
-    durable local payload, and an armed run becomes disposable once its exact commit is pushed.
+    Estate audit clones are disposable, credential-free compute caches. This module has no
+    mutation finalizer and therefore never retains a branch, commit, or pushed payload.
     Guard the destructive edge by requiring the generated basename, the configured direct
     parent, and a non-symlink target. A missing target is already at the fixed point.
     """
@@ -373,8 +477,7 @@ def _npm_project_dirs(repo_root: Path) -> list[Path]:
 
 
 def heal_repo(repo: str, *, apply: bool) -> dict:
-    """Clone `repo`, heal each project dir (verify-gated), and — when armed and something cleared —
-    open a fix PR (never merge). Returns a report dict."""
+    """Compute verify-cleared fixes without sharing credentials or performing target writes."""
     stamp = _now().strftime("%Y%m%d%H%M%S")
     clone_dir = _worktree_root() / f"estate-audit-{repo.split('/')[-1]}-{stamp}"
     report: dict = {"repo": repo, "tier1": {}, "tier2": [], "human": [], "pr": None, "error": None}
@@ -391,84 +494,47 @@ def heal_repo(repo: str, *, apply: bool) -> dict:
         return report
     owned_by_invocation = True
 
-    dbase = _gh(["api", f"/repos/{repo}", "--jq", ".default_branch"], timeout=20)
-    default = (dbase.stdout or "").strip() or "main"
-    clone = _gh(["repo", "clone", repo, str(clone_dir), "--", "--depth=1"], timeout=180)
-    if clone.returncode != 0:
-        report["error"] = "clone failed"
+    try:
+        with tempfile.TemporaryDirectory(prefix="estate-audit-home-", dir=_worktree_root()) as raw_home:
+            target_env = _secretless_target_env(Path(raw_home))
+            clone = _public_clone(repo, clone_dir, env=target_env)
+            if clone.returncode != 0:
+                report["error"] = "public secretless clone failed"
+                return report
+
+            project_dirs = _npm_project_dirs(clone_dir)
+            aggregate_tier1: dict[str, dict] = {}
+            for pdir in project_dirs:
+                res = heal_project(pdir, target_env=target_env)
+                rel = pdir.relative_to(clone_dir).as_posix() or "."
+                if res.get("changed"):
+                    aggregate_tier1[rel] = res["tier1"]
+                report["tier1"].update({f"{rel}:{k}": v for k, v in res.get("tier1", {}).items()})
+                report["tier2"].extend(f"{rel}:{n}" for n in res.get("tier2", []))
+                report["human"].extend(f"{rel}:{n}" for n in res.get("human", []))
+
+            if not aggregate_tier1:
+                report["note"] = "nothing verify-cleared (all advisories Tier-2/human → Dependabot)"
+                return report
+            if apply:
+                report["error"] = "trusted finalizer unavailable; cross-repository write refused"
+                report["note"] = "compute result has no durable target mutation"
+                return report
+            report["note"] = "DRY-RUN — trusted finalizer required for any branch, push, or PR"
+            return report
+    finally:
         cleaned, detail = _cleanup_owned_clone(clone_dir, owned_by_invocation=owned_by_invocation)
         report["clone_cleanup"] = detail
         if not cleaned:
             report["clone_retained"] = clone_dir.name
-        return report
-
-    # Detection/no-value clones are disposable. Once an armed commit exists locally, retain it
-    # until push establishes remote custody; after push, cleanup is safe even if PR creation fails.
-    cleanup_on_exit = True
-    try:
-        project_dirs = _npm_project_dirs(clone_dir)
-        aggregate_tier1: dict[str, dict] = {}
-        for pdir in project_dirs:
-            res = heal_project(pdir)
-            rel = pdir.relative_to(clone_dir).as_posix() or "."
-            if res.get("changed"):
-                aggregate_tier1[rel] = res["tier1"]
-            report["tier1"].update({f"{rel}:{k}": v for k, v in res.get("tier1", {}).items()})
-            report["tier2"].extend(f"{rel}:{n}" for n in res.get("tier2", []))
-            report["human"].extend(f"{rel}:{n}" for n in res.get("human", []))
-
-        if not aggregate_tier1:
-            report["note"] = "nothing verify-cleared (all advisories Tier-2/human → Dependabot)"
-            return report
-        if not apply:
-            report["note"] = "DRY-RUN — would open a PR with the Tier-1 fixes above"
-            return report
-
-        # armed: branch, commit the changed manifests+lockfiles, push, open PR (NO merge)
-        branch = f"fix/audit-heal-{stamp}"
-        cleanup_on_exit = False
-        _bounded_git(clone_dir, "checkout", "-b", branch)
-        _bounded_git(clone_dir, "add", "-A")
-        msg = ("fix: pin verify-cleared audit advisories via overrides\n\n"
-               "Auto-authored by scripts/estate-audit-heal.py (verify-gated; Tier-1 only).\n\n"
-               "Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>")
-        commit = _bounded_git(clone_dir, "commit", "-m", msg)
-        if commit.returncode != 0:
-            report["error"] = "nothing staged / commit failed"
-            return report
-        push = _bounded_git(clone_dir, "push", "-u", "origin", branch)
-        if push.returncode != 0:
-            report["error"] = "push failed"
-            return report
-        report["remote_branch"] = branch
-        cleanup_on_exit = True
-        tier2_note = ("\n\n**Deferred to Dependabot (Tier-2, override-resistant / framework-major-held):** "
-                      + ", ".join(report["tier2"])) if report["tier2"] else ""
-        body = ("Auto-authored by `scripts/estate-audit-heal.py` — the estate dependency-audit healer.\n\n"
-                "**Verify-gated:** every pin below was applied, then a re-audit confirmed its advisory "
-                "cleared. Fixes that did not clear are NOT included here — they are deferred to Dependabot."
-                f"\n\nTier-1 (verified cleared): {json.dumps(report['tier1'])}" + tier2_note +
-                "\n\nNot auto-merged — this repo's own CI + owner adjudicate.")
-        pr = _gh(["pr", "create", "--repo", repo, "--base", default, "--head", branch,
-                  "--title", "fix: clear verify-gated npm/pnpm audit advisories (overrides)",
-                  "--body", body], timeout=60)
-        report["pr"] = "opened" if pr.returncode == 0 else f"pr-create-failed: {(pr.stderr or '')[:80]}"
-        return report
-    finally:
-        if cleanup_on_exit:
-            cleaned, detail = _cleanup_owned_clone(clone_dir, owned_by_invocation=owned_by_invocation)
-            report["clone_cleanup"] = detail
-            if not cleaned:
-                report["clone_retained"] = clone_dir.name
-                if not report.get("error"):
-                    report["error"] = f"clone cleanup failed:{detail}"
-        else:
-            report["clone_retained"] = clone_dir.name
+            if not report.get("error"):
+                report["error"] = f"clone cleanup failed:{detail}"
 
 
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def _write_stamp(reports: list[dict]) -> None:
     """Persist a compact verdict so `estate-audit-posture.py` reads estate state cheaply, without
@@ -476,9 +542,14 @@ def _write_stamp(reports: list[dict]) -> None:
     payload = {
         "generated": _now().isoformat(),
         "repos": [
-            {"repo": r.get("repo"), "tier1": len(r.get("tier1") or {}),
-             "tier2": len(r.get("tier2") or []), "human": len(r.get("human") or []),
-             "error": r.get("error"), "pr": r.get("pr")}
+            {
+                "repo": r.get("repo"),
+                "tier1": len(r.get("tier1") or {}),
+                "tier2": len(r.get("tier2") or []),
+                "human": len(r.get("human") or []),
+                "error": r.get("error"),
+                "pr": r.get("pr"),
+            }
             for r in reports
         ],
     }
@@ -528,6 +599,7 @@ def run(*, apply: bool, as_json: bool) -> int:
 def core_load_estate() -> dict:
     try:
         import yaml  # PyYAML is a repo dep
+
         p = ROOT / "institutio" / "github" / "estate.yaml"
         return yaml.safe_load(p.read_text(encoding="utf-8")) or {}
     except Exception:

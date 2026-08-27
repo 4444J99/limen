@@ -116,7 +116,7 @@ def enumerate_merged_prs_result(owners, gh_fn, since_iso, max_total=1000, want_u
     """Return every PR merged since ``since_iso`` (ISO8601) across ``owners``, plus explicit
     transport/parse/completeness truth — the merged-PR sibling of ``enumerate_open_prs_result``.
 
-    Exists because self-merges (``merge-policy.sh`` + ``await-pr.sh --merge``) never write to
+    Exists because one-shot exact-head merge submissions never write to
     ``logs/merge-drain.log`` — only the batch ``merge-drain.py`` daemon's own merges land there —
     so a "PRs merged in the last 24h" count that greps that log sees only a fraction of real
     throughput. This queries GitHub directly instead, the same way the open-PR census does.

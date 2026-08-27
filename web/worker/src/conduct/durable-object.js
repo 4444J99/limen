@@ -203,6 +203,10 @@ export class ConductKeeperDurableObject {
       requireRole(principal, "observer");
       return json(await this.service.call("capabilities"), 200, this.env);
     }
+    if (path === "/api/conduct/notifications/assignments" && request.method === "GET") {
+      requireRole(principal, "observer", "conductor");
+      return json(await this.service.call("list_notification_assignments", { principal }), 200, this.env);
+    }
     if (path === "/api/conduct/sessions" && request.method === "POST") {
       requireRole(principal, "conductor", "executor");
       const body = await parseBody(request);
@@ -300,12 +304,21 @@ export class ConductKeeperDurableObject {
         run_id: decodeIdentifier(match[1], "root_run_id"),
       }), 200, this.env);
     }
-    match = path.match(/^\/api\/conduct\/runs\/([^/]+)\/(adopt|cancel|request-stop)$/);
+    match = path.match(/^\/api\/conduct\/runs\/([^/]+)\/adopt$/);
     if (match && request.method === "POST") {
-      requireRole(principal, "conductor");
+      requireRole(principal, "conductor", "executor");
+      const body = await parseBody(request);
+      return json(await this.service.call("adopt", {
+        run_id: decodeIdentifier(match[1], "run_id"),
+        session_id: bodyIdentifier(body, "session_id"),
+        principal,
+      }), 200, this.env);
+    }
+    match = path.match(/^\/api\/conduct\/runs\/([^/]+)\/(cancel|request-stop)$/);
+    if (match && request.method === "POST") {
+      requireRole(principal, "conductor", "executor");
       const body = await parseBody(request);
       const operation = {
-        adopt: "adopt",
         cancel: "cancel",
         "request-stop": "request_stop",
       }[match[2]];

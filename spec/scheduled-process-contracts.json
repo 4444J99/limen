@@ -34,7 +34,17 @@
         "wall_seconds_per_tick": 120
       },
       "mode": "read_only_one_shot",
-      "owner": "organvm/limen#2528",
+      "owner": "4444J99/limen#2528",
+      "allowed_effects": ["notification_event_v1"],
+      "max_notification_events_per_fire": 1,
+      "runtime_artifacts": [
+        "cli/src/limen/heartbeat.py",
+        "cli/src/limen/bounded_subprocess.py",
+        "cli/src/limen/host_admission.py",
+        "cli/src/limen/notification_effect.py",
+        "cli/src/limen/cli.py",
+        "scripts/check-beat-freshness.py"
+      ],
       "probes": [
         {
           "cadence_seconds": 1800,

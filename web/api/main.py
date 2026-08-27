@@ -643,7 +643,7 @@ def conduct_request(method: str, path: str, payload: dict[str, Any]) -> dict[str
 
 def board_owner() -> str:
     candidate = GITHUB_REPO.strip()
-    return candidate if REPO_RE.fullmatch(candidate) and "/" in candidate else "organvm/limen"
+    return candidate if REPO_RE.fullmatch(candidate) and "/" in candidate else "4444J99/limen"
 
 
 def conduct_identity() -> dict[str, Any]:

@@ -1741,7 +1741,7 @@ sensors:
     # reads only the latest successful workflow_dispatch receipt and fails closed when it is absent,
     # stale, or cannot be queried. Read-only; advisory; onset-deduped.
     steps:
-      - command: 'python3 scripts/cloud-maintenance-freshness.py --repo organvm/limen --max-age-seconds 21600'
+      - command: 'python3 scripts/cloud-maintenance-freshness.py --repo 4444J99/limen --max-age-seconds 21600'
         severity: advisory
         escalation: "No fresh successful cloud-maintenance receipt exists — dispatch `.github/workflows/cloud-maintenance.yml` at the exact current main SHA and inspect its counts-only receipt"
 

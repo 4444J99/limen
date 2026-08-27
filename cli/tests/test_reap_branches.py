@@ -331,6 +331,7 @@ def test_github_open_head_snapshot_keeps_exact_oid(monkeypatch):
     monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
     payload = [
         {
+            "number": 7,
             "headRefName": "same-name",
             "headRefOid": "a" * 40,
             "state": "OPEN",
@@ -486,11 +487,29 @@ def test_gather_facts_matches_a_closed_pr_by_sha_not_by_name(repo):
         check=True,
     ).stdout.strip()
 
-    exact = reap.gather_facts("livework", "main", set(), {}, {}, "main", {"livework": {tip}})
+    exact = reap.gather_facts(
+        "livework",
+        "main",
+        set(),
+        {},
+        {},
+        "main",
+        {"livework": (reap.ClosedPullRef(number=17, head_oid=tip),)},
+    )
     assert exact.pr_closed_safe is True
+    assert exact.pr_closed_number == 17
+    assert exact.pr_closed_head_oid == tip
     assert reap.classify(exact).reason == "decided-pr-closed"
 
-    other = reap.gather_facts("livework", "main", set(), {}, {}, "main", {"livework": {"b" * 40}})
+    other = reap.gather_facts(
+        "livework",
+        "main",
+        set(),
+        {},
+        {},
+        "main",
+        {"livework": (reap.ClosedPullRef(number=18, head_oid="b" * 40),)},
+    )
     assert other.pr_closed_safe is False
     assert other.pr_closed_raw is True
     assert reap.classify(other).reason == "pr-closed-but-advanced"
@@ -511,9 +530,9 @@ def test_gh_head_states_keeps_every_closed_head_oid_for_a_reused_name(monkeypatc
     monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
     monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
     payload = [
-        {"headRefName": "reused", "headRefOid": "a" * 40, "state": "CLOSED", "mergedAt": None},
-        {"headRefName": "reused", "headRefOid": "b" * 40, "state": "CLOSED", "mergedAt": None},
-        {"headRefName": "no-oid", "headRefOid": "", "state": "CLOSED", "mergedAt": None},
+        {"number": 10, "headRefName": "reused", "headRefOid": "a" * 40, "state": "CLOSED", "mergedAt": None},
+        {"number": 11, "headRefName": "reused", "headRefOid": "b" * 40, "state": "CLOSED", "mergedAt": None},
+        {"number": 12, "headRefName": "no-oid", "headRefOid": "", "state": "CLOSED", "mergedAt": None},
     ]
     monkeypatch.setattr(
         reap.subprocess,
@@ -523,7 +542,12 @@ def test_gh_head_states_keeps_every_closed_head_oid_for_a_reused_name(monkeypatc
 
     _merged, _open, closed, online = reap.gh_head_states()
 
-    assert closed == {"reused": {"a" * 40, "b" * 40}}
+    assert closed == {
+        "reused": (
+            reap.ClosedPullRef(number=10, head_oid="a" * 40),
+            reap.ClosedPullRef(number=11, head_oid="b" * 40),
+        )
+    }
     assert "no-oid" not in closed  # an empty OID would match an unreadable tip — never recorded
     assert online is True
 
@@ -535,8 +559,8 @@ def test_gh_head_states_warns_when_the_pr_window_truncates(monkeypatch, capsys):
     monkeypatch.setenv("LIMEN_BRANCH_REAP_PR_LIMIT", "2")
     monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
     payload = [
-        {"headRefName": "a", "headRefOid": "a" * 40, "state": "CLOSED", "mergedAt": None},
-        {"headRefName": "b", "headRefOid": "b" * 40, "state": "CLOSED", "mergedAt": None},
+        {"number": 1, "headRefName": "a", "headRefOid": "a" * 40, "state": "CLOSED", "mergedAt": None},
+        {"number": 2, "headRefName": "b", "headRefOid": "b" * 40, "state": "CLOSED", "mergedAt": None},
     ]
     monkeypatch.setattr(
         reap.subprocess,
@@ -554,7 +578,7 @@ def test_gh_head_states_is_quiet_below_the_ceiling(monkeypatch, capsys):
     monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
     monkeypatch.setenv("LIMEN_BRANCH_REAP_PR_LIMIT", "50")
     monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
-    payload = [{"headRefName": "a", "headRefOid": "a" * 40, "state": "CLOSED", "mergedAt": None}]
+    payload = [{"number": 1, "headRefName": "a", "headRefOid": "a" * 40, "state": "CLOSED", "mergedAt": None}]
     monkeypatch.setattr(
         reap.subprocess,
         "run",
@@ -573,10 +597,17 @@ def test_ledger_files_decided_separately_from_unfulfilled_intentions(tmp_path, m
     monkeypatch.setattr(reap, "LEDGER", ledger)
     monkeypatch.setattr(reap, "_branch_tip_desc", lambda b: f"deadbee {b} subject")
 
-    reap.write_ledger(["still-open"], ["adv"], 0, ["closed-adv"], ["rejected"])
+    reap.write_ledger(
+        ["still-open"],
+        ["adv"],
+        0,
+        ["closed-adv"],
+        [reap.DecidedBranch(branch="rejected", pull_number=99, pull_head_oid="a" * 40)],
+    )
     text = ledger.read_text()
 
     assert "## Decided — closed PR, work preserved (1)" in text
     assert "refs/pull/N/head" in text
+    assert "PR #99 `refs/pull/99/head` @ `" + "a" * 40 + "`" in text
     assert "## Closed-but-advanced (1)" in text
     assert "`rejected`" in text and "`closed-adv`" in text and "`still-open`" in text

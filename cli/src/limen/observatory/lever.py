@@ -55,7 +55,7 @@ def to_task(experiment: dict, hero: str | None) -> dict:
     from limen.intake import contract_fields, github_pr_contract
 
     task_id = experiment.get("task_id", "OBS-EXP")
-    repo = hero or "organvm/limen"
+    repo = hero or "4444J99/limen"
     return {
         "id": task_id,
         "title": f"Prepare OBSERVATORY experiment: {experiment.get('change', '')}",

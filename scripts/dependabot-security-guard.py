@@ -31,23 +31,41 @@ SCRIPT_DIR = os.path.join(ROOT, "scripts")
 APPLY_ENV = "LIMEN_DEPENDABOT_GUARD_APPLY"
 DEFAULT_CAP = int(os.environ.get("LIMEN_DEPENDABOT_GUARD_MAX", "10") or "10")
 OWNER = os.environ.get("LIMEN_DEPENDABOT_GUARD_OWNER", "organvm")
-SELF_REPO = "organvm/limen"  # limen uses Renovate, not Dependabot — out of scope
+SELF_REPOS = {"4444J99/limen", "organvm/limen"}  # stable identity plus historical redirect
 
 
-def _gh(args: list[str], timeout: int = 60) -> subprocess.CompletedProcess:
-    """gh with the cascade token; fail-open (mirrors sync-marketplace-config.py:72-86)."""
+def _gh(
+    args: list[str],
+    timeout: int = 60,
+    *,
+    repo: str | None = None,
+    app_only: bool = False,
+) -> subprocess.CompletedProcess:
+    """Run gh with exact-repository auth; mutation calls require an App-only token."""
+    if app_only and repo is None:
+        return subprocess.CompletedProcess(args, 1, "", "App-only GitHub call requires exact repository")
     if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
         return subprocess.CompletedProcess(args, 1, "", "offline")
     env = {**os.environ}
-    try:
-        tok = subprocess.run(
-            ["bash", os.path.join(SCRIPT_DIR, "gh-app-token.sh")],
-            capture_output=True, text=True, timeout=45,
-        )
-        if tok.returncode == 0 and tok.stdout.strip():
+    if repo is None:
+        env.pop("GH_TOKEN", None)
+        env.pop("GITHUB_TOKEN", None)
+    else:
+        try:
+            token_command = ["bash", os.path.join(SCRIPT_DIR, "gh-app-token.sh"), "--repo", repo]
+            if app_only:
+                token_command.append("--app-only")
+            tok = subprocess.run(
+                token_command,
+                capture_output=True,
+                text=True,
+                timeout=45,
+            )
+            if tok.returncode != 0 or not tok.stdout.strip():
+                return subprocess.CompletedProcess(args, 1, "", "exact-repository token unavailable")
             env["GH_TOKEN"] = env["GITHUB_TOKEN"] = tok.stdout.strip()
-    except Exception:
-        pass
+        except Exception as exc:
+            return subprocess.CompletedProcess(args, 1, "", str(exc))
     try:
         return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout, env=env)
     except Exception as e:
@@ -63,8 +81,21 @@ def discover_repos() -> list[str]:
     else:
         found = set()
         for term in ("npm audit", "pnpm audit"):
-            r = _gh(["search", "code", "--owner", OWNER, term, "path:.github/workflows",
-                     "--json", "repository", "--limit", "50"], timeout=90)
+            r = _gh(
+                [
+                    "search",
+                    "code",
+                    "--owner",
+                    OWNER,
+                    term,
+                    "path:.github/workflows",
+                    "--json",
+                    "repository",
+                    "--limit",
+                    "50",
+                ],
+                timeout=90,
+            )
             if r.returncode != 0:
                 continue
             try:
@@ -74,7 +105,7 @@ def discover_repos() -> list[str]:
                         found.add(full)
             except (ValueError, json.JSONDecodeError):
                 continue
-    found.discard(SELF_REPO)
+    found.difference_update(SELF_REPOS)
     return sorted(found)
 
 
@@ -82,14 +113,17 @@ def observe(repo: str) -> dict:
     """Read the two Dependabot security postures for `repo` (read-only). Values: 'on'|'off'|'unknown'
     (unknown ⟺ the API call failed → fail-open, treated as not-drifted so we never thrash on a blip)."""
     sec = "unknown"
-    r = _gh(["api", f"/repos/{repo}", "--jq", ".security_and_analysis.dependabot_security_updates.status"],
-            timeout=30)
+    r = _gh(
+        ["api", f"/repos/{repo}", "--jq", ".security_and_analysis.dependabot_security_updates.status"],
+        timeout=30,
+        repo=repo,
+    )
     if r.returncode == 0:
         val = (r.stdout or "").strip()
         sec = "on" if val == "enabled" else ("off" if val == "disabled" else "unknown")
     # vulnerability-alerts: 204 (on) → returncode 0 ; 404 (off) → non-zero with Not Found
     alerts = "unknown"
-    a = _gh(["api", f"/repos/{repo}/vulnerability-alerts"], timeout=30)
+    a = _gh(["api", f"/repos/{repo}/vulnerability-alerts"], timeout=30, repo=repo)
     if a.returncode == 0:
         alerts = "on"
     elif "404" in (a.stderr or "") or "Not Found" in (a.stderr or ""):
@@ -108,11 +142,23 @@ def enable(repo: str) -> dict:
     --enable-automated-security-fixes flag (only --enable-advanced-security); the documented path
     is `PUT /repos/{repo}/automated-security-fixes`. Verified empirically 2026-07-22 (full
     DELETE→disabled / PUT→enabled round-trip on a live repo)."""
-    fixes = _gh(["api", "-X", "PUT", f"/repos/{repo}/automated-security-fixes"], timeout=45)
-    alerts = _gh(["api", "-X", "PUT", f"/repos/{repo}/vulnerability-alerts"], timeout=30)
-    return {"repo": repo,
-            "security_fixes": "enabled" if fixes.returncode == 0 else f"FAILED:{(fixes.stderr or '')[:60]}",
-            "alerts": "enabled" if alerts.returncode == 0 else f"FAILED:{(alerts.stderr or '')[:60]}"}
+    fixes = _gh(
+        ["api", "-X", "PUT", f"/repos/{repo}/automated-security-fixes"],
+        timeout=45,
+        repo=repo,
+        app_only=True,
+    )
+    alerts = _gh(
+        ["api", "-X", "PUT", f"/repos/{repo}/vulnerability-alerts"],
+        timeout=30,
+        repo=repo,
+        app_only=True,
+    )
+    return {
+        "repo": repo,
+        "security_fixes": "enabled" if fixes.returncode == 0 else f"FAILED:{(fixes.stderr or '')[:60]}",
+        "alerts": "enabled" if alerts.returncode == 0 else f"FAILED:{(alerts.stderr or '')[:60]}",
+    }
 
 
 def run(*, apply: bool, as_json: bool) -> int:
@@ -130,15 +176,21 @@ def run(*, apply: bool, as_json: bool) -> int:
             actions.append(enable(s["repo"]))
 
     if as_json:
-        print(json.dumps({"armed": armed, "states": states, "drifted": [s["repo"] for s in drifted],
-                          "actions": actions}, indent=2))
+        print(
+            json.dumps(
+                {"armed": armed, "states": states, "drifted": [s["repo"] for s in drifted], "actions": actions},
+                indent=2,
+            )
+        )
     else:
         for s in states:
             flag = "  DRIFT →" if is_drifted(s) else ""
             print(f"  {s['repo']}: alerts={s['alerts']} security-updates={s['security_updates']}{flag}")
         if drifted and not armed:
-            print(f"dependabot-security-guard: {len(drifted)} repo(s) with Dependabot security posture OFF "
-                  f"— DARK; set {APPLY_ENV}=1 to re-enable")
+            print(
+                f"dependabot-security-guard: {len(drifted)} repo(s) with Dependabot security posture OFF "
+                f"— DARK; set {APPLY_ENV}=1 to re-enable"
+            )
         for a in actions:
             print(f"  re-enabled {a['repo']}: security_fixes={a['security_fixes']} alerts={a['alerts']}")
 

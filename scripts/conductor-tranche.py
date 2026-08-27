@@ -15,6 +15,7 @@ evidence, skips parked/family/human-gate/auth-only lanes, and writes a public-sa
 It never claims tasks, dispatches agents, mutates GitHub, or reads raw prompt
 text.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -28,9 +29,7 @@ from typing import Any
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 HOME = Path.home()
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 ATTACK_INDEX = PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
 DOC_PATH = ROOT / "docs" / "conductor-tranche.md"
 PRIVATE_INDEX = PRIVATE_ROOT / "lifecycle" / "conductor-tranche.json"
@@ -133,8 +132,7 @@ def worktree_lifecycle_packet(path: dict[str, Any]) -> dict[str, Any]:
             "preservation proof, owner blockers, remote/default proof, or documented non-source residue."
         ),
         "repo_worktree": (
-            "`organvm/limen` conductor checkout plus read-only inspection of "
-            "`~/Workspace/.limen-worktrees`."
+            "`4444J99/limen` conductor checkout plus read-only inspection of `~/Workspace/.limen-worktrees`."
         ),
         "allowed_files": [
             "cli/src/limen/worktree_debt.py",
@@ -170,8 +168,7 @@ def local_lean_packet(path: dict[str, Any]) -> dict[str, Any]:
             "receipts, preservation proof, or explicit human-gated reclaim packets."
         ),
         "repo_worktree": (
-            "`organvm/limen` conductor checkout plus read-only inspection of "
-            "`~/Workspace/.limen-worktrees`."
+            "`4444J99/limen` conductor checkout plus read-only inspection of `~/Workspace/.limen-worktrees`."
         ),
         "allowed_files": [
             "scripts/*lifecycle*.py",
@@ -207,7 +204,7 @@ def dispatch_packet(path: dict[str, Any]) -> dict[str, Any]:
             "Repair dispatch/remote proof drift so the queue can distinguish healthy async work, "
             "stranded claims, merged PRs, and real blockers."
         ),
-        "repo_worktree": "`organvm/limen` conductor checkout only.",
+        "repo_worktree": "`4444J99/limen` conductor checkout only.",
         "allowed_files": [
             "scripts/dispatch*.py",
             "scripts/verify-dispatch.py",
@@ -236,7 +233,7 @@ def local_network_packet(path: dict[str, Any]) -> dict[str, Any]:
             "agents do not treat route drops, legacy LaunchAgents, or auth-looking network failures "
             "as single-lane flakiness."
         ),
-        "repo_worktree": "`organvm/limen` conductor checkout plus read-only probes of the live netmode install.",
+        "repo_worktree": "`4444J99/limen` conductor checkout plus read-only probes of the live netmode install.",
         "allowed_files": [
             "scripts/network-health.py",
             "scripts/netmode.sh",
@@ -281,7 +278,7 @@ def capability_substrate_packet(path: dict[str, Any]) -> dict[str, Any]:
             "Refresh the local agent capability substrate as a public-safe receipt so skill/plugin/MCP "
             "surface area is counted and routed before any lane tries to install, port, or activate tools."
         ),
-        "repo_worktree": "`organvm/limen` conductor checkout plus read-only path scans of configured capability roots.",
+        "repo_worktree": "`4444J99/limen` conductor checkout plus read-only path scans of configured capability roots.",
         "allowed_files": [
             "scripts/capability-substrate-ledger.py",
             "scripts/session-blockers-ledger.py",
@@ -379,7 +376,7 @@ def owner_state_packet(path: dict[str, Any]) -> dict[str, Any]:
             f"Preserve `{path_id}` as a scoped owner-state packet for `{owner_name}` "
             "without rewriting corpus content or broadening into creative placement work."
         ),
-        "repo_worktree": f"`{owner_name}` owner repo at `{owner_scope}` plus `organvm/limen` conductor receipts.",
+        "repo_worktree": f"`{owner_name}` owner repo at `{owner_scope}` plus `4444J99/limen` conductor receipts.",
         "allowed_files": [
             *owner_allowed,
             "docs/session-corpus-ledger.md",
@@ -425,7 +422,7 @@ def consolidation_packet(path: dict[str, Any]) -> dict[str, Any]:
             "Advance the GitHub/org consolidation enforcement path by refreshing dry-run gates, "
             "surfacing collisions, and packetizing the exact human-gated rename/transfer/rewrite sequence."
         ),
-        "repo_worktree": "`organvm/limen` conductor checkout only; GitHub/org state is read-only.",
+        "repo_worktree": "`4444J99/limen` conductor checkout only; GitHub/org state is read-only.",
         "allowed_files": [
             "scripts/consolidation-gates.py",
             "scripts/consolidate-github.py",
@@ -456,7 +453,7 @@ def consolidation_packet(path: dict[str, Any]) -> dict[str, Any]:
             "python3 scripts/conductor-tranche.py --write",
             "PYTHONPATH=cli/src python3 scripts/consolidate-github.py",
             "PYTHONPATH=cli/src python3 scripts/rewrite-owners.py",
-            "bash scripts/gh-app-token.sh --which",
+            "bash scripts/gh-app-token.sh --repo 4444J99/limen --which",
         ],
         "receipt": (
             "docs/consolidation/GATES.md plus docs/conductor-tranche.md; private parsed gate receipt "
@@ -471,7 +468,7 @@ def github_app_identity_packet(path: dict[str, Any]) -> dict[str, Any]:
             "Clearly block limen[bot] until the GitHub App exists, is installed on `organvm`, "
             "and local/CI credentials are hydrated without exposing secret values."
         ),
-        "repo_worktree": "`organvm/limen` conductor checkout only; GitHub App state is read-only.",
+        "repo_worktree": "`4444J99/limen` conductor checkout only; GitHub App state is read-only.",
         "allowed_files": [
             "scripts/consolidation-gates.py",
             "scripts/gh-app-token.sh",
@@ -489,7 +486,7 @@ def github_app_identity_packet(path: dict[str, Any]) -> dict[str, Any]:
         ),
         "verification": [
             "python3 scripts/consolidation-gates.py --write",
-            "bash scripts/gh-app-token.sh --which",
+            "bash scripts/gh-app-token.sh --repo 4444J99/limen --which",
             "python3 scripts/session-blockers-ledger.py --write",
             "python3 scripts/session-attack-paths.py --write",
             "python3 scripts/conductor-tranche.py --write",
@@ -502,7 +499,7 @@ def default_packet(path: dict[str, Any]) -> dict[str, Any]:
     path_id = str(path.get("id") or "selected-path")
     return {
         "purpose": f"Turn `{path_id}` into an owner-recorded packet or resolve the blocker locally.",
-        "repo_worktree": "`organvm/limen` conductor checkout unless a narrower owner packet says otherwise.",
+        "repo_worktree": "`4444J99/limen` conductor checkout unless a narrower owner packet says otherwise.",
         "allowed_files": [
             "docs/session-attack-paths.md",
             "docs/session-lifecycle-blockers.md",
@@ -531,7 +528,7 @@ def packet_for_path(path: dict[str, Any] | None) -> dict[str, Any]:
                 "family, human-gated, observe, auth-only, already-preserved PR, owner-blocked, "
                 "active, and live-checkout paths."
             ),
-            "repo_worktree": "`organvm/limen` conductor checkout.",
+            "repo_worktree": "`4444J99/limen` conductor checkout.",
             "allowed_files": [
                 "scripts/live-root-gate.py",
                 "docs/session-attack-paths.md",
@@ -582,8 +579,7 @@ def build_snapshot() -> dict[str, Any]:
     selected = select_path(ranked)
     packet = packet_for_path(selected)
     selected_id = str(
-        (selected or {}).get("id")
-        or ("no-autonomous-actionable-path" if ranked else "missing-ranked-path")
+        (selected or {}).get("id") or ("no-autonomous-actionable-path" if ranked else "missing-ranked-path")
     )
     skipped = [path.get("id") for path in ranked if path is not selected and not is_actionable(path)]
     return {
@@ -638,10 +634,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
         f"Generated: `{snapshot['generated_at']}`",
         "",
-        (
-            f"Summary: `{packet['id']}` -> `{selected_id}` (`{lane}`); "
-            f"stop before: {packet['stop_condition']}"
-        ),
+        (f"Summary: `{packet['id']}` -> `{selected_id}` (`{lane}`); stop before: {packet['stop_condition']}"),
         "",
         "## Cadence Contract",
         "",

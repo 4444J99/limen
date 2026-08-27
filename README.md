@@ -1,6 +1,6 @@
 # Limen
 
-[![CI](https://github.com/organvm/limen/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/organvm/limen/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/4444J99/limen/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/4444J99/limen/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 
 Limen is a cross-agent, cross-repo, budget-capped task intake system. Every AI agent reads a single `tasks.yaml` to discover work. TABVLARIVS is the deterministic state authority and lease keeper. The CLI + SaaS dashboard provide unified visibility, budget management, and lifecycle control across your entire agent fleet.
 
@@ -38,9 +38,9 @@ portable contract.
 
 ### Verification
 
-- [Required PR gate](https://github.com/organvm/limen/actions/workflows/pr-gate.yml) runs the
+- [Required PR gate](https://github.com/4444J99/limen/actions/workflows/pr-gate.yml) runs the
   repository's governed checks on every proposed change; the broader
-  [path-scoped CI workflow](https://github.com/organvm/limen/actions/workflows/ci.yml) runs when its
+  [path-scoped CI workflow](https://github.com/4444J99/limen/actions/workflows/ci.yml) runs when its
   declared paths are implicated.
 - The [successful exact-head PR Gate run](https://github.com/organvm/limen/actions/runs/31820844953)
   is bound to `b39e40774a3a1a8b34565b4312cfecf3b437b006` and was observed on 2026-08-14.
@@ -48,7 +48,7 @@ portable contract.
   a push; [`scripts/verify-whole.sh`](scripts/verify-whole.sh) is the whole-repository predicate.
 - The [public status endpoint](https://limen-dashboard.pages.dev/public-status.json) is the
   reproducible public operating anchor; its values are dated snapshots, not reliability rates.
-- [Release history](https://github.com/organvm/limen/releases) is the repository-owned record of
+- [Release history](https://github.com/4444J99/limen/releases) is the repository-owned record of
   published versions; this page does not infer a release from unreleased source.
 
 ### Status and authorship disclosure
@@ -91,7 +91,7 @@ the relevant predicate.
 
 ```bash
 #One-liner (clones repo, installs CLI to venv, sets up PATH)
-curl -fsSL https://raw.githubusercontent.com/organvm/limen/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/4444J99/limen/main/install.sh | bash
 source ~/.zshenv
 ```
 
@@ -349,7 +349,7 @@ nothing here is paywalled.
 - [Quickstart](QUICKSTART.md)
 - [Schema](SCHEMA.md)
 - [Agent Protocol](AGENTS.md)
-- [GitHub](https://github.com/organvm/limen)
+- [GitHub](https://github.com/4444J99/limen)
 
 ## Contact
 

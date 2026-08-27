@@ -5,6 +5,7 @@ The source session is private. This script reads the full JSONL session, derives
 hash-only evidence across every turn, and emits public-safe owner packets with
 executor criteria and verification predicates.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,9 +20,7 @@ from typing import Any
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 HOME = Path.home()
-PRIVATE_ROOT = Path(
-    os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus")
-)
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_SESSION_CORPUS", ROOT / ".limen-private" / "session-corpus"))
 DOC_DIR = ROOT / "docs" / "current-session-fanout"
 PRIVATE_DIR = PRIVATE_ROOT / "lifecycle" / "current-session-fanout"
 
@@ -422,7 +421,7 @@ def private_sauce_owner_packets(
             "id": f"{packet_id}-private-material-boundary",
             "theme": theme,
             "owner": "session corpus and prompt lifecycle ledgers",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "target_agent": "codex",
             "status": "ready-for-executor",
             "dispatch_gate": "raw session material stays in the ignored private corpus; tracked receipts carry hashes, counts, and public-safe summaries",
@@ -448,7 +447,7 @@ def private_sauce_owner_packets(
             "id": f"{packet_id}-public-redaction-contract",
             "theme": theme,
             "owner": "public acceptance, task logs, commits, PRs, and outbound receipts",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "target_agent": "codex",
             "status": "ready-for-executor",
             "dispatch_gate": "public or identity-bearing surfaces must be generated from redacted packet facts only",
@@ -472,7 +471,7 @@ def private_sauce_owner_packets(
             "id": f"{packet_id}-outward-stage-gate",
             "theme": theme,
             "owner": "contrib, positioning, and public proof surfaces",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "target_agent": "codex",
             "status": "human-gated-for-outbound",
             "dispatch_gate": "stage outward proof locally; do not publish, send, deploy, comment, flip visibility, or mutate identity surfaces without a fresh human gate",
@@ -496,7 +495,7 @@ def private_sauce_owner_packets(
             "id": f"{packet_id}-blocked-local-continuity",
             "theme": "global-product-selection",
             "owner": "local substrate, his-hand registry, and product selector",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "target_agent": "codex",
             "status": "blocked-local-recorded",
             "dispatch_gate": "record local/private/outbound blockers once, then keep global product selection active",
@@ -522,7 +521,7 @@ def private_sauce_owner_packets(
             ],
             "verification_predicates": [
                 "test -f docs/NEEDS-HUMAN-DIGEST.md",
-                "LIMEN_DISCOVER_REPOS=organvm/limen python3 scripts/discover-value.py --tasks tasks.yaml --floor 1 --max-new 1",
+                "LIMEN_DISCOVER_REPOS=4444J99/limen python3 scripts/discover-value.py --tasks tasks.yaml --floor 1 --max-new 1",
                 "python3 scripts/score-dispatch.py --print --limit 1",
             ],
         },
@@ -564,7 +563,7 @@ def owner_packets(
             "id": f"{packet_id}-quota-reset-guard",
             "theme": theme,
             "owner": "limen usage and dispatch",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "target_agent": "codex",
             "status": "ready-for-executor",
             "dispatch_gate": "execute only inside a Limen checkout; no paid reset, top-up, or outward dispatch",
@@ -590,7 +589,7 @@ def owner_packets(
             "id": f"{packet_id}-blocked-local-work",
             "theme": "blocked-local-work",
             "owner": "local substrate and his-hand registry",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "target_agent": "codex",
             "status": "blocked-local-recorded",
             "dispatch_gate": "record local blocker once, then keep unrelated global product-selection packets eligible",
@@ -622,7 +621,7 @@ def owner_packets(
             "id": f"{packet_id}-global-product-selection",
             "theme": "global-product-selection",
             "owner": "value discovery and product selection",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "target_agent": "codex",
             "status": "ready-for-executor",
             "dispatch_gate": "not blocked by local machine or credential residue unless the selected product itself needs that gate",
@@ -646,7 +645,7 @@ def owner_packets(
                 "A blocked product can be recorded without making the whole product ledger blocked.",
             ],
             "verification_predicates": [
-                "LIMEN_DISCOVER_REPOS=organvm/limen python3 scripts/discover-value.py --tasks tasks.yaml --floor 1 --max-new 1",
+                "LIMEN_DISCOVER_REPOS=4444J99/limen python3 scripts/discover-value.py --tasks tasks.yaml --floor 1 --max-new 1",
                 "python3 scripts/score-dispatch.py --print --limit 1",
             ],
         },
@@ -667,8 +666,7 @@ def coverage_from_packets(session_summary: dict[str, Any], packets: list[dict[st
         "packets_with_verification_predicates": sum(1 for packet in packets if packet.get("verification_predicates")),
         "blocked_local_packets": sum(1 for packet in packets if packet.get("status") == "blocked-local-recorded"),
         "global_product_selection_unblocked": any(
-            packet.get("theme") == "global-product-selection"
-            and packet.get("depends_on_blocked_local_work") is False
+            packet.get("theme") == "global-product-selection" and packet.get("depends_on_blocked_local_work") is False
             for packet in packets
         ),
     }
@@ -778,7 +776,9 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "## Source Provenance",
         "",
         render_hash_refs("Source plan hashes", packet_source.get("plan_hashes") or [], boundary_mode=boundary_mode),
-        render_hash_refs("Source prompt hash refs", packet_source.get("prompt_hashes") or [], boundary_mode=boundary_mode),
+        render_hash_refs(
+            "Source prompt hash refs", packet_source.get("prompt_hashes") or [], boundary_mode=boundary_mode
+        ),
         "",
         "## Owner Packets",
         "",
@@ -861,8 +861,12 @@ def main() -> int:
     parser.add_argument("--session", required=True, help="source Codex session JSONL")
     parser.add_argument("--packet-id", required=True, help="planner packet id")
     parser.add_argument("--theme", required=True, help="planner packet theme")
-    parser.add_argument("--source-plan-hash", action="append", default=[], help="known source plan hash; comma-separated accepted")
-    parser.add_argument("--source-prompt-hash", action="append", default=[], help="known source prompt hash; comma-separated accepted")
+    parser.add_argument(
+        "--source-plan-hash", action="append", default=[], help="known source plan hash; comma-separated accepted"
+    )
+    parser.add_argument(
+        "--source-prompt-hash", action="append", default=[], help="known source prompt hash; comma-separated accepted"
+    )
     parser.add_argument("--write", action="store_true", help="write tracked markdown and ignored private JSON")
     args = parser.parse_args()
 

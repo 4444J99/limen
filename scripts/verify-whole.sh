@@ -102,6 +102,9 @@ python3 scripts/tests/claude-workflow-guard-phase.test.py
 step "Verify the resolver selection fixtures (verify.py implicates exactly the registered gates)"
 bash scripts/tests/verify-resolver.test.sh
 
+step "Observe live positioning/profile parity outside exact-tree source admission"
+python3 scripts/positioning-research-adjudication.py --verify-live
+
 step "Verify the enactment predicate (declared-ON fleet flags are actually wired live, not just merged)"
 bash scripts/tests/enactment-audit.test.sh
 

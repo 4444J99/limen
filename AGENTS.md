@@ -139,14 +139,14 @@ ask the operator to choose between options the system can resolve, and do not gu
 registry already holds. Options are a decision forced by a genuine human-gated lever, not a
 default delivery posture.
 
-**2. Bounded CI waits and scoped verification.**
-`scripts/verify-scoped.sh` is the default pre-push gate; it runs only the gates implicated by the
-diff. Never run the full test suite as a default local gate — scope it. Never hand-roll a
-background poll loop on a PR gate; the one sanctioned synchronous waiter is
-`scripts/await-pr.sh`. Polling non-required checks or running unimplicated gates is waste and
-masks genuine failures. Once an implicated predicate passes for an unchanged exact head, record and
-reuse that receipt; do not rerun suites merely to accumulate reassurance. A changed head or a
-specific observed failure is required before another test.
+**2. No synchronous CI waits; scoped verification.**
+`scripts/verify-scoped.sh` is the implicated pre-push gate; there is no synchronous waiter. A
+registry-declared **single-owner fast lane** merges its verified head immediately with
+`gh pr merge NUMBER --repo OWNER/NAME --squash --match-head-commit SHA`; remote checks and automated reviews are advisory. Include any implicated local build/deploy predicate in that batch.
+Other repositories submit at most once with
+`scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA` and return control.
+`QUEUED` is GitHub ownership, never a `MERGED` receipt. Never retry, re-arm, poll non-required
+checks, or rerun a green exact-head predicate without a changed head or observed failure.
 
 Treat one exact tree as one verification batch, not a per-finding waterfall. Batch independent
 corrections, then let the scoped resolver run eligible gates concurrently within each resource
@@ -173,11 +173,12 @@ The litmus: am I destroying, sending, spending, or irreversibly leaking? If no, 
 **5. Concurrent integration — moving `main` is normal; rewriting every PR head is not.**
 Multiple interactive and autonomous sessions are co-equal supported work, provided each mutation
 lane is isolated in its own worktree and topic branch. A newer `main` must never trigger an
-unbounded merge/rebase → full-CI → newer-`main` loop. Preserve the exact-head CI receipt and use
-the repository's merge queue: GitHub composes that immutable head with the latest base and queued
-predecessors, then `pr-gate` verifies the synthetic `merge_group`. `BEHIND` is queueable only when
-the live queue rail is proven active; without that proof it remains fail-closed. Use
-`scripts/await-pr.sh --merge`, never `--admin`, force-push, or repeated branch rewrites. Direct
+unbounded merge/rebase → full-CI → newer-`main` loop. A single-owner fast lane merges its verified
+SHA through the PR rail with `--match-head-commit`; it does not wait for `pr-gate`, review, or a
+synthetic `merge_group`. A shared-writer queue may verify that synthetic `merge_group`; use one
+`scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA` submission. In either
+lane, never use `scripts/await-pr.sh`, never `--admin`, force-push, repeated branch rewrites, or a
+session-held merge watch. Direct
 `main` writes are forbidden, including board snapshots: Tabularius coalesces the local projection
 and publishes it through its stable, fast-forward-only PR branch. The repository's no-bypass
 `pull_request` rule makes that boundary remote-enforced. The full executable contract is
@@ -196,6 +197,15 @@ Where a policy hook judges shell commands, compose nothing on the judged rail: o
 per invocation. A `&&`/`;`/pipe chain forces the judge to guess about the whole composition, and a
 chain also short-circuits — hiding which member failed. Shell **scripts** chain freely inside
 their own bodies; the rule binds the top-level judged invocation, not script internals.
+
+**8. Landing proof is positive and repository-qualified.**
+A closed-unmerged PR, the absence of an open PR, branch age, a lower branch count, or walkthrough
+metadata is never proof that work landed or may be deleted. Landing requires the exact repository,
+ref tip, and default generation plus either ancestry/merge proof or reviewed tree/patch-equivalence
+to a named successor. Every historical review finding remains lifecycle debt until its correction or
+evidence-backed disposition is bound to the relevant head and default result. Destructive cleanup
+requires separate custody and review-closure proof; census or prose may observe these facts but may
+never set completion.
 
 ### Standing Corrections (from insights reports 2026-06-23 → 2026-07-17)
 

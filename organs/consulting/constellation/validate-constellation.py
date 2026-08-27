@@ -39,6 +39,7 @@ the access registry (gitvs-owned), never here; grant-shape validation
 
 Usage:
   python organs/consulting/constellation/validate-constellation.py
+  python organs/consulting/constellation/validate-constellation.py --skip-overlay  # source admission
   python organs/consulting/constellation/validate-constellation.py --quiet
   echo $?   # 0 = pass, 1 = violations, 2 = unusable input
 """
@@ -330,6 +331,11 @@ def main() -> int:
     )
     parser.add_argument("path", nargs="?", default=str(DEFAULT_REGISTRY), help="registry YAML path")
     parser.add_argument("--overlay", default=str(DEFAULT_OVERLAY), help="private overlay path (parity check)")
+    parser.add_argument(
+        "--skip-overlay",
+        action="store_true",
+        help="validate only tracked/public and access-registry rules; private parity remains owner-local",
+    )
     parser.add_argument("--access", default=str(DEFAULT_ACCESS), help="access registry path (grant cross-check)")
     parser.add_argument("--quiet", action="store_true", help="suppress output; exit code only")
     args = parser.parse_args()
@@ -339,8 +345,9 @@ def main() -> int:
     overlay_checked = access_checked = False
     if doc is not None:
         overlay_path = Path(args.overlay)
-        overlay_checked = overlay_path.exists()
-        violations.extend(_validate_overlay(overlay_path, doc))
+        if not args.skip_overlay:
+            overlay_checked = overlay_path.exists()
+            violations.extend(_validate_overlay(overlay_path, doc))
         access_path = Path(args.access)
         access_checked = access_path.exists()
         violations.extend(_validate_access(access_path, doc))
@@ -358,7 +365,9 @@ def main() -> int:
                 print(f"      violation: {item}")
         else:
             skipped = []
-            if not overlay_checked:
+            if args.skip_overlay:
+                skipped.append("Rule #6 (owner-local private parity)")
+            elif not overlay_checked:
                 skipped.append("Rule #6 (overlay absent)")
             if not access_checked:
                 skipped.append("Rule #7 (access registry absent)")

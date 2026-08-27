@@ -59,9 +59,7 @@ def _accepted_receipt(work_id: str):
                 "https://github.com/organvm/limen/pull/2305",
             ],
             "rollback": {"invoked": False, "state": "not needed"},
-            "observed_heads": {
-                "organvm/limen": "10cf8476d5e88309c71d5fac25167ec7b7af59c4"
-            },
+            "observed_heads": {"organvm/limen": "10cf8476d5e88309c71d5fac25167ec7b7af59c4"},
         }
     return {
         "schema_version": "limen.positioning_work_receipt.v1",
@@ -92,9 +90,7 @@ def _accepted_receipt(work_id: str):
             "https://github.com/organvm/limen/pull/2328",
         ],
         "rollback": {"invoked": False, "state": "not needed"},
-        "observed_heads": {
-            "organvm/limen": "d8b44e60e404b044436addf8108732cc28c06371"
-        },
+        "observed_heads": {"organvm/limen": "d8b44e60e404b044436addf8108732cc28c06371"},
     }
 
 
@@ -105,10 +101,7 @@ def _accepted_comment(work_id: str):
     return {
         "id": int(expected["marked_receipt"].rsplit("-", 1)[1]),
         "html_url": expected["marked_receipt"],
-        "body": (
-            f"<!-- positioning-receipt:{work_id} -->\n"
-            f"```json\n{json.dumps(receipt, indent=2)}\n```"
-        ),
+        "body": (f"<!-- positioning-receipt:{work_id} -->\n```json\n{json.dumps(receipt, indent=2)}\n```"),
     }
 
 
@@ -142,9 +135,7 @@ def _errors(bundle):
 
 def _sync_projected_issue_receipt(bundle) -> None:
     work_ids = bundle["artifact"]["repository_drift_relay"]["affected_work_ids"]
-    bundle["receipt"]["portfolio_repository_identity"][
-        "live_issue_bodies_requiring_refresh"
-    ] = [
+    bundle["receipt"]["portfolio_repository_identity"]["live_issue_bodies_requiring_refresh"] = [
         {
             "work_id": work_id,
             "issue": bundle["issue_map"]["issues"][work_id]["number"],
@@ -177,19 +168,18 @@ def _live_profile_fixture():
                 "created_at": _rfc3339(created_at),
                 "updated_at": _rfc3339(created_at + timedelta(minutes=5)),
                 "head_sha": trigger_head,
-                "html_url": (
-                    f"https://github.com/{MODULE.PROFILE_REPOSITORY}/actions/runs/{run_id}"
-                ),
+                "html_url": (f"https://github.com/{MODULE.PROFILE_REPOSITORY}/actions/runs/{run_id}"),
             }
         )
 
     stats = {}
     for name, value in {
-        "personal_public_repos": 8,
+        "personal_public_repos": MODULE.LIVE_PROFILE_PERSONAL_PUBLIC_REPOS,
         "followers": 41,
         "member_since": "2016",
-        "ecosystem_public_repos": 227,
-        "ecosystem_original_repos": 198,
+        "ecosystem_public_repos": MODULE.LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS,
+        "ecosystem_original_repos": MODULE.LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS,
+        "ecosystem_forks": MODULE.LIVE_PROFILE_ORGANIZATION_FORKS,
         "contributions_last_year": 33203,
     }.items():
         stats[name] = {
@@ -210,21 +200,18 @@ def _live_profile_fixture():
         )
     contribution_total = sum(day["contributionCount"] for day in contribution_days)
     weeks = [
-        {"contributionDays": contribution_days[index : index + 7]}
-        for index in range(0, len(contribution_days), 7)
+        {"contributionDays": contribution_days[index : index + 7]} for index in range(0, len(contribution_days), 7)
     ]
 
-    compare_url = (
-        f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/"
-        f"{accepted_head}...{current_head}"
-    )
+    compare_url = f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/{accepted_head}...{current_head}"
     trigger_compare_url = (
-        f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/"
-        f"{latest_trigger}...{current_head}"
+        f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/{latest_trigger}...{current_head}"
     )
     public_payloads = {
         MODULE.PROFILE_USER_API_URL: {
             **MODULE.EXPECTED_PROFILE_METADATA_RESULT,
+            "public_repos": MODULE.LIVE_PROFILE_PERSONAL_PUBLIC_REPOS,
+            "blog": MODULE.EXPECTED_LIVE_PROFILE_BLOG,
             "updated_at": "2026-08-12T08:00:00Z",
         },
         MODULE.PROFILE_MANIFEST_RAW_URL: {
@@ -235,9 +222,7 @@ def _live_profile_fixture():
         MODULE.PROFILE_RUNS_API_URL: {"workflow_runs": runs},
         MODULE.PROFILE_MAIN_COMMIT_API_URL: {
             "sha": current_head,
-            "html_url": (
-                f"https://github.com/{MODULE.PROFILE_REPOSITORY}/commit/{current_head}"
-            ),
+            "html_url": (f"https://github.com/{MODULE.PROFILE_REPOSITORY}/commit/{current_head}"),
             "commit": {"committer": {"date": "2026-08-12T07:10:00Z"}},
             "parents": [{"sha": "9" * 40}],
         },
@@ -275,6 +260,22 @@ def _live_profile_fixture():
 
 def test_tracked_adjudication_bundle_passes_static_contract() -> None:
     assert _errors(_bundle()) == []
+
+
+def test_historical_profile_receipt_counts_remain_frozen_while_live_counts_advance() -> None:
+    assert MODULE.EXPECTED_PROFILE_METADATA_RESULT["public_repos"] == 8
+    rendered = MODULE.EXPECTED_PUBLIC_PROFILE["stats_manifest"]["rendered_values"]
+    assert rendered["personal_public_repositories"] == 8
+    assert rendered["ecosystem_public_repositories"] == 227
+    assert rendered["ecosystem_original_repositories"] == 198
+    assert MODULE.EXPECTED_W01_RESULT["profile_basis_reconciliation"] == (
+        "8 personal public repositories + 227 public organization repositories = 235 public repositories"
+    )
+    assert MODULE.LIVE_PROFILE_PERSONAL_PUBLIC_REPOS == 9
+    assert MODULE.LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS == 226
+    assert MODULE.LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS == 197
+    assert MODULE.LIVE_PROFILE_ORGANIZATION_FORKS == 29
+    assert MODULE.LIVE_PROFILE_TOTAL_PUBLIC_REPOS == 235
 
 
 @pytest.mark.parametrize("filename", ("research-adjudication.json", "w08-receipt.json"))
@@ -330,9 +331,7 @@ def test_malformed_formalization_and_accepted_blocks_fail_as_validation_errors()
     malformed = _bundle()
     malformed["flagship_evidence"] = copy.deepcopy(malformed["flagship_evidence"])
     malformed["flagship_evidence"]["w08_research_import"]["claims"][0] = "not-a-mapping"
-    assert (
-        "flagship_evidence.w08_research_import.claims[0] must be a mapping" in _errors(malformed)
-    )
+    assert "flagship_evidence.w08_research_import.claims[0] must be a mapping" in _errors(malformed)
 
     malformed = _bundle()
     malformed["artifact"] = copy.deepcopy(malformed["artifact"])
@@ -372,8 +371,7 @@ def test_w05_import_cannot_replace_the_accepted_flagship_evidence_blob() -> None
     errors = _errors(bundle)
     assert "flagship-evidence blob differs from the accepted W05 binding" in errors
     assert (
-        "all 13 artifact claims must exactly match the accepted W05 four-layer and publishable projection"
-        not in errors
+        "all 13 artifact claims must exactly match the accepted W05 four-layer and publishable projection" not in errors
     )
 
 
@@ -385,10 +383,7 @@ def test_claims_ledger_table_must_match_all_four_dispositions() -> None:
         1,
     )
 
-    assert (
-        "accepted claims-ledger table must exactly match all 13 formalized claim dispositions"
-        in _errors(bundle)
-    )
+    assert "accepted claims-ledger table must exactly match all 13 formalized claim dispositions" in _errors(bundle)
 
 
 def test_claim_denominator_is_fixed_and_not_self_declared() -> None:
@@ -417,10 +412,7 @@ def test_tokenized_disposition_and_citation_sinks_fail_neutrally() -> None:
         bundle = _bundle()
         bundle["artifact"] = copy.deepcopy(bundle["artifact"])
         bundle["artifact"]["disposition_vocabularies"]["measurement"] = malformed_vocabulary
-        assert (
-            "measurement disposition vocabulary must match the canonical ordered vocabulary"
-            in _errors(bundle)
-        )
+        assert "measurement disposition vocabulary must match the canonical ordered vocabulary" in _errors(bundle)
 
     disposition = _bundle()
     disposition["artifact"] = copy.deepcopy(disposition["artifact"])
@@ -430,18 +422,13 @@ def test_tokenized_disposition_and_citation_sinks_fail_neutrally() -> None:
     citations = _bundle()
     citations["artifact"] = copy.deepcopy(citations["artifact"])
     citations["artifact"]["claims"][0]["measurement"]["citations"] = [["PROFILE_README"]]
-    assert any(
-        "measurement citations must be nonempty string source IDs" in error
-        for error in _errors(citations)
-    )
+    assert any("measurement citations must be nonempty string source IDs" in error for error in _errors(citations))
 
 
 def test_all_claim_layers_bind_their_exact_accepted_citations() -> None:
     baseline = _bundle()
     assert (
-        MODULE._canonical_sha256(
-            MODULE._claim_citation_contract(baseline["artifact"]["claims"])
-        )
+        MODULE._canonical_sha256(MODULE._claim_citation_contract(baseline["artifact"]["claims"]))
         == MODULE.EXPECTED_CLAIM_CITATION_CONTRACT_SHA256
     )
 
@@ -453,10 +440,9 @@ def test_all_claim_layers_bind_their_exact_accepted_citations() -> None:
             replacement = "PROFILE_RUNS" if citations[0] != "PROFILE_RUNS" else "PROFILE_README"
             citations[0] = replacement
 
-            assert (
-                "all 13 claims must match the accepted exact per-layer citation contract"
-                in _errors(mutated)
-            ), f"{claim['id']}.{layer} accepted an unrelated source"
+            assert "all 13 claims must match the accepted exact per-layer citation contract" in _errors(mutated), (
+                f"{claim['id']}.{layer} accepted an unrelated source"
+            )
 
 
 def test_tokenized_lavrea_and_http_receipt_sinks_fail_neutrally() -> None:
@@ -479,9 +465,7 @@ def test_tokenized_lavrea_and_http_receipt_sinks_fail_neutrally() -> None:
 def test_public_sources_reject_embedded_credentials() -> None:
     bundle = _bundle()
     bundle["artifact"] = copy.deepcopy(bundle["artifact"])
-    bundle["artifact"]["sources"]["PROFILE_README"]["url"] = (
-        "https://token@example.test/public-source"
-    )
+    bundle["artifact"]["sources"]["PROFILE_README"]["url"] = "https://token@example.test/public-source"
 
     assert any("credential-free HTTPS public URL" in error for error in _errors(bundle))
 
@@ -497,9 +481,7 @@ def test_public_sources_reject_query_and_fragment_credentials() -> None:
 
         assert any("credential-free HTTPS public URL" in error for error in _errors(bundle))
 
-    assert MODULE._credential_free_https_url(
-        "https://docs.github.com/en/graphql/reference/users#contributioncalendar"
-    )
+    assert MODULE._credential_free_https_url("https://docs.github.com/en/graphql/reference/users#contributioncalendar")
 
 
 def test_public_sources_bind_exact_expected_repository_path_and_url() -> None:
@@ -507,10 +489,7 @@ def test_public_sources_bind_exact_expected_repository_path_and_url() -> None:
     unexpected_repository["artifact"] = copy.deepcopy(unexpected_repository["artifact"])
     source = unexpected_repository["artifact"]["sources"]["PROFILE_README"]
     source["repository"] = "unexpected-owner/private-profile"
-    source["url"] = (
-        "https://github.com/unexpected-owner/private-profile/blob/"
-        f"{source['head']}/README.md"
-    )
+    source["url"] = f"https://github.com/unexpected-owner/private-profile/blob/{source['head']}/README.md"
     errors = _errors(unexpected_repository)
     assert "source PROFILE_README must bind its exact public repository" in errors
     assert "source PROFILE_README must bind its exact public url" in errors
@@ -519,10 +498,7 @@ def test_public_sources_bind_exact_expected_repository_path_and_url() -> None:
     wrong_path["artifact"] = copy.deepcopy(wrong_path["artifact"])
     source = wrong_path["artifact"]["sources"]["PROFILE_README"]
     source["path"] = "PRIVATE.md"
-    source["url"] = (
-        "https://github.com/4444J99/4444J99/blob/"
-        f"{source['head']}/PRIVATE.md"
-    )
+    source["url"] = f"https://github.com/4444J99/4444J99/blob/{source['head']}/PRIVATE.md"
     errors = _errors(wrong_path)
     assert "source PROFILE_README must bind its exact public path" in errors
     assert "source PROFILE_README must bind its exact public url" in errors
@@ -531,19 +507,12 @@ def test_public_sources_bind_exact_expected_repository_path_and_url() -> None:
 def test_public_sources_reject_unexpected_and_credential_bearing_fields() -> None:
     unexpected = _bundle()
     unexpected["artifact"] = copy.deepcopy(unexpected["artifact"])
-    unexpected["artifact"]["sources"]["PROFILE_API_RECEIPT"]["authorization"] = (
-        "Bearer SECRET"
-    )
-    assert (
-        "source PROFILE_API_RECEIPT must match its exact typed public contract"
-        in _errors(unexpected)
-    )
+    unexpected["artifact"]["sources"]["PROFILE_API_RECEIPT"]["authorization"] = "Bearer SECRET"
+    assert "source PROFILE_API_RECEIPT must match its exact typed public contract" in _errors(unexpected)
 
     changed = _bundle()
     changed["artifact"] = copy.deepcopy(changed["artifact"])
-    changed["artifact"]["sources"]["PROFILE_API_RECEIPT"]["receipt_path"] = (
-        "unexpected/private-metadata"
-    )
+    changed["artifact"]["sources"]["PROFILE_API_RECEIPT"]["receipt_path"] = "unexpected/private-metadata"
     errors = _errors(changed)
     assert "source PROFILE_API_RECEIPT must match its exact typed public contract" in errors
     assert "source PROFILE_API_RECEIPT must bind its exact public receipt_path" in errors
@@ -559,9 +528,8 @@ def test_live_public_sources_require_public_repositories_and_exact_paths() -> No
             path = expected.get("path")
             head = expected.get("head")
             if all(isinstance(value, str) for value in (repository, path, head)):
-                content_endpoint = (
-                    f"repos/{repository}/contents/{MODULE.quote(path, safe='/')}?ref={head}"
-                )
+                live_repository = MODULE.canonical_live_repository(repository)
+                content_endpoint = f"repos/{live_repository}/contents/{MODULE.quote(path, safe='/')}?ref={head}"
                 if endpoint == content_endpoint:
                     return {
                         "type": "file",
@@ -629,9 +597,8 @@ def test_complete_portfolio_identity_receipt_is_exact_value_bound() -> None:
             pytest.fail(f"unhandled identity value type for {key}: {type(value).__name__}")
         mutated["receipt"]["portfolio_repository_identity"][key] = replacement
 
-        assert (
-            "portfolio repository identity receipt must match its complete accepted typed value contract"
-            in _errors(mutated)
+        assert "portfolio repository identity receipt must match its complete accepted typed value contract" in _errors(
+            mutated
         ), f"portfolio identity field {key} was not exact-bound"
 
 
@@ -698,13 +665,8 @@ def test_live_identity_keeps_public_immutable_metadata_fail_closed_for_actions_t
 def test_live_reference_binds_exact_open_issue_and_rejects_substitutes() -> None:
     static = _bundle()
     static["receipt"] = copy.deepcopy(static["receipt"])
-    static["receipt"]["formal_completion"]["live_reference"]["issue"] = (
-        "https://github.com/other/repo/issues/1245"
-    )
-    assert (
-        "the profile-engine live reference must bind the exact open organvm/limen#1245 contract"
-        in _errors(static)
-    )
+    static["receipt"]["formal_completion"]["live_reference"]["issue"] = "https://github.com/other/repo/issues/1245"
+    assert "the profile-engine live reference must bind the exact open 4444J99/limen#1245 contract" in _errors(static)
 
     expected = {
         "number": MODULE.LIVE_REFERENCE_ISSUE_NUMBER,
@@ -720,7 +682,7 @@ def test_live_reference_binds_exact_open_issue_and_rejects_substitutes() -> None
         return expected
 
     assert MODULE.validate_live_reference(fetch) == []
-    assert calls == [["api", "repos/organvm/limen/issues/1245"]]
+    assert calls == [["api", "repos/4444J99/limen/issues/1245"]]
     assert MODULE.validate_live_reference(lambda _args: []) == [
         "profile-engine live reference response must be a mapping"
     ]
@@ -734,9 +696,8 @@ def test_live_reference_binds_exact_open_issue_and_rejects_substitutes() -> None
     assert any("html_url must remain" in error for error in errors)
 
     pull_request = {**expected, "pull_request": {"url": "https://api.github.com/example"}}
-    assert (
-        "profile-engine live reference must remain an issue, not a pull request"
-        in MODULE.validate_live_reference(lambda _args: pull_request)
+    assert "profile-engine live reference must remain an issue, not a pull request" in MODULE.validate_live_reference(
+        lambda _args: pull_request
     )
 
 
@@ -770,19 +731,19 @@ def test_live_formalization_binds_latest_marked_receipts_and_observed_heads() ->
 
     assert MODULE.validate_live_dependencies(fetch) == []
     assert calls == [
-        ["api", "repos/organvm/limen/issues/2173"],
+        ["api", "repos/4444J99/limen/issues/2173"],
         [
             "api",
             "--paginate",
             "--slurp",
-            "repos/organvm/limen/issues/2173/comments?per_page=100",
+            "repos/4444J99/limen/issues/2173/comments?per_page=100",
         ],
-        ["api", "repos/organvm/limen/issues/2177"],
+        ["api", "repos/4444J99/limen/issues/2177"],
         [
             "api",
             "--paginate",
             "--slurp",
-            "repos/organvm/limen/issues/2177/comments?per_page=100",
+            "repos/4444J99/limen/issues/2177/comments?per_page=100",
         ],
     ]
 
@@ -820,6 +781,7 @@ def test_live_receipt_pagination_payloads_fail_neutrally() -> None:
         ([[{"id": [], "body": "marked"}]], "comment page[0][0] needs a positive integer id"),
     )
     for payload, expected_error in cases:
+
         def fetch(args, value=payload):
             return value if "comments" in args[-1] else {"state": "closed"}
 
@@ -853,24 +815,26 @@ def test_contribution_observation_is_typed_and_bound_to_both_recorded_values() -
 def test_profile_metadata_result_is_exact_typed_and_reconciled() -> None:
     missing = _bundle()
     missing["receipt"] = copy.deepcopy(missing["receipt"])
-    profile = next(
-        row for row in missing["receipt"]["api_query_receipts"] if row["id"] == "profile_metadata"
-    )
+    profile = next(row for row in missing["receipt"]["api_query_receipts"] if row["id"] == "profile_metadata")
     profile.pop("result")
     assert "profile metadata result must match the exact typed public observation" in _errors(missing)
 
     arbitrary = _bundle()
     arbitrary["receipt"] = copy.deepcopy(arbitrary["receipt"])
-    profile = next(
-        row for row in arbitrary["receipt"]["api_query_receipts"] if row["id"] == "profile_metadata"
-    )
+    profile = next(row for row in arbitrary["receipt"]["api_query_receipts"] if row["id"] == "profile_metadata")
     profile["result"]["public_repos"] = True
     errors = _errors(arbitrary)
     assert "profile metadata result must match the exact typed public observation" in errors
-    assert (
-        "profile metadata result must reconcile identity, repository count, blog claim, and tenure inputs"
-        in errors
-    )
+    assert "profile metadata result must reconcile identity, repository count, blog claim, and tenure inputs" in errors
+
+
+def test_live_profile_blog_is_separate_from_immutable_preflight_observation() -> None:
+    bundle = _bundle()
+    profile = next(row for row in bundle["receipt"]["api_query_receipts"] if row["id"] == "profile_metadata")
+
+    assert profile["result"]["blog"] == "https://organvm.github.io/portfolio/"
+    assert MODULE.EXPECTED_PROFILE_METADATA_RESULT["blog"] == profile["result"]["blog"]
+    assert MODULE.EXPECTED_LIVE_PROFILE_BLOG == "https://organvm-vii-kerygma.github.io/portfolio/"
 
 
 def test_lavrea_axis_conclusions_match_the_accepted_exact_contract() -> None:
@@ -881,20 +845,14 @@ def test_lavrea_axis_conclusions_match_the_accepted_exact_contract() -> None:
     axis["inference_disposition"] = "arbitrary_but_nonempty"
     axis["primary_source_result"] = "Arbitrary but nonempty text."
 
-    assert (
-        "LAVREA axis contributions_year must match its accepted exact conclusion contract"
-        in _errors(bundle)
-    )
+    assert "LAVREA axis contributions_year must match its accepted exact conclusion contract" in _errors(bundle)
 
 
 def test_public_profile_head_and_blobs_bind_cited_sources_and_latest_run() -> None:
     mismatched_head = _bundle()
     mismatched_head["receipt"] = copy.deepcopy(mismatched_head["receipt"])
     mismatched_head["receipt"]["public_profile"]["head"] = "a" * 40
-    assert (
-        "public-profile head must exactly match the cited README and manifest heads"
-        in _errors(mismatched_head)
-    )
+    assert "public-profile head must exactly match the cited README and manifest heads" in _errors(mismatched_head)
 
     mismatched_blobs = _bundle()
     mismatched_blobs["receipt"] = copy.deepcopy(mismatched_blobs["receipt"])
@@ -907,10 +865,7 @@ def test_public_profile_head_and_blobs_bind_cited_sources_and_latest_run() -> No
     mismatched_run = _bundle()
     mismatched_run["receipt"] = copy.deepcopy(mismatched_run["receipt"])
     mismatched_run["receipt"]["daily_generation_receipt"]["runs"][0]["resulting_head"] = "a" * 40
-    assert (
-        "public-profile head must exactly match the latest scheduled run resulting_head"
-        in _errors(mismatched_run)
-    )
+    assert "public-profile head must exactly match the latest scheduled run resulting_head" in _errors(mismatched_run)
 
 
 def test_public_profile_and_nested_mappings_match_complete_typed_contract() -> None:
@@ -934,10 +889,7 @@ def test_public_profile_and_nested_mappings_match_complete_typed_contract() -> N
             target = target[key]
         target[path[-1]] = replacement
 
-        assert (
-            "public-profile receipt must match its complete exact typed contract"
-            in _errors(bundle)
-        )
+        assert "public-profile receipt must match its complete exact typed contract" in _errors(bundle)
 
 
 def test_privacy_review_matches_complete_typed_public_safe_contract() -> None:
@@ -960,10 +912,7 @@ def test_privacy_review_matches_complete_typed_public_safe_contract() -> None:
         bundle["receipt"] = copy.deepcopy(bundle["receipt"])
         bundle["receipt"]["privacy_review"][key] = replacement
 
-        assert (
-            "privacy review must match its complete exact typed public-safe contract"
-            in _errors(bundle)
-        )
+        assert "privacy review must match its complete exact typed public-safe contract" in _errors(bundle)
 
 
 def test_entire_public_artifact_and_receipt_reject_credential_fields_recursively() -> None:
@@ -1036,18 +985,12 @@ def test_entire_public_artifact_and_receipt_match_exact_recursive_field_shapes()
     artifact = _bundle()
     artifact["artifact"] = copy.deepcopy(artifact["artifact"])
     artifact["artifact"]["unexpected_public_field"] = "harmless"
-    assert (
-        "artifact must match its complete recursively typed field-shape contract"
-        in _errors(artifact)
-    )
+    assert "artifact must match its complete recursively typed field-shape contract" in _errors(artifact)
 
     receipt = _bundle()
     receipt["receipt"] = copy.deepcopy(receipt["receipt"])
     receipt["receipt"]["unexpected_public_field"] = "harmless"
-    assert (
-        "receipt must match its complete recursively typed field-shape contract"
-        in _errors(receipt)
-    )
+    assert "receipt must match its complete recursively typed field-shape contract" in _errors(receipt)
 
 
 def test_organization_observations_are_exact_typed_ten_key_censuses() -> None:
@@ -1071,10 +1014,7 @@ def test_organization_observations_are_exact_typed_ten_key_censuses() -> None:
         "API query receipt public_original_organization_repository_counts counts must be non-negative integers"
         in errors
     )
-    assert (
-        "API query receipt public_original_organization_repository_counts organization_count must be 10"
-        in errors
-    )
+    assert "API query receipt public_original_organization_repository_counts organization_count must be 10" in errors
 
 
 def test_api_receipts_require_exact_ids_public_metadata_and_no_credentials() -> None:
@@ -1098,10 +1038,7 @@ def test_api_receipts_require_exact_ids_public_metadata_and_no_credentials() -> 
     errors = _errors(credentialed)
     assert "API query receipt profile_metadata needs a credential-free HTTPS source" in errors
     assert "API query receipt profile_metadata needs an RFC3339 observation time" in errors
-    assert (
-        "API query receipt profile_metadata needs safe nonempty reproduction or query metadata"
-        in errors
-    )
+    assert "API query receipt profile_metadata needs safe nonempty reproduction or query metadata" in errors
 
 
 def test_api_receipt_ids_bind_their_exact_expected_source_endpoints() -> None:
@@ -1109,67 +1046,38 @@ def test_api_receipt_ids_bind_their_exact_expected_source_endpoints() -> None:
     for receipt_id in MODULE.EXPECTED_API_RECEIPT_SOURCES:
         bundle = _bundle()
         bundle["receipt"] = copy.deepcopy(bundle["receipt"])
-        row = next(
-            row
-            for row in bundle["receipt"]["api_query_receipts"]
-            if row["id"] == receipt_id
-        )
+        row = next(row for row in bundle["receipt"]["api_query_receipts"] if row["id"] == receipt_id)
         row["source"] = f"https://example.test/unrelated/{receipt_id}"
 
-        assert (
-            f"API query receipt {receipt_id} must bind its exact expected source endpoint"
-            in _errors(bundle)
-        )
+        assert f"API query receipt {receipt_id} must bind its exact expected source endpoint" in _errors(bundle)
 
 
 def test_public_receipt_schemas_reject_credential_bearing_extra_fields() -> None:
     for receipt_id in MODULE.EXPECTED_API_RECEIPT_IDS:
         bundle = _bundle()
         bundle["receipt"] = copy.deepcopy(bundle["receipt"])
-        row = next(
-            row
-            for row in bundle["receipt"]["api_query_receipts"]
-            if row["id"] == receipt_id
-        )
+        row = next(row for row in bundle["receipt"]["api_query_receipts"] if row["id"] == receipt_id)
         row["authorization"] = "Bearer SECRET"
 
-        assert any(
-            f"API query receipt {receipt_id} must contain exactly" in error
-            for error in _errors(bundle)
-        )
+        assert any(f"API query receipt {receipt_id} must contain exactly" in error for error in _errors(bundle))
 
     for receipt_id in MODULE.EXPECTED_HTTP_RECEIPTS:
         bundle = _bundle()
         bundle["receipt"] = copy.deepcopy(bundle["receipt"])
-        row = next(
-            row
-            for row in bundle["receipt"]["http_receipts"]
-            if row["id"] == receipt_id
-        )
+        row = next(row for row in bundle["receipt"]["http_receipts"] if row["id"] == receipt_id)
         row["authorization"] = "Bearer SECRET"
 
-        assert any(
-            f"HTTP receipt {receipt_id} must contain exactly" in error
-            for error in _errors(bundle)
-        )
+        assert any(f"HTTP receipt {receipt_id} must contain exactly" in error for error in _errors(bundle))
 
     daily = _bundle()
     daily["receipt"] = copy.deepcopy(daily["receipt"])
     daily["receipt"]["daily_generation_receipt"]["authorization"] = "Bearer SECRET"
-    assert (
-        "daily generation receipt must contain its exact public field set"
-        in _errors(daily)
-    )
+    assert "daily generation receipt must contain its exact public field set" in _errors(daily)
 
     run = _bundle()
     run["receipt"] = copy.deepcopy(run["receipt"])
-    run["receipt"]["daily_generation_receipt"]["runs"][0]["authorization"] = (
-        "Bearer SECRET"
-    )
-    assert (
-        "every daily generation run must contain its exact public field set"
-        in _errors(run)
-    )
+    run["receipt"]["daily_generation_receipt"]["runs"][0]["authorization"] = "Bearer SECRET"
+    assert "every daily generation run must contain its exact public field set" in _errors(run)
 
 
 def test_projected_issue_numbers_are_positive_non_boolean_and_distinct() -> None:
@@ -1183,10 +1091,7 @@ def test_projected_issue_numbers_are_positive_non_boolean_and_distinct() -> None
         bundle["issue_map"]["issues"][work_id]["number"] = invalid_number
         _sync_projected_issue_receipt(bundle)
 
-        assert (
-            f"{work_id} issue number must be a positive non-boolean integer"
-            in _errors(bundle)
-        )
+        assert f"{work_id} issue number must be a positive non-boolean integer" in _errors(bundle)
 
     duplicate = _bundle()
     duplicate["issue_map"] = copy.deepcopy(duplicate["issue_map"])
@@ -1197,10 +1102,7 @@ def test_projected_issue_numbers_are_positive_non_boolean_and_distinct() -> None
     duplicate["issue_map"]["issues"][second_work_id]["number"] = issue_number
     _sync_projected_issue_receipt(duplicate)
 
-    assert (
-        f"issue number {issue_number} is duplicated by {first_work_id} and {second_work_id}"
-        in _errors(duplicate)
-    )
+    assert f"issue number {issue_number} is duplicated by {first_work_id} and {second_work_id}" in _errors(duplicate)
 
 
 def test_http_receipts_bind_url_time_status_and_reproduction() -> None:
@@ -1229,11 +1131,7 @@ def test_http_receipts_bind_url_time_status_and_reproduction() -> None:
         for reproduction in credentialed_commands:
             credentialed = _bundle()
             credentialed["receipt"] = copy.deepcopy(credentialed["receipt"])
-            row = next(
-                row
-                for row in credentialed["receipt"]["http_receipts"]
-                if row["id"] == receipt_id
-            )
+            row = next(row for row in credentialed["receipt"]["http_receipts"] if row["id"] == receipt_id)
             row["reproduction"] = reproduction
 
             assert (
@@ -1277,12 +1175,8 @@ def test_live_profile_observations_reproduce_all_moving_public_claim_inputs() ->
 
     assert errors == []
     assert set(public_calls) == set(public_payloads)
-    assert graphql_calls == [
-        ["api", "graphql", "-f", f"query={MODULE.PROFILE_CONTRIBUTION_QUERY}"]
-    ]
-    assert set(http_calls) == {
-        url for url, _status in MODULE.EXPECTED_HTTP_RECEIPTS.values()
-    }
+    assert graphql_calls == [["api", "graphql", "-f", f"query={MODULE.PROFILE_CONTRIBUTION_QUERY}"]]
+    assert set(http_calls) == {url for url, _status in MODULE.EXPECTED_HTTP_RECEIPTS.values()}
 
 
 def test_live_profile_window_ignores_older_failures_and_truncated_compare_commits() -> None:
@@ -1301,9 +1195,7 @@ def test_live_profile_window_ignores_older_failures_and_truncated_compare_commit
                 "created_at": _rfc3339(created_at),
                 "updated_at": _rfc3339(created_at + timedelta(minutes=5)),
                 "head_sha": f"{offset + 20:040x}",
-                "html_url": (
-                    f"https://github.com/{MODULE.PROFILE_REPOSITORY}/actions/runs/{run_id}"
-                ),
+                "html_url": (f"https://github.com/{MODULE.PROFILE_REPOSITORY}/actions/runs/{run_id}"),
             }
         )
     compare_url = next(url for url in public_payloads if "/compare/" in url)
@@ -1316,9 +1208,7 @@ def test_live_profile_window_ignores_older_failures_and_truncated_compare_commit
         public_fetch=lambda url: copy.deepcopy(public_payloads[url]),
         http_fetch=lambda url: {
             "status": next(
-                status
-                for expected_url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values()
-                if expected_url == url
+                status for expected_url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values() if expected_url == url
             ),
             "url": url,
         },
@@ -1333,12 +1223,9 @@ def test_live_profile_accepts_transitive_scheduled_trigger_ancestry() -> None:
     latest_trigger = public_payloads[MODULE.PROFILE_RUNS_API_URL]["workflow_runs"][0]["head_sha"]
     current_head = public_payloads[MODULE.PROFILE_MAIN_COMMIT_API_URL]["sha"]
     trigger_compare_url = (
-        f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/"
-        f"{latest_trigger}...{current_head}"
+        f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/{latest_trigger}...{current_head}"
     )
-    assert public_payloads[MODULE.PROFILE_MAIN_COMMIT_API_URL]["parents"] == [
-        {"sha": "9" * 40}
-    ]
+    assert public_payloads[MODULE.PROFILE_MAIN_COMMIT_API_URL]["parents"] == [{"sha": "9" * 40}]
     assert public_payloads[trigger_compare_url]["status"] == "ahead"
     assert public_payloads[trigger_compare_url]["ahead_by"] == 2
 
@@ -1348,9 +1235,7 @@ def test_live_profile_accepts_transitive_scheduled_trigger_ancestry() -> None:
         public_fetch=lambda url: copy.deepcopy(public_payloads[url]),
         http_fetch=lambda url: {
             "status": next(
-                status
-                for expected_url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values()
-                if expected_url == url
+                status for expected_url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values() if expected_url == url
             ),
             "url": url,
         },
@@ -1364,9 +1249,7 @@ def test_live_profile_observations_fail_neutrally_on_drift_and_malformed_payload
     now, public_payloads, contribution_payload = _live_profile_fixture()
 
     def validate(payloads, contribution=contribution_payload, http_statuses=None):
-        statuses = http_statuses or {
-            url: status for url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values()
-        }
+        statuses = http_statuses or {url: status for url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values()}
         return MODULE.validate_live_profile_observations(
             _bundle()["receipt"],
             gh_fetch=lambda _args: copy.deepcopy(contribution),
@@ -1376,32 +1259,26 @@ def test_live_profile_observations_fail_neutrally_on_drift_and_malformed_payload
         )
 
     changed_profile = copy.deepcopy(public_payloads)
-    changed_profile[MODULE.PROFILE_USER_API_URL]["public_repos"] = 9
-    assert any(
-        "live profile metadata public_repos must remain 8" in error
-        for error in validate(changed_profile)
-    )
+    changed_profile[MODULE.PROFILE_USER_API_URL]["public_repos"] = 8
+    assert any("live profile metadata public_repos must remain 9" in error for error in validate(changed_profile))
+
+    changed_forks = copy.deepcopy(public_payloads)
+    changed_forks[MODULE.PROFILE_MANIFEST_RAW_URL]["stats"]["ecosystem_forks"]["value"] = 28
+    assert "live profile manifest ecosystem fork count must remain 29" in validate(changed_forks)
 
     missing_runs = copy.deepcopy(public_payloads)
     missing_runs[MODULE.PROFILE_RUNS_API_URL] = {"workflow_runs": []}
-    assert (
-        "live profile workflow must expose eight recent successful scheduled runs"
-        in validate(missing_runs)
-    )
+    assert "live profile workflow must expose eight recent successful scheduled runs" in validate(missing_runs)
 
     changed_contribution = copy.deepcopy(contribution_payload)
-    calendar = changed_contribution["data"]["user"]["contributionsCollection"][
-        "contributionCalendar"
-    ]
+    calendar = changed_contribution["data"]["user"]["contributionsCollection"]["contributionCalendar"]
     calendar["totalContributions"] -= 1
-    assert (
-        "live contribution total must equal the sum of daily counts"
-        in validate(public_payloads, changed_contribution)
+    assert "live contribution total must equal the sum of daily counts" in validate(
+        public_payloads, changed_contribution
     )
 
     changed_http = {
-        url: 500 if index == 0 else status
-        for index, (url, status) in enumerate(MODULE.EXPECTED_HTTP_RECEIPTS.values())
+        url: 500 if index == 0 else status for index, (url, status) in enumerate(MODULE.EXPECTED_HTTP_RECEIPTS.values())
     }
     assert any(
         "live HTTP receipt" in error and "must remain" in error
@@ -1420,10 +1297,7 @@ def test_live_profile_observations_fail_neutrally_on_drift_and_malformed_payload
     assert "live profile stats manifest response must be a mapping" in malformed_errors
     assert "live scheduled workflow response must be a mapping" in malformed_errors
     assert "live profile main-head response must be a mapping" in malformed_errors
-    assert (
-        "live contribution calendar response must contain the expected mapping"
-        in malformed_errors
-    )
+    assert "live contribution calendar response must contain the expected mapping" in malformed_errors
 
 
 def test_daily_runs_are_distinct_scheduled_and_window_bound() -> None:
@@ -1440,9 +1314,7 @@ def test_daily_runs_are_distinct_scheduled_and_window_bound() -> None:
 
     outside_window = _bundle()
     outside_window["receipt"] = copy.deepcopy(outside_window["receipt"])
-    outside_window["receipt"]["daily_generation_receipt"]["runs"][0]["created_at"] = (
-        "2026-08-11T08:05:20Z"
-    )
+    outside_window["receipt"]["daily_generation_receipt"]["runs"][0]["created_at"] = "2026-08-11T08:05:20Z"
     assert "daily generation run times must fall inside the observation window" in _errors(outside_window)
 
 
@@ -1473,9 +1345,7 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
     assert "institutio/positioning/program.yaml" not in live_gate["paths"]
     assert workflow["permissions"] == {"actions": "read", "contents": "read", "issues": "read"}
     verification_steps = {
-        step["name"]: step
-        for step in workflow["jobs"]["pr-gate"]["steps"]
-        if isinstance(step, dict) and "name" in step
+        step["name"]: step for step in workflow["jobs"]["pr-gate"]["steps"] if isinstance(step, dict) and "name" in step
     }
     for step_name in (
         "Verify implicated PR gates (scoped, CI mirrors deferred)",
@@ -1483,19 +1353,13 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
         "Verify manual run (scoped)",
     ):
         assert verification_steps[step_name]["env"]["GH_TOKEN"] == "${{ github.token }}"
-    fallback = verification_steps[
-        "Full literal matrix (LIMEN_PRGATE_SCOPED=0 escape hatch)"
-    ]
+    fallback = verification_steps["Full literal matrix (LIMEN_PRGATE_SCOPED=0 escape hatch)"]
     assert fallback["env"]["GH_TOKEN"] == "${{ github.token }}"
     assert foundry_gate["command"] in fallback["run"].splitlines()
     assert foundry_public_live_gate["command"] in fallback["run"].splitlines()
-    assert (
-        "python3 scripts/positioning-research-adjudication.py --verify-live"
-        in fallback["run"].splitlines()
-    )
+    assert "python3 scripts/positioning-research-adjudication.py --verify-live" in fallback["run"].splitlines()
     assert (
         "bash scripts/run-pytest-hermetic.sh "
-        "scripts/tests/test_positioning_research_adjudication.py -q"
-        in fallback["run"].splitlines()
+        "scripts/tests/test_positioning_research_adjudication.py -q" in fallback["run"].splitlines()
     )
     assert "GH_TOKEN" not in workflow["jobs"]["pr-gate"]["env"]

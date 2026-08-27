@@ -39,7 +39,7 @@ class ResourceLimited(Exception):
     throttle on the *worker*, not a violation of the runtime *contract* the probe
     verifies. The worker and the static dashboard are independently deployed, so a
     worker CPU limit must not block publishing static dashboard content. We surface
-    it loudly (and it stays tracked in organvm/limen#1264) but treat it as advisory:
+    it loudly (and it stays tracked in 4444J99/limen#1264) but treat it as advisory:
     every real contract check (schema, persona isolation, auth denial, private-field
     leak) still fails the probe hard via fail().
     """
@@ -541,7 +541,7 @@ if __name__ == "__main__":
         print(
             "runtime adapter probe: ADVISORY — worker hit a Cloudflare 1102 resource "
             f"limit on '{limited}' (free-tier CPU budget parsing the multi-MB board). "
-            "This is a known worker defect tracked in organvm/limen#1264, NOT a contract "
+            "This is a known worker defect tracked in 4444J99/limen#1264, NOT a contract "
             "failure — every contract assertion the probe reached passed. The static "
             "dashboard publish proceeds; the live runtime panels are degraded until the "
             "worker cron+KV fix lands. Deploy is not blocked on a free-tier CPU limit.",

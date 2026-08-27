@@ -48,6 +48,20 @@ class FlagshipEvidenceTests(unittest.TestCase):
         index["packets"][0]["public_repository"] = "example/replacement"
         self.assert_error_contains(index, "W03-selected public repository")
 
+    def test_historical_workflow_receipt_survives_limen_owner_transfer(self) -> None:
+        packet = copy.deepcopy(self.index["packets"][0])
+        source = copy.deepcopy(packet["sources"][0])
+        packet["public_repository"] = "4444J99/limen"
+        self.assertEqual(MODULE.workflow_binding_errors(packet, source), [])
+
+        run_id = source["url"].rsplit("/", 1)[-1]
+        run = {
+            "repository": {"full_name": "4444J99/limen"},
+            "html_url": f"https://github.com/4444J99/limen/actions/runs/{run_id}",
+            "url": f"https://api.github.com/repos/4444J99/limen/actions/runs/{run_id}",
+        }
+        self.assertEqual(MODULE.validate_workflow_run_response(packet, source, run), [])
+
     def test_rejects_duplicate_source_kinds(self) -> None:
         index = copy.deepcopy(self.index)
         index["packets"][0]["sources"][1] = copy.deepcopy(index["packets"][0]["sources"][0])

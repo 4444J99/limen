@@ -89,7 +89,7 @@ def npm_project_dirs(root: Path) -> list[Path]:
 # ---------------------------------------------------------------------------
 
 
-def run_audit(project_dir: Path) -> dict | None:
+def run_audit(project_dir: Path, *, env: dict[str, str] | None = None) -> dict | None:
     """Run `npm audit --json` in project_dir. npm exits non-zero when vulns exist — parse stdout
     regardless. Fail-open to None on missing npm / malformed JSON (never break the beat)."""
     try:
@@ -99,6 +99,7 @@ def run_audit(project_dir: Path) -> dict | None:
             capture_output=True,
             text=True,
             timeout=180,
+            env=env,
         )
     except (FileNotFoundError, subprocess.SubprocessError, OSError):
         return None

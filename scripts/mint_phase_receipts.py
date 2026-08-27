@@ -23,7 +23,7 @@ import urllib.parse
 
 
 GITHUB_API = "https://api.github.com"
-REPO = "organvm/limen"
+REPO = "4444J99/limen"
 
 # Issue numbers for PSP-P03 and PSP-P04 phase issues
 PHASE_ISSUES = {
@@ -33,8 +33,8 @@ PHASE_ISSUES = {
 
 # Evidence URLs (the phase-level issue)
 PHASE_EVIDENCE = {
-    "PSP-P03": "https://github.com/organvm/limen/issues/2181",
-    "PSP-P04": "https://github.com/organvm/limen/issues/2189",
+    "PSP-P03": "https://github.com/4444J99/limen/issues/2181",
+    "PSP-P04": "https://github.com/4444J99/limen/issues/2189",
 }
 
 
@@ -56,7 +56,7 @@ def gh_post_comment(issue_number: int, body: str, token: str, dry_run: bool) -> 
     if dry_run:
         print(f"[DRY RUN] Would POST to {url}")
         print(f"[DRY RUN] Body (first 200 chars): {body[:200]}")
-        return "https://github.com/organvm/limen/issues/DRY_RUN"
+        return "https://github.com/4444J99/limen/issues/DRY_RUN"
 
     req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
     with urllib.request.urlopen(req) as resp:
@@ -68,9 +68,7 @@ def mint_receipt(phase_id: str, dry_run: bool, token: str) -> dict:  # allow-sec
     print(f"\n=== Minting {phase_id} phase receipt ===")
 
     # Run the phase-proof predicate
-    r = run(
-        ["python3", "scripts/positioning-program.py", "--phase-proof", phase_id]
-    )
+    r = run(["python3", "scripts/positioning-program.py", "--phase-proof", phase_id])
     if r.returncode != 0:
         print(f"ERROR: --phase-proof {phase_id} failed (rc={r.returncode}):")
         print(r.stdout)
@@ -112,7 +110,7 @@ def mint_receipt(phase_id: str, dry_run: bool, token: str) -> dict:  # allow-sec
             "observed_at": now,
             "output_sha256": output_sha256,
         },
-        "observed_heads": {"organvm/limen": main_head},
+        "observed_heads": {"4444J99/limen": main_head},
         "child_receipts_sha256": bindings["child_receipts_sha256"],
         "exit_gate_sha256": bindings["exit_gate_sha256"],
         "parity_sha256": bindings["parity_sha256"],
@@ -135,7 +133,7 @@ Phase receipt: `{phase_id}` — predicate passed at `{now}`.
 Predicate: `python3 scripts/positioning-program.py --phase-proof {phase_id}`
 Exit code: 0
 Output SHA-256: `{output_sha256}`
-Observed `organvm/limen` head: `{main_head}`
+Observed `4444J99/limen` head: `{main_head}`
 """
 
     issue_number = PHASE_ISSUES[phase_id]

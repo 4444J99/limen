@@ -6,9 +6,10 @@ import copy
 import base64
 import hashlib
 import hmac
+import json
 import secrets
 from datetime import datetime, timedelta
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from typing import Any, Callable
 
 from limen.conduct.models import (
@@ -31,6 +32,11 @@ from limen.conduct.models import (
 from limen.conduct.resources import conflicting_keys, parse_resource, sorted_claims
 from limen.conduct.store import MemoryStateStore, StateStore
 from limen.work_loan import packet_is_non_capacity_projection, packet_work_loan_missing, work_loan_denial
+
+
+_DEFAULT_NOTIFICATION_REGISTRY = (
+    Path(__file__).resolve().parents[4] / "institutio" / "governance" / "notification-events.limen.json"
+)
 
 
 class ConductError(RuntimeError):
@@ -212,6 +218,7 @@ class ConductBroker:
         lease_ttl: timedelta = timedelta(minutes=15),
         capability_secret: str | bytes | None = None,
         runtime_identity: dict[str, str] | None = None,
+        notification_registry_path: Path | str | None = None,
     ):
         self.store = store
         self.session_ttl = session_ttl
@@ -220,6 +227,7 @@ class ConductBroker:
         secret = capability_secret or secrets.token_bytes(32)
         self.capability_secret = secret.encode("utf-8") if isinstance(secret, str) else secret
         self.runtime_identity = _validate_runtime_identity(runtime_identity)
+        self.notification_registry_path = Path(notification_registry_path or _DEFAULT_NOTIFICATION_REGISTRY)
 
     def register(
         self,
@@ -235,6 +243,7 @@ class ConductBroker:
         with self.store.transaction() as state:
             state.setdefault("receipt_index", {})
             state.setdefault("session_principals", {})
+            state.setdefault("session_principal_roles", {})
             current = state["sessions"].get(session.session_id)
             if current:
                 prior = ConductorSessionV1.model_validate(current)
@@ -284,6 +293,7 @@ class ConductBroker:
             session = session.model_copy(update={"supersedes": None})
             state["sessions"][session.session_id] = _dump(session)
             state["session_principals"][session.session_id] = principal.principal_id
+            state["session_principal_roles"][session.session_id] = sorted(principal.roles)
             _event(
                 state,
                 "session.registered",
@@ -339,8 +349,6 @@ class ConductBroker:
         project_task_event: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         now = now or utc_now()
-        principal, principal_enforced = self._principal_for_identity(packet.conductor, principal)
-        self._require_role(principal, "conductor", "compatibility")
         _require_work_loan(packet)
         if packet.deadline <= now:
             raise ConductError("work packet deadline has already passed")
@@ -353,16 +361,23 @@ class ConductBroker:
             if not conductor_raw:
                 raise ConductConflict("packet conductor must be a registered session")
             conductor = ConductorSessionV1.model_validate(conductor_raw)
-            if conductor.identity != self._bind_conductor_identity(packet.conductor, principal):
+            resolved, principal_enforced = self._principal_for_identity(
+                packet.conductor,
+                principal,
+                capabilities=conductor.capabilities,
+            )
+            self._require_role(resolved, "conductor", "compatibility")
+            if conductor.identity != self._bind_conductor_identity(packet.conductor, resolved):
                 raise ConductConflict("packet conductor identity does not match its registered session")
             if now - conductor.heartbeat_at > self.session_ttl:
                 raise ConductConflict("packet conductor session is not healthy")
-            if state["session_principals"].get(conductor.session_id) != principal.principal_id:
+            if state["session_principals"].get(conductor.session_id) != resolved.principal_id:
                 raise ConductConflict("packet conductor is not bound to the authenticated principal")
             adapter = str(packet.execution.get("adapter") or "")
             needed_capability = "task-submit" if adapter == "tabularius" else "conduct"
             if needed_capability not in conductor.capabilities:
                 raise ConductConflict(f"packet conductor lacks required {needed_capability} capability")
+            principal = resolved
             by_id = state["work_index"].get(packet.work_id)
             by_key = state["work_key_index"].get(packet.work_key)
             if by_id and by_key and by_id != by_key:
@@ -460,7 +475,7 @@ class ConductBroker:
                 state["resource_generations"][claim.key] = prior + 1
             lease_id = f"lease-{generation}-{run_id.removeprefix('run-')[:16]}"
             executor_principal_id = state["session_principals"].get(executor.session_id)
-            if _is_task_compatibility_packet(packet):
+            if _is_task_compatibility_packet(packet) or packet.intent.get("kind") == "fanout-root":
                 executor_principal_id = principal.principal_id
             if not executor_principal_id:
                 raise ConductConflict("selected executor session has no authenticated principal binding")
@@ -579,11 +594,17 @@ class ConductBroker:
         for packet in packets:
             _require_work_loan(packet)
         now = now or utc_now()
-        resolved, _ = self._principal_for_identity(packets[0].conductor, principal)
-        self._require_role(resolved, "conductor")
-        if any(packet.conductor.session_id != packets[0].conductor.session_id for packet in packets):
-            raise ConductConflict("atomic graph packets must share one owning conductor session")
         with self.store.transaction() as state:
+            conductor_raw = state["sessions"].get(packets[0].conductor.session_id)
+            conductor_caps = ConductorSessionV1.model_validate(conductor_raw).capabilities if conductor_raw else None
+            resolved, _ = self._principal_for_identity(
+                packets[0].conductor,
+                principal,
+                capabilities=conductor_caps,
+            )
+            self._require_role(resolved, "conductor")
+            if any(packet.conductor.session_id != packets[0].conductor.session_id for packet in packets):
+                raise ConductConflict("atomic graph packets must share one owning conductor session")
             staged_store = MemoryStateStore(state)
             staged = ConductBroker(
                 staged_store,
@@ -768,9 +789,19 @@ class ConductBroker:
                 raise ConductError(f"work index points to missing run: {work_id}")
             return self._submit_result(state, run, duplicate=True)
 
-    def task_run(self, task_id: str) -> dict[str, Any]:
+    def task_run(
+        self,
+        task_id: str,
+        *,
+        principal: ConductPrincipalV1 | None = None,
+    ) -> dict[str, Any]:
         """Return the canonical current run for one task without rebuilding its packet."""
-
+        resolved = (
+            principal
+            if principal is not None
+            else self._local_principal(AgentIdentityV1(agent="anonymous", surface="read", session_id="anon"))
+        )
+        self._require_role(resolved, "observer", "conductor", "executor", "compatibility")
         with self.store.transaction() as state:
             candidates = [
                 run for run in state["runs"].values() if str((run.get("packet") or {}).get("task_id") or "") == task_id
@@ -818,7 +849,18 @@ class ConductBroker:
             projection = state.get("local_board_projection")
             return copy.deepcopy(projection) if isinstance(projection, dict) else None
 
-    def graph(self, root_run_id: str) -> dict[str, Any]:
+    def graph(
+        self,
+        root_run_id: str,
+        *,
+        principal: ConductPrincipalV1 | None = None,
+    ) -> dict[str, Any]:
+        resolved = (
+            principal
+            if principal is not None
+            else self._local_principal(AgentIdentityV1(agent="anonymous", surface="read", session_id="anon"))
+        )
+        self._require_role(resolved, "observer", "conductor", "executor", "compatibility")
         with self.store.transaction() as state:
             if root_run_id not in state["runs"]:
                 raise ConductError(f"unknown run: {root_run_id}")
@@ -856,7 +898,13 @@ class ConductBroker:
             if not raw:
                 raise ConductError(f"unknown lease: {lease_id}")
             lease = LeaseV1.model_validate(raw)
-            resolved, enforced = self._principal_for_identity(lease.executor, principal)
+            executor_raw = state["sessions"].get(lease.executor.session_id)
+            executor_caps = ConductorSessionV1.model_validate(executor_raw).capabilities if executor_raw else None
+            resolved, enforced = self._principal_for_identity(
+                lease.executor,
+                principal,
+                capabilities=executor_caps,
+            )
             self._require_role(resolved, "executor", "compatibility")
             if generation != lease.generation:
                 raise ConductConflict("lease generation does not match the claim")
@@ -1298,8 +1346,19 @@ class ConductBroker:
         ]
         _event(state, "fanout.campaign_settled", run_id=root_run_id, outcome=outcome)
 
-    def harvest(self, root_run_id: str) -> dict[str, Any]:
-        graph = self.graph(root_run_id)
+    def harvest(
+        self,
+        root_run_id: str,
+        *,
+        principal: ConductPrincipalV1 | None = None,
+    ) -> dict[str, Any]:
+        resolved = (
+            principal
+            if principal is not None
+            else self._local_principal(AgentIdentityV1(agent="anonymous", surface="read", session_id="anon"))
+        )
+        self._require_role(resolved, "observer", "conductor", "executor", "compatibility")
+        graph = self.graph(root_run_id, principal=resolved)
         by_status: dict[str, int] = {}
         receipts = 0
         for node in graph["nodes"]:
@@ -1319,6 +1378,72 @@ class ConductBroker:
             "nodes": graph["nodes"],
         }
 
+    def list_notification_assignments(
+        self,
+        *,
+        principal: ConductPrincipalV1 | None = None,
+        now: datetime | None = None,
+    ) -> dict[str, Any]:
+        """List the registry-owned event-to-channel notification routes."""
+        resolved = (
+            principal
+            if principal is not None
+            else self._local_principal(AgentIdentityV1(agent="anonymous", surface="read", session_id="anon"))
+        )
+        self._require_role(resolved, "observer", "conductor")
+        now = now or utc_now()
+        try:
+            registry = json.loads(self.notification_registry_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ConductError("notification registry is unavailable or malformed") from exc
+        namespace = registry.get("namespace") if isinstance(registry, dict) else None
+        registry_version = registry.get("schema_version") if isinstance(registry, dict) else None
+        events = registry.get("events") if isinstance(registry, dict) else None
+        if not isinstance(namespace, str) or not isinstance(registry_version, int) or not isinstance(events, dict):
+            raise ConductError("notification registry is unavailable or malformed")
+        assignments: list[dict[str, Any]] = []
+        for event_id, definition in sorted(events.items()):
+            if not isinstance(event_id, str) or not isinstance(definition, dict):
+                raise ConductError("notification registry is unavailable or malformed")
+            channels = definition.get("channels")
+            templates = definition.get("templates")
+            if not isinstance(channels, list) or not all(isinstance(channel, str) for channel in channels):
+                raise ConductError("notification registry is unavailable or malformed")
+            if not isinstance(templates, dict):
+                raise ConductError("notification registry is unavailable or malformed")
+            assignments.append(
+                {
+                    "event_id": event_id,
+                    "class": definition.get("class"),
+                    "severity": definition.get("severity"),
+                    "owner": definition.get("owner"),
+                    "privacy": definition.get("privacy"),
+                    "channels": list(channels),
+                    "dedupe_key": definition.get("dedupe_key"),
+                    "recovery": definition.get("recovery"),
+                    "title": definition.get("title"),
+                    "templates": copy.deepcopy(templates),
+                }
+            )
+        return {
+            "schema_version": "limen.notification_assignments.v1",
+            "generated_at": now.isoformat(),
+            "registry_namespace": namespace,
+            "registry_schema_version": registry_version,
+            "registry_digest": canonical_hash(
+                {"namespace": namespace, "schema_version": registry_version, "events": events}
+            ),
+            "assignments": assignments,
+        }
+
+    def list_assignments(
+        self,
+        *,
+        principal: ConductPrincipalV1 | None = None,
+        now: datetime | None = None,
+    ) -> dict[str, Any]:
+        return self.list_notification_assignments(principal=principal, now=now)
+
     def adopt(
         self,
         run_id: str,
@@ -1335,12 +1460,10 @@ class ConductBroker:
                 raise ConductError("run or adopter session not found")
             adopter = ConductorSessionV1.model_validate(adopter_raw)
             resolved, enforced = self._principal_for_session(adopter, principal)
-            self._require_role(resolved, "conductor")
+            self._require_role(resolved, "conductor", "executor")
             bound = state.get("session_principals", {}).get(adopter_session_id)
             if bound != resolved.principal_id:
                 raise ConductConflict("adopter session is not bound to the authenticated principal")
-            if enforced and run.get("conductor_principal_id") != resolved.principal_id:
-                raise ConductConflict("only the owning conductor principal may recover a run")
             old_raw = state["sessions"].get(run["conductor_session_id"])
             if old_raw:
                 old = ConductorSessionV1.model_validate(old_raw)
@@ -1375,7 +1498,7 @@ class ConductBroker:
                 raise ConductConflict("requester session is not registered")
             requester_model = ConductorSessionV1.model_validate(requester_raw)
             resolved, enforced = self._principal_for_session(requester_model, principal)
-            self._require_role(resolved, "conductor")
+            self._require_role(resolved, "conductor", "executor")
             if run["conductor_session_id"] != requester_session_id:
                 raise ConductConflict("only the current conductor may cancel a reservation")
             if state.get("session_principals", {}).get(requester_session_id) != resolved.principal_id:
@@ -1411,7 +1534,7 @@ class ConductBroker:
                 raise ConductConflict("requester session is not registered")
             requester_model = ConductorSessionV1.model_validate(requester_raw)
             resolved, enforced = self._principal_for_session(requester_model, principal)
-            self._require_role(resolved, "conductor")
+            self._require_role(resolved, "conductor", "executor")
             if run["conductor_session_id"] != requester_session_id:
                 raise ConductConflict("only the current conductor may request stop")
             if state.get("session_principals", {}).get(requester_session_id) != resolved.principal_id:
@@ -1505,7 +1628,7 @@ class ConductBroker:
         exclude_sessions: frozenset[str] = frozenset(),
         ignore_required_session: bool = False,
     ) -> ConductorSessionV1:
-        if _is_task_compatibility_packet(packet):
+        if _is_task_compatibility_packet(packet) or packet.intent.get("kind") == "fanout-root":
             identity = AgentIdentityV1(
                 agent="tabularius",
                 surface="keeper",
@@ -1516,7 +1639,7 @@ class ConductBroker:
                 session_id=identity.session_id,
                 identity=identity,
                 origin="relay",
-                capabilities=frozenset({"board-write"}),
+                capabilities=frozenset({"board-write", "conduct"}),
                 transport="keeper",
                 harvest_method="projection-receipt",
                 concurrency=1024,
@@ -1535,6 +1658,20 @@ class ConductBroker:
             if session.quota_remaining == 0:
                 continue
             if packet.required_capabilities - session.capabilities:
+                continue
+            role_snapshot = (state.get("session_principal_roles") or {}).get(session.session_id)
+            if role_snapshot is None:
+                # Backward compatibility is safe only for the deterministic local
+                # principal: its roles are derived from the same capability set.
+                # An older authenticated session without a role snapshot must
+                # re-register instead of being guessed into executor authority.
+                local = self._local_principal(session.identity, session.capabilities)
+                if (state.get("session_principals") or {}).get(session.session_id) != local.principal_id:
+                    continue
+                registered_roles = set(local.roles)
+            else:
+                registered_roles = set(role_snapshot)
+            if registered_roles.isdisjoint({"executor", "compatibility"}):
                 continue
             if (
                 packet.execution.get("local_heavy_allowed") is False
@@ -1679,7 +1816,13 @@ class ConductBroker:
         if not raw:
             raise ConductError(f"unknown lease: {lease_id}")
         lease = LeaseV1.model_validate(raw)
-        resolved, enforced = self._principal_for_identity(lease.executor, principal)
+        executor_raw = state["sessions"].get(lease.executor.session_id)
+        executor_caps = ConductorSessionV1.model_validate(executor_raw).capabilities if executor_raw else None
+        resolved, enforced = self._principal_for_identity(
+            lease.executor,
+            principal,
+            capabilities=executor_caps,
+        )
         self._require_role(resolved, "executor", "compatibility")
         if generation is not None and generation != lease.generation:
             raise ConductConflict("lease generation does not match the request")
@@ -1773,27 +1916,42 @@ class ConductBroker:
             raise ConductConflict(f"authenticated principal lacks required {'/'.join(roles)} role")
 
     @staticmethod
-    def _local_principal(identity: AgentIdentityV1) -> ConductPrincipalV1:
+    def _local_principal(
+        identity: AgentIdentityV1,
+        capabilities: frozenset[str] | set[str] | None = None,
+    ) -> ConductPrincipalV1:
+        roles: set[ConductRole] = {"observer"}
+        if capabilities:
+            caps = set(capabilities)
+            if {"conduct", "task-submit", "split"} & caps:
+                roles.add("conductor")
+            if {"execute", "board-write", "code", "review", "relay", "local-worktree"} & caps:
+                roles.add("executor")
         return ConductPrincipalV1(
             principal_id=f"local:{identity.agent}:{identity.surface}",
             agent=identity.agent,
             surface=identity.surface,
-            roles=frozenset({"observer", "conductor", "executor", "compatibility"}),
+            roles=frozenset(roles),
         )
 
     def _principal_for_identity(
         self,
         identity: AgentIdentityV1,
         principal: ConductPrincipalV1 | None,
+        capabilities: frozenset[str] | set[str] | None = None,
     ) -> tuple[ConductPrincipalV1, bool]:
-        return (principal, True) if principal else (self._local_principal(identity), False)
+        if principal is not None:
+            return (principal, True)
+        return (self._local_principal(identity, capabilities), True)
 
     def _principal_for_session(
         self,
         session: ConductorSessionV1,
         principal: ConductPrincipalV1 | None,
     ) -> tuple[ConductPrincipalV1, bool]:
-        return self._principal_for_identity(session.identity, principal)
+        if principal is not None:
+            return (principal, True)
+        return (self._local_principal(session.identity, session.capabilities), True)
 
     @staticmethod
     def _bind_session_identity(

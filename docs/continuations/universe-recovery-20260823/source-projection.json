@@ -1,0 +1,51 @@
+{
+  "schema": "limen.universe_recovery_source_projection.v1",
+  "observed_at": "2026-08-23T16:00:00Z",
+  "launch_snapshot_claimed": {
+    "repositories": 319,
+    "open_pull_requests": 949,
+    "non_default_refs": 10543,
+    "recent_pull_request_closures": 129,
+    "unresolved_current_threads": 93,
+    "unresolved_outdated_threads": 7,
+    "status": "source-evidence-requires-exhaustive-live-rederivation"
+  },
+  "tracked_census_snapshot": {
+    "observed_date": "2026-08-21",
+    "repositories": 319,
+    "normalized_leaves": 14342,
+    "open_pull_requests": 1039,
+    "branches": 11102,
+    "status": "stale-launch-input-not-current-truth"
+  },
+  "live_review_lineage": {
+    "pull_requests": 13,
+    "threads": 156,
+    "resolved": 56,
+    "unresolved_current": 93,
+    "unresolved_outdated": 7,
+    "pagination": "complete"
+  },
+  "preserved_source_instances": {
+    "agy_markdown_artifacts": 12,
+    "agy_metadata_records": 12,
+    "git_bundle_bytes": 263455448,
+    "git_bundle_refs": 659,
+    "git_bundle_verified": true,
+    "limen_stashes": 26,
+    "agy_named_stashes": 2,
+    "collaboration_dirty_paths": 47,
+    "collaboration_tracked_dirty_paths": 32,
+    "collaboration_untracked_paths": 15
+  },
+  "custody_volumes": {
+    "Archive4T": "not-mounted",
+    "T7Recovery": "not-mounted"
+  },
+  "privacy": {
+    "raw_transcripts_committed": false,
+    "private_repository_coordinates_committed": false,
+    "full_private_object_hashes_committed": false,
+    "credentials_committed": false
+  }
+}

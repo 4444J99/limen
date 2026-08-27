@@ -233,7 +233,7 @@ BINARY_FEATURES = (
 # stdlib ``urllib`` (no headless browser in the repo; $0-capex) — a JS-only site simply reads as
 # "not demoed above the fold", which is itself an honest legibility signal.
 
-_SITE_UA = "limen-observatory/1.0 (+https://github.com/organvm/limen)"
+_SITE_UA = "limen-observatory/1.0 (+https://github.com/4444J99/limen)"
 _SITE_TIMEOUT = 8
 _SITE_BLOCKED = {401, 403, 429, 999}
 _SITE_HEAD = 4000  # the "above the fold" region of the served HTML

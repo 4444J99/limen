@@ -45,6 +45,12 @@ from typing import Any, Callable, Iterable
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
+CLI_SRC = ROOT / "cli" / "src"
+if str(CLI_SRC) not in sys.path:
+    sys.path.insert(0, str(CLI_SRC))
+
+from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY  # noqa: E402
+
 DEFAULT_MANIFEST = ROOT / "institutio" / "positioning" / "program.yaml"
 DEFAULT_MAP = ROOT / "institutio" / "positioning" / "github-map.json"
 DEFAULT_INDEX = ROOT / "docs" / "positioning" / "program" / "ISSUE-INDEX.md"
@@ -110,6 +116,14 @@ class ProgramError(RuntimeError):
     pass
 
 
+def _canonical_repository_coordinate(repository: str) -> str:
+    """Compare Limen receipts by stable repository identity, without rewriting evidence."""
+
+    if LIMEN_REPOSITORY_IDENTITY.accepts(repository):
+        return LIMEN_REPOSITORY_IDENTITY.canonical_coordinate
+    return repository
+
+
 # These comments are public audit evidence and must remain undeleted.  Their IDs are a
 # durable quarantine register so a later valid-looking comment cannot resurrect forged proof.
 INVALIDATED_RECEIPT_COMMENT_IDS = frozenset(
@@ -145,22 +159,39 @@ def _command_owned_by_packet(command: str, packet: dict[str, Any]) -> bool:
         return False
     if any(token in {";", "|", "||", "&&"} or any(char in token for char in "$`()") for token in tokens):
         return False
-    executable = tokens[1] if Path(tokens[0]).name in {"python", "python3", "python3.13"} and len(tokens) > 1 else tokens[0]
+    executable = (
+        tokens[1] if Path(tokens[0]).name in {"python", "python3", "python3.13"} and len(tokens) > 1 else tokens[0]
+    )
     executable = executable.removeprefix("./")
     if Path(executable).is_absolute() or Path(executable).name in {
-        "bash", "dash", "env", "ksh", "sh", "zsh", "true", "false", "echo", "printf",
+        "bash",
+        "dash",
+        "env",
+        "ksh",
+        "sh",
+        "zsh",
+        "true",
+        "false",
+        "echo",
+        "printf",
     }:
         return False
     if "-c" in tokens or executable.endswith("/true") or executable.endswith("/false"):
         return False
     target_paths = [str(path).rstrip("/") for path in packet.get("target_paths") or []]
-    if not any(path == "scripts" or path.startswith(("scripts/", "docs/", "src/")) or path.endswith((".py", ".sh")) for path in target_paths):
+    if not any(
+        path == "scripts" or path.startswith(("scripts/", "docs/", "src/")) or path.endswith((".py", ".sh"))
+        for path in target_paths
+    ):
         return (ROOT / executable).is_file()
     return any(executable == target or executable.startswith(target + "/") for target in target_paths)
 
 
 def _predicate_binding_failures(
-    predicate: dict[str, Any], *, expected_command: str | None = None, packet: dict[str, Any] | None = None,
+    predicate: dict[str, Any],
+    *,
+    expected_command: str | None = None,
+    packet: dict[str, Any] | None = None,
     strengthened: bool = True,
 ) -> list[str]:
     failures: list[str] = []
@@ -211,7 +242,11 @@ def _git_show_text(head: str, path: str) -> str:
         raise ProgramError("receipt artifact must use an exact head and repository-relative path")
     try:
         completed = subprocess.run(
-            ["git", "show", f"{head}:{path}"], cwd=ROOT, check=True, capture_output=True, text=True,
+            ["git", "show", f"{head}:{path}"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
         )
     except (OSError, subprocess.CalledProcessError) as exc:
         raise ProgramError(f"receipt artifact {path!r} is not present at observed head {head}") from exc
@@ -220,7 +255,16 @@ def _git_show_text(head: str, path: str) -> str:
 
 def _validate_w07_artifacts(reader_evidence: dict[str, Any], observed_heads: dict[str, Any]) -> list[str]:
     failures: list[str] = []
-    head = observed_heads.get("organvm/limen") if isinstance(observed_heads, dict) else None
+    head = None
+    if isinstance(observed_heads, dict):
+        head = next(
+            (
+                value
+                for repository, value in observed_heads.items()
+                if _canonical_repository_coordinate(str(repository)) == LIMEN_REPOSITORY_IDENTITY.canonical_coordinate
+            ),
+            None,
+        )
     response_path = reader_evidence.get("response_path")
     memo_path = reader_evidence.get("decision_memo_path")
     if not _is_nonempty_text(head) or not _valid_exact_head(head):
@@ -377,9 +421,7 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
         if not isinstance(repository_id, int) or isinstance(repository_id, bool) or repository_id <= 0:
             failures.append(f"{label}.github_repository_id must be a positive integer")
         elif repository_id in repository_ids:
-            failures.append(
-                f"{label}.github_repository_id duplicates {repository_ids[repository_id]!r}"
-            )
+            failures.append(f"{label}.github_repository_id duplicates {repository_ids[repository_id]!r}")
         else:
             repository_ids[repository_id] = str(identity_name)
         if not isinstance(canonical_slug, str) or not REPOSITORY_RE.fullmatch(canonical_slug):
@@ -396,9 +438,7 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
             failures.append(f"{label}.archived must be boolean")
         expected_source = f"https://api.github.com/repositories/{repository_id}"
         if value.get("source") != expected_source:
-            failures.append(
-                f"{label}.source must exactly bind github_repository_id to {expected_source!r}"
-            )
+            failures.append(f"{label}.source must exactly bind github_repository_id to {expected_source!r}")
         if not _is_nonempty_text(value.get("resolution_rule")):
             failures.append(f"{label}.resolution_rule must be non-empty text")
         if not _is_text_list(previous_slugs):
@@ -407,9 +447,7 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
         if canonical_slug in previous_slugs:
             failures.append(f"{label}.previous_slugs cannot contain the canonical slug")
         if canonical_slug in retired_repository_slugs:
-            failures.append(
-                f"{label}.canonical_slug is already declared as a retired repository slug"
-            )
+            failures.append(f"{label}.canonical_slug is already declared as a retired repository slug")
         normalized = {**value, "identity": str(identity_name), "observed_at": identity_observed_at}
         repository_identity_by_slug[canonical_slug] = normalized
         for previous_slug in previous_slugs:
@@ -420,9 +458,7 @@ def index_program(data: dict[str, Any]) -> dict[str, Any]:
                 failures.append(f"retired repository slug is declared more than once: {previous_slug}")
                 continue
             if previous_slug in repository_identity_by_slug:
-                failures.append(
-                    f"{label}.previous_slugs contains canonical repository slug {previous_slug!r}"
-                )
+                failures.append(f"{label}.previous_slugs contains canonical repository slug {previous_slug!r}")
                 continue
             retired_repository_slugs[previous_slug] = canonical_slug
 
@@ -1523,9 +1559,25 @@ def validate_work_receipt(
             resolved_set = set(resolved)
             if len(resolved_set) != len(resolved):
                 failures.append("resolved_repositories must not contain duplicates")
-        if not isinstance(observed_heads, dict) or set(observed_heads) != resolved_set:
+        normalized_resolved = {_canonical_repository_coordinate(repository) for repository in resolved_set}
+        normalized_observed = (
+            {_canonical_repository_coordinate(str(repository)) for repository in observed_heads}
+            if isinstance(observed_heads, dict)
+            else set()
+        )
+        if (
+            not isinstance(observed_heads, dict)
+            or len(normalized_resolved) != len(resolved_set)
+            or len(normalized_observed) != len(observed_heads)
+            or normalized_observed != normalized_resolved
+        ):
             failures.append("observed_heads must contain exactly every resolved repository")
-    elif not isinstance(observed_heads, dict) or set(observed_heads) != {expected_repository}:
+    elif (
+        not isinstance(observed_heads, dict)
+        or len(observed_heads) != 1
+        or {_canonical_repository_coordinate(str(repository)) for repository in observed_heads}
+        != {_canonical_repository_coordinate(expected_repository)}
+    ):
         failures.append(f"observed_heads must contain exactly the packet target repository {expected_repository!r}")
     if isinstance(observed_heads, dict):
         for repository, head in observed_heads.items():
@@ -1610,9 +1662,7 @@ def _canonical_digest(value: object) -> str:
 
 def _stable_remote_row(object_id: str, row: dict[str, Any], *, include_state: bool = True) -> dict[str, Any]:
     body = str(row.get("body") or "")
-    labels = sorted(
-        str(item.get("name") or "") for item in row.get("labels") or [] if isinstance(item, dict)
-    )
+    labels = sorted(str(item.get("name") or "") for item in row.get("labels") or [] if isinstance(item, dict))
     milestone = row.get("milestone")
     projection = {
         "id": object_id,
@@ -1720,9 +1770,7 @@ def validate_phase_receipt(
         failures.append("predicate must be a mapping")
     else:
         failures.extend(
-            _predicate_binding_failures(
-                predicate, expected_command=expected_command, strengthened=strengthened
-            )
+            _predicate_binding_failures(predicate, expected_command=expected_command, strengthened=strengthened)
         )
         if predicate.get("exit_code") != 0:
             failures.append("predicate.exit_code must be zero")
@@ -1735,9 +1783,14 @@ def validate_phase_receipt(
         failures.append("evidence URLs must use https")
     observed_heads = receipt.get("observed_heads")
     repository = str(graph["program"]["repository"])
-    if not isinstance(observed_heads, dict) or set(observed_heads) != {repository}:
+    if (
+        not isinstance(observed_heads, dict)
+        or len(observed_heads) != 1
+        or {_canonical_repository_coordinate(str(observed_repository)) for observed_repository in observed_heads}
+        != {_canonical_repository_coordinate(repository)}
+    ):
         failures.append(f"observed_heads must contain exactly the program repository {repository!r}")
-    elif not _valid_exact_head(observed_heads[repository]):
+    elif not _valid_exact_head(next(iter(observed_heads.values()))):
         failures.append("observed_heads must record an exact 40-character head")
     for field, expected, label in (
         ("child_receipts_sha256", child_receipt_digest, "child receipt digest"),
@@ -1839,17 +1892,9 @@ def _validate_phase_projection(
             failures.append(f"{object_id} title drift")
         if str(row.get("body") or "") != body_for(object_id, graph, mapping):
             failures.append(f"{object_id} body drift")
-        current_labels = {
-            str(item.get("name") or "") for item in row.get("labels") or [] if isinstance(item, dict)
-        }
-        expected_routing = {
-            label for label in labels_for(object_id, graph) if label.startswith(("model:", "effort:"))
-        }
-        current_routing = {
-            label
-            for label in current_labels
-            if label.startswith(("model:", "effort:"))
-        }
+        current_labels = {str(item.get("name") or "") for item in row.get("labels") or [] if isinstance(item, dict)}
+        expected_routing = {label for label in labels_for(object_id, graph) if label.startswith(("model:", "effort:"))}
+        current_routing = {label for label in current_labels if label.startswith(("model:", "effort:"))}
         if current_routing != expected_routing:
             failures.append(f"{object_id} routing label drift")
         if not set(labels_for(object_id, graph)).issubset(current_labels):
@@ -1861,7 +1906,11 @@ def _validate_phase_projection(
     orphan_prefix = f"{phase_id}-W"
     for remote_id, row in remote.items():
         markers = MARKER_RE.findall(str(row.get("body") or "")) if isinstance(row, dict) else []
-        orphans = [marker_id for marker_id in markers if marker_id.startswith(orphan_prefix) and marker_id not in expected_children]
+        orphans = [
+            marker_id
+            for marker_id in markers
+            if marker_id.startswith(orphan_prefix) and marker_id not in expected_children
+        ]
         if orphans:
             failures.append(f"{phase_id} has orphan phase-local markers {sorted(orphans)}")
     if failures:
@@ -1900,36 +1949,23 @@ def phase_proof(phase_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -
         for dependency in graph["chunk_by_id"][chunk_id].get("depends_on") or []
     }
     chunk_dependency_set = _dependency_closure(direct_chunk_dependencies, graph["chunk_by_id"])
-    predecessor_work_set = {
-        work_id
-        for chunk_id in chunk_dependency_set
-        for work_id in graph["chunk_work"][chunk_id]
-    }
+    predecessor_work_set = {work_id for chunk_id in chunk_dependency_set for work_id in graph["chunk_work"][chunk_id]}
     predecessor_phase_set = {
         candidate["id"]
         for candidate in graph["phases"]
-        if candidate["id"] != phase_id
-        and {packet["id"] for packet in candidate["work"]}.issubset(predecessor_work_set)
+        if candidate["id"] != phase_id and {packet["id"] for packet in candidate["work"]}.issubset(predecessor_work_set)
     }
     required_phase_set = phase_dependency_set | predecessor_phase_set
-    required_phase_ids = [
-        candidate["id"] for candidate in graph["phases"] if candidate["id"] in required_phase_set
-    ]
-    required_chunk_ids = [
-        chunk["id"] for chunk in graph["chunks"] if chunk["id"] in chunk_dependency_set
-    ]
-    predecessor_work_ids = [
-        work_id for chunk_id in required_chunk_ids for work_id in graph["chunk_work"][chunk_id]
-    ]
+    required_phase_ids = [candidate["id"] for candidate in graph["phases"] if candidate["id"] in required_phase_set]
+    required_chunk_ids = [chunk["id"] for chunk in graph["chunks"] if chunk["id"] in chunk_dependency_set]
+    predecessor_work_ids = [work_id for chunk_id in required_chunk_ids for work_id in graph["chunk_work"][chunk_id]]
     phase_object_ids = [
         phase_id,
         *(packet["id"] for packet in phase["work"]),
     ]
     for dependency in required_phase_ids:
         dependency_phase = graph["phase_by_id"][dependency]
-        phase_object_ids.extend(
-            [dependency, *(packet["id"] for packet in dependency_phase["work"])]
-        )
+        phase_object_ids.extend([dependency, *(packet["id"] for packet in dependency_phase["work"])])
     phase_object_ids.extend(predecessor_work_ids)
     remote = recover_mapped_issues(graph, mapping, initial_remote, object_ids=phase_object_ids)
     _validate_phase_projection(phase_id, graph, mapping, remote)
@@ -1950,9 +1986,7 @@ def phase_proof(phase_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -
         except ProgramError as exc:
             failures.append(f"{phase_id} upstream phase {dependency} is invalid: {exc}")
     phase_covered_work_ids = {
-        packet["id"]
-        for dependency in required_phase_ids
-        for packet in graph["phase_by_id"][dependency]["work"]
+        packet["id"] for dependency in required_phase_ids for packet in graph["phase_by_id"][dependency]["work"]
     }
     partial_predecessor_work = [
         work_id
@@ -2052,7 +2086,9 @@ def fetch_work_receipt(work_id: str, graph: dict[str, Any], mapping: dict[str, A
     ):
         raise ProgramError(f"{work_id} legacy v1 receipt was posted after the contract cutover")
     return validate_work_receipt(
-        receipt, work_id, graph,
+        receipt,
+        work_id,
+        graph,
         allow_legacy_v1=_legacy_receipt_allowed(receipt.get("schema_version"), latest),
     ), str(latest.get("html_url") or "")
 
@@ -2300,9 +2336,7 @@ def ready_work(graph: dict[str, Any], mapping: dict[str, Any]) -> list[dict[str,
                     "issue": row,
                     "target_repo": packet["target_repo"],
                     "target_repository_identity": (
-                        public_repository_identity(repository_identity)
-                        if repository_identity is not None
-                        else None
+                        public_repository_identity(repository_identity) if repository_identity is not None else None
                     ),
                     "target_paths": packet["target_paths"],
                     "capabilities": packet["capabilities"],
@@ -2338,9 +2372,7 @@ def packet_seed(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) ->
         "live_references": packet["external_dependencies"],
     }
     if repository_identity is not None:
-        execution_requirements["target_repository_identity"] = resolve_repository_identity_for_seed(
-            repository_identity
-        )
+        execution_requirements["target_repository_identity"] = resolve_repository_identity_for_seed(repository_identity)
     return {
         "schema_version": SEED_SCHEMA,
         "work_id": work_id,
@@ -2372,7 +2404,7 @@ def chunk_launch_prompt(chunk_id: str, graph: dict[str, Any], mapping: dict[str,
     excluded = ", ".join(chunk.get("exclude_work_ids") or []) or "none"
     extras = ", ".join(chunk.get("extra_work_ids") or []) or "none"
     root_row = mapping.get("issues", {}).get("PSP-ROOT") or {}
-    root_url = str(root_row.get("url") or "https://github.com/organvm/limen/issues/2157")
+    root_url = str(root_row.get("url") or "https://github.com/4444J99/limen/issues/2157")
     if chunk_id == "PSP-C00":
         bootstrap = (
             "Continue draft PR #2156 on branch `codex/production-systems-program`; do not recreate the graph or "
@@ -2688,7 +2720,9 @@ def omega(
         "remote_state": remote_state_digest,
         "work_receipts": {
             work_id: hashlib.sha256(
-                json.dumps(fetch_work_receipt(work_id, graph, mapping)[0], sort_keys=True, separators=(",", ":")).encode()
+                json.dumps(
+                    fetch_work_receipt(work_id, graph, mapping)[0], sort_keys=True, separators=(",", ":")
+                ).encode()
             ).hexdigest()
             for work_id in sorted(graph["work_by_id"])
             if work_id in receipt_urls and work_id not in terminal_work_ids
@@ -2719,8 +2753,7 @@ def omega(
     open_ids = [
         object_id
         for object_id in graph["ordered_ids"]
-        if str(remote[object_id].get("state") or "").lower() != "closed"
-        and object_id not in allowed_open
+        if str(remote[object_id].get("state") or "").lower() != "closed" and object_id not in allowed_open
     ]
     if open_ids:
         failures.append(f"open program objects: {open_ids}")

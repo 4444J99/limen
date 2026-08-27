@@ -82,7 +82,7 @@ CHRONIC_MAX_AGE_SECONDS = 2 * 60 * 60
 # state). Issue #2054 says in terms that no Cloudflare support case, billing change, plan
 # change or operator action is required, so pointing a reader at a lever sends them to a
 # human action the owner explicitly ruled out. Cite the engineering owner instead.
-QUOTA_OWNER = "organvm/limen#2054 (conduct persistence write amplification)"
+QUOTA_OWNER = "4444J99/limen#2054 (conduct persistence write amplification)"
 # sysexits(3): the request is valid, the service is temporarily unable to honour it.
 EX_TEMPFAIL = 75
 

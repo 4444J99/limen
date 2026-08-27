@@ -10,7 +10,18 @@ empty-branch-is-a-todo), so they are **kept, never auto-deleted** — this is th
 location instead of hanging invisibly.
 Resolve each: open a PR and land it, or delete the branch by hand if the intention is abandoned.
 
+## Decided — closed PR, work preserved (3) — reapable, awaiting acceptance
+
+A human CLOSED these PRs unmerged and the local tip is still that PR's exact head, so
+GitHub preserves the commit at `refs/pull/N/head` — `git fetch origin pull/N/head`
+recovers it. Deleting the local ref loses nothing. These are NOT unfulfilled intentions:
+the intention was already decided against. They are reap candidates gated on
+`docs/branch-reap-acceptance.jsonl`, not on anyone re-deciding them.
+
+- `codex/limen-closeout-20260822` — PR #2532 `refs/pull/2532/head` @ `6526fd06a06e598bd02e92ba912ea55af09e713c`; local tip matches exact pull head — 6526fd06a fix(closeout): preserve ledger ordering and unique branch custody
+- `feat/notification-registry` — PR #2527 `refs/pull/2527/head` @ `ae62c6cd1fde7dffc90f82b4d31a4c6e42b7d98f`; local tip matches exact pull head — ae62c6cd1 feat: add truthful notification registry
+- `work/on-demand-runtime-rollout-closeout` — PR #2530 `refs/pull/2530/head` @ `e7c2f16294b851618ad26e910a6bb8d16e97bc4b`; local tip matches exact pull head — e7c2f1629 Merge branch 'fix/discharge-card-hold' into work/on-demand-runtime-rollout-closeout
+
 ## Live-work branches (1) — decide each
 
-- `feat/notification-registry` — ae62c6cd1 feat: add truthful notification registry
-
+- `recovery/agy-project-md-20260823` — c84d1ad00 preserve: orphaned Agy project delta

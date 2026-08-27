@@ -70,7 +70,7 @@
     },
     {
       "rank": 7,
-      "repo": "organvm/limen",
+      "repo": "4444J99/limen",
       "product": "PR-Repair Factory",
       "stage": "building",
       "whose_hand": "mine",
@@ -80,7 +80,7 @@
     },
     {
       "rank": 8,
-      "repo": "organvm/limen",
+      "repo": "4444J99/limen",
       "product": "MONETA Mint-as-a-Service",
       "stage": "live",
       "whose_hand": "yours",
@@ -90,7 +90,7 @@
     },
     {
       "rank": 9,
-      "repo": "organvm/limen",
+      "repo": "4444J99/limen",
       "product": "Fleet Cost-Compliance Guard",
       "stage": "building",
       "whose_hand": "mine",
@@ -100,7 +100,7 @@
     },
     {
       "rank": 10,
-      "repo": "organvm/limen",
+      "repo": "4444J99/limen",
       "product": "Enactment Audit",
       "stage": "building",
       "whose_hand": "mine",
@@ -110,7 +110,6 @@
     }
   ],
   "conductor_core": [
-    "organvm/limen",
     "4444J99/limen",
     "organvm/session-meta",
     "4444J99/session-meta"

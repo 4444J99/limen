@@ -292,7 +292,7 @@ def agent_status(agent: str) -> AgentStatus:
         warp_key = os.environ.get("WARP_API_KEY")
         gh_path = shutil.which("gh")
         workflow = os.environ.get("LIMEN_WARP_OZ_WORKFLOW", "limen-warp-oz.yml")
-        dispatch_repo = os.environ.get("LIMEN_WARP_OZ_REPO", "organvm/limen")
+        dispatch_repo = os.environ.get("LIMEN_WARP_OZ_REPO", "4444J99/limen")
         if not warp_key:
             return {
                 "agent": agent,
@@ -336,7 +336,7 @@ def agent_status(agent: str) -> AgentStatus:
         workflow = os.environ.get("LIMEN_GITHUB_ACTIONS_WORKFLOW", DEFAULT_GITHUB_ACTIONS_WORKFLOW)
         health_repo = os.environ.get(
             "LIMEN_GITHUB_ACTIONS_HEALTH_REPO",
-            os.environ.get("LIMEN_GITHUB_ACTIONS_REPO", "organvm/limen"),
+            os.environ.get("LIMEN_GITHUB_ACTIONS_REPO", "4444J99/limen"),
         )
         workflow_ok, workflow_detail = _github_actions_workflow_status(binary, workflow, health_repo)
         ok = ok and workflow_ok
@@ -351,7 +351,7 @@ def agent_status(agent: str) -> AgentStatus:
             # github_actions (l.332) and ollama (l.318) lanes so this lane is HEALTH-DERIVED:
             # reachable when the actor is assignable, self-down if the seat lapses — no manual
             # LIMEN_COPILOT_ENABLED arming (which the persistence classifier blocks anyway).
-            health_repo = os.environ.get("LIMEN_COPILOT_HEALTH_REPO", "organvm/limen")
+            health_repo = os.environ.get("LIMEN_COPILOT_HEALTH_REPO", "4444J99/limen")
             if health_repo and _copilot_assignable(binary, health_repo, actor):
                 detail = f"{detail}; {actor} assignable on {health_repo}"
             else:

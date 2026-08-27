@@ -77,7 +77,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 LOCKD = ROOT / "logs" / ".queue.lock.d"
 STAMP = ROOT / "logs" / "main-green.json"
 WORKFLOW = os.environ.get("LIMEN_MAIN_GREEN_WORKFLOW", "ci.yml")
-REPO = os.environ.get("LIMEN_MAIN_GREEN_REPO", "organvm/limen")
+REPO = os.environ.get("LIMEN_MAIN_GREEN_REPO", "4444J99/limen")
 # The merge queue's validation workflow: every no-bypass main commit is a fast-forward to a group
 # commit this workflow proved as a merge_group run at the SAME sha (see _queue_proof_url).
 QUEUE_PROOF_WORKFLOW = "pr-gate.yml"
@@ -492,11 +492,15 @@ def open_pr_impact(
 def classify_red_run(run_id: int | str):
     """Fetch GitHub evidence and apply the shared classifier."""
     if not run_id:
-        return type(classify_ci_failure([]))("executed_code_failure", "classification evidence unavailable", False)
+        return type(classify_ci_failure([]))(
+            "executed_code_failure", "classification evidence unavailable", False, "CI_CODE_RED", True, False
+        )
     data = _gh_json(["api", f"repos/{REPO}/actions/runs/{run_id}/jobs"], None)
     jobs = data.get("jobs") if isinstance(data, dict) else None
     if not isinstance(jobs, list) or not jobs:
-        return type(classify_ci_failure([]))("executed_code_failure", "classification evidence unavailable", False)
+        return type(classify_ci_failure([]))(
+            "executed_code_failure", "classification evidence unavailable", False, "CI_CODE_RED", True, False
+        )
     failed = [j for j in jobs if isinstance(j, dict) and (j.get("conclusion") or "") in RED]
     annotations: list[dict] = []
     for job in failed:

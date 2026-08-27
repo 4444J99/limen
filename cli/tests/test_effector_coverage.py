@@ -326,7 +326,7 @@ def test_the_baseline_pins_the_sharpest_known_sites(ce):
         ("scripts/autonomy-governor.py", "gh pr merge"),  # merge to main auto-deploys
         ("scripts/contributions-organ.py", "gh pr comment"),  # third-party repositories
         ("scripts/creds-hydrate.py", "gh secret set"),  # writes Actions secrets
-        ("scripts/reap-remote-branches.py", "gh api -X DELETE"),  # deletes remote refs
+        ("scripts/repository-transfer-workflows.py", "gh api -X PUT"),  # changes workflow state
         ("organs/representation/representation_substrate.py", "import smtplib"),
     ]:
         assert path in joined and verb in joined, f"{path} `{verb}` fell out of the baseline"

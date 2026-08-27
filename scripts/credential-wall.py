@@ -145,12 +145,12 @@ _HEADER = """\
 None of it lives in a chat or in anyone's head. Two homes, both on GitHub:
 
 - **The information** — what each credential is, its `op://` provenance, its env-var name, its validity \
-probe — lives in code: [`scripts/creds-hydrate.py`](https://github.com/organvm/limen/blob/main/scripts/creds-hydrate.py) \
+probe — lives in code: [`scripts/creds-hydrate.py`](https://github.com/4444J99/limen/blob/main/scripts/creds-hydrate.py) \
 → `DEFAULT_MAP`. Adding a vendor = adding **one entry**, never a login step. **Values never touch the \
 repo** — only `op://` item paths + env-var names, behind the `_scrub()` PII firewall. Actual secrets \
 live in 1Password; account/health PII lives off-repo at `700`.
 - **The actions** — each remaining human or reroutable atom — live as the `credential`-labelled issues. \
-Filter the live set anytime: <https://github.com/organvm/limen/labels/credential>.
+Filter the live set anytime: <https://github.com/4444J99/limen/labels/credential>.
 
 **Verify the whole estate:** `python3 scripts/creds-hydrate.py --verify` (exit `0` = every lane \
 authenticates). **Hydration flow:** 1Password → `~/.limen.env` (chmod `600`, never committed) → every \

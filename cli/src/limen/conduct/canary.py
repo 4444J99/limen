@@ -619,7 +619,7 @@ def _packet(
             horizon="present",
             value_case="Prove one bounded authenticated peer-conduct mesh edge",
             budget_cost=1,
-            owner_surface="organvm/limen",
+            owner_surface="4444J99/limen",
         ),
         authority=AuthorityEnvelopeV1(
             actions=frozenset({"read"}),

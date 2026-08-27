@@ -55,7 +55,7 @@ def latest_success(repo: str) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--repo", default="organvm/limen")
+    parser.add_argument("--repo", default="4444J99/limen")
     parser.add_argument("--max-age-seconds", type=int, default=21600)
     args = parser.parse_args()
     try:

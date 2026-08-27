@@ -53,7 +53,7 @@ VALUE_REPOS = ROOT / "value-repos.json"
 CONTRIBUTION_BALANCE_SCRIPT = ROOT / "scripts" / "github-contribution-balance.py"
 CONTRIBUTION_BALANCE_LOGIN = os.environ.get("LIMEN_CONTRIBUTION_BALANCE_LOGIN", "4444J99")
 CONTRIBUTION_BALANCE_POLICY = ROOT / "docs" / "github-contribution-balance.md"
-CONTRIBUTION_BALANCE_OWNER_ISSUE = "https://github.com/organvm/limen/issues/687"
+CONTRIBUTION_BALANCE_OWNER_ISSUE = "https://github.com/4444J99/limen/issues/687"
 CONTRIBUTION_BALANCE_PUBLIC_ROOT = os.environ.get("LIMEN_CONTRIBUTION_BALANCE_PUBLIC_ROOT", "~/Workspace/limen")
 CREDENTIAL_TOMBSTONE_DOC = ROOT / "docs" / "credential-token-tombstone-audit.md"
 ARCHIVE4T_ROOT = Path(os.environ.get("LIMEN_ARCHIVE4T_ROOT", "/Volumes/Archive4T"))
@@ -749,10 +749,10 @@ def mail_receipts() -> list[dict[str, Any]]:
             **common,
             "assignment_packet": {
                 "lane_fit": "local-codex-or-opencode",
-                "repo": "organvm/limen",
+                "repo": "4444J99/limen",
                 "task": "Run python3 scripts/mail-story-ledger.py --scope flagged --write. Use existing mail-story atoms and UMA obligations to classify the active flagged set; draft/park, never send.",
                 "predicate": "python3 -m pytest cli/tests/test_mail_story_ledger.py -q",
-                "receipt_target": "git:organvm/limen:docs/mail-story-ledger.md",
+                "receipt_target": "git:4444J99/limen:docs/mail-story-ledger.md",
                 "stop_condition": "flagged set has classified atoms, obligations, and needs-human buckets",
             },
         },
@@ -772,10 +772,10 @@ def mail_receipts() -> list[dict[str, Any]]:
             **{**common, "evidence": {**common["evidence"], "mail_story": history_story}},
             "assignment_packet": {
                 "lane_fit": "local-codex-or-opencode",
-                "repo": "organvm/limen",
+                "repo": "4444J99/limen",
                 "task": "Continue the historical metadata sweep from existing receipts; emit batch cursor/count receipt before any thread enrichment.",
                 "predicate": "python3 scripts/mail-story-ledger.py --scope all --limit 500 --write",
-                "receipt_target": "git:organvm/limen:docs/mail-story-ledger.md",
+                "receipt_target": "git:4444J99/limen:docs/mail-story-ledger.md",
                 "stop_condition": "next 500 historical messages are atomized or a precise cursor/blocker is recorded",
             },
         },
@@ -824,10 +824,10 @@ def repo_surface_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "agy-or-opencode-readonly",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "task": "Run python3 scripts/repo-surface-ledger.py --scan-root ~/Workspace --max-depth 6 --write. Harvest existing repo-surface and consolidation receipts, then assign only missing classifications.",
             "predicate": "scripts/verify-scoped.sh",
-            "receipt_target": "git:organvm/limen:docs/repo-surface-ledger.md",
+            "receipt_target": "git:4444J99/limen:docs/repo-surface-ledger.md",
             "stop_condition": "all discovered roots are classified or recorded with blocker/gate",
         },
     }
@@ -858,10 +858,10 @@ def prompt_packet_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "codex-conductor",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "task": "Map each open prompt packet to merged PR, open PR, owner task, supersession, or precise blocker.",
             "predicate": "python3 scripts/prompt-packet-ledger.py --write",
-            "receipt_target": "git:organvm/limen:docs/prompt-packet-ledger.md",
+            "receipt_target": "git:4444J99/limen:docs/prompt-packet-ledger.md",
             "stop_condition": "open prompt packet count is zero or every packet has an owner receipt",
         },
     }
@@ -947,10 +947,10 @@ def value_repo_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "jules-or-opencode-repo-specific",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "task": "Harvest existing PRs/tasks for top value repos, then assign only clean bounded ship predicates.",
             "predicate": "python3 scripts/product-ledger.py --write",
-            "receipt_target": "git:organvm/limen:docs/product-ledger.md",
+            "receipt_target": "git:4444J99/limen:docs/product-ledger.md",
             "stop_condition": "top value repo has shipped PR, open PR with predicate, owner task, or blocker",
         },
     }
@@ -1038,14 +1038,14 @@ def estate_custody_receipt() -> dict[str, Any]:
             relpath(ESTATE_CUSTODY_DOC),
             relpath(WORKTREE_RECLAIM_CANDIDATES_DOC),
             relpath(WORKTREE_RECLAIM_CANDIDATES_JSON),
-            "https://github.com/organvm/limen/issues/685",
-            "https://github.com/organvm/limen/issues/688",
+            "https://github.com/4444J99/limen/issues/685",
+            "https://github.com/4444J99/limen/issues/688",
             "https://github.com/organvm/media-ark/issues/56",
             "https://github.com/organvm/portvs/issues/2",
         ],
         "assignment_packet": {
             "lane_fit": "codex-conductor",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "task": (
                 "Build the run-and-gun estate lifecycle: external SSDs hold durable private/raw data, "
                 "processed/redacted corpora, repo/org mirrors, photos/media packages, and recovery copies; "
@@ -1059,7 +1059,7 @@ def estate_custody_receipt() -> dict[str, Any]:
                 "python3 scripts/substrate-ledger.py --write && "
                 "python3 scripts/vltima-prior-excavations.py --write"
             ),
-            "receipt_target": "git:organvm/limen:docs/estate-custody-implementation-receipts.json",
+            "receipt_target": "git:4444J99/limen:docs/estate-custody-implementation-receipts.json",
             "stop_condition": (
                 "external estate cleanup, prompt chronology, repo/org custody, photos processing, and "
                 "pain-point productization each have owner receipts without destructive local-only action"
@@ -1126,14 +1126,14 @@ def contribution_balance_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "codex-conductor",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "task": (
                 f"Run python3 scripts/github-contribution-balance.py --login {CONTRIBUTION_BALANCE_LOGIN} --json and use the live contribution balance as a value gate: route the next public work to "
                 "substantive PR review first, then real issue criteria and PR packaging, before more "
                 "commit-heavy implementation churn."
             ),
             "predicate": "python3 -m pytest cli/tests/test_github_contribution_balance.py -q",
-            "receipt_target": "git:organvm/limen:docs/always-working.md",
+            "receipt_target": "git:4444J99/limen:docs/always-working.md",
             "stop_condition": "reviews/issues/PRs have owner receipts and commit-only churn is no longer the next public action",
         },
     }
@@ -1187,19 +1187,19 @@ def credential_wall_receipt() -> dict[str, Any]:
         "existing_receipts": [
             relpath(ROOT / "scripts" / "credential-wall.py"),
             relpath(ROOT / "scripts" / "creds-hydrate.py"),
-            "https://github.com/organvm/limen/issues/320",
-            "https://github.com/organvm/limen/labels/credential",
+            "https://github.com/4444J99/limen/issues/320",
+            "https://github.com/4444J99/limen/labels/credential",
         ],
         "assignment_packet": {
             "lane_fit": "codex-integrator",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "task": (
                 "Keep token/scope failures out of chat by registering every current credential atom "
                 "and adding a historical tombstone receipt for formerly exposed or rotated tokens. "
                 "Never record secret values."
             ),
             "predicate": "python3 scripts/credential-wall.py --check && test -f docs/credential-token-tombstone-audit.md",
-            "receipt_target": "git:organvm/limen:docs/credential-token-tombstone-audit.md",
+            "receipt_target": "git:4444J99/limen:docs/credential-token-tombstone-audit.md",
             "stop_condition": "current credential wall passes and historic token existence/revocation custody is recorded without values",
         },
     }
@@ -1255,10 +1255,10 @@ def tabularius_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "codex-integrator",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "task": "Convert status/result writers to keeper tickets; preserve tasks.yaml drift as separate board state.",
             "predicate": "python3 scripts/task-writer-audit.py && PYTHONPATH=cli/src python3 -m pytest cli/tests/test_tabularius.py -q",
-            "receipt_target": "git:organvm/limen:docs/tabularius-writer-audit.md",
+            "receipt_target": "git:4444J99/limen:docs/tabularius-writer-audit.md",
             "stop_condition": "non-keeper status/result direct writers are converted or explicitly owner-recorded",
         },
     }
@@ -1344,7 +1344,7 @@ def substrate_receipt() -> dict[str, Any]:
         ],
         "assignment_packet": {
             "lane_fit": "codex-local",
-            "repo": "organvm/limen",
+            "repo": "4444J99/limen",
             "execution_scope": "control-host",
             "packet_epoch": f"worktree-debt:{debt}:reapable:{reapable}",
             "task": (
@@ -1356,7 +1356,7 @@ def substrate_receipt() -> dict[str, Any]:
                 "docs/worktree-preservation-receipts.json, then push one narrow owner PR."
             ),
             "predicate": "python3 -m pytest cli/tests/test_reclaim_worktrees.py -q",
-            "receipt_target": "git:organvm/limen:docs/worktree-preservation-receipts.json",
+            "receipt_target": "git:4444J99/limen:docs/worktree-preservation-receipts.json",
             "stop_condition": (
                 "one tranche removes at most three accepted roots or records that no accepted root "
                 "remains; every residual root stays preserved for a later packet"
