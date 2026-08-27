@@ -47,20 +47,25 @@ PR #2542 lanes remain observation-only.
 
 ## Frozen observations
 
-Three persisted exhaustive remote generations are retained:
+Four persisted exhaustive remote generations are retained:
 
 | Observation | Repositories | Connections | Leaves | Failed connections | Remote unaccounted |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | `2026-08-27T14:58:22.879946Z` | 320 | 1,280 | 13,570 | 0 | 0 |
 | `2026-08-27T15:25:52.639931Z` | 320 | 1,280 | 13,572 | 0 | 0 |
 | `2026-08-27T16:25:36.923203Z` | 320 | 1,280 | 13,062 | 0 | 0 |
+| `2026-08-27T16:31:53.473770Z` | 320 | 1,280 | 13,062 | 0 | 0 |
 
 The original two-leaf change is preserved as live estate movement, not normalized away. The third
 generation also stops emitting a synthetic check leaf for an explicit no-required-check policy, so
 its leaf denominator is intentionally policy-aware. The latest aggregate reports 308 stable
 repositories of 320, 766 protected open PRs, 9,993 unaccounted non-default branches, 110
 unaccounted local roots, 95 unaccounted worktrees, two local census failures, and 20,301 aggregate
-unaccounted leaves. It is therefore correctly `complete: false`.
+unaccounted leaves. The independent second policy-aware generation reproduced every remote count.
+Its local projection moved one current worktree from custody-risk blocked to clean-but-nonterminal,
+yielding 111 unaccounted local roots, 96 unaccounted worktrees, and 20,304 aggregate unaccounted
+leaves. That explained local transition is preserved rather than normalized away; the aggregate is
+correctly `complete: false`.
 
 The current immutable cleanup dry plan contains seven candidates with digest
 `8b0217df440fbfb61ae4f7aa045915032a4b7d8c64b0c40780ae08141deb4f19`; strict worktree debt reports
@@ -81,6 +86,8 @@ aggregate census is incomplete.
   parity, lint, and format), along with 103 focused local-census/baseline/recovery/debt tests.
 - Default-policy collection and partial-write refusal: 28 focused tests plus 174-file mypy and lint
   passed; live failed connections fell from 77 to zero without overwriting a partial ledger.
+- Independent fixed-point generation: the source generation changed while all remote denominator,
+  connection, leaf-kind, debt-kind, failure, and remote-unaccounted counts remained identical.
 - Latest remote census: 320 repositories, 1,280 complete connections, zero failed connections,
   zero remote unaccounted leaves.
 - `limen progress --view universe --json-output`: receipt loaded successfully and remained

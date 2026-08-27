@@ -11,8 +11,8 @@
     "reason": "authenticated broker environment unavailable after documented bootstrap"
   },
   "remote_census": {
-    "observed_at": "2026-08-27T16:25:36.923203Z",
-    "source_generation": "03037628eff207f831e3daae42ca01f0cf2b4ce28a26cae347fb668a6cf16e47",
+    "observed_at": "2026-08-27T16:31:53.473770Z",
+    "source_generation": "e9d7f66763f824338dd57e18331dc6abc3aeb9fbc1b649b98c0dcc28a6c8161b",
     "repository_denominator": 320,
     "connection_count": 1280,
     "known_leaf_count": 13062,
@@ -21,10 +21,10 @@
     "exhaustive_for_registered_connections": true
   },
   "universe_baseline": {
-    "census_digest": "fd0448646785c8ebbef231c520dc41d2499d242a7dd1899f621e04f270faf928",
+    "census_digest": "50c3c7899daa88c5f8a1ba3657837d5e1f7f655cec826039fead802d2d75e3a5",
     "stable_count": 308,
     "failure_count": 2,
-    "unaccounted": 20301,
+    "unaccounted": 20304,
     "complete": false
   },
   "pull_requests": {
@@ -71,6 +71,11 @@
     {
       "command": "python3 scripts/github-estate-census.py --write --check --json --workers 2",
       "result": "320 repositories, 1280 complete connections, zero failed connections, zero remote unaccounted leaves",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 scripts/github-estate-census.py --write --check --json --workers 2",
+      "result": "independent generation reproduced the exact remote denominator and all leaf/debt partitions; only the clean local session-worktree disposition changed",
       "exit_code": 0
     }
   ],
