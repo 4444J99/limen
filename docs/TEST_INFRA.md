@@ -90,7 +90,7 @@ The mission of this test suite is to provide an authoritative, automated, multi-
 ## Test Infrastructure Design
 
 ### 1. Test Suite Location & Conventions
-- **Test File**: `tests/e2e/test_ecosystem_liveness.py`
+- **Test File**: `cli/tests/e2e/test_ecosystem_liveness.py`
 - **Framework**: `pytest` (>= 8.0)
 - **Isolation**: Every test operates within isolated `tmp_path` fixtures or temporary directories, preventing mutation of live repository data (`logs/`, `tasks.yaml`, `his-hand-levers.json`).
 - **Dependencies**: Uses Python standard library, `pytest`, and `limen` CLI packages (`cli/src/limen`).
@@ -99,13 +99,13 @@ The mission of this test suite is to provide an authoritative, automated, multi-
 
 ```bash
 # Run full E2E ecosystem liveness test suite:
-python3 -m pytest tests/e2e/test_ecosystem_liveness.py -v
+python3 -m pytest cli/tests/e2e/test_ecosystem_liveness.py -v
 
 # Run by specific tier:
-python3 -m pytest tests/e2e/test_ecosystem_liveness.py -k "test_tier1" -v
-python3 -m pytest tests/e2e/test_ecosystem_liveness.py -k "test_tier2" -v
-python3 -m pytest tests/e2e/test_ecosystem_liveness.py -k "test_tier3" -v
-python3 -m pytest tests/e2e/test_ecosystem_liveness.py -k "test_tier4" -v
+python3 -m pytest cli/tests/e2e/test_ecosystem_liveness.py -k "test_tier1" -v
+python3 -m pytest cli/tests/e2e/test_ecosystem_liveness.py -k "test_tier2" -v
+python3 -m pytest cli/tests/e2e/test_ecosystem_liveness.py -k "test_tier3" -v
+python3 -m pytest cli/tests/e2e/test_ecosystem_liveness.py -k "test_tier4" -v
 
 # Run scoped pre-push verification:
 scripts/verify-scoped.sh

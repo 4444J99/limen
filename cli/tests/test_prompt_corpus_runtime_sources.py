@@ -306,7 +306,7 @@ def test_runtime_root_follows_limen_root(tmp_path: Path, monkeypatch) -> None:
     assert lifecycle.RUNTIME_ROOT == tmp_path / ".agent-runtime"
 
 
-def test_runtime_roots_survive_source_home_override(tmp_path: Path, monkeypatch) -> None:
+def test_runtime_roots_rebase_with_source_home_override(tmp_path: Path, monkeypatch) -> None:
     module = _load_atom_script()
     shim_home = tmp_path / "shim-home"
     monkeypatch.setattr(module, "SOURCE_HOME_OVERRIDE", shim_home)
@@ -315,8 +315,8 @@ def test_runtime_roots_survive_source_home_override(tmp_path: Path, monkeypatch)
     roots = [(source, Path(root), patterns) for source, root, patterns in lifecycle.LOCAL_SOURCES]
 
     assert ("codex-sessions", shim_home / ".codex" / "sessions", ("*",)) in roots
-    assert ("codex-sessions", ROOT / ".agent-runtime" / "codex" / "sessions", ("*",)) in roots
-    assert ("claude-projects", ROOT / ".agent-runtime" / "claude" / "projects", ("*",)) in roots
+    assert ("codex-sessions", shim_home / ".agent-runtime" / "codex" / "sessions", ("*",)) in roots
+    assert ("claude-projects", shim_home / ".agent-runtime" / "claude" / "projects", ("*",)) in roots
     assert (
         "gemini-tmp-agy",
         shim_home / ".gemini" / "tmp",

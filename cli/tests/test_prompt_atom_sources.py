@@ -104,8 +104,8 @@ def _claude_memory_alias_fixture(module, tmp_path: Path, *, absolute: bool = Fal
     return lifecycle, projects, alias, target
 
 
-def _claude_subagent_alias_fixture(module, tmp_path: Path):
-    projects = tmp_path / ".claude" / "projects"
+def _claude_subagent_alias_fixture(module, tmp_path: Path, *, runtime: bool = False):
+    projects = tmp_path / ".agent-runtime" / "claude" / "projects" if runtime else tmp_path / ".claude" / "projects"
     target = projects / "project" / "target-session" / "subagents" / "agent.jsonl"
     alias = projects / "project" / "alias-session" / "subagents" / target.name
     target.parent.mkdir(parents=True)
@@ -4057,12 +4057,14 @@ def test_memory_alias_second_pass_is_zero_growth_byte_identical_and_public_safe(
     assert alias.name not in encoded
 
 
+@pytest.mark.parametrize("runtime", [False, True])
 def test_claude_subagent_cross_session_alias_is_excluded_with_independent_target_custody(
     tmp_path: Path,
     monkeypatch,
+    runtime: bool,
 ):
     sources = _load()
-    lifecycle, _projects, alias, target = _claude_subagent_alias_fixture(sources, tmp_path)
+    lifecycle, _projects, alias, target = _claude_subagent_alias_fixture(sources, tmp_path, runtime=runtime)
     rows = sources.regular_source_rows(lifecycle, None)
 
     events, result = sources.scan_regular_sources(
@@ -5555,12 +5557,14 @@ def _codex_attachment_fixture(
     parent_texts: list[str] | None = None,
     duplicate_reference: bool = False,
     forked: bool = False,
+    runtime: bool = False,
 ):
-    attachments = tmp_path / ".codex" / "attachments"
+    codex_root = tmp_path / ".agent-runtime" / "codex" if runtime else tmp_path / ".codex"
+    attachments = codex_root / "attachments"
     attachment = attachments / "fixture-container" / "pasted-text-1.txt"
     attachment.parent.mkdir(parents=True, exist_ok=True)
     attachment.write_text(body, encoding="utf-8")
-    sessions = tmp_path / ".codex" / "sessions"
+    sessions = codex_root / "sessions"
     session = sessions / "2026" / "07" / "13" / "rollout-fixture.jsonl"
     session.parent.mkdir(parents=True, exist_ok=True)
     reference = sources.codex_attachment_reference_line(attachment)
@@ -5993,6 +5997,33 @@ def test_codex_pasted_text_attachment_binds_to_one_parent_and_inherits_authority
         "codex-session-jsonl-v2": 1,
     }
     assert result["coverage"]["codex-attachments"]["adapted"] == 1
+
+
+def test_codex_runtime_pasted_text_attachment_binds_to_its_runtime_parent(tmp_path: Path):
+    sources = _load()
+    lifecycle, session, attachment = _codex_attachment_fixture(sources, tmp_path, runtime=True)
+
+    _events, result = sources.scan_regular_sources(
+        lifecycle,
+        {"files": {}},
+        days=None,
+        budget=sources.ScanBudget(limit=2),
+        rows=[
+            {"source": "codex-sessions", "path": session},
+            {"source": "codex-attachments", "path": attachment},
+        ],
+    )
+
+    receipt = result["adapted_unit_receipts"][sources.cursor_unit_key("codex-attachments", attachment)]
+    assert result["errors"] == []
+    assert sources.source_contract_receipt_applies(
+        receipt["contract_id"],
+        "codex-attachments",
+        str(attachment),
+        signature=sources.file_signature(attachment),
+        related_signatures=receipt["related_signatures"],
+        related_evidence=receipt["related_evidence"],
+    )
 
 
 @pytest.mark.parametrize("ambiguity", ["missing", "multiple-events", "duplicate-reference"])

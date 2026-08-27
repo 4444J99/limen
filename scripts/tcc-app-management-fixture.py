@@ -23,7 +23,9 @@ from typing import Any
 SCHEMA = "limen.tcc_app_management_fixture.v1"
 FIXTURE_PREFIX = "LimenTCCFixture-"
 RUNNER_LABELS = ("uvx-renamed", "node-renamed", "python-renamed", "portable-ruby-renamed")
-RUNNER_SOURCE = r'''
+COMPILER_TIMEOUT_SECONDS = 60
+HOSTED_COMMAND_TIMEOUT_SECONDS = 20
+RUNNER_SOURCE = r"""
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
@@ -123,7 +125,7 @@ int main(int argc, char **argv) {
     if (strcmp(argv[1], "delete") == 0) return delete_fixture(argv[2]) ? 0 : 1;
     return 64;
 }
-'''
+"""
 
 
 class FixtureError(RuntimeError):
@@ -198,7 +200,7 @@ def _run_hosted(
         capture_output=True,
         text=True,
         check=False,
-        timeout=20,
+        timeout=HOSTED_COMMAND_TIMEOUT_SECONDS,
     )
     if completed.returncode != 0:
         detail = (completed.stderr or completed.stdout or "hosted command failed").strip()
@@ -218,18 +220,29 @@ def exercise(home: Path, host: Path) -> dict[str, Any]:
         compiler = shutil.which("clang") or shutil.which("cc")
         if compiler is None:
             raise FixtureError("a C compiler is required for renamed native fixtures")
+        compiled_runner = runner_root / "fixture-runner"
+        compiled = subprocess.run(
+            [
+                compiler,
+                "-Os",
+                "-Wall",
+                "-Wextra",
+                "-Werror",
+                str(source),
+                "-o",
+                str(compiled_runner),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=COMPILER_TIMEOUT_SECONDS,
+        )
+        if compiled.returncode != 0:
+            detail = (compiled.stderr or compiled.stdout or "compiler failed").strip()
+            raise FixtureError(f"renamed fixture compiler failed: {detail[:200]}")
         for label in RUNNER_LABELS:
             runner = runner_root / label
-            compiled = subprocess.run(
-                [compiler, "-Os", "-Wall", "-Wextra", "-Werror", str(source), "-o", str(runner)],
-                capture_output=True,
-                text=True,
-                check=False,
-                timeout=20,
-            )
-            if compiled.returncode != 0:
-                detail = (compiled.stderr or compiled.stdout or "compiler failed").strip()
-                raise FixtureError(f"renamed fixture compiler failed: {detail[:200]}")
+            shutil.copy2(compiled_runner, runner)
             runners.append(runner)
 
         for runner in runners:
