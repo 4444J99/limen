@@ -658,14 +658,15 @@ classes:
     match: ["4444J99/limen"]
     visibility: public                     # 2026-07-22 owner decision: conductor stays public (free-tier CI dependency; resolves the observed-public drift); supersedes the 2026-07-16 private flip
     branch_protection: required
-    required_checks: ["pr-gate"]            # sole always-on context; ci.yml children are path-filtered receipts
+    required_checks: []                    # single-owner fast lane: exact-tree local verification is admission; remote checks remain advisory receipts
+    single_owner_fast_lane: true           # one operator owns every write; no inter-party review or CI wait is an admission boundary
     app_installed: required
     secret_hygiene: enforced
     stale_branch_grace_min: 60             # reuses the reap-branches grace default
     archive_policy: never
     seo: {description: required, topics_min: 5, homepage: required, readme: portal}
     owner: gitvs
-    note: "The live daemon body: strictest posture. pr-gate is always-on; path-filtered CI children remain additive exact-head receipts and cannot be global required contexts."
+    note: "The live daemon body: PR-only, squash-only, no bypass, no force push. One operator owns every write, so an unchanged exact head merges immediately after scoped local verification; remote CI and automated review remain advisory fix-forward evidence, never synchronous admission."
   contrib_fork:
     match: ["**"]
     match_facts: {fork: true}

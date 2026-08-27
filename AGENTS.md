@@ -140,8 +140,10 @@ registry already holds. Options are a decision forced by a genuine human-gated l
 default delivery posture.
 
 **2. No synchronous CI waits; scoped verification.**
-`scripts/verify-scoped.sh` is the default pre-push gate; run only implicated gates. There is no synchronous waiter
-on a PR gate. After exact-tree verification, submit at most once with
+`scripts/verify-scoped.sh` is the implicated pre-push gate; there is no synchronous waiter. A
+registry-declared **single-owner fast lane** merges its verified head immediately with
+`gh pr merge NUMBER --repo OWNER/NAME --squash --match-head-commit SHA`; remote checks and automated reviews are advisory. Include any implicated local build/deploy predicate in that batch.
+Other repositories submit at most once with
 `scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA` and return control.
 `QUEUED` is GitHub ownership, never a `MERGED` receipt. Never retry, re-arm, poll non-required
 checks, or rerun a green exact-head predicate without a changed head or observed failure.
@@ -171,13 +173,12 @@ The litmus: am I destroying, sending, spending, or irreversibly leaking? If no, 
 **5. Concurrent integration — moving `main` is normal; rewriting every PR head is not.**
 Multiple interactive and autonomous sessions are co-equal supported work, provided each mutation
 lane is isolated in its own worktree and topic branch. A newer `main` must never trigger an
-unbounded merge/rebase → full-CI → newer-`main` loop. Preserve the exact-head CI receipt and use
-the repository's merge queue: GitHub composes that immutable head with the latest base and queued
-predecessors, then `pr-gate` verifies the synthetic `merge_group`. `BEHIND` is queueable only when
-the live queue rail is proven active; without that proof it remains fail-closed. Use one exact-head
-`scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA` submission; never
-`scripts/await-pr.sh`, never `--admin`, force-push, repeated branch rewrites, or a session-held merge
-watch. Direct
+unbounded merge/rebase → full-CI → newer-`main` loop. A single-owner fast lane merges its verified
+SHA through the PR rail with `--match-head-commit`; it does not wait for `pr-gate`, review, or a
+synthetic `merge_group`. A shared-writer queue may verify that synthetic `merge_group`; use one
+`scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA` submission. In either
+lane, never use `scripts/await-pr.sh`, never `--admin`, force-push, repeated branch rewrites, or a
+session-held merge watch. Direct
 `main` writes are forbidden, including board snapshots: Tabularius coalesces the local projection
 and publishes it through its stable, fast-forward-only PR branch. The repository's no-bypass
 `pull_request` rule makes that boundary remote-enforced. The full executable contract is

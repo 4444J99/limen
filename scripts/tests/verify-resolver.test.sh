@@ -126,7 +126,6 @@ expect research-adjudication-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
 research-adjudication-test
-research-adjudication-live-test
 check-params
 check-note-links
 check-board-consumers
@@ -136,7 +135,6 @@ expect research-adjudication-live-input-change 'syntax-changed
 diff-hygiene
 positioning-foundry-technical-readiness-public-live
 research-adjudication-test
-research-adjudication-live-test
 check-note-links' institutio/positioning/github-map.json
 
 # io.py is a DIRECT child of cli/src/limen — load-bearing for check-effectors, whose glob dialect

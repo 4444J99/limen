@@ -530,6 +530,9 @@ def main() -> int:
         for phrase, label in [
             ("scripts/verify-scoped.sh", "bounded-CI-waits rule (verify-scoped.sh is the default gate)"),
             ("no synchronous waiter", "bounded-CI rule (agent/provider sessions never wait on PR state)"),
+            ("single-owner fast lane", "registry-declared immediate-merge rule"),
+            ("--match-head-commit", "exact-head direct-merge binding"),
+            ("remote checks and automated reviews are advisory", "fast-lane advisory-remote rule"),
             ("scripts/merge-drain.py", "one-shot exact-head merge submission rule"),
             ("BLOCKED: <atom>", "no-stall/BLOCKED-once rule"),
             ("his-hand-levers.json", "durable-homing rule (human-gated atoms file in his-hand-levers.json)"),
@@ -614,13 +617,15 @@ def main() -> int:
     peer_documents[str(COPILOT_PROFILE.relative_to(ROOT))] = COPILOT_PROFILE.read_text(encoding="utf-8")
     errors.extend(peer_conductor_errors(peer_documents))
 
-    # P. 2026-07-18 concurrent-session correction: exact PR-head proof is immutable; latest-base
-    # composition belongs to the queue. Bind both the canonical shared rule and Claude's concrete
-    # merge cadence so a later doc edit cannot silently recreate the update-branch/full-CI loop.
+    # P. Concurrent-session correction: exact PR-head proof is immutable. Registry-declared
+    # single-owner repositories merge that head directly; shared-writer repositories may compose
+    # it through a queue. Bind both rails so docs cannot recreate update/full-CI or waiter loops.
     try:
         discipline_section = section(agents_text, "Session Discipline")
         for phrase, label in [
             ("moving `main` is normal", "moving-main-is-normal rule"),
+            ("single-owner fast lane", "single-owner exact-head rail"),
+            ("--match-head-commit", "exact-head direct-merge binding"),
             ("synthetic `merge_group`", "merge-group composition rule"),
             ("never `--admin`", "no-admin-bypass rule"),
         ]:
@@ -628,6 +633,8 @@ def main() -> int:
                 errors.append(f"AGENTS.md 'Session Discipline' lacks the concurrent-integration {label}")
         merge_section = section(claude_text, "Merge & Branch Protocol")
         for phrase, label in [
+            ("single-owner fast lane", "single-owner exact-head rail"),
+            ("--match-head-commit", "exact-head direct-merge binding"),
             ("MERGE-MODE: queue|direct", "explicit merge-mode contract"),
             ("synthetic latest-base merge group", "queue composition contract"),
             ("repeated branch-rewrite/full-CI loop", "no branch-rewrite starvation rule"),

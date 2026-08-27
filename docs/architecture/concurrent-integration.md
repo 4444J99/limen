@@ -1,56 +1,55 @@
 # Concurrent Integration
 
-Multiple sessions are a supported operating condition. The integration rail serializes mutations
-to `main`; it does not serialize thought, editing, review, or exact-head verification.
+Multiple sessions are a supported operating condition. Integration serializes mutations to
+`main`; it does not serialize thought, editing, review, or exact-head verification. A registry
+chooses the smallest sound rail for each repository.
 
 ## Contract
 
-1. Every mutation session works in one isolated worktree and topic branch. Action-level host
-   admission allows concurrent writers in distinct worktrees and exactly one writer per canonical
-   worktree scope. The live `main` checkout remains the read/control plane and may be dirty with
-   daemon-owned board state; source writes there fail `shared-checkout-write`.
-2. PR-head verification is immutable. A successful check receipt belongs to one exact
-   `headRefOid`; moving `main` does not authorize changing that head or repeating successful
+1. Every mutation session works in one isolated worktree and topic branch. The live `main`
+   checkout remains the read/control plane; source writes there fail `shared-checkout-write`.
+2. Verification is immutable. A successful local `scripts/verify-scoped.sh` receipt belongs to one
+   clean `headRefOid`; moving `main` does not authorize changing that head or repeating successful
    children.
-3. Current-base verification belongs to GitHub's merge queue. The queue constructs a
-   `merge_group` from latest `main`, the exact PR head, and any predecessors. The always-on
-   `pr-gate` runs every scoped gate implicated by that synthetic composition.
-4. `BEHIND` means queueable only when the live repository reports an active queue. An absent,
-   unreadable, or partially configured queue fails closed. `DIRTY` always remains a real conflict.
-5. Agent and provider sessions never wait on PR state. They may submit one exact head once with
-   `scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA`, then return control.
-   `QUEUED` proves durable GitHub ownership only; it is never promoted into a `MERGED` receipt.
-   `scripts/await-pr.sh` is a fail-closed compatibility circuit breaker for stale instructions.
-6. `scripts/merge-drain.py` applies the same predicate immediately before each effect. Its one-shot
-   mode never polls or retries; its recurring beat mode owns later observation and applies bounded
-   work without keeping an agent/provider session alive.
-7. Tabularius never pushes `main`. It keeps the sealed board dirty locally, publishes only
-   `tasks.yaml` to the stable `tabularius/board-projection` branch with normal fast-forward commits,
-   and opens one exact-head PR. Newer local state coalesces while that PR is in flight. A stale
-   competing publisher loses at the remote ref without a force push.
-8. The default-branch ruleset combines `merge_queue` with a zero-approval `pull_request` rule and
-   no bypass actors. That remote predicate rejects every direct `main` write; automation workflows
-   use the same board PR publisher and cannot create a hidden side door.
+3. A registry-declared **single-owner fast lane** has no inter-party admission problem. After one
+   exact-tree local verification batch and one push, merge immediately through the PR rail with
+   `gh pr merge NUMBER --repo OWNER/NAME --squash --match-head-commit SHA`. Remote CI and automated
+   review remain advisory fix-forward evidence. A deploy-triggering diff includes its implicated
+   local build/deploy predicate in the same batch.
+4. A shared-writer repository may instead use GitHub's merge queue. GitHub composes a synthetic
+   `merge_group` from latest `main`, the immutable PR head, and queued predecessors; its declared
+   integration gate verifies that composition. Submit it once with `scripts/merge-drain.py`.
+5. Agent and provider sessions never wait on PR state. `scripts/await-pr.sh` is a fail-closed
+   compatibility circuit breaker. There is no sleep/recheck, polling loop, auto-merge babysitting,
+   or automatic retry in either rail.
+6. `BEHIND` never causes a repeated merge/rebase/full-suite cycle. The single-owner rail relies on
+   GitHub's atomic exact-head mergeability check; the shared-writer rail uses a positively proven
+   queue. A real `DIRTY` conflict is repaired once as a changed head.
+7. Tabularius never pushes `main`. It publishes `tasks.yaml` through its stable
+   `tabularius/board-projection` branch with normal fast-forward commits and one exact-head PR.
+8. The default-branch rule remains PR-only, squash-only, no-bypass, no force push, and no deletion.
+   A single-owner declaration removes remote status and bot-thread admission; it does not create a
+   direct-`main` or admin side door.
 
 ## Verification split
 
-| Receipt | Identity | Work |
-|---|---|---|
-| PR head | exact `headRefOid` | ordinary PR CI and review |
-| Integration | exact `merge_group` SHA and base SHA | every scoped gate implicated by the combined diff |
-| Main | resulting merge SHA | normal push/deploy receipts |
-
-This split removes the starvation loop without weakening the silent-revert guard: current `main` is
-still present in the tested tree, but it is composed by the queue instead of copied into every
-author branch.
+| Rail | Admission receipt | Remote evidence | Merge binding |
+|---|---|---|---|
+| Single owner | exact local tree + scoped implicated predicates | advisory CI/review, fix-forward | PR number + `--match-head-commit SHA` |
+| Shared writer | exact PR head plus declared integration gate | required queue/check receipt | one `merge-drain.py` submission |
+| Main | repository-qualified merge SHA | push/deploy receipts | default-branch presence |
 
 ## Operator commands
 
 ```bash
+# Registry-declared single-owner fast lane
+scripts/verify-scoped.sh
+gh pr merge <PR> --repo OWNER/NAME --squash --match-head-commit <SHA>
+
+# Shared-writer rail
 scripts/merge-policy.sh <PR> --expected-head <SHA>
 scripts/merge-drain.py --repo OWNER/NAME --pr <PR> --expected-head <SHA>
 ```
 
-Queue settings are declared and applied idempotently by `scripts/setup-rulesets.py`. The rollout
-order is strict: land the `merge_group` workflow first, apply the queue settings second, then prove
-the live queue before treating any stale PR as queueable.
+`scripts/setup-rulesets.py` derives the rail from `institutio/github/estate.yaml` and verifies the
+live GitHub state after applying it.

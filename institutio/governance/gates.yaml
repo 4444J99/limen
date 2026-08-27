@@ -220,10 +220,10 @@ gates:
     owner: consulting
     note: "Sovereign Systems engagement records stay schema-clean."
   constellation-registry:
-    command: "python3 organs/consulting/constellation/validate-constellation.py --quiet"
+    command: "python3 organs/consulting/constellation/validate-constellation.py --skip-overlay --quiet"
     paths: ["organs/consulting/constellation/**", "institutio/github/access.yaml"]
     owner: consulting
-    note: "The constellation register's Rules #1-7 (completeness, name discipline, PII lint, cross-refs, single-org, overlay parity, access cross-check) run per-diff — previously reachable only via constellation-done.sh. access.yaml implicates it because Rule #7 cross-checks every grant against the granted person's registered project rows."
+    note: "Tracked source admission runs deterministic Rules #1-5 and #7 (completeness, name discipline, PII lint, cross-refs, estate placement, access cross-check). Rule #6 reads the owner-local private overlay and remains in the full owner predicate; it cannot make the same tracked tree pass or fail by host state. access.yaml implicates this gate because Rule #7 cross-checks every grant against the registered project rows."
   biography-registry:
     command: "python3 scripts/check-biography.py --quiet"
     paths: ["institutio/governance/biography.yaml", "scripts/check-biography.py", "scripts/derive-epochs.py", "scripts/corpus_resolve.py"]
@@ -671,8 +671,9 @@ gates:
     command: "python3 scripts/positioning-research-adjudication.py --verify-live"
     paths: ["docs/positioning/claims-ledger.md", "docs/positioning/evidence/flagship-evidence.yaml", "docs/positioning/program/ISSUE-INDEX.md", "docs/positioning/program/RESEARCH-ADJUDICATION.md", "docs/positioning/program/research-adjudication.json", "docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json", "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json", "institutio/positioning/github-map.json", "scripts/positioning-research-adjudication.py"]
     timeout_seconds: 300
+    scoped: false
     owner: positioning-program
-    note: "PSP-P02-W08's bounded live predicate verifies latest marked receipts, immutable repository/source identities, issue state, and exact profile metadata only when an owning W08 evidence or validator input changes. Shared registry and program-contract edits select the static gate instead, so unrelated leaves cannot be blocked by mutable public-profile drift."
+    note: "PSP-P02-W08's live predicate observes latest receipts, repository/source identities, issue state, and mutable public-profile metadata. It remains an owner/whole-system observation, never exact-tree source admission: follower counts and live profile totals can drift while identical code is under review. The adjacent hermetic research-adjudication-test owns deterministic pre-push correctness."
   positioning-p14-control-plane-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_positioning_p14_control_plane.py -q"
     paths: ["scripts/positioning-p14-control-plane.py", "cli/tests/test_positioning_p14_control_plane.py", "cli/tests/fixtures/positioning-p14/**", "institutio/positioning/p14/**", "docs/positioning/p14/**", "docs/receipts/positioning/relays/2026-08-10-psp-c12-control-plane-preflight.md", "institutio/governance/gates.yaml"]

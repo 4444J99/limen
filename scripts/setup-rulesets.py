@@ -1,22 +1,25 @@
 #!/usr/bin/env python3
-"""setup-rulesets — configure self-draining, concurrency-safe merge gates.
+"""setup-rulesets — configure bounded, repository-declared merge rails.
 
 For each repo that currently has open author PRs, configure the default branch so that:
-  • required_status_checks = the repo's actual CI checks (strict:false)
+  • required_status_checks = the repo's declared CI checks (strict:false), or NONE for a
+    registry-declared single-owner fast lane
   • required_pull_request_reviews = NONE  (there is no human reviewer team — requiring one is the
     faulty old element that forced the admin-bypass; we gate on CI instead)
-  • allow_auto_merge = true  (so a PR armed with --auto merges itself the instant CI is green)
+  • allow_auto_merge = false on a single-owner fast lane (merge the locally verified exact head
+    immediately); true elsewhere when remote checks own admission
   • delete_branch_on_merge = false  (source branches are retained for receipt-backed reaping)
 
-Required checks come from `institutio/github/estate.yaml`; live check-rollup detection is never a
-substitute for declared desired state. For 4444J99/limen, keep those checks with
-strict:false/enforce_admins:true, and idempotently ensure a default-branch ruleset holding a
-zero-approval, review-thread-resolved pull-request rule with no bypass actors: every mutation,
-including Tabularius board publication, must enter through a PR. The native merge queue was removed 2026-08-06
+Required checks and the single-owner fast-lane declaration come from
+`institutio/github/estate.yaml`; live check-rollup detection is never a substitute for declared
+desired state. For 4444J99/limen, clear remote required checks while retaining
+enforce_admins:true, and idempotently ensure a default-branch ruleset holding a zero-approval,
+review-thread-advisory pull-request rule with no bypass actors: every mutation, including
+Tabularius board publication, must enter through a PR. The native merge queue was removed 2026-08-06
 (proven-at-submission rail): its serialized re-validation lane re-derived proofs the scoped local
 gates had already produced, and its evict-to-back failure mode turned a GitHub Actions incident
-into a day-long merge outage for green PRs. Direct squash on green required checks is the rail;
-merge-policy.sh / targeted merge-drain submission detect queue absence and use MERGE-MODE: direct automatically.
+into a day-long merge outage for green PRs. Limen's rail is immediate exact-head squash after local
+scoped verification; repositories with declared remote checks retain their check-gated rail.
 
 SAFE: dry-run by default — prints the exact per-repo plan and executes NOTHING. Reversible:
 branch protection can be removed. `--apply` is GATED on the user.
@@ -176,15 +179,29 @@ def _class_for_repo(document, repo, facts=None):
     raise EstateContractError(f"no estate class matches {repo}")
 
 
+def _policy_for_repo(repo, facts=None):
+    """Return the first-match estate class and its merge policy."""
+    return _class_for_repo(_load_estate(), repo, facts=facts)
+
+
 def checks_for_repo(repo, facts=None):
     """Return the registry-declared required checks for the repository's first matching class."""
     if FORCED:
         return list(FORCED)
-    class_name, row = _class_for_repo(_load_estate(), repo, facts=facts)
+    class_name, row = _policy_for_repo(repo, facts=facts)
     checks = row.get("required_checks")
     if not isinstance(checks, list) or any(not isinstance(check, str) or not check for check in checks):
         raise EstateContractError(f"estate class {class_name!r} has invalid required_checks")
     return list(checks)
+
+
+def single_owner_fast_lane_for_repo(repo, facts=None):
+    """Whether local exact-tree verification replaces remote merge admission for this repo."""
+    class_name, row = _policy_for_repo(repo, facts=facts)
+    value = row.get("single_owner_fast_lane", False)
+    if not isinstance(value, bool):
+        raise EstateContractError(f"estate class {class_name!r} has invalid single_owner_fast_lane")
+    return value
 
 
 def classic_protection_body(checks):
@@ -192,7 +209,7 @@ def classic_protection_body(checks):
     return {
         # strict:false — gate on checks passing, NOT on branch-up-to-date, else auto-merge
         # deadlocks (nothing auto-updates behind branches) and we're back on the treadmill.
-        "required_status_checks": {"strict": False, "contexts": checks},
+        "required_status_checks": {"strict": False, "contexts": checks} if checks else None,
         "enforce_admins": True,
         "required_pull_request_reviews": None,
         "restrictions": None,
@@ -203,12 +220,18 @@ def classic_protection_contract_holds(actual, checks):
     """Read-after-write verification for the exact non-strict, admin-enforced check gate."""
     if not isinstance(actual, dict):
         return False
-    status = actual.get("required_status_checks") or {}
-    contexts = status.get("contexts") or []
+    status = actual.get("required_status_checks")
     enforce_admins = actual.get("enforce_admins") or {}
+    if checks:
+        status_ok = (
+            isinstance(status, dict)
+            and status.get("strict") is False
+            and (status.get("contexts") or []) == checks
+        )
+    else:
+        status_ok = status is None
     return (
-        status.get("strict") is False
-        and contexts == checks
+        status_ok
         and enforce_admins.get("enabled") is True
         and actual.get("required_pull_request_reviews") is None
         and actual.get("restrictions") is None
@@ -216,7 +239,7 @@ def classic_protection_contract_holds(actual, checks):
 
 
 def default_ruleset_body():
-    """A no-bypass, thread-resolved PR requirement — the queue-free proven-at-submission rail."""
+    """A no-bypass PR requirement with automated review advisory on the single-owner rail."""
     return {
         "name": MERGE_QUEUE_RULESET_NAME,
         "target": "branch",
@@ -232,7 +255,7 @@ def default_ruleset_body():
                     "require_code_owner_review": False,
                     "require_last_push_approval": False,
                     "required_approving_review_count": 0,
-                    "required_review_thread_resolution": True,
+                    "required_review_thread_resolution": False,
                 },
             },
         ],
@@ -369,7 +392,7 @@ def ensure_copilot_review(repo):
                     "dismiss_stale_reviews_on_push": False,
                     "require_code_owner_review": False,
                     "require_last_push_approval": False,
-                    "required_review_thread_resolution": True,
+                    "required_review_thread_resolution": False,
                 },
             }
         ],
@@ -388,6 +411,7 @@ def main():
         print(f"    contexts forced (detection skipped): {FORCED}")
     print()
     no_ci = []
+    fast_lanes = []
     failures = []
     for repo in repos:
         info = (
@@ -405,11 +429,18 @@ def main():
         }
         try:
             checks = checks_for_repo(repo, facts=facts)
+            fast_lane = single_owner_fast_lane_for_repo(repo, facts=facts)
         except EstateContractError as exc:
             failures.append(f"{repo}:estate-contract")
             print(f"  {repo}@{branch}: ✗ {exc}")
             continue
-        if not checks:
+        if fast_lane:
+            fast_lanes.append(repo)
+            print(
+                f"  {repo}@{branch}: single-owner fast lane → local exact-tree verification; "
+                "no remote admission checks or auto-merge wait"
+            )
+        elif not checks:
             no_ci.append(repo)
             print(
                 f"  {repo}@{branch}: ⚠ no CI checks detected → auto-merge N/A (PRs merge immediately); "
@@ -422,8 +453,8 @@ def main():
             )
         if _is_limen_repo(repo):
             print(
-                "      + default-branch PR-only ruleset (zero approvals, threads resolved, no bypass, squash-only; "
-                "queue-free proven-at-submission rail)"
+                "      + default-branch PR-only ruleset (zero approvals, bot threads advisory, no bypass, "
+                "squash-only; exact-head direct rail)"
             )
         if not APPLY:
             continue
@@ -450,7 +481,7 @@ def main():
                 "PATCH",
                 f"/repos/{repo}",
                 "-F",
-                "allow_auto_merge=true",
+                f"allow_auto_merge={'false' if fast_lane else 'true'}",
                 "-F",
                 "delete_branch_on_merge=false",
             ]
@@ -463,7 +494,7 @@ def main():
         settings_ok = (
             not settings_error
             and isinstance(observed_settings, dict)
-            and observed_settings.get("allow_auto_merge") is True
+            and observed_settings.get("allow_auto_merge") is (not fast_lane)
             and observed_settings.get("delete_branch_on_merge") is False
         )
         if not settings_ok:
@@ -471,7 +502,7 @@ def main():
             print("      ✗ repository settings unverified: " + (settings_error or "contract mismatch"))
             continue
         print("      ✓ repository settings verified")
-        if checks:
+        if checks or fast_lane:
             body = classic_protection_body(checks)
             r = gh_input("PUT", f"/repos/{repo}/branches/{branch}/protection", body)
             if r.returncode != 0:
@@ -499,17 +530,18 @@ def main():
         if not ensure_copilot_review(repo):
             failures.append(f"{repo}:copilot-review")
 
+    ci_gated = len(repos) - len(no_ci) - len(fast_lanes)
     print(
-        f"\n{len(repos) - len(no_ci)} repos gateable via CI; {len(no_ci)} have no CI "
-        f"(auto-merge moot — they merge on creation)."
+        f"\n{ci_gated} repos gateable via remote CI; {len(fast_lanes)} single-owner fast lane(s); "
+        f"{len(no_ci)} have neither required checks nor a fast-lane declaration."
     )
     if not APPLY:
         print("\nDRY-RUN — nothing changed. Re-run with --apply (GATED) to configure.")
         if any(_is_limen_repo(repo) for repo in repos):
             print(
-                "After the Limen workflow lands and --apply succeeds: "
-                "`scripts/merge-drain.py --repo 4444J99/limen --pr <n> --expected-head <sha>` "
-                "→ one-shot exact-head queue submission."
+                "After scoped local verification and --apply succeeds: "
+                "`gh pr merge <n> --repo 4444J99/limen --squash --match-head-commit <sha>` "
+                "→ immediate exact-head merge; do not wait or retry."
             )
         if any(not _is_limen_repo(repo) for repo in repos):
             print("For non-queue repos: `gh pr merge <n> --auto --squash` on green PRs.")

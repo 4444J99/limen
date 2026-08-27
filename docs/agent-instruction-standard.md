@@ -206,12 +206,13 @@ token in all three docs. **Exit 0 ⟺ docs and code agree.** This is the autopoi
 the instruction files can no longer silently drift from the code.
 
 **Check M (added 2026-07-15):** The four cross-agent session-discipline rules — (1) derive/no-menu,
-(2) no synchronous PR waits plus scoped verification, (3) durable homing, (4) no-stall/BLOCKED-once — must
+(2) no synchronous PR waits plus scoped verification, including immediate exact-head merge on a
+registry-declared single-owner fast lane, (3) durable homing, (4) no-stall/BLOCKED-once — must
 be present in the `AGENTS.md` **`## Session Discipline`** section (the canonical shared layer), and
 the home-scope Layer-1 `AGENTS.md.tmpl` must carry a matching summary that defers to that section
 rather than diverging. Tool-specific charters (`CLAUDE.md`, `GEMINI.md`) extend or cite these rules;
 they must not define divergent versions. Phrase assertions: `scripts/verify-scoped.sh`,
-`scripts/merge-drain.py`, `no synchronous waiter`, `BLOCKED: <atom>`, `his-hand-levers.json`,
+`single-owner fast lane`, `--match-head-commit`, `scripts/merge-drain.py`, `no synchronous waiter`, `BLOCKED: <atom>`, `his-hand-levers.json`,
 `registry already owns the answer`.
 
 **Checks N–S (accumulated since):** the predicate has kept growing past M; the script is the
