@@ -862,7 +862,9 @@ def test_pull_request_landing_submits_exact_head_once_without_claiming_queued_as
         "--expected-head",
         HEAD,
     ]
-    assert calls[0][1]["timeout"] == 240
+    # The child declares up to 510 seconds across its bounded GitHub calls. The parent must not
+    # terminate a possibly accepted exact-head effect before the child emits its durable verdict.
+    assert calls[0][1]["timeout"] >= 510
 
 
 def test_pull_request_landing_homes_deferred_submission_without_retry_error(monkeypatch) -> None:

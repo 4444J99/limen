@@ -31,6 +31,11 @@ from limen.work_loan import WorkLoanV1, packet_work_loan_missing, work_loan_deni
 
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _GIT_SHA_RE = re.compile(r"^[0-9a-f]{40,64}$")
+# merge-drain's one-shot path has a 510-second declared worst case: initial queue read (40),
+# assessment view/compare/queue-capability/diff (40+60+60+60), adjacent queue read (40), policy
+# check (120), and effect (90). Keep the parent above that child-owned cumulative bound while still
+# imposing a finite wall on a wedged process.
+_MERGE_SUBMISSION_TIMEOUT_SECONDS = 600
 _FORBIDDEN_KEYS = {
     "prompt",
     "prompt_text",
@@ -779,7 +784,7 @@ class PullRequestReceiptAdapter:
             cwd=root,
             text=True,
             capture_output=True,
-            timeout=240,
+            timeout=_MERGE_SUBMISSION_TIMEOUT_SECONDS,
             check=False,
         )
         output = (completed.stdout + completed.stderr).strip()

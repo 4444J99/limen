@@ -631,6 +631,7 @@ def heartbeat_once(
     admission = controller or AdmissionController()
     receipt: dict[str, Any]
     trip_kill_switch = False
+    pending_notification_count = 0
     try:
         state_error: str | None = None
         try:
@@ -727,7 +728,10 @@ def heartbeat_once(
             trip_kill_switch = True
         candidate: NotificationCandidate | None = None
         delivery: DeliveryReceipt | None = None
-        if state_error is None and (not state["disabled"] or trip_kill_switch):
+        # A disabled heartbeat runs no probe, but it remains a bounded sender for any notification
+        # transition that was not accepted before the kill switch tripped. One candidate is attempted
+        # per fire; once the durable broker accepts the final candidate, launchd is unloaded.
+        if state_error is None:
             candidate = _select_notification_candidate(_notification_candidates(state))
             if candidate is not None:
                 emitter = notification_emitter or _emit_candidate
@@ -744,6 +748,7 @@ def heartbeat_once(
                     )
                 if delivery.accepted:
                     _accept_notification_candidate(state, candidate)
+        pending_notification_count = len(_notification_candidates(state))
         _atomic_json(state_path, state)
         receipt = {
             "schema": PRIVATE_RECEIPT_SCHEMA,
@@ -779,7 +784,7 @@ def heartbeat_once(
             except (AdmissionStateError, ValueError):
                 pass
         _release_lock(lock, lock_state)
-    if trip_kill_switch:
+    if trip_kill_switch and pending_notification_count == 0:
         disable_launch_agent()
     return receipt
 
