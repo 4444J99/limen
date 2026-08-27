@@ -115,6 +115,7 @@ def test_duplicate_event_allows_source_state_to_advance(tmp_path, monkeypatch):
 def test_shipping_24_crosses_10_with_truthful_observation(tmp_path, monkeypatch, capsys):
     mod, _, state_path = _setup(tmp_path, monkeypatch, [], state={"stages": {}, "ship_bucket": 0})
     mod.VIEW.write_text(json.dumps({"products": [], "ships_24h": {"total": 24}}))
+    monkeypatch.setattr(mod, "read_ships_24h", lambda _root: (24, {}, []))
     captured = []
     monkeypatch.setattr(
         mod,
@@ -219,16 +220,77 @@ def test_canary_receipt_separates_submission_from_visible_acceptance(tmp_path, m
     monkeypatch.setattr(
         mod,
         "emit_event_v1",
-        lambda *_args, **_kwargs: SimpleNamespace(status="submitted", channels={"macos": "submitted"}),
+        lambda *_args, **_kwargs: SimpleNamespace(
+            status="submitted",
+            channels={"macos": "submitted"},
+            broker_invoked=True,
+            reason=None,
+        ),
     )
 
     assert mod._run_canary("macos") == 0
     payload = json.loads(mod.CANARY_RECEIPT.read_text(encoding="utf-8"))
 
     assert payload["broker_status"] == "submitted"
+    assert payload["broker_accepted"] is True
+    assert payload["recording_accepted"] is None
     assert payload["visible_acceptance"] == "pending_operator"
     assert payload["visible_observed_at"] is None
     assert mod.CANARY_RECEIPT.stat().st_mode & 0o777 == 0o600
+
+
+def test_recording_canary_selects_recording_backend_and_verifies_event(tmp_path, monkeypatch):
+    mod = _load_module()
+    monkeypatch.setattr(mod, "RECORDING_CANARY_RECEIPT", tmp_path / "recording-canary.json")
+    monkeypatch.setattr(mod, "CANARY_RECORDING", tmp_path / "recording.jsonl")
+    monkeypatch.setattr(mod, "CANARY_RECORDING_LEDGER", tmp_path / "recording-ledger.json")
+
+    def fake_emit(*_args, **kwargs):
+        environ = kwargs["environ"]
+        assert environ["DOMUS_NOTIFY"] == "0"
+        assert environ["DOMUS_NOTIFY_RECORDING"] == str(mod.CANARY_RECORDING)
+        assert kwargs["transition"] == "milestone"
+        assert kwargs["level"] == "normal"
+        mod.CANARY_RECORDING.write_text(
+            json.dumps({"event": {"event_id": kwargs["event_id"]}}) + "\n",
+            encoding="utf-8",
+        )
+        return SimpleNamespace(
+            status="recorded",
+            channels={"macos": "recorded"},
+            broker_invoked=True,
+            reason=None,
+        )
+
+    monkeypatch.setattr(mod, "emit_event_v1", fake_emit)
+
+    assert mod._run_canary("recording") == 0
+    payload = json.loads(mod.RECORDING_CANARY_RECEIPT.read_text(encoding="utf-8"))
+
+    assert payload["broker_status"] == "recorded"
+    assert payload["recording_accepted"] is True
+    assert payload["recording_evidence"] == str(mod.CANARY_RECORDING)
+
+
+def test_recording_canary_refuses_receipt_without_recorded_event(tmp_path, monkeypatch):
+    mod = _load_module()
+    monkeypatch.setattr(mod, "RECORDING_CANARY_RECEIPT", tmp_path / "recording-canary.json")
+    monkeypatch.setattr(mod, "CANARY_RECORDING", tmp_path / "missing.jsonl")
+    monkeypatch.setattr(mod, "CANARY_RECORDING_LEDGER", tmp_path / "recording-ledger.json")
+    monkeypatch.setattr(
+        mod,
+        "emit_event_v1",
+        lambda *_args, **_kwargs: SimpleNamespace(
+            status="recorded",
+            channels={"macos": "recorded"},
+            broker_invoked=True,
+            reason=None,
+        ),
+    )
+
+    assert mod._run_canary("recording") == 1
+    payload = json.loads(mod.RECORDING_CANARY_RECEIPT.read_text(encoding="utf-8"))
+    assert payload["recording_accepted"] is False
 
 
 def test_dry_run_never_invokes_an_effector_or_advances_state(tmp_path, monkeypatch, capsys):
@@ -236,6 +298,7 @@ def test_dry_run_never_invokes_an_effector_or_advances_state(tmp_path, monkeypat
     state = {"stages": {"organvm/limen::MONETA": "deploy-ready"}, "ship_bucket": 0}
     mod, _, state_path = _setup(tmp_path, monkeypatch, products, state=state)
     mod.VIEW.write_text(json.dumps({"products": products, "ships_24h": {"total": 12}}), encoding="utf-8")
+    monkeypatch.setattr(mod, "read_ships_24h", lambda _root: (12, {}, []))
     monkeypatch.setattr(
         mod,
         "emit_event_v1",

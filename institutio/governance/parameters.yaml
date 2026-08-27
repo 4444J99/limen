@@ -455,6 +455,24 @@ parameters:
     self_update: none
     owner: vitals
     note: "Kill switch for the scripts/_notify.py escalation path (macOS display notification, onset-deduped via logs/vigilia/relief-state.json). 0 keeps the dedup bookkeeping but never calls osascript — also how hermetic tests stay silent."
+  LIMEN_IMMUTABLE_RUNTIME:
+    default: "~/.local/share/limen/current"
+    env: LIMEN_IMMUTABLE_RUNTIME
+    self_update: none
+    owner: vitals
+    note: "Symlink root of the installed immutable Limen runtime used by the processless notification scheduler. The scheduler resolves its Python and one-shot script beneath this root so a runtime rotation changes both together."
+  LIMEN_NOTIFICATION_CRON:
+    default: "*/10 * * * *"
+    env: LIMEN_NOTIFICATION_CRON
+    self_update: none
+    owner: vitals
+    note: "Cron expression for the bounded notification one-shot. The managed marker block is exact and processless; no resident daemon or LaunchAgent is installed."
+  LIMEN_NOTIFICATION_STATE_DIR:
+    default: "~/.local/state/limen"
+    env: LIMEN_NOTIFICATION_STATE_DIR
+    self_update: none
+    owner: vitals
+    note: "Private host-local state root for the notification one-shot lock and execution receipt. It contains no repository names or notification bodies and is never a tracked source of estate counts."
   LIMEN_CONDUCTING_REFRESH_TIMEOUT:
     default: 60
     env: LIMEN_CONDUCTING_REFRESH_TIMEOUT

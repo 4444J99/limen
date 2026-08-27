@@ -1,0 +1,52 @@
+{
+  "schema": "limen.main_normalization_receipt.v1",
+  "observed_at": "2026-08-27T18:06:43Z",
+  "source_generation": "60c79dd7f5834ec6445654b15e7cc2a61984207dac022cd1c684527c4fc3013a",
+  "repository_denominator": 320,
+  "plan": {
+    "private_frozen_sha256": "68410ca4806a3b7474f3358998b6281d602e8b87b73e74539e8f8235e3b1c8a4",
+    "tracked_redacted_sha256": "4428cf2753ee1dfc34581c0185fca541f82d04a34742b612e478f2bf59ae432b"
+  },
+  "pre_state": {
+    "main_defaults": 300,
+    "non_main_or_missing_defaults": 20
+  },
+  "operations": {
+    "exact_default_branch_renames": 17,
+    "empty_repository_main_bootstraps": 1,
+    "existing_main_default_switches": 2,
+    "total_repositories_normalized": 20,
+    "open_pull_requests_retargeted_to_main": 109,
+    "private_integration_pull_requests_opened": 1,
+    "archive_states_restored": 6
+  },
+  "post_state": {
+    "default_ref": "refs/heads/main",
+    "repositories_with_exact_default_ref": 320,
+    "repositories_with_missing_default_sha": 0,
+    "stable_repositories": 308,
+    "red_default_repositories": 11,
+    "unknown_default_policy_repositories": 1,
+    "renamed_old_default_refs_absent": 17,
+    "special_case_residual_refs_preserved": 2
+  },
+  "safety": {
+    "force_pushes": 0,
+    "rewritten_histories": 0,
+    "discarded_unique_commits": 0,
+    "protected_workspaces_touched": 0,
+    "remote_branch_deletions": 0,
+    "private_repository_identities_in_tracked_receipt": 0,
+    "full_private_evidence": ".limen-private/session-corpus/universe-finish-line-20260827/main-normalization"
+  },
+  "verification": {
+    "repository_pages": 11,
+    "connection_count": 1280,
+    "failed_connection_count": 0,
+    "remote_unaccounted": 0,
+    "default_ref_query": "all repository receipts report refs/heads/main",
+    "default_sha_query": "all repository receipts report a non-null default SHA"
+  },
+  "failures": [],
+  "complete": true
+}

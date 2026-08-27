@@ -1,0 +1,78 @@
+{
+  "schema": "limen.notification_recovery_receipt.v1",
+  "observed_at": "2026-08-27T18:07:31Z",
+  "producer": {
+    "owner_source": "institutio/github/estate.yaml via scripts/gitvs.py",
+    "owner_accounts_queried": 10,
+    "hard_coded_owner_fallbacks": 0,
+    "merged_pull_requests_24h": 81,
+    "repositories_with_merges_24h": 22,
+    "cache_complete": true,
+    "cache_error": null
+  },
+  "events": [
+    {
+      "stable_id": "limen.shipping.threshold",
+      "event_id": "shipping-2026-08-27-50",
+      "observed_merge_count": 81,
+      "threshold": 50,
+      "broker_status": "submitted"
+    },
+    {
+      "stable_id": "limen.estate.progress",
+      "event_id": "estate-progress-unavailable-unavaila-unavailable",
+      "broker_status": "submitted",
+      "count_display": "count unavailable/incomplete"
+    },
+    {
+      "stable_id": "limen.estate.integrity",
+      "broker_status": "submitted",
+      "count_display": "count unavailable/incomplete"
+    },
+    {
+      "stable_id": "limen.summary.midday",
+      "event_id": "diurnal-midday-2026-08-27",
+      "broker_status": "submitted"
+    }
+  ],
+  "canaries": {
+    "recording": {
+      "event_id": "notification-canary-recording-20260827T180542Z",
+      "broker_status": "recorded",
+      "recording_accepted": true,
+      "exact_event_readback": true,
+      "receipt": "logs/notification-recording-canary-receipt.json"
+    },
+    "macos": {
+      "event_id": "notification-canary-macos-20260827T180547Z",
+      "broker_status": "submitted",
+      "channel_status": "submitted",
+      "visible_acceptance": "pending_operator",
+      "receipt": "logs/notification-canary-receipt.json"
+    }
+  },
+  "transport_truth": {
+    "macos": "submission_only_visible_delivery_unverified",
+    "ntfy": "not_configured"
+  },
+  "original_events": {
+    "morning": "registered",
+    "midday": "registered_and_submitted",
+    "shipping": "registered_and_submitted",
+    "ci": "registered",
+    "host": "registered",
+    "onset": "registered",
+    "recovery": "registered"
+  },
+  "cadence": {
+    "resident_process": false,
+    "launch_agent_installed": false,
+    "bounded_one_shot_verified": true,
+    "schedule_kind": "cron_bounded_one_shot",
+    "schedule_plan_sha256": "50e1d0eae1ed314949930b41ae3637ef3e8f1c0178e89639b6bd35b378fc6568",
+    "broker_job": "unavailable_without_authenticated conduct environment",
+    "next_command": "python3 scripts/notification-schedule.py --apply --expected-plan-sha256 50e1d0eae1ed314949930b41ae3637ef3e8f1c0178e89639b6bd35b378fc6568"
+  },
+  "complete": false,
+  "incomplete_reason": "visible macOS acceptance is pending operator observation and no authenticated broker job currently owns recurring invocation"
+}
