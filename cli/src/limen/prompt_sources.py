@@ -1450,23 +1450,31 @@ def source_contract_receipt_applies(
         source_parts = path.parts
         target_path = PurePath(target_locator)
         target_parts = target_path.parts
-        marker = (".claude", "projects")
-        source_indexes = [
-            index
-            for index in range(len(source_parts) - len(marker) + 1)
-            if tuple(source_parts[index : index + len(marker)]) == marker
-        ]
-        target_indexes = [
-            index
-            for index in range(len(target_parts) - len(marker) + 1)
-            if tuple(target_parts[index : index + len(marker)]) == marker
-        ]
-        if len(source_indexes) != 1 or len(target_indexes) != 1:
+        project_roots = (
+            (".claude", "projects"),
+            (".agent-runtime", "claude", "projects"),
+        )
+        root_matches = []
+        for root in project_roots:
+            source_indexes = [
+                index
+                for index in range(len(source_parts) - len(root) + 1)
+                if tuple(source_parts[index : index + len(root)]) == root
+            ]
+            target_indexes = [
+                index
+                for index in range(len(target_parts) - len(root) + 1)
+                if tuple(target_parts[index : index + len(root)]) == root
+            ]
+            if len(source_indexes) == 1 and len(target_indexes) == 1:
+                root_matches.append((root, source_indexes[0], target_indexes[0]))
+        if len(root_matches) != 1:
             return False
-        source_relative = source_parts[source_indexes[0] + len(marker) :]
-        target_relative = target_parts[target_indexes[0] + len(marker) :]
+        root, source_index, target_index = root_matches[0]
+        source_relative = source_parts[source_index + len(root) :]
+        target_relative = target_parts[target_index + len(root) :]
         if not (
-            source_parts[: source_indexes[0]] == target_parts[: target_indexes[0]]
+            source_parts[:source_index] == target_parts[:target_index]
             and len(source_relative) == 4
             and len(target_relative) == 4
             and source_relative[0] == target_relative[0]
@@ -1512,22 +1520,28 @@ def source_contract_receipt_applies(
         if not isinstance(parent_locator, str) or not parent_locator:
             return False
         parent_parts = PurePath(parent_locator).parts
-        codex_sessions = (".codex", "sessions")
-        parent_root_indexes = [
-            index
-            for index in range(len(parent_parts) - len(codex_sessions) + 1)
-            if tuple(parent_parts[index : index + len(codex_sessions)]) == codex_sessions
-        ]
         attachment_parts = path.parts
-        attachment_root_indexes = [
-            index
-            for index in range(len(attachment_parts) - 1)
-            if tuple(attachment_parts[index : index + 2]) == (".codex", "attachments")
-        ]
+        root_pairs = (
+            ((".codex", "sessions"), (".codex", "attachments")),
+            ((".agent-runtime", "codex", "sessions"), (".agent-runtime", "codex", "attachments")),
+        )
+        root_matches = []
+        for session_root, attachment_root in root_pairs:
+            parent_indexes = [
+                index
+                for index in range(len(parent_parts) - len(session_root) + 1)
+                if tuple(parent_parts[index : index + len(session_root)]) == session_root
+            ]
+            attachment_indexes = [
+                index
+                for index in range(len(attachment_parts) - len(attachment_root) + 1)
+                if tuple(attachment_parts[index : index + len(attachment_root)]) == attachment_root
+            ]
+            if len(parent_indexes) == 1 and len(attachment_indexes) == 1:
+                root_matches.append((parent_indexes[0], attachment_indexes[0]))
         if (
-            len(parent_root_indexes) != 1
-            or len(attachment_root_indexes) != 1
-            or parent_parts[: parent_root_indexes[0]] != attachment_parts[: attachment_root_indexes[0]]
+            len(root_matches) != 1
+            or parent_parts[: root_matches[0][0]] != attachment_parts[: root_matches[0][1]]
             or PurePath(parent_locator).suffix.lower() != ".jsonl"
         ):
             return False

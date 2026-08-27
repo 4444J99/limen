@@ -11,8 +11,10 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import re
+import os
+import shutil
 import sqlite3
+import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -48,6 +50,56 @@ def _load_module(name: str, script_path: Path):
     return mod
 
 
+def _run_no_tasks_on_me(registry_path: Path) -> subprocess.CompletedProcess[str]:
+    environment = os.environ.copy()
+    real_git = shutil.which("git")
+    assert real_git is not None
+    shim_dir = registry_path.parent / "git-custody-shim"
+    shim_dir.mkdir(exist_ok=True)
+    git_shim = shim_dir / "git"
+    git_shim.write_text(
+        "#!/usr/bin/env python3\n"
+        "import os\n"
+        "import sys\n"
+        f"REAL_GIT = {real_git!r}\n"
+        "args = sys.argv[1:]\n"
+        "if len(args) >= 4 and args[0] == '-C' and args[2:] == ['status', '--porcelain']:\n"
+        "    raise SystemExit(0)\n"
+        "if len(args) >= 5 and args[0] == '-C' and args[2:] == "
+        "['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']:\n"
+        "    print('origin/__closeout_test_custody__')\n"
+        "    raise SystemExit(0)\n"
+        "if len(args) >= 5 and args[0] == '-C' and args[2:] == "
+        "['rev-list', '--count', 'origin/__closeout_test_custody__..HEAD']:\n"
+        "    print('0')\n"
+        "    raise SystemExit(0)\n"
+        "os.execv(REAL_GIT, [REAL_GIT, *args])\n",
+        encoding="utf-8",
+    )
+    git_shim.chmod(0o755)
+    environment.update(
+        {
+            "LIMEN_HIS_HAND_LEVERS": str(registry_path),
+            "LIMEN_OFFLINE": "1",
+            "LIMEN_PII_DENYLIST": str(registry_path.parent / "absent-denylist.txt"),
+            # The predicate must still execute every production check, while
+            # this fixture supplies only the branch-custody fact that a
+            # detached GitHub Actions checkout cannot carry.  The production
+            # script gets no bypass or test-mode switch.
+            "PATH": str(shim_dir) + os.pathsep + environment["PATH"],
+        }
+    )
+    return subprocess.run(
+        [str(NO_TASKS_ON_ME_SCRIPT)],
+        cwd=ROOT,
+        env=environment,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+
+
 def _create_test_portal_db(db_path: Path, stars: int = 5, dossiers: int = 3, prepared: int = 2) -> None:
     db_path.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(db_path) as conn:
@@ -78,6 +130,7 @@ def _create_test_portal_db(db_path: Path, stars: int = 5, dossiers: int = 3, pre
 def test_tier1_01_bifrons_doctor_liveness_probe(tmp_path, monkeypatch, capsys):
     """Tier 1.1: Bifrons doctor probe validates portal store, engine CLI, and alchemia module."""
     mod = _load_module("bifrons_t1_01", BIFRONS_SCRIPT)
+    original_alchemia_ok = mod._alchemia_ok
     db_path = tmp_path / "portal.db"
     _create_test_portal_db(db_path, stars=2)
 
@@ -90,6 +143,20 @@ def test_tier1_01_bifrons_doctor_liveness_probe(tmp_path, monkeypatch, capsys):
     assert "portal_store=present" in out
     assert "engine_cli=yes" in out
     assert "alchemia=ok" in out
+
+    import builtins
+
+    original_import = builtins.__import__
+
+    def failing_alchemia_import(name, *args, **kwargs):
+        if name == "alchemia":
+            raise RuntimeError("broken native dependency")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", failing_alchemia_import)
+    monkeypatch.setattr(mod, "_alchemia_ok", original_alchemia_ok)
+    monkeypatch.setattr(mod.shutil, "which", lambda _name: None)
+    assert mod._alchemia_ok() is False
 
 
 def test_tier1_02_bifrons_check_predicate_determinism(tmp_path, monkeypatch, capsys):
@@ -270,6 +337,7 @@ def test_tier1_11_closeout_no_tasks_on_me_predicate(tmp_path):
                 "unlocks": "test lane",
                 "source_task": "task-001",
                 "issue": 101,
+                "sovereignty": {"reason": "identity"},
             },
             {
                 "id": "L-TEST-02",
@@ -279,25 +347,16 @@ def test_tier1_11_closeout_no_tasks_on_me_predicate(tmp_path):
                 "unlocks": "second lane",
                 "source_task": "task-002",
                 "issue": 102,
+                "sovereignty": {"reason": "identity"},
             },
         ]
     }
     reg_path = tmp_path / "his-hand-levers.json"
     reg_path.write_text(json.dumps(valid_registry, indent=2), encoding="utf-8")
 
-    # Validate registry rules
-    data = json.loads(reg_path.read_text(encoding="utf-8"))
-    levers = data["levers"]
-    required_keys = ("id", "label", "owner", "cost", "unlocks", "source_task", "issue")
-    for lev in levers:
-        for k in required_keys:
-            assert k in lev and str(lev[k]).strip() != ""
-        assert isinstance(lev["issue"], int)
-
-    # PII firewall shape test: ensure no medical measurement units in registry
-    blob = json.dumps(data).lower()
-    pii_shapes = r"\b\d+\s?mg\b|\bmg/dl\b|\bmmhg\b|\b\d+\s?mcg\b|\b\d+\s?ml\b|\bbpm\b"
-    assert re.findall(pii_shapes, blob) == []
+    result = _run_no_tasks_on_me(reg_path)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "registry: 2 levers" in result.stdout
 
 
 # ==============================================================================
@@ -491,9 +550,9 @@ def test_tier3_01_vitals_shedding_to_observation_feed_to_health_matrix(tmp_path,
 
     view = mod.build()
     vigilia_row = next((o for o in view["organs"] if o["key"] == "vigilia"), None)
-    if vigilia_row:
-        assert vigilia_row["status"] == "down"
-        assert "self-reported defect" in vigilia_row["note"]
+    assert vigilia_row is not None
+    assert vigilia_row["status"] == "down"
+    assert "self-reported defect" in vigilia_row["note"]
 
 
 def test_tier3_02_bifrons_star_intake_to_observation_telemetry_to_portal_render(tmp_path, monkeypatch):
@@ -691,45 +750,25 @@ def test_tier4_03_closeout_idempotent_fixed_point(tmp_path):
                 "unlocks": "closeout validation",
                 "source_task": "task-closeout",
                 "issue": 999,
+                "sovereignty": {"reason": "identity"},
             }
         ]
     }
     registry_file.write_text(json.dumps(registry_data, indent=2), encoding="utf-8")
 
-    def run_validation_predicate(path: Path) -> tuple[bool, str]:
-        try:
-            d = json.loads(path.read_text(encoding="utf-8"))
-            levers = d.get("levers", [])
-            if not levers:
-                return False, "Empty levers"
-            for lev in levers:
-                for req in ("id", "label", "owner", "cost", "unlocks", "source_task", "issue"):
-                    if not str(lev.get(req, "")).strip():
-                        return False, f"Missing required field {req}"
-                if not isinstance(lev.get("issue"), int):
-                    return False, "Issue must be int"
-            # Check PII
-            blob = json.dumps(d).lower()
-            shapes = r"\b\d+\s?mg\b|\bmg/dl\b|\bmmhg\b|\b\d+\s?mcg\b|\b\d+\s?ml\b|\bbpm\b"
-            if re.findall(shapes, blob):
-                return False, "PII shape detected"
-            return True, "Valid fixed point"
-        except Exception as e:
-            return False, str(e)
-
     # First run
-    ok1, msg1 = run_validation_predicate(registry_file)
-    assert ok1 is True, msg1
+    first = _run_no_tasks_on_me(registry_file)
+    assert first.returncode == 0, first.stdout + first.stderr
 
     # Second run (idempotency verification)
-    ok2, msg2 = run_validation_predicate(registry_file)
-    assert ok2 is True, msg2
-    assert msg1 == msg2
+    second = _run_no_tasks_on_me(registry_file)
+    assert second.returncode == 0, second.stdout + second.stderr
+    assert first.stdout == second.stdout
 
     # Injected defect check
     bad_registry = dict(registry_data)
     bad_registry["levers"][0]["issue"] = "not-an-integer"
     registry_file.write_text(json.dumps(bad_registry), encoding="utf-8")
-    ok3, msg3 = run_validation_predicate(registry_file)
-    assert ok3 is False
-    assert "Issue must be int" in msg3
+    invalid = _run_no_tasks_on_me(registry_file)
+    assert invalid.returncode != 0
+    assert "no `issue` pointer" in invalid.stdout

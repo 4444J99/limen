@@ -897,12 +897,17 @@ def load_lifecycle_module() -> Any:
         source_home = SOURCE_HOME_OVERRIDE.resolve()
 
         provider_roots = tuple(original_home / name for name in (".claude", ".codex", ".gemini", ".local"))
+        runtime_roots = tuple(
+            REPO / ".agent-runtime" / provider for provider in ("claude", "codex", "gemini", "opencode")
+        )
 
         def rebase(path: Any) -> Path:
             candidate = Path(path)
-            if not any(candidate == root or root in candidate.parents for root in provider_roots):
-                return candidate
-            return source_home / candidate.relative_to(original_home)
+            if any(candidate == root or root in candidate.parents for root in provider_roots):
+                return source_home / candidate.relative_to(original_home)
+            if any(candidate == root or root in candidate.parents for root in runtime_roots):
+                return source_home / candidate.relative_to(REPO)
+            return candidate
 
         module.HOME = source_home
         for attribute in (

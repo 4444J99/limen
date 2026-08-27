@@ -4,11 +4,11 @@
 
 The end-to-end (E2E) test infrastructure and validation test suite for organ liveness and telemetry across `organvm/limen` is established, fully automated, and verified.
 
-- **Test Suite Path**: `tests/e2e/test_ecosystem_liveness.py`
+- **Test Suite Path**: `cli/tests/e2e/test_ecosystem_liveness.py`
 - **Test Infrastructure Doc**: `TEST_INFRA.md`
 - **Total Test Count**: 27 tests across 4 tiers
 - **Suite Execution Result**: **27 PASSED / 0 FAILED** (100% pass rate)
-- **Execution Time**: ~27.7s
+- **Execution Time**: 31.23s (verified 2026-08-23)
 
 ---
 
@@ -67,13 +67,13 @@ The end-to-end (E2E) test infrastructure and validation test suite for organ liv
 
 ```bash
 # Run the entire E2E liveness test suite:
-python3 -m pytest tests/e2e/test_ecosystem_liveness.py -v
+python3 -m pytest cli/tests/e2e/test_ecosystem_liveness.py -v
 
 # Run individual tiers:
-python3 -m pytest tests/e2e/test_ecosystem_liveness.py -k "test_tier1" -v
-python3 -m pytest tests/e2e/test_ecosystem_liveness.py -k "test_tier2" -v
-python3 -m pytest tests/e2e/test_ecosystem_liveness.py -k "test_tier3" -v
-python3 -m pytest tests/e2e/test_ecosystem_liveness.py -k "test_tier4" -v
+python3 -m pytest cli/tests/e2e/test_ecosystem_liveness.py -k "test_tier1" -v
+python3 -m pytest cli/tests/e2e/test_ecosystem_liveness.py -k "test_tier2" -v
+python3 -m pytest cli/tests/e2e/test_ecosystem_liveness.py -k "test_tier3" -v
+python3 -m pytest cli/tests/e2e/test_ecosystem_liveness.py -k "test_tier4" -v
 
 # Run scoped pre-push verification:
 scripts/verify-scoped.sh

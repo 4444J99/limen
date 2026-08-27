@@ -79,7 +79,7 @@ def _alchemia_ok() -> bool:
         import alchemia  # type: ignore # noqa: F401
 
         return True
-    except ImportError:
+    except Exception:
         pass
 
     # 2. Check via CLI if functional on PATH
