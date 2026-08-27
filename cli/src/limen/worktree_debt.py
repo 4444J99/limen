@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 from typing import Any, TypedDict
 
+from limen.protected_exclusions import ProtectedExclusionError, ProtectedExclusionRegistry
 from limen.worktree_roots import effective_worktree_root, iter_worktree_targets
 
 DEBT_REASONS = {
@@ -18,6 +19,7 @@ DEBT_REASONS = {
     "unpushed-commits",
     "unpreserved-local-refs",
     "unresolved",
+    "protected-exclusion-registry-unavailable",
 }
 REAPABLE_REASONS = {
     "clean+merged+idle",
@@ -38,7 +40,14 @@ REMOTE_MERGED_STATUSES = {"merged_pr_preserved"}
 REMOTE_PR_OPEN_LANES = {"remote-pr-open"}
 REMOTE_PR_OPEN_STATUSES = {"open_pr_preserved"}
 OWNER_BLOCKER_LANES = {"owner-blocker"}
-OWNER_BLOCKER_STATUSES = {"history_mismatch_patch_preserved", "private_patch_preserved"}
+OWNER_BLOCKER_STATUSES = {
+    "history_mismatch_patch_preserved",
+    "private_patch_preserved",
+    "private_bundle_preserved",
+}
+PROTECTED_EXCLUSION_REGISTRY = (
+    Path(__file__).resolve().parents[3] / "institutio" / "governance" / "reconciliation-protected-exclusions.json"
+)
 GENERATED_LOG_SHELL_FILES = {
     "logs/session-lifecycle-pressure.md",
     "logs/session-lifecycle-pressure.json",
@@ -296,13 +305,25 @@ def _classify(
     min_age_h: float,
     self_guard: set[Path],
     preservation_receipts: dict[str, dict[str, object]],
+    protected_registry: ProtectedExclusionRegistry | None = None,
+    protected_registry_error: bool = False,
 ) -> str:
+    if protected_registry_error:
+        return "protected-exclusion-registry-unavailable"
     try:
         resolved = path.resolve()
     except OSError:
         return "unresolved"
     if resolved in self_guard:
         return "self/live-checkout"
+    if protected_registry is not None:
+        protected_reason = protected_registry.match(path)
+        if protected_reason is None:
+            branch_result = _git(["branch", "--show-current"], path)
+            branch = branch_result.stdout.strip() if branch_result.returncode == 0 else ""
+            protected_reason = protected_registry.match(path, branch=branch or None)
+        if protected_reason is not None:
+            return protected_reason
     if _inside_agy_scratch_root(path):
         return "antigravity-scratch-managed"
     if _is_documented_residue(path, preservation_receipts):
@@ -358,12 +379,30 @@ def worktree_debt_report(limen_root: Path | None = None, *, strict: bool = False
 
     now = time.time()
     preservation_receipts = _load_preservation_receipts(root)
+    protected_registry: ProtectedExclusionRegistry | None = None
+    protected_registry_error = False
+    try:
+        protected_registry = ProtectedExclusionRegistry.load(root, PROTECTED_EXCLUSION_REGISTRY)
+    except ProtectedExclusionError:
+        if strict:
+            from limen.worktree_roots import WorktreeInventoryError
+
+            raise WorktreeInventoryError("protected exclusion registry unavailable")
+        protected_registry_error = True
     items: list[WorktreeDebtItem] = []
     by_reason: dict[str, int] = {}
     by_reapable_reason: dict[str, int] = {}
     for target in iter_worktree_targets(root, strict=strict):
         path = target.path
-        reason = _classify(path, now, target.min_age_h, self_guard, preservation_receipts)
+        reason = _classify(
+            path,
+            now,
+            target.min_age_h,
+            self_guard,
+            preservation_receipts,
+            protected_registry,
+            protected_registry_error,
+        )
         debt = reason in DEBT_REASONS
         reapable = reason in REAPABLE_REASONS
         by_reason[reason] = by_reason.get(reason, 0) + 1

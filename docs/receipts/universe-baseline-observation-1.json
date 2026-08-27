@@ -1,0 +1,83 @@
+{
+  "census_digest": "a70d43bb754acc2f8c50deb7972aec80b699d6c07c6e1c65425fce6c77dd8e59",
+  "complete": false,
+  "failure_count": 2,
+  "observed_at": "2026-08-27T14:58:22.879946Z",
+  "partitions": [
+    {
+      "blocked": 143,
+      "complete": true,
+      "kind": "repositories",
+      "protected": 0,
+      "schema_version": "limen.universe_partition.v1",
+      "terminal": 177,
+      "total": 320,
+      "unaccounted": 0
+    },
+    {
+      "blocked": 0,
+      "complete": true,
+      "kind": "pull_requests",
+      "protected": 762,
+      "schema_version": "limen.universe_partition.v1",
+      "terminal": 0,
+      "total": 762,
+      "unaccounted": 0
+    },
+    {
+      "blocked": 0,
+      "complete": false,
+      "kind": "branches",
+      "protected": 0,
+      "schema_version": "limen.universe_partition.v1",
+      "terminal": 319,
+      "total": 10609,
+      "unaccounted": 10290
+    },
+    {
+      "blocked": 29,
+      "complete": false,
+      "kind": "local_roots",
+      "protected": 5,
+      "schema_version": "limen.universe_partition.v1",
+      "terminal": 13,
+      "total": 156,
+      "unaccounted": 109
+    },
+    {
+      "blocked": 18,
+      "complete": false,
+      "kind": "worktrees",
+      "protected": 5,
+      "schema_version": "limen.universe_partition.v1",
+      "terminal": 0,
+      "total": 117,
+      "unaccounted": 94
+    },
+    {
+      "blocked": 0,
+      "complete": true,
+      "kind": "protections",
+      "protected": 5,
+      "schema_version": "limen.universe_partition.v1",
+      "terminal": 0,
+      "total": 5,
+      "unaccounted": 0
+    },
+    {
+      "blocked": 29,
+      "complete": false,
+      "kind": "terminal_dispositions",
+      "protected": 767,
+      "schema_version": "limen.universe_partition.v1",
+      "terminal": 332,
+      "total": 11527,
+      "unaccounted": 10399
+    }
+  ],
+  "repository_denominator": 320,
+  "schema_version": "limen.universe_baseline_receipt.v1",
+  "source_generation": "1820f8871184b0fffc06b1441d4f1f3fb4849c04c302bb46e5beafde4f9e23de",
+  "stable_count": 177,
+  "unaccounted": 20892
+}

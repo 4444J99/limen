@@ -68,14 +68,46 @@ class CursorReceiptV1(ProtocolModel):
     page_count: int = Field(ge=1)
     complete: bool
     errors: tuple[str, ...] = ()
+    repository_identity: RepositoryIdentityV1 | None = None
+    repository: str | None = None
+    connection_kind: str | None = None
+    page_cursor: str | None = None
+    expected_total: int | None = Field(default=None, ge=0)
+    observed_total: int | None = Field(default=None, ge=0)
+    retry_class: Literal["none", "transient", "permanent", "corrupt"] = "none"
+    attempt: int = Field(default=1, ge=1)
+    source_generation: str | None = None
 
     _surface = field_validator("surface")(_nonblank)
+    _optional_text = field_validator("repository", "connection_kind", "page_cursor")(
+        lambda value: _nonblank(value) if value is not None else None
+    )
+    _source_generation = field_validator("source_generation")(
+        lambda value: _digest(value) if value is not None else None
+    )
 
     @model_validator(mode="after")
     def completeness_is_exact(self) -> "CursorReceiptV1":
-        exact = self.total_count == self.observed_count and not self.errors
+        expected = self.total_count if self.expected_total is None else self.expected_total
+        observed = self.observed_count if self.observed_total is None else self.observed_total
+        if self.expected_total is not None and self.expected_total != self.total_count:
+            raise ValueError("expected_total must match total_count")
+        if self.observed_total is not None and self.observed_total != self.observed_count:
+            raise ValueError("observed_total must match observed_count")
+        if self.connection_kind is not None and self.connection_kind != self.surface:
+            raise ValueError("connection_kind must match surface")
+        if self.repository_identity is not None:
+            if self.repository is None or not self.repository_identity.accepts(self.repository):
+                raise ValueError("cursor repository must match its stable identity")
+        elif self.repository is not None:
+            raise ValueError("cursor repository requires a stable repository identity")
+        exact = expected == observed and not self.errors
         if self.complete != exact:
             raise ValueError("cursor completeness must match counts and errors")
+        if self.complete and self.page_cursor is not None:
+            raise ValueError("complete cursor receipt cannot retain a page cursor")
+        if self.retry_class in {"permanent", "corrupt"} and self.complete:
+            raise ValueError("terminal cursor failure cannot claim completeness")
         return self
 
 
@@ -551,6 +583,48 @@ class RecoveryEvaluationV1(ProtocolModel):
     errors: tuple[str, ...]
 
 
+UniversePartitionKind = Literal[
+    "repositories",
+    "pull_requests",
+    "branches",
+    "local_roots",
+    "worktrees",
+    "protections",
+    "terminal_dispositions",
+]
+UNIVERSE_PARTITION_KINDS: tuple[UniversePartitionKind, ...] = (
+    "repositories",
+    "pull_requests",
+    "branches",
+    "local_roots",
+    "worktrees",
+    "protections",
+    "terminal_dispositions",
+)
+
+
+class UniversePartitionV1(ProtocolModel):
+    """An explicit denominator whose every member is accounted for exactly once."""
+
+    schema_version: Literal["limen.universe_partition.v1"] = "limen.universe_partition.v1"
+    kind: UniversePartitionKind
+    total: int = Field(ge=0)
+    terminal: int = Field(ge=0)
+    protected: int = Field(ge=0)
+    blocked: int = Field(ge=0)
+    unaccounted: int = Field(ge=0)
+    complete: bool
+
+    @model_validator(mode="after")
+    def partition_is_exact(self) -> "UniversePartitionV1":
+        accounted = self.terminal + self.protected + self.blocked + self.unaccounted
+        if accounted != self.total:
+            raise ValueError("partition total must equal terminal + protected + blocked + unaccounted")
+        if self.complete != (self.unaccounted == 0):
+            raise ValueError("partition completeness must match its unaccounted count")
+        return self
+
+
 class RecoveryStableObservationV1(ProtocolModel):
     """A separately persisted first observation for the two-census fixed point."""
 
@@ -560,10 +634,112 @@ class RecoveryStableObservationV1(ProtocolModel):
     stable_digest: str
     observed_at: datetime
     manifest_receipt: str
+    repository_identity: RepositoryIdentityV1 | None = None
+    repository: str | None = None
+    default_ref: str | None = None
+    default_sha: str | None = None
+    default_check_status: Literal["green", "no_required_checks", "red", "pending", "unknown"] | None = None
+    partitions: tuple[UniversePartitionV1, ...] = ()
+    unaccounted: int = Field(default=0, ge=0)
+    complete: bool | None = None
 
     _stable_digest = field_validator("stable_digest")(_digest)
     _observed = field_validator("observed_at")(_aware)
     _receipt = field_validator("manifest_receipt")(_nonblank)
+    _repository = field_validator("repository", "default_ref")(
+        lambda value: _nonblank(value) if value is not None else None
+    )
+    _default_sha = field_validator("default_sha")(lambda value: _git_oid(value) if value is not None else None)
+
+    @model_validator(mode="after")
+    def extended_observation_is_exact(self) -> "RecoveryStableObservationV1":
+        extended = any(
+            value is not None
+            for value in (
+                self.repository_identity,
+                self.repository,
+                self.default_ref,
+                self.default_sha,
+                self.default_check_status,
+                self.complete,
+            )
+        ) or bool(self.partitions)
+        if not extended:
+            if self.unaccounted:
+                raise ValueError("legacy stable observation cannot claim unaccounted extended state")
+            return self
+        if None in (
+            self.repository_identity,
+            self.repository,
+            self.default_ref,
+            self.default_sha,
+            self.default_check_status,
+            self.complete,
+        ):
+            raise ValueError("extended stable observation requires repository, default, and completeness fields")
+        assert self.repository_identity is not None
+        assert self.repository is not None
+        assert self.default_ref is not None
+        assert self.default_check_status is not None
+        assert self.complete is not None
+        if not self.repository_identity.accepts(self.repository):
+            raise ValueError("stable observation repository must match its stable identity")
+        if not self.default_ref.startswith("refs/heads/"):
+            raise ValueError("stable observation default ref must be fully qualified")
+        kinds = tuple(row.kind for row in self.partitions)
+        required = set(UNIVERSE_PARTITION_KINDS)
+        if len(kinds) != len(set(kinds)) or set(kinds) != required:
+            raise ValueError("extended stable observation requires each universe partition exactly once")
+        observed_unaccounted = sum(row.unaccounted for row in self.partitions)
+        if observed_unaccounted != self.unaccounted:
+            raise ValueError("stable observation unaccounted count must match its partitions")
+        stable_default = self.default_check_status in {"green", "no_required_checks"}
+        expected_complete = stable_default and all(row.complete for row in self.partitions) and self.unaccounted == 0
+        if self.complete != expected_complete:
+            raise ValueError("stable observation completeness must match default checks and partitions")
+        return self
+
+
+class UniverseBaselineReceiptV1(ProtocolModel):
+    """Aggregate receipt for the frozen universe generation and no other source."""
+
+    schema_version: Literal["limen.universe_baseline_receipt.v1"] = "limen.universe_baseline_receipt.v1"
+    observed_at: datetime
+    source_generation: str
+    census_digest: str
+    repository_denominator: int = Field(ge=0)
+    stable_count: int = Field(ge=0)
+    partitions: tuple[UniversePartitionV1, ...] = Field(min_length=1)
+    failure_count: int = Field(ge=0)
+    unaccounted: int = Field(ge=0)
+    complete: bool
+
+    _observed = field_validator("observed_at")(_aware)
+    _digests = field_validator("source_generation", "census_digest")(_digest)
+
+    @model_validator(mode="after")
+    def aggregate_is_exact(self) -> "UniverseBaselineReceiptV1":
+        if self.stable_count > self.repository_denominator:
+            raise ValueError("stable repository count cannot exceed the frozen denominator")
+        kinds = tuple(row.kind for row in self.partitions)
+        required = set(UNIVERSE_PARTITION_KINDS)
+        if len(kinds) != len(set(kinds)) or set(kinds) != required:
+            raise ValueError("universe baseline requires each universe partition exactly once")
+        repositories = next(row for row in self.partitions if row.kind == "repositories")
+        if repositories.total != self.repository_denominator or repositories.terminal != self.stable_count:
+            raise ValueError("repository partition must match denominator and stable count")
+        observed_unaccounted = sum(row.unaccounted for row in self.partitions)
+        if observed_unaccounted != self.unaccounted:
+            raise ValueError("aggregate unaccounted count must match its partitions")
+        expected_complete = (
+            self.stable_count == self.repository_denominator
+            and self.failure_count == 0
+            and self.unaccounted == 0
+            and all(row.complete for row in self.partitions)
+        )
+        if self.complete != expected_complete:
+            raise ValueError("aggregate completeness must match stable, failure, and partition evidence")
+        return self
 
 
 def _pull_request_disposition_identity(

@@ -1,0 +1,106 @@
+{
+  "schema_version": "limen.direct_session_execution_receipt.v1",
+  "receipt_id": "universe-finish-line-20260827-implementation",
+  "executor": "codex",
+  "surface": "direct-human-session",
+  "human_protected": true,
+  "branch": "corrective/universe-finish-line-20260827",
+  "base_sha": "8773db631e9c4b2fe00abbb032e758b5264ffc7f",
+  "conduct": {
+    "registered": false,
+    "reason": "authenticated broker environment unavailable after documented bootstrap"
+  },
+  "remote_census": {
+    "observed_at": "2026-08-27T16:31:53.473770Z",
+    "source_generation": "e9d7f66763f824338dd57e18331dc6abc3aeb9fbc1b649b98c0dcc28a6c8161b",
+    "repository_denominator": 320,
+    "connection_count": 1280,
+    "known_leaf_count": 13062,
+    "failed_connection_count": 0,
+    "unaccounted": 0,
+    "exhaustive_for_registered_connections": true
+  },
+  "universe_baseline": {
+    "census_digest": "50c3c7899daa88c5f8a1ba3657837d5e1f7f655cec826039fead802d2d75e3a5",
+    "stable_count": 308,
+    "failure_count": 2,
+    "unaccounted": 20304,
+    "complete": false
+  },
+  "pull_requests": {
+    "original": "https://github.com/4444J99/limen/pull/2542",
+    "successor": "https://github.com/4444J99/limen/pull/2548",
+    "successor_head": "c368a0769a438b0323fd7a706d9270c8196030a4",
+    "successor_merge_commit": "b08301f8ef56991f5e469da437d054605b0987b2",
+    "original_disposition": "closed-superseded-with-range-diff-landing-proof"
+  },
+  "verification": [
+    {
+      "command": "python3 -m pytest cli/tests/test_github_estate_census.py cli/tests/test_local_git_census.py cli/tests/test_universe_baseline.py cli/tests/test_universe_recovery.py cli/tests/test_progress.py cli/tests/test_notify_events.py cli/tests/test_worktree_debt.py cli/tests/test_protected_exclusions.py scripts/tests/test_worktree_preserve_dirty.py scripts/tests/test_positioning_research_adjudication.py -q",
+      "result": "211 passed",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 scripts/worktree-debt.py --strict --fail-on-debt --json",
+      "result": "six debt items; expected nonterminal failure",
+      "exit_code": 1
+    },
+    {
+      "command": "python3 scripts/reclaim-worktrees.py --check --json",
+      "result": "seven unapplied candidates; protected lanes excluded",
+      "exit_code": 0
+    },
+    {
+      "command": "scripts/verify-scoped.sh --changed --base 8773db631e9c4b2fe00abbb032e758b5264ffc7f --require-base --jobs 4",
+      "result": "the cheap wave exposed five defects; all previously green shards remain reusable and each failed shard was corrected and rerun successfully",
+      "exit_code": 1
+    },
+    {
+      "command": "limen host-admission status --cwd . --json",
+      "result": "heavy admission denied: swap-fraction 0.37041870114626363",
+      "exit_code": 0
+    },
+    {
+      "command": "scripts/no-tasks-on-me.sh",
+      "result": "session branch clean and fully pushed; two already-authorized landed local branches remain held by the incomplete-census deletion gate",
+      "exit_code": 1
+    },
+    {
+      "command": "python3 -m pytest cli/tests/test_github_estate_census.py scripts/tests/test_github_estate_census_custody.py cli/tests/test_universe_baseline.py -q",
+      "result": "28 passed; explicit no-required-check, invalid empty-check, no-default, pagination, and partial-write refusal covered",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 scripts/github-estate-census.py --write --check --json --workers 2",
+      "result": "320 repositories, 1280 complete connections, zero failed connections, zero remote unaccounted leaves",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 scripts/github-estate-census.py --write --check --json --workers 2",
+      "result": "independent generation reproduced the exact remote denominator and all leaf/debt partitions; only the clean local session-worktree disposition changed",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -m pytest cli/tests/test_bounded_subprocess.py cli/tests/test_transfer_script_coordinates.py cli/tests/test_tcc_app_management_fixture.py -q",
+      "result": "23 passed after repairing the two exact hosted PR #2549 failures and importing the merged PR #2548 correction",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 -m pytest tests/e2e/verify_ecosystem_prs.py tests/e2e/test_pr_remediation_pipeline.py tests/e2e/test_ecosystem_liveness.py -q",
+      "result": "164 tests independently reproduced from the preserved Agy verification corpus",
+      "exit_code": 0
+    },
+    {
+      "command": "scripts/verify-scoped.sh",
+      "result": "all 35 cheap gates passed; local heavy verification was not admitted because the machine-wide swap-fraction guard returned exit 75",
+      "exit_code": 75
+    }
+  ],
+  "outcome": "nonterminal_durable_continuation",
+  "destructive_effects": [],
+  "external_effects": [
+    "pushed successor branch and opened pull request 2548",
+    "merged pull request 2548 at an exact matched head and recorded pull request 2542 supersession proof",
+    "pushed the universe finish-line branch and opened pull request 2549"
+  ]
+}
