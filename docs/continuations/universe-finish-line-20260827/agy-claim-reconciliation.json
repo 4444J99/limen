@@ -1,0 +1,3192 @@
+{
+  "schema_version": "limen.agy_handoff_reconciliation.v1",
+  "observed_at": "2026-08-27T17:36:41Z",
+  "source": {
+    "conversation_id": "1afead36-1a51-4757-809e-e279b610cf99",
+    "handoff_sha256": "bcbbdb67bc5ebcccaa90367a9ee24a53d27494b18b5b6303f466436f68e3469c",
+    "headline_merge_claim": "160+",
+    "explicit_claim_count": 49,
+    "explicit_claim_key": "claimed repository plus PR number"
+  },
+  "summary": {
+    "explicit_claim_count": 49,
+    "unique_claim_count": 49,
+    "claimed_merged_count": 48,
+    "live_merged_count": 38,
+    "superseded_with_landing_proof_count": 4,
+    "protected_active_count": 1,
+    "invalid_repository_claim_count": 6,
+    "duplicate_after_identity_resolution_count": 5,
+    "state_mismatch_count": 4,
+    "remote_head_branch_present_count": 3,
+    "rows_with_failing_checks": 28,
+    "unaccounted_count": 0,
+    "exhaustive": true,
+    "valid": false,
+    "validity_reason": "the explicit roster is exhaustive but contains six claims under a nonexistent repository identity and four PRs described as merged that were actually closed after equivalent landing"
+  },
+  "identity_evidence": {
+    "mislabeled_local_path": "redacted tracked receipt; private preservation ledger owns the absolute path",
+    "actual_remote": "git@github.com:4444J99/peer-audited--behavioral-blockchain.git",
+    "actual_git_common_directory_repository": "4444J99/peer-audited--behavioral-blockchain",
+    "dirty_delta_preserved": true,
+    "preservation_receipt_owner": "docs/worktree-preservation-receipts.json"
+  },
+  "claims": [
+    {
+      "claim_key": "organvm-v-logos/.github#37",
+      "claimed_repository": "organvm-v-logos/.github",
+      "current_repository": "organvm-v-logos/.github",
+      "repository_identity_status": "exact",
+      "pr_number": 37,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-26T18:06:12Z",
+      "closed_at": "2026-08-26T18:06:12Z",
+      "head_sha": "4de09b08d94566536474eb996e43cba4e38e2da0",
+      "merge_commit": "3b3fa6ae4adb58954d5e5c84ce2aba4e54d58c31",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "dependabot",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/organvm-v-logos/.github/actions/runs/32997839970/job/98271605167"
+        },
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-v-logos/.github/actions/runs/32997839832/job/98271603375"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "limen/gh-organvm-dot-github-logos-18-dad8",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-v-logos/.github/pull/37"
+    },
+    {
+      "claim_key": "organvm-v-logos/.github#34",
+      "claimed_repository": "organvm-v-logos/.github",
+      "current_repository": "organvm-v-logos/.github",
+      "repository_identity_status": "exact",
+      "pr_number": 34,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-26T18:07:04Z",
+      "closed_at": "2026-08-26T18:07:04Z",
+      "head_sha": "69ca100b70c6a5ddf572671a37f1bf62d7ad4de5",
+      "merge_commit": "703a790c73ee7d642e6c77e9007753f75c942092",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "dependabot",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/organvm-v-logos/.github/actions/runs/32997922158/job/98271896126"
+        },
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-v-logos/.github/actions/runs/32997922103/job/98271894732"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "limen/gh-organvm-v-logos-github-6-bb3f",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-v-logos/.github/pull/34"
+    },
+    {
+      "claim_key": "organvm-v-logos/.github#26",
+      "claimed_repository": "organvm-v-logos/.github",
+      "current_repository": "organvm-v-logos/.github",
+      "repository_identity_status": "exact",
+      "pr_number": 26,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-26T18:07:57Z",
+      "closed_at": "2026-08-26T18:07:57Z",
+      "head_sha": "b186517916078fba313f974ad2fdb3adf9ecd028",
+      "merge_commit": "daaa73bc45999b36eadd3519266b90787f6762e5",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "dependabot",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/organvm-v-logos/.github/actions/runs/32998002027/job/98272173202"
+        },
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-v-logos/.github/actions/runs/32998002040/job/98272171154"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "limen/gh-organvm-v-logos-github-21-78e9",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-v-logos/.github/pull/26"
+    },
+    {
+      "claim_key": "organvm-vi-koinonia/public-process#35",
+      "claimed_repository": "organvm-vi-koinonia/public-process",
+      "current_repository": "organvm-vi-koinonia/public-process",
+      "repository_identity_status": "exact",
+      "pr_number": 35,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-26T18:08:52Z",
+      "closed_at": "2026-08-26T18:08:53Z",
+      "head_sha": "16689063c340640ee00088940d5b4bab1c91f851",
+      "merge_commit": "a1c03200c5e4e70ee619d325db2feb67a11a17ce",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-vi-koinonia/public-process/actions/runs/32998089247/job/98272471960"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "limen/gh-organvm-public-process-16-1055",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-vi-koinonia/public-process/pull/35"
+    },
+    {
+      "claim_key": "organvm-vi-koinonia/public-process#34",
+      "claimed_repository": "organvm-vi-koinonia/public-process",
+      "current_repository": "organvm-vi-koinonia/public-process",
+      "repository_identity_status": "exact",
+      "pr_number": 34,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-26T18:09:47Z",
+      "closed_at": "2026-08-26T18:09:47Z",
+      "head_sha": "d16c02bc92cf749f07f36f5bd9d4e6ad8523a4ed",
+      "merge_commit": "7db7676297366b75b6b9ea5c2124d7a84c1b3887",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-vi-koinonia/public-process/actions/runs/32998176102/job/98272763391"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "limen/gh-organvm-public-process-15-5f5f",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-vi-koinonia/public-process/pull/34"
+    },
+    {
+      "claim_key": "organvm-vi-koinonia/public-process#30",
+      "claimed_repository": "organvm-vi-koinonia/public-process",
+      "current_repository": "organvm-vi-koinonia/public-process",
+      "repository_identity_status": "exact",
+      "pr_number": 30,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-26T18:10:42Z",
+      "closed_at": "2026-08-26T18:10:42Z",
+      "head_sha": "db82ac789e2688949a9cc43e30fe6afacce83a7c",
+      "merge_commit": "e43546872112cb00fee873677da6d42ce6dcfb95",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-vi-koinonia/public-process/actions/runs/32998261019/job/98273044061"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "limen/gh-organvm-public-process-14-ba69",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-vi-koinonia/public-process/pull/30"
+    },
+    {
+      "claim_key": "organvm-vi-koinonia/public-process#29",
+      "claimed_repository": "organvm-vi-koinonia/public-process",
+      "current_repository": "organvm-vi-koinonia/public-process",
+      "repository_identity_status": "exact",
+      "pr_number": 29,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-26T18:11:49Z",
+      "closed_at": "2026-08-26T18:11:49Z",
+      "head_sha": "e0fff1e4df315b574bbf2af94ae77e26b627793d",
+      "merge_commit": "3a3f357a699061555d2833b963463bfc015860a0",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-vi-koinonia/public-process/actions/runs/32998364939/job/98273406114"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "limen/gh-organvm-public-process-19-339f",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-vi-koinonia/public-process/pull/29"
+    },
+    {
+      "claim_key": "organvm-vi-koinonia/community-hub#10",
+      "claimed_repository": "organvm-vi-koinonia/community-hub",
+      "current_repository": "organvm-vi-koinonia/community-hub",
+      "repository_identity_status": "exact",
+      "pr_number": 10,
+      "claimed_disposition": "merged",
+      "claim_matches_live": false,
+      "live_state": "CLOSED",
+      "merged_at": null,
+      "closed_at": "2026-08-26T18:12:31Z",
+      "head_sha": "32bce7ebf18d944e77ca22ea5cc7a91796e0a09d",
+      "merge_commit": null,
+      "review_disposition": "none",
+      "checks": [],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "limen/discover-organvm-community-hub-e783",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "superseded_with_landing_proof",
+      "landing_proof": {
+        "repository": "organvm-vi-koinonia/community-hub",
+        "pr": 18,
+        "relation": "exact closed head equals successor squash merge commit",
+        "exact_sha": "32bce7ebf18d944e77ca22ea5cc7a91796e0a09d"
+      },
+      "url": "https://github.com/organvm-vi-koinonia/community-hub/pull/10"
+    },
+    {
+      "claim_key": "organvm-iv-taxis/a-i--skills#38",
+      "claimed_repository": "organvm-iv-taxis/a-i--skills",
+      "current_repository": "organvm-iv-taxis/a-i--skills",
+      "repository_identity_status": "exact",
+      "pr_number": 38,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:23:12Z",
+      "closed_at": "2026-08-27T12:23:12Z",
+      "head_sha": "94adb98629bf5148b4e3c079f54e215d358623ca",
+      "merge_commit": "f254bd8febf08f31bea08731f6a75f0a43b64dd7",
+      "review_disposition": "REVIEW_REQUIRED",
+      "checks": [
+        {
+          "name": "validate-and-comment",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33071601253/job/98514988299"
+        },
+        {
+          "name": "test (3.11)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33071601182/job/98514988175"
+        },
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33071601242/job/98514987990"
+        },
+        {
+          "name": "test (3.12)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33071601182/job/98514987926"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "dependabot/github_actions/actions/setup-python-7",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-iv-taxis/a-i--skills/pull/38"
+    },
+    {
+      "claim_key": "organvm-iv-taxis/a-i--skills#35",
+      "claimed_repository": "organvm-iv-taxis/a-i--skills",
+      "current_repository": "organvm-iv-taxis/a-i--skills",
+      "repository_identity_status": "exact",
+      "pr_number": 35,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-26T18:47:53Z",
+      "closed_at": "2026-08-26T18:47:53Z",
+      "head_sha": "c1672cfbcb790e55d1a738ae5a256beaaed1185f",
+      "merge_commit": "cf3a50c5cb207d42b9a42963a449a98f4319f70c",
+      "review_disposition": "REVIEW_REQUIRED",
+      "checks": [
+        {
+          "name": "validate-and-comment",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33001636636/job/98284704040"
+        },
+        {
+          "name": "test (3.11)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33001636668/job/98284704339"
+        },
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33001636693/job/98284704205"
+        },
+        {
+          "name": "test (3.12)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33001636668/job/98284704791"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "feat/code-review-checklist-skill",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-iv-taxis/a-i--skills/pull/35"
+    },
+    {
+      "claim_key": "organvm-iv-taxis/a-i--skills#31",
+      "claimed_repository": "organvm-iv-taxis/a-i--skills",
+      "current_repository": "organvm-iv-taxis/a-i--skills",
+      "repository_identity_status": "exact",
+      "pr_number": 31,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-26T18:43:45Z",
+      "closed_at": "2026-08-26T18:43:45Z",
+      "head_sha": "0cfd9953e238b4b9d6cc400a9569e7ce3cd4f377",
+      "merge_commit": "c5224c7ac850204fff95911998269a66b57ad4e9",
+      "review_disposition": "REVIEW_REQUIRED",
+      "checks": [
+        {
+          "name": "validate-and-comment",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33001241821/job/98283337198"
+        },
+        {
+          "name": "test (3.11)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33001241801/job/98283336829"
+        },
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33001241781/job/98283337138"
+        },
+        {
+          "name": "test (3.12)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33001241801/job/98283337100"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "fix/restore-turnstile-spin-source",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-iv-taxis/a-i--skills/pull/31"
+    },
+    {
+      "claim_key": "organvm-iv-taxis/a-i--skills#30",
+      "claimed_repository": "organvm-iv-taxis/a-i--skills",
+      "current_repository": "organvm-iv-taxis/a-i--skills",
+      "repository_identity_status": "exact",
+      "pr_number": 30,
+      "claimed_disposition": "merged",
+      "claim_matches_live": false,
+      "live_state": "CLOSED",
+      "merged_at": null,
+      "closed_at": "2026-08-26T18:51:39Z",
+      "head_sha": "cf3a50c5cb207d42b9a42963a449a98f4319f70c",
+      "merge_commit": null,
+      "review_disposition": "REVIEW_REQUIRED",
+      "checks": [],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "chore/remove-session-artifacts",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "superseded_with_landing_proof",
+      "landing_proof": {
+        "repository": "organvm-iv-taxis/a-i--skills",
+        "pr": 35,
+        "relation": "exact closed head equals successor squash merge commit",
+        "exact_sha": "cf3a50c5cb207d42b9a42963a449a98f4319f70c"
+      },
+      "url": "https://github.com/organvm-iv-taxis/a-i--skills/pull/30"
+    },
+    {
+      "claim_key": "organvm-iv-taxis/a-i--skills#29",
+      "claimed_repository": "organvm-iv-taxis/a-i--skills",
+      "current_repository": "organvm-iv-taxis/a-i--skills",
+      "repository_identity_status": "exact",
+      "pr_number": 29,
+      "claimed_disposition": "merged",
+      "claim_matches_live": false,
+      "live_state": "CLOSED",
+      "merged_at": null,
+      "closed_at": "2026-08-26T18:54:20Z",
+      "head_sha": "2c36999d89224953e0e7c59c79cd28a73f37d143",
+      "merge_commit": null,
+      "review_disposition": "REVIEW_REQUIRED",
+      "checks": [],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "limen/discover-organvm-a-i--skills-e36f",
+        "present": true,
+        "observed_tip": "2c36999d89224953e0e7c59c79cd28a73f37d143"
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "superseded_with_landing_proof",
+      "landing_proof": {
+        "repository": "organvm-iv-taxis/a-i--skills",
+        "pr": 12,
+        "relation": "exact closed head equals successor squash merge commit",
+        "exact_sha": "2c36999d89224953e0e7c59c79cd28a73f37d143"
+      },
+      "url": "https://github.com/organvm-iv-taxis/a-i--skills/pull/29"
+    },
+    {
+      "claim_key": "organvm-iv-taxis/a-i--skills#27",
+      "claimed_repository": "organvm-iv-taxis/a-i--skills",
+      "current_repository": "organvm-iv-taxis/a-i--skills",
+      "repository_identity_status": "exact",
+      "pr_number": 27,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:25:45Z",
+      "closed_at": "2026-08-27T12:25:45Z",
+      "head_sha": "9d374484d4f94cc7b184a769ecfd0075ed29fcb6",
+      "merge_commit": "6b53d3ec952527cc82bb38b272e425a81ee3dd25",
+      "review_disposition": "REVIEW_REQUIRED",
+      "checks": [
+        {
+          "name": "validate-and-comment",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33071792495/job/98515647508"
+        },
+        {
+          "name": "test (3.11)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33071792434/job/98515647823"
+        },
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33071792511/job/98515647866"
+        },
+        {
+          "name": "test (3.12)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33071792434/job/98515647595"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "limen/discover-organvm-a-i--skills-1ede",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-iv-taxis/a-i--skills/pull/27"
+    },
+    {
+      "claim_key": "organvm-iv-taxis/a-i--skills#12",
+      "claimed_repository": "organvm-iv-taxis/a-i--skills",
+      "current_repository": "organvm-iv-taxis/a-i--skills",
+      "repository_identity_status": "exact",
+      "pr_number": 12,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-26T18:53:18Z",
+      "closed_at": "2026-08-26T18:53:19Z",
+      "head_sha": "aff778657edb35ba0b5ceabcc9797438f94365d4",
+      "merge_commit": "2c36999d89224953e0e7c59c79cd28a73f37d143",
+      "review_disposition": "REVIEW_REQUIRED",
+      "checks": [
+        {
+          "name": "validate-and-comment",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33002132663/job/98286415332"
+        },
+        {
+          "name": "test (3.11)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33002132656/job/98286415223"
+        },
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33002132552/job/98286414874"
+        },
+        {
+          "name": "test (3.12)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm-iv-taxis/a-i--skills/actions/runs/33002132656/job/98286415410"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "restore/2026-05-01-elevate-orphan-skills",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-iv-taxis/a-i--skills/pull/12"
+    },
+    {
+      "claim_key": "4444J99/peer-audited--behavioral-blockchain#944",
+      "claimed_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "current_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "repository_identity_status": "exact",
+      "pr_number": 944,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:26:06Z",
+      "closed_at": "2026-08-27T12:26:06Z",
+      "head_sha": "0af057f4240a4aee366b2e84aa986b51a142720f",
+      "merge_commit": "f1e725e6b7e0b519c188fcfbfb0cfc537ce993c8",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "update_release_draft",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836744/job/98515800788"
+        },
+        {
+          "name": "build_and_test_matrix (24.x)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836820/job/98515801232"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836761/job/98515800900"
+        },
+        {
+          "name": "Secret Pattern Detection",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836749/job/98515800737"
+        },
+        {
+          "name": "terraform_validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836820/job/98515801115"
+        },
+        {
+          "name": "changed-files",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836820/job/98515801298"
+        },
+        {
+          "name": "build_and_test",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836820/job/98515917932"
+        },
+        {
+          "name": "e2e_browsers",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836820/job/98515919372"
+        },
+        {
+          "name": "e2e",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836820/job/98515918271"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/runs/98516340222"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/5147984/scans/217581802"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/ip-address-10.5.0",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/944"
+    },
+    {
+      "claim_key": "4444J99/peer-audited--behavioral-blockchain#946",
+      "claimed_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "current_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "repository_identity_status": "exact",
+      "pr_number": 946,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:25:45Z",
+      "closed_at": "2026-08-27T12:25:45Z",
+      "head_sha": "a8e07c94b9a825bacdbee7eae72312e9c7bea421",
+      "merge_commit": "912d00f9b8911d1000c05f1708fe4d5159cad74d",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "update_release_draft",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812296/job/98515715532"
+        },
+        {
+          "name": "build_and_test_matrix (24.x)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812492/job/98515716614"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812439/job/98515715990"
+        },
+        {
+          "name": "Secret Pattern Detection",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812395/job/98515715315"
+        },
+        {
+          "name": "terraform_validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812492/job/98515716821"
+        },
+        {
+          "name": "changed-files",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812492/job/98515716861"
+        },
+        {
+          "name": "build_and_test",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812492/job/98515825650"
+        },
+        {
+          "name": "e2e_browsers",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812492/job/98515826805"
+        },
+        {
+          "name": "e2e",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812492/job/98515826276"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/runs/98516215404"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/5147984/scans/217581615"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/js-yaml-5.4.0",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/946"
+    },
+    {
+      "claim_key": "4444J99/peer-audited--behavioral-blockchain#947",
+      "claimed_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "current_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "repository_identity_status": "exact",
+      "pr_number": 947,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:25:32Z",
+      "closed_at": "2026-08-27T12:25:32Z",
+      "head_sha": "f9132ac0d0d16021956810d439a654e33b1015b5",
+      "merge_commit": "1997292e50f6f26d27def0ff59aa9b3952290306",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "update_release_draft",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793479/job/98515650815"
+        },
+        {
+          "name": "build_and_test_matrix (24.x)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793499/job/98515650871"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793468/job/98515650907"
+        },
+        {
+          "name": "Secret Pattern Detection",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793502/job/98515650920"
+        },
+        {
+          "name": "terraform_validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793499/job/98515651105"
+        },
+        {
+          "name": "changed-files",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793499/job/98515651177"
+        },
+        {
+          "name": "build_and_test",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793499/job/98515774580"
+        },
+        {
+          "name": "e2e_browsers",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793499/job/98516208144"
+        },
+        {
+          "name": "e2e",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793499/job/98516207321"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/runs/98516178904"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/5147984/scans/217581519"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/postcss-8.5.26",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/947"
+    },
+    {
+      "claim_key": "4444J99/peer-audited--behavioral-blockchain#948",
+      "claimed_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "current_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "repository_identity_status": "exact",
+      "pr_number": 948,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:25:19Z",
+      "closed_at": "2026-08-27T12:25:19Z",
+      "head_sha": "1c381c10d9b26e6a5d06eb53e59293f28b3a98cf",
+      "merge_commit": "525b686450d524b0a7cf73ccf2bf9966f3dfae27",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "update_release_draft",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071777061/job/98515594653"
+        },
+        {
+          "name": "build_and_test_matrix (24.x)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071776996/job/98515594395"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071777269/job/98515595284"
+        },
+        {
+          "name": "Secret Pattern Detection",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071777085/job/98515594482"
+        },
+        {
+          "name": "terraform_validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071776996/job/98515594185"
+        },
+        {
+          "name": "changed-files",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071776996/job/98515594396"
+        },
+        {
+          "name": "build_and_test",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071776996/job/98516386863"
+        },
+        {
+          "name": "e2e_browsers",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071776996/job/98516387700"
+        },
+        {
+          "name": "e2e",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071776996/job/98516387464"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/runs/98516175561"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/5147984/scans/217581431"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/brace-expansion-5.0.9",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/948"
+    },
+    {
+      "claim_key": "4444J99/peer-audited--behavioral-blockchain#949",
+      "claimed_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "current_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "repository_identity_status": "exact",
+      "pr_number": 949,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:25:02Z",
+      "closed_at": "2026-08-27T12:25:03Z",
+      "head_sha": "788ab86d4ff4d81d5aecd8b30897229c0d4129eb",
+      "merge_commit": "b6eac0f70fd21fc4417e19159de443c9f8c432bf",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "build_and_test_matrix (24.x)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879429/job/98278594327"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879500/job/98278594985"
+        },
+        {
+          "name": "update_release_draft",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879562/job/98278595122"
+        },
+        {
+          "name": "Secret Pattern Detection",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879431/job/98278594737"
+        },
+        {
+          "name": "terraform_validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879429/job/98278594472"
+        },
+        {
+          "name": "changed-files",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879429/job/98278594640"
+        },
+        {
+          "name": "build_and_test",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879429/job/98283203964"
+        },
+        {
+          "name": "e2e_browsers",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879429/job/98283205804"
+        },
+        {
+          "name": "e2e",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879429/job/98283204652"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/runs/98278952745"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/5147984/scans/217101581"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/nanoid-3.3.18",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/949"
+    },
+    {
+      "claim_key": "4444J99/peer-audited--behavioral-blockchain#950",
+      "claimed_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "current_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "repository_identity_status": "exact",
+      "pr_number": 950,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:28:26Z",
+      "closed_at": "2026-08-27T12:28:26Z",
+      "head_sha": "ede14aad6cba0c752ff458e4f0d95ab416b98efd",
+      "merge_commit": "1dbff89c80cbafeb8c3ad2030a17b8adaea68ed1",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "build_and_test_matrix (24.x)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071981616/job/98516306750"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071981488/job/98516303634"
+        },
+        {
+          "name": "update_release_draft",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071981536/job/98516304365"
+        },
+        {
+          "name": "Secret Pattern Detection",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071981618/job/98516304306"
+        },
+        {
+          "name": "terraform_validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071981616/job/98516306549"
+        },
+        {
+          "name": "changed-files",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071981616/job/98516306823"
+        },
+        {
+          "name": "build_and_test",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071981616/job/98516928668"
+        },
+        {
+          "name": "e2e_browsers",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071981616/job/98516930293"
+        },
+        {
+          "name": "e2e",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071981616/job/98516929284"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/runs/98516607304"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/5147984/scans/217582695"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/js-yaml-5.4.1",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/950"
+    },
+    {
+      "claim_key": "4444J99/peer-audited--behavioral-blockchain#951",
+      "claimed_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "current_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "repository_identity_status": "exact",
+      "pr_number": 951,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:28:44Z",
+      "closed_at": "2026-08-27T12:28:44Z",
+      "head_sha": "f2a7b9df8d18d8187708f52ebfc9591b0987bd58",
+      "merge_commit": "42c853ff514f26533d5308d21b117da85c7a1da2",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "update_release_draft",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33072040552/job/98516504073"
+        },
+        {
+          "name": "build_and_test_matrix (24.x)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33072040560/job/98516504199"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33072040547/job/98516504032"
+        },
+        {
+          "name": "Secret Pattern Detection",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33072040494/job/98516504548"
+        },
+        {
+          "name": "terraform_validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33072040560/job/98516504219"
+        },
+        {
+          "name": "changed-files",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33072040560/job/98516504057"
+        },
+        {
+          "name": "build_and_test",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33072040560/job/98516960008"
+        },
+        {
+          "name": "e2e_browsers",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33072040560/job/98517021320"
+        },
+        {
+          "name": "e2e",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33072040560/job/98517020686"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/runs/98517048556"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/5147984/scans/217583054"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/ws-8.21.3",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/951"
+    },
+    {
+      "claim_key": "organvm-vii-kerygma/portfolio#229",
+      "claimed_repository": "organvm-vii-kerygma/portfolio",
+      "current_repository": "organvm-vii-kerygma/portfolio",
+      "repository_identity_status": "exact",
+      "pr_number": 229,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:39:10Z",
+      "closed_at": "2026-08-27T12:39:10Z",
+      "head_sha": "94ee0cada3697221f7a64af17b9c4df3e6a4169d",
+      "merge_commit": "fe0f273bc48b8d93942a011641fb960319666297",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "build-and-deploy",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm-vii-kerygma/portfolio/actions/runs/33072881879/job/98519398654"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/astro-7.2.4",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-vii-kerygma/portfolio/pull/229"
+    },
+    {
+      "claim_key": "organvm-vii-kerygma/portfolio#228",
+      "claimed_repository": "organvm-vii-kerygma/portfolio",
+      "current_repository": "organvm-vii-kerygma/portfolio",
+      "repository_identity_status": "exact",
+      "pr_number": 228,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:38:27Z",
+      "closed_at": "2026-08-27T12:38:27Z",
+      "head_sha": "2e2ab9bc8eda8861d6b6acf58fe34ab811805242",
+      "merge_commit": "1795d4ac3b1c3f66da523ad794d38edfb1e8b803",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "build-and-deploy",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm-vii-kerygma/portfolio/actions/runs/32999579654/job/98277556378"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/astrojs/mdx-7.0.7",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-vii-kerygma/portfolio/pull/228"
+    },
+    {
+      "claim_key": "4444J99/styx-behavioral-art#11",
+      "claimed_repository": "4444J99/styx-behavioral-art",
+      "current_repository": "4444J99/styx-behavioral-art",
+      "repository_identity_status": "exact",
+      "pr_number": 11,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:23:31Z",
+      "closed_at": "2026-08-27T12:23:31Z",
+      "head_sha": "cafd41209c5c62e10a086a658d7718bac8338809",
+      "merge_commit": "95c600baf3513b35d8bddd2103c954bf4358a19c",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/styx-behavioral-art/actions/runs/30557579291/job/90921886519"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/6419044/scans/202785418"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/github_actions/github-actions-deps-f4c224cee8",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 1,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/4444J99/styx-behavioral-art/pull/11"
+    },
+    {
+      "claim_key": "4444J99/styx-behavioral-art#8",
+      "claimed_repository": "4444J99/styx-behavioral-art",
+      "current_repository": "4444J99/styx-behavioral-art",
+      "repository_identity_status": "exact",
+      "pr_number": 8,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:24:17Z",
+      "closed_at": "2026-08-27T12:24:17Z",
+      "head_sha": "743377d06240be03efc01d8e8fffe16ada0dd690",
+      "merge_commit": "ca05e7ecb4bc07a996cb68a6050bdea53df33fce",
+      "review_disposition": "APPROVED",
+      "checks": [
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/styx-behavioral-art/actions/runs/33071692710/job/98515302388"
+        },
+        {
+          "name": "CodeRabbit",
+          "status": "SUCCESS",
+          "conclusion": null,
+          "details_url": null
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/6419044/scans"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "limen/gen-organvm-ii-poiesis-styx-behavioral-art-test-coverage-0620-ab7a",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 1,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/4444J99/styx-behavioral-art/pull/8"
+    },
+    {
+      "claim_key": "4444J99/styx-behavioral-economics-theory#8",
+      "claimed_repository": "4444J99/styx-behavioral-economics-theory",
+      "current_repository": "4444J99/styx-behavioral-economics-theory",
+      "repository_identity_status": "exact",
+      "pr_number": 8,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:22:59Z",
+      "closed_at": "2026-08-27T12:22:59Z",
+      "head_sha": "d1f31cab18b6a3016a42f60cf00af7d29c240bc2",
+      "merge_commit": "9febb22ae0bc9523050a0ae593502c6407996feb",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "validate",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/styx-behavioral-economics-theory/actions/runs/30073162127/job/89418107947"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "NEUTRAL",
+          "details_url": "https://github.com/4444J99/styx-behavioral-economics-theory/runs/89418098569"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/github_actions/github-actions-deps-3845f4951d",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 1,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/4444J99/styx-behavioral-economics-theory/pull/8"
+    },
+    {
+      "claim_key": "4444J99/styx-launch-package#944",
+      "claimed_repository": "4444J99/styx-launch-package",
+      "current_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "repository_identity_status": "invalid_worktree_label",
+      "pr_number": 944,
+      "claimed_disposition": "merged",
+      "claim_matches_live": false,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:26:06Z",
+      "closed_at": "2026-08-27T12:26:06Z",
+      "head_sha": "0af057f4240a4aee366b2e84aa986b51a142720f",
+      "merge_commit": "f1e725e6b7e0b519c188fcfbfb0cfc537ce993c8",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "update_release_draft",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836744/job/98515800788"
+        },
+        {
+          "name": "build_and_test_matrix (24.x)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836820/job/98515801232"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836761/job/98515800900"
+        },
+        {
+          "name": "Secret Pattern Detection",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836749/job/98515800737"
+        },
+        {
+          "name": "terraform_validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836820/job/98515801115"
+        },
+        {
+          "name": "changed-files",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836820/job/98515801298"
+        },
+        {
+          "name": "build_and_test",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836820/job/98515917932"
+        },
+        {
+          "name": "e2e_browsers",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836820/job/98515919372"
+        },
+        {
+          "name": "e2e",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071836820/job/98515918271"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/runs/98516340222"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/5147984/scans/217581802"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/ip-address-10.5.0",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "invalid_repository_claim_duplicate",
+      "landing_proof": {
+        "repository": "4444J99/peer-audited--behavioral-blockchain",
+        "pr": 944,
+        "relation": "same PR number already appears under the worktree's actual remote identity",
+        "exact_sha": "f1e725e6b7e0b519c188fcfbfb0cfc537ce993c8"
+      },
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/944"
+    },
+    {
+      "claim_key": "4444J99/styx-launch-package#945",
+      "claimed_repository": "4444J99/styx-launch-package",
+      "current_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "repository_identity_status": "invalid_worktree_label",
+      "pr_number": 945,
+      "claimed_disposition": "merged",
+      "claim_matches_live": false,
+      "live_state": "CLOSED",
+      "merged_at": null,
+      "closed_at": "2026-08-27T12:25:53Z",
+      "head_sha": "912d00f9b8911d1000c05f1708fe4d5159cad74d",
+      "merge_commit": null,
+      "review_disposition": "none",
+      "checks": [],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/ws-8.20.1",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "invalid_repository_claim_superseded",
+      "landing_proof": {
+        "repository": "4444J99/peer-audited--behavioral-blockchain",
+        "pr": 946,
+        "relation": "exact closed head equals successor squash merge commit",
+        "exact_sha": "912d00f9b8911d1000c05f1708fe4d5159cad74d"
+      },
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/945"
+    },
+    {
+      "claim_key": "4444J99/styx-launch-package#946",
+      "claimed_repository": "4444J99/styx-launch-package",
+      "current_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "repository_identity_status": "invalid_worktree_label",
+      "pr_number": 946,
+      "claimed_disposition": "merged",
+      "claim_matches_live": false,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:25:45Z",
+      "closed_at": "2026-08-27T12:25:45Z",
+      "head_sha": "a8e07c94b9a825bacdbee7eae72312e9c7bea421",
+      "merge_commit": "912d00f9b8911d1000c05f1708fe4d5159cad74d",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "update_release_draft",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812296/job/98515715532"
+        },
+        {
+          "name": "build_and_test_matrix (24.x)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812492/job/98515716614"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812439/job/98515715990"
+        },
+        {
+          "name": "Secret Pattern Detection",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812395/job/98515715315"
+        },
+        {
+          "name": "terraform_validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812492/job/98515716821"
+        },
+        {
+          "name": "changed-files",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812492/job/98515716861"
+        },
+        {
+          "name": "build_and_test",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812492/job/98515825650"
+        },
+        {
+          "name": "e2e_browsers",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812492/job/98515826805"
+        },
+        {
+          "name": "e2e",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071812492/job/98515826276"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/runs/98516215404"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/5147984/scans/217581615"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/js-yaml-5.4.0",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "invalid_repository_claim_duplicate",
+      "landing_proof": {
+        "repository": "4444J99/peer-audited--behavioral-blockchain",
+        "pr": 946,
+        "relation": "same PR number already appears under the worktree's actual remote identity",
+        "exact_sha": "912d00f9b8911d1000c05f1708fe4d5159cad74d"
+      },
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/946"
+    },
+    {
+      "claim_key": "4444J99/styx-launch-package#947",
+      "claimed_repository": "4444J99/styx-launch-package",
+      "current_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "repository_identity_status": "invalid_worktree_label",
+      "pr_number": 947,
+      "claimed_disposition": "merged",
+      "claim_matches_live": false,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:25:32Z",
+      "closed_at": "2026-08-27T12:25:32Z",
+      "head_sha": "f9132ac0d0d16021956810d439a654e33b1015b5",
+      "merge_commit": "1997292e50f6f26d27def0ff59aa9b3952290306",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "update_release_draft",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793479/job/98515650815"
+        },
+        {
+          "name": "build_and_test_matrix (24.x)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793499/job/98515650871"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793468/job/98515650907"
+        },
+        {
+          "name": "Secret Pattern Detection",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793502/job/98515650920"
+        },
+        {
+          "name": "terraform_validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793499/job/98515651105"
+        },
+        {
+          "name": "changed-files",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793499/job/98515651177"
+        },
+        {
+          "name": "build_and_test",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793499/job/98515774580"
+        },
+        {
+          "name": "e2e_browsers",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793499/job/98516208144"
+        },
+        {
+          "name": "e2e",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071793499/job/98516207321"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/runs/98516178904"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/5147984/scans/217581519"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/postcss-8.5.26",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "invalid_repository_claim_duplicate",
+      "landing_proof": {
+        "repository": "4444J99/peer-audited--behavioral-blockchain",
+        "pr": 947,
+        "relation": "same PR number already appears under the worktree's actual remote identity",
+        "exact_sha": "1997292e50f6f26d27def0ff59aa9b3952290306"
+      },
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/947"
+    },
+    {
+      "claim_key": "4444J99/styx-launch-package#948",
+      "claimed_repository": "4444J99/styx-launch-package",
+      "current_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "repository_identity_status": "invalid_worktree_label",
+      "pr_number": 948,
+      "claimed_disposition": "merged",
+      "claim_matches_live": false,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:25:19Z",
+      "closed_at": "2026-08-27T12:25:19Z",
+      "head_sha": "1c381c10d9b26e6a5d06eb53e59293f28b3a98cf",
+      "merge_commit": "525b686450d524b0a7cf73ccf2bf9966f3dfae27",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "update_release_draft",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071777061/job/98515594653"
+        },
+        {
+          "name": "build_and_test_matrix (24.x)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071776996/job/98515594395"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071777269/job/98515595284"
+        },
+        {
+          "name": "Secret Pattern Detection",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071777085/job/98515594482"
+        },
+        {
+          "name": "terraform_validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071776996/job/98515594185"
+        },
+        {
+          "name": "changed-files",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071776996/job/98515594396"
+        },
+        {
+          "name": "build_and_test",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071776996/job/98516386863"
+        },
+        {
+          "name": "e2e_browsers",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071776996/job/98516387700"
+        },
+        {
+          "name": "e2e",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/33071776996/job/98516387464"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/runs/98516175561"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/5147984/scans/217581431"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/brace-expansion-5.0.9",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "invalid_repository_claim_duplicate",
+      "landing_proof": {
+        "repository": "4444J99/peer-audited--behavioral-blockchain",
+        "pr": 948,
+        "relation": "same PR number already appears under the worktree's actual remote identity",
+        "exact_sha": "525b686450d524b0a7cf73ccf2bf9966f3dfae27"
+      },
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/948"
+    },
+    {
+      "claim_key": "4444J99/styx-launch-package#949",
+      "claimed_repository": "4444J99/styx-launch-package",
+      "current_repository": "4444J99/peer-audited--behavioral-blockchain",
+      "repository_identity_status": "invalid_worktree_label",
+      "pr_number": 949,
+      "claimed_disposition": "merged",
+      "claim_matches_live": false,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:25:02Z",
+      "closed_at": "2026-08-27T12:25:03Z",
+      "head_sha": "788ab86d4ff4d81d5aecd8b30897229c0d4129eb",
+      "merge_commit": "b6eac0f70fd21fc4417e19159de443c9f8c432bf",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "build_and_test_matrix (24.x)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879429/job/98278594327"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879500/job/98278594985"
+        },
+        {
+          "name": "update_release_draft",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879562/job/98278595122"
+        },
+        {
+          "name": "Secret Pattern Detection",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879431/job/98278594737"
+        },
+        {
+          "name": "terraform_validate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879429/job/98278594472"
+        },
+        {
+          "name": "changed-files",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879429/job/98278594640"
+        },
+        {
+          "name": "build_and_test",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879429/job/98283203964"
+        },
+        {
+          "name": "e2e_browsers",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879429/job/98283205804"
+        },
+        {
+          "name": "e2e",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/actions/runs/32999879429/job/98283204652"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/runs/98278952745"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/5147984/scans/217101581"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/nanoid-3.3.18",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 3,
+        "protected_count": 0
+      },
+      "terminal_disposition": "invalid_repository_claim_duplicate",
+      "landing_proof": {
+        "repository": "4444J99/peer-audited--behavioral-blockchain",
+        "pr": 949,
+        "relation": "same PR number already appears under the worktree's actual remote identity",
+        "exact_sha": "b6eac0f70fd21fc4417e19159de443c9f8c432bf"
+      },
+      "url": "https://github.com/4444J99/peer-audited--behavioral-blockchain/pull/949"
+    },
+    {
+      "claim_key": "4444J99/social-automation#10",
+      "claimed_repository": "4444J99/social-automation",
+      "current_repository": "organvm/social-automation",
+      "repository_identity_status": "transferred",
+      "pr_number": 10,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:27:07Z",
+      "closed_at": "2026-08-27T12:27:07Z",
+      "head_sha": "27439d6e597107e1d682bd154b687b6a5a1431d9",
+      "merge_commit": "cb48a8f405e4e101798becd56800f34baa9c625d",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "test",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/social-automation/actions/runs/33071915968/job/98516081054"
+        },
+        {
+          "name": "Analyze Code (python)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/social-automation/actions/runs/33071915934/job/98516081062"
+        },
+        {
+          "name": "update_release_draft",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/social-automation/actions/runs/33071915918/job/98516080806"
+        },
+        {
+          "name": "Secret Pattern Detection",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/social-automation/actions/runs/33071915945/job/98516081080"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/github_actions/github-actions-deps-7a2c25c5b7",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm/social-automation/pull/10"
+    },
+    {
+      "claim_key": "4444J99/relationship-pipeline#11",
+      "claimed_repository": "4444J99/relationship-pipeline",
+      "current_repository": "4444J99/relationship-pipeline",
+      "repository_identity_status": "exact",
+      "pr_number": 11,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:27:42Z",
+      "closed_at": "2026-08-27T12:27:42Z",
+      "head_sha": "6d4f720358f71817519f3fd46688ee9aa4defeb7",
+      "merge_commit": "dd48efa800148a5227bea2fbd8305ee391a5b47d",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "CodeRabbit",
+          "status": "PENDING",
+          "conclusion": null,
+          "details_url": null
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "work/maddie-boundary-20260629",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm/relationship-pipeline/pull/11"
+    },
+    {
+      "claim_key": "4444J99/relationship-pipeline#12",
+      "claimed_repository": "4444J99/relationship-pipeline",
+      "current_repository": "4444J99/relationship-pipeline",
+      "repository_identity_status": "exact",
+      "pr_number": 12,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:28:06Z",
+      "closed_at": "2026-08-27T12:28:06Z",
+      "head_sha": "030f661df5e63b27bce82849e4fd0fb851a05f9f",
+      "merge_commit": "95966d87009cbf561d8c6ac6c0bdb524fd5d5258",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "CodeRabbit",
+          "status": "SUCCESS",
+          "conclusion": null,
+          "details_url": null
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "work/student-email-d2l-support-20260629",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm/relationship-pipeline/pull/12"
+    },
+    {
+      "claim_key": "4444J99/portvs#1",
+      "claimed_repository": "4444J99/portvs",
+      "current_repository": "4444J99/portvs",
+      "repository_identity_status": "exact",
+      "pr_number": 1,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:29:18Z",
+      "closed_at": "2026-08-27T12:29:18Z",
+      "head_sha": "766f3c7bb846a19857c33d55eb9307358fdb5aaf",
+      "merge_commit": "0a76143b4fc02a2e869eb4056dc59bdc9acba24e",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "Analyze (python)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/portvs/actions/runs/33072083844/job/98516657528"
+        },
+        {
+          "name": "CodeRabbit",
+          "status": "SUCCESS",
+          "conclusion": null,
+          "details_url": null
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "work/triptych-story",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm/portvs/pull/1"
+    },
+    {
+      "claim_key": "4444J99/portvs#3",
+      "claimed_repository": "4444J99/portvs",
+      "current_repository": "4444J99/portvs",
+      "repository_identity_status": "exact",
+      "pr_number": 3,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:30:52Z",
+      "closed_at": "2026-08-27T12:30:52Z",
+      "head_sha": "95512d1eae587fe50c252531526ac83e52a1ede7",
+      "merge_commit": "48da3da293ecd7604b6c9d3ce19d0bf49a70013d",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "Analyze (python)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/portvs/actions/runs/33072211692/job/98517087266"
+        },
+        {
+          "name": "CodeRabbit",
+          "status": "SUCCESS",
+          "conclusion": null,
+          "details_url": null
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "work/triptych-account-excavation-20260706",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm/portvs/pull/3"
+    },
+    {
+      "claim_key": "4444J99/essay-pipeline#24",
+      "claimed_repository": "4444J99/essay-pipeline",
+      "current_repository": "organvm/essay-pipeline",
+      "repository_identity_status": "transferred",
+      "pr_number": 24,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:33:05Z",
+      "closed_at": "2026-08-27T12:33:05Z",
+      "head_sha": "fc173168f0be4b59833f76fea2761bf04d461e8b",
+      "merge_commit": "52f7a46ccb872ef706c4141a54750fce97b255bd",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "test (3.10)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072391665/job/98517692567"
+        },
+        {
+          "name": "Analyze (actions)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072388081/job/98517683797"
+        },
+        {
+          "name": "test (3.11)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072391665/job/98517692355"
+        },
+        {
+          "name": "Analyze (python)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072388081/job/98517683852"
+        },
+        {
+          "name": "test (3.12)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072391665/job/98517692561"
+        },
+        {
+          "name": "test (3.13)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072391665/job/98517692893"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/github_actions/github-actions-deps-696b649f44",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm/essay-pipeline/pull/24"
+    },
+    {
+      "claim_key": "4444J99/essay-pipeline#18",
+      "claimed_repository": "4444J99/essay-pipeline",
+      "current_repository": "organvm/essay-pipeline",
+      "repository_identity_status": "transferred",
+      "pr_number": 18,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:33:53Z",
+      "closed_at": "2026-08-27T12:33:53Z",
+      "head_sha": "d85cddab91775f61468c294d2e68346c8d7194b2",
+      "merge_commit": "27a3685325802d8d264f875e4454c5d6cd542bd0",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "test (3.10)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072464583/job/98517943183"
+        },
+        {
+          "name": "Analyze (actions)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072460192/job/98517931768"
+        },
+        {
+          "name": "test (3.11)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072464583/job/98517943099"
+        },
+        {
+          "name": "Analyze (python)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072460192/job/98517931514"
+        },
+        {
+          "name": "test (3.12)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072464583/job/98517943125"
+        },
+        {
+          "name": "test (3.13)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072464583/job/98517942932"
+        },
+        {
+          "name": "CodeRabbit",
+          "status": "SUCCESS",
+          "conclusion": null,
+          "details_url": null
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "limen/bld2-essay-pipeline-api-docs-5d6f",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm/essay-pipeline/pull/18"
+    },
+    {
+      "claim_key": "4444J99/essay-pipeline#21",
+      "claimed_repository": "4444J99/essay-pipeline",
+      "current_repository": "organvm/essay-pipeline",
+      "repository_identity_status": "transferred",
+      "pr_number": 21,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:36:22Z",
+      "closed_at": "2026-08-27T12:36:22Z",
+      "head_sha": "ba99fe097ad915515f54589a95559e516df7fed7",
+      "merge_commit": "118bf0b04f2f3e1948bf8073dc93871ca70d30cd",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "test (3.10)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072666802/job/98518635107"
+        },
+        {
+          "name": "Analyze (actions)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072664506/job/98518630047"
+        },
+        {
+          "name": "test (3.11)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072666802/job/98518635321"
+        },
+        {
+          "name": "Analyze (python)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072664506/job/98518630219"
+        },
+        {
+          "name": "test (3.12)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072666802/job/98518635415"
+        },
+        {
+          "name": "test (3.13)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072666802/job/98518635525"
+        },
+        {
+          "name": "CodeRabbit",
+          "status": "SUCCESS",
+          "conclusion": null,
+          "details_url": null
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "limen/bld2-essay-pipeline-billing-9159",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm/essay-pipeline/pull/21"
+    },
+    {
+      "claim_key": "4444J99/essay-pipeline#17",
+      "claimed_repository": "4444J99/essay-pipeline",
+      "current_repository": "organvm/essay-pipeline",
+      "repository_identity_status": "transferred",
+      "pr_number": 17,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:36:59Z",
+      "closed_at": "2026-08-27T12:36:59Z",
+      "head_sha": "8fed57c6c2916aa265618ca5fea82770b408be97",
+      "merge_commit": "b152a7c942aa73f6b159c6b462616ef14357c871",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "test (3.10)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072714521/job/98518807588"
+        },
+        {
+          "name": "Analyze (actions)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072712049/job/98518804634"
+        },
+        {
+          "name": "test (3.11)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072714521/job/98518807904"
+        },
+        {
+          "name": "Analyze (python)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072712049/job/98518804988"
+        },
+        {
+          "name": "test (3.12)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072714521/job/98518807883"
+        },
+        {
+          "name": "test (3.13)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/essay-pipeline/actions/runs/33072714521/job/98518807759"
+        },
+        {
+          "name": "CodeRabbit",
+          "status": "SUCCESS",
+          "conclusion": null,
+          "details_url": null
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "limen/bld-essay-pipeline-readme-65d6",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm/essay-pipeline/pull/17"
+    },
+    {
+      "claim_key": "4444J99/essay-pipeline#14",
+      "claimed_repository": "4444J99/essay-pipeline",
+      "current_repository": "organvm/essay-pipeline",
+      "repository_identity_status": "transferred",
+      "pr_number": 14,
+      "claimed_disposition": "merged",
+      "claim_matches_live": false,
+      "live_state": "CLOSED",
+      "merged_at": null,
+      "closed_at": "2026-08-27T12:37:21Z",
+      "head_sha": "b152a7c942aa73f6b159c6b462616ef14357c871",
+      "merge_commit": null,
+      "review_disposition": "none",
+      "checks": [],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "limen/bld-essay-pipeline-tests-b6d2",
+        "present": true,
+        "observed_tip": "b152a7c942aa73f6b159c6b462616ef14357c871"
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "superseded_with_landing_proof",
+      "landing_proof": {
+        "repository": "organvm/essay-pipeline",
+        "pr": 17,
+        "relation": "exact closed head equals successor squash merge commit",
+        "exact_sha": "b152a7c942aa73f6b159c6b462616ef14357c871"
+      },
+      "url": "https://github.com/organvm/essay-pipeline/pull/14"
+    },
+    {
+      "claim_key": "4444J99/application-pipeline#83",
+      "claimed_repository": "4444J99/application-pipeline",
+      "current_repository": "organvm/application-pipeline",
+      "repository_identity_status": "transferred",
+      "pr_number": 83,
+      "claimed_disposition": "preserved",
+      "claim_matches_live": true,
+      "live_state": "OPEN",
+      "merged_at": null,
+      "closed_at": null,
+      "head_sha": "fddd3dc98bae91292eaff1fd3a30dc002dce2ce5",
+      "merge_commit": null,
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "verify-all (3.12)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm/application-pipeline/actions/runs/30391276748/job/90383185387"
+        },
+        {
+          "name": "Analyze (actions)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm/application-pipeline/actions/runs/30391272393/job/90383173874"
+        },
+        {
+          "name": "Analyze (javascript-typescript)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm/application-pipeline/actions/runs/30391272393/job/90383173894"
+        },
+        {
+          "name": "Analyze (python)",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm/application-pipeline/actions/runs/30391272393/job/90383173888"
+        },
+        {
+          "name": "full-regression",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/organvm/application-pipeline/actions/runs/30391276748/job/90383186115"
+        },
+        {
+          "name": "CodeQL",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/organvm/application-pipeline/runs/90383359329"
+        },
+        {
+          "name": "CodeRabbit",
+          "status": "SUCCESS",
+          "conclusion": null,
+          "details_url": null
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "agent/remote-only-recruiter-reply",
+        "present": true,
+        "observed_tip": "fddd3dc98bae91292eaff1fd3a30dc002dce2ce5"
+      },
+      "local_custody": {
+        "repository_root_count": 4,
+        "exact_head_count": 0,
+        "custody_risk_count": 2,
+        "protected_count": 0
+      },
+      "terminal_disposition": "protected_active",
+      "landing_proof": null,
+      "url": "https://github.com/organvm/application-pipeline/pull/83"
+    },
+    {
+      "claim_key": "4444J99/victoroff-os#386",
+      "claimed_repository": "4444J99/victoroff-os",
+      "current_repository": "4444J99/victoroff-os",
+      "repository_identity_status": "exact",
+      "pr_number": 386,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:36:55Z",
+      "closed_at": "2026-08-27T12:36:55Z",
+      "head_sha": "1eb11dc0a0cccc3f88e7a32bce9db0dd38da3efe",
+      "merge_commit": "c5d2854b48e1ea89a8fd239e4a7b9cdebf91c88f",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "scope",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072616469/job/98518458901"
+        },
+        {
+          "name": "control",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072616469/job/98518518412"
+        },
+        {
+          "name": "docs",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072616469/job/98518518399"
+        },
+        {
+          "name": "code",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072616469/job/98518519562"
+        },
+        {
+          "name": "browser",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072616469/job/98518519679"
+        },
+        {
+          "name": "release",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072616469/job/98518519701"
+        },
+        {
+          "name": "security",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072616469/job/98518518451"
+        },
+        {
+          "name": "gate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072616469/job/98518733867"
+        },
+        {
+          "name": "CodeRabbit",
+          "status": "SUCCESS",
+          "conclusion": null,
+          "details_url": null
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/6394545/scans/217586771"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "commercial/buyable-today",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 5,
+        "exact_head_count": 0,
+        "custody_risk_count": 4,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/4444J99/victoroff-os/pull/386"
+    },
+    {
+      "claim_key": "4444J99/victoroff-os#333",
+      "claimed_repository": "4444J99/victoroff-os",
+      "current_repository": "4444J99/victoroff-os",
+      "repository_identity_status": "exact",
+      "pr_number": 333,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:34:59Z",
+      "closed_at": "2026-08-27T12:34:59Z",
+      "head_sha": "d789b158d6a0869145a40d0a81185febb1d5430b",
+      "merge_commit": "cd38fdcc478cfde3cc3e4987f39e127bd8f256c4",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "scope",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072459951/job/98517927498"
+        },
+        {
+          "name": "control",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072459951/job/98517968565"
+        },
+        {
+          "name": "docs",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072459951/job/98517968452"
+        },
+        {
+          "name": "code",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072459951/job/98517970369"
+        },
+        {
+          "name": "browser",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072459951/job/98517969806"
+        },
+        {
+          "name": "release",
+          "status": "COMPLETED",
+          "conclusion": "SKIPPED",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072459951/job/98517969733"
+        },
+        {
+          "name": "security",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072459951/job/98517968443"
+        },
+        {
+          "name": "gate",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://github.com/4444J99/victoroff-os/actions/runs/33072459951/job/98518169015"
+        },
+        {
+          "name": "CodeRabbit",
+          "status": "SUCCESS",
+          "conclusion": null,
+          "details_url": null
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/6394545/scans/217585589"
+        }
+      ],
+      "has_failing_check": false,
+      "remote_branch": {
+        "name": "agent/v-contract-monetization",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 5,
+        "exact_head_count": 0,
+        "custody_risk_count": 4,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/4444J99/victoroff-os/pull/333"
+    },
+    {
+      "claim_key": "organvm-iii-ergon/trendpulse#8",
+      "claimed_repository": "organvm-iii-ergon/trendpulse",
+      "current_repository": "organvm-iii-ergon/trendpulse",
+      "repository_identity_status": "exact",
+      "pr_number": 8,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:32:47Z",
+      "closed_at": "2026-08-27T12:32:47Z",
+      "head_sha": "36c35a52f2ac54a0c418a19046e9d3ae8ec4acb6",
+      "merge_commit": "995c5b8e40cd9ddc075c3e6de4559fd7cf087290",
+      "review_disposition": "APPROVED",
+      "checks": [
+        {
+          "name": "Lint, typecheck, test & build",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm-iii-ergon/trendpulse/actions/runs/33072358559/job/98517578046"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "limen/bld2-trendpulse-integration-tests-1a3d",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 1,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-iii-ergon/trendpulse/pull/8"
+    },
+    {
+      "claim_key": "organvm-iii-ergon/your-fit-tailored#27",
+      "claimed_repository": "organvm-iii-ergon/your-fit-tailored",
+      "current_repository": "organvm-iii-ergon/your-fit-tailored",
+      "repository_identity_status": "exact",
+      "pr_number": 27,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:23:04Z",
+      "closed_at": "2026-08-27T12:23:04Z",
+      "head_sha": "ab5c4045d4938d924e141fde6236f9171719704c",
+      "merge_commit": "7d23744f1e689316631a5156753b5d7a52fcf0dc",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "test (node 20)",
+          "status": "COMPLETED",
+          "conclusion": "CANCELLED",
+          "details_url": "https://github.com/4444J99/your-fit-tailored/actions/runs/33048437437/job/98437835733"
+        },
+        {
+          "name": "test (node 22)",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/4444J99/your-fit-tailored/actions/runs/33048437437/job/98437835455"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        },
+        {
+          "name": "semgrep-cloud-platform/scan",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://semgrep.dev/orgs/4444j99/projects/5008840/scans/217431877"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/npm-deps-a3be8da887",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 0,
+        "exact_head_count": 0,
+        "custody_risk_count": 0,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/4444J99/your-fit-tailored/pull/27"
+    },
+    {
+      "claim_key": "organvm-iii-ergon/speech-score-engine#21",
+      "claimed_repository": "organvm-iii-ergon/speech-score-engine",
+      "current_repository": "organvm-iii-ergon/speech-score-engine",
+      "repository_identity_status": "exact",
+      "pr_number": 21,
+      "claimed_disposition": "merged",
+      "claim_matches_live": true,
+      "live_state": "MERGED",
+      "merged_at": "2026-08-27T12:33:21Z",
+      "closed_at": "2026-08-27T12:33:21Z",
+      "head_sha": "a658ed2ae7711a00fa1a3bcd0ec570bd4a8ec831",
+      "merge_commit": "d8569814c27cbdac9a8dd05fa020986b448252dd",
+      "review_disposition": "none",
+      "checks": [
+        {
+          "name": "verify",
+          "status": "COMPLETED",
+          "conclusion": "FAILURE",
+          "details_url": "https://github.com/organvm-iii-ergon/speech-score-engine/actions/runs/32976871526/job/98203637423"
+        },
+        {
+          "name": "Sourcery review",
+          "status": "COMPLETED",
+          "conclusion": "SUCCESS",
+          "details_url": "https://sourcery.ai"
+        }
+      ],
+      "has_failing_check": true,
+      "remote_branch": {
+        "name": "dependabot/npm_and_yarn/npm-deps-7297581d1c",
+        "present": false,
+        "observed_tip": null
+      },
+      "local_custody": {
+        "repository_root_count": 3,
+        "exact_head_count": 0,
+        "custody_risk_count": 2,
+        "protected_count": 0
+      },
+      "terminal_disposition": "landed",
+      "landing_proof": null,
+      "url": "https://github.com/organvm-iii-ergon/speech-score-engine/pull/21"
+    }
+  ]
+}

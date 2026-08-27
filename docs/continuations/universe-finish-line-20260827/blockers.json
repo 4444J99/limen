@@ -1,7 +1,7 @@
 {
   "schema_version": "limen.continuation_blockers.v1",
   "capsule_id": "universe-finish-line-20260827",
-  "observed_at": "2026-08-27T17:23:00Z",
+  "observed_at": "2026-08-27T17:36:41Z",
   "terminal": false,
   "blockers": [
     {
@@ -10,13 +10,6 @@
       "predicate": "limen conduct capabilities returns authenticated live capabilities and permits human-protected registration",
       "evidence": "live bootstrap on 2026-08-27 again raised BrokerUnavailable because LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN are not configured; the credential wall itself passes all 27 registered atoms",
       "next_command": "limen conduct capabilities"
-    },
-    {
-      "id": "agy-claim-inventory",
-      "owner": "agy-handoff-source",
-      "predicate": "every claimed repository and PR number reconciles to live state and local custody with no duplicate or missing claim",
-      "evidence": "the approved handoff and shared residue are preserved and its 164-test claim independently passed; the handoff still supplies only a bounded explicit merge roster, while its residue manifest classifies 173 diagnostic PRs, not 173 merges, so the 160-plus aggregate remains unsupported until every unique repository and PR pair is live-reconciled",
-      "next_command": "python3 scripts/universe-recovery.py --check --manifest docs/continuations/universe-recovery-20260823/manifest.json"
     },
     {
       "id": "default-profile-source-drift",
