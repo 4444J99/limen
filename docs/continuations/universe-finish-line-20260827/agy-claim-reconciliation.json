@@ -2787,68 +2787,32 @@
       "url": "https://github.com/organvm/essay-pipeline/pull/14"
     },
     {
-      "claim_key": "4444J99/application-pipeline#83",
-      "claimed_repository": "4444J99/application-pipeline",
-      "current_repository": "organvm/application-pipeline",
-      "repository_identity_status": "transferred",
+      "claim_key": "private-repository-008#83",
+      "claimed_repository": "private-repository-008",
+      "current_repository": "private-repository-008",
+      "repository_identity_status": "private-redacted-transfer-verified",
       "pr_number": 83,
       "claimed_disposition": "preserved",
       "claim_matches_live": true,
       "live_state": "OPEN",
       "merged_at": null,
       "closed_at": null,
-      "head_sha": "fddd3dc98bae91292eaff1fd3a30dc002dce2ce5",
+      "head_sha": "redacted-private-sha",
       "merge_commit": null,
       "review_disposition": "none",
       "checks": [
         {
-          "name": "verify-all (3.12)",
+          "name": "redacted-private-check-summary",
           "status": "COMPLETED",
           "conclusion": "FAILURE",
-          "details_url": "https://github.com/organvm/application-pipeline/actions/runs/30391276748/job/90383185387"
-        },
-        {
-          "name": "Analyze (actions)",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "details_url": "https://github.com/organvm/application-pipeline/actions/runs/30391272393/job/90383173874"
-        },
-        {
-          "name": "Analyze (javascript-typescript)",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "details_url": "https://github.com/organvm/application-pipeline/actions/runs/30391272393/job/90383173894"
-        },
-        {
-          "name": "Analyze (python)",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "details_url": "https://github.com/organvm/application-pipeline/actions/runs/30391272393/job/90383173888"
-        },
-        {
-          "name": "full-regression",
-          "status": "COMPLETED",
-          "conclusion": "SKIPPED",
-          "details_url": "https://github.com/organvm/application-pipeline/actions/runs/30391276748/job/90383186115"
-        },
-        {
-          "name": "CodeQL",
-          "status": "COMPLETED",
-          "conclusion": "SUCCESS",
-          "details_url": "https://github.com/organvm/application-pipeline/runs/90383359329"
-        },
-        {
-          "name": "CodeRabbit",
-          "status": "SUCCESS",
-          "conclusion": null,
           "details_url": null
         }
       ],
       "has_failing_check": true,
       "remote_branch": {
-        "name": "agent/remote-only-recruiter-reply",
+        "name": "redacted-private-branch",
         "present": true,
-        "observed_tip": "fddd3dc98bae91292eaff1fd3a30dc002dce2ce5"
+        "observed_tip": "redacted-private-sha"
       },
       "local_custody": {
         "repository_root_count": 4,
@@ -2858,7 +2822,8 @@
       },
       "terminal_disposition": "protected_active",
       "landing_proof": null,
-      "url": "https://github.com/organvm/application-pipeline/pull/83"
+      "url": null,
+      "private_evidence": "full repository-qualified receipt retained in the private session corpus"
     },
     {
       "claim_key": "4444J99/victoroff-os#386",

@@ -28,6 +28,7 @@ Fail-open throughout: any transport/parse failure writes an error-flagged cache 
 """
 
 import argparse
+import importlib.util
 import json
 import os
 import subprocess
@@ -39,16 +40,35 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from _pr_scan import enumerate_merged_prs_result  # noqa: E402
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+SOURCE_ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("LIMEN_ROOT", SOURCE_ROOT))
 LOGS = ROOT / "logs"
 CACHE = LOGS / "ships-24h.json"
-OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
 WINDOW_HOURS = 24
 RECENT_KEEP = 12
 
 
 def gh(args, timeout=60):
     return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout)
+
+
+def _gitvs():
+    path = SOURCE_ROOT / "scripts" / "gitvs.py"
+    spec = importlib.util.spec_from_file_location("limen_gitvs_shipping_owner_adapter", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("gitvs owner adapter unavailable")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def canonical_owners():
+    """Return the explicit override or the same registry-derived owner denominator as Gitvs."""
+    override = [owner.strip() for owner in os.environ.get("LIMEN_OWNERS", "").split(",") if owner.strip()]
+    if override:
+        return list(dict.fromkeys(override))
+    gitvs = _gitvs()
+    return gitvs.owners(gitvs.load_estate())
 
 
 def _int(name, default):
@@ -88,6 +108,10 @@ def _atomic_write(path: Path, payload: dict):
 
 
 def refresh(*, dry_run: bool, force: bool) -> int:
+    owners = canonical_owners()
+    if not owners:
+        print("ships-24h-refresh: canonical owner registry is empty", file=sys.stderr)
+        return 1
     interval = _int("LIMEN_SHIPS_24H_REFRESH_INTERVAL_MINUTES", 20)
     now = datetime.now(timezone.utc)
     age = _cache_age_minutes(now)
@@ -101,13 +125,13 @@ def refresh(*, dry_run: bool, force: bool) -> int:
     if dry_run:
         print(
             f"ships-24h-refresh: DUE (cache {age}m old, interval {interval}m) — would query gh for owners "
-            f"{OWNERS} merged since {since_iso}"
+            f"{owners} merged since {since_iso}"
         )
         return 0
 
     timeout = _int("LIMEN_SHIPS_24H_REFRESH_TIMEOUT", 60)
     result = enumerate_merged_prs_result(
-        OWNERS,
+        owners,
         lambda cmd: gh(cmd, timeout=timeout),
         since_iso,
     )
@@ -130,7 +154,7 @@ def refresh(*, dry_run: bool, force: bool) -> int:
     }
     _atomic_write(CACHE, payload)
     status = "ok" if result.success else f"FAILED ({result.error})"
-    print(f"ships-24h-refresh: {status} — {payload['total']} merged since {since_iso} across {len(OWNERS)} owner(s)")
+    print(f"ships-24h-refresh: {status} — {payload['total']} merged since {since_iso} across {len(owners)} owner(s)")
     return 0 if result.success else 1
 
 

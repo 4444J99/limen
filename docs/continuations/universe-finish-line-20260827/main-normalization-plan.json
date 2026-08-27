@@ -264,12 +264,12 @@
       "deletion": false
     },
     {
-      "repository": "organvm/domus-genoma",
+      "repository": "private-repository-001",
       "private": true,
       "expected": {
         "archived": false,
-        "default_branch": "master",
-        "default_sha": "9a693baade60e83043a4f14bb29290e9e1f1f805",
+        "default_branch": "redacted-private-default",
+        "default_sha": "redacted-private-sha",
         "main_absent": true
       },
       "local_custody": {
@@ -280,7 +280,7 @@
       },
       "open_pr_count": 62,
       "open_pr_base_branches": [
-        "master"
+        "redacted-private-default"
       ],
       "operation": [
         "rename exact default branch to main",
@@ -289,12 +289,12 @@
       "deletion": false
     },
     {
-      "repository": "organvm/etceter4",
+      "repository": "private-repository-002",
       "private": true,
       "expected": {
         "archived": true,
-        "default_branch": "master",
-        "default_sha": "7217d38f7dcee080f1dd2da16bbf6bba88e82512",
+        "default_branch": "redacted-private-default",
+        "default_sha": "redacted-private-sha",
         "main_absent": true
       },
       "local_custody": {
@@ -315,12 +315,12 @@
       "deletion": false
     },
     {
-      "repository": "organvm/in-my-head",
+      "repository": "private-repository-003",
       "private": true,
       "expected": {
         "archived": false,
-        "default_branch": "master",
-        "default_sha": "3a7aad270db5ff8f952d252257fc775f1e39f522",
+        "default_branch": "redacted-private-default",
+        "default_sha": "redacted-private-sha",
         "main_absent": true
       },
       "local_custody": {
@@ -389,12 +389,12 @@
       "deletion": false
     },
     {
-      "repository": "organvm/my-knowledge-base",
+      "repository": "private-repository-004",
       "private": true,
       "expected": {
         "archived": false,
-        "default_branch": "master",
-        "default_sha": "185b7f6e17bfeef1b47c2e87dc1f36b00e3d9297",
+        "default_branch": "redacted-private-default",
+        "default_sha": "redacted-private-sha",
         "main_absent": true
       },
       "local_custody": {
@@ -405,7 +405,7 @@
       },
       "open_pr_count": 4,
       "open_pr_base_branches": [
-        "master"
+        "redacted-private-default"
       ],
       "operation": [
         "rename exact default branch to main",
@@ -414,12 +414,12 @@
       "deletion": false
     },
     {
-      "repository": "organvm/render-second-amendment",
+      "repository": "private-repository-005",
       "private": true,
       "expected": {
         "archived": false,
-        "default_branch": "master",
-        "default_sha": "79e5f95cbe8c29130ee7d7bb3ca5afaa5b542a0e",
+        "default_branch": "redacted-private-default",
+        "default_sha": "redacted-private-sha",
         "main_absent": true
       },
       "local_custody": {
@@ -430,7 +430,7 @@
       },
       "open_pr_count": 6,
       "open_pr_base_branches": [
-        "master"
+        "redacted-private-default"
       ],
       "operation": [
         "rename exact default branch to main",
@@ -441,11 +441,11 @@
   ],
   "blocked": [
     {
-      "repository": "organvm-i-theoria/visual-substrate-inquiry",
+      "repository": "private-repository-006",
       "reason": "declared default main has no branch ref; requires empty-repository root bootstrap",
       "observed": {
         "archived": false,
-        "default_branch": "main",
+        "default_branch": "redacted-private-default",
         "default_sha": null,
         "main_present": false,
         "main_sha": null
@@ -477,14 +477,14 @@
       "open_pr_count": 1
     },
     {
-      "repository": "organvm/session-meta",
+      "repository": "private-repository-007",
       "reason": "main already exists at a different SHA; branch rename is unsafe",
       "observed": {
         "archived": false,
-        "default_branch": "clean-main",
-        "default_sha": "8611126a070769235222e6b6251a1d9b0df1c45b",
+        "default_branch": "redacted-private-default",
+        "default_sha": "redacted-private-sha",
         "main_present": true,
-        "main_sha": "b7b9f16e654511f2b4d6f18733455d530fb31f2a"
+        "main_sha": "redacted-private-sha"
       },
       "local_custody": {
         "total": 0,
