@@ -1,7 +1,7 @@
 {
   "schema_version": "limen.continuation_blockers.v1",
   "capsule_id": "universe-finish-line-20260827",
-  "observed_at": "2026-08-27T15:31:41.500648Z",
+  "observed_at": "2026-08-27T15:47:14Z",
   "terminal": false,
   "blockers": [
     {
@@ -73,6 +73,13 @@
       "predicate": "a separate recording-backend receipt exists and one submitted macOS canary has an operator-observed confirmation receipt",
       "evidence": "macOS submission is implemented but visible delivery has not been claimed or observed; ntfy is not configured",
       "next_command": "PYTHONPATH=cli/src python3 scripts/notify-events.py --status"
+    },
+    {
+      "id": "authorized-local-branch-reap",
+      "owner": "branch-reap-acceptance-ledger",
+      "predicate": "the two exact landed local branches are absent and a second branch-reap plan is empty",
+      "evidence": "no-tasks-on-me reports two already-authorized landed branches; apply remains withheld by the campaign-wide incomplete-census deletion gate",
+      "next_command": "python3 scripts/reap-branches.py --check"
     }
   ]
 }

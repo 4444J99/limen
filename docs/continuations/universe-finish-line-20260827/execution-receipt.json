@@ -57,11 +57,17 @@
       "command": "limen host-admission status --cwd . --json",
       "result": "heavy admission denied: swap-fraction 0.37041870114626363",
       "exit_code": 0
+    },
+    {
+      "command": "scripts/no-tasks-on-me.sh",
+      "result": "session branch clean and fully pushed; two already-authorized landed local branches remain held by the incomplete-census deletion gate",
+      "exit_code": 1
     }
   ],
   "outcome": "nonterminal_durable_continuation",
   "destructive_effects": [],
   "external_effects": [
-    "pushed successor branch and opened pull request 2548"
+    "pushed successor branch and opened pull request 2548",
+    "pushed the universe finish-line branch and opened pull request 2549"
   ]
 }
