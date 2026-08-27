@@ -11,20 +11,20 @@
     "reason": "authenticated broker environment unavailable after documented bootstrap"
   },
   "remote_census": {
-    "observed_at": "2026-08-27T15:25:52.639931Z",
-    "source_generation": "4080e6f82e22601e1c9e6d8fa1d1d19d3b68bd255d4b5ab1127c9c84edcf09f8",
+    "observed_at": "2026-08-27T16:25:36.923203Z",
+    "source_generation": "03037628eff207f831e3daae42ca01f0cf2b4ce28a26cae347fb668a6cf16e47",
     "repository_denominator": 320,
     "connection_count": 1280,
-    "known_leaf_count": 13572,
+    "known_leaf_count": 13062,
     "failed_connection_count": 0,
     "unaccounted": 0,
     "exhaustive_for_registered_connections": true
   },
   "universe_baseline": {
-    "census_digest": "bacc0f28e5069219fc4dcb3ac5f50465cccabe59c8858359480dc704e54b0a19",
-    "stable_count": 177,
+    "census_digest": "fd0448646785c8ebbef231c520dc41d2499d242a7dd1899f621e04f270faf928",
+    "stable_count": 308,
     "failure_count": 2,
-    "unaccounted": 20900,
+    "unaccounted": 20301,
     "complete": false
   },
   "pull_requests": {
@@ -62,6 +62,16 @@
       "command": "scripts/no-tasks-on-me.sh",
       "result": "session branch clean and fully pushed; two already-authorized landed local branches remain held by the incomplete-census deletion gate",
       "exit_code": 1
+    },
+    {
+      "command": "python3 -m pytest cli/tests/test_github_estate_census.py scripts/tests/test_github_estate_census_custody.py cli/tests/test_universe_baseline.py -q",
+      "result": "28 passed; explicit no-required-check, invalid empty-check, no-default, pagination, and partial-write refusal covered",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 scripts/github-estate-census.py --write --check --json --workers 2",
+      "result": "320 repositories, 1280 complete connections, zero failed connections, zero remote unaccounted leaves",
+      "exit_code": 0
     }
   ],
   "outcome": "nonterminal_durable_continuation",

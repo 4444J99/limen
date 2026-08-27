@@ -1,16 +1,16 @@
 {
-  "census_digest": "bacc0f28e5069219fc4dcb3ac5f50465cccabe59c8858359480dc704e54b0a19",
+  "census_digest": "fd0448646785c8ebbef231c520dc41d2499d242a7dd1899f621e04f270faf928",
   "complete": false,
   "failure_count": 2,
-  "observed_at": "2026-08-27T15:25:52.639931Z",
+  "observed_at": "2026-08-27T16:25:36.923203Z",
   "partitions": [
     {
-      "blocked": 143,
+      "blocked": 12,
       "complete": true,
       "kind": "repositories",
       "protected": 0,
       "schema_version": "limen.universe_partition.v1",
-      "terminal": 177,
+      "terminal": 308,
       "total": 320,
       "unaccounted": 0
     },
@@ -18,10 +18,10 @@
       "blocked": 0,
       "complete": true,
       "kind": "pull_requests",
-      "protected": 763,
+      "protected": 766,
       "schema_version": "limen.universe_partition.v1",
       "terminal": 0,
-      "total": 763,
+      "total": 766,
       "unaccounted": 0
     },
     {
@@ -31,28 +31,28 @@
       "protected": 0,
       "schema_version": "limen.universe_partition.v1",
       "terminal": 319,
-      "total": 10610,
-      "unaccounted": 10291
+      "total": 10312,
+      "unaccounted": 9993
     },
     {
-      "blocked": 29,
+      "blocked": 30,
       "complete": false,
       "kind": "local_roots",
       "protected": 5,
       "schema_version": "limen.universe_partition.v1",
       "terminal": 14,
       "total": 159,
-      "unaccounted": 111
+      "unaccounted": 110
     },
     {
-      "blocked": 19,
+      "blocked": 20,
       "complete": false,
       "kind": "worktrees",
       "protected": 5,
       "schema_version": "limen.universe_partition.v1",
       "terminal": 0,
       "total": 120,
-      "unaccounted": 96
+      "unaccounted": 95
     },
     {
       "blocked": 0,
@@ -65,19 +65,19 @@
       "unaccounted": 0
     },
     {
-      "blocked": 29,
+      "blocked": 30,
       "complete": false,
       "kind": "terminal_dispositions",
-      "protected": 768,
+      "protected": 771,
       "schema_version": "limen.universe_partition.v1",
       "terminal": 333,
-      "total": 11532,
-      "unaccounted": 10402
+      "total": 11237,
+      "unaccounted": 10103
     }
   ],
   "repository_denominator": 320,
   "schema_version": "limen.universe_baseline_receipt.v1",
-  "source_generation": "4080e6f82e22601e1c9e6d8fa1d1d19d3b68bd255d4b5ab1127c9c84edcf09f8",
-  "stable_count": 177,
-  "unaccounted": 20900
+  "source_generation": "03037628eff207f831e3daae42ca01f0cf2b4ce28a26cae347fb668a6cf16e47",
+  "stable_count": 308,
+  "unaccounted": 20301
 }

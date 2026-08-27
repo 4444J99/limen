@@ -495,6 +495,8 @@ def _repository_record(repository: dict[str, Any]) -> dict[str, Any]:
         "default_ref": f"refs/heads/{default_branch}" if default_branch else None,
         "default_sha": default_sha,
         "default_check_status": repository.get("default_check_status") or "unknown",
+        "default_check_policy": repository.get("default_check_policy") or "unknown",
+        "required_check_count": repository.get("required_check_count"),
         "default_generation": _canonical_sha256(
             {
                 "repository": name,
@@ -515,6 +517,8 @@ def _tracked_repository(row: dict[str, Any]) -> dict[str, Any]:
         "archived": row["archived"],
         "default_generation": row["default_generation"],
         "default_check_status": row["default_check_status"],
+        "default_check_policy": row["default_check_policy"],
+        "required_check_count": row["required_check_count"],
     }
 
 
@@ -715,6 +719,8 @@ def build_github_estate_census(
                 "default_ref": repository.get("default_ref"),
                 "default_sha": repository.get("default_sha"),
                 "default_check_status": repository.get("default_check_status") or "unknown",
+                "default_check_policy": repository.get("default_check_policy") or "unknown",
+                "required_check_count": repository.get("required_check_count"),
                 "default_generation": repository["default_generation"],
                 "source_generation": source_generation,
                 "complete": len(rows) == len(CONNECTION_KINDS) and all(row["complete"] for row in rows),
