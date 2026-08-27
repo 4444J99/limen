@@ -12,6 +12,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import shutil
 import sqlite3
 import subprocess
 import sys
@@ -51,11 +52,41 @@ def _load_module(name: str, script_path: Path):
 
 def _run_no_tasks_on_me(registry_path: Path) -> subprocess.CompletedProcess[str]:
     environment = os.environ.copy()
+    real_git = shutil.which("git")
+    assert real_git is not None
+    shim_dir = registry_path.parent / "git-custody-shim"
+    shim_dir.mkdir(exist_ok=True)
+    git_shim = shim_dir / "git"
+    git_shim.write_text(
+        "#!/usr/bin/env python3\n"
+        "import os\n"
+        "import sys\n"
+        f"REAL_GIT = {real_git!r}\n"
+        "args = sys.argv[1:]\n"
+        "if len(args) >= 4 and args[0] == '-C' and args[2:] == ['status', '--porcelain']:\n"
+        "    raise SystemExit(0)\n"
+        "if len(args) >= 5 and args[0] == '-C' and args[2:] == "
+        "['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']:\n"
+        "    print('origin/__closeout_test_custody__')\n"
+        "    raise SystemExit(0)\n"
+        "if len(args) >= 5 and args[0] == '-C' and args[2:] == "
+        "['rev-list', '--count', 'origin/__closeout_test_custody__..HEAD']:\n"
+        "    print('0')\n"
+        "    raise SystemExit(0)\n"
+        "os.execv(REAL_GIT, [REAL_GIT, *args])\n",
+        encoding="utf-8",
+    )
+    git_shim.chmod(0o755)
     environment.update(
         {
             "LIMEN_HIS_HAND_LEVERS": str(registry_path),
             "LIMEN_OFFLINE": "1",
             "LIMEN_PII_DENYLIST": str(registry_path.parent / "absent-denylist.txt"),
+            # The predicate must still execute every production check, while
+            # this fixture supplies only the branch-custody fact that a
+            # detached GitHub Actions checkout cannot carry.  The production
+            # script gets no bypass or test-mode switch.
+            "PATH": str(shim_dir) + os.pathsep + environment["PATH"],
         }
     )
     return subprocess.run(
