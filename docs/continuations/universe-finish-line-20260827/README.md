@@ -28,6 +28,9 @@ PR #2542 lanes remain observation-only.
   machine-wide `swap-fraction` guard.
 - Added cursor-receipt identity, bounded transient retry, completed-page reuse, cursor corruption
   rejection, total-drift rejection, and source-generation checks to the estate census.
+- Added same-snapshot default-policy evidence from classic protection plus inherited rulesets.
+  `no_required_checks` now requires complete effective evidence; empty enabled-check configurations
+  and repositories without a default branch remain distinct terminal blocked facts.
 - Added estate-wide local clone/worktree discovery by repository identity and Git common directory.
 - Added `UniverseBaselineReceiptV1` aggregation and `limen progress --view universe`, sourced only
   from the persisted aggregate receipt.
@@ -44,17 +47,20 @@ PR #2542 lanes remain observation-only.
 
 ## Frozen observations
 
-Two persisted exhaustive remote generations are retained:
+Three persisted exhaustive remote generations are retained:
 
 | Observation | Repositories | Connections | Leaves | Failed connections | Remote unaccounted |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | `2026-08-27T14:58:22.879946Z` | 320 | 1,280 | 13,570 | 0 | 0 |
 | `2026-08-27T15:25:52.639931Z` | 320 | 1,280 | 13,572 | 0 | 0 |
+| `2026-08-27T16:25:36.923203Z` | 320 | 1,280 | 13,062 | 0 | 0 |
 
-The two-leaf change is preserved as live estate movement, not normalized away. The latest
-aggregate reports 177 stable repositories of 320, 763 protected open PRs, 10,291 unaccounted
-non-default branches, 111 unaccounted local roots, 96 unaccounted worktrees, two local census
-failures, and 20,900 aggregate unaccounted leaves. It is therefore correctly `complete: false`.
+The original two-leaf change is preserved as live estate movement, not normalized away. The third
+generation also stops emitting a synthetic check leaf for an explicit no-required-check policy, so
+its leaf denominator is intentionally policy-aware. The latest aggregate reports 308 stable
+repositories of 320, 766 protected open PRs, 9,993 unaccounted non-default branches, 110
+unaccounted local roots, 95 unaccounted worktrees, two local census failures, and 20,301 aggregate
+unaccounted leaves. It is therefore correctly `complete: false`.
 
 The current immutable cleanup dry plan contains seven candidates with digest
 `8b0217df440fbfb61ae4f7aa045915032a4b7d8c64b0c40780ae08141deb4f19`; strict worktree debt reports
@@ -73,6 +79,8 @@ aggregate census is incomplete.
   selection parity, two census-backed flagship projections, and formatting. All five were repaired;
   their implicated reruns passed (174-file mypy, 43 proof-set tests, 42 evidence tests, resolver
   parity, lint, and format), along with 103 focused local-census/baseline/recovery/debt tests.
+- Default-policy collection and partial-write refusal: 28 focused tests plus 174-file mypy and lint
+  passed; live failed connections fell from 77 to zero without overwriting a partial ledger.
 - Latest remote census: 320 repositories, 1,280 complete connections, zero failed connections,
   zero remote unaccounted leaves.
 - `limen progress --view universe --json-output`: receipt loaded successfully and remained

@@ -1,7 +1,7 @@
 {
   "schema_version": "limen.continuation_blockers.v1",
   "capsule_id": "universe-finish-line-20260827",
-  "observed_at": "2026-08-27T15:47:14Z",
+  "observed_at": "2026-08-27T16:28:19.919755Z",
   "terminal": false,
   "blockers": [
     {
@@ -26,11 +26,11 @@
       "next_command": "gh run list --repo 4444J99/4444J99 --workflow profile.yml --limit 5"
     },
     {
-      "id": "default-required-check-policy",
-      "owner": "github-estate-census",
-      "predicate": "every repository records its effective default-ref required-check policy, including an explicit no-required-check disposition",
-      "evidence": "repositories with no status rollup remain unknown rather than being inferred green",
-      "next_command": "python3 scripts/github-estate-census.py --json --workers 2"
+      "id": "invalid-empty-required-check-policy",
+      "owner": "ruleset-estate-contract",
+      "predicate": "every enabled required-status-check policy names at least one exact context or is explicitly disabled",
+      "evidence": "one public default branch reports requiresStatusChecks true with zero classic contexts; the exhaustive census records invalid_required_checks and excludes it from stable repositories",
+      "next_command": "python3 scripts/setup-rulesets.py"
     },
     {
       "id": "remote-connection-scope",
