@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 from datetime import UTC, datetime
+from pathlib import Path
 
 from limen.github_estate_census import build_github_estate_census, github_connection_query, paginate_exact
 
@@ -9,10 +11,41 @@ from limen.github_estate_census import build_github_estate_census, github_connec
 NOW = datetime(2026, 7, 21, 12, tzinfo=UTC)
 
 
+def _load_script():
+    path = Path(__file__).resolve().parents[2] / "scripts" / "github-estate-census.py"
+    spec = importlib.util.spec_from_file_location("github_estate_census_script", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_recording_digest_ignores_observation_identity_but_not_estate_state() -> None:
+    module = _load_script()
+    first = {
+        "source_report": {"generated_at": "2026-08-27T12:00:00Z", "source_generation": "1" * 64},
+        "repository_receipts": [{"connection_receipt_digest": "2" * 64}],
+        "universe_baseline": {"observed_at": "2026-08-27T12:00:00Z", "census_digest": "3" * 64},
+        "summary": {"repository_count": 320},
+    }
+    second = json.loads(json.dumps(first))
+    second["source_report"]["generated_at"] = "2026-08-27T13:00:00Z"
+    second["source_report"]["source_generation"] = "4" * 64
+    second["repository_receipts"][0]["connection_receipt_digest"] = "5" * 64
+    second["universe_baseline"]["observed_at"] = "2026-08-27T13:00:00Z"
+    second["universe_baseline"]["census_digest"] = "6" * 64
+
+    assert module._stable_digest(json.dumps(first)) == module._stable_digest(json.dumps(second))
+    second["summary"]["repository_count"] = 321
+    assert module._stable_digest(json.dumps(first)) != module._stable_digest(json.dumps(second))
+
+
 def test_live_connection_queries_close_every_graphql_scope() -> None:
+    pull_requests = github_connection_query("pull_requests")
     issues = github_connection_query("issues")
     branches = github_connection_query("branches")
 
+    assert "connection:pullRequests(states:OPEN,first:100,after:$cursor" in pull_requests
     assert "connection:issues(states:OPEN,first:100,after:$cursor)" in issues
     assert 'connection:refs(refPrefix:"refs/heads/",first:100,after:$cursor)' in branches
     assert issues.endswith("}}}}")
@@ -158,6 +191,181 @@ def test_moved_total_and_duplicate_cursor_rows_fail_closed() -> None:
     assert result.exhaustive is False
     assert result.known_count == 1
     assert result.error == "total-count-moved"
+
+
+def test_transient_failed_cursor_resumes_without_restarting_completed_page() -> None:
+    generation = "generation-1"
+    first_calls: list[str | None] = []
+
+    def first_fetch(cursor):
+        first_calls.append(cursor)
+        if cursor == "next":
+            raise ValueError("github-page-unavailable")
+        return {
+            "total_count": 2,
+            "nodes": [{"number": 1}],
+            "has_next_page": True,
+            "end_cursor": "next",
+        }
+
+    partial = paginate_exact(
+        "issues",
+        first_fetch,
+        expected_total=2,
+        repository="owner/repo",
+        source_generation=generation,
+    )
+    resumed_calls: list[str | None] = []
+
+    def resumed_fetch(cursor):
+        resumed_calls.append(cursor)
+        assert cursor == "next"
+        return {
+            "total_count": 2,
+            "nodes": [{"number": 2}],
+            "has_next_page": False,
+            "end_cursor": None,
+        }
+
+    complete = paginate_exact(
+        "issues",
+        resumed_fetch,
+        expected_total=2,
+        repository="owner/repo",
+        source_generation=generation,
+        resume=partial.as_resume_dict(),
+    )
+
+    assert first_calls == [None, "next"]
+    assert resumed_calls == ["next"]
+    assert complete.exhaustive is True
+    assert complete.known_count == 2
+    assert complete.page_count == 2
+    assert complete.failures[-1].repository == "owner/repo"
+    assert complete.failures[-1].connection_kind == "issues"
+    assert complete.failures[-1].cursor == "next"
+    assert complete.failures[-1].attempt == 1
+    assert complete.failures[-1].expected_total == 2
+    assert complete.failures[-1].retry_class == "transient"
+
+
+def test_complete_connection_is_reused_without_fetch() -> None:
+    complete = paginate_exact(
+        "branches",
+        lambda _cursor: {
+            "total_count": 1,
+            "nodes": [{"name": "main"}],
+            "has_next_page": False,
+            "end_cursor": None,
+        },
+        expected_total=1,
+        source_generation="generation-1",
+    )
+
+    reused = paginate_exact(
+        "branches",
+        lambda _cursor: (_ for _ in ()).throw(AssertionError("fetch must not run")),
+        expected_total=1,
+        source_generation="generation-1",
+        resume=complete.as_resume_dict(),
+    )
+
+    assert reused.exhaustive is True
+    assert reused.reused is True
+
+
+def test_cursor_corruption_and_corrupt_resume_cache_fail_closed() -> None:
+    repeated = paginate_exact(
+        "branches",
+        lambda _cursor: {
+            "total_count": 2,
+            "nodes": [{"name": "main"}],
+            "has_next_page": True,
+            "end_cursor": "same",
+        },
+        expected_total=2,
+    )
+    assert repeated.exhaustive is False
+    assert repeated.error == "duplicate-node-across-cursor"
+    assert repeated.failures[-1].retry_class == "corrupt"
+
+    complete_cache = {
+        "kind": "issues",
+        "expected_total": 1,
+        "page_count": 1,
+        "exhaustive": True,
+        "end_cursor": None,
+        "nodes": [{"number": 1}, {"number": 1}],
+        "source_generation": "generation-1",
+    }
+    refused = paginate_exact(
+        "issues",
+        lambda _cursor: (_ for _ in ()).throw(AssertionError("fetch must not run")),
+        expected_total=1,
+        repository="owner/repo",
+        source_generation="generation-1",
+        resume=complete_cache,
+    )
+    assert refused.exhaustive is False
+    assert refused.error.startswith("resume-cache-corrupt:")
+    assert refused.failures[-1].retry_class == "corrupt"
+
+
+def test_changed_source_generation_restarts_instead_of_reusing_stale_pages() -> None:
+    cached = paginate_exact(
+        "issues",
+        lambda _cursor: {
+            "total_count": 1,
+            "nodes": [{"number": 1}],
+            "has_next_page": False,
+            "end_cursor": None,
+        },
+        expected_total=1,
+        source_generation="generation-1",
+    )
+    calls: list[str | None] = []
+
+    refreshed = paginate_exact(
+        "issues",
+        lambda cursor: (
+            calls.append(cursor)
+            or {
+                "total_count": 1,
+                "nodes": [{"number": 2}],
+                "has_next_page": False,
+                "end_cursor": None,
+            }
+        ),
+        expected_total=1,
+        source_generation="generation-2",
+        resume=cached.as_resume_dict(),
+    )
+
+    assert calls == [None]
+    assert refreshed.reused is False
+    assert refreshed.nodes == ({"number": 2},)
+
+
+def test_transient_page_retries_are_bounded() -> None:
+    calls = 0
+
+    def fetch(_cursor):
+        nonlocal calls
+        calls += 1
+        if calls < 3:
+            raise TimeoutError("temporary timeout")
+        return {
+            "total_count": 1,
+            "nodes": [{"number": 1}],
+            "has_next_page": False,
+            "end_cursor": None,
+        }
+
+    result = paginate_exact("issues", fetch, expected_total=1, max_attempts=3)
+
+    assert result.exhaustive is True
+    assert calls == 3
+    assert [failure.attempt for failure in result.failures] == [1, 2]
 
 
 def test_private_repository_names_never_enter_tracked_projection() -> None:

@@ -24,6 +24,8 @@ from limen.universe_recovery import (
     ReviewLineageClosureV2,
     ReviewThreadClosureV2,
     SourceCoverageV1,
+    UniverseBaselineReceiptV1,
+    UniversePartitionV1,
     UniverseRecoveryManifestV1,
     bound_reap_expiry,
     cas_delete_command,
@@ -48,6 +50,34 @@ IDENTITY = RepositoryIdentityV1(
 
 def cursor(surface: str = "repositories") -> CursorReceiptV1:
     return CursorReceiptV1(surface=surface, total_count=1, observed_count=1, page_count=1, complete=True)
+
+
+def partitions(*, repository_total: int = 1, stable: int = 1, missing_branches: int = 0):
+    rows = []
+    for kind in (
+        "repositories",
+        "pull_requests",
+        "branches",
+        "local_roots",
+        "worktrees",
+        "protections",
+        "terminal_dispositions",
+    ):
+        total = repository_total if kind == "repositories" else (missing_branches if kind == "branches" else 0)
+        terminal = stable if kind == "repositories" else 0
+        unaccounted = missing_branches if kind == "branches" else 0
+        rows.append(
+            UniversePartitionV1(
+                kind=kind,
+                total=total,
+                terminal=terminal,
+                protected=0,
+                blocked=0,
+                unaccounted=unaccounted,
+                complete=unaccounted == 0,
+            )
+        )
+    return tuple(rows)
 
 
 def review(*, terminal: bool = True, outdated: bool = False) -> ReviewLineageClosureV2:
@@ -423,6 +453,92 @@ def test_read_only_predicate_requires_a_prior_matching_stable_observation(tmp_pa
     )
     prior_path.write_text(prior.model_dump_json(), encoding="utf-8")
     assert subprocess.run(command, check=False, capture_output=True).returncode == 0
+
+
+def test_extended_stable_observation_binds_default_and_all_partitions():
+    observation = RecoveryStableObservationV1(
+        stable_digest=DIGEST,
+        observed_at=NOW,
+        manifest_receipt="git:4444J99/limen:stable-observation.json",
+        repository_identity=IDENTITY,
+        repository="organvm/limen",
+        default_ref="refs/heads/main",
+        default_sha=BASE,
+        default_check_status="green",
+        partitions=partitions(),
+        unaccounted=0,
+        complete=True,
+    )
+
+    assert observation.complete is True
+    with pytest.raises(ValueError, match="each universe partition"):
+        RecoveryStableObservationV1.model_validate(
+            observation.model_dump(mode="json") | {"partitions": observation.model_dump(mode="json")["partitions"][:-1]}
+        )
+    with pytest.raises(ValueError, match="completeness"):
+        RecoveryStableObservationV1.model_validate(
+            observation.model_dump(mode="json") | {"default_check_status": "pending"}
+        )
+
+
+def test_universe_baseline_receipt_refuses_partial_or_inconsistent_completeness():
+    complete = UniverseBaselineReceiptV1(
+        observed_at=NOW,
+        source_generation="1" * 64,
+        census_digest="2" * 64,
+        repository_denominator=1,
+        stable_count=1,
+        partitions=partitions(),
+        failure_count=0,
+        unaccounted=0,
+        complete=True,
+    )
+
+    assert complete.complete is True
+    partial_partitions = partitions(missing_branches=1)
+    partial = UniverseBaselineReceiptV1(
+        observed_at=NOW,
+        source_generation="1" * 64,
+        census_digest="2" * 64,
+        repository_denominator=1,
+        stable_count=0,
+        partitions=(
+            partial_partitions[0].model_copy(update={"terminal": 0, "blocked": 1}),
+            *partial_partitions[1:],
+        ),
+        failure_count=1,
+        unaccounted=1,
+        complete=False,
+    )
+    assert partial.unaccounted == 1
+    with pytest.raises(ValueError, match="aggregate completeness"):
+        UniverseBaselineReceiptV1.model_validate(complete.model_dump(mode="json") | {"failure_count": 1})
+
+
+def test_cursor_receipt_binds_repository_connection_cursor_and_generation():
+    incomplete = CursorReceiptV1(
+        surface="branches",
+        total_count=2,
+        observed_count=1,
+        page_count=1,
+        complete=False,
+        errors=("timeout",),
+        repository_identity=IDENTITY,
+        repository="4444J99/limen",
+        connection_kind="branches",
+        page_cursor="cursor-1",
+        expected_total=2,
+        observed_total=1,
+        retry_class="transient",
+        attempt=3,
+        source_generation="3" * 64,
+    )
+
+    assert incomplete.page_cursor == "cursor-1"
+    with pytest.raises(ValueError, match="stable identity"):
+        CursorReceiptV1.model_validate(incomplete.model_dump(mode="json") | {"repository": "4444J99/other"})
+    with pytest.raises(ValueError, match="connection_kind"):
+        CursorReceiptV1.model_validate(incomplete.model_dump(mode="json") | {"connection_kind": "issues"})
 
 
 def test_paired_custody_requires_two_distinct_verified_devices_and_restore():

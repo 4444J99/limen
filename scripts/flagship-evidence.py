@@ -178,6 +178,11 @@ def public_artifact_identity_errors(index: dict[str, Any], *, root: Path = ROOT)
         for text in texts
         for identity in repository_identities_in_text(text, controlled_owners)
         if canonical.get(identity.casefold()) != identity
+        and not (
+            LIMEN_REPOSITORY_IDENTITY.accepts(identity)
+            and canonical.get(LIMEN_REPOSITORY_IDENTITY.canonical_coordinate.casefold())
+            == LIMEN_REPOSITORY_IDENTITY.canonical_coordinate
+        )
     }
     if unregistered:
         return [

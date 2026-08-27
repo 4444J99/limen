@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-07-19T14:42:58.228648Z",
+  "generated_utc": "2026-08-27T14:24:04Z",
   "receipts": [
     {
       "branch": "pr-110-branch",
@@ -4808,6 +4808,50 @@
       "score_discount": 35,
       "status": "open_pr_preserved",
       "worktree": "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/ac30/limen"
+    },
+    {
+      "branch": "main",
+      "classification": "bounded tracked patch and untracked archive privately preserved; owner decision required",
+      "custody_bundle_sha256": "f1afbad80eb4fd1c98a08fbabcc51b4b7100f6af8cbe9bd569f6c3118028d291",
+      "dirty_patch_bytes": 10572,
+      "dirty_patch_command": "git diff --binary HEAD",
+      "dirty_patch_max_bytes": 67108864,
+      "dirty_patch_sha256": "ea9a8dcf2abb9182af7749b7bb75ae3ac8c9da1c3801aa973411b5ee86686a70",
+      "dirty_paths_count": 2,
+      "dirty_paths_sample": [
+        "PROJECT.md",
+        "cli/tests/e2e/test_ecosystem_liveness.py"
+      ],
+      "dirty_paths_sha256": "45b40b5493da28d5bf9f37d2b4393059ea69761319fd1c5ab570b7cbd9a95c07",
+      "evidence_updated_utc": "2026-08-27T14:24:04Z",
+      "head": "f034e3e659c8c8c3b9469b7b66e32c2bc03fdb64",
+      "lane": "owner-blocker",
+      "next_action": "Do not delete, reclaim, force-push, or auto-port this worktree from lifecycle cleanup. A bounded private tracked patch/untracked archive receipt exists; create a narrow owner packet to review, push, supersede, or retire this preserved dirty state.",
+      "private_patch": ".limen-private/session-corpus/lifecycle/worktree-preserve/limen-06658008-f1afbad80eb4fd1c/dirty.patch",
+      "private_patch_sha256": "ea9a8dcf2abb9182af7749b7bb75ae3ac8c9da1c3801aa973411b5ee86686a70",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/limen-06658008-f1afbad80eb4fd1c/receipt.json",
+      "private_untracked_archive": ".limen-private/session-corpus/lifecycle/worktree-preserve/limen-06658008-f1afbad80eb4fd1c/untracked.tar",
+      "private_untracked_manifest": ".limen-private/session-corpus/lifecycle/worktree-preserve/limen-06658008-f1afbad80eb4fd1c/untracked-manifest.json",
+      "repo": "4444J99/limen",
+      "root": "limen",
+      "status": "private_bundle_preserved",
+      "untracked_archive_bytes": 1771520,
+      "untracked_archive_sha256": "35002df33e4ad30df1908a1aef6490146892d1c424667687b4f028f976f48f1a",
+      "untracked_entries_count": 375,
+      "untracked_manifest_sha256": "6934bae3090ddfcab43430cc28ea9f6edd4eaa9edcbea695d6ecb518f6949e92",
+      "untracked_paths_count": 375,
+      "untracked_paths_sample": [],
+      "untracked_paths_sha256": "432bb91f8ab1dc396a55a9e0b3fba432a9ea5852b0a13796ee7b22a75aa7bb92",
+      "untracked_payload_bytes": 1469103,
+      "worktree": "/Users/4jp/Workspace/limen",
+      "worktree_key": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
+      "worktree_status_count": 3,
+      "worktree_status_sample": [
+        "## main...origin/main [behind 4]",
+        " M PROJECT.md",
+        " M cli/tests/e2e/test_ecosystem_liveness.py"
+      ],
+      "worktree_status_sha256": "04542badb2d85d2e2b0fd2c1f8618c39c1fde43793d967f760cafbdf57d6bbc0"
     },
     {
       "branch": "codex/psp-p00-w01-phase-predicates",

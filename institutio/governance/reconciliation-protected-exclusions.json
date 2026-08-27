@@ -9,6 +9,42 @@
       "registration": ".git/worktrees/career-portal-20260728",
       "blocks_omega": true,
       "reason": "active externally owned dirty workstream"
+    },
+    {
+      "exclusion_id": "limen-private-document-review-20260825",
+      "owner": "private-document-review-human-lane",
+      "path": ".protected-worktrees/limen-private-document-review-20260825",
+      "branch": "task/private-document-review-20260825",
+      "registration": ".git/worktrees/limen-private-document-review-20260825",
+      "blocks_omega": false,
+      "reason": "explicitly frozen private document review lane"
+    },
+    {
+      "exclusion_id": "limen-private-document-review-reviewer-20260826",
+      "owner": "private-document-review-reviewer-lane",
+      "path": ".protected-worktrees/limen-private-document-review-reviewer-20260826",
+      "branch": "review/private-document-review-20260826",
+      "registration": ".git/worktrees/limen-private-document-review-reviewer-20260826",
+      "blocks_omega": false,
+      "reason": "explicitly frozen private review lane"
+    },
+    {
+      "exclusion_id": "limen-pr-2542-corrective-lane",
+      "owner": "pull-request-2542-corrective-owner",
+      "path": ".protected-worktrees/pr-2542",
+      "branch": "corrective/recovery-audit-2539-2540",
+      "registration": ".git/worktrees/pr-2542",
+      "blocks_omega": true,
+      "reason": "open corrective pull request must be reconciled before reclamation"
+    },
+    {
+      "exclusion_id": "universal-mail-seven-state-flags",
+      "owner": "universal-mail-human-lane",
+      "path": ".protected-worktrees/universal-mail-seven-state-flags",
+      "branch": "feat/mailapp-seven-state-flags",
+      "registration": ".protected-registrations/universal-mail-seven-state-flags",
+      "blocks_omega": false,
+      "reason": "explicitly frozen Universal Mail human lane"
     }
   ]
 }

@@ -24,7 +24,10 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
+from pydantic import ValidationError
+
 from limen.models import LimenFile, Task
+from limen.universe_recovery import UniverseBaselineReceiptV1
 from limen.work_loan import (
     task_due,
     task_horizon,
@@ -67,6 +70,52 @@ LIFECYCLE_STAGE = {
     "done": 100,
     "archived": 100,
 }
+UNIVERSE_RECEIPT_RELATIVE_PATH = Path("docs/receipts/universe-baseline.json")
+
+
+class UniverseProgressError(ValueError):
+    """The aggregate universe receipt is absent or cannot authorize a view."""
+
+
+def load_universe_progress(root: Path, *, receipt_path: Path | None = None) -> UniverseBaselineReceiptV1:
+    """Load the universe view from its sole authority: the aggregate receipt."""
+
+    path = (receipt_path or (root / UNIVERSE_RECEIPT_RELATIVE_PATH)).expanduser()
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise UniverseProgressError(f"universe baseline receipt not found: {path}") from exc
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise UniverseProgressError(f"universe baseline receipt is unreadable: {path}: {exc}") from exc
+    try:
+        return UniverseBaselineReceiptV1.model_validate(payload)
+    except ValidationError as exc:
+        raise UniverseProgressError(f"universe baseline receipt is invalid: {path}: {exc}") from exc
+
+
+def render_universe_progress(receipt: UniverseBaselineReceiptV1, *, ascii_only: bool = False) -> str:
+    """Render only receipt-backed estate counts; an absent receipt never becomes zero."""
+
+    stable_pct = _percent(receipt.stable_count, receipt.repository_denominator)
+    census_state = "COMPLETE" if receipt.complete else "INCOMPLETE"
+    lines = [
+        f"Limen universe baseline — {receipt.observed_at.isoformat().replace('+00:00', 'Z')}",
+        f"CENSUS {census_state} generation={receipt.source_generation}",
+        (
+            f"STABLE DEFAULTS  {progress_bar(stable_pct, ascii_only=ascii_only)} {stable_pct:>5.1f}%  "
+            f"{receipt.stable_count}/{receipt.repository_denominator} repositories"
+        ),
+        f"FAILURES {receipt.failure_count}  UNACCOUNTED {receipt.unaccounted}",
+        "",
+        "ACCOUNTED PARTITIONS",
+    ]
+    for row in receipt.partitions:
+        marker = "OK" if row.complete else "INCOMPLETE"
+        lines.append(
+            f"  {marker:<10} {row.kind:<22} total={row.total:<6} terminal={row.terminal:<6} "
+            f"protected={row.protected:<6} blocked={row.blocked:<6} unaccounted={row.unaccounted}"
+        )
+    return "\n".join(lines) + "\n"
 
 
 def _slug(value: Any) -> str | None:

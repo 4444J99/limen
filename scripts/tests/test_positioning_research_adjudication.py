@@ -1325,7 +1325,9 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
     foundry_gate = gates["gates"]["positioning-foundry-technical-readiness-test"]
     foundry_public_live_gate = gates["gates"]["positioning-foundry-technical-readiness-public-live"]
     workflow = MODULE._load_yaml(ROOT / ".github" / "workflows" / "pr-gate.yml")
+    ci_workflow = MODULE._load_yaml(ROOT / ".github" / "workflows" / "ci.yml")
 
+    assert ".github/workflows/ci.yml" in gate["paths"]
     assert ".github/workflows/pr-gate.yml" in gate["paths"]
     assert "institutio/positioning/github-map.json" in gate["paths"]
     assert "docs/positioning/claims-ledger.md" in gate["paths"]
@@ -1363,3 +1365,9 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
         "scripts/tests/test_positioning_research_adjudication.py -q" in fallback["run"].splitlines()
     )
     assert "GH_TOKEN" not in workflow["jobs"]["pr-gate"]["env"]
+    whole_verify = next(
+        step
+        for step in ci_workflow["jobs"]["verify"]["steps"]
+        if step.get("name") == "Run whole-repo verification (verify-whole.sh)"
+    )
+    assert whole_verify["env"]["GH_TOKEN"] == "${{ github.token }}"

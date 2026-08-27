@@ -70,7 +70,9 @@ def test_cpu_limit_is_applied_to_child(tmp_path: Path) -> None:
     result = run_bounded_subprocess(
         [sys.executable, "-c", "while True: pass"],
         cwd=tmp_path,
-        timeout_seconds=5,
+        # RLIMIT_CPU counts scheduled CPU time, not elapsed wall time. Leave a
+        # finite runway for a child competing with the parallel hosted suite.
+        timeout_seconds=20,
         stdout_ceiling=1024,
         stderr_ceiling=1024,
         cpu_seconds=1,
