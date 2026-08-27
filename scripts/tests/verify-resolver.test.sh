@@ -227,6 +227,7 @@ check-note-links' CLAUDE.md
 expect workflow-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
+research-adjudication-test
 workflow-yaml
 check-gates
 check-runner-coverage

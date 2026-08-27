@@ -32,7 +32,13 @@ from limen.private_board import (
     private_board_path,
 )
 from limen.opencode_smoke import run_opencode_smoke
-from limen.progress import build_progress_snapshot, render_progress
+from limen.progress import (
+    UniverseProgressError,
+    build_progress_snapshot,
+    load_universe_progress,
+    render_progress,
+    render_universe_progress,
+)
 from limen.progress_source_registry import build_source_registry
 from limen.status import print_status
 
@@ -556,7 +562,7 @@ def status(agent, status):
 @main.command()
 @click.option(
     "--view",
-    type=click.Choice(["workstream", "source_lineage", "origin", "horizon", "agent", "repo", "status"]),
+    type=click.Choice(["workstream", "source_lineage", "origin", "horizon", "agent", "repo", "status", "universe"]),
     default="workstream",
     show_default=True,
     help="Macro grouping and micro drill-down dimension.",
@@ -605,6 +611,23 @@ def progress(view, scope, level, limit, show_all, ascii_only, json_output, repor
     """
 
     root = resolve_root()
+    if view == "universe":
+        if scope is not None:
+            raise click.ClickException("--scope is not supported for the aggregate universe view")
+        try:
+            receipt = load_universe_progress(root)
+        except UniverseProgressError as exc:
+            raise click.ClickException(str(exc)) from exc
+        payload = receipt.model_dump(mode="json")
+        if report_file:
+            output = Path(report_file).expanduser()
+            output.parent.mkdir(parents=True, exist_ok=True)
+            output.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+        if json_output:
+            click.echo(json.dumps(payload, indent=2))
+            return
+        click.echo(render_universe_progress(receipt, ascii_only=ascii_only), nl=False)
+        return
     tasks_path = resolve_tasks_path(root)
     if not tasks_path.exists():
         click.echo("tasks.yaml not found", err=True)

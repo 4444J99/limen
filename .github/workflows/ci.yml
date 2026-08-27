@@ -169,6 +169,10 @@ jobs:
       - name: Run whole-repo verification (verify-whole.sh)
         run: scripts/verify-whole.sh
         env:
+          # verify-whole includes the bounded live research-adjudication probe.
+          # Scope the built-in read token to this step; gh has no ambient token
+          # in Actions and otherwise every public-source read fails admission.
+          GH_TOKEN: ${{ github.token }}
           LIMEN_VERIFY_LIVE: "0"
 
   compat:

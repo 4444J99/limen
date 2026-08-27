@@ -327,6 +327,12 @@ class FlagshipEvidenceTests(unittest.TestCase):
         self.assertTrue(any("absent from the tracked public census" in error for error in errors), errors)
         self.assertFalse(any(synthetic_identity in error for error in errors), errors)
 
+    def test_public_identity_guard_accepts_registered_limen_transfer_alias(self) -> None:
+        index = copy.deepcopy(self.index)
+        index["packets"][0]["bounded_claim"] += " Historical receipt: organvm/limen"
+        errors = MODULE.public_artifact_identity_errors(index)
+        self.assertFalse(any("absent from the tracked public census" in error for error in errors), errors)
+
     def test_claims_ledger_metric_projection_rejects_value_or_wording_drift(self) -> None:
         index = copy.deepcopy(self.index)
         metric = index["packets"][0]["metrics"][0]

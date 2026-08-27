@@ -1,0 +1,67 @@
+{
+  "schema_version": "limen.direct_session_execution_receipt.v1",
+  "receipt_id": "universe-finish-line-20260827-implementation",
+  "executor": "codex",
+  "surface": "direct-human-session",
+  "human_protected": true,
+  "branch": "corrective/universe-finish-line-20260827",
+  "base_sha": "8773db631e9c4b2fe00abbb032e758b5264ffc7f",
+  "conduct": {
+    "registered": false,
+    "reason": "authenticated broker environment unavailable after documented bootstrap"
+  },
+  "remote_census": {
+    "observed_at": "2026-08-27T15:25:52.639931Z",
+    "source_generation": "4080e6f82e22601e1c9e6d8fa1d1d19d3b68bd255d4b5ab1127c9c84edcf09f8",
+    "repository_denominator": 320,
+    "connection_count": 1280,
+    "known_leaf_count": 13572,
+    "failed_connection_count": 0,
+    "unaccounted": 0,
+    "exhaustive_for_registered_connections": true
+  },
+  "universe_baseline": {
+    "census_digest": "bacc0f28e5069219fc4dcb3ac5f50465cccabe59c8858359480dc704e54b0a19",
+    "stable_count": 177,
+    "failure_count": 2,
+    "unaccounted": 20900,
+    "complete": false
+  },
+  "pull_requests": {
+    "original": "https://github.com/4444J99/limen/pull/2542",
+    "successor": "https://github.com/4444J99/limen/pull/2548",
+    "original_disposition": "protected-open-pending-successor-landing"
+  },
+  "verification": [
+    {
+      "command": "python3 -m pytest cli/tests/test_github_estate_census.py cli/tests/test_local_git_census.py cli/tests/test_universe_baseline.py cli/tests/test_universe_recovery.py cli/tests/test_progress.py cli/tests/test_notify_events.py cli/tests/test_worktree_debt.py cli/tests/test_protected_exclusions.py scripts/tests/test_worktree_preserve_dirty.py scripts/tests/test_positioning_research_adjudication.py -q",
+      "result": "211 passed",
+      "exit_code": 0
+    },
+    {
+      "command": "python3 scripts/worktree-debt.py --strict --fail-on-debt --json",
+      "result": "six debt items; expected nonterminal failure",
+      "exit_code": 1
+    },
+    {
+      "command": "python3 scripts/reclaim-worktrees.py --check --json",
+      "result": "seven unapplied candidates; protected lanes excluded",
+      "exit_code": 0
+    },
+    {
+      "command": "scripts/verify-scoped.sh --changed --base 8773db631e9c4b2fe00abbb032e758b5264ffc7f --require-base --jobs 4",
+      "result": "the cheap wave exposed five defects; all previously green shards remain reusable and each failed shard was corrected and rerun successfully",
+      "exit_code": 1
+    },
+    {
+      "command": "limen host-admission status --cwd . --json",
+      "result": "heavy admission denied: swap-fraction 0.37041870114626363",
+      "exit_code": 0
+    }
+  ],
+  "outcome": "nonterminal_durable_continuation",
+  "destructive_effects": [],
+  "external_effects": [
+    "pushed successor branch and opened pull request 2548"
+  ]
+}

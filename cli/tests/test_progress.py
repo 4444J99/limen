@@ -4,11 +4,20 @@ import json
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
 from limen.cli import main
 from limen.models import LimenFile
-from limen.progress import build_progress_snapshot, progress_bar, render_progress
+from limen.progress import (
+    UniverseProgressError,
+    build_progress_snapshot,
+    load_universe_progress,
+    progress_bar,
+    render_progress,
+    render_universe_progress,
+)
+from limen.universe_recovery import UniverseBaselineReceiptV1, UniversePartitionV1
 
 
 SOURCE_PATHS = {
@@ -431,3 +440,90 @@ def test_progress_cli_can_write_a_bounded_receipt(tmp_path: Path, monkeypatch) -
     assert payload["summary"]["coverage_debt"] == 8
     assert payload["summary"]["requested_active_debit_runs"] == 3
     assert len(payload["tasks"]) == 4
+
+
+def _universe_receipt(*, complete: bool = False) -> UniverseBaselineReceiptV1:
+    repository_rows = UniversePartitionV1(
+        kind="repositories",
+        total=2,
+        terminal=1 if not complete else 2,
+        protected=0,
+        blocked=1 if not complete else 0,
+        unaccounted=0,
+        complete=True,
+    )
+    partitions = [repository_rows]
+    for kind in (
+        "pull_requests",
+        "branches",
+        "local_roots",
+        "worktrees",
+        "protections",
+        "terminal_dispositions",
+    ):
+        partitions.append(
+            UniversePartitionV1(
+                kind=kind,
+                total=0,
+                terminal=0,
+                protected=0,
+                blocked=0,
+                unaccounted=0,
+                complete=True,
+            )
+        )
+    return UniverseBaselineReceiptV1(
+        observed_at=datetime(2026, 8, 27, 12, tzinfo=UTC),
+        source_generation="1" * 64,
+        census_digest="2" * 64,
+        repository_denominator=2,
+        stable_count=2 if complete else 1,
+        partitions=tuple(partitions),
+        failure_count=0,
+        unaccounted=0,
+        complete=complete,
+    )
+
+
+def test_universe_progress_loads_only_the_validated_aggregate_receipt(tmp_path: Path) -> None:
+    path = tmp_path / "docs" / "receipts" / "universe-baseline.json"
+    path.parent.mkdir(parents=True)
+    receipt = _universe_receipt()
+    path.write_text(receipt.model_dump_json(), encoding="utf-8")
+
+    loaded = load_universe_progress(tmp_path)
+    rendered = render_universe_progress(loaded, ascii_only=True)
+
+    assert loaded.census_digest == "2" * 64
+    assert "CENSUS INCOMPLETE" in rendered
+    assert "1/2 repositories" in rendered
+    assert "repositories" in rendered
+
+
+def test_universe_progress_fails_closed_without_an_aggregate_receipt(tmp_path: Path) -> None:
+    with pytest.raises(UniverseProgressError, match="not found"):
+        load_universe_progress(tmp_path)
+
+
+def test_progress_cli_universe_view_does_not_read_tasks_projection(tmp_path: Path, monkeypatch) -> None:
+    receipt_path = tmp_path / "docs" / "receipts" / "universe-baseline.json"
+    receipt_path.parent.mkdir(parents=True)
+    receipt_path.write_text(_universe_receipt().model_dump_json(), encoding="utf-8")
+    (tmp_path / "tasks.yaml").write_text("this is deliberately not a board", encoding="utf-8")
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+
+    result = CliRunner().invoke(main, ["progress", "--view", "universe", "--json-output"])
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["schema_version"] == "limen.universe_baseline_receipt.v1"
+    assert payload["repository_denominator"] == 2
+
+
+def test_progress_cli_universe_view_refuses_missing_receipt(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+
+    result = CliRunner().invoke(main, ["progress", "--view", "universe"])
+
+    assert result.exit_code != 0
+    assert "receipt not found" in result.output

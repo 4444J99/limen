@@ -1,0 +1,78 @@
+{
+  "schema_version": "limen.continuation_blockers.v1",
+  "capsule_id": "universe-finish-line-20260827",
+  "observed_at": "2026-08-27T15:31:41.500648Z",
+  "terminal": false,
+  "blockers": [
+    {
+      "id": "authenticated-conduct-environment",
+      "owner": "credential-wall",
+      "predicate": "limen conduct capabilities returns authenticated live capabilities and permits human-protected registration",
+      "evidence": "LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN were absent after the documented bootstrap",
+      "next_command": "limen conduct capabilities"
+    },
+    {
+      "id": "agy-claim-inventory",
+      "owner": "agy-handoff-source",
+      "predicate": "every claimed repository and PR number reconciles to live state and local custody with no duplicate or missing claim",
+      "evidence": "the preserved handoff contains Agy artifacts but not the source inventory behind the 160-plus merge claim",
+      "next_command": "python3 scripts/universe-recovery.py --check --manifest docs/continuations/universe-recovery-20260823/manifest.json"
+    },
+    {
+      "id": "default-profile-source-drift",
+      "owner": "4444J99-profile-producer",
+      "predicate": "the live research-adjudication gate passes on the exact Limen default SHA using a freshly reconciled profile manifest",
+      "evidence": "authenticated live reads work, but current public profile counts differ from the committed generated manifest",
+      "next_command": "gh run list --repo 4444J99/4444J99 --workflow profile.yml --limit 5"
+    },
+    {
+      "id": "default-required-check-policy",
+      "owner": "github-estate-census",
+      "predicate": "every repository records its effective default-ref required-check policy, including an explicit no-required-check disposition",
+      "evidence": "repositories with no status rollup remain unknown rather than being inferred green",
+      "next_command": "python3 scripts/github-estate-census.py --json --workers 2"
+    },
+    {
+      "id": "remote-connection-scope",
+      "owner": "github-estate-census",
+      "predicate": "the canonical connection registry and collector cover every required PR, review, check, issue, and branch partition",
+      "evidence": "the live exact collector currently completes open PRs, open issues, branches, and default rollup checks; closed PR and review-detail partitions are not yet collected",
+      "next_command": "python3 -m pytest cli/tests/test_github_estate_census.py -q"
+    },
+    {
+      "id": "local-root-identity",
+      "owner": "local-git-census",
+      "predicate": "every discovered local Git root has a repository identity or an explicit terminal/protected disposition",
+      "evidence": "one redacted local-only unborn root produces two fail-closed identity observations",
+      "next_command": "PYTHONPATH=cli/src python3 -m limen.cli progress --view universe --json-output"
+    },
+    {
+      "id": "branch-and-worktree-debt",
+      "owner": "universe-drain",
+      "predicate": "strict worktree debt and the remote-reap verifier pass, then a regenerated immutable cleanup plan is empty",
+      "evidence": "strict debt reports six items and the unapplied plan contains seven candidates",
+      "next_command": "python3 scripts/worktree-debt.py --strict --fail-on-debt --json"
+    },
+    {
+      "id": "shared-checkout-residue",
+      "owner": "human-protected-shared-limen-lane",
+      "predicate": "the preservation receipt remains readable and the shared checkout is clean on a fast-forwarded default without discarding unrelated work",
+      "evidence": "custody is proven, but the shared checkout intentionally remains dirty and was not reset",
+      "next_command": "python3 scripts/worktree-preserve-dirty.py --worktree \"$LIMEN_ROOT\" --json"
+    },
+    {
+      "id": "successor-heavy-admission",
+      "owner": "machine-wide-host-admission",
+      "predicate": "the unchanged exact PR #2548 head receives the remaining admitted heavy-gate receipt",
+      "evidence": "13 cheap scoped gates passed; the heavy wave exited 75 because swap use exceeded the configured fraction",
+      "next_command": "limen host-admission status --cwd . --json"
+    },
+    {
+      "id": "notification-visible-canary",
+      "owner": "human-operator",
+      "predicate": "a separate recording-backend receipt exists and one submitted macOS canary has an operator-observed confirmation receipt",
+      "evidence": "macOS submission is implemented but visible delivery has not been claimed or observed; ntfy is not configured",
+      "next_command": "PYTHONPATH=cli/src python3 scripts/notify-events.py --status"
+    }
+  ]
+}
