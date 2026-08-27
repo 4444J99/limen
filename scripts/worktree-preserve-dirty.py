@@ -2,14 +2,16 @@
 """Preserve bounded tracked worktree debt as owner-blocker receipts.
 
 This is a custody helper, not a cleanup helper. It captures a private,
-content-addressed patch and bounded public metadata for dirty worktrees, then
-records an owner-blocker receipt in docs/worktree-preservation-receipts.json.
+content-addressed tracked patch plus a deterministic archive of untracked
+content and bounded public metadata for dirty worktrees, then records an
+owner-blocker receipt in docs/worktree-preservation-receipts.json.
 Physical removal still belongs to the reclaim acceptance surface after an
 owner decision.
 
-The helper fails closed before writing any durable artifact when a worktree
-contains untracked paths, a patch exceeds the per-item byte ceiling, or the
-aggregate patch set exceeds the invocation ceiling.
+The helper fails closed before writing any durable artifact when tracked or
+untracked content exceeds its byte ceiling, changes during capture, cannot be
+read back from the private archive, or the aggregate set exceeds the
+invocation ceilings.
 """
 
 from __future__ import annotations
@@ -17,13 +19,16 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import io
 import json
 import os
 import re
 import selectors
 import shutil
+import stat
 import subprocess
 import sys
+import tarfile
 import tempfile
 import time
 from pathlib import Path
@@ -41,6 +46,8 @@ SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
 
 MAX_PATCH_BYTES = 64 * 1024 * 1024
 MAX_TOTAL_PATCH_BYTES = 128 * 1024 * 1024
+MAX_UNTRACKED_BYTES = 512 * 1024 * 1024
+MAX_TOTAL_UNTRACKED_BYTES = 1024 * 1024 * 1024
 MAX_METADATA_BYTES = 4 * 1024 * 1024
 PATCH_CHUNK_BYTES = 1024 * 1024
 MAX_STDERR_BYTES = 4096
@@ -100,6 +107,10 @@ def run_git_checked(path: Path, args: list[str], timeout: int = 60) -> str:
 
 def sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8", errors="replace")).hexdigest()
+
+
+def sha256_bytes(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
 
 
 def file_sha256(path: Path) -> str:
@@ -219,10 +230,173 @@ def stream_git_patch(path: Path, destination: Path, max_bytes: int, timeout: int
             destination.unlink(missing_ok=True)
 
 
+def _safe_untracked_relative(value: str) -> Path:
+    relative = Path(value)
+    if not value or relative.is_absolute() or "\x00" in value or ".." in relative.parts:
+        raise PreservationError(f"unsafe untracked path returned by Git: {value!r}")
+    return relative
+
+
+def _untracked_entries(worktree: Path, untracked_paths: list[str]) -> list[tuple[str, Path, os.stat_result]]:
+    """Expand Git's untracked leaves without following symlinks or escaping the worktree."""
+
+    root = worktree.resolve()
+    entries: dict[str, tuple[Path, os.stat_result]] = {}
+
+    def visit(relative: Path) -> None:
+        source = worktree / relative
+        try:
+            source_parent = source.parent.resolve(strict=True)
+            source_parent.relative_to(root)
+            info = source.lstat()
+        except (OSError, ValueError) as exc:
+            raise PreservationError(f"{worktree}: cannot safely inspect untracked path {relative}: {exc}") from exc
+        archive_name = relative.as_posix().rstrip("/")
+        if not archive_name:
+            raise PreservationError(f"{worktree}: untracked path resolved to the worktree root")
+        entries[archive_name] = (source, info)
+        if stat.S_ISDIR(info.st_mode):
+            try:
+                children = sorted(source.iterdir(), key=lambda item: os.fsencode(item.name))
+            except OSError as exc:
+                raise PreservationError(f"{worktree}: cannot enumerate untracked directory {relative}: {exc}") from exc
+            for child in children:
+                visit(relative / child.name)
+
+    for value in sorted(set(untracked_paths), key=os.fsencode):
+        relative = _safe_untracked_relative(value)
+        if any(parent.as_posix() in entries for parent in relative.parents if parent != Path(".")):
+            continue
+        visit(relative)
+    return [(name, *entries[name]) for name in sorted(entries, key=os.fsencode)]
+
+
+def capture_untracked_archive(
+    worktree: Path,
+    untracked_paths: list[str],
+    destination: Path,
+    max_bytes: int,
+) -> dict[str, Any]:
+    """Write a deterministic tar archive and return its private manifest."""
+
+    if max_bytes <= 0 or max_bytes > MAX_UNTRACKED_BYTES:
+        raise PreservationError(f"untracked byte ceiling must be between 1 and {MAX_UNTRACKED_BYTES}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    manifest: list[dict[str, Any]] = []
+    payload_bytes = 0
+    try:
+        entries = _untracked_entries(worktree, untracked_paths)
+        with tarfile.open(destination, mode="x", format=tarfile.PAX_FORMAT) as archive:
+            for name, source, info in entries:
+                member = tarfile.TarInfo(name=name)
+                member.uid = 0
+                member.gid = 0
+                member.uname = ""
+                member.gname = ""
+                member.mtime = 0
+                member.mode = stat.S_IMODE(info.st_mode)
+                row: dict[str, Any] = {"mode": member.mode, "path": name}
+                if stat.S_ISREG(info.st_mode):
+                    size = int(info.st_size)
+                    if payload_bytes + size > max_bytes:
+                        raise PreservationError(
+                            f"{worktree}: untracked payload exceeds the {max_bytes}-byte per-item ceiling"
+                        )
+                    with source.open("rb") as handle:
+                        body = handle.read(max_bytes + 1)
+                    if len(body) != size:
+                        raise PreservationError(f"{worktree}: untracked file changed while reading: {name}")
+                    payload_bytes += size
+                    member.size = size
+                    archive.addfile(member, io.BytesIO(body))
+                    row.update({"sha256": sha256_bytes(body), "size": size, "type": "file"})
+                elif stat.S_ISLNK(info.st_mode):
+                    target = os.readlink(source)
+                    encoded_target = os.fsencode(target)
+                    if payload_bytes + len(encoded_target) > max_bytes:
+                        raise PreservationError(
+                            f"{worktree}: untracked payload exceeds the {max_bytes}-byte per-item ceiling"
+                        )
+                    payload_bytes += len(encoded_target)
+                    member.type = tarfile.SYMTYPE
+                    member.linkname = target
+                    archive.addfile(member)
+                    row.update(
+                        {
+                            "sha256": sha256_bytes(encoded_target),
+                            "size": len(encoded_target),
+                            "target": target,
+                            "type": "symlink",
+                        }
+                    )
+                elif stat.S_ISDIR(info.st_mode):
+                    member.type = tarfile.DIRTYPE
+                    archive.addfile(member)
+                    row.update({"sha256": sha256_bytes(b""), "size": 0, "type": "directory"})
+                else:
+                    raise PreservationError(f"{worktree}: unsupported untracked file type: {name}")
+                manifest.append(row)
+        return {
+            "archive_bytes": destination.stat().st_size,
+            "archive_sha256": file_sha256(destination),
+            "entry_count": len(manifest),
+            "manifest": manifest,
+            "manifest_sha256": sha256_text(json.dumps(manifest, sort_keys=True, separators=(",", ":"))),
+            "payload_bytes": payload_bytes,
+        }
+    except (OSError, tarfile.TarError, PreservationError) as exc:
+        destination.unlink(missing_ok=True)
+        if isinstance(exc, PreservationError):
+            raise
+        raise PreservationError(f"{worktree}: cannot capture untracked archive: {exc}") from exc
+
+
+def verify_untracked_archive(archive_path: Path, manifest: list[dict[str, Any]]) -> bool:
+    """Read every archived entry and verify its path, type, mode, size, and digest."""
+
+    expected = {str(row.get("path")): row for row in manifest}
+    if len(expected) != len(manifest) or any(not name for name in expected):
+        return False
+    try:
+        with tarfile.open(archive_path, mode="r:") as archive:
+            members = archive.getmembers()
+            if len(members) != len(expected) or {member.name for member in members} != set(expected):
+                return False
+            for member in members:
+                row = expected[member.name]
+                if member.mode != row.get("mode"):
+                    return False
+                row_type = row.get("type")
+                if row_type == "file" and member.isfile():
+                    handle = archive.extractfile(member)
+                    if handle is None:
+                        return False
+                    digest = hashlib.sha256()
+                    size = 0
+                    for chunk in iter(lambda: handle.read(PATCH_CHUNK_BYTES), b""):
+                        digest.update(chunk)
+                        size += len(chunk)
+                    if size != row.get("size") or digest.hexdigest() != row.get("sha256"):
+                        return False
+                elif row_type == "symlink" and member.issym():
+                    target = member.linkname
+                    if target != row.get("target") or sha256_bytes(os.fsencode(target)) != row.get("sha256"):
+                        return False
+                elif row_type == "directory" and member.isdir():
+                    if row.get("size") != 0 or row.get("sha256") != sha256_bytes(b""):
+                        return False
+                else:
+                    return False
+    except (OSError, tarfile.TarError, KeyError, TypeError):
+        return False
+    return True
+
+
 def prepare_item(
     item: dict[str, Any],
     staging_root: Path,
     max_patch_bytes: int,
+    max_untracked_bytes: int = MAX_UNTRACKED_BYTES,
 ) -> dict[str, Any]:
     path = Path(str(item["path"]))
     root = str(item.get("name") or path.name)
@@ -239,20 +413,35 @@ def prepare_item(
     status_lines = [line for line in status_branch.splitlines() if line]
     dirty_paths = git_z_paths(path, ["diff", "--name-only", "HEAD"], timeout=120)
     untracked_paths = git_z_paths(path, ["ls-files", "--others", "--exclude-standard"], timeout=120)
-    if untracked_paths:
-        raise PreservationError(
-            f"{path}: {len(untracked_paths)} untracked path(s) are not representable by "
-            "git diff --binary HEAD; no custody receipt was written"
-        )
 
     path_digest = sha256_text(str(path.resolve()))
     staged_patch = staging_root / f"{safe_name(root)}-{path_digest[:12]}.patch"
     capture = stream_git_patch(path, staged_patch, max_patch_bytes)
-    if capture["bytes"] <= 0:
-        raise PreservationError(f"{path}: tracked dirty classification produced an empty patch")
+    staged_archive: Path | None = None
+    untracked_capture: dict[str, Any] = {
+        "archive_bytes": 0,
+        "archive_sha256": sha256_bytes(b""),
+        "entry_count": 0,
+        "manifest": [],
+        "manifest_sha256": sha256_text("[]"),
+        "payload_bytes": 0,
+    }
+    if untracked_paths:
+        staged_archive = staging_root / f"{safe_name(root)}-{path_digest[:12]}.untracked.tar"
+        untracked_capture = capture_untracked_archive(path, untracked_paths, staged_archive, max_untracked_bytes)
+    if capture["bytes"] <= 0 and not untracked_paths:
+        raise PreservationError(f"{path}: dirty classification produced no tracked or untracked content")
     verification_patch = staged_patch.with_suffix(".verify.patch")
+    verification_archive = (
+        staged_archive.with_suffix(".verify.tar") if staged_archive is not None else None
+    )
     try:
         verification_capture = stream_git_patch(path, verification_patch, max_patch_bytes)
+        verification_untracked_capture = (
+            capture_untracked_archive(path, untracked_paths, verification_archive, max_untracked_bytes)
+            if verification_archive is not None
+            else untracked_capture
+        )
         post_branch = run_git_checked(path, ["rev-parse", "--abbrev-ref", "HEAD"]).strip()
         post_head = run_git_checked(path, ["rev-parse", "HEAD"]).strip()
         post_remote = run_git_checked(path, ["remote", "get-url", "origin"]).strip()
@@ -269,25 +458,40 @@ def prepare_item(
             or remote != post_remote
             or status_branch != post_status_branch
             or dirty_paths != post_dirty_paths
-            or post_untracked_paths
+            or untracked_paths != post_untracked_paths
             or capture != verification_capture
+            or untracked_capture != verification_untracked_capture
         ):
             raise PreservationError(
                 f"{path}: worktree identity or content changed during capture; retry from fresh state"
             )
+        if staged_archive is not None and not verify_untracked_archive(
+            staged_archive, untracked_capture["manifest"]
+        ):
+            raise PreservationError(f"{path}: untracked archive failed readback verification")
     except (OSError, PreservationError):
         staged_patch.unlink(missing_ok=True)
+        if staged_archive is not None:
+            staged_archive.unlink(missing_ok=True)
         raise
     finally:
         verification_patch.unlink(missing_ok=True)
+        if verification_archive is not None:
+            verification_archive.unlink(missing_ok=True)
 
-    private_dir_name = f"{safe_name(root)}-{path_digest[:8]}-{capture['sha256'][:16]}"
+    bundle_digest = sha256_text(f"{capture['sha256']}\n{untracked_capture['archive_sha256']}\n")
+    private_dir_name = f"{safe_name(root)}-{path_digest[:8]}-{bundle_digest[:16]}"
     private_dir = PRIVATE_ROOT / private_dir_name
     private_patch = private_dir / "dirty.patch"
+    private_untracked_archive = private_dir / "untracked.tar" if untracked_paths else None
+    private_untracked_manifest = private_dir / "untracked-manifest.json" if untracked_paths else None
     private_receipt = private_dir / "receipt.json"
     receipt = {
         "branch": branch,
-        "classification": "bounded tracked worktree patch privately preserved; owner decision required",
+        "classification": (
+            "bounded tracked patch and untracked archive privately preserved; owner decision required"
+        ),
+        "custody_bundle_sha256": bundle_digest,
         "dirty_patch_bytes": capture["bytes"],
         "dirty_patch_command": "git diff --binary HEAD",
         "dirty_patch_max_bytes": max_patch_bytes,
@@ -299,19 +503,31 @@ def prepare_item(
         "lane": "owner-blocker",
         "next_action": (
             "Do not delete, reclaim, force-push, or auto-port this worktree from lifecycle cleanup. "
-            "A bounded private tracked patch/status receipt exists; create a narrow owner packet to "
+            "A bounded private tracked patch/untracked archive receipt exists; create a narrow owner packet to "
             "review, push, supersede, or retire this preserved dirty state."
         ),
         "private_patch": rel_to_root(private_patch),
         "private_patch_sha256": capture["sha256"],
         "private_receipt": rel_to_root(private_receipt),
+        "private_untracked_archive": (
+            rel_to_root(private_untracked_archive) if private_untracked_archive is not None else None
+        ),
+        "private_untracked_manifest": (
+            rel_to_root(private_untracked_manifest) if private_untracked_manifest is not None else None
+        ),
         "repo": repo_slug(remote) or remote,
         "root": root,
-        "status": "private_patch_preserved",
-        "untracked_paths_count": 0,
-        "untracked_paths_sha256": sha256_text(""),
+        "status": "private_bundle_preserved",
+        "untracked_archive_bytes": untracked_capture["archive_bytes"],
+        "untracked_archive_sha256": untracked_capture["archive_sha256"],
+        "untracked_entries_count": untracked_capture["entry_count"],
+        "untracked_manifest_sha256": untracked_capture["manifest_sha256"],
+        "untracked_paths_count": len(untracked_paths),
+        "untracked_paths_sha256": sha256_text("\n".join(sorted(untracked_paths))),
         "untracked_paths_sample": [],
+        "untracked_payload_bytes": untracked_capture["payload_bytes"],
         "worktree": str(path),
+        "worktree_key": path_digest,
         "worktree_status_count": len(status_lines),
         "worktree_status_sample": status_lines[:PUBLIC_SAMPLE_LIMIT],
         "worktree_status_sha256": sha256_text("\n".join(status_lines)),
@@ -319,8 +535,10 @@ def prepare_item(
     return {
         "dirty_paths": dirty_paths,
         "receipt": receipt,
+        "staged_archive": staged_archive,
         "staged_patch": staged_patch,
         "status_branch": status_branch,
+        "untracked_manifest": untracked_capture["manifest"],
         "untracked_paths": untracked_paths,
     }
 
@@ -334,14 +552,18 @@ def candidate_receipt(existing: dict[str, Any] | None, prepared: dict[str, Any])
     return candidate
 
 
-def private_paths(receipt: dict[str, Any]) -> tuple[Path, Path]:
+def private_paths(receipt: dict[str, Any]) -> tuple[Path, Path, Path | None, Path | None]:
     patch = ROOT / str(receipt["private_patch"])
     private_receipt = ROOT / str(receipt["private_receipt"])
-    return patch, private_receipt
+    archive_value = receipt.get("private_untracked_archive")
+    manifest_value = receipt.get("private_untracked_manifest")
+    archive = ROOT / str(archive_value) if archive_value else None
+    manifest = ROOT / str(manifest_value) if manifest_value else None
+    return patch, private_receipt, archive, manifest
 
 
 def private_artifacts_valid(receipt: dict[str, Any]) -> bool:
-    patch, private_receipt = private_paths(receipt)
+    patch, private_receipt, archive, manifest_path = private_paths(receipt)
     required = {
         patch,
         private_receipt,
@@ -349,11 +571,26 @@ def private_artifacts_valid(receipt: dict[str, Any]) -> bool:
         patch.parent / "dirty-paths.txt",
         patch.parent / "untracked-paths.txt",
     }
+    if receipt.get("untracked_paths_count"):
+        if archive is None or manifest_path is None:
+            return False
+        required.update({archive, manifest_path})
     if not all(path.is_file() for path in required):
         return False
     try:
         private_payload = json.loads(private_receipt.read_text(encoding="utf-8"))
-        return file_sha256(patch) == receipt.get("private_patch_sha256") and private_payload == receipt
+        if file_sha256(patch) != receipt.get("private_patch_sha256") or private_payload != receipt:
+            return False
+        if archive is None or manifest_path is None:
+            return not receipt.get("untracked_paths_count")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        return bool(
+            isinstance(manifest, list)
+            and file_sha256(archive) == receipt.get("untracked_archive_sha256")
+            and sha256_text(json.dumps(manifest, sort_keys=True, separators=(",", ":")))
+            == receipt.get("untracked_manifest_sha256")
+            and verify_untracked_archive(archive, manifest)
+        )
     except (OSError, json.JSONDecodeError):
         return False
 
@@ -382,7 +619,7 @@ def atomic_write_text(path: Path, content: str) -> None:
 
 
 def write_private_artifacts(prepared: dict[str, Any], receipt: dict[str, Any]) -> Path | None:
-    private_patch, private_receipt = private_paths(receipt)
+    private_patch, private_receipt, private_archive, private_manifest = private_paths(receipt)
     private_dir = private_patch.parent
     if private_dir.exists():
         if private_artifacts_valid(receipt):
@@ -391,7 +628,8 @@ def write_private_artifacts(prepared: dict[str, Any], receipt: dict[str, Any]) -
             f"content-addressed private directory exists but is incomplete or mismatched: {private_dir}"
         )
 
-    private_dir.mkdir(parents=True)
+    private_dir.mkdir(parents=True, mode=0o700)
+    private_dir.chmod(0o700)
     created = private_dir
     try:
         temporary_patch = private_dir / ".dirty.patch.tmp"
@@ -399,10 +637,29 @@ def write_private_artifacts(prepared: dict[str, Any], receipt: dict[str, Any]) -
         if file_sha256(temporary_patch) != receipt["private_patch_sha256"]:
             raise PreservationError(f"private patch copy digest mismatch: {private_dir}")
         os.replace(temporary_patch, private_patch)
+        private_patch.chmod(0o600)
         atomic_write_text(private_dir / "status-branch.txt", prepared["status_branch"])
         atomic_write_text(private_dir / "dirty-paths.txt", "\n".join(prepared["dirty_paths"]) + "\n")
-        atomic_write_text(private_dir / "untracked-paths.txt", "")
+        atomic_write_text(
+            private_dir / "untracked-paths.txt",
+            "\n".join(prepared["untracked_paths"]) + ("\n" if prepared["untracked_paths"] else ""),
+        )
+        if prepared["staged_archive"] is not None:
+            if private_archive is None or private_manifest is None:
+                raise PreservationError(f"private untracked paths are absent from receipt: {private_dir}")
+            temporary_archive = private_dir / ".untracked.tar.tmp"
+            shutil.copyfile(prepared["staged_archive"], temporary_archive)
+            if file_sha256(temporary_archive) != receipt["untracked_archive_sha256"]:
+                raise PreservationError(f"private untracked archive copy digest mismatch: {private_dir}")
+            os.replace(temporary_archive, private_archive)
+            private_archive.chmod(0o600)
+            atomic_write_text(
+                private_manifest,
+                json.dumps(prepared["untracked_manifest"], indent=2, sort_keys=True) + "\n",
+            )
         atomic_write_text(private_receipt, json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+        if not private_artifacts_valid(receipt):
+            raise PreservationError(f"private custody bundle failed readback verification: {private_dir}")
         return created
     except Exception:
         shutil.rmtree(created)
@@ -426,6 +683,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--json", action="store_true", help="emit machine-readable JSON")
     parser.add_argument("--limit", type=int, default=0, help="maximum dirty roots to preserve; 0 means all")
     parser.add_argument(
+        "--worktree",
+        action="append",
+        type=Path,
+        default=[],
+        help="preserve this exact worktree instead of selecting dirty debt roots; repeatable",
+    )
+    parser.add_argument(
         "--max-patch-bytes",
         type=int,
         default=MAX_PATCH_BYTES,
@@ -437,6 +701,18 @@ def parse_args() -> argparse.Namespace:
         default=MAX_TOTAL_PATCH_BYTES,
         help=f"aggregate invocation ceiling; cannot exceed {MAX_TOTAL_PATCH_BYTES}",
     )
+    parser.add_argument(
+        "--max-untracked-bytes",
+        type=int,
+        default=MAX_UNTRACKED_BYTES,
+        help=f"per-root untracked payload ceiling; cannot exceed {MAX_UNTRACKED_BYTES}",
+    )
+    parser.add_argument(
+        "--max-total-untracked-bytes",
+        type=int,
+        default=MAX_TOTAL_UNTRACKED_BYTES,
+        help=f"aggregate untracked payload ceiling; cannot exceed {MAX_TOTAL_UNTRACKED_BYTES}",
+    )
     args = parser.parse_args()
     if args.limit < 0:
         parser.error("--limit must be non-negative")
@@ -446,13 +722,31 @@ def parse_args() -> argparse.Namespace:
         parser.error(f"--max-total-patch-bytes must be between 1 and {MAX_TOTAL_PATCH_BYTES}")
     if args.max_patch_bytes > args.max_total_patch_bytes:
         parser.error("--max-patch-bytes cannot exceed --max-total-patch-bytes")
+    if not 1 <= args.max_untracked_bytes <= MAX_UNTRACKED_BYTES:
+        parser.error(f"--max-untracked-bytes must be between 1 and {MAX_UNTRACKED_BYTES}")
+    if not 1 <= args.max_total_untracked_bytes <= MAX_TOTAL_UNTRACKED_BYTES:
+        parser.error(
+            f"--max-total-untracked-bytes must be between 1 and {MAX_TOTAL_UNTRACKED_BYTES}"
+        )
+    if args.max_untracked_bytes > args.max_total_untracked_bytes:
+        parser.error("--max-untracked-bytes cannot exceed --max-total-untracked-bytes")
     return args
 
 
 def main() -> int:
     args = parse_args()
-    report = worktree_debt_report(ROOT)
-    dirty = [item for item in report.get("items", []) if item.get("reason") == "dirty" and item.get("debt")]
+    if args.worktree:
+        resolved = [path.expanduser().resolve() for path in args.worktree]
+        if len(resolved) != len(set(resolved)):
+            print("duplicate --worktree target", file=sys.stderr)
+            return 2
+        dirty = [
+            {"debt": True, "name": path.name, "path": str(path), "reason": "dirty"}
+            for path in resolved
+        ]
+    else:
+        report = worktree_debt_report(ROOT)
+        dirty = [item for item in report.get("items", []) if item.get("reason") == "dirty" and item.get("debt")]
     if args.limit > 0:
         dirty = dirty[: args.limit]
 
@@ -462,10 +756,13 @@ def main() -> int:
         "failures": [],
         "max_patch_bytes": args.max_patch_bytes,
         "max_total_patch_bytes": args.max_total_patch_bytes,
+        "max_total_untracked_bytes": args.max_total_untracked_bytes,
+        "max_untracked_bytes": args.max_untracked_bytes,
         "prepared": 0,
         "requested": len(dirty),
         "roots": [],
         "total_patch_bytes": 0,
+        "total_untracked_bytes": 0,
         "updated": 0,
         "would_update": 0,
     }
@@ -474,27 +771,61 @@ def main() -> int:
             staging_root = Path(temporary)
             prepared_items: list[dict[str, Any]] = []
             for item in dirty:
-                prepared = prepare_item(item, staging_root, args.max_patch_bytes)
-                total = payload["total_patch_bytes"] + int(prepared["receipt"]["dirty_patch_bytes"])
-                if total > args.max_total_patch_bytes:
+                prepared = prepare_item(
+                    item,
+                    staging_root,
+                    args.max_patch_bytes,
+                    args.max_untracked_bytes,
+                )
+                total_patch = payload["total_patch_bytes"] + int(prepared["receipt"]["dirty_patch_bytes"])
+                if total_patch > args.max_total_patch_bytes:
                     raise PreservationError(
                         f"aggregate tracked patches exceed the {args.max_total_patch_bytes}-byte "
                         "invocation ceiling; no custody receipt was written"
                     )
-                payload["total_patch_bytes"] = total
+                total_untracked = payload["total_untracked_bytes"] + int(
+                    prepared["receipt"]["untracked_payload_bytes"]
+                )
+                if total_untracked > args.max_total_untracked_bytes:
+                    raise PreservationError(
+                        f"aggregate untracked payload exceeds the {args.max_total_untracked_bytes}-byte "
+                        "invocation ceiling; no custody receipt was written"
+                    )
+                payload["total_patch_bytes"] = total_patch
+                payload["total_untracked_bytes"] = total_untracked
                 prepared_items.append(prepared)
 
             data = load_receipts()
             receipt_rows = data["receipts"]
-            by_root = {
-                str(row.get("root")): (index, row)
-                for index, row in enumerate(receipt_rows)
-                if isinstance(row, dict) and row.get("root")
-            }
+            by_worktree_key: dict[str, tuple[int, dict[str, Any]]] = {}
+            by_legacy_worktree: dict[str, tuple[int, dict[str, Any]]] = {}
+            for index, row in enumerate(receipt_rows):
+                if not isinstance(row, dict):
+                    continue
+                worktree_key = row.get("worktree_key")
+                worktree = row.get("worktree")
+                if isinstance(worktree_key, str) and worktree_key:
+                    if worktree_key in by_worktree_key:
+                        raise PreservationError(
+                            f"duplicate worktree preservation identity in tracked ledger: {worktree_key}"
+                        )
+                    by_worktree_key[worktree_key] = (index, row)
+                elif isinstance(worktree, str) and worktree:
+                    resolved_worktree = str(Path(worktree).expanduser().resolve(strict=False))
+                    if resolved_worktree in by_legacy_worktree:
+                        raise PreservationError(
+                            "duplicate legacy worktree path in tracked preservation ledger"
+                        )
+                    by_legacy_worktree[resolved_worktree] = (index, row)
             candidates: list[tuple[int | None, dict[str, Any], dict[str, Any]]] = []
             for prepared in prepared_items:
-                root = str(prepared["receipt"]["root"])
-                index, existing = by_root.get(root, (None, None))
+                receipt = prepared["receipt"]
+                worktree_key = str(receipt["worktree_key"])
+                worktree = str(Path(str(receipt["worktree"])).resolve(strict=False))
+                index, existing = by_worktree_key.get(
+                    worktree_key,
+                    by_legacy_worktree.get(worktree, (None, None)),
+                )
                 candidate = candidate_receipt(existing, prepared)
                 artifacts_valid = private_artifacts_valid(candidate)
                 if existing != candidate or not artifacts_valid:

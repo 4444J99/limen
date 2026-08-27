@@ -48,9 +48,9 @@ candidate_screen:
   legacy_entry_point_additions: 1
   candidate_count: 22
   source_projection:
-    observed_at: "2026-08-10T22:30:17Z"
-    w01_public_repository_count: 235
-    w01_public_repository_identity_sha256: b41856b46ce6eed60959bf408f79478657117b3b98b91a9ebfa03c150f9ae50d
+    observed_at: "2026-08-27T15:25:52.639931Z"
+    w01_public_repository_count: 236
+    w01_public_repository_identity_sha256: 9566e7e695c54a75ade65c0f05151c7c4bf7418065e28040c5905cbf559196a0
     w02_classification_policy_sha256: 1487689716f9b7b35b9b6e444f029026a6ddab4c09ab13779a2c229eb5e3a909
     w02_front_door_proof_repositories:
       - 4444J99/4444J99

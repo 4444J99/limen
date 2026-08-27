@@ -19,7 +19,11 @@ OWNERSHIP = ROOT / "institutio" / "governance" / "heartbeat-ownership.json"
 SENSORS = ROOT / "institutio" / "governance" / "sensors.yaml"
 PRODUCER_ID_RE = re.compile(r"stable_id\s*=\s*[\"'](limen\.[a-z0-9_.-]+)[\"']")
 EVENT_LITERAL_RE = re.compile(r"[\"'](limen\.[a-z0-9_.-]+)[\"']")
-NON_EVENT_PROTOCOL_IDS = {"limen.notification_events.v1"}
+NON_EVENT_PROTOCOL_IDS = {
+    "limen.notification_events.v1",
+    "limen.notification-canary-receipt.v1",
+    "limen.notification-status.v1",
+}
 SCAN_ROOTS = ("scripts", "cli/src", "mcp/src", "ianva/src", "apps", "organs")
 
 

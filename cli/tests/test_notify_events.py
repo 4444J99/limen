@@ -31,6 +31,7 @@ def _setup(tmp_path, monkeypatch, products, state=None):
         state_path.write_text(json.dumps(state))
     monkeypatch.setattr(mod, "VIEW", view)
     monkeypatch.setattr(mod, "STATE", state_path)
+    monkeypatch.setattr(mod, "BASELINE", tmp_path / "missing-baseline.json")
     emitted = []
     monkeypatch.setattr(
         mod,
@@ -114,15 +115,140 @@ def test_duplicate_event_allows_source_state_to_advance(tmp_path, monkeypatch):
 def test_shipping_24_crosses_10_with_truthful_observation(tmp_path, monkeypatch, capsys):
     mod, _, state_path = _setup(tmp_path, monkeypatch, [], state={"stages": {}, "ship_bucket": 0})
     mod.VIEW.write_text(json.dumps({"products": [], "ships_24h": {"total": 24}}))
-    captured = {}
+    captured = []
     monkeypatch.setattr(
         mod,
         "emit_event_v1",
-        lambda *args, **kwargs: captured.update(kwargs) or SimpleNamespace(status="recorded"),
+        lambda *args, **kwargs: captured.append(kwargs) or SimpleNamespace(status="recorded"),
     )
     assert mod.main() == 0
-    assert captured["stable_id"] == "limen.shipping.threshold"
-    assert captured["facts"]["threshold"] == 10
-    assert captured["facts"]["observed"] == 24
+    shipping = next(row for row in captured if row["stable_id"] == "limen.shipping.threshold")
+    assert shipping["facts"]["threshold"] == 10
+    assert shipping["facts"]["observed"] == 24
     assert "crossed 10; 24 observed at" in capsys.readouterr().out
     assert json.loads(state_path.read_text())["ship_bucket"] == 10
+
+
+def test_status_reports_missing_counts_and_absent_ntfy_as_configuration_state(tmp_path, monkeypatch):
+    mod = _load_module()
+    monkeypatch.setattr(mod, "BASELINE", tmp_path / "missing-baseline.json")
+    monkeypatch.setattr(mod, "CANARY_RECEIPT", tmp_path / "missing-canary.json")
+    monkeypatch.delenv("LIMEN_NTFY_TOPIC", raising=False)
+
+    payload = mod._status_payload()
+
+    assert payload["census"]["status"] == "unavailable"
+    assert payload["census"]["counts"] is None
+    assert payload["census"]["count_display"] == "count unavailable/incomplete"
+    assert payload["transports"]["ntfy"] == "not_configured"
+    assert payload["transports"]["macos"] == "submission_only_visible_delivery_unverified"
+
+
+def test_missing_baseline_still_emits_integrity_with_unavailable_counts(tmp_path, monkeypatch):
+    mod = _load_module()
+    monkeypatch.setattr(mod, "BASELINE", tmp_path / "missing-baseline.json")
+
+    status = mod._baseline_status()
+    specs = mod._estate_event_specs(status)
+
+    assert {row["stable_id"] for row in specs} == {
+        "limen.estate.integrity",
+        "limen.estate.progress",
+    }
+    progress = next(row for row in specs if row["stable_id"] == "limen.estate.progress")
+    assert progress["facts"]["total_repositories"] == "count unavailable/incomplete"
+    integrity = next(row for row in specs if row["stable_id"] == "limen.estate.integrity")
+    assert integrity["transition"] == "onset"
+    assert integrity["facts"]["census_status"] == "unavailable"
+
+
+def test_partial_estate_event_never_translates_missing_counts_to_zero(tmp_path, monkeypatch):
+    mod = _load_module()
+    from limen.universe_recovery import UniverseBaselineReceiptV1, UniversePartitionV1
+
+    kinds = (
+        "repositories",
+        "pull_requests",
+        "branches",
+        "local_roots",
+        "worktrees",
+        "protections",
+        "terminal_dispositions",
+    )
+    partitions = []
+    for kind in kinds:
+        if kind == "repositories":
+            partitions.append(
+                UniversePartitionV1(
+                    kind=kind, total=2, terminal=1, protected=0, blocked=1, unaccounted=0, complete=True
+                )
+            )
+        else:
+            partitions.append(
+                UniversePartitionV1(
+                    kind=kind, total=0, terminal=0, protected=0, blocked=0, unaccounted=0, complete=True
+                )
+            )
+    receipt = UniverseBaselineReceiptV1(
+        observed_at="2026-08-27T12:00:00Z",
+        source_generation="1" * 64,
+        census_digest="2" * 64,
+        repository_denominator=2,
+        stable_count=1,
+        partitions=tuple(partitions),
+        failure_count=1,
+        unaccounted=0,
+        complete=False,
+    )
+    baseline = tmp_path / "baseline.json"
+    baseline.write_text(receipt.model_dump_json(), encoding="utf-8")
+    monkeypatch.setattr(mod, "BASELINE", baseline)
+
+    status = mod._baseline_status(now=receipt.observed_at)
+    specs = mod._estate_event_specs(status)
+
+    assert status["state"] == "incomplete"
+    progress = next(spec for spec in specs if spec["stable_id"] == "limen.estate.progress")
+    assert progress["facts"]["stable_repositories"] == "count unavailable/incomplete"
+    assert progress["facts"]["open_or_blocked_prs"] == "count unavailable/incomplete"
+
+
+def test_canary_receipt_separates_submission_from_visible_acceptance(tmp_path, monkeypatch):
+    mod = _load_module()
+    monkeypatch.setattr(mod, "CANARY_RECEIPT", tmp_path / "canary.json")
+    monkeypatch.setattr(
+        mod,
+        "emit_event_v1",
+        lambda *_args, **_kwargs: SimpleNamespace(status="submitted", channels={"macos": "submitted"}),
+    )
+
+    assert mod._run_canary("macos") == 0
+    payload = json.loads(mod.CANARY_RECEIPT.read_text(encoding="utf-8"))
+
+    assert payload["broker_status"] == "submitted"
+    assert payload["visible_acceptance"] == "pending_operator"
+    assert payload["visible_observed_at"] is None
+    assert mod.CANARY_RECEIPT.stat().st_mode & 0o777 == 0o600
+
+
+def test_dry_run_never_invokes_an_effector_or_advances_state(tmp_path, monkeypatch, capsys):
+    products = [dict(PRODUCTS[1], stage="live")]
+    state = {"stages": {"organvm/limen::MONETA": "deploy-ready"}, "ship_bucket": 0}
+    mod, _, state_path = _setup(tmp_path, monkeypatch, products, state=state)
+    mod.VIEW.write_text(json.dumps({"products": products, "ships_24h": {"total": 12}}), encoding="utf-8")
+    monkeypatch.setattr(
+        mod,
+        "emit_event_v1",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("structured effector invoked")),
+    )
+    monkeypatch.setattr(
+        mod,
+        "_emit",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("legacy effector invoked")),
+    )
+
+    assert mod.main(["--dry-run"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["events"]
+    assert any(row["stable_id"] == "limen.shipping.threshold" for row in payload["structured_events"])
+    assert json.loads(state_path.read_text(encoding="utf-8")) == state
