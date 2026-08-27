@@ -133,11 +133,34 @@ def _repo_facts(repo):
     observed, error = gh_json_checked(["repo", "view", repo, "--json", "isArchived,isFork,isPrivate"])
     if error or not isinstance(observed, dict):
         raise EstateContractError(f"cannot derive repository facts for {repo}: {error or 'unexpected response'}")
-    return {
+    facts = {
         "archived": observed.get("isArchived"),
         "fork": observed.get("isFork"),
         "private": observed.get("isPrivate"),
     }
+    invalid = sorted(key for key, value in facts.items() if not isinstance(value, bool))
+    if invalid:
+        raise EstateContractError(f"cannot derive repository facts for {repo}: invalid {','.join(invalid)}")
+    return facts
+
+
+def repository_plan(repo):
+    """Read the exact default branch and classification facts or refuse every mutation."""
+    observed, error = gh_json_checked(["repo", "view", repo, "--json", "defaultBranchRef,isArchived,isFork,isPrivate"])
+    if error or not isinstance(observed, dict):
+        raise EstateContractError(f"cannot derive repository plan for {repo}: {error or 'unexpected response'}")
+    branch = (observed.get("defaultBranchRef") or {}).get("name")
+    if not isinstance(branch, str) or not branch.strip():
+        raise EstateContractError(f"cannot derive repository plan for {repo}: invalid default branch")
+    facts = {
+        "archived": observed.get("isArchived"),
+        "fork": observed.get("isFork"),
+        "private": observed.get("isPrivate"),
+    }
+    invalid = sorted(key for key, value in facts.items() if not isinstance(value, bool))
+    if invalid:
+        raise EstateContractError(f"cannot derive repository plan for {repo}: invalid {','.join(invalid)}")
+    return branch, facts
 
 
 def _class_for_repo(document, repo, facts=None):
@@ -224,9 +247,7 @@ def classic_protection_contract_holds(actual, checks):
     enforce_admins = actual.get("enforce_admins") or {}
     if checks:
         status_ok = (
-            isinstance(status, dict)
-            and status.get("strict") is False
-            and (status.get("contexts") or []) == checks
+            isinstance(status, dict) and status.get("strict") is False and (status.get("contexts") or []) == checks
         )
     else:
         status_ok = status is None
@@ -414,25 +435,13 @@ def main():
     fast_lanes = []
     failures = []
     for repo in repos:
-        info = (
-            gh_json(
-                ["repo", "view", repo, "--json", "defaultBranchRef,isArchived,isFork,isPrivate"],
-                default={},
-            )
-            or {}
-        )
-        branch = (info.get("defaultBranchRef") or {}).get("name") or "main"
-        facts = {
-            "archived": info.get("isArchived"),
-            "fork": info.get("isFork"),
-            "private": info.get("isPrivate"),
-        }
         try:
+            branch, facts = repository_plan(repo)
             checks = checks_for_repo(repo, facts=facts)
             fast_lane = single_owner_fast_lane_for_repo(repo, facts=facts)
         except EstateContractError as exc:
             failures.append(f"{repo}:estate-contract")
-            print(f"  {repo}@{branch}: ✗ {exc}")
+            print(f"  {repo}@unreadable: ✗ {exc}")
             continue
         if fast_lane:
             fast_lanes.append(repo)

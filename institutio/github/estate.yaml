@@ -71,6 +71,7 @@ app:
   bootstrap: "scripts/bootstrap-github-app.py"
   architecture_doc: "docs/github-app-architecture.md"
   expected_permissions:
+    administration: write
     contents: write
     pull_requests: write
     actions: read

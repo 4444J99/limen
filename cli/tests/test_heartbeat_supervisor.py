@@ -363,14 +363,19 @@ def test_contract_initialization_failure_writes_receipts_and_disables(tmp_path):
     assert list((state_root / "receipts").glob("*.json"))
 
 
-def test_contract_initialization_failure_disables_before_receipt_storage(tmp_path, monkeypatch):
+def test_contract_initialization_failure_still_disables_when_receipt_storage_fails(tmp_path, monkeypatch):
     root = tmp_path / "missing-contract-root"
     root.mkdir()
     disabled = []
+    receipt_attempted = []
 
     def fail_receipt(*_args, **_kwargs):
-        assert disabled == [True]
+        receipt_attempted.append(True)
         raise OSError("receipt storage unavailable")
+
+    def disable():
+        assert receipt_attempted == [True]
+        disabled.append(True)
 
     monkeypatch.setattr(heartbeat, "_initialization_failure_receipt", fail_receipt)
 
@@ -379,7 +384,26 @@ def test_contract_initialization_failure_disables_before_receipt_storage(tmp_pat
             root,
             state_root=tmp_path / "state",
             clock=lambda: 1_000_000,
-            disable_launch_agent=lambda: disabled.append(True),
+            disable_launch_agent=disable,
         )
 
     assert disabled == [True]
+
+
+def test_contract_initialization_failure_persists_before_kill_switch_failure(tmp_path):
+    root = tmp_path / "missing-contract-root"
+    root.mkdir()
+    state_root = tmp_path / "state"
+
+    def fail_disable():
+        assert json.loads((state_root / "public-latest.json").read_text())["status"] == "failed"
+        assert list((state_root / "receipts").glob("*.json"))
+        raise heartbeat.HeartbeatContractError("kill switch unavailable")
+
+    with pytest.raises(heartbeat.HeartbeatContractError, match="kill switch unavailable"):
+        heartbeat.heartbeat_once(
+            root,
+            state_root=state_root,
+            clock=lambda: 1_000_000,
+            disable_launch_agent=fail_disable,
+        )
