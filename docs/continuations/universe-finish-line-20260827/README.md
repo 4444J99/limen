@@ -74,11 +74,16 @@ six debt items. No candidate was applied because the aggregate truth plane is in
 
 The approved Agy handoff and its shared-checkout artifacts were recovered after this capsule was
 first written. Its `164/164` test claim is reproducible: 26 explicitly targeted harness tests plus
-111 remediation-pipeline and 27 liveness tests passed. That does not substantiate the separate
-aggregate `160+` merge claim: the handoff contains a bounded explicit roster, while the residue
-manifest describes 173 *diagnostic* PRs rather than 173 merges. The complete 1,469,103-byte
-untracked payload plus the 10,572-byte tracked patch remain readback-verified in the private
-content-addressed preservation archive while repository-qualified reconciliation proceeds.
+111 remediation-pipeline and 27 liveness tests passed. The repository-qualified
+[Agy reconciliation](agy-claim-reconciliation.json) is now exhaustive over all 49 explicit
+`repository + PR number` rows: 38 are live merges, four were closed with exact-head successor
+landing proof, one is a registry-owned open PR, and six used the nonexistent
+`4444J99/styx-launch-package` identity. That path is actually a linked worktree of
+`4444J99/peer-audited--behavioral-blockchain`; five rows duplicate claims already made under the
+real repository and the sixth was superseded by PR #946. The separate `160+` aggregate remains
+invalid rather than unexamined. The complete 1,469,103-byte shared-checkout payload plus its
+10,572-byte tracked patch remain readback-verified, and the newly discovered 455-byte dirty patch
+in the mislabeled worktree has its own content-addressed private preservation receipt.
 
 The final session-custody check proves this branch is fully pushed and the worktree is clean. It
 still fails on two landed local branches that carry standing authorization in the branch-reap
@@ -93,6 +98,9 @@ aggregate census is incomplete.
   implicated files passed, and the next hosted generation passed every executed check before merge.
 - Preserved Agy verification corpus: `164 passed` across the documented 26 + 111 + 27 partition;
   the additional shared-checkout remediation/diagnostic shard passed `114` tests.
+- Agy claim reconciliation: all 49 explicit keys accounted, zero unaccounted; 38 live merges,
+  four exact-head supersessions, one owned open PR, six invalid repository-qualified rows, and
+  three surviving remote heads (two landed, one owned open).
 - The first exact-tree scoped wave exposed five cheap-shard defects: static typing, resolver
   selection parity, two census-backed flagship projections, and formatting. All five were repaired;
   their implicated reruns passed (174-file mypy, 43 proof-set tests, 42 evidence tests, resolver

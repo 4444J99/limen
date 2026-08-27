@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-08-27T14:24:04Z",
+  "generated_utc": "2026-08-27T17:40:13Z",
   "receipts": [
     {
       "branch": "pr-110-branch",
@@ -4903,6 +4903,48 @@
       "score_discount": 35,
       "status": "open_pr_preserved",
       "worktree": "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/psp-p00-w04-contracts"
+    },
+    {
+      "branch": "docs/deploy-cache-gotcha",
+      "classification": "bounded tracked patch and untracked archive privately preserved; owner decision required",
+      "custody_bundle_sha256": "a272178426eed4ad27c8490f85599fc1491a25ad223fe50b412d4fd5dc247899",
+      "dirty_patch_bytes": 455,
+      "dirty_patch_command": "git diff --binary HEAD",
+      "dirty_patch_max_bytes": 67108864,
+      "dirty_patch_sha256": "b407b59561a27d00a6568fa8e10b7c6e235c277bd93f5cd60b550f9a6137267a",
+      "dirty_paths_count": 1,
+      "dirty_paths_sample": [
+        "src/web/next-env.d.ts"
+      ],
+      "dirty_paths_sha256": "00f18019819e1825408cc09513fc69ab9610dc15e168a1553113df0631961dd1",
+      "evidence_updated_utc": "2026-08-27T17:40:13Z",
+      "head": "3694e839ae710147bf89b554a237f7bce9f65b85",
+      "lane": "owner-blocker",
+      "next_action": "Do not delete, reclaim, force-push, or auto-port this worktree from lifecycle cleanup. A bounded private tracked patch/untracked archive receipt exists; create a narrow owner packet to review, push, supersede, or retire this preserved dirty state.",
+      "private_patch": ".limen-private/session-corpus/lifecycle/worktree-preserve/styx-launch-package-bf70d843-a272178426eed4ad/dirty.patch",
+      "private_patch_sha256": "b407b59561a27d00a6568fa8e10b7c6e235c277bd93f5cd60b550f9a6137267a",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/styx-launch-package-bf70d843-a272178426eed4ad/receipt.json",
+      "private_untracked_archive": null,
+      "private_untracked_manifest": null,
+      "repo": "4444J99/peer-audited--behavioral-blockchain",
+      "root": "styx-launch-package",
+      "status": "private_bundle_preserved",
+      "untracked_archive_bytes": 0,
+      "untracked_archive_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "untracked_entries_count": 0,
+      "untracked_manifest_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "untracked_paths_count": 0,
+      "untracked_paths_sample": [],
+      "untracked_paths_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "untracked_payload_bytes": 0,
+      "worktree": "/Users/4jp/Workspace/4444J99/styx-launch-package",
+      "worktree_key": "bf70d843cf873a3f7f051f853d07dd26152e97578de24a4902e226b6714bb32c",
+      "worktree_status_count": 2,
+      "worktree_status_sample": [
+        "## docs/deploy-cache-gotcha...origin/docs/deploy-cache-gotcha [gone]",
+        " M src/web/next-env.d.ts"
+      ],
+      "worktree_status_sha256": "6aa328aa8cd8cb1e2ed25de8251a3add0659afad54850a1db1f66c560270dcc6"
     }
   ],
   "schema": 1
