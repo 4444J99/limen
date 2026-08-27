@@ -22,10 +22,11 @@ PR #2542 lanes remain observation-only.
 
 ## Delivered tranche
 
-- Opened successor pull request [#2548](https://github.com/4444J99/limen/pull/2548) from current
-  default rather than rewriting PR #2542. The exact successor head passed its combined 317-test
-  focused shard; all 13 admitted cheap scoped gates passed. Heavy admission was withheld by the
-  machine-wide `swap-fraction` guard.
+- Landed successor pull request [#2548](https://github.com/4444J99/limen/pull/2548) as
+  `b08301f8ef56991f5e469da437d054605b0987b2` from exact reviewed head
+  `c368a0769a438b0323fd7a706d9270c8196030a4`, without rewriting PR #2542. All executed hosted
+  checks passed. GitHub closed #2542 immediately after the successor landed; a mechanical
+  range-diff and repository-qualified supersession receipt are recorded on the original PR.
 - Added cursor-receipt identity, bounded transient retry, completed-page reuse, cursor corruption
   rejection, total-drift rejection, and source-generation checks to the estate census.
 - Added same-snapshot default-policy evidence from classic protection plus inherited rulesets.
@@ -71,6 +72,14 @@ The current immutable cleanup dry plan contains seven candidates with digest
 `8b0217df440fbfb61ae4f7aa045915032a4b7d8c64b0c40780ae08141deb4f19`; strict worktree debt reports
 six debt items. No candidate was applied because the aggregate truth plane is incomplete.
 
+The approved Agy handoff and its shared-checkout artifacts were recovered after this capsule was
+first written. Its `164/164` test claim is reproducible: 26 explicitly targeted harness tests plus
+111 remediation-pipeline and 27 liveness tests passed. That does not substantiate the separate
+aggregate `160+` merge claim: the handoff contains a bounded explicit roster, while the residue
+manifest describes 173 *diagnostic* PRs rather than 173 merges. The complete 1,469,103-byte
+untracked payload plus the 10,572-byte tracked patch remain readback-verified in the private
+content-addressed preservation archive while repository-qualified reconciliation proceeds.
+
 The final session-custody check proves this branch is fully pushed and the worktree is clean. It
 still fails on two landed local branches that carry standing authorization in the branch-reap
 ledger. They remain intentionally unapplied because this campaign forbids deletion while the
@@ -80,6 +89,10 @@ aggregate census is incomplete.
 
 - Focused implementation batch: `211 passed in 75.26s`.
 - Successor PR #2548 focused batch: `317 passed in 82.41s`.
+- Successor repair batch: both formerly failing hosted nodes passed, all 23 tests in the three
+  implicated files passed, and the next hosted generation passed every executed check before merge.
+- Preserved Agy verification corpus: `164 passed` across the documented 26 + 111 + 27 partition;
+  the additional shared-checkout remediation/diagnostic shard passed `114` tests.
 - The first exact-tree scoped wave exposed five cheap-shard defects: static typing, resolver
   selection parity, two census-backed flagship projections, and formatting. All five were repaired;
   their implicated reruns passed (174-file mypy, 43 proof-set tests, 42 evidence tests, resolver
