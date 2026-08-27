@@ -1,0 +1,19 @@
+{
+  "schema_version": "limen.work_packet_redacted_projection.v1",
+  "run_id": "run-d204534054e61ab8f1dda0968fb04865",
+  "lease_id": "lease-1013-d204534054e61ab8",
+  "lease_generation": 1013,
+  "work_id": "universe-recovery-custody-lever-20260823",
+  "work_key": "organvm-limen-universe-recovery-custody-lever-20260823",
+  "intent_hash": "e589a0f614422103ba3d1be009cc6851a1d90f5a0e0e42a56580aff2a59e61dc",
+  "execution_hash": "15a810ac6e2cdd9bda14594067a7c59702f25183e4d35951edb719b4dcfdd2a5",
+  "branch": "recovery/universe-20260823",
+  "base": "69ad9e3f954f56e9549dff73e3d2101c9e022625",
+  "paths": [
+    "his-hand-levers.json",
+    "docs/continuations/universe-recovery-20260823"
+  ],
+  "predicate": "python3 scripts/check-operator-gates.py --check",
+  "effect": "write",
+  "private_coordinates_committed": false
+}

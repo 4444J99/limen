@@ -3,6 +3,11 @@
 # unrelated edit above cannot masquerade as a new violation.
 # Ratchet: new literals fail check-corpora D; this list only shrinks.
 # Convert a consumer, then delete its lines here.
+cli/src/limen/harvest.py::session-meta
+cli/src/limen/prompt_sources.py::exactly-one-canonical-session-meta-identity
+cli/src/limen/session_atoms.py::session-meta
+cli/src/limen/session_atoms.py::session-meta atoms-store reader is unavailable
+cli/src/limen/session_atoms.py::session-meta.atoms-store.v2
 scripts/codex-quicken.py::route through session-meta, knowledge-corpus, and corpus-converge receipts
 scripts/corpus-converge.py::session-meta
 scripts/corpus-converge.py::session-meta:

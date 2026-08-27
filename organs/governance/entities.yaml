@@ -9,7 +9,7 @@
 # Add/update entities by editing this file. Run validate-entities.py to check integrity.
 schema_version: "1.0"
 organ: "governance"
-repo: "organvm/limen"
+repo: "4444J99/limen"
 updated: "2026-07-06"
 
 # ── Entity taxonomy ──────────────────────────────────────────────────────
@@ -82,7 +82,7 @@ promotion_rules:
 # Every organ repo registered under governance, with its cursus standing.
 # Update these as repos advance through the cursus.
 repos:
-  - repo: "organvm/limen"
+  - repo: "4444J99/limen"
     organ: "Aerarium / Cvrsvs Honorvm"
     home: "organs/governance/"
     entity: "cind-and-sol-foundation"
@@ -98,7 +98,7 @@ repos:
       - "Entity Registrar"
       - "Compliance Sentinel"
 
-  - repo: "organvm/limen"
+  - repo: "4444J99/limen"
     organ: "Publication Policy (the disclosure court)"
     home: "organs/governance/"
     entity: "cind-and-sol-foundation"

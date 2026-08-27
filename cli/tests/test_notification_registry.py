@@ -1,3 +1,4 @@
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -17,3 +18,13 @@ def test_forbidden_heartbeat_plist_and_generator_are_absent():
     assert not (ROOT / "container" / "launchd" / "com.limen.heartbeat.plist").exists()
     assert not (ROOT / "container" / "launchd" / "com.limen.heartbeat.plist.tmpl").exists()
     assert not (ROOT / "scripts" / "gen-launchd-plist.sh").exists()
+
+
+def test_heartbeat_event_is_registered_for_submission_receipts():
+    registry = json.loads((ROOT / "institutio/governance/notification-events.limen.json").read_text())["events"]
+
+    heartbeat = registry["limen.heartbeat.finding"]
+    assert heartbeat["owner"] == "limen"
+    assert heartbeat["recovery"] == "submitted_channels"
+    assert {"onset", "update", "clear"} <= set(heartbeat["templates"])
+    assert all(definition["recovery"] != "delivered_channels" for definition in registry.values())

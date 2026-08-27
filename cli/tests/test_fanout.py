@@ -25,6 +25,7 @@ from limen.conduct.models import (
 from limen.fanout import (
     FanoutError,
     FanoutManifestV1,
+    PullRequestReceiptAdapter,
     canonical_entry_hash,
     compile_packets,
     harvest_root,
@@ -826,6 +827,64 @@ def test_harvest_validates_exact_receipt_and_returns_pr_without_local_state() ->
             "merged": False,
         }
     ]
+
+
+def test_pull_request_landing_submits_exact_head_once_without_claiming_queued_as_merged(monkeypatch) -> None:
+    payload = terminal_harvest()
+    node = payload["nodes"][0]
+    receipt = node["receipts"][0]
+    calls: list[tuple[list[str], dict]] = []
+
+    def fake_run(command: list[str], **kwargs):
+        calls.append((command, kwargs))
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            f"MERGE-SUBMISSION organvm/limen#9999@{HEAD}: QUEUED — already owned by GitHub\n",
+            "",
+        )
+
+    monkeypatch.setattr("limen.fanout.subprocess.run", fake_run)
+
+    result = PullRequestReceiptAdapter().land(node, receipt, merge=True)
+
+    assert result == {
+        "adapter": "pull-request-receipt",
+        "pr": "https://github.com/organvm/limen/pull/9999",
+        "merged": False,
+        "merge_submission": "queued",
+    }
+    assert calls[0][0][-6:] == [
+        "--repo",
+        "organvm/limen",
+        "--pr",
+        "9999",
+        "--expected-head",
+        HEAD,
+    ]
+    # The child declares up to 510 seconds across its bounded GitHub calls. The parent must not
+    # terminate a possibly accepted exact-head effect before the child emits its durable verdict.
+    assert calls[0][1]["timeout"] >= 510
+
+
+def test_pull_request_landing_homes_deferred_submission_without_retry_error(monkeypatch) -> None:
+    payload = terminal_harvest()
+    node = payload["nodes"][0]
+    receipt = node["receipts"][0]
+    monkeypatch.setattr(
+        "limen.fanout.subprocess.run",
+        lambda command, **kwargs: subprocess.CompletedProcess(
+            command,
+            2,
+            f"MERGE-SUBMISSION organvm/limen#9999@{HEAD}: DEFERRED — CI-PENDING\n",
+            "",
+        ),
+    )
+
+    result = PullRequestReceiptAdapter().land(node, receipt, merge=True)
+
+    assert result["merged"] is False
+    assert result["merge_submission"] == "deferred"
 
 
 @pytest.mark.parametrize(

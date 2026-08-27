@@ -385,7 +385,7 @@ def _next_commands(track_c: Mapping[str, Any]) -> list[str]:
     if track_c.get("met"):
         return [
             "python3 scripts/tcc-track-c-closeout.py --finalize --write-lever",
-            f"gh issue close {ISSUE_NUMBER} --repo organvm/limen --comment 'Track C met: vendor version advanced; normalized TCC inventory green. Receipt: docs/receipts/tcc-track-c-1703/'",
+            f"gh issue close {ISSUE_NUMBER} --repo 4444J99/limen --comment 'Track C met: vendor version advanced; normalized TCC inventory green. Receipt: docs/receipts/tcc-track-c-1703/'",
             "python3 scripts/tcc-identity-audit.py --json --strict",
         ]
     return [

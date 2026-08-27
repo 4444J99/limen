@@ -43,8 +43,11 @@ Gemini process to write the local `tasks.yaml` projection.
    or reap a protected human session.
 
 PR waiting and merge mechanics remain those in `CLAUDE.md` → **Merge & Branch Protocol**:
-`scripts/await-pr.sh` is the only synchronous waiter, and the packet's authority envelope decides
-whether a merge is allowed. The cross-agent session rules bind this lane too: `AGENTS.md` →
+Gemini never launches a synchronous waiter. On a registry-declared single-owner fast lane, run the
+scoped local predicate once and merge the exact pushed head immediately with `gh pr merge ...
+--squash --match-head-commit SHA`; remote CI/review is advisory. Otherwise invoke
+`scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA` exactly once and return
+control; never retry or promote `QUEUED` into `MERGED`. The cross-agent session rules bind this lane too: `AGENTS.md` →
 **Session Discipline** and **Full Lifecycle Closure** (the closure covenant) apply to every
 Gemini session, not only to Claude's charter.
 

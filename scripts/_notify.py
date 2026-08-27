@@ -59,11 +59,31 @@ class NotificationResult:
 class DeliveryReceipt:
     """Channel-aware receipt returned by the machine-global Domus broker."""
 
-    status: Literal["delivered", "deduped", "recorded", "withheld", "cleared", "failed"]
+    status: Literal[
+        "submitted",
+        "submitted_unverified",
+        "deduped",
+        "recorded",
+        "withheld",
+        "cleared",
+        "failed",
+    ]
     stable_id: str
     event_id: str
     channels: dict[str, str]
     reason: str | None = None
+    broker_schema: str | None = None
+    broker_invoked: bool = True
+
+    @property
+    def accepted(self) -> bool:
+        return self.status in {
+            "submitted",
+            "submitted_unverified",
+            "deduped",
+            "recorded",
+            "cleared",
+        }
 
 
 NOTIFICATION_REGISTRY = (
@@ -378,7 +398,7 @@ def notify_ntfy(
             evidence_ref="legacy-notify-ntfy",
             producer="scripts/_notify.py",
         )
-        return receipt.channels.get("ntfy") == "delivered"
+        return receipt.channels.get("ntfy") in {"submitted", "submitted_unverified"}
     except Exception:
         return False
 
@@ -398,8 +418,25 @@ def emit_event_v1(
     level: str | None = None,
 ) -> DeliveryReceipt:
     """Validate at the broker boundary and return its channel-aware receipt."""
+    if not _enabled(enabled):
+        return DeliveryReceipt(
+            "withheld",
+            stable_id,
+            event_id,
+            {},
+            "notifications disabled",
+            "domus.notification_delivery_receipt.v2",
+            False,
+        )
     if not _root_may_speak(root):
-        return DeliveryReceipt("withheld", stable_id, event_id, {}, "root is not the live organism")
+        return DeliveryReceipt(
+            "withheld",
+            stable_id,
+            event_id,
+            {},
+            "root is not the live organism",
+            broker_invoked=False,
+        )
     event = {
         "event_id": event_id,
         "transition": transition,
@@ -420,8 +457,6 @@ def emit_event_v1(
     if os.environ.get("LIMEN_NTFY_TOPIC") and not env.get("DOMUS_NOTIFY_NTFY_URL"):
         base = os.environ.get("LIMEN_NTFY_URL", "https://ntfy.sh").rstrip("/")
         env["DOMUS_NOTIFY_NTFY_URL"] = f"{base}/{os.environ['LIMEN_NTFY_TOPIC']}"
-    if not _enabled(enabled):
-        env["DOMUS_NOTIFY"] = "0"
     try:
         completed = subprocess.run(
             command,
@@ -433,16 +468,51 @@ def emit_event_v1(
             env=env,
         )
         if completed.returncode != 0:
-            return DeliveryReceipt(
-                "failed", stable_id, event_id, {}, f"Domus broker exited {completed.returncode}"
-            )
+            return DeliveryReceipt("failed", stable_id, event_id, {}, f"Domus broker exited {completed.returncode}")
         payload = json.loads(completed.stdout or "{}")
         if not isinstance(payload, dict):
             return DeliveryReceipt("failed", stable_id, event_id, {}, "invalid Domus broker response")
-        status = payload.get("status")
-        if status not in {"delivered", "deduped", "recorded", "withheld", "cleared", "failed"}:
+        schema = payload.get("schema") if isinstance(payload.get("schema"), str) else None
+        if schema not in {None, "domus.notification_delivery_receipt.v2"}:
+            return DeliveryReceipt(
+                "failed",
+                stable_id,
+                event_id,
+                {},
+                f"unsupported Domus broker receipt schema: {schema}",
+                schema,
+            )
+        legacy_delivered = payload.get("status") == "delivered"
+        status = "submitted_unverified" if legacy_delivered else payload.get("status")
+        if status not in {
+            "submitted",
+            "submitted_unverified",
+            "deduped",
+            "recorded",
+            "withheld",
+            "cleared",
+            "failed",
+        }:
             status = "failed"
-        return DeliveryReceipt(status, stable_id, event_id, dict(payload.get("channels") or {}), payload.get("reason"))
+        raw_channels = payload.get("channels") or {}
+        channels = (
+            {
+                str(channel): "submitted_unverified" if legacy_delivered and value == "delivered" else str(value)
+                for channel, value in raw_channels.items()
+                if isinstance(channel, str) and isinstance(value, str)
+            }
+            if isinstance(raw_channels, dict)
+            else {}
+        )
+        reason = payload.get("reason")
+        return DeliveryReceipt(
+            status,
+            stable_id,
+            event_id,
+            channels,
+            reason if isinstance(reason, str) else None,
+            schema,
+        )
     except (OSError, subprocess.SubprocessError, ValueError) as exc:
         return DeliveryReceipt("failed", stable_id, event_id, {}, f"Domus broker unavailable ({exc})")
 

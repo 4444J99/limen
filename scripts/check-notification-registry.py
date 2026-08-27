@@ -20,6 +20,7 @@ SENSORS = ROOT / "institutio" / "governance" / "sensors.yaml"
 PRODUCER_ID_RE = re.compile(r"stable_id\s*=\s*[\"'](limen\.[a-z0-9_.-]+)[\"']")
 EVENT_LITERAL_RE = re.compile(r"[\"'](limen\.[a-z0-9_.-]+)[\"']")
 NON_EVENT_PROTOCOL_IDS = {"limen.notification_events.v1"}
+SCAN_ROOTS = ("scripts", "cli/src", "mcp/src", "ianva/src", "apps", "organs")
 
 
 def main() -> int:
@@ -38,11 +39,18 @@ def main() -> int:
             errors.append(f"{stable_id}: wrong namespace")
     discovered: dict[str, set[str]] = {}
     undeclared_calls: set[str] = set()
-    for base in (ROOT / "scripts", ROOT / "cli" / "src"):
+    scan_roots = [ROOT / d for d in SCAN_ROOTS if (ROOT / d).exists()]
+    for base in scan_roots:
         for path in base.rglob("*.py"):
             if path == Path(__file__):
                 continue
-            source = path.read_text(errors="ignore")
+            try:
+                source = path.read_text(errors="ignore")
+            except OSError:
+                # Fleet roots can change while the bounded scan is walking them.
+                # One unreadable or concurrently removed file does not make every
+                # remaining producer unreachable.
+                continue
             for stable_id in events:
                 if f'"{stable_id}"' in source or f"'{stable_id}'" in source:
                     discovered.setdefault(stable_id, set()).add(str(path.relative_to(ROOT)))

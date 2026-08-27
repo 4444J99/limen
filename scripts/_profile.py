@@ -4,8 +4,8 @@ WHY THIS EXISTS
 ---------------
 The profile README at github.com/4444J99 carried a "nothing phrase" ("Top-tier
 Creative Technologist") and a wall of self-reported numbers that traced to no live
-source and contradicted the API (the personal account owns 1 public repo; the work
-lives under the organvm orgs). This module makes every number on the profile
+source and contradicted the API (personal and organization repositories were counted
+on different surfaces). This module makes every number on the profile
 *provable*: it is queried live from the GitHub API at generate-time and emitted into
 a committed `stats-manifest.json` as {value, basis, source_query, fetched_at} so any
 claim is re-derivable. Visuals are rendered as our OWN self-hosted SVGs (no
@@ -217,6 +217,31 @@ def _try(fn, on_fail=None):
         return on_fail
 
 
+def _stable_repository_identities(*repository_groups: Any) -> list[str]:
+    """Return public ``owner/name`` identities once in deterministic order.
+
+    GitHub repository coordinates are case-insensitive. Keep the spelling from the
+    first observation, then sort by the normalized identity so pagination overlap,
+    API ordering changes, or an alias with different casing cannot perturb the public
+    identity denominator or its generated digest.
+    """
+
+    identities: dict[str, str] = {}
+    for repositories in repository_groups:
+        if not isinstance(repositories, list):
+            continue
+        for repository in repositories:
+            if not isinstance(repository, dict) or repository.get("private") is True:
+                continue
+            full_name = repository.get("full_name")
+            if not isinstance(full_name, str) or not full_name.strip():
+                continue
+            identity = full_name.strip()
+            identity_key = identity.casefold()
+            identities.setdefault(identity_key, identity)
+    return [identities[key] for key in sorted(identities)]
+
+
 def collect_facts(login: str = LOGIN) -> Facts:
     """Collect every provable profile fact. Each fact degrades to omission on failure."""
     facts = Facts(login=login)
@@ -245,6 +270,16 @@ def collect_facts(login: str = LOGIN) -> Facts:
         if created:
             facts.put(Fact("member_since", created, "live-public-gh-api", f"gh api users/{login} --jq .created_at"))
 
+    # The user endpoint is the public, owner-only identity denominator.  These
+    # repositories join the public index, but never the organization aggregates below.
+    personal_repositories = (
+        _try(
+            lambda: gh_json(f"users/{login}/repos?type=owner&per_page=100", paginate=True),
+            [],
+        )
+        or []
+    )
+
     # --- org ecosystem: derive orgs, aggregate public repos / originals / forks / stars / langs ---
     org_logins = _try(lambda: [o["login"] for o in gh_json(f"users/{login}/orgs")], []) or []
     orgs = sorted(set(org_logins) | set(FALLBACK_ORGS))
@@ -254,7 +289,7 @@ def collect_facts(login: str = LOGIN) -> Facts:
     stars = 0
     langs: Counter = Counter()
     orgs_with_public: set[str] = set()
-    public_fullnames: list[str] = []
+    organization_repositories: list[dict[str, Any]] = []
     for org in orgs:
         meta = _try(lambda org=org: gh_json(f"orgs/{org}"))
         if not meta:
@@ -270,17 +305,16 @@ def collect_facts(login: str = LOGIN) -> Facts:
             )
             or []
         )
+        organization_repositories.extend(r for r in repos if isinstance(r, dict))
         for r in repos:
             stars += int(r.get("stargazers_count", 0))
-            if r.get("full_name"):
-                public_fullnames.append(r["full_name"])
             if r.get("fork"):
                 forks += 1
             else:
                 originals += 1
                 if r.get("language"):
                     langs[r["language"]] += 1
-    facts.public_repos = sorted(public_fullnames)
+    facts.public_repos = _stable_repository_identities(personal_repositories, organization_repositories)
     if orgs_with_public:
         orgs_q = f"gh api users/{login}/orgs then sum orgs/<org>.public_repos"
         facts.put(Fact("ecosystem_public_repos", total_public, "live-public-gh-api", orgs_q))

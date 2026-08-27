@@ -46,7 +46,7 @@ concurrency:
 jobs:
   python:
     if: github.event_name != 'schedule'
-    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
@@ -136,7 +136,7 @@ jobs:
     # aggregate must never rerun a successful child).
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     needs: [python, worker, web]
-    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       # Full history, matching pr-gate/fleet-gate. verify-whole.sh runs
       # check-session-streams.py, whose settled_by check resolves each claim with
@@ -177,7 +177,7 @@ jobs:
     # image. The suite itself runs on 3.12 in pr-gate and `verify`; the former
     # per-PR full second suite on 3.11 protected a version nothing deploys on.
     if: github.event_name == 'schedule'
-    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.11", "3.14"]
@@ -193,7 +193,7 @@ jobs:
 
   worker:
     if: github.event_name != 'schedule'
-    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
@@ -219,7 +219,7 @@ jobs:
 
   web:
     if: github.event_name != 'schedule'
-    runs-on: ${{ vars.LIMEN_RUNS_ON || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 

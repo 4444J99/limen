@@ -55,6 +55,32 @@ LIFECYCLE_LABELS = frozenset(
         "lifecycle:superseded",
     }
 )
+_QUEUE_STATE_QUERY = """
+query($owner:String!,$name:String!,$number:Int!){
+  repository(owner:$owner,name:$name){
+    pullRequest(number:$number){
+      state
+      headRefOid
+      mergeStateStatus
+      isInMergeQueue
+      autoMergeRequest{enabledAt}
+    }
+  }
+}
+""".strip()
+
+
+def merge_prohibition() -> str | None:
+    try:
+        text = (ROOT / "logs" / "AUTONOMY_PAUSED").read_text(encoding="utf-8", errors="replace")
+    except FileNotFoundError:
+        return None
+    except OSError as exc:
+        return f"AUTONOMY_PAUSED unreadable ({type(exc).__name__})"
+    for line in text.splitlines():
+        if line.lower().startswith("prohibitions:") and "merge" in line.lower():
+            return line.strip()
+    return None
 
 
 def gh(args, timeout=60):
@@ -313,28 +339,52 @@ def assess(rn):
 
 def _queue_state(repo, num):
     """Return exact live PR state before a queue effect; ``None`` fails closed."""
+    if repo.count("/") != 1:
+        return None
+    owner, name = repo.split("/", 1)
+    if not owner or not name:
+        return None
     r = gh(
         [
-            "pr",
-            "view",
-            str(num),
-            "-R",
-            repo,
-            "--json",
-            "state,headRefOid,mergeStateStatus,autoMergeRequest",
+            "api",
+            "graphql",
+            "-f",
+            f"query={_QUEUE_STATE_QUERY}",
+            "-F",
+            f"owner={owner}",
+            "-F",
+            f"name={name}",
+            "-F",
+            f"number={num}",
         ],
         timeout=40,
     )
     if r.returncode != 0:
         return None
     try:
-        d = json.loads(r.stdout)
+        payload = json.loads(r.stdout)
     except (TypeError, ValueError):
+        return None
+    if not isinstance(payload, dict) or payload.get("errors"):
+        return None
+    data = payload.get("data")
+    repository = data.get("repository") if isinstance(data, dict) else None
+    d = repository.get("pullRequest") if isinstance(repository, dict) else None
+    if (
+        not isinstance(d, dict)
+        or not isinstance(d.get("state"), str)
+        or not isinstance(d.get("headRefOid"), str)
+        or not isinstance(d.get("mergeStateStatus"), str)
+        or not isinstance(d.get("isInMergeQueue"), bool)
+        or "autoMergeRequest" not in d
+    ):
         return None
     return {
         "state": str(d.get("state") or ""),
         "head": str(d.get("headRefOid") or ""),
-        "queued": d.get("autoMergeRequest") is not None or d.get("mergeStateStatus") == "QUEUED",
+        "queued": (
+            d["isInMergeQueue"] or d.get("autoMergeRequest") is not None or d.get("mergeStateStatus") == "QUEUED"
+        ),
     }
 
 
@@ -375,6 +425,8 @@ def merge(repo, num, expected_head, mode_hint):
     Queue mode is idempotent and returns ``QUEUED`` rather than manufacturing a merge receipt.
     The final policy invocation is adjacent to the effect, invalidating stale batch assessments.
     """
+    if merge_prohibition() is not None:
+        return "REFUSED"
     if mode_hint == "queue":
         current = _queue_state(repo, num)
         if current is None or current["head"] != expected_head:
@@ -417,7 +469,48 @@ def merge(repo, num, expected_head, mode_hint):
     return success if r.returncode == 0 else "FAILED"
 
 
-def main():
+def submit_one(repo: str, num: int, expected_head: str) -> int:
+    """Submit one exact PR head once and return; never poll or retry.
+
+    The recurring merge drain owns later observations.  QUEUED is a durable handoff, not a
+    manufactured MERGED receipt.
+    """
+    prohibition = merge_prohibition()
+    if prohibition is not None:
+        print(f"MERGE-SUBMISSION {repo}#{num}@{expected_head}: REFUSED — {prohibition}")
+        return 3
+    current = _queue_state(repo, num)
+    identity = f"{repo}#{num}@{expected_head}"
+    if current is None:
+        print(f"MERGE-SUBMISSION {identity}: FAILED — live PR state unavailable")
+        return 1
+    if current["head"] != expected_head:
+        print(f"MERGE-SUBMISSION {identity}: FAILED — live head is {current['head'] or 'unknown'}")
+        return 1
+    if current["state"] == "MERGED":
+        print(f"MERGE-SUBMISSION {identity}: MERGED")
+        return 0
+    if current["state"] != "OPEN":
+        print(f"MERGE-SUBMISSION {identity}: FAILED — PR state is {current['state'] or 'unknown'}")
+        return 1
+    if current["queued"]:
+        print(f"MERGE-SUBMISSION {identity}: QUEUED — already owned by GitHub")
+        return 0
+
+    row = assess((repo, num))
+    if len(row) < 5 or row[2] != "READY":
+        print(f"MERGE-SUBMISSION {identity}: DEFERRED — {row[2]}")
+        return 2
+    observed_head = str(row[3])
+    if observed_head != expected_head:
+        print(f"MERGE-SUBMISSION {identity}: FAILED — assessment head is {observed_head or 'unknown'}")
+        return 1
+    outcome = merge(repo, num, expected_head, str(row[4]))
+    print(f"MERGE-SUBMISSION {identity}: {outcome}")
+    return 0 if outcome in {"MERGED", "QUEUED"} else 1
+
+
+def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument(
         "--scan",
@@ -433,7 +526,21 @@ def main():
     )
     ap.add_argument("--limit", type=int, default=int(os.environ.get("LIMEN_MERGE_LIMIT", "10")))
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--repo", help="one-shot mode: OWNER/NAME")
+    ap.add_argument("--pr", type=int, help="one-shot mode: pull-request number")
+    ap.add_argument("--expected-head", help="one-shot mode: exact 40-character PR head")
     a = ap.parse_args()
+    one_shot = (a.repo, a.pr, a.expected_head)
+    if any(value is not None for value in one_shot):
+        if not all(value is not None for value in one_shot):
+            ap.error("--repo, --pr, and --expected-head are required together")
+        if (
+            not isinstance(a.expected_head, str)
+            or len(a.expected_head) != 40
+            or any(character not in "0123456789abcdef" for character in a.expected_head)
+        ):
+            ap.error("--expected-head must be a lowercase 40-character commit OID")
+        return submit_one(str(a.repo), int(a.pr), a.expected_head)
     # FULL-FLEET coverage (shared with self-heal): enumerate every open PR once, assess a rotating
     # --scan window this beat so a READY PR below the old head-of-list 30 finally gets landed
     # instead of sitting forever. Own cursor so MERGE and HEAL rotate independently.
@@ -451,7 +558,7 @@ def main():
         if enumeration_complete and not a.dry_run:
             reconcile_ci_red_subjects([], [], enumeration_complete=True)
         print("[merge-drain] no open PRs" if enumeration.success else "[merge-drain] PR enumeration unavailable")
-        return
+        return 0
     prs = rotating_window(allprs, a.scan, str(ROOT / "logs" / ".pr-scan-cursor.merge"), persist=not a.dry_run)
     with cf.ThreadPoolExecutor(max_workers=10) as ex:
         rows = list(ex.map(assess, prs))
@@ -490,7 +597,8 @@ def main():
             f.write(summary + (("  " + " ".join(effects)) if effects else "") + "\n")
     except Exception:
         pass
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

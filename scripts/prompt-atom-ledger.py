@@ -841,7 +841,7 @@ def build_adapter_gap_routes(
 
     routing = policy.get("owner_routing")
     routing = routing if isinstance(routing, dict) else {}
-    default_owner = _redacted_policy_text(routing.get("default_owner"), "organvm/limen")
+    default_owner = _redacted_policy_text(routing.get("default_owner"), "4444J99/limen")
     default_route = _redacted_policy_text(
         routing.get("default_route"),
         "TABVLARIVS/prompt-atom-intake",

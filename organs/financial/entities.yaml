@@ -6,7 +6,7 @@
 # reads this to produce balance-sheet, cashflow, and payrail artifacts.
 schema_version: "1.0"
 organ: "financial"
-repo: "organvm/limen"
+repo: "4444J99/limen"
 generated_at: "2026-07-03T00:00:00Z"
 
 # ── Entity taxonomy ──────────────────────────────────────────────────────

@@ -64,7 +64,7 @@ from pathlib import Path
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
 
-DEFAULT_REPO = "organvm/limen"
+DEFAULT_REPO = "4444J99/limen"
 DEFAULT_SAMPLE = 10
 # An excerpt, never the whole comment: findings print into a beat log that is read at a glance, and
 # CodeRabbit bodies carry collapsed <details> blocks hundreds of lines long.

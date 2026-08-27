@@ -25,7 +25,7 @@ from typing import Callable, Mapping, Sequence
 from urllib.parse import urlparse
 
 
-SCHEMA_VERSION = "limen.remote-execution.v3"
+SCHEMA_VERSION = "limen.remote-execution.v4"
 SHA_RE = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")

@@ -1,8 +1,11 @@
 import json
 from pathlib import Path
 
+import pytest
+
 from limen import heartbeat
 from limen.bounded_subprocess import BoundedCompletedProcess, BoundedSubprocessError
+from limen.notification_effect import DeliveryReceipt
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -27,7 +30,7 @@ class FakeAdmission:
         return {"allowed": True}
 
 
-def _state(path, *, failures=0, disabled=False, probes=None):
+def _state(path, *, failures=0, disabled=False, probes=None, notification_conditions=None):
     path.mkdir(parents=True, exist_ok=True)
     (path / "state.json").write_text(
         json.dumps(
@@ -36,6 +39,7 @@ def _state(path, *, failures=0, disabled=False, probes=None):
                 "consecutive_system_failures": failures,
                 "disabled": disabled,
                 "probes": probes or {},
+                "notification_conditions": notification_conditions or {},
             }
         )
     )
@@ -49,6 +53,9 @@ def test_contract_is_a_one_shot_resource_contract():
     assert contract["limits"]["max_concurrent_probes"] == 1
     assert contract["limits"]["rss_bytes"] <= 512 * 1024 * 1024
     assert contract["failure_policy"]["consecutive_system_failures"] == 3
+    assert contract["allowed_effects"] == ["notification_event_v1"]
+    assert contract["max_notification_events_per_fire"] == 1
+    assert "cli/src/limen/notification_effect.py" in contract["runtime_artifacts"]
     commands = {probe["name"]: probe["command"] for probe in contract["probes"]}
     assert "--no-receipt" in commands["background-items-census"]
     assert "--no-receipt" in commands["live-checkout-currency"]
@@ -91,6 +98,78 @@ def test_probe_finding_does_not_increment_kill_switch(tmp_path, monkeypatch):
     assert receipt["consecutive_system_failures"] == 0
 
 
+def test_finding_emits_one_notification_event_with_bound_broker_receipt(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        heartbeat,
+        "run_bounded_subprocess",
+        lambda *_args, **_kwargs: BoundedCompletedProcess(2, b"", b"finding"),
+    )
+    emitted = []
+
+    def accept(_root, candidate):
+        emitted.append(candidate)
+        return DeliveryReceipt(
+            "submitted",
+            candidate.event["stable_id"],
+            candidate.event["event_id"],
+            {"macos": "submitted"},
+            broker_schema="domus.notification_delivery_receipt.v2",
+        )
+
+    receipt = heartbeat.heartbeat_once(
+        ROOT,
+        state_root=tmp_path,
+        clock=lambda: 1_000_000,
+        notification_emitter=accept,
+    )
+
+    assert len(emitted) == 1
+    event = emitted[0].event
+    assert event["stable_id"] == "limen.heartbeat.finding"
+    assert event["transition"] == "onset"
+    assert event["owner"] == "limen"
+    assert receipt["notification_event_selected_count"] == 1
+    assert receipt["notification_event_attempted_count"] == 1
+    assert receipt["notification_event_accepted_count"] == 1
+    assert receipt["notification_broker_schema"] == "domus.notification_delivery_receipt.v2"
+    assert receipt["notification_broker_status"] == "submitted"
+    assert receipt["notification_broker_channels"] == {"macos": "submitted"}
+    public = json.loads((tmp_path / "public-latest.json").read_text())
+    assert public["notification_effect"]["event_digest"] == receipt["notification_event_digest"]
+    assert public["notification_effect"]["accepted_count"] == 1
+
+
+def test_notification_selection_is_deterministic_and_losers_rederive():
+    state = heartbeat._initial_state()
+    heartbeat._observe_notification_condition(
+        state,
+        probe="normal-probe",
+        status="finding",
+        reason="probe-returncode:2",
+        returncode=2,
+        observed_at="2026-08-25T12:00:00Z",
+    )
+    heartbeat._observe_notification_condition(
+        state,
+        probe="urgent-probe",
+        status="failed",
+        reason="timeout",
+        returncode=None,
+        observed_at="2026-08-25T12:00:01Z",
+    )
+
+    first = heartbeat._select_notification_candidate(heartbeat._notification_candidates(state))
+    assert first is not None
+    assert first.condition_key == "urgent-probe"
+    assert first.severity == "urgent"
+    heartbeat._accept_notification_candidate(state, first)
+
+    second = heartbeat._select_notification_candidate(heartbeat._notification_candidates(state))
+    assert second is not None
+    assert second.condition_key == "normal-probe"
+    assert second.event["event_id"] == heartbeat._notification_candidates(state)[0].event["event_id"]
+
+
 def test_heavy_probe_is_deferred_under_pressure_without_spawn(tmp_path, monkeypatch):
     contract, _digest = heartbeat._load_contract(ROOT)
     cheap = {row["name"]: {"last_attempt_epoch": 1_000_000} for row in contract["probes"] if row["cost"] == "cheap"}
@@ -125,10 +204,68 @@ def test_third_system_failure_disables_launch_agent(tmp_path, monkeypatch):
         state_root=tmp_path,
         clock=lambda: 1_000_000,
         disable_launch_agent=lambda: disabled.append(True),
+        notification_emitter=lambda _root, candidate: DeliveryReceipt(
+            "submitted",
+            candidate.event["stable_id"],
+            candidate.event["event_id"],
+            {"macos": "submitted"},
+        ),
     )
     assert receipt["status"] == "failed"
     assert receipt["consecutive_system_failures"] == 3
     assert receipt["disabled"] is True
+    assert receipt["surviving_descendant_count"] == "unknown"
+    assert disabled == [True]
+
+
+def test_kill_switch_keeps_bounded_sender_until_pending_notification_is_accepted(tmp_path, monkeypatch):
+    _state(tmp_path, failures=2)
+    monkeypatch.setattr(
+        heartbeat,
+        "run_bounded_subprocess",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(BoundedSubprocessError("timeout")),
+    )
+    disabled = []
+    attempts = []
+
+    def emit(_root, candidate):
+        attempts.append(candidate.event["event_id"])
+        if len(attempts) == 1:
+            return DeliveryReceipt(
+                "failed",
+                candidate.event["stable_id"],
+                candidate.event["event_id"],
+                {},
+                "synthetic broker outage",
+            )
+        return DeliveryReceipt(
+            "submitted",
+            candidate.event["stable_id"],
+            candidate.event["event_id"],
+            {"macos": "submitted"},
+        )
+
+    first = heartbeat.heartbeat_once(
+        ROOT,
+        state_root=tmp_path,
+        clock=lambda: 1_000_000,
+        disable_launch_agent=lambda: disabled.append(True),
+        notification_emitter=emit,
+    )
+    assert first["disabled"] is True
+    assert first["notification_event_accepted_count"] == 0
+    assert disabled == []
+
+    second = heartbeat.heartbeat_once(
+        ROOT,
+        state_root=tmp_path,
+        clock=lambda: 1_000_300,
+        disable_launch_agent=lambda: disabled.append(True),
+        notification_emitter=emit,
+    )
+    assert second["status"] == "disabled"
+    assert second["notification_event_accepted_count"] == 1
+    assert attempts == [attempts[0], attempts[0]]
     assert disabled == [True]
 
 
@@ -183,3 +320,46 @@ def test_registry_probes_match_observer_host_ownership():
     scheduled = {row["name"] for row in contract["probes"]}
     ownership = json.loads((ROOT / "institutio/governance/heartbeat-ownership.json").read_text())["rungs"]
     assert {name for name, row in ownership.items() if row["owner"] == "observe_host"} <= scheduled
+
+
+def test_contract_initialization_failure_writes_receipts_and_disables(tmp_path):
+    root = tmp_path / "missing-contract-root"
+    root.mkdir()
+    state_root = tmp_path / "state"
+    disabled = []
+
+    receipt = heartbeat.heartbeat_once(
+        root,
+        state_root=state_root,
+        clock=lambda: 1_000_000,
+        disable_launch_agent=lambda: disabled.append(True),
+    )
+
+    assert receipt["status"] == "failed"
+    assert receipt["disabled"] is True
+    assert receipt["contract_digest"] is None
+    assert disabled == [True]
+    assert json.loads((state_root / "public-latest.json").read_text())["status"] == "failed"
+    assert list((state_root / "receipts").glob("*.json"))
+
+
+def test_contract_initialization_failure_disables_before_receipt_storage(tmp_path, monkeypatch):
+    root = tmp_path / "missing-contract-root"
+    root.mkdir()
+    disabled = []
+
+    def fail_receipt(*_args, **_kwargs):
+        assert disabled == [True]
+        raise OSError("receipt storage unavailable")
+
+    monkeypatch.setattr(heartbeat, "_initialization_failure_receipt", fail_receipt)
+
+    with pytest.raises(OSError, match="receipt storage unavailable"):
+        heartbeat.heartbeat_once(
+            root,
+            state_root=tmp_path / "state",
+            clock=lambda: 1_000_000,
+            disable_launch_agent=lambda: disabled.append(True),
+        )
+
+    assert disabled == [True]

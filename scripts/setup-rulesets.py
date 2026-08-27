@@ -1,21 +1,25 @@
 #!/usr/bin/env python3
-"""setup-rulesets — configure self-draining, concurrency-safe merge gates.
+"""setup-rulesets — configure bounded, repository-declared merge rails.
 
 For each repo that currently has open author PRs, configure the default branch so that:
-  • required_status_checks = the repo's actual CI checks (strict:false)
+  • required_status_checks = the repo's declared CI checks (strict:false), or NONE for a
+    registry-declared single-owner fast lane
   • required_pull_request_reviews = NONE  (there is no human reviewer team — requiring one is the
     faulty old element that forced the admin-bypass; we gate on CI instead)
-  • allow_auto_merge = true  (so a PR armed with --auto merges itself the instant CI is green)
+  • allow_auto_merge = false on a single-owner fast lane (merge the locally verified exact head
+    immediately); true elsewhere when remote checks own admission
   • delete_branch_on_merge = false  (source branches are retained for receipt-backed reaping)
 
-For organvm/limen only, keep the classic required check to `pr-gate` with
-strict:false/enforce_admins:true, and idempotently ensure a default-branch ruleset holding a
-zero-approval pull-request rule with no bypass actors: every mutation, including Tabularius board
-publication, must enter through a PR. The native merge queue was removed 2026-08-06
+Required checks and the single-owner fast-lane declaration come from
+`institutio/github/estate.yaml`; live check-rollup detection is never a substitute for declared
+desired state. For 4444J99/limen, clear remote required checks while retaining
+enforce_admins:true, and idempotently ensure a default-branch ruleset holding a zero-approval,
+review-thread-advisory pull-request rule with no bypass actors: every mutation, including
+Tabularius board publication, must enter through a PR. The native merge queue was removed 2026-08-06
 (proven-at-submission rail): its serialized re-validation lane re-derived proofs the scoped local
 gates had already produced, and its evict-to-back failure mode turned a GitHub Actions incident
-into a day-long merge outage for green PRs. Direct squash on green required checks is the rail;
-merge-policy.sh / await-pr.sh detect queue absence and use MERGE-MODE: direct automatically.
+into a day-long merge outage for green PRs. Limen's rail is immediate exact-head squash after local
+scoped verification; repositories with declared remote checks retain their check-gated rail.
 
 SAFE: dry-run by default — prints the exact per-repo plan and executes NOTHING. Reversible:
 branch protection can be removed. `--apply` is GATED on the user.
@@ -23,16 +27,22 @@ branch protection can be removed. `--apply` is GATED on the user.
   python3 scripts/setup-rulesets.py            # dry-run plan (read-only)
   python3 scripts/setup-rulesets.py --apply     # ⚠ GATED: configure protection + auto-merge
   python3 scripts/setup-rulesets.py --repo owner/name [...]   # limit to specific repos
-  python3 scripts/setup-rulesets.py --contexts pr-gate,python,web   # force these check names (skip detection)
+  python3 scripts/setup-rulesets.py --contexts pr-gate,python,web   # explicit one-run override
 """
 
 import json
-import re
+from fnmatch import fnmatchcase
+from pathlib import Path
 import subprocess
 import sys
 from collections import OrderedDict
 
-MERGE_QUEUE_REPO = "organvm/limen"
+import yaml
+
+MERGE_QUEUE_REPO = "4444J99/limen"
+MERGE_QUEUE_REPO_KEY = MERGE_QUEUE_REPO.casefold()
+ROOT = Path(__file__).resolve().parents[1]
+ESTATE = ROOT / "institutio" / "github" / "estate.yaml"
 # Historical name retained: this is the live ruleset's identity on GitHub (id 19147990) and
 # renaming it would churn every external reference for zero behavioral gain. The queue rule
 # itself was removed 2026-08-06; only the pull_request rule remains.
@@ -40,8 +50,7 @@ MERGE_QUEUE_RULESET_NAME = "limen-default-merge-queue"
 
 APPLY = "--apply" in sys.argv
 EXPLICIT = [sys.argv[i + 1] for i, a in enumerate(sys.argv) if a == "--repo" and i + 1 < len(sys.argv)]
-# --contexts a,b,c overrides auto-detection entirely — the explicit fallback for any repo whose job
-# names the heuristic can't classify. Applied to every targeted repo.
+# --contexts a,b,c explicitly overrides the registry for this invocation. Applied to every target.
 FORCED = next(
     (sys.argv[i + 1].split(",") for i, a in enumerate(sys.argv) if a == "--contexts" and i + 1 < len(sys.argv)), None
 )
@@ -97,48 +106,102 @@ def target_repos():
     return list(seen.keys())
 
 
-# A genuine merge gate is the test/build/lint suite — NOT bots, scanners, release-drafters, or CLA.
-# Requiring the latter (strict) would permanently block merges (they never reliably "pass" per-PR).
-# The token list includes this estate's own CI job names (derived from .github/workflows): the
-# always-on `pr-gate` workflow (matched by `gate`, the `-` is a word boundary) plus ci.yml's
-# `python` / `web` / `worker` jobs — without these the limen-style repos report "no checks detected".
-_GATE = re.compile(
-    r"\b(test|build|lint|typecheck|type-check|e2e|tox|matrix|smoke|unit|compile|gate|gates|pytest|jest|vitest|doctor|python|web|worker)\b",
-    re.I,
-)
-_NOISE = re.compile(
-    r"(cla|dependabot|release[_-]?draft|sourcery|coderabbit|gitguardian|semgrep|secret|codeql|analyze|advisory|scan|pr title|pr comment|^release$)",
-    re.I,
-)
+class EstateContractError(RuntimeError):
+    """The declared GitHub estate cannot safely determine a repository's merge checks."""
 
 
-def is_real_gate(name):
-    return bool(_GATE.search(name)) and not _NOISE.search(name)
+def _repo_coordinate_key(repo):
+    """Return the case-insensitive identity key GitHub uses for OWNER/REPO coordinates."""
+    return repo.strip().casefold()
 
 
-def detect_checks(repo):
-    """genuine CI gate names from the newest open PR's rollup (filtered: real test/build/lint only)."""
+def _is_limen_repo(repo):
+    return _repo_coordinate_key(repo) == MERGE_QUEUE_REPO_KEY
+
+
+def _load_estate():
+    try:
+        document = yaml.safe_load(ESTATE.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as exc:
+        raise EstateContractError(f"cannot read {ESTATE}: {exc}") from exc
+    if not isinstance(document, dict) or not isinstance(document.get("classes"), dict):
+        raise EstateContractError("estate classes mapping is missing")
+    return document
+
+
+def _repo_facts(repo):
+    observed, error = gh_json_checked(["repo", "view", repo, "--json", "isArchived,isFork,isPrivate"])
+    if error or not isinstance(observed, dict):
+        raise EstateContractError(f"cannot derive repository facts for {repo}: {error or 'unexpected response'}")
+    return {
+        "archived": observed.get("isArchived"),
+        "fork": observed.get("isFork"),
+        "private": observed.get("isPrivate"),
+    }
+
+
+def _class_for_repo(document, repo, facts=None):
+    classes = document["classes"]
+    repo_key = _repo_coordinate_key(repo)
+    overrides = document.get("repo_overrides") or {}
+    override = next(
+        (
+            row
+            for coordinate, row in overrides.items()
+            if isinstance(coordinate, str) and _repo_coordinate_key(coordinate) == repo_key
+        ),
+        None,
+    )
+    if isinstance(override, dict) and override.get("class"):
+        name = override["class"]
+        row = classes.get(name)
+        if not isinstance(row, dict):
+            raise EstateContractError(f"repo override for {repo} names unknown class {name!r}")
+        return name, row
+
+    observed_facts = facts
+    for name, row in classes.items():
+        if not isinstance(row, dict):
+            continue
+        patterns = row.get("match")
+        if not isinstance(patterns, list) or not any(
+            isinstance(pattern, str) and fnmatchcase(repo_key, pattern.casefold()) for pattern in patterns
+        ):
+            continue
+        expected_facts = row.get("match_facts")
+        if expected_facts:
+            if not isinstance(expected_facts, dict):
+                raise EstateContractError(f"class {name!r} has invalid match_facts")
+            observed_facts = observed_facts if observed_facts is not None else _repo_facts(repo)
+            if any(observed_facts.get(key) != value for key, value in expected_facts.items()):
+                continue
+        return name, row
+    raise EstateContractError(f"no estate class matches {repo}")
+
+
+def _policy_for_repo(repo, facts=None):
+    """Return the first-match estate class and its merge policy."""
+    return _class_for_repo(_load_estate(), repo, facts=facts)
+
+
+def checks_for_repo(repo, facts=None):
+    """Return the registry-declared required checks for the repository's first matching class."""
     if FORCED:
         return list(FORCED)
-    prs = (
-        gh_json(["pr", "list", "--repo", repo, "--state", "open", "--limit", "1", "--json", "number"], default=[]) or []
-    )
-    if not prs:
-        return []
-    d = gh_json(["pr", "view", str(prs[0]["number"]), "--repo", repo, "--json", "statusCheckRollup"], default={}) or {}
-    names = []
-    for c in d.get("statusCheckRollup") or []:
-        n = c.get("name") or c.get("context")
-        if n and n not in names and is_real_gate(n):
-            names.append(n)
-    return names
+    class_name, row = _policy_for_repo(repo, facts=facts)
+    checks = row.get("required_checks")
+    if not isinstance(checks, list) or any(not isinstance(check, str) or not check for check in checks):
+        raise EstateContractError(f"estate class {class_name!r} has invalid required_checks")
+    return list(checks)
 
 
-def checks_for_repo(repo):
-    """Return the classic required checks; Limen's queue has one stable required context."""
-    if repo == MERGE_QUEUE_REPO:
-        return ["pr-gate"]
-    return detect_checks(repo)
+def single_owner_fast_lane_for_repo(repo, facts=None):
+    """Whether local exact-tree verification replaces remote merge admission for this repo."""
+    class_name, row = _policy_for_repo(repo, facts=facts)
+    value = row.get("single_owner_fast_lane", False)
+    if not isinstance(value, bool):
+        raise EstateContractError(f"estate class {class_name!r} has invalid single_owner_fast_lane")
+    return value
 
 
 def classic_protection_body(checks):
@@ -146,7 +209,7 @@ def classic_protection_body(checks):
     return {
         # strict:false — gate on checks passing, NOT on branch-up-to-date, else auto-merge
         # deadlocks (nothing auto-updates behind branches) and we're back on the treadmill.
-        "required_status_checks": {"strict": False, "contexts": checks},
+        "required_status_checks": {"strict": False, "contexts": checks} if checks else None,
         "enforce_admins": True,
         "required_pull_request_reviews": None,
         "restrictions": None,
@@ -157,12 +220,18 @@ def classic_protection_contract_holds(actual, checks):
     """Read-after-write verification for the exact non-strict, admin-enforced check gate."""
     if not isinstance(actual, dict):
         return False
-    status = actual.get("required_status_checks") or {}
-    contexts = status.get("contexts") or []
+    status = actual.get("required_status_checks")
     enforce_admins = actual.get("enforce_admins") or {}
+    if checks:
+        status_ok = (
+            isinstance(status, dict)
+            and status.get("strict") is False
+            and (status.get("contexts") or []) == checks
+        )
+    else:
+        status_ok = status is None
     return (
-        status.get("strict") is False
-        and contexts == checks
+        status_ok
         and enforce_admins.get("enabled") is True
         and actual.get("required_pull_request_reviews") is None
         and actual.get("restrictions") is None
@@ -170,7 +239,7 @@ def classic_protection_contract_holds(actual, checks):
 
 
 def default_ruleset_body():
-    """A no-bypass, zero-approval PR requirement — the queue-free proven-at-submission rail."""
+    """A no-bypass PR requirement with automated review advisory on the single-owner rail."""
     return {
         "name": MERGE_QUEUE_RULESET_NAME,
         "target": "branch",
@@ -236,7 +305,7 @@ def actions_workflow_permissions_body():
 
 def ensure_actions_pr_permissions(repo):
     """Enable and verify the repository switch required for GITHUB_TOKEN-created pull requests."""
-    if repo != MERGE_QUEUE_REPO:
+    if not _is_limen_repo(repo):
         return True
     body = actions_workflow_permissions_body()
     result = gh_input("PUT", f"/repos/{repo}/actions/permissions/workflow", body)
@@ -251,7 +320,7 @@ def ensure_actions_pr_permissions(repo):
 
 def ensure_default_ruleset(repo):
     """Idempotently create/update and read-after-write verify Limen's default-branch ruleset."""
-    if repo != MERGE_QUEUE_REPO:
+    if not _is_limen_repo(repo):
         return True
     existing, error = gh_json_checked(["api", f"/repos/{repo}/rulesets"])
     if error or not isinstance(existing, list):
@@ -342,12 +411,36 @@ def main():
         print(f"    contexts forced (detection skipped): {FORCED}")
     print()
     no_ci = []
+    fast_lanes = []
     failures = []
     for repo in repos:
-        info = gh_json(["repo", "view", repo, "--json", "defaultBranchRef"], default={}) or {}
+        info = (
+            gh_json(
+                ["repo", "view", repo, "--json", "defaultBranchRef,isArchived,isFork,isPrivate"],
+                default={},
+            )
+            or {}
+        )
         branch = (info.get("defaultBranchRef") or {}).get("name") or "main"
-        checks = checks_for_repo(repo)
-        if not checks:
+        facts = {
+            "archived": info.get("isArchived"),
+            "fork": info.get("isFork"),
+            "private": info.get("isPrivate"),
+        }
+        try:
+            checks = checks_for_repo(repo, facts=facts)
+            fast_lane = single_owner_fast_lane_for_repo(repo, facts=facts)
+        except EstateContractError as exc:
+            failures.append(f"{repo}:estate-contract")
+            print(f"  {repo}@{branch}: ✗ {exc}")
+            continue
+        if fast_lane:
+            fast_lanes.append(repo)
+            print(
+                f"  {repo}@{branch}: single-owner fast lane → local exact-tree verification; "
+                "no remote admission checks or auto-merge wait"
+            )
+        elif not checks:
             no_ci.append(repo)
             print(
                 f"  {repo}@{branch}: ⚠ no CI checks detected → auto-merge N/A (PRs merge immediately); "
@@ -358,10 +451,10 @@ def main():
                 f"  {repo}@{branch}: require {len(checks)} check(s) {checks[:4]}"
                 f"{'…' if len(checks) > 4 else ''} · no human review · allow_auto_merge=true"
             )
-        if repo == MERGE_QUEUE_REPO:
+        if _is_limen_repo(repo):
             print(
-                "      + default-branch PR-only ruleset (zero approvals, no bypass, squash-only; "
-                "queue-free proven-at-submission rail)"
+                "      + default-branch PR-only ruleset (zero approvals, bot threads advisory, no bypass, "
+                "squash-only; exact-head direct rail)"
             )
         if not APPLY:
             continue
@@ -369,7 +462,7 @@ def main():
         # Install and read-after-write verify the no-bypass rule before touching the weaker
         # classic branch-protection surface. A rejected ruleset can therefore never be hidden by
         # a later successful API call.
-        if repo == MERGE_QUEUE_REPO:
+        if _is_limen_repo(repo):
             prerequisites_ok = True
             if not ensure_actions_pr_permissions(repo):
                 failures.append(f"{repo}:actions-pr-permission")
@@ -388,7 +481,7 @@ def main():
                 "PATCH",
                 f"/repos/{repo}",
                 "-F",
-                "allow_auto_merge=true",
+                f"allow_auto_merge={'false' if fast_lane else 'true'}",
                 "-F",
                 "delete_branch_on_merge=false",
             ]
@@ -401,7 +494,7 @@ def main():
         settings_ok = (
             not settings_error
             and isinstance(observed_settings, dict)
-            and observed_settings.get("allow_auto_merge") is True
+            and observed_settings.get("allow_auto_merge") is (not fast_lane)
             and observed_settings.get("delete_branch_on_merge") is False
         )
         if not settings_ok:
@@ -409,7 +502,7 @@ def main():
             print("      ✗ repository settings unverified: " + (settings_error or "contract mismatch"))
             continue
         print("      ✓ repository settings verified")
-        if checks:
+        if checks or fast_lane:
             body = classic_protection_body(checks)
             r = gh_input("PUT", f"/repos/{repo}/branches/{branch}/protection", body)
             if r.returncode != 0:
@@ -437,18 +530,20 @@ def main():
         if not ensure_copilot_review(repo):
             failures.append(f"{repo}:copilot-review")
 
+    ci_gated = len(repos) - len(no_ci) - len(fast_lanes)
     print(
-        f"\n{len(repos) - len(no_ci)} repos gateable via CI; {len(no_ci)} have no CI "
-        f"(auto-merge moot — they merge on creation)."
+        f"\n{ci_gated} repos gateable via remote CI; {len(fast_lanes)} single-owner fast lane(s); "
+        f"{len(no_ci)} have neither required checks nor a fast-lane declaration."
     )
     if not APPLY:
         print("\nDRY-RUN — nothing changed. Re-run with --apply (GATED) to configure.")
-        if MERGE_QUEUE_REPO in repos:
+        if any(_is_limen_repo(repo) for repo in repos):
             print(
-                "After the Limen workflow lands and --apply succeeds: "
-                "`scripts/await-pr.sh <n> --repo organvm/limen --merge` → exact-head queue rail."
+                "After scoped local verification and --apply succeeds: "
+                "`gh pr merge <n> --repo 4444J99/limen --squash --match-head-commit <sha>` "
+                "→ immediate exact-head merge; do not wait or retry."
             )
-        if any(repo != MERGE_QUEUE_REPO for repo in repos):
+        if any(not _is_limen_repo(repo) for repo in repos):
             print("For non-queue repos: `gh pr merge <n> --auto --squash` on green PRs.")
     if failures:
         print("\nAPPLY FAILED: " + ", ".join(failures), file=sys.stderr)

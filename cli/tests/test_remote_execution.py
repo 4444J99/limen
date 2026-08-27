@@ -19,6 +19,10 @@ from limen.io import save_limen_file
 from limen.models import BudgetTrack, DispatchLogEntry, LimenFile, Task
 from limen.provider_selection import execution_profile_for
 from limen.remote_execution import (
+    CI_EXECUTED_STEP_ADMISSION,
+    CI_RUNNER_ID_ADMISSION,
+    CI_ZERO_STEP_ADMISSION,
+    ActionsJobObservation,
     CommandResult,
     DurableOutput,
     GitHubWorkflowAdapter,
@@ -140,9 +144,24 @@ def run(
     state: RemoteState = RemoteState.RUNNING,
     *,
     run_id: str = "42",
+    run_attempt: int | None = None,
     detail: str = "running",
     observed_at: str = NOW,
 ) -> RemoteRun:
+    observed_attempt = run_attempt if run_attempt is not None else (None if run_id.startswith("pending:") else 1)
+    job = (
+        ActionsJobObservation(
+            job_id=420,
+            run_attempt=observed_attempt,
+            name="deterministic-compute",
+            url=f"https://github.com/organvm/limen/actions/runs/{run_id}/job/420",
+            runner_id=7,
+            runner_name="GitHub Actions 7",
+            executed_step_count=5,
+        )
+        if state in {RemoteState.SUCCEEDED, RemoteState.FAILED} and observed_attempt is not None
+        else None
+    )
     return RemoteRun(
         provider=req.provider,
         provider_run_id=run_id,
@@ -159,7 +178,10 @@ def run(
         state=state,
         request_id=req.request_id,
         observed_at=observed_at,
+        run_attempt=observed_attempt,
         detail=detail,
+        actions_job=job,
+        admission_result=CI_EXECUTED_STEP_ADMISSION if job else "",
     )
 
 
@@ -180,6 +202,7 @@ def successful_receipt(req: RemoteRequest, observed: RemoteRun) -> RemoteReceipt
         predicate=PredicateReceipt(req.predicate_digest, True, 0, DIGEST),
         outputs=(output_for(req, observed),),
         observed_sha=req.base_sha,
+        workflow_receipt_digest=DIGEST,
         observed_at=observed.observed_at,
     )
 
@@ -812,7 +835,10 @@ def control_ref_result(
     ref: str = "main",
     sha: str = CONTROL_SHA,
 ) -> CommandResult | None:
-    if args[1:] == ("api", "repos/organvm/limen", "--jq", ".default_branch"):
+    if args[1:] in {
+        ("api", "repos/organvm/limen", "--jq", ".default_branch"),
+        ("api", "repos/4444J99/limen", "--jq", ".default_branch"),
+    }:
         return CommandResult(args, 0, ref + "\n")
     if f"/git/ref/heads/{ref}" in " ".join(args):
         return CommandResult(
@@ -958,11 +984,13 @@ def exact_actions_row(
     req: RemoteRequest,
     *,
     run_id: int = 42,
+    run_attempt: int = 1,
     status: str = "queued",
     conclusion: str | None = None,
 ) -> dict[str, object]:
     return {
         "id": run_id,
+        "run_attempt": run_attempt,
         "html_url": f"https://github.com/{req.control_repo}/actions/runs/{run_id}",
         "display_title": f"remote:{req.request_id}:{req.task_id}",
         "head_branch": req.control_ref,
@@ -973,6 +1001,33 @@ def exact_actions_row(
         "path": req.workflow_path,
         "status": status,
         "conclusion": conclusion,
+    }
+
+
+def exact_actions_job(
+    req: RemoteRequest,
+    *,
+    run_id: int = 42,
+    run_attempt: int = 1,
+    job_id: int = 420,
+    runner_id: int = 7,
+    runner_name: str = "GitHub Actions 7",
+    steps: list[dict[str, object]] | None = None,
+) -> dict[str, object]:
+    return {
+        "id": job_id,
+        "run_id": run_id,
+        "run_attempt": run_attempt,
+        "name": "deterministic-compute",
+        "html_url": f"https://github.com/{req.control_repo}/actions/runs/{run_id}/job/{job_id}",
+        "runner_id": runner_id,
+        "runner_name": runner_name,
+        "steps": steps
+        if steps is not None
+        else [
+            {"number": 1, "name": "Check out pinned control code", "status": "completed", "conclusion": "success"},
+            {"number": 2, "name": "Execute verifier", "status": "completed", "conclusion": "success"},
+        ],
     }
 
 
@@ -1164,12 +1219,57 @@ def test_terminal_workflow_failure_requires_no_artifact() -> None:
     def runner(argv: object, _timeout: int) -> CommandResult:
         args = tuple(argv)  # type: ignore[arg-type]
         calls.append(args)
+        if args[1] == "api" and args[-3].endswith("/jobs"):
+            return CommandResult(
+                args,
+                0,
+                json.dumps([{"total_count": 1, "jobs": [exact_actions_job(req)]}]),
+            )
         payload = exact_actions_row(req, status="completed", conclusion="failure")
         return CommandResult(args, 0, json.dumps(payload))
 
     receipt = _actions_adapter(runner).harvest(req, current)
     assert receipt.state is RemoteState.FAILED
+    assert receipt.run.actions_job is not None
+    assert receipt.run.actions_job.executed_step_count == 2
+    assert receipt.run.admission_result == CI_EXECUTED_STEP_ADMISSION
     assert not any(args[1:3] == ("run", "download") for args in calls)
+
+
+def test_terminal_rerun_recensuses_job_admission_for_changed_attempt() -> None:
+    req = request()
+    prior_attempt = run(req, RemoteState.FAILED, run_attempt=1)
+    job_census_paths: list[str] = []
+
+    def runner(argv: object, _timeout: int) -> CommandResult:
+        args = tuple(argv)  # type: ignore[arg-type]
+        if args[1] == "api" and args[-3].endswith("/jobs"):
+            job_census_paths.append(args[-3])
+            job = exact_actions_job(
+                req,
+                run_attempt=2,
+                job_id=421,
+                runner_id=0,
+                runner_name="",
+                steps=[],
+            )
+            return CommandResult(args, 0, json.dumps([{"total_count": 1, "jobs": [job]}]))
+        return CommandResult(
+            args,
+            0,
+            json.dumps(exact_actions_row(req, run_attempt=2, status="completed", conclusion="failure")),
+        )
+
+    receipt = _actions_adapter(runner).harvest(req, prior_attempt)
+
+    assert job_census_paths == ["repos/organvm/limen/actions/runs/42/attempts/2/jobs"]
+    assert receipt.state is RemoteState.BLOCKED
+    assert receipt.run.run_attempt == 2
+    assert receipt.run.admission_result == CI_ZERO_STEP_ADMISSION
+    assert receipt.run.actions_job is not None
+    assert receipt.run.actions_job.run_attempt == 2
+    assert receipt.run.actions_job.job_id == 421
+    assert receipt.run.retry_allowed is False
 
 
 def test_successful_workflow_without_artifact_is_blocked() -> None:
@@ -1179,6 +1279,12 @@ def test_successful_workflow_without_artifact_is_blocked() -> None:
     def runner(argv: object, _timeout: int) -> CommandResult:
         args = tuple(argv)  # type: ignore[arg-type]
         if args[1] == "api":
+            if args[-3].endswith("/jobs"):
+                return CommandResult(
+                    args,
+                    0,
+                    json.dumps([{"total_count": 1, "jobs": [exact_actions_job(req)]}]),
+                )
             payload = exact_actions_row(req, status="completed", conclusion="success")
             return CommandResult(args, 0, json.dumps(payload))
         return CommandResult(args, 1, "", "artifact absent")
@@ -1186,6 +1292,109 @@ def test_successful_workflow_without_artifact_is_blocked() -> None:
     receipt = _actions_adapter(runner).harvest(req, current)
     assert receipt.state is RemoteState.BLOCKED
     assert not receipt.done
+
+
+def test_zero_step_job_is_nonretryable_admission_failure_without_artifact_download(tmp_path: Path) -> None:
+    req = request()
+    current = run(req)
+    calls: list[tuple[str, ...]] = []
+
+    def runner(argv: object, _timeout: int) -> CommandResult:
+        args = tuple(argv)  # type: ignore[arg-type]
+        calls.append(args)
+        if args[1] == "api" and args[-3].endswith("/jobs"):
+            job = exact_actions_job(req, runner_id=0, runner_name="", steps=[])
+            return CommandResult(args, 0, json.dumps([{"total_count": 1, "jobs": [job]}]))
+        return CommandResult(
+            args,
+            0,
+            json.dumps(exact_actions_row(req, status="completed", conclusion="failure")),
+        )
+
+    receipt = _actions_adapter(runner).harvest(req, current)
+
+    assert receipt.state is RemoteState.BLOCKED
+    assert receipt.run.admission_result == CI_ZERO_STEP_ADMISSION
+    assert receipt.run.retry_allowed is False
+    assert receipt.run.actions_job is not None
+    assert receipt.run.actions_job.executed_step_count == 0
+    assert not any(args[1:3] == ("run", "download") for args in calls)
+    loaded = load_receipt(ReceiptStore(tmp_path).write(receipt), req)
+    assert loaded.run.admission_result == CI_ZERO_STEP_ADMISSION
+    assert loaded.run.retry_allowed is False
+
+
+def test_executed_job_without_nonzero_runner_identity_is_nonretryable() -> None:
+    req = request()
+    current = run(req)
+
+    def runner(argv: object, _timeout: int) -> CommandResult:
+        args = tuple(argv)  # type: ignore[arg-type]
+        if args[1] == "api" and args[-3].endswith("/jobs"):
+            job = exact_actions_job(req, runner_id=0, runner_name="")
+            return CommandResult(args, 0, json.dumps([{"total_count": 1, "jobs": [job]}]))
+        return CommandResult(
+            args,
+            0,
+            json.dumps(exact_actions_row(req, status="completed", conclusion="success")),
+        )
+
+    receipt = _actions_adapter(runner).harvest(req, current)
+
+    assert receipt.state is RemoteState.BLOCKED
+    assert receipt.run.admission_result == CI_RUNNER_ID_ADMISSION
+    assert receipt.run.retry_allowed is False
+
+
+def test_job_census_is_exhaustive_and_selects_exactly_one_deterministic_job() -> None:
+    req = request()
+    current = run(req)
+    other = exact_actions_job(req, job_id=419)
+    other["name"] = "setup"
+    other["html_url"] = f"{current.url}/job/419"
+
+    def runner(argv: object, _timeout: int) -> CommandResult:
+        args = tuple(argv)  # type: ignore[arg-type]
+        if args[1] == "api" and args[-3].endswith("/jobs"):
+            pages = [
+                {"total_count": 2, "jobs": [other]},
+                {"total_count": 2, "jobs": [exact_actions_job(req)]},
+            ]
+            return CommandResult(args, 0, json.dumps(pages))
+        return CommandResult(
+            args,
+            0,
+            json.dumps(exact_actions_row(req, status="completed", conclusion="failure")),
+        )
+
+    receipt = _actions_adapter(runner).harvest(req, current)
+
+    assert receipt.state is RemoteState.FAILED
+    assert receipt.run.actions_job is not None
+    assert receipt.run.actions_job.job_id == 420
+
+
+def test_job_census_rejects_duplicate_deterministic_job_identity() -> None:
+    req = request()
+    current = run(req)
+    duplicate = exact_actions_job(req, job_id=421)
+
+    def runner(argv: object, _timeout: int) -> CommandResult:
+        args = tuple(argv)  # type: ignore[arg-type]
+        if args[1] == "api" and args[-3].endswith("/jobs"):
+            return CommandResult(
+                args,
+                0,
+                json.dumps([{"total_count": 2, "jobs": [exact_actions_job(req), duplicate]}]),
+            )
+        return CommandResult(
+            args,
+            0,
+            json.dumps(exact_actions_row(req, status="completed", conclusion="success")),
+        )
+
+    with pytest.raises(RemoteExecutionError, match="exactly one deterministic-compute"):
+        _actions_adapter(runner).harvest(req, current)
 
 
 @pytest.mark.parametrize(
@@ -1224,7 +1433,7 @@ def test_actions_catalog_fails_closed_on_request_id_identity_collision() -> None
 
 def workflow_payload(req: RemoteRequest, observed: RemoteRun) -> dict[str, object]:
     payload: dict[str, object] = {
-        "schema_version": "limen.remote-execution.v3",
+        "schema_version": "limen.remote-execution.v4",
         "request_id": observed.request_id,
         "provider": req.provider,
         "task_id": req.task_id,
@@ -1324,6 +1533,19 @@ def test_workflow_receipt_digest_is_verified_before_fields() -> None:
     payload["receipt_digest"] = DIGEST
     with pytest.raises(RemoteExecutionError, match="receipt digest mismatch"):
         _receipt_from_workflow_payload(payload, req, observed, "organvm/limen")
+
+
+def test_workflow_receipt_preserves_digest_and_exact_job_admission() -> None:
+    req = request()
+    observed = run(req, RemoteState.SUCCEEDED)
+    payload = workflow_payload(req, observed)
+
+    receipt = _receipt_from_workflow_payload(payload, req, observed, "organvm/limen")
+
+    assert receipt.workflow_receipt_digest == payload["receipt_digest"]
+    assert receipt.run.actions_job is not None
+    assert receipt.run.actions_job.admitted
+    assert receipt.done
 
 
 def _task(req: RemoteRequest, observed: RemoteRun, receipt_path: str) -> Task:

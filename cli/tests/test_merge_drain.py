@@ -245,3 +245,136 @@ def test_direct_merge_has_one_exact_head_method_and_no_fallback(monkeypatch):
     assert mod.merge("organvm/limen", 1194, "deadbeefcafe", "direct") == "FAILED"
     assert len(calls) == 1
     assert calls[0][-3:] == ["--squash", "--match-head-commit", "deadbeefcafe"]
+
+
+def test_submit_one_returns_queued_without_polling_or_retry(monkeypatch, capsys):
+    mod = _load()
+    head = "a" * 40
+    calls = []
+    monkeypatch.setattr(
+        mod,
+        "_queue_state",
+        lambda repo, num: {"state": "OPEN", "head": head, "queued": False},
+    )
+    monkeypatch.setattr(
+        mod,
+        "assess",
+        lambda value: (value[0], value[1], "READY", head, "queue"),
+    )
+    monkeypatch.setattr(
+        mod,
+        "merge",
+        lambda repo, num, expected, mode: calls.append((repo, num, expected, mode)) or "QUEUED",
+    )
+
+    assert mod.submit_one("4444J99/limen", 2543, head) == 0
+    assert calls == [("4444J99/limen", 2543, head, "queue")]
+    assert capsys.readouterr().out.strip() == f"MERGE-SUBMISSION 4444J99/limen#2543@{head}: QUEUED"
+
+
+def test_submit_one_deferred_is_terminal_for_the_invocation(monkeypatch, capsys):
+    mod = _load()
+    head = "b" * 40
+    monkeypatch.setattr(
+        mod,
+        "_queue_state",
+        lambda repo, num: {"state": "OPEN", "head": head, "queued": False},
+    )
+    monkeypatch.setattr(mod, "assess", lambda value: (value[0], value[1], "CI-PENDING"))
+    monkeypatch.setattr(
+        mod,
+        "merge",
+        lambda *args: (_ for _ in ()).throw(AssertionError("deferred submission must not mutate")),
+    )
+
+    assert mod.submit_one("4444J99/limen", 2543, head) == 2
+    assert capsys.readouterr().out.strip().endswith(": DEFERRED — CI-PENDING")
+
+
+def test_submit_one_is_idempotent_for_already_queued_head(monkeypatch, capsys):
+    mod = _load()
+    head = "c" * 40
+    monkeypatch.setattr(
+        mod,
+        "_queue_state",
+        lambda repo, num: {"state": "OPEN", "head": head, "queued": True},
+    )
+    monkeypatch.setattr(
+        mod,
+        "assess",
+        lambda *args: (_ for _ in ()).throw(AssertionError("already queued must not reassess")),
+    )
+
+    assert mod.submit_one("4444J99/limen", 2543, head) == 0
+    assert ": QUEUED — already owned by GitHub" in capsys.readouterr().out
+
+
+def test_queue_state_uses_authoritative_merge_queue_membership(monkeypatch):
+    mod = _load()
+    calls = []
+
+    def fake_gh(args, timeout=60):
+        calls.append((args, timeout))
+        return _R(
+            json.dumps(
+                {
+                    "data": {
+                        "repository": {
+                            "pullRequest": {
+                                "state": "OPEN",
+                                "headRefOid": "c" * 40,
+                                "mergeStateStatus": "CLEAN",
+                                "isInMergeQueue": True,
+                                "autoMergeRequest": None,
+                            }
+                        }
+                    }
+                }
+            )
+        )
+
+    monkeypatch.setattr(mod, "gh", fake_gh)
+
+    assert mod._queue_state("4444J99/limen", 2543) == {
+        "state": "OPEN",
+        "head": "c" * 40,
+        "queued": True,
+    }
+    assert calls[0][0][:2] == ["api", "graphql"]
+    assert "isInMergeQueue" in calls[0][0][3]
+    assert calls[0][1] == 40
+
+
+def test_submit_one_refuses_merge_prohibiting_pause_before_github(monkeypatch, tmp_path, capsys):
+    mod = _load()
+    head = "d" * 40
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs" / "AUTONOMY_PAUSED").write_text(
+        "prohibitions: dispatch, merge\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        mod,
+        "_queue_state",
+        lambda *args: (_ for _ in ()).throw(AssertionError("pause must refuse before GitHub")),
+    )
+
+    assert mod.submit_one("4444J99/limen", 2543, head) == 3
+    assert capsys.readouterr().out.strip().endswith("REFUSED — prohibitions: dispatch, merge")
+
+
+def test_submit_one_refuses_when_pause_marker_is_unreadable(monkeypatch, tmp_path, capsys):
+    mod = _load()
+    head = "e" * 40
+    marker = tmp_path / "logs" / "AUTONOMY_PAUSED"
+    marker.mkdir(parents=True)
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        mod,
+        "_queue_state",
+        lambda *args: (_ for _ in ()).throw(AssertionError("unreadable pause must refuse before GitHub")),
+    )
+
+    assert mod.submit_one("4444J99/limen", 2543, head) == 3
+    assert capsys.readouterr().out.strip().endswith("REFUSED — AUTONOMY_PAUSED unreadable (IsADirectoryError)")

@@ -1,4 +1,5 @@
 import { ChunkedDurableStateStore } from "./durable-store.js";
+import notificationRegistry from "../../../../institutio/governance/notification-events.limen.json" with { type: "json" };
 import { conflictingKeys, parseResource, sortedClaims } from "./resources.js";
 import {
   canonicalHash,
@@ -28,6 +29,7 @@ export function emptyConductState() {
     schema_version: "limen.conduct_state.v1",
     sessions: {},
     session_principals: {},
+    session_principal_roles: {},
     runs: {},
     leases: {},
     work_index: {},
@@ -220,6 +222,7 @@ function validateLoadedState(input) {
   for (const field of [
     "sessions",
     "session_principals",
+    "session_principal_roles",
     "runs",
     "leases",
     "work_index",
@@ -245,6 +248,7 @@ export class ConductKernel {
       leaseTtlMs = 15 * 60 * 1000,
       capabilitySecret = null,
       runtimeIdentity = null,
+      notificationAssignments = notificationRegistry,
     } = {},
   ) {
     this.state = validateLoadedState(input);
@@ -255,6 +259,7 @@ export class ConductKernel {
     this.leaseTtlMs = leaseTtlMs;
     this.capabilitySecret = capabilitySecret;
     this.runtimeIdentity = runtimeIdentity;
+    this.notificationAssignments = clone(notificationAssignments);
     this.projectionEvents = [];
     this.mutated = false;
   }
@@ -285,6 +290,8 @@ export class ConductKernel {
         payload.receipt,
       );
       case "harvest": return this.harvest(payload.run_id);
+      case "list_notification_assignments": return this.listNotificationAssignments(payload.principal);
+      case "list_assignments": return this.listNotificationAssignments(payload.principal);
       case "adopt": return this.adopt(payload.run_id, payload.session_id, payload.principal);
       case "cancel": return this.cancel(payload.run_id, payload.session_id, payload.principal);
       case "request_stop": return this.requestStop(payload.run_id, payload.session_id, payload.principal);
@@ -463,6 +470,7 @@ export class ConductKernel {
     }
     this.state.sessions[session.session_id] = stored;
     this.state.session_principals[session.session_id] = principal.principal_id;
+    this.state.session_principal_roles[session.session_id] = [...principal.roles].sort();
     this.recordEvent("session.registered", {
       session_id: session.session_id,
       agent: session.identity.agent,
@@ -656,7 +664,9 @@ export class ConductKernel {
     }
     const leaseId = `lease-${generation}-${runId.slice(4, 20)}`;
     let executorPrincipalId = this.state.session_principals[executor.session_id];
-    if (isTaskCompatibilityPacket(packet)) executorPrincipalId = principal.principal_id;
+    if (isTaskCompatibilityPacket(packet) || packet.intent?.kind === "fanout-root") {
+      executorPrincipalId = principal.principal_id;
+    }
     if (!executorPrincipalId) {
       throw new ConductError("selected executor session has no authenticated principal binding");
     }
@@ -1417,17 +1427,76 @@ export class ConductKernel {
     };
   }
 
+  async listNotificationAssignments(requestedPrincipal = null) {
+    const { principal } = this.principalForIdentity(
+      { agent: "anonymous", surface: "read" },
+      requestedPrincipal,
+    );
+    this.requireRole(principal, "observer", "conductor");
+    const registry = this.notificationAssignments;
+    const namespace = registry?.namespace;
+    const registryVersion = registry?.schema_version;
+    const events = registry?.events;
+    if (
+      typeof namespace !== "string"
+      || !Number.isSafeInteger(registryVersion)
+      || !events
+      || typeof events !== "object"
+      || Array.isArray(events)
+    ) {
+      throw new ConductError("notification registry is unavailable or malformed", 500);
+    }
+    const assignments = [];
+    for (const [eventId, definition] of Object.entries(events)
+      .sort(([left], [right]) => left.localeCompare(right))) {
+      if (
+        typeof eventId !== "string"
+        || !definition
+        || typeof definition !== "object"
+        || Array.isArray(definition)
+        || !Array.isArray(definition.channels)
+        || !definition.channels.every((channel) => typeof channel === "string")
+        || !definition.templates
+        || typeof definition.templates !== "object"
+        || Array.isArray(definition.templates)
+      ) {
+        throw new ConductError("notification registry is unavailable or malformed", 500);
+      }
+      assignments.push({
+        event_id: eventId,
+        class: definition.class,
+        severity: definition.severity,
+        owner: definition.owner,
+        privacy: definition.privacy,
+        channels: [...definition.channels],
+        dedupe_key: definition.dedupe_key,
+        recovery: definition.recovery,
+        title: definition.title,
+        templates: clone(definition.templates),
+      });
+    }
+    return {
+      schema_version: "limen.notification_assignments.v1",
+      generated_at: this.timestamp,
+      registry_namespace: namespace,
+      registry_schema_version: registryVersion,
+      registry_digest: await canonicalHash({
+        namespace,
+        schema_version: registryVersion,
+        events,
+      }),
+      assignments,
+    };
+  }
+
   adopt(runId, adopterSessionId, requestedPrincipal = null) {
     const run = this.state.runs[runId];
     const adopter = this.state.sessions[adopterSessionId];
     if (!run || !adopter) throw new ConductError("run or adopter session not found", 404);
-    const { principal, enforced } = this.principalForIdentity(adopter.identity, requestedPrincipal);
-    this.requireRole(principal, "conductor");
+    const { principal } = this.principalForIdentity(adopter.identity, requestedPrincipal);
+    this.requireRole(principal, "conductor", "executor");
     if (this.state.session_principals[adopterSessionId] !== principal.principal_id) {
       throw new ConductError("adopter session is not bound to the authenticated principal", 403);
-    }
-    if (enforced && run.conductor_principal_id !== principal.principal_id) {
-      throw new ConductError("only the owning conductor principal may recover a run", 403);
     }
     const priorSession = this.state.sessions[run.conductor_session_id];
     if (priorSession) {
@@ -1457,7 +1526,7 @@ export class ConductKernel {
     const requester = this.state.sessions[requesterSessionId];
     if (!requester) throw new ConductError("requester session is not registered");
     const { principal, enforced } = this.principalForIdentity(requester.identity, requestedPrincipal);
-    this.requireRole(principal, "conductor");
+    this.requireRole(principal, "conductor", "executor");
     if (run.conductor_session_id !== requesterSessionId) {
       throw new ConductError("only the current conductor may cancel a reservation");
     }
@@ -1494,7 +1563,7 @@ export class ConductKernel {
     const requester = this.state.sessions[requesterSessionId];
     if (!requester) throw new ConductError("requester session is not registered");
     const { principal, enforced } = this.principalForIdentity(requester.identity, requestedPrincipal);
-    this.requireRole(principal, "conductor");
+    this.requireRole(principal, "conductor", "executor");
     if (run.conductor_session_id !== requesterSessionId) {
       throw new ConductError("only the current conductor may request stop");
     }
@@ -1591,7 +1660,7 @@ export class ConductKernel {
     excludeSessions = new Set(),
     ignoreRequiredSession = false,
   } = {}) {
-    if (isTaskCompatibilityPacket(packet)) {
+    if (isTaskCompatibilityPacket(packet) || packet.intent?.kind === "fanout-root") {
       return {
         session_id: "tabularius-conduct-keeper",
         identity: {
@@ -1614,6 +1683,19 @@ export class ConductKernel {
       if (!session.accepting_work || this.now - asDate(session.heartbeat_at) > this.sessionTtlMs) return false;
       if (session.quota_remaining === 0) return false;
       if (packet.required_capabilities.some((capability) => !session.capabilities.includes(capability))) return false;
+      const roleSnapshot = this.state.session_principal_roles[session.session_id];
+      let registeredRoles;
+      if (roleSnapshot === undefined) {
+        // Older local-development sessions may be reconstructed because their
+        // deterministic principal is derived from the same stored identity.
+        // Authenticated sessions without a role snapshot must re-register.
+        const local = this.principalForIdentity(session.identity, null).principal;
+        if (this.state.session_principals[session.session_id] !== local.principal_id) return false;
+        registeredRoles = new Set(local.roles);
+      } else {
+        registeredRoles = new Set(roleSnapshot);
+      }
+      if (!["executor", "compatibility"].some((role) => registeredRoles.has(role))) return false;
       if (packet.execution?.local_heavy_allowed === false
           && (session.capabilities.includes("local-heavy")
             || session.capabilities.includes("local-worktree"))) return false;
@@ -1843,6 +1925,7 @@ export class SerializedConductService {
       capabilitySecret = "development-only-capability-secret",
       steadyHeartbeatPersistence = true,
       runtimeIdentity = null,
+      notificationAssignments = notificationRegistry,
     } = {},
   ) {
     this.store = store;
@@ -1855,6 +1938,7 @@ export class SerializedConductService {
       leaseTtlMs,
       capabilitySecret,
       runtimeIdentity,
+      notificationAssignments,
     };
     this.tail = Promise.resolve();
   }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Focused contracts for Limen's native merge-queue workflow and ruleset body."""
+"""Focused contracts for Limen's single-owner fast lane and PR-only ruleset."""
 
 from __future__ import annotations
 
@@ -81,32 +81,35 @@ def test_workflow_event_contract() -> None:
 
 def test_targeted_ruleset_and_classic_protection_contract() -> None:
     module = load_setup_module()
-    assert module.checks_for_repo("organvm/limen") == ["pr-gate"]
+    assert module.checks_for_repo("4444J99/limen") == []
+    assert module.single_owner_fast_lane_for_repo("4444J99/limen") is True
 
-    protection = module.classic_protection_body(["pr-gate"])
-    assert protection["required_status_checks"] == {
-        "strict": False,
-        "contexts": ["pr-gate"],
-    }
+    protection = module.classic_protection_body([])
+    assert protection["required_status_checks"] is None
     assert protection["enforce_admins"] is True
     assert protection["required_pull_request_reviews"] is None
     assert module.classic_protection_contract_holds(
         {
-            "required_status_checks": {"strict": False, "contexts": ["pr-gate"]},
+            "required_status_checks": None,
             "enforce_admins": {"enabled": True},
             "required_pull_request_reviews": None,
             "restrictions": None,
         },
-        ["pr-gate"],
+        [],
     )
+    checked_protection = module.classic_protection_body(["pr-gate"])
+    assert checked_protection["required_status_checks"] == {
+        "strict": False,
+        "contexts": ["pr-gate"],
+    }
     assert not module.classic_protection_contract_holds(
         {
-            "required_status_checks": {"strict": False, "contexts": ["pr-gate"]},
+            "required_status_checks": None,
             "enforce_admins": {"enabled": False},
             "required_pull_request_reviews": None,
             "restrictions": None,
         },
-        ["pr-gate"],
+        [],
     )
 
     ruleset = module.default_ruleset_body()
@@ -229,7 +232,7 @@ def test_actions_board_publisher_dispatches_pr_gate_on_exact_branch() -> None:
         assert (
             tabularius._dispatch_pr_gate(
                 ROOT,
-                "organvm/limen",
+                "4444J99/limen",
                 tabularius.BOARD_PUBLICATION_BRANCH,
             )
             == ""
@@ -241,7 +244,7 @@ def test_actions_board_publisher_dispatches_pr_gate_on_exact_branch() -> None:
             "run",
             "pr-gate.yml",
             "--repo",
-            "organvm/limen",
+            "4444J99/limen",
             "--ref",
             tabularius.BOARD_PUBLICATION_BRANCH,
         ],
@@ -257,10 +260,10 @@ def test_actions_permissions_are_explicit_and_verified() -> None:
         mock.patch.object(module, "gh_json_checked", return_value=(body, "")) as verify,
         contextlib.redirect_stdout(io.StringIO()),
     ):
-        assert module.ensure_actions_pr_permissions("organvm/limen") is True
+        assert module.ensure_actions_pr_permissions("4444J99/limen") is True
     mutation.assert_called_once_with(
         "PUT",
-        "/repos/organvm/limen/actions/permissions/workflow",
+        "/repos/4444J99/limen/actions/permissions/workflow",
         {
             "default_workflow_permissions": "read",
             "can_approve_pull_request_reviews": True,
@@ -278,9 +281,9 @@ def test_ruleset_apply_is_idempotent_and_targeted() -> None:
         (
             [{"id": 731, "name": module.MERGE_QUEUE_RULESET_NAME}],
             "PUT",
-            "/repos/organvm/limen/rulesets/731",
+            "/repos/4444J99/limen/rulesets/731",
         ),
-        ([], "POST", "/repos/organvm/limen/rulesets"),
+        ([], "POST", "/repos/4444J99/limen/rulesets"),
     ):
         responses = iter([(existing, ""), (observed, "")])
         with (
@@ -288,7 +291,7 @@ def test_ruleset_apply_is_idempotent_and_targeted() -> None:
             mock.patch.object(module, "gh_input", return_value=success) as api,
             contextlib.redirect_stdout(io.StringIO()),
         ):
-            assert module.ensure_default_ruleset("organvm/limen") is True
+            assert module.ensure_default_ruleset("4444J99/limen") is True
         api.assert_called_once_with(method, path, module.default_ruleset_body())
 
     with mock.patch.object(module, "gh_input") as api:
@@ -300,7 +303,7 @@ def test_dry_run_never_calls_mutating_seams() -> None:
     module = load_setup_module()
     module.APPLY = False
     with (
-        mock.patch.object(module, "target_repos", return_value=["organvm/limen"]),
+        mock.patch.object(module, "target_repos", return_value=["4444J99/limen"]),
         mock.patch.object(
             module,
             "gh_json",
@@ -331,7 +334,7 @@ def test_apply_aggregates_ruleset_failure_and_skips_weaker_mutations() -> None:
         return False
 
     with (
-        mock.patch.object(module, "target_repos", return_value=["organvm/limen"]),
+        mock.patch.object(module, "target_repos", return_value=["4444J99/limen"]),
         mock.patch.object(module, "gh_json", return_value={"defaultBranchRef": {"name": "main"}}),
         mock.patch.object(module, "gh") as weaker_repo_mutation,
         mock.patch.object(module, "gh_input") as weaker_classic_mutation,
@@ -345,6 +348,51 @@ def test_apply_aggregates_ruleset_failure_and_skips_weaker_mutations() -> None:
     assert order == ["ruleset"]
     weaker_repo_mutation.assert_not_called()
     weaker_classic_mutation.assert_not_called()
+
+
+def test_fast_lane_apply_clears_remote_checks_and_disables_auto_merge() -> None:
+    module = load_setup_module()
+    module.APPLY = True
+    success = SimpleNamespace(returncode=0, stdout="", stderr="")
+    observed_protection = {
+        "required_status_checks": None,
+        "enforce_admins": {"enabled": True},
+        "required_pull_request_reviews": None,
+        "restrictions": None,
+    }
+    readbacks = iter(
+        [
+            ({"allow_auto_merge": False, "delete_branch_on_merge": False}, ""),
+            (observed_protection, ""),
+        ]
+    )
+    with (
+        mock.patch.object(module, "target_repos", return_value=["4444J99/limen"]),
+        mock.patch.object(
+            module,
+            "gh_json",
+            return_value={
+                "defaultBranchRef": {"name": "main"},
+                "isArchived": False,
+                "isFork": False,
+                "isPrivate": False,
+            },
+        ),
+        mock.patch.object(module, "gh", return_value=success) as repo_mutation,
+        mock.patch.object(module, "gh_input", return_value=success) as protection_mutation,
+        mock.patch.object(module, "gh_json_checked", side_effect=lambda *_args: next(readbacks)),
+        mock.patch.object(module, "ensure_actions_pr_permissions", return_value=True),
+        mock.patch.object(module, "ensure_default_ruleset", return_value=True),
+        mock.patch.object(module, "ensure_copilot_review", return_value=True),
+        contextlib.redirect_stdout(io.StringIO()),
+    ):
+        assert module.main() == 0
+    assert "allow_auto_merge=false" in repo_mutation.call_args.args[0]
+    protection_mutation.assert_called_once_with(
+        "PUT",
+        "/repos/4444J99/limen/branches/main/protection",
+        module.classic_protection_body([]),
+    )
 
 
 def test_apply_seam_has_one_protection_write_plus_one_readback() -> None:
@@ -366,6 +414,7 @@ def main() -> None:
     test_ruleset_apply_is_idempotent_and_targeted()
     test_dry_run_never_calls_mutating_seams()
     test_apply_aggregates_ruleset_failure_and_skips_weaker_mutations()
+    test_fast_lane_apply_clears_remote_checks_and_disables_auto_merge()
     test_apply_seam_has_one_protection_write_plus_one_readback()
     print("merge-queue-contract: all focused contracts pass")
 

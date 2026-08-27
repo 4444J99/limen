@@ -12,18 +12,23 @@ import subprocess
 import sys
 import time
 import uuid
+from dataclasses import dataclass
 from typing import Any, Callable
 
 from limen.bounded_subprocess import BoundedSubprocessError, run_bounded_subprocess
 from limen.host_admission import AdmissionController, AdmissionStateError
+from limen.notification_effect import DeliveryReceipt, emit_notification_event
 
 
 LABEL = "com.limen.heartbeat"
 CONTRACT_RELATIVE_PATH = Path("spec/scheduled-process-contracts.json")
+NOTIFICATION_REGISTRY_RELATIVE_PATH = Path("institutio/governance/notification-events.limen.json")
 STATE_SCHEMA = "limen.heartbeat_state.v1"
 PRIVATE_RECEIPT_SCHEMA = "limen.heartbeat_private_receipt.v1"
 PUBLIC_RECEIPT_SCHEMA = "limen.heartbeat_public_receipt.v1"
 SYSTEM_FAILURES = frozenset({"descendants", "invalid", "output", "resource", "timeout", "unavailable"})
+NOTIFICATION_STABLE_ID = "limen.heartbeat.finding"
+NOTIFICATION_SEVERITY_ORDER = {"urgent": 0, "normal": 1, "summary": 2}
 Clock = Callable[[], float]
 
 
@@ -87,6 +92,8 @@ def _load_contract(root: Path) -> tuple[dict[str, Any], str]:
         "audit_stream": isinstance(audit.get("max_stream_bytes"), int) and 1 <= audit["max_stream_bytes"] <= 262144,
         "audit_receipts": isinstance(audit.get("max_receipts"), int) and 1 <= audit["max_receipts"] <= 96,
         "public_receipt": audit.get("public_receipt") == "public-latest.json",
+        "notification_effect": contract.get("allowed_effects") == ["notification_event_v1"],
+        "notification_limit": contract.get("max_notification_events_per_fire") == 1,
     }
     failed = sorted(key for key, valid in required.items() if not valid)
     if failed:
@@ -120,6 +127,20 @@ def _load_contract(root: Path) -> tuple[dict[str, Any], str]:
         if any(value in {"--apply", "--emit", "--live", "dispatch"} for value in command):
             raise HeartbeatContractError(f"probe is not read-only: {name}")
         names.add(name)
+    runtime_artifacts = contract.get("runtime_artifacts")
+    if (
+        not isinstance(runtime_artifacts, list)
+        or not runtime_artifacts
+        or not all(
+            isinstance(value, str)
+            and value
+            and not Path(value).is_absolute()
+            and ".." not in Path(value).parts
+            and (root / value).is_file()
+            for value in runtime_artifacts
+        )
+    ):
+        raise HeartbeatContractError("heartbeat runtime artifact declaration is unsafe")
     required_fires = sum(86_400 / probe["cadence_seconds"] for probe in probes)
     available_fires = 86_400 / launchd["start_interval_seconds"]
     if math.ceil(required_fires) > math.floor(available_fires):
@@ -141,6 +162,7 @@ def _initial_state() -> dict[str, Any]:
         "consecutive_system_failures": 0,
         "disabled": False,
         "probes": {},
+        "notification_conditions": {},
     }
 
 
@@ -157,8 +179,10 @@ def _read_state(path: Path) -> dict[str, Any]:
         or not isinstance(state.get("consecutive_system_failures"), int)
         or not isinstance(state.get("disabled"), bool)
         or not isinstance(state.get("probes"), dict)
+        or not isinstance(state.get("notification_conditions", {}), dict)
     ):
         raise HeartbeatContractError("heartbeat state schema is incompatible")
+    state.setdefault("notification_conditions", {})
     return state
 
 
@@ -215,13 +239,14 @@ def _command(root: Path, declared: list[str]) -> list[str]:
     return command
 
 
-def _runtime_identity(root: Path, contract_digest: str, probe: dict[str, Any] | None) -> tuple[str, str]:
-    files = [
-        root / CONTRACT_RELATIVE_PATH,
-        Path(__file__),
-        Path(__file__).with_name("bounded_subprocess.py"),
-        Path(__file__).with_name("host_admission.py"),
-    ]
+def _runtime_identity(
+    root: Path,
+    contract: dict[str, Any],
+    contract_digest: str,
+    probe: dict[str, Any] | None,
+) -> tuple[str, str]:
+    files = [root / CONTRACT_RELATIVE_PATH]
+    files.extend(root / value for value in contract["runtime_artifacts"])
     if probe is not None:
         for value in probe["command"]:
             if value.startswith("scripts/"):
@@ -238,6 +263,169 @@ def _runtime_identity(root: Path, contract_digest: str, probe: dict[str, Any] | 
     except (OSError, json.JSONDecodeError):
         pass
     return runtime_sha, runtime_digest
+
+
+@dataclass(frozen=True)
+class NotificationCandidate:
+    """One re-derivable notification transition competing for the single effect slot."""
+
+    condition_key: str
+    transition: str
+    severity: str
+    target_active: bool
+    event: dict[str, Any]
+    digest: str
+
+
+def _canonical_digest(payload: object) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _observe_notification_condition(
+    state: dict[str, Any],
+    *,
+    probe: str,
+    status: str,
+    reason: str | None,
+    returncode: int | None,
+    observed_at: str,
+) -> None:
+    """Project a probe transition without consuming its notification entitlement."""
+
+    if status not in {"passed", "finding", "failed"}:
+        return
+    conditions = state.setdefault("notification_conditions", {})
+    row = conditions.get(probe)
+    if not isinstance(row, dict):
+        row = {"accepted_active": False, "accepted_severity": None}
+        conditions[probe] = row
+    active = status in {"finding", "failed"}
+    severity = "urgent" if status == "failed" else "normal" if active else None
+    changed = row.get("active") != active or (active and row.get("severity") != severity)
+    row.update(
+        {
+            "active": active,
+            "severity": severity,
+            "status": status,
+            "reason": reason,
+            "returncode": returncode,
+        }
+    )
+    if changed:
+        transition_facts = {
+            "active": active,
+            "observed_at": observed_at,
+            "probe": probe,
+            "reason": reason,
+            "returncode": returncode,
+            "severity": severity,
+            "status": status,
+        }
+        row["transition_observed_at"] = observed_at
+        row["transition_digest"] = _canonical_digest(transition_facts)
+
+
+def _notification_candidates(state: dict[str, Any]) -> list[NotificationCandidate]:
+    candidates: list[NotificationCandidate] = []
+    conditions = state.get("notification_conditions") or {}
+    for condition_key in sorted(conditions):
+        row = conditions[condition_key]
+        if not isinstance(row, dict):
+            continue
+        active = bool(row.get("active"))
+        accepted_active = bool(row.get("accepted_active"))
+        severity = str(row.get("severity") or row.get("accepted_severity") or "normal")
+        if active != accepted_active:
+            transition = "onset" if active else "clear"
+        elif (
+            active
+            and accepted_active
+            and NOTIFICATION_SEVERITY_ORDER.get(severity, 99)
+            < NOTIFICATION_SEVERITY_ORDER.get(str(row.get("accepted_severity") or "summary"), 99)
+        ):
+            transition = "update"
+        else:
+            continue
+        observed_at = str(row.get("transition_observed_at") or "")
+        transition_digest = str(row.get("transition_digest") or "")
+        if not observed_at or len(transition_digest) != 64:
+            continue
+        event = {
+            "event_id": f"heartbeat-{transition_digest[:24]}",
+            "transition": transition,
+            "subject_key": condition_key,
+            "observed_at": observed_at,
+            "stable_id": NOTIFICATION_STABLE_ID,
+            "facts": {
+                "probe": condition_key,
+                "reason": row.get("reason"),
+                "returncode": row.get("returncode"),
+                "snapshot_time": observed_at,
+                "status": row.get("status"),
+            },
+            "evidence_ref": f"heartbeat-observation:{transition_digest}",
+            "producer": "limen.heartbeat",
+            "owner": "limen",
+        }
+        candidates.append(
+            NotificationCandidate(
+                condition_key=condition_key,
+                transition=transition,
+                severity=severity,
+                target_active=active,
+                event=event,
+                digest=_canonical_digest(event),
+            )
+        )
+    return candidates
+
+
+def _select_notification_candidate(
+    candidates: list[NotificationCandidate],
+) -> NotificationCandidate | None:
+    """Choose one stable candidate; every loser remains derivable from state."""
+
+    def ordering(candidate: NotificationCandidate) -> tuple[int, int, str, str]:
+        severity = NOTIFICATION_SEVERITY_ORDER.get(candidate.severity, 99)
+        transition = 0 if candidate.transition in {"onset", "clear"} else 1
+        return severity, transition, candidate.condition_key, candidate.digest
+
+    return min(candidates, key=ordering) if candidates else None
+
+
+def _emit_candidate(root: Path, candidate: NotificationCandidate) -> DeliveryReceipt:
+    return emit_notification_event(
+        candidate.event,
+        registry=root / NOTIFICATION_REGISTRY_RELATIVE_PATH,
+        level=candidate.severity,
+    )
+
+
+def _accept_notification_candidate(state: dict[str, Any], candidate: NotificationCandidate) -> None:
+    row = (state.get("notification_conditions") or {}).get(candidate.condition_key)
+    if not isinstance(row, dict):
+        return
+    row["accepted_active"] = candidate.target_active
+    row["accepted_severity"] = candidate.severity if candidate.target_active else None
+    row["accepted_event_id"] = candidate.event["event_id"]
+
+
+def _notification_receipt_fields(
+    candidate: NotificationCandidate | None,
+    delivery: DeliveryReceipt | None,
+) -> dict[str, Any]:
+    return {
+        "notification_event_selected_count": int(candidate is not None),
+        "notification_event_attempted_count": int(delivery is not None and delivery.broker_invoked),
+        "notification_event_accepted_count": int(delivery is not None and delivery.accepted),
+        "notification_event_stable_id": candidate.event["stable_id"] if candidate is not None else None,
+        "notification_event_id": candidate.event["event_id"] if candidate is not None else None,
+        "notification_event_digest": candidate.digest if candidate is not None else None,
+        "notification_broker_schema": delivery.broker_schema if delivery is not None else None,
+        "notification_broker_status": delivery.status if delivery is not None else None,
+        "notification_broker_channels": dict(delivery.channels) if delivery is not None else {},
+    }
 
 
 def _append_audit(state_root: Path, receipt: dict[str, Any]) -> None:
@@ -271,6 +459,17 @@ def _write_receipts(state_root: Path, contract: dict[str, Any], receipt: dict[st
             for key in ("passed", "finding", "deferred", "idle", "coalesced", "disabled", "failed")
         },
         "consecutive_system_failures": receipt["consecutive_system_failures"],
+        "notification_effect": {
+            "selected_count": receipt["notification_event_selected_count"],
+            "attempted_count": receipt["notification_event_attempted_count"],
+            "accepted_count": receipt["notification_event_accepted_count"],
+            "stable_id": receipt["notification_event_stable_id"],
+            "event_id": receipt["notification_event_id"],
+            "event_digest": receipt["notification_event_digest"],
+            "broker_schema": receipt["notification_broker_schema"],
+            "broker_status": receipt["notification_broker_status"],
+            "broker_channels": receipt["notification_broker_channels"],
+        },
     }
     _atomic_json(state_root / contract["audit"]["public_receipt"], public)
 
@@ -294,6 +493,85 @@ def _disable_launch_agent() -> None:
         raise HeartbeatContractError("launchd kill switch could not be fully enacted")
 
 
+def _initialization_failure_receipt(root: Path, state_root: Path, now: float, reason: str) -> dict[str, Any]:
+    """Persist a fail-closed receipt even when the declared contract is unusable."""
+
+    runtime_files = [
+        Path(__file__),
+        Path(__file__).with_name("bounded_subprocess.py"),
+        Path(__file__).with_name("host_admission.py"),
+        Path(__file__).with_name("notification_effect.py"),
+    ]
+    contract_path = root / CONTRACT_RELATIVE_PATH
+    if contract_path.is_file():
+        runtime_files.append(contract_path)
+    rows = {
+        str(path.relative_to(root)) if path.is_relative_to(root) else path.name: _sha256(path) for path in runtime_files
+    }
+    runtime_digest = _canonical_digest(rows)
+    run_id = uuid.uuid4().hex
+    receipt = {
+        "schema": PRIVATE_RECEIPT_SCHEMA,
+        "run_id": run_id,
+        "label": LABEL,
+        "status": "failed",
+        "reason": reason,
+        "observed_epoch": now,
+        "observed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
+        "probe": None,
+        "probe_cost": None,
+        "duration_ms": 0,
+        "returncode": None,
+        "output_bytes": 0,
+        "surviving_descendant_count": 0,
+        "runtime_sha": "development",
+        "runtime_digest": runtime_digest,
+        "contract_digest": None,
+        "consecutive_system_failures": 1,
+        "disabled": True,
+        **_notification_receipt_fields(None, None),
+    }
+    _atomic_json(state_root / "receipts" / f"{int(now)}-{run_id}.json", receipt)
+    _append_audit(state_root, receipt)
+    _atomic_json(
+        state_root / "public-latest.json",
+        {
+            "schema": PUBLIC_RECEIPT_SCHEMA,
+            "label": LABEL,
+            "status": "failed",
+            "observed_at": receipt["observed_at"],
+            "runtime_sha": receipt["runtime_sha"],
+            "runtime_digest": runtime_digest,
+            "probe_count": 0,
+            "counts": {
+                key: int(key == "failed")
+                for key in (
+                    "passed",
+                    "finding",
+                    "deferred",
+                    "idle",
+                    "coalesced",
+                    "disabled",
+                    "failed",
+                )
+            },
+            "consecutive_system_failures": 1,
+            "notification_effect": {
+                "selected_count": 0,
+                "attempted_count": 0,
+                "accepted_count": 0,
+                "stable_id": None,
+                "event_id": None,
+                "event_digest": None,
+                "broker_schema": None,
+                "broker_status": None,
+                "broker_channels": {},
+            },
+        },
+    )
+    return receipt
+
+
 def heartbeat_once(
     root: Path,
     *,
@@ -301,17 +579,23 @@ def heartbeat_once(
     clock: Clock = time.time,
     controller: AdmissionController | None = None,
     disable_launch_agent: Callable[[], None] = _disable_launch_agent,
+    notification_emitter: Callable[[Path, NotificationCandidate], DeliveryReceipt] | None = None,
 ) -> dict[str, Any]:
     """Run at most one due read-only probe, then leave no resident child."""
 
     root = root.resolve()
     state_root = (state_root or _default_state_root()).resolve()
     now = clock()
-    contract, contract_digest = _load_contract(root)
+    observed_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
+    try:
+        contract, contract_digest = _load_contract(root)
+    except HeartbeatContractError as exc:
+        disable_launch_agent()
+        return _initialization_failure_receipt(root, state_root, now, str(exc))
     lock, lock_state = _acquire_lock(state_root, now)
     if lock is None:
         fail_closed = lock_state != "coalesced"
-        runtime_sha, runtime_digest = _runtime_identity(root, contract_digest, None)
+        runtime_sha, runtime_digest = _runtime_identity(root, contract, contract_digest, None)
         contention_receipt = {
             "schema": PRIVATE_RECEIPT_SCHEMA,
             "run_id": uuid.uuid4().hex,
@@ -319,7 +603,7 @@ def heartbeat_once(
             "status": "coalesced" if lock_state == "coalesced" else "failed",
             "reason": lock_state,
             "observed_epoch": now,
-            "observed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
+            "observed_at": observed_at,
             "probe": None,
             "probe_cost": None,
             "duration_ms": 0,
@@ -331,6 +615,7 @@ def heartbeat_once(
             "contract_digest": contract_digest,
             "consecutive_system_failures": -1,
             "disabled": fail_closed,
+            **_notification_receipt_fields(None, None),
         }
         _atomic_json(
             state_root / "receipts" / f"{int(now)}-{contention_receipt['run_id']}.json",
@@ -346,6 +631,7 @@ def heartbeat_once(
     admission = controller or AdmissionController()
     receipt: dict[str, Any]
     trip_kill_switch = False
+    pending_notification_count = 0
     try:
         state_error: str | None = None
         try:
@@ -359,12 +645,13 @@ def heartbeat_once(
             state["consecutive_system_failures"] = contract["failure_policy"]["consecutive_system_failures"] - 1
             state["disabled"] = True
         probe = None if state_error else _select_probe(contract, state, now)
-        runtime_sha, runtime_digest = _runtime_identity(root, contract_digest, probe)
+        runtime_sha, runtime_digest = _runtime_identity(root, contract, contract_digest, probe)
         status = "failed" if state_error else "disabled" if state["disabled"] else "idle" if probe is None else "passed"
         reason: str | None = state_error
         duration_ms = 0
         returncode: int | None = None
         output_bytes = 0
+        surviving_descendant_count: int | str = 0
         system_failure = state_error is not None
         if probe is not None and not state["disabled"]:
             if probe["cost"] == "heavy":
@@ -413,6 +700,7 @@ def heartbeat_once(
                     status = "failed"
                     reason = exc.kind
                     system_failure = exc.kind in SYSTEM_FAILURES
+                    surviving_descendant_count = "unknown"
                 except HeartbeatContractError as exc:
                     status = "failed"
                     reason = str(exc)
@@ -423,6 +711,14 @@ def heartbeat_once(
                     "last_attempt_epoch": now,
                     "last_status": status,
                 }
+                _observe_notification_condition(
+                    state,
+                    probe=probe["name"],
+                    status=status,
+                    reason=reason,
+                    returncode=returncode,
+                    observed_at=observed_at,
+                )
         if system_failure:
             state["consecutive_system_failures"] += 1
         elif status not in {"disabled"}:
@@ -430,13 +726,36 @@ def heartbeat_once(
         if state["consecutive_system_failures"] >= contract["failure_policy"]["consecutive_system_failures"]:
             state["disabled"] = True
             trip_kill_switch = True
+        candidate: NotificationCandidate | None = None
+        delivery: DeliveryReceipt | None = None
+        # A disabled heartbeat runs no probe, but it remains a bounded sender for any notification
+        # transition that was not accepted before the kill switch tripped. One candidate is attempted
+        # per fire; once the durable broker accepts the final candidate, launchd is unloaded.
+        if state_error is None:
+            candidate = _select_notification_candidate(_notification_candidates(state))
+            if candidate is not None:
+                emitter = notification_emitter or _emit_candidate
+                try:
+                    delivery = emitter(root, candidate)
+                except Exception as exc:  # noqa: BLE001 - an effect failure must still yield a receipt
+                    delivery = DeliveryReceipt(
+                        "failed",
+                        candidate.event["stable_id"],
+                        candidate.event["event_id"],
+                        {},
+                        f"notification adapter failed ({type(exc).__name__})",
+                        broker_invoked=False,
+                    )
+                if delivery.accepted:
+                    _accept_notification_candidate(state, candidate)
+        pending_notification_count = len(_notification_candidates(state))
         _atomic_json(state_path, state)
         receipt = {
             "schema": PRIVATE_RECEIPT_SCHEMA,
             "run_id": uuid.uuid4().hex,
             "label": LABEL,
             "observed_epoch": now,
-            "observed_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
+            "observed_at": observed_at,
             "status": status,
             "reason": reason,
             "probe": probe["name"] if probe is not None else None,
@@ -444,12 +763,13 @@ def heartbeat_once(
             "duration_ms": duration_ms,
             "returncode": returncode,
             "output_bytes": output_bytes,
-            "surviving_descendant_count": 0,
+            "surviving_descendant_count": surviving_descendant_count,
             "runtime_sha": runtime_sha,
             "runtime_digest": runtime_digest,
             "contract_digest": contract_digest,
             "consecutive_system_failures": state["consecutive_system_failures"],
             "disabled": state["disabled"],
+            **_notification_receipt_fields(candidate, delivery),
         }
         _append_audit(state_root, receipt)
         _write_receipts(state_root, contract, receipt)
@@ -464,7 +784,7 @@ def heartbeat_once(
             except (AdmissionStateError, ValueError):
                 pass
         _release_lock(lock, lock_state)
-    if trip_kill_switch:
+    if trip_kill_switch and pending_notification_count == 0:
         disable_launch_agent()
     return receipt
 

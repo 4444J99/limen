@@ -126,7 +126,6 @@ expect research-adjudication-change 'syntax-changed
 diff-hygiene
 direct-main-writer-contract
 research-adjudication-test
-research-adjudication-live-test
 check-params
 check-note-links
 check-board-consumers
@@ -136,7 +135,6 @@ expect research-adjudication-live-input-change 'syntax-changed
 diff-hygiene
 positioning-foundry-technical-readiness-public-live
 research-adjudication-test
-research-adjudication-live-test
 check-note-links' institutio/positioning/github-map.json
 
 # io.py is a DIRECT child of cli/src/limen — load-bearing for check-effectors, whose glob dialect
@@ -183,7 +181,6 @@ diff-hygiene
 merge-policy-test
 merge-queue-contract-test
 direct-main-writer-contract
-await-pr-test
 check-params
 check-gates
 check-note-links' scripts/merge-policy.sh
@@ -295,6 +292,7 @@ verify-resolver-test
 verify-parallel-test
 agent-docs
 github-estate-census-custody-test
+remote-execution-admission-test
 positioning-foundry-technical-readiness-test
 positioning-foundry-technical-readiness-public-live
 flagship-proof-set-test
@@ -302,6 +300,7 @@ flagship-evidence-test
 claim-policy-test
 agentic-delivery-audit-decision-test
 positioning-offer-contract-test
+profile-engine-test
 research-adjudication-test
 positioning-p14-control-plane-test
 check-gates

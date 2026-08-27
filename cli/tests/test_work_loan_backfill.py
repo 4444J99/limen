@@ -134,10 +134,10 @@ def test_load_repo_predicates_roundtrip(tmp_path: Path):
 def test_live_registry_parses_and_underwrites():
     root = Path(__file__).resolve().parents[2]
     registry = load_repo_predicates(root / "docs" / "repo-predicates.yaml")
-    assert "organvm/limen" in registry.repos
-    patch, reason = derive_loan_patch(_task(), registry)
+    assert "4444J99/limen" in registry.repos
+    patch, reason = derive_loan_patch(_task(repo="4444J99/limen"), registry)
     assert reason == "minted"
-    enriched = {**_task(), **patch}
+    enriched = {**_task(repo="4444J99/limen"), **patch}
     assert task_work_loan_readiness(enriched).ready
 
 

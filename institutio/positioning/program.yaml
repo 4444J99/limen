@@ -2,7 +2,7 @@ schema_version: limen.positioning_program.v1
 program:
   id: PSP-ROOT
   title: Production-Systems Positioning — Alpha to Omega
-  repository: organvm/limen
+  repository: 4444J99/limen
   outcome: >-
     An evidence-backed production-systems identity, proof-led public front door, qualified inbound
     motion, repeatable delivery practice, and governed operator-handoff loop that any registered
@@ -356,7 +356,7 @@ phases:
       - id: PSP-P00-W01
         title: Commit the canonical alpha-to-omega program manifest
         outcome: Strategy, phases, dependencies, gates, targets, predicates, and return paths have one tracked owner.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [institutio/positioning/program.yaml]
         capabilities: [architecture, documentation]
         reasoning: deep
@@ -372,7 +372,7 @@ phases:
       - id: PSP-P00-W02
         title: Build structural validation and dependency-cycle detection
         outcome: Malformed fields, unknown references, duplicate IDs, cycles, and unsafe model pinning fail closed.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [scripts/positioning-program.py, cli/tests/test_positioning_program.py]
         capabilities: [python, testing]
         reasoning: routine
@@ -388,7 +388,7 @@ phases:
       - id: PSP-P00-W03
         title: Build idempotent GitHub milestone, label, and issue projection
         outcome: Root, phase, and leaf issues are recoverable from stable markers and never duplicate on rerun.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [scripts/positioning-program.py, institutio/positioning/github-map.json]
         capabilities: [python, github_write]
         reasoning: deep
@@ -404,7 +404,7 @@ phases:
       - id: PSP-P00-W04
         title: Publish cross-agent work-packet and relay contracts
         outcome: A cold agent can resume a leaf without transcript inheritance or authority confusion.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/program/AGENT-RUNBOOK.md, docs/positioning/program/WORK-PACKET-TEMPLATE.md, docs/positioning/program/RELAY-TEMPLATE.md]
         capabilities: [documentation, conduct_protocol]
         reasoning: deep
@@ -420,7 +420,7 @@ phases:
       - id: PSP-P00-W05
         title: Expose ready-work and model-assigned packet seeds
         outcome: Any healthy lane can discover unblocked work and create a live WorkPacketV1 without a model-name table.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [scripts/positioning-program.py]
         capabilities: [python, conduct_protocol]
         reasoning: deep
@@ -436,7 +436,7 @@ phases:
       - id: PSP-P00-W06
         title: Prove issue-map parity and zero orphan program work
         outcome: Every manifest object has exactly one issue and every marked issue has exactly one manifest owner.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [scripts/positioning-program.py, docs/positioning/program/ISSUE-INDEX.md]
         capabilities: [github_read, verification]
         reasoning: routine
@@ -452,7 +452,7 @@ phases:
       - id: PSP-P00-W07
         title: Route ready expert-positioning work into fresh Codex tasks
         outcome: Ready strategy work is handed to fresh Codex tasks with exact registry-derived model, effort, dependencies, scope, and a durable receipt.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [institutio/positioning/program.yaml, scripts/positioning-program.py, docs/positioning/program]
         capabilities: [codex_tasks, program_management, verification]
         reasoning: deep
@@ -476,7 +476,7 @@ phases:
       - id: PSP-P01-W01
         title: Fix the wall-clock-dependent throughput-governor test
         outcome: The test evaluates its fixture time rather than the host wall clock while production semantics remain unchanged.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [cli/src/limen/dispatch.py, cli/tests/test_throughput_governor.py]
         capabilities: [python, diagnosis, testing]
         reasoning: routine
@@ -492,7 +492,7 @@ phases:
       - id: PSP-P01-W02
         title: Land the positioning truth-reconciliation foundation
         outcome: PR 2136 merges with claims, authorship, proof, estate, URL, and IA documents intact.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning, link-surfaces.json, scripts]
         capabilities: [github_review, ci, documentation]
         reasoning: deep
@@ -508,7 +508,7 @@ phases:
       - id: PSP-P01-W03
         title: Land encrypted custody for private evidence artifacts
         outcome: PR 2141 merges and private research/evidence can be preserved without public-path leakage.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [private-vault, docs, scripts]
         capabilities: [github_review, security, ci]
         reasoning: deep
@@ -524,7 +524,7 @@ phases:
       - id: PSP-P01-W04
         title: Reconcile old positioning doctrine and generators against the new truth contract
         outcome: No older document or generator can silently republish superseded or unsupported claims.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/inbound-magnet-system.md, docs/positioning, scripts/sync-readme.py, scripts]
         capabilities: [search, documentation, python]
         reasoning: deep
@@ -540,7 +540,7 @@ phases:
       - id: PSP-P01-W05
         title: Freeze the post-merge public-surface baseline
         outcome: The program records current URLs, rendered states, claims, checks, and known failures before public redesign.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/receipts, link-surfaces.json, institutio/identity/url-map.yaml]
         capabilities: [browser, github_read, evidence_collection]
         reasoning: routine
@@ -564,7 +564,7 @@ phases:
       - id: PSP-P02-W01
         title: Discover every organization and repository the owner controls
         outcome: The estate denominator comes from live GitHub ownership and includes all organizations, not a remembered subset.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [institutio/github/estate.yaml, docs/receipts]
         capabilities: [github_read, data_collection]
         reasoning: routine
@@ -580,7 +580,7 @@ phases:
       - id: PSP-P02-W02
         title: Classify the full estate by role, maturity, visibility, and public relevance
         outcome: Infrastructure, proof, experiments, products, archives, private operations, and partner work are distinguishable.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/estate-classification.md, institutio/github/estate.yaml]
         capabilities: [classification, repository_analysis]
         reasoning: deep
@@ -596,7 +596,7 @@ phases:
       - id: PSP-P02-W03
         title: Score and ratify the flagship proof set
         outcome: A small proof set carries the story while the full estate remains available for diligence.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/estate-classification.md, docs/positioning/proof-production-program.md]
         capabilities: [product_strategy, evidence_synthesis]
         reasoning: frontier_review
@@ -612,7 +612,7 @@ phases:
       - id: PSP-P02-W04
         title: Build a complete evidence packet for every selected flagship
         outcome: Architecture, code, tests, deployments, metrics, limitations, authorship, and status are available for synthesis.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/evidence, private-vault]
         capabilities: [github_read, code_analysis, evidence_collection]
         reasoning: deep
@@ -628,7 +628,7 @@ phases:
       - id: PSP-P02-W05
         title: Make every material metric and claim reproducible
         outcome: Throughput, scale, reliability, deployment, and adoption claims can be regenerated or are explicitly withheld.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/claims-ledger.md, scripts]
         capabilities: [data_analysis, python, github_read]
         reasoning: deep
@@ -644,7 +644,7 @@ phases:
       - id: PSP-P02-W06
         title: Enforce claim policy, staleness, and privacy in generation gates
         outcome: Unsupported, expired, private, or prohibited claims cannot reach generated public surfaces.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [scripts, docs/positioning/claims-ledger.md]
         capabilities: [python, policy_testing]
         reasoning: deep
@@ -660,7 +660,7 @@ phases:
       - id: PSP-P02-W07
         title: Establish public correction, withdrawal, and source-change protocol
         outcome: A discovered error has a deterministic route from quarantine through correction and republication.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning, docs/positioning/program]
         capabilities: [governance, documentation]
         reasoning: deep
@@ -676,7 +676,7 @@ phases:
       - id: PSP-P02-W08
         title: Adjudicate research criticisms against the live profile and primary sources
         outcome: Stale or mistaken research cannot suppress valid evidence, while contestable inferences remain honestly bounded.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/program/RESEARCH-ADJUDICATION.md, docs/positioning/program/research-adjudication.json, docs/receipts/positioning/psp-p02-w08-live-profile-preflight-20260810.json, docs/positioning/claims-ledger.md, scripts]
         capabilities: [github_read, research, statistical_reasoning, claim_adjudication]
         reasoning: frontier_review
@@ -700,7 +700,7 @@ phases:
       - id: PSP-P03-W01
         title: Ratify the production-systems architect identity contract
         outcome: Canonical title, headline, disclosure, proof hierarchy, and forbidden claims are settled in one source.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning, positioning-seeds.json]
         capabilities: [positioning, editorial]
         reasoning: frontier_review
@@ -716,7 +716,7 @@ phases:
       - id: PSP-P03-W02
         title: Define the client, recruiter, and deeper operator jobs-to-be-done
         outcome: Each audience sees only the proof and action relevant to its decision.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/portfolio-information-architecture.md, docs/positioning/program]
         capabilities: [audience_research, information_architecture]
         reasoning: deep
@@ -732,7 +732,7 @@ phases:
       - id: PSP-P03-W03
         title: Write the ten-second, five-minute, and diligence narrative ladder
         outcome: Visitors can stop at the level of detail they need while evidence remains discoverable.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/portfolio-information-architecture.md, docs/positioning]
         capabilities: [editorial, information_architecture]
         reasoning: deep
@@ -748,7 +748,7 @@ phases:
       - id: PSP-P03-W04
         title: Create the client-facing narrative and expensive-problem map
         outcome: The story begins with stalled delivery and governance risk, not with tools or repository volume.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning, docs/positioning/program]
         capabilities: [sales_strategy, editorial]
         reasoning: deep
@@ -764,7 +764,7 @@ phases:
       - id: PSP-P03-W05
         title: Create the recruiter-facing narrative and role map
         outcome: Senior hiring readers see systems leadership, operating judgment, and delivery scope without an unsupported title claim.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning, portfolio/resume]
         capabilities: [career_strategy, editorial]
         reasoning: deep
@@ -780,7 +780,7 @@ phases:
       - id: PSP-P03-W06
         title: Design language that reduces the spy or takeover threat response
         outcome: Interviews and sales conversations communicate additive leverage, bounded authority, and partnership.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning, docs/positioning/program]
         capabilities: [behavioral_messaging, editorial]
         reasoning: deep
@@ -796,7 +796,7 @@ phases:
       - id: PSP-P03-W07
         title: Run blinded target-reader comprehension and trust tests
         outcome: The narrative is judged by what qualified readers infer, not by author intent.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/receipts, docs/positioning]
         capabilities: [research, qualitative_analysis]
         reasoning: routine
@@ -820,7 +820,7 @@ phases:
       - id: PSP-P04-W01
         title: Productize the Agentic Delivery Audit
         outcome: A CTO can buy a fixed, read-only diagnostic that ends in a written verdict and gate specification.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/offers, docs/positioning]
         capabilities: [offer_design, technical_delivery]
         reasoning: frontier_review
@@ -836,7 +836,7 @@ phases:
       - id: PSP-P04-W02
         title: Productize the Governance Install
         outcome: The audit can expand into a 4-8 week implementation for one team or pipeline with bounded change authority.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/offers]
         capabilities: [offer_design, systems_architecture]
         reasoning: deep
@@ -852,7 +852,7 @@ phases:
       - id: PSP-P04-W03
         title: Define the bounded delivery-governance retainer
         outcome: Ongoing support has a finite cadence, decision rights, response envelope, and no on-call ambiguity.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/offers]
         capabilities: [service_design, operations]
         reasoning: deep
@@ -868,7 +868,7 @@ phases:
       - id: PSP-P04-W04
         title: Define qualification, disqualification, and escalation criteria
         outcome: Bad-fit leads are declined early and good-fit leads enter the correct offer without custom invention.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/offers, docs/positioning/program]
         capabilities: [sales_strategy, risk_analysis]
         reasoning: deep
@@ -884,7 +884,7 @@ phases:
       - id: PSP-P04-W05
         title: Model internal pricing, capacity, and discount guardrails
         outcome: Price hypotheses cover delivery effort, risk, opportunity cost, and capacity while staying private.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [positioning-seeds.json, private-vault]
         capabilities: [financial_modeling, service_operations]
         reasoning: deep
@@ -916,7 +916,7 @@ phases:
       - id: PSP-P04-W07
         title: Define the product-partnership offer without making it a front-door distraction
         outcome: Qualified operators can understand transfer hypotheses after diligence while public positioning remains focused.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/offers, docs/positioning/program]
         capabilities: [venture_design, partnership_strategy]
         reasoning: frontier_review
@@ -940,7 +940,7 @@ phases:
       - id: PSP-P05-W01
         title: Publish the Limen engineering report source package
         outcome: Limen demonstrates governed multi-agent delivery through architecture, decisions, failure modes, metrics, and limits.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/proof, docs/receipts]
         capabilities: [technical_writing, architecture, data_analysis]
         reasoning: frontier_review
@@ -956,7 +956,7 @@ phases:
       - id: PSP-P05-W02
         title: Reconcile every public surface against the claims contract
         outcome: Existing profile, portfolio, resume, organization, and repository copy cannot contradict the report or ledger.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning, scripts, link-surfaces.json]
         capabilities: [content_audit, search, verification]
         reasoning: deep
@@ -972,7 +972,7 @@ phases:
       - id: PSP-P05-W03
         title: Produce cost-per-task and failure-mode analysis
         outcome: The commercial claim is grounded in delivery economics and control behavior, not only software output.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/proof, docs/receipts]
         capabilities: [data_analysis, reliability_engineering]
         reasoning: deep
@@ -988,7 +988,7 @@ phases:
       - id: PSP-P05-W04
         title: Create fresh test-reproduction receipts for flagship claims
         outcome: Visitors and reviewers can see recent proof that selected systems still work.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/receipts/positioning]
         capabilities: [testing, github_actions, evidence_collection]
         reasoning: routine
@@ -1004,7 +1004,7 @@ phases:
       - id: PSP-P05-W05
         title: Build a public-safe Limen architecture demonstration
         outcome: The governed system can be understood visually and interactively without exposing private operations or secrets.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [web, docs/positioning/proof, assets]
         capabilities: [frontend, visualization, security_review]
         reasoning: deep
@@ -1020,7 +1020,7 @@ phases:
       - id: PSP-P05-W06
         title: Produce external validation objects
         outcome: Third-party observations, reviews, reproductions, or outcomes provide evidence beyond self-authored claims.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/proof, docs/receipts]
         capabilities: [research, partner_coordination, evidence_curation]
         reasoning: deep
@@ -1244,7 +1244,7 @@ phases:
       - id: PSP-P07-W06
         title: Stage the LinkedIn, X, and email-signature identity package
         outcome: Off-platform identity surfaces have approved copy aligned with the canonical position and fastest contact route.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/off-platform]
         capabilities: [editorial, platform_copy]
         reasoning: deep
@@ -1260,7 +1260,7 @@ phases:
       - id: PSP-P07-W07
         title: Attach the approved custom-domain hierarchy
         outcome: Portfolio, Limen, exporter, and other approved surfaces resolve at stable branded URLs.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [institutio/identity/url-map.yaml, scripts/cf-wrangler.sh, link-surfaces.json]
         capabilities: [dns, cloudflare, deployment]
         reasoning: routine
@@ -1292,7 +1292,7 @@ phases:
       - id: PSP-P07-W09
         title: Prove link health, release rollback, and surface parity
         outcome: Broken links, stale builds, and inconsistent public copy are detected before they damage trust.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [link-surfaces.json, scripts/link-health.py, scripts]
         capabilities: [verification, deployment, browser]
         reasoning: routine
@@ -1316,7 +1316,7 @@ phases:
       - id: PSP-P08-W01
         title: Activate a dedicated inbound alias and tagged CTAs
         outcome: Every public CTA carries surface, proof, and audience provenance into the mail lane.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [positioning-seeds.json, docs/positioning, link-surfaces.json]
         capabilities: [email_routing, configuration]
         reasoning: routine
@@ -1364,7 +1364,7 @@ phases:
       - id: PSP-P08-W04
         title: Score and route client, recruiter, operator, spam, and ambiguous leads
         outcome: The system suggests the next lane without pretending uncertainty is certainty.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [scripts, institutio, docs/positioning]
         capabilities: [classification, sales_operations, python]
         reasoning: deep
@@ -1436,7 +1436,7 @@ phases:
       - id: PSP-P09-W01
         title: Build the 90-day proof-led editorial calendar
         outcome: Content cadence follows the flagship evidence and buyer questions rather than generic personal branding.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/content]
         capabilities: [editorial_strategy, sales_strategy]
         reasoning: deep
@@ -1532,7 +1532,7 @@ phases:
       - id: PSP-P09-W07
         title: Generate channel-specific derivative assets without claim drift
         outcome: Threads, newsletter blurbs, community posts, and visuals remain compact pointers to the canonical proof.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/content, assets]
         capabilities: [content_repurposing, design]
         reasoning: routine
@@ -1572,7 +1572,7 @@ phases:
       - id: PSP-P10-W01
         title: Define the ideal client profile and live buying signals
         outcome: The audit targets teams with expensive agentic-delivery pain, sufficient authority, and a decision they can act on.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/sales]
         capabilities: [sales_strategy, market_research]
         reasoning: deep
@@ -1684,7 +1684,7 @@ phases:
       - id: PSP-P10-W08
         title: Run and adjudicate the 90-day demand experiment
         outcome: Actual qualified outcomes validate the audit wedge or force a documented revision without another broad speculative research cycle.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/decisions, docs/receipts]
         capabilities: [sales_analysis, strategy, decision_review]
         reasoning: frontier_review
@@ -1908,7 +1908,7 @@ phases:
       - id: PSP-P12-W05
         title: Capture testimonials, references, reproductions, and independent review
         outcome: The story includes externally authored validation with provenance and consent.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/proof, docs/receipts]
         capabilities: [evidence_curation, partner_coordination]
         reasoning: routine
@@ -1924,7 +1924,7 @@ phases:
       - id: PSP-P12-W06
         title: Refresh positioning, proof, and offer claims from real outcomes
         outcome: External results strengthen, narrow, or invalidate the narrative through the same claims control plane.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/claims-ledger.md, docs/positioning, positioning-seeds.json]
         capabilities: [claim_adjudication, strategy, data_analysis]
         reasoning: frontier_review
@@ -1948,7 +1948,7 @@ phases:
       - id: PSP-P13-W01
         title: Inventory every product candidate across all owned organizations
         outcome: Generated products, experiments, infrastructure, archives, partner work, and actual transfer candidates are no longer conflated.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [institutio/github/estate.yaml, docs/positioning/foundry]
         capabilities: [github_read, product_inventory, classification]
         reasoning: routine
@@ -1964,7 +1964,7 @@ phases:
       - id: PSP-P13-W02
         title: Score demand and market evidence for every product candidate
         outcome: Transfer attention follows observed demand, pain, audience, and willingness-to-pay evidence rather than build enthusiasm.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/foundry, institutio]
         capabilities: [product_strategy, market_analysis, data_modeling]
         reasoning: deep
@@ -1980,7 +1980,7 @@ phases:
       - id: PSP-P13-W03
         title: Score technical readiness, custody, and maintenance risk
         outcome: A product cannot be handed off because it demos well while tests, deploy, security, docs, data, or ownership remain unsafe.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/foundry, docs/receipts]
         capabilities: [technical_due_diligence, security, operations]
         reasoning: deep
@@ -2012,7 +2012,7 @@ phases:
       - id: PSP-P13-W05
         title: Establish transfer floors, economics, and kill/park rules
         outcome: A handoff begins only after demand and economics cross declared thresholds, and weak products stop consuming narrative attention.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/foundry, private-vault]
         capabilities: [financial_modeling, portfolio_strategy]
         reasoning: deep
@@ -2076,7 +2076,7 @@ phases:
       - id: PSP-P13-W09
         title: Institutionalize foundry governance and product return paths
         outcome: Future product transfers reuse a scored, observable, reversible operating model rather than one-off partnerships.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/foundry, institutio, scripts]
         capabilities: [governance, portfolio_operations, automation]
         reasoning: deep
@@ -2100,7 +2100,7 @@ phases:
       - id: PSP-P14-W01
         title: Define the end-to-end event and KPI dictionary
         outcome: Trust, discovery, engagement, demand, sales, delivery, and foundry metrics have stable definitions and owners.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/analytics, institutio]
         capabilities: [analytics, kpi_design, governance]
         reasoning: deep
@@ -2116,7 +2116,7 @@ phases:
       - id: PSP-P14-W02
         title: Operate the weekly execution and demand review
         outcome: Ready work, blockers, qualified demand, delivery risk, and evidence changes receive one bounded weekly decision.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/reviews, scripts]
         capabilities: [program_management, analytics]
         reasoning: routine
@@ -2132,7 +2132,7 @@ phases:
       - id: PSP-P14-W03
         title: Operate the monthly truth, surface, and privacy audit
         outcome: Claims, sources, links, public/private boundaries, and generated surfaces cannot drift silently.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [scripts, docs/receipts, link-surfaces.json]
         capabilities: [audit, privacy, link_check, claim_adjudication]
         reasoning: deep
@@ -2148,7 +2148,7 @@ phases:
       - id: PSP-P14-W04
         title: Operate the quarterly strategy and prominence review
         outcome: Identity, proof hierarchy, offers, and channels change only when accumulated audience and outcome evidence warrants it.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/decisions, docs/receipts]
         capabilities: [strategy, claim_adjudication, sales_analysis]
         reasoning: frontier_review
@@ -2164,7 +2164,7 @@ phases:
       - id: PSP-P14-W05
         title: Automate claim incident quarantine and correction propagation
         outcome: A false, stale, or privacy-unsafe claim is removed everywhere before a corrected version can republish.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [scripts, docs/positioning/claims-ledger.md, docs/receipts]
         capabilities: [python, incident_response, content_generation]
         reasoning: deep
@@ -2196,7 +2196,7 @@ phases:
       - id: PSP-P14-W07
         title: Feed sales objections and demand outcomes back into offers
         outcome: Offer scope, qualification, pricing, and copy evolve from aggregated market evidence without corrupting historical outcomes.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/offers, docs/positioning/decisions]
         capabilities: [sales_analysis, offer_design]
         reasoning: deep
@@ -2212,7 +2212,7 @@ phases:
       - id: PSP-P14-W08
         title: Feed delivery and operator outcomes back into proof and portfolio classification
         outcome: Reliability, impact, maintenance, and operator evidence update what products and systems may credibly claim.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [docs/positioning/claims-ledger.md, docs/positioning/estate-classification.md, docs/positioning/proof]
         capabilities: [product_analysis, claim_adjudication, portfolio_strategy]
         reasoning: deep
@@ -2228,7 +2228,7 @@ phases:
       - id: PSP-P14-W09
         title: Prove alpha-to-omega convergence in two unchanged passes
         outcome: The program reaches a cross-agent fixed point with no orphan issue, stale claim, broken surface, unowned result, or hidden human gate.
-        target_repo: organvm/limen
+        target_repo: 4444J99/limen
         target_paths: [institutio/positioning, docs/positioning/program, docs/receipts]
         capabilities: [verification, github_read, governance, closeout]
         reasoning: frontier_review

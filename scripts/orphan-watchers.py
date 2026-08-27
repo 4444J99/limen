@@ -18,14 +18,13 @@ One detection core, three consumers:
 
 A WATCHER is a Claude-launched shell (``.claude/shell-snapshots/`` in its command) that both
 sleeps (``sleep N``) and polls a PR gate (``gh pr `` or ``merge-policy.sh``) — plus any live
-``scripts/await-pr.sh`` run (the sanctioned waiter is still a watcher; an orphaned one past its
-deadline is equally reapable). An ORPHAN is a watcher whose parent is gone (or is no longer a
+``scripts/await-pr.sh`` run left over from the retired implementation. An ORPHAN is a watcher whose parent is gone (or is no longer a
 claude process) AND whose age >= LIMEN_ORPHAN_WATCHER_MIN_AGE (default 1800 s — deliberately
-above await-pr's 1200 s deadline, so a healthy sanctioned wait can never be reaped).
+conservative for historical watcher cleanup).
 
 Test seam: --ps-fixture FILE replays a ``ps -axo pid=,ppid=,etime=,command=`` table.
-Sanctioned alternatives the escalation points at: scripts/await-pr.sh (bounded, loud) or the
-beat's merge rung (scripts/merge-drain.py via scripts/drain.sh).
+The only sanctioned handoff is one exact-head submission to scripts/merge-drain.py; agent/provider
+sessions never wait or retry.
 """
 
 from __future__ import annotations
@@ -197,7 +196,7 @@ def main(argv: list[str] | None = None) -> int:
         if watchers:
             print(
                 f"⚠ orphan-watchers: {len(watchers)} PR watcher shell(s) still running at session end "
-                f"— use scripts/await-pr.sh or hand off to the merge rung (scripts/drain.sh):",
+                f"— submit one exact head to scripts/merge-drain.py and return control:",
                 file=sys.stderr,
             )
             for w in watchers:
