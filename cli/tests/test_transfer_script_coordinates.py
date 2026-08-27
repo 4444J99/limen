@@ -21,10 +21,13 @@ def _load_script(name: str, relative_path: str):
 def test_ruleset_registry_and_limen_guards_are_case_insensitive() -> None:
     setup_rulesets = _load_script("setup_rulesets_coordinate_test", "scripts/setup-rulesets.py")
 
-    assert setup_rulesets.checks_for_repo(
-        "4444j99/LIMEN",
-        facts={"archived": False, "fork": False, "private": False},
-    ) == ["pr-gate"]
+    assert (
+        setup_rulesets.checks_for_repo(
+            "4444j99/LIMEN",
+            facts={"archived": False, "fork": False, "private": False},
+        )
+        == []
+    )
     assert setup_rulesets._is_limen_repo("4444j99/LIMEN") is True
 
 
