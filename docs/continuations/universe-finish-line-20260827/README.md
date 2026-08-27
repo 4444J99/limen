@@ -9,6 +9,8 @@ reclamation, shared-checkout reset, notification canary acceptance, or closure o
 
 - Branch: `corrective/universe-finish-line-20260827`
 - Base: `origin/main@8773db631e9c4b2fe00abbb032e758b5264ffc7f`
+- Implementation commit: `740d5c720ab5612d2b2e2d04f4d5b845c4e636b8`
+- Review owner: [PR #2549](https://github.com/4444J99/limen/pull/2549)
 - Executor: native Codex direct session, human protected by policy
 - Writer scope: the isolated universe-finish Limen worktree only
 - Conduct state: unavailable because the authenticated broker environment was not present
@@ -57,6 +59,11 @@ failures, and 20,900 aggregate unaccounted leaves. It is therefore correctly `co
 The current immutable cleanup dry plan contains seven candidates with digest
 `8b0217df440fbfb61ae4f7aa045915032a4b7d8c64b0c40780ae08141deb4f19`; strict worktree debt reports
 six debt items. No candidate was applied because the aggregate truth plane is incomplete.
+
+The final session-custody check proves this branch is fully pushed and the worktree is clean. It
+still fails on two landed local branches that carry standing authorization in the branch-reap
+ledger. They remain intentionally unapplied because this campaign forbids deletion while the
+aggregate census is incomplete.
 
 ## Verification
 
