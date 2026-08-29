@@ -28,9 +28,9 @@ schema: limen.repo_predicates.v1
 default_predicate_template: >-
   test "$(gh pr list --repo {repo} --state merged --search {task_id} --json number --jq length)" != 0
 repos:
-  organvm/a-i-chat--exporter: {}
+  organvm-iii-ergon/a-i-chat--exporter: {}
   organvm/my-knowledge-base: {}
-  organvm/public-record-data-scrapper: {}
+  organvm-iii-ergon/public-record-data-scrapper: {}
   4444J99/peer-audited--behavioral-blockchain: {}
   4444J99/your-fit-tailored: {}
   4444J99/mirror-mirror: {}
@@ -43,7 +43,7 @@ repos:
   organvm/session-meta: {}
   organvm-vii-kerygma/portfolio: {}
   organvm/manumissio: {}
-  organvm/cind-and-sol-foundation: {}
+  organvm-ii-poiesis/cind-and-sol-foundation: {}
   4444J99/sovereign--ground--4444j99: {}
   organvm/hospes: {}
   4444J99/micro-tato: {}
