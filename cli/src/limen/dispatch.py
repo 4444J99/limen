@@ -5372,6 +5372,7 @@ def _remaining_budget(limen: LimenFile, agent: str, budget: int) -> int:
 
 
 DispatchResult = tuple[str, str, bool | str | PlanHandoffResult, str, str]
+SerialReservation = tuple[LimenFile, Task, str, str]
 
 
 def _clear_result_receipts(task_id: str) -> None:
@@ -5472,6 +5473,158 @@ def _commit_dispatch_results(
         apply_limen_file_sync(tasks_path, fresh, agent="dispatch", session_id="serial-results")
 
 
+def _reserve_serial_dispatch(
+    tasks_path: Path,
+    limen: LimenFile,
+    task_id: str,
+    agent: str,
+    selected_contract_hash: str,
+    selected_lifecycle_token: str,
+    now: datetime,
+    *,
+    explicit_task: bool,
+) -> SerialReservation:
+    """Canonically claim one serial task before any provider process is launched.
+
+    The public ``tasks.yaml`` is a lagging projection.  A local status mutation or
+    work-loan journal row therefore cannot reserve budget or exclude another host.
+    This seam submits the exact open→dispatched transition to the authenticated
+    keeper, requires the keeper's projected claim receipt, and only then returns a
+    task that is safe to hand to a provider.
+    """
+
+    with _queue_lock(tasks_path) as got:
+        if not got:
+            raise RuntimeError("queue busy before canonical claim")
+        fresh = load_limen_file(tasks_path) if tasks_path.exists() else limen.model_copy(deep=True)
+        before = fresh.model_copy(deep=True)
+        id2 = {task.id: task for task in fresh.tasks}
+        task = id2.get(task_id)
+        if task is None:
+            raise RuntimeError("task disappeared before canonical claim")
+        if not _dispatchable(task) or not _task_targets_agent(task, agent) or not agent_can_run_task(agent, task):
+            raise RuntimeError("task is no longer dispatchable by the selected agent")
+        if not explicit_task and (
+            not _deps_met(task, id2)
+            or _superseded_by_rebase_task(task, id2)
+            or _superseded_by_trunk_repair(task, id2)
+            or chronic_dispatch_reason(task) is not None
+        ):
+            raise RuntimeError("task dependencies or ownership changed before canonical claim")
+        if not _routine_generated_buildout_allowed(task):
+            raise RuntimeError("task is no longer admitted by the routine buildout gate")
+
+        # The caller may have normalized a legacy row in memory.  Repeat that
+        # deterministic normalization on the fresh projection, while retaining
+        # ``before`` so the normalization itself is included in the authenticated
+        # compare-and-swap transition.
+        normalize_selected_legacy_task(task)
+        if not _result_owner_is_current(task, selected_contract_hash, selected_lifecycle_token):
+            raise RuntimeError("task execution contract or lifecycle changed before canonical claim")
+
+        reservation_id = secrets.token_hex(32)
+        task.status = "dispatched"
+        task.updated = now
+        task.dispatch_log.append(
+            DispatchLogEntry(
+                timestamp=now,
+                agent=agent,
+                session_id=reservation_id,
+                status="dispatched",
+                execution_contract_hash=selected_contract_hash,
+                output="dispatch-serial: canonical claim accepted before provider execution",
+            )
+        )
+        receipt = apply_limen_file_sync(
+            tasks_path,
+            fresh,
+            agent="dispatch",
+            session_id="serial-reserve",
+            before=before,
+            now=now,
+        )
+        projected = getattr(receipt, "projected_tasks", None)
+        projected_row = projected.get(task_id) if isinstance(projected, dict) else None
+        if not isinstance(projected_row, dict):
+            raise RuntimeError("canonical keeper returned no projected claim receipt")
+        reserved_task = Task.model_validate(projected_row)
+        last = reserved_task.dispatch_log[-1] if reserved_task.dispatch_log else None
+        if (
+            reserved_task.status != "dispatched"
+            or last is None
+            or last.status != "dispatched"
+            or dispatch_session_id(last) != reservation_id
+            or last.execution_contract_hash != selected_contract_hash
+        ):
+            raise RuntimeError("canonical keeper returned a mismatched claim receipt")
+
+        fresh.tasks = [reserved_task if row.id == task_id else row for row in fresh.tasks]
+        return fresh, reserved_task, _lifecycle_ownership_token(reserved_task), reservation_id
+
+
+def _commit_serial_reserved_result(
+    tasks_path: Path,
+    reserved_board: LimenFile,
+    reserved_task: Task,
+    agent: str,
+    result: bool | str | PlanHandoffResult,
+    now: datetime,
+    selected_contract_hash: str,
+    selected_lifecycle_token: str,
+    reserved_lifecycle_token: str,
+) -> bool:
+    """Commit one provider result against its exact canonical claim receipt."""
+
+    with _queue_lock(tasks_path) as got:
+        if not got:
+            _clear_result_receipts(reserved_task.id)
+            print(
+                f"── dispatch: queue busy — result for {reserved_task.id} NOT committed; "
+                "harvest reconciles from provider state"
+            )
+            return False
+        current = load_limen_file(tasks_path) if tasks_path.exists() else reserved_board.model_copy(deep=True)
+        current_task = next((task for task in current.tasks if task.id == reserved_task.id), None)
+        try:
+            if current_task is None:
+                print(f"  FENCE {reserved_task.id}: task disappeared; canonical claim remains for harvest")
+                return False
+            try:
+                normalize_selected_legacy_task(current_task)
+            except IntakeContractError:
+                print(f"  FENCE {reserved_task.id}: local execution contract is no longer valid")
+                return False
+            current_owner = _lifecycle_ownership_token(current_task)
+            if not _result_contract_is_current(current_task, selected_contract_hash) or current_owner not in {
+                selected_lifecycle_token,
+                reserved_lifecycle_token,
+            }:
+                print(f"  FENCE {reserved_task.id}: execution or lifecycle ownership changed; fresh task wins")
+                return False
+
+            # Other local rows may have changed while the provider ran.  Preserve
+            # those rows, but use the keeper-returned task as the exact CAS base for
+            # this result transition.
+            commit_base = current.model_copy(deep=True)
+            commit_base.tasks = [
+                reserved_task.model_copy(deep=True) if row.id == reserved_task.id else row for row in commit_base.tasks
+            ]
+            desired = commit_base.model_copy(deep=True)
+            target = next(task for task in desired.tasks if task.id == reserved_task.id)
+            _apply_result(target, agent, result, now, desired.portal.budget.track, charge_budget=False)
+            apply_limen_file_sync(
+                tasks_path,
+                desired,
+                agent="dispatch",
+                session_id="serial-results",
+                before=commit_base,
+                now=now,
+            )
+            return True
+        finally:
+            _clear_result_receipts(reserved_task.id)
+
+
 def dispatch_tasks(
     limen: LimenFile,
     tasks_path: Path,
@@ -5570,7 +5723,6 @@ def dispatch_tasks(
     print(f"── limen dispatch ({mode}) — agent={agent_filter} budget_remaining={remaining}")
 
     dispatched = 0
-    results: list[DispatchResult] = []
     for task in candidates:
         if limit is not None and dispatched >= max(0, limit):
             break
@@ -5605,38 +5757,64 @@ def dispatch_tasks(
 
         selected_contract_hash = execution_contract_hash(task)
         selected_lifecycle_token = _lifecycle_ownership_token(task)
-        try:
+        if dry_run:
             result = _journaled_agent_dispatch(
                 agent_filter,
                 task,
-                dry_run,
+                True,
                 selected_lifecycle_token,
                 tasks_path.parent,
             )
-        finally:
-            if not dry_run:
-                _release_machine_admission(task.id)
-        if not dry_run:
-            # In-memory apply keeps this loop's bookkeeping consistent; persistence happens
-            # once at commit, re-applied onto a FRESH board (never this stale snapshot).
-            _apply_result(task, agent_filter, result, now, track, consume_receipts=False)
-            results.append((agent_filter, task.id, result, selected_contract_hash, selected_lifecycle_token))
-            if result == _RATELIMIT:
-                _commit_dispatch_results(tasks_path, limen, results, now)
-                print(f"── lane {agent_filter} rate-limited — cooling, {dispatched} dispatched this cycle")
-                return
-            elif (
-                result
-                and result not in (_NOOP, _RATELIMIT, _TIMEOUT)
-                and not _is_blocked_result(result)
-                and not _is_workstream_successor_result(result)
-            ):
-                remaining -= task.budget_cost
+            dispatched += 1
+            continue
 
+        try:
+            reserved_board, reserved_task, reserved_lifecycle_token, reservation_id = _reserve_serial_dispatch(
+                tasks_path,
+                limen,
+                task.id,
+                agent_filter,
+                selected_contract_hash,
+                selected_lifecycle_token,
+                now,
+                explicit_task=task_id is not None,
+            )
+        except Exception as exc:
+            _release_machine_admission(task.id)
+            print(f"  CLAIM BLOCKED {task.id}: {str(exc)[:200]}; no provider launched")
+            return
+
+        # A successful canonical claim is the budget/WIP admission point.  Debit
+        # the process-local remainder immediately so this batch cannot out-run a
+        # lagging public projection; the keeper independently enforces the live
+        # daily and per-agent caps before acknowledging the claim above.
+        remaining -= reserved_task.budget_cost
         dispatched += 1
+        try:
+            result = _journaled_agent_dispatch(
+                agent_filter,
+                reserved_task,
+                False,
+                reservation_id,
+                tasks_path.parent,
+            )
+        finally:
+            _release_machine_admission(task.id)
 
-    if not dry_run:
-        _commit_dispatch_results(tasks_path, limen, results, now)
+        _commit_serial_reserved_result(
+            tasks_path,
+            reserved_board,
+            reserved_task,
+            agent_filter,
+            result,
+            now,
+            selected_contract_hash,
+            selected_lifecycle_token,
+            reserved_lifecycle_token,
+        )
+        if result == _RATELIMIT:
+            print(f"── lane {agent_filter} rate-limited — cooling, {dispatched} dispatched this cycle")
+            return
 
     print(f"── {mode}: {dispatched} task(s)")
 
