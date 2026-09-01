@@ -1,0 +1,220 @@
+contract_name: project-record.v1
+contract_version: 1
+project_id: limen
+name: Limen
+canonical_repository: 4444J99/limen
+former_repositories:
+  - organvm/limen
+repository_role: canonical
+documentation_class: A
+one_sentence: >-
+  Limen coordinates work across AI coding agents so each task has one owner, a bounded budget,
+  explicit permissions, and inspectable completion evidence.
+problem: >-
+  Multi-agent delivery breaks down when assignment, authority, resource conflicts, provider spend,
+  verification, and failure state live in separate tools and prose status is mistaken for landed,
+  reproducible completion.
+intended_users:
+  - multi-agent system operators
+  - platform and infrastructure engineers
+  - AI-assisted software delivery teams
+  - technical evaluators
+implementation_status: ACTIVE
+deployment_status: public
+authorship:
+  owner: Anthony James Padavano
+  role: system architect, project director, and operator
+  contributions:
+    - system architecture and ideal-form definition
+    - authority, evidence, and human-approval doctrine
+    - cross-provider orchestration design
+    - multi-agent implementation direction and revision
+    - verification and acceptance-boundary design
+    - operational and public documentation
+  collaborators: []
+  generated:
+    - Implementation, tests, reviews, and documentation produced through multiple disclosed AI-agent lanes under direction and verification.
+  inherited: []
+  external:
+    - Python, FastAPI, Next.js, Cloudflare Workers and Durable Objects, GitHub Actions, and other repository-declared dependencies and services.
+claim_references:
+  - id: conduct-contract
+    claim_posture: implemented
+    assertion_contract: assertion-evidence.v1
+    assertion_id: limen-conduct-contract-20260831
+    assertion_ref: docs/positioning/evidence/assertions/conduct-contract.json
+    scope: capability
+    placements: [readme, general, technical, humanities, business, evaluator, evidence]
+  - id: persona-surfaces
+    claim_posture: implemented
+    assertion_contract: assertion-evidence.v1
+    assertion_id: limen-persona-surfaces-20260831
+    assertion_ref: docs/positioning/evidence/assertions/persona-surfaces.json
+    scope: capability
+    placements: [readme, technical, business, evaluator, evidence]
+  - id: public-deployment
+    claim_posture: implemented
+    assertion_contract: assertion-evidence.v1
+    assertion_id: limen-public-deployment-20260831
+    assertion_ref: docs/positioning/evidence/assertions/public-deployment.json
+    scope: deployment
+    placements: [readme, general, technical, business, evaluator, evidence]
+  - id: internal-operation
+    claim_posture: implemented
+    assertion_contract: assertion-evidence.v1
+    assertion_id: limen-internal-operation-20260831
+    assertion_ref: docs/positioning/evidence/assertions/internal-operation.json
+    scope: status
+    placements: [readme, general, business, evaluator, evidence]
+  - id: authorship-disclosure
+    claim_posture: implemented
+    assertion_contract: assertion-evidence.v1
+    assertion_id: limen-authorship-disclosure-20260831
+    assertion_ref: docs/positioning/evidence/assertions/authorship.json
+    scope: authorship
+    placements: [readme, humanities, evaluator, evidence]
+  - id: adoption-boundary
+    claim_posture: unknown
+    assertion_contract: assertion-evidence.v1
+    assertion_id: limen-adoption-boundary-20260831
+    assertion_ref: docs/positioning/evidence/assertions/adoption-boundary.json
+    scope: adoption
+    placements: [readme, general, technical, humanities, business, evaluator, evidence]
+  - id: license-status
+    claim_posture: contradicted
+    assertion_contract: assertion-evidence.v1
+    assertion_id: limen-license-status-20260831
+    assertion_ref: docs/positioning/evidence/assertions/license-status.json
+    scope: rights
+    placements: [readme, general, technical, humanities, business, evaluator, evidence]
+  - id: verification-rails
+    claim_posture: implemented
+    assertion_contract: assertion-evidence.v1
+    assertion_id: limen-verification-rails-20260831
+    assertion_ref: docs/positioning/evidence/assertions/verification-rails.json
+    scope: capability
+    placements: [readme, technical, evaluator, evidence]
+  - id: proposed-industry-applications
+    claim_posture: proposed
+    assertion_contract: assertion-evidence.v1
+    assertion_id: limen-proposed-industry-applications-20260831
+    assertion_ref: docs/positioning/evidence/assertions/proposed-industry-applications.json
+    scope: capability
+    placements: [business, evidence]
+limitations:
+  - id: no-customer-adoption-proof
+    statement: >-
+      Owner-environment operation and public runtime reachability do not establish customer
+      adoption, revenue, retention, or return on investment.
+    assertion_ref: docs/positioning/evidence/assertions/adoption-boundary.json
+    assertion_id: limen-adoption-boundary-20260831
+  - id: public-projection-is-redacted
+    statement: >-
+      The public status surface is a dated aggregate projection and cannot reproduce or disprove
+      protected private operations.
+  - id: runtime-health-is-not-sla
+    statement: >-
+      A successful endpoint observation does not establish a reliability window, security
+      certification, or enterprise service-level objective.
+  - id: provider-health-is-live-state
+    statement: >-
+      Adapter code and lane declarations do not prove every provider is funded, authenticated,
+      healthy, or accepting work at a later time.
+  - id: no-comparative-benchmark
+    statement: >-
+      No public independent benchmark establishes cost, throughput, reliability, or quality
+      superiority over other orchestration systems.
+  - id: license-unresolved
+    statement: >-
+      No license file is present in the verified tree; publicly inspectable source must not be
+      represented as an open-source permission grant.
+    assertion_ref: docs/positioning/evidence/assertions/license-status.json
+    assertion_id: limen-license-status-20260831
+audience_routes:
+  - mode: general
+    path: docs/audiences/general.md
+    primary_question: What is Limen, what happens when it is used, and why might it matter?
+    surface: public
+    search_intents: [informational, problem]
+  - mode: technical
+    path: docs/audiences/technical.md
+    primary_question: How is Limen built, bounded, secured, tested, and operated?
+    surface: public
+    search_intents: [technical, implementation, comparative]
+  - mode: humanities
+    path: docs/audiences/humanities.md
+    primary_question: What does Limen imply about authority, memory, authorship, and delegated machine labor?
+    surface: public
+    search_intents: [research, informational]
+  - mode: business
+    path: docs/audiences/business.md
+    primary_question: Which operational problem does Limen address and what would responsible adoption require?
+    surface: public
+    search_intents: [problem, commercial, implementation]
+  - mode: evaluator
+    path: docs/audiences/evaluator.md
+    primary_question: What did Anthony build and direct, and where can the claims be reproduced?
+    surface: public
+    search_intents: [hiring, technical]
+industries:
+  - name: multi-agent software delivery
+    status: proposed
+    claim_references: [proposed-industry-applications]
+  - name: software consulting delivery governance
+    status: proposed
+    claim_references: [proposed-industry-applications]
+  - name: research engineering operations
+    status: proposed
+    claim_references: [proposed-industry-applications]
+concepts:
+  - agent-orchestration
+  - bounded-delegation
+  - deterministic-record-keeping
+  - exact-head-verification
+  - human-approval-boundaries
+  - multi-agent-governance
+  - persona-separated-disclosure
+  - resource-leasing
+search_intents:
+  - intent: informational
+    terms:
+      - AI agent orchestration explained
+      - multi-agent task coordination
+  - intent: problem
+    terms:
+      - prevent AI coding agents from conflicting
+      - govern multiple AI coding tools
+  - intent: technical
+    terms:
+      - exact-head agent lease protocol
+      - bounded multi-agent work graph
+      - deterministic AI agent task keeper
+  - intent: comparative
+    terms:
+      - multi-agent orchestration governance
+      - agent task queue versus lease keeper
+  - intent: commercial
+    terms:
+      - AI coding agent governance platform
+      - multi-vendor agent operations
+  - intent: research
+    terms:
+      - delegated machine authority
+      - AI authorship and institutional memory
+  - intent: hiring
+    terms:
+      - multi-agent systems architect portfolio
+      - AI platform engineering evidence
+  - intent: implementation
+    terms:
+      - implement bounded AI agent delegation
+      - resource leases for coding agents
+links:
+  repository: https://github.com/4444J99/limen
+  documentation: docs/audiences/general.md
+  project_page: https://limen-dashboard.pages.dev/
+  demo: https://limen-dashboard.pages.dev/public
+  deployment: https://limen-runtime.ivixivi.workers.dev/health
+  evidence: docs/positioning/evidence/limen.md
+generated_at: "2026-08-31T22:35:19Z"
+verified_at: "2026-08-31T22:35:19Z"
