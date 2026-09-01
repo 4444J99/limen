@@ -99,7 +99,7 @@ jobs:
           else:
               raise SystemExit("Unexpected Cloudflare deployment inventory shape")
 
-          observed = {str(item["id"]) for item in deployments}
+          observed = {str(item["Id"]) for item in deployments}
           expected = set(os.environ["EXPECTED_DEPLOYMENT_IDS"].split())
           if observed != expected:
               raise SystemExit(
@@ -109,10 +109,10 @@ jobs:
               )
 
           current_id = os.environ["CURRENT_DEPLOYMENT_ID"]
-          current = next(item for item in deployments if item["id"] == current_id)
-          if current.get("environment") != "production":
+          current = next(item for item in deployments if item["Id"] == current_id)
+          if current.get("Environment") != "Production":
               raise SystemExit("Guarded current deployment is not production")
-          if current.get("url") != "https://1af478e6.danse.pages.dev":
+          if current.get("Deployment") != "https://1af478e6.danse.pages.dev":
               raise SystemExit("Guarded current deployment URL changed")
           PY
 
@@ -150,7 +150,7 @@ jobs:
           else:
               raise SystemExit("Unexpected Cloudflare deployment inventory shape")
 
-          observed = {str(item["id"]) for item in deployments}
+          observed = {str(item["Id"]) for item in deployments}
           expected = {os.environ["CURRENT_DEPLOYMENT_ID"]}
           if observed != expected:
               raise SystemExit(
