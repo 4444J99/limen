@@ -25,7 +25,7 @@ jobs:
       CF_PAGES_TOKEN_SET: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
     steps:
       - name: Check out the canonical Danse source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: organvm/the-thing-without-a-name
           ref: main
@@ -105,5 +105,11 @@ jobs:
           --commit-hash "${{ steps.source.outputs.sha }}"
           --commit-message "Canonical Danse ${{ steps.source.outputs.sha }}"
           --commit-dirty=false
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Inventory Cloudflare Pages deployments
+        if: steps.freshness.outputs.deploy == 'true'
+        run: npx wrangler@4 pages deployment list --project-name danse
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
