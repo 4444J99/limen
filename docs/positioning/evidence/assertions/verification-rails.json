@@ -1,0 +1,34 @@
+{
+  "contract_name": "assertion-evidence.v1",
+  "contract_version": 1,
+  "assertion_id": "limen-verification-rails-20260831",
+  "assertion_class": "historical_record",
+  "statement": "At audited commit bc4e3a06f87fc9c36444d89411e76a261f995b2a, the repository defines path-scoped and whole-repository verification entrypoints and a required pull-request gate workflow.",
+  "verification_state": "verified",
+  "evidence_references": [
+    {
+      "evidence_id": "limen-scoped-verifier",
+      "independence_group": "limen-source-tree-91eedfac",
+      "evidence_type": "primary_source",
+      "reference": "scripts/verify-scoped.sh",
+      "body_hash": "sha256:53afe6055f57e376403f37cb1c6ad3a572ae59eaf9d9d2e23dddb005fa5ea1fc",
+      "observed_at": "2026-08-31T22:35:19Z"
+    },
+    {
+      "evidence_id": "limen-whole-verifier",
+      "independence_group": "limen-source-tree-91eedfac",
+      "evidence_type": "primary_source",
+      "reference": "scripts/verify-whole.sh",
+      "body_hash": "sha256:00bdc94ee20f519cbc421c21c29d95ce603881ccebdc038722d8b17f8826f523",
+      "observed_at": "2026-08-31T22:35:19Z"
+    },
+    {
+      "evidence_id": "limen-pr-gate-workflow",
+      "independence_group": "limen-source-tree-91eedfac",
+      "evidence_type": "primary_source",
+      "reference": ".github/workflows/pr-gate.yml",
+      "body_hash": "sha256:2ed0ec763715b04486294a618c32f3a6494bbac7fa00acedf57e8d47faf2b3fe",
+      "observed_at": "2026-08-31T22:35:19Z"
+    }
+  ]
+}
