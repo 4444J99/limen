@@ -25,6 +25,7 @@ jobs:
       CURRENT_DEPLOYMENT_URL: https://1af478e6.danse.pages.dev
       CURRENT_SOURCE_SHA: 2d7dd6c97ce67c6f083b85505a47497a1a5a9690
       WRANGLER_VERSION: 4.127.1
+      MAX_DEPLOYMENTS: 250
 
     steps:
       - name: Require the configured Cloudflare deployment credential
@@ -76,26 +77,47 @@ jobs:
 
           deployments = []
           page = 1
-          per_page = 100
+          per_page = 25
           declared_total = None
+          declared_pages = None
           while True:
               payload = get_json(
                   f"{base}/deployments?"
                   + urlencode({"page": page, "per_page": per_page})
               )
               batch = payload.get("result")
-              info = payload.get("result_info") or {}
-              if not isinstance(batch, list):
+              info = payload.get("result_info")
+              if not isinstance(batch, list) or not isinstance(info, dict):
                   raise SystemExit("Unexpected Cloudflare deployment result shape")
-              deployments.extend(batch)
 
-              if declared_total is None and info.get("total_count") is not None:
+              required = {"page", "per_page", "count", "total_count", "total_pages"}
+              missing = required - set(info)
+              if missing:
+                  raise SystemExit(
+                      f"Incomplete pagination metadata: {sorted(missing)}"
+                  )
+              if int(info["page"]) != page or int(info["per_page"]) != per_page:
+                  raise SystemExit(
+                      "Cloudflare pagination metadata does not match the request"
+                  )
+              if int(info["count"]) != len(batch):
+                  raise SystemExit("Cloudflare page count does not match its result")
+              if declared_total is None:
                   declared_total = int(info["total_count"])
-              total_pages = info.get("total_pages")
-              if total_pages is not None:
-                  if page >= int(total_pages):
-                      break
-              elif len(batch) < per_page:
+                  declared_pages = int(info["total_pages"])
+                  if declared_total > int(os.environ["MAX_DEPLOYMENTS"]):
+                      raise SystemExit(
+                          "Deployment inventory exceeds the cleanup safety cap: "
+                          f"{declared_total}"
+                      )
+              elif (
+                  int(info["total_count"]) != declared_total
+                  or int(info["total_pages"]) != declared_pages
+              ):
+                  raise SystemExit("Deployment pagination changed while freezing")
+
+              deployments.extend(batch)
+              if page >= declared_pages:
                   break
               page += 1
               if page > 100:
@@ -104,7 +126,7 @@ jobs:
           ids = [str(item.get("id", "")) for item in deployments]
           if len(ids) != len(set(ids)):
               raise SystemExit("Cloudflare deployment inventory contains duplicate IDs")
-          if declared_total is not None and declared_total != len(ids):
+          if declared_total != len(ids):
               raise SystemExit(
                   "Incomplete Cloudflare deployment inventory: "
                   f"declared={declared_total} fetched={len(ids)}"
@@ -129,6 +151,11 @@ jobs:
               deployment_id = str(item.get("id", ""))
               if deployment_id == current_id:
                   continue
+              if item.get("environment") not in {"production", "preview"}:
+                  raise SystemExit(
+                      f"Unexpected deployment environment for {deployment_id}: "
+                      f"{item.get('environment')!r}"
+                  )
               if str(uuid.UUID(deployment_id)) != deployment_id:
                   raise SystemExit(f"Invalid deployment ID: {deployment_id!r}")
               created = datetime.fromisoformat(
@@ -212,23 +239,60 @@ jobs:
                   f"Canonical deployment changed: {canonical.get('id')!r}"
               )
 
-          payload = get_json(
-              f"{base}/deployments?"
-              + urlencode({"page": 1, "per_page": 100})
-          )
-          deployments = payload.get("result")
-          info = payload.get("result_info") or {}
-          if not isinstance(deployments, list):
-              raise SystemExit("Unexpected Cloudflare deployment result shape")
+          deployments = []
+          page = 1
+          per_page = 25
+          declared_total = None
+          declared_pages = None
+          while True:
+              payload = get_json(
+                  f"{base}/deployments?"
+                  + urlencode({"page": page, "per_page": per_page})
+              )
+              batch = payload.get("result")
+              info = payload.get("result_info")
+              if not isinstance(batch, list) or not isinstance(info, dict):
+                  raise SystemExit("Unexpected Cloudflare deployment result shape")
+
+              required = {"page", "per_page", "count", "total_count", "total_pages"}
+              missing = required - set(info)
+              if missing:
+                  raise SystemExit(
+                      f"Incomplete pagination metadata: {sorted(missing)}"
+                  )
+              if int(info["page"]) != page or int(info["per_page"]) != per_page:
+                  raise SystemExit(
+                      "Cloudflare pagination metadata does not match the request"
+                  )
+              if int(info["count"]) != len(batch):
+                  raise SystemExit("Cloudflare page count does not match its result")
+              if declared_total is None:
+                  declared_total = int(info["total_count"])
+                  declared_pages = int(info["total_pages"])
+              elif (
+                  int(info["total_count"]) != declared_total
+                  or int(info["total_pages"]) != declared_pages
+              ):
+                  raise SystemExit("Deployment pagination changed during verification")
+
+              deployments.extend(batch)
+              if page >= declared_pages:
+                  break
+              page += 1
+              if page > 100:
+                  raise SystemExit("Deployment pagination exceeded 100 pages")
+
+          if declared_total != len(deployments):
+              raise SystemExit(
+                  "Incomplete Cloudflare deployment inventory: "
+                  f"declared={declared_total} fetched={len(deployments)}"
+              )
           observed = {str(item.get("id", "")) for item in deployments}
           expected = {current_id}
-          if observed != expected:
+          if observed != expected or declared_total != 1:
               raise SystemExit(
-                  f"Expected only {sorted(expected)}; observed {sorted(observed)}"
-              )
-          if info.get("total_count") is not None and int(info["total_count"]) != 1:
-              raise SystemExit(
-                  f"Expected total_count=1; observed {info.get('total_count')!r}"
+                  f"Expected only {sorted(expected)}; observed {sorted(observed)}; "
+                  f"total_count={declared_total}"
               )
           PY
           live_sha="$(
