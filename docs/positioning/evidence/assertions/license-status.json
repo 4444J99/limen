@@ -1,0 +1,31 @@
+{
+  "contract_name": "assertion-evidence.v1",
+  "contract_version": 1,
+  "assertion_id": "limen-license-status-20260831",
+  "assertion_class": "current_state",
+  "statement": "The verified Limen tree has no LICENSE file and GitHub reports no detected repository license; public source visibility therefore does not establish an open-source permission grant.",
+  "verification_state": "verified",
+  "freshness": {
+    "verified_at": "2026-08-31T23:15:00Z",
+    "max_age_seconds": 86400,
+    "status": "fresh"
+  },
+  "evidence_references": [
+    {
+      "evidence_id": "limen-root-manifest-license-absence",
+      "independence_group": "limen-source-tree-91eedfac",
+      "evidence_type": "owner_record",
+      "reference": "institutio/governance/root-manifest.yaml",
+      "body_hash": "sha256:cb521e45a0b3d3371ab09095bc8ce3053983b9422fbf0768c747ace25e0cb6bb",
+      "observed_at": "2026-08-31T22:35:19Z"
+    },
+    {
+      "evidence_id": "limen-github-license-null-receipt",
+      "independence_group": "github-repository-record",
+      "evidence_type": "fresh_verifier_receipt",
+      "reference": "docs/positioning/evidence/receipts/github-repository-2026-08-31.json",
+      "body_hash": "sha256:7860e1c37ab776e450aa02c4f32e01c3a69de16f766429bf90b46f1aaa2353ed",
+      "observed_at": "2026-08-31T23:15:00Z"
+    }
+  ]
+}

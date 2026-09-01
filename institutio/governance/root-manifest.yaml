@@ -68,6 +68,7 @@ sanctioned:
   - {path: package-lock.json, kind: package, owner: fleet, why: "root npm lockfile"}
   - {path: pillars.yaml, kind: registry, owner: governance, why: "platform pillars registry"}
   - {path: positioning-seeds.json, kind: registry, owner: launch, why: "positioning seed registry (gates.yaml + seo-seeds consume)"}
+  - {path: project-record.yml, kind: registry, owner: docs, why: "canonical reader-mode factual substrate consumed by README.md and docs/audiences/"}
   - {path: PROJECT.md, kind: doc, owner: docs, why: "VLTIMA project architecture doc — consumed by verify-scoped and organ validators"}
   - {path: public-portal, kind: dir, owner: observation, why: "named target of the planned dashboard consolidation"}
   - {path: renovate.json, kind: config, owner: fleet, why: "dependency update bot config"}

@@ -1,0 +1,31 @@
+{
+  "contract_name": "assertion-evidence.v1",
+  "contract_version": 1,
+  "assertion_id": "limen-public-deployment-20260831",
+  "assertion_class": "current_state",
+  "statement": "At the recorded observation time, Limen's public status endpoint and Cloudflare Worker health endpoint both returned status ok, and the Worker reported configured writable private Durable Object storage with a public aggregate projection.",
+  "verification_state": "verified",
+  "freshness": {
+    "verified_at": "2026-08-31T23:13:15Z",
+    "max_age_seconds": 86400,
+    "status": "fresh"
+  },
+  "evidence_references": [
+    {
+      "evidence_id": "limen-public-evidence-packet",
+      "independence_group": "limen-owner-record",
+      "evidence_type": "owner_record",
+      "reference": "docs/positioning/evidence/limen.md",
+      "body_hash": "sha256:f7d0a2d34ba18f4fac8de967050041864112da84f4b74a530b169882276608c0",
+      "observed_at": "2026-08-31T22:35:19Z"
+    },
+    {
+      "evidence_id": "limen-public-endpoint-response-receipt",
+      "independence_group": "limen-http-observation",
+      "evidence_type": "fresh_verifier_receipt",
+      "reference": "docs/positioning/evidence/receipts/public-endpoints-2026-08-31.json",
+      "body_hash": "sha256:a8a1175f42c32a13d895a0fdfac46b73e4df0a3e51ce658fb2c44db89d2fcf89",
+      "observed_at": "2026-08-31T23:13:15Z"
+    }
+  ]
+}

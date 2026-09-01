@@ -1,0 +1,16 @@
+{
+  "receipt_type": "normalized-github-repository-observation",
+  "observed_at": "2026-08-31T23:15:00Z",
+  "url": "https://api.github.com/repos/4444J99/limen",
+  "method": "curl --fail --silent --show-error --location --max-time 20",
+  "normalized_body": {
+    "full_name": "4444J99/limen",
+    "visibility": "public",
+    "license": null,
+    "archived": false,
+    "default_branch": "main",
+    "updated_at": "2026-08-27T17:56:00Z",
+    "pushed_at": "2026-08-30T13:21:12Z"
+  },
+  "boundary": "GitHub's null detected-license field is not legal advice; repository terms remain bounded by the tracked files and applicable law."
+}
