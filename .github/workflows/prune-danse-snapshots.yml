@@ -20,148 +20,220 @@ jobs:
     timeout-minutes: 20
     env:
       CF_PAGES_TOKEN_SET: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+      CLOUDFLARE_ACCOUNT_ID: e0921b840fd656d8ea46426f1f114c30
       CURRENT_DEPLOYMENT_ID: 1af478e6-6cc8-485f-b3bd-995b9c785da6
+      CURRENT_DEPLOYMENT_URL: https://1af478e6.danse.pages.dev
       CURRENT_SOURCE_SHA: 2d7dd6c97ce67c6f083b85505a47497a1a5a9690
-      EXPECTED_DEPLOYMENT_IDS: >-
-        1af478e6-6cc8-485f-b3bd-995b9c785da6
-        2ce2bf85-af51-4881-9361-b65469ea6ecd
-        cfb49272-21bc-48b3-bc3f-6c2ee02bdf8c
-        c347850d-bd6e-4eeb-a937-5d68af47ea66
-        c4f99a12-a1ec-49ed-a784-5eda934e4dee
-        db18ce6a-d885-41f4-abed-9b930387cd45
-        819e4ea9-ade6-459f-9229-b3aba6d99713
-        83ad45a7-aec6-464e-903a-a76adac44083
-        31c83b14-a910-4ffa-8aab-8c3c7cf96281
-        c176b5fc-5600-4915-9635-0139cea6ec94
-        3a367562-1b7f-4f4d-99b8-48517eb60f11
-        ed746808-3897-4efb-9c97-47e5a6d428f4
-        8977f58b-0495-4357-9952-7122c0ec1bf8
-        b0212a9a-8fea-4c3b-88dd-205177f57e0b
-        efc6b3da-1d0d-425a-8a9c-5cb1f02ea7cb
-        753a30d7-59a0-4352-88fd-17d01227f773
-        01018c48-bb09-4fda-b6cb-5fc5b4c5739f
-        afa96f65-2099-45ab-8bf2-15873c4006ba
-        7f703ac6-bfa3-4f46-91fe-d1c61a797ae1
-        4295e3ad-9d57-4112-b02b-267fc6d0c1cf
-        3c5e5470-b57c-4d08-b365-eb3d895ea09f
-        9321e2d9-2ba5-4d28-af78-42450960f4b8
-        fb317936-227e-4fbd-9d24-7f066b667a8c
-        b66c0563-b952-48ed-871a-25cfadf24591
-        45a98933-05c1-471a-a782-26750ff47c4d
-      LEGACY_DEPLOYMENT_IDS: >-
-        2ce2bf85-af51-4881-9361-b65469ea6ecd
-        cfb49272-21bc-48b3-bc3f-6c2ee02bdf8c
-        c347850d-bd6e-4eeb-a937-5d68af47ea66
-        c4f99a12-a1ec-49ed-a784-5eda934e4dee
-        db18ce6a-d885-41f4-abed-9b930387cd45
-        819e4ea9-ade6-459f-9229-b3aba6d99713
-        83ad45a7-aec6-464e-903a-a76adac44083
-        31c83b14-a910-4ffa-8aab-8c3c7cf96281
-        c176b5fc-5600-4915-9635-0139cea6ec94
-        3a367562-1b7f-4f4d-99b8-48517eb60f11
-        ed746808-3897-4efb-9c97-47e5a6d428f4
-        8977f58b-0495-4357-9952-7122c0ec1bf8
-        b0212a9a-8fea-4c3b-88dd-205177f57e0b
-        efc6b3da-1d0d-425a-8a9c-5cb1f02ea7cb
-        753a30d7-59a0-4352-88fd-17d01227f773
-        01018c48-bb09-4fda-b6cb-5fc5b4c5739f
-        afa96f65-2099-45ab-8bf2-15873c4006ba
-        7f703ac6-bfa3-4f46-91fe-d1c61a797ae1
-        4295e3ad-9d57-4112-b02b-267fc6d0c1cf
-        3c5e5470-b57c-4d08-b365-eb3d895ea09f
-        9321e2d9-2ba5-4d28-af78-42450960f4b8
-        fb317936-227e-4fbd-9d24-7f066b667a8c
-        b66c0563-b952-48ed-871a-25cfadf24591
-        45a98933-05c1-471a-a782-26750ff47c4d
+      WRANGLER_VERSION: 4.127.1
 
     steps:
       - name: Require the configured Cloudflare deployment credential
         run: test "$CF_PAGES_TOKEN_SET" = "true"
 
-      - name: Guard the exact deployment inventory
+      - name: Freeze the complete guarded deployment inventory
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           set -euo pipefail
-          npx wrangler@4 pages deployment list \
-            --project-name danse \
-            --json > "$RUNNER_TEMP/danse-before.json"
           python3 - <<'PY'
           import json
           import os
+          import uuid
+          from datetime import datetime
           from pathlib import Path
+          from urllib.parse import urlencode
+          from urllib.request import Request, urlopen
 
-          payload = json.loads(
-              Path(os.environ["RUNNER_TEMP"], "danse-before.json").read_text()
+          account_id = os.environ["CLOUDFLARE_ACCOUNT_ID"]
+          current_id = os.environ["CURRENT_DEPLOYMENT_ID"]
+          token = os.environ["CLOUDFLARE_API_TOKEN"]
+          base = (
+              "https://api.cloudflare.com/client/v4/accounts/"
+              f"{account_id}/pages/projects/danse"
           )
-          if isinstance(payload, list):
-              deployments = payload
-          elif isinstance(payload, dict):
-              deployments = payload.get("deployments", payload.get("result", []))
-          else:
-              raise SystemExit("Unexpected Cloudflare deployment inventory shape")
 
-          observed = {str(item["Id"]) for item in deployments}
-          expected = set(os.environ["EXPECTED_DEPLOYMENT_IDS"].split())
-          if observed != expected:
+          def get_json(url):
+              request = Request(
+                  url,
+                  headers={
+                      "Authorization": f"Bearer {token}",
+                      "Content-Type": "application/json",
+                  },
+              )
+              with urlopen(request, timeout=30) as response:
+                  payload = json.load(response)
+              if payload.get("success") is not True:
+                  raise SystemExit(f"Cloudflare API request failed: {payload.get('errors')}")
+              return payload
+
+          project = get_json(base)["result"]
+          canonical = project.get("canonical_deployment") or {}
+          if canonical.get("id") != current_id:
               raise SystemExit(
-                  "Deployment inventory changed; refusing cleanup. "
-                  f"missing={sorted(expected - observed)} "
-                  f"unexpected={sorted(observed - expected)}"
+                  "Canonical deployment changed; refusing cleanup: "
+                  f"{canonical.get('id')!r}"
               )
 
-          current_id = os.environ["CURRENT_DEPLOYMENT_ID"]
-          current = next(item for item in deployments if item["Id"] == current_id)
-          if current.get("Environment") != "Production":
-              raise SystemExit("Guarded current deployment is not production")
-          if current.get("Deployment") != "https://1af478e6.danse.pages.dev":
-              raise SystemExit("Guarded current deployment URL changed")
-          PY
+          deployments = []
+          page = 1
+          per_page = 100
+          declared_total = None
+          while True:
+              payload = get_json(
+                  f"{base}/deployments?"
+                  + urlencode({"page": page, "per_page": per_page})
+              )
+              batch = payload.get("result")
+              info = payload.get("result_info") or {}
+              if not isinstance(batch, list):
+                  raise SystemExit("Unexpected Cloudflare deployment result shape")
+              deployments.extend(batch)
 
-      - name: Delete only the inventoried legacy snapshots
+              if declared_total is None and info.get("total_count") is not None:
+                  declared_total = int(info["total_count"])
+              total_pages = info.get("total_pages")
+              if total_pages is not None:
+                  if page >= int(total_pages):
+                      break
+              elif len(batch) < per_page:
+                  break
+              page += 1
+              if page > 100:
+                  raise SystemExit("Deployment pagination exceeded 100 pages")
+
+          ids = [str(item.get("id", "")) for item in deployments]
+          if len(ids) != len(set(ids)):
+              raise SystemExit("Cloudflare deployment inventory contains duplicate IDs")
+          if declared_total is not None and declared_total != len(ids):
+              raise SystemExit(
+                  "Incomplete Cloudflare deployment inventory: "
+                  f"declared={declared_total} fetched={len(ids)}"
+              )
+
+          current = next(
+              (item for item in deployments if item.get("id") == current_id),
+              None,
+          )
+          if current is None:
+              raise SystemExit("Guarded current deployment is missing")
+          if current.get("environment") != "production":
+              raise SystemExit("Guarded current deployment is not production")
+          if current.get("url") != os.environ["CURRENT_DEPLOYMENT_URL"]:
+              raise SystemExit("Guarded current deployment URL changed")
+
+          current_created = datetime.fromisoformat(
+              current["created_on"].replace("Z", "+00:00")
+          )
+          targets = []
+          for item in deployments:
+              deployment_id = str(item.get("id", ""))
+              if deployment_id == current_id:
+                  continue
+              if str(uuid.UUID(deployment_id)) != deployment_id:
+                  raise SystemExit(f"Invalid deployment ID: {deployment_id!r}")
+              created = datetime.fromisoformat(
+                  item["created_on"].replace("Z", "+00:00")
+              )
+              if created >= current_created:
+                  raise SystemExit(
+                      "A non-current deployment is not older than the canonical "
+                      f"deployment: {deployment_id}"
+                  )
+              targets.append(deployment_id)
+
+          targets.sort()
+          Path(os.environ["RUNNER_TEMP"], "danse-targets.txt").write_text(
+              "".join(f"{deployment_id}\n" for deployment_id in targets)
+          )
+          Path(os.environ["RUNNER_TEMP"], "danse-frozen-inventory.json").write_text(
+              json.dumps(deployments, indent=2, sort_keys=True)
+          )
+          print(
+              f"Frozen {len(deployments)} complete deployment(s); "
+              f"{len(targets)} legacy target(s)"
+          )
+          PY
+          live_sha="$(
+            curl --fail --silent --show-error --max-time 20 \
+              "https://danse.pages.dev/pages-manifest.json?cleanup=$GITHUB_RUN_ID" \
+              | python3 -c 'import json, sys; print(json.load(sys.stdin)["source"]["commit"])'
+          )"
+          test "$live_sha" = "$CURRENT_SOURCE_SHA"
+
+      - name: Delete only the frozen legacy deployment set
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           set -euo pipefail
-          for deployment_id in $LEGACY_DEPLOYMENT_IDS; do
-            npx wrangler@4 pages deployment delete "$deployment_id" \
+          while IFS= read -r deployment_id; do
+            npx --yes "wrangler@$WRANGLER_VERSION" \
+              pages deployment delete "$deployment_id" \
               --project-name danse \
               --force
-          done
+          done < "$RUNNER_TEMP/danse-targets.txt"
 
-      - name: Verify one Cloudflare deployment remains
+      - name: Verify the complete Cloudflare inventory and live source
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           set -euo pipefail
-          npx wrangler@4 pages deployment list \
-            --project-name danse \
-            --json > "$RUNNER_TEMP/danse-after.json"
           python3 - <<'PY'
           import json
           import os
-          from pathlib import Path
+          from urllib.parse import urlencode
+          from urllib.request import Request, urlopen
 
-          payload = json.loads(
-              Path(os.environ["RUNNER_TEMP"], "danse-after.json").read_text()
+          account_id = os.environ["CLOUDFLARE_ACCOUNT_ID"]
+          current_id = os.environ["CURRENT_DEPLOYMENT_ID"]
+          token = os.environ["CLOUDFLARE_API_TOKEN"]
+          base = (
+              "https://api.cloudflare.com/client/v4/accounts/"
+              f"{account_id}/pages/projects/danse"
           )
-          if isinstance(payload, list):
-              deployments = payload
-          elif isinstance(payload, dict):
-              deployments = payload.get("deployments", payload.get("result", []))
-          else:
-              raise SystemExit("Unexpected Cloudflare deployment inventory shape")
 
-          observed = {str(item["Id"]) for item in deployments}
-          expected = {os.environ["CURRENT_DEPLOYMENT_ID"]}
+          def get_json(url):
+              request = Request(
+                  url,
+                  headers={
+                      "Authorization": f"Bearer {token}",
+                      "Content-Type": "application/json",
+                  },
+              )
+              with urlopen(request, timeout=30) as response:
+                  payload = json.load(response)
+              if payload.get("success") is not True:
+                  raise SystemExit(f"Cloudflare API request failed: {payload.get('errors')}")
+              return payload
+
+          project = get_json(base)["result"]
+          canonical = project.get("canonical_deployment") or {}
+          if canonical.get("id") != current_id:
+              raise SystemExit(
+                  f"Canonical deployment changed: {canonical.get('id')!r}"
+              )
+
+          payload = get_json(
+              f"{base}/deployments?"
+              + urlencode({"page": 1, "per_page": 100})
+          )
+          deployments = payload.get("result")
+          info = payload.get("result_info") or {}
+          if not isinstance(deployments, list):
+              raise SystemExit("Unexpected Cloudflare deployment result shape")
+          observed = {str(item.get("id", "")) for item in deployments}
+          expected = {current_id}
           if observed != expected:
               raise SystemExit(
                   f"Expected only {sorted(expected)}; observed {sorted(observed)}"
               )
+          if info.get("total_count") is not None and int(info["total_count"]) != 1:
+              raise SystemExit(
+                  f"Expected total_count=1; observed {info.get('total_count')!r}"
+              )
           PY
           live_sha="$(
             curl --fail --silent --show-error --max-time 20 \
-              https://danse.pages.dev/pages-manifest.json \
+              "https://danse.pages.dev/pages-manifest.json?verify=$GITHUB_RUN_ID" \
               | python3 -c 'import json, sys; print(json.load(sys.stdin)["source"]["commit"])'
           )"
           test "$live_sha" = "$CURRENT_SOURCE_SHA"
