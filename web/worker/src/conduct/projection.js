@@ -150,6 +150,7 @@ const ENUM_STRUCTURED_LOG_FIELDS = new Map([
     "pr-closed-reconcile",
     "routine-recovered",
     "provider-terminal",
+    "plan-handoff-complete",
     "stale-successor-hold",
     "recurrence-reopen",
   ])],
@@ -531,6 +532,17 @@ function isLifecycleRepairAuthorized(task, nextStatus, log, patch) {
       && Boolean(priorReservation)
       && priorEntry.status === "dispatched";
   }
+  if (marker === "plan-handoff-complete") {
+    const contractHash = String(log?.execution_contract_hash || "");
+    return priorStatus === "dispatched"
+      && nextStatus === "open"
+      && log?.execution_started === true
+      && /^[0-9a-f]{64}$/.test(contractHash)
+      && contractHash === String(priorEntry.execution_contract_hash || "")
+      && String(log?.execution_reservation_id || "") === priorReservation
+      && Boolean(priorReservation)
+      && priorEntry.status === "dispatched";
+  }
   if (marker === "stale-successor-hold") {
     const evidence = String(log?.liveness_evidence || "");
     const age = log?.liveness_age_seconds;
@@ -655,13 +667,16 @@ export function applyTaskPacketProjectionEvent(input, event) {
     const missing = taskWorkLoanMissingFields({ ...existing, ...patch });
     if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 409);
   }
-  if (!isHeldJulesLandingRecovery(existing, nextStatus, intent.log)
-      && !(kind === "task.status"
-        && isLifecycleRepairAuthorized(existing, nextStatus, intent.log, patch))) {
+  const lifecycleRepair = kind === "task.status"
+    && isLifecycleRepairAuthorized(existing, nextStatus, intent.log, patch);
+  if (!isHeldJulesLandingRecovery(existing, nextStatus, intent.log) && !lifecycleRepair) {
     validateTransition(taskId, existing.status, nextStatus, kind);
   }
   if (kind === "task.claim") applyCanonicalBudgetDebit(board, existing, event, patch);
-  if (kind === "task.status" && existing.status === "dispatched" && nextStatus === "open") {
+  if (kind === "task.status"
+      && existing.status === "dispatched"
+      && nextStatus === "open"
+      && !(lifecycleRepair && intent.log?.lifecycle_repair === "plan-handoff-complete")) {
     applyCanonicalBudgetRefund(board, existing, event);
   }
   Object.assign(existing, clone(patch));

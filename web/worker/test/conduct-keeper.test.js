@@ -3325,6 +3325,7 @@ test("exceptional task transitions require exact structured evidence", () => {
   const reservation = {
     timestamp: "2026-07-18T00:00:00.000Z",
     agent: "dispatch-async",
+    logical_agent: "codex",
     session_id: "keeper-reserve",
     logical_session_id: "async-reserve:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     status: "dispatched",
@@ -3341,6 +3342,35 @@ test("exceptional task transitions require exact structured evidence", () => {
     apply(task({ status: "dispatched", dispatch_log: [reservation] }), provider).status,
     "failed_blocked",
   );
+
+  const plan = event("dispatched", "open", {
+    lifecycle_repair: "plan-handoff-complete",
+    execution_started: true,
+    execution_contract_hash: "a".repeat(64),
+    execution_reservation_id: reservation.logical_session_id,
+  }, { target_agent: "opencode" });
+  const planBoard = {
+    portal: {
+      budget: {
+        daily: 10,
+        per_agent: { codex: 10 },
+        track: { date: "2026-07-18", spent: 1, per_agent: { codex: 1 } },
+      },
+    },
+    tasks: [task({ status: "dispatched", dispatch_log: [reservation] })],
+  };
+  const planned = applyTaskPacketProjectionEvent(planBoard, plan);
+  assert.equal(planned.task.status, "open");
+  assert.equal(planned.task.target_agent, "opencode");
+  assert.equal(planned.board.portal.budget.track.spent, 1);
+  assert.equal(planned.board.portal.budget.track.per_agent.codex, 1);
+
+  const forgedPlan = structuredClone(plan);
+  forgedPlan.event_id += ":forged";
+  forgedPlan.intent.log.execution_reservation_id = "wrong-reservation";
+  const refunded = applyTaskPacketProjectionEvent(planBoard, forgedPlan);
+  assert.equal(refunded.board.portal.budget.track.spent, 0);
+  assert.equal(refunded.board.portal.budget.track.per_agent.codex, 0);
 
   const stale = event("dispatched", "failed", {
     lifecycle_repair: "stale-successor-hold",

@@ -95,6 +95,7 @@ class DispatchLogEntry(BaseModel):
             "pr-closed-reconcile",
             "routine-recovered",
             "provider-terminal",
+            "plan-handoff-complete",
             "stale-successor-hold",
             "recurrence-reopen",
         ]

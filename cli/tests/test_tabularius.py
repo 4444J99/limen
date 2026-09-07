@@ -265,6 +265,64 @@ def test_pure_reducer_requires_and_preserves_completion_evidence():
     assert tasks["T-CREDIT"]["dispatch_log"][-1]["verification_context_digest"] == digest
 
 
+def test_keeper_projection_preserves_planner_debit_on_completed_handoff() -> None:
+    reservation_id = "b" * 64
+    contract_hash = "c" * 64
+    board = _board(
+        [
+            _task(
+                "T-PLAN",
+                status="dispatched",
+                budget_cost=1,
+                dispatch_log=[
+                    {
+                        "timestamp": _NOW.isoformat(),
+                        "agent": "codex",
+                        "session_id": reservation_id,
+                        "status": "dispatched",
+                        "execution_contract_hash": contract_hash,
+                        "output": "dispatch-serial: canonical claim accepted before provider execution",
+                    }
+                ],
+            )
+        ]
+    )
+    board.portal.budget.track.date = _NOW.date().isoformat()
+    board.portal.budget.track.spent = 1
+    board.portal.budget.track.per_agent = {"codex": 1}
+    event = {
+        "event_id": "event-plan-handoff",
+        "timestamp": _NOW.isoformat(),
+        "agent": "dispatch",
+        "session_id": "serial-results",
+        "run_id": "run-plan-handoff",
+        "lease_id": "lease-plan-handoff",
+        "generation": 1,
+        "task_id": "T-PLAN",
+        "intent": {
+            "kind": "task.status",
+            "task_id": "T-PLAN",
+            "expected_status": "dispatched",
+            "patch": {"status": "open", "target_agent": "opencode"},
+            "log": {
+                "status": "open",
+                "output": "validated plan receipt recorded; builder will be selected again",
+                "lifecycle_repair": "plan-handoff-complete",
+                "execution_started": True,
+                "execution_contract_hash": contract_hash,
+                "execution_reservation_id": reservation_id,
+            },
+        },
+    }
+
+    projected, _receipt = tabularius._project_local_task_event(board, event)
+
+    assert projected.tasks[0].status == "open"
+    assert projected.portal.budget.track.spent == 1
+    assert projected.portal.budget.track.per_agent["codex"] == 1
+    assert projected.tasks[0].dispatch_log[-1].lifecycle_repair == "plan-handoff-complete"
+
+
 def test_batch_admission_rejects_stale_exact_state_ticket():
     base = _task("T-1", status="open")
     archive = _ticket(

@@ -217,7 +217,12 @@ def capture_canonical_deltas(monkeypatch) -> list[LimenFile]:
                 track = canonical.portal.budget.track
                 track.spent += desired.budget_cost
                 track.per_agent[entry.agent] = track.per_agent.get(entry.agent, 0) + desired.budget_cost
-            elif current is not None and current.status == "dispatched" and desired.status == "open":
+            elif (
+                current is not None
+                and current.status == "dispatched"
+                and desired.status == "open"
+                and (not desired.dispatch_log or desired.dispatch_log[-1].lifecycle_repair != "plan-handoff-complete")
+            ):
                 refund_agent = current.dispatch_log[-1].agent if current.dispatch_log else current.target_agent
                 track = canonical.portal.budget.track
                 track.spent = max(0, track.spent - current.budget_cost)
@@ -1486,16 +1491,74 @@ def test_serial_dispatch_does_not_launch_provider_when_canonical_claim_fails(
     assert read_board(tasks_path)["tasks"][0]["status"] == "open"
 
 
+def test_serial_dispatch_continues_after_task_scoped_claim_rejection(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    tasks = [
+        {
+            "id": task_id,
+            "title": title,
+            "repo": "someorg/dispatch-lab",
+            "target_agent": "codex",
+            "priority": priority,
+            "budget_cost": 1,
+            "source_origin": "human_prompt",
+            "horizon": "present",
+            "value_case": f"Exercise serial claim handling for {task_id}.",
+            "predicate": "python3 scripts/check.py",
+            "receipt_target": f"github:someorg/dispatch-lab:pull-request:{task_id}",
+            "status": "open",
+            "created": "2026-06-20",
+            "dispatch_log": [],
+        }
+        for task_id, title, priority in (
+            ("STALE-CANDIDATE", "stale candidate", "critical"),
+            ("NEXT-CANDIDATE", "next candidate", "high"),
+        )
+    ]
+    write_board(tasks_path, tasks)
+    board = read_board(tasks_path)
+    board["portal"]["budget"]["track"]["date"] = date.today().isoformat()
+    tasks_path.write_text(yaml.safe_dump(board, sort_keys=False))
+    projections = capture_canonical_deltas(monkeypatch)
+    real_reserve = D._reserve_serial_dispatch
+    provider_calls: list[str] = []
+
+    def reserve(*args, **kwargs):
+        if args[2] == "STALE-CANDIDATE":
+            raise RuntimeError("task dependencies or ownership changed before canonical claim")
+        return real_reserve(*args, **kwargs)
+
+    monkeypatch.setattr(D, "_reserve_serial_dispatch", reserve)
+    monkeypatch.setattr(
+        D,
+        "call_agent_dispatch",
+        lambda _agent, task, dry_run=False: provider_calls.append(task.id) or True,
+    )
+    monkeypatch.setattr(D, "_down_lanes", lambda: set())
+
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=False)
+
+    output = capsys.readouterr().out
+    assert provider_calls == ["NEXT-CANDIDATE"]
+    assert "CLAIM BLOCKED STALE-CANDIDATE" in output
+    assert "── LIVE: 1 task(s)" in output
+    assert projections[-1].portal.budget.track.spent == 1
+
+
 def test_dispatch_serial_commit_survives_concurrent_board_write(
     tmp_path: Path,
     monkeypatch,
     capsys,
 ) -> None:
-    """A concurrent hot-cache rewrite must survive, while its changed contract fences the result.
+    """A concurrent hot-cache rewrite survives without overruling the canonical claim.
 
     The canonical claim has already happened before the provider runs, so an unauthenticated local
-    rewrite is deliberately not copied into that claim.  Its own owner must relay the rewrite; this
-    dispatch pass leaves the exact claim for harvest/release instead of applying a stale result.
+    rewrite is deliberately not copied into that claim.  The result uses the keeper-returned claim
+    as its CAS base and leaves any genuine canonical conflict for the keeper to reject.
     """
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     tasks_path = tmp_path / "tasks.yaml"
@@ -1546,10 +1609,128 @@ def test_dispatch_serial_commit_survives_concurrent_board_write(
     intended = {task.id: task for task in projections[-1].tasks}
     assert set(intended) == {"DISPATCH-ME"}
     assert intended["DISPATCH-ME"].status == "dispatched"
-    assert intended["DISPATCH-ME"].dispatch_log[-1].output.startswith("dispatch-serial: canonical claim")
+    assert intended["DISPATCH-ME"].dispatch_log[-2].output.startswith("dispatch-serial: canonical claim")
+    assert intended["DISPATCH-ME"].dispatch_log[-1].status == "dispatched"
     assert intended["DISPATCH-ME"].predicate == "python3 scripts/check.py"
     assert intended["DISPATCH-ME"].receipt_target.endswith(":DISPATCH-ME")
-    assert "FENCE DISPATCH-ME: execution or lifecycle ownership changed" in capsys.readouterr().out
+    assert "FENCE DISPATCH-ME" not in capsys.readouterr().out
+
+
+def test_serial_plan_handoff_records_execution_complete_without_local_recharge(monkeypatch) -> None:
+    now = datetime(2026, 8, 30, 12, tzinfo=timezone.utc)
+    task = Task(
+        id="SERIAL-PLAN-HANDOFF",
+        title="plan the bounded implementation",
+        repo="someorg/dispatch-lab",
+        target_agent="codex",
+        status="dispatched",
+        labels=["mode:plan-only"],
+        budget_cost=1,
+        predicate="python3 scripts/check.py",
+        receipt_target="github:someorg/dispatch-lab:pull-request:SERIAL-PLAN-HANDOFF",
+        created=date(2026, 8, 30),
+    )
+    contract_hash = execution_contract_hash(task)
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=now,
+            agent="codex",
+            session_id="b" * 64,
+            status="dispatched",
+            execution_contract_hash=contract_hash,
+            output="dispatch-serial: canonical claim accepted before provider execution",
+        )
+    )
+    receipt = D.build_plan_receipt(task, "Implement the focused repair.", planner_agent="codex")
+    monkeypatch.setattr(D, "select_live_builder", lambda _receipt: "opencode")
+    track = BudgetTrack(date="2026-08-30", spent=1, per_agent={"codex": 1})
+
+    D._apply_result(
+        task,
+        "codex",
+        D.PlanHandoffResult(receipt),
+        now,
+        track,
+        charge_budget=False,
+    )
+
+    entry = task.dispatch_log[-1]
+    assert task.status == "open"
+    assert task.target_agent == "opencode"
+    assert track.spent == 1
+    assert track.per_agent["codex"] == 1
+    assert entry.lifecycle_repair == "plan-handoff-complete"
+    assert entry.execution_started is True
+    assert entry.execution_reservation_id == "b" * 64
+
+
+def test_prelaunch_block_releases_serial_claim_without_execution_evidence() -> None:
+    now = datetime(2026, 8, 30, 12, tzinfo=timezone.utc)
+    task = Task(
+        id="SERIAL-PRELAUNCH-BLOCK",
+        title="blocked before provider launch",
+        repo="someorg/dispatch-lab",
+        target_agent="codex",
+        status="dispatched",
+        budget_cost=1,
+        predicate="python3 scripts/check.py",
+        receipt_target="github:someorg/dispatch-lab:pull-request:SERIAL-PRELAUNCH-BLOCK",
+        created=date(2026, 8, 30),
+    )
+    contract_hash = execution_contract_hash(task)
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=now,
+            agent="codex",
+            session_id="c" * 64,
+            status="dispatched",
+            execution_contract_hash=contract_hash,
+            output="dispatch-serial: canonical claim accepted before provider execution",
+        )
+    )
+    track = BudgetTrack(date="2026-08-30", spent=1, per_agent={"codex": 1})
+
+    D._apply_result(
+        task,
+        "codex",
+        D._prelaunch_blocked_result("work-loan reservation failed"),
+        now,
+        track,
+        charge_budget=False,
+    )
+
+    entry = task.dispatch_log[-1]
+    assert task.status == "open"
+    assert entry.status == "open"
+    assert entry.execution_started is False
+    assert entry.execution_reservation_id == "c" * 64
+    assert entry.lifecycle_repair is None
+    assert "blocked:routing" not in task.labels
+
+
+def test_workstream_contract_rejection_is_explicitly_prelaunch(monkeypatch) -> None:
+    task = Task(
+        id="SERIAL-PRELAUNCH-WORKSTREAM",
+        title="invalid workstream contract",
+        repo="someorg/dispatch-lab",
+        target_agent="codex",
+        status="dispatched",
+        budget_cost=1,
+        predicate="python3 scripts/check.py",
+        receipt_target="github:someorg/dispatch-lab:pull-request:SERIAL-PRELAUNCH-WORKSTREAM",
+        created=date(2026, 8, 30),
+    )
+    monkeypatch.setattr(
+        D,
+        "_workstream_packet_for",
+        lambda _task: (_ for _ in ()).throw(D.WorkstreamLaunchContractError("contract expired")),
+    )
+
+    result = D.call_agent_dispatch("codex", task, dry_run=False)
+
+    assert D._is_workstream_successor_result(result)
+    assert D._is_prelaunch_result(result)
+    assert "contract expired" in D._workstream_successor_reason(result)
 
 
 def test_dispatch_budget_reset_persist_survives_concurrent_board_write(
@@ -3492,6 +3673,76 @@ def test_remote_verification_rebuilds_exact_request_before_mutation(
     assert expected_reason in D._blocked_reason(result)
     assert provider_mutations == []
     assert child_id not in D._REMOTE_SUBMISSION_RECEIPTS
+
+
+def test_remote_verification_accepts_authenticated_serial_claim_over_open_projection(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    task_id = "REMOTE-SERIAL-CLAIM"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "REMOTE-SERIAL-PARENT",
+                "title": "land implementation",
+                "repo": "organvm/limen",
+                "type": "code",
+                "target_agent": "codex",
+                "predicate": "python3 scripts/check-implementation.py",
+                "receipt_target": "github:organvm/limen:pull-request:7",
+                "status": "done",
+                "created": "2026-07-16",
+                "dispatch_log": [
+                    {
+                        "timestamp": "2026-07-16T00:00:00+00:00",
+                        "agent": "codex",
+                        "session_id": "https://github.com/organvm/limen/pull/7",
+                        "status": "done",
+                        "output": "merged https://github.com/organvm/limen/pull/7",
+                    }
+                ],
+            },
+            {
+                "id": task_id,
+                "title": "bounded public verification",
+                "repo": "organvm/limen",
+                "type": "verification",
+                "target_agent": "github_actions",
+                "predicate": "python3 scripts/check-remote.py",
+                "receipt_target": f"artifact:organvm/limen:task:{task_id}",
+                "status": "open",
+                "labels": ["mode:verification-only"],
+                "depends_on": ["REMOTE-SERIAL-PARENT"],
+                "created": "2026-07-17",
+                "dispatch_log": [],
+            },
+        ],
+    )
+    monkeypatch.setenv("LIMEN_TASKS", str(tasks_path))
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    reserved = next(task for task in load_limen_file(tasks_path).tasks if task.id == task_id)
+    now = datetime.now(timezone.utc)
+    contract_hash = execution_contract_hash(reserved)
+    reserved.status = "dispatched"
+    reserved.updated = now
+    reserved.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=now,
+            agent="github_actions",
+            session_id="a" * 64,
+            status="dispatched",
+            execution_contract_hash=contract_hash,
+            output="dispatch-serial: canonical claim accepted before provider execution",
+        )
+    )
+
+    verified, context = D._authoritative_remote_verification(reserved)
+
+    assert verified.status == "dispatched"
+    assert dispatch_session_id(verified.dispatch_log[-1]) == "a" * 64
+    assert context["child_task_id"] == task_id
 
 
 def test_conducted_remote_board_io_failure_stays_external_blocker(monkeypatch) -> None:
