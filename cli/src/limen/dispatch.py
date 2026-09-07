@@ -1780,17 +1780,21 @@ def _journaled_agent_dispatch(
     started = time.monotonic()
     try:
         result = call_agent_dispatch(agent, task, dry_run=False)
-    except Exception:
+    except Exception as exc:
         elapsed_seconds = max(0.0, time.monotonic() - started)
-        store.record_actual(
-            task,
-            agent=canonical_agent(agent),
-            reservation_id=reservation_id,
-            elapsed_seconds=elapsed_seconds,
-            local_host=canonical_agent(agent) in LOCAL_CHECKOUT_AGENTS,
-            metrics={"runs": 1},
-        )
-        raise
+        accounting_failure = ""
+        try:
+            store.record_actual(
+                task,
+                agent=canonical_agent(agent),
+                reservation_id=reservation_id,
+                elapsed_seconds=elapsed_seconds,
+                local_host=canonical_agent(agent) in LOCAL_CHECKOUT_AGENTS,
+                metrics={"runs": 1},
+            )
+        except WorkLoanJournalError as accounting_exc:
+            accounting_failure = f"; work-loan actual accounting also failed: {accounting_exc}"
+        raise _ProviderDispatchError(f"{exc}{accounting_failure}") from exc
     elapsed_seconds = max(0.0, time.monotonic() - started)
     launched_runs = 0 if _is_blocked_result(result) or _is_workstream_successor_result(result) else 1
     try:
@@ -5434,6 +5438,10 @@ class _SerialClaimUnavailable(RuntimeError):
     """The canonical claim seam is unavailable, so this dispatch beat must stop."""
 
 
+class _ProviderDispatchError(RuntimeError):
+    """A provider was started but raised before returning a terminal receipt."""
+
+
 def _clear_result_receipts(task_id: str) -> None:
     """Drop process-local metadata once one provider result reaches a terminal seam."""
 
@@ -5851,10 +5859,13 @@ def dispatch_tasks(
                 reservation_id,
                 tasks_path.parent,
             )
+        except _ProviderDispatchError as exc:
+            result = _blocked_result(f"provider dispatch raised: {exc}")
+            print(f"  PROVIDER FAILED {task.id}: {str(exc)[:200]}; committing terminal receipt")
         finally:
             _release_machine_admission(task.id)
 
-        _commit_serial_reserved_result(
+        committed = _commit_serial_reserved_result(
             tasks_path,
             reserved_board,
             reserved_task,
@@ -5864,6 +5875,8 @@ def dispatch_tasks(
             selected_contract_hash,
             reserved_lifecycle_token,
         )
+        if committed and _is_prelaunch_result(result):
+            remaining += reserved_task.budget_cost
         if result == _RATELIMIT:
             print(f"── lane {agent_filter} rate-limited — cooling, {dispatched} dispatched this cycle")
             return
@@ -5926,10 +5939,10 @@ def _apply_result(
         return
 
     entry = DispatchLogEntry(timestamp=now, agent=agent, session_id=session_id(), status="dispatched")
-    if prelaunch_result:
+    if prelaunch_result and not _is_workstream_successor_result(result):
         entry.status = "open"
         task.status = "open"
-        reason = _blocked_reason(result) if _is_blocked_result(result) else _workstream_successor_reason(result)
+        reason = _blocked_reason(result)
         entry.output = f"provider launch did not start; canonical claim released: {reason}"
     elif isinstance(result, PlanHandoffResult):
         try:
@@ -6045,6 +6058,8 @@ def _apply_result(
         entry.execution_started = False
         entry.execution_contract_hash = prior_contract_hash
         entry.execution_reservation_id = prior_reservation
+        if _is_workstream_successor_result(result):
+            entry.lifecycle_repair = "prelaunch-successor-hold"
     elif (
         prior_status == "dispatched"
         and isinstance(result, PlanHandoffResult)
@@ -6055,6 +6070,19 @@ def _apply_result(
         and re.fullmatch(r"[0-9a-f]{64}", prior_contract_hash)
     ):
         entry.lifecycle_repair = "plan-handoff-complete"
+        entry.execution_started = True
+        entry.execution_contract_hash = prior_contract_hash
+        entry.execution_reservation_id = prior_reservation
+    elif (
+        prior_status == "dispatched"
+        and not prelaunch_result
+        and entry.status == "open"
+        and prior_entry is not None
+        and prior_entry.status == "dispatched"
+        and prior_reservation
+        and re.fullmatch(r"[0-9a-f]{64}", prior_contract_hash)
+    ):
+        entry.lifecycle_repair = "provider-reroute"
         entry.execution_started = True
         entry.execution_contract_hash = prior_contract_hash
         entry.execution_reservation_id = prior_reservation
