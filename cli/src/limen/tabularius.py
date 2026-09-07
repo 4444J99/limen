@@ -957,6 +957,18 @@ def _lifecycle_repair_authorized(
             and prior_reservation
             and prior_entry.get("status") == "dispatched"
         )
+    if marker == "plan-handoff-complete":
+        contract_hash = str(log.get("execution_contract_hash") or "")
+        return bool(
+            prior_status == "dispatched"
+            and next_status == "open"
+            and log.get("execution_started") is True
+            and re.fullmatch(r"[0-9a-f]{64}", contract_hash)
+            and contract_hash == str(prior_entry.get("execution_contract_hash") or "")
+            and str(log.get("execution_reservation_id") or "") == prior_reservation
+            and prior_reservation
+            and prior_entry.get("status") == "dispatched"
+        )
     if marker == "stale-successor-hold":
         evidence = str(log.get("liveness_evidence") or "")
         pid = log.get("liveness_pid")
@@ -1106,7 +1118,12 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
                 raise ValueError(f"task {task_id} cannot transition from {prior_status} to {next_status}")
         if kind == "task.claim":
             _local_budget_debit(data, existing, event, patch)
-        if kind == "task.status" and prior_status == "dispatched" and next_status == "open":
+        if (
+            kind == "task.status"
+            and prior_status == "dispatched"
+            and next_status == "open"
+            and not (repair and str(log.get("lifecycle_repair") or "") == "plan-handoff-complete")
+        ):
             _local_budget_refund(data, existing, event)
         existing.update(patch)
         existing["updated"] = str(event["timestamp"])

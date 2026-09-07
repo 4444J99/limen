@@ -220,6 +220,7 @@ def test_dispatch_refuses_provider_launch_when_reservation_cannot_land(monkeypat
     )
 
     assert dispatch._is_blocked_result(result)
+    assert dispatch._is_prelaunch_result(result)
     assert "work-loan reservation failed" in str(result)
     assert launched is False
 
