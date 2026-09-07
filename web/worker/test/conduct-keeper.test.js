@@ -3103,6 +3103,26 @@ test("task claims derive canonical debit and identity while canonical transition
     },
   };
   const first = applyTaskPacketProjectionEvent(board, claim);
+  const policyBoard = structuredClone(board);
+  const policy = {
+    schema_version: "limen.provider_eligibility.v1", repository: "organvm/limen", source_revision: "a".repeat(40),
+    data_classification: "synthetic", max_retention_days: 0, tools: [], destinations: [],
+  };
+  policyBoard.tasks[0].provider_eligibility = policy;
+  const originalPolicyBoard = structuredClone(policyBoard);
+  for (const stripPolicy of [false, true]) {
+    const policyClaim = structuredClone(claim);
+    if (stripPolicy) policyClaim.intent.patch.provider_eligibility = null;
+    assert.throws(
+      () => applyTaskPacketProjectionEvent(policyBoard, policyClaim),
+      /provider_eligibility_adapter_unavailable/,
+    );
+    assert.deepEqual(policyBoard, originalPolicyBoard);
+  }
+  const policyUpdate = structuredClone(claim);
+  policyUpdate.intent.kind = "task.mutate";
+  policyUpdate.intent.patch = { title: "policy retained through unrelated update" };
+  assert.deepEqual(applyTaskPacketProjectionEvent(policyBoard, policyUpdate).task.provider_eligibility, policy);
   const duplicate = applyTaskPacketProjectionEvent(first.board, claim);
   assert.equal(first.board.portal.budget.track.spent, 2);
   assert.equal(first.board.portal.budget.track.date, "2026-07-18");
@@ -3365,12 +3385,43 @@ test("exceptional task transitions require exact structured evidence", () => {
   assert.equal(planned.board.portal.budget.track.spent, 1);
   assert.equal(planned.board.portal.budget.track.per_agent.codex, 1);
 
+  const unknown = event("dispatched", "failed", {
+    lifecycle_repair: "provider-attempt-unknown",
+    execution_started: null,
+    execution_result_kind: "failed",
+    execution_contract_hash: "a".repeat(64),
+    execution_reservation_id: reservation.logical_session_id,
+  });
+  const unknownResult = applyTaskPacketProjectionEvent(planBoard, unknown);
+  assert.equal(unknownResult.task.status, "failed");
+  assert.equal(unknownResult.task.dispatch_log.at(-1).execution_started ?? null, null);
+  assert.equal(unknownResult.board.portal.budget.track.spent, 1);
+  assert.equal(unknownResult.board.portal.budget.track.per_agent.codex, 1);
+  for (const change of [
+    { execution_started: true },
+    { execution_started: false },
+    { execution_contract_hash: "b".repeat(64) },
+    { execution_reservation_id: "wrong-reservation" },
+    { execution_result_kind: "done" },
+  ]) {
+    const forged = structuredClone(unknown);
+    Object.assign(forged.intent.log, change);
+    assert.throws(() => applyTaskPacketProjectionEvent(planBoard, forged), /cannot transition/);
+  }
+  for (const status of ["done", "failed_blocked", "open"]) {
+    const forged = structuredClone(unknown);
+    forged.intent.patch.status = status;
+    forged.intent.log.status = status;
+    forged.intent.log.execution_result_kind = status;
+    assert.throws(() => applyTaskPacketProjectionEvent(planBoard, forged), /cannot transition|lifecycle repair evidence/);
+  }
+
   const forgedPlan = structuredClone(plan);
   forgedPlan.event_id += ":forged";
   forgedPlan.intent.log.execution_reservation_id = "wrong-reservation";
-  const refunded = applyTaskPacketProjectionEvent(planBoard, forgedPlan);
-  assert.equal(refunded.board.portal.budget.track.spent, 0);
-  assert.equal(refunded.board.portal.budget.track.per_agent.codex, 0);
+  assert.throws(() => applyTaskPacketProjectionEvent(planBoard, forgedPlan), /lifecycle repair evidence/);
+  assert.equal(planBoard.portal.budget.track.spent, 1);
+  assert.equal(planBoard.portal.budget.track.per_agent.codex, 1);
 
   const reroute = event("dispatched", "open", {
     lifecycle_repair: "provider-reroute",
@@ -3385,9 +3436,9 @@ test("exceptional task transitions require exact structured evidence", () => {
   const forgedReroute = structuredClone(reroute);
   forgedReroute.event_id += ":forged";
   forgedReroute.intent.log.execution_contract_hash = "b".repeat(64);
-  const rerouteRefund = applyTaskPacketProjectionEvent(planBoard, forgedReroute);
-  assert.equal(rerouteRefund.board.portal.budget.track.spent, 0);
-  assert.equal(rerouteRefund.board.portal.budget.track.per_agent.codex, 0);
+  assert.throws(() => applyTaskPacketProjectionEvent(planBoard, forgedReroute), /lifecycle repair evidence/);
+  assert.equal(planBoard.portal.budget.track.spent, 1);
+  assert.equal(planBoard.portal.budget.track.per_agent.codex, 1);
 
   const prelaunchSuccessor = event("dispatched", "failed", {
     lifecycle_repair: "prelaunch-successor-hold",

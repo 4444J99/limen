@@ -19,7 +19,7 @@ import limen.dispatch as D
 import limen.tabularius as T
 from limen.capacity import PAID_AGENT_ORDER, agent_status, capacity_census, format_capacity_census, select_lanes
 from limen.conduct.client import BrokerUnavailable
-from limen.conduct.broker import ConductError
+from limen.conduct.broker import ConductConflict, ConductError
 from limen.dispatch import dispatch_parallel, dispatch_tasks, release_stale_tasks
 from limen.doctor import qa_report, readiness_report, stale_tasks
 from limen.execution_contract import execution_contract_hash
@@ -1504,10 +1504,12 @@ def test_serial_dispatch_does_not_launch_provider_when_canonical_claim_fails(
     assert read_board(tasks_path)["tasks"][0]["status"] == "open"
 
 
+@pytest.mark.parametrize("remote_conflict", [False, True])
 def test_serial_dispatch_continues_after_task_scoped_claim_rejection(
     tmp_path: Path,
     monkeypatch,
     capsys,
+    remote_conflict,
 ) -> None:
     tasks_path = tmp_path / "tasks.yaml"
     tasks = [
@@ -1538,14 +1540,23 @@ def test_serial_dispatch_continues_after_task_scoped_claim_rejection(
     tasks_path.write_text(yaml.safe_dump(board, sort_keys=False))
     projections = capture_canonical_deltas(monkeypatch)
     real_reserve = D._reserve_serial_dispatch
+    real_sync = D.apply_limen_file_sync
     provider_calls: list[str] = []
 
     def reserve(*args, **kwargs):
-        if args[2] == "STALE-CANDIDATE":
+        if args[2] == "STALE-CANDIDATE" and not remote_conflict:
             raise RuntimeError("task dependencies or ownership changed before canonical claim")
         return real_reserve(*args, **kwargs)
 
+    def sync(path, desired, **kwargs):
+        if remote_conflict and kwargs["session_id"] == "serial-reserve":
+            changed = next(task for task in desired.tasks if task.status == "dispatched")
+            if changed.id == "STALE-CANDIDATE":
+                raise ConductConflict("canonical task CAS rejected", status=409)
+        return real_sync(path, desired, **kwargs)
+
     monkeypatch.setattr(D, "_reserve_serial_dispatch", reserve)
+    monkeypatch.setattr(D, "apply_limen_file_sync", sync)
     monkeypatch.setattr(
         D,
         "call_agent_dispatch",
@@ -1721,6 +1732,216 @@ def test_prelaunch_block_releases_serial_claim_without_execution_evidence() -> N
     assert "blocked:routing" not in task.labels
 
 
+@pytest.mark.parametrize("case", ["remote-board", "remote-adapter", "remote-repo", "jules-repo", "paid-policy"])
+def test_adapter_admission_rejections_are_explicitly_prelaunch(monkeypatch, case) -> None:
+    task = Task(
+        id="ADAPTER-PRELAUNCH",
+        title="reject before any provider submission",
+        repo="example/repo",
+        target_agent="github_actions",
+        status="open",
+        created=date(2026, 8, 30),
+    )
+    monkeypatch.setattr(D, "_authoritative_remote_verification", lambda task: (task, {}))
+    monkeypatch.setattr(D, "_remote_repo_arg", lambda _task: None)
+    monkeypatch.setattr(
+        D, "_run_cmd", lambda *_args, **_kwargs: pytest.fail("admission must precede provider submission")
+    )
+    if case == "remote-board":
+        monkeypatch.setattr(
+            D,
+            "_authoritative_remote_verification",
+            lambda _task: (_ for _ in ()).throw(OSError("board unavailable")),
+        )
+    if case.startswith("remote-"):
+        adapter = object.__new__(D.GitHubWorkflowAdapter)
+        monkeypatch.setattr(D, "discover_adapters", lambda: ({"github_actions": adapter}, {}))
+        if case == "remote-adapter":
+            monkeypatch.setattr(D, "discover_adapters", lambda: ({}, {}))
+        result = D._call_remote_adapter("github_actions", task, dry_run=False)
+    elif case == "jules-repo":
+        result = D._call_jules(task, dry_run=False)
+    else:
+        monkeypatch.setattr(D, "paid_service_block_reason", lambda _task: "no paid-service authorization")
+        result = D._call_warp_oz("oz", task, dry_run=False)
+    assert D._is_blocked_result(result)
+    assert D._is_prelaunch_result(result)
+
+
+@pytest.mark.parametrize(
+    ("result", "runs"),
+    [
+        (D._prelaunch_blocked_result("no launch"), 0),
+        (D._blocked_result("provider ran, then evidence failed"), 1),
+        (D._workstream_successor_result("provider ran, then retry was refused"), 1),
+    ],
+)
+def test_work_loan_refunds_only_explicitly_prelaunch_result(monkeypatch, result, runs):
+    task = Task(id="USAGE", title="account attempt", target_agent="codex", created=date(2026, 8, 30))
+    actual = []
+    store = SimpleNamespace(
+        record_reservation=lambda *_args, **_kwargs: None,
+        record_actual=lambda *_args, **kwargs: actual.append(kwargs),
+    )
+    monkeypatch.setattr(D, "default_work_loan_journal_store", lambda: store)
+    monkeypatch.setattr(D, "call_agent_dispatch", lambda *_args, **_kwargs: result)
+    assert D._journaled_agent_dispatch("codex", task, False, "a" * 64) == result
+    assert actual[0]["metrics"] == {"runs": runs}
+
+
+@pytest.mark.parametrize(("canonical_conflict", "custody_failure"), [(False, False), (True, False), (True, True)])
+def test_serial_reserved_result_uses_broker_cas_not_local_queue_lock(
+    tmp_path, monkeypatch, canonical_conflict, custody_failure
+):
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "SYNC-RESULT",
+                "title": "sync result",
+                "repo": "example/repo",
+                "target_agent": "codex",
+                "status": "open",
+                "created": "2026-08-30",
+                "predicate": "true",
+                "receipt_target": "git:example/repo:result.json",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    board = load_limen_file(tasks_path)
+    task = board.tasks[0]
+    now = datetime.now(timezone.utc)
+    task.status = "dispatched"
+    task.updated = now
+    digest = execution_contract_hash(task)
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=now,
+            agent="codex",
+            session_id="a" * 64,
+            status="dispatched",
+            execution_contract_hash=digest,
+            output="dispatch-serial: canonical claim accepted before provider execution",
+        )
+    )
+    before_bytes = tasks_path.read_bytes()
+    submitted = []
+
+    class BusyLock:
+        def __enter__(self):
+            return False
+
+        def __exit__(self, *_args):
+            return False
+
+    def broker(_path, desired, **kwargs):
+        submitted.append((desired, kwargs["before"]))
+        assert kwargs["before"].tasks[0] == task
+        if canonical_conflict:
+            raise ConductConflict("newer canonical owner", status=409)
+        return SimpleNamespace(projected_tasks={task.id: desired.tasks[0].model_dump(mode="json")})
+
+    monkeypatch.setattr(D, "_queue_lock", lambda _path: BusyLock())
+    monkeypatch.setattr(D, "apply_limen_file_sync", broker)
+    if custody_failure:
+        monkeypatch.setattr(D, "submit_ticket", lambda *_args: (_ for _ in ()).throw(OSError("inbox unavailable")))
+    D._MODEL_SELECTION_RECEIPTS[task.id] = {"selected_model": "synthetic-model"}
+
+    def call():
+        return D._commit_serial_reserved_result(
+            tasks_path,
+            board,
+            task,
+            "codex",
+            D._NOOP,
+            now,
+            digest,
+            D._lifecycle_ownership_token(task),
+        )
+
+    if custody_failure:
+        with pytest.raises(OSError, match="inbox unavailable"):
+            call()
+        assert D._MODEL_SELECTION_RECEIPTS[task.id] == {"selected_model": "synthetic-model"}
+    elif canonical_conflict:
+        with pytest.raises(ConductConflict):
+            call()
+        [path] = list((T.tickets_root(tasks_path) / "inbox").glob("*.json"))
+        ticket = T.Ticket.model_validate_json(path.read_text())
+        assert ticket.task_id == task.id
+        assert ticket.log["selected_model"] == "synthetic-model"
+        assert ticket.log["status"] == "failed"
+        assert ticket.precondition == {
+            "task_sha256": T.task_state_sha256(task.model_dump(mode="json", exclude_none=True))
+        }
+    else:
+        assert call() is True
+        entry = submitted[0][0].tasks[0].dispatch_log[-1]
+        assert entry.status == "failed"
+        assert entry.selected_model == "synthetic-model"
+    assert len(submitted) == 1
+    assert tasks_path.read_bytes() == before_bytes
+    if not custody_failure:
+        assert task.id not in D._MODEL_SELECTION_RECEIPTS
+    D._clear_result_receipts(task.id)
+
+
+def test_explicit_eligibility_policy_blocks_selection_claim_and_direct_launch(tmp_path, monkeypatch) -> None:
+    policy = {
+        "schema_version": "limen.provider_eligibility.v1",
+        "repository": "example/repo",
+        "source_revision": "a" * 40,
+        "data_classification": "synthetic",
+        "max_retention_days": 0,
+        "tools": [],
+        "destinations": [],
+    }
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "POLICY-HELD",
+                "title": "policy is not admission",
+                "repo": "example/repo",
+                "target_agent": "codex",
+                "status": "open",
+                "created": "2026-08-30",
+                "predicate": "true",
+                "receipt_target": "git:example/repo:result",
+                "dispatch_log": [],
+                "provider_eligibility": policy,
+            }
+        ],
+    )
+    board = load_limen_file(tasks_path)
+    task = board.tasks[0]
+    monkeypatch.setattr(D, "apply_limen_file_sync", lambda *_args, **_kwargs: pytest.fail("must not reserve"))
+    monkeypatch.setattr(D, "_run_cmd", lambda *_args, **_kwargs: pytest.fail("must not invoke provider"))
+    assert not D.agent_can_run_task("codex", task)
+    result = D.call_agent_dispatch("codex", task, dry_run=False)
+    assert D._is_prelaunch_result(result)
+    assert "provider_eligibility_adapter_unavailable" in D._blocked_reason(result)
+    with pytest.raises(RuntimeError, match="no longer dispatchable"):
+        D._reserve_serial_dispatch(
+            tasks_path,
+            board,
+            task.id,
+            "codex",
+            execution_contract_hash(task),
+            D._lifecycle_ownership_token(task),
+            datetime.now(timezone.utc),
+            explicit_task=True,
+        )
+    for malformed in ({}, False, "self-authorized"):
+        data = task.model_dump(mode="json")
+        data["provider_eligibility"] = malformed
+        with pytest.raises(ValueError):
+            Task.model_validate(data)
+
+
 def test_workstream_contract_rejection_is_explicitly_prelaunch(monkeypatch) -> None:
     task = Task(
         id="SERIAL-PRELAUNCH-WORKSTREAM",
@@ -1868,10 +2089,11 @@ def test_serial_provider_exception_commits_terminal_receipt(
 
     intended = {task.id: task for task in projections[-1].tasks}["PROVIDER-RAISES"]
     entry = intended.dispatch_log[-1]
-    assert intended.status == "failed_blocked"
-    assert entry.lifecycle_repair == "provider-terminal"
-    assert entry.execution_started is True
-    assert entry.execution_result_kind == "failed_blocked"
+    assert intended.status == "failed"
+    assert entry.lifecycle_repair == "provider-attempt-unknown"
+    assert entry.execution_started is None
+    assert entry.execution_result_kind == "failed"
+    assert "blocked:routing" not in intended.labels
     assert "provider dispatch raised: adapter socket closed" in str(entry.output)
     output = capsys.readouterr().out
     assert "PROVIDER FAILED PROVIDER-RAISES" in output

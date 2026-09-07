@@ -323,7 +323,81 @@ def test_keeper_projection_preserves_planner_debit_on_completed_handoff() -> Non
     assert projected.tasks[0].dispatch_log[-1].lifecycle_repair == "plan-handoff-complete"
 
 
-def test_keeper_projection_preserves_debit_on_evidenced_provider_reroute() -> None:
+@pytest.mark.parametrize(
+    ("next_status", "launch", "reservation", "contract", "accepted"),
+    [
+        ("failed", None, "d" * 64, "e" * 64, True),
+        ("done", None, "d" * 64, "e" * 64, False),
+        ("failed_blocked", None, "d" * 64, "e" * 64, False),
+        ("open", None, "d" * 64, "e" * 64, False),
+        ("failed", True, "d" * 64, "e" * 64, False),
+        ("failed", False, "d" * 64, "e" * 64, False),
+        ("failed", None, "f" * 64, "e" * 64, False),
+        ("failed", None, "d" * 64, "f" * 64, False),
+    ],
+)
+def test_keeper_unknown_provider_attempt_is_failure_only_and_retains_debit(
+    next_status, launch, reservation, contract, accepted
+) -> None:
+    board = _board(
+        [
+            _task(
+                "T-UNKNOWN",
+                status="dispatched",
+                budget_cost=1,
+                dispatch_log=[
+                    {
+                        "timestamp": _NOW.isoformat(),
+                        "agent": "codex",
+                        "session_id": "d" * 64,
+                        "status": "dispatched",
+                        "execution_contract_hash": "e" * 64,
+                    }
+                ],
+            )
+        ]
+    )
+    board.portal.budget.track.date = _NOW.date().isoformat()
+    board.portal.budget.track.spent = 1
+    board.portal.budget.track.per_agent = {"codex": 1}
+    event = {
+        "event_id": "event-unknown-attempt",
+        "timestamp": _NOW.isoformat(),
+        "agent": "dispatch",
+        "session_id": "serial-results",
+        "run_id": "run-unknown",
+        "lease_id": "lease-unknown",
+        "generation": 1,
+        "task_id": "T-UNKNOWN",
+        "intent": {
+            "kind": "task.status",
+            "task_id": "T-UNKNOWN",
+            "expected_status": "dispatched",
+            "patch": {"status": next_status},
+            "log": {
+                "status": next_status,
+                "lifecycle_repair": "provider-attempt-unknown",
+                "execution_started": launch,
+                "execution_result_kind": next_status,
+                "execution_contract_hash": contract,
+                "execution_reservation_id": reservation,
+            },
+        },
+    }
+    if not accepted:
+        with pytest.raises(ValueError, match="cannot transition"):
+            tabularius._project_local_task_event(board, event)
+        return
+    projected, _receipt = tabularius._project_local_task_event(board, event)
+    assert projected.tasks[0].status == "failed"
+    assert projected.tasks[0].dispatch_log[-1].execution_started is None
+    assert projected.portal.budget.track.spent == 1
+    assert projected.portal.budget.track.per_agent["codex"] == 1
+
+
+@pytest.mark.parametrize("marker", ["plan-handoff-complete", "provider-reroute"])
+@pytest.mark.parametrize("tamper", [None, "execution_reservation_id", "execution_contract_hash", "execution_started"])
+def test_keeper_projection_preserves_debit_only_on_exact_provider_handoff(marker, tamper) -> None:
     reservation_id = "d" * 64
     contract_hash = "e" * 64
     board = _board(
@@ -363,7 +437,7 @@ def test_keeper_projection_preserves_debit_on_evidenced_provider_reroute() -> No
             "patch": {"status": "open"},
             "log": {
                 "status": "open",
-                "lifecycle_repair": "provider-reroute",
+                "lifecycle_repair": marker,
                 "execution_started": True,
                 "execution_contract_hash": contract_hash,
                 "execution_reservation_id": reservation_id,
@@ -371,11 +445,60 @@ def test_keeper_projection_preserves_debit_on_evidenced_provider_reroute() -> No
         },
     }
 
+    if tamper:
+        event["intent"]["log"][tamper] = False if tamper == "execution_started" else "f" * 64
+        before = board.model_dump(mode="json")
+        with pytest.raises(ValueError, match="lifecycle repair evidence"):
+            tabularius._project_local_task_event(board, event)
+        assert board.model_dump(mode="json") == before
+        assert board.portal.budget.track.spent == 1
+        return
     projected, _receipt = tabularius._project_local_task_event(board, event)
 
     assert projected.tasks[0].status == "open"
     assert projected.portal.budget.track.spent == 1
     assert projected.portal.budget.track.per_agent["codex"] == 1
+
+
+@pytest.mark.parametrize("strip_policy", [False, True])
+def test_keeper_explicit_provider_policy_cannot_claim_or_strip_at_claim(strip_policy) -> None:
+    policy = {
+        "schema_version": "limen.provider_eligibility.v1",
+        "repository": "organvm/limen",
+        "source_revision": "a" * 40,
+        "data_classification": "synthetic",
+        "max_retention_days": 0,
+        "tools": [],
+        "destinations": [],
+    }
+    board = _board([_task("T-POLICY", status="open", provider_eligibility=policy)])
+    before = board.model_dump(mode="json")
+    event = {
+        "event_id": "policy-claim",
+        "timestamp": _NOW.isoformat(),
+        "agent": "codex",
+        "session_id": "claim",
+        "run_id": "policy-run",
+        "lease_id": "policy-lease",
+        "generation": 1,
+        "task_id": "T-POLICY",
+        "intent": {
+            "kind": "task.claim",
+            "task_id": "T-POLICY",
+            "expected_status": "open",
+            "patch": {"status": "dispatched"},
+            "log": {"status": "dispatched"},
+        },
+    }
+    if strip_policy:
+        event["intent"]["patch"]["provider_eligibility"] = None
+    with pytest.raises(ValueError, match="provider_eligibility_adapter_unavailable"):
+        tabularius._project_local_task_event(board, event)
+    assert board.model_dump(mode="json") == before
+    event["intent"]["kind"] = "task.mutate"
+    event["intent"]["patch"] = {"title": "policy retained through unrelated update"}
+    projected, _receipt = tabularius._project_local_task_event(board, event)
+    assert projected.tasks[0].provider_eligibility == policy
 
 
 def test_keeper_projection_refunds_evidenced_prelaunch_successor_hold() -> None:

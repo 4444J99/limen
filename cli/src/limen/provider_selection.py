@@ -13,8 +13,9 @@ import re
 import subprocess
 from dataclasses import asdict, dataclass
 from datetime import date, datetime, timezone
-from typing import Any, Iterable, Sequence, get_type_hints
+from typing import Any, Iterable, Mapping, Sequence, get_type_hints
 
+from limen.provider_eligibility import EvidenceVerifier, provider_eligibility_reason
 from limen.provider_health import ProviderHealthSnapshot
 
 
@@ -306,12 +307,29 @@ def select_opencode_model(
     health: ProviderHealthSnapshot | None = None,
     *,
     now: datetime | None = None,
+    eligibility_policy: object = None,
+    eligibility_provider: str | None = None,
+    eligibility_evidence: Mapping[str, Mapping[str, Any]] | None = None,
+    eligibility_verifier: EvidenceVerifier | None = None,
 ) -> ModelCapability | None:
     current = now or datetime.now(timezone.utc)
     eligible = [
         model
         for model in models
-        if model.satisfies(profile) and (health is None or health.allows(model.model_id, now=current))
+        if (
+            eligibility_policy is None
+            or provider_eligibility_reason(
+                eligibility_policy,
+                provider=eligibility_provider or "",
+                model_id=model.model_id,
+                evidence=(eligibility_evidence or {}).get(model.model_id),
+                verifier=eligibility_verifier,
+                now=current,
+            )
+            is None
+        )
+        and model.satisfies(profile)
+        and (health is None or health.allows(model.model_id, now=current))
     ]
     if not eligible:
         return None
