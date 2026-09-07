@@ -49,6 +49,7 @@ const PATCHABLE_TASK_FIELDS = new Set([
   "receipt_verified",
   "execution_requirements",
   "workstream_contract",
+  "provider_eligibility",
   "claude_tier",
   "depends_on",
 ]);
@@ -150,6 +151,7 @@ const ENUM_STRUCTURED_LOG_FIELDS = new Map([
     "pr-closed-reconcile",
     "routine-recovered",
     "provider-terminal",
+    "provider-attempt-unknown",
     "plan-handoff-complete",
     "provider-reroute",
     "prelaunch-successor-hold",
@@ -522,6 +524,18 @@ function isLifecycleRepairAuthorized(task, nextStatus, log, patch) {
   }
   const priorEntry = (task.dispatch_log || []).at(-1) || {};
   const priorReservation = logicalLogSession(priorEntry);
+  if (marker === "provider-attempt-unknown") {
+    const contractHash = String(log?.execution_contract_hash || "");
+    return priorStatus === "dispatched"
+      && nextStatus === "failed"
+      && log?.execution_started == null
+      && log?.execution_result_kind === "failed"
+      && /^[0-9a-f]{64}$/.test(contractHash)
+      && contractHash === String(priorEntry.execution_contract_hash || "")
+      && String(log?.execution_reservation_id || "") === priorReservation
+      && Boolean(priorReservation)
+      && priorEntry.status === "dispatched";
+  }
   if (marker === "provider-terminal") {
     const contractHash = String(log?.execution_contract_hash || "");
     return priorStatus === "dispatched"
@@ -689,11 +703,25 @@ export function applyTaskPacketProjectionEvent(input, event) {
   const nextStatus = patch.status ?? existing.status;
   requireReceiptCredit(taskId, existing, patch, intent.log);
   if (["dispatched", "in_progress"].includes(nextStatus)) {
+    // A policy document is not a trusted provider attestation. Preserve it,
+    // but admit no policy-bearing execution until the live adapter exists.
+    // Checking both sides also forbids stripping policy during the claim.
+    if (existing.provider_eligibility != null || patch.provider_eligibility != null) {
+      throw new ConductProjectionError(`task ${taskId} provider_eligibility_adapter_unavailable`, 409);
+    }
     const missing = taskWorkLoanMissingFields({ ...existing, ...patch });
     if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 409);
   }
   const lifecycleRepair = kind === "task.status"
     && isLifecycleRepairAuthorized(existing, nextStatus, intent.log, patch);
+  // A malformed execution receipt is not a prelaunch cancellation. Reject it
+  // before the ordinary dispatched -> open fallback can refund its debit.
+  if (["plan-handoff-complete", "provider-reroute", "provider-attempt-unknown"]
+    .includes(intent.log?.lifecycle_repair) && !lifecycleRepair) {
+    throw new ConductProjectionError(
+      `task ${taskId} cannot transition: lifecycle repair evidence does not match reservation`, 409,
+    );
+  }
   if (!isHeldJulesLandingRecovery(existing, nextStatus, intent.log) && !lifecycleRepair) {
     validateTransition(taskId, existing.status, nextStatus, kind);
   }

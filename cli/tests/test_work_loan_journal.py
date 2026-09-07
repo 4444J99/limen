@@ -77,6 +77,26 @@ def test_journal_keeps_requested_reserved_and_actual_capacity_distinct(tmp_path:
     assert journal.path.stat().st_mode & 0o777 == 0o600
 
 
+def test_unknown_launch_keeps_reservation_without_inventing_actual_run(tmp_path: Path) -> None:
+    journal = store(tmp_path)
+    task = task_row()
+    journal.record_reservation(task, agent="jules", reservation_id="unknown-1", now=NOW)
+    journal.record_actual(
+        task,
+        agent="jules",
+        reservation_id="unknown-1",
+        elapsed_seconds=2.0,
+        local_host=False,
+        metrics={"runs": None},
+        now=NOW,
+    )
+    [snapshot] = journal_snapshots(journal.read())
+    assert snapshot["reserved"]["runs"] == 2
+    assert snapshot["actual"]["runs"] is None
+    assert snapshot["actual"]["elapsed_seconds"] == 2.0
+    assert snapshot["unrepaid_debt"] is True
+
+
 def test_journal_is_hash_chained_and_rejects_tampering(tmp_path: Path) -> None:
     journal = store(tmp_path)
     task = task_row()

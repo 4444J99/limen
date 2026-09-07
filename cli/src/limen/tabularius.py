@@ -106,6 +106,7 @@ _PATCHABLE_TASK_FIELDS = frozenset(
         "receipt_verified",
         "execution_requirements",
         "workstream_contract",
+        "provider_eligibility",
         "claude_tier",
         "depends_on",
     }
@@ -944,6 +945,19 @@ def _lifecycle_repair_authorized(
     prior_log = (task.get("dispatch_log") or [])[-1:] or [{}]
     prior_entry = prior_log[0]
     prior_reservation = _logical_log_session(prior_entry)
+    if marker == "provider-attempt-unknown":
+        contract_hash = str(log.get("execution_contract_hash") or "")
+        return bool(
+            prior_status == "dispatched"
+            and next_status == "failed"
+            and log.get("execution_started") is None
+            and log.get("execution_result_kind") == "failed"
+            and re.fullmatch(r"[0-9a-f]{64}", contract_hash)
+            and contract_hash == str(prior_entry.get("execution_contract_hash") or "")
+            and str(log.get("execution_reservation_id") or "") == prior_reservation
+            and prior_reservation
+            and prior_entry.get("status") == "dispatched"
+        )
     if marker == "provider-terminal":
         contract_hash = str(log.get("execution_contract_hash") or "")
         return bool(
@@ -1122,6 +1136,8 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
         prior_status = str(existing.get("status") or "")
         next_status = str(patch.get("status") or prior_status)
         if next_status in {"dispatched", "in_progress"}:
+            if existing.get("provider_eligibility") is not None or patch.get("provider_eligibility") is not None:
+                raise ValueError(f"task {task_id} provider_eligibility_adapter_unavailable")
             underwriting = task_work_loan_readiness({**existing, **patch})
             if not underwriting.ready:
                 raise ValueError(underwriting.reason_code)
@@ -1131,6 +1147,15 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
         repair = kind in {"task.status", "task.upsert"} and _lifecycle_repair_authorized(
             existing, next_status, log, patch
         )
+        # These results attest execution (or expressly unknown execution),
+        # never cancellation-before-start. Invalid evidence must not fall
+        # through to ordinary dispatched -> open and refund the reservation.
+        if (
+            str(log.get("lifecycle_repair") or "")
+            in {"plan-handoff-complete", "provider-reroute", "provider-attempt-unknown"}
+            and not repair
+        ):
+            raise ValueError(f"task {task_id} cannot transition: lifecycle repair evidence does not match reservation")
         is_migration_upsert = kind in {"task.upsert", "task.status"} and bool(
             "migration" in str(log.get("output") or "").lower()
             or "reconciliation" in str(log.get("output") or "").lower()
