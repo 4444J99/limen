@@ -3372,6 +3372,42 @@ test("exceptional task transitions require exact structured evidence", () => {
   assert.equal(refunded.board.portal.budget.track.spent, 0);
   assert.equal(refunded.board.portal.budget.track.per_agent.codex, 0);
 
+  const reroute = event("dispatched", "open", {
+    lifecycle_repair: "provider-reroute",
+    execution_started: true,
+    execution_contract_hash: "a".repeat(64),
+    execution_reservation_id: reservation.logical_session_id,
+  }, { target_agent: "opencode" });
+  const rerouted = applyTaskPacketProjectionEvent(planBoard, reroute);
+  assert.equal(rerouted.task.status, "open");
+  assert.equal(rerouted.board.portal.budget.track.spent, 1);
+  assert.equal(rerouted.board.portal.budget.track.per_agent.codex, 1);
+  const forgedReroute = structuredClone(reroute);
+  forgedReroute.event_id += ":forged";
+  forgedReroute.intent.log.execution_contract_hash = "b".repeat(64);
+  const rerouteRefund = applyTaskPacketProjectionEvent(planBoard, forgedReroute);
+  assert.equal(rerouteRefund.board.portal.budget.track.spent, 0);
+  assert.equal(rerouteRefund.board.portal.budget.track.per_agent.codex, 0);
+
+  const prelaunchSuccessor = event("dispatched", "failed", {
+    lifecycle_repair: "prelaunch-successor-hold",
+    execution_started: false,
+    execution_contract_hash: "a".repeat(64),
+    execution_reservation_id: reservation.logical_session_id,
+  }, { labels: ["workstream:successor-required"] });
+  const successor = applyTaskPacketProjectionEvent(planBoard, prelaunchSuccessor);
+  assert.equal(successor.task.status, "failed");
+  assert.deepEqual(successor.task.labels, ["workstream:successor-required"]);
+  assert.equal(successor.board.portal.budget.track.spent, 0);
+  assert.equal(successor.board.portal.budget.track.per_agent.codex, 0);
+  const forgedSuccessor = structuredClone(prelaunchSuccessor);
+  forgedSuccessor.event_id += ":forged";
+  forgedSuccessor.intent.log.execution_started = true;
+  assert.throws(
+    () => applyTaskPacketProjectionEvent(planBoard, forgedSuccessor),
+    /cannot transition/,
+  );
+
   const stale = event("dispatched", "failed", {
     lifecycle_repair: "stale-successor-hold",
     liveness_evidence: "dead-process",

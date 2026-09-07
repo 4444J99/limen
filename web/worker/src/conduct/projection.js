@@ -151,6 +151,8 @@ const ENUM_STRUCTURED_LOG_FIELDS = new Map([
     "routine-recovered",
     "provider-terminal",
     "plan-handoff-complete",
+    "provider-reroute",
+    "prelaunch-successor-hold",
     "stale-successor-hold",
     "recurrence-reopen",
   ])],
@@ -543,6 +545,29 @@ function isLifecycleRepairAuthorized(task, nextStatus, log, patch) {
       && Boolean(priorReservation)
       && priorEntry.status === "dispatched";
   }
+  if (marker === "provider-reroute") {
+    const contractHash = String(log?.execution_contract_hash || "");
+    return priorStatus === "dispatched"
+      && nextStatus === "open"
+      && log?.execution_started === true
+      && /^[0-9a-f]{64}$/.test(contractHash)
+      && contractHash === String(priorEntry.execution_contract_hash || "")
+      && String(log?.execution_reservation_id || "") === priorReservation
+      && Boolean(priorReservation)
+      && priorEntry.status === "dispatched";
+  }
+  if (marker === "prelaunch-successor-hold") {
+    const contractHash = String(log?.execution_contract_hash || "");
+    return priorStatus === "dispatched"
+      && nextStatus === "failed"
+      && labels.has("workstream:successor-required")
+      && log?.execution_started === false
+      && /^[0-9a-f]{64}$/.test(contractHash)
+      && contractHash === String(priorEntry.execution_contract_hash || "")
+      && String(log?.execution_reservation_id || "") === priorReservation
+      && Boolean(priorReservation)
+      && priorEntry.status === "dispatched";
+  }
   if (marker === "stale-successor-hold") {
     const evidence = String(log?.liveness_evidence || "");
     const age = log?.liveness_age_seconds;
@@ -675,8 +700,12 @@ export function applyTaskPacketProjectionEvent(input, event) {
   if (kind === "task.claim") applyCanonicalBudgetDebit(board, existing, event, patch);
   if (kind === "task.status"
       && existing.status === "dispatched"
-      && nextStatus === "open"
-      && !(lifecycleRepair && intent.log?.lifecycle_repair === "plan-handoff-complete")) {
+      && ((nextStatus === "open"
+        && !(lifecycleRepair && ["plan-handoff-complete", "provider-reroute"]
+          .includes(intent.log?.lifecycle_repair)))
+        || (nextStatus === "failed"
+          && lifecycleRepair
+          && intent.log?.lifecycle_repair === "prelaunch-successor-hold"))) {
     applyCanonicalBudgetRefund(board, existing, event);
   }
   Object.assign(existing, clone(patch));

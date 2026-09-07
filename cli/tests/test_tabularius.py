@@ -323,6 +323,117 @@ def test_keeper_projection_preserves_planner_debit_on_completed_handoff() -> Non
     assert projected.tasks[0].dispatch_log[-1].lifecycle_repair == "plan-handoff-complete"
 
 
+def test_keeper_projection_preserves_debit_on_evidenced_provider_reroute() -> None:
+    reservation_id = "d" * 64
+    contract_hash = "e" * 64
+    board = _board(
+        [
+            _task(
+                "T-REROUTE",
+                status="dispatched",
+                budget_cost=1,
+                dispatch_log=[
+                    {
+                        "timestamp": _NOW.isoformat(),
+                        "agent": "codex",
+                        "session_id": reservation_id,
+                        "status": "dispatched",
+                        "execution_contract_hash": contract_hash,
+                    }
+                ],
+            )
+        ]
+    )
+    board.portal.budget.track.date = _NOW.date().isoformat()
+    board.portal.budget.track.spent = 1
+    board.portal.budget.track.per_agent = {"codex": 1}
+    event = {
+        "event_id": "event-provider-reroute",
+        "timestamp": _NOW.isoformat(),
+        "agent": "dispatch",
+        "session_id": "serial-results",
+        "run_id": "run-provider-reroute",
+        "lease_id": "lease-provider-reroute",
+        "generation": 1,
+        "task_id": "T-REROUTE",
+        "intent": {
+            "kind": "task.status",
+            "task_id": "T-REROUTE",
+            "expected_status": "dispatched",
+            "patch": {"status": "open"},
+            "log": {
+                "status": "open",
+                "lifecycle_repair": "provider-reroute",
+                "execution_started": True,
+                "execution_contract_hash": contract_hash,
+                "execution_reservation_id": reservation_id,
+            },
+        },
+    }
+
+    projected, _receipt = tabularius._project_local_task_event(board, event)
+
+    assert projected.tasks[0].status == "open"
+    assert projected.portal.budget.track.spent == 1
+    assert projected.portal.budget.track.per_agent["codex"] == 1
+
+
+def test_keeper_projection_refunds_evidenced_prelaunch_successor_hold() -> None:
+    reservation_id = "f" * 64
+    contract_hash = "a" * 64
+    board = _board(
+        [
+            _task(
+                "T-PRELAUNCH-SUCCESSOR",
+                status="dispatched",
+                budget_cost=1,
+                dispatch_log=[
+                    {
+                        "timestamp": _NOW.isoformat(),
+                        "agent": "codex",
+                        "session_id": reservation_id,
+                        "status": "dispatched",
+                        "execution_contract_hash": contract_hash,
+                    }
+                ],
+            )
+        ]
+    )
+    board.portal.budget.track.date = _NOW.date().isoformat()
+    board.portal.budget.track.spent = 1
+    board.portal.budget.track.per_agent = {"codex": 1}
+    event = {
+        "event_id": "event-prelaunch-successor",
+        "timestamp": _NOW.isoformat(),
+        "agent": "dispatch",
+        "session_id": "serial-results",
+        "run_id": "run-prelaunch-successor",
+        "lease_id": "lease-prelaunch-successor",
+        "generation": 1,
+        "task_id": "T-PRELAUNCH-SUCCESSOR",
+        "intent": {
+            "kind": "task.status",
+            "task_id": "T-PRELAUNCH-SUCCESSOR",
+            "expected_status": "dispatched",
+            "patch": {"status": "failed", "labels": ["workstream:successor-required"]},
+            "log": {
+                "status": "failed",
+                "lifecycle_repair": "prelaunch-successor-hold",
+                "execution_started": False,
+                "execution_contract_hash": contract_hash,
+                "execution_reservation_id": reservation_id,
+            },
+        },
+    }
+
+    projected, _receipt = tabularius._project_local_task_event(board, event)
+
+    assert projected.tasks[0].status == "failed"
+    assert projected.tasks[0].labels == ["workstream:successor-required"]
+    assert projected.portal.budget.track.spent == 0
+    assert projected.portal.budget.track.per_agent["codex"] == 0
+
+
 def test_batch_admission_rejects_stale_exact_state_ticket():
     base = _task("T-1", status="open")
     archive = _ticket(

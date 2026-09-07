@@ -96,6 +96,8 @@ class DispatchLogEntry(BaseModel):
             "routine-recovered",
             "provider-terminal",
             "plan-handoff-complete",
+            "provider-reroute",
+            "prelaunch-successor-hold",
             "stale-successor-hold",
             "recurrence-reopen",
         ]

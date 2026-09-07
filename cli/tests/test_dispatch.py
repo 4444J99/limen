@@ -220,8 +220,21 @@ def capture_canonical_deltas(monkeypatch) -> list[LimenFile]:
             elif (
                 current is not None
                 and current.status == "dispatched"
-                and desired.status == "open"
-                and (not desired.dispatch_log or desired.dispatch_log[-1].lifecycle_repair != "plan-handoff-complete")
+                and (
+                    (
+                        desired.status == "open"
+                        and (
+                            not desired.dispatch_log
+                            or desired.dispatch_log[-1].lifecycle_repair
+                            not in {"plan-handoff-complete", "provider-reroute"}
+                        )
+                    )
+                    or (
+                        desired.status == "failed"
+                        and desired.dispatch_log
+                        and desired.dispatch_log[-1].lifecycle_repair == "prelaunch-successor-hold"
+                    )
+                )
             ):
                 refund_agent = current.dispatch_log[-1].agent if current.dispatch_log else current.target_agent
                 track = canonical.portal.budget.track
@@ -1731,6 +1744,190 @@ def test_workstream_contract_rejection_is_explicitly_prelaunch(monkeypatch) -> N
     assert D._is_workstream_successor_result(result)
     assert D._is_prelaunch_result(result)
     assert "contract expired" in D._workstream_successor_reason(result)
+
+
+def test_prelaunch_workstream_rejection_holds_successor_and_refunds_claim() -> None:
+    now = datetime(2026, 8, 30, 12, tzinfo=timezone.utc)
+    task = Task(
+        id="SERIAL-PRELAUNCH-SUCCESSOR",
+        title="hold the rejected contract for successor routing",
+        repo="someorg/dispatch-lab",
+        target_agent="codex",
+        status="dispatched",
+        budget_cost=1,
+        predicate="python3 scripts/check.py",
+        receipt_target="github:someorg/dispatch-lab:pull-request:SERIAL-PRELAUNCH-SUCCESSOR",
+        created=date(2026, 8, 30),
+    )
+    contract_hash = execution_contract_hash(task)
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=now,
+            agent="codex",
+            session_id="d" * 64,
+            status="dispatched",
+            execution_contract_hash=contract_hash,
+            output="dispatch-serial: canonical claim accepted before provider execution",
+        )
+    )
+
+    D._apply_result(
+        task,
+        "codex",
+        D._prelaunch_workstream_successor_result("contract expired"),
+        now,
+        BudgetTrack(date="2026-08-30", spent=1, per_agent={"codex": 1}),
+        charge_budget=False,
+    )
+
+    entry = task.dispatch_log[-1]
+    assert task.status == "failed"
+    assert D.WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in task.labels
+    assert entry.lifecycle_repair == "prelaunch-successor-hold"
+    assert entry.execution_started is False
+    assert entry.execution_reservation_id == "d" * 64
+
+
+def test_postlaunch_reroute_records_execution_and_preserves_claim_debit(monkeypatch) -> None:
+    now = datetime(2026, 8, 30, 12, tzinfo=timezone.utc)
+    task = Task(
+        id="SERIAL-REROUTE",
+        title="reroute after launched provider throttles",
+        repo="someorg/dispatch-lab",
+        target_agent="codex",
+        status="dispatched",
+        budget_cost=1,
+        predicate="python3 scripts/check.py",
+        receipt_target="github:someorg/dispatch-lab:pull-request:SERIAL-REROUTE",
+        created=date(2026, 8, 30),
+    )
+    contract_hash = execution_contract_hash(task)
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=now,
+            agent="codex",
+            session_id="e" * 64,
+            status="dispatched",
+            execution_contract_hash=contract_hash,
+            output="dispatch-serial: canonical claim accepted before provider execution",
+        )
+    )
+    monkeypatch.setattr(D, "_cascade_or_requeue", lambda _agent: "opencode")
+    track = BudgetTrack(date="2026-08-30", spent=1, per_agent={"codex": 1})
+
+    D._apply_result(task, "codex", D._RATELIMIT, now, track, charge_budget=False)
+
+    entry = task.dispatch_log[-1]
+    assert task.status == "open"
+    assert entry.route_to == "opencode"
+    assert entry.lifecycle_repair == "provider-reroute"
+    assert entry.execution_started is True
+    assert entry.execution_reservation_id == "e" * 64
+    assert track.spent == 1
+
+
+def test_serial_provider_exception_commits_terminal_receipt(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "PROVIDER-RAISES",
+                "title": "contain an adapter exception",
+                "repo": "someorg/dispatch-lab",
+                "target_agent": "codex",
+                "priority": "critical",
+                "budget_cost": 1,
+                "source_origin": "human_prompt",
+                "horizon": "present",
+                "value_case": "Commit an evidence-bound failure if the launched provider raises.",
+                "predicate": "python3 scripts/check.py",
+                "receipt_target": "github:someorg/dispatch-lab:pull-request:PROVIDER-RAISES",
+                "status": "open",
+                "created": "2026-06-20",
+                "dispatch_log": [],
+            }
+        ],
+    )
+    board = read_board(tasks_path)
+    board["portal"]["budget"]["track"]["date"] = date.today().isoformat()
+    tasks_path.write_text(yaml.safe_dump(board, sort_keys=False))
+    projections = capture_canonical_deltas(monkeypatch)
+    monkeypatch.setattr(
+        D,
+        "call_agent_dispatch",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("adapter socket closed")),
+    )
+    monkeypatch.setattr(D, "_down_lanes", lambda: set())
+
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=False)
+
+    intended = {task.id: task for task in projections[-1].tasks}["PROVIDER-RAISES"]
+    entry = intended.dispatch_log[-1]
+    assert intended.status == "failed_blocked"
+    assert entry.lifecycle_repair == "provider-terminal"
+    assert entry.execution_started is True
+    assert entry.execution_result_kind == "failed_blocked"
+    assert "provider dispatch raised: adapter socket closed" in str(entry.output)
+    output = capsys.readouterr().out
+    assert "PROVIDER FAILED PROVIDER-RAISES" in output
+    assert "── LIVE: 1 task(s)" in output
+
+
+def test_serial_prelaunch_refund_restores_batch_remainder(
+    tmp_path: Path,
+    monkeypatch,
+    capsys,
+) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    tasks = [
+        {
+            "id": task_id,
+            "title": title,
+            "repo": "someorg/dispatch-lab",
+            "target_agent": "codex",
+            "priority": priority,
+            "budget_cost": 1,
+            "source_origin": "human_prompt",
+            "horizon": "present",
+            "value_case": f"Exercise refunded serial batch capacity for {task_id}.",
+            "predicate": "python3 scripts/check.py",
+            "receipt_target": f"github:someorg/dispatch-lab:pull-request:{task_id}",
+            "status": "open",
+            "created": "2026-06-20",
+            "dispatch_log": [],
+        }
+        for task_id, title, priority in (
+            ("PRELAUNCH-RELEASE", "release before launch", "critical"),
+            ("NEXT-AFTER-REFUND", "launch after refund", "high"),
+        )
+    ]
+    write_board(tasks_path, tasks)
+    board = read_board(tasks_path)
+    board["portal"]["budget"]["track"]["date"] = date.today().isoformat()
+    tasks_path.write_text(yaml.safe_dump(board, sort_keys=False))
+    projections = capture_canonical_deltas(monkeypatch)
+    provider_calls: list[str] = []
+
+    def provider(_agent, task, dry_run=False):
+        provider_calls.append(task.id)
+        if task.id == "PRELAUNCH-RELEASE":
+            return D._prelaunch_blocked_result("host admission denied")
+        return True
+
+    monkeypatch.setattr(D, "call_agent_dispatch", provider)
+    monkeypatch.setattr(D, "_down_lanes", lambda: set())
+
+    dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", budget=1, dry_run=False)
+
+    assert provider_calls == ["PRELAUNCH-RELEASE", "NEXT-AFTER-REFUND"]
+    assert projections[-1].portal.budget.track.spent == 1
+    assert projections[-1].portal.budget.track.per_agent["codex"] == 1
+    assert "── LIVE: 2 task(s)" in capsys.readouterr().out
 
 
 def test_dispatch_budget_reset_persist_survives_concurrent_board_write(
