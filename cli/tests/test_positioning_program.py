@@ -510,6 +510,26 @@ def test_forged_receipts_fail_exact_corruption_shapes() -> None:
             MODULE.validate_work_receipt(forged, work_id, graph)
 
 
+def test_remote_template_predicate_uses_packet_scope_not_controller_checkout() -> None:
+    graph, _mapping = graph_and_map()
+    packet = graph["work_by_id"]["PSP-P11-W03"]
+    assert MODULE._command_owned_by_packet("python3 templates/production-systems/verify-audit-report.py", packet)
+    assert MODULE._command_owned_by_packet(
+        "node_modules/.bin/tsx scripts/validate-production-systems-preflight.ts", packet
+    )
+    for command in (
+        "python3 templates/production-systems/../../unowned.py",
+        "python3 /tmp/verify-audit-report.py",
+        "python3 unowned/verify-audit-report.py",
+        "python3 -c 'print(1)'",
+        "node_modules/.bin/tsx -e 'validateAuditReport()'",
+        "node_modules/.bin/tsx scripts/unowned.ts",
+        "other/tsx scripts/validate-production-systems-preflight.ts",
+        "python3 templates/production-systems/verify-audit-report.py && true",
+    ):
+        assert not MODULE._command_owned_by_packet(command, packet), command
+
+
 def test_w07_receipt_requires_five_reader_records_and_decision_evidence() -> None:
     graph, _mapping = graph_and_map()
     work_id = "PSP-P03-W07"
