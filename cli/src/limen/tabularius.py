@@ -30,7 +30,7 @@ import urllib.parse
 import urllib.request
 import uuid
 from collections import OrderedDict
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -53,6 +53,7 @@ from limen.conduct.models import (
     canonical_hash,
 )
 from limen.intake import IntakeContractError, validate_intake_contract
+from limen.inventory_admission import require_inventory_admission
 from limen.io import (
     load_limen_file,
     local_conduct_projection_lock,
@@ -69,6 +70,7 @@ from limen.materialize import (
 )
 from limen.models import VALID_STATUSES, LimenFile, Task
 from limen.partition_lanes import heuristics_may_promote
+from limen.provider_eligibility import validate_policy_update
 from limen.work_loan import task_work_loan_readiness
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL
 
@@ -106,6 +108,7 @@ _PATCHABLE_TASK_FIELDS = frozenset(
         "receipt_verified",
         "execution_requirements",
         "workstream_contract",
+        "provider_eligibility",
         "claude_tier",
         "depends_on",
     }
@@ -199,6 +202,9 @@ class Ticket(BaseModel):
     # migration can therefore never archive a task that another ticket claimed
     # after compilation.
     precondition: dict[str, Any] | None = None
+    # Captured claim supplies replay's CAS input, never canonical authority.
+    # The keeper still checks its exact revision/status against live state.
+    canonical_base: dict[str, Any] | None = None
 
 
 def task_state_sha256(fields: dict[str, Any]) -> str:
@@ -667,6 +673,22 @@ def _revision_iso(value: datetime) -> str:
 
 
 def _compatibility_intent(ticket: Ticket, base: dict[str, Any] | None) -> dict[str, Any]:
+    if ticket.canonical_base is not None:
+        captured = ticket.canonical_base
+        expected_hash = (ticket.precondition or {}).get("task_sha256")
+        captured_open_claim = (
+            captured.get("status") == "open"
+            and ticket.intent == INTENT_UPSERT
+            and (ticket.patch or {}).get("status") == "dispatched"
+        )
+        if (
+            captured.get("id") != ticket.task_id
+            or (captured.get("status") != "dispatched" and not captured_open_claim)
+            or not expected_hash
+            or task_state_sha256(captured) != expected_hash
+        ):
+            raise ValueError("captured canonical claim does not match exact ticket precondition")
+        base = captured
     log = dict(ticket.log or {})
     # ``agent``/``session_id`` in the packet log are untrusted workflow
     # correlation. The keeper projects them under logical names while deriving
@@ -788,8 +810,9 @@ def _local_budget_debit(
     amount = task.get("budget_cost", 0)
     if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0:
         raise ValueError(f"task {task['id']} has invalid canonical budget_cost")
-    log = dict((event.get("intent") or {}).get("log") or {})
-    agent = str(log.get("logical_agent") or log.get("agent") or "")
+    # Task/log labels are correlation only. The keeper supplied the canonical
+    # executor on the authenticated projection event, just as in the Worker.
+    agent = str(event.get("agent") or "")
     if not agent or agent == "any":
         raise ValueError(f"task {task['id']} claim requires one concrete executor")
     latest = (task.get("dispatch_log") or [])[-1:] or [{}]
@@ -814,11 +837,14 @@ def _local_budget_debit(
 
 def _local_budget_refund(board: dict[str, Any], task: dict[str, Any], event: dict[str, Any]) -> None:
     amount = task.get("budget_cost", 0)
-    claim: dict[str, Any] = next(
-        (entry for entry in reversed(task.get("dispatch_log") or []) if entry.get("status") == "dispatched"),
-        {},
-    )
-    agent = str(claim.get("logical_agent") or claim.get("agent") or task.get("target_agent") or "")
+    claim: dict[str, Any] = {}
+    # The first dispatched entry in the current uninterrupted reservation
+    # owns its debit. Later metadata updates cannot replace that identity.
+    for entry in reversed(task.get("dispatch_log") or []):
+        if entry.get("status") != "dispatched":
+            break
+        claim = entry
+    agent = str(claim.get("agent") or "")
     if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0 or not agent or agent == "any":
         raise ValueError(f"task {task['id']} cannot derive a canonical budget refund")
     budget = (board.get("portal") or {}).get("budget") or {}
@@ -944,6 +970,19 @@ def _lifecycle_repair_authorized(
     prior_log = (task.get("dispatch_log") or [])[-1:] or [{}]
     prior_entry = prior_log[0]
     prior_reservation = _logical_log_session(prior_entry)
+    if marker == "provider-attempt-unknown":
+        contract_hash = str(log.get("execution_contract_hash") or "")
+        return bool(
+            prior_status == "dispatched"
+            and next_status == "failed"
+            and log.get("execution_started") is None
+            and log.get("execution_result_kind") == "failed"
+            and re.fullmatch(r"[0-9a-f]{64}", contract_hash)
+            and contract_hash == str(prior_entry.get("execution_contract_hash") or "")
+            and str(log.get("execution_reservation_id") or "") == prior_reservation
+            and prior_reservation
+            and prior_entry.get("status") == "dispatched"
+        )
     if marker == "provider-terminal":
         contract_hash = str(log.get("execution_contract_hash") or "")
         return bool(
@@ -951,6 +990,43 @@ def _lifecycle_repair_authorized(
             and next_status in {"done", "failed", "failed_blocked"}
             and log.get("execution_started") is True
             and log.get("execution_result_kind") == next_status
+            and re.fullmatch(r"[0-9a-f]{64}", contract_hash)
+            and contract_hash == str(prior_entry.get("execution_contract_hash") or "")
+            and str(log.get("execution_reservation_id") or "") == prior_reservation
+            and prior_reservation
+            and prior_entry.get("status") == "dispatched"
+        )
+    if marker == "plan-handoff-complete":
+        contract_hash = str(log.get("execution_contract_hash") or "")
+        return bool(
+            prior_status == "dispatched"
+            and next_status == "open"
+            and log.get("execution_started") is True
+            and re.fullmatch(r"[0-9a-f]{64}", contract_hash)
+            and contract_hash == str(prior_entry.get("execution_contract_hash") or "")
+            and str(log.get("execution_reservation_id") or "") == prior_reservation
+            and prior_reservation
+            and prior_entry.get("status") == "dispatched"
+        )
+    if marker == "provider-reroute":
+        contract_hash = str(log.get("execution_contract_hash") or "")
+        return bool(
+            prior_status == "dispatched"
+            and next_status == "open"
+            and log.get("execution_started") is True
+            and re.fullmatch(r"[0-9a-f]{64}", contract_hash)
+            and contract_hash == str(prior_entry.get("execution_contract_hash") or "")
+            and str(log.get("execution_reservation_id") or "") == prior_reservation
+            and prior_reservation
+            and prior_entry.get("status") == "dispatched"
+        )
+    if marker == "prelaunch-successor-hold":
+        contract_hash = str(log.get("execution_contract_hash") or "")
+        return bool(
+            prior_status == "dispatched"
+            and next_status == "failed"
+            and "workstream:successor-required" in labels
+            and log.get("execution_started") is False
             and re.fullmatch(r"[0-9a-f]{64}", contract_hash)
             and contract_hash == str(prior_entry.get("execution_contract_hash") or "")
             and str(log.get("execution_reservation_id") or "") == prior_reservation
@@ -1026,6 +1102,10 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             raise ValueError(f"task projection id {supplied.get('id')} does not match {task_id}")
         task = dict(supplied)
         is_new = existing is None
+        if is_new:
+            # Canonical lifecycle history is emitted by the keeper, never
+            # supplied by a task creator as evidence of a prior reservation.
+            task["dispatch_log"] = []
         if supplied.get("receipt_verified") is True:
             raise ValueError(f"task {task_id} receipt credit requires an evidence-bound status transition")
         if existing:
@@ -1037,6 +1117,14 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             task["dispatch_log"] = history
             if created is not None:
                 task["created"] = created
+        require_inventory_admission(existing or {"status": "open"}, task)
+        policy = validate_policy_update(existing, task)
+        if policy is not None:
+            if task.get("status") in {"dispatched", "in_progress"}:
+                raise ValueError(f"task {task_id} provider_eligibility_adapter_unavailable")
+            task["provider_eligibility"] = policy
+        if is_new and task.get("status") in {"dispatched", "in_progress"}:
+            raise ValueError(f"task {task_id} canonical_reservation_required")
         task["updated"] = str(event["timestamp"])
         task.setdefault("dispatch_log", [])
         task["dispatch_log"].append(
@@ -1059,6 +1147,9 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             if not underwriting.ready and not is_migration:
                 raise ValueError(underwriting.reason_code)
             tasks.append(task)
+        elif existing is not None:
+            existing.clear()
+            existing.update(task)
     else:
         if kind not in {"task.status", "task.claim", "task.mutate"}:
             raise ValueError(f"unsupported task compatibility intent: {kind}")
@@ -1082,9 +1173,14 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             )
         if kind == "task.status" and "status" not in patch:
             raise ValueError(f"task {task_id} status intent requires a status patch")
+        policy = validate_policy_update(existing, {**existing, **patch})
+        if policy is not None and "provider_eligibility" in patch:
+            patch["provider_eligibility"] = policy
         prior_status = str(existing.get("status") or "")
         next_status = str(patch.get("status") or prior_status)
         if next_status in {"dispatched", "in_progress"}:
+            if existing.get("provider_eligibility") is not None or patch.get("provider_eligibility") is not None:
+                raise ValueError(f"task {task_id} provider_eligibility_adapter_unavailable")
             underwriting = task_work_loan_readiness({**existing, **patch})
             if not underwriting.ready:
                 raise ValueError(underwriting.reason_code)
@@ -1094,6 +1190,15 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
         repair = kind in {"task.status", "task.upsert"} and _lifecycle_repair_authorized(
             existing, next_status, log, patch
         )
+        # These results attest execution (or expressly unknown execution),
+        # never cancellation-before-start. Invalid evidence must not fall
+        # through to ordinary dispatched -> open and refund the reservation.
+        if (
+            str(log.get("lifecycle_repair") or "")
+            in {"plan-handoff-complete", "provider-reroute", "provider-attempt-unknown"}
+            and not repair
+        ):
+            raise ValueError(f"task {task_id} cannot transition: lifecycle repair evidence does not match reservation")
         is_migration_upsert = kind in {"task.upsert", "task.status"} and bool(
             "migration" in str(log.get("output") or "").lower()
             or "reconciliation" in str(log.get("output") or "").lower()
@@ -1104,9 +1209,27 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
                 raise ValueError(f"task {task_id} claim requires open -> dispatched")
             if next_status not in _CANONICAL_TRANSITIONS.get(prior_status, frozenset()):
                 raise ValueError(f"task {task_id} cannot transition from {prior_status} to {next_status}")
+        require_inventory_admission(existing, {**existing, **patch})
         if kind == "task.claim":
             _local_budget_debit(data, existing, event, patch)
-        if kind == "task.status" and prior_status == "dispatched" and next_status == "open":
+        if (
+            kind == "task.status"
+            and prior_status == "dispatched"
+            and (
+                (
+                    next_status == "open"
+                    and not (
+                        repair
+                        and str(log.get("lifecycle_repair") or "") in {"plan-handoff-complete", "provider-reroute"}
+                    )
+                )
+                or (
+                    next_status == "failed"
+                    and repair
+                    and str(log.get("lifecycle_repair") or "") == "prelaunch-successor-hold"
+                )
+            )
+        ):
             _local_budget_refund(data, existing, event)
         existing.update(patch)
         existing["updated"] = str(event["timestamp"])
@@ -1165,6 +1288,15 @@ def _materialize_local_result(
 # register() binds these three identity fields from the authenticated principal; every OTHER
 # identity field is client-declared and is compared verbatim against the stored session.
 _RELAY_PRINCIPAL_BOUND_IDENTITY_FIELDS = ("agent", "surface", "session_id")
+
+
+class SelectedExecutorAuthorityUnavailable(ConductError):
+    """The credential principal cannot authorize the selected task executor."""
+
+    reason_code = "selected_executor_authority_unavailable"
+
+    def __init__(self) -> None:
+        super().__init__(self.reason_code, status=403)
 
 
 def _relay_identity_key(identity: AgentIdentityV1) -> str:
@@ -1237,15 +1369,7 @@ def _register_relay_session(remote: Any, session: ConductorSessionV1) -> tuple[A
         return remote.register(fallback), fallback
 
 
-def _submit_compatibility_ticket(
-    ticket: Ticket,
-    intent: dict[str, Any],
-    remote: Any,
-    work_id: str,
-    *,
-    board_path: Path | None = None,
-    local_board: LimenFile | None = None,
-) -> dict[str, Any]:
+def _registered_compatibility_identity(ticket: Ticket, remote: Any) -> AgentIdentityV1:
     requested_identity = AgentIdentityV1(
         agent=_safe_identifier(ticket.agent, "tabularius-relay"),
         surface="tabularius-relay",
@@ -1272,7 +1396,30 @@ def _submit_compatibility_ticket(
         registered_session = ConductorSessionV1.model_validate(registered_payload)
     except Exception as exc:
         raise RuntimeError("conduct broker registration returned no canonical session identity") from exc
-    identity = registered_session.identity
+    return registered_session.identity
+
+
+def _require_selected_executor_identity(ticket: Ticket, identity: AgentIdentityV1) -> None:
+    # A registration echo is authenticated actor provenance, not permission to
+    # replace the provider selected by the caller. Delegation needs its own
+    # authenticated adapter; no registry/task/log declaration creates one here.
+    if identity.agent != ticket.agent:
+        raise SelectedExecutorAuthorityUnavailable()
+
+
+def _submit_compatibility_ticket(
+    ticket: Ticket,
+    intent: dict[str, Any],
+    remote: Any,
+    work_id: str,
+    *,
+    board_path: Path | None = None,
+    local_board: LimenFile | None = None,
+    registered_identity: AgentIdentityV1 | None = None,
+) -> dict[str, Any]:
+    identity = registered_identity or _registered_compatibility_identity(ticket, remote)
+    if intent.get("kind") == "task.claim":
+        _require_selected_executor_identity(ticket, identity)
     owner = os.environ.get("LIMEN_GITHUB_REPO", "").strip() or "4444J99/limen"
     execution = {"adapter": "tabularius", "projection": "tasks.yaml", "observed_heads": {}}
     work_key = f"task-compat-{canonical_hash({'intent': intent, 'execution': execution})}"
@@ -1336,12 +1483,16 @@ def _relay_ticket(
     *,
     client=None,
     board_path: Path | None = None,
+    registered_identity: AgentIdentityV1 | None = None,
 ) -> dict[str, Any]:
     remote = client or client_from_env()
     # Bind replay identity to the entire immutable ticket, not its display ID.
     # Sanitizing/truncating ticket_id alone can collide, and an ID reused with
     # different intent must never receive an unrelated stored projection.
-    work_id = f"ticket-{canonical_hash(ticket.model_dump(mode='json'))}"
+    ticket_identity = ticket.model_dump(mode="json")
+    if ticket.canonical_base is None:
+        ticket_identity.pop("canonical_base", None)  # preserve historical replay identities
+    work_id = f"ticket-{canonical_hash(ticket_identity)}"
     if isinstance(remote, LocalConductClient):
         if board_path is None:
             raise RuntimeError("local conduct projection requires an explicit temporary board path")
@@ -1373,9 +1524,10 @@ def _relay_ticket(
                 work_id,
                 board_path=board_path,
                 local_board=local_board,
+                registered_identity=registered_identity,
             )
     intent = _compatibility_intent(ticket, base)
-    return _submit_compatibility_ticket(ticket, intent, remote, work_id)
+    return _submit_compatibility_ticket(ticket, intent, remote, work_id, registered_identity=registered_identity)
 
 
 def _is_tolerated_already_homed(exc: Exception, ticket: Ticket, tolerated: set[str]) -> bool:
@@ -1407,6 +1559,8 @@ def apply_limen_file_sync(
     limen: LimenFile,
     *,
     agent: str,
+    claim_agents: Mapping[str, str] | None = None,
+    prepared_claims: Mapping[str, Ticket] | None = None,
     session_id: str = "unknown",
     allow_shrink: bool = False,
     before: LimenFile | None = None,
@@ -1419,6 +1573,13 @@ def apply_limen_file_sync(
     derives bounded per-task packets and waits for remote projection receipts;
     it never writes, commits, pushes, or refreshes the local file. Unsupported
     board metadata, ordering, removal, or field mutations fail closed.
+
+    ``claim_agents`` carries the caller's explicit provider selections for a
+    mixed-provider reservation batch. It is used only for open-to-dispatched
+    claims; task fields and dispatch-log labels never choose claim authority.
+
+    ``prepared_claims`` reuses already-durable immutable claim requests only
+    when they exactly match this derived transition and captured open state.
 
     ``tolerate_already_homed`` names task ids whose *create* may legitimately race a
     keeper that already holds them — the caller derived "this task is absent" from the
@@ -1435,6 +1596,8 @@ def apply_limen_file_sync(
         previous = load_limen_file(board_path)
     events = diff_boards(previous, limen)
     if not events:
+        if prepared_claims:
+            raise ValueError("prepared claim has no matching open-to-dispatched transition")
         return DrainResult(note="no board change")
 
     timestamp = now or datetime.now(timezone.utc)
@@ -1457,13 +1620,27 @@ def apply_limen_file_sync(
 
     prior_by_id = {str(task["id"]): task for task in previous_data.get("tasks", [])}
     tickets = []
+    unused_prepared = set(prepared_claims or {})
     for event in events:
         event_type = str(event.get("type") or "")
         if event_type == EV_BOARD_META:
             continue
         if event_type in {EV_BOARD_ORDER, EV_TASK_REMOVE}:
             raise RuntimeError(f"{event_type} has no authenticated remote compatibility transition")
-        ticket = _ticket_from_event(event, agent=agent, session_id=session_id, now=timestamp)
+        task_id = str(event.get("task_id") or "")
+        prior = prior_by_id.get(task_id)
+        selected_agent = None
+        if (
+            event_type == EV_TASK_UPSERT
+            and prior is not None
+            and prior.get("status") == "open"
+            and (event.get("data") or {}).get("status") == "dispatched"
+            and claim_agents is not None
+        ):
+            selected_agent = claim_agents.get(task_id)
+            if not isinstance(selected_agent, str) or not selected_agent.strip() or selected_agent == "any":
+                raise ValueError(f"task {task_id} claim requires one concrete selected executor")
+        ticket = _ticket_from_event(event, agent=selected_agent or agent, session_id=session_id, now=timestamp)
         if event_type == EV_TASK_UPSERT:
             task_id = str(event["task_id"])
             prior = prior_by_id.get(task_id)
@@ -1488,10 +1665,41 @@ def apply_limen_file_sync(
                             f"task {task_id} compatibility transition must append exactly one dispatch receipt"
                         )
                     ticket = ticket.model_copy(update={"log": dict(desired_log[-1])})
+        if selected_agent is not None:
+            # The dispatcher identifies the orchestration surface only. The
+            # authenticated ticket identity above names the selected provider.
+            ticket = ticket.model_copy(update={"log": {**(ticket.log or {}), "agent": agent}})
+        if prepared_claims is not None and task_id in prepared_claims:
+            prepared = prepared_claims[task_id]
+            if (
+                not isinstance(prepared, Ticket)
+                or prior is None
+                or prior.get("status") != "open"
+                or (ticket.patch or {}).get("status") != "dispatched"
+                or prepared.canonical_base != prior
+                or (prepared.precondition or {}).get("task_sha256") != task_state_sha256(prior)
+                or prepared.model_dump(mode="json", exclude={"ticket_id", "canonical_base"})
+                != ticket.model_dump(mode="json", exclude={"ticket_id", "canonical_base"})
+            ):
+                raise ValueError("prepared claim does not match exact derived reservation")
+            ticket = prepared
+            unused_prepared.remove(task_id)
         tickets.append(ticket)
+    if unused_prepared:
+        raise ValueError("prepared claim has no matching open-to-dispatched transition")
     if not tickets:
         return DrainResult(note="no task transition; budget-window metadata is derived by the remote keeper")
     remote = client_from_env()
+    # Authenticate every selected claim before submitting any task from a
+    # mixed-provider batch. Otherwise a supported first claim can retain a
+    # debit when the same token cannot authorize a later selected provider.
+    claim_identities: dict[str, AgentIdentityV1] = {}
+    for ticket in tickets:
+        prior = prior_by_id.get(str(ticket.task_id))
+        if prior and prior.get("status") == "open" and (ticket.patch or {}).get("status") == "dispatched":
+            identity = _registered_compatibility_identity(ticket, remote)
+            _require_selected_executor_identity(ticket, identity)
+            claim_identities[ticket.ticket_id] = identity
     tolerated = {str(task_id) for task_id in (tolerate_already_homed or ())}
     projected_tasks: dict[str, dict[str, Any]] = {}
     already_homed: list[str] = []
@@ -1504,6 +1712,7 @@ def apply_limen_file_sync(
                 prior_by_id.get(task_id),
                 client=remote,
                 board_path=board_path,
+                registered_identity=claim_identities.get(ticket.ticket_id),
             )
         except Exception as exc:
             if not _is_tolerated_already_homed(exc, ticket, tolerated):
@@ -1813,7 +2022,7 @@ def drain_once(board_path: Path, *, dry_run: bool = False, lock_timeout: int = 2
                     dry_tasks[str(ticket.task_id)] = dict(intent["task"])
                 else:
                     dry_tasks[str(ticket.task_id)] = {
-                        **dry_tasks[str(ticket.task_id)],
+                        **(ticket.canonical_base or dry_tasks.get(str(ticket.task_id), {})),
                         **dict(intent.get("patch") or {}),
                     }
                 applicable.append((path, ticket))
