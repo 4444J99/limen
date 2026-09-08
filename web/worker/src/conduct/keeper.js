@@ -1,5 +1,6 @@
 import { ChunkedDurableStateStore } from "./durable-store.js";
 import notificationRegistry from "../../../../institutio/governance/notification-events.limen.json" with { type: "json" };
+import { sessionAudit } from "./session-audit.js";
 import { conflictingKeys, parseResource, sortedClaims } from "./resources.js";
 import {
   canonicalHash,
@@ -268,6 +269,7 @@ export class ConductKernel {
     switch (operation) {
       case "register": return this.register(payload.session, payload.principal);
       case "capabilities": return this.capabilities(payload.principal);
+      case "session_audit": return sessionAudit(this.state, payload.session_id);
       case "task_run": return this.taskRun(payload.task_id);
       case "submit": return this.submit(payload.packet, payload.principal);
       case "submit_graph": return this.submitGraph(payload.packets, payload.principal);

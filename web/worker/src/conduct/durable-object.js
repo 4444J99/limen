@@ -234,7 +234,14 @@ export class ConductKeeperDurableObject {
       return json(await this.service.call("submit_graph", { packets, principal }), 200, this.env);
     }
 
-    let match = path.match(/^\/api\/conduct\/runs\/([^/]+)\/children$/);
+    let match = path.match(/^\/api\/conduct\/sessions\/([^/]+)\/audit$/);
+    if (match && request.method === "GET") {
+      requireRole(principal, "observer");
+      return json(await this.service.call("session_audit", {
+        session_id: decodeIdentifier(match[1], "session_id"),
+      }), 200, this.env);
+    }
+    match = path.match(/^\/api\/conduct\/runs\/([^/]+)\/children$/);
     if (match && request.method === "POST") {
       requireRole(principal, "conductor");
       const parentRunId = decodeIdentifier(match[1], "parent_run_id");
