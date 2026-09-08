@@ -27,7 +27,9 @@ def _partition(
     protected: int,
     blocked: int,
     unaccounted: int,
+    observation_complete: bool,
 ) -> UniversePartitionV1:
+    closure_complete = unaccounted == 0
     return UniversePartitionV1(
         kind=kind,
         total=terminal + protected + blocked + unaccounted,
@@ -35,7 +37,9 @@ def _partition(
         protected=protected,
         blocked=blocked,
         unaccounted=unaccounted,
-        complete=unaccounted == 0,
+        observation_complete=observation_complete,
+        closure_complete=closure_complete,
+        complete=closure_complete,
     )
 
 
@@ -94,25 +98,31 @@ def build_universe_baseline_receipt(
         and row.get("default_check_status") in {"green", "no_required_checks"}
     ]
     complete_receipts = sum(bool(row.get("complete")) for row in receipts)
+    remote_failure_count = int((remote.get("summary") or {}).get("failure_count") or 0)
+    local_failure_count = int((local.get("summary") or {}).get("failure_count") or 0)
     repositories = _partition(
         "repositories",
         terminal=len(stable_receipts),
         protected=0,
         blocked=max(0, complete_receipts - len(stable_receipts)),
         unaccounted=max(0, denominator - complete_receipts),
+        observation_complete=complete_receipts == denominator and remote_failure_count == 0,
     )
 
     leaves = list(remote.get("leaves") or ())
     pull_leaves = [row for row in leaves if row.get("kind") == "pull_request"]
     pull_expected, pull_observed = _connection_total(remote, "pull_requests")
-    pull_protected = sum(row.get("status") == "owned" for row in pull_leaves)
-    pull_blocked = pull_observed - pull_protected
+    pull_terminal = sum(row.get("disposition") in {"landed", "superseded"} for row in pull_leaves)
+    pull_protected = sum(row.get("disposition") == "protected_active" for row in pull_leaves)
+    pull_blocked = sum(row.get("disposition") == "externally_blocked" for row in pull_leaves)
+    pull_unaccounted = max(0, pull_observed - pull_terminal - pull_protected - pull_blocked)
     pull_requests = _partition(
         "pull_requests",
-        terminal=0,
+        terminal=pull_terminal,
         protected=pull_protected,
         blocked=pull_blocked,
-        unaccounted=max(0, pull_expected - pull_observed),
+        unaccounted=max(0, pull_expected - pull_observed) + pull_unaccounted,
+        observation_complete=pull_expected == pull_observed and remote_failure_count == 0,
     )
 
     branch_leaves = [row for row in leaves if row.get("kind") == "branch"]
@@ -124,6 +134,7 @@ def build_universe_baseline_receipt(
         protected=0,
         blocked=0,
         unaccounted=max(0, branch_expected - branch_observed) + max(0, branch_observed - branch_terminal),
+        observation_complete=branch_expected == branch_observed and remote_failure_count == 0,
     )
 
     defaults = {
@@ -139,6 +150,7 @@ def build_universe_baseline_receipt(
         protected=local_classes.count("protected"),
         blocked=local_classes.count("blocked"),
         unaccounted=local_classes.count("unaccounted"),
+        observation_complete=local_failure_count == 0,
     )
     worktree_rows = [row for row in local_rows if row.get("checkout_kind") == "linked_worktree"]
     worktree_classes = [_local_disposition(row, defaults) for row in worktree_rows]
@@ -148,6 +160,7 @@ def build_universe_baseline_receipt(
         protected=worktree_classes.count("protected"),
         blocked=worktree_classes.count("blocked"),
         unaccounted=worktree_classes.count("unaccounted"),
+        observation_complete=local_failure_count == 0,
     )
 
     protection_count = int((local.get("summary") or {}).get("protection_exclusion_count") or 0)
@@ -157,9 +170,21 @@ def build_universe_baseline_receipt(
         protected=protection_count,
         blocked=0,
         unaccounted=0,
+        observation_complete=local_failure_count == 0,
     )
     disposition_classes = (
-        ["protected" if row.get("status") == "owned" else "blocked" for row in pull_leaves]
+        [
+            (
+                "terminal"
+                if row.get("disposition") in {"landed", "superseded"}
+                else "protected"
+                if row.get("disposition") == "protected_active"
+                else "blocked"
+                if row.get("disposition") == "externally_blocked"
+                else "unaccounted"
+            )
+            for row in pull_leaves
+        ]
         + ["terminal" if row.get("is_default") else "unaccounted" for row in branch_leaves]
         + local_classes
     )
@@ -169,6 +194,7 @@ def build_universe_baseline_receipt(
         protected=disposition_classes.count("protected"),
         blocked=disposition_classes.count("blocked"),
         unaccounted=disposition_classes.count("unaccounted"),
+        observation_complete=remote_failure_count == 0 and local_failure_count == 0,
     )
     partitions = (
         repositories,
@@ -179,15 +205,21 @@ def build_universe_baseline_receipt(
         protections,
         terminal_dispositions,
     )
-    failure_count = int((remote.get("summary") or {}).get("failure_count") or 0) + int(
-        (local.get("summary") or {}).get("failure_count") or 0
+    failure_count = remote_failure_count + local_failure_count
+    unique_debt_count = (
+        repositories.blocked
+        + repositories.unaccounted
+        + pull_requests.unaccounted
+        + branches.blocked
+        + branches.unaccounted
+        + local_roots.blocked
+        + local_roots.unaccounted
     )
-    unaccounted = sum(row.unaccounted for row in partitions)
-    complete = (
+    observation_complete = failure_count == 0 and all(row.observation_complete for row in partitions)
+    closure_complete = (
         len(stable_receipts) == denominator
-        and failure_count == 0
-        and unaccounted == 0
-        and all(row.complete for row in partitions)
+        and unique_debt_count == 0
+        and all(row.closure_complete for row in partitions)
     )
     return UniverseBaselineReceiptV1(
         observed_at=observed_at,
@@ -196,7 +228,12 @@ def build_universe_baseline_receipt(
         repository_denominator=denominator,
         stable_count=len(stable_receipts),
         partitions=partitions,
+        remote_failure_count=remote_failure_count,
+        local_failure_count=local_failure_count,
         failure_count=failure_count,
-        unaccounted=unaccounted,
-        complete=complete,
+        observation_complete=observation_complete,
+        closure_complete=closure_complete,
+        unique_debt_count=unique_debt_count,
+        unaccounted=unique_debt_count,
+        complete=observation_complete and closure_complete,
     )

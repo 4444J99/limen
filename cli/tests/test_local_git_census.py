@@ -36,6 +36,7 @@ def test_local_census_deduplicates_clone_seeds_and_enumerates_linked_worktrees(t
         checkout_roots=(checkout, sibling, checkout),
         observed_at=NOW,
         require_protection_registry=False,
+        require_local_root_policy_registry=False,
     )
 
     assert private["summary"]["checkout_seed_count"] == 3
@@ -60,6 +61,7 @@ def test_local_census_reports_dirty_untracked_and_unpushed_custody_risk(tmp_path
         checkout_roots=(checkout,),
         observed_at=NOW,
         require_protection_registry=False,
+        require_local_root_policy_registry=False,
     )
 
     root = private["roots"][0]
@@ -83,9 +85,61 @@ def test_local_census_fails_closed_when_repository_identity_is_unavailable(tmp_p
         checkout_roots=(checkout,),
         observed_at=NOW,
         require_protection_registry=False,
+        require_local_root_policy_registry=False,
     )
 
     assert private["summary"]["exhaustive"] is False
     assert private["summary"]["unaccounted"] == 1
     assert private["roots"][0]["errors"] == ["repository-identity-unavailable"]
     assert tracked["failures"][0]["scope"] == "git_root"
+
+
+def test_declared_protected_local_only_root_is_complete_without_head_or_remote(tmp_path: Path) -> None:
+    repository_root = tmp_path / "limen"
+    registry = repository_root / "institutio" / "governance" / "local-git-root-policies.json"
+    registry.parent.mkdir(parents=True)
+    registry.write_text(
+        """{
+  "schema": "limen.local_git_root_policies.v1",
+  "roots": [
+    {
+      "policy_id": "people-private-local-only",
+      "workspace_relative_path": "_people-private",
+      "classification": "protected_local_only",
+      "owner": "human-lane",
+      "expected_branch": "main",
+      "allow_unborn_head": true,
+      "allow_no_remote": true,
+      "reason": "sealed corpus"
+    }
+  ]
+}
+""",
+        encoding="utf-8",
+    )
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    checkout = workspace / "_people-private"
+    checkout.mkdir()
+    _git(checkout, "init", "-q", "-b", "main")
+    (checkout / "private.txt").write_text("protected", encoding="utf-8")
+
+    private, tracked = collect_local_git_census(
+        repository_root,
+        checkout_roots=(checkout,),
+        workspace_roots=(workspace,),
+        observed_at=NOW,
+        require_protection_registry=False,
+    )
+
+    root = private["roots"][0]
+    assert root["head"] is None
+    assert root["repository"] is None
+    assert root["protected"] is True
+    assert root["local_only"] is True
+    assert root["complete"] is True
+    assert root["errors"] == []
+    assert private["summary"]["failure_count"] == 0
+    assert private["summary"]["exhaustive"] is True
+    assert private["summary"]["local_root_policy_count"] == 1
+    assert tracked["roots"][0]["local_policy_id"] == "people-private-local-only"

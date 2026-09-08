@@ -1,0 +1,35 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:04:15Z",
+  "target": {
+    "repository": "organvm/domus-genoma",
+    "pull_request": 313,
+    "head": "1ee9930f75e7c64ad0b3461608a65197af607fee",
+    "base": "master",
+    "branch": "feat/cartridge-own-copilot-mcp",
+    "title": "feat: cartridge-own ~/.copilot/mcp-config.json (wrapper-based, no secret)"
+  },
+  "remediation": {
+    "worktree": ".worktrees/remediate-organvm-313-cartridge-own-copilot-mcp",
+    "lifecycle": "limen.worktree_initialization.v1",
+    "actions": [
+      "rebase onto origin/master",
+      "fix E501 line length in dot_local/bin/executable_launchd-contract-wrap",
+      "fix lint_test.sh to exclude .tmpl from ruff check matching CI workflow"
+    ]
+  },
+  "verification": {
+    "command": "python3 -m pytest tests/ && bash lint_test.sh && bats tests/*.bats",
+    "executed_at": "2026-08-26T13:04:03Z",
+    "exit_status": 0,
+    "tests_passed": 532,
+    "bats_passed": 348,
+    "lint_status": "PASS",
+    "result": "100% test and lint verification passed"
+  },
+  "push": {
+    "lease": true,
+    "target_ref": "feat/cartridge-own-copilot-mcp",
+    "pushed_head": "1ee9930f75e7c64ad0b3461608a65197af607fee"
+  }
+}

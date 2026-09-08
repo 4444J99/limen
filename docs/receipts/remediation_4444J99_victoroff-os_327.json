@@ -1,0 +1,33 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:07:55Z",
+  "target": {
+    "repository": "4444J99/victoroff-os",
+    "pull_request": 327,
+    "initial_head": "6e6e120e29b152d06b52a17f694e9f78ea1e2203",
+    "remediated_head": "699c06a867082427f75c6f0aadc8be786a36ff03",
+    "base_ref": "main"
+  },
+  "remediation": {
+    "category": "merge_conflict_and_artifact_pin",
+    "root_cause": "ownership_transfer_conflict_and_digest_drift",
+    "patches_applied": [
+      "docs/legal/ownership-transfer.md: resolved merge conflict against main and unified operational state",
+      "docs/architecture/artifacts.v1.json: updated pinned artifact digest for V—ART—000026"
+    ]
+  },
+  "verification": {
+    "local_command": "pnpm verify:control && node --test tests/control/*.test.mjs",
+    "local_exit_code": 0,
+    "ci_status_rollup": {
+      "total": 6,
+      "failing": 0,
+      "pending": 0,
+      "required_scope": "required"
+    },
+    "merge_policy_verdict": "CLEARED",
+    "merge_mode": "direct",
+    "merge_commit": "67acf2e7ca14b25dc85f8695d2d52c743cfd00ab"
+  },
+  "integrity_note": "Remediated in isolated worktree .worktrees/remediate-327. Verified 228 control tests and pinned digest prior to merge."
+}

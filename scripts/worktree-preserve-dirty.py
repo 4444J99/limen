@@ -40,7 +40,8 @@ sys.path.insert(0, str(ROOT / "cli" / "src"))
 from limen.worktree_debt import worktree_debt_report
 
 PRESERVATION_RECEIPTS = ROOT / "docs" / "worktree-preservation-receipts.json"
-PRIVATE_ROOT = ROOT / ".limen-private" / "session-corpus" / "lifecycle" / "worktree-preserve"
+PRIVATE_RELATIVE_ROOT = Path(".limen-private/session-corpus/lifecycle/worktree-preserve")
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_CUSTODY_ROOT", ROOT / PRIVATE_RELATIVE_ROOT)).expanduser()
 REMOTE_RE = re.compile(r"(?:github\.com[:/])([^/\s]+)/([^/\s]+?)(?:\.git)?$")
 SAFE_NAME_RE = re.compile(r"[^A-Za-z0-9._-]+")
 
@@ -52,7 +53,7 @@ MAX_METADATA_BYTES = 4 * 1024 * 1024
 PATCH_CHUNK_BYTES = 1024 * 1024
 MAX_STDERR_BYTES = 4096
 PUBLIC_SAMPLE_LIMIT = 25
-PUBLIC_REMOVED_FIELDS = {"dirty_paths", "untracked_paths", "worktree_status"}
+PUBLIC_REMOVED_FIELDS = {"dirty_paths", "untracked_paths", "worktree", "worktree_status"}
 
 
 class PreservationError(RuntimeError):
@@ -143,11 +144,29 @@ def load_receipts() -> dict[str, Any]:
     return data
 
 
-def rel_to_root(path: Path) -> str:
+def private_reference(path: Path) -> str:
+    """Return a stable redacted locator while private custody may live outside this checkout."""
+
     try:
-        return str(path.resolve().relative_to(ROOT.resolve()))
-    except (OSError, ValueError):
-        return str(path)
+        relative = path.resolve().relative_to(PRIVATE_ROOT.resolve())
+    except (OSError, ValueError) as exc:
+        raise PreservationError(f"private artifact escaped its custody root: {path}") from exc
+    return str(PRIVATE_RELATIVE_ROOT / relative)
+
+
+def private_path(reference: object) -> Path:
+    if not isinstance(reference, str) or not reference:
+        raise PreservationError("private artifact reference is missing")
+    candidate = Path(reference)
+    if candidate.is_absolute():
+        raise PreservationError("private artifact reference must be path-redacted")
+    try:
+        relative = candidate.relative_to(PRIVATE_RELATIVE_ROOT)
+    except ValueError as exc:
+        raise PreservationError("private artifact reference is outside the custody namespace") from exc
+    if ".." in relative.parts:
+        raise PreservationError("private artifact reference contains traversal")
+    return PRIVATE_ROOT / relative
 
 
 def stop_process(proc: subprocess.Popen[bytes]) -> None:
@@ -432,9 +451,7 @@ def prepare_item(
     if capture["bytes"] <= 0 and not untracked_paths:
         raise PreservationError(f"{path}: dirty classification produced no tracked or untracked content")
     verification_patch = staged_patch.with_suffix(".verify.patch")
-    verification_archive = (
-        staged_archive.with_suffix(".verify.tar") if staged_archive is not None else None
-    )
+    verification_archive = staged_archive.with_suffix(".verify.tar") if staged_archive is not None else None
     try:
         verification_capture = stream_git_patch(path, verification_patch, max_patch_bytes)
         verification_untracked_capture = (
@@ -465,9 +482,7 @@ def prepare_item(
             raise PreservationError(
                 f"{path}: worktree identity or content changed during capture; retry from fresh state"
             )
-        if staged_archive is not None and not verify_untracked_archive(
-            staged_archive, untracked_capture["manifest"]
-        ):
+        if staged_archive is not None and not verify_untracked_archive(staged_archive, untracked_capture["manifest"]):
             raise PreservationError(f"{path}: untracked archive failed readback verification")
     except (OSError, PreservationError):
         staged_patch.unlink(missing_ok=True)
@@ -488,9 +503,7 @@ def prepare_item(
     private_receipt = private_dir / "receipt.json"
     receipt = {
         "branch": branch,
-        "classification": (
-            "bounded tracked patch and untracked archive privately preserved; owner decision required"
-        ),
+        "classification": ("bounded tracked patch and untracked archive privately preserved; owner decision required"),
         "custody_bundle_sha256": bundle_digest,
         "dirty_patch_bytes": capture["bytes"],
         "dirty_patch_command": "git diff --binary HEAD",
@@ -506,14 +519,14 @@ def prepare_item(
             "A bounded private tracked patch/untracked archive receipt exists; create a narrow owner packet to "
             "review, push, supersede, or retire this preserved dirty state."
         ),
-        "private_patch": rel_to_root(private_patch),
+        "private_patch": private_reference(private_patch),
         "private_patch_sha256": capture["sha256"],
-        "private_receipt": rel_to_root(private_receipt),
+        "private_receipt": private_reference(private_receipt),
         "private_untracked_archive": (
-            rel_to_root(private_untracked_archive) if private_untracked_archive is not None else None
+            private_reference(private_untracked_archive) if private_untracked_archive is not None else None
         ),
         "private_untracked_manifest": (
-            rel_to_root(private_untracked_manifest) if private_untracked_manifest is not None else None
+            private_reference(private_untracked_manifest) if private_untracked_manifest is not None else None
         ),
         "repo": repo_slug(remote) or remote,
         "root": root,
@@ -540,6 +553,7 @@ def prepare_item(
         "status_branch": status_branch,
         "untracked_manifest": untracked_capture["manifest"],
         "untracked_paths": untracked_paths,
+        "worktree": str(path.resolve()),
     }
 
 
@@ -547,19 +561,23 @@ def candidate_receipt(existing: dict[str, Any] | None, prepared: dict[str, Any])
     candidate = dict(existing or {})
     for field in PUBLIC_REMOVED_FIELDS:
         candidate.pop(field, None)
-    candidate.update(prepared["receipt"])
+    candidate.update({key: value for key, value in prepared["receipt"].items() if key not in PUBLIC_REMOVED_FIELDS})
     candidate["evidence_updated_utc"] = str((existing or {}).get("evidence_updated_utc") or utc_now())
     return candidate
 
 
 def private_paths(receipt: dict[str, Any]) -> tuple[Path, Path, Path | None, Path | None]:
-    patch = ROOT / str(receipt["private_patch"])
-    private_receipt = ROOT / str(receipt["private_receipt"])
+    patch = private_path(receipt.get("private_patch"))
+    private_receipt = private_path(receipt.get("private_receipt"))
     archive_value = receipt.get("private_untracked_archive")
     manifest_value = receipt.get("private_untracked_manifest")
-    archive = ROOT / str(archive_value) if archive_value else None
-    manifest = ROOT / str(manifest_value) if manifest_value else None
+    archive = private_path(archive_value) if archive_value else None
+    manifest = private_path(manifest_value) if manifest_value else None
     return patch, private_receipt, archive, manifest
+
+
+def _public_receipt_projection(receipt: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in receipt.items() if key not in PUBLIC_REMOVED_FIELDS}
 
 
 def private_artifacts_valid(receipt: dict[str, Any]) -> bool:
@@ -579,7 +597,11 @@ def private_artifacts_valid(receipt: dict[str, Any]) -> bool:
         return False
     try:
         private_payload = json.loads(private_receipt.read_text(encoding="utf-8"))
-        if file_sha256(patch) != receipt.get("private_patch_sha256") or private_payload != receipt:
+        if (
+            file_sha256(patch) != receipt.get("private_patch_sha256")
+            or not isinstance(private_payload, dict)
+            or _public_receipt_projection(private_payload) != receipt
+        ):
             return False
         if archive is None or manifest_path is None:
             return not receipt.get("untracked_paths_count")
@@ -657,7 +679,14 @@ def write_private_artifacts(prepared: dict[str, Any], receipt: dict[str, Any]) -
                 private_manifest,
                 json.dumps(prepared["untracked_manifest"], indent=2, sort_keys=True) + "\n",
             )
-        atomic_write_text(private_receipt, json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+        private_payload = {
+            **receipt,
+            "dirty_paths": prepared["dirty_paths"],
+            "untracked_paths": prepared["untracked_paths"],
+            "worktree": prepared["worktree"],
+            "worktree_status": prepared["status_branch"].splitlines(),
+        }
+        atomic_write_text(private_receipt, json.dumps(private_payload, indent=2, sort_keys=True) + "\n")
         if not private_artifacts_valid(receipt):
             raise PreservationError(f"private custody bundle failed readback verification: {private_dir}")
         return created
@@ -725,9 +754,7 @@ def parse_args() -> argparse.Namespace:
     if not 1 <= args.max_untracked_bytes <= MAX_UNTRACKED_BYTES:
         parser.error(f"--max-untracked-bytes must be between 1 and {MAX_UNTRACKED_BYTES}")
     if not 1 <= args.max_total_untracked_bytes <= MAX_TOTAL_UNTRACKED_BYTES:
-        parser.error(
-            f"--max-total-untracked-bytes must be between 1 and {MAX_TOTAL_UNTRACKED_BYTES}"
-        )
+        parser.error(f"--max-total-untracked-bytes must be between 1 and {MAX_TOTAL_UNTRACKED_BYTES}")
     if args.max_untracked_bytes > args.max_total_untracked_bytes:
         parser.error("--max-untracked-bytes cannot exceed --max-total-untracked-bytes")
     return args
@@ -740,10 +767,7 @@ def main() -> int:
         if len(resolved) != len(set(resolved)):
             print("duplicate --worktree target", file=sys.stderr)
             return 2
-        dirty = [
-            {"debt": True, "name": path.name, "path": str(path), "reason": "dirty"}
-            for path in resolved
-        ]
+        dirty = [{"debt": True, "name": path.name, "path": str(path), "reason": "dirty"} for path in resolved]
     else:
         report = worktree_debt_report(ROOT)
         dirty = [item for item in report.get("items", []) if item.get("reason") == "dirty" and item.get("debt")]
@@ -783,9 +807,7 @@ def main() -> int:
                         f"aggregate tracked patches exceed the {args.max_total_patch_bytes}-byte "
                         "invocation ceiling; no custody receipt was written"
                     )
-                total_untracked = payload["total_untracked_bytes"] + int(
-                    prepared["receipt"]["untracked_payload_bytes"]
-                )
+                total_untracked = payload["total_untracked_bytes"] + int(prepared["receipt"]["untracked_payload_bytes"])
                 if total_untracked > args.max_total_untracked_bytes:
                     raise PreservationError(
                         f"aggregate untracked payload exceeds the {args.max_total_untracked_bytes}-byte "
@@ -813,15 +835,13 @@ def main() -> int:
                 elif isinstance(worktree, str) and worktree:
                     resolved_worktree = str(Path(worktree).expanduser().resolve(strict=False))
                     if resolved_worktree in by_legacy_worktree:
-                        raise PreservationError(
-                            "duplicate legacy worktree path in tracked preservation ledger"
-                        )
+                        raise PreservationError("duplicate legacy worktree path in tracked preservation ledger")
                     by_legacy_worktree[resolved_worktree] = (index, row)
             candidates: list[tuple[int | None, dict[str, Any], dict[str, Any]]] = []
             for prepared in prepared_items:
                 receipt = prepared["receipt"]
                 worktree_key = str(receipt["worktree_key"])
-                worktree = str(Path(str(receipt["worktree"])).resolve(strict=False))
+                worktree = str(Path(str(prepared["worktree"])).resolve(strict=False))
                 index, existing = by_worktree_key.get(
                     worktree_key,
                     by_legacy_worktree.get(worktree, (None, None)),

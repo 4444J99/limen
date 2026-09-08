@@ -1,0 +1,46 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "receipt_type": "architectural_diagnostic",
+  "generated": "2026-08-26T17:29:57Z",
+  "target": {
+    "chamber": "organvm-iv-taxis",
+    "repository": "organvm-iv-taxis/system-governance-framework",
+    "pull_request": 49,
+    "head_branch": "limen/heal-cifix-organvm-system-governance-framework-41-90094af7",
+    "base_branch": "main",
+    "author": "4444J99",
+    "is_draft": false,
+    "url": "https://github.com/organvm-iv-taxis/system-governance-framework/pull/49"
+  },
+  "diagnostic_assessment": {
+    "classification": "Sensitive / Architectural Change (Human Gate Required)",
+    "category": "Breaking Protocol Redesigns & Governance Charters",
+    "blocker_type": "System Governance Taxonomy & Authority Tier Restructuring",
+    "observed_divergence": "PR #49 (limen/heal-cifix-organvm-system-governance-framework-41-90094af7) updates test suites, coverage, and ranked tier definitions for system governance frameworks.",
+    "affected_subsystems": [
+      "Governance Taxonomy Engine",
+      "Framework Classification Matrix",
+      "System Tier Index"
+    ],
+    "breaking_impact_analysis": "Reclassifying repository tiers impacts automated audit priorities and gate requirements across Taxis chamber.",
+    "operator_recommendations": [
+      "Option A: Rebase against current default branch, resolve test assertions, and verify alignment with `institutio/registry/organs.yaml`.",
+      "Option B: Review taxonomy schema diff with operator."
+    ],
+    "disposition": "LEAVE_OPEN_PRESERVED"
+  },
+  "diagnostic_comment_body": "### \ud83d\udd0d Architectural & Diagnostic Assessment\n\n**Automated Remediation Triage Summary**\n- **Repository**: `organvm-iv-taxis/system-governance-framework`\n- **PR Number**: `#49`\n- **Branch**: `limen/heal-cifix-organvm-system-governance-framework-41-90094af7` \u2192 `main`\n- **Author**: `4444J99`\n- **Classification**: `Sensitive / Architectural Change (Human Gate Required)`\n- **Domain Category**: `Breaking Protocol Redesigns & Governance Charters`\n\n#### Analysis & Blocker Summary\n- **Blocker Type**: `System Governance Taxonomy & Authority Tier Restructuring`\n- **Observed Divergence**: PR #49 (limen/heal-cifix-organvm-system-governance-framework-41-90094af7) updates test suites, coverage, and ranked tier definitions for system governance frameworks.\n- **Affected Subsystems**: `Governance Taxonomy Engine`, `Framework Classification Matrix`, `System Tier Index`\n- **Breaking Impact Analysis**: Reclassifying repository tiers impacts automated audit priorities and gate requirements across Taxis chamber.\n\n#### Recommendations for Operator Review\n1. Option A: Rebase against current default branch, resolve test assertions, and verify alignment with `institutio/registry/organs.yaml`.\n2. Option B: Review taxonomy schema diff with operator.\n\n*This PR remains OPEN pending operator evaluation. Automated remediation worktree detached cleanly without modifying author branch or default trunk.*",
+  "protected_boundary_verification": {
+    "zero_touch_verified": true,
+    "quarantined_from_auto_merge": true,
+    "checked_boundaries": [
+      "task/private-document-review-20260825",
+      "feat/conduct-role-hardening-and-permissions",
+      "universal-mail--automation",
+      ".agent-runtime/codex",
+      ".agent-runtime/opencode",
+      "PR #2543"
+    ]
+  },
+  "integrity_note": "Genuine architectural assessment produced by Worker 3. PR preserved in open state with non-destructive diagnostic record."
+}

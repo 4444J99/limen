@@ -102,17 +102,24 @@ def render_universe_progress(receipt: UniverseBaselineReceiptV1, *, ascii_only: 
         f"Limen universe baseline — {receipt.observed_at.isoformat().replace('+00:00', 'Z')}",
         f"CENSUS {census_state} generation={receipt.source_generation}",
         (
+            f"OBSERVATION {'COMPLETE' if receipt.observation_complete else 'INCOMPLETE'}  "
+            f"CLOSURE {'COMPLETE' if receipt.closure_complete else 'INCOMPLETE'}"
+        ),
+        (
             f"STABLE DEFAULTS  {progress_bar(stable_pct, ascii_only=ascii_only)} {stable_pct:>5.1f}%  "
             f"{receipt.stable_count}/{receipt.repository_denominator} repositories"
         ),
-        f"FAILURES {receipt.failure_count}  UNACCOUNTED {receipt.unaccounted}",
+        (
+            f"FAILURES remote={receipt.remote_failure_count} local={receipt.local_failure_count} "
+            f"total={receipt.failure_count}  UNIQUE DEBT {receipt.unique_debt_count}"
+        ),
         "",
         "ACCOUNTED PARTITIONS",
     ]
     for row in receipt.partitions:
-        marker = "OK" if row.complete else "INCOMPLETE"
+        marker = f"OBS:{'OK' if row.observation_complete else 'NO'}/CLOSE:{'OK' if row.closure_complete else 'NO'}"
         lines.append(
-            f"  {marker:<10} {row.kind:<22} total={row.total:<6} terminal={row.terminal:<6} "
+            f"  {marker:<20} {row.kind:<22} total={row.total:<6} terminal={row.terminal:<6} "
             f"protected={row.protected:<6} blocked={row.blocked:<6} unaccounted={row.unaccounted}"
         )
     return "\n".join(lines) + "\n"

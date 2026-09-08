@@ -90,9 +90,28 @@ def test_metadata_carries_live_default_commit_oid_into_generation_input():
     tip = "a" * 40
 
     class Gitvs:
-        @staticmethod
-        def _gh_user(args, timeout):
+        attempts = 0
+
+        @classmethod
+        def _gh_user(cls, args, timeout):
             assert timeout == 90
+            cls.attempts += 1
+            if cls.attempts == 1:
+                return subprocess.CompletedProcess(
+                    [],
+                    1,
+                    json.dumps(
+                        {
+                            "errors": [
+                                {
+                                    "message": "API rate limit exceeded",
+                                    "extensions": {"code": "RATE_LIMITED"},
+                                }
+                            ]
+                        }
+                    ),
+                    "",
+                )
             payload = {
                 "data": {
                     "repository": {
@@ -113,7 +132,10 @@ def test_metadata_carries_live_default_commit_oid_into_generation_input():
                         },
                         "defaultBranchRef": {
                             "name": "main",
-                            "target": {"oid": tip, "statusCheckRollup": {"state": "SUCCESS"}},
+                            "target": {
+                                "oid": tip,
+                                "statusCheckRollup": {"contexts": {"totalCount": 1}},
+                            },
                         },
                     }
                 }
@@ -123,8 +145,32 @@ def test_metadata_carries_live_default_commit_oid_into_generation_input():
     result = MODULE._metadata(Gitvs(), "organvm/limen")
 
     assert result is not None
+    assert Gitvs.attempts == 2
     assert result["default_sha"] == tip
     assert result["default_check_status"] == "no_required_checks"
+
+
+def test_github_api_error_classifier_separates_permanent_query_errors():
+    result = subprocess.CompletedProcess(
+        [],
+        1,
+        json.dumps(
+            {
+                "errors": [
+                    {
+                        "message": "Field 'missing' doesn't exist on type 'Repository'",
+                        "extensions": {"code": "undefinedField"},
+                    }
+                ]
+            }
+        ),
+        "",
+    )
+
+    error_class = MODULE._github_api_error_class(result)
+
+    assert error_class == "github-query-invalid"
+    assert MODULE._github_retry_class(error_class) == "permanent"
 
 
 def test_required_check_policy_needs_both_effective_rules_and_classic_protection():
@@ -183,6 +229,11 @@ def test_required_check_policy_needs_both_effective_rules_and_classic_protection
         "complete": True,
         "required_check_count": 3,
         "required_check_contexts": ["pr-gate", "python", "worker"],
+        "required_check_requirements": [
+            {"kind": "context", "context": "pr-gate", "app_id": None},
+            {"kind": "context", "context": "python", "app_id": None},
+            {"kind": "context", "context": "worker", "app_id": None},
+        ],
         "error": None,
     }
 
@@ -199,7 +250,7 @@ def test_required_check_policy_reads_app_bound_classic_check_descriptions():
                     "pattern": "main",
                     "requiresStatusChecks": True,
                     "requiredStatusCheckContexts": [],
-                    "requiredStatusChecks": [{"context": "pr-gate"}],
+                    "requiredStatusChecks": [{"context": "pr-gate", "app": {"databaseId": 15368}}],
                 }
             ],
             "pageInfo": {"hasNextPage": False, "endCursor": "classic"},
@@ -216,6 +267,7 @@ def test_required_check_policy_reads_app_bound_classic_check_descriptions():
     assert policy["status"] == "required_checks"
     assert policy["complete"] is True
     assert policy["required_check_contexts"] == ["pr-gate"]
+    assert policy["required_check_requirements"] == [{"kind": "context", "context": "pr-gate", "app_id": 15368}]
 
 
 def test_empty_enabled_classic_check_policy_is_complete_but_invalid():
@@ -249,6 +301,7 @@ def test_empty_enabled_classic_check_policy_is_complete_but_invalid():
         "complete": True,
         "required_check_count": 0,
         "required_check_contexts": [],
+        "required_check_requirements": [],
         "error": "classic-required-checks-empty",
     }
 
@@ -261,6 +314,7 @@ def test_repository_without_default_branch_has_complete_not_applicable_check_pol
         "complete": True,
         "required_check_count": 0,
         "required_check_contexts": [],
+        "required_check_requirements": [],
         "error": None,
     }
 
@@ -352,6 +406,175 @@ def test_required_check_policy_fails_closed_for_unobservable_property_condition(
     assert policy["status"] == "unknown"
     assert policy["complete"] is False
     assert policy["error"] == "ruleset-condition-unsupported"
+
+
+def _required_policy(*requirements):
+    return {
+        "status": "required_checks",
+        "complete": True,
+        "required_check_requirements": list(requirements),
+    }
+
+
+def test_required_check_status_ignores_advisory_failures():
+    policy = _required_policy({"kind": "context", "context": "test", "app_id": None})
+    nodes = (
+        {"id": "required", "name": "test", "state": "SUCCESS", "observed_at": "2026-08-27T12:00:00Z"},
+        {"id": "advisory", "name": "CodeQL", "state": "FAILURE", "observed_at": "2026-08-27T12:01:00Z"},
+    )
+
+    assert MODULE._required_check_status(policy, nodes) == "green"
+
+
+def test_required_check_status_rejects_required_failure():
+    policy = _required_policy({"kind": "context", "context": "test", "app_id": None})
+    nodes = ({"id": "required", "name": "test", "state": "FAILURE", "observed_at": "2026-08-27T12:00:00Z"},)
+
+    assert MODULE._required_check_status(policy, nodes) == "red"
+
+
+def test_required_check_status_treats_missing_requirement_as_pending():
+    policy = _required_policy({"kind": "context", "context": "test", "app_id": None})
+
+    assert MODULE._required_check_status(policy, ()) == "pending"
+
+
+def test_required_check_status_honors_app_binding_and_latest_observation():
+    policy = _required_policy({"kind": "context", "context": "test", "app_id": 15368})
+    nodes = (
+        {
+            "id": "wrong-app",
+            "name": "test",
+            "app_id": 7,
+            "state": "SUCCESS",
+            "observed_at": "2026-08-27T12:02:00Z",
+        },
+        {
+            "id": "old-required",
+            "name": "test",
+            "app_id": 15368,
+            "state": "FAILURE",
+            "observed_at": "2026-08-27T12:00:00Z",
+        },
+        {
+            "id": "new-required",
+            "name": "test",
+            "app_id": 15368,
+            "state": "SUCCESS",
+            "observed_at": "2026-08-27T12:01:00Z",
+        },
+    )
+
+    assert MODULE._required_check_status(policy, nodes) == "green"
+
+
+def test_required_workflow_uses_latest_run_suite_result():
+    policy = _required_policy({"kind": "workflow", "path": ".github/workflows/pr-gate.yml"})
+    nodes = (
+        {
+            "id": "old",
+            "name": "test",
+            "state": "SUCCESS",
+            "observed_at": "2026-08-27T12:00:00Z",
+            "suite_conclusion": "SUCCESS",
+            "workflow_run_id": 1,
+            "workflow_run_updated_at": "2026-08-27T12:00:00Z",
+            "workflow_resource_path": "/4444J99/limen/actions/workflows/pr-gate.yml",
+        },
+        {
+            "id": "new",
+            "name": "test",
+            "state": "FAILURE",
+            "observed_at": "2026-08-27T12:05:00Z",
+            "suite_conclusion": "FAILURE",
+            "workflow_run_id": 2,
+            "workflow_run_updated_at": "2026-08-27T12:05:00Z",
+            "workflow_resource_path": "/4444J99/limen/actions/workflows/pr-gate.yml",
+        },
+    )
+
+    assert MODULE._required_check_status(policy, nodes) == "red"
+
+
+def test_no_required_check_policy_ignores_advisory_failures():
+    policy = {"status": "no_required_checks", "complete": True, "required_check_requirements": []}
+    nodes = ({"id": "advisory", "name": "CodeQL", "state": "FAILURE"},)
+
+    assert MODULE._required_check_status(policy, nodes) == "no_required_checks"
+
+
+def test_remote_check_page_normalizes_check_runs_and_status_contexts():
+    tip = "b" * 40
+
+    class Gitvs:
+        @staticmethod
+        def _gh_user(args, timeout):
+            assert timeout == 90
+            assert "connection:contexts(first:100,after:$cursor)" in args[3]
+            payload = {
+                "data": {
+                    "repository": {
+                        "defaultBranchRef": {
+                            "target": {
+                                "oid": tip,
+                                "statusCheckRollup": {
+                                    "connection": {
+                                        "totalCount": 2,
+                                        "nodes": [
+                                            {
+                                                "__typename": "CheckRun",
+                                                "id": "check",
+                                                "name": "test",
+                                                "status": "COMPLETED",
+                                                "conclusion": "SUCCESS",
+                                                "detailsUrl": "https://example.invalid/check",
+                                                "startedAt": "2026-08-27T12:00:00Z",
+                                                "completedAt": "2026-08-27T12:01:00Z",
+                                                "checkSuite": {
+                                                    "id": "suite",
+                                                    "status": "COMPLETED",
+                                                    "conclusion": "SUCCESS",
+                                                    "updatedAt": "2026-08-27T12:01:00Z",
+                                                    "app": {"databaseId": 15368, "slug": "github-actions"},
+                                                    "workflowRun": {
+                                                        "databaseId": 42,
+                                                        "updatedAt": "2026-08-27T12:01:00Z",
+                                                        "workflow": {
+                                                            "name": "CI",
+                                                            "resourcePath": "/o/r/actions/workflows/ci.yml",
+                                                        },
+                                                    },
+                                                },
+                                            },
+                                            {
+                                                "__typename": "StatusContext",
+                                                "id": "status",
+                                                "context": "external",
+                                                "state": "PENDING",
+                                                "targetUrl": "https://example.invalid/status",
+                                                "updatedAt": "2026-08-27T12:02:00Z",
+                                                "creator": {"login": "bot"},
+                                            },
+                                        ],
+                                        "pageInfo": {"hasNextPage": False, "endCursor": None},
+                                    }
+                                },
+                            }
+                        }
+                    }
+                }
+            }
+            return subprocess.CompletedProcess([], 0, json.dumps(payload), "")
+
+    page = MODULE._remote_page(Gitvs(), "organvm/repo", "checks", None)
+
+    assert page["total_count"] == 2
+    assert page["has_next_page"] is False
+    assert page["nodes"][0]["head_oid"] == tip
+    assert page["nodes"][0]["app_id"] == 15368
+    assert page["nodes"][0]["workflow_run_id"] == 42
+    assert page["nodes"][1]["name"] == "external"
+    assert page["nodes"][1]["creator_login"] == "bot"
 
 
 def test_write_refuses_to_replace_tracked_receipts_with_partial_data(tmp_path: Path, monkeypatch):

@@ -1,0 +1,30 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:03:20.157398+00:00",
+  "target": {
+    "repository": "organvm-iii-ergon/parlor-games--ephemera-engine",
+    "pull_request": 278,
+    "initial_head": "907a2a7d16a373bd5d872f4ed875e888884770e5",
+    "remediated_head": "907a2a7d16a373bd5d872f4ed875e888884770e5",
+    "base_ref": "main"
+  },
+  "remediation": {
+    "category": "clean_verification",
+    "root_cause": "passing_ci_verification",
+    "patches_applied": []
+  },
+  "verification": {
+    "local_command": "scripts/merge-policy.sh 278 --repo organvm-iii-ergon/parlor-games--ephemera-engine",
+    "local_exit_code": 0,
+    "ci_status_rollup": {
+      "total": 1,
+      "failing": 0,
+      "pending": 0,
+      "required_scope": "required"
+    },
+    "merge_policy_verdict": "CLEARED",
+    "merge_mode": "direct",
+    "merge_commit": "7fe9428b4b2215ff83021598180ee0d3f10e894a"
+  },
+  "integrity_note": "Verified via merge-policy.sh with complete passing CI status prior to squash merge."
+}
