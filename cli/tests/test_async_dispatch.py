@@ -1435,9 +1435,9 @@ def test_reserve_and_launch_marks_and_spawns(tmp_path, monkeypatch):
     dispatched = [t for t in load_limen_file(tmp_path / "tasks.yaml").tasks if t.status == "dispatched"]
     assert len(dispatched) == 2
     assert all(t.dispatch_log[-1].status == "dispatched" for t in dispatched)
-    assert all(t.dispatch_log[-1].session_id == "dispatch-async-reserve" for t in dispatched)
-    assert all(t.dispatch_log[-1].agent == "dispatch-async" for t in dispatched)
-    assert all(dispatch_agent(t.dispatch_log[-1]) == "codex" for t in dispatched)
+    assert all(t.dispatch_log[-1].session_id == "codex-reserve" for t in dispatched)
+    assert all(t.dispatch_log[-1].agent == "codex" for t in dispatched)
+    assert all(t.dispatch_log[-1].logical_agent == "dispatch-async" for t in dispatched)
     reservation_ids = [dispatch_session_id(t.dispatch_log[-1]) for t in dispatched]
     assert all(re.fullmatch(r"async-reserve:[0-9a-f]{32}", value) for value in reservation_ids)
     assert len(set(reservation_ids)) == len(reservation_ids)

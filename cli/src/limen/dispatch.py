@@ -51,13 +51,23 @@ from limen.models import (
     DispatchLogEntry,
     LimenFile,
     Task,
+    canonical_dispatch_agent,
     dispatch_agent,
     dispatch_session_id,
     has_jules_landing_hold,
 )
 from limen.conduct.client import client_from_env
+from limen.conduct.broker import ConductConflict
 from limen.partition_lanes import heuristics_may_promote
-from limen.tabularius import apply_limen_file_sync
+from limen.tabularius import (
+    INTENT_UPSERT,
+    SelectedExecutorAuthorityUnavailable,
+    Ticket,
+    apply_limen_file_sync,
+    submit_ticket,
+    task_state_sha256,
+    tickets_root,
+)
 from limen.runtime_requirements import task_execution_ready
 from limen.doctor import stale_tasks
 from limen.provider_selection import (
@@ -81,6 +91,7 @@ from limen.provider_health import (
     provider_health_policy,
     provider_outcome_ledger_path,
 )
+from limen.provider_eligibility import eligibility_dispatch_block_reason
 from limen.plan_handoff import (
     PlanHandoffResult,
     PlanReceiptError,
@@ -1711,12 +1722,14 @@ def session_id() -> str:
 
 def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str | PlanHandoffResult:
     agent = canonical_agent(agent)
+    if reason := eligibility_dispatch_block_reason(task):
+        return _prelaunch_blocked_result(reason)
     try:
         workstream_packet = _workstream_packet_for(task)
     except WorkstreamLaunchContractError as exc:
         reason = str(exc)
         print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
-        return _workstream_successor_result(reason)
+        return _prelaunch_workstream_successor_result(reason)
     if agent == "jules":
         return _call_jules(task, dry_run)
     if agent == "github_actions":
@@ -1732,7 +1745,7 @@ def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str | P
         if workstream_packet is not None:
             reason = "conducted workstream packets cannot bypass their guarded adapter via LIMEN_DISPATCH_CMD"
             print(f"  BLOCKED {task.id}: {reason}")
-            return _workstream_successor_result(reason)
+            return _prelaunch_workstream_successor_result(reason)
         return _run_cmd([cmd_override, agent, _build_prompt(task)], task, dry_run)
     if agent == "copilot":
         return _call_copilot(task, dry_run)
@@ -1757,7 +1770,7 @@ def call_agent_dispatch(agent: str, task: Task, dry_run: bool) -> bool | str | P
                 return _call_local_agent(agent, task, dry_run)
         except AdmissionDenied as exc:
             reasons = ",".join(exc.decision.get("reasons") or ["host-admission-denied"])
-            return _blocked_result(f"host admission denied local {agent} execution: {reasons}")
+            return _prelaunch_blocked_result(f"host admission denied local {agent} execution: {reasons}")
     return _run_cmd(["agent-dispatch", agent, _build_prompt(task)], task, dry_run)
 
 
@@ -1775,24 +1788,47 @@ def _journaled_agent_dispatch(
     store = default_work_loan_journal_store() if journal_root is None else default_work_loan_journal_store(journal_root)
     try:
         store.record_reservation(task, agent=canonical_agent(agent), reservation_id=reservation_id)
-    except WorkLoanJournalError as exc:
-        return _blocked_result(f"work-loan reservation failed: {exc}")
+    except WorkLoanJournalError:
+        return _prelaunch_blocked_result("work-loan reservation failed: WorkLoanJournalError")
     started = time.monotonic()
     try:
         result = call_agent_dispatch(agent, task, dry_run=False)
-    except Exception:
+    except Exception as exc:
         elapsed_seconds = max(0.0, time.monotonic() - started)
-        store.record_actual(
-            task,
-            agent=canonical_agent(agent),
-            reservation_id=reservation_id,
-            elapsed_seconds=elapsed_seconds,
-            local_host=canonical_agent(agent) in LOCAL_CHECKOUT_AGENTS,
-            metrics={"runs": 1},
+        accounting_failure = ""
+        try:
+            store.record_actual(
+                task,
+                agent=canonical_agent(agent),
+                reservation_id=reservation_id,
+                elapsed_seconds=elapsed_seconds,
+                local_host=canonical_agent(agent) in LOCAL_CHECKOUT_AGENTS,
+                # An adapter exception alone proves neither a launch nor its
+                # absence. Keep the reservation debit and report measured time
+                # without inventing a completed/started provider run.
+                metrics={"runs": None},
+            )
+        except WorkLoanJournalError:
+            accounting_failure = "; work-loan actual accounting also failed: WorkLoanJournalError"
+        error_code = (
+            type(exc).__name__
+            if type(exc)
+            in {
+                RuntimeError,
+                ValueError,
+                TypeError,
+                KeyError,
+                OSError,
+                TimeoutError,
+                ConnectionError,
+            }
+            else "ProviderError"
         )
-        raise
+        raise _ProviderDispatchError(f"{error_code}{accounting_failure}") from exc
     elapsed_seconds = max(0.0, time.monotonic() - started)
-    launched_runs = 0 if _is_blocked_result(result) or _is_workstream_successor_result(result) else 1
+    # Only an explicit prelaunch result proves no capacity was consumed. A
+    # blocker reported after a provider attempt must not erase that usage.
+    launched_runs = 0 if _is_prelaunch_result(result) else 1
     try:
         store.record_actual(
             task,
@@ -1802,8 +1838,11 @@ def _journaled_agent_dispatch(
             local_host=canonical_agent(agent) in LOCAL_CHECKOUT_AGENTS,
             metrics={"runs": launched_runs},
         )
-    except WorkLoanJournalError as exc:
-        return _blocked_result(f"work-loan actual accounting failed after provider launch: {exc}")
+    except WorkLoanJournalError:
+        if _is_prelaunch_result(result):
+            print(f"  ACCOUNTING DEFERRED {task.id}: WorkLoanJournalError; proven no-launch result retained")
+            return result
+        return _blocked_result("work-loan actual accounting failed after provider launch: WorkLoanJournalError")
     return result
 
 
@@ -1819,6 +1858,24 @@ def _receipt_path_for_board(path: Path) -> str:
         return str(path.resolve().relative_to(root.resolve()))
     except ValueError:
         return str(path)
+
+
+def _is_serial_reserved_claim(task: Task) -> bool:
+    """Validate the authenticated open-to-dispatched receipt used by serial dispatch."""
+
+    if task.status != "dispatched" or not task.dispatch_log:
+        return False
+    entry = task.dispatch_log[-1]
+    try:
+        contract_hash = execution_contract_hash(task)
+    except (TypeError, ValueError):
+        return False
+    return bool(
+        entry.status == "dispatched"
+        and re.fullmatch(r"[0-9a-f]{64}", dispatch_session_id(entry))
+        and entry.execution_contract_hash == contract_hash
+        and str(entry.output or "").startswith("dispatch-serial: canonical claim")
+    )
 
 
 def _authoritative_remote_verification(task: Task) -> tuple[Task, dict[str, object]]:
@@ -1839,9 +1896,14 @@ def _authoritative_remote_verification(task: Task) -> tuple[Task, dict[str, obje
         raise RemoteExecutionError("verification child execution contract is invalid") from exc
     if contract_changed:
         raise RemoteExecutionError("verification child execution contract changed on the authoritative board")
-    if authoritative.status != task.status:
+    projection_lags_serial_claim = bool(
+        authoritative.status == "open" and task.status == "dispatched" and _is_serial_reserved_claim(task)
+    )
+    if authoritative.status != task.status and not projection_lags_serial_claim:
         raise RemoteExecutionError("verification child changed on the authoritative board before dispatch")
-    return authoritative, verification_context_for_task(authoritative, by_id)
+    verified = task if projection_lags_serial_claim else authoritative
+    by_id[task.id] = verified
+    return verified, verification_context_for_task(verified, by_id)
 
 
 def _call_remote_adapter(agent: str, task: Task, dry_run: bool) -> bool | str:
@@ -1858,17 +1920,17 @@ def _call_remote_adapter(agent: str, task: Task, dry_run: bool) -> bool | str:
             raise RemoteExecutionError("verification child lifecycle ownership changed during initial verification")
     except WorkstreamLaunchContractError as exc:
         reason = f"remote {agent} verification requires a successor workstream: {str(exc)[:300]}"
-        return _workstream_successor_result(reason)
+        return _prelaunch_workstream_successor_result(reason)
     except (RemoteExecutionError, ValueError, OSError) as exc:
         reason = f"remote {agent} verification-only gate blocked: {str(exc)[:300]}"
-        return _blocked_result(reason)
+        return _prelaunch_blocked_result(reason)
     adapters, _capabilities = discover_adapters()
     adapter = adapters.get(agent)
     if not isinstance(adapter, GitHubWorkflowAdapter):
-        return _blocked_result("GitHub Actions auth or deterministic worker workflow is unavailable")
+        return _prelaunch_blocked_result("GitHub Actions auth or deterministic worker workflow is unavailable")
     repo = _remote_repo_arg(remote_task)
     if repo is None:
-        return _blocked_result(f"remote lane needs GitHub owner/repo, got {remote_task.repo or '(no repo)'}")
+        return _prelaunch_blocked_result(f"remote lane needs GitHub owner/repo, got {remote_task.repo or '(no repo)'}")
     instruction = f"Verify completed implementation for task {remote_task.id}; do not modify code: {remote_task.title}"
     if dry_run:
         try:
@@ -1890,7 +1952,7 @@ def _call_remote_adapter(agent: str, task: Task, dry_run: bool) -> bool | str:
             adapter.preflight(preview)
             adapter.intent(preview)
         except (RemoteExecutionError, ValueError) as exc:
-            return _blocked_result(f"remote {agent} packet blocked: {str(exc)[:300]}")
+            return _prelaunch_blocked_result(f"remote {agent} packet blocked: {str(exc)[:300]}")
         print(
             f"  would remote-verify {remote_task.id} via {agent} from exact pushed {repo}@<resolved-sha> "
             f"using control {adapter.control_repo}:{adapter.control_ref_kind}:{adapter.control_ref}"
@@ -2180,7 +2242,7 @@ def _call_jules(task: Task, dry_run: bool) -> bool | str:
             print(f"  would BLOCK {task.id}: {msg}")
             return True
         print(f"  BLOCKED {task.id}: {msg}")
-        return _blocked_result(msg)
+        return _prelaunch_blocked_result(msg)
     # `jules remote new` runs the session autonomously in a VM and yields a pullable result; plain
     # `jules new` routes through the web-UI plan-approval flow, which strands every headless
     # dispatch at "Awaiting User Feedback" (no CLI verb can approve it) — the bug that made jules
@@ -2282,7 +2344,7 @@ def _call_warp_oz(agent: str, task: Task, dry_run: bool) -> bool | str:
             print(f"  would BLOCK {task.id}: {reason}")
             return True
         print(f"  BLOCKED {task.id}: {reason}")
-        return _blocked_result(reason)
+        return _prelaunch_blocked_result(reason)
     requested_profile = execution_profile_for(task)
     plan_accepted = _claude_fable_acceptance_present()
     profile = effective_profile(requested_profile, plan_accepted=plan_accepted)
@@ -2307,7 +2369,7 @@ def _call_warp_oz(agent: str, task: Task, dry_run: bool) -> bool | str:
             selected_model=None,
             source="warp_override_missing",
         )
-        return _blocked_result(reason)
+        return _prelaunch_blocked_result(reason)
     _record_model_selection(
         task,
         profile=profile.as_dict(),
@@ -3829,6 +3891,8 @@ def _control_host_task(task: Task) -> bool:
 
 def agent_can_run_task(agent: str, task: Task) -> bool:
     agent = canonical_agent(agent)
+    if eligibility_dispatch_block_reason(task) is not None:
+        return False
     if _agent_timed_out_on_task(agent, task):
         return False
     if _control_host_task(task) and agent not in _LOCAL_AGENTS:
@@ -3874,7 +3938,10 @@ _RATELIMIT = "__ratelimit__"
 # in the cloud. One timeout → jules, instead of 5 timeouts → failed.
 _TIMEOUT = "__timeout__"
 _FAILED_BLOCKED_PREFIX = "__failed_blocked__:"
+_FAILED_RESULT_PREFIX = "__provider_failed__:"
+_PRELAUNCH_BLOCKED_PREFIX = "__prelaunch_failed_blocked__:"
 _WORKSTREAM_SUCCESSOR_PREFIX = "__workstream_successor__:"
+_PRELAUNCH_WORKSTREAM_SUCCESSOR_PREFIX = "__prelaunch_workstream_successor__:"
 _RATE_PATTERNS = re.compile(
     r"rate.?limit|quota|usage limit|too many requests|\b429\b|\b529\b|"
     r"resource.?exhausted|overloaded|insufficient_quota|throttl|out of (?:tokens|credits)",
@@ -3890,28 +3957,68 @@ def _blocked_result(reason: str) -> str:
     return _FAILED_BLOCKED_PREFIX + " ".join((reason or "blocked").split())[:500]
 
 
+def _failed_result(reason: str) -> str:
+    """A retryable provider failure, not evidence of an external blocker."""
+
+    return _FAILED_RESULT_PREFIX + " ".join((reason or "provider failed").split())[:500]
+
+
+def _is_failed_result(result: object) -> bool:
+    return isinstance(result, str) and result.startswith(_FAILED_RESULT_PREFIX)
+
+
+def _prelaunch_blocked_result(reason: str) -> str:
+    """Record a blocked result whose provider process was never started."""
+
+    return _PRELAUNCH_BLOCKED_PREFIX + " ".join((reason or "blocked").split())[:500]
+
+
 def _is_blocked_result(result: object) -> bool:
-    return isinstance(result, str) and result.startswith(_FAILED_BLOCKED_PREFIX)
+    return isinstance(result, str) and result.startswith((_FAILED_BLOCKED_PREFIX, _PRELAUNCH_BLOCKED_PREFIX))
 
 
 def _blocked_reason(result: object) -> str:
     if not _is_blocked_result(result):
         return ""
-    return str(result)[len(_FAILED_BLOCKED_PREFIX) :]
+    value = str(result)
+    prefix = _PRELAUNCH_BLOCKED_PREFIX if value.startswith(_PRELAUNCH_BLOCKED_PREFIX) else _FAILED_BLOCKED_PREFIX
+    return value[len(prefix) :]
 
 
 def _workstream_successor_result(reason: str) -> str:
     return _WORKSTREAM_SUCCESSOR_PREFIX + " ".join((reason or "workstream boundary reached").split())[:500]
 
 
+def _prelaunch_workstream_successor_result(reason: str) -> str:
+    """Record a successor result whose provider process was never started."""
+
+    return _PRELAUNCH_WORKSTREAM_SUCCESSOR_PREFIX + " ".join((reason or "workstream boundary reached").split())[:500]
+
+
 def _is_workstream_successor_result(result: object) -> bool:
-    return isinstance(result, str) and result.startswith(_WORKSTREAM_SUCCESSOR_PREFIX)
+    return isinstance(result, str) and result.startswith(
+        (_WORKSTREAM_SUCCESSOR_PREFIX, _PRELAUNCH_WORKSTREAM_SUCCESSOR_PREFIX)
+    )
 
 
 def _workstream_successor_reason(result: object) -> str:
     if not _is_workstream_successor_result(result):
         return ""
-    return str(result)[len(_WORKSTREAM_SUCCESSOR_PREFIX) :]
+    value = str(result)
+    prefix = (
+        _PRELAUNCH_WORKSTREAM_SUCCESSOR_PREFIX
+        if value.startswith(_PRELAUNCH_WORKSTREAM_SUCCESSOR_PREFIX)
+        else _WORKSTREAM_SUCCESSOR_PREFIX
+    )
+    return value[len(prefix) :]
+
+
+def _is_prelaunch_result(result: object) -> bool:
+    """Whether dispatch stopped before any provider process or remote run started."""
+
+    return isinstance(result, str) and result.startswith(
+        (_PRELAUNCH_BLOCKED_PREFIX, _PRELAUNCH_WORKSTREAM_SUCCESSOR_PREFIX)
+    )
 
 
 _REPO_UNAVAILABLE_PATTERNS = re.compile(
@@ -5372,6 +5479,15 @@ def _remaining_budget(limen: LimenFile, agent: str, budget: int) -> int:
 
 
 DispatchResult = tuple[str, str, bool | str | PlanHandoffResult, str, str]
+SerialReservation = tuple[LimenFile, Task, str, str]
+
+
+class _SerialClaimUnavailable(RuntimeError):
+    """The canonical claim seam is unavailable, so this dispatch beat must stop."""
+
+
+class _ProviderDispatchError(RuntimeError):
+    """An adapter raised before returning a receipt; provider launch is unknown."""
 
 
 def _clear_result_receipts(task_id: str) -> None:
@@ -5472,6 +5588,281 @@ def _commit_dispatch_results(
         apply_limen_file_sync(tasks_path, fresh, agent="dispatch", session_id="serial-results")
 
 
+def _sync_serial_ticket_custody(directory: Path, tasks_path: Path) -> None:
+    """Persist the existing ticket entry and each newly created parent link."""
+
+    stop = tasks_path.parent
+    while True:
+        descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        if directory == stop:
+            return
+        directory = directory.parent
+
+
+def _reserve_serial_dispatch(
+    tasks_path: Path,
+    limen: LimenFile,
+    task_id: str,
+    agent: str,
+    selected_contract_hash: str,
+    selected_lifecycle_token: str,
+    now: datetime,
+    *,
+    explicit_task: bool,
+) -> SerialReservation:
+    """Canonically claim one serial task before any provider process is launched.
+
+    The public ``tasks.yaml`` is a lagging projection.  A local status mutation or
+    work-loan journal row therefore cannot reserve budget or exclude another host.
+    This seam submits the exact open→dispatched transition to the authenticated
+    keeper, requires the keeper's projected claim receipt, and only then returns a
+    task that is safe to hand to a provider.
+    """
+
+    with _queue_lock(tasks_path) as got:
+        if not got:
+            raise _SerialClaimUnavailable("queue busy before canonical claim")
+        fresh = load_limen_file(tasks_path) if tasks_path.exists() else limen.model_copy(deep=True)
+        before = fresh.model_copy(deep=True)
+        id2 = {task.id: task for task in fresh.tasks}
+        task = id2.get(task_id)
+        if task is None:
+            raise RuntimeError("task disappeared before canonical claim")
+        if not _dispatchable(task) or not _task_targets_agent(task, agent) or not agent_can_run_task(agent, task):
+            raise RuntimeError("task is no longer dispatchable by the selected agent")
+        if not explicit_task and (
+            not _deps_met(task, id2)
+            or _superseded_by_rebase_task(task, id2)
+            or _superseded_by_trunk_repair(task, id2)
+            or chronic_dispatch_reason(task) is not None
+        ):
+            raise RuntimeError("task dependencies or ownership changed before canonical claim")
+        if not _routine_generated_buildout_allowed(task):
+            raise RuntimeError("task is no longer admitted by the routine buildout gate")
+
+        # The caller may have normalized a legacy row in memory.  Repeat that
+        # deterministic normalization on the fresh projection, while retaining
+        # ``before`` so the normalization itself is included in the authenticated
+        # compare-and-swap transition.
+        normalize_selected_legacy_task(task)
+        if not _result_owner_is_current(task, selected_contract_hash, selected_lifecycle_token):
+            raise RuntimeError("task execution contract or lifecycle changed before canonical claim")
+
+        # An uncertain HTTP acknowledgement must leave the exact claim request
+        # recoverable. Its immutable ticket determines the keeper's work_id;
+        # re-deriving a nonce or timestamp would create a second claim instead
+        # of replaying the accepted one. The captured open row is a CAS input,
+        # never authority to overwrite a newer canonical owner.
+        prior_task = next(row for row in before.tasks if row.id == task_id)
+        before_data = prior_task.model_dump(mode="json", exclude_none=True)
+        ticket_id = "serial-claim-" + task_state_sha256({"before": before_data, "agent": agent})
+        root = tickets_root(tasks_path)
+        pending_path = root / "inbox" / f"{ticket_id}.json"
+        archive_path = root / "archive" / f"{ticket_id}.json"
+        if archive_path.exists() or (root / "rejected" / f"{ticket_id}.json").exists():
+            raise RuntimeError("canonical claim already has terminal ticket custody; reconcile existing claim")
+        retained_ticket = None
+        try:
+            if pending_path.exists():
+                retained_ticket = Ticket.model_validate_json(pending_path.read_text(encoding="utf-8"))
+                now = retained_ticket.timestamp
+                reservation_id = str((retained_ticket.log or {}).get("session_id") or "")
+                if not re.fullmatch(r"[0-9a-f]{64}", reservation_id):
+                    raise ValueError("invalid reservation identity")
+            else:
+                reservation_id = secrets.token_hex(32)
+        except Exception as exc:
+            raise _SerialClaimUnavailable("canonical claim request custody is invalid") from exc
+        task.status = "dispatched"
+        task.updated = now
+        task.dispatch_log.append(
+            DispatchLogEntry(
+                timestamp=now,
+                agent=agent,
+                session_id=reservation_id,
+                status="dispatched",
+                execution_contract_hash=selected_contract_hash,
+                output="dispatch-serial: canonical claim requested before provider execution",
+            )
+        )
+        ticket = Ticket(
+            ticket_id=ticket_id,
+            timestamp=now,
+            agent=agent,
+            session_id="serial-reserve",
+            intent=INTENT_UPSERT,
+            task_id=task_id,
+            patch=task.model_dump(mode="json", exclude_none=True),
+            log=task.dispatch_log[-1].model_dump(mode="json", exclude_none=True),
+            precondition={"task_sha256": task_state_sha256(before_data)},
+            canonical_base=before_data,
+        )
+        try:
+            if retained_ticket is not None:
+                if retained_ticket != ticket:
+                    raise ValueError("claim request changed")
+            else:
+                submit_ticket(tasks_path, ticket)
+            _sync_serial_ticket_custody(pending_path.parent, tasks_path)
+        except Exception as exc:
+            raise _SerialClaimUnavailable("canonical claim request could not obtain exact durable custody") from exc
+        try:
+            receipt = apply_limen_file_sync(
+                tasks_path,
+                fresh,
+                agent=agent,
+                session_id="serial-reserve",
+                before=before,
+                now=now,
+                prepared_claims={task_id: ticket},
+            )
+        except Exception as exc:
+            # A rejected CAS is scoped to this candidate, not evidence that the
+            # keeper is unavailable. Continue other candidates without launch.
+            if isinstance(exc, SelectedExecutorAuthorityUnavailable):
+                raise RuntimeError("selected executor authority unavailable; exact claim request retained") from exc
+            if isinstance(exc, ConductConflict) or getattr(exc, "status", None) == 409:
+                raise RuntimeError("canonical claim conflict; exact request retained for reconciliation") from exc
+            raise _SerialClaimUnavailable(
+                "canonical claim acknowledgement unavailable; exact request retained"
+            ) from exc
+        projected = getattr(receipt, "projected_tasks", None)
+        projected_row = projected.get(task_id) if isinstance(projected, dict) else None
+        if not isinstance(projected_row, dict):
+            raise _SerialClaimUnavailable("canonical keeper returned no projected claim receipt")
+        try:
+            reserved_task = Task.model_validate(projected_row)
+        except Exception as exc:
+            raise _SerialClaimUnavailable("canonical keeper returned an invalid claim receipt") from exc
+        last = reserved_task.dispatch_log[-1] if reserved_task.dispatch_log else None
+        if (
+            reserved_task.id != task_id
+            or reserved_task.status != "dispatched"
+            or not _result_contract_is_current(reserved_task, selected_contract_hash)
+            or last is None
+            or last.status != "dispatched"
+            or canonical_dispatch_agent(last) != agent
+            or dispatch_session_id(last) != reservation_id
+            or last.execution_contract_hash != selected_contract_hash
+        ):
+            raise _SerialClaimUnavailable("canonical keeper returned a mismatched claim receipt")
+
+        # Archive before handing the authenticated claim to a provider. A later
+        # stale projection must not turn this already-consumed acknowledgement
+        # into authority for another launch. Interrupted custody stays charged
+        # and requires the existing keeper reconciliation path.
+        try:
+            archive_path.parent.mkdir(parents=True, exist_ok=True)
+            os.link(pending_path, archive_path)
+            # Persist the handoff marker before removing pending custody. A
+            # crash can retain both links, but can never authorize two launches.
+            _sync_serial_ticket_custody(archive_path.parent, tasks_path)
+            pending_path.unlink()
+            _sync_serial_ticket_custody(pending_path.parent, tasks_path)
+        except Exception as exc:
+            raise _SerialClaimUnavailable(
+                "canonical claim handoff custody unavailable; reconcile existing claim"
+            ) from exc
+
+        fresh.tasks = [reserved_task if row.id == task_id else row for row in fresh.tasks]
+        return fresh, reserved_task, _lifecycle_ownership_token(reserved_task), reservation_id
+
+
+def _commit_serial_reserved_result(
+    tasks_path: Path,
+    reserved_board: LimenFile,
+    reserved_task: Task,
+    agent: str,
+    result: bool | str | PlanHandoffResult,
+    now: datetime,
+    selected_contract_hash: str,
+    reserved_lifecycle_token: str,
+) -> bool | None:
+    """Return True for commit, None for durable deferral, False for stale ownership.
+
+    Commit through canonical CAS; no local projection write needs a queue lock.
+
+    A local lock timeout used to discard synchronous outcomes with no provider
+    state for harvest to reconstruct. Both sides of this bounded delta retain
+    the same unrelated rows; only the exact reserved task reaches the keeper.
+    A newer canonical owner still rejects its stale CAS precondition.
+    """
+
+    selection = _MODEL_SELECTION_RECEIPTS.get(reserved_task.id)
+    remote = _REMOTE_SUBMISSION_RECEIPTS.get(reserved_task.id)
+    may_clear = True
+    try:
+        if not _result_contract_is_current(reserved_task, selected_contract_hash) or (
+            _lifecycle_ownership_token(reserved_task) != reserved_lifecycle_token
+        ):
+            print(f"  FENCE {reserved_task.id}: canonical claim receipt is no longer valid")
+            return False
+        commit_base = reserved_board.model_copy(deep=True)
+        retained = [row for row in commit_base.tasks if row.id != reserved_task.id]
+        commit_base.tasks = [*retained, reserved_task.model_copy(deep=True)]
+        desired = commit_base.model_copy(deep=True)
+        target = next(task for task in desired.tasks if task.id == reserved_task.id)
+        _apply_result(target, agent, result, now, desired.portal.budget.track, charge_budget=False)
+        try:
+            apply_limen_file_sync(
+                tasks_path,
+                desired,
+                agent="dispatch",
+                session_id="serial-results",
+                before=commit_base,
+                now=now,
+            )
+        except Exception:
+            # The provider may have no external PR/run to harvest. Hand its
+            # exact result to the existing keeper inbox before discarding any
+            # process-local metadata. Its CAS still rejects a newer owner;
+            # quarantine is durable custody, not successful reconciliation.
+            before_data = reserved_task.model_dump(mode="json", exclude_none=True)
+            target_data = target.model_dump(mode="json", exclude_none=True)
+            ticket = Ticket(
+                ticket_id="serial-result-" + task_state_sha256({"before": before_data, "after": target_data}),
+                timestamp=now,
+                agent="dispatch",
+                session_id="serial-results",
+                intent=INTENT_UPSERT,
+                task_id=target.id,
+                patch=target_data,
+                log=target.dispatch_log[-1].model_dump(mode="json", exclude_none=True),
+                precondition={"task_sha256": task_state_sha256(before_data)},
+                canonical_base=before_data,
+            )
+            try:
+                try:
+                    submit_ticket(tasks_path, ticket)
+                except FileExistsError:
+                    # A retry can encounter the identical immutable ticket.
+                    # Never overwrite a distinct result or count it committed.
+                    from limen.tabularius import tickets_root
+
+                    prior = Ticket.model_validate_json(
+                        (tickets_root(tasks_path) / "inbox" / f"{ticket.ticket_id}.json").read_text()
+                    )
+                    if prior != ticket:
+                        raise RuntimeError("existing serial result ticket differs")
+            except Exception:
+                may_clear = False
+                if selection is not None:
+                    _MODEL_SELECTION_RECEIPTS[reserved_task.id] = selection
+                if remote is not None:
+                    _REMOTE_SUBMISSION_RECEIPTS[reserved_task.id] = remote
+                raise
+            print(f"  RESULT DEFERRED {target.id}: exact result ticket preserved; canonical commit unacknowledged")
+            return None
+        return True
+    finally:
+        if may_clear:
+            _clear_result_receipts(reserved_task.id)
+
+
 def dispatch_tasks(
     limen: LimenFile,
     tasks_path: Path,
@@ -5570,7 +5961,6 @@ def dispatch_tasks(
     print(f"── limen dispatch ({mode}) — agent={agent_filter} budget_remaining={remaining}")
 
     dispatched = 0
-    results: list[DispatchResult] = []
     for task in candidates:
         if limit is not None and dispatched >= max(0, limit):
             break
@@ -5605,38 +5995,72 @@ def dispatch_tasks(
 
         selected_contract_hash = execution_contract_hash(task)
         selected_lifecycle_token = _lifecycle_ownership_token(task)
-        try:
+        if dry_run:
             result = _journaled_agent_dispatch(
                 agent_filter,
                 task,
-                dry_run,
+                True,
                 selected_lifecycle_token,
                 tasks_path.parent,
             )
-        finally:
-            if not dry_run:
-                _release_machine_admission(task.id)
-        if not dry_run:
-            # In-memory apply keeps this loop's bookkeeping consistent; persistence happens
-            # once at commit, re-applied onto a FRESH board (never this stale snapshot).
-            _apply_result(task, agent_filter, result, now, track, consume_receipts=False)
-            results.append((agent_filter, task.id, result, selected_contract_hash, selected_lifecycle_token))
-            if result == _RATELIMIT:
-                _commit_dispatch_results(tasks_path, limen, results, now)
-                print(f"── lane {agent_filter} rate-limited — cooling, {dispatched} dispatched this cycle")
-                return
-            elif (
-                result
-                and result not in (_NOOP, _RATELIMIT, _TIMEOUT)
-                and not _is_blocked_result(result)
-                and not _is_workstream_successor_result(result)
-            ):
-                remaining -= task.budget_cost
+            dispatched += 1
+            continue
 
+        try:
+            reserved_board, reserved_task, reserved_lifecycle_token, reservation_id = _reserve_serial_dispatch(
+                tasks_path,
+                limen,
+                task.id,
+                agent_filter,
+                selected_contract_hash,
+                selected_lifecycle_token,
+                now,
+                explicit_task=task_id is not None,
+            )
+        except _SerialClaimUnavailable as exc:
+            _release_machine_admission(task.id)
+            print(f"  CLAIM BLOCKED {task.id}: {str(exc)[:200]}; no provider launched")
+            return
+        except Exception as exc:
+            _release_machine_admission(task.id)
+            print(f"  CLAIM BLOCKED {task.id}: {str(exc)[:200]}; no provider launched")
+            continue
+
+        # A successful canonical claim is the budget/WIP admission point.  Debit
+        # the process-local remainder immediately so this batch cannot out-run a
+        # lagging public projection; the keeper independently enforces the live
+        # daily and per-agent caps before acknowledging the claim above.
+        remaining -= reserved_task.budget_cost
         dispatched += 1
+        try:
+            result = _journaled_agent_dispatch(
+                agent_filter,
+                reserved_task,
+                False,
+                reservation_id,
+                tasks_path.parent,
+            )
+        except _ProviderDispatchError as exc:
+            result = _failed_result(f"provider dispatch raised: {exc}")
+            print(f"  PROVIDER FAILED {task.id}: {str(exc)[:200]}; committing terminal receipt")
+        finally:
+            _release_machine_admission(task.id)
 
-    if not dry_run:
-        _commit_dispatch_results(tasks_path, limen, results, now)
+        committed = _commit_serial_reserved_result(
+            tasks_path,
+            reserved_board,
+            reserved_task,
+            agent_filter,
+            result,
+            now,
+            selected_contract_hash,
+            reserved_lifecycle_token,
+        )
+        if committed is True and _is_prelaunch_result(result):
+            remaining += reserved_task.budget_cost
+        if result == _RATELIMIT:
+            print(f"── lane {agent_filter} rate-limited — cooling, {dispatched} dispatched this cycle")
+            return
 
     print(f"── {mode}: {dispatched} task(s)")
 
@@ -5657,6 +6081,7 @@ def _apply_result(
     prior_entry = task.dispatch_log[-1] if task.dispatch_log else None
     prior_reservation = dispatch_session_id(prior_entry) if prior_entry is not None else ""
     prior_contract_hash = str(prior_entry.execution_contract_hash or "") if prior_entry is not None else ""
+    prelaunch_result = _is_prelaunch_result(result)
     if task.status in {"done", "archived"} and _has_done_transition(task):
         return
     if _restore_done_status(
@@ -5673,12 +6098,17 @@ def _apply_result(
     # same failure would violate the fixed-point contract.
     if successor_held:
         return
-    if isinstance(result, PlanHandoffResult):
+    if prelaunch_result:
+        successful_result = False
+    elif isinstance(result, PlanHandoffResult):
         successful_result = True
     else:
         successful_result = bool(result) and result not in {_NOOP, _RATELIMIT, _TIMEOUT}
         successful_result = (
-            successful_result and not _is_blocked_result(result) and not _is_workstream_successor_result(result)
+            successful_result
+            and not _is_blocked_result(result)
+            and not _is_failed_result(result)
+            and not _is_workstream_successor_result(result)
         )
     if (
         not successor_held
@@ -5693,7 +6123,12 @@ def _apply_result(
         return
 
     entry = DispatchLogEntry(timestamp=now, agent=agent, session_id=session_id(), status="dispatched")
-    if isinstance(result, PlanHandoffResult):
+    if prelaunch_result and not _is_workstream_successor_result(result):
+        entry.status = "open"
+        task.status = "open"
+        reason = _blocked_reason(result)
+        entry.output = f"provider launch did not start; canonical claim released: {reason}"
+    elif isinstance(result, PlanHandoffResult):
         try:
             builder = select_live_builder(result.receipt)
             builder_view = builder_task_from_receipt(
@@ -5765,6 +6200,10 @@ def _apply_result(
         task.status = "failed"
         if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in task.labels:
             task.labels.append(WORKSTREAM_SUCCESSOR_REQUIRED_LABEL)
+    elif _is_failed_result(result):
+        entry.status = "failed"
+        entry.output = str(result)[len(_FAILED_RESULT_PREFIX) :]
+        task.status = "failed"
     elif _is_blocked_result(result):
         entry.status = "failed_blocked"
         entry.output = _blocked_reason(result)
@@ -5798,14 +6237,53 @@ def _apply_result(
             task.status = "failed"
     if (
         prior_status == "dispatched"
+        and prelaunch_result
+        and prior_entry is not None
+        and prior_entry.status == "dispatched"
+        and prior_reservation
+        and re.fullmatch(r"[0-9a-f]{64}", prior_contract_hash)
+    ):
+        entry.execution_started = False
+        entry.execution_contract_hash = prior_contract_hash
+        entry.execution_reservation_id = prior_reservation
+        if _is_workstream_successor_result(result):
+            entry.lifecycle_repair = "prelaunch-successor-hold"
+    elif (
+        prior_status == "dispatched"
+        and isinstance(result, PlanHandoffResult)
+        and entry.status == "open"
+        and prior_entry is not None
+        and prior_entry.status == "dispatched"
+        and prior_reservation
+        and re.fullmatch(r"[0-9a-f]{64}", prior_contract_hash)
+    ):
+        entry.lifecycle_repair = "plan-handoff-complete"
+        entry.execution_started = True
+        entry.execution_contract_hash = prior_contract_hash
+        entry.execution_reservation_id = prior_reservation
+    elif (
+        prior_status == "dispatched"
+        and not prelaunch_result
+        and entry.status == "open"
+        and prior_entry is not None
+        and prior_entry.status == "dispatched"
+        and prior_reservation
+        and re.fullmatch(r"[0-9a-f]{64}", prior_contract_hash)
+    ):
+        entry.lifecycle_repair = "provider-reroute"
+        entry.execution_started = True
+        entry.execution_contract_hash = prior_contract_hash
+        entry.execution_reservation_id = prior_reservation
+    elif (
+        prior_status == "dispatched"
         and entry.status in {"done", "failed", "failed_blocked"}
         and prior_entry is not None
         and prior_entry.status == "dispatched"
         and prior_reservation
         and re.fullmatch(r"[0-9a-f]{64}", prior_contract_hash)
     ):
-        entry.lifecycle_repair = "provider-terminal"
-        entry.execution_started = True
+        entry.lifecycle_repair = "provider-attempt-unknown" if _is_failed_result(result) else "provider-terminal"
+        entry.execution_started = None if _is_failed_result(result) else True
         entry.execution_contract_hash = prior_contract_hash
         entry.execution_reservation_id = prior_reservation
         if entry.status == "done":
@@ -6334,6 +6812,7 @@ def dispatch_parallel(
                     tasks_path,
                     fresh,
                     agent="dispatch-parallel",
+                    claim_agents={task_id: selected_agent for selected_agent, task_id in picked},
                     session_id="reserve",
                 )
                 projected = getattr(reservation, "projected_tasks", None)
@@ -6366,6 +6845,9 @@ def dispatch_parallel(
                 selected_lifecycle_tokens[tid],
                 tasks_path.parent,
             )
+        except _ProviderDispatchError as exc:
+            print(f"  ERROR {agent} {tid}: {str(exc)[:160]}; provider launch outcome unknown")
+            res = _failed_result(f"provider dispatch raised: {exc}")
         except Exception as e:  # never let one task kill the pool
             print(f"  ERROR {agent} {tid}: {str(e)[:160]}")
             res = False
@@ -6422,6 +6904,8 @@ def dispatch_parallel(
                 n_successor += 1
             elif _is_blocked_result(res):
                 n_blocked += 1
+            elif _is_failed_result(res):
+                n_fail += 1
             elif res and not _is_blocked_result(res) and not _is_workstream_successor_result(res):
                 n_pr += 1
             else:

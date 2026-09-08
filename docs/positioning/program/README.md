@@ -1,5 +1,13 @@
 # Production-Systems Positioning Program
 
+Current recalibration: [2026-09-08 alpha-to-Omega plan](../../../.codex/plans/2026-09-08-psp-alpha-omega-recalibration.md),
+[all 111 task dispositions](recalibration/2026-09-08-task-crosswalk.md), and
+[bounded cross-agent launch prompts](recalibration/2026-09-08-launch-prompts.md).
+Read these before resuming historical execution prompts. The live admission audit is blocked by
+one missing leaf receipt and three phase-parity mismatches; R00 owns the bounded reconciliation.
+The plan preserves existing acceptance and authority until its explicit migrations are implemented.
+Its snapshot is dated planning evidence, not current task state or a lease.
+
 This directory is the canonical execution index for turning the estate into a credible,
 evidence-backed public identity, an inbound commercial system, a repeatable delivery practice,
 and eventually a governed software foundry whose products can be transferred to domain operators.
