@@ -117,6 +117,7 @@ def _load_local_root_policies(
         reason = value.get("reason")
         if not all(isinstance(item, str) and item.strip() == item and item for item in (policy_id, owner, reason)):
             raise ValueError("local-git-root-policy-text-invalid")
+        assert isinstance(policy_id, str)
         if expected_branch is not None and (not isinstance(expected_branch, str) or not expected_branch):
             raise ValueError("local-git-root-policy-branch-invalid")
         if value.get("classification") != "protected_local_only":
