@@ -6,7 +6,7 @@ import {
   validatePrivateBoard,
 } from "./private-board.js";
 import { taskWorkLoanMissingFields, workLoanDenial } from "./work-loan.js";
-import { inventoryAdmissionDenied } from "./inventory-admission.js";
+import { inventoryAdmissionDenied, inventoryClassificationChanged } from "./inventory-admission.js";
 import {
   ProviderEligibilityError,
   validateProviderEligibilityUpdate,
@@ -350,6 +350,9 @@ function validatePolicyUpdate(existing, candidate, taskId) {
 }
 
 function requireInventoryAdmission(existing, candidate, taskId) {
+  if (inventoryClassificationChanged(existing, candidate)) {
+    throw new ConductProjectionError(`task ${taskId} inventory_classification_change_unauthorized`, 409);
+  }
   if (inventoryAdmissionDenied(existing, candidate)) {
     throw new ConductProjectionError(`task ${taskId} inventory_admission_adapter_unavailable`, 409);
   }
@@ -405,8 +408,14 @@ function applyCanonicalBudgetDebit(board, task, event, patch) {
 
 function applyCanonicalBudgetRefund(board, task, event) {
   const amount = Number(task.budget_cost || 0);
-  const latest = task.dispatch_log?.at(-1);
-  const agent = String(latest?.logical_agent || latest?.agent || "");
+  let claim;
+  // Preserve the executor that acquired this reservation across subsequent
+  // dispatched metadata updates; logical labels never own canonical spend.
+  for (const entry of [...(task.dispatch_log || [])].reverse()) {
+    if (entry?.status !== "dispatched") break;
+    claim = entry;
+  }
+  const agent = String(claim?.agent || "");
   if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount < 0 || !agent || agent === "any") {
     throw new ConductProjectionError(`task ${task.id} cannot derive a canonical budget refund`, 422);
   }
@@ -662,6 +671,9 @@ export function applyTaskPacketProjectionEvent(input, event) {
     validateTaskShape(supplied, taskId);
     validatePolicyUpdate(existing, { ...existing, ...supplied }, taskId);
     requireInventoryAdmission(existing, { ...existing, ...supplied }, taskId);
+    if (!existing && ["dispatched", "in_progress"].includes(supplied.status)) {
+      throw new ConductProjectionError(`task ${taskId} canonical_reservation_required`, 409);
+    }
     if (supplied.receipt_verified === true) {
       throw new ConductProjectionError(
         `task ${taskId} receipt credit requires an evidence-bound status transition`,

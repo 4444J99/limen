@@ -3115,7 +3115,7 @@ test("task claims derive canonical debit and identity while canonical transition
     if (stripPolicy) policyClaim.intent.patch.provider_eligibility = null;
     assert.throws(
       () => applyTaskPacketProjectionEvent(policyBoard, policyClaim),
-      stripPolicy ? /provider_eligibility_change_unauthorized/ : /provider_eligibility_adapter_unavailable/,
+      /provider_eligibility_adapter_unavailable/,
     );
     assert.deepEqual(policyBoard, originalPolicyBoard);
   }

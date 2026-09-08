@@ -25,7 +25,9 @@ for (const [id, labels] of [["GEN-fixture", []], ["BLD-fixture", []], ["BLD2-fix
     const before = structuredClone(board);
     event.intent.patch.labels = []; // A caller cannot strip a prior marker and claim.
     event.intent.inventory_verified = true;
-    assert.throws(() => applyTaskPacketProjectionEvent(board, event), /inventory_admission_adapter_unavailable/);
+    const denial = id === "legacy"
+      ? /inventory_classification_change_unauthorized/ : /inventory_admission_adapter_unavailable/;
+    assert.throws(() => applyTaskPacketProjectionEvent(board, event), denial);
     assert.deepEqual(board, before);
   });
 }
@@ -36,8 +38,10 @@ test("routine legacy events and new dispatched upserts cannot bypass inventory a
     status: "dispatched", from_statuses: ["open"], budget_action: "debit", output: "reserved" };
   assert.throws(() => applyTaskCompatibilityEvent(board, legacy), /inventory_admission_adapter_unavailable/);
   event.intent.kind = "task.upsert";
-  event.intent.task = { ...board.tasks[0], status: "dispatched" };
-  assert.throws(() => applyTaskPacketProjectionEvent({ tasks: [], portal: {} }, event), /inventory_admission_adapter_unavailable/);
+  for (const status of ["dispatched", "in_progress"]) {
+    event.intent.task = { ...board.tasks[0], status };
+    assert.throws(() => applyTaskPacketProjectionEvent({ tasks: [], portal: {} }, event), /inventory_admission_adapter_unavailable/);
+  }
 });
 
 test("non-routine claims and settlement of existing reservations remain available", () => {
@@ -49,4 +53,31 @@ test("non-routine claims and settlement of existing reservations remain availabl
   event.task_id = "GEN-fixture";
   event.intent = { kind: "task.status", task_id: "GEN-fixture", expected_status: "dispatched", patch: { status: "in_progress" } };
   assert.equal(applyTaskPacketProjectionEvent(claimed.board, event).task.status, "in_progress");
+});
+
+for (const kind of ["task.mutate", "task.status", "task.upsert"]) {
+  for (const labels of [[], ["generated"], ["build-out"], ["unrelated"]]) {
+    test(`legacy routine cannot strip classification through ${kind}: ${JSON.stringify(labels)}`, () => {
+      const { board, event } = fixture("LEGACY", ["generated", "build-out"]);
+      const before = structuredClone(board);
+      event.intent.kind = kind;
+      event.intent.patch = { status: "open", labels };
+      event.intent.log = { output: "migration requested by task payload" };
+      if (kind === "task.upsert") event.intent.task = { ...board.tasks[0], labels };
+      assert.throws(() => applyTaskPacketProjectionEvent(board, event), /inventory_classification_change_unauthorized/);
+      assert.deepEqual(board, before);
+    });
+  }
+}
+
+test("legacy routine permits unrelated labels without removing the gate", () => {
+  const { board, event } = fixture("LEGACY", ["generated", "build-out"]);
+  event.intent.kind = "task.mutate";
+  event.intent.patch = { title: "Updated", labels: ["generated", "build-out", "unrelated"] };
+  const updated = applyTaskPacketProjectionEvent(board, event);
+  assert.equal(updated.task.title, "Updated");
+  event.event_id = "claim-after-update";
+  event.intent.kind = "task.claim";
+  event.intent.patch = { status: "dispatched" };
+  assert.throws(() => applyTaskPacketProjectionEvent(updated.board, event), /inventory_admission_adapter_unavailable/);
 });

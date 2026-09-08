@@ -805,8 +805,9 @@ def _local_budget_debit(
     amount = task.get("budget_cost", 0)
     if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0:
         raise ValueError(f"task {task['id']} has invalid canonical budget_cost")
-    log = dict((event.get("intent") or {}).get("log") or {})
-    agent = str(log.get("logical_agent") or log.get("agent") or "")
+    # Task/log labels are correlation only. The keeper supplied the canonical
+    # executor on the authenticated projection event, just as in the Worker.
+    agent = str(event.get("agent") or "")
     if not agent or agent == "any":
         raise ValueError(f"task {task['id']} claim requires one concrete executor")
     latest = (task.get("dispatch_log") or [])[-1:] or [{}]
@@ -831,11 +832,14 @@ def _local_budget_debit(
 
 def _local_budget_refund(board: dict[str, Any], task: dict[str, Any], event: dict[str, Any]) -> None:
     amount = task.get("budget_cost", 0)
-    claim: dict[str, Any] = next(
-        (entry for entry in reversed(task.get("dispatch_log") or []) if entry.get("status") == "dispatched"),
-        {},
-    )
-    agent = str(claim.get("logical_agent") or claim.get("agent") or task.get("target_agent") or "")
+    claim: dict[str, Any] = {}
+    # The first dispatched entry in the current uninterrupted reservation
+    # owns its debit. Later metadata updates cannot replace that identity.
+    for entry in reversed(task.get("dispatch_log") or []):
+        if entry.get("status") != "dispatched":
+            break
+        claim = entry
+    agent = str(claim.get("agent") or "")
     if isinstance(amount, bool) or not isinstance(amount, int) or amount < 0 or not agent or agent == "any":
         raise ValueError(f"task {task['id']} cannot derive a canonical budget refund")
     budget = (board.get("portal") or {}).get("budget") or {}
@@ -1093,6 +1097,10 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             raise ValueError(f"task projection id {supplied.get('id')} does not match {task_id}")
         task = dict(supplied)
         is_new = existing is None
+        if is_new:
+            # Canonical lifecycle history is emitted by the keeper, never
+            # supplied by a task creator as evidence of a prior reservation.
+            task["dispatch_log"] = []
         if supplied.get("receipt_verified") is True:
             raise ValueError(f"task {task_id} receipt credit requires an evidence-bound status transition")
         if existing:
@@ -1104,11 +1112,14 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             task["dispatch_log"] = history
             if created is not None:
                 task["created"] = created
+        require_inventory_admission(existing or {"status": "open"}, task)
         policy = validate_policy_update(existing, task)
         if policy is not None:
             if task.get("status") in {"dispatched", "in_progress"}:
                 raise ValueError(f"task {task_id} provider_eligibility_adapter_unavailable")
             task["provider_eligibility"] = policy
+        if is_new and task.get("status") in {"dispatched", "in_progress"}:
+            raise ValueError(f"task {task_id} canonical_reservation_required")
         task["updated"] = str(event["timestamp"])
         task.setdefault("dispatch_log", [])
         task["dispatch_log"].append(
@@ -1131,7 +1142,7 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             if not underwriting.ready and not is_migration:
                 raise ValueError(underwriting.reason_code)
             tasks.append(task)
-        else:
+        elif existing is not None:
             existing.clear()
             existing.update(task)
     else:
