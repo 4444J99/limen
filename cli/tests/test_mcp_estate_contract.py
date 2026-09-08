@@ -21,6 +21,42 @@ def policy():
     }
 
 
+def test_apply_entrypoint_reuses_episode_without_certifying_cached_evidence(tmp_path, monkeypatch, capsys):
+    from types import SimpleNamespace
+
+    settings = tmp_path / ".serena/serena_config.yml"
+    settings.parent.mkdir()
+    settings.write_text("web_dashboard_open_on_launch: true\n")
+    launcher = tmp_path / ".local/bin/domus-mcp-repair"
+    launcher.parent.mkdir(parents=True)
+    launcher.write_text("fixture")
+    config = tmp_path / "config.toml"
+    config.write_text('[mcp_servers.serena]\ncommand="false"\n')
+    desired = policy()
+    desired["services"]["serena"]["repair"] = "serena-partial-config"
+    inventory = estate.inventory(desired, [("codex", config)])
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(estate, "load_policy", lambda path: (desired, "a" * 64))
+    monkeypatch.setattr(estate, "inventory", lambda *args, **kwargs: inventory)
+    monkeypatch.setattr(estate, "gateway_reconciliation", lambda: {})
+    calls = []
+
+    def repair(*args, **kwargs):
+        calls.append("repair")
+        return SimpleNamespace(returncode=0, stdout=json.dumps({"outcome": "unchanged", "episode": "rollback"}))
+
+    monkeypatch.setattr(estate.subprocess, "run", repair)
+    assert estate.main(["--apply", "--json"]) == 77
+    first = json.loads(capsys.readouterr().out)
+    assert estate.main(["--apply", "--json"]) == 77
+    second = json.loads(capsys.readouterr().out)
+    assert calls == ["repair"]
+    assert first["repair"]["reused"] is False
+    assert second["repair"]["reused"] is True
+    assert second["denominator"] == {"services": 1, "registrations": 1}
+    assert second["distance"]["unmeasured_integrations"] > 0
+
+
 def test_missing_stays_in_denominator(tmp_path):
     records, issues, _, _ = estate.inventory(policy(), [("codex", tmp_path / "missing.toml")])
     result = estate.measure(policy(), records, issues, inventory_only=True)
