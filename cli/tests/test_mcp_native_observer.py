@@ -91,12 +91,25 @@ def test_native_wire_rejects_login_or_elicitation_request():
     assert wire.cleanup == "pass"
 
 
-@pytest.mark.parametrize("failure", [None, "changed_config", "version", "pagination"])
+@pytest.mark.parametrize("failure", [None, "changed_config", "version", "pagination", "wrong_route"])
 def test_collector_observes_native_route_and_refuses_dependency_races(monkeypatch, tmp_path, failure):
     from contextlib import nullcontext
     import limen.host_admission
+    import mcp_estate as estate
 
     calls = []
+    declaration = {"command": "synthetic"}
+    safe_calls = [
+        {
+            "method": "tools/call",
+            "server": "fixture",
+            "params": {"name": "health", "arguments": {}},
+            "read_only": True,
+            "launch_fingerprint": "wrong"
+            if failure == "wrong_route"
+            else estate.fingerprint(estate.normalize(declaration)),
+        }
+    ]
     monkeypatch.setattr(observer.time, "time", lambda: 101)
     monkeypatch.setattr(observer.shutil, "which", lambda _: "/fixture/codex")
     monkeypatch.setattr(observer, "file_digest", lambda _: "binary-content")
@@ -124,9 +137,25 @@ def test_collector_observes_native_route_and_refuses_dependency_races(monkeypatc
                 return {}
             if method == "config/read":
                 self.config_reads += 1
-                return {"config": {"fixture": self.config_reads if failure == "changed_config" else 1}}
+                return {
+                    "config": {
+                        "fixture": self.config_reads if failure == "changed_config" else 1,
+                        "mcp_servers": {"fixture": declaration},
+                    }
+                }
             if method == "skills/list":
                 return {"data": [{"skills": [], "errors": []}]}
+            if method == "thread/start":
+                assert args[0]["ephemeral"] is True
+                return {"thread": {"id": "native-fixture-thread"}}
+            if method == "mcpServer/tool/call":
+                assert args[0] == {
+                    "threadId": "native-fixture-thread",
+                    "server": "fixture",
+                    "tool": "health",
+                    "arguments": {},
+                }
+                return {"content": [{"type": "text", "text": "private functional response"}]}
             if method == "mcpServerStatus/list":
                 return {
                     "data": [
@@ -144,12 +173,24 @@ def test_collector_observes_native_route_and_refuses_dependency_races(monkeypatc
     monkeypatch.setattr(observer, "NativeWire", Native)
     if failure:
         with pytest.raises(observer.ProtocolError):
-            observer.collect_codex(broker(), "run-fixture", tmp_path, include_mcp=True)
+            observer.collect_codex(broker(), "run-fixture", tmp_path, include_mcp=True, safe_calls=safe_calls)
+        assert "mcpServer/tool/call" not in calls
     else:
-        result = observer.collect_codex(broker(), "run-fixture", tmp_path, include_mcp=True)
+        result = observer.collect_codex(broker(), "run-fixture", tmp_path, include_mcp=True, safe_calls=safe_calls)
         assert result["servers"][0]["server_version"] == "server-1"
         assert result["run_id"] == "run-fixture"
         assert result["native_session_id"]
         assert result["cleanup"] == "pass"
+        assert result["native_session_id"] == "native-fixture-thread"
+        assert result["functional"] == {"attempted": 1, "passed": 1, "state": "pass"}
+        assert "private functional response" not in str(result)
     assert calls[-1] == "close"
     assert not any("login" in method or "turn/" in method for method in calls)
+
+
+@pytest.mark.parametrize(
+    "call", [{}, {"method": "tools/call", "read_only": False}, {"method": "login", "read_only": True}]
+)
+def test_native_functional_contract_refuses_unowned_effects(call):
+    with pytest.raises(observer.ProtocolError):
+        observer.native_call_contract([call])

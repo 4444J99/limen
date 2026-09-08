@@ -117,9 +117,13 @@ def load_policy(path):
     return policy, digest
 
 
-def normalize(spec):
+def normalize(spec, client=None):
     if not isinstance(spec, dict):
         return {**normalize({}), "invalid": True}
+    if client == "opencode" and "environment" in spec:
+        if "env" in spec and spec["env"] != spec["environment"]:
+            return {**normalize({}), "invalid": True}
+        spec = {**spec, "env": spec["environment"]}
     command = spec.get("command")
     url = spec.get("url") or spec.get("serverUrl") or spec.get("httpUrl")
     args = spec.get("args", [])
@@ -156,6 +160,23 @@ def normalize(spec):
         "disabled": spec.get("disabled") is True or spec.get("enabled") is False,
         "invalid": bool(invalid),
     }
+
+
+def native_configuration_index(client, response):
+    """Sanitize the effective native MCP map without treating absence as an empty catalog."""
+    config = response.get("config") if client == "codex" else response
+    field = "mcp_servers" if client == "codex" else "mcp"
+    if not isinstance(config, dict) or field not in config or not isinstance(config[field], dict):
+        return {"state": "unmeasured", "registrations": {}}
+    rows = {}
+    for name, declaration in config[field].items():
+        spec = normalize(declaration, client)
+        rows[name] = {
+            "launch_fingerprint": fingerprint(spec),
+            "disabled": spec["disabled"],
+            "valid": not spec["invalid"] and spec["transport"] != "unsupported",
+        }
+    return {"state": "observed", "registrations": rows}
 
 
 def installed_plugin_roots(path, plugin, project):
@@ -255,7 +276,7 @@ def inventory(policy, config_paths=None, project=None, client_environments=None)
             "route": route,
             "source": source,
             "fingerprint": digest,
-            "spec": normalize(spec),
+            "spec": normalize(spec, client),
             "active": active,
         }
         if key in records:
@@ -276,6 +297,11 @@ def inventory(policy, config_paths=None, project=None, client_environments=None)
             issues.append({"client": client, "reason": "configuration_unreadable", "owner": "domus-genoma"})
             continue
         configs.append({"client": client, "state": "valid", "fingerprint": digest})
+        if any(
+            key in data and not isinstance(data[key], dict)
+            for key in ("mcpServers", "mcp_servers", "servers", "mcp", "upstreams")
+        ):
+            issues.append({"client": client, "reason": "registration_table_unmeasured", "owner": "domus-genoma"})
         table = server_map(data)
         if client == "ianva" and not table:
             table = {k: v for k, v in data.items() if isinstance(v, dict)}
@@ -284,8 +310,14 @@ def inventory(policy, config_paths=None, project=None, client_environments=None)
             if not isinstance(spec, dict):
                 issues.append({"client": client, "reason": "invalid_registration", "owner": "domus-genoma"})
         plugins = data.get("plugins", {})
+        plugin_path = path
         if client == "claude":
-            settings_path = path.parent / "settings.json"
+            settings_path = (
+                active_config_path("claude-settings", client_environments.get(client))
+                if config_paths is None
+                else path.parent / "settings.json"
+            )
+            plugin_path = settings_path
             if settings_path.exists():
                 try:
                     settings_data, settings_digest = read_config(settings_path)
@@ -305,10 +337,10 @@ def inventory(policy, config_paths=None, project=None, client_environments=None)
                 continue
             plugin_name = plugin.split("@", 1)[0]
             try:
-                roots, selection = installed_plugin_roots(path, plugin, project)
+                roots, selection = installed_plugin_roots(plugin_path, plugin, project)
             except (ValueError, OSError, TypeError, AttributeError):
                 roots, selection = [], "installed_registry_unmeasured"
-            overridden = plugin_provenance(path, plugin, roots)
+            overridden = plugin_provenance(plugin_path, plugin, roots)
             manifests = [r / ".mcp.json" for r in roots if (r / ".mcp.json").exists()]
             if len(roots) == 1 and not manifests:
                 try:
@@ -596,7 +628,7 @@ def apply_client_receipts(rows, receipts, policy, now=None, observations=None):
             dimensions = receipt.get("dimensions", {})
             if not isinstance(dimensions, dict):
                 continue
-            for dimension in ("startup_ui", "explicit_ui", "isolation", "client_route"):
+            for dimension in ("startup_ui", "explicit_ui", "isolation", "client_route", "functional"):
                 if dimensions.get(dimension) in ("pass", "fail", "not_applicable"):
                     row["dimensions"][dimension] = dimensions[dimension]
             row["client_version"] = receipt["client_version"]
@@ -629,6 +661,16 @@ def native_receipts(rows, policy, observation):
         if len(matches) != 1 or not server.get("server_version"):
             continue
         row = matches[0]
+        effective = observation.get("effective_configuration", {})
+        native = effective.get("registrations", {}).get(server["name"], {})
+        if (
+            effective.get("state") != "observed"
+            or native.get("valid") is not True
+            or native.get("disabled") is not False
+            or not row.get("launch_fingerprint")
+            or native.get("launch_fingerprint") != row["launch_fingerprint"]
+        ):
+            continue
         dependency = fingerprint(
             [
                 observation["binary_fingerprint"],
@@ -644,7 +686,10 @@ def native_receipts(rows, policy, observation):
             **{k: observation[k] for k in ("run_id", "native_session_id", "client_version", "observed_at")},
             "server_version": server["server_version"],
             "dependency_fingerprint": dependency,
-            "dimensions": {"client_route": "pass" if server.get("runtime_status") == "connected" else "unmeasured"},
+            "dimensions": {
+                "client_route": "pass" if server.get("runtime_status") == "connected" else "unmeasured",
+                "functional": server.get("functional", {}).get("state", "unmeasured"),
+            },
         }
         receipts.append(receipt)
         witnesses[(row["client"], row["name"], row["route"])] = {
@@ -681,6 +726,7 @@ def measure(policy, records, issues, inventory_only=False, service=None, timeout
             evidence_age_seconds=None,
             repair_outcome="not_attempted",
             provenance=record.get("provenance", []) + [{k: record[k] for k in ("source", "fingerprint", "active")}],
+            launch_fingerprint=fingerprint(spec) if spec else None,
         )
         if "plugin_selection" in record:
             row["plugin_selection"] = record["plugin_selection"]
@@ -786,12 +832,20 @@ def main(argv=None):
                 if remaining <= 0:
                     raise ValueError("native collection deadline exhausted")
                 collector = {"codex": collect_codex, "opencode": collect_opencode}[client]
+                options = {}
+                if client == "codex" and quiet and not args.inventory_only:
+                    options["safe_calls"] = [
+                        {**call, "server": record["name"], "launch_fingerprint": fingerprint(record["spec"])}
+                        for record in client_records
+                        for call in (record["policy"] or {}).get("verification", {}).get("safe_calls", [])
+                    ]
                 observation = collector(
                     client_from_env(),
                     args.broker_run,
                     args.project or Path.cwd(),
                     timeout=remaining,
                     include_mcp=quiet and not args.inventory_only,
+                    **options,
                 )
                 fresh_records, _, _, _ = inventory(policy, project=args.project)
                 if fingerprint(records) != fingerprint(fresh_records):
