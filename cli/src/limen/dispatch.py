@@ -6715,6 +6715,7 @@ def dispatch_parallel(
                     tasks_path,
                     fresh,
                     agent="dispatch-parallel",
+                    claim_agents={task_id: selected_agent for selected_agent, task_id in picked},
                     session_id="reserve",
                 )
                 projected = getattr(reservation, "projected_tasks", None)

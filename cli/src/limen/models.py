@@ -148,7 +148,7 @@ def dispatch_session_id(entry: object) -> str:
 
 
 def dispatch_agent(entry: object) -> str:
-    """Return the producer lane while leaving authenticated keeper identity intact."""
+    """Return read-only producer correlation; never use it as execution authority."""
 
     if isinstance(entry, dict):
         logical = entry.get("logical_agent")
@@ -157,6 +157,19 @@ def dispatch_agent(entry: object) -> str:
         logical = getattr(entry, "logical_agent", None)
         server_owned = getattr(entry, "agent", None)
     return str(logical if logical not in {None, ""} else server_owned or "")
+
+
+def canonical_dispatch_agent(entry: object) -> str:
+    """Return only keeper-owned executor identity for lifecycle authorization.
+
+    Historical dispatcher identities and absent canonical identities are not
+    upgraded from producer correlation. Callers must match a selected executor.
+    """
+    if isinstance(entry, dict):
+        server_owned = entry.get("agent")
+    else:
+        server_owned = getattr(entry, "agent", None)
+    return server_owned if isinstance(server_owned, str) else ""
 
 
 class ExecutionRequirement(BaseModel):
