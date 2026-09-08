@@ -8,8 +8,8 @@ names — if this file and one of them ever disagree, **they win and this file i
 
 1. [`AGENTS.md`](../AGENTS.md) — the repo-wide dispatch/task contract, task states, and the Peer
    Conductor Contract. The source of truth for how work is claimed and reported.
-2. The **closest** directory-scoped `AGENTS.md` to the files you are editing — e.g.
-   [`apps/danse/AGENTS.md`](../apps/danse/AGENTS.md). Closest wins; it holds what that component
+2. The **closest** directory-scoped `AGENTS.md` to the files you are editing, where present.
+   Closest wins; it holds what that component
    knows and the root cannot.
 3. [`CONTRIBUTING.md`](../CONTRIBUTING.md) for human contributor guidance, and
    [`docs/agent-instruction-standard.md`](../docs/agent-instruction-standard.md) for why these files

@@ -90,6 +90,23 @@ positioning-offer-contract-test
 check-docs-exports
 check-note-links' docs/positioning/offers/product-operating-partnership-review.md
 
+# Reader evidence must select its executable suite even when only the reusable
+# workflow, anonymous schema, or stimulus changes under docs/.
+for reader_path in \
+  docs/positioning/program/w07_blinded_reader_workflow.py \
+  docs/positioning/program/validate_p03_w07_blinded_reader.py \
+  docs/positioning/program/w07_blinded_reader_response_schema.json \
+  docs/positioning/program/w07_blinded_reader_response_template.json \
+  docs/positioning/program/test_p03_w07_blinded_reader_intake.py \
+  docs/positioning/program/test_p03_w07_workflow.py \
+  docs/positioning/w07-blinded-reader-protocol.md; do
+  expect "reader-workflow-$reader_path" 'syntax-changed
+diff-hygiene
+research-adjudication-test
+check-docs-exports
+check-note-links' "$reader_path"
+done
+
 expect unmanaged-offer-artifact-change 'syntax-changed
 diff-hygiene
 positioning-offer-contract-test
