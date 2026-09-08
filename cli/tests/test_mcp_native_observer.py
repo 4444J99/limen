@@ -92,10 +92,12 @@ def test_native_wire_rejects_login_or_elicitation_request():
 
 
 @pytest.mark.parametrize("failure", [None, "changed_config", "version", "pagination", "wrong_route"])
-def test_collector_observes_native_route_and_refuses_dependency_races(monkeypatch, tmp_path, failure):
+@pytest.mark.parametrize("collect_metrics", [False, True])
+def test_collector_observes_native_route_and_refuses_dependency_races(monkeypatch, tmp_path, failure, collect_metrics):
     from contextlib import nullcontext
     import limen.host_admission
     import mcp_estate as estate
+    import mcp_native_metrics
 
     calls = []
     declaration = {"command": "synthetic"}
@@ -116,11 +118,38 @@ def test_collector_observes_native_route_and_refuses_dependency_races(monkeypatc
     monkeypatch.setattr(observer.subprocess, "run", lambda *a, **k: SimpleNamespace(stdout="codex-cli 1"))
     monkeypatch.setattr(limen.host_admission, "hold_lease", lambda *a, **k: nullcontext())
 
+    class Metrics:
+        def __init__(self, version):
+            assert version == "1"
+
+        def start(self):
+            calls.append("metrics-start")
+
+        def configuration(self):
+            return "synthetic-private-exporter"
+
+        def evidence(self, expected, timeout):
+            assert expected == 1
+            return {
+                "state": "pass",
+                "fresh_native_loading_witness": True,
+                "native_metrics": {"enabled": 1, "kept": 1, "omitted": 0, "truncated_chars": 0},
+            }
+
+        def close(self):
+            calls.append("metrics-close")
+
+    monkeypatch.setattr(mcp_native_metrics, "RenderMetrics", Metrics)
+
     class Native:
         def __init__(self, *args):
+            self.server = args[0]
             self.cleanup = "unmeasured"
             self.process = SimpleNamespace(pid=12345)
             self.config_reads = 0
+
+        def remaining(self):
+            return 5
 
         def start(self):
             calls.append("start")
@@ -144,7 +173,22 @@ def test_collector_observes_native_route_and_refuses_dependency_races(monkeypatc
                     }
                 }
             if method == "skills/list":
-                return {"data": [{"skills": [], "errors": []}]}
+                return {
+                    "data": [
+                        {
+                            "skills": [
+                                {
+                                    "name": "fixture",
+                                    "path": "/private/SKILL.md",
+                                    "description": "synthetic",
+                                    "scope": "user",
+                                    "enabled": True,
+                                }
+                            ],
+                            "errors": [],
+                        }
+                    ]
+                }
             if method == "thread/start":
                 assert args[0]["ephemeral"] is True
                 return {"thread": {"id": "native-fixture-thread"}}
@@ -173,10 +217,24 @@ def test_collector_observes_native_route_and_refuses_dependency_races(monkeypatc
     monkeypatch.setattr(observer, "NativeWire", Native)
     if failure:
         with pytest.raises(observer.ProtocolError):
-            observer.collect_codex(broker(), "run-fixture", tmp_path, include_mcp=True, safe_calls=safe_calls)
+            observer.collect_codex(
+                broker(),
+                "run-fixture",
+                tmp_path,
+                include_mcp=True,
+                safe_calls=safe_calls,
+                collect_render_metrics=collect_metrics,
+            )
         assert "mcpServer/tool/call" not in calls
     else:
-        result = observer.collect_codex(broker(), "run-fixture", tmp_path, include_mcp=True, safe_calls=safe_calls)
+        result = observer.collect_codex(
+            broker(),
+            "run-fixture",
+            tmp_path,
+            include_mcp=True,
+            safe_calls=safe_calls,
+            collect_render_metrics=collect_metrics,
+        )
         assert result["servers"][0]["server_version"] == "server-1"
         assert result["run_id"] == "run-fixture"
         assert result["native_session_id"]
@@ -184,7 +242,8 @@ def test_collector_observes_native_route_and_refuses_dependency_races(monkeypatc
         assert result["native_session_id"] == "native-fixture-thread"
         assert result["functional"] == {"attempted": 1, "passed": 1, "state": "pass"}
         assert "private functional response" not in str(result)
-    assert calls[-1] == "close"
+        assert result["skills"]["fresh_native_loading_witness"] is collect_metrics
+    assert calls[-1] == ("metrics-close" if collect_metrics else "close")
     assert not any("login" in method or "turn/" in method for method in calls)
 
 

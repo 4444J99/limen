@@ -303,3 +303,60 @@ def test_metadata_modifier_escapes_control_characters_and_preserves_other_fields
     metadata = yaml.safe_load(skill.read_text().split("---")[1])
     assert metadata == {"name": "retained", "description": "line one\nline two\tend", "extra": ["a", "b"]}
     assert skill.read_text().endswith("---\nbody\n")
+
+
+def test_plugin_refresh_at_same_path_gets_new_custody_generation(tmp_path, monkeypatch):
+    mod = _load()
+    _point_at(mod, _synthetic_home(tmp_path))
+    monkeypatch.setattr(mod, "CAP_OVERRIDE", "80")
+    assert mod.run("apply", quiet=True) == 0
+    skill = tmp_path / "plugins/cache/openai-curated-remote/vercel/1.0.0/skills/nextjs/SKILL.md"
+    fresh_description = "Refreshed release description with routing detail. " * 10
+    refreshed = (
+        f"---\nname: nextjs\ndescription: {fresh_description}\nallowed-tools: [Read]\n---\nnew release instructions\n"
+    )
+    skill.write_text(refreshed)
+    target = {"path": skill, "field": "yaml:description"}
+    assert mod.run("apply", quiet=True) == 0
+    assert len(mod._get(target)) <= 80
+    assert "allowed-tools: [Read]\n" in skill.read_text()
+    assert skill.read_text().endswith("---\nnew release instructions\n")
+    entry = mod._load_ledger()[mod._key(target)]
+    assert len(entry["history"]) == 1
+    assert entry["original"] == fresh_description.strip()
+    before = mod.LEDGER.read_bytes()
+    assert mod.run("apply", quiet=True) == 0
+    assert mod.LEDGER.read_bytes() == before
+    assert mod.run("restore", quiet=True) == 0
+    assert mod._get(target) == fresh_description.strip()
+    assert skill.read_text().endswith("---\nnew release instructions\n")
+
+
+def test_tighter_budget_recompacts_and_restores_original_source(tmp_path, monkeypatch):
+    mod = _load()
+    _point_at(mod, _synthetic_home(tmp_path))
+    target = {"path": tmp_path / "skills/userskill/SKILL.md", "field": "yaml:description"}
+    original = mod._get(target)
+    monkeypatch.setattr(mod, "CAP_OVERRIDE", "150")
+    assert mod.run("apply", quiet=True) == 0
+    assert 80 < len(mod._get(target)) <= 150
+    monkeypatch.setattr(mod, "CAP_OVERRIDE", "80")
+    assert mod.run("apply", quiet=True) == 0
+    assert len(mod._get(target)) <= 80
+    assert mod._load_ledger()[mod._key(target)]["original"] == original
+    assert mod.run("restore", quiet=True) == 0
+    assert mod._get(target) == original
+
+
+def test_refresh_during_interrupted_generation_is_not_replayed(tmp_path, monkeypatch):
+    mod = _load()
+    _point_at(mod, _synthetic_home(tmp_path))
+    monkeypatch.setattr(mod, "CAP_OVERRIDE", "80")
+    monkeypatch.setattr(mod, "_set", lambda *args, **kwargs: False)
+    assert mod.run("apply", quiet=True) == 77
+    skill = tmp_path / "skills/userskill/SKILL.md"
+    skill.write_text(skill.read_text() + "refreshed instructions\n")
+    before = mod.LEDGER.read_bytes()
+    monkeypatch.setattr(mod, "_set", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("replayed")))
+    assert mod.run("apply", quiet=True) == 77
+    assert mod.LEDGER.read_bytes() == before

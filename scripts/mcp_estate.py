@@ -649,6 +649,7 @@ def native_receipts(rows, policy, observation):
     if observation.get("schema_version") != "limen.native_observation.v1" or observation.get("client") not in (
         "codex",
         "opencode",
+        "claude",
     ):
         return receipts, witnesses
     for server in observation.get("servers", []):
@@ -795,7 +796,7 @@ def main(argv=None):
     parser.add_argument(
         "--collect-codex", action="store_true", help="fresh admitted native catalog and route observation"
     )
-    parser.add_argument("--collect-client", choices=("codex", "opencode"), action="append", default=[])
+    parser.add_argument("--collect-client", choices=("codex", "opencode", "claude"), action="append", default=[])
     parser.add_argument("--broker-run", help="active broker execution run owning the native observation")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
@@ -813,6 +814,7 @@ def main(argv=None):
         for client in sorted(collectors):
             from mcp_native_observer import collect_codex, ProtocolError
             from mcp_opencode_observer import collect_opencode
+            from mcp_claude_observer import collect_claude
             from limen.host_admission import AdmissionDenied
             from limen.conduct.broker import ConductError
 
@@ -832,9 +834,10 @@ def main(argv=None):
                 remaining = min(collection_deadline - time.monotonic(), 120)
                 if remaining <= 0:
                     raise ValueError("native collection deadline exhausted")
-                collector = {"codex": collect_codex, "opencode": collect_opencode}[client]
+                collector = {"codex": collect_codex, "opencode": collect_opencode, "claude": collect_claude}[client]
                 options = {}
                 if client == "codex" and quiet and not args.inventory_only:
+                    options["collect_render_metrics"] = True
                     options["safe_calls"] = [
                         {**call, "server": record["name"], "launch_fingerprint": fingerprint(record["spec"])}
                         for record in client_records
@@ -874,8 +877,10 @@ def main(argv=None):
             # Domus still owns the mutation, backup, and conditional rollback.
             try:
                 service_policy = policy["services"]["serena"]
-                if (service_policy.get("source_owner") != "domus-genoma"
-                        or service_policy.get("repair") != "serena-partial-config"):
+                if (
+                    service_policy.get("source_owner") != "domus-genoma"
+                    or service_policy.get("repair") != "serena-partial-config"
+                ):
                     raise ValueError("repair owner not registered")
                 launcher = Path.home() / ".local/bin/domus-mcp-repair"
                 affected = [r for r in payload["servers"] if r["service"] == "serena"]
@@ -884,11 +889,18 @@ def main(argv=None):
                 target = Path.home() / ".serena/serena_config.yml"
                 bindings = {
                     "registration": fingerprint(sorted((r["client"], r["name"], r["route"]) for r in affected)),
-                    "configuration": fingerprint([hashlib.sha256(target.read_bytes()).hexdigest(),
-                                                  [r["fingerprint"] for r in affected]]),
-                    "dependency": fingerprint([hashlib.sha256(launcher.read_bytes()).hexdigest(),
-                                               [(r.get("launch_fingerprint"), r.get("server_version"),
-                                                 r.get("dependency_fingerprint")) for r in affected]]),
+                    "configuration": fingerprint(
+                        [hashlib.sha256(target.read_bytes()).hexdigest(), [r["fingerprint"] for r in affected]]
+                    ),
+                    "dependency": fingerprint(
+                        [
+                            hashlib.sha256(launcher.read_bytes()).hexdigest(),
+                            [
+                                (r.get("launch_fingerprint"), r.get("server_version"), r.get("dependency_fingerprint"))
+                                for r in affected
+                            ],
+                        ]
+                    ),
                     "policy": digest,
                     "failure": fingerprint([r["dimensions"] for r in affected]),
                 }
@@ -909,12 +921,19 @@ def main(argv=None):
                     payload["servers"] = [
                         replacements.get((r["client"], r["name"], r["route"]), r) for r in payload["servers"]
                     ]
-                    return "pass" if checked["exit"] == 0 and affected else ("fail" if checked["exit"] == 1 else "unmeasured")
+                    return (
+                        "pass"
+                        if checked["exit"] == 0 and affected
+                        else ("fail" if checked["exit"] == 1 else "unmeasured")
+                    )
 
                 payload["repair"] = heal(
                     Path.home() / ".local/state/limen/mcp-healing",
-                    owner="domus-genoma", repair_id="serena-partial-config", bindings=bindings,
-                    repair=registered_repair, verify=verify_repair,
+                    owner="domus-genoma",
+                    repair_id="serena-partial-config",
+                    bindings=bindings,
+                    repair=registered_repair,
+                    verify=verify_repair,
                 )
                 for row in payload["servers"]:
                     if row["service"] == "serena":
