@@ -1,0 +1,220 @@
+# Bounded cross-agent launch prompts
+
+Use the next eligible block, not the entire conversation. These prompts are provider-neutral; start with R00. Every “timebox” is a maximum run slice, not a promise to finish a package.
+
+Shared contract: Read current AGENTS.md, the recalibration plan, snapshot and only the named package's sources. Re-query current ownership, repository identity and exact acceptance. Keep existing issue IDs/PR owners. Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts. Use one isolated writable checkout. Return the artifact link, exact tested/accepted heads, real exit evidence, usage/time when available and one next action. Do not paste private evidence or source identities into public receipts.
+
+## R00 — Restore trustworthy admission and current execution policy
+
+Profile: synthesis. Effort: high. Actual model: live capability selection / provider Auto. Run-slice ceiling: 45 minutes; at most one evidence-driven corrective batch; no child fanout.
+
+Copy this block as the task input:
+
+```text
+Continue PSP package R00 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
+Read docs/positioning/program/recalibration/2026-09-08-snapshot.json and select the first eligible microphase, honoring the canonical leaf dependencies and existing owner. Do not launch other implementation packages until you return a truthful live admission result.
+Scope: existing P00 control-plane owners, root #2157 and the specific closure/receipt discrepancies; no new foundational program or duplicate work IDs.
+Deliverable: One bounded control-plane correction, current issue/receipt reconciliation, and nine candidate rows reconciled without claiming human evidence.
+Exit: The live ready command returns honest results; historical accepted work is retained; quarantine has an explicit authorized recovery path; fresh seeds follow current provider and merge policy.
+Reconcile the missing #2198 receipt and P00/P01/P02 parity first; preserve accepted child receipts and quarantined evidence. Retain the existing #2563 owner. Make any required custody/admission/model/terminal-contract correction one bounded, reviewed change with explicit migration tests, rather than resetting all task receipts. Return valid live ready rows, or the precise unresolved owner if admission still fails. Never label offline dependency candidates as live-ready.
+Execution limits: use high effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
+Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
+```
+
+## R01 — Finish and verify the buyer-facing proof package
+
+Profile: implementation. Effort: medium. Actual model: live capability selection / provider Auto. Run-slice ceiling: 30 minutes; at most one evidence-driven corrective batch; no child fanout.
+
+Copy this block as the task input:
+
+```text
+Continue PSP package R01 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
+Read docs/positioning/program/recalibration/2026-09-08-snapshot.json and select the first eligible microphase, honoring the canonical leaf dependencies and existing owner. The package dependency list is planning order; actual leaf evidence decides admission. Do not wait on an unrelated phase or human-gated sibling.
+Scope: PSP-P05-W01 (#2198), PSP-P05-W02 (#2199), PSP-P05-W03 (#2200), PSP-P05-W04 (#2201), PSP-P05-W05 (#2202), PSP-P05-W06 (#2203).
+Deliverable: One engineering report, evidence appendix, current flagship proofs, reproducible cost/failure analysis, public-safe demo, and surface discrepancy list.
+Exit: P05 deliverables pass their own acceptance; external validation remains explicit; no stale closed PR is counted as landed.
+Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.
+Execution limits: use medium effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
+Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
+```
+
+## R02 — Complete reader and commercial decisions
+
+Profile: synthesis. Effort: high. Actual model: live capability selection / provider Auto. Run-slice ceiling: 45 minutes; at most one evidence-driven corrective batch; no child fanout.
+
+Copy this block as the task input:
+
+```text
+Continue PSP package R02 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
+Read docs/positioning/program/recalibration/2026-09-08-snapshot.json and select the first eligible microphase, honoring the canonical leaf dependencies and existing owner. The package dependency list is planning order; actual leaf evidence decides admission. Do not wait on an unrelated phase or human-gated sibling.
+Scope: PSP-P03-W07 (#2188), PSP-P04-W05 (#2194), PSP-P04-W06 (#2195), PSP-P04-W07 (#2196).
+Deliverable: Five genuine reader records and decision memo; private pricing/capacity decision; bounded terms and deep operator offer.
+Exit: Real reader and owner/counsel evidence resolves P03/P04 decisions through recovered receipt chains.
+Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.
+Execution limits: use high effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
+Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
+```
+
+## R03 — Make the progressive-disclosure experience usable
+
+Profile: implementation. Effort: medium. Actual model: live capability selection / provider Auto. Run-slice ceiling: 30 minutes; at most one evidence-driven corrective batch; no child fanout.
+
+Copy this block as the task input:
+
+```text
+Continue PSP package R03 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
+Read docs/positioning/program/recalibration/2026-09-08-snapshot.json and select the first eligible microphase, honoring the canonical leaf dependencies and existing owner. The package dependency list is planning order; actual leaf evidence decides admission. Do not wait on an unrelated phase or human-gated sibling.
+Scope: PSP-P06-W01 (#2205), PSP-P06-W02 (#2206), PSP-P06-W03 (#2207), PSP-P06-W04 (#2208), PSP-P06-W05 (#2209), PSP-P06-W06 (#2210), PSP-P06-W07 (#2211).
+Deliverable: Taste brief, content map, L1/L2/L3 flows, components, approved tokens, and rendered desktop/mobile QA.
+Exit: P06 tests pass and actual reader/visual evidence supports a clear first screen, accessible depth and two distinct doors.
+Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.
+Execution limits: use medium effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
+Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
+```
+
+## R04 — Finish the reusable private delivery system
+
+Profile: implementation. Effort: medium. Actual model: live capability selection / provider Auto. Run-slice ceiling: 30 minutes; at most one evidence-driven corrective batch; no child fanout.
+
+Copy this block as the task input:
+
+```text
+Continue PSP package R04 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
+Read docs/positioning/program/recalibration/2026-09-08-snapshot.json and select the first eligible microphase, honoring the canonical leaf dependencies and existing owner. The package dependency list is planning order; actual leaf evidence decides admission. Do not wait on an unrelated phase or human-gated sibling.
+Scope: PSP-P11-W03 (#2251), PSP-P11-W04 (#2252), PSP-P11-W05 (#2253), PSP-P11-W06 (#2254), PSP-P11-W07 (#2255), PSP-P11-W08 (#2256).
+Deliverable: Reconcile the already-merged audit report, then install/retainer/workspace/security/closeout/consent artifacts.
+Exit: A synthetic engagement completes twice without dangling access or authority; synthetic evidence is never presented as a customer result.
+Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.
+Execution limits: use medium effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
+Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
+```
+
+## R05 — Release coherent public surfaces
+
+Profile: implementation. Effort: medium. Actual model: live capability selection / provider Auto. Run-slice ceiling: 30 minutes; at most one evidence-driven corrective batch; no child fanout.
+
+Copy this block as the task input:
+
+```text
+Continue PSP package R05 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
+Read docs/positioning/program/recalibration/2026-09-08-snapshot.json and select the first eligible microphase, honoring the canonical leaf dependencies and existing owner. The package dependency list is planning order; actual leaf evidence decides admission. Do not wait on an unrelated phase or human-gated sibling.
+Scope: PSP-P07-W01 (#2213), PSP-P07-W02 (#2214), PSP-P07-W03 (#2215), PSP-P07-W04 (#2216), PSP-P07-W06 (#2218), PSP-P07-W07 (#2219), PSP-P07-W08 (#2220), PSP-P07-W09 (#2221).
+Deliverable: Profile, estate map, portfolio, resume, social/signature drafts, owner-approved URL bindings, minimal analytics and rollback.
+Exit: Accepted public identity decisions plus actual deployed/browser/link/capture receipts; mere builds and PRs do not count.
+Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.
+Execution limits: use medium effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
+Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
+```
+
+## R06 — Complete safe inbound capture
+
+Profile: implementation. Effort: medium. Actual model: live capability selection / provider Auto. Run-slice ceiling: 30 minutes; at most one evidence-driven corrective batch; no child fanout.
+
+Copy this block as the task input:
+
+```text
+Continue PSP package R06 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
+Read docs/positioning/program/recalibration/2026-09-08-snapshot.json and select the first eligible microphase, honoring the canonical leaf dependencies and existing owner. The package dependency list is planning order; actual leaf evidence decides admission. Do not wait on an unrelated phase or human-gated sibling.
+Scope: PSP-P08-W01 (#2223), PSP-P08-W02 (#2224), PSP-P08-W03 (#2225), PSP-P08-W04 (#2226), PSP-P08-W05 (#2227), PSP-P08-W06 (#2228), PSP-P08-W07 (#2229).
+Deliverable: Tagged alias and minimal intake, private normalization/routing, draft responses, opportunity ledger and two synthetic journeys.
+Exit: Client/recruiter journeys work end to end with the outbound send valve closed.
+Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.
+Execution limits: use medium effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
+Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
+```
+
+## R07 — Prepare and distribute proof; operate qualification
+
+Profile: implementation. Effort: medium. Actual model: live capability selection / provider Auto. Run-slice ceiling: 30 minutes; at most one evidence-driven corrective batch; no child fanout.
+
+Copy this block as the task input:
+
+```text
+Continue PSP package R07 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
+Read docs/positioning/program/recalibration/2026-09-08-snapshot.json and select the first eligible microphase, honoring the canonical leaf dependencies and existing owner. The package dependency list is planning order; actual leaf evidence decides admission. Do not wait on an unrelated phase or human-gated sibling.
+Scope: PSP-P09-W01 (#2231), PSP-P09-W02 (#2232), PSP-P09-W03 (#2233), PSP-P09-W04 (#2234), PSP-P09-W05 (#2235), PSP-P09-W06 (#2236), PSP-P09-W07 (#2237), PSP-P09-W08 (#2238), PSP-P10-W01 (#2240), PSP-P10-W02 (#2241), PSP-P10-W03 (#2242), PSP-P10-W04 (#2243), PSP-P10-W05 (#2244), PSP-P10-W06 (#2245), PSP-P10-W07 (#2246).
+Deliverable: Evidence-derived editorial assets, discovery guide, sales/intake page, proposals and recruiter interview packet, plus an objection ledger.
+Exit: P09 and P10-W01..W07 acceptance; approved sends have real receipts and outcomes are attributable.
+Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.
+Execution limits: use medium effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
+Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
+```
+
+## R08 — Run the commercial experiment and return actual outcomes
+
+Profile: synthesis. Effort: high. Actual model: live capability selection / provider Auto. Run-slice ceiling: 45 minutes; at most one evidence-driven corrective batch; no child fanout.
+
+Copy this block as the task input:
+
+```text
+Continue PSP package R08 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
+Read docs/positioning/program/recalibration/2026-09-08-snapshot.json and select the first eligible microphase, honoring the canonical leaf dependencies and existing owner. The package dependency list is planning order; actual leaf evidence decides admission. Do not wait on an unrelated phase or human-gated sibling.
+Scope: PSP-P10-W08 (#2247), PSP-P12-W01 (#2258), PSP-P12-W02 (#2259), PSP-P12-W03 (#2260), PSP-P12-W04 (#2261), PSP-P12-W05 (#2262), PSP-P12-W06 (#2263).
+Deliverable: Bounded partner recruitment and delivery, permissioned case evidence, demand experiment and an explicit continue/revise/no-go decision.
+Exit: P12 and P10-W08 meet the ratified outcome branches; observations and consent are real, not synthetic.
+Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.
+Execution limits: use high effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
+Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
+```
+
+## R09 — Validate a product/operator handoff
+
+Profile: synthesis. Effort: high. Actual model: live capability selection / provider Auto. Run-slice ceiling: 45 minutes; at most one evidence-driven corrective batch; no child fanout.
+
+Copy this block as the task input:
+
+```text
+Continue PSP package R09 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
+Read docs/positioning/program/recalibration/2026-09-08-snapshot.json and select the first eligible microphase, honoring the canonical leaf dependencies and existing owner. The package dependency list is planning order; actual leaf evidence decides admission. Do not wait on an unrelated phase or human-gated sibling.
+Scope: PSP-P13-W02 (#2266), PSP-P13-W04 (#2268), PSP-P13-W05 (#2269), PSP-P13-W06 (#2270), PSP-P13-W07 (#2271), PSP-P13-W08 (#2272), PSP-P13-W09 (#2273).
+Deliverable: Demand/readiness-backed shortlist, operator criteria/economics, counsel-approved terms, controlled pilot and return path.
+Exit: P13 outcome is supported by real custody/economic/decision evidence; an evidenced no-go uses an explicit accepted branch, never an invented transfer.
+Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.
+Execution limits: use high effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
+Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
+```
+
+## R10 — Operate and test the return loops
+
+Profile: implementation. Effort: medium. Actual model: live capability selection / provider Auto. Run-slice ceiling: 30 minutes; at most one evidence-driven corrective batch; no child fanout.
+
+Copy this block as the task input:
+
+```text
+Continue PSP package R10 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
+Read docs/positioning/program/recalibration/2026-09-08-snapshot.json and select the first eligible microphase, honoring the canonical leaf dependencies and existing owner. The package dependency list is planning order; actual leaf evidence decides admission. Do not wait on an unrelated phase or human-gated sibling.
+Scope: PSP-P14-W01 (#2275), PSP-P14-W02 (#2276), PSP-P14-W03 (#2277), PSP-P14-W04 (#2278), PSP-P14-W05 (#2279), PSP-P14-W06 (#2280), PSP-P14-W07 (#2281), PSP-P14-W08 (#2282).
+Deliverable: KPI dictionary, weekly/monthly/quarterly observations, claim correction, release recovery and feedback into offers/proof.
+Exit: All P14-W01..W08 evidence exists across its actual observation periods and declared prerequisite leaves.
+Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.
+Execution limits: use medium effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
+Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
+```
+
+## R11 — Prove full Omega and hand over ongoing ownership
+
+Profile: review. Effort: high. Actual model: live capability selection / provider Auto. Run-slice ceiling: 20 minutes; at most one evidence-driven corrective batch; no child fanout.
+
+Copy this block as the task input:
+
+```text
+Continue PSP package R11 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
+Read docs/positioning/program/recalibration/2026-09-08-snapshot.json and select the first eligible microphase, honoring the canonical leaf dependencies and existing owner. The package dependency list is planning order; actual leaf evidence decides admission. Do not wait on an unrelated phase or human-gated sibling.
+Scope: PSP-P14-W09 (#2283).
+Deliverable: Full leaf/phase/issue parity, two independent unchanged Omega observations, durable operating owner and renewal triggers.
+Exit: The canonical Omega predicate passes; terminal leaf, phase and root close only afterward under actual authorized lifecycle ownership.
+Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.
+Execution limits: use high effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
+Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
+```
+
+## Resume after usage or provider change
+
+```text
+Resume the named package from its latest durable issue/PR receipt. Read the recalibration plan and that package only. Resolve the existing repository/branch/head and real owner before mutation. Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Continue the single recorded next microphase. Do not rerun all research, all tests, all receipts or the full estate census.
+```
+
+## Minimal end-of-run relay
+
+Record package and leaf IDs; current owner; canonical repository; branch/PR; public exact tested and accepted head references; changed paths; completed deliverable; bare predicate result and durable evidence; unchanged evidence reused; actual authority source; human/external gate if any; usage/time if available; one next command/action; remaining run ceiling. Private locations, customer content and authority material stay in their private owner.
+
