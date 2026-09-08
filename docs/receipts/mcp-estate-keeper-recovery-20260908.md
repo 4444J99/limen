@@ -111,3 +111,13 @@ admission, resume those exact branches in isolated worktrees and implement the s
 
 No new credential consent, client restart, scheduler, fanout, or manual publication-ref restoration
 was performed. The larger task remains unfulfilled and must not be marked done from this receipt.
+
+## Completion continuation at 18:44 UTC
+
+The user requires all three outcomes: verified implementation, exact deployed changes, and a fresh unfiltered estate with both denominators and all seven defect counts zero. Partial receipts, drafts, queued merges and filed blockers remain intermediate states. Protected Codex session `mcp-estate-complete-20260908` claimed new run `run-d41cd64aaf7052a1ac3de532d52f897a`, lease generation 1036, on the existing branches and scoped paths.
+
+Integrated the already-landed Danse instruction retirement from main (#2563); the retired application tree was not recreated. The diurnal fixture now freezes its clock inside the receipt-retention interval. The synthetic GPG fixture exports from a public-only keyring before testing the unchanged production canonical-armor validation. The scratch round trip passes locally; normalization remains to be verified on the previously failing Linux runner.
+
+Twelve of thirteen cheap scoped gates passed in one batch; the sole formatting failure was corrected and only that shard rerun, now passing. The private-vault gate passed 90 tests; the focused diurnal/vault batch passed 102 tests before a fixture NameError, which was corrected and its sole failed test passed. No full CLI or deployment pass is claimed.
+
+Host admission at 18:43:54 UTC denied heavy work with `swap-fraction,vitals-shed`: swap fraction 0.4595715332, no host leases, VITALS shed. Owner: this prerequisite PR. Next command after changed host conditions: admitted scoped heavy wave for this exact tree, followed by exact-head landing and Worker deployment; preserve the green cheap receipts.

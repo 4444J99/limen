@@ -15,6 +15,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -24,12 +25,19 @@ SCRIPT = ROOT / "scripts" / "diurnal.py"
 
 
 @pytest.fixture()
-def mod():
+def mod(monkeypatch):
     spec = importlib.util.spec_from_file_location("diurnal", SCRIPT)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     sys.modules["diurnal"] = module
     spec.loader.exec_module(module)
+
+    class FixtureClock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 8, 2, 12, tzinfo=tz)
+
+    monkeypatch.setattr(module, "datetime", FixtureClock)
     return module
 
 
