@@ -1,5 +1,16 @@
 # PSP-P03 Phase Receipt — Canonical Identity and Audience
 
+> **Quarantined historical claim — not valid completion evidence.** Reconciled 2026-09-08:
+> [phase #2181](https://github.com/4444J99/limen/issues/2181) and
+> [reader task #2188](https://github.com/4444J99/limen/issues/2188) are open.
+> The cited W07 and phase completion comments were explicitly invalidated by the
+> [recovery record](https://github.com/4444J99/limen/issues/2181#issuecomment-5303837398).
+> The assertions below are retained as historical custody evidence, including their reported
+> timestamps and results; they do not establish a closed phase, genuine reader participation,
+> or a current passing predicate. Follow the
+> [recalibration plan](../../../../.codex/plans/2026-09-08-psp-alpha-omega-recalibration.md)
+> for the explicit recovery path. This annotation does not alter or supersede an invalidated receipt.
+
 **Phase:** PSP-P03  
 **Chunk:** PSP-C03  
 **Closed:** 2026-08-15T15:50:52Z  
