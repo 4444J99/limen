@@ -186,6 +186,10 @@ def inventory_count(
     leaves = observation.get("leaves")
     if not isinstance(repositories, list) or not isinstance(cursors, list) or not isinstance(leaves, list):
         raise InventoryAdmissionError("inventory_private_full_facts_required")
+    if _integer(report.get("normalized_leaf_count"), "inventory_leaf_count_invalid") != len(leaves) or report.get(
+        "content_sha256"
+    ) != _canonical_sha256(leaves):
+        raise InventoryAdmissionError("inventory_content_changed")
     if observation.get("failures") != []:
         raise InventoryAdmissionError("inventory_partial_or_unknown")
     aliases: dict[str, str] = {}

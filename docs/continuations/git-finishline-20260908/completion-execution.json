@@ -1,0 +1,30 @@
+{
+  "schema": "limen.recovery_completion_execution.v1",
+  "owner": "https://github.com/4444J99/limen/pull/2573",
+  "status": "incomplete",
+  "candidate_count": 1150,
+  "candidate_count_is_reconciled_intent_count": false,
+  "source_count": 44,
+  "custody": {
+    "status": "PASS",
+    "stashes": 26,
+    "deleted_branches": 9,
+    "original_pr_heads": 9,
+    "method": "independent empty-repository archive restoration"
+  },
+  "broker_bootstrap": "authenticated environment cache succeeded",
+  "host_observation": {
+    "observed_at": "2026-09-08T19:08:31Z",
+    "allowed": false,
+    "reasons": [
+      "swap-fraction",
+      "vitals-shed"
+    ]
+  },
+  "remote_capacity_observation": "no healthy sessions in authenticated broker capability response",
+  "base": "aac08eaa6d0061abd05614124fde36b4070e0814",
+  "scoped_command": "bash scripts/verify-scoped.sh --base aac08eaa6d0061abd05614124fde36b4070e0814 --integration --require-base --jobs 2 --gate-timeout-seconds 180 --gate-output-bytes 65536",
+  "production_verification": "pending",
+  "campaign_acceptance": "FAIL; all provisional candidate outcomes remain unverified",
+  "no_merge_or_runtime_delivery_claim": true
+}
