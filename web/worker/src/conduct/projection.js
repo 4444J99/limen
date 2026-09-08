@@ -385,6 +385,17 @@ function canonicalClaimAgent(task, event) {
   return agent;
 }
 
+function requireReservedBudgetCost(prior, desired) {
+  // A reservation's debit and eventual refund must use the same amount.
+  // Open tasks may be repriced before a separate canonical claim.
+  if (prior
+      && (["dispatched", "in_progress"].includes(prior.status)
+        || ["dispatched", "in_progress"].includes(desired.status))
+      && prior.budget_cost !== desired.budget_cost) {
+    throw new ConductProjectionError(`task ${prior.id} reservation_budget_cost_immutable`, 409);
+  }
+}
+
 function applyCanonicalBudgetDebit(board, task, event, patch) {
   const amount = Number(task.budget_cost || 0);
   if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount < 0) {
@@ -699,6 +710,7 @@ export function applyTaskPacketProjectionEvent(input, event) {
       validatePatch(patch, taskId);
       const candidate = { ...existing, ...patch };
       validatePolicyUpdate(existing, candidate, taskId);
+      requireReservedBudgetCost(existing, candidate);
       if (candidate.provider_eligibility != null) patch.provider_eligibility = candidate.provider_eligibility;
       Object.assign(task, patch);
       task.dispatch_log = history;
@@ -772,6 +784,7 @@ export function applyTaskPacketProjectionEvent(input, event) {
   if (!isHeldJulesLandingRecovery(existing, nextStatus, intent.log) && !lifecycleRepair) {
     validateTransition(taskId, existing.status, nextStatus, kind);
   }
+  requireReservedBudgetCost(existing, candidate);
   if (kind === "task.claim") applyCanonicalBudgetDebit(board, existing, event, patch);
   if (kind === "task.status"
       && existing.status === "dispatched"

@@ -63,3 +63,94 @@ test("new open upsert discards caller-supplied dispatch history", () => {
   assert.equal(created.dispatch_log[0].status, "open");
   assert.equal(created.dispatch_log[0].conduct_event_id, "new-upsert");
 });
+
+function fundedBoard(cost = 2) {
+  const board = fixture();
+  board.tasks[0].budget_cost = cost;
+  board.portal.budget = { daily: 2000, per_agent: { codex: 2000, jules: 2000 },
+    track: { date: "2026-09-08", spent: 9, per_agent: { codex: 4, jules: 5 } } };
+  return board;
+}
+function claim(board) {
+  const request = event("task.claim", { status: "dispatched" }, "open", "claim");
+  Object.assign(request.intent.log, { session_id: "d".repeat(64), execution_contract_hash: "e".repeat(64) });
+  return applyTaskPacketProjectionEvent(board, request).board;
+}
+function assertTrack(board, spent, codex) {
+  assert.equal(board.portal.budget.track.spent, spent);
+  assert.deepEqual(board.portal.budget.track.per_agent, { codex, jules: 5 });
+}
+function assertCostRejected(board, request) {
+  const before = structuredClone(board);
+  assert.throws(() => applyTaskPacketProjectionEvent(board, request), /reservation_budget_cost_immutable/);
+  assert.deepEqual(board, before);
+}
+
+test("claim cannot inflate cost after debit before refund (review 5144025944)", () => {
+  const board = fundedBoard(1);
+  assertCostRejected(board, event("task.claim", { status: "dispatched", budget_cost: 1000 }, "open", "inflate"));
+  assertTrack(board, 9, 4);
+});
+for (const status of ["dispatched", "in_progress"]) {
+  for (const kind of ["task.mutate", "task.status", "task.upsert"]) {
+    for (const cost of [1, 1000]) {
+      test(`active reservation cost is immutable: ${status} ${kind} ${cost}`, () => {
+        let board = claim(fundedBoard());
+        if (status === "in_progress") {
+          board = applyTaskPacketProjectionEvent(board, event("task.status", { status }, "dispatched", "started")).board;
+        }
+        const request = event(kind, { status, budget_cost: cost }, status, "cost-change");
+        if (kind === "task.upsert") request.intent.task = { ...board.tasks[0], budget_cost: cost };
+        assertCostRejected(board, request);
+        assertTrack(board, 11, 6);
+      });
+    }
+  }
+}
+for (const status of ["open", "failed"]) {
+  test(`settlement cannot change reserved cost: ${status}`, () => {
+    const board = claim(fundedBoard());
+    const request = event("task.status", { status, budget_cost: 1000 }, "dispatched", "settle");
+    if (status === "failed") {
+      Object.assign(request.intent.log, { lifecycle_repair: "provider-terminal", execution_started: true,
+        execution_result_kind: "failed", execution_reservation_id: "d".repeat(64), execution_contract_hash: "e".repeat(64) });
+    }
+    assertCostRejected(board, request);
+    assertTrack(board, 11, 6);
+    if (status === "failed") {
+      delete request.intent.patch.budget_cost;
+      const settled = applyTaskPacketProjectionEvent(board, request).board;
+      assert.equal(settled.tasks[0].status, "failed");
+      assertTrack(settled, 11, 6);
+    }
+  });
+}
+for (const kind of ["task.mutate", "task.upsert"]) {
+  test(`open cost update then claim and refund preserve other reservations: ${kind}`, () => {
+    let board = fundedBoard();
+    const request = event(kind, { budget_cost: 3 }, "open", "open-cost");
+    if (kind === "task.upsert") request.intent.task = { ...board.tasks[0], budget_cost: 3 };
+    board = applyTaskPacketProjectionEvent(board, request).board;
+    assertTrack(board, 9, 4);
+    board = claim(board);
+    assertTrack(board, 12, 7);
+    board = applyTaskPacketProjectionEvent(board, event("task.mutate", { title: "Unrelated metadata", budget_cost: 3 }, "dispatched", "metadata")).board;
+    board = applyTaskPacketProjectionEvent(board, event("task.status", { status: "open" }, "dispatched", "refund")).board;
+    assertTrack(board, 9, 4);
+  });
+}
+test("postlaunch reroute retains each attempt debit and immutable cost", () => {
+  let board = claim(fundedBoard());
+  const request = event("task.status", { status: "open", budget_cost: 1000 }, "dispatched", "reroute");
+  Object.assign(request.intent.log, { lifecycle_repair: "provider-reroute", execution_started: true,
+    execution_reservation_id: "d".repeat(64), execution_contract_hash: "e".repeat(64) });
+  assertCostRejected(board, request);
+  delete request.intent.patch.budget_cost;
+  board = applyTaskPacketProjectionEvent(board, request).board;
+  assertTrack(board, 11, 6);
+  board = applyTaskPacketProjectionEvent(board, event("task.mutate", { budget_cost: 3 }, "open", "next-cost")).board;
+  board = applyTaskPacketProjectionEvent(board, event("task.claim", { status: "dispatched" }, "open", "second-claim")).board;
+  assertTrack(board, 14, 9);
+  board = applyTaskPacketProjectionEvent(board, event("task.status", { status: "open" }, "dispatched", "second-refund")).board;
+  assertTrack(board, 11, 6);
+});

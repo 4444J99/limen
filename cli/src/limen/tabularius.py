@@ -274,21 +274,26 @@ def refuse_unfunded_partner_lane(repo: object, task_id: object) -> None:
     )
 
 
-def submit_ticket(board_path: Path, ticket: Ticket) -> Path:
+def submit_ticket(board_path: Path, ticket: Ticket, *, custody: str | None = None) -> Path:
     """Append a ticket to the inbox — the worker's *only* board-write surface.
 
     Exclusive + atomic: write to a temp file, fsync, then `os.link` it into place. `os.link` fails
     if the destination exists, so a duplicate `ticket_id` raises instead of clobbering, and a reader
     can never observe a half-written ticket. No lock, no board read — many workers submit
     concurrently without contending.
+
+    Serial claim requests use the same immutable writer in dedicated custody;
+    a generic projection acknowledgement cannot consume provider handoff.
     """
+    if custody not in {None, "serial-claims"}:
+        raise ValueError("unsupported ticket custody")
     if ticket.intent not in _INTENTS:
         raise ValueError(f"unknown ticket intent: {ticket.intent!r}")
     if ticket.intent == INTENT_UPSERT and dict(ticket.precondition or {}).get("absent") is True:
         # The create case, and only the create case — an `absent` precondition IS the declaration
         # that this row does not exist yet. See refuse_unfunded_partner_lane.
         refuse_unfunded_partner_lane(dict(ticket.patch or {}).get("repo"), ticket.task_id)
-    inbox = _inbox(board_path)
+    inbox = _inbox(board_path) if custody is None else tickets_root(board_path) / custody / "inbox"
     inbox.mkdir(parents=True, exist_ok=True)
     dest = inbox / f"{ticket.ticket_id}.json"
     fd, tmp = tempfile.mkstemp(dir=inbox, prefix=f".{ticket.ticket_id}.", suffix=".tmp")
@@ -804,6 +809,20 @@ def _reset_local_budget_window(budget: dict[str, Any], timestamp: str) -> None:
     track["per_agent"] = {str(agent): 0 for agent in (budget.get("per_agent") or {})}
 
 
+def _require_reserved_budget_cost(prior: dict[str, Any] | None, desired: dict[str, Any]) -> None:
+    # A reservation's debit and eventual refund must use the same amount.
+    # Open tasks may be repriced before a separate canonical claim.
+    if (
+        prior is not None
+        and (
+            prior.get("status") in {"dispatched", "in_progress"}
+            or desired.get("status") in {"dispatched", "in_progress"}
+        )
+        and prior.get("budget_cost") != desired.get("budget_cost")
+    ):
+        raise ValueError(f"task {prior['id']} reservation_budget_cost_immutable")
+
+
 def _local_budget_debit(
     board: dict[str, Any], task: dict[str, Any], event: dict[str, Any], patch: dict[str, Any]
 ) -> None:
@@ -1125,6 +1144,7 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             task["provider_eligibility"] = policy
         if is_new and task.get("status") in {"dispatched", "in_progress"}:
             raise ValueError(f"task {task_id} canonical_reservation_required")
+        _require_reserved_budget_cost(existing, task)
         task["updated"] = str(event["timestamp"])
         task.setdefault("dispatch_log", [])
         task["dispatch_log"].append(
@@ -1210,6 +1230,7 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             if next_status not in _CANONICAL_TRANSITIONS.get(prior_status, frozenset()):
                 raise ValueError(f"task {task_id} cannot transition from {prior_status} to {next_status}")
         require_inventory_admission(existing, {**existing, **patch})
+        _require_reserved_budget_cost(existing, {**existing, **patch})
         if kind == "task.claim":
             _local_budget_debit(data, existing, event, patch)
         if (
