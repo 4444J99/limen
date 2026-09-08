@@ -12,6 +12,8 @@ import re
 from datetime import UTC, datetime
 from typing import Any, Mapping
 
+from limen.github_estate_census import CONNECTION_KINDS, _canonical_sha256
+
 
 POLICY_ISSUE = "https://github.com/4444J99/limen/issues/269"
 INVENTORY_CEILING = 250
@@ -42,6 +44,59 @@ def _integer(value: Any, reason: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise InventoryAdmissionError(reason)
     return value
+
+
+def _validate_connection_receipts(
+    observation: Mapping[str, Any],
+    cursors: list[Any],
+    aliases: Mapping[str, str],
+    expected_generation: str,
+) -> None:
+    """Use the emitter's existing global-to-repository receipt binding."""
+    receipts = observation.get("repository_receipts")
+    if not isinstance(receipts, list):
+        raise InventoryAdmissionError("inventory_repository_receipts_required")
+    rows_by_name: dict[str, list[dict[str, Any]]] = {name: [] for name in aliases}
+    for cursor in cursors:
+        if not isinstance(cursor, dict):
+            raise InventoryAdmissionError("inventory_connection_receipt_invalid")
+        name = cursor.get("repository")
+        if not isinstance(name, str) or name not in rows_by_name:
+            raise InventoryAdmissionError("inventory_connection_receipt_invalid")
+        rows_by_name[name].append(cursor)
+    seen: set[str] = set()
+    for receipt in receipts:
+        if not isinstance(receipt, dict):
+            raise InventoryAdmissionError("inventory_connection_receipt_invalid")
+        name = receipt.get("repository")
+        if not isinstance(name, str) or name not in aliases or name in seen:
+            raise InventoryAdmissionError("inventory_connection_receipt_invalid")
+        seen.add(name)
+        if (
+            str(receipt.get("repository_id")) != aliases[name]
+            or receipt.get("source_generation") != expected_generation
+            or receipt.get("complete") is not True
+        ):
+            raise InventoryAdmissionError("inventory_connection_receipt_invalid")
+        rows = rows_by_name[name]
+        kinds = [row.get("kind") for row in rows]
+        if len(rows) != len(CONNECTION_KINDS) or any(kinds.count(kind) != 1 for kind in CONNECTION_KINDS):
+            raise InventoryAdmissionError("inventory_connection_partition_missing")
+        if any(row.get("complete") is not True or row.get("exhaustive") is not True for row in rows):
+            raise InventoryAdmissionError("inventory_connection_partition_incomplete")
+        generations = [row.get("source_generation") for row in rows]
+        if any(not isinstance(value, str) or not _GENERATION.fullmatch(value) for value in generations):
+            raise InventoryAdmissionError("inventory_connection_generation_invalid")
+        if any(value != generations[0] for value in generations[1:]):
+            raise InventoryAdmissionError("inventory_connection_generation_invalid")
+        try:
+            digest = _canonical_sha256(rows)
+        except (TypeError, ValueError):
+            raise InventoryAdmissionError("inventory_connection_receipt_invalid") from None
+        if receipt.get("connection_receipt_digest") != digest:
+            raise InventoryAdmissionError("inventory_connection_receipt_invalid")
+    if seen != aliases.keys():
+        raise InventoryAdmissionError("inventory_repository_receipts_required")
 
 
 def inventory_count(
@@ -107,6 +162,7 @@ def inventory_count(
         or _integer(repository_cursor.get("page_count"), "inventory_repository_pagination_incomplete") == 0
     ):
         raise InventoryAdmissionError("inventory_repository_pagination_incomplete")
+    _validate_connection_receipts(observation, cursors, aliases, expected_generation)
     counts: dict[str, int] = {}
     for cursor in cursors:
         if not isinstance(cursor, dict) or cursor.get("kind") != "pull_requests":
@@ -120,8 +176,7 @@ def inventory_count(
             or cursor.get("exhaustive") is not True
             or _integer(cursor.get("known_count"), "inventory_pr_total_unknown") != count
             or cursor.get("page_cursor") is not None
-            or cursor.get("source_generation") != expected_generation
-            or _integer(cursor.get("page_count"), "inventory_pr_pagination_invalid") == 0
+            or (_integer(cursor.get("page_count"), "inventory_pr_pagination_invalid") == 0 and count != 0)
         ):
             raise InventoryAdmissionError("inventory_pr_pagination_incomplete")
         counts[name] = count

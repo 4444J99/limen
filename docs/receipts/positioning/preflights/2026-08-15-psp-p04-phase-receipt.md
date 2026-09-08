@@ -1,5 +1,15 @@
 # PSP-P04 Phase Receipt — Offer Ladder and Commercial Templates
 
+> **Quarantined historical claim — not valid completion evidence.** Reconciled 2026-09-08:
+> [phase #2189](https://github.com/4444J99/limen/issues/2189) and P04-W05/W06/W07 remain open.
+> The cited completion claims were explicitly invalidated by the
+> [recovery record](https://github.com/4444J99/limen/issues/2189#issuecomment-5303837581).
+> The assertions below are retained as historical custody evidence, including their reported
+> timestamps and results; they do not establish approved prices, commercial terms, operator terms,
+> a closed phase, or a current passing predicate. Follow the
+> [recalibration plan](../../../../.codex/plans/2026-09-08-psp-alpha-omega-recalibration.md)
+> for the explicit recovery path. This annotation does not alter or supersede an invalidated receipt.
+
 **Phase:** PSP-P04  
 **Chunk:** PSP-C03  
 **Closed:** 2026-08-15T15:53:47Z  

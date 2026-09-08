@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from limen.conduct.store import MemoryStateStore
+from limen.github_estate_census import build_github_estate_census
 from limen.inventory_admission import (
     InventoryAdmissionError,
     inventory_count,
@@ -19,47 +20,33 @@ PRIOR = {"id": "GEN-org-repo-tests", "status": "open", "labels": []}
 DESIRED = {**PRIOR, "status": "dispatched"}
 
 
-def census(count=2):
-    return {
-        "schema": "limen.github-estate-census.v1",
-        "source_report": {
-            "exhaustive": True,
-            "generated_at": NOW.isoformat(),
-            "source_generation": GENERATION,
-            "cursor": {
-                "repository": {
-                    "expected_total": 1,
-                    "known_count": 1,
-                    "page_count": 1,
-                    "exhaustive": True,
-                }
-            },
-        },
-        "repositories": [{"name_with_owner": "organvm/example", "repository_id": "42"}],
-        "failures": [],
-        "cursors": [
+def census(count=2, aliases=("organvm/example",)):
+    def page(_repo, kind, cursor):
+        assert kind == "pull_requests"
+        start = int(cursor or "0")
+        end = min(start + 100, count)
+        return {
+            "total_count": count,
+            "nodes": [{"number": i + 1, "author_login": "4444J99"} for i in range(start, end)],
+            "has_next_page": end < count,
+            "end_cursor": str(end) if end < count else None,
+        }
+
+    full, _tracked = build_github_estate_census(
+        [
             {
-                "kind": "pull_requests",
-                "repository": "organvm/example",
-                "expected_total": count,
-                "known_count": count,
-                "page_count": 2,
-                "page_cursor": None,
-                "complete": True,
-                "exhaustive": True,
-                "source_generation": GENERATION,
+                "name_with_owner": name,
+                "repository_id": "42",
+                "connection_totals": {"pull_requests": count, "issues": 0, "branches": 0, "checks": 0},
             }
+            for name in aliases
         ],
-        "leaves": [
-            {
-                "kind": "pull_request",
-                "repository": "organvm/example",
-                "number": i + 1,
-                "author_login": "4444J99",
-            }
-            for i in range(count)
-        ],
-    }
+        page,
+        repository_cursor={"expected_total": len(aliases), "page_count": 1, "exhaustive": True},
+        now=NOW,
+        source_generation=GENERATION,
+    )
+    return full
 
 
 def count(snapshot):
@@ -115,11 +102,7 @@ def test_unknown_partial_stale_or_racing_observation_fails_closed(change):
 
 
 def test_migration_aliases_deduplicate_stable_repository_id():
-    snapshot = census(1)
-    snapshot["repositories"].append({"name_with_owner": "new-org/example", "repository_id": "42"})
-    snapshot["source_report"]["cursor"]["repository"].update(expected_total=2, known_count=2)
-    snapshot["cursors"].append({**snapshot["cursors"][0], "repository": "new-org/example"})
-    snapshot["leaves"].append({**snapshot["leaves"][0], "repository": "new-org/example"})
+    snapshot = census(1, aliases=("organvm/example", "new-org/example"))
     assert count(snapshot) == 1
     snapshot["leaves"][1]["author_login"] = "somebody-else"
     with pytest.raises(InventoryAdmissionError, match="migration_conflict"):

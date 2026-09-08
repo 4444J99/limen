@@ -1501,7 +1501,10 @@ def test_serial_dispatch_does_not_launch_provider_when_canonical_claim_fails(
 
     dispatch_tasks(load_limen_file(tasks_path), tasks_path, agent="codex", dry_run=False, limit=1)
 
-    assert "CLAIM BLOCKED REJECTED-CLAIM: live budget exhausted; no provider launched" in capsys.readouterr().out
+    assert (
+        "CLAIM BLOCKED REJECTED-CLAIM: canonical claim acknowledgement unavailable; exact request retained; no provider launched"
+        in capsys.readouterr().out
+    )
     assert read_board(tasks_path)["tasks"][0]["status"] == "open"
 
 

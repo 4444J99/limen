@@ -51,6 +51,7 @@ from limen.models import (
     DispatchLogEntry,
     LimenFile,
     Task,
+    canonical_dispatch_agent,
     dispatch_agent,
     dispatch_session_id,
     has_jules_landing_hold,
@@ -58,7 +59,15 @@ from limen.models import (
 from limen.conduct.client import client_from_env
 from limen.conduct.broker import ConductConflict
 from limen.partition_lanes import heuristics_may_promote
-from limen.tabularius import INTENT_UPSERT, Ticket, apply_limen_file_sync, submit_ticket, task_state_sha256
+from limen.tabularius import (
+    INTENT_UPSERT,
+    SelectedExecutorAuthorityUnavailable,
+    Ticket,
+    apply_limen_file_sync,
+    submit_ticket,
+    task_state_sha256,
+    tickets_root,
+)
 from limen.runtime_requirements import task_execution_ready
 from limen.doctor import stale_tasks
 from limen.provider_selection import (
@@ -5579,6 +5588,21 @@ def _commit_dispatch_results(
         apply_limen_file_sync(tasks_path, fresh, agent="dispatch", session_id="serial-results")
 
 
+def _sync_serial_ticket_custody(directory: Path, tasks_path: Path) -> None:
+    """Persist the existing ticket entry and each newly created parent link."""
+
+    stop = tasks_path.parent
+    while True:
+        descriptor = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+        if directory == stop:
+            return
+        directory = directory.parent
+
+
 def _reserve_serial_dispatch(
     tasks_path: Path,
     limen: LimenFile,
@@ -5628,7 +5652,31 @@ def _reserve_serial_dispatch(
         if not _result_owner_is_current(task, selected_contract_hash, selected_lifecycle_token):
             raise RuntimeError("task execution contract or lifecycle changed before canonical claim")
 
-        reservation_id = secrets.token_hex(32)
+        # An uncertain HTTP acknowledgement must leave the exact claim request
+        # recoverable. Its immutable ticket determines the keeper's work_id;
+        # re-deriving a nonce or timestamp would create a second claim instead
+        # of replaying the accepted one. The captured open row is a CAS input,
+        # never authority to overwrite a newer canonical owner.
+        prior_task = next(row for row in before.tasks if row.id == task_id)
+        before_data = prior_task.model_dump(mode="json", exclude_none=True)
+        ticket_id = "serial-claim-" + task_state_sha256({"before": before_data, "agent": agent})
+        root = tickets_root(tasks_path)
+        pending_path = root / "inbox" / f"{ticket_id}.json"
+        archive_path = root / "archive" / f"{ticket_id}.json"
+        if archive_path.exists() or (root / "rejected" / f"{ticket_id}.json").exists():
+            raise RuntimeError("canonical claim already has terminal ticket custody; reconcile existing claim")
+        retained_ticket = None
+        try:
+            if pending_path.exists():
+                retained_ticket = Ticket.model_validate_json(pending_path.read_text(encoding="utf-8"))
+                now = retained_ticket.timestamp
+                reservation_id = str((retained_ticket.log or {}).get("session_id") or "")
+                if not re.fullmatch(r"[0-9a-f]{64}", reservation_id):
+                    raise ValueError("invalid reservation identity")
+            else:
+                reservation_id = secrets.token_hex(32)
+        except Exception as exc:
+            raise _SerialClaimUnavailable("canonical claim request custody is invalid") from exc
         task.status = "dispatched"
         task.updated = now
         task.dispatch_log.append(
@@ -5638,9 +5686,30 @@ def _reserve_serial_dispatch(
                 session_id=reservation_id,
                 status="dispatched",
                 execution_contract_hash=selected_contract_hash,
-                output="dispatch-serial: canonical claim accepted before provider execution",
+                output="dispatch-serial: canonical claim requested before provider execution",
             )
         )
+        ticket = Ticket(
+            ticket_id=ticket_id,
+            timestamp=now,
+            agent=agent,
+            session_id="serial-reserve",
+            intent=INTENT_UPSERT,
+            task_id=task_id,
+            patch=task.model_dump(mode="json", exclude_none=True),
+            log=task.dispatch_log[-1].model_dump(mode="json", exclude_none=True),
+            precondition={"task_sha256": task_state_sha256(before_data)},
+            canonical_base=before_data,
+        )
+        try:
+            if retained_ticket is not None:
+                if retained_ticket != ticket:
+                    raise ValueError("claim request changed")
+            else:
+                submit_ticket(tasks_path, ticket)
+            _sync_serial_ticket_custody(pending_path.parent, tasks_path)
+        except Exception as exc:
+            raise _SerialClaimUnavailable("canonical claim request could not obtain exact durable custody") from exc
         try:
             receipt = apply_limen_file_sync(
                 tasks_path,
@@ -5649,27 +5718,55 @@ def _reserve_serial_dispatch(
                 session_id="serial-reserve",
                 before=before,
                 now=now,
+                prepared_claims={task_id: ticket},
             )
         except Exception as exc:
             # A rejected CAS is scoped to this candidate, not evidence that the
             # keeper is unavailable. Continue other candidates without launch.
+            if isinstance(exc, SelectedExecutorAuthorityUnavailable):
+                raise RuntimeError("selected executor authority unavailable; exact claim request retained") from exc
             if isinstance(exc, ConductConflict) or getattr(exc, "status", None) == 409:
-                raise RuntimeError(f"canonical claim conflict: {exc}") from exc
-            raise _SerialClaimUnavailable(str(exc)) from exc
+                raise RuntimeError("canonical claim conflict; exact request retained for reconciliation") from exc
+            raise _SerialClaimUnavailable(
+                "canonical claim acknowledgement unavailable; exact request retained"
+            ) from exc
         projected = getattr(receipt, "projected_tasks", None)
         projected_row = projected.get(task_id) if isinstance(projected, dict) else None
         if not isinstance(projected_row, dict):
             raise _SerialClaimUnavailable("canonical keeper returned no projected claim receipt")
-        reserved_task = Task.model_validate(projected_row)
+        try:
+            reserved_task = Task.model_validate(projected_row)
+        except Exception as exc:
+            raise _SerialClaimUnavailable("canonical keeper returned an invalid claim receipt") from exc
         last = reserved_task.dispatch_log[-1] if reserved_task.dispatch_log else None
         if (
-            reserved_task.status != "dispatched"
+            reserved_task.id != task_id
+            or reserved_task.status != "dispatched"
+            or not _result_contract_is_current(reserved_task, selected_contract_hash)
             or last is None
             or last.status != "dispatched"
+            or canonical_dispatch_agent(last) != agent
             or dispatch_session_id(last) != reservation_id
             or last.execution_contract_hash != selected_contract_hash
         ):
             raise _SerialClaimUnavailable("canonical keeper returned a mismatched claim receipt")
+
+        # Archive before handing the authenticated claim to a provider. A later
+        # stale projection must not turn this already-consumed acknowledgement
+        # into authority for another launch. Interrupted custody stays charged
+        # and requires the existing keeper reconciliation path.
+        try:
+            archive_path.parent.mkdir(parents=True, exist_ok=True)
+            os.link(pending_path, archive_path)
+            # Persist the handoff marker before removing pending custody. A
+            # crash can retain both links, but can never authorize two launches.
+            _sync_serial_ticket_custody(archive_path.parent, tasks_path)
+            pending_path.unlink()
+            _sync_serial_ticket_custody(pending_path.parent, tasks_path)
+        except Exception as exc:
+            raise _SerialClaimUnavailable(
+                "canonical claim handoff custody unavailable; reconcile existing claim"
+            ) from exc
 
         fresh.tasks = [reserved_task if row.id == task_id else row for row in fresh.tasks]
         return fresh, reserved_task, _lifecycle_ownership_token(reserved_task), reservation_id

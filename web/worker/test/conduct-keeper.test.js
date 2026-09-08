@@ -1053,6 +1053,62 @@ test("declared conductor identity matches its principal-bound session (#1408)", 
   }), /does not match its registered session/);
 });
 
+test("authenticated HTTP task claims cannot promote a declared provider over the token principal", async () => {
+  const codexToken = "synthetic-codex-credential-for-principal-test";
+  const julesToken = "synthetic-jules-credential-for-principal-test";
+  const board = {
+    portal: { budget: { daily: 10, per_agent: { codex: 10, jules: 10 },
+      track: { date: "2026-07-18", spent: 0, per_agent: {} } } },
+    tasks: [{ id: "HTTP-SELECTED", title: "Synthetic principal claim", repo: "organvm/limen",
+      target_agent: "jules", budget_cost: 1, status: "open", created: "2026-07-18",
+      source_origin: "human_prompt", horizon: "present", value_case: "Verify authenticated executor authority",
+      predicate: "npm test", receipt_target: "github:organvm/limen:pull-request:HTTP-SELECTED",
+      dispatch_log: [] }],
+  };
+  let canonical = structuredClone(board);
+  const durable = Object.create(ConductKeeperDurableObject.prototype);
+  durable.env = { LIMEN_CONDUCT_PRINCIPAL_REGISTRY: principalRegistry(
+    { principal_id: "http-codex", agent: "codex", surface: "cloud", roles: ["conductor"], bearer: codexToken },
+    { principal_id: "http-jules", agent: "jules", surface: "cloud", roles: ["conductor"], bearer: julesToken },
+  ) };
+  durable.service = new SerializedConductService(new MemoryConductStore(), {
+    clock: () => NOW,
+    projectTaskEvent(event) {
+      const projected = applyTaskPacketProjectionEvent(canonical, event);
+      canonical = projected.board;
+      return projected;
+    },
+  });
+  const request = (path, body, token) => durable.fetch(new Request(`https://limen.example${path}`, {
+    method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify(body),
+  }));
+  const declared = session("jules", { sessionId: "http-declared-jules", capabilities: ["task-submit"] });
+  const registration = await request("/api/conduct/sessions", declared, codexToken);
+  assert.equal(registration.status, 200);
+  const bound = await registration.json();
+  assert.equal(bound.identity.agent, "codex");
+  const intent = { kind: "task.claim", task_id: "HTTP-SELECTED", expected_status: "open",
+    patch: { status: "dispatched" }, log: { agent: "jules", status: "dispatched" } };
+  const denied = await request("/api/conduct/runs", await taskPacket({
+    workId: "http-unauthorized-jules", conductor: bound.identity, intent,
+  }), codexToken);
+  assert.equal(denied.status, 409);
+  assert.match((await denied.json()).detail, /not claim agent codex/);
+  assert.deepEqual(canonical, board);
+
+  const admitted = await request("/api/conduct/sessions",
+    session("jules", { sessionId: "http-authorized-jules", capabilities: ["task-submit"] }), julesToken);
+  const authorized = await admitted.json();
+  const claimed = await request("/api/conduct/runs", await taskPacket({
+    workId: "http-authorized-jules", conductor: authorized.identity, intent,
+  }), julesToken);
+  assert.equal(claimed.status, 200);
+  assert.equal(canonical.tasks[0].dispatch_log.at(-1).agent, "jules");
+  assert.equal(canonical.portal.budget.track.per_agent.jules, 1);
+  assert.equal(canonical.portal.budget.track.per_agent.codex || 0, 0);
+});
+
 test("executor attempts are capability-bound, durable, idempotent, and token-free", async () => {
   const codex = session("codex");
   const { service } = await serviceWith([codex], {

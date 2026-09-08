@@ -676,9 +676,14 @@ def _compatibility_intent(ticket: Ticket, base: dict[str, Any] | None) -> dict[s
     if ticket.canonical_base is not None:
         captured = ticket.canonical_base
         expected_hash = (ticket.precondition or {}).get("task_sha256")
+        captured_open_claim = (
+            captured.get("status") == "open"
+            and ticket.intent == INTENT_UPSERT
+            and (ticket.patch or {}).get("status") == "dispatched"
+        )
         if (
             captured.get("id") != ticket.task_id
-            or captured.get("status") != "dispatched"
+            or (captured.get("status") != "dispatched" and not captured_open_claim)
             or not expected_hash
             or task_state_sha256(captured) != expected_hash
         ):
@@ -1285,6 +1290,15 @@ def _materialize_local_result(
 _RELAY_PRINCIPAL_BOUND_IDENTITY_FIELDS = ("agent", "surface", "session_id")
 
 
+class SelectedExecutorAuthorityUnavailable(ConductError):
+    """The credential principal cannot authorize the selected task executor."""
+
+    reason_code = "selected_executor_authority_unavailable"
+
+    def __init__(self) -> None:
+        super().__init__(self.reason_code, status=403)
+
+
 def _relay_identity_key(identity: AgentIdentityV1) -> str:
     """A short digest of the identity fields `register()` compares but does NOT normalize.
 
@@ -1355,15 +1369,7 @@ def _register_relay_session(remote: Any, session: ConductorSessionV1) -> tuple[A
         return remote.register(fallback), fallback
 
 
-def _submit_compatibility_ticket(
-    ticket: Ticket,
-    intent: dict[str, Any],
-    remote: Any,
-    work_id: str,
-    *,
-    board_path: Path | None = None,
-    local_board: LimenFile | None = None,
-) -> dict[str, Any]:
+def _registered_compatibility_identity(ticket: Ticket, remote: Any) -> AgentIdentityV1:
     requested_identity = AgentIdentityV1(
         agent=_safe_identifier(ticket.agent, "tabularius-relay"),
         surface="tabularius-relay",
@@ -1390,7 +1396,30 @@ def _submit_compatibility_ticket(
         registered_session = ConductorSessionV1.model_validate(registered_payload)
     except Exception as exc:
         raise RuntimeError("conduct broker registration returned no canonical session identity") from exc
-    identity = registered_session.identity
+    return registered_session.identity
+
+
+def _require_selected_executor_identity(ticket: Ticket, identity: AgentIdentityV1) -> None:
+    # A registration echo is authenticated actor provenance, not permission to
+    # replace the provider selected by the caller. Delegation needs its own
+    # authenticated adapter; no registry/task/log declaration creates one here.
+    if identity.agent != ticket.agent:
+        raise SelectedExecutorAuthorityUnavailable()
+
+
+def _submit_compatibility_ticket(
+    ticket: Ticket,
+    intent: dict[str, Any],
+    remote: Any,
+    work_id: str,
+    *,
+    board_path: Path | None = None,
+    local_board: LimenFile | None = None,
+    registered_identity: AgentIdentityV1 | None = None,
+) -> dict[str, Any]:
+    identity = registered_identity or _registered_compatibility_identity(ticket, remote)
+    if intent.get("kind") == "task.claim":
+        _require_selected_executor_identity(ticket, identity)
     owner = os.environ.get("LIMEN_GITHUB_REPO", "").strip() or "4444J99/limen"
     execution = {"adapter": "tabularius", "projection": "tasks.yaml", "observed_heads": {}}
     work_key = f"task-compat-{canonical_hash({'intent': intent, 'execution': execution})}"
@@ -1454,6 +1483,7 @@ def _relay_ticket(
     *,
     client=None,
     board_path: Path | None = None,
+    registered_identity: AgentIdentityV1 | None = None,
 ) -> dict[str, Any]:
     remote = client or client_from_env()
     # Bind replay identity to the entire immutable ticket, not its display ID.
@@ -1494,9 +1524,10 @@ def _relay_ticket(
                 work_id,
                 board_path=board_path,
                 local_board=local_board,
+                registered_identity=registered_identity,
             )
     intent = _compatibility_intent(ticket, base)
-    return _submit_compatibility_ticket(ticket, intent, remote, work_id)
+    return _submit_compatibility_ticket(ticket, intent, remote, work_id, registered_identity=registered_identity)
 
 
 def _is_tolerated_already_homed(exc: Exception, ticket: Ticket, tolerated: set[str]) -> bool:
@@ -1529,6 +1560,7 @@ def apply_limen_file_sync(
     *,
     agent: str,
     claim_agents: Mapping[str, str] | None = None,
+    prepared_claims: Mapping[str, Ticket] | None = None,
     session_id: str = "unknown",
     allow_shrink: bool = False,
     before: LimenFile | None = None,
@@ -1546,6 +1578,9 @@ def apply_limen_file_sync(
     mixed-provider reservation batch. It is used only for open-to-dispatched
     claims; task fields and dispatch-log labels never choose claim authority.
 
+    ``prepared_claims`` reuses already-durable immutable claim requests only
+    when they exactly match this derived transition and captured open state.
+
     ``tolerate_already_homed`` names task ids whose *create* may legitimately race a
     keeper that already holds them — the caller derived "this task is absent" from the
     local projection, which lags. For those ids only, an already-homed rejection is
@@ -1561,6 +1596,8 @@ def apply_limen_file_sync(
         previous = load_limen_file(board_path)
     events = diff_boards(previous, limen)
     if not events:
+        if prepared_claims:
+            raise ValueError("prepared claim has no matching open-to-dispatched transition")
         return DrainResult(note="no board change")
 
     timestamp = now or datetime.now(timezone.utc)
@@ -1583,6 +1620,7 @@ def apply_limen_file_sync(
 
     prior_by_id = {str(task["id"]): task for task in previous_data.get("tasks", [])}
     tickets = []
+    unused_prepared = set(prepared_claims or {})
     for event in events:
         event_type = str(event.get("type") or "")
         if event_type == EV_BOARD_META:
@@ -1631,10 +1669,37 @@ def apply_limen_file_sync(
             # The dispatcher identifies the orchestration surface only. The
             # authenticated ticket identity above names the selected provider.
             ticket = ticket.model_copy(update={"log": {**(ticket.log or {}), "agent": agent}})
+        if prepared_claims is not None and task_id in prepared_claims:
+            prepared = prepared_claims[task_id]
+            if (
+                not isinstance(prepared, Ticket)
+                or prior is None
+                or prior.get("status") != "open"
+                or (ticket.patch or {}).get("status") != "dispatched"
+                or prepared.canonical_base != prior
+                or (prepared.precondition or {}).get("task_sha256") != task_state_sha256(prior)
+                or prepared.model_dump(mode="json", exclude={"ticket_id", "canonical_base"})
+                != ticket.model_dump(mode="json", exclude={"ticket_id", "canonical_base"})
+            ):
+                raise ValueError("prepared claim does not match exact derived reservation")
+            ticket = prepared
+            unused_prepared.remove(task_id)
         tickets.append(ticket)
+    if unused_prepared:
+        raise ValueError("prepared claim has no matching open-to-dispatched transition")
     if not tickets:
         return DrainResult(note="no task transition; budget-window metadata is derived by the remote keeper")
     remote = client_from_env()
+    # Authenticate every selected claim before submitting any task from a
+    # mixed-provider batch. Otherwise a supported first claim can retain a
+    # debit when the same token cannot authorize a later selected provider.
+    claim_identities: dict[str, AgentIdentityV1] = {}
+    for ticket in tickets:
+        prior = prior_by_id.get(str(ticket.task_id))
+        if prior and prior.get("status") == "open" and (ticket.patch or {}).get("status") == "dispatched":
+            identity = _registered_compatibility_identity(ticket, remote)
+            _require_selected_executor_identity(ticket, identity)
+            claim_identities[ticket.ticket_id] = identity
     tolerated = {str(task_id) for task_id in (tolerate_already_homed or ())}
     projected_tasks: dict[str, dict[str, Any]] = {}
     already_homed: list[str] = []
@@ -1647,6 +1712,7 @@ def apply_limen_file_sync(
                 prior_by_id.get(task_id),
                 client=remote,
                 board_path=board_path,
+                registered_identity=claim_identities.get(ticket.ticket_id),
             )
         except Exception as exc:
             if not _is_tolerated_already_homed(exc, ticket, tolerated):
