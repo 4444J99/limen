@@ -21,6 +21,7 @@ import tomllib
 
 from agent_config_paths import MCP_VENDOR_KEYS, active_config_path, candidate_config_paths
 from mcp_protocol import verify
+from mcp_healing import heal
 
 DIMENSIONS = (
     "configuration",
@@ -869,20 +870,37 @@ def main(argv=None):
             if client not in accepted:
                 issues.append({"client": client, "reason": "fresh_client_canary_required", "owner": "limen"})
         if args.apply and not args.inventory_only and (not args.service or "serena" in args.service):
-            # Domus's registered effector owns diagnosis, exact-content checks, episode lock and backup.
+            # Existing boot/update entry points share persistent orchestration custody.
+            # Domus still owns the mutation, backup, and conditional rollback.
             try:
-                process = subprocess.run(
-                    [str(Path.home() / ".local/bin/domus-mcp-repair"), "--apply"],
-                    capture_output=True,
-                    timeout=15,
-                    text=True,
-                )
-                repair = json.loads(process.stdout)
-                outcome = repair.get("outcome", "unavailable")
-                if process.returncode != 0 and outcome in ("verified", "unchanged"):
-                    outcome = "unavailable"
-                payload["repair"] = {"outcome": outcome, "owner": "domus-genoma"}
-                if outcome == "verified":
+                service_policy = policy["services"]["serena"]
+                if (service_policy.get("source_owner") != "domus-genoma"
+                        or service_policy.get("repair") != "serena-partial-config"):
+                    raise ValueError("repair owner not registered")
+                launcher = Path.home() / ".local/bin/domus-mcp-repair"
+                affected = [r for r in payload["servers"] if r["service"] == "serena"]
+                if not affected:
+                    raise ValueError("repair registration missing")
+                target = Path.home() / ".serena/serena_config.yml"
+                bindings = {
+                    "registration": fingerprint(sorted((r["client"], r["name"], r["route"]) for r in affected)),
+                    "configuration": fingerprint([hashlib.sha256(target.read_bytes()).hexdigest(),
+                                                  [r["fingerprint"] for r in affected]]),
+                    "dependency": fingerprint([hashlib.sha256(launcher.read_bytes()).hexdigest(),
+                                               [(r.get("launch_fingerprint"), r.get("server_version"),
+                                                 r.get("dependency_fingerprint")) for r in affected]]),
+                    "policy": digest,
+                    "failure": fingerprint([r["dimensions"] for r in affected]),
+                }
+
+                def registered_repair():
+                    process = subprocess.run([str(launcher), "--apply"], capture_output=True, timeout=15, text=True)
+                    result = json.loads(process.stdout)
+                    if process.returncode != 0 and result.get("outcome") in ("verified", "unchanged"):
+                        result["outcome"] = "unavailable"
+                    return result
+
+                def verify_repair():
                     fresh_records, fresh_issues, _, _ = inventory(policy, project=args.project)
                     issues.extend(fresh_issues)
                     affected = [r for r in fresh_records if r["service"] == "serena"]
@@ -891,10 +909,17 @@ def main(argv=None):
                     payload["servers"] = [
                         replacements.get((r["client"], r["name"], r["route"]), r) for r in payload["servers"]
                     ]
+                    return "pass" if checked["exit"] == 0 and affected else ("fail" if checked["exit"] == 1 else "unmeasured")
+
+                payload["repair"] = heal(
+                    Path.home() / ".local/state/limen/mcp-healing",
+                    owner="domus-genoma", repair_id="serena-partial-config", bindings=bindings,
+                    repair=registered_repair, verify=verify_repair,
+                )
                 for row in payload["servers"]:
                     if row["service"] == "serena":
-                        row["repair_outcome"] = outcome
-            except (OSError, ValueError, subprocess.TimeoutExpired):
+                        row["repair_outcome"] = payload["repair"]["outcome"]
+            except (OSError, ValueError, KeyError, TypeError, subprocess.TimeoutExpired):
                 payload["repair"] = {"outcome": "unavailable", "owner": "domus-genoma"}
         payload["gateway"] = gateway_reconciliation()
         gateway = payload["gateway"]
