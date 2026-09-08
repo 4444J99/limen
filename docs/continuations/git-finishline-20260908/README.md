@@ -21,21 +21,30 @@ from that bundle, so it now has a separate private companion archive, independen
 and checksummed. The keeper remains the owner of canonical task state: this historical
 projection is preservation evidence and must never be replayed as a board mutation.
 
+Some original PR heads postdate the original archive. A small incremental PR-head
+companion now preserves those exact tips; the predicate restores it after the original
+archive and verifies all nine heads without access to the source object store.
+
 Archives remain private local custody. They contain historical material and are never
 committed or uploaded to this public repository. Their neutral filenames and checksums
 identify the restore inputs without publishing private source bodies.
 
-Run from the repository root, supplying the two private archive locations:
+Run from the repository root, supplying the three private archive locations:
 
 ```sh
-python3 docs/continuations/git-finishline-20260908/verify-custody.py --stash-bundle /path/to/limen-stash-archive-20260908.bundle --board-bundle /path/to/board-projection-20260908.bundle
+python3 docs/continuations/git-finishline-20260908/verify-custody.py --stash-bundle /path/to/limen-stash-archive-20260908.bundle --board-bundle /path/to/board-projection-20260908.bundle --pr-bundle /path/to/original-pr-heads-20260908.bundle
 ```
 
 The predicate verifies checksums, reconstructs objects without source alternates, checks
-all stash trees and parents, and proves recoverability of all nine deleted tips. It does
+all stash trees and parents, and proves recoverability of all nine deleted tips and all nine original PR heads. It does
 not infer merge, deployment, or safe deletion from archive presence.
 
 ## Corrected successor
+
+The semantic audit found one missing substantive stash intent: security headers. Index22
+is now represented at actual Pages/Worker serving boundaries and the supported FastAPI
+adapter. Its ineffective static-export Next headers configuration remains historical.
+The manifest records a distinct evidence-backed disposition for every stash.
 
 The recovery successor incorporates PR2564, preserves PR2550's distinct historical
 receipts under `history/`, and incorporates the corrected serial governor from PR2552.
@@ -60,10 +69,22 @@ exact-head GitHub merge receipt decide that status.
 
 PR2553 remains owned by its reader-mode pilot. Its former schema dependency #16 was
 superseded by merged schema-definitions#17; engine#174 was superseded by open engine#175,
-and editorial-standards#12 depends on that engine generation. The original reader acceptance
-gate remains independently owned; draft source preservation does not satisfy it.
+and editorial-standards#12 depends on that engine generation. The original PR also requires
+GitHub About metadata consistent with its evidence. Draft preservation does not satisfy
+the strict schema/runtime, identity, evidence, or metadata acceptance predicates.
 
 Resume the finite correction lane by checking out the remote successor named in
 `receipt.json`, reading this file and `workstream.json`, and running the scoped gate once
 for any changed tree. Host admission is authoritative for heavy checks. Existing successful
 shards remain evidence until their inputs change; do not poll CI or repeatedly rewrite PRs.
+
+
+The single continuation launch command, from a checkout of the published successor, is:
+
+```sh
+bash docs/continuations/git-finishline-20260908/launch.sh
+```
+
+The wrapper recreates the canonical four-hour capsule from the preserved remote branch,
+then uses its live-derived native launch. `--prepare-only` validates capsule preparation
+without starting another agent. It preserves the existing admitted deadline on re-entry.

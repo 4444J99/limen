@@ -1,4 +1,10 @@
-# Cache headers for Cloudflare Pages static hosting.
+# Response headers for Cloudflare Pages static hosting.
+# Keep embedding and browser capability policy unchanged; this is a static export.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-XSS-Protection: 0
+
 # Next.js content-hashed static assets get max-age=1y immutable.
 # JSON feeds get a short TTL so the daemon's 60s-rebuild cycle keeps them fresh.
 /_next/static/*

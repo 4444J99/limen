@@ -21,6 +21,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--stash-bundle", type=Path, required=True)
     parser.add_argument("--board-bundle", type=Path, required=True)
+    parser.add_argument("--pr-bundle", type=Path, required=True)
     args = parser.parse_args()
     here = Path(__file__).resolve().parent
     stashes = json.loads((here / "stash-custody.json").read_text())
@@ -32,7 +33,7 @@ def main() -> None:
         "original": (args.stash_bundle, stashes["bundle_sha256"]),
         "companion": (args.board_bundle, branches["companion_bundle"]["sha256"]),
     }
-    restored_stashes = restored_branches = 0
+    restored_stashes = restored_branches = restored_pr_heads = 0
     for name, (bundle, expected_digest) in bundles.items():
         bundle = bundle.expanduser().resolve(strict=True)
         with bundle.open("rb") as stream:
@@ -57,6 +58,16 @@ def main() -> None:
                     if stash["untracked_tree"]:
                         git(root, "cat-file", "-e", f"{stash['untracked_tree']}^{{tree}}")
                     restored_stashes += 1
+                pr_bundle = args.pr_bundle.expanduser().resolve(strict=True)
+                with pr_bundle.open("rb") as stream:
+                    pr_digest = hashlib.file_digest(stream, "sha256").hexdigest()
+                if pr_digest != prs["original_pr_companion_bundle"]["sha256"]:
+                    raise ValueError("PR companion checksum mismatch")
+                git(root, "bundle", "verify", str(pr_bundle))
+                git(root, "bundle", "unbundle", str(pr_bundle))
+                for pr in prs["pull_requests"]:
+                    git(root, "cat-file", "-e", f"{pr['original_head']}^{{commit}}")
+                    restored_pr_heads += 1
             for branch in branches["branches"]:
                 if branch["archive"] == name:
                     git(root, "cat-file", "-e", f"{branch['tip']}^{{commit}}")
@@ -68,6 +79,7 @@ def main() -> None:
                 "independently_restored_stashes": restored_stashes,
                 "independently_restored_deleted_tips": restored_branches,
                 "original_pr_count": len(prs["pull_requests"]),
+                "independently_restored_original_pr_heads": restored_pr_heads,
                 "scope": "archive custody; no claim of deployment, merge, or live runtime health",
             }
         )
