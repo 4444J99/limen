@@ -1335,7 +1335,9 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
     assert "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json" in gate["paths"]
     assert gate["command"] == (
         "bash scripts/run-pytest-hermetic.sh cli/tests/test_positioning_program.py "
-        "scripts/tests/test_positioning_research_adjudication.py -q && "
+        "scripts/tests/test_positioning_research_adjudication.py "
+        "docs/positioning/program/test_p03_w07_blinded_reader_intake.py "
+        "docs/positioning/program/test_p03_w07_workflow.py -q && "
         "python3 scripts/positioning-research-adjudication.py --check"
     )
     assert gate["timeout_seconds"] == 300
