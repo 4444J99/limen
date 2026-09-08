@@ -5661,14 +5661,25 @@ def _reserve_serial_dispatch(
         before_data = prior_task.model_dump(mode="json", exclude_none=True)
         ticket_id = "serial-claim-" + task_state_sha256({"before": before_data, "agent": agent})
         root = tickets_root(tasks_path)
-        pending_path = root / "inbox" / f"{ticket_id}.json"
-        archive_path = root / "archive" / f"{ticket_id}.json"
-        if archive_path.exists() or (root / "rejected" / f"{ticket_id}.json").exists():
+        pending_path = root / "serial-claims" / "inbox" / f"{ticket_id}.json"
+        archive_path = root / "serial-claims" / "archive" / f"{ticket_id}.json"
+        legacy_pending = root / "inbox" / f"{ticket_id}.json"
+        # A legacy archive may mean generic ACK or provider handoff. Preserve
+        # it under a reconciliation hold; absence of launch cannot be inferred.
+        if any(
+            path.exists()
+            for path in (
+                archive_path,
+                root / "archive" / f"{ticket_id}.json",
+                root / "rejected" / f"{ticket_id}.json",
+            )
+        ):
             raise RuntimeError("canonical claim already has terminal ticket custody; reconcile existing claim")
         retained_ticket = None
         try:
-            if pending_path.exists():
-                retained_ticket = Ticket.model_validate_json(pending_path.read_text(encoding="utf-8"))
+            retained_path = pending_path if pending_path.exists() else legacy_pending
+            if retained_path.exists():
+                retained_ticket = Ticket.model_validate_json(retained_path.read_text(encoding="utf-8"))
                 now = retained_ticket.timestamp
                 reservation_id = str((retained_ticket.log or {}).get("session_id") or "")
                 if not re.fullmatch(r"[0-9a-f]{64}", reservation_id):
@@ -5705,9 +5716,16 @@ def _reserve_serial_dispatch(
             if retained_ticket is not None:
                 if retained_ticket != ticket:
                     raise ValueError("claim request changed")
-            else:
-                submit_ticket(tasks_path, ticket)
+            if legacy_pending.exists() and Ticket.model_validate_json(legacy_pending.read_bytes()) != ticket:
+                raise ValueError("legacy claim request changed")
+            if not pending_path.exists():
+                submit_ticket(tasks_path, ticket, custody="serial-claims")
             _sync_serial_ticket_custody(pending_path.parent, tasks_path)
+            if legacy_pending.exists():
+                # Migrate only the identical pending request while holding the
+                # generic drain's queue lock; durable new custody comes first.
+                legacy_pending.unlink()
+                _sync_serial_ticket_custody(legacy_pending.parent, tasks_path)
         except Exception as exc:
             raise _SerialClaimUnavailable("canonical claim request could not obtain exact durable custody") from exc
         try:
@@ -5841,13 +5859,12 @@ def _commit_serial_reserved_result(
                 except FileExistsError:
                     # A retry can encounter the identical immutable ticket.
                     # Never overwrite a distinct result or count it committed.
-                    from limen.tabularius import tickets_root
-
                     prior = Ticket.model_validate_json(
                         (tickets_root(tasks_path) / "inbox" / f"{ticket.ticket_id}.json").read_text()
                     )
                     if prior != ticket:
                         raise RuntimeError("existing serial result ticket differs")
+                _sync_serial_ticket_custody(tickets_root(tasks_path) / "inbox", tasks_path)
             except Exception:
                 may_clear = False
                 if selection is not None:
