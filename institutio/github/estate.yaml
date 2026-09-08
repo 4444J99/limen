@@ -871,7 +871,7 @@ repo_overrides:
   organvm/domus-genoma: {class: operation_private, why: "the config cartridge — host/factory operation; strategy+secret-shaped paths never publish raw"}
   organvm/edu-organism: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm-iii-ergon/enterprise-plugin: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/euro-trip-2026: {class: vault_private, why: "personal travel — private data"}
+  4444J99/euro-trip-2026: {class: vault_private, why: "personal travel — private data"}
   organvm/generative-abstract-environments-studies: {class: vault_private, why: "studies corpus — internal strategy"}
   organvm-iii-ergon/gens: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm-iii-ergon/glyph-cascade: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
@@ -900,7 +900,7 @@ repo_overrides:
   organvm-ii-poiesis/narratological-algorithmic-lenses: {class: portal_public, why: "traction/value lure — portal tier"}
   organvm/netmode: {class: operation_private, why: "machine infra, not a product (sweep 2026-07-30): network-health receipts, session-blockers, conductor-tranche dependencies ride it — engine room, no publish wave"}
   organvm-iii-ergon/object-lessons: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  organvm/opencode-plans: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
+  4444J99/opencode-plans: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
   organvm/organvm-corpvs-testamentvm: {class: vault_private, why: "testament corpus — internal strategy"}
   meta-organvm/organvm-i-theoria--superproject: {class: vault_private, why: "superproject state mirror — private state"}
   meta-organvm/organvm-ii-poiesis--superproject: {class: vault_private, why: "superproject state mirror — private state"}
@@ -915,10 +915,11 @@ repo_overrides:
   4444J99/peer-audited--behavioral-blockchain: {class: portal_public, why: "traction/value lure — portal tier; personal estate 2026-07-30 (custody v4.0.0 transfer, jtenen lane intact)"}
   organvm/persona-fleet: {class: vault_private, why: "persona corpus — private data"}
   organvm/personal: {class: vault_private, why: "personal memory store — private data"}
+  4444J99/personal: {class: vault_private, why: "personal memory store — private data"}
   organvm-vii-kerygma/portfolio: {class: portal_public, why: "traction/value lure — portal tier"}
   organvm/portvs: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/process-environment-enactment-20260609173021: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
-  organvm/prompt-registry-archive: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
+  4444J99/prompt-registry-archive: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
   organvm-iii-ergon/public-record-data-scrapper: {class: portal_public, why: "traction/value lure — portal tier"}
   organvm/quaestor: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm-iv-taxis/quick-fire--all-command: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
@@ -930,7 +931,7 @@ repo_overrides:
   organvm/session-stone-sanitized-019ea761-bff5-7841-b772-f2d85475092e-20260609175059: {class: vault_private, why: "session archive — private data"}
   organvm-iii-ergon/sign-signal--voice-synth: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/sovereign--ground: {class: vault_private, why: "ground corpus — internal strategy"}
-  organvm/sovereign--ground--4444j99: {class: vault_private, why: "ground corpus — internal strategy"}
+  4444J99/sovereign--ground--4444j99: {class: vault_private, why: "ground corpus — internal strategy"}
   4444J99/sovereign-systems--elevate-align: {class: operation_private, why: "partner-shared build lane — protected, review-gated (repo_collaborators grant); personal estate 2026-07-30 (custody v4.0.0 transfer; flipped private personal-side — the org-side 422 seat-metering block dissolved exactly as doctrine predicted)"}
   organvm/speculum-opencode: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
   organvm-iii-ergon/speech-score-engine: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
@@ -1091,7 +1092,7 @@ budgets:
   actions_minutes:
     budget: unlimited_public
     owner: gitvs
-    note: "Public and private usage are measured separately; actions_spend below is the current budget predicate. A provider admission message never routes to a historical lever by default."
+    note: "Public and private usage are measured separately; dynamic server-side CodeQL/default-setup schedules are inventoried even when no workflow file exists; actions_spend below is the current budget predicate. A provider admission message never routes to a historical lever by default."
   actions_spend:
     monthly_net_usd_max: 25                # mirrors orgs.canonical.actions_spending_limit_usd; env override LIMEN_ACTIONS_BUDGET
     owner: gitvs

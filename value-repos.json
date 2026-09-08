@@ -2,9 +2,9 @@
   "_comment": "THE VALUE TIER \u2014 the ONLY repos the autonomous fleet may spend a token on, ranked by time-to-an-actual-dollar (goal: real income before August 2026). Everything NOT listed here gets ZERO auto-generated/auto-mined work. This is Anthony's priorities \u2014 edit freely; add a repo to fund it with fleet effort, remove one to starve it. Fail-closed: if this list is empty, the generator produces nothing rather than flooding all repos.",
   "ranked_by": "time-to-dollar",
   "repos": [
-    "organvm/a-i-chat--exporter",
+    "organvm-iii-ergon/a-i-chat--exporter",
     "organvm/my-knowledge-base",
-    "organvm/public-record-data-scrapper",
+    "organvm-iii-ergon/public-record-data-scrapper",
     "4444J99/peer-audited--behavioral-blockchain",
     "4444J99/your-fit-tailored",
     "4444J99/mirror-mirror",
@@ -17,8 +17,8 @@
     "organvm/session-meta",
     "organvm-vii-kerygma/portfolio",
     "organvm/manumissio",
-    "organvm/cind-and-sol-foundation",
-    "organvm/sovereign--ground--4444j99",
+    "organvm-ii-poiesis/cind-and-sol-foundation",
+    "4444J99/sovereign--ground--4444j99",
     "organvm/hospes",
     "4444J99/micro-tato"
   ]
