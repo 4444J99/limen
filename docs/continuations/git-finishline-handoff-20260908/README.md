@@ -16,6 +16,21 @@ invalidate only their implicated shards; do not replay production, activate sche
 or poll CI to manufacture completion. Keep the finite runway and retained authority
 boundaries in [workstream.json](workstream.json).
 
+The denied gate IDs are `worker-check`, `pytest-cli`, `pytest-api`, and `web-build`.
+Resolve their commands from `gates.yaml` and execute them through the existing bounded
+runner, admission context, and serialization lock. The last three are registry-marked
+serialized gates; retain those locks and their deadlines. Do not invoke the full
+unchanged cheap wave again. The launch command below is the next action for the owner.
+
+The [combined predicate receipt](combined-scoped.json) records its actual exit code
+and private log digest. The [final state snapshot](final-state.json) binds custody,
+PR dispositions, and landing receipts to the observed repository generation.
+The [broker receipts](run-receipts.json) retain the complete reported deltas. The
+governor and aggregate runs ended with explicit partial releases because their
+initial packet path envelopes omitted some direct-session changes; they are not
+successful broker receipts. All session leases were released. Derive the complete
+path envelope before reserving any continuation children.
+
 The inherited [custody and correction owner](../git-finishline-20260908/README.md),
 [execution receipt](../git-finishline-20260908/receipt.json),
 [stash ledger](../git-finishline-20260908/stash-custody.json),
