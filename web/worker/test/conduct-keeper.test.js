@@ -3344,8 +3344,8 @@ test("exceptional task transitions require exact structured evidence", () => {
 
   const reservation = {
     timestamp: "2026-07-18T00:00:00.000Z",
-    agent: "dispatch-async",
-    logical_agent: "codex",
+    agent: "codex",
+    logical_agent: "dispatch-async",
     session_id: "keeper-reserve",
     logical_session_id: "async-reserve:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     status: "dispatched",

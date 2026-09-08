@@ -1532,9 +1532,16 @@ def test_new_policy_bearing_active_upsert_fails_before_persistence():
 @pytest.mark.parametrize("status", ["dispatched", "in_progress"])
 def test_new_generated_active_upsert_requires_inventory_authority(status):
     board = _board([])
-    event = {"event_id":"generated-upsert", "run_id":"r", "lease_id":"l", "generation":1,
-        "agent":"codex", "session_id":"s", "timestamp":_NOW.isoformat(), "intent":{
-        "kind":"task.upsert", "task_id":"GEN-repro", "task":_task("GEN-repro", status=status)}}
+    event = {
+        "event_id": "generated-upsert",
+        "run_id": "r",
+        "lease_id": "l",
+        "generation": 1,
+        "agent": "codex",
+        "session_id": "s",
+        "timestamp": _NOW.isoformat(),
+        "intent": {"kind": "task.upsert", "task_id": "GEN-repro", "task": _task("GEN-repro", status=status)},
+    }
     with pytest.raises(ValueError, match="inventory_admission_adapter_unavailable"):
         tabularius._project_local_task_event(board, event)
     assert board.tasks == []
