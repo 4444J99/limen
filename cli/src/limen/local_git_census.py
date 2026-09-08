@@ -225,9 +225,7 @@ def _inspect_root(
         protection = f"local-root-policy:{local_policy['policy_id']}:protected-local-only"
     common_dir_key = _path_digest(common_dir) if common_dir is not None else None
     repository_key = hashlib.sha256(repository.encode("utf-8")).hexdigest() if repository else None
-    clone_identity = repository or (
-        f"local-policy:{local_policy['policy_id']}" if local_policy is not None else None
-    )
+    clone_identity = repository or (f"local-policy:{local_policy['policy_id']}" if local_policy is not None else None)
     clone_key = (
         _digest({"repository": clone_identity, "common_dir_key": common_dir_key})
         if clone_identity is not None and common_dir_key is not None
