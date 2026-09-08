@@ -1747,7 +1747,7 @@ class ConductBroker:
             "repo-write",
         }
         has_code_write_scope = any(parse_resource(claim.key).kind in code_write_scope_kinds for claim in claims)
-        if packet.effect == "write" and not has_code_write_scope:
+        if packet.effect == "write" and not has_code_write_scope and not packet_is_non_capacity_projection(packet):
             repositories = sorted(packet.authority.repositories)
             if not repositories or "*" in repositories:
                 claims.append(ResourceClaimV1(key="repo/*/*/write", mode="exclusive"))
