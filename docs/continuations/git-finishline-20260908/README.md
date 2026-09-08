@@ -85,6 +85,7 @@ The single continuation launch command, from a checkout of the published success
 bash docs/continuations/git-finishline-20260908/launch.sh
 ```
 
-The wrapper recreates the canonical four-hour capsule from the preserved remote branch,
-then uses its live-derived native launch. `--prepare-only` validates capsule preparation
+The wrapper creates a separate canonical four-hour handoff capsule from the preserved
+remote branch, then uses its live-derived native launch. Re-entry verifies and reuses
+the existing capsule; it never rerenders a different identity into the original session. `--prepare-only` validates capsule preparation
 without starting another agent. It preserves the existing admitted deadline on re-entry.
