@@ -1,0 +1,1228 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "receipt_type": "architectural_diagnostic_manifest",
+  "generated": "2026-08-26T17:29:57Z",
+  "total_sensitive_prs_diagnosed": 173,
+  "diagnostics": [
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 113,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Unsanitized Path Traversal in Archive Scanner",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 111,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Unsanitized Path Traversal in Archive Scanner",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 73,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 71,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Unsanitized Path Traversal in Archive Scanner",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 67,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 64,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Unsanitized Path Traversal in Archive Scanner",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 60,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 57,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Unsanitized Path Traversal in Archive Scanner",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 54,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 51,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 49,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "CLI Argument Credential Exposure & Deprecation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 46,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 42,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Unsanitized Path Traversal in Archive Scanner",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 38,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Unsanitized Path Traversal in Archive Scanner",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 32,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "CLI Argument Credential Exposure & Deprecation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 30,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Unsanitized Path Traversal in Archive Scanner",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 28,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 24,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "CLI Argument Credential Exposure & Deprecation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 21,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/cognitive-archaelogy-tribunal",
+      "pull_request": 16,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/organvm-ontologia",
+      "pull_request": 18,
+      "category": "Conduct Principal RBAC & Authorization Authority",
+      "blocker_type": "Authority-Qualified Governance Memory Schema Evolution",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/organvm-ontologia",
+      "pull_request": 14,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "Protocol Specification & Governance Boundary Modification",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/organvm-ontologia",
+      "pull_request": 13,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "Protocol Specification & Governance Boundary Modification",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/organvm-ontologia",
+      "pull_request": 12,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "Protocol Specification & Governance Boundary Modification",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/organvm-ontologia",
+      "pull_request": 11,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "Protocol Specification & Governance Boundary Modification",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/essay-pipeline",
+      "pull_request": 21,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/application-pipeline",
+      "pull_request": 83,
+      "category": "Conduct Principal RBAC & Authorization Authority",
+      "blocker_type": "Application Submission Boundary Enforcement",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/domus-genoma",
+      "pull_request": 308,
+      "category": "Operator-Gated Decisions & Recovery Runtimes",
+      "blocker_type": "Limen Heartbeat Preview Valve Ownership Reassignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/domus-genoma",
+      "pull_request": 231,
+      "category": "Conduct Principal RBAC & Authorization Authority",
+      "blocker_type": "Authentication & Role-Based Access Control Reconfiguration",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/domus-genoma",
+      "pull_request": 230,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/domus-genoma",
+      "pull_request": 160,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "System Path Boundary Guard & Package Security Hardening",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/domus-genoma",
+      "pull_request": 155,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "System Path Boundary Guard & Package Security Hardening",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/domus-genoma",
+      "pull_request": 149,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/domus-genoma",
+      "pull_request": 146,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "System Path Boundary Guard & Package Security Hardening",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/domus-genoma",
+      "pull_request": 141,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "System Path Boundary Guard & Package Security Hardening",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/domus-genoma",
+      "pull_request": 140,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/domus-genoma",
+      "pull_request": 138,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "System Path Boundary Guard & Package Security Hardening",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/daily-engine",
+      "pull_request": 28,
+      "category": "Operator-Gated Decisions & Recovery Runtimes",
+      "blocker_type": "Daily Engine Recovery Acceptance Gate Calibration",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/organvm-corpvs-testamentvm",
+      "pull_request": 534,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "Ecosystem Governance Organ Ratification & Beacon Protocol Redesign",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/organvm-corpvs-testamentvm",
+      "pull_request": 491,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "Protocol Specification & Governance Boundary Modification",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/organvm-corpvs-testamentvm",
+      "pull_request": 357,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "Ecosystem Governance Organ Ratification & Beacon Protocol Redesign",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/manumissio",
+      "pull_request": 23,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/manumissio",
+      "pull_request": 18,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "API Routing & Open-Weight Provider Key Architecture",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 88,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 87,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 86,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 85,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 84,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 79,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 58,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 55,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "System Path Boundary Guard & Package Security Hardening",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 53,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 52,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Database Schema & State Persistence Drift for Billing Subsystem",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 43,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Database Schema & State Persistence Drift for Billing Subsystem",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 42,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Database Schema & State Persistence Drift for Billing Subsystem",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 40,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Database Schema & State Persistence Drift for Billing Subsystem",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 39,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Database Schema & State Persistence Drift for Billing Subsystem",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/the-invisible-ledger",
+      "pull_request": 38,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Database Schema & State Persistence Drift for Billing Subsystem",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/session-meta",
+      "pull_request": 143,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "System Path Boundary Guard & Package Security Hardening",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/session-meta",
+      "pull_request": 82,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "Protocol Specification & Governance Boundary Modification",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 114,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 109,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 108,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 105,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 100,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 98,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 96,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 93,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 89,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 86,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 82,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 81,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 77,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 73,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 71,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 68,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 66,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 61,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 59,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 54,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 53,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 48,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 45,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 43,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 39,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 37,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 33,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 31,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 27,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 23,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 21,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 19,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 14,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 11,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 6,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/virgil-training-overlay",
+      "pull_request": 3,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 117,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 111,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 105,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 103,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 100,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 96,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 94,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 92,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 86,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 85,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 82,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 80,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 76,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 73,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 72,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 71,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 67,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 65,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 62,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 59,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Session Token Invalidation & Suspended Principal Re-Authentication",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 58,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 55,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 50,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 47,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 44,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Session Token Invalidation & Suspended Principal Re-Authentication",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm/gamified-coach-interface",
+      "pull_request": 42,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-i-theoria/.github",
+      "pull_request": 471,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-i-theoria/.github",
+      "pull_request": 457,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-ii-poiesis/narratological-algorithmic-lenses",
+      "pull_request": 36,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "pull_request": 356,
+      "category": "Operator-Gated Decisions & Recovery Runtimes",
+      "blocker_type": "Operator-Gated Recovery Workflow Calibration",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "pull_request": 355,
+      "category": "Operator-Gated Decisions & Recovery Runtimes",
+      "blocker_type": "Operator-Gated Recovery Workflow Calibration",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "pull_request": 338,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "System Path Boundary Guard & Package Security Hardening",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "pull_request": 337,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "System Path Boundary Guard & Package Security Hardening",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "pull_request": 336,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "System Path Boundary Guard & Package Security Hardening",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "pull_request": 335,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "System Path Boundary Guard & Package Security Hardening",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iii-ergon/specvla-ergon--avditor-mvndi",
+      "pull_request": 34,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iii-ergon/bountyscope",
+      "pull_request": 7,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iii-ergon/writelens",
+      "pull_request": 5,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iii-ergon/promptscope",
+      "pull_request": 15,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iii-ergon/tab-bookmark-manager",
+      "pull_request": 26,
+      "category": "Conduct Principal RBAC & Authorization Authority",
+      "blocker_type": "Authentication & Role-Based Access Control Reconfiguration",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iii-ergon/trendpulse",
+      "pull_request": 5,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 150,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "Protocol Specification & Governance Boundary Modification",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 61,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 60,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 58,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 54,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 52,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 51,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 48,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 45,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 42,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 37,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 36,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 33,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 30,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 27,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 24,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 21,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 16,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 13,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 11,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "GitHub Actions / Workflow Script Injection Vulnerability",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/petasum-super-petasum",
+      "pull_request": 9,
+      "category": "Security Matrices & Vulnerability Defense",
+      "blocker_type": "Security Policy Hardening & Vulnerability Remediation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/system-governance-framework",
+      "pull_request": 49,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "System Governance Taxonomy & Authority Tier Restructuring",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/system-governance-framework",
+      "pull_request": 47,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "System Governance Taxonomy & Authority Tier Restructuring",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/system-governance-framework",
+      "pull_request": 46,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "System Governance Taxonomy & Authority Tier Restructuring",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/system-governance-framework",
+      "pull_request": 45,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "System Governance Taxonomy & Authority Tier Restructuring",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/system-governance-framework",
+      "pull_request": 42,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "System Governance Taxonomy & Authority Tier Restructuring",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "organvm-iv-taxis/system-governance-framework",
+      "pull_request": 41,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "System Governance Taxonomy & Authority Tier Restructuring",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "4444J99/victoroff-os",
+      "pull_request": 391,
+      "category": "Breaking Protocol Redesigns & Governance Charters",
+      "blocker_type": "AI Model & Agent Governance Substrate Architecture",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "4444J99/victoroff-os",
+      "pull_request": 390,
+      "category": "Operator-Gated Decisions & Recovery Runtimes",
+      "blocker_type": "Enterprise Integration Buyer-Facing Proof Validation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "4444J99/victoroff-os",
+      "pull_request": 386,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Commercial Transaction & Monetized Contract Infrastructure",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "4444J99/victoroff-os",
+      "pull_request": 333,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "4444J99/victoroff-os",
+      "pull_request": 327,
+      "category": "Conduct Principal RBAC & Authorization Authority",
+      "blocker_type": "Canonical Repository Authority Matrix Modification",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "4444J99/limen",
+      "pull_request": 2542,
+      "category": "Operator-Gated Decisions & Recovery Runtimes",
+      "blocker_type": "Recovery Liveness & Custody Review Debt Reconciliation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "4444J99/sovereign-systems--elevate-align",
+      "pull_request": 257,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Subscription Boundary & Payment Collection Rail Implementation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "4444J99/sovereign-systems--elevate-align",
+      "pull_request": 235,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Subscription Boundary & Payment Collection Rail Implementation",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    },
+    {
+      "repository": "4444J99/mirror-mirror",
+      "pull_request": 125,
+      "category": "Payment Rails, Revenue Engines & Ledger Substrates",
+      "blocker_type": "Revenue Engine Increment & Product Path Alignment",
+      "disposition": "LEAVE_OPEN_PRESERVED"
+    }
+  ],
+  "protected_boundaries_enforced": [
+    "task/private-document-review-20260825",
+    "feat/conduct-role-hardening-and-permissions",
+    "universal-mail--automation",
+    ".agent-runtime/codex",
+    ".agent-runtime/opencode",
+    "PR #2543"
+  ],
+  "integrity_note": "All sensitive PRs preserved in open state with non-destructive diagnostic records."
+}

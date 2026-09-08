@@ -613,15 +613,120 @@ class UniversePartitionV1(ProtocolModel):
     protected: int = Field(ge=0)
     blocked: int = Field(ge=0)
     unaccounted: int = Field(ge=0)
+    observation_complete: bool
+    closure_complete: bool
     complete: bool
+
+    @model_validator(mode="before")
+    @classmethod
+    def additive_completeness_fields(cls, value):
+        if not isinstance(value, dict):
+            return value
+        normalized = dict(value)
+        legacy = bool(normalized.get("complete"))
+        normalized.setdefault("observation_complete", legacy)
+        normalized.setdefault("closure_complete", legacy)
+        return normalized
 
     @model_validator(mode="after")
     def partition_is_exact(self) -> "UniversePartitionV1":
         accounted = self.terminal + self.protected + self.blocked + self.unaccounted
         if accounted != self.total:
             raise ValueError("partition total must equal terminal + protected + blocked + unaccounted")
-        if self.complete != (self.unaccounted == 0):
+        if self.closure_complete != (self.unaccounted == 0):
             raise ValueError("partition completeness must match its unaccounted count")
+        if self.complete != self.closure_complete:
+            raise ValueError("legacy partition completeness must match closure completeness")
+        return self
+
+
+class RepositoryDefaultObservationV1(ProtocolModel):
+    """Exact default SHA, effective policy, and app-bound check evidence for one repository."""
+
+    schema_version: Literal["limen.repository_default_observation.v1"] = "limen.repository_default_observation.v1"
+    repository_identity: RepositoryIdentityV1
+    repository: str
+    default_ref: str
+    default_sha: str
+    default_check_status: Literal["green", "no_required_checks", "red", "pending", "unknown"]
+    required_check_requirements: tuple[str, ...] = ()
+    observed_check_requirements: tuple[str, ...] = ()
+    check_evidence_digest: str
+    complete: bool
+
+    _repository = field_validator("repository", "default_ref")(_nonblank)
+    _default_sha = field_validator("default_sha")(_git_oid)
+    _check_evidence_digest = field_validator("check_evidence_digest")(_digest)
+
+    @model_validator(mode="after")
+    def default_observation_is_exact(self) -> "RepositoryDefaultObservationV1":
+        if not self.repository_identity.accepts(self.repository):
+            raise ValueError("default observation repository must match its stable identity")
+        if not self.default_ref.startswith("refs/heads/"):
+            raise ValueError("default observation ref must be fully qualified")
+        if len(self.required_check_requirements) != len(set(self.required_check_requirements)):
+            raise ValueError("required check requirements must be unique")
+        if len(self.observed_check_requirements) != len(set(self.observed_check_requirements)):
+            raise ValueError("observed check requirements must be unique")
+        requirements_met = set(self.required_check_requirements).issubset(self.observed_check_requirements)
+        stable = self.default_check_status == "no_required_checks" or (
+            self.default_check_status == "green" and requirements_met
+        )
+        if self.default_check_status == "no_required_checks" and self.required_check_requirements:
+            raise ValueError("no-required-check policy cannot carry required check requirements")
+        if self.complete != stable:
+            raise ValueError("default observation completeness must match exact check evidence")
+        return self
+
+
+class MergeLandingV1(ProtocolModel):
+    """Repository-qualified exact-head landing in one bounded merge batch."""
+
+    schema_version: Literal["limen.merge_landing.v1"] = "limen.merge_landing.v1"
+    repository_identity: RepositoryIdentityV1
+    repository: str
+    pull_request: int = Field(gt=0)
+    expected_head: str
+    landed_sha: str
+    merged_at: datetime
+    evidence_ref: str
+
+    _repository = field_validator("repository")(_nonblank)
+    _objects = field_validator("expected_head", "landed_sha")(_git_oid)
+    _merged_at = field_validator("merged_at")(_aware)
+    _evidence_ref = field_validator("evidence_ref")(_nonblank)
+
+    @model_validator(mode="after")
+    def landing_identity_is_exact(self) -> "MergeLandingV1":
+        if not self.repository_identity.accepts(self.repository):
+            raise ValueError("merge landing repository must match its stable identity")
+        return self
+
+
+class MergeBatchReceiptV1(ProtocolModel):
+    """Batch/generation merge counts; the rolling 24-hour window remains a separate producer."""
+
+    schema_version: Literal["limen.merge_batch_receipt.v1"] = "limen.merge_batch_receipt.v1"
+    batch_id: str
+    source_generation: str
+    observed_at: datetime
+    landings: tuple[MergeLandingV1, ...] = ()
+    batch_merged_count: int = Field(ge=0)
+    generation_merged_count: int = Field(ge=0)
+
+    _batch_id = field_validator("batch_id")(_nonblank)
+    _source_generation = field_validator("source_generation")(_digest)
+    _observed_at = field_validator("observed_at")(_aware)
+
+    @model_validator(mode="after")
+    def merge_counts_are_repository_qualified(self) -> "MergeBatchReceiptV1":
+        identities = [(row.repository_identity.repository_id, row.pull_request) for row in self.landings]
+        if len(identities) != len(set(identities)):
+            raise ValueError("merge batch contains duplicate repository/pull-request identities")
+        if self.batch_merged_count != len(self.landings):
+            raise ValueError("batch merge count must equal repository-qualified landings")
+        if self.generation_merged_count < self.batch_merged_count:
+            raise ValueError("generation merge count cannot be smaller than the current batch")
         return self
 
 
@@ -634,6 +739,7 @@ class RecoveryStableObservationV1(ProtocolModel):
     stable_digest: str
     observed_at: datetime
     manifest_receipt: str
+    repository_defaults: tuple[RepositoryDefaultObservationV1, ...] = ()
     repository_identity: RepositoryIdentityV1 | None = None
     repository: str | None = None
     default_ref: str | None = None
@@ -641,6 +747,8 @@ class RecoveryStableObservationV1(ProtocolModel):
     default_check_status: Literal["green", "no_required_checks", "red", "pending", "unknown"] | None = None
     partitions: tuple[UniversePartitionV1, ...] = ()
     unaccounted: int = Field(default=0, ge=0)
+    observation_complete: bool | None = None
+    closure_complete: bool | None = None
     complete: bool | None = None
 
     _stable_digest = field_validator("stable_digest")(_digest)
@@ -653,6 +761,34 @@ class RecoveryStableObservationV1(ProtocolModel):
 
     @model_validator(mode="after")
     def extended_observation_is_exact(self) -> "RecoveryStableObservationV1":
+        if self.repository_defaults:
+            if not self.partitions or None in (self.observation_complete, self.closure_complete, self.complete):
+                raise ValueError("universe stable observation requires partitions and both completeness axes")
+            identities = [row.repository_identity.repository_id for row in self.repository_defaults]
+            if len(identities) != len(set(identities)):
+                raise ValueError("universe stable observation contains duplicate repository identities")
+            kinds = tuple(row.kind for row in self.partitions)
+            required = set(UNIVERSE_PARTITION_KINDS)
+            if len(kinds) != len(set(kinds)) or set(kinds) != required:
+                raise ValueError("extended stable observation requires each universe partition exactly once")
+            repositories = next(row for row in self.partitions if row.kind == "repositories")
+            if repositories.total != len(self.repository_defaults):
+                raise ValueError("repository default evidence must match the repository partition denominator")
+            if repositories.terminal != sum(row.complete for row in self.repository_defaults):
+                raise ValueError("repository terminal count must match stable exact-default evidence")
+            expected_observation = all(row.observation_complete for row in self.partitions)
+            expected_closure = (
+                all(row.complete for row in self.repository_defaults)
+                and all(row.closure_complete for row in self.partitions)
+                and self.unaccounted == 0
+            )
+            if self.observation_complete != expected_observation:
+                raise ValueError("stable observation observation-completeness does not match its partitions")
+            if self.closure_complete != expected_closure:
+                raise ValueError("stable observation closure-completeness does not match exact evidence")
+            if self.complete != (expected_observation and expected_closure):
+                raise ValueError("stable observation completeness must combine observation and closure")
+            return self
         extended = any(
             value is not None
             for value in (
@@ -710,12 +846,31 @@ class UniverseBaselineReceiptV1(ProtocolModel):
     repository_denominator: int = Field(ge=0)
     stable_count: int = Field(ge=0)
     partitions: tuple[UniversePartitionV1, ...] = Field(min_length=1)
+    remote_failure_count: int = Field(ge=0)
+    local_failure_count: int = Field(ge=0)
     failure_count: int = Field(ge=0)
+    observation_complete: bool
+    closure_complete: bool
+    unique_debt_count: int = Field(ge=0)
     unaccounted: int = Field(ge=0)
     complete: bool
 
     _observed = field_validator("observed_at")(_aware)
     _digests = field_validator("source_generation", "census_digest")(_digest)
+
+    @model_validator(mode="before")
+    @classmethod
+    def additive_truth_axes(cls, value):
+        if not isinstance(value, dict):
+            return value
+        normalized = dict(value)
+        failures = int(normalized.get("failure_count") or 0)
+        normalized.setdefault("remote_failure_count", failures)
+        normalized.setdefault("local_failure_count", 0)
+        normalized.setdefault("observation_complete", failures == 0)
+        normalized.setdefault("closure_complete", bool(normalized.get("complete")))
+        normalized.setdefault("unique_debt_count", int(normalized.get("unaccounted") or 0))
+        return normalized
 
     @model_validator(mode="after")
     def aggregate_is_exact(self) -> "UniverseBaselineReceiptV1":
@@ -728,17 +883,22 @@ class UniverseBaselineReceiptV1(ProtocolModel):
         repositories = next(row for row in self.partitions if row.kind == "repositories")
         if repositories.total != self.repository_denominator or repositories.terminal != self.stable_count:
             raise ValueError("repository partition must match denominator and stable count")
-        observed_unaccounted = sum(row.unaccounted for row in self.partitions)
-        if observed_unaccounted != self.unaccounted:
-            raise ValueError("aggregate unaccounted count must match its partitions")
-        expected_complete = (
+        if self.failure_count != self.remote_failure_count + self.local_failure_count:
+            raise ValueError("aggregate failure count must equal remote plus local failures")
+        if self.unaccounted != self.unique_debt_count:
+            raise ValueError("legacy aggregate unaccounted count must match unique debt")
+        expected_observation = self.failure_count == 0 and all(row.observation_complete for row in self.partitions)
+        expected_closure = (
             self.stable_count == self.repository_denominator
-            and self.failure_count == 0
-            and self.unaccounted == 0
-            and all(row.complete for row in self.partitions)
+            and self.unique_debt_count == 0
+            and all(row.closure_complete for row in self.partitions)
         )
-        if self.complete != expected_complete:
-            raise ValueError("aggregate completeness must match stable, failure, and partition evidence")
+        if self.observation_complete != expected_observation:
+            raise ValueError("aggregate observation completeness must match failures and partitions")
+        if self.closure_complete != expected_closure:
+            raise ValueError("aggregate closure completeness must match stable defaults and unique debt")
+        if self.complete != (expected_observation and expected_closure):
+            raise ValueError("aggregate completeness must combine observation and closure")
         return self
 
 

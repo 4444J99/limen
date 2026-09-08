@@ -642,7 +642,7 @@ def _write_stamp(payload: dict) -> None:
         pass
 
 
-def verdict(throttle: int) -> dict:
+def verdict(throttle: int, *, record: bool = True) -> dict:
     """Return {conclusion, head_sha, url, source}. Uses cached verdict within the throttle window."""
     cached = _read_stamp()
     if cached.get("checked_at"):
@@ -667,7 +667,8 @@ def verdict(throttle: int) -> dict:
         "url": run.get("url") or "",
         "run_id": run.get("databaseId") or 0,
     }
-    _write_stamp(payload)
+    if record:
+        _write_stamp(payload)
     return {**payload, "source": "gh"}
 
 
@@ -829,7 +830,7 @@ def main(argv=None) -> int:
     if args.exact_head_check:
         return exact_head_check()
 
-    v = verdict(args.throttle)
+    v = verdict(args.throttle, record=not args.dry_run)
     conclusion = v.get("conclusion", "unknown")
     head = v.get("head_sha", "")
     url = v.get("url", "")
@@ -861,9 +862,10 @@ def main(argv=None) -> int:
         print(f"check-main-green: SKIP — main CI status unavailable ({v.get('source')}); failing open")
         return 0
     if conclusion not in RED:
-        _clear_jam()  # trunk green — the jam condition (if any) has ended; notification re-arms
-        for classification in CI_EVENT_IDS:
-            _emit_ci_condition(classification, "clear", v.get("run_id") or 0)
+        if not args.dry_run:
+            _clear_jam()  # trunk green — the jam condition (if any) has ended; notification re-arms
+            for classification in CI_EVENT_IDS:
+                _emit_ci_condition(classification, "clear", v.get("run_id") or 0)
         if wp:
             # trunk's own ci.yml is green, yet a required check is wedged across the queue — a divergence
             # the ci.yml-on-main read alone cannot see. Surface it; heal the base.
@@ -884,10 +886,14 @@ def main(argv=None) -> int:
     if klass != "executed_code_failure":
         # Emit the structured observation. Provider annotation categories never assert an account
         # cause, remediation, or human owner; independently proven visibility drift remains distinct.
-        _emit_ci_condition(klass, "onset", v.get("run_id") or 0)
+        if not args.dry_run:
+            _emit_ci_condition(klass, "onset", v.get("run_id") or 0)
         run_ids = [int(v.get("run_id") or 0)] + jammed_pr_run_ids(prs, required, _fresh_since())
         recover_jam = args.recover_jam or os.environ.get("LIMEN_CI_JAM_RERUN", "1").strip() == "1"
-        results = attempt_reruns([rid for rid in run_ids if rid], enabled=recover_jam and failure.retry_allowed)
+        results = attempt_reruns(
+            [rid for rid in run_ids if rid],
+            enabled=not args.dry_run and recover_jam and failure.retry_allowed,
+        )
         rerun = sum(1 for r in results if r.get("action") == "rerun")
         backoff = sum(1 for r in results if r.get("action") == "backoff")
         print(f"  → recovery ({detail or klass}): rerun={rerun} backoff={backoff} of {len(results)} target(s)")

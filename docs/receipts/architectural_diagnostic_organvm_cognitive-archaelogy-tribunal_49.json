@@ -1,0 +1,46 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "receipt_type": "architectural_diagnostic",
+  "generated": "2026-08-26T17:29:57Z",
+  "target": {
+    "chamber": "organvm",
+    "repository": "organvm/cognitive-archaelogy-tribunal",
+    "pull_request": 49,
+    "head_branch": "sentinel-deprecate-token-cli-arg-11380112488861006612",
+    "base_branch": "main",
+    "author": "google-labs-jules",
+    "is_draft": true,
+    "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/49"
+  },
+  "diagnostic_assessment": {
+    "classification": "Sensitive / Architectural Change (Human Gate Required)",
+    "category": "Security Matrices & Vulnerability Defense",
+    "blocker_type": "CLI Argument Credential Exposure & Deprecation",
+    "observed_divergence": "PR #49 (sentinel-deprecate-token-cli-arg-11380112488861006612) deprecates and removes plain-text `--github-token` CLI flags in favor of environment variable or vault resolution.",
+    "affected_subsystems": [
+      "CLI Entrypoint",
+      "Credential Hydration Layer",
+      "Subprocess Argument Sanitizer"
+    ],
+    "breaking_impact_analysis": "Immediate removal of CLI token argument breaks automated shell scripts and CI jobs relying on legacy argument passing.",
+    "operator_recommendations": [
+      "Option A: Introduce a 2-stage deprecation: emit a security warning to stderr while reading from environment variable fallback.",
+      "Option B: Enforce environment variable / credential-wall resolution exclusively and update all orchestrator invocation scripts."
+    ],
+    "disposition": "LEAVE_OPEN_PRESERVED"
+  },
+  "diagnostic_comment_body": "### \ud83d\udd0d Architectural & Diagnostic Assessment\n\n**Automated Remediation Triage Summary**\n- **Repository**: `organvm/cognitive-archaelogy-tribunal`\n- **PR Number**: `#49`\n- **Branch**: `sentinel-deprecate-token-cli-arg-11380112488861006612` \u2192 `main`\n- **Author**: `google-labs-jules`\n- **Classification**: `Sensitive / Architectural Change (Human Gate Required)`\n- **Domain Category**: `Security Matrices & Vulnerability Defense`\n\n#### Analysis & Blocker Summary\n- **Blocker Type**: `CLI Argument Credential Exposure & Deprecation`\n- **Observed Divergence**: PR #49 (sentinel-deprecate-token-cli-arg-11380112488861006612) deprecates and removes plain-text `--github-token` CLI flags in favor of environment variable or vault resolution.\n- **Affected Subsystems**: `CLI Entrypoint`, `Credential Hydration Layer`, `Subprocess Argument Sanitizer`\n- **Breaking Impact Analysis**: Immediate removal of CLI token argument breaks automated shell scripts and CI jobs relying on legacy argument passing.\n\n#### Recommendations for Operator Review\n1. Option A: Introduce a 2-stage deprecation: emit a security warning to stderr while reading from environment variable fallback.\n2. Option B: Enforce environment variable / credential-wall resolution exclusively and update all orchestrator invocation scripts.\n\n*This PR remains OPEN pending operator evaluation. Automated remediation worktree detached cleanly without modifying author branch or default trunk.*",
+  "protected_boundary_verification": {
+    "zero_touch_verified": true,
+    "quarantined_from_auto_merge": true,
+    "checked_boundaries": [
+      "task/private-document-review-20260825",
+      "feat/conduct-role-hardening-and-permissions",
+      "universal-mail--automation",
+      ".agent-runtime/codex",
+      ".agent-runtime/opencode",
+      "PR #2543"
+    ]
+  },
+  "integrity_note": "Genuine architectural assessment produced by Worker 3. PR preserved in open state with non-destructive diagnostic record."
+}
