@@ -1,0 +1,131 @@
+{
+  "schema_version": "limen.positioning_flagship_freshness_observation.v1",
+  "work_id": "PSP-P05-W04",
+  "flagship_id": "ai_chat_exporter",
+  "observed_at": "2026-09-08T16:57:46Z",
+  "repository": "organvm-iii-ergon/a-i-chat--exporter",
+  "repository_id": 1114290112,
+  "visibility": "public",
+  "archived": false,
+  "default_branch": "main",
+  "observed_head": "900da0fa256b443b3fe976963c9b2c67e8c09176",
+  "head_url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/commit/900da0fa256b443b3fe976963c9b2c67e8c09176",
+  "result": "not_current",
+  "reason": "Hosted CI/build checks are visible at the observed head. Their executed predicate, coverage and output have not been independently inspected in this observation. Dependabot failures are maintenance observations, not proof that export functionality fails.",
+  "fresh_reproduction_receipt": null,
+  "receipt_age_days": null,
+  "age_note": "No accepted fresh reproduction receipt was collected; commit age and a check completion date are not receipt age.",
+  "collection": {
+    "source": "https://api.github.com/repos/organvm-iii-ergon/a-i-chat--exporter/commits/900da0fa256b443b3fe976963c9b2c67e8c09176/check-runs",
+    "pages_read": 2,
+    "check_run_count": 32,
+    "returned_count": 32,
+    "complete": true,
+    "maintenance_checks_omitted_from_display": 20
+  },
+  "hosted_checks": [
+    {
+      "completed_at": "2026-08-27T17:46:40Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/33100079152/job/98615114515",
+      "name": "check",
+      "started_at": "2026-08-27T17:46:03Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-27T17:46:01Z",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/33100079154/job/98615114436",
+      "name": "release",
+      "started_at": "2026-08-27T17:46:01Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-14T16:53:25Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/31821375781/job/94835278345",
+      "name": "report-build-status",
+      "started_at": "2026-08-14T16:53:21Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-14T16:54:06Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/31821375781/job/94835278287",
+      "name": "deploy",
+      "started_at": "2026-08-14T16:53:10Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-14T16:53:57Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/31821376161/job/94835266246",
+      "name": "deploy-cloudflare",
+      "started_at": "2026-08-14T16:53:07Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-14T16:53:54Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/31821376161/job/94835266227",
+      "name": "docker",
+      "started_at": "2026-08-14T16:53:06Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-14T16:54:10Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/31821376161/job/94835266140",
+      "name": "deploy-github-pages",
+      "started_at": "2026-08-14T16:53:08Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-14T16:53:07Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/31821375781/job/94835158349",
+      "name": "build",
+      "started_at": "2026-08-14T16:52:42Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-14T16:52:38Z",
+      "conclusion": "skipped",
+      "html_url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/31821376114/job/94835156087",
+      "name": "release",
+      "started_at": "2026-08-14T16:52:38Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-14T16:53:11Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/31821376242/job/94835155836",
+      "name": "ci",
+      "started_at": "2026-08-14T16:52:40Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-14T16:53:04Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/31821376161/job/94835155608",
+      "name": "build-site",
+      "started_at": "2026-08-14T16:52:40Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-14T16:53:18Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/a-i-chat--exporter/actions/runs/31821376123/job/94835155270",
+      "name": "check",
+      "started_at": "2026-08-14T16:52:40Z",
+      "status": "completed"
+    }
+  ],
+  "limitations": [
+    "Read-only metadata observation, not execution or re-execution of product tests.",
+    "No runtime health, customer adoption or commercial outcome claim.",
+    "A passing hosted check is preserved as evidence to inspect, not relabelled as a failed test.",
+    "No workflow dispatch, repository change, account effect or spend was initiated."
+  ],
+  "next_action": "Inspect the repository-owned predicate and exact-head hosted execution evidence, or reproduce it on an admitted host, then append a new dated receipt. Preserve this observation."
+}
