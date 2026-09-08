@@ -123,11 +123,17 @@ class Wire:
                     raise ProtocolError("unexpected RPC response or server request")
         else:
             headers = {
+                **self.server.get("headers", {}),
                 "Content-Type": "application/json",
                 "Accept": "application/json, text/event-stream",
                 "MCP-Protocol-Version": self.version,
                 "Mcp-Method": method,
             }
+            for name, reference in self.server.get("env_http_headers", {}).items():
+                value = os.environ.get(reference)
+                if not value:
+                    raise AuthenticationRequired("missing credential reference")
+                headers[name] = value
             if "name" in params:
                 headers["Mcp-Name"] = params["name"]
             if self.session:
@@ -161,6 +167,9 @@ class Wire:
                                 break
                     else:
                         raw = stream.read(LIMIT + 1)
+                        self.bytes_read += len(raw)
+                        if self.bytes_read > LIMIT:
+                            raise ProtocolError("output ceiling")
                     if len(raw) > LIMIT:
                         raise ProtocolError("output ceiling")
                     response = json.loads(raw)
@@ -192,7 +201,9 @@ class Wire:
                 )
                 members = [tuple(map(int, line.split())) for line in snapshot.stdout.splitlines()]
                 owned = [uid for pid, pgid, uid in members if pgid == self.process.pid]
-                if any(uid != os.getuid() for uid in owned):
+                if owned:
+                    # Once our leader has exited, a reused PGID cannot establish custody from
+                    # UID equality alone. Never signal an unproven surviving/reused group.
                     self.cleanup = "unmeasured"
                     return
                 signal_needed = bool(owned)
@@ -216,7 +227,7 @@ class Wire:
             stream.close()
 
 
-def verify(server, timeout=15, expected=None, version="2025-11-25"):
+def verify(server, timeout=15, expected=None, version="2025-11-25", safe_calls=None):
     """A wall deadline also bounds HTTP peers trickling bytes without finishing a line."""
     if threading.current_thread() is not threading.main_thread() or signal.getitimer(signal.ITIMER_REAL)[0]:
         return {
@@ -234,14 +245,16 @@ def verify(server, timeout=15, expected=None, version="2025-11-25"):
     # HTTP peers while leaving cleanup a distinct, bounded two-second allowance.
     signal.setitimer(signal.ITIMER_REAL, timeout + 1)
     try:
-        return _verify(server, timeout, expected, version)
+        return _verify(server, timeout, expected, version, safe_calls)
     finally:
         signal.setitimer(signal.ITIMER_REAL, 0)
         signal.signal(signal.SIGALRM, previous)
 
 
-def _verify(server, timeout=15, expected=None, version="2025-11-25"):
-    dimensions = dict.fromkeys(("transport", "protocol", "authentication", "capabilities", "cleanup"), "unmeasured")
+def _verify(server, timeout=15, expected=None, version="2025-11-25", safe_calls=None):
+    dimensions = dict.fromkeys(
+        ("transport", "protocol", "authentication", "capabilities", "functional", "cleanup"), "unmeasured"
+    )
     report = {
         "dimensions": dimensions,
         "server_version": None,
@@ -291,9 +304,9 @@ def _verify(server, timeout=15, expected=None, version="2025-11-25"):
                     raise ProtocolError("invalid capability list")
                 names.update(r[key] for r in rows)
                 cursor = result.get("nextCursor")
-                if not cursor:
+                if cursor is None:
                     break
-                if not isinstance(cursor, str) or cursor in cursors or len(cursors) >= 100:
+                if not isinstance(cursor, str) or not cursor or cursor in cursors or len(cursors) >= 100:
                     raise ProtocolError("invalid pagination")
                 cursors.add(cursor)
                 params = {"cursor": cursor}
@@ -301,6 +314,33 @@ def _verify(server, timeout=15, expected=None, version="2025-11-25"):
             missing.extend(set((expected or {}).get(kind, [])) - names)
         report["missing_capabilities"] = len(missing)
         dimensions["capabilities"] = "fail" if missing else ("pass" if expected else "unmeasured")
+        if safe_calls is not None:
+            if not isinstance(safe_calls, list) or len(safe_calls) > 10:
+                raise ProtocolError("invalid safe-call contract")
+            # Validate the entire owner-declared batch before making any functional call.
+            for call in safe_calls:
+                if (
+                    not isinstance(call, dict)
+                    or call.get("read_only") is not True
+                    or call.get("method") not in ("tools/call", "resources/read", "prompts/get")
+                    or not isinstance(call.get("params"), dict)
+                ):
+                    raise ProtocolError("functional call lacks read-only owner contract")
+            dimensions["functional"] = "not_applicable" if not safe_calls else "pass"
+            report["functional_calls"] = {"attempted": 0, "passed": 0}
+            for call in safe_calls:
+                report["functional_calls"]["attempted"] += 1
+                result = wire.exchange(call["method"], call["params"])
+                if result.get("isError") is True:
+                    dimensions["functional"] = "fail"
+                    break
+                expected_field = {"tools/call": "content", "resources/read": "contents", "prompts/get": "messages"}[
+                    call["method"]
+                ]
+                if not isinstance(result.get(expected_field), list):
+                    dimensions["functional"] = "fail"
+                    raise ProtocolError("invalid functional result")
+                report["functional_calls"]["passed"] += 1
     except AuthenticationRequired:
         dimensions["authentication"] = "required"
         report["reason"] = "authentication_required"

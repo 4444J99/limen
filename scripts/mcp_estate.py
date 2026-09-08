@@ -10,9 +10,11 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
 import subprocess
+import sys
 import time
 import tomllib
 
@@ -26,6 +28,7 @@ DIMENSIONS = (
     "protocol",
     "authentication",
     "capabilities",
+    "functional",
     "startup_ui",
     "explicit_ui",
     "isolation",
@@ -105,15 +108,36 @@ def load_policy(path):
 def normalize(spec):
     command = spec.get("command")
     url = spec.get("url") or spec.get("serverUrl") or spec.get("httpUrl")
+    args = spec.get("args", [])
+    invalid = not isinstance(args, list) or any(not isinstance(arg, str) for arg in args)
+    if isinstance(command, list):
+        invalid = invalid or not command or any(not isinstance(arg, str) for arg in command)
+        if not invalid:
+            command, args = command[0], command[1:] + args
+    invalid = (
+        invalid
+        or (command is not None and not isinstance(command, str))
+        or (url is not None and not isinstance(url, str))
+    )
+    for field in ("env", "headers", "http_headers", "env_http_headers"):
+        value = spec.get(field, {})
+        invalid = (
+            invalid
+            or not isinstance(value, dict)
+            or any(not isinstance(k, str) or not isinstance(v, str) for k, v in value.items())
+        )
     return {
         "command": command,
-        "args": spec.get("args", []),
+        "args": args,
         "url": url,
         "transport": "stdio" if command else ("http" if url else "unsupported"),
         "env": spec.get("env", {}),
         "cwd": spec.get("cwd"),
         "bearer_token_env_var": spec.get("bearer_token_env_var"),
+        "headers": spec.get("headers", spec.get("http_headers", {})),
+        "env_http_headers": spec.get("env_http_headers", {}),
         "disabled": spec.get("disabled") is True or spec.get("enabled") is False,
+        "invalid": bool(invalid),
     }
 
 
@@ -143,6 +167,9 @@ def inventory(policy, config_paths=None, project=None):
         }
         if key in records:
             issues.append({"client": client, "reason": "ambiguous_registration", "owner": "domus-genoma"})
+            entry["provenance"] = records[key].get("provenance", []) + [
+                {k: records[key][k] for k in ("source", "fingerprint", "active")}
+            ]
         records[key] = entry
 
     for client, path in paths:
@@ -173,12 +200,21 @@ def inventory(policy, config_paths=None, project=None):
             manifests = [r / ".mcp.json" for r in roots if (r / ".mcp.json").exists()]
             if len(roots) == 1 and not manifests:
                 try:
-                    metadata, _ = read_config(roots[0] / ".claude-plugin/plugin.json")
+                    metadata_paths = [roots[0] / kind / "plugin.json" for kind in (".codex-plugin", ".claude-plugin")]
+                    metadata_path = next((p for p in metadata_paths if p.is_file()), metadata_paths[0])
+                    metadata, _ = read_config(metadata_path)
                     if "mcpServers" not in metadata:
                         continue  # installed plugin explicitly has no MCP entry point
                     if isinstance(metadata["mcpServers"], dict):
                         for name, spec in metadata["mcpServers"].items():
-                            add(client, name, spec, "plugin-inline", digest, plugin)
+                            add(
+                                client,
+                                name,
+                                {**spec, "enabled": settings.get("enabled", True)},
+                                "plugin-inline",
+                                fingerprint([digest, metadata]),
+                                plugin,
+                            )
                         continue
                 except (OSError, ValueError):
                     pass
@@ -246,6 +282,65 @@ def inventory(policy, config_paths=None, project=None):
                         add(client, name, spec, "project-override", digest, "project")
                 except (ValueError, OSError):
                     issues.append({"client": client, "reason": "project_config_unreadable", "owner": "domus-genoma"})
+    if config_paths is None:
+        cache = active_config_path("codex").parent / "plugins/cache"
+        for root in sorted(cache.glob("*/*/*")):
+            if not root.is_dir():
+                continue
+            manifests = [root / kind / "plugin.json" for kind in (".codex-plugin", ".claude-plugin")]
+            metadata_path = next((p for p in manifests if p.is_file()), None)
+            if metadata_path is None:
+                continue
+            try:
+                metadata, digest = read_config(metadata_path)
+                plugin_route = root.parent.name + "@" + root.parent.parent.name
+                for field in ("mcpServers", "apps"):
+                    declaration = metadata.get(field)
+                    if declaration is None:
+                        continue
+                    if isinstance(declaration, str):
+                        declared_path = (root / declaration).resolve()
+                        if not declared_path.is_relative_to(root.resolve()):
+                            raise ValueError("plugin reference escapes installed root")
+                        declaration, manifest_digest = read_config(declared_path)
+                    elif isinstance(declaration, dict):
+                        manifest_digest = fingerprint(declaration)
+                    else:
+                        raise ValueError("unsupported plugin declaration")
+                    table = (
+                        declaration.get("apps", declaration)
+                        if field == "apps"
+                        else server_map(declaration) or declaration
+                    )
+                    if not isinstance(table, dict):
+                        raise ValueError("invalid plugin declaration table")
+                    for name, spec in table.items():
+                        if not isinstance(spec, dict):
+                            raise ValueError("invalid plugin entry")
+                        route = plugin_route if field == "mcpServers" else "hosted:" + plugin_route
+                        key = ("codex", name, route)
+                        if key in records:
+                            records[key].setdefault("provenance", []).append(
+                                {
+                                    "source": "plugin-cache-candidate",
+                                    "active": False,
+                                    "fingerprint": fingerprint([digest, manifest_digest]),
+                                }
+                            )
+                            continue
+                        add(
+                            "codex",
+                            name,
+                            spec if field == "mcpServers" else {},
+                            "plugin-cache-candidate",
+                            fingerprint([digest, manifest_digest]),
+                            route,
+                            False,
+                        )
+            except (OSError, ValueError, TypeError):
+                issues.append(
+                    {"client": "codex", "reason": "cached_plugin_manifest_unmeasured", "owner": "domus-genoma"}
+                )
     for desired in policy.get("registrations", []):
         key = (desired["client"], desired["name"], desired.get("route", "standalone"))
         if key not in records:
@@ -270,11 +365,64 @@ def inventory(policy, config_paths=None, project=None):
     return list(records.values()), issues, stale, configs
 
 
+def gateway_reconciliation():
+    """Read ianva's owning loader and materialized MCPHub config without starting either."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ianva/src"))
+    try:
+        from ianva.config import load_config
+        from ianva import paths as gateway_paths
+        from ianva.upstreams import load_upstreams, _iter_raw
+
+        config = load_config()
+        expected = load_upstreams(
+            Path(config.registry) if config.registry else None,
+            Path(config.extra) if config.extra else None,
+            include_disabled=True,
+        )
+        materialized, digest = read_config(gateway_paths.MCPHUB_SETTINGS)
+        actual = _iter_raw(materialized)
+        desired_names = {upstream.name for upstream in expected}
+        rows = []
+        for name in sorted(desired_names | set(actual)):
+            desired = next((upstream for upstream in expected if upstream.name == name), None)
+            observed = actual.get(name)
+            rows.append(
+                {
+                    "name": name,
+                    "desired_state": "enabled"
+                    if desired and desired.enabled
+                    else "disabled"
+                    if desired
+                    else "undeclared",
+                    "observed_state": "missing"
+                    if observed is None
+                    else "disabled"
+                    if normalize(observed)["disabled"]
+                    else "enabled",
+                    "capabilities": "unmeasured",
+                    "client_routes": "unmeasured",
+                }
+            )
+        return {
+            "owner": "ianva",
+            "state": "configuration_observed",
+            "fingerprint": digest,
+            "expected_upstreams": len(expected),
+            "materialized_upstreams": len(actual),
+            "upstreams": rows,
+        }
+    except (OSError, ValueError, ImportError, TypeError):
+        return {"owner": "ianva", "state": "unmeasured"}
+    finally:
+        sys.path.pop(0)
+
+
 def summarize(rows, issues):
     counts = dict.fromkeys(DISTANCES, 0)
     for row in rows:
         d = row["dimensions"]
         counts["missing_capabilities"] += row.get("missing_capabilities", 0)
+        counts["missing_capabilities"] += d.get("functional") == "fail"
         counts["ownership_conflicts"] += d["ownership"] == "fail"
         counts["unintended_launches"] += d["startup_ui"] == "fail"
         counts["protocol_failures"] += d["protocol"] == "fail"
@@ -292,17 +440,28 @@ def summarize(rows, issues):
     return counts, code
 
 
-def apply_client_receipts(rows, receipts, policy, now=None):
+def apply_client_receipts(rows, receipts, policy, now=None, observations=None):
     """Accept only exact-dependency, fresh per-registration canaries; retain unaffected receipts."""
     now = time.time() if now is None else now
     accepted = set()
+    observations = observations or {}
     for row in rows:
         key = (row["client"], row["name"], row["route"])
         contract = policy["services"].get(row["service"], {})
+        witness = observations.get(key, {})
         for receipt in receipts:
+            if not isinstance(receipt, dict):
+                continue
             if (receipt.get("client"), receipt.get("name"), receipt.get("route")) != key:
                 continue
-            age = now - receipt.get("observed_at", 0)
+            observed_at = receipt.get("observed_at")
+            if (
+                isinstance(observed_at, bool)
+                or not isinstance(observed_at, (int, float))
+                or not math.isfinite(observed_at)
+            ):
+                continue
+            age = now - observed_at
             ttl = policy.get("defaults", {}).get("evidence_ttl_seconds", 3600)
             if (
                 not 0 <= age <= ttl
@@ -311,13 +470,21 @@ def apply_client_receipts(rows, receipts, policy, now=None):
                 or not receipt.get("client_version")
                 or not receipt.get("server_version")
                 or receipt.get("schema_version") != "limen.mcp_client_canary.v1"
+                or witness.get("receipt_fingerprint") != fingerprint(receipt)
+                or not witness.get("dependency_fingerprint")
+                or witness.get("dependency_fingerprint") != receipt.get("dependency_fingerprint")
+                or witness.get("client_version") != receipt.get("client_version")
+                or witness.get("server_version") != receipt.get("server_version")
             ):
                 continue
             dimensions = receipt.get("dimensions", {})
+            if not isinstance(dimensions, dict):
+                continue
             for dimension in ("startup_ui", "explicit_ui", "isolation", "client_route"):
                 if dimensions.get(dimension) in ("pass", "fail", "not_applicable"):
                     row["dimensions"][dimension] = dimensions[dimension]
             row["client_version"] = receipt["client_version"]
+            row["dependency_fingerprint"] = witness["dependency_fingerprint"]
             row["evidence_age_seconds"] = age
             accepted.add(key[0])
     return accepted
@@ -336,7 +503,7 @@ def measure(policy, records, issues, inventory_only=False, service=None, timeout
         spec, owner = record["spec"], record["policy"]
         desired = record.get("desired", {}).get("availability", (owner or {}).get("availability", "unknown"))
         d = dict.fromkeys(DIMENSIONS, "unmeasured")
-        d["configuration"] = "pass" if spec else "fail"
+        d["configuration"] = "pass" if spec and not spec["invalid"] else "fail"
         d["ownership"] = "pass" if owner else "unmeasured"
         row = {k: record[k] for k in ("client", "name", "route", "service", "source", "fingerprint")}
         row.update(
@@ -344,17 +511,23 @@ def measure(policy, records, issues, inventory_only=False, service=None, timeout
             observed_state="missing" if not spec else ("disabled" if spec["disabled"] else "enabled"),
             dimensions=d,
             owner=(owner or {}).get("source_owner", "domus-genoma"),
-            evidence_age_seconds=0,
+            evidence_age_seconds=None,
             repair_outcome="not_attempted",
+            provenance=record.get("provenance", []) + [{k: record[k] for k in ("source", "fingerprint", "active")}],
         )
         if len(enabled_routes.get((record["client"], record["service"]), [])) > 1:
             d["ownership"] = "fail"
-        if desired == "disabled" and spec and spec["disabled"]:
+        if spec and spec["invalid"]:
+            row["reason"] = "invalid_registration"
+        elif desired == "disabled" and spec and spec["disabled"]:
             d.update({k: "not_applicable" for k in DIMENSIONS if k not in ("configuration", "ownership")})
         elif not spec or spec["disabled"]:
             row["missing_capabilities"] = max(
                 1, sum(len(v) for v in (owner or {}).get("verification", {}).get("expected", {}).values())
             )
+        elif not record["active"]:
+            row["observed_state"] = "inactive_or_activation_unmeasured"
+            row["reason"] = "outside_active_client_scope"
         elif not inventory_only and owner and time.monotonic() < deadline:
             contract = owner.get("verification", {})
             # Unknown launchers can pop UI or initiate auth. They remain counted, never launched speculatively.
@@ -368,6 +541,7 @@ def measure(policy, records, issues, inventory_only=False, service=None, timeout
                     min(timeout, deadline - time.monotonic()),
                     contract.get("expected"),
                     contract.get("protocol", "unsupported"),
+                    safe_calls=contract.get("safe_calls"),
                 )
                 d.update(result.pop("dimensions"))
                 # Only counts leave the wire boundary; resource names can contain private paths.
@@ -379,9 +553,12 @@ def measure(policy, records, issues, inventory_only=False, service=None, timeout
     counts, code = summarize(rows, issues)
     return {
         "schema_version": "limen.mcp_estate.v1",
-        "exit": code,
+        "exit": 77 if service else code,
         "distance": counts,
-        "denominator": {"services": len({r["service"] for r in records}), "registrations": len(records)},
+        "denominator": {
+            "services": len(set(policy["services"]) | {r["service"] for r in records}),
+            "registrations": len(records),
+        },
         "scope": "filtered" if service else "estate",
         "measured_registrations": len(rows),
         "unmeasured_surfaces": len(issues),
@@ -434,19 +611,30 @@ def main(argv=None):
                     text=True,
                 )
                 repair = json.loads(process.stdout)
-                payload["repair"] = {"outcome": repair.get("outcome", "unavailable"), "owner": "domus-genoma"}
-                if repair.get("outcome") == "verified":
-                    affected = [r for r in records if r["service"] == "serena"]
+                outcome = repair.get("outcome", "unavailable")
+                if process.returncode != 0 and outcome in ("verified", "unchanged"):
+                    outcome = "unavailable"
+                payload["repair"] = {"outcome": outcome, "owner": "domus-genoma"}
+                if outcome == "verified":
+                    fresh_records, fresh_issues, _, _ = inventory(policy, project=args.project)
+                    issues.extend(fresh_issues)
+                    affected = [r for r in fresh_records if r["service"] == "serena"]
                     checked = measure(policy, affected, [], False, None, args.timeout, args.total_timeout)
                     replacements = {(r["client"], r["name"], r["route"]): r for r in checked["servers"]}
                     payload["servers"] = [
                         replacements.get((r["client"], r["name"], r["route"]), r) for r in payload["servers"]
                     ]
+                for row in payload["servers"]:
+                    if row["service"] == "serena":
+                        row["repair_outcome"] = outcome
             except (OSError, ValueError, subprocess.TimeoutExpired):
                 payload["repair"] = {"outcome": "unavailable", "owner": "domus-genoma"}
         payload["distance"], payload["exit"] = summarize(payload["servers"], issues)
+        if args.service:
+            payload["exit"] = 77
         payload["unmeasured_surfaces"] = len(issues)
         payload.update(policy_fingerprint=digest, stale_configs=stale, configurations=configs)
+        payload["gateway"] = gateway_reconciliation()
     except (ValueError, OSError, KeyError, TypeError):
         payload = {"schema_version": "limen.mcp_estate.v1", "exit": 77, "reason": "policy_or_inventory_unavailable"}
     print(
