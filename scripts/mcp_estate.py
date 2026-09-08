@@ -488,53 +488,41 @@ def inventory(policy, config_paths=None, project=None, client_environments=None)
 
 
 def gateway_reconciliation():
-    """Read ianva's owning loader and materialized MCPHub config without starting either."""
+    """Read and validate every owning input before comparing materialized settings."""
     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ianva/src"))
     try:
-        from ianva.config import load_config
+        from ianva.config import load_config, _config_files
         from ianva import paths as gateway_paths
-        from ianva.upstreams import load_upstreams, _iter_raw
+        from ianva.upstreams import load_upstreams
+        from mcp_gateway_evidence import reconcile, server_table
 
+        sources = []
+        for path in _config_files():
+            if path.exists():
+                _, source_digest = read_config(path)
+                sources.append(source_digest)
         config = load_config()
-        expected = load_upstreams(
-            Path(config.registry) if config.registry else None,
-            Path(config.extra) if config.extra else None,
-            include_disabled=True,
-        )
-        materialized, digest = read_config(gateway_paths.MCPHUB_SETTINGS)
-        actual = _iter_raw(materialized)
-        desired_names = {upstream.name for upstream in expected}
-        rows = []
-        for name in sorted(desired_names | set(actual)):
-            desired = next((upstream for upstream in expected if upstream.name == name), None)
-            observed = actual.get(name)
-            rows.append(
-                {
-                    "name": name,
-                    "desired_state": "enabled"
-                    if desired and desired.enabled
-                    else "disabled"
-                    if desired
-                    else "undeclared",
-                    "observed_state": "missing"
-                    if observed is None
-                    else "disabled"
-                    if normalize(observed)["disabled"]
-                    else "enabled",
-                    "capabilities": "unmeasured",
-                    "client_routes": "unmeasured",
-                }
-            )
-        return {
-            "owner": "ianva",
-            "state": "configuration_observed",
-            "fingerprint": digest,
-            "expected_upstreams": len(expected),
-            "materialized_upstreams": len(actual),
-            "upstreams": rows,
-        }
-    except (OSError, ValueError, ImportError, TypeError):
-        return {"owner": "ianva", "state": "unmeasured"}
+        registry = Path(config.registry) if config.registry else gateway_paths.DEFAULT_REGISTRY
+        extra = Path(config.extra) if config.extra else gateway_paths.UPSTREAMS_JSON
+        for path in (registry, extra):
+            if not path.exists():
+                if path == registry:
+                    raise ValueError("gateway registry missing")
+                continue
+            if path.stat().st_size > 16 * 1024 * 1024:
+                raise ValueError("gateway registry ceiling")
+            raw = path.read_bytes()
+            if len(raw) > 16 * 1024 * 1024:
+                raise ValueError("gateway registry ceiling")
+            server_table(json.loads(raw, object_pairs_hook=unique_fields))
+            sources.append(fingerprint(raw))
+        expected = load_upstreams(registry, extra, include_disabled=True)
+        materialized, _ = read_config(gateway_paths.MCPHUB_SETTINGS)
+        result = reconcile(expected, materialized)
+        result["source_fingerprint"] = fingerprint(sources)
+        return result
+    except (OSError, ValueError, ImportError, TypeError, AttributeError):
+        return {"owner": "ianva", "state": "unmeasured", "cutover_eligible": False}
     finally:
         sys.path.pop(0)
 
@@ -625,13 +613,16 @@ def apply_client_receipts(rows, receipts, policy, now=None, observations=None):
 def native_receipts(rows, policy, observation):
     """Bind direct collector output to one unambiguous registration and its policy."""
     receipts, witnesses = [], {}
-    if observation.get("schema_version") != "limen.native_observation.v1" or observation.get("client") != "codex":
+    if observation.get("schema_version") != "limen.native_observation.v1" or observation.get("client") not in (
+        "codex",
+        "opencode",
+    ):
         return receipts, witnesses
     for server in observation.get("servers", []):
         matches = [
             r
             for r in rows
-            if r["client"] == "codex"
+            if r["client"] == observation["client"]
             and r["name"] == server["name"]
             and ((r["route"] == "standalone" and not server.get("plugin_id")) or r["route"] == server.get("plugin_id"))
         ]
@@ -757,6 +748,7 @@ def main(argv=None):
     parser.add_argument(
         "--collect-codex", action="store_true", help="fresh admitted native catalog and route observation"
     )
+    parser.add_argument("--collect-client", choices=("codex", "opencode"), action="append", default=[])
     parser.add_argument("--broker-run", help="active broker execution run owning the native observation")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
@@ -769,8 +761,11 @@ def main(argv=None):
         # receipt is required; absence is visible even on a machine without that client installed.
         payload = measure(policy, records, issues, args.inventory_only, args.service, args.timeout, args.total_timeout)
         accepted = set()
-        if args.collect_codex:
+        collectors = set(args.collect_client) | ({"codex"} if args.collect_codex else set())
+        collection_deadline = time.monotonic() + args.total_timeout
+        for client in sorted(collectors):
             from mcp_native_observer import collect_codex, ProtocolError
+            from mcp_opencode_observer import collect_opencode
             from limen.host_admission import AdmissionDenied
             from limen.conduct.broker import ConductError
 
@@ -781,17 +776,21 @@ def main(argv=None):
 
                 # Listing status can start every configured MCP. Require every active
                 # declaration to have an owner-declared quiet probe before doing so.
-                codex_records = [
+                client_records = [
                     r
                     for r in records
-                    if r["client"] == "codex" and r["active"] and r["spec"] and not r["spec"]["disabled"]
+                    if r["client"] == client and r["active"] and r["spec"] and not r["spec"]["disabled"]
                 ]
-                quiet = bool(codex_records) and all(quiet_probe_allowed(r) for r in codex_records)
-                observation = collect_codex(
+                quiet = bool(client_records) and all(quiet_probe_allowed(r) for r in client_records)
+                remaining = min(collection_deadline - time.monotonic(), 120)
+                if remaining <= 0:
+                    raise ValueError("native collection deadline exhausted")
+                collector = {"codex": collect_codex, "opencode": collect_opencode}[client]
+                observation = collector(
                     client_from_env(),
                     args.broker_run,
                     args.project or Path.cwd(),
-                    timeout=min(args.total_timeout, 120),
+                    timeout=remaining,
                     include_mcp=quiet and not args.inventory_only,
                 )
                 fresh_records, _, _, _ = inventory(policy, project=args.project)
@@ -799,10 +798,11 @@ def main(argv=None):
                     raise ValueError("configuration changed during native collection")
                 receipts, witnesses = native_receipts(payload["servers"], policy, observation)
                 accepted |= apply_client_receipts(payload["servers"], receipts, policy, observations=witnesses)
-                payload["native_observation"] = {k: v for k, v in observation.items() if k != "servers"}
-                payload["native_observation"]["observed_servers"] = len(observation["servers"])
+                summary = {k: v for k, v in observation.items() if k != "servers"}
+                summary["observed_servers"] = len(observation["servers"])
+                payload.setdefault("native_observations", []).append(summary)
             except (ValueError, OSError, ProtocolError, ConductError, AdmissionDenied, subprocess.SubprocessError):
-                issues.append({"client": "codex", "reason": "native_collection_unavailable", "owner": "limen"})
+                issues.append({"client": client, "reason": "native_collection_unavailable", "owner": "limen"})
         if args.receipts:
             try:
                 receipts = json.loads(args.receipts.read_text())
@@ -842,12 +842,20 @@ def main(argv=None):
                         row["repair_outcome"] = outcome
             except (OSError, ValueError, subprocess.TimeoutExpired):
                 payload["repair"] = {"outcome": "unavailable", "owner": "domus-genoma"}
+        payload["gateway"] = gateway_reconciliation()
+        gateway = payload["gateway"]
+        if "ianva" in policy.get("required_client_adapters", []):
+            if gateway.get("state") != "configuration_observed":
+                issues.append({"client": "ianva", "reason": "gateway_configuration_unmeasured", "owner": "ianva"})
+            elif gateway.get("configuration_mismatches", 0):
+                issues.append({"client": "ianva", "reason": "gateway_configuration_mismatch", "owner": "ianva"})
+            if not gateway.get("cutover_eligible"):
+                issues.append({"client": "ianva", "reason": "gateway_equivalence_required", "owner": "ianva"})
         payload["distance"], payload["exit"] = summarize(payload["servers"], issues)
         if args.service:
             payload["exit"] = 77
         payload["unmeasured_surfaces"] = len(issues)
         payload.update(policy_fingerprint=digest, stale_configs=stale, configurations=configs)
-        payload["gateway"] = gateway_reconciliation()
     except (ValueError, OSError, KeyError, TypeError):
         payload = {"schema_version": "limen.mcp_estate.v1", "exit": 77, "reason": "policy_or_inventory_unavailable"}
     print(
