@@ -8,6 +8,10 @@ function routineGeneration(task) {
 
 export function inventoryAdmissionDenied(prior, candidate) {
   return (prior == null || prior.status === "open")
-    && candidate.status === "dispatched"
+    && ["dispatched", "in_progress"].includes(candidate.status)
     && (routineGeneration(prior) || routineGeneration(candidate));
+}
+
+export function inventoryClassificationChanged(prior, candidate) {
+  return routineGeneration(prior) && !routineGeneration(candidate);
 }

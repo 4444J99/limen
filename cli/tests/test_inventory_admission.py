@@ -143,7 +143,8 @@ def test_missing_adapter_and_caller_override_flags_cannot_admit(task):
         "inventory_override": True,
         "inventory_count": 0,
     }
-    with pytest.raises(InventoryAdmissionError, match="adapter_unavailable"):
+    reason = "classification_change_unauthorized" if task["id"] == "old" else "adapter_unavailable"
+    with pytest.raises(InventoryAdmissionError, match=reason):
         require_inventory_admission(task, desired)
 
 

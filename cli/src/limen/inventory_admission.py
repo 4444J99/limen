@@ -32,6 +32,12 @@ def routine_inventory_growth(task: Mapping[str, Any]) -> bool:
     )
 
 
+def require_inventory_classification(prior: Mapping[str, Any], desired: Mapping[str, Any]) -> None:
+    """Keep established routine classification until an authorized migration exists."""
+    if routine_inventory_growth(prior) and not routine_inventory_growth(desired):
+        raise InventoryAdmissionError("inventory_classification_change_unauthorized")
+
+
 def _integer(value: Any, reason: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise InventoryAdmissionError(reason)
@@ -162,7 +168,8 @@ def require_inventory_admission(
     labels, supplied receipt fields and environment variables cannot override.
     Outstanding growth reservations must be counted in the same transaction.
     """
-    if prior.get("status") != "open" or desired.get("status") != "dispatched":
+    require_inventory_classification(prior, desired)
+    if prior.get("status") != "open" or desired.get("status") not in {"dispatched", "in_progress"}:
         return
     if not (routine_inventory_growth(prior) or routine_inventory_growth(desired)):
         return
