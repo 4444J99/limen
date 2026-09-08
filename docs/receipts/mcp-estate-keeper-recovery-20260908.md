@@ -121,3 +121,36 @@ Integrated the already-landed Danse instruction retirement from main (#2563); th
 Twelve of thirteen cheap scoped gates passed in one batch; the sole formatting failure was corrected and only that shard rerun, now passing. The private-vault gate passed 90 tests; the focused diurnal/vault batch passed 102 tests before a fixture NameError, which was corrected and its sole failed test passed. No full CLI or deployment pass is claimed.
 
 Host admission at 18:43:54 UTC denied heavy work with `swap-fraction,vitals-shed`: swap fraction 0.4595715332, no host leases, VITALS shed. Owner: this prerequisite PR. Next command after changed host conditions: admitted scoped heavy wave for this exact tree, followed by exact-head landing and Worker deployment; preserve the green cheap receipts.
+
+## Continued delivery and safe local verification
+
+The September 8 correction against stopping at an intermediate receipt remains binding: this
+prerequisite continues through admitted verification, exact-head landing, captured merged Worker
+deployment, runtime identity, and two consecutive legitimate canonical task updates. A pushed PR,
+released lease, or unavailable heavy wave is not completion while independent source work remains.
+
+The isolated keeper checkout now carries exactly the broker-isolation fixture and regression test
+from Limen #2576 (`47131d901f49f7fd043ff48770ace4a85084f282`). This is required before its full
+CLI suite: the hermetic shell runner scrubs all caller-supplied `LIMEN_*` variables, and the old
+fixture allowed dispatch to reread the operator's environment file. Each test now selects a
+temporary keeper, binds both environment-file paths to an empty fixture, and refuses real broker
+transport before any network request. The unchanged production authentication path is preserved.
+The focused isolation regression passed **3 tests** through the actual hermetic shell runner.
+
+At 23:31:55 UTC the host had no heavy leases, VITALS was `ok`, and swap had declined to 30.95%;
+the declared 25% admission limit still denied heavy execution. No threshold or peer process was
+changed. The existing publication ref independently returned HTTP 404; it was not restored by an
+agent. That is the production condition the deployed keeper must recover itself.
+
+The authenticated read-only audit observed 3,186 retained canonical tasks, zero dispatch entries
+bound to `codex-serial-reserve`, no keeper task runs for the `ACK-CUSTODY` or `NEXT` fixture IDs,
+and the prior test-created session with zero active leases. Its registration and last heartbeat
+remain 22:19:44.611Z and 22:23:15.303Z. These observations confirm an unintended session mutation
+and no matching mutation in the retained task projection; they do not prove absence from earlier
+history. The deployed API exposes no session event-history endpoint. The source audit and the
+earlier #2576 receipt retain that explicit limitation instead of claiming a complete negative audit.
+
+Runtime identity before deployment remains
+`6f9626e95eec4aaf92e359186c01b1013e76fde6`, Cloudflare version
+`c15efaf3-3595-4e01-bf70-d41c2d7da9c5`. Deployment uses only the cached repository secret via
+`deploy-worker.yml`; no interactive login or credential rehydration is part of that rail.
