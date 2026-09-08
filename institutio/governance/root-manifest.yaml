@@ -36,6 +36,8 @@ sanctioned:
   - {path: README.md, kind: doc, owner: docs, why: "front door"}
   - {path: SCHEMA.md, kind: doc, owner: docs, why: "data-shape reference"}
   - {path: START-HERE.md, kind: doc, owner: docs, why: "orientation index"}
+  - {path: TEST_INFRA.md, kind: doc, owner: testing, why: "test infrastructure readiness and execution notes"}
+  - {path: TEST_READY.md, kind: doc, owner: testing, why: "test readiness receipt and launch context"}
   - {path: apps, kind: dir, owner: apps, why: "standalone app surfaces"}
   - {path: censor, kind: dir, owner: censor, why: "insight/correction lineage store"}
   - {path: cli, kind: dir, owner: cli, why: "the limen CLI package"}
@@ -79,6 +81,7 @@ sanctioned:
   - {path: state, kind: dir, owner: governance, why: "live gate input (aug1-view.py / AUG1-10K-GATE)"}
   - {path: studium, kind: dir, owner: studium, why: "first-class component with its own scripts/studium-* family"}
   - {path: tasks.yaml, kind: registry, owner: tabularius, why: "the board projection (TABVLARIVS keeper)"}
+  - {path: tests, kind: dir, owner: testing, why: "repository-level E2E and ecosystem verification suite"}
   - {path: value-discovery-dispositions.json, kind: registry, owner: governance, why: "value-discovery dispositions (parameters.yaml consumes)"}
   - {path: value-repos.json, kind: registry, owner: observation, why: "value-repo census (65 referents)"}
   - {path: web, kind: dir, owner: web, why: "worker + api + dashboard"}
