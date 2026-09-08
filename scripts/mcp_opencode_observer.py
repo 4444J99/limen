@@ -119,6 +119,8 @@ class NativeHTTP:
 
 
 def collect_opencode(broker, run_id, project, timeout=45, include_mcp=False):
+    from mcp_estate import native_configuration_index
+
     started = time.time()
     binding = require_live_run(broker, run_id, started)
     if not 0 < timeout <= 120:
@@ -187,6 +189,7 @@ def collect_opencode(broker, run_id, project, timeout=45, include_mcp=False):
         "client_version": version,
         "binary_fingerprint": binary,
         "configuration_fingerprint": digest(config),
+        "effective_configuration": native_configuration_index("opencode", config),
         "native_version_fingerprint": digest(health),
         "native_api_fingerprint": digest(schema),
         "scope_fingerprint": digest(scope),
