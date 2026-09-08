@@ -265,3 +265,16 @@ def test_interrupted_repair_is_not_replayed(tmp_path, monkeypatch):
     monkeypatch.setattr(mod, "_set", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("replayed")))
     mod.run("apply", quiet=True)
     assert mod.LEDGER.read_text() == ledger
+
+
+def test_metadata_modifier_escapes_control_characters_and_preserves_other_fields(tmp_path):
+    import yaml
+
+    mod = _load()
+    skill = tmp_path / "SKILL.md"
+    skill.write_text("---\nname: retained\ndescription: old\nextra: [a, b]\n---\nbody\n")
+    target = {"path": skill, "field": "yaml:description"}
+    assert mod._set(target, "line one\nline two\tend")
+    metadata = yaml.safe_load(skill.read_text().split("---")[1])
+    assert metadata == {"name": "retained", "description": "line one\nline two\tend", "extra": ["a", "b"]}
+    assert skill.read_text().endswith("---\nbody\n")
