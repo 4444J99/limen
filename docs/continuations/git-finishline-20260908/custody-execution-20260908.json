@@ -1,0 +1,22 @@
+{
+  "schema": "limen.recovery_custody_execution.v1",
+  "repository": "4444J99/limen",
+  "checkout_head": "47131d901f49f7fd043ff48770ace4a85084f282",
+  "predicate_sha256": "867ef53bd1842b42ccb43b15c7342f72443ceb6de0070130c069c9eb27895a5d",
+  "command": "python3 docs/continuations/git-finishline-20260908/verify-custody.py --stash-bundle ORIGINAL_PRIVATE_BUNDLE --board-bundle BOARD_PRIVATE_BUNDLE --pr-bundle PR_PRIVATE_BUNDLE",
+  "executed": true,
+  "exit_code": 0,
+  "result": {
+    "status": "PASS",
+    "independently_restored_stashes": 26,
+    "independently_restored_deleted_tips": 9,
+    "independently_restored_original_pr_heads": 9
+  },
+  "archive_manifest_refs": [
+    "stash-custody.json",
+    "branch-custody.json",
+    "pr-custody.json"
+  ],
+  "restore_method": "each archive group unbundled into its own new empty bare repository; no source object alternates; temporary restores automatically removed",
+  "scope": "custody only; no source work applied and no live refs altered"
+}
