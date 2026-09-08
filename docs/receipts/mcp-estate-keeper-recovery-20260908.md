@@ -192,3 +192,21 @@ then the matching package cache supplied the bounded fixture. The full Worker ga
 the complete exact lockfile installation; the primary checkout's fast-uri cache is older and is
 not reused for it. At 23:43:46 UTC the admission reading remained denied on swap fraction 30.61%,
 VITALS `ok`, no heavy lease, and zero measured swap growth.
+
+## Retained session audit interface
+
+The authenticated observer route `GET /api/conduct/sessions/{session_id}/audit` now exposes a
+bounded read-only audit through `HttpConductClient.session_audit`. It links retained conductor,
+initiator, executor and lease identities to redacted event/run/projection metadata and counts
+coalesced heartbeat occurrences. It returns no packets, task context, arbitrary receipt bodies,
+principal records, credential hashes or worktree paths. Output is capped at 250 rows per class;
+truncation is explicit and cannot produce `retained_state_complete: true`.
+
+Absence is limited to retained keeper state. Missing registration witnesses, rejected requests,
+uncommitted requests and earlier HTTP request history remain explicitly `unmeasured`. The latest
+retained projection receipt per run is not a complete historical publication ledger. This route
+makes the prior `codex-serial-reserve` audit executable after exact deployment without pretending
+that old request logs can be reconstructed from state. Query it using the documented broker
+bootstrap and save the redacted JSON beside the live publication receipt. The source audit shard
+passed five Node tests and the changed HTTP client shard passed nine Python tests; authenticated
+route fixtures are included in the required admitted Worker check.
