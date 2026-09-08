@@ -799,6 +799,14 @@ def _reset_local_budget_window(budget: dict[str, Any], timestamp: str) -> None:
     track["per_agent"] = {str(agent): 0 for agent in (budget.get("per_agent") or {})}
 
 
+def _require_reserved_budget_cost(prior: dict[str, Any], desired: dict[str, Any]) -> None:
+    """A reservation keeps the price admitted by its original claim."""
+    if prior.get("budget_cost") == desired.get("budget_cost"):
+        return
+    if {prior.get("status"), desired.get("status")} & {"dispatched", "in_progress"}:
+        raise ValueError(f"task {prior['id']} reserved budget_cost cannot change")
+
+
 def _local_budget_debit(
     board: dict[str, Any], task: dict[str, Any], event: dict[str, Any], patch: dict[str, Any]
 ) -> None:
@@ -1112,6 +1120,7 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             task["dispatch_log"] = history
             if created is not None:
                 task["created"] = created
+            _require_reserved_budget_cost(existing, task)
         require_inventory_admission(existing or {"status": "open"}, task)
         policy = validate_policy_update(existing, task)
         if policy is not None:
@@ -1173,6 +1182,7 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             patch["provider_eligibility"] = policy
         prior_status = str(existing.get("status") or "")
         next_status = str(patch.get("status") or prior_status)
+        _require_reserved_budget_cost(existing, {**existing, **patch})
         if next_status in {"dispatched", "in_progress"}:
             if existing.get("provider_eligibility") is not None or patch.get("provider_eligibility") is not None:
                 raise ValueError(f"task {task_id} provider_eligibility_adapter_unavailable")

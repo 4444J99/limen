@@ -12,6 +12,8 @@ import re
 from datetime import UTC, datetime
 from typing import Any, Mapping
 
+from limen.github_estate_census import _canonical_sha256
+
 
 POLICY_ISSUE = "https://github.com/4444J99/limen/issues/269"
 INVENTORY_CEILING = 250
@@ -42,6 +44,57 @@ def _integer(value: Any, reason: str) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or value < 0:
         raise InventoryAdmissionError(reason)
     return value
+
+
+def _repository_connection_generation(repository: dict[str, Any], expected_generation: str) -> str:
+    """Bind collector connection facts to this repository and census generation.
+
+    This checks consistency within the trusted private observation; the keeper
+    still owns authentication of the observation and the expected generation.
+    """
+    inputs = repository.get("connection_generation_inputs")
+    totals = repository.get("connection_totals")
+    if not isinstance(inputs, dict) or not isinstance(totals, dict):
+        raise InventoryAdmissionError("inventory_repository_generation_invalid")
+    fields = {
+        "source_generation",
+        "repository",
+        "repository_updated_at",
+        "default_sha",
+        "default_check_policy",
+        "required_check_count",
+        "check_total",
+        "open_pr_total",
+        "issue_total",
+        "branch_total",
+    }
+    if (
+        inputs.keys() != fields
+        or inputs.get("source_generation") != expected_generation
+        or inputs.get("repository") != repository.get("name_with_owner")
+        or any(
+            inputs.get(field) != repository.get(field)
+            for field in ("default_sha", "default_check_policy", "required_check_count")
+        )
+    ):
+        raise InventoryAdmissionError("inventory_repository_generation_invalid")
+    for field, kind in (
+        ("open_pr_total", "pull_requests"),
+        ("issue_total", "issues"),
+        ("branch_total", "branches"),
+        ("check_total", "checks"),
+    ):
+        if _integer(inputs.get(field), "inventory_repository_generation_invalid") != _integer(
+            totals.get(kind), "inventory_repository_generation_invalid"
+        ):
+            raise InventoryAdmissionError("inventory_repository_generation_invalid")
+    try:
+        generation = _canonical_sha256(inputs)
+    except (TypeError, ValueError):
+        raise InventoryAdmissionError("inventory_repository_generation_invalid") from None
+    if repository.get("connection_generation") != generation:
+        raise InventoryAdmissionError("inventory_repository_generation_invalid")
+    return generation
 
 
 def inventory_count(
@@ -83,6 +136,8 @@ def inventory_count(
     if observation.get("failures") != []:
         raise InventoryAdmissionError("inventory_partial_or_unknown")
     aliases: dict[str, str] = {}
+    generations: dict[str, str] = {}
+    repository_pr_totals: dict[str, int] = {}
     for repository in repositories:
         if not isinstance(repository, dict):
             raise InventoryAdmissionError("inventory_repository_identity_invalid")
@@ -93,6 +148,8 @@ def inventory_count(
         if not isinstance(name, str) or name.count("/") != 1 or name in aliases:
             raise InventoryAdmissionError("inventory_repository_identity_invalid")
         aliases[name] = str(identity)
+        generations[name] = _repository_connection_generation(repository, expected_generation)
+        repository_pr_totals[name] = repository["connection_totals"]["pull_requests"]
     if not expected_repository_ids or set(aliases.values()) != expected_repository_ids:
         raise InventoryAdmissionError("inventory_scope_changed")
     cursor_summary = report.get("cursor")
@@ -119,9 +176,10 @@ def inventory_count(
             cursor.get("complete") is not True
             or cursor.get("exhaustive") is not True
             or _integer(cursor.get("known_count"), "inventory_pr_total_unknown") != count
+            or repository_pr_totals[name] != count
             or cursor.get("page_cursor") is not None
-            or cursor.get("source_generation") != expected_generation
-            or _integer(cursor.get("page_count"), "inventory_pr_pagination_invalid") == 0
+            or cursor.get("source_generation") != generations[name]
+            or (_integer(cursor.get("page_count"), "inventory_pr_pagination_invalid") == 0 and count != 0)
         ):
             raise InventoryAdmissionError("inventory_pr_pagination_incomplete")
         counts[name] = count
