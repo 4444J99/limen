@@ -275,3 +275,17 @@ The completion requirement is durable in the execution packet and this continuat
 ```
 
 Remaining acceptance and deployment ownership stays with MCP-ESTATE-20260908, Limen #2567/#2569 and Domus #379. No implementation-complete, deployed, estate-ideal or terminal closeout claim is made.
+
+### Completion correction and continued execution
+
+The operator rejected stopping at the preceding partial handoff. That correction binds this task: keep the full implementation, deployment and zero-defect acceptance scope active across turns; a pressure-denied native or build lane does not stop independent source implementation. Releasing an execution lease or pushing a draft is not a task boundary. Continue admissible work until the full predicate passes or no meaningful independent action remains behind a precisely owned external gate.
+
+The next native Codex execution is broker run `run-838daff04c181b2d3d933b9d4bbcc455`, lease `lease-1041-838daff04c181b2d`, preserving the existing branches and unchanged receipts. Its packet carries this correction and the original completion requirement.
+
+This continuation adds gateway declaration/materialization comparison (including launch arguments, headers, environment, disabled/missing/extra upstreams), strict source-container validation, explicit capability/schema mapping comparison, and gateway gaps that control the estate exit. It also adds PID-reuse-resistant child custody, bounded group-absence verification, and sampled process-count/RSS evidence to the protocol and native collectors. The OpenCode adapter uses the actual native HTTP runtime, validates its live API and version, creates an owned native session, reads effective configuration and MCP status, then removes that session and its owned process. No model turn, login, configuration edit or existing-session mutation is performed.
+
+Adapter source: [OpenCode server contract](https://opencode.ai/docs/server/), inspected alongside installed `opencode --version` = `1.18.20`. MCP status does not expose an independently bound server version in this adapter; that field stays missing and cannot mint a passing registration receipt. This is a native observation producer, not evidence of a live canary passing.
+
+Focused receipts: `python3 -m pytest cli/tests/test_mcp_gateway_evidence.py -q` **16 passed**; affected process/protocol/Codex tests **60 passed**; `python3 -m pytest cli/tests/test_mcp_opencode_observer.py -q` **12 passed**. Changed Python files pass Ruff after formatting. The run remains active for the remaining implementations and acceptance work; these receipts do not replace the full completion predicate.
+
+The continuation's scoped cheap wave passed **11/11 gates** with finite 180-second per-gate deadlines. At `2026-09-08T19:52:33Z`, admission still reported `swap-fraction,vitals-shed`, swap fraction `0.3924`, and no live host lease. No denied heavy gate was bypassed or claimed green. Independent implementation continues under the active broker lease.

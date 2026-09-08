@@ -10,6 +10,8 @@ import json
 import os
 import selectors
 import signal
+
+from mcp_process_custody import Custody
 import subprocess
 import time
 import threading
@@ -43,6 +45,7 @@ class Wire:
         self.counter = 0
         self.bytes_read = 0
         self.cleanup = "not_applicable"
+        self.custody = None
         self.transport = "unmeasured"
 
     def remaining(self):
@@ -70,6 +73,8 @@ class Wire:
             os.set_blocking(self.process.stdin.fileno(), False)
             self.transport = "pass"
             self.cleanup = "unmeasured"
+            self.custody = Custody(self.process)
+            self.custody.sample()
         elif self.server["transport"] != "http":
             raise ProtocolError("unsupported transport")
 
@@ -186,45 +191,18 @@ class Wire:
             or not isinstance(response.get("result"), dict)
         ):
             raise ProtocolError("invalid or error RPC response")
+        if self.custody:
+            self.custody.sample()
         return response["result"]
 
     def close(self):
         if not self.process:
             return
-        # start_new_session gives the probe sole custody of this group, including wrappers.
-        self.process.poll()
-        signal_needed = True
-        if self.process.returncode is not None:
-            try:
-                snapshot = subprocess.run(
-                    ["ps", "-axo", "pid=,pgid=,uid="], capture_output=True, text=True, timeout=2, check=True
-                )
-                members = [tuple(map(int, line.split())) for line in snapshot.stdout.splitlines()]
-                owned = [uid for pid, pgid, uid in members if pgid == self.process.pid]
-                if owned:
-                    # Once our leader has exited, a reused PGID cannot establish custody from
-                    # UID equality alone. Never signal an unproven surviving/reused group.
-                    self.cleanup = "unmeasured"
-                    return
-                signal_needed = bool(owned)
-            except (OSError, ValueError, subprocess.SubprocessError):
-                self.cleanup = "unmeasured"
-                return
         try:
-            if signal_needed:
-                os.killpg(self.process.pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-        except PermissionError:
-            self.cleanup = "fail"
-            return
-        try:
-            self.process.wait(timeout=2)
-            self.cleanup = "pass"
-        except subprocess.TimeoutExpired:
-            self.cleanup = "fail"
-        for stream in (self.process.stdin, self.process.stdout):
-            stream.close()
+            self.cleanup = self.custody.close() if self.custody else "unmeasured"
+        finally:
+            for stream in (self.process.stdin, self.process.stdout):
+                stream.close()
 
 
 def verify(server, timeout=15, expected=None, version="2025-11-25", safe_calls=None):
@@ -352,5 +330,6 @@ def _verify(server, timeout=15, expected=None, version="2025-11-25", safe_calls=
         wire.close()
         dimensions["transport"] = wire.transport
         dimensions["cleanup"] = wire.cleanup
+        report["processes"] = wire.custody.report() if wire.custody else {"measurement": "not_applicable"}
         report["latency_ms"] = round((time.monotonic() - started) * 1000)
     return report

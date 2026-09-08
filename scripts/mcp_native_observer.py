@@ -51,6 +51,8 @@ class NativeWire(Wire):
             result = message.get("result")
             if not isinstance(result, dict):
                 raise ProtocolError("invalid native result")
+            if self.custody:
+                self.custody.sample()
             return result
 
 
@@ -229,6 +231,7 @@ def collect_codex(broker, run_id, project, timeout=45, include_mcp=False):
         "observed_at": time.time(),
         "latency_ms": int((time.time() - started) * 1000),
         "cleanup": wire.cleanup,
+        "processes": wire.custody.report() if getattr(wire, "custody", None) else {"measurement": "unmeasured"},
         "skills": catalog,
         "servers": clean_servers,
     }
