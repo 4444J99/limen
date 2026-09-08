@@ -20,6 +20,12 @@
 schema_version: 0.1
 
 parameters:
+  LIMEN_MCP_POLICY:
+    default: "~/.config/domus/mcp-policy.json"
+    env: LIMEN_MCP_POLICY
+    self_update: none
+    owner: domus-genoma
+    note: "Read-only MCP desired-state policy; override with an isolated Domus source registry for verification. Missing or malformed policy returns unavailable, never healthy."
 
   # Isolated relay governor deployment; never fleet-wide credential hydration.
   LIMEN_RELAY_GOVERNOR_APP_ID:
