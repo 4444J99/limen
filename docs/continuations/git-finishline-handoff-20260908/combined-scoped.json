@@ -1,0 +1,23 @@
+{
+  "schema": "limen.exact_head_scoped_predicate.v1",
+  "repository": "4444J99/limen",
+  "head": "1fb83ecd33381e4bb135dbb9ef957a77389e8bc4",
+  "command": [
+    "bash",
+    "scripts/verify-scoped.sh",
+    "--base",
+    "32f62917d25dde4b8ac7b2b1127ed18705f1080a",
+    "--integration",
+    "--require-base",
+    "--jobs",
+    "2",
+    "--gate-timeout-seconds",
+    "180",
+    "--gate-output-bytes",
+    "65536"
+  ],
+  "exit_code": 75,
+  "seconds": 54.9,
+  "log_sha256": "779ed38f11f27cc22b456d0f56cbb300d62862833a990adfdebdaa3154160bd6",
+  "log_bytes": 63351
+}
