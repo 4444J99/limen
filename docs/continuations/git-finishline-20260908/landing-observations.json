@@ -1,0 +1,240 @@
+{
+  "schema": "limen.recovery_landing_observations.v1",
+  "repository": "4444J99/limen",
+  "default_generation": "6e2b554f76eb0ccdcd5a1b133fabb2c452de9220",
+  "observed_at": "2026-09-08T23:40:48.902264+00:00",
+  "private_snapshot_sha256": "e6ea506c73747d7ba30e2ae65315e9c452a21b190e298c78d48463093b8d6c34",
+  "pull_requests": [
+    {
+      "number": 2527,
+      "state": "CLOSED",
+      "url": "https://github.com/4444J99/limen/pull/2527",
+      "headRefOid": "ae62c6cd1fde7dffc90f82b4d31a4c6e42b7d98f",
+      "baseRefOid": "3902a539cd57863e4f811d70ee6f9e34112afbcb",
+      "mergedAt": null,
+      "mergeCommit": null
+    },
+    {
+      "number": 2528,
+      "state": "MERGED",
+      "url": "https://github.com/4444J99/limen/pull/2528",
+      "headRefOid": "91d5c7d35a0ef590dba2736f3303119dd3b2e765",
+      "baseRefOid": "3902a539cd57863e4f811d70ee6f9e34112afbcb",
+      "mergedAt": "2026-08-23T14:29:22Z",
+      "mergeCommit": {
+        "oid": "eaac68c93cfa60e72ec81d272c10bb59ae985cc8"
+      },
+      "ancestry_exit_code": 0,
+      "reachable_from_default": true
+    },
+    {
+      "number": 2529,
+      "state": "CLOSED",
+      "url": "https://github.com/4444J99/limen/pull/2529",
+      "headRefOid": "7262c7363b503539142cae660c043f83f1f417de",
+      "baseRefOid": "3902a539cd57863e4f811d70ee6f9e34112afbcb",
+      "mergedAt": null,
+      "mergeCommit": null
+    },
+    {
+      "number": 2530,
+      "state": "CLOSED",
+      "url": "https://github.com/4444J99/limen/pull/2530",
+      "headRefOid": "e7c2f16294b851618ad26e910a6bb8d16e97bc4b",
+      "baseRefOid": "7262c7363b503539142cae660c043f83f1f417de",
+      "mergedAt": null,
+      "mergeCommit": null
+    },
+    {
+      "number": 2531,
+      "state": "MERGED",
+      "url": "https://github.com/4444J99/limen/pull/2531",
+      "headRefOid": "3538b637e5ac816de21539b60853ef80ad956482",
+      "baseRefOid": "a807e0f45dda990bfc29f83a2c03fe762aff71ad",
+      "mergedAt": "2026-08-23T14:29:11Z",
+      "mergeCommit": {
+        "oid": "91d5c7d35a0ef590dba2736f3303119dd3b2e765"
+      },
+      "ancestry_exit_code": 1,
+      "reachable_from_default": false
+    },
+    {
+      "number": 2532,
+      "state": "CLOSED",
+      "url": "https://github.com/4444J99/limen/pull/2532",
+      "headRefOid": "6526fd06a06e598bd02e92ba912ea55af09e713c",
+      "baseRefOid": "3902a539cd57863e4f811d70ee6f9e34112afbcb",
+      "mergedAt": null,
+      "mergeCommit": null
+    },
+    {
+      "number": 2538,
+      "state": "MERGED",
+      "url": "https://github.com/4444J99/limen/pull/2538",
+      "headRefOid": "536944f374fe40ab3803ddedd417e1a4a825c6d8",
+      "baseRefOid": "eaac68c93cfa60e72ec81d272c10bb59ae985cc8",
+      "mergedAt": "2026-08-23T14:30:59Z",
+      "mergeCommit": {
+        "oid": "4c3f6742639f725a840f4579e600512d3b12116a"
+      },
+      "ancestry_exit_code": 0,
+      "reachable_from_default": true
+    },
+    {
+      "number": 2542,
+      "state": "CLOSED",
+      "url": "https://github.com/4444J99/limen/pull/2542",
+      "headRefOid": "f6b7804cca26eb01a569fe1c57883f986c7e4b00",
+      "baseRefOid": "e3b073b589687fd62631cc26a98bbc08beb47997",
+      "mergedAt": null,
+      "mergeCommit": null
+    },
+    {
+      "number": 2543,
+      "state": "MERGED",
+      "url": "https://github.com/4444J99/limen/pull/2543",
+      "headRefOid": "98874167baac3de4f509b5f76d587030059b9ced",
+      "baseRefOid": "e3b073b589687fd62631cc26a98bbc08beb47997",
+      "mergedAt": "2026-08-27T12:48:08Z",
+      "mergeCommit": {
+        "oid": "612d4081f0cb0d71e2e8f5c792129a4e6ba1f895"
+      },
+      "ancestry_exit_code": 0,
+      "reachable_from_default": true
+    },
+    {
+      "number": 2544,
+      "state": "CLOSED",
+      "url": "https://github.com/4444J99/limen/pull/2544",
+      "headRefOid": "ccdb04c88164b3639b93f4621b1fcaa8fd96dada",
+      "baseRefOid": "f034e3e659c8c8c3b9469b7b66e32c2bc03fdb64",
+      "mergedAt": null,
+      "mergeCommit": null
+    },
+    {
+      "number": 2548,
+      "state": "MERGED",
+      "url": "https://github.com/4444J99/limen/pull/2548",
+      "headRefOid": "c368a0769a438b0323fd7a706d9270c8196030a4",
+      "baseRefOid": "8773db631e9c4b2fe00abbb032e758b5264ffc7f",
+      "mergedAt": "2026-08-27T17:18:59Z",
+      "mergeCommit": {
+        "oid": "b08301f8ef56991f5e469da437d054605b0987b2"
+      },
+      "ancestry_exit_code": 0,
+      "reachable_from_default": true
+    },
+    {
+      "number": 2550,
+      "state": "CLOSED",
+      "url": "https://github.com/4444J99/limen/pull/2550",
+      "headRefOid": "db5bdc20b7e05c85ff3a1f14ca6f0d87218d18a6",
+      "baseRefOid": "91eedfac8ef8edd8b0dee5eb6b6b805cdec2a575",
+      "mergedAt": null,
+      "mergeCommit": null
+    },
+    {
+      "number": 2551,
+      "state": "MERGED",
+      "url": "https://github.com/4444J99/limen/pull/2551",
+      "headRefOid": "86fda7685fa1ee492b0a58f99573b59ed9a6896e",
+      "baseRefOid": "91eedfac8ef8edd8b0dee5eb6b6b805cdec2a575",
+      "mergedAt": "2026-09-08T16:44:28Z",
+      "mergeCommit": {
+        "oid": "e97d333a2a43f36b2a2e9d02c003d04a379ff444"
+      },
+      "ancestry_exit_code": 0,
+      "reachable_from_default": true
+    },
+    {
+      "number": 2552,
+      "state": "OPEN",
+      "url": "https://github.com/4444J99/limen/pull/2552",
+      "headRefOid": "7c47dd6a950584a0f021d531b6e0b43080bda295",
+      "baseRefOid": "ac351ed163e83aba37e549fe1954cffa38b1c2a3",
+      "mergedAt": null,
+      "mergeCommit": null
+    },
+    {
+      "number": 2553,
+      "state": "OPEN",
+      "url": "https://github.com/4444J99/limen/pull/2553",
+      "headRefOid": "46abf4d0ae7ef8e767dae0598e5a089597af370d",
+      "baseRefOid": "91eedfac8ef8edd8b0dee5eb6b6b805cdec2a575",
+      "mergedAt": null,
+      "mergeCommit": null
+    },
+    {
+      "number": 2561,
+      "state": "OPEN",
+      "url": "https://github.com/4444J99/limen/pull/2561",
+      "headRefOid": "632693995e2d8674860a84f6f2a23ab0a7ac72ca",
+      "baseRefOid": "26b82ebc65bc2057b39dcef1499edc78308c0489",
+      "mergedAt": null,
+      "mergeCommit": null
+    },
+    {
+      "number": 2562,
+      "state": "OPEN",
+      "url": "https://github.com/4444J99/limen/pull/2562",
+      "headRefOid": "14d111097636f92b324ab544d8aede17a5ad7498",
+      "baseRefOid": "26b82ebc65bc2057b39dcef1499edc78308c0489",
+      "mergedAt": null,
+      "mergeCommit": null
+    },
+    {
+      "number": 2563,
+      "state": "MERGED",
+      "url": "https://github.com/4444J99/limen/pull/2563",
+      "headRefOid": "85f40f705cddc13b39e614e09f235178d82e946a",
+      "baseRefOid": "26b82ebc65bc2057b39dcef1499edc78308c0489",
+      "mergedAt": "2026-09-08T16:45:32Z",
+      "mergeCommit": {
+        "oid": "32f62917d25dde4b8ac7b2b1127ed18705f1080a"
+      },
+      "ancestry_exit_code": 0,
+      "reachable_from_default": true
+    },
+    {
+      "number": 2564,
+      "state": "CLOSED",
+      "url": "https://github.com/4444J99/limen/pull/2564",
+      "headRefOid": "b4b41e4dbe1ad574ca508bcde46a58fc4728414f",
+      "baseRefOid": "26b82ebc65bc2057b39dcef1499edc78308c0489",
+      "mergedAt": null,
+      "mergeCommit": null
+    },
+    {
+      "number": 2565,
+      "state": "MERGED",
+      "url": "https://github.com/4444J99/limen/pull/2565",
+      "headRefOid": "e892b23978498e2dcc83f92df84e2bfdcd05e817",
+      "baseRefOid": "26b82ebc65bc2057b39dcef1499edc78308c0489",
+      "mergedAt": "2026-09-08T16:12:09Z",
+      "mergeCommit": {
+        "oid": "709d494017d0cb2d5e4ab56b44c92091ba9fc520"
+      },
+      "ancestry_exit_code": 0,
+      "reachable_from_default": true
+    },
+    {
+      "number": 2573,
+      "state": "OPEN",
+      "url": "https://github.com/4444J99/limen/pull/2573",
+      "headRefOid": "de70f51959613a3dab5d8887a49fab9eef642687",
+      "baseRefOid": "ac351ed163e83aba37e549fe1954cffa38b1c2a3",
+      "mergedAt": null,
+      "mergeCommit": null
+    },
+    {
+      "number": 2576,
+      "state": "OPEN",
+      "url": "https://github.com/4444J99/limen/pull/2576",
+      "headRefOid": "47131d901f49f7fd043ff48770ace4a85084f282",
+      "baseRefOid": "de70f51959613a3dab5d8887a49fab9eef642687",
+      "mergedAt": null,
+      "mergeCommit": null
+    }
+  ],
+  "scope": "positive landing observations only; predicates and source equivalence remain separately required"
+}

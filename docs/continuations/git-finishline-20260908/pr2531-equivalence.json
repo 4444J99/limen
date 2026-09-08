@@ -1,0 +1,41 @@
+{
+  "schema": "limen.recovery_source_equivalence.v1",
+  "repository": "4444J99/limen",
+  "original_pr": 2531,
+  "original_merge": "91d5c7d35a0ef590dba2736f3303119dd3b2e765",
+  "successor_pr": 2528,
+  "successor_merge": "eaac68c93cfa60e72ec81d272c10bb59ae985cc8",
+  "default_generation": "6e2b554f76eb0ccdcd5a1b133fabb2c452de9220",
+  "source_changed_path_count": 3,
+  "path_receipts": [
+    {
+      "path": "cli/uv.lock",
+      "blobs": {
+        "source": "d94c15571809432ac6434b3a360ca912dd1aa34d",
+        "successor": "d94c15571809432ac6434b3a360ca912dd1aa34d",
+        "default": "d94c15571809432ac6434b3a360ca912dd1aa34d"
+      },
+      "equal": true
+    },
+    {
+      "path": "docs/continuations/evolved-on-demand-runtime-rollout/rollout-acceptance.json",
+      "blobs": {
+        "source": "344993b98e559ce1c18b1e6eebaa4476a59b9335",
+        "successor": "344993b98e559ce1c18b1e6eebaa4476a59b9335",
+        "default": "344993b98e559ce1c18b1e6eebaa4476a59b9335"
+      },
+      "equal": true
+    },
+    {
+      "path": "docs/continuations/evolved-on-demand-runtime-rollout/workstream.json",
+      "blobs": {
+        "source": "58b18009c546ff8e095a05633466daa658ddba32",
+        "successor": "58b18009c546ff8e095a05633466daa658ddba32",
+        "default": "58b18009c546ff8e095a05633466daa658ddba32"
+      },
+      "equal": true
+    }
+  ],
+  "status": "PASS",
+  "scope": "PR2531 entire changed path set retained through squash into PR2528; heartbeat deployment and 43-rung runtime acceptance remain separate"
+}
