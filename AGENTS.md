@@ -58,8 +58,8 @@ TABVLARIVS is authoritative for *state* and `tasks.yaml` is its cache/projection
 authoritative for *protocol*. Where a tool charter restates a rule from this file, this file is the
 source of truth.
 
-**Directory-scoped `AGENTS.md`.** A component may carry its own — e.g.
-[`apps/danse/AGENTS.md`](apps/danse/AGENTS.md). It sits at rung 4 beside this file and is *more
+**Directory-scoped `AGENTS.md`.** A component may carry its own.
+It sits at rung 4 beside this file and is *more
 specific*, not higher: it adds what only that component knows and may never contradict this file or
 a tool charter. **Read the closest one to the files you are editing.** Keep it to what is not
 derivable from the code — a component's verification belongs in a `gates.yaml` entry, where every
