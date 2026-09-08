@@ -146,6 +146,8 @@ def test_expired_or_changed_receipt_cannot_supply_evidence():
         "client_version": "1",
         "server_version": "1",
         "observed_at": 100,
+        "run_id": "run-observed",
+        "native_session_id": "native-observed",
         "dimensions": {"startup_ui": "pass", "explicit_ui": "pass", "isolation": "pass", "client_route": "pass"},
     }
     assert not estate.apply_client_receipts([row], [receipt], policy(), now=4000)
@@ -157,6 +159,9 @@ def test_expired_or_changed_receipt_cannot_supply_evidence():
             "dependency_fingerprint": receipt["dependency_fingerprint"],
             "client_version": "1",
             "server_version": "1",
+            "run_id": "run-observed",
+            "native_session_id": "native-observed",
+            "observed_at": 100,
         }
     }
     assert estate.apply_client_receipts([row], [receipt], policy(), now=101, observations=witness) == {"codex"}
@@ -271,3 +276,108 @@ def test_safe_functional_result_is_checked_and_content_is_not_reported():
     assert result["dimensions"]["functional"] == "pass"
     assert result["functional_calls"] == {"attempted": 1, "passed": 1}
     assert "private probe data" not in json.dumps(result)
+
+
+@pytest.mark.parametrize("spec", [None, False, "bad", [], 3])
+def test_invalid_undeclared_registration_remains_counted(tmp_path, spec):
+    path = tmp_path / "config.json"
+    path.write_text(json.dumps({"mcpServers": {"unknown": spec}}))
+    records, issues, _, _ = estate.inventory(policy(), [("codex", path)])
+    row = next(r for r in records if r["name"] == "unknown")
+    assert row["spec"]["invalid"]
+    result = estate.measure(policy(), records, issues, inventory_only=True)
+    assert result["denominator"]["registrations"] == 2
+    assert result["exit"] == 77
+
+
+def test_duplicate_json_keys_are_unavailable(tmp_path):
+    path = tmp_path / "config.json"
+    path.write_text('{"mcpServers":{},"mcpServers":{"serena":{}}}')
+    with pytest.raises(ValueError, match="duplicate"):
+        estate.read_config(path)
+
+
+@pytest.mark.parametrize("field", ["plugins", "projects"])
+def test_malformed_optional_tables_do_not_hide_registration(tmp_path, field):
+    path = tmp_path / "config.json"
+    path.write_text(json.dumps({field: [False], "mcpServers": {"serena": {"command": "false"}}}))
+    records, issues, _, _ = estate.inventory(policy(), [("claude", path)])
+    assert any(r["name"] == "serena" and r["client"] == "claude" for r in records)
+    assert issues
+
+
+def test_installed_plugin_version_wins_over_old_cache(tmp_path):
+    for version in ("1", "2"):
+        root = tmp_path / "plugins/cache/market/serena" / version
+        root.mkdir(parents=True)
+        (root / ".mcp.json").write_text(json.dumps({"mcpServers": {"serena": {"command": version}}}))
+    (tmp_path / "plugins/installed_plugins.json").write_text(
+        json.dumps({"plugins": {"serena@market": [{"scope": "user", "installPath": str(root), "version": "2"}]}})
+    )
+    path = tmp_path / "config.toml"
+    path.write_text('[plugins."serena@market"]\nenabled=true\n')
+    records, issues, _, _ = estate.inventory(policy(), [("codex", path)])
+    plugin = next(r for r in records if r["route"] == "serena@market")
+    assert plugin["spec"]["command"] == "2"
+    assert plugin["plugin_selection"] == "installed_registry"
+    assert plugin["provenance"][0]["source"] == "overridden-plugin-cache"
+    assert not plugin["provenance"][0]["active"]
+    assert not issues
+
+
+def test_installed_project_plugin_cannot_override_another_project(tmp_path):
+    roots = []
+    for version in ("1", "2"):
+        root = tmp_path / "plugins/cache/market/serena" / version
+        root.mkdir(parents=True)
+        roots.append(root)
+    (tmp_path / "plugins/installed_plugins.json").write_text(
+        json.dumps(
+            {
+                "plugins": {
+                    "serena@market": [
+                        {"scope": "user", "installPath": str(roots[0]), "version": "1"},
+                        {
+                            "scope": "project",
+                            "projectPath": str(tmp_path / "project"),
+                            "installPath": str(roots[1]),
+                            "version": "2",
+                        },
+                    ]
+                }
+            }
+        )
+    )
+    path = tmp_path / "config.toml"
+    assert estate.installed_plugin_roots(path, "serena@market", tmp_path / "other")[0] == [roots[0]]
+    assert estate.installed_plugin_roots(path, "serena@market", tmp_path / "project")[0] == [roots[1]]
+
+
+def test_observed_client_environments_do_not_share_shell_roots(tmp_path, monkeypatch):
+    monkeypatch.setattr(estate, "MCP_VENDOR_KEYS", ("codex",))
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    observed = tmp_path / "native/config.toml"
+    observed.parent.mkdir()
+    observed.write_text('[mcp_servers.serena]\ncommand="native"\n')
+    monkeypatch.setenv("CODEX_HOME", str(tmp_path / "shell"))
+    records, _, _, _ = estate.inventory(policy(), client_environments={"codex": {"CODEX_HOME": str(observed.parent)}})
+    row = next(r for r in records if r["client"] == "codex" and r["name"] == "serena" and r["route"] == "standalone")
+    assert row["spec"]["command"] == "native"
+
+
+def test_quiet_serena_requires_explicit_false_even_with_probe_policy():
+    record = {
+        "service": "serena",
+        "policy": {"verification": {"quiet_probe": True}},
+        "spec": estate.normalize({"command": "serena", "args": []}),
+    }
+    assert not estate.quiet_probe_allowed(record)
+    record["spec"]["args"] = ["--open-web-dashboard", "false"]
+    assert estate.quiet_probe_allowed(record)
+
+
+@pytest.mark.parametrize(
+    "field,value", [("enabled", "false"), ("disabled", 0), ("cwd", []), ("bearer_token_env_var", {})]
+)
+def test_malformed_launch_fields_are_not_coerced(field, value):
+    assert estate.normalize({"command": "false", field: value})["invalid"]
