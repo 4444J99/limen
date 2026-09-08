@@ -492,7 +492,8 @@ def test_keeper_explicit_provider_policy_cannot_claim_or_strip_at_claim(strip_po
     }
     if strip_policy:
         event["intent"]["patch"]["provider_eligibility"] = None
-    with pytest.raises(ValueError, match="provider_eligibility_adapter_unavailable"):
+    denial = "provider_eligibility_change_unauthorized" if strip_policy else "provider_eligibility_adapter_unavailable"
+    with pytest.raises(ValueError, match=denial):
         tabularius._project_local_task_event(board, event)
     assert board.model_dump(mode="json") == before
     event["intent"]["kind"] = "task.mutate"
@@ -1355,3 +1356,174 @@ def test_the_worker_and_the_python_keepers_agree_on_the_already_homed_status():
         f"the Worker's already-homed refusal must carry {TaskAlreadyHomed.status}, "
         f"matching TaskAlreadyHomed.status; found: {throw.strip()}"
     )
+
+
+@pytest.mark.parametrize("stale_projection", [True, False])
+def test_deferred_claim_replay_uses_capture_and_fences_canonical_race(tmp_path, monkeypatch, stale_projection):
+    from limen.execution_contract import execution_contract_hash
+
+    board_path = _seed_board(tmp_path, 1)
+    board = load_limen_file(board_path)
+    task = board.tasks[0]
+    task.status = "dispatched"
+    task.dispatch_log.append(
+        DispatchLogEntry(
+            timestamp=_NOW,
+            agent="codex",
+            session_id="a" * 64,
+            status="dispatched",
+            execution_contract_hash=execution_contract_hash(task),
+            conduct_generation=3,
+            conduct_event_id="claimed",
+        )
+    )
+    captured = task.model_dump(mode="json", exclude_none=True)
+    ticket = Ticket(
+        ticket_id="captured-result",
+        timestamp=_NOW,
+        agent="codex",
+        intent=INTENT_STATUS,
+        task_id=task.id,
+        patch={"status": "failed"},
+        log={"status": "failed"},
+        precondition={"task_sha256": task_state_sha256(captured)},
+        canonical_base=captured,
+    )
+    client = FakeConductClient([captured], conflict_on=set() if stale_projection else {task.id})
+    monkeypatch.setattr(tabularius, "client_from_env", lambda: client)
+    submit_ticket(board_path, ticket)
+    result = drain_once(board_path)
+    if stale_projection:
+        assert result.applied == 1
+        assert result.rejected == 0
+        assert client.packets[0].intent["expected_status"] == "dispatched"
+        assert client.packets[0].intent["expected_revision"] == tabularius._canonical_revision(captured)
+    else:
+        assert result.applied == 0
+        assert result.rejected == 1
+        assert (_rejected(board_path) / "captured-result.json").exists()
+    assert load_limen_file(board_path).tasks[0].status == "open"
+
+
+def test_captured_claim_tamper_rejected_before_broker():
+    captured = _task("CAPTURE", status="dispatched")
+    ticket = Ticket(
+        ticket_id="capture",
+        timestamp=_NOW,
+        agent="codex",
+        intent=INTENT_STATUS,
+        task_id="CAPTURE",
+        patch={"status": "failed"},
+        canonical_base=captured,
+        precondition={"task_sha256": task_state_sha256(captured)},
+    )
+    ticket.canonical_base["title"] = "changed after capture"
+    with pytest.raises(ValueError, match="captured canonical claim"):
+        tabularius._compatibility_intent(ticket, None)
+
+
+@pytest.mark.parametrize("kind", ["task.upsert", "task.mutate"])
+@pytest.mark.parametrize("replacement", [None, "changed"])
+def test_canonical_policy_cannot_be_stripped_or_replaced(kind, replacement):
+    policy = {
+        "schema_version": "limen.provider_eligibility.v1",
+        "repository": "organvm/limen",
+        "source_revision": "a" * 40,
+        "data_classification": "synthetic",
+        "max_retention_days": 0,
+        "tools": [],
+        "destinations": [],
+    }
+    board = _board([_task("POLICY", status="open", provider_eligibility=policy)])
+    change = None if replacement is None else {**policy, "max_retention_days": 1}
+    task = board.tasks[0].model_dump(mode="json", exclude_none=True)
+    intent = {
+        "kind": kind,
+        "task_id": "POLICY",
+        "expected_status": "open",
+        "patch": {"provider_eligibility": change},
+        "task": {**task, "provider_eligibility": change},
+    }
+    event = {
+        "event_id": "policy-change",
+        "run_id": "r",
+        "lease_id": "l",
+        "generation": 1,
+        "agent": "codex",
+        "session_id": "s",
+        "timestamp": _NOW.isoformat(),
+        "intent": intent,
+    }
+    before = board.model_dump(mode="json")
+    with pytest.raises(ValueError, match="provider_eligibility_change_unauthorized"):
+        tabularius._project_local_task_event(board, event)
+    assert board.model_dump(mode="json") == before
+
+
+def test_canonical_upsert_persists_new_policy_before_next_claim():
+    policy = {
+        "schema_version": "limen.provider_eligibility.v1",
+        "repository": "organvm/limen",
+        "source_revision": "a" * 40,
+        "data_classification": "synthetic",
+        "max_retention_days": 0,
+        "tools": [],
+        "destinations": [],
+    }
+    board = _board([_task("POLICY", status="open")])
+    task = board.tasks[0].model_dump(mode="json", exclude_none=True)
+    event = {
+        "event_id": "policy-add",
+        "run_id": "r",
+        "lease_id": "l",
+        "generation": 1,
+        "agent": "codex",
+        "session_id": "s",
+        "timestamp": _NOW.isoformat(),
+        "intent": {"kind": "task.upsert", "task_id": "POLICY", "task": {**task, "provider_eligibility": policy}},
+    }
+    projected, _ = tabularius._project_local_task_event(board, event)
+    assert projected.tasks[0].provider_eligibility == policy
+    assert projected.tasks[0].dispatch_log[-1].conduct_event_id == "policy-add"
+    claim = {
+        **event,
+        "event_id": "claim",
+        "intent": {
+            "kind": "task.claim",
+            "task_id": "POLICY",
+            "expected_status": "open",
+            "patch": {"status": "dispatched"},
+        },
+    }
+    with pytest.raises(ValueError, match="provider_eligibility_adapter_unavailable"):
+        tabularius._project_local_task_event(projected, claim)
+
+
+def test_new_policy_bearing_active_upsert_fails_before_persistence():
+    policy = {
+        "schema_version": "limen.provider_eligibility.v1",
+        "repository": "organvm/limen",
+        "source_revision": "a" * 40,
+        "data_classification": "synthetic",
+        "max_retention_days": 0,
+        "tools": [],
+        "destinations": [],
+    }
+    board = _board([])
+    event = {
+        "event_id": "active-upsert",
+        "run_id": "r",
+        "lease_id": "l",
+        "generation": 1,
+        "agent": "codex",
+        "session_id": "s",
+        "timestamp": _NOW.isoformat(),
+        "intent": {
+            "kind": "task.upsert",
+            "task_id": "POLICY",
+            "task": _task("POLICY", status="dispatched", provider_eligibility=policy),
+        },
+    }
+    with pytest.raises(ValueError, match="provider_eligibility_adapter_unavailable"):
+        tabularius._project_local_task_event(board, event)
+    assert board.tasks == []

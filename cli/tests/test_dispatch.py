@@ -1425,6 +1425,7 @@ def test_serial_dispatch_claims_canonical_budget_before_provider_launch(
         desired_task = next(task for task in desired.tasks if task.id == "PRECLAIM")
         if before_task.status == "open":
             order.append("canonical-claim")
+            assert kwargs["agent"] == "codex"
             assert desired_task.status == "dispatched"
             assert desired_task.dispatch_log[-1].agent == "codex"
             assert len(dispatch_session_id(desired_task.dispatch_log[-1])) == 64
@@ -1866,8 +1867,7 @@ def test_serial_reserved_result_uses_broker_cas_not_local_queue_lock(
             call()
         assert D._MODEL_SELECTION_RECEIPTS[task.id] == {"selected_model": "synthetic-model"}
     elif canonical_conflict:
-        with pytest.raises(ConductConflict):
-            call()
+        assert call() is None  # durable custody is distinct from canonical commit
         [path] = list((T.tickets_root(tasks_path) / "inbox").glob("*.json"))
         ticket = T.Ticket.model_validate_json(path.read_text())
         assert ticket.task_id == task.id
@@ -2094,9 +2094,11 @@ def test_serial_provider_exception_commits_terminal_receipt(
     assert entry.execution_started is None
     assert entry.execution_result_kind == "failed"
     assert "blocked:routing" not in intended.labels
-    assert "provider dispatch raised: adapter socket closed" in str(entry.output)
+    assert "provider dispatch raised: RuntimeError" in str(entry.output)
+    assert "adapter socket closed" not in str(entry.output)
     output = capsys.readouterr().out
     assert "PROVIDER FAILED PROVIDER-RAISES" in output
+    assert "adapter socket closed" not in output
     assert "── LIVE: 1 task(s)" in output
 
 
@@ -6380,3 +6382,78 @@ def test_explicit_task_operator_override_gate_off(tmp_path: Path, capsys, monkey
     out = capsys.readouterr().out
     assert "Worktree admission blocked" not in out
     assert "DRY-RUN: 1 task" in out
+
+
+@pytest.mark.parametrize("successor", [False, True])
+def test_actual_journal_failure_preserves_proven_prelaunch(monkeypatch, capsys, successor):
+    task = Task(id="JOURNAL-PRELAUNCH", title="account no launch", target_agent="codex", created=date(2026, 8, 30))
+    result = (
+        D._prelaunch_workstream_successor_result("expired")
+        if successor
+        else D._prelaunch_blocked_result("admission denied")
+    )
+    store = SimpleNamespace(
+        record_reservation=lambda *_a, **_kw: None,
+        record_actual=lambda *_a, **_kw: (_ for _ in ()).throw(D.WorkLoanJournalError("secret-url-token")),
+    )
+    monkeypatch.setattr(D, "default_work_loan_journal_store", lambda: store)
+    monkeypatch.setattr(D, "call_agent_dispatch", lambda *_a, **_kw: result)
+    actual = D._journaled_agent_dispatch("codex", task, False, "a" * 64)
+    assert actual == result
+    assert D._is_prelaunch_result(actual)
+    assert D._is_workstream_successor_result(actual) is successor
+    assert "secret-url-token" not in str(actual) + capsys.readouterr().out
+
+
+@pytest.mark.parametrize("budget", [1, 2])
+def test_serial_durable_deferral_continues_without_unacknowledged_refund(tmp_path, monkeypatch, capsys, budget):
+    path = tmp_path / "tasks.yaml"
+    rows = [
+        {
+            "id": tid,
+            "title": tid,
+            "repo": "someorg/dispatch-lab",
+            "target_agent": "codex",
+            "budget_cost": 1,
+            "status": "open",
+            "created": "2026-08-30",
+            "predicate": "python3 scripts/check.py",
+            "receipt_target": "github:someorg/dispatch-lab:pull-request:PROOF",
+            "priority": priority,
+            "source_origin": "human_prompt",
+            "horizon": "present",
+            "value_case": "Verify custody continuation",
+            "dispatch_log": [],
+        }
+        for tid, priority in [("FIRST", "critical"), ("SECOND", "high")]
+    ]
+    write_board(path, rows)
+    data = read_board(path)
+    data["portal"]["budget"]["track"]["date"] = date.today().isoformat()
+    data["portal"]["budget"]["per_agent"]["codex"] = budget
+    path.write_text(yaml.safe_dump(data, sort_keys=False))
+    provider_calls = []
+
+    def broker(_path, desired, **kwargs):
+        # A result commit may re-order the one target; compare by identity.
+        old = {t.id: t for t in kwargs["before"].tasks}
+        changed = [(old[t.id], t) for t in desired.tasks if old[t.id] != t]
+        before, after = changed[0]
+        if before.status == "dispatched" and after.id == "FIRST":
+            raise BrokerUnavailable("temporary outage")
+        return T.DrainResult(applied=1, projected_tasks={after.id: after.model_dump(mode="json", exclude_none=True)})
+
+    def provider(_agent, task, dry_run=False):
+        provider_calls.append(task.id)
+        return D._prelaunch_blocked_result("no launch") if task.id == "FIRST" else True
+
+    monkeypatch.setattr(D, "apply_limen_file_sync", broker)
+    monkeypatch.setattr(D, "call_agent_dispatch", provider)
+    monkeypatch.setattr(D, "_down_lanes", lambda: set())
+    dispatch_tasks(load_limen_file(path), path, agent="codex", budget=budget, dry_run=False)
+    assert provider_calls == (["FIRST"] if budget == 1 else ["FIRST", "SECOND"])
+    [ticket_path] = list((T.tickets_root(path) / "inbox").glob("*.json"))
+    ticket = T.Ticket.model_validate_json(ticket_path.read_text())
+    assert ticket.canonical_base["status"] == "dispatched"
+    assert ticket.patch["status"] == "open"
+    assert "── LIVE:" in capsys.readouterr().out

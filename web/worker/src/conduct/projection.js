@@ -6,6 +6,11 @@ import {
   validatePrivateBoard,
 } from "./private-board.js";
 import { taskWorkLoanMissingFields, workLoanDenial } from "./work-loan.js";
+import { inventoryAdmissionDenied } from "./inventory-admission.js";
+import {
+  ProviderEligibilityError,
+  validateProviderEligibilityUpdate,
+} from "./provider-eligibility.js";
 
 const GITHUB_API = "https://api.github.com";
 const inlineBoards = new WeakMap();
@@ -330,6 +335,26 @@ function validateTaskShape(task, taskId) {
   }
 }
 
+function validatePolicyUpdate(existing, candidate, taskId) {
+  let policy;
+  try {
+    policy = validateProviderEligibilityUpdate(existing, candidate);
+  } catch (error) {
+    if (!(error instanceof ProviderEligibilityError)) throw error;
+    throw new ConductProjectionError(`task ${taskId} ${error.message}`, 422);
+  }
+  if (policy !== null) candidate.provider_eligibility = policy;
+  if (policy !== null && ["dispatched", "in_progress"].includes(candidate.status)) {
+    throw new ConductProjectionError(`task ${taskId} provider_eligibility_adapter_unavailable`, 409);
+  }
+}
+
+function requireInventoryAdmission(existing, candidate, taskId) {
+  if (inventoryAdmissionDenied(existing, candidate)) {
+    throw new ConductProjectionError(`task ${taskId} inventory_admission_adapter_unavailable`, 409);
+  }
+}
+
 function resetBudgetWindow(budget, event) {
   budget.track ||= { date: "", spent: 0, per_agent: {} };
   const currentDate = String(event.timestamp).slice(0, 10);
@@ -635,6 +660,8 @@ export function applyTaskPacketProjectionEvent(input, event) {
     }
     const supplied = clone(intent.task || {});
     validateTaskShape(supplied, taskId);
+    validatePolicyUpdate(existing, { ...existing, ...supplied }, taskId);
+    requireInventoryAdmission(existing, { ...existing, ...supplied }, taskId);
     if (supplied.receipt_verified === true) {
       throw new ConductProjectionError(
         `task ${taskId} receipt credit requires an evidence-bound status transition`,
@@ -658,11 +685,15 @@ export function applyTaskPacketProjectionEvent(input, event) {
         Object.entries(supplied).filter(([field]) => PATCHABLE_TASK_FIELDS.has(field)),
       );
       validatePatch(patch, taskId);
+      const candidate = { ...existing, ...patch };
+      validatePolicyUpdate(existing, candidate, taskId);
+      if (candidate.provider_eligibility != null) patch.provider_eligibility = candidate.provider_eligibility;
       Object.assign(task, patch);
       task.dispatch_log = history;
       if (created !== undefined) task.created = created;
     }
     if (!existing) {
+      validatePolicyUpdate(null, task, taskId);
       const missing = taskWorkLoanMissingFields(task);
       if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 422);
     }
@@ -695,7 +726,7 @@ export function applyTaskPacketProjectionEvent(input, event) {
       409,
     );
   }
-  const patch = intent.patch || {};
+  const patch = clone(intent.patch || {});
   validatePatch(patch, taskId);
   if (kind === "task.status" && !Object.prototype.hasOwnProperty.call(patch, "status")) {
     throw new ConductProjectionError(`task ${taskId} status intent requires a status patch`, 422);
@@ -712,6 +743,10 @@ export function applyTaskPacketProjectionEvent(input, event) {
     const missing = taskWorkLoanMissingFields({ ...existing, ...patch });
     if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 409);
   }
+  const candidate = { ...existing, ...patch };
+  validatePolicyUpdate(existing, candidate, taskId);
+  requireInventoryAdmission(existing, candidate, taskId);
+  if (candidate.provider_eligibility != null) patch.provider_eligibility = candidate.provider_eligibility;
   const lifecycleRepair = kind === "task.status"
     && isLifecycleRepairAuthorized(existing, nextStatus, intent.log, patch);
   // A malformed execution receipt is not a prelaunch cancellation. Reject it
@@ -784,6 +819,8 @@ export function applyTaskCompatibilityEvent(input, event) {
   }
   const task = (board.tasks || []).find((candidate) => candidate.id === event.task_id);
   if (!task) throw new ConductProjectionError(`task ${event.task_id} not found in canonical board`, 409);
+  validatePolicyUpdate(task, { ...task, status: event.status }, event.task_id);
+  requireInventoryAdmission(task, { ...task, status: event.status }, event.task_id);
   if (["dispatched", "in_progress"].includes(event.status)) {
     const missing = taskWorkLoanMissingFields(task);
     if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 409);

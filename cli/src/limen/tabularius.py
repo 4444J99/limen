@@ -53,6 +53,7 @@ from limen.conduct.models import (
     canonical_hash,
 )
 from limen.intake import IntakeContractError, validate_intake_contract
+from limen.inventory_admission import require_inventory_admission
 from limen.io import (
     load_limen_file,
     local_conduct_projection_lock,
@@ -69,6 +70,7 @@ from limen.materialize import (
 )
 from limen.models import VALID_STATUSES, LimenFile, Task
 from limen.partition_lanes import heuristics_may_promote
+from limen.provider_eligibility import validate_policy_update
 from limen.work_loan import task_work_loan_readiness
 from limen.workstream_contract import WORKSTREAM_SUCCESSOR_REQUIRED_LABEL
 
@@ -200,6 +202,9 @@ class Ticket(BaseModel):
     # migration can therefore never archive a task that another ticket claimed
     # after compilation.
     precondition: dict[str, Any] | None = None
+    # Captured claim supplies replay's CAS input, never canonical authority.
+    # The keeper still checks its exact revision/status against live state.
+    canonical_base: dict[str, Any] | None = None
 
 
 def task_state_sha256(fields: dict[str, Any]) -> str:
@@ -668,6 +673,17 @@ def _revision_iso(value: datetime) -> str:
 
 
 def _compatibility_intent(ticket: Ticket, base: dict[str, Any] | None) -> dict[str, Any]:
+    if ticket.canonical_base is not None:
+        captured = ticket.canonical_base
+        expected_hash = (ticket.precondition or {}).get("task_sha256")
+        if (
+            captured.get("id") != ticket.task_id
+            or captured.get("status") != "dispatched"
+            or not expected_hash
+            or task_state_sha256(captured) != expected_hash
+        ):
+            raise ValueError("captured canonical claim does not match exact ticket precondition")
+        base = captured
     log = dict(ticket.log or {})
     # ``agent``/``session_id`` in the packet log are untrusted workflow
     # correlation. The keeper projects them under logical names while deriving
@@ -1088,6 +1104,11 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             task["dispatch_log"] = history
             if created is not None:
                 task["created"] = created
+        policy = validate_policy_update(existing, task)
+        if policy is not None:
+            if task.get("status") in {"dispatched", "in_progress"}:
+                raise ValueError(f"task {task_id} provider_eligibility_adapter_unavailable")
+            task["provider_eligibility"] = policy
         task["updated"] = str(event["timestamp"])
         task.setdefault("dispatch_log", [])
         task["dispatch_log"].append(
@@ -1110,6 +1131,9 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             if not underwriting.ready and not is_migration:
                 raise ValueError(underwriting.reason_code)
             tasks.append(task)
+        else:
+            existing.clear()
+            existing.update(task)
     else:
         if kind not in {"task.status", "task.claim", "task.mutate"}:
             raise ValueError(f"unsupported task compatibility intent: {kind}")
@@ -1133,6 +1157,9 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             )
         if kind == "task.status" and "status" not in patch:
             raise ValueError(f"task {task_id} status intent requires a status patch")
+        policy = validate_policy_update(existing, {**existing, **patch})
+        if policy is not None and "provider_eligibility" in patch:
+            patch["provider_eligibility"] = policy
         prior_status = str(existing.get("status") or "")
         next_status = str(patch.get("status") or prior_status)
         if next_status in {"dispatched", "in_progress"}:
@@ -1166,6 +1193,7 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
                 raise ValueError(f"task {task_id} claim requires open -> dispatched")
             if next_status not in _CANONICAL_TRANSITIONS.get(prior_status, frozenset()):
                 raise ValueError(f"task {task_id} cannot transition from {prior_status} to {next_status}")
+        require_inventory_admission(existing, {**existing, **patch})
         if kind == "task.claim":
             _local_budget_debit(data, existing, event, patch)
         if (
@@ -1420,7 +1448,10 @@ def _relay_ticket(
     # Bind replay identity to the entire immutable ticket, not its display ID.
     # Sanitizing/truncating ticket_id alone can collide, and an ID reused with
     # different intent must never receive an unrelated stored projection.
-    work_id = f"ticket-{canonical_hash(ticket.model_dump(mode='json'))}"
+    ticket_identity = ticket.model_dump(mode="json")
+    if ticket.canonical_base is None:
+        ticket_identity.pop("canonical_base", None)  # preserve historical replay identities
+    work_id = f"ticket-{canonical_hash(ticket_identity)}"
     if isinstance(remote, LocalConductClient):
         if board_path is None:
             raise RuntimeError("local conduct projection requires an explicit temporary board path")
@@ -1892,7 +1923,7 @@ def drain_once(board_path: Path, *, dry_run: bool = False, lock_timeout: int = 2
                     dry_tasks[str(ticket.task_id)] = dict(intent["task"])
                 else:
                     dry_tasks[str(ticket.task_id)] = {
-                        **dry_tasks[str(ticket.task_id)],
+                        **(ticket.canonical_base or dry_tasks.get(str(ticket.task_id), {})),
                         **dict(intent.get("patch") or {}),
                     }
                 applicable.append((path, ticket))
