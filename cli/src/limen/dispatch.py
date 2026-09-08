@@ -4041,7 +4041,7 @@ def _repo_unavailable_reason(repo: str | None) -> str | None:
         return None
     blob = ((result.stderr or "") + "\n" + (result.stdout or "")).strip()
     if _REPO_UNAVAILABLE_PATTERNS.search(blob):
-        return f"repo unavailable: {repo}; {blob[:240]}"
+        return f"repo unavailable: {repo}"
     return None
 
 
@@ -4406,17 +4406,17 @@ def _clone_repo(task: Task) -> Path | None:
             # every clone-needing worker → the ThreadPoolExecutor never drains → dispatch-parallel
             # wedges past the lane timeout and the daemon stalls (observed: ~30-min hang). The
             # group-kill reaps the grandchildren so the clone is genuinely bounded → cascades clean.
-            r = _run_capture(
+            _run_capture(
                 ["gh", "repo", "clone", task.repo, str(dest)],
                 timeout=600,
             )
-        except Exception as e:
-            print(f"  clone {task.repo} errored: {e}")
+        except Exception:
+            print(f"  clone {task.repo} errored: repository clone unavailable")
             return None
     if (dest / ".git").exists():
         print(f"  cloned {task.repo} → {dest}")
         return dest
-    print(f"  clone {task.repo} failed: {r.stderr.strip()[:200]}")
+    print(f"  clone {task.repo} failed: repository clone unavailable")
     return None
 
 
@@ -4741,14 +4741,15 @@ def _run_isolated_agent(
             run_env["LIMEN_TASK_ID"] = task.id
         _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
         supervised_cmd = _stable_agent_host_command(agent_cmd, run_env)
-    except StableAgentHostError as exc:
-        reason = str(exc)
+    except StableAgentHostError:
+        reason = "stable agent host unavailable"
         print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
-        return _blocked_result(reason)
-    except WorkstreamLaunchContractError as exc:
-        reason = str(exc)
+        # A no-output retry already attempted the provider in this reservation.
+        return _blocked_result(reason) if retry_count else _prelaunch_blocked_result(reason)
+    except WorkstreamLaunchContractError:
+        reason = "workstream launch contract unavailable"
         print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
-        return _workstream_successor_result(reason)
+        return _workstream_successor_result(reason) if retry_count else _prelaunch_workstream_successor_result(reason)
     started_at = datetime.now(timezone.utc)
     max_retries = provider_health_policy().same_model_retries if agent == "opencode" else retry_count
     while True:
@@ -4770,12 +4771,12 @@ def _run_isolated_agent(
                         agent_cmd,
                         run_env,
                     )
-                except StableAgentHostError as exc:
-                    reason = str(exc)
+                except StableAgentHostError:
+                    reason = "stable agent host unavailable"
                     print(f"  BLOCKED {task.id}: {reason}; refusing an unstable auth-retry TCC principal")
                     return _blocked_result(reason)
-                except WorkstreamLaunchContractError as exc:
-                    reason = str(exc)
+                except WorkstreamLaunchContractError:
+                    reason = "workstream launch contract unavailable"
                     print(f"  BLOCKED {task.id}: {reason}; refusing auth retry so the lane can successor-route")
                     return _workstream_successor_result(reason)
                 run = _run_capture(
@@ -4784,8 +4785,8 @@ def _run_isolated_agent(
                     timeout=lane_timeout,
                     env=run_env,
                 )
-        except StableAgentHostError as exc:
-            reason = str(exc)
+        except StableAgentHostError:
+            reason = "stable agent host unavailable"
             print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
             return _blocked_result(reason)
         except subprocess.TimeoutExpired:
@@ -5144,8 +5145,9 @@ def _isolated_local_run(
     if repo_dir is None and not dry_run:
         blocked = _repo_unavailable_reason(task.repo)
         if blocked:
-            print(f"  BLOCKED {task.id}: {blocked}")
-            return _blocked_result(blocked)
+            reason = "repository unavailable"
+            print(f"  BLOCKED {task.id}: {reason}")
+            return _prelaunch_blocked_result(reason)
         repo_dir = _clone_repo(task)  # post-move: clone on demand so local lanes can work it
     if repo_dir is None:
         msg = f"no local checkout of {task.repo or '(no repo)'}"
@@ -5153,7 +5155,7 @@ def _isolated_local_run(
             print(f"  would [{msg}; clone-on-demand then isolate]: →{binary}→PR")
             return True
         print(f"  SKIP {task.id}: {msg} — clone-on-demand failed")
-        return False
+        return _prelaunch_blocked_result(msg)
 
     base = _default_branch(repo_dir)
     pr_head = _same_repo_pr_head_for_task(task)
@@ -5241,14 +5243,18 @@ def _isolated_local_run(
             continue
         break
     if not initialized:
-        print(f"  FAILED transactional worktree initialization {task.id}: {initialization_error[:300]}")
-        return False
+        reason = "transactional worktree initialization unavailable"
+        print(f"  BLOCKED {task.id}: {reason}")
+        return _prelaunch_blocked_result(reason)
     _record_worktree_birth(task, wt, branch, checkout_ref, pr_base, existing_pr=bool(pr_head))
     _mark_machine_admission_born(task.id)
 
     pushed = False
     try:
-        agent_args = _workspace_agent_args(agent, base_agent_args, wt)
+        try:
+            agent_args = _workspace_agent_args(agent, base_agent_args, wt)
+        except WorkstreamLaunchContractError:
+            return _prelaunch_workstream_successor_result("workstream launch contract unavailable")
         agent_cmd = [binary, *agent_args, prompt]
         start_head_result = _git(["rev-parse", "HEAD"], wt)
         start_head = start_head_result.stdout.strip() if start_head_result.returncode == 0 else ""
@@ -5326,27 +5332,28 @@ def _isolated_local_run(
 def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str | PlanHandoffResult:
     if not agent_can_run_task(agent, task):
         print(f"  SKIP {task.id}: {agent} is gated for Limen registry discovery tasks")
-        return False
+        return _prelaunch_blocked_result("agent is gated for Limen registry discovery tasks")
     try:
         agent_args = _agent_argv(agent, task)
-    except WorkstreamLaunchContractError as exc:
-        reason = str(exc)
+    except WorkstreamLaunchContractError:
+        reason = "workstream launch contract unavailable"
         print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
-        return _workstream_successor_result(reason)
-    except ProviderSelectionError as exc:
-        reason = str(exc)
+        return _prelaunch_workstream_successor_result(reason)
+    except ProviderSelectionError:
+        reason = "provider selection unavailable"
         print(f"  BLOCKED {task.id}: {reason}")
-        return _blocked_result(reason)
-    except ClaudeLaunchContractError as exc:
-        print(f"  BLOCKED {task.id}: {exc}; refusing provider launch so the lane can cascade")
-        return False
+        return _prelaunch_blocked_result(reason)
+    except ClaudeLaunchContractError:
+        reason = "Claude launch contract unavailable"
+        print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can cascade")
+        return _prelaunch_blocked_result(reason)
     if agent == "opencode" and "-m" not in agent_args:
         reason = "no healthy code-capable model is exposed by the live OpenCode catalog"
         if dry_run:
             print(f"  would BLOCK {task.id}: {reason}")
             return True
         print(f"  BLOCKED {task.id}: {reason}")
-        return _blocked_result(reason)
+        return _prelaunch_blocked_result(reason)
     if _worktree_isolation_enabled():
         return _isolated_local_run(agent, task, dry_run, agent_args)
     # ── legacy in-place path (escape hatch; edits the live checkout directly)
@@ -5358,19 +5365,19 @@ def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str | Pla
             print(f"  would [{msg}; clone first]: {binary} {' '.join(agent_args)} …")
             return True
         print(f"  SKIP {task.id}: {msg} — clone it under $LIMEN_WORKDIR first")
-        return False
+        return _prelaunch_blocked_result(msg)
     if _workstream_packet_for(task) is not None:
         reason = "conducted workstream packets require the isolated local launch path"
         print(f"  BLOCKED {task.id}: {reason}")
-        return False
+        return _prelaunch_workstream_successor_result(reason)
     cmd = [binary, *agent_args, _build_prompt(task)]
     if not dry_run:
         try:
             cmd = _stable_agent_host_command(cmd)
-        except StableAgentHostError as exc:
-            reason = str(exc)
+        except StableAgentHostError:
+            reason = "stable agent host unavailable"
             print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
-            return _blocked_result(reason)
+            return _prelaunch_blocked_result(reason)
     return _run_cmd(cmd, task, dry_run, cwd=str(cwd))
 
 

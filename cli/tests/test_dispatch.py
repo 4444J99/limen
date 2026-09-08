@@ -2629,7 +2629,8 @@ def test_isolated_agent_turns_stale_host_lifetime_fd_into_blocked_result(
     )
 
     assert D._is_blocked_result(result)
-    assert "lifetime descriptor is invalid" in D._blocked_reason(result)
+    assert D._blocked_reason(result) == "stable agent host unavailable"
+    assert not D._is_prelaunch_result(result)
 
 
 def test_in_place_local_agent_runs_through_stable_host(
@@ -4551,7 +4552,8 @@ def test_isolated_local_run_blocks_unavailable_repo_without_cascading(monkeypatc
     result = D._isolated_local_run("codex", task, dry_run=False)
 
     assert D._is_blocked_result(result)
-    assert "organvm/missing" in D._blocked_reason(result)
+    assert D._blocked_reason(result) == "repository unavailable"
+    assert D._is_prelaunch_result(result)
 
 
 def test_release_stale_dry_run_does_not_mutate(tmp_path: Path) -> None:
