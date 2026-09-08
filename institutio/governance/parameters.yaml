@@ -263,6 +263,12 @@ parameters:
     self_update: none
     owner: vitals
     note: "Installed immutable host-admission policy entrypoint. The project runner delegates to this path so a checkout cannot replace the policy that judges it; an explicit override exists for bounded compatibility tests and clean runtime activation probes."
+  LIMEN_IMMUTABLE_RUNTIME:
+    default: "$HOME/.local/share/limen/current"
+    env: LIMEN_IMMUTABLE_RUNTIME
+    self_update: none
+    owner: notifications
+    note: "Immutable runtime root used by notification launchers; overridable for isolated verification."
   LIMEN_CODEX_PRETOOL_DENIAL_SUPPORTED:
     default: "auto"
     env: LIMEN_CODEX_PRETOOL_DENIAL_SUPPORTED
@@ -455,6 +461,12 @@ parameters:
     self_update: none
     owner: vitals
     note: "Kill switch for the scripts/_notify.py escalation path (macOS display notification, onset-deduped via logs/vigilia/relief-state.json). 0 keeps the dedup bookkeeping but never calls osascript — also how hermetic tests stay silent."
+  DOMUS_NOTIFY_BIN:
+    default: "~/.local/bin/domus-notify"
+    env: DOMUS_NOTIFY_BIN
+    self_update: none
+    owner: vitals
+    note: "Machine-global notification broker executable used by both structured and legacy scripts/_notify.py delivery. An explicitly supplied transport environment overrides this panel default without borrowing ambient transport configuration."
   LIMEN_CONDUCTING_REFRESH_TIMEOUT:
     default: 60
     env: LIMEN_CONDUCTING_REFRESH_TIMEOUT
@@ -621,6 +633,24 @@ parameters:
     self_update: none
     owner: continuity
     note: "Ignored local private cartridge root (parent of session-corpus, photos-universe, etc.). Full media-dedup paths/hashes live here and are never committed; public receipts carry aggregates only."
+  LIMEN_PRIVATE_CUSTODY_ROOT:
+    default: "$LIMEN_ROOT/.limen-private"
+    env: LIMEN_PRIVATE_CUSTODY_ROOT
+    self_update: none
+    owner: continuity
+    note: "Explicit private custody root for isolated document and runtime verification; never committed or published."
+  LIMEN_NOTIFICATION_CRON:
+    default: ""
+    env: LIMEN_NOTIFICATION_CRON
+    self_update: none
+    owner: notifications
+    note: "Optional notification schedule expression; empty uses the launcher's default interval."
+  LIMEN_NOTIFICATION_STATE_DIR:
+    default: "$HOME/.local/state/limen"
+    env: LIMEN_NOTIFICATION_STATE_DIR
+    self_update: none
+    owner: notifications
+    note: "Local notification state directory; overridable for isolated verification and never published."
   LIMEN_PRIVATE_SESSION_CORPUS:
     default: "$LIMEN_ROOT/.limen-private/session-corpus"
     env: LIMEN_PRIVATE_SESSION_CORPUS

@@ -39,6 +39,7 @@ import calendar
 import fnmatch
 import hashlib
 import json
+import math
 import os
 import re
 import shlex
@@ -57,6 +58,7 @@ CLI_SRC = SCRIPT_DIR.parent / "cli" / "src"
 if str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
 from limen.ci_failure import classify_ci_failure
+from _human_signals import TERMINAL_LEVER_STATUSES as TERMINAL_LEVER_STATUSES, lever_is_open as _lever_is_open
 
 # ROOT is the script's OWN tree (never LIMEN_ROOT) — a registry-drift predicate must validate the tree
 # it lives in, so the parity gate checks THIS checkout's estate.yaml in a worktree/CI, not wherever an
@@ -81,7 +83,6 @@ WORKFLOWS = ROOT / ".github" / "workflows"
 
 REQUIRED_RESOURCE_FIELDS = ("identity", "desired", "observe", "effector", "status", "owner", "note")
 VALID_STATUS = {"active", "envisioned"}
-TERMINAL_LEVER_STATUSES = frozenset({"discharged", "retired", "done", "closed"})
 REQUIRED_CLASS_FIELDS = ("match", "visibility", "branch_protection", "required_checks", "owner", "note")
 VALID_VISIBILITY = {"public", "private", "any"}
 VALID_MATCH_FACT_KEYS = {"fork", "archived", "private"}  # census-fact keys a class may match on
@@ -1755,14 +1756,6 @@ def seo_floor_gaps(rows: list[dict], estate: dict) -> list[str]:
     return gaps
 
 
-def _lever_is_open(lever: dict) -> bool:
-    """Return whether a human lever may still own current work."""
-    if str(lever.get("discharged") or "").strip():
-        return False
-    status = str(lever.get("status") or "").strip().lower()
-    return status not in TERMINAL_LEVER_STATUSES
-
-
 def _homed_levers() -> set[str]:
     """Lever ids present (and open) in his-hand-levers.json — so the doctor can CITE a homed atom
     (App un-installed → L-LIMENBOT-INSTALL) instead of counting it as a failure. Absent file → empty."""
@@ -2755,6 +2748,111 @@ def _runner_admission_observation(repo: str) -> tuple[bool | None, str]:
     return False, f"newest run {run_id} failed without the matching admission annotation"
 
 
+def _actions_budget_observation(org: str, *, actions_net: float, projected: float, policy_budget: float) -> dict:
+    """Read organization Actions budgets; expose conclusions, never private budget rows.
+
+    Contract: https://docs.github.com/en/rest/billing/budgets#get-all-budgets-for-an-organization
+    The API's has_next_page/total_count own exhaustion. A local policy or an
+    unreadable/missing remote budget cannot stand in for this observation.
+    """
+    seen: set[str] = set()
+    expected_total: int | None = None
+    amounts: list[float] = []
+    enforced: list[float] = []
+
+    def unavailable(reason: str) -> dict:
+        return {"status": "unavailable", "reason": reason, "scope": "organization", "product": "actions"}
+
+    for page in range(1, 11):
+        response = _gh_user(
+            [
+                "api",
+                f"/organizations/{org}/settings/billing/budgets?scope=organization&per_page=100&page={page}",
+                "-H",
+                "Accept: application/vnd.github+json",
+                "-H",
+                "X-GitHub-Api-Version: 2026-03-10",
+            ],
+            timeout=5,
+        )
+        if response.returncode != 0:
+            return unavailable("budget_endpoint_unreadable")
+        try:
+            data = json.loads(response.stdout or "{}")
+        except (TypeError, json.JSONDecodeError):
+            return unavailable("budget_response_invalid")
+        if not isinstance(data, dict):
+            return unavailable("budget_response_invalid")
+        rows, total, has_next = data.get("budgets"), data.get("total_count"), data.get("has_next_page")
+        if (
+            not isinstance(rows, list)
+            or isinstance(total, bool)
+            or not isinstance(total, int)
+            or total < 0
+            or not isinstance(has_next, bool)
+        ):
+            return unavailable("budget_response_invalid")
+        if expected_total is not None and total != expected_total:
+            return unavailable("budget_total_changed")
+        expected_total = total
+        for row in rows:
+            if not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"]:
+                return unavailable("budget_identity_invalid")
+            if row["id"] in seen:
+                return unavailable("budget_identity_repeated")
+            seen.add(row["id"])
+            products = row.get("budget_product_skus")
+            if (
+                not isinstance(row.get("budget_scope"), str)
+                or not isinstance(row.get("budget_type"), str)
+                or not isinstance(products, list)
+                or not products
+                or any(not isinstance(product, str) or not product for product in products)
+            ):
+                return unavailable("budget_response_invalid")
+            if (
+                row.get("budget_scope") == "organization"
+                and row.get("budget_type") == "SkuPricing"
+                and any(product.startswith("actions_") for product in products)
+            ):
+                return unavailable("actions_sku_budget_requires_scoped_usage")
+            if (
+                row.get("budget_scope") != "organization"
+                or row.get("budget_type") != "ProductPricing"
+                or products != ["actions"]
+            ):
+                continue
+            amount, stop = row.get("budget_amount"), row.get("prevent_further_usage")
+            if (
+                isinstance(amount, bool)
+                or not isinstance(amount, (int, float))
+                or not math.isfinite(amount)
+                or amount < 0
+                or not isinstance(stop, bool)
+            ):
+                return unavailable("actions_budget_invalid")
+            amounts.append(float(amount))
+            if stop:
+                enforced.append(float(amount))
+        if len(seen) > total or (has_next and (not rows or len(seen) >= total)):
+            return unavailable("budget_pagination_invalid")
+        if not has_next:
+            if len(seen) != total:
+                return unavailable("budget_pagination_incomplete")
+            if not amounts:
+                return unavailable("organization_actions_budget_missing")
+            return {
+                "status": "observed",
+                "scope": "organization",
+                "product": "actions",
+                "policy_matches": all(amount == policy_budget for amount in amounts),
+                "projected_within_budget": all(projected <= amount for amount in amounts),
+                "enforced_headroom_available": all(actions_net < amount for amount in enforced),
+                "stop_on_exhaustion_configured": bool(enforced),
+            }
+    return unavailable("budget_page_limit_reached")
+
+
 def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False, write: bool = True) -> int:
     """Meter Actions spend and preserve runner-admission text without inferring account state."""
     if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
@@ -2775,10 +2873,19 @@ def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False, 
         budget = float(os.environ.get("LIMEN_ACTIONS_BUDGET") or budget_default)
     except ValueError:
         budget = float(budget_default)
+    if not math.isfinite(budget) or budget < 0:
+        print("[gitvs] usage: invalid local Actions policy threshold")
+        return 1
     days_in_month = calendar.monthrange(now.year, now.month)[1]
     actions_product = (month_data.get("by_product") or {}).get("actions") or {}
     actions_net = round(float(actions_product.get("net_usd") or 0.0), 2)
     projected = round(actions_net / max(now.day, 1) * days_in_month, 2)
+    budget_observation = _actions_budget_observation(
+        org,
+        actions_net=actions_net,
+        projected=projected,
+        policy_budget=budget,
+    )
     doc = {
         "schema": "limen.github_actions_usage.v2",
         "org": org,
@@ -2788,6 +2895,8 @@ def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False, 
         "actions_net_usd_mtd": actions_net,
         "actions_net_usd_projected_month_end": projected,
         "budget_net_usd": budget,
+        "budget_source": "local_policy",
+        "remote_budget_observation": budget_observation,
         "runner_admission_observation": {
             "repo": probe_repo,
             "annotation_present": admission_present,
@@ -2820,6 +2929,13 @@ def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False, 
     fails: list[str] = []
     if projected > budget:
         fails.append(f"projected ${projected} exceeds budget ${budget}")
+    if budget_observation["status"] == "observed":
+        if not budget_observation["policy_matches"]:
+            fails.append("remote Actions budget differs from local policy threshold")
+        if not budget_observation["projected_within_budget"]:
+            fails.append("projected Actions usage exceeds the observed remote budget")
+        if not budget_observation["enforced_headroom_available"]:
+            fails.append("observed remote Actions budget has no enforced spending headroom")
     if admission_present is True:
         fails.append(
             f"runner admission annotation observed on {probe_repo} ({admission_detail}); "
@@ -2828,6 +2944,10 @@ def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False, 
     if strict and admission_present is None:
         print("[gitvs] usage: SKIP (runner-admission observation unreadable)")
         return 77
+    if budget_observation["status"] != "observed":
+        print(f"[gitvs] usage: SKIP (remote Actions budget observation unavailable: {budget_observation['reason']})")
+        if check or strict:
+            return 77
     if fails:
         marker = "✗" if check or strict else "~"
         print(f"{marker} gitvs usage: {'; '.join(fails)} — see {USAGE_DOC.relative_to(ROOT)}")
@@ -2836,8 +2956,10 @@ def usage(estate: dict, *, check: bool, print_json: bool, strict: bool = False, 
         "present" if admission_present is True else ("absent" if admission_present is False else "unreadable")
     )
     print(
-        f"✓ gitvs usage: Actions net MTD ${actions_net}, projected ${projected} vs budget ${budget}, "
-        f"runner-admission annotation {admission_word} → {USAGE_DOC.relative_to(ROOT)}"
+        f"{'✓' if budget_observation['status'] == 'observed' else '~'} gitvs usage: "
+        f"Actions net MTD ${actions_net}, projected ${projected} vs local policy ${budget}, "
+        f"remote budget {budget_observation['status']}, runner-admission annotation {admission_word} "
+        f"→ {USAGE_DOC.relative_to(ROOT)}"
     )
     return 0
 

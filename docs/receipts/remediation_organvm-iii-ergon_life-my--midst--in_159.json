@@ -1,0 +1,30 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:02:29.773622+00:00",
+  "target": {
+    "repository": "organvm-iii-ergon/life-my--midst--in",
+    "pull_request": 159,
+    "initial_head": "202ad46354f2c755a4ac2a343e87632984a701a3",
+    "remediated_head": "202ad46354f2c755a4ac2a343e87632984a701a3",
+    "base_ref": "main"
+  },
+  "remediation": {
+    "category": "clean_verification",
+    "root_cause": "passing_ci_verification",
+    "patches_applied": []
+  },
+  "verification": {
+    "local_command": "scripts/merge-policy.sh 159 --repo organvm-iii-ergon/life-my--midst--in",
+    "local_exit_code": 0,
+    "ci_status_rollup": {
+      "total": 1,
+      "failing": 0,
+      "pending": 0,
+      "required_scope": "required"
+    },
+    "merge_policy_verdict": "CLEARED",
+    "merge_mode": "direct",
+    "merge_commit": "0c80e657579101aeae039b2d6c6213acc2626f63"
+  },
+  "integrity_note": "Verified via merge-policy.sh with complete passing CI status prior to squash merge."
+}

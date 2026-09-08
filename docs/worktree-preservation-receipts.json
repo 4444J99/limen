@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-08-27T14:24:04Z",
+  "generated_utc": "2026-08-28T15:31:10Z",
   "receipts": [
     {
       "branch": "pr-110-branch",
@@ -4812,46 +4812,47 @@
     {
       "branch": "main",
       "classification": "bounded tracked patch and untracked archive privately preserved; owner decision required",
-      "custody_bundle_sha256": "f1afbad80eb4fd1c98a08fbabcc51b4b7100f6af8cbe9bd569f6c3118028d291",
-      "dirty_patch_bytes": 10572,
+      "custody_bundle_sha256": "bb2dadd1cdf88e3ed458ac54ef603b29c42f87d0aca8e601b60af82ebc3a78b3",
+      "dirty_patch_bytes": 11528,
       "dirty_patch_command": "git diff --binary HEAD",
       "dirty_patch_max_bytes": 67108864,
-      "dirty_patch_sha256": "ea9a8dcf2abb9182af7749b7bb75ae3ac8c9da1c3801aa973411b5ee86686a70",
-      "dirty_paths_count": 2,
+      "dirty_patch_sha256": "26d388ab28956f6ac4884c959d2a694374e84d0093ea9023180f3d0dfa082588",
+      "dirty_paths_count": 3,
       "dirty_paths_sample": [
         "PROJECT.md",
-        "cli/tests/e2e/test_ecosystem_liveness.py"
+        "cli/tests/e2e/test_ecosystem_liveness.py",
+        "docs/diurnal/INDEX.md"
       ],
-      "dirty_paths_sha256": "45b40b5493da28d5bf9f37d2b4393059ea69761319fd1c5ab570b7cbd9a95c07",
-      "evidence_updated_utc": "2026-08-27T14:24:04Z",
+      "dirty_paths_sha256": "30326283c3ad9fb875a824a721dfba21322aca64a8ed74dda1e390d89f516722",
+      "evidence_updated_utc": "2026-08-28T15:31:10Z",
       "head": "f034e3e659c8c8c3b9469b7b66e32c2bc03fdb64",
       "lane": "owner-blocker",
       "next_action": "Do not delete, reclaim, force-push, or auto-port this worktree from lifecycle cleanup. A bounded private tracked patch/untracked archive receipt exists; create a narrow owner packet to review, push, supersede, or retire this preserved dirty state.",
-      "private_patch": ".limen-private/session-corpus/lifecycle/worktree-preserve/limen-06658008-f1afbad80eb4fd1c/dirty.patch",
-      "private_patch_sha256": "ea9a8dcf2abb9182af7749b7bb75ae3ac8c9da1c3801aa973411b5ee86686a70",
-      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/limen-06658008-f1afbad80eb4fd1c/receipt.json",
-      "private_untracked_archive": ".limen-private/session-corpus/lifecycle/worktree-preserve/limen-06658008-f1afbad80eb4fd1c/untracked.tar",
-      "private_untracked_manifest": ".limen-private/session-corpus/lifecycle/worktree-preserve/limen-06658008-f1afbad80eb4fd1c/untracked-manifest.json",
+      "private_patch": ".limen-private/session-corpus/lifecycle/worktree-preserve/limen-06658008-bb2dadd1cdf88e3e/dirty.patch",
+      "private_patch_sha256": "26d388ab28956f6ac4884c959d2a694374e84d0093ea9023180f3d0dfa082588",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/limen-06658008-bb2dadd1cdf88e3e/receipt.json",
+      "private_untracked_archive": ".limen-private/session-corpus/lifecycle/worktree-preserve/limen-06658008-bb2dadd1cdf88e3e/untracked.tar",
+      "private_untracked_manifest": ".limen-private/session-corpus/lifecycle/worktree-preserve/limen-06658008-bb2dadd1cdf88e3e/untracked-manifest.json",
       "repo": "4444J99/limen",
       "root": "limen",
       "status": "private_bundle_preserved",
       "untracked_archive_bytes": 1771520,
-      "untracked_archive_sha256": "35002df33e4ad30df1908a1aef6490146892d1c424667687b4f028f976f48f1a",
-      "untracked_entries_count": 375,
-      "untracked_manifest_sha256": "6934bae3090ddfcab43430cc28ea9f6edd4eaa9edcbea695d6ecb518f6949e92",
-      "untracked_paths_count": 375,
+      "untracked_archive_sha256": "cf4dc148548f574874f3ec887d7e2374e4711462f8b8b87ce09a2c087f13ca1d",
+      "untracked_entries_count": 376,
+      "untracked_manifest_sha256": "b81970d4d641c5d9287c93dcc04ab61239aabc1b9de83feea6f1c5b40ac64a8c",
+      "untracked_paths_count": 376,
       "untracked_paths_sample": [],
-      "untracked_paths_sha256": "432bb91f8ab1dc396a55a9e0b3fba432a9ea5852b0a13796ee7b22a75aa7bb92",
-      "untracked_payload_bytes": 1469103,
-      "worktree": "/Users/4jp/Workspace/limen",
+      "untracked_paths_sha256": "7d7f30b1be64cfd87c0bb2d61345876cdc7035de6841ca2edb53bd8947d8709d",
+      "untracked_payload_bytes": 1471486,
       "worktree_key": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
-      "worktree_status_count": 3,
+      "worktree_status_count": 4,
       "worktree_status_sample": [
-        "## main...origin/main [behind 4]",
+        "## main...origin/main [behind 6]",
         " M PROJECT.md",
-        " M cli/tests/e2e/test_ecosystem_liveness.py"
+        " M cli/tests/e2e/test_ecosystem_liveness.py",
+        " M docs/diurnal/INDEX.md"
       ],
-      "worktree_status_sha256": "04542badb2d85d2e2b0fd2c1f8618c39c1fde43793d967f760cafbdf57d6bbc0"
+      "worktree_status_sha256": "62953c32599bea69975615bd4cdb6973e52c49968b0fc3f140e4ada801164ea8"
     },
     {
       "branch": "codex/psp-p00-w01-phase-predicates",
@@ -4903,6 +4904,48 @@
       "score_discount": 35,
       "status": "open_pr_preserved",
       "worktree": "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/psp-p00-w04-contracts"
+    },
+    {
+      "branch": "docs/deploy-cache-gotcha",
+      "classification": "bounded tracked patch and untracked archive privately preserved; owner decision required",
+      "custody_bundle_sha256": "a272178426eed4ad27c8490f85599fc1491a25ad223fe50b412d4fd5dc247899",
+      "dirty_patch_bytes": 455,
+      "dirty_patch_command": "git diff --binary HEAD",
+      "dirty_patch_max_bytes": 67108864,
+      "dirty_patch_sha256": "b407b59561a27d00a6568fa8e10b7c6e235c277bd93f5cd60b550f9a6137267a",
+      "dirty_paths_count": 1,
+      "dirty_paths_sample": [
+        "src/web/next-env.d.ts"
+      ],
+      "dirty_paths_sha256": "00f18019819e1825408cc09513fc69ab9610dc15e168a1553113df0631961dd1",
+      "evidence_updated_utc": "2026-08-27T17:40:13Z",
+      "head": "3694e839ae710147bf89b554a237f7bce9f65b85",
+      "lane": "owner-blocker",
+      "next_action": "Do not delete, reclaim, force-push, or auto-port this worktree from lifecycle cleanup. A bounded private tracked patch/untracked archive receipt exists; create a narrow owner packet to review, push, supersede, or retire this preserved dirty state.",
+      "private_patch": ".limen-private/session-corpus/lifecycle/worktree-preserve/styx-launch-package-bf70d843-a272178426eed4ad/dirty.patch",
+      "private_patch_sha256": "b407b59561a27d00a6568fa8e10b7c6e235c277bd93f5cd60b550f9a6137267a",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/styx-launch-package-bf70d843-a272178426eed4ad/receipt.json",
+      "private_untracked_archive": null,
+      "private_untracked_manifest": null,
+      "repo": "4444J99/peer-audited--behavioral-blockchain",
+      "root": "styx-launch-package",
+      "status": "private_bundle_preserved",
+      "untracked_archive_bytes": 0,
+      "untracked_archive_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "untracked_entries_count": 0,
+      "untracked_manifest_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "untracked_paths_count": 0,
+      "untracked_paths_sample": [],
+      "untracked_paths_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "untracked_payload_bytes": 0,
+      "worktree": "/Users/4jp/Workspace/4444J99/styx-launch-package",
+      "worktree_key": "bf70d843cf873a3f7f051f853d07dd26152e97578de24a4902e226b6714bb32c",
+      "worktree_status_count": 2,
+      "worktree_status_sample": [
+        "## docs/deploy-cache-gotcha...origin/docs/deploy-cache-gotcha [gone]",
+        " M src/web/next-env.d.ts"
+      ],
+      "worktree_status_sha256": "6aa328aa8cd8cb1e2ed25de8251a3add0659afad54850a1db1f66c560270dcc6"
     }
   ],
   "schema": 1

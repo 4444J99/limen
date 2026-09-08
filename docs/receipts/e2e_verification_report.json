@@ -1,0 +1,274 @@
+{
+  "schema": "limen.historical_model_report.v1",
+  "timestamp": "2026-08-27T12:24:57.137853+00:00",
+  "results": [
+    {
+      "test_id": "T1.1",
+      "requirement": "R1",
+      "tier": "Tier 1",
+      "name": "Clean Rebase Against Default Branch",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.038,
+      "metadata": {}
+    },
+    {
+      "test_id": "T1.2",
+      "requirement": "R1",
+      "tier": "Tier 1",
+      "name": "3-Way Merge Conflict Resolution",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.015000000000000001,
+      "metadata": {}
+    },
+    {
+      "test_id": "T1.3",
+      "requirement": "R1",
+      "tier": "Tier 1",
+      "name": "Detached HEAD State Handling",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.01,
+      "metadata": {}
+    },
+    {
+      "test_id": "T1.4",
+      "requirement": "R1",
+      "tier": "Tier 1",
+      "name": "Fast-Forward Mergeability",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.005,
+      "metadata": {}
+    },
+    {
+      "test_id": "T1.5",
+      "requirement": "R1",
+      "tier": "Tier 1",
+      "name": "Commit Provenance Preservation",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.002,
+      "metadata": {}
+    },
+    {
+      "test_id": "T2.1",
+      "requirement": "R2",
+      "tier": "Tier 2",
+      "name": "Local Test Suite Execution Verification",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.003,
+      "metadata": {}
+    },
+    {
+      "test_id": "T2.2",
+      "requirement": "R2",
+      "tier": "Tier 2",
+      "name": "Syntax, Lint, and Typecheck Gates",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.002,
+      "metadata": {}
+    },
+    {
+      "test_id": "T2.3",
+      "requirement": "R2",
+      "tier": "Tier 2",
+      "name": "CI Workflow Diagnostics & Repair",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.003,
+      "metadata": {}
+    },
+    {
+      "test_id": "T2.4",
+      "requirement": "R2",
+      "tier": "Tier 2",
+      "name": "Timeout and Resource Bounds",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.001,
+      "metadata": {}
+    },
+    {
+      "test_id": "T2.5",
+      "requirement": "R2",
+      "tier": "Tier 2",
+      "name": "Hermetic Environment Isolation",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.08399999999999999,
+      "metadata": {}
+    },
+    {
+      "test_id": "T3.1",
+      "requirement": "R3",
+      "tier": "Tier 3",
+      "name": "Force-with-Lease Safety Guard",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.002,
+      "metadata": {}
+    },
+    {
+      "test_id": "T3.2",
+      "requirement": "R3",
+      "tier": "Tier 3",
+      "name": "Exact-Head Commit Matching",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.003,
+      "metadata": {}
+    },
+    {
+      "test_id": "T3.3",
+      "requirement": "R3",
+      "tier": "Tier 3",
+      "name": "GitHub Standard Merge Execution",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.002,
+      "metadata": {}
+    },
+    {
+      "test_id": "T3.4",
+      "requirement": "R3",
+      "tier": "Tier 3",
+      "name": "Remote Branch Deletion Verification",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.001,
+      "metadata": {}
+    },
+    {
+      "test_id": "T3.5",
+      "requirement": "R3",
+      "tier": "Tier 3",
+      "name": "Cryptographic Scoped Receipt Minting",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.049,
+      "metadata": {}
+    },
+    {
+      "test_id": "T4.1",
+      "requirement": "R4",
+      "tier": "Tier 4",
+      "name": "Worktree Lifecycle & Reaping",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.414,
+      "metadata": {}
+    },
+    {
+      "test_id": "T4.2",
+      "requirement": "R4",
+      "tier": "Tier 4",
+      "name": "Zero Unceremonious Closures",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.012,
+      "metadata": {}
+    },
+    {
+      "test_id": "T4.3",
+      "requirement": "R4",
+      "tier": "Tier 4",
+      "name": "Diagnostic Assessment Retention",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.022,
+      "metadata": {}
+    },
+    {
+      "test_id": "T4.4",
+      "requirement": "R4",
+      "tier": "Tier 4",
+      "name": "Batch Remediation Fault Isolation",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.005,
+      "metadata": {}
+    },
+    {
+      "test_id": "T4.5",
+      "requirement": "R4",
+      "tier": "Tier 4",
+      "name": "Closeout Hygiene Predicate",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.001,
+      "metadata": {}
+    },
+    {
+      "test_id": "INV.1",
+      "requirement": "R5",
+      "tier": "Invariant",
+      "name": "Private Document Review Untouched",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.003,
+      "metadata": {}
+    },
+    {
+      "test_id": "INV.2",
+      "requirement": "R5",
+      "tier": "Invariant",
+      "name": "Conduct Role Hardening Branch Untouched",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.002,
+      "metadata": {}
+    },
+    {
+      "test_id": "INV.3",
+      "requirement": "R5",
+      "tier": "Invariant",
+      "name": "Universal Mail Automation Untouched",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.002,
+      "metadata": {}
+    },
+    {
+      "test_id": "INV.4",
+      "requirement": "R5",
+      "tier": "Invariant",
+      "name": "Active Codex/OpenCode Daemons Preserved",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.002,
+      "metadata": {}
+    },
+    {
+      "test_id": "INV.5",
+      "requirement": "R5",
+      "tier": "Invariant",
+      "name": "Path Traversal & Alias Resistance",
+      "passed": true,
+      "details": "PASSED",
+      "duration_ms": 0.002,
+      "metadata": {}
+    }
+  ],
+  "evidence_scope": "synthetic_models_only",
+  "operational_status": "unverified",
+  "historical_reported_summary": {
+    "total": 25,
+    "passed": 25,
+    "failed": 0,
+    "pass_rate_pct": 100.0,
+    "status": "PASS"
+  },
+  "summary": {
+    "status": "SIMULATION_ONLY",
+    "operational_assertions_verified": 0
+  },
+  "correction": {
+    "recorded_at": "2026-09-08",
+    "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+    "reason": "The original harness fabricated rebase hashes and initialized live preservation flags as true. Its reported pass count cannot prove live operations or custody."
+  }
+}

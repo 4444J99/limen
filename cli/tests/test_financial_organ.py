@@ -111,6 +111,8 @@ def test_financial_dashboard_surfaces_macro_and_micro_faces(tmp_path: Path, monk
     assert faces["macro"]["path"] == "organs/financial/MACRO.md"
     assert faces["micro"]["status"] == "deepened"
     assert "MONETA intakes value" in web_face["rail_boundary"]
+    priorities = [line.split("**", 2)[1] for line in dashboard.splitlines() if ". **P" in line]
+    assert priorities[:3] == ["P0: Enter balances", "P1: Deploy MONETA", "P2: Deploy Exporter"]
 
 
 def test_public_census_is_counts_only(tmp_path: Path, monkeypatch) -> None:

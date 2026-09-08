@@ -34,6 +34,11 @@ def test_gitvs_strict_doctor_and_usage_report_unavailable(tmp_path, monkeypatch,
     monkeypatch.setattr(gitvs.shutil, "which", lambda _command: "/usr/bin/gh")
     monkeypatch.setattr(gitvs, "owners", lambda _estate: ["organvm"])
     monkeypatch.setattr(gitvs, "_usage_month", lambda *_args: {"net_usd_total": 0.0})
+    monkeypatch.setattr(
+        gitvs,
+        "_actions_budget_observation",
+        lambda *_args, **_kwargs: {"status": "unavailable", "reason": "budget_endpoint_unreadable"},
+    )
     monkeypatch.setattr(gitvs, "_runner_admission_observation", lambda _repo: (None, "private diagnostic detail"))
     monkeypatch.setattr(gitvs, "USAGE_DOC", tmp_path / "usage.json")
     monkeypatch.setattr(gitvs, "USAGE_STAMP", tmp_path / "usage-stamp.json")

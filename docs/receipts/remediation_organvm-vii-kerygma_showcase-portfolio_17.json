@@ -1,0 +1,30 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:03:34.037934+00:00",
+  "target": {
+    "repository": "organvm-vii-kerygma/showcase-portfolio",
+    "pull_request": 17,
+    "initial_head": "658cbe50417e1f4d4e46f1032e7c19e5cd9e7013",
+    "remediated_head": "658cbe50417e1f4d4e46f1032e7c19e5cd9e7013",
+    "base_ref": "main"
+  },
+  "remediation": {
+    "category": "clean_verification",
+    "root_cause": "passing_ci_verification",
+    "patches_applied": []
+  },
+  "verification": {
+    "local_command": "scripts/merge-policy.sh 17 --repo organvm-vii-kerygma/showcase-portfolio",
+    "local_exit_code": 0,
+    "ci_status_rollup": {
+      "total": 1,
+      "failing": 0,
+      "pending": 0,
+      "required_scope": "required"
+    },
+    "merge_policy_verdict": "CLEARED",
+    "merge_mode": "direct",
+    "merge_commit": "1774e7a94185cefe66c6d94fb3ccf78dfc9d2288"
+  },
+  "integrity_note": "Verified via merge-policy.sh with complete passing CI status prior to squash merge."
+}
