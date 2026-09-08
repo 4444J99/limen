@@ -39,7 +39,7 @@ Modes:
   --restore   put every original description back from the backup ledger (revert guard).
   --quiet     one summary line instead of per-entry lines (used by the beat).
 
-FAIL-OPEN: no ~/.codex, no config, a torn file — skip it and exit 0 (never break the beat).
+Missing evidence returns 77. A metadata-size proxy never certifies native skill loading.
 Never prints secrets; descriptions are public plugin metadata, but logs stay counts-only under
 --quiet. Read-only outside --apply/--restore.
 """
@@ -47,10 +47,13 @@ Never prints secrets; descriptions are public plugin metadata, but logs stay cou
 from __future__ import annotations
 
 import argparse
+import fcntl
+import hashlib
 import json
 import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 CODEX_HOME = Path(os.environ.get("CODEX_HOME") or (Path.home() / ".codex"))
@@ -313,6 +316,12 @@ def _get(t: dict) -> str | None:
         except Exception:
             return None
     lines = text.splitlines()
+    if not lines or lines[0] != "---":
+        return None
+    try:
+        lines = lines[1 : lines.index("---", 1)]
+    except ValueError:
+        return None
     for i, line in enumerate(lines):
         m = _DESC_LINE.match(line)
         if m:
@@ -324,12 +333,16 @@ def _get(t: dict) -> str | None:
     return None
 
 
-def _set(t: dict, new: str) -> bool:
+def _set(t: dict, new: str, expected_digest: str | None = None) -> bool:
     """Atomically write `new` as the target's description. Validates before replacing."""
     path: Path = t["path"]
+    if path.is_symlink():
+        return False
     try:
         text = path.read_text(encoding="utf-8")
     except Exception:
+        return False
+    if expected_digest is not None and _digest(text) != expected_digest:
         return False
     if t["field"] == "json:description":
         try:
@@ -344,8 +357,16 @@ def _set(t: dict, new: str) -> bool:
         # style, and it can never leave an unterminated quote from a mid-string cut.
         esc = new.replace("\\", "\\\\").replace('"', '\\"')
         lines = text.splitlines(keepends=True)
+        if not lines or lines[0].strip() != "---":
+            return False
+        try:
+            boundary = next(i for i in range(1, len(lines)) if lines[i].strip() == "---")
+        except StopIteration:
+            return False
         done = False
         for i, line in enumerate(lines):
+            if i >= boundary:
+                break
             m = _DESC_LINE.match(line.rstrip("\n"))
             if m:
                 eol = "\n" if line.endswith("\n") else ""
@@ -355,41 +376,146 @@ def _set(t: dict, new: str) -> bool:
         if not done:
             return False
         rendered = "".join(lines)
-    tmp = path.with_suffix(path.suffix + ".slim-tmp")
+    tmp = None
     try:
-        tmp.write_text(rendered, encoding="utf-8")
+        fd, name = tempfile.mkstemp(prefix=".slim-", dir=path.parent)
+        tmp = Path(name)
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            os.fchmod(stream.fileno(), path.stat().st_mode & 0o777)
+            stream.write(rendered)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if path.is_symlink() or path.read_text(encoding="utf-8") != text:
+            tmp.unlink()
+            return False
         os.replace(tmp, path)
     except Exception:
-        tmp.unlink(missing_ok=True)
+        if tmp:
+            tmp.unlink(missing_ok=True)
         return False
     return True
 
 
+def _digest(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
 def _load_ledger() -> dict:
-    try:
-        return json.loads(LEDGER.read_text(encoding="utf-8"))
-    except Exception:
+    if not LEDGER.exists():
         return {}
+    if LEDGER.is_symlink():
+        raise ValueError("unsafe backup ledger")
+    try:
+        data = json.loads(LEDGER.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise ValueError("backup custody unavailable") from exc
+    if not isinstance(data, dict):
+        raise ValueError("invalid backup ledger")
+    return data
 
 
 def _save_ledger(led: dict) -> None:
+    LEDGER.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if LEDGER.is_symlink():
+        raise ValueError("unsafe backup ledger")
+    fd, name = tempfile.mkstemp(prefix=".ledger-", dir=LEDGER.parent)
+    tmp = Path(name)
     try:
-        LEDGER.parent.mkdir(parents=True, exist_ok=True)
-        LEDGER.write_text(json.dumps(led, indent=2, ensure_ascii=False), encoding="utf-8")
-    except Exception:
-        pass
+        with os.fdopen(fd, "w", encoding="utf-8") as stream:
+            os.fchmod(stream.fileno(), 0o600)
+            json.dump(led, stream, indent=2, ensure_ascii=False)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(tmp, LEDGER)
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 def _key(t: dict) -> str:
     return f"{t['path']}::{t['field']}"
 
 
+def catalog_evidence() -> dict:
+    """Enumerate candidate metadata without confusing a filesystem census with native loading."""
+    import yaml
+
+    entries = []
+    for target in targets():
+        if target["field"] != "yaml:description":
+            continue
+        path = target["path"]
+        row = {
+            "identity": target["id"],
+            "path_fingerprint": _digest(str(path)),
+            "path_chars": len(str(path)),
+            "state": "parse_failure",
+        }
+        try:
+            raw = path.read_text(encoding="utf-8")
+            parts = raw.split("---", 2)
+            if len(parts) != 3 or parts[0].strip():
+                raise ValueError("missing frontmatter")
+            metadata = yaml.safe_load(parts[1])
+            if not isinstance(metadata, dict) or not isinstance(metadata.get("name"), str):
+                raise ValueError("missing identity")
+            description = metadata.get("description")
+            if description is not None and not isinstance(description, str):
+                raise ValueError("invalid description")
+            row.update(
+                name=metadata["name"],
+                name_chars=len(metadata["name"]),
+                description_chars=len(description or ""),
+                body_fingerprint=_digest(parts[2]),
+                state="description_missing" if not description else "parsed",
+            )
+            # Explicitly a candidate render, not a tokenizer or native-runtime claim.
+            rendered = f"- {target['id']}: {description or ''} (file: {path})\n"
+            row.update(
+                candidate_render_chars=len(rendered),
+                candidate_render_bytes=len(rendered.encode()),
+                formatting_chars=len(rendered) - len(target["id"]) - len(description or "") - len(str(path)),
+            )
+        except (OSError, ValueError, yaml.YAMLError):
+            pass
+        entries.append(row)
+    telemetry = codex_skill_budget()
+    return {
+        "schema_version": "limen.codex_skill_catalog.v1",
+        "exit": 77,
+        "scope": "filesystem_candidates",
+        "entries": entries,
+        "candidate_skills": len(entries),
+        "parse_failures": sum(r["state"] == "parse_failure" for r in entries),
+        "missing_descriptions": sum(r["state"] == "description_missing" for r in entries),
+        "omitted_skills": None,
+        "stripped_descriptions": None,
+        "native_telemetry": "truncation_only" if telemetry else "missing",
+        "runtime_budget": telemetry,
+        "fresh_native_loading_witness": False,
+    }
+
+
 def run(mode: str, quiet: bool) -> int:
+    if mode not in {"apply", "restore"}:
+        return _run(mode, quiet)
+    LEDGER.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    fd = os.open(LEDGER.parent / ".lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+    try:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return 77
+        return _run(mode, quiet)
+    finally:
+        os.close(fd)
+
+
+def _run(mode: str, quiet: bool) -> int:
     tgts = targets()
     if not tgts:
         if not quiet:
             print("codex-skill-slim: no Codex skills/plugins found (nothing to do)")
-        return 0
+        return 77 if mode == "check" else 0
 
     # Codex's budget metric is `total_skills`, so derive the cap against the SKILL count (SKILL.md
     # descriptions), not the skill+plugin.json total. plugin.json descriptions are slimmed too, but
@@ -457,20 +583,24 @@ def run(mode: str, quiet: bool) -> int:
                 file=sys.stderr,
             )
             return 1
-        print(f"codex skill budget: ok ({total}B across {len(rows)} entries, all ≤{cap}){emitted}")
-        return 0
+        print(
+            f"codex skill budget: metadata within cap ({total}B across {len(rows)} entries){emitted}; fresh native loading evidence unavailable"
+        )
+        return 77
 
     if mode == "restore":
         led = _load_ledger()
         restored = 0
         for t in tgts:
             k = _key(t)
-            if k in led:
-                if _set(t, led[k]):
+            entry = led.get(k)
+            if isinstance(entry, dict) and entry.get("after_digest"):
+                if _set(t, entry["original"], expected_digest=entry["after_digest"]):
                     restored += 1
-        _save_ledger({})
+                    del led[k]
+        _save_ledger(led)
         print(f"codex-skill-slim: restored {restored} original description(s)")
-        return 0
+        return 77 if led else 0
 
     if mode == "report":
         print(
@@ -493,8 +623,19 @@ def run(mode: str, quiet: bool) -> int:
         if b <= cap or new == cur or not new:
             continue
         k = _key(t)
-        led.setdefault(k, cur)  # preserve the FIRST-seen original as the restore point
-        if _set(t, new):
+        # Versioned path plus whole-file digest binds custody to this exact installed artifact.
+        # Persist custody BEFORE mutation; interrupted attempts remain visible and never replay.
+        if k in led:
+            continue
+        if _get(t) != cur:
+            continue
+        before_digest = _digest(t["path"].read_text(encoding="utf-8"))
+        led[k] = {"original": cur, "before_digest": before_digest, "after_digest": None, "state": "prepared"}
+        _save_ledger(led)
+        if _set(t, new, expected_digest=before_digest):
+            led[k]["after_digest"] = _digest(t["path"].read_text(encoding="utf-8"))
+            led[k]["state"] = "applied"
+            _save_ledger(led)
             changed += 1
             saved += b - len(new)
             if not quiet:
@@ -510,7 +651,7 @@ def run(mode: str, quiet: bool) -> int:
             f"codex-skill-slim: distilled {changed} description(s); budget {total}→{new_total}B "
             f"across {len(rows)} entries (cap {cap}); every skill preserved"
         )
-    return 0
+    return 77 if any(not isinstance(entry, dict) or entry.get("state") != "applied" for entry in led.values()) else 0
 
 
 def main() -> int:
@@ -520,18 +661,23 @@ def main() -> int:
     g.add_argument("--check", action="store_true", help="exit 1 if any description exceeds the cap")
     g.add_argument("--restore", action="store_true", help="restore original descriptions from the ledger")
     ap.add_argument("--quiet", action="store_true", help="one summary line (for the beat)")
+    g.add_argument("--catalog-json", action="store_true", help="sanitized metadata accounting and native evidence gaps")
     args = ap.parse_args()
+    if args.catalog_json:
+        payload = catalog_evidence()
+        print(json.dumps(payload, indent=2))
+        return payload["exit"]
     if not CODEX_HOME.is_dir():
         if not args.quiet:
             print("codex-skill-slim: no CODEX_HOME (nothing to do)")
-        return 0
+        return 77 if args.check else 0
     mode = "apply" if args.apply else "check" if args.check else "restore" if args.restore else "report"
     try:
         return run(mode, args.quiet)
     except Exception as exc:  # fail-open: never break the beat
         if not args.quiet:
             print(f"codex-skill-slim: skipped ({exc})")
-        return 0
+        return 77
 
 
 if __name__ == "__main__":

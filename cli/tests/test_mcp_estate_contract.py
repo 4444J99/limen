@@ -149,9 +149,48 @@ def test_expired_or_changed_receipt_cannot_supply_evidence():
         "dimensions": {"startup_ui": "pass", "explicit_ui": "pass", "isolation": "pass", "client_route": "pass"},
     }
     assert not estate.apply_client_receipts([row], [receipt], policy(), now=4000)
-    assert estate.apply_client_receipts([row], [receipt], policy(), now=101) == {"codex"}
+    assert not estate.apply_client_receipts([row], [receipt], policy(), now=101)
+    receipt["dependency_fingerprint"] = "independent-current-dependencies"
+    witness = {
+        ("codex", "serena", "standalone"): {
+            "receipt_fingerprint": estate.fingerprint(receipt),
+            "dependency_fingerprint": receipt["dependency_fingerprint"],
+            "client_version": "1",
+            "server_version": "1",
+        }
+    }
+    assert estate.apply_client_receipts([row], [receipt], policy(), now=101, observations=witness) == {"codex"}
     receipt["fingerprint"] = "old"
     assert not estate.apply_client_receipts([row], [receipt], policy(), now=102)
+
+
+def test_filtered_check_cannot_certify_estate(tmp_path):
+    p = policy()
+    p["registrations"][0]["availability"] = "disabled"
+    path = tmp_path / "config.toml"
+    path.write_text('[mcp_servers.serena]\nenabled=false\ncommand="false"\n')
+    records, issues, _, _ = estate.inventory(p, [("codex", path)])
+    assert estate.measure(p, records, issues, service=["serena"])["exit"] == 77
+
+
+def test_duplicate_configuration_retains_sanitized_provenance(tmp_path):
+    first, second = tmp_path / "first.json", tmp_path / "second.json"
+    for path in (first, second):
+        path.write_text(json.dumps({"mcpServers": {"serena": {"command": str(path)}}}))
+    records, issues, _, _ = estate.inventory(policy(), [("codex", first), ("codex", second)])
+    result = estate.measure(policy(), records, issues, inventory_only=True)
+    assert len(result["servers"][0]["provenance"]) == 2
+    assert str(tmp_path) not in json.dumps(result)
+
+
+@pytest.mark.parametrize("cursor", [0, False, "", [], {}])
+def test_malformed_pagination_cannot_look_complete(cursor):
+    code = SERVER.replace(
+        "else: result={'tools':[{'name':'open_dashboard'}]}",
+        "else: result={'tools':[{'name':'open_dashboard'}], 'nextCursor': " + repr(cursor) + "}",
+    )
+    result = protocol.verify(stdio(code), expected={"tools": ["open_dashboard"]})
+    assert result["dimensions"]["protocol"] == "fail"
 
 
 def test_report_does_not_leak_config_values(tmp_path):
@@ -160,3 +199,75 @@ def test_report_does_not_leak_config_values(tmp_path):
     records, issues, _, _ = estate.inventory(policy(), [("codex", path)])
     raw = json.dumps(estate.measure(policy(), records, issues, inventory_only=True))
     assert "secret-value" not in raw and "private-command" not in raw
+
+
+def test_native_status_returns_identical_inventory_without_probe(monkeypatch):
+    import importlib.util
+    from types import SimpleNamespace
+
+    root = Path(__file__).resolve().parents[2]
+    monkeypatch.syspath_prepend(str(root / "mcp/src"))
+    spec = importlib.util.spec_from_file_location("estate_native_status_test", root / "mcp/src/limen_mcp/server.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    payload = {"schema_version": "limen.mcp_estate.v1", "exit": 77, "scope": "filtered", "distance": {}}
+
+    def observe(argv, **kwargs):
+        assert "--inventory-only" in argv
+        assert "--apply" not in argv
+        assert argv[-2:] == ["--service", "serena"]
+        return SimpleNamespace(stdout=json.dumps(payload), returncode=77)
+
+    monkeypatch.setattr(module.subprocess, "run", observe)
+    assert module.mcp_estate_status("serena") == payload
+
+
+def test_codex_inline_manifest_honors_disabled_plugin(tmp_path):
+    cache = tmp_path / "plugins/cache/market/serena/1/.codex-plugin"
+    cache.mkdir(parents=True)
+    (cache / "plugin.json").write_text(json.dumps({"mcpServers": {"serena": {"command": "false"}}}))
+    path = tmp_path / "config.toml"
+    path.write_text('[plugins."serena@market"]\nenabled=false\n')
+    records, _, _, _ = estate.inventory(policy(), [("codex", path)])
+    plugin = next(r for r in records if r["route"] == "serena@market")
+    assert plugin["spec"]["disabled"] is True
+
+
+def test_inactive_project_is_counted_but_never_launched(tmp_path, monkeypatch):
+    path = tmp_path / "claude.json"
+    path.write_text(
+        json.dumps(
+            {
+                "projects": {
+                    "/unselected/private-project": {
+                        "mcpServers": {"serena": {"command": "false", "args": ["--open-web-dashboard", "false"]}}
+                    }
+                }
+            }
+        )
+    )
+    records, issues, _, _ = estate.inventory(policy(), [("claude", path)])
+    monkeypatch.setattr(estate, "verify", lambda *args: pytest.fail("inactive project launched"))
+    result = estate.measure(policy(), records, issues)
+    row = next(r for r in result["servers"] if r["client"] == "claude")
+    assert row["reason"] == "outside_active_client_scope"
+    assert row["dimensions"]["protocol"] == "unmeasured"
+
+
+def test_functional_calls_require_explicit_read_only_contract():
+    calls = [{"method": "tools/call", "params": {"name": "health", "arguments": {}}}]
+    result = protocol.verify(stdio(SERVER), expected={"tools": ["open_dashboard"]}, safe_calls=calls)
+    assert result["dimensions"]["protocol"] == "fail"
+    assert "functional_calls" not in result
+
+
+def test_safe_functional_result_is_checked_and_content_is_not_reported():
+    code = SERVER.replace(
+        "else: result={'tools':[{'name':'open_dashboard'}]}",
+        "elif q['method']=='tools/call': result={'content':[{'type':'text','text':'private probe data'}]}\n else: result={'tools':[{'name':'open_dashboard'}]}",
+    )
+    calls = [{"method": "tools/call", "params": {"name": "health", "arguments": {}}, "read_only": True}]
+    result = protocol.verify(stdio(code), expected={"tools": ["open_dashboard"]}, safe_calls=calls)
+    assert result["dimensions"]["functional"] == "pass"
+    assert result["functional_calls"] == {"attempted": 1, "passed": 1}
+    assert "private probe data" not in json.dumps(result)
