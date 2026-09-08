@@ -5,7 +5,10 @@ import json
 import subprocess
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
 
 SPEC = importlib.util.spec_from_file_location("completion", Path(__file__).with_name("verify-completion.py"))
 C = importlib.util.module_from_spec(SPEC)
@@ -101,6 +104,33 @@ class CompletionTests(unittest.TestCase):
         self.data["atoms"][0]["unresolved_findings"] = []
         self.data["atoms"][0]["required_predicates"].append("rendered_output")
         self.assertEqual(self.result()["status"], "FAIL")
+
+
+class ResumeAdmissionTests(unittest.TestCase):
+    def test_denial_never_executes_a_gate(self):
+        spec = importlib.util.spec_from_file_location("resume", Path(__file__).with_name("resume-heavy.py"))
+        resume = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(resume)
+
+        class Denied(RuntimeError):
+            pass
+
+        @contextmanager
+        def deny(**kwargs):
+            raise Denied("synthetic pressure")
+            yield
+
+        runner = SimpleNamespace(
+            load_registry=lambda: {"gates": {g: {"serialize": g != "worker-check"} for g in
+                ["worker-check", "pytest-cli", "pytest-api", "web-build"]}},
+            heavy_admission=deny, HostAdmissionFailure=Denied, run_gate_wave=Mock())
+        fake_spec = SimpleNamespace(name="synthetic_recovery_runner", loader=SimpleNamespace(exec_module=lambda m: None))
+        with patch.object(resume.subprocess, "run"), patch.object(resume.subprocess, "check_output", return_value=""), \
+                patch.object(resume.os, "chdir"), \
+                patch.object(resume.importlib.util, "spec_from_file_location", return_value=fake_spec), \
+                patch.object(resume.importlib.util, "module_from_spec", return_value=runner):
+            self.assertEqual(resume.main(), 75)
+        runner.run_gate_wave.assert_not_called()
 
 
 if __name__ == "__main__":
