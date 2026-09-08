@@ -385,6 +385,13 @@ function canonicalClaimAgent(task, event) {
   return agent;
 }
 
+function requireReservedBudgetCost(prior, candidate) {
+  if (prior.budget_cost === candidate.budget_cost) return;
+  if ([prior.status, candidate.status].some((status) => ["dispatched", "in_progress"].includes(status))) {
+    throw new ConductProjectionError(`task ${prior.id} reserved budget_cost cannot change`, 409);
+  }
+}
+
 function applyCanonicalBudgetDebit(board, task, event, patch) {
   const amount = Number(task.budget_cost || 0);
   if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount < 0) {
@@ -698,6 +705,7 @@ export function applyTaskPacketProjectionEvent(input, event) {
       );
       validatePatch(patch, taskId);
       const candidate = { ...existing, ...patch };
+      requireReservedBudgetCost(existing, candidate);
       validatePolicyUpdate(existing, candidate, taskId);
       if (candidate.provider_eligibility != null) patch.provider_eligibility = candidate.provider_eligibility;
       Object.assign(task, patch);
@@ -744,6 +752,7 @@ export function applyTaskPacketProjectionEvent(input, event) {
     throw new ConductProjectionError(`task ${taskId} status intent requires a status patch`, 422);
   }
   const nextStatus = patch.status ?? existing.status;
+  requireReservedBudgetCost(existing, { ...existing, ...patch });
   requireReceiptCredit(taskId, existing, patch, intent.log);
   if (["dispatched", "in_progress"].includes(nextStatus)) {
     // A policy document is not a trusted provider attestation. Preserve it,
