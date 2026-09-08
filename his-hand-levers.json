@@ -1584,6 +1584,27 @@
       "sovereignty": {
         "reason": "identity"
       }
+    },
+    {
+      "id": "L-RELAY-GOVERNOR-ADMIN-ACTIVATION",
+      "label": "Provision the isolated relay governor App and enforce its PR-only main update authority.",
+      "owner": "Anthony",
+      "status": "open",
+      "added": "2026-09-08",
+      "cost": "one dedicated App installation and two reviewed GitHub protection settings",
+      "source_task": "https://github.com/4444J99/organvm-ci-relay/issues/3",
+      "gate": "The managed integration has no Administration or App installation capability; main is still unprotected.",
+      "unlocks": "System deployment and protected adversarial canaries for personal-relay merge-time enforcement through the existing governor.",
+      "steps": [
+        "Review docs/architecture/personal-relay-merge.md and its rendered configuration; preserve the personal runner plane.",
+        "Install the isolated governor App on the relay only and provision its credentials in the trusted governor deployment, never in Actions or fleet-wide hydration.",
+        "Apply strict no-bypass branch protection and the separate update-only ruleset with the single governor Integration exemption in pull_request mode.",
+        "Return live setting readback to the activation owner; system execution must pass the protected canaries before activation is accepted."
+      ],
+      "note": "Source review and system-run canaries are not discharged by this administrator action. Existing asynchronous admission checks do not close the freshness gap. No credential values belong in git.",
+      "sovereignty": {
+        "reason": "governance_choice"
+      }
     }
   ]
 }
