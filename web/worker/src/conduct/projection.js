@@ -1186,13 +1186,14 @@ export async function commitTaskCompatibilityEvent(
         event_id: event.event_id,
       };
     }
-    await publishPublicBoard(env, applied.board, { fetchImpl, maxAttempts });
+    const publication = await publishPublicBoard(env, applied.board, { fetchImpl, maxAttempts });
     await savePrivateBoard(storage, applied.board);
     return {
       status: "committed",
       mode: "private-canonical",
       task: applied.task,
       event_id: event.event_id,
+      publication,
     };
   }
   if (!env.LIMEN_GITHUB_REPO || !env.LIMEN_GITHUB_TOKEN) {

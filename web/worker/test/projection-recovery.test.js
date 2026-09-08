@@ -114,6 +114,7 @@ test("consecutive keeper mutations preserve private history after automatic ref 
     }, { fetchImpl: f.fetchImpl, storage });
     assert.equal(result.status, "committed");
     assert.equal(result.task.status, after);
+    assert.deepEqual(result.publication, { status: "committed", mode: "public-aggregate", sha: peerSha });
   }
   const board = await loadPrivateBoard(storage);
   assert.deepEqual(board.tasks[0].dispatch_log.map((entry) => entry.status), ["failed", "open"]);

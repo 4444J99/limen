@@ -154,3 +154,41 @@ Runtime identity before deployment remains
 `6f9626e95eec4aaf92e359186c01b1013e76fde6`, Cloudflare version
 `c15efaf3-3595-4e01-bf70-d41c2d7da9c5`. Deployment uses only the cached repository secret via
 `deploy-worker.yml`; no interactive login or credential rehydration is part of that rail.
+
+## Exact publication canary
+
+`scripts/verify-keeper-publication.py` owns the final two-mutation predicate. Private-canonical
+mutation responses now retain the publisher's existing redacted `public-aggregate` receipt and
+commit SHA. The canary requires a captured merged runtime SHA, a stable Cloudflare version,
+an existing healthy native `task-submit` session, exactly two new status-preserving acceptance
+amendments, two committed private/public receipts, fresh canonical rereads, and GitHub ancestry
+from the first publication commit to the second. It never writes refs or launches a login.
+
+The two staged amendments in `keeper-publication-amendments-20260908.json` propagate the human's
+separate delivery and authentication corrections to the existing MCP owner. No canonical recovery
+task was found by the current finishline/recovery/stash lineage lookup, so this canary does not
+invent a recovery task or manufacture lifecycle churn. It preserves the MCP task's original
+context, predicate, status, and registration denominator. Source and protocol tests use fixtures;
+they do not satisfy this production canary.
+
+After exact deployment, with the existing session registered for `task-submit` and the documented
+broker environment hydrated, run once:
+
+```sh
+python3 scripts/verify-keeper-publication.py --apply --expected-runtime-sha "$MERGED_WORKER_SHA" --session-id "$NATIVE_SESSION_ID" --updates docs/receipts/keeper-publication-amendments-20260908.json --receipt docs/receipts/keeper-publication-live-20260908.json
+```
+
+The receipt is atomically reserved before submission and updated after each step. An existing
+or interrupted receipt refuses automatic replay; its work/run identities must be reconciled
+against the keeper first. The script returns 77 for incomplete evidence and emits no private
+task context or credentials. Parent campaign ownership persists if admission or deployment has
+not yet supplied the required runtime.
+
+The changed verifier/isolation batch passed **12 Python tests**. The changed publication shard
+passed **12 Node tests**, including the returned commit-SHA receipt. The fixture used only the
+existing YAML 2.9.0 package matching the exact lockfile; no package install ran and no full
+dependency-tree pass is claimed. A first attempt without that dependency failed at module loading,
+then the matching package cache supplied the bounded fixture. The full Worker gate still requires
+the complete exact lockfile installation; the primary checkout's fast-uri cache is older and is
+not reused for it. At 23:43:46 UTC the admission reading remained denied on swap fraction 30.61%,
+VITALS `ok`, no heavy lease, and zero measured swap growth.
