@@ -61,3 +61,35 @@ argument not present in the packet predicate. The corrected receipt
 `recovery-isolation-increment-bound-20260908` bound the original predicate,
 returned `mutation_authorized: true`, released the lease, and harvested with
 `unharvested: []`. This terminal partial run does not mark recovery complete.
+
+## Binding operator correction: eliminate recurring login work
+
+The operator reaffirmed that avoiding repeated logins is part of the original
+design. A fresh interactive login is not the default repair for `not_logged_in`.
+Before proposing consent, diagnose credential persistence, refresh-token rotation,
+effective client/profile identity, endpoint/registration churn, and credential
+owner deployment. Reuse recoverable authorized credentials through their owner.
+Never infer revocation, absent provider support, or a need for consent from a
+generic status label. This correction is additive to both original campaigns.
+
+Authentication acceptance now explicitly requires fresh-session reuse and a
+successful refresh lifecycle without repeated browser consent, including after
+client restart and plugin refresh. If a provider has revoked a grant or explicitly
+requires renewed consent, bind that exception to current protocol evidence and
+the existing credential lever. A one-time successful login or cached success
+receipt cannot satisfy this predicate. No login was initiated in this run.
+
+Read-only diagnosis: installed Codex 0.153.4 uses the relocated runtime profile;
+both that profile and the legacy home profile leave OAuth store mode at its
+default. Neither has a fallback `.credentials.json`. Direct-keyring metadata
+lookups for the two current server/URL identities and their base-URL variants
+returned item-not-found; no password value was requested. Both native statuses
+remain `not_logged_in`. These observations do not establish why prior credentials
+are absent or whether another backend owns them.
+
+The source-owned `codex-mcp-auth-runtime` only caches login attempts; it does not
+currently prove restart/refresh durability and can return a cached successful
+repair even when fresh status has reverted to auth-needed. Its companion legacy
+healthcheck resolves `~/.codex` instead of the active `CODEX_HOME`. These are
+concrete owner defects to correct through Domus, retaining capabilities and
+avoiding another consent cycle as a substitute for engineering.
