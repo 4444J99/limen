@@ -158,7 +158,7 @@ def test_apply_is_idempotent_and_restorable(tmp_path, monkeypatch):
 
     assert mod.run("apply", quiet=True) == 0
     assert len(mod._get(target)) <= 80 < len(orig_value)  # slimmed under cap
-    assert mod.run("check", quiet=True) == 0  # everything now ≤ cap
+    assert mod.run("check", quiet=True) == 77  # everything now ≤ cap
 
     # second apply changes nothing on disk (fixed point)
     before = skill.read_text()
@@ -194,7 +194,7 @@ def test_check_passes_when_no_truncation_since_slim(tmp_path, monkeypatch):
     assert mod.run("apply", quiet=True) == 0
     applied_at = mod.LEDGER.stat().st_mtime
     _write_trunc_log(tmp_path, ts=int(applied_at) - 1000)  # last truncation was before we slimmed
-    assert mod.run("check", quiet=True) == 0
+    assert mod.run("check", quiet=True) == 77
 
 
 def test_check_ignores_compaction_from_session_started_before_slim(tmp_path, monkeypatch):
@@ -211,4 +211,57 @@ def test_check_ignores_compaction_from_session_started_before_slim(tmp_path, mon
         process_started_at=int(applied_at) - 1000,
     )
 
-    assert mod.run("check", quiet=True) == 0
+    assert mod.run("check", quiet=True) == 77
+
+
+def test_restore_preserves_changed_body_and_custody(tmp_path, monkeypatch):
+    mod = _load()
+    _point_at(mod, _synthetic_home(tmp_path))
+    monkeypatch.setattr(mod, "CAP_OVERRIDE", "80")
+    assert mod.run("apply", quiet=True) == 0
+    skill = tmp_path / "skills/userskill/SKILL.md"
+    changed = skill.read_text() + "new instructions\n"
+    skill.write_text(changed)
+    assert mod.run("restore", quiet=True) == 77
+    assert skill.read_text() == changed
+    assert str(skill) in mod.LEDGER.read_text()
+    assert mod.LEDGER.stat().st_mode & 0o777 == 0o600
+
+
+def test_description_in_instruction_body_is_never_modified(tmp_path):
+    mod = _load()
+    skill = tmp_path / "SKILL.md"
+    original = "---\nname: body-only\n---\ndescription: instructions, not metadata\n"
+    skill.write_text(original)
+    target = {"path": skill, "field": "yaml:description"}
+    assert mod._get(target) is None
+    assert not mod._set(target, "changed")
+    assert skill.read_text() == original
+
+
+def test_catalog_accounts_for_paths_and_parse_failures_without_native_claim(tmp_path):
+    mod = _load()
+    _point_at(mod, _synthetic_home(tmp_path))
+    malformed = tmp_path / "skills/broken/SKILL.md"
+    malformed.parent.mkdir()
+    malformed.write_text("no frontmatter")
+    result = mod.catalog_evidence()
+    assert result["candidate_skills"] == 5
+    assert result["parse_failures"] == 1
+    assert result["omitted_skills"] is None
+    assert result["stripped_descriptions"] is None
+    assert result["native_telemetry"] == "missing"
+    assert result["exit"] == 77
+    assert all(row["path_chars"] > 0 for row in result["entries"])
+
+
+def test_interrupted_repair_is_not_replayed(tmp_path, monkeypatch):
+    mod = _load()
+    _point_at(mod, _synthetic_home(tmp_path))
+    monkeypatch.setattr(mod, "CAP_OVERRIDE", "80")
+    monkeypatch.setattr(mod, "_set", lambda *args, **kwargs: False)
+    mod.run("apply", quiet=True)
+    ledger = mod.LEDGER.read_text()
+    monkeypatch.setattr(mod, "_set", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("replayed")))
+    mod.run("apply", quiet=True)
+    assert mod.LEDGER.read_text() == ledger

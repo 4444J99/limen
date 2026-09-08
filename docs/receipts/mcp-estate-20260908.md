@@ -1,5 +1,85 @@
 # MCP estate implementation receipt — 2026-09-08
 
+## Resumed source implementation
+
+Protected session `mcp-estate-resume-20260908` holds scoped execution run
+`run-3890a837deca93e3ca65ac4ef1bce340`, lease `lease-1034-3890a837deca93e3`, generation 1034.
+The task claim itself returned `busy` because the deployed keeper adds repository-wide code
+exclusion to board-only packets. The four exact conflicting peer leases were inspected and
+preserved; the separate two-branch execution packet was accepted and claimed. Prerequisite #2569
+now corrects only the strict existing board-only contract; malformed packets retain exclusion.
+This separate execution record is not a canonical task-state transition.
+
+This resumed implementation adds:
+
+- Read-only native `mcp_estate_status` with CLI-identical inventory JSON and MCP read-only hints.
+- Configured and cached Codex manifests plus hosted-app declarations; ambiguous and overridden
+  copies retain sanitized provenance. Inactive project and cache scopes are never probed.
+- Filtered checks always return 77. Client receipt bundles cannot attest themselves: independent
+  receipt/dependency/version observations are required. The native observation producer is still
+  missing, so those dimensions remain unavailable rather than accepting a forged passing bundle.
+- Explicit HTTP credential-header references, cumulative response ceilings, malformed pagination
+  refusal, and fresh configuration reload after the one owned repair attempt.
+- Read-only reconciliation of ianva's existing upstream loader with materialized MCPHub settings;
+  this does not introduce another gateway or certify route/capability equivalence.
+- Skill candidate catalog accounting for names, paths, formatting and descriptions. Native omitted
+  skills and stripped descriptions remain null when telemetry cannot distinguish them. Metadata
+  edits stay within frontmatter, serialize through a private lock, record custody before mutation,
+  retain interrupted episodes and refuse rollback if the whole installed artifact has changed.
+  Missing/corrupt custody fails closed. A size proxy or old truncation log cannot return green.
+
+Focused results: 53 tests passed across estate contracts, skill custody and the existing boot
+compatibility suite; 38 companion Domus tests
+passed. Domus ownership validation and commit hooks passed. These focused results do not replace
+the required admitted scoped batches or fresh application canaries.
+
+## Current live observations and required continuation
+
+Expanded source denominator: **122 service identities, 155 registrations**. Inventory-only
+measurement returned **77**, with seven separate defect counts: missing capabilities **11**,
+ownership conflicts **6**, unintended launches **0**, protocol failures **0**, authentication
+gaps **0**, unmeasured integrations **154**, abandoned processes **0**. Zeros here mean no defect
+observed in that dimension by inventory-only measurement, not successful protocol/auth/UI probes.
+Fourteen coverage gaps remain, including the 13 distinct required adapter canaries.
+
+The existing ianva loader and materialized MCPHub file both contain only two upstreams, `limen`
+and `playwright`. Both configuration entries are enabled; capability and client-route evidence
+remain unmeasured. No upstream cutover or external exposure was performed.
+
+The deployed credential owner's read-only status returned exit 1 and `not_logged_in` for the
+enabled direct LaunchDarkly registration. Consent remains owned by existing
+`L-LAUNCHDARKLY-OAUTH-CONSENT`; the direct route was preserved. This independent observation
+is not included in inventory-only authentication counts and is not an authenticated exchange.
+
+Skill census: 358 filesystem candidate skills, zero parsed-metadata failures, zero missing
+descriptions; the native truncation telemetry reports 268 skills and a 5440-token budget from
+an older process. That is a denominator mismatch and missing fresh loading witness, not success.
+
+Required owner actions remain the supplied estate plan: finish effective app-environment and
+adapter version witnesses; safe functional calls, client behavior and isolation canaries;
+deployment of exact merged revisions; targeted Domus apply and conditional gateway cutover;
+then a fresh full-estate measurement with all seven counts zero. #2569 owns publication recovery,
+the admitted full verification boundary and two consecutive real post-deployment mutations.
+Its updated Worker remote job passed; its full scoped/local admission is not inferred from that.
+Neither implementation completion, deployment completion nor estate-ideal satisfaction is claimed.
+
+The estate scoped batch used exact ancestor `26b82ebc65bc2057b39dcef1499edc78308c0489`.
+Nineteen of 20 cheap gates passed, including mypy, lint, formatting, paused-beat, ownership and
+ideal-form checks. `agent-docs` failed with `FileNotFoundError` for `apps/danse/AGENTS.md`:
+`git ls-tree HEAD apps/danse` contains only its README, while the unchanged instruction verifier
+still includes the removed component instruction file in `REFERENCE_DOCS`. This is an existing
+relocation/reference defect, not a passing or waived gate. Its durable disposition is this PR's
+verification blocker, owned by the shared instruction-surface verifier. Next owner action:
+reconcile the relocated component's canonical references, then run `python3 scripts/check-agent-docs.py`.
+The batch did not reach the heavy tier. Unchanged green shard receipts remain historical evidence;
+focused tests and lint cover subsequent protocol refinements, not a new whole-batch pass.
+
+Functional smoke calls now require an explicit bounded read-only owner declaration and validate
+their result envelopes. Raw functional response content is excluded from reports. Invalid launch
+specifications remain counted and never launch; combined OpenCode argv is normalized without
+dropping arguments. Cleanup refuses to signal a group whose original leader has exited and whose
+remaining membership cannot be proven; that case remains unmeasured rather than claiming cleanup.
+
 Owner: Codex direct human session; canonical owner task `MCP-ESTATE-20260908`.
 Companion source: `organvm/domus-genoma`, branch `feat/mcp-estate-policy-20260908`.
 Limen branch: `feat/mcp-estate-contract-20260908`.
