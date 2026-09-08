@@ -15,6 +15,7 @@ from datetime import datetime
 from pathlib import Path
 
 import yaml
+import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "omni-view.py"
@@ -128,6 +129,26 @@ def test_ships_24h_reads_ground_truth_cache_not_merge_drain_log(tmp_path: Path):
     html = _run(tmp_path)
     assert "ships 24h: <b>63</b>" in html
     assert "organvm/limen#2482" in html
+
+
+@pytest.mark.parametrize("completion", [{"complete": False, "error": None}, {"complete": True, "error": "partial"}, {}])
+def test_incomplete_cache_renders_unavailable(tmp_path: Path, completion):
+    _seed(tmp_path)
+    (tmp_path / "logs/ships-24h.json").write_text(
+        json.dumps(
+            {
+                "generated_at": datetime.now().isoformat(),
+                "total": 63,
+                "by_repo": {"organvm/limen": 63},
+                "recent": ["organvm/limen#2482"],
+                **completion,
+            }
+        )
+    )
+    html = _run(tmp_path)
+    assert "ships 24h: <b>unavailable</b>" in html
+    assert "ships 24h: <b>0</b>" not in html
+    assert "organvm/limen#2482" not in html
 
 
 def test_fails_open_with_no_feeds(tmp_path: Path):

@@ -48,10 +48,11 @@ class CompletionTests(unittest.TestCase):
                                          "evidence": copy.deepcopy(landing)})
         landing.update(verification_receipt_ref=receipt["ref"], verification_receipt_sha256=receipt["sha256"])
         self.data["atoms"][0]["outcome"]["evidence"].append(landing)
-        self.data.update(count_status="reconciled", private_extraction_sha256="d" * 64)
+        self.lineage = dict.fromkeys(("source-findings", "review-findings", "branch-pr-findings"), "d" * 64)
+        self.data.update(count_status="reconciled", private_extraction_sha256=self.lineage)
         self.data["atoms"][0]["candidate_ids"] = ["C1"]
         self.data["candidate_inventory"] = self.write("candidates", {
-            "private_extraction_sha256": "d" * 64,
+            "private_extraction_sha256": self.lineage,
             "candidates": [{"candidate_id": "C1", "source_ids": ["stash:0"]}]})
 
     def write(self, name, value):
@@ -83,13 +84,43 @@ class CompletionTests(unittest.TestCase):
     def test_stale_extraction_and_missing_lineage(self):
         self.data["private_extraction_sha256"] = "e" * 64
         self.assertEqual(self.result()["status"], "FAIL")
-        self.data["private_extraction_sha256"] = "d" * 64
+        self.data["private_extraction_sha256"] = self.lineage
         self.data["atoms"][0]["source_ids"] = []
         self.assertEqual(self.result()["status"], "FAIL")
 
     def test_stale_evidence(self):
         (self.root / "docs/predicate.json").write_text("{}")
         self.assertEqual(self.result()["status"], "FAIL")
+
+    def test_malformed_and_empty_extraction(self):
+        for candidates in (None, {}, [], [None], [{"candidate_id": [], "source_ids": []}],
+                           [{"candidate_id": "C1", "source_ids": []}],
+                           [{"candidate_id": "C1", "source_ids": ["outside"]}]):
+            with self.subTest(candidates=candidates):
+                self.data["candidate_inventory"] = self.write("candidates", {
+                    "private_extraction_sha256": self.lineage, "candidates": candidates})
+                self.assertEqual(self.result()["status"], "FAIL")
+
+    def test_missing_digest_on_both_sides_is_not_lineage(self):
+        self.data.pop("private_extraction_sha256")
+        self.data["candidate_inventory"] = self.write("candidates", {
+            "candidates": [{"candidate_id": "C1", "source_ids": ["stash:0"]}]})
+        self.assertEqual(self.result()["status"], "FAIL")
+
+    def test_independent_candidate_denominator(self):
+        self.assertEqual(C.check(self.data, self.expected, self.root, candidate_count=2)["status"], "FAIL")
+
+    def test_malformed_top_level_inventory(self):
+        for data in ([], {"atoms": None}, {"sources": [None]}, {"atoms": [{"atom_id": []}]}):
+            with self.subTest(data=data):
+                self.assertEqual(self.result(data)["status"], "FAIL")
+
+    def test_malformed_nested_evidence(self):
+        for field in ("outcome", "source_ids", "candidate_ids", "delivery"):
+            with self.subTest(field=field):
+                data = copy.deepcopy(self.data)
+                data["atoms"][0][field] = None
+                self.assertEqual(self.result(data)["status"], "FAIL")
 
     def test_stale_generation(self):
         self.data["integration_generations"]["owner/repo"] = "c" * 40

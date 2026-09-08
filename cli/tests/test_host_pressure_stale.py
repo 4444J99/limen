@@ -29,12 +29,19 @@ def run_stale(tmp_path: Path, env: dict | None = None, extra_args: list[str] | N
     if env:
         child_env.update(env)
     return subprocess.run(
-        [sys.executable, "-c",
-         "import runpy,sys; m=runpy.run_path(sys.argv[1]); "
-         "m['main'].__globals__.update("
-         "_boot_identity=lambda: \"fixture-boot\", _active_monotonic=lambda: 200000.0); "
-         "sys.exit(m['main'](sys.argv[2:]))",
-         str(SCRIPT), *(extra_args or [])], capture_output=True, text=True, env=child_env
+        [
+            sys.executable,
+            "-c",
+            "import runpy,sys; m=runpy.run_path(sys.argv[1]); "
+            "m['main'].__globals__.update("
+            '_boot_identity=lambda: "fixture-boot", _active_monotonic=lambda: 200000.0); '
+            "sys.exit(m['main'](sys.argv[2:]))",
+            str(SCRIPT),
+            *(extra_args or []),
+        ],
+        capture_output=True,
+        text=True,
+        env=child_env,
     )
 
 
