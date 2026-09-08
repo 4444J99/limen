@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { recoverProjectionBranch, publishPublicBoard } from "../src/conduct/projection.js";
+import { recoverProjectionBranch, publishPublicBoard, commitTaskCompatibilityEvent } from "../src/conduct/projection.js";
+import { savePrivateBoard, loadPrivateBoard } from "../src/conduct/private-board.js";
 
 const env = { LIMEN_GITHUB_REPO: "owner/repo", LIMEN_GITHUB_TOKEN: "fixture" };
 const root = "https://api.github.com/repos/owner/repo";
@@ -64,6 +65,7 @@ for (const [name, options, configuration] of [
   ["default mismatch", { defaultBranch: "trunk" }, { ...env, LIMEN_GITHUB_DEFAULT_BRANCH: "main" }],
   ["default target", { defaultBranch: branch }, env],
   ["invalid default SHA", { defaultSha: "bad" }, env],
+  ["invalid existing SHA", { existing: "bad" }, env],
   ["permission denied", { refStatus: 403 }, env],
   ["failed creation", { creationFails: true }, env],
 ]) {
@@ -83,4 +85,39 @@ test("two consecutive publications succeed after deletion with one automatic cre
   const commits = f.writes.filter((w) => w.url.endsWith("/git/commits"));
   assert.deepEqual(commits.map((w) => w.payload.parents), [[sha], [peerSha]]);
   assert.ok(f.writes.filter((w) => w.method === "PATCH").every((w) => w.payload.force === false));
+});
+
+test("consecutive keeper mutations preserve private history after automatic ref recovery", async () => {
+  const values = new Map();
+  const storage = {
+    async get(key) {
+      if (Array.isArray(key)) return new Map(key.filter((k) => values.has(k)).map((k) => [k, structuredClone(values.get(k))]));
+      return structuredClone(values.get(key));
+    },
+    async put(key, value) { values.set(key, structuredClone(value)); },
+    async delete(key) { for (const k of Array.isArray(key) ? key : [key]) values.delete(k); },
+    async list({ prefix } = {}) { return new Map([...values].filter(([k]) => !prefix || k.startsWith(prefix))); },
+  };
+  await savePrivateBoard(storage, { portal: {}, tasks: [{
+    id: "RECOVERY-TEST", title: "private fixture", status: "in_progress",
+    target_agent: "codex", priority: "high", budget_cost: 1, dispatch_log: [],
+  }] });
+  const f = fixture();
+  for (const [n, before, after] of [[1, "in_progress", "failed"], [2, "failed", "open"]]) {
+    const result = await commitTaskCompatibilityEvent(env, {
+      schema_version: "limen.task_packet_projection_event.v1",
+      event_id: `recovery:${n}`, kind: "task.status", timestamp: `2026-09-08T12:00:0${n}.000Z`,
+      task_id: "RECOVERY-TEST", run_id: `run-${n}`, lease_id: `lease-${n}`, generation: n,
+      agent: "codex", session_id: "fixture",
+      intent: { kind: "task.status", task_id: "RECOVERY-TEST", expected_status: before,
+        patch: { status: after }, log: { status: after, output: "fixture mutation" } },
+    }, { fetchImpl: f.fetchImpl, storage });
+    assert.equal(result.status, "committed");
+    assert.equal(result.task.status, after);
+  }
+  const board = await loadPrivateBoard(storage);
+  assert.deepEqual(board.tasks[0].dispatch_log.map((entry) => entry.status), ["failed", "open"]);
+  assert.equal(f.creates, 1);
+  assert.ok(f.writes.filter((w) => w.url.endsWith("/git/blobs"))
+    .every((w) => !w.payload.content.includes("RECOVERY-TEST")));
 });
