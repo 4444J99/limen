@@ -20,8 +20,10 @@
       "tracked_change_count": 6,
       "untracked_tree": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "integrated_evolved",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "cli/src/limen/prompt_sources.py; cli/tests/test_prompt_atom_sources.py",
+      "semantic_evidence": "Relocated runtime prompt roots and regression additions retained; wrapper/ledger snapshots remain historical."
     },
     {
       "index": 1,
@@ -35,8 +37,10 @@
       "tracked_change_count": 8,
       "untracked_tree": "639e077638a8bd3c42075fed85e4a8a0ceff6a7d",
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "integrated_evolved",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "scripts/bifrons-organ.py; cli/src/limen/observation/collector.py; tests/e2e/test_ecosystem_liveness.py",
+      "semantic_evidence": "Collector and M1 test are byte-identical; bifrons fallback evolved; all27 original E2E entrypoints retained. TEST_INFRA/READY now state actual scope."
     },
     {
       "index": 2,
@@ -50,8 +54,10 @@
       "tracked_change_count": 1,
       "untracked_tree": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "private archive; overnight observation reporter",
+      "semantic_evidence": "Dated overnight observation only."
     },
     {
       "index": 3,
@@ -65,8 +71,10 @@
       "tracked_change_count": 6,
       "untracked_tree": "af9aa8f36746c0ce3e400aaa90be2b13f68d6447",
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "private archive; corresponding capacity/prompt/TCC registries",
+      "semantic_evidence": "Dated observation receipts, including untracked TCC evidence; no executable delta."
     },
     {
       "index": 4,
@@ -79,8 +87,10 @@
       "tracked_change_count": 1,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "private archive; overnight observation reporter",
+      "semantic_evidence": "Dated overnight observation only."
     },
     {
       "index": 5,
@@ -93,8 +103,10 @@
       "tracked_change_count": 2,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "integrated_and_historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "mcp/uv.lock; private observation archive",
+      "semantic_evidence": "Dependency lock byte-identical; overnight observation historical."
     },
     {
       "index": 6,
@@ -107,8 +119,10 @@
       "tracked_change_count": 3,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "private archive; current usage/contention reporters",
+      "semantic_evidence": "Dated usage, contention and overnight observations."
     },
     {
       "index": 7,
@@ -121,8 +135,10 @@
       "tracked_change_count": 1,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "docs/branch-reap-acceptance.jsonl; private archive",
+      "semantic_evidence": "Dated branch-hygiene observation; current acceptance/custody remains authoritative."
     },
     {
       "index": 8,
@@ -135,8 +151,10 @@
       "tracked_change_count": 1,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "private archive; overnight observation reporter",
+      "semantic_evidence": "Dated overnight observation only."
     },
     {
       "index": 9,
@@ -149,8 +167,10 @@
       "tracked_change_count": 1,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "private archive; overnight observation reporter",
+      "semantic_evidence": "Dated overnight observation only."
     },
     {
       "index": 10,
@@ -163,8 +183,10 @@
       "tracked_change_count": 1,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "docs/branch-reap-acceptance.jsonl; private archive",
+      "semantic_evidence": "Historical branch-acceptance observation is not landing proof."
     },
     {
       "index": 11,
@@ -177,8 +199,10 @@
       "tracked_change_count": 7,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "integrated_and_historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "mcp/uv.lock; TABVLARIVS; Bifrons; his-hand-levers.json",
+      "semantic_evidence": "Lock additions retained; generated portal counts and dated branch/usage/lever/board observations remain historical."
     },
     {
       "index": 12,
@@ -191,8 +215,10 @@
       "tracked_change_count": 3,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "integrated_evolved",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "cli/src/limen/capacity.py; cli/tests/test_dispatch_async.py; cli/tests/test_session_value_review.py",
+      "semantic_evidence": "Optional remaining annotation, admission isolation and private prompt-index isolation retained."
     },
     {
       "index": 13,
@@ -206,8 +232,10 @@
       "tracked_change_count": 7,
       "untracked_tree": "9e5508e6cccd4393de8f1a50db3b60e7a807af57",
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "integrated_evolved",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "scripts/async-run-one.py; scripts/dispatch-async.py; cli/tests/test_dispatch_async_paths.py",
+      "semantic_evidence": "Safe filename hashing/source marker parsing retained; dated study byte-identical; generated board/session observations historical."
     },
     {
       "index": 14,
@@ -220,8 +248,10 @@
       "tracked_change_count": 1,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "TABVLARIVS",
+      "semantic_evidence": "Task projection only; never replay into canonical task state."
     },
     {
       "index": 15,
@@ -235,8 +265,10 @@
       "tracked_change_count": 5,
       "untracked_tree": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "integrated_evolved",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "institutio/governance/gates.yaml; scripts/verify-whole.sh",
+      "semantic_evidence": "Declarative gate/ratchet intent is owned by current registry and architecture; old gate-registry prose superseded."
     },
     {
       "index": 16,
@@ -249,8 +281,10 @@
       "tracked_change_count": 1,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "TABVLARIVS",
+      "semantic_evidence": "Task projection only; never replay into canonical task state."
     },
     {
       "index": 17,
@@ -263,8 +297,10 @@
       "tracked_change_count": 1,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "TABVLARIVS",
+      "semantic_evidence": "Task projection only; never replay into canonical task state."
     },
     {
       "index": 18,
@@ -277,8 +313,10 @@
       "tracked_change_count": 1,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "TABVLARIVS",
+      "semantic_evidence": "Task projection only; never replay into canonical task state."
     },
     {
       "index": 19,
@@ -291,8 +329,10 @@
       "tracked_change_count": 2,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical_nonsemantic",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "CLI formatter; TABVLARIVS",
+      "semantic_evidence": "Click-option wrapping has no behavioral delta; board observation historical."
     },
     {
       "index": 20,
@@ -305,8 +345,10 @@
       "tracked_change_count": 1,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "TABVLARIVS",
+      "semantic_evidence": "Task projection only; never replay into canonical task state."
     },
     {
       "index": 21,
@@ -320,8 +362,10 @@
       "tracked_change_count": 4,
       "untracked_tree": "4ba4beb89fcca875edf396c69ece48e2f5b44ed0",
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "evolved",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "organs/artist/KERNEL.md; organs/artist/CHARTER.md",
+      "semantic_evidence": "Artist roles and authority evolved into current macro/micro faces and primitives. Do not restore old image counts or proposed grouping counts as current truth; dated study byte-identical."
     },
     {
       "index": 22,
@@ -334,8 +378,10 @@
       "tracked_change_count": 3,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "corrected_pending_landing",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "web/app/static-passthrough/_headers; web/worker/src/index.js; web/api/main.py",
+      "semantic_evidence": "plutil availability guard already exists. Missing security headers recovered at actual serving boundaries; obsolete static-export Next headers superseded.13 focused tests pass; API compatibility probe uses FastAPI0.138.0, below declared >=0.139.0."
     },
     {
       "index": 23,
@@ -348,8 +394,10 @@
       "tracked_change_count": 7,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "evolved",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "cli/src/limen/dispatch.py; scripts/dispatch-async.py; scripts/heal-dispatch.py",
+      "semantic_evidence": "Canonical broker owns lifecycle and terminal-history protection. Old direct projection writes and open-PR-as-done patterns must not be restored."
     },
     {
       "index": 24,
@@ -362,8 +410,10 @@
       "tracked_change_count": 1,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "TABVLARIVS",
+      "semantic_evidence": "Task projection only; never replay into canonical task state."
     },
     {
       "index": 25,
@@ -376,8 +426,11 @@
       "tracked_change_count": 2,
       "untracked_tree": null,
       "custody": "restored_from_bundle_in_independent_empty_repository",
-      "delivery_disposition": "preserved_historical_snapshot",
-      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+      "delivery_disposition": "historical",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+      "current_intent_owner": "obligations registry; TABVLARIVS",
+      "semantic_evidence": "Obligations/task observation only; no standalone executable delta."
     }
-  ]
+  ],
+  "semantic_scope": "Historical means preserved observation or projection, never proof its underlying task completed. No missing substantive intent remained after index22 correction within this bounded audit."
 }
