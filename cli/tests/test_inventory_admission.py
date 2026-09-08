@@ -167,6 +167,7 @@ def test_migration_aliases_deduplicate_stable_repository_id():
     snapshot["source_report"].update(
         content_sha256=_canonical_sha256(snapshot["leaves"]), normalized_leaf_count=len(snapshot["leaves"])
     )
+    snapshot["source_report"]["cursor"]["known_leaf_count"] = len(snapshot["leaves"])
     assert count(snapshot) == 1
     snapshot["leaves"][1]["author_login"] = "somebody-else"
     snapshot["source_report"]["content_sha256"] = _canonical_sha256(snapshot["leaves"])

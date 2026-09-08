@@ -59,6 +59,32 @@ def check(data: dict, expected: dict[str, str], root: Path = ROOT) -> dict:
     sources = data.get("sources", [])
     atoms = data.get("atoms", [])
     by_id = {a["atom_id"]: a for a in atoms}
+    # Source coverage alone cannot detect an intent removed from both sides of
+    # the mapping. Bind reconciliation to the separately frozen extraction.
+    try:
+        extraction = artifact(root, data["candidate_inventory"])
+        if extraction.get("private_extraction_sha256") != data.get("private_extraction_sha256"):
+            raise ValueError("extraction lineage mismatch")
+        candidates = extraction["candidates"]
+        candidate_ids = [c["candidate_id"] for c in candidates]
+        if len(candidate_ids) != len(set(candidate_ids)):
+            raise ValueError("duplicate extracted candidate")
+        mapped = {}
+        for atom in atoms:
+            for cid in atom.get("candidate_ids", []):
+                if cid in mapped:
+                    raise ValueError("candidate assigned more than once")
+                mapped[cid] = atom
+        if set(mapped) != set(candidate_ids):
+            raise ValueError("extracted candidate coverage differs from reconciliation")
+        for candidate in candidates:
+            atom = mapped[candidate["candidate_id"]]
+            if not set(candidate["source_ids"]).issubset(atom.get("source_ids", [])):
+                raise ValueError("candidate source lineage omitted")
+        if data.get("count_status") != "reconciled":
+            raise ValueError("distinct intent count remains provisional")
+    except (KeyError, ValueError, OSError, subprocess.SubprocessError) as exc:
+        errors.append(f"invalid extracted candidate coverage: {exc}")
     source_ids = [s["source_id"] for s in sources]
     if len(source_ids) != len(set(source_ids)) or set(source_ids) != set(expected):
         errors.append("source coverage differs from frozen 44-source cohort")

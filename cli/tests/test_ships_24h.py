@@ -31,6 +31,8 @@ def _write_cache(root: Path, *, generated_at: str, total=0, by_repo=None, recent
         json.dumps(
             {
                 "generated_at": generated_at,
+                "complete": True,
+                "error": None,
                 "total": total,
                 "by_repo": by_repo or {},
                 "recent": recent or [],
@@ -83,3 +85,14 @@ def test_fresh_cache_within_stale_window_is_served(tmp_path, monkeypatch):
     _write_cache(tmp_path, generated_at=fresh, total=12)
     total, _, _ = m.read_ships_24h(tmp_path)
     assert total == 12
+
+
+def test_incomplete_or_failed_producer_is_not_served(tmp_path):
+    m = _load()
+    _write_cache(tmp_path, generated_at=datetime.now(timezone.utc).isoformat(), total=63)
+    path = tmp_path / "logs/ships-24h.json"
+    original = json.loads(path.read_text())
+    for change in ({"complete": False}, {"error": "partial-owner-query"}, {"complete": None}):
+        path.write_text(json.dumps({**original, **change}))
+        assert m.read_ships_24h(tmp_path) == (0, {}, [])
+        assert m.read_ships_24h_status(tmp_path)["available"] is False
