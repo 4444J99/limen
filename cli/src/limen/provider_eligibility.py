@@ -75,7 +75,10 @@ def _strings(value: object, *, origins: bool = False) -> list[str]:
         if not origins:
             _identifier(item)
             continue
-        parsed = urlsplit(item)
+        try:
+            parsed = urlsplit(item)
+        except ValueError as exc:
+            raise EligibilityPolicyError("invalid destination") from exc
         if (
             parsed.scheme != "https"
             or not parsed.hostname
