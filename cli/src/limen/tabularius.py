@@ -30,7 +30,7 @@ import urllib.parse
 import urllib.request
 import uuid
 from collections import OrderedDict
-from collections.abc import Collection
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -1528,6 +1528,7 @@ def apply_limen_file_sync(
     limen: LimenFile,
     *,
     agent: str,
+    claim_agents: Mapping[str, str] | None = None,
     session_id: str = "unknown",
     allow_shrink: bool = False,
     before: LimenFile | None = None,
@@ -1540,6 +1541,10 @@ def apply_limen_file_sync(
     derives bounded per-task packets and waits for remote projection receipts;
     it never writes, commits, pushes, or refreshes the local file. Unsupported
     board metadata, ordering, removal, or field mutations fail closed.
+
+    ``claim_agents`` carries the caller's explicit provider selections for a
+    mixed-provider reservation batch. It is used only for open-to-dispatched
+    claims; task fields and dispatch-log labels never choose claim authority.
 
     ``tolerate_already_homed`` names task ids whose *create* may legitimately race a
     keeper that already holds them — the caller derived "this task is absent" from the
@@ -1584,7 +1589,20 @@ def apply_limen_file_sync(
             continue
         if event_type in {EV_BOARD_ORDER, EV_TASK_REMOVE}:
             raise RuntimeError(f"{event_type} has no authenticated remote compatibility transition")
-        ticket = _ticket_from_event(event, agent=agent, session_id=session_id, now=timestamp)
+        task_id = str(event.get("task_id") or "")
+        prior = prior_by_id.get(task_id)
+        selected_agent = None
+        if (
+            event_type == EV_TASK_UPSERT
+            and prior is not None
+            and prior.get("status") == "open"
+            and (event.get("data") or {}).get("status") == "dispatched"
+            and claim_agents is not None
+        ):
+            selected_agent = claim_agents.get(task_id)
+            if not isinstance(selected_agent, str) or not selected_agent.strip() or selected_agent == "any":
+                raise ValueError(f"task {task_id} claim requires one concrete selected executor")
+        ticket = _ticket_from_event(event, agent=selected_agent or agent, session_id=session_id, now=timestamp)
         if event_type == EV_TASK_UPSERT:
             task_id = str(event["task_id"])
             prior = prior_by_id.get(task_id)
@@ -1609,6 +1627,10 @@ def apply_limen_file_sync(
                             f"task {task_id} compatibility transition must append exactly one dispatch receipt"
                         )
                     ticket = ticket.model_copy(update={"log": dict(desired_log[-1])})
+        if selected_agent is not None:
+            # The dispatcher identifies the orchestration surface only. The
+            # authenticated ticket identity above names the selected provider.
+            ticket = ticket.model_copy(update={"log": {**(ticket.log or {}), "agent": agent}})
         tickets.append(ticket)
     if not tickets:
         return DrainResult(note="no task transition; budget-window metadata is derived by the remote keeper")

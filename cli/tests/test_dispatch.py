@@ -3970,7 +3970,9 @@ def test_parallel_result_commit_lock_busy_cleans_owned_receipts(
     current = read_board(tasks_path)["tasks"][0]
     assert current["status"] == "dispatched"
     assert len(current["dispatch_log"]) == 1
-    assert current["dispatch_log"][0]["session_id"] == "dispatch-parallel-reserve"
+    assert current["dispatch_log"][0]["session_id"] == "codex-reserve"
+    assert current["dispatch_log"][0]["agent"] == "codex"
+    assert current["dispatch_log"][0]["logical_agent"] == "dispatch-parallel"
     assert dispatch_session_id(current["dispatch_log"][0]) == "reserve"
     assert task_id not in D._MODEL_SELECTION_RECEIPTS
     assert task_id not in D._REMOTE_SUBMISSION_RECEIPTS
