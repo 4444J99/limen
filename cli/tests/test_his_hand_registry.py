@@ -3,12 +3,32 @@
 from __future__ import annotations
 
 import json
+import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 
 import yaml
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def test_historical_lever_reference_is_not_an_active_human_signal(tmp_path):
+    spec = importlib.util.spec_from_file_location("human_signals_under_test", ROOT / "scripts/_human_signals.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    rows = [{"id": "L-ACTIVE", "status": "open"}, {"id": "L-LEGACY"}]
+    rows += [{"id": f"L-{status}", "status": status} for status in module.TERMINAL_LEVER_STATUSES]
+    rows += [{"id": "L-OLD", "discharged": "2026-07-17"}]
+    (tmp_path / "his-hand-levers.json").write_text(json.dumps({"levers": rows}))
+    levers = module.lever_ids(tmp_path)
+    assert levers == {"L-ACTIVE", "L-LEGACY"}
+    task = SimpleNamespace(id="HEAL-reference", title="Inspect receipt", context="", description="")
+    for row in rows:
+        task.context = f"Reference to {row['id']}"
+        assert module.is_human_gated(task, levers) is (row["id"] in levers)
+    task.context = "A new credential requires attention"
+    assert module.is_human_gated(task, levers)
 
 
 def test_discharged_card_hold_cannot_own_later_billing_failures():

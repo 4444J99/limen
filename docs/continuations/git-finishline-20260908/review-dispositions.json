@@ -1,0 +1,191 @@
+{
+  "schema": "limen.review_dispositions.v1",
+  "repository": "4444J99/limen",
+  "binding": "Published successor head in receipt.json and PR body binds these paths and their regression predicates. Historical review threads remain visible; this disposition never asserts UI thread resolution.",
+  "reviews": [
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830415387",
+      "disposition": "corrected",
+      "source_paths": [
+        "scripts/host-pressure-stale.py",
+        "cli/src/limen/vigilia/executive.py",
+        "cli/tests/test_host_pressure_stale.py"
+      ],
+      "reason": "Failed or unwritten refresh stays stale; persisted sleep state has no perpetual grace; unavailable boot identities are incompatible; refresh requires explicit --apply and read-only overrides it; Linux has a real boot identifier."
+    },
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830415395",
+      "disposition": "corrected",
+      "source_paths": [
+        "scripts/host-pressure-stale.py",
+        "cli/src/limen/vigilia/executive.py",
+        "cli/tests/test_host_pressure_stale.py"
+      ],
+      "reason": "Failed or unwritten refresh stays stale; persisted sleep state has no perpetual grace; unavailable boot identities are incompatible; refresh requires explicit --apply and read-only overrides it; Linux has a real boot identifier."
+    },
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830415427",
+      "disposition": "corrected",
+      "source_paths": [
+        "scripts/host-pressure-stale.py",
+        "cli/src/limen/vigilia/executive.py",
+        "cli/tests/test_host_pressure_stale.py"
+      ],
+      "reason": "Failed or unwritten refresh stays stale; persisted sleep state has no perpetual grace; unavailable boot identities are incompatible; refresh requires explicit --apply and read-only overrides it; Linux has a real boot identifier."
+    },
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830443680",
+      "disposition": "corrected",
+      "source_paths": [
+        "scripts/host-pressure-stale.py",
+        "cli/src/limen/vigilia/executive.py",
+        "cli/tests/test_host_pressure_stale.py"
+      ],
+      "reason": "Failed or unwritten refresh stays stale; persisted sleep state has no perpetual grace; unavailable boot identities are incompatible; refresh requires explicit --apply and read-only overrides it; Linux has a real boot identifier."
+    },
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830443698",
+      "disposition": "corrected",
+      "source_paths": [
+        "scripts/host-pressure-stale.py",
+        "cli/src/limen/vigilia/executive.py",
+        "cli/tests/test_host_pressure_stale.py"
+      ],
+      "reason": "Failed or unwritten refresh stays stale; persisted sleep state has no perpetual grace; unavailable boot identities are incompatible; refresh requires explicit --apply and read-only overrides it; Linux has a real boot identifier."
+    },
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830415404",
+      "disposition": "superseded_by_current_observation_doctrine",
+      "source_paths": [
+        "cli/src/limen/ci_failure.py",
+        "scripts/check-main-green.py",
+        "docs/architecture/source-of-truth-and-local-cache.md"
+      ],
+      "reason": "Combined provider annotation is now an observed runner-admission failure with cause/remedy unverified. Visibility drift is independently observable and is not causal evidence that may overwrite the provider observation. No payment diagnosis or retry is inferred."
+    },
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830443678",
+      "disposition": "superseded_by_current_observation_doctrine",
+      "source_paths": [
+        "cli/src/limen/ci_failure.py",
+        "scripts/check-main-green.py",
+        "docs/architecture/source-of-truth-and-local-cache.md"
+      ],
+      "reason": "Combined provider annotation is now an observed runner-admission failure with cause/remedy unverified. Visibility drift is independently observable and is not causal evidence that may overwrite the provider observation. No payment diagnosis or retry is inferred."
+    },
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830415407",
+      "disposition": "verified_transport_semantics",
+      "source_paths": [
+        "scripts/_notify.py"
+      ],
+      "reason": "Tracked Domus transport at85662d1165f51f930879467c201170a9e7613af0 uses active-condition onset dedupe rearmed by clear, and milestone event identity. Hermetic real-source probes recorded onset/clear/onset three times and distinct same-tag milestones twice; third repeated milestone deduped. Live send functions forbidden in probe."
+    },
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830415413",
+      "disposition": "verified_transport_semantics",
+      "source_paths": [
+        "scripts/_notify.py"
+      ],
+      "reason": "Tracked Domus transport at85662d1165f51f930879467c201170a9e7613af0 uses active-condition onset dedupe rearmed by clear, and milestone event identity. Hermetic real-source probes recorded onset/clear/onset three times and distinct same-tag milestones twice; third repeated milestone deduped. Live send functions forbidden in probe."
+    },
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830415417",
+      "disposition": "corrected",
+      "source_paths": [
+        "scripts/_notify.py",
+        "institutio/governance/parameters.yaml",
+        "cli/tests/test_notify_events.py"
+      ],
+      "reason": "Active IDs include the broker ledger; configured DOMUS_NOTIFY_BIN is resolved through registry parameters; nonzero broker status is authoritative failure."
+    },
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830443687",
+      "disposition": "corrected",
+      "source_paths": [
+        "scripts/_notify.py",
+        "institutio/governance/parameters.yaml",
+        "cli/tests/test_notify_events.py"
+      ],
+      "reason": "Active IDs include the broker ledger; configured DOMUS_NOTIFY_BIN is resolved through registry parameters; nonzero broker status is authoritative failure."
+    },
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830415421",
+      "disposition": "already_corrected_in_recovery_source",
+      "source_paths": [
+        "scripts/check-main-green.py"
+      ],
+      "reason": "Recovery derives the existing LIMEN_CI_JAM_RERUN valve and still requires classifier retry permission."
+    },
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830443683",
+      "disposition": "already_corrected_in_default",
+      "source_paths": [
+        "cli/src/limen/vigilia/executive.py"
+      ],
+      "reason": "Full-beat merge preserves boot identity, monotonic sample time and wake state from the selected sample."
+    },
+    {
+      "pull_request": 2527,
+      "discussion": "https://github.com/4444J99/limen/pull/2527#discussion_r3830443693",
+      "disposition": "corrected",
+      "source_paths": [
+        "scripts/check-main-green.py",
+        "scripts/gitvs.py",
+        "cli/tests/test_check_main_green.py"
+      ],
+      "reason": "All jobs and annotations are paginated. Unavailable evidence is explicitly unknown and cannot enable rerun or claim code red. Gitvs preserves unreadable evidence rather than inventing absence."
+    },
+    {
+      "pull_request": 2529,
+      "discussion": "https://github.com/4444J99/limen/pull/2529#discussion_r3832448381",
+      "disposition": "corrected",
+      "source_paths": [
+        "START-HERE.md"
+      ],
+      "reason": "Removes the stale fixed human-gate count; derives active scope from the owning registry."
+    },
+    {
+      "pull_request": 2529,
+      "discussion": "https://github.com/4444J99/limen/pull/2529#discussion_r3832448386",
+      "disposition": "corrected",
+      "source_paths": [
+        "organs/financial/consolidate.py"
+      ],
+      "reason": "Generator preserves MONETA P1 and Exporter P2 priorities."
+    },
+    {
+      "pull_request": 2529,
+      "discussion": "https://github.com/4444J99/limen/pull/2529#discussion_r3832448391",
+      "disposition": "corrected",
+      "source_paths": [
+        "scripts/_human_signals.py",
+        "scripts/gitvs.py"
+      ],
+      "reason": "Both signal consumers share terminal-lever exclusion; historical discharged IDs do not become active human gates."
+    },
+    {
+      "pull_request": 2529,
+      "discussion": "https://github.com/4444J99/limen/pull/2529#discussion_r3832448396",
+      "disposition": "corrected",
+      "source_paths": [
+        "scripts/gitvs.py",
+        "cli/tests/test_gitvs_remote_budget.py"
+      ],
+      "reason": "Remote budgets API has bounded authenticated read pagination and explicit unavailable observation; local threshold remains a separately labeled policy input; strict/check cannot be green without matching current budget evidence."
+    }
+  ]
+}

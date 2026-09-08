@@ -229,6 +229,7 @@ def test_apply_is_content_addressed_and_byte_idempotent(
     first = ledger.read_bytes()
     first_dirs = sorted(path.name for path in module.PRIVATE_ROOT.iterdir())
     receipt = json.loads(first)["receipts"][0]
+    assert "worktree" not in receipt
     assert "worktree_status" not in receipt
     assert Path(root / receipt["private_patch"]).is_file()
     assert Path(root / receipt["private_untracked_archive"]).is_file()
@@ -277,9 +278,53 @@ def test_same_basename_worktrees_never_replace_each_others_receipts(
 
     assert len(receipts) == 2
     assert receipts[0] == first_receipt
-    captured = next(row for row in receipts if row.get("worktree") == str(second.resolve()))
+    second_key = hashlib.sha256(str(second.resolve()).encode()).hexdigest()
+    captured = next(row for row in receipts if row.get("worktree_key") == second_key)
     assert captured["root"] == "limen"
+    assert "worktree" not in captured
     assert captured["worktree_key"] != hashlib.sha256(str(first.resolve()).encode()).hexdigest()
+
+    private_receipt = json.loads((root / captured["private_receipt"]).read_text(encoding="utf-8"))
+    assert private_receipt["worktree"] == str(second.resolve())
+
+
+def test_private_custody_root_can_be_external_without_leaking_its_path(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = load_module()
+    root = configure_paths(module, tmp_path, monkeypatch)
+    private_root = tmp_path / "durable-private-custody"
+    monkeypatch.setattr(module, "PRIVATE_ROOT", private_root)
+    repo = make_repo(tmp_path)
+    (repo / "tracked.txt").write_text("preserve externally\n", encoding="utf-8")
+    monkeypatch.setattr(module, "worktree_debt_report", lambda _root: {"items": [dirty_item(repo)]})
+    monkeypatch.setattr(sys, "argv", ["worktree-preserve-dirty.py", "--apply", "--json"])
+
+    assert module.main() == 0
+    receipt = json.loads(
+        (root / "docs" / "worktree-preservation-receipts.json").read_text(encoding="utf-8")
+    )["receipts"][0]
+
+    assert str(private_root) not in json.dumps(receipt)
+    assert receipt["private_receipt"].startswith(
+        ".limen-private/session-corpus/lifecycle/worktree-preserve/"
+    )
+    assert module.private_artifacts_valid(receipt)
+    assert module.private_path(receipt["private_receipt"]).is_file()
+
+
+def test_private_artifact_reference_rejects_absolute_or_traversing_paths(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    module = load_module()
+    configure_paths(module, tmp_path, monkeypatch)
+
+    with pytest.raises(module.PreservationError, match="path-redacted"):
+        module.private_path(str(tmp_path / "receipt.json"))
+    with pytest.raises(module.PreservationError, match="custody namespace"):
+        module.private_path("../receipt.json")
 
 
 def test_aggregate_untracked_ceiling_fails_before_any_durable_write(

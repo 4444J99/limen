@@ -1,0 +1,30 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:02:47.065508+00:00",
+  "target": {
+    "repository": "organvm-iii-ergon/speech-score-engine",
+    "pull_request": 20,
+    "initial_head": "7a64341051f7683b3106596ccea86d44964b325e",
+    "remediated_head": "7a64341051f7683b3106596ccea86d44964b325e",
+    "base_ref": "main"
+  },
+  "remediation": {
+    "category": "clean_verification",
+    "root_cause": "passing_ci_verification",
+    "patches_applied": []
+  },
+  "verification": {
+    "local_command": "scripts/merge-policy.sh 20 --repo organvm-iii-ergon/speech-score-engine",
+    "local_exit_code": 0,
+    "ci_status_rollup": {
+      "total": 1,
+      "failing": 0,
+      "pending": 0,
+      "required_scope": "required"
+    },
+    "merge_policy_verdict": "CLEARED",
+    "merge_mode": "direct",
+    "merge_commit": "7b585ff99520b2810844363cf285716ff5781a7a"
+  },
+  "integrity_note": "Verified via merge-policy.sh with complete passing CI status prior to squash merge."
+}

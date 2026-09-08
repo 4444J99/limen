@@ -1,0 +1,30 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:02:18.952063+00:00",
+  "target": {
+    "repository": "organvm-iii-ergon/growth-auditor",
+    "pull_request": 60,
+    "initial_head": "5318399447ff3e5633207f4f6c819f7adf319df3",
+    "remediated_head": "5318399447ff3e5633207f4f6c819f7adf319df3",
+    "base_ref": "main"
+  },
+  "remediation": {
+    "category": "clean_verification",
+    "root_cause": "passing_ci_verification",
+    "patches_applied": []
+  },
+  "verification": {
+    "local_command": "scripts/merge-policy.sh 60 --repo organvm-iii-ergon/growth-auditor",
+    "local_exit_code": 0,
+    "ci_status_rollup": {
+      "total": 1,
+      "failing": 0,
+      "pending": 0,
+      "required_scope": "required"
+    },
+    "merge_policy_verdict": "CLEARED",
+    "merge_mode": "direct",
+    "merge_commit": "d23cb09397959058225c7721c09ec06cfe31fd23"
+  },
+  "integrity_note": "Verified via merge-policy.sh with complete passing CI status prior to squash merge."
+}

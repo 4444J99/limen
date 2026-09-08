@@ -1,0 +1,383 @@
+{
+  "schema": "limen.stash_custody_verification.v1",
+  "repository": "4444J99/limen",
+  "bundle_name": "limen-stash-archive-20260908.bundle",
+  "bundle_sha256": "1f53f4acd8299f15ec943db942f93469d06485b3b1e13f6718c1716c0226f859",
+  "expected_stashes": 26,
+  "restored_stashes": 26,
+  "active_stashes": 0,
+  "restoration_method": "git init --bare in a new empty directory; git bundle unbundle; git cat-file -e for each recorded commit; no access to the source repository object store",
+  "stashes": [
+    {
+      "index": 0,
+      "commit": "7386b3c66ab0b21a371852a13d466bc0ac4ef3c1",
+      "tree": "205c8a60b49678f97ee527c40e067bd07bf15d66",
+      "parents": [
+        "c8d1a4c1ba089da678736314c7571199645bc532",
+        "83238d04655c3d6a61e5081a9a11c92fe73e62b4",
+        "baff1a79410200a7a4f48218f2b96fcae5bc8ff1"
+      ],
+      "tracked_change_count": 6,
+      "untracked_tree": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 1,
+      "commit": "d5372afa97e1217981babd3bf350088fcfeed49b",
+      "tree": "3d0dd81c3ecf705d232c8a75a3dd958243aa7311",
+      "parents": [
+        "3902a539cd57863e4f811d70ee6f9e34112afbcb",
+        "43014b52ff5f4d86a9794c8332888bf37c70803c",
+        "d7c8a5d6b495569313af5dfd306f544a7ca74371"
+      ],
+      "tracked_change_count": 8,
+      "untracked_tree": "639e077638a8bd3c42075fed85e4a8a0ceff6a7d",
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 2,
+      "commit": "efb90c9c1176e390eb83467bfdeed9e3d1e5ffc6",
+      "tree": "439289131a8465c236da1fc0101aa47f00b6dbaa",
+      "parents": [
+        "04cf1cfc3e516916cb48404b78dd640c730e57c6",
+        "ff70da3a56e8d67ef4f349bb6c40b5a459f628b8",
+        "73e388cb7a5a14493d5eb2ea35fb3e51e33c576e"
+      ],
+      "tracked_change_count": 1,
+      "untracked_tree": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 3,
+      "commit": "294a72413ffdf9400c535a2daecc342b81ced710",
+      "tree": "b525b86509b650438632a60371436e393508fa6b",
+      "parents": [
+        "dedd045c5a7500154f157899e83055ecbae02a31",
+        "80806afe2fec5ed34959355f2b7a12f47d4220a7",
+        "7d96e6e6a32639984e21b01f90f84aa6fbecb3fd"
+      ],
+      "tracked_change_count": 6,
+      "untracked_tree": "af9aa8f36746c0ce3e400aaa90be2b13f68d6447",
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 4,
+      "commit": "013d72a105b7a681c6d9bb2c6c2c2937645c7859",
+      "tree": "36ca223e91d658b33fdd0ecbc6e63fea00335e03",
+      "parents": [
+        "d85d6ba0c97ff545643c22417b73a833937f7252",
+        "84a94520b922b8155415eaece962e39eca8b1dbe"
+      ],
+      "tracked_change_count": 1,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 5,
+      "commit": "3924fa00185f1a4f4cc15f8f91926c57584a228c",
+      "tree": "96ddf882579ca8138118082bf2db349f6d4ff98c",
+      "parents": [
+        "d85d6ba0c97ff545643c22417b73a833937f7252",
+        "58abc042df62051694599ce230861433c678a52e"
+      ],
+      "tracked_change_count": 2,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 6,
+      "commit": "b5512e500fb36b9b3461e5e373c475153db222c6",
+      "tree": "aa1795f532b7a4b844f20fe0e2997f40e5f6f478",
+      "parents": [
+        "c544cdcd3b5642ecd30deffc0afffa3cc620faa1",
+        "2ab8095b0d93357cfabc74fae7ff478d8eb1cd6d"
+      ],
+      "tracked_change_count": 3,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 7,
+      "commit": "c41ba6457e408a46ba0a9d1e5a097b31d9515bd7",
+      "tree": "a09e0a64a462e6e303010cb1e2e657ccb190d5a5",
+      "parents": [
+        "bf652f550c37a0c9bc81800f18c2175a4773872e",
+        "2361790594710be7b95f8c2588d9d03f300be57a"
+      ],
+      "tracked_change_count": 1,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 8,
+      "commit": "1a8ded4f3c24bcc9cfea0c5532865641e5bcb2c0",
+      "tree": "b11da8cbe09a5ba12a927730aa7e63f97aa7ab40",
+      "parents": [
+        "a6aea4a76a0ba11ccd0686683cc3fdf38abae56d",
+        "55a2d4b763bc85e6b0533ab08e9bc4ae55e2ff2d"
+      ],
+      "tracked_change_count": 1,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 9,
+      "commit": "4f741428830664e914879ecbed62de0d0933716e",
+      "tree": "9e4dea099b1da56c8d248c7fd087c8f0c06594f0",
+      "parents": [
+        "893b008096569549217fb5bdf1212e3b9fd55f96",
+        "f619efebc6fd08271030a88961aadd2490ed074b"
+      ],
+      "tracked_change_count": 1,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 10,
+      "commit": "7cb6e0eab581c0176253133498de5bdf685db351",
+      "tree": "7141cdba63eb16143253cf6f9651a3286154f26a",
+      "parents": [
+        "48e324652282154e3fb30d428e6b82130c196330",
+        "18d2df446b071a358b5bc3ddc47458fff3b65e61"
+      ],
+      "tracked_change_count": 1,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 11,
+      "commit": "b68275778c592e103584dd103b7a427768e4e5a0",
+      "tree": "7f6789f2309b6bc2fe1800f3ab12bf7d11018063",
+      "parents": [
+        "681f0294404b15328ba975e099f45cf56d2620b6",
+        "80d7c719e5b7639219af46314220b8ae1593b771"
+      ],
+      "tracked_change_count": 7,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 12,
+      "commit": "20752fe891026691665b2815513951464b9b32c8",
+      "tree": "dd6ff2d50948e478e18384ffc617b81226106080",
+      "parents": [
+        "d13ff39f5ab267d7109471a85d1d3b3e4896122c",
+        "7f9b130b06824c8623be92503049ac167b6349fd"
+      ],
+      "tracked_change_count": 3,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 13,
+      "commit": "492d9744ef49e58a4245b37a0f3d5786ce80a35b",
+      "tree": "3983a82c81722c6a64516df9466b2d26799b97c7",
+      "parents": [
+        "e876e47f574fe199315060fad5064d716fce82ed",
+        "5d3eb8e2107076e5fb00a3b715fcbe284c423d81",
+        "41cbb7015073496d3f658fbca0afb08a5f6f2163"
+      ],
+      "tracked_change_count": 7,
+      "untracked_tree": "9e5508e6cccd4393de8f1a50db3b60e7a807af57",
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 14,
+      "commit": "207f6e7b2b56fc39308861871441449ece86768f",
+      "tree": "47e6d2d22089ce287aa8ae9e1fa8f0d4f01906cd",
+      "parents": [
+        "fd844343431b0feb087caf19c0a234095be93e95",
+        "aecbab467aa8f36c9879739e126430b6e6c32f64"
+      ],
+      "tracked_change_count": 1,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 15,
+      "commit": "8349141cc5c829e7e97568cd984b3617ea0a9258",
+      "tree": "e2e385298aec0f8fb5629958f404ed59b9bc9f46",
+      "parents": [
+        "a0f605b9a3e05945cdaefc4663824d41aeffcce1",
+        "3dd44eaade4d0aeca3579ea0e30d70cb0d1038c1",
+        "4ca6b04c8f70f89e3daefb350a3fab44ce9312cf"
+      ],
+      "tracked_change_count": 5,
+      "untracked_tree": "4b825dc642cb6eb9a060e54bf8d69288fbee4904",
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 16,
+      "commit": "56284580a4b57902db775adb49a773b2379e08fe",
+      "tree": "27d189233ca5f5754e518c2eb0f673dae58136f0",
+      "parents": [
+        "f045aee684b401b846ce63b67e525fe4ef9c286c",
+        "f868ac1416e509132dbeaf16004839cc942d7d8f"
+      ],
+      "tracked_change_count": 1,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 17,
+      "commit": "ebca2d9de6e0da10a0eaaa78846e2705dbf3342e",
+      "tree": "b7b997924a5ee5487d6463fb662474910a165fbe",
+      "parents": [
+        "bddad8ce7cd2242a8c13fa3a61d6c371f43bdbcf",
+        "cd21668e2f5ef8e0e48f163fb5fc446d427220f4"
+      ],
+      "tracked_change_count": 1,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 18,
+      "commit": "2f76eb5ae9b414ad369529d9032b6b78c3d83439",
+      "tree": "3e2ca8e3b413a410e70127166a3ec124a3cef9e2",
+      "parents": [
+        "e34e12a2a4a5a5ffaeba00462537811d7de4a821",
+        "200dd80fa4a8054a6f1741a5ca77d437a421bf6c"
+      ],
+      "tracked_change_count": 1,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 19,
+      "commit": "2c1bc08b743ecf8cb00740bc4014704aa9754f92",
+      "tree": "c7a3534e9fde68e685888ddcf53d2d01b09b1478",
+      "parents": [
+        "f6baee2b418280860b9757b7752ad678a4f69470",
+        "d08621974f32b016f93cebb8a500f02b6130283a"
+      ],
+      "tracked_change_count": 2,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 20,
+      "commit": "781f115ac9e55367f3538de5fac3cf315653a259",
+      "tree": "b78bb057db55f589d3f14e9a310d8e61aa7d101c",
+      "parents": [
+        "57d6eb817f56de3454e29add1028206b6586ca79",
+        "22db987a40c36ec3ce506494aef5464f23834d51"
+      ],
+      "tracked_change_count": 1,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 21,
+      "commit": "232b830af12a17e9fe6467b395bfe2a5c3aa8580",
+      "tree": "d7e9c281f43ea853ff7ebafc94c21f273ef0b447",
+      "parents": [
+        "bfaa7b92159e58de05319d7b5e4006b2ac1ca4d6",
+        "b04029d0eae524432327a29e09a9576cdc6ae37c",
+        "a99ceba48e79b1498b449d8d9229e3d9f55bc69f"
+      ],
+      "tracked_change_count": 4,
+      "untracked_tree": "4ba4beb89fcca875edf396c69ece48e2f5b44ed0",
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 22,
+      "commit": "86799fbe2273e65b7fb1c8d6d8265f1e4181a6d4",
+      "tree": "9b626dd325ba9d1f119d0a856a74655d1fecc783",
+      "parents": [
+        "fbc5f9c6a090732dcb874427b622b81651a37f93",
+        "71fad217b4d1c8aba1d51b0031425ce9afb463a8"
+      ],
+      "tracked_change_count": 3,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 23,
+      "commit": "fc61d8fe68f95c9075755537b6081630e9766c39",
+      "tree": "75b22018cecef0a0ecb82dd9634adb8512031efc",
+      "parents": [
+        "ec5e06d7e6cd60fbd18d5e9b4b1f35151f48aad1",
+        "821da9948ba975fb7f1ab42301620a9979841a7d"
+      ],
+      "tracked_change_count": 7,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 24,
+      "commit": "a7f17325ff1a149772cfce30e9502a72f51c9370",
+      "tree": "e51eea4152a37c89f1e659bf0f3094c6e6db3842",
+      "parents": [
+        "cc26337d0aa3a35933ef339f8231f944f0f94540",
+        "4feb2c8e7ff12b455a0b21744a6c858b4fd8b38b"
+      ],
+      "tracked_change_count": 1,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "index": 25,
+      "commit": "4b8877b118925ba9ad3000b1845f9cbb1271d07c",
+      "tree": "bfe72a8c564ff3763e007d5acd5f0afa51228325",
+      "parents": [
+        "274ac0bd6c0a30fcb346d19995d1057c735de825",
+        "29e4d9c7dabb491e859dd32137c6e680911fdf38"
+      ],
+      "tracked_change_count": 2,
+      "untracked_tree": null,
+      "custody": "restored_from_bundle_in_independent_empty_repository",
+      "delivery_disposition": "preserved_historical_snapshot",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    }
+  ]
+}

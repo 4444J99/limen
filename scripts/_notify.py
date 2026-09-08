@@ -32,12 +32,13 @@ import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Mapping
 
 # The liveness guard lives next to this file ON DISK. Resolving it by path rather than by
 # `import _root` is the whole point — see _load_root().
 _ROOT_MODULE_PATH = Path(__file__).resolve().parent / "_root.py"
 _ROOT_MODULE = None
+_PARAMS_MODULE = None
 EVENT_RETENTION_DAYS = 31
 EVENT_RETENTION_RECORDS = 2048
 EVENT_LOCK_TIMEOUT_SECONDS = 2.0
@@ -89,6 +90,30 @@ class DeliveryReceipt:
 NOTIFICATION_REGISTRY = (
     Path(__file__).resolve().parents[1] / "institutio" / "governance" / "notification-events.limen.json"
 )
+
+
+def _broker_binary(environ: Mapping[str, str] | None = None) -> str:
+    """Resolve the owning parameter panel without importing another transport's environment."""
+    global _PARAMS_MODULE
+    env = os.environ if environ is None else environ
+    default = str(Path.home() / ".local" / "bin" / "domus-notify")
+    env_name = "DOMUS_NOTIFY_BIN"
+    try:
+        if _PARAMS_MODULE is None:
+            path = Path(__file__).resolve().parents[1] / "cli/src/limen/vigilia/params.py"
+            spec = importlib.util.spec_from_file_location("_limen_notification_params", path)
+            if spec is None or spec.loader is None:
+                raise ImportError("notification parameter accessor unavailable")
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            _PARAMS_MODULE = module
+        declaration = _PARAMS_MODULE._load_panel().get("DOMUS_NOTIFY_BIN", {})
+        if isinstance(declaration, dict):
+            default = str(declaration.get("default") or default)
+            env_name = str(declaration.get("env") or env_name)
+    except (ImportError, OSError, ValueError):
+        pass
+    return str(Path(env.get(env_name, default)).expanduser())
 
 
 def _state_path(root: Path | str) -> Path:
@@ -363,7 +388,7 @@ def _root_may_speak(root: Path | str) -> bool:
 def _deliver(message: str, title: str) -> bool:
     """Delegate legacy delivery to the one machine-global Domus transport."""
     try:
-        broker = os.environ.get("DOMUS_NOTIFY_BIN", str(Path.home() / ".local" / "bin" / "domus-notify"))
+        broker = _broker_binary()
         delivered = subprocess.run(
             [broker, "--title", title, "--message", message],
             capture_output=True,
@@ -416,6 +441,7 @@ def emit_event_v1(
     observed_at: str | None = None,
     enabled: bool | None = None,
     level: str | None = None,
+    environ: Mapping[str, str] | None = None,
 ) -> DeliveryReceipt:
     """Validate at the broker boundary and return its channel-aware receipt."""
     if not _enabled(enabled):
@@ -448,15 +474,16 @@ def emit_event_v1(
         "producer": producer,
         "owner": "limen",
     }
-    broker = os.environ.get("DOMUS_NOTIFY_BIN", str(Path.home() / ".local" / "bin" / "domus-notify"))
+    env = dict(os.environ if environ is None else environ)
+    broker = _broker_binary(env)
     command = [broker, "emit", "--event-json", "-"]
     if level:
         command.extend(["--level", level])
-    env = dict(os.environ)
     env["DOMUS_NOTIFY_REGISTRY"] = str(NOTIFICATION_REGISTRY)
-    if os.environ.get("LIMEN_NTFY_TOPIC") and not env.get("DOMUS_NOTIFY_NTFY_URL"):
-        base = os.environ.get("LIMEN_NTFY_URL", "https://ntfy.sh").rstrip("/")
-        env["DOMUS_NOTIFY_NTFY_URL"] = f"{base}/{os.environ['LIMEN_NTFY_TOPIC']}"
+    ntfy_topic = env.get("LIMEN_NTFY_TOPIC")
+    if ntfy_topic and not env.get("DOMUS_NOTIFY_NTFY_URL"):
+        base = env.get("LIMEN_NTFY_URL", "https://ntfy.sh").rstrip("/")
+        env["DOMUS_NOTIFY_NTFY_URL"] = f"{base}/{ntfy_topic}"
     try:
         completed = subprocess.run(
             command,
@@ -688,7 +715,49 @@ def clear_condition(root: Path | str, key: str, cooldown: int = 0) -> bool:
 
 
 def active_conditions(root: Path | str) -> list[str]:
-    return sorted(_load(root))
+    """Combine legacy onsets with the Domus transport's authoritative structured state."""
+    active = set(_load(root))
+    # Standalone/test roots must never borrow the live organism's private ledger.
+    explicit_state = any(
+        os.environ.get(key)
+        for key in (
+            "DOMUS_NOTIFY_LEDGER",
+            "DOMUS_NOTIFY_STATE_DIR",
+            "DOMUS_NOTIFY_RECORDING",
+            "DOMUS_NOTIFY_RECORDING_LEDGER",
+        )
+    )
+    if not explicit_state and not _root_may_speak(root):
+        return sorted(active)
+    state_dir = Path(os.environ.get("DOMUS_NOTIFY_STATE_DIR", "~/.local/state/domus")).expanduser()
+    recording = Path(os.environ.get("DOMUS_NOTIFY_RECORDING", state_dir / "notification-recording.jsonl")).expanduser()
+    recording_mode = (
+        bool(os.environ.get("DOMUS_NOTIFY_RECORDING"))
+        if os.environ.get("DOMUS_NOTIFY", "1") == "0"
+        else os.environ.get("DOMUS_NOTIFY_BACKEND", "live") == "recording"
+    )
+    ledger_path = (
+        Path(os.environ.get("DOMUS_NOTIFY_RECORDING_LEDGER", recording.with_name(f"{recording.stem}-ledger.json")))
+        if recording_mode
+        else Path(os.environ.get("DOMUS_NOTIFY_LEDGER", state_dir / "notification-ledger-v1.json"))
+    ).expanduser()
+    try:
+        ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+        definitions = json.loads(NOTIFICATION_REGISTRY.read_text(encoding="utf-8"))["events"]
+        if not isinstance(ledger, dict) or ledger.get("schema_version") != 1:
+            return sorted(active)
+        conditions = ledger.get("conditions")
+        if not isinstance(conditions, dict):
+            return sorted(active)
+        for key, row in conditions.items():
+            if not isinstance(key, str) or not isinstance(row, dict) or row.get("active") is not True:
+                continue
+            stable_id = key.split(":", 1)[0]
+            if stable_id in definitions:
+                active.add(stable_id)
+    except (OSError, KeyError, TypeError, ValueError):
+        pass
+    return sorted(active)
 
 
 def main(argv: list[str] | None = None) -> int:

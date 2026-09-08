@@ -1,0 +1,30 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:02:57.824844+00:00",
+  "target": {
+    "repository": "organvm-iii-ergon/fetch-familiar-friends",
+    "pull_request": 248,
+    "initial_head": "13cd2466641a34cc528a2fe52c619787c449b690",
+    "remediated_head": "13cd2466641a34cc528a2fe52c619787c449b690",
+    "base_ref": "main"
+  },
+  "remediation": {
+    "category": "clean_verification",
+    "root_cause": "passing_ci_verification",
+    "patches_applied": []
+  },
+  "verification": {
+    "local_command": "scripts/merge-policy.sh 248 --repo organvm-iii-ergon/fetch-familiar-friends",
+    "local_exit_code": 0,
+    "ci_status_rollup": {
+      "total": 1,
+      "failing": 0,
+      "pending": 0,
+      "required_scope": "required"
+    },
+    "merge_policy_verdict": "CLEARED",
+    "merge_mode": "direct",
+    "merge_commit": "c6cdfcb5f2b61fe6cb5461de4a82fb159bbf5f08"
+  },
+  "integrity_note": "Verified via merge-policy.sh with complete passing CI status prior to squash merge."
+}

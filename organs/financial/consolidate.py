@@ -520,8 +520,8 @@ def build_dashboard(entities: dict, revenue: dict, obligations: dict, classified
     lines.append(
         "3. **P0: Enter balances** — principal fills `balance` + `as_of` in `entities.yaml` (unlocks real position tracking)"
     )
-    lines.append("4. **P2: Deploy MONETA** — `docker build + docker run` on $0 host; set `MINT_BTC_ADDRESS`")
-    lines.append("5. **P3: Deploy Exporter** — 'git push' + 'wrangler deploy'; first dollar via MONETA or Ko-fi")
+    lines.append("4. **P1: Deploy MONETA** — `docker build + docker run` on $0 host; set `MINT_BTC_ADDRESS`")
+    lines.append("5. **P2: Deploy Exporter** — 'git push' + 'wrangler deploy'; first dollar via MONETA or Ko-fi")
     lines.append(
         "6. ✅ **Self-feed wired** — `financial-organ.py` runs every 8 beats; auto-advances maturity as slices land"
     )

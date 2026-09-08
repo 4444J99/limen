@@ -46,7 +46,7 @@ bypass. Dry-run first, reversible, **gated on user go-ahead.** This is the highe
 3. Keep all 6 vendors saturated; drive `EVERY-ASK-LEDGER.md` items to done.
 4. Write `docs/PLAN-LONG-AND-WIDE.md` (the multi-horizon plan to ratify).
 5. One-container cutover (`container/migrate.sh` S4–S13) under external backup.
-6. Surface the 5 `needs_human` atoms as a decision list.
+6. Derive current human actions from `his-hand-levers.json`, excluding terminal records; use the live registry count.
 
 ## Bootstrap shortlist needing the human
 Nelnet recert · `consolidate-github --apply` & `setup-rulesets --apply` triggers · monetization

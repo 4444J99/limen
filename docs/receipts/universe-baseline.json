@@ -1,63 +1,78 @@
 {
-  "census_digest": "50c3c7899daa88c5f8a1ba3657837d5e1f7f655cec826039fead802d2d75e3a5",
+  "census_digest": "ad84623aee0571cc3f150258a839db87a8b6cc88110521611cfe07aa2248f9d1",
+  "closure_complete": false,
   "complete": false,
-  "failure_count": 2,
-  "observed_at": "2026-08-27T16:31:53.473770Z",
+  "failure_count": 0,
+  "local_failure_count": 0,
+  "observation_complete": true,
+  "observed_at": "2026-08-28T15:39:25.022226Z",
   "partitions": [
     {
-      "blocked": 12,
+      "blocked": 13,
+      "closure_complete": true,
       "complete": true,
       "kind": "repositories",
+      "observation_complete": true,
       "protected": 0,
       "schema_version": "limen.universe_partition.v1",
-      "terminal": 308,
+      "terminal": 307,
       "total": 320,
       "unaccounted": 0
     },
     {
       "blocked": 0,
-      "complete": true,
-      "kind": "pull_requests",
-      "protected": 766,
-      "schema_version": "limen.universe_partition.v1",
-      "terminal": 0,
-      "total": 766,
-      "unaccounted": 0
-    },
-    {
-      "blocked": 0,
+      "closure_complete": false,
       "complete": false,
-      "kind": "branches",
+      "kind": "pull_requests",
+      "observation_complete": true,
       "protected": 0,
       "schema_version": "limen.universe_partition.v1",
-      "terminal": 319,
-      "total": 10312,
-      "unaccounted": 9993
-    },
-    {
-      "blocked": 29,
-      "complete": false,
-      "kind": "local_roots",
-      "protected": 5,
-      "schema_version": "limen.universe_partition.v1",
-      "terminal": 14,
-      "total": 159,
-      "unaccounted": 111
-    },
-    {
-      "blocked": 19,
-      "complete": false,
-      "kind": "worktrees",
-      "protected": 5,
-      "schema_version": "limen.universe_partition.v1",
       "terminal": 0,
-      "total": 120,
-      "unaccounted": 96
+      "total": 786,
+      "unaccounted": 786
     },
     {
       "blocked": 0,
+      "closure_complete": false,
+      "complete": false,
+      "kind": "branches",
+      "observation_complete": true,
+      "protected": 0,
+      "schema_version": "limen.universe_partition.v1",
+      "terminal": 320,
+      "total": 10336,
+      "unaccounted": 10016
+    },
+    {
+      "blocked": 27,
+      "closure_complete": false,
+      "complete": false,
+      "kind": "local_roots",
+      "observation_complete": true,
+      "protected": 6,
+      "schema_version": "limen.universe_partition.v1",
+      "terminal": 12,
+      "total": 162,
+      "unaccounted": 117
+    },
+    {
+      "blocked": 18,
+      "closure_complete": false,
+      "complete": false,
+      "kind": "worktrees",
+      "observation_complete": true,
+      "protected": 5,
+      "schema_version": "limen.universe_partition.v1",
+      "terminal": 0,
+      "total": 123,
+      "unaccounted": 100
+    },
+    {
+      "blocked": 0,
+      "closure_complete": true,
       "complete": true,
       "kind": "protections",
+      "observation_complete": true,
       "protected": 5,
       "schema_version": "limen.universe_partition.v1",
       "terminal": 0,
@@ -65,19 +80,23 @@
       "unaccounted": 0
     },
     {
-      "blocked": 29,
+      "blocked": 27,
+      "closure_complete": false,
       "complete": false,
       "kind": "terminal_dispositions",
-      "protected": 771,
+      "observation_complete": true,
+      "protected": 6,
       "schema_version": "limen.universe_partition.v1",
-      "terminal": 333,
-      "total": 11237,
-      "unaccounted": 10104
+      "terminal": 332,
+      "total": 11284,
+      "unaccounted": 10919
     }
   ],
+  "remote_failure_count": 0,
   "repository_denominator": 320,
   "schema_version": "limen.universe_baseline_receipt.v1",
-  "source_generation": "e9d7f66763f824338dd57e18331dc6abc3aeb9fbc1b649b98c0dcc28a6c8161b",
-  "stable_count": 308,
-  "unaccounted": 20304
+  "source_generation": "caa181e3a99187b5c9987540a098efa6f73c319a8daa04c0ca95c47a82ea57d3",
+  "stable_count": 307,
+  "unaccounted": 10959,
+  "unique_debt_count": 10959
 }

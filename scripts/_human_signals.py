@@ -30,10 +30,18 @@ HUMAN_SIGNALS = re.compile(
 HUMAN_ID_PREFIXES = ("BLD2-",)
 # Explicit lever tag on a task — the surest human-atom signal, independent of the credential cluster.
 LEVER_MARKER = re.compile(r"needs-human \(L-|\[his-hand\]", re.IGNORECASE)
+TERMINAL_LEVER_STATUSES = frozenset({"discharged", "retired", "done", "closed"})
+
+
+def lever_is_open(lever: dict) -> bool:
+    """Only nonterminal registry rows may own current human work."""
+    if str(lever.get("discharged") or "").strip():
+        return False
+    return str(lever.get("status") or "").strip().lower() not in TERMINAL_LEVER_STATUSES
 
 
 def lever_ids(root: Path) -> set[str]:
-    """The owned human-gate registry — a task naming any of these is his hand BY DEFINITION.
+    """The active human-gate registry; historical references do not own current work.
 
     Derived, never pinned: a task tagged to a lever (`needs-human (L-…)`, `[his-hand]`, or naming
     a registered lever id) is human-gated even absent a credential keyword — else a drain would
@@ -44,7 +52,7 @@ def lever_ids(root: Path) -> set[str]:
     except (OSError, json.JSONDecodeError):
         return set()
     levers = raw.get("levers") if isinstance(raw, dict) else raw
-    return {lv["id"] for lv in (levers or []) if isinstance(lv, dict) and lv.get("id")}
+    return {lv["id"] for lv in (levers or []) if isinstance(lv, dict) and lv.get("id") and lever_is_open(lv)}
 
 
 def task_blob(task) -> str:

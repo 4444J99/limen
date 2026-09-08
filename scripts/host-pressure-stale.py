@@ -21,6 +21,7 @@ log no one is reading is not an alarm. Read-only otherwise; advisory in the regi
 from __future__ import annotations
 
 import argparse
+import math
 import json
 import os
 import hashlib
@@ -38,8 +39,16 @@ STALE_KEY = "vitals-stale"
 
 
 def _boot_identity() -> str:
+    if sys.platform.startswith("linux"):
+        try:
+            value = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+            return value or "unavailable"
+        except OSError:
+            return "unavailable"
     try:
         result = subprocess.run(["sysctl", "-n", "kern.boottime"], capture_output=True, text=True, timeout=3)
+        if result.returncode != 0 or not result.stdout.strip():
+            return "unavailable"
         return hashlib.sha256(result.stdout.strip().encode()).hexdigest()[:20]
     except (OSError, subprocess.SubprocessError):
         return "unavailable"
@@ -139,6 +148,9 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="evaluate freshness without notification or dedupe-state writes",
     )
+    parser.add_argument(
+        "--apply", action="store_true", help="allow one bounded sample refresh for incompatible metadata"
+    )
     args = parser.parse_args(argv)
     if _configured_env("LIMEN_VIGILIA", "1") in ("0", "false", "False"):
         print("host-pressure-stale: VIGILIA off — nothing to watch")
@@ -162,27 +174,37 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         payload = json.loads(status_path.read_text())
-        wake_state = str(payload.get("wake_state") or "legacy")
-        if wake_state in {"Sleep", "MaintenanceDarkWake", "DarkWake"}:
-            print(f"host-pressure-stale: grace — wake_state={wake_state} cannot page")
-            return 0
-        boot_identity = payload.get("boot_identity")
-        sampled_monotonic = payload.get("sampled_monotonic_seconds")
-        if boot_identity != _boot_identity() or not isinstance(sampled_monotonic, (int, float)):
-            print("host-pressure-stale: STALE — reboot/legacy metadata requires one bounded sample-first refresh")
-            if not args.read_only:
-                try:
-                    subprocess.run(
-                        [sys.executable, "-m", "limen.vigilia", "sample"],
-                        cwd=_root(),
-                        timeout=30,
-                        capture_output=True,
-                        check=False,
-                    )
-                except (OSError, subprocess.SubprocessError):
-                    pass
-                return 0
-            return 1
+        boot_identity = _boot_identity()
+
+        def compatible(record: dict) -> bool:
+            sampled = record.get("sampled_monotonic_seconds")
+            return (
+                boot_identity != "unavailable"
+                and record.get("boot_identity") == boot_identity
+                and isinstance(sampled, (int, float))
+                and not isinstance(sampled, bool)
+                and math.isfinite(sampled)
+                and 0 <= sampled <= _active_monotonic()
+            )
+
+        if not compatible(payload):
+            message = "host-pressure-stale: STALE — reboot/legacy metadata requires one bounded sample-first refresh"
+            if not args.apply or args.read_only:
+                return _stale(message, read_only=args.read_only)
+            try:
+                refreshed = subprocess.run(
+                    [sys.executable, "-m", "limen.vigilia", "sample"],
+                    cwd=_root(),
+                    timeout=_sample_timeout_seconds(),
+                    capture_output=True,
+                    check=False,
+                )
+                payload = json.loads(status_path.read_text())
+            except (OSError, subprocess.SubprocessError, ValueError):
+                return _stale(message + "; refresh failed", read_only=args.read_only)
+            if refreshed.returncode != 0 or not compatible(payload):
+                return _stale(message + "; refresh did not produce compatible metadata", read_only=args.read_only)
+        sampled_monotonic = payload["sampled_monotonic_seconds"]
         sampled_raw = payload.get("sampled_at") or payload.get("completed_at") or payload.get("ts") or ""
         if not sampled_raw:
             return _stale(

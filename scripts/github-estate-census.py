@@ -18,6 +18,7 @@ from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlparse
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -151,15 +152,18 @@ def _failed_connection(
     expected_total: int | None,
     error: str,
     source_generation: str,
+    *,
+    attempt: int = 1,
+    retry_class: str = "permanent",
 ) -> ConnectionCensus:
     failure = CursorFailure(
         repository=repository,
         connection_kind=kind,
         cursor=None,
         error_class=error,
-        attempt=1,
+        attempt=attempt,
         expected_total=expected_total,
-        retry_class="permanent",
+        retry_class=retry_class,
     )
     return ConnectionCensus(
         kind=kind,
@@ -343,6 +347,51 @@ def _gitvs():
     return module
 
 
+def _github_api_error_class(result: subprocess.CompletedProcess) -> str:
+    details: list[str] = []
+    try:
+        payload = json.loads(result.stdout or "{}")
+    except json.JSONDecodeError:
+        payload = {}
+    for error in payload.get("errors") or []:
+        if not isinstance(error, dict):
+            continue
+        message = error.get("message")
+        code = (error.get("extensions") or {}).get("code")
+        if message:
+            details.append(str(message))
+        if code:
+            details.append(str(code))
+    details.append(str(result.stderr or ""))
+    detail = " ".join(details).lower()
+    if "rate limit" in detail or "rate_limit" in detail or "secondary rate" in detail:
+        return "github-rate-limited"
+    if any(marker in detail for marker in ("timed out", "timeout", "502", "503", "504")):
+        return "github-api-timeout"
+    if "something went wrong while executing your query" in detail or "internal" in detail:
+        return "github-graphql-transient"
+    if "could not resolve to a repository" in detail or "not found" in detail:
+        return "github-repository-unavailable"
+    if "forbidden" in detail or "resource not accessible" in detail:
+        return "github-forbidden"
+    if "undefinedfield" in detail or "doesn't exist on type" in detail or "parse error" in detail:
+        return "github-query-invalid"
+    if "authentication" in detail or "bad credentials" in detail:
+        return "github-authentication-failed"
+    return "github-api-unavailable"
+
+
+def _github_retry_class(error_class: str) -> str:
+    if error_class in {
+        "github-api-timeout",
+        "github-api-unavailable",
+        "github-graphql-transient",
+        "github-rate-limited",
+    }:
+        return "transient"
+    return "permanent"
+
+
 def _metadata(gitvs, repo: str) -> dict[str, Any] | None:
     try:
         owner, name = repo.split("/", 1)
@@ -351,34 +400,46 @@ def _metadata(gitvs, repo: str) -> dict[str, Any] | None:
     query = (
         "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){"
         'id nameWithOwner isPrivate updatedAt issues(states:OPEN){totalCount} refs(refPrefix:"refs/heads/"){totalCount} '
-        "defaultBranchRef{name target{... on Commit{oid statusCheckRollup{state}}}} "
+        "defaultBranchRef{name target{... on Commit{oid statusCheckRollup{contexts(first:1){totalCount}}}}} "
         "branchProtectionRules(first:100){totalCount nodes{pattern requiresStatusChecks "
-        "requiredStatusCheckContexts requiredStatusChecks{context}} pageInfo{hasNextPage endCursor}} "
+        "requiredStatusCheckContexts requiredStatusChecks{context app{databaseId}}} "
+        "pageInfo{hasNextPage endCursor}} "
         "rulesets(first:100,includeParents:true,targets:[BRANCH]){totalCount nodes{enforcement target "
         "conditions{refName{include exclude} repositoryName{include exclude protected} "
         "repositoryId{repositoryIds} organizationProperty{include{name propertyValues} "
         "exclude{name propertyValues}} repositoryProperty{include{name propertyValues} "
         "exclude{name propertyValues}}} "
         "rules(first:100){totalCount nodes{type parameters{__typename "
-        "... on RequiredStatusChecksParameters{requiredStatusChecks{context}} "
-        "... on WorkflowsParameters{workflows{path}}}} pageInfo{hasNextPage endCursor}}} "
+        "... on RequiredStatusChecksParameters{requiredStatusChecks{context integrationId}} "
+        "... on WorkflowsParameters{workflows{path repositoryId ref sha}}}} pageInfo{hasNextPage endCursor}}} "
         "pageInfo{hasNextPage endCursor}}}}"
     )
-    result = gitvs._gh_user(
-        [
-            "api",
-            "graphql",
-            "-f",
-            f"query={query}",
-            "-F",
-            f"owner={owner}",
-            "-F",
-            f"name={name}",
-        ],
-        timeout=90,
-    )
-    if result.returncode != 0:
-        return None
+    result: subprocess.CompletedProcess | None = None
+    for attempt in range(1, CURSOR_RETRY_ATTEMPTS + 1):
+        result = gitvs._gh_user(
+            [
+                "api",
+                "graphql",
+                "-f",
+                f"query={query}",
+                "-F",
+                f"owner={owner}",
+                "-F",
+                f"name={name}",
+            ],
+            timeout=90,
+        )
+        if result.returncode == 0:
+            break
+        error_class = _github_api_error_class(result)
+        retry_class = _github_retry_class(error_class)
+        if retry_class != "transient" or attempt == CURSOR_RETRY_ATTEMPTS:
+            return {
+                "metadata_error": error_class,
+                "metadata_attempt": attempt,
+                "metadata_retry_class": retry_class,
+            }
+    assert result is not None
     try:
         repository = (json.loads(result.stdout or "{}").get("data") or {}).get("repository")
         if not isinstance(repository, dict):
@@ -386,34 +447,16 @@ def _metadata(gitvs, repo: str) -> dict[str, Any] | None:
         default_ref = repository.get("defaultBranchRef") or {}
         target = default_ref.get("target") or {}
         rollup = target.get("statusCheckRollup") or {}
-        check_state = rollup.get("state")
-        check_nodes = []
-        if check_state:
-            check_nodes.append(
-                {
-                    "id": f"default:{target.get('oid') or 'unknown'}",
-                    "name": "default-branch-rollup",
-                    "state": str(check_state),
-                    "head_oid": target.get("oid"),
-                    "url": None,
-                }
-            )
-        normalized_check_state = str(check_state or "").upper()
+        contexts = rollup.get("contexts") or {}
+        check_total = int(contexts.get("totalCount") or 0)
         default_branch = default_ref.get("name")
         policy = _required_check_policy(repository, default_branch)
         if policy["status"] == "no_required_checks" and policy["complete"]:
             default_check_status = "no_required_checks"
-            check_nodes = []
-        elif policy["status"] == "invalid_required_checks":
+        elif not policy["complete"] or policy["status"] in {"invalid_required_checks", "not_applicable"}:
             default_check_status = "unknown"
-        elif normalized_check_state == "SUCCESS":
-            default_check_status = "green"
-        elif normalized_check_state in {"FAILURE", "ERROR"}:
-            default_check_status = "red"
-        elif normalized_check_state in {"PENDING", "EXPECTED"}:
-            default_check_status = "pending"
         else:
-            default_check_status = "unknown"
+            default_check_status = "pending"
         return {
             "issues": int((repository.get("issues") or {})["totalCount"]),
             "branches": int((repository.get("refs") or {})["totalCount"]),
@@ -422,11 +465,13 @@ def _metadata(gitvs, repo: str) -> dict[str, Any] | None:
             "default_sha": target.get("oid"),
             "default_check_status": default_check_status,
             "default_check_policy": policy["status"],
+            "default_check_policy_receipt": policy,
             "default_check_policy_complete": policy["complete"],
             "required_check_count": policy["required_check_count"],
             "required_check_contexts": policy["required_check_contexts"],
+            "required_check_requirements": policy["required_check_requirements"],
             "default_check_policy_error": policy["error"],
-            "checks": check_nodes,
+            "check_total": check_total,
         }
     except (KeyError, TypeError, ValueError, json.JSONDecodeError):
         return None
@@ -528,166 +573,326 @@ def _ruleset_applies(repository: dict[str, Any], branch: str, conditions: object
 def _required_check_policy(repository: dict[str, Any], branch: object) -> dict[str, Any]:
     """Prove effective classic and ruleset check policy from one bounded GraphQL snapshot."""
 
-    if not isinstance(branch, str) or not branch:
+    requirements: dict[tuple[object, ...], dict[str, Any]] = {}
+
+    def receipt(status: str, *, complete: bool, error: str | None) -> dict[str, Any]:
+        ordered = sorted(
+            requirements.values(),
+            key=lambda value: (
+                str(value.get("kind") or ""),
+                str(value.get("context") or value.get("path") or ""),
+                -1 if value.get("app_id") is None else int(value["app_id"]),
+                str(value.get("repository_id") or ""),
+                str(value.get("ref") or ""),
+                str(value.get("sha") or ""),
+            ),
+        )
+        contexts = sorted(
+            {str(value["context"]) if value["kind"] == "context" else f"workflow:{value['path']}" for value in ordered}
+        )
         return {
-            "status": "not_applicable",
-            "complete": True,
-            "required_check_count": 0,
-            "required_check_contexts": [],
-            "error": None,
+            "status": status,
+            "complete": complete,
+            "required_check_count": len(ordered) if complete else None,
+            "required_check_contexts": contexts if complete else [],
+            "required_check_requirements": ordered if complete else [],
+            "error": error,
         }
+
+    def unknown(error: str) -> dict[str, Any]:
+        requirements.clear()
+        return receipt("unknown", complete=False, error=error)
+
+    def add_context(context: str, app_id: int | None = None) -> None:
+        key = ("context", context, app_id)
+        requirements[key] = {
+            "kind": "context",
+            "context": context,
+            "app_id": app_id,
+        }
+
+    def add_workflow(workflow: dict[str, Any]) -> None:
+        requirement = {
+            "kind": "workflow",
+            "path": workflow["path"],
+            "repository_id": workflow["repositoryId"],
+            "ref": workflow.get("ref"),
+            "sha": workflow.get("sha"),
+        }
+        key = ("workflow", requirement["path"], requirement["repository_id"], requirement["ref"], requirement["sha"])
+        requirements[key] = requirement
+
+    def check_description(value: object) -> tuple[str, int | None] | None:
+        if not isinstance(value, dict) or not isinstance(value.get("context"), str) or not value["context"]:
+            return None
+        if "integrationId" in value:
+            integration_id = value.get("integrationId")
+            if integration_id is not None and (not isinstance(integration_id, int) or isinstance(integration_id, bool)):
+                return None
+            return str(value["context"]), integration_id
+        app = value.get("app")
+        if app is None:
+            return str(value["context"]), None
+        if not isinstance(app, dict):
+            return None
+        app_id = app.get("databaseId")
+        if app_id is not None and (not isinstance(app_id, int) or isinstance(app_id, bool)):
+            return None
+        return str(value["context"]), app_id
+
+    if not isinstance(branch, str) or not branch:
+        return receipt("not_applicable", complete=True, error=None)
     classic = repository.get("branchProtectionRules")
     rulesets = repository.get("rulesets")
     if not _connection_is_complete(classic) or not _connection_is_complete(rulesets):
-        return {
-            "status": "unknown",
-            "complete": False,
-            "required_check_count": None,
-            "required_check_contexts": [],
-            "error": "default-check-policy-pagination-incomplete",
-        }
+        return unknown("default-check-policy-pagination-incomplete")
 
-    contexts: set[str] = set()
     invalid_policy: str | None = None
     for rule in classic["nodes"]:
         if not isinstance(rule, dict) or not isinstance(rule.get("pattern"), str):
-            return {
-                "status": "unknown",
-                "complete": False,
-                "required_check_count": None,
-                "required_check_contexts": [],
-                "error": "classic-policy-invalid",
-            }
+            return unknown("classic-policy-invalid")
         if not _matches_ref_pattern(rule["pattern"], branch) or not rule.get("requiresStatusChecks"):
             continue
         raw_contexts = rule.get("requiredStatusCheckContexts") or []
         raw_checks = rule.get("requiredStatusChecks") or []
         if not isinstance(raw_contexts, list) or not isinstance(raw_checks, list):
-            return {
-                "status": "unknown",
-                "complete": False,
-                "required_check_count": None,
-                "required_check_contexts": [],
-                "error": "classic-required-checks-invalid",
-            }
-        if not all(isinstance(value, str) and value for value in raw_contexts) or not all(
-            isinstance(value, dict) and isinstance(value.get("context"), str) and value["context"]
-            for value in raw_checks
-        ):
-            return {
-                "status": "unknown",
-                "complete": False,
-                "required_check_count": None,
-                "required_check_contexts": [],
-                "error": "classic-required-checks-invalid",
-            }
-        combined = {*raw_contexts, *(str(value["context"]) for value in raw_checks)}
-        if not combined:
+            return unknown("classic-required-checks-invalid")
+        if not all(isinstance(value, str) and value for value in raw_contexts):
+            return unknown("classic-required-checks-invalid")
+        descriptions = [check_description(value) for value in raw_checks]
+        if any(value is None for value in descriptions):
+            return unknown("classic-required-checks-invalid")
+        if not raw_contexts and not descriptions:
             invalid_policy = "classic-required-checks-empty"
             continue
-        contexts.update(combined)
+        described_contexts = {value[0] for value in descriptions if value is not None}
+        for context in raw_contexts:
+            if context not in described_contexts:
+                add_context(context)
+        for description in descriptions:
+            assert description is not None
+            add_context(*description)
 
     for ruleset in rulesets["nodes"]:
         if not isinstance(ruleset, dict):
-            return {
-                "status": "unknown",
-                "complete": False,
-                "required_check_count": None,
-                "required_check_contexts": [],
-                "error": "ruleset-policy-invalid",
-            }
+            return unknown("ruleset-policy-invalid")
         if ruleset.get("target") != "BRANCH" or ruleset.get("enforcement") != "ACTIVE":
             continue
         applies = _ruleset_applies(repository, branch, ruleset.get("conditions"))
         if applies is None:
-            return {
-                "status": "unknown",
-                "complete": False,
-                "required_check_count": None,
-                "required_check_contexts": [],
-                "error": "ruleset-condition-unsupported",
-            }
+            return unknown("ruleset-condition-unsupported")
         if not applies:
             continue
         rules = ruleset.get("rules")
         if not _connection_is_complete(rules):
-            return {
-                "status": "unknown",
-                "complete": False,
-                "required_check_count": None,
-                "required_check_contexts": [],
-                "error": "ruleset-rule-pagination-incomplete",
-            }
+            return unknown("ruleset-rule-pagination-incomplete")
         for rule in rules["nodes"]:
             if not isinstance(rule, dict):
-                return {
-                    "status": "unknown",
-                    "complete": False,
-                    "required_check_count": None,
-                    "required_check_contexts": [],
-                    "error": "ruleset-rule-invalid",
-                }
+                return unknown("ruleset-rule-invalid")
             rule_type = str(rule.get("type") or "")
             parameters = rule.get("parameters")
             if rule_type == "REQUIRED_STATUS_CHECKS":
                 checks = parameters.get("requiredStatusChecks") if isinstance(parameters, dict) else None
                 if not isinstance(checks, list) or not checks:
-                    return {
-                        "status": "unknown",
-                        "complete": False,
-                        "required_check_count": None,
-                        "required_check_contexts": [],
-                        "error": "ruleset-required-checks-invalid",
-                    }
+                    return unknown("ruleset-required-checks-invalid")
                 for check in checks:
-                    if not isinstance(check, dict) or not isinstance(check.get("context"), str):
-                        return {
-                            "status": "unknown",
-                            "complete": False,
-                            "required_check_count": None,
-                            "required_check_contexts": [],
-                            "error": "ruleset-required-checks-invalid",
-                        }
-                    contexts.add(str(check["context"]))
+                    description = check_description(check)
+                    if description is None:
+                        return unknown("ruleset-required-checks-invalid")
+                    add_context(*description)
             elif rule_type == "WORKFLOWS":
                 workflows = parameters.get("workflows") if isinstance(parameters, dict) else None
                 if not isinstance(workflows, list) or not workflows:
-                    return {
-                        "status": "unknown",
-                        "complete": False,
-                        "required_check_count": None,
-                        "required_check_contexts": [],
-                        "error": "ruleset-workflows-invalid",
-                    }
+                    return unknown("ruleset-workflows-invalid")
                 for workflow in workflows:
-                    if not isinstance(workflow, dict) or not isinstance(workflow.get("path"), str):
-                        return {
-                            "status": "unknown",
-                            "complete": False,
-                            "required_check_count": None,
-                            "required_check_contexts": [],
-                            "error": "ruleset-workflows-invalid",
-                        }
-                    contexts.add(f"workflow:{workflow['path']}")
+                    if (
+                        not isinstance(workflow, dict)
+                        or not isinstance(workflow.get("path"), str)
+                        or not workflow["path"]
+                    ):
+                        return unknown("ruleset-workflows-invalid")
+                    if (
+                        not isinstance(workflow.get("repositoryId"), int)
+                        or isinstance(workflow["repositoryId"], bool)
+                        or workflow["repositoryId"] <= 0
+                        or any(
+                            workflow.get(key) is not None and not isinstance(workflow[key], str)
+                            for key in ("ref", "sha")
+                        )
+                        or not any(isinstance(workflow.get(key), str) and workflow[key] for key in ("ref", "sha"))
+                    ):
+                        return unknown("ruleset-workflow-identity-missing")
+                    add_workflow(workflow)
 
     if invalid_policy is not None:
-        return {
-            "status": "invalid_required_checks",
-            "complete": True,
-            "required_check_count": len(contexts),
-            "required_check_contexts": sorted(contexts),
-            "error": invalid_policy,
-        }
+        return receipt("invalid_required_checks", complete=True, error=invalid_policy)
+    return receipt("required_checks" if requirements else "no_required_checks", complete=True, error=None)
+
+
+def _check_result_status(value: object) -> str:
+    normalized = str(value or "").upper()
+    if normalized in {"SUCCESS", "NEUTRAL", "SKIPPED"}:
+        return "green"
+    if normalized in {
+        "",
+        "COMPLETED",
+        "EXPECTED",
+        "IN_PROGRESS",
+        "PENDING",
+        "QUEUED",
+        "REQUESTED",
+        "WAITING",
+    }:
+        return "pending"
+    return "red"
+
+
+def _observed_key(node: dict[str, Any]) -> tuple[str, str]:
+    return str(node.get("observed_at") or ""), str(node.get("id") or "")
+
+
+def _workflow_identity_matches(requirement: dict[str, Any], node: dict[str, Any]) -> bool:
+    """A basename or target-repository match cannot prove the executed source file."""
+    if (
+        not isinstance(requirement.get("repository_id"), int)
+        or isinstance(requirement["repository_id"], bool)
+        or not requirement.get("path")
+        or not (requirement.get("ref") or requirement.get("sha"))
+    ):
+        return False
+    if requirement["repository_id"] != node.get("workflow_repository_id") or requirement["path"] != node.get(
+        "workflow_path"
+    ):
+        return False
+    expected_revision = requirement.get("sha") or requirement.get("ref")
+    return expected_revision == node.get("workflow_source_revision")
+
+
+def _workflow_file_identity(
+    gitvs, repository: dict[str, Any], workflow_file: object, source_ids: dict[str, int | None]
+) -> dict[str, Any]:
+    """Read the executed file's source, not the check suite's target repository."""
+    if not isinstance(workflow_file, dict):
+        return {}
+    source = workflow_file.get("repositoryName")
+    path = workflow_file.get("path")
+    file_url = workflow_file.get("repositoryFileUrl")
+    if not all(isinstance(value, str) and value for value in (source, path, file_url)):
+        return {}
+    parsed = urlparse(file_url)
+    prefix = f"/{source}/blob/"
+    suffix = f"/{path}"
+    if parsed.netloc != "github.com" or not parsed.path.startswith(prefix) or not parsed.path.endswith(suffix):
+        return {}
+    revision = unquote(parsed.path[len(prefix) : -len(suffix)])
+    if not revision or len(source.split("/")) != 2:
+        return {}
+    if source not in source_ids:
+        if source == repository.get("nameWithOwner"):
+            source_ids[source] = repository.get("databaseId")
+        else:
+            result = gitvs._gh_user(["api", f"repos/{source}"], timeout=90)
+            try:
+                value = json.loads(result.stdout or "{}") if result.returncode == 0 else {}
+                source_ids[source] = value.get("id") if value.get("full_name") == source else None
+            except (ValueError, TypeError, AttributeError):
+                source_ids[source] = None
+    source_id = source_ids[source]
+    if not isinstance(source_id, int) or isinstance(source_id, bool) or source_id <= 0:
+        return {}
     return {
-        "status": "required_checks" if contexts else "no_required_checks",
-        "complete": True,
-        "required_check_count": len(contexts),
-        "required_check_contexts": sorted(contexts),
-        "error": None,
+        "workflow_repository_id": source_id,
+        "workflow_repository": source,
+        "workflow_path": path,
+        "workflow_source_revision": revision,
     }
 
 
-def _remote_page(gitvs, repo: str, kind: str, cursor: str | None) -> dict[str, Any]:
+def _required_check_status(
+    policy: dict[str, Any], nodes: tuple[dict[str, Any], ...], *, default_sha: str | None = None
+) -> str:
+    """Evaluate only declared requirements on the exact default commit."""
+
+    if not default_sha or any(node.get("head_oid") != default_sha for node in nodes):
+        return "unknown"
+    if policy.get("status") == "no_required_checks" and policy.get("complete") is True:
+        return "no_required_checks"
+    if policy.get("status") != "required_checks" or policy.get("complete") is not True:
+        return "unknown"
+    requirements = policy.get("required_check_requirements")
+    if not isinstance(requirements, list) or not requirements:
+        return "unknown"
+
+    requirement_states: list[str] = []
+    for requirement in requirements:
+        if not isinstance(requirement, dict):
+            return "unknown"
+        kind = requirement.get("kind")
+        if kind == "context":
+            context = requirement.get("context")
+            app_id = requirement.get("app_id")
+            matches = [
+                node
+                for node in nodes
+                if node.get("name") == context and (app_id is None or node.get("app_id") == app_id)
+            ]
+            if not matches:
+                requirement_states.append("pending")
+                continue
+            latest = max(matches, key=_observed_key)
+            requirement_states.append(_check_result_status(latest.get("state")))
+            continue
+        if kind != "workflow" or not isinstance(requirement.get("path"), str):
+            return "unknown"
+        workflow_nodes = [node for node in nodes if _workflow_identity_matches(requirement, node)]
+        if not workflow_nodes:
+            requirement_states.append("pending")
+            continue
+        run_groups: dict[object, list[dict[str, Any]]] = {}
+        for node in workflow_nodes:
+            run_id = node.get("workflow_run_id")
+            key: object = run_id if run_id is not None else ("unidentified", node.get("workflow_run_updated_at"))
+            run_groups.setdefault(key, []).append(node)
+        latest_run = max(
+            run_groups.values(),
+            key=lambda group: max(
+                (
+                    str(node.get("workflow_run_updated_at") or node.get("observed_at") or ""),
+                    str(node.get("workflow_run_id") or ""),
+                )
+                for node in group
+            ),
+        )
+        suite_results = [
+            node.get("suite_conclusion") or node.get("suite_status")
+            for node in latest_run
+            if node.get("suite_conclusion") or node.get("suite_status")
+        ]
+        if suite_results:
+            requirement_states.append(_check_result_status(suite_results[0]))
+            continue
+        latest_jobs: dict[tuple[object, object], dict[str, Any]] = {}
+        for node in latest_run:
+            job_key = node.get("name"), node.get("app_id")
+            current = latest_jobs.get(job_key)
+            if current is None or _observed_key(node) > _observed_key(current):
+                latest_jobs[job_key] = node
+        job_states = [_check_result_status(node.get("state")) for node in latest_jobs.values()]
+        if "red" in job_states:
+            requirement_states.append("red")
+        elif "pending" in job_states or not job_states:
+            requirement_states.append("pending")
+        else:
+            requirement_states.append("green")
+
+    if "red" in requirement_states:
+        return "red"
+    if "pending" in requirement_states:
+        return "pending"
+    return "green"
+
+
+def _remote_page(gitvs, repo: str, kind: str, cursor: str | None, *, default_sha: str | None = None) -> dict[str, Any]:
     owner, name = repo.split("/", 1)
     query = github_connection_query(kind)
     args = [
@@ -700,19 +905,98 @@ def _remote_page(gitvs, repo: str, kind: str, cursor: str | None) -> dict[str, A
         "-F",
         f"name={name}",
     ]
+    if kind == "checks":
+        if not default_sha:
+            raise ValueError("default-check-head-missing")
+        args.extend(["-F", f"commit={default_sha}"])
     if cursor:
         args.extend(["-F", f"cursor={cursor}"])
     result = gitvs._gh_user(args, timeout=90)
     if result.returncode != 0:
-        raise ValueError("github-page-unavailable")
+        raise ValueError(_github_api_error_class(result))
     try:
         repository = (json.loads(result.stdout or "{}").get("data") or {}).get("repository")
-        block = repository["connection"]
+        if kind == "checks":
+            target = repository.get("target") if isinstance(repository, dict) else None
+            if not isinstance(target, dict) or target.get("oid") != default_sha:
+                raise ValueError("default-check-head-mismatch")
+            rollup = target.get("statusCheckRollup") if isinstance(target, dict) else None
+            if not isinstance(rollup, dict):
+                return {
+                    "total_count": 0,
+                    "nodes": [],
+                    "has_next_page": False,
+                    "end_cursor": None,
+                }
+            block = rollup["connection"]
+            head_oid = target.get("oid")
+        else:
+            block = repository["connection"]
+            head_oid = None
         nodes = []
+        source_ids: dict[str, int | None] = {}
         for raw in block.get("nodes") or []:
             node = dict(raw)
             if kind == "branches":
                 node["head_oid"] = (node.pop("target", None) or {}).get("oid")
+            elif kind == "checks":
+                typename = node.get("__typename")
+                if typename == "CheckRun":
+                    suite = node.get("checkSuite") or {}
+                    app = suite.get("app") or {}
+                    workflow_run = suite.get("workflowRun") or {}
+                    workflow = workflow_run.get("workflow") or {}
+                    node = {
+                        "id": node.get("id"),
+                        "type": "check_run",
+                        "name": node.get("name"),
+                        "state": node.get("conclusion") or node.get("status"),
+                        "conclusion": node.get("conclusion"),
+                        "status": node.get("status"),
+                        "head_oid": head_oid,
+                        "url": node.get("detailsUrl"),
+                        "app_id": app.get("databaseId"),
+                        "app_slug": app.get("slug"),
+                        "observed_at": (
+                            node.get("completedAt")
+                            or node.get("startedAt")
+                            or suite.get("updatedAt")
+                            or workflow_run.get("updatedAt")
+                        ),
+                        "suite_id": suite.get("id"),
+                        "suite_status": suite.get("status"),
+                        "suite_conclusion": suite.get("conclusion"),
+                        "workflow_run_id": workflow_run.get("databaseId"),
+                        "workflow_run_updated_at": workflow_run.get("updatedAt"),
+                        "workflow_name": workflow.get("name"),
+                        "workflow_resource_path": workflow.get("resourcePath"),
+                        **_workflow_file_identity(gitvs, repository, workflow_run.get("file"), source_ids),
+                    }
+                elif typename == "StatusContext":
+                    creator = node.get("creator") or {}
+                    node = {
+                        "id": node.get("id"),
+                        "type": "status_context",
+                        "name": node.get("context"),
+                        "state": node.get("state"),
+                        "conclusion": node.get("state"),
+                        "status": None,
+                        "head_oid": head_oid,
+                        "url": node.get("targetUrl"),
+                        "app_id": None,
+                        "app_slug": None,
+                        "creator_login": creator.get("login"),
+                        "observed_at": node.get("updatedAt"),
+                        "suite_id": None,
+                        "suite_status": None,
+                        "suite_conclusion": None,
+                        "workflow_run_id": None,
+                        "workflow_run_updated_at": None,
+                        "workflow_name": None,
+                        "workflow_resource_path": None,
+                    }
+                else:
+                    raise ValueError("github-check-node-invalid")
             nodes.append(node)
         page = block["pageInfo"]
         return {
@@ -722,6 +1006,8 @@ def _remote_page(gitvs, repo: str, kind: str, cursor: str | None) -> dict[str, A
             "end_cursor": page.get("endCursor"),
         }
     except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        if str(exc) == "default-check-head-mismatch":
+            raise
         raise ValueError("github-page-invalid") from exc
 
 
@@ -788,10 +1074,11 @@ def collect(*, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
         kind: str,
         expected_total: int,
         connection_generation: str,
+        default_sha: str | None = None,
     ) -> ConnectionCensus:
         return paginate_exact(
             kind,
-            lambda cursor: _remote_page(gitvs, repo, kind, cursor),
+            lambda cursor: _remote_page(gitvs, repo, kind, cursor, default_sha=default_sha),
             expected_total=expected_total,
             repository=repo,
             source_generation=connection_generation,
@@ -803,20 +1090,26 @@ def collect(*, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
         repo: str,
     ) -> tuple[dict[str, Any], dict[str, ConnectionCensus], dict[str, ConnectionCensus]]:
         row = repositories[repo]
-        metadata = _metadata(gitvs, repo)
-        connection_generation = _canonical_sha256(
-            {
-                "source_generation": source_generation,
-                "repository": repo,
-                "repository_updated_at": metadata.get("updated_at") if metadata is not None else None,
-                "default_sha": metadata.get("default_sha") if metadata is not None else None,
-                "default_check_policy": metadata.get("default_check_policy") if metadata is not None else None,
-                "required_check_count": metadata.get("required_check_count") if metadata is not None else None,
-                "open_pr_total": int(row["open_pr_total"]),
-                "issue_total": metadata.get("issues") if metadata is not None else None,
-                "branch_total": metadata.get("branches") if metadata is not None else None,
-            }
+        metadata_observation = _metadata(gitvs, repo)
+        metadata_failure = (
+            metadata_observation
+            if isinstance(metadata_observation, dict) and metadata_observation.get("metadata_error")
+            else None
         )
+        metadata = None if metadata_failure is not None else metadata_observation
+        connection_generation_inputs = {
+            "source_generation": source_generation,
+            "repository": repo,
+            "repository_updated_at": metadata.get("updated_at") if metadata is not None else None,
+            "default_sha": metadata.get("default_sha") if metadata is not None else None,
+            "default_check_policy": metadata.get("default_check_policy") if metadata is not None else None,
+            "required_check_count": metadata.get("required_check_count") if metadata is not None else None,
+            "check_total": metadata.get("check_total") if metadata is not None else None,
+            "open_pr_total": int(row["open_pr_total"]),
+            "issue_total": metadata.get("issues") if metadata is not None else None,
+            "branch_total": metadata.get("branches") if metadata is not None else None,
+        }
+        connection_generation = _canonical_sha256(connection_generation_inputs)
         raw_results: dict[str, ConnectionCensus] = {}
         build_results: dict[str, ConnectionCensus] = {}
 
@@ -831,13 +1124,26 @@ def collect(*, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
         build_results["pull_requests"] = replace(pull_requests, nodes=classified_nodes)
 
         if metadata is None:
+            metadata_error = (
+                str(metadata_failure.get("metadata_error"))
+                if metadata_failure is not None
+                else "repository-metadata-unavailable"
+            )
+            metadata_attempt = int(metadata_failure.get("metadata_attempt") or 1) if metadata_failure is not None else 1
+            metadata_retry_class = (
+                str(metadata_failure.get("metadata_retry_class") or "permanent")
+                if metadata_failure is not None
+                else "permanent"
+            )
             for kind in ("issues", "branches", "checks"):
                 failed = _failed_connection(
                     repo,
                     kind,
                     None,
-                    "repository-metadata-unavailable",
+                    metadata_error,
                     connection_generation,
+                    attempt=metadata_attempt,
+                    retry_class=metadata_retry_class,
                 )
                 raw_results[kind] = failed
                 build_results[kind] = failed
@@ -848,33 +1154,9 @@ def collect(*, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
         else:
             issues = page_connection(repo, "issues", int(metadata["issues"]), connection_generation)
             branches = page_connection(repo, "branches", int(metadata["branches"]), connection_generation)
-            if not metadata["default_check_policy_complete"]:
-                checks = _failed_connection(
-                    repo,
-                    "checks",
-                    len(metadata["checks"]),
-                    str(metadata["default_check_policy_error"] or "default-check-policy-unavailable"),
-                    connection_generation,
-                )
-            else:
-                checks = paginate_exact(
-                    "checks",
-                    lambda cursor: (
-                        {
-                            "total_count": len(metadata["checks"]),
-                            "nodes": list(metadata["checks"]),
-                            "has_next_page": False,
-                            "end_cursor": None,
-                        }
-                        if cursor is None
-                        else (_ for _ in ()).throw(ValueError("unexpected-local-cursor"))
-                    ),
-                    expected_total=len(metadata["checks"]),
-                    repository=repo,
-                    source_generation=connection_generation,
-                    resume=resume_for(repo, "checks"),
-                    max_attempts=1,
-                )
+            checks = page_connection(
+                repo, "checks", int(metadata["check_total"]), connection_generation, metadata["default_sha"]
+            )
             for kind, result in (("issues", issues), ("branches", branches), ("checks", checks)):
                 raw_results[kind] = result
                 build_results[kind] = result
@@ -882,14 +1164,20 @@ def collect(*, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
                 "pull_requests": int(row["open_pr_total"]),
                 "issues": int(metadata["issues"]),
                 "branches": int(metadata["branches"]),
-                "checks": len(metadata["checks"]),
+                "checks": int(metadata["check_total"]),
             }
             default_branch = metadata["default_branch"]
             default_sha = metadata["default_sha"]
-            default_check_status = metadata["default_check_status"]
+            default_check_status = (
+                _required_check_status(metadata["default_check_policy_receipt"], checks.nodes, default_sha=default_sha)
+                if checks.exhaustive
+                else "unknown"
+            )
         return (
             {
                 "name_with_owner": repo,
+                "connection_generation": connection_generation,
+                "connection_generation_inputs": connection_generation_inputs,
                 "repository_id": row.get("repository_id"),
                 "private": bool(row["private"]),
                 "archived": bool(row.get("archived")),

@@ -1,0 +1,30 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:02:03.563608+00:00",
+  "target": {
+    "repository": "organvm-iii-ergon/public-record-data-scrapper",
+    "pull_request": 388,
+    "initial_head": "9a65b0a2da6e637db7c34b31a26f209b4db09ae3",
+    "remediated_head": "9a65b0a2da6e637db7c34b31a26f209b4db09ae3",
+    "base_ref": "main"
+  },
+  "remediation": {
+    "category": "clean_verification",
+    "root_cause": "passing_ci_verification",
+    "patches_applied": []
+  },
+  "verification": {
+    "local_command": "scripts/merge-policy.sh 388 --repo organvm-iii-ergon/public-record-data-scrapper",
+    "local_exit_code": 0,
+    "ci_status_rollup": {
+      "total": 1,
+      "failing": 0,
+      "pending": 0,
+      "required_scope": "required"
+    },
+    "merge_policy_verdict": "CLEARED",
+    "merge_mode": "direct",
+    "merge_commit": "ffcb0c14afc2eb92b120a125d2fb33f03fec7298"
+  },
+  "integrity_note": "Verified via merge-policy.sh with complete passing CI status prior to squash merge."
+}

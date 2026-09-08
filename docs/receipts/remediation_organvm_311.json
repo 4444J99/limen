@@ -1,0 +1,36 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:06:58Z",
+  "target": {
+    "repository": "organvm/domus-genoma",
+    "pull_request": 311,
+    "head": "4847f8957ee0853cfc9f9116e0be47432cb3904e",
+    "base": "master",
+    "branch": "work/perplexity-research-backend-20260717",
+    "title": "Retire direct Perplexity routing"
+  },
+  "remediation": {
+    "worktree": ".worktrees/remediate-organvm-311-perplexity-research-backend",
+    "lifecycle": "limen.worktree_initialization.v1",
+    "actions": [
+      "rebase onto origin/master",
+      "fix E501 line length in dot_local/bin/executable_launchd-contract-wrap",
+      "fix lint_test.sh to exclude .tmpl from ruff check",
+      "fix tests/test-domus-packages.bats grep to ignore binary files and pycache"
+    ]
+  },
+  "verification": {
+    "command": "python3 -m pytest tests/ && bash lint_test.sh && bats tests/test-domus-packages.bats",
+    "executed_at": "2026-08-26T13:06:47Z",
+    "exit_status": 0,
+    "tests_passed": 532,
+    "bats_passed": 15,
+    "lint_status": "PASS",
+    "result": "100% test and lint verification passed"
+  },
+  "push": {
+    "lease": true,
+    "target_ref": "work/perplexity-research-backend-20260717",
+    "pushed_head": "4847f8957ee0853cfc9f9116e0be47432cb3904e"
+  }
+}

@@ -69,6 +69,48 @@ def test_unavailable_predicate_withholds_rather_than_fires(tmp_path, capsys):
     assert "withholding notification" in capsys.readouterr().err
 
 
+def test_event_delivery_uses_only_the_supplied_transport_environment(tmp_path, monkeypatch):
+    mod = _load("_notify_transport_env", SCRIPTS / "_notify.py")
+    monkeypatch.setattr(mod, "_root_may_speak", lambda _root: True)
+    monkeypatch.setenv("DOMUS_NOTIFY_BIN", "/ambient/broker")
+    monkeypatch.setenv("LIMEN_NTFY_TOPIC", "ambient-topic")
+    captured = {}
+
+    def run(command, **kwargs):
+        captured["command"] = command
+        captured["env"] = kwargs["env"]
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            '{"schema":"domus.notification_delivery_receipt.v2","status":"recorded"}',
+            "",
+        )
+
+    monkeypatch.setattr(mod.subprocess, "run", run)
+
+    receipt = mod.emit_event_v1(
+        tmp_path,
+        stable_id="limen.test",
+        transition="milestone",
+        subject_key="transport-env",
+        event_id="transport-env-1",
+        facts={"ok": True},
+        evidence_ref="test",
+        producer="pytest",
+        enabled=True,
+        environ={
+            "DOMUS_NOTIFY_BIN": "/selected/broker",
+            "LIMEN_NTFY_TOPIC": "selected-topic",
+            "LIMEN_NTFY_URL": "https://notify.example",
+        },
+    )
+
+    assert receipt.status == "recorded"
+    assert captured["command"][0] == "/selected/broker"
+    assert captured["env"]["DOMUS_NOTIFY_NTFY_URL"] == "https://notify.example/selected-topic"
+    assert "ambient-topic" not in captured["env"].values()
+
+
 # ── the cross-tree axis: an ungated copy anywhere is detected ────────────────────────
 
 

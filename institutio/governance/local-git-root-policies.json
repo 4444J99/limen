@@ -1,0 +1,15 @@
+{
+  "schema": "limen.local_git_root_policies.v1",
+  "roots": [
+    {
+      "policy_id": "people-private-local-only",
+      "workspace_relative_path": "_people-private",
+      "classification": "protected_local_only",
+      "owner": "people-private-human-lane",
+      "expected_branch": "main",
+      "allow_unborn_head": true,
+      "allow_no_remote": true,
+      "reason": "sealed relationship corpus is intentionally local-only and excluded from remote lifecycle actions"
+    }
+  ]
+}

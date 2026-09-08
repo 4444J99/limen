@@ -1,0 +1,90 @@
+{
+  "schema": "limen.historical_recovery_evidence.v1",
+  "source": {
+    "repository": "4444J99/limen",
+    "pr": 2550,
+    "head": "db5bdc20b7e05c85ff3a1f14ca6f0d87218d18a6",
+    "path": "docs/continuations/universe-finish-line-20260827/blockers.json",
+    "sha256": "22cbfaa6b16fb585480566c1f1ba095281435cc88289423b49c4690f24811794"
+  },
+  "current_state_verified": false,
+  "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
+  "historical_record": {
+    "schema_version": "limen.continuation_blockers.v1",
+    "capsule_id": "universe-finish-line-20260827",
+    "observed_at": "2026-08-27T18:13:00Z",
+    "terminal": false,
+    "blockers": [
+      {
+        "id": "authenticated-conduct-environment",
+        "owner": "credential-wall",
+        "predicate": "limen conduct capabilities returns authenticated live capabilities and permits human-protected registration",
+        "evidence": "live bootstrap on 2026-08-27 again raised BrokerUnavailable because LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN are not configured; the credential wall itself passes all 27 registered atoms",
+        "next_command": "limen conduct capabilities"
+      },
+      {
+        "id": "unstable-default-health",
+        "owner": "universe-default-repair",
+        "predicate": "all 320 exact refs/heads/main receipts report green required checks or an explicit valid no-required-check policy",
+        "evidence": "post-normalization exhaustive generation has 308 stable repositories, 11 red defaults, and one unknown policy result",
+        "next_command": "python3 scripts/github-estate-census.py --write --check --json --workers 2"
+      },
+      {
+        "id": "default-profile-source-drift",
+        "owner": "4444J99-profile-producer",
+        "predicate": "the live research-adjudication gate passes on the exact Limen default SHA using a freshly reconciled profile manifest",
+        "evidence": "authenticated live reads work, but current public profile counts differ from the committed generated manifest",
+        "next_command": "gh run list --repo 4444J99/4444J99 --workflow profile.yml --limit 5"
+      },
+      {
+        "id": "invalid-empty-required-check-policy",
+        "owner": "ruleset-estate-contract",
+        "predicate": "every enabled required-status-check policy names at least one exact context or is explicitly disabled",
+        "evidence": "one public default branch reports requiresStatusChecks true with zero classic contexts; the exhaustive census records invalid_required_checks and excludes it from stable repositories",
+        "next_command": "python3 scripts/setup-rulesets.py"
+      },
+      {
+        "id": "remote-connection-scope",
+        "owner": "github-estate-census",
+        "predicate": "the canonical connection registry and collector cover every required PR, review, check, issue, and branch partition",
+        "evidence": "the live exact collector currently completes open PRs, open issues, branches, and default rollup checks; closed PR and review-detail partitions are not yet collected",
+        "next_command": "python3 -m pytest cli/tests/test_github_estate_census.py -q"
+      },
+      {
+        "id": "local-root-identity",
+        "owner": "local-git-census",
+        "predicate": "every discovered local Git root has a repository identity or an explicit terminal/protected disposition",
+        "evidence": "one redacted local-only unborn root produces two fail-closed identity observations",
+        "next_command": "PYTHONPATH=cli/src python3 -m limen.cli progress --view universe --json-output"
+      },
+      {
+        "id": "branch-and-worktree-debt",
+        "owner": "universe-drain",
+        "predicate": "strict worktree debt and the remote-reap verifier pass, then a regenerated immutable cleanup plan is empty",
+        "evidence": "fresh aggregate reports 9997 non-default branches, 113 unaccounted local roots, and 97 unaccounted worktrees; destructive cleanup remains plan-and-CAS only",
+        "next_command": "python3 scripts/worktree-debt.py --strict --fail-on-debt --json"
+      },
+      {
+        "id": "shared-checkout-residue",
+        "owner": "human-protected-shared-limen-lane",
+        "predicate": "the preservation receipt remains readable and the shared checkout is clean on a fast-forwarded default without discarding unrelated work",
+        "evidence": "custody readback is proven for a 10572-byte tracked patch and 1469103-byte untracked archive, but the shared checkout intentionally remains dirty and was not reset",
+        "next_command": "python3 scripts/worktree-preserve-dirty.py --worktree \"$LIMEN_ROOT\" --json"
+      },
+      {
+        "id": "notification-visible-canary",
+        "owner": "human-operator",
+        "predicate": "a separate recording-backend receipt exists and one submitted macOS canary has an operator-observed confirmation receipt",
+        "evidence": "recording event notification-canary-recording-20260827T180542Z passed exact readback; macOS event notification-canary-macos-20260827T180547Z is submitted with visible acceptance pending; bounded schedule plan 50e1d0eae1ed314949930b41ae3637ef3e8f1c0178e89639b6bd35b378fc6568 awaits exact merged runtime installation",
+        "next_command": "PYTHONPATH=cli/src python3 scripts/notify-events.py --status"
+      },
+      {
+        "id": "authorized-local-branch-reap",
+        "owner": "branch-reap-acceptance-ledger",
+        "predicate": "the two exact landed local branches are absent and a second branch-reap plan is empty",
+        "evidence": "no-tasks-on-me reports two already-authorized landed branches; apply remains withheld by the campaign-wide incomplete-census deletion gate",
+        "next_command": "python3 scripts/reap-branches.py --check"
+      }
+    ]
+  }
+}
