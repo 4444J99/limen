@@ -27,6 +27,13 @@ gate while a predecessor remains incomplete. Multiple ready leaves and chunks ma
 in isolated worktrees and leases. This distinction keeps genuine human gates local instead of
 turning one blocked leaf into a program-wide stop.
 
+Leaf admission also validates transitive work prerequisites and reads each closed work receipt at
+most once per observation. `closed_work_requiring_reconciliation` names invalid closed work without
+admitting its descendants or hiding an independent leaf. It does not repair or close that work.
+`aggregate_integrity` explicitly remains separate: phase proof, remote closure integrity and Omega
+still require their complete evidence. A ready row is not aggregate completion, a lease, a live
+model selection, or permission to cross its named human gates.
+
 Use `EXECUTION-CHUNKS.md` to select the conductor whose resolved scope contains the ready leaf.
 C10 still interleaves P12 with P10-W08 and must follow its prompt exactly.
 
