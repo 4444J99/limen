@@ -28,7 +28,7 @@ This resumed implementation adds:
   retain interrupted episodes and refuse rollback if the whole installed artifact has changed.
   Missing/corrupt custody fails closed. A size proxy or old truncation log cannot return green.
 
-Focused results: 53 tests passed across estate contracts, skill custody and the existing boot
+Focused results: 54 tests passed across retained estate, skill custody and existing boot
 compatibility suite; 38 companion Domus tests
 passed. Domus ownership validation and commit hooks passed. These focused results do not replace
 the required admitted scoped batches or fresh application canaries.
@@ -79,6 +79,28 @@ their result envelopes. Raw functional response content is excluded from reports
 specifications remain counted and never launch; combined OpenCode argv is normalized without
 dropping arguments. Cleanup refuses to signal a group whose original leader has exited and whose
 remaining membership cannot be proven; that case remains unmeasured rather than claiming cleanup.
+
+## Recovered full CLI failure identities
+
+Remote prerequisite run `34260120907`, exact head `f8c6ca2c237de591c3ee60837abf8d10a37236aa`,
+finished with **6839 passed, 3 failed, 4 skipped**. The failures are:
+
+- `cli/tests/test_diurnal_shipping.py::test_the_pr_number_is_recorded_so_the_next_run_can_reap_it`
+- `cli/tests/test_diurnal_shipping.py::test_no_pr_is_recorded_when_ship_docs_already_merged`
+- `cli/tests/test_private_vault.py::test_real_gpg_round_trip_with_scratch_key`
+
+The two diurnal cases reproduce on untouched primary-checkout head
+`26b82ebc65bc2057b39dcef1499edc78308c0489` with the same missing receipt keys. Owner:
+`scripts/diurnal.py` and its receipt fixture. The GPG failure is the canonical public-key armor
+comparison in `scripts/private-vault.py`; owner: private-vault's portable scratch-GPG fixture.
+All four implicated source/test files are byte-identical between the prerequisite base and its
+tested head. They are evidence-backed unrelated-suite dispositions under the user's scope,
+not waived failures or reasons to take on the diurnal/vault tasks. The full suite remains failed.
+The next owner probes are the two named diurnal test nodes and the named private-vault node;
+no full-suite retry or credential/key modification was performed here.
+
+The last skill refinement validates YAML metadata round-trip, correctly escapes control characters,
+and preserves every non-description key and instruction body; its 14-test shard passed.
 
 Owner: Codex direct human session; canonical owner task `MCP-ESTATE-20260908`.
 Companion source: `organvm/domus-genoma`, branch `feat/mcp-estate-policy-20260908`.

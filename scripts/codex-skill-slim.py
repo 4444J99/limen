@@ -322,6 +322,15 @@ def _get(t: dict) -> str | None:
         lines = lines[1 : lines.index("---", 1)]
     except ValueError:
         return None
+    try:
+        import yaml
+
+        metadata = yaml.safe_load("\n".join(lines))
+        description = metadata.get("description") if isinstance(metadata, dict) else None
+        if not isinstance(description, str):
+            return None
+    except (ValueError, yaml.YAMLError):
+        return None
     for i, line in enumerate(lines):
         m = _DESC_LINE.match(line)
         if m:
@@ -329,7 +338,7 @@ def _get(t: dict) -> str | None:
             # A following indented, non-key line means a YAML block scalar → skip (don't corrupt).
             if nxt[:1] in (" ", "\t") and not _DESC_LINE.match(nxt.strip()):
                 return None
-            return _unwrap_scalar(m.group(2).strip())
+            return description
     return None
 
 
@@ -355,7 +364,7 @@ def _set(t: dict, new: str, expected_digest: str | None = None) -> bool:
     else:
         # Always emit a double-quoted, escaped scalar — valid YAML regardless of the original
         # style, and it can never leave an unterminated quote from a mid-string cut.
-        esc = new.replace("\\", "\\\\").replace('"', '\\"')
+        scalar = json.dumps(new, ensure_ascii=False)
         lines = text.splitlines(keepends=True)
         if not lines or lines[0].strip() != "---":
             return False
@@ -370,12 +379,23 @@ def _set(t: dict, new: str, expected_digest: str | None = None) -> bool:
             m = _DESC_LINE.match(line.rstrip("\n"))
             if m:
                 eol = "\n" if line.endswith("\n") else ""
-                lines[i] = f'{m.group(1)}"{esc}"{eol}'
+                lines[i] = f"{m.group(1)}{scalar}{eol}"
                 done = True
                 break
         if not done:
             return False
         rendered = "".join(lines)
+        try:
+            import yaml
+
+            before_metadata = yaml.safe_load("".join(text.splitlines(keepends=True)[1:boundary]))
+            after_metadata = yaml.safe_load("".join(lines[1:boundary]))
+            if not isinstance(before_metadata, dict) or not isinstance(after_metadata, dict):
+                return False
+            if after_metadata != {**before_metadata, "description": new}:
+                return False
+        except (ValueError, yaml.YAMLError):
+            return False
     tmp = None
     try:
         fd, name = tempfile.mkstemp(prefix=".slim-", dir=path.parent)
