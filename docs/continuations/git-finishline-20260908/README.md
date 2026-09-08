@@ -89,3 +89,48 @@ The wrapper creates a separate canonical four-hour handoff capsule from the pres
 remote branch, then uses its live-derived native launch. Re-entry verifies and reuses
 the existing capsule; it never rerenders a different identity into the original session. `--prepare-only` validates capsule preparation
 without starting another agent. It preserves the existing admitted deadline on re-entry.
+
+
+## Recovery intent completion audit
+
+The custody counts above do not discharge source intent. The September 8 source
+reassessment inspected all 44 source objects and found **1,150 provisional candidate
+records**: 949 task candidates, 28 other source candidates, 18 branch/PR lineage
+candidates, and 155 review records. This is **not a reconciled useful-intent count**.
+Current task `done` and merged PR status are observations pending their individual
+acceptance and delivery evidence. The former assertion that no substantive intent
+remained is withdrawn.
+
+`completion.json` retains reciprocal opaque source/atom references. Raw source bodies,
+canonical task snapshots and detailed extraction remain private; public digests bind
+that extraction. Source archives remain unchanged. The acceptance command is:
+
+```sh
+python3 docs/continuations/git-finishline-20260908/verify-completion.py
+```
+
+It currently fails for unresolved outcomes. It reuses the prompt-corpus typed outcome
+validator, requires tracked digest-bound receipts, repository-qualified positive
+landing evidence, the fixed integration generation, completed successors, and every
+required executed delivery predicate. Archive custody, assignment, a draft and a
+closed-unmerged PR cannot pass. It does not create a product API or replay task state.
+Its synthetic counterexample tests are separate from campaign completion:
+
+```sh
+python3 docs/continuations/git-finishline-20260908/test_completion.py
+```
+
+The recovery branch integrates the observed newer #2552 source delta while preserving
+both reservation immutability checks and regression families. It adds corrections for
+prelaunch accounting/custody, inventory content binding, portal identity joins and
+W07 authority linkage; these require the implicated admitted production predicates.
+#2552 retains its original branch and owner. #2561/#2562 retain their dependency PRs;
+#2553 retains Engine #175 → Editorial #12 → Limen and validated metadata gates.
+
+BLOCKED: admitted production verification. Fresh host observation denied heavy work
+for swap-fraction and VITALS shed; the authenticated broker bootstrap succeeded, and
+no healthy remote executor session was advertised. Owner: this PR (#2573). Required
+predicate: the implicated Worker/CLI/API/web-build batch under the registered host
+admission and serialization boundary. Next command: the scoped verification command
+recorded in completion-execution.json after host admission permits execution. No
+scheduler activation, account change or runtime publication is authorized here.

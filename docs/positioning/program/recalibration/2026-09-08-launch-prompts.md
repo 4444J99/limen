@@ -102,6 +102,7 @@ Scope: PSP-P07-W01 (#2213), PSP-P07-W02 (#2214), PSP-P07-W03 (#2215), PSP-P07-W0
 Deliverable: Profile, estate map, portfolio, resume, social/signature drafts, owner-approved URL bindings, minimal analytics and rollback.
 Exit: Accepted public identity decisions plus actual deployed/browser/link/capture receipts; mere builds and PRs do not count.
 Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.
+Deployment boundary: derive recorded authorization, exact target and rollback before deployment. With authority, retain actual deployed/browser/link/capture receipts. Without authority, preparation remains incomplete delivery. This prompt grants no publication authority.
 Execution limits: use medium effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
 Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
 ```
@@ -187,6 +188,7 @@ Scope: PSP-P14-W01 (#2275), PSP-P14-W02 (#2276), PSP-P14-W03 (#2277), PSP-P14-W0
 Deliverable: KPI dictionary, weekly/monthly/quarterly observations, claim correction, release recovery and feedback into offers/proof.
 Exit: All P14-W01..W08 evidence exists across its actual observation periods and declared prerequisite leaves.
 Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.
+Observation boundary: preparation can finish in this slice; four weekly reviews, two monthly audits and the strategy review require their actual elapsed-period data. Monitoring or scheduling requires separately recorded authority; never fabricate observations or activate a scheduler from this prompt.
 Execution limits: use medium effort and the cheapest adequate currently available model; keep to the declared run-slice ceiling. One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.
 Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.
 ```
@@ -211,7 +213,7 @@ Return the concrete artifact and delta. If the scope cannot converge in one corr
 ## Resume after usage or provider change
 
 ```text
-Resume the named package from its latest durable issue/PR receipt. Read the recalibration plan and that package only. Resolve the existing repository/branch/head and real owner before mutation. Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Continue the single recorded next microphase. Do not rerun all research, all tests, all receipts or the full estate census.
+Resume the named package from its latest durable issue/PR receipt. Read current AGENTS.md, the current snapshot, the recalibration plan and that package only. Resolve the existing repository/branch/head and real owner before mutation. Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Continue the single recorded next microphase. Do not rerun all research, all tests, all receipts or the full estate census.
 ```
 
 ## Minimal end-of-run relay

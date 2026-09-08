@@ -23,7 +23,8 @@
       "delivery_disposition": "integrated_evolved",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "cli/src/limen/prompt_sources.py; cli/tests/test_prompt_atom_sources.py",
-      "semantic_evidence": "Relocated runtime prompt roots and regression additions retained; wrapper/ledger snapshots remain historical."
+      "semantic_evidence": "Relocated runtime prompt roots and regression additions retained; wrapper/ledger snapshots remain historical.",
+      "completion_assessment": "unverified; see completion.json source stash:0"
     },
     {
       "index": 1,
@@ -40,7 +41,8 @@
       "delivery_disposition": "integrated_evolved",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "scripts/bifrons-organ.py; cli/src/limen/observation/collector.py; tests/e2e/test_ecosystem_liveness.py",
-      "semantic_evidence": "Collector and M1 test are byte-identical; bifrons fallback evolved; all27 original E2E entrypoints retained. TEST_INFRA/READY now state actual scope."
+      "semantic_evidence": "Collector and M1 test are byte-identical; bifrons fallback evolved; all27 original E2E entrypoints retained. TEST_INFRA/READY now state actual scope.",
+      "completion_assessment": "unverified; see completion.json source stash:1"
     },
     {
       "index": 2,
@@ -57,7 +59,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "private archive; overnight observation reporter",
-      "semantic_evidence": "Dated overnight observation only."
+      "semantic_evidence": "Dated overnight observation only.",
+      "completion_assessment": "unverified; see completion.json source stash:2"
     },
     {
       "index": 3,
@@ -74,7 +77,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "private archive; corresponding capacity/prompt/TCC registries",
-      "semantic_evidence": "Dated observation receipts, including untracked TCC evidence; no executable delta."
+      "semantic_evidence": "Dated observation receipts, including untracked TCC evidence; no executable delta.",
+      "completion_assessment": "unverified; see completion.json source stash:3"
     },
     {
       "index": 4,
@@ -90,7 +94,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "private archive; overnight observation reporter",
-      "semantic_evidence": "Dated overnight observation only."
+      "semantic_evidence": "Dated overnight observation only.",
+      "completion_assessment": "unverified; see completion.json source stash:4"
     },
     {
       "index": 5,
@@ -106,7 +111,8 @@
       "delivery_disposition": "integrated_and_historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "mcp/uv.lock; private observation archive",
-      "semantic_evidence": "Dependency lock byte-identical; overnight observation historical."
+      "semantic_evidence": "Dependency lock byte-identical; overnight observation historical.",
+      "completion_assessment": "unverified; see completion.json source stash:5"
     },
     {
       "index": 6,
@@ -122,7 +128,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "private archive; current usage/contention reporters",
-      "semantic_evidence": "Dated usage, contention and overnight observations."
+      "semantic_evidence": "Dated usage, contention and overnight observations.",
+      "completion_assessment": "unverified; see completion.json source stash:6"
     },
     {
       "index": 7,
@@ -138,7 +145,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "docs/branch-reap-acceptance.jsonl; private archive",
-      "semantic_evidence": "Dated branch-hygiene observation; current acceptance/custody remains authoritative."
+      "semantic_evidence": "Dated branch-hygiene observation; current acceptance/custody remains authoritative.",
+      "completion_assessment": "unverified; see completion.json source stash:7"
     },
     {
       "index": 8,
@@ -154,7 +162,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "private archive; overnight observation reporter",
-      "semantic_evidence": "Dated overnight observation only."
+      "semantic_evidence": "Dated overnight observation only.",
+      "completion_assessment": "unverified; see completion.json source stash:8"
     },
     {
       "index": 9,
@@ -170,7 +179,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "private archive; overnight observation reporter",
-      "semantic_evidence": "Dated overnight observation only."
+      "semantic_evidence": "Dated overnight observation only.",
+      "completion_assessment": "unverified; see completion.json source stash:9"
     },
     {
       "index": 10,
@@ -186,7 +196,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "docs/branch-reap-acceptance.jsonl; private archive",
-      "semantic_evidence": "Historical branch-acceptance observation is not landing proof."
+      "semantic_evidence": "Historical branch-acceptance observation is not landing proof.",
+      "completion_assessment": "unverified; see completion.json source stash:10"
     },
     {
       "index": 11,
@@ -202,7 +213,8 @@
       "delivery_disposition": "integrated_and_historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "mcp/uv.lock; TABVLARIVS; Bifrons; his-hand-levers.json",
-      "semantic_evidence": "Lock additions retained; generated portal counts and dated branch/usage/lever/board observations remain historical."
+      "semantic_evidence": "Lock additions retained; generated portal counts and dated branch/usage/lever/board observations remain historical.",
+      "completion_assessment": "unverified; see completion.json source stash:11"
     },
     {
       "index": 12,
@@ -218,7 +230,8 @@
       "delivery_disposition": "integrated_evolved",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "cli/src/limen/capacity.py; cli/tests/test_dispatch_async.py; cli/tests/test_session_value_review.py",
-      "semantic_evidence": "Optional remaining annotation, admission isolation and private prompt-index isolation retained."
+      "semantic_evidence": "Optional remaining annotation, admission isolation and private prompt-index isolation retained.",
+      "completion_assessment": "unverified; see completion.json source stash:12"
     },
     {
       "index": 13,
@@ -235,7 +248,8 @@
       "delivery_disposition": "integrated_evolved",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "scripts/async-run-one.py; scripts/dispatch-async.py; cli/tests/test_dispatch_async_paths.py",
-      "semantic_evidence": "Safe filename hashing/source marker parsing retained; dated study byte-identical; generated board/session observations historical."
+      "semantic_evidence": "Safe filename hashing/source marker parsing retained; dated study byte-identical; generated board/session observations historical.",
+      "completion_assessment": "unverified; see completion.json source stash:13"
     },
     {
       "index": 14,
@@ -251,7 +265,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "TABVLARIVS",
-      "semantic_evidence": "Task projection only; never replay into canonical task state."
+      "semantic_evidence": "Task projection only; never replay into canonical task state.",
+      "completion_assessment": "unverified; see completion.json source stash:14"
     },
     {
       "index": 15,
@@ -268,7 +283,8 @@
       "delivery_disposition": "integrated_evolved",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "institutio/governance/gates.yaml; scripts/verify-whole.sh",
-      "semantic_evidence": "Declarative gate/ratchet intent is owned by current registry and architecture; old gate-registry prose superseded."
+      "semantic_evidence": "Declarative gate/ratchet intent is owned by current registry and architecture; old gate-registry prose superseded.",
+      "completion_assessment": "unverified; see completion.json source stash:15"
     },
     {
       "index": 16,
@@ -284,7 +300,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "TABVLARIVS",
-      "semantic_evidence": "Task projection only; never replay into canonical task state."
+      "semantic_evidence": "Task projection only; never replay into canonical task state.",
+      "completion_assessment": "unverified; see completion.json source stash:16"
     },
     {
       "index": 17,
@@ -300,7 +317,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "TABVLARIVS",
-      "semantic_evidence": "Task projection only; never replay into canonical task state."
+      "semantic_evidence": "Task projection only; never replay into canonical task state.",
+      "completion_assessment": "unverified; see completion.json source stash:17"
     },
     {
       "index": 18,
@@ -316,7 +334,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "TABVLARIVS",
-      "semantic_evidence": "Task projection only; never replay into canonical task state."
+      "semantic_evidence": "Task projection only; never replay into canonical task state.",
+      "completion_assessment": "unverified; see completion.json source stash:18"
     },
     {
       "index": 19,
@@ -332,7 +351,8 @@
       "delivery_disposition": "historical_nonsemantic",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "CLI formatter; TABVLARIVS",
-      "semantic_evidence": "Click-option wrapping has no behavioral delta; board observation historical."
+      "semantic_evidence": "Click-option wrapping has no behavioral delta; board observation historical.",
+      "completion_assessment": "unverified; see completion.json source stash:19"
     },
     {
       "index": 20,
@@ -348,7 +368,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "TABVLARIVS",
-      "semantic_evidence": "Task projection only; never replay into canonical task state."
+      "semantic_evidence": "Task projection only; never replay into canonical task state.",
+      "completion_assessment": "unverified; see completion.json source stash:20"
     },
     {
       "index": 21,
@@ -365,7 +386,8 @@
       "delivery_disposition": "evolved",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "organs/artist/KERNEL.md; organs/artist/CHARTER.md",
-      "semantic_evidence": "Artist roles and authority evolved into current macro/micro faces and primitives. Do not restore old image counts or proposed grouping counts as current truth; dated study byte-identical."
+      "semantic_evidence": "Artist roles and authority evolved into current macro/micro faces and primitives. Do not restore old image counts or proposed grouping counts as current truth; dated study byte-identical.",
+      "completion_assessment": "unverified; see completion.json source stash:21"
     },
     {
       "index": 22,
@@ -381,7 +403,8 @@
       "delivery_disposition": "corrected_pending_landing",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "web/app/static-passthrough/_headers; web/worker/src/index.js; web/api/main.py",
-      "semantic_evidence": "plutil availability guard already exists. Missing security headers recovered at actual serving boundaries; obsolete static-export Next headers superseded.13 focused tests pass; API compatibility probe uses FastAPI0.138.0, below declared >=0.139.0."
+      "semantic_evidence": "plutil availability guard already exists. Missing security headers recovered at actual serving boundaries; obsolete static-export Next headers superseded.13 focused tests pass; API compatibility probe uses FastAPI0.138.0, below declared >=0.139.0.",
+      "completion_assessment": "unverified; see completion.json source stash:22"
     },
     {
       "index": 23,
@@ -397,7 +420,8 @@
       "delivery_disposition": "evolved",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "cli/src/limen/dispatch.py; scripts/dispatch-async.py; scripts/heal-dispatch.py",
-      "semantic_evidence": "Canonical broker owns lifecycle and terminal-history protection. Old direct projection writes and open-PR-as-done patterns must not be restored."
+      "semantic_evidence": "Canonical broker owns lifecycle and terminal-history protection. Old direct projection writes and open-PR-as-done patterns must not be restored.",
+      "completion_assessment": "unverified; see completion.json source stash:23"
     },
     {
       "index": 24,
@@ -413,7 +437,8 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "TABVLARIVS",
-      "semantic_evidence": "Task projection only; never replay into canonical task state."
+      "semantic_evidence": "Task projection only; never replay into canonical task state.",
+      "completion_assessment": "unverified; see completion.json source stash:24"
     },
     {
       "index": 25,
@@ -429,8 +454,9 @@
       "delivery_disposition": "historical",
       "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md",
       "current_intent_owner": "obligations registry; TABVLARIVS",
-      "semantic_evidence": "Obligations/task observation only; no standalone executable delta."
+      "semantic_evidence": "Obligations/task observation only; no standalone executable delta.",
+      "completion_assessment": "unverified; see completion.json source stash:25"
     }
   ],
-  "semantic_scope": "Historical means preserved observation or projection, never proof its underlying task completed. No missing substantive intent remained after index22 correction within this bounded audit."
+  "semantic_scope": "Custody verified independently; prior historical/integrated/evolved labels are observations, not completion outcomes. Source reconciliation extracted additional candidates. completion.json and verify-completion.py own campaign acceptance; campaign remains incomplete."
 }

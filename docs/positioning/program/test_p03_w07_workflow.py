@@ -241,8 +241,19 @@ def test_receipt_copies_explicit_broker_authority_without_replacing_identity() -
     authority = {
         "kind": "broker",
         "run_id": "run-" + "a" * 32,
-        "lease_id": "lease-123-" + "b" * 16,
+        "lease_id": "lease-123-" + "a" * 16,
         "executor": "codex-test",
     }
     assert W.validated_authority(authority) == authority
     assert W.validated_authority(authority) is not authority
+
+
+def test_protocol_session_identifier_is_accepted() -> None:
+    authority = {**TEST_AUTHORITY, "session_id": "codex-recovery-20260908"}
+    assert W.validated_authority(authority) == authority
+
+
+def test_mismatched_lease_and_run_are_rejected() -> None:
+    with pytest.raises(W.WorkflowError, match="does not belong"):
+        W.validated_authority({"kind": "broker", "run_id": "run-" + "a" * 32,
+                               "lease_id": "lease-123-" + "b" * 16, "executor": "codex"})

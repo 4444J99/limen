@@ -14,7 +14,6 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from uuid import UUID
 
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -272,12 +271,12 @@ def validated_authority(value: Any) -> dict[str, Any]:
         fields = {"kind", "session_id", "executor", "human_protected"}
         _exact_keys(value, fields, "receipt authority")
         session_id = value["session_id"]
-        try:
-            session = UUID(session_id) if isinstance(session_id, str) else None
-        except ValueError:
-            session = None
-        if session is None or session.int == 0 or str(session) != session_id:
-            raise WorkflowError("receipt authority requires a canonical nonzero session UUID")
+        if (
+            not isinstance(session_id, str)
+            or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}", session_id)
+            or session_id == "00000000-0000-0000-0000-000000000000"
+        ):
+            raise WorkflowError("receipt authority requires a bounded existing session identifier")
         if value["human_protected"] is not True:
             raise WorkflowError("receipt authority requires a protected direct human session")
     elif kind == "broker":
@@ -287,6 +286,8 @@ def validated_authority(value: Any) -> dict[str, Any]:
             raise WorkflowError("receipt authority requires an existing broker run identifier")
         if not isinstance(value["lease_id"], str) or not re.fullmatch(r"lease-[0-9]+-[0-9a-f]{16}", value["lease_id"]):
             raise WorkflowError("receipt authority requires an existing broker lease identifier")
+        if value["lease_id"].rsplit("-", 1)[1] != value["run_id"][4:20]:
+            raise WorkflowError("receipt authority lease does not belong to the supplied run")
     else:
         raise WorkflowError("receipt authority kind must match an existing direct session or broker lease")
     if not isinstance(value["executor"], str) or not value["executor"].strip():

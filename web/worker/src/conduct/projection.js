@@ -385,10 +385,14 @@ function canonicalClaimAgent(task, event) {
   return agent;
 }
 
-function requireReservedBudgetCost(prior, candidate) {
-  if (prior.budget_cost === candidate.budget_cost) return;
-  if ([prior.status, candidate.status].some((status) => ["dispatched", "in_progress"].includes(status))) {
-    throw new ConductProjectionError(`task ${prior.id} reserved budget_cost cannot change`, 409);
+function requireReservedBudgetCost(prior, desired) {
+  // A reservation's debit and eventual refund must use the same amount.
+  // Open tasks may be repriced before a separate canonical claim.
+  if (prior
+      && (["dispatched", "in_progress"].includes(prior.status)
+        || ["dispatched", "in_progress"].includes(desired.status))
+      && prior.budget_cost !== desired.budget_cost) {
+    throw new ConductProjectionError(`task ${prior.id} reservation_budget_cost_immutable: reserved budget_cost cannot change`, 409);
   }
 }
 
@@ -413,8 +417,8 @@ function applyCanonicalBudgetDebit(board, task, event, patch) {
   budget.track.per_agent[agent] = priorAgent + amount;
 }
 
-function applyCanonicalBudgetRefund(board, task, event) {
-  const amount = Number(task.budget_cost || 0);
+function applyCanonicalBudgetRefund(board, task, event, legacy = false) {
+  const amount = Number(legacy ? (task.budget_cost ?? event.budget_cost ?? 1) : (task.budget_cost || 0));
   let claim;
   // Preserve the executor that acquired this reservation across subsequent
   // dispatched metadata updates; logical labels never own canonical spend.
@@ -428,7 +432,23 @@ function applyCanonicalBudgetRefund(board, task, event) {
   }
   const budget = board.portal?.budget;
   if (!budget || !amount) return;
+  if (legacy && (!claim.conduct_run_id || claim.conduct_run_id !== event.run_id
+      || !claim.conduct_lease_id || claim.conduct_lease_id !== event.lease_id
+      || claim.conduct_generation !== event.generation)) {
+    throw new ConductProjectionError(`task ${task.id} cannot derive a canonical budget refund reservation`, 409);
+  }
+  const timestamp = claim.timestamp;
+  const parsed = typeof timestamp === "string" ? Date.parse(timestamp) : Number.NaN;
+  if (typeof timestamp !== "string"
+      || !/^(?!0000)\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|\+00:00)$/.test(timestamp)
+      || !Number.isFinite(parsed)
+      || new Date(parsed).toISOString().slice(0, 19) !== timestamp.slice(0, 19)) {
+    throw new ConductProjectionError(`task ${task.id} cannot derive a canonical budget refund window`, 409);
+  }
   resetBudgetWindow(budget, event);
+  // Rollover already retired this reservation's debit. Later metadata does
+  // not transfer it into another UTC day's ledger.
+  if (budget.track.date !== timestamp.slice(0, 10)) return;
   budget.track.per_agent ||= {};
   budget.track.spent = Math.max(0, Number(budget.track.spent || 0) - amount);
   budget.track.per_agent[agent] = Math.max(
@@ -707,6 +727,7 @@ export function applyTaskPacketProjectionEvent(input, event) {
       const candidate = { ...existing, ...patch };
       requireReservedBudgetCost(existing, candidate);
       validatePolicyUpdate(existing, candidate, taskId);
+      requireReservedBudgetCost(existing, candidate);
       if (candidate.provider_eligibility != null) patch.provider_eligibility = candidate.provider_eligibility;
       Object.assign(task, patch);
       task.dispatch_log = history;
@@ -781,6 +802,7 @@ export function applyTaskPacketProjectionEvent(input, event) {
   if (!isHeldJulesLandingRecovery(existing, nextStatus, intent.log) && !lifecycleRepair) {
     validateTransition(taskId, existing.status, nextStatus, kind);
   }
+  requireReservedBudgetCost(existing, candidate);
   if (kind === "task.claim") applyCanonicalBudgetDebit(board, existing, event, patch);
   if (kind === "task.status"
       && existing.status === "dispatched"
@@ -806,6 +828,10 @@ export function applyTaskPacketProjectionEvent(input, event) {
 }
 
 function ensureBudget(board, task, event) {
+  if (event.budget_action === "refund") {
+    applyCanonicalBudgetRefund(board, task, event, true);
+    return;
+  }
   const budget = board.portal?.budget;
   if (!budget || event.budget_action === "none") return;
   resetBudgetWindow(budget, event);
@@ -824,9 +850,6 @@ function ensureBudget(board, task, event) {
     }
     budget.track.spent = priorTotal + cost;
     budget.track.per_agent[event.agent] = priorAgent + cost;
-  } else if (event.budget_action === "refund") {
-    budget.track.spent = Math.max(0, priorTotal - cost);
-    budget.track.per_agent[event.agent] = Math.max(0, priorAgent - cost);
   }
 }
 

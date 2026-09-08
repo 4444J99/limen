@@ -75,7 +75,7 @@ def test_claim_custody_replays_committed_claim_after_lost_ack(tmp_path, monkeypa
     with pytest.raises(dispatch._SerialClaimUnavailable, match="acknowledgement unavailable") as error:
         _reserve(path, board)
     assert "private transport" not in str(error.value)
-    inbox = tabularius.tickets_root(path) / "inbox"
+    inbox = tabularius.tickets_root(path) / "serial-claims" / "inbox"
     pending = next(inbox.glob("*.json"))
     original = pending.read_bytes()
     ticket = tabularius.Ticket.model_validate_json(original)
@@ -90,7 +90,7 @@ def test_claim_custody_replays_committed_claim_after_lost_ack(tmp_path, monkeypa
     assert reserved[3] == ticket.log["session_id"]
     assert client.local_board_projection() == canonical_before
     assert not pending.exists()
-    archived = tabularius.tickets_root(path) / "archive" / pending.name
+    archived = tabularius.tickets_root(path) / "serial-claims" / "archive" / pending.name
     assert archived.read_bytes() == original
 
     # Even another stale open projection cannot use this acknowledged handoff
@@ -123,16 +123,16 @@ def test_claim_custody_blocks_unacknowledged_or_wrong_executor(tmp_path, monkeyp
             _reserve(path, board, now)
         assert "secret-provider-token" not in str(error.value)
     assert tickets[0] == tickets[1]
-    pending = list((tabularius.tickets_root(path) / "inbox").glob("*.json"))
+    pending = list((tabularius.tickets_root(path) / "serial-claims" / "inbox").glob("*.json"))
     assert len(pending) == 1
     assert "secret-provider-token" not in pending[0].read_text()
-    assert not (tabularius.tickets_root(path) / "archive").exists()
+    assert not (tabularius.tickets_root(path) / "serial-claims" / "archive").exists()
 
 
 def test_claim_custody_failure_prevents_broker_submission(tmp_path, monkeypatch):
     path = tmp_path / "tasks.yaml"
     board = _open_board(path)
-    monkeypatch.setattr(dispatch, "submit_ticket", lambda *_: (_ for _ in ()).throw(OSError("private disk")))
+    monkeypatch.setattr(dispatch, "submit_ticket", lambda *_a, **_kw: (_ for _ in ()).throw(OSError("private disk")))
     monkeypatch.setattr(
         dispatch,
         "apply_limen_file_sync",
@@ -148,6 +148,7 @@ def test_claim_directory_sync_failure_blocks_submission_or_handoff(tmp_path, mon
     board = _open_board(path)
     real_fsync = os.fsync
     claims = []
+    settlements = []
 
     def directory_sync_failure(descriptor):
         if stat.S_ISDIR(os.fstat(descriptor).st_mode) and (stage == "inbox" or claims):
@@ -155,6 +156,9 @@ def test_claim_directory_sync_failure_blocks_submission_or_handoff(tmp_path, mon
         return real_fsync(descriptor)
 
     def acknowledged(_path, desired, **kwargs):
+        if kwargs.get("session_id") == "serial-results":
+            settlements.append(desired.tasks[-1])
+            return tabularius.DrainResult()
         claims.append(kwargs["prepared_claims"]["ACK-CUSTODY"])
         return tabularius.DrainResult(
             projected_tasks={"ACK-CUSTODY": desired.tasks[0].model_dump(mode="json", exclude_none=True)}
@@ -166,10 +170,14 @@ def test_claim_directory_sync_failure_blocks_submission_or_handoff(tmp_path, mon
         _reserve(path, board)
     assert "private directory" not in str(error.value)
     assert len(claims) == (stage == "archive")
-    pending = list((tabularius.tickets_root(path) / "inbox").glob("*.json"))
+    assert len(settlements) == (stage == "archive")
+    if settlements:
+        assert settlements[0].status == "open"
+        assert settlements[0].dispatch_log[-1].execution_started is False
+    pending = list((tabularius.tickets_root(path) / "serial-claims" / "inbox").glob("*.json"))
     assert len(pending) == 1
     if stage == "archive":
-        archived = tabularius.tickets_root(path) / "archive" / pending[0].name
+        archived = tabularius.tickets_root(path) / "serial-claims" / "archive" / pending[0].name
         assert archived.read_bytes() == pending[0].read_bytes()
         with pytest.raises(RuntimeError, match="terminal ticket custody"):
             _reserve(path, board)

@@ -264,7 +264,7 @@ DEFAULT_MAP: list[dict] = [
         # [[wrangler-login-and-op-ping-disease]] [[gmail-mutation-cascade-avenues]]
         "lane": "cloudflare (a-i-chat--exporter CI secret)",
         "ref": "op://Personal/Cloudflare API Token/credential",
-        "gh_secret": {"repo": "organvm/a-i-chat--exporter", "name": "CLOUDFLARE_API_TOKEN"},
+        "gh_secret": {"repo": "organvm-iii-ergon/a-i-chat--exporter", "name": "CLOUDFLARE_API_TOKEN"},
         "enabled": True,
     },
     {

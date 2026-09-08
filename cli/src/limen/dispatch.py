@@ -4041,7 +4041,7 @@ def _repo_unavailable_reason(repo: str | None) -> str | None:
         return None
     blob = ((result.stderr or "") + "\n" + (result.stdout or "")).strip()
     if _REPO_UNAVAILABLE_PATTERNS.search(blob):
-        return f"repo unavailable: {repo}; {blob[:240]}"
+        return f"repo unavailable: {repo}"
     return None
 
 
@@ -4406,17 +4406,17 @@ def _clone_repo(task: Task) -> Path | None:
             # every clone-needing worker → the ThreadPoolExecutor never drains → dispatch-parallel
             # wedges past the lane timeout and the daemon stalls (observed: ~30-min hang). The
             # group-kill reaps the grandchildren so the clone is genuinely bounded → cascades clean.
-            r = _run_capture(
+            _run_capture(
                 ["gh", "repo", "clone", task.repo, str(dest)],
                 timeout=600,
             )
-        except Exception as e:
-            print(f"  clone {task.repo} errored: {e}")
+        except Exception:
+            print(f"  clone {task.repo} errored: repository clone unavailable")
             return None
     if (dest / ".git").exists():
         print(f"  cloned {task.repo} → {dest}")
         return dest
-    print(f"  clone {task.repo} failed: {r.stderr.strip()[:200]}")
+    print(f"  clone {task.repo} failed: repository clone unavailable")
     return None
 
 
@@ -4741,14 +4741,15 @@ def _run_isolated_agent(
             run_env["LIMEN_TASK_ID"] = task.id
         _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
         supervised_cmd = _stable_agent_host_command(agent_cmd, run_env)
-    except StableAgentHostError as exc:
-        reason = str(exc)
+    except StableAgentHostError:
+        reason = "stable agent host unavailable"
         print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
-        return _blocked_result(reason)
-    except WorkstreamLaunchContractError as exc:
-        reason = str(exc)
+        # A no-output retry already attempted the provider in this reservation.
+        return _blocked_result(reason) if retry_count else _prelaunch_blocked_result(reason)
+    except WorkstreamLaunchContractError:
+        reason = "workstream launch contract unavailable"
         print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
-        return _workstream_successor_result(reason)
+        return _workstream_successor_result(reason) if retry_count else _prelaunch_workstream_successor_result(reason)
     started_at = datetime.now(timezone.utc)
     max_retries = provider_health_policy().same_model_retries if agent == "opencode" else retry_count
     while True:
@@ -4770,12 +4771,12 @@ def _run_isolated_agent(
                         agent_cmd,
                         run_env,
                     )
-                except StableAgentHostError as exc:
-                    reason = str(exc)
+                except StableAgentHostError:
+                    reason = "stable agent host unavailable"
                     print(f"  BLOCKED {task.id}: {reason}; refusing an unstable auth-retry TCC principal")
                     return _blocked_result(reason)
-                except WorkstreamLaunchContractError as exc:
-                    reason = str(exc)
+                except WorkstreamLaunchContractError:
+                    reason = "workstream launch contract unavailable"
                     print(f"  BLOCKED {task.id}: {reason}; refusing auth retry so the lane can successor-route")
                     return _workstream_successor_result(reason)
                 run = _run_capture(
@@ -4784,8 +4785,8 @@ def _run_isolated_agent(
                     timeout=lane_timeout,
                     env=run_env,
                 )
-        except StableAgentHostError as exc:
-            reason = str(exc)
+        except StableAgentHostError:
+            reason = "stable agent host unavailable"
             print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
             return _blocked_result(reason)
         except subprocess.TimeoutExpired:
@@ -5144,8 +5145,9 @@ def _isolated_local_run(
     if repo_dir is None and not dry_run:
         blocked = _repo_unavailable_reason(task.repo)
         if blocked:
-            print(f"  BLOCKED {task.id}: {blocked}")
-            return _blocked_result(blocked)
+            reason = "repository unavailable"
+            print(f"  BLOCKED {task.id}: {reason}")
+            return _prelaunch_blocked_result(reason)
         repo_dir = _clone_repo(task)  # post-move: clone on demand so local lanes can work it
     if repo_dir is None:
         msg = f"no local checkout of {task.repo or '(no repo)'}"
@@ -5153,7 +5155,7 @@ def _isolated_local_run(
             print(f"  would [{msg}; clone-on-demand then isolate]: →{binary}→PR")
             return True
         print(f"  SKIP {task.id}: {msg} — clone-on-demand failed")
-        return False
+        return _prelaunch_blocked_result(msg)
 
     base = _default_branch(repo_dir)
     pr_head = _same_repo_pr_head_for_task(task)
@@ -5241,14 +5243,18 @@ def _isolated_local_run(
             continue
         break
     if not initialized:
-        print(f"  FAILED transactional worktree initialization {task.id}: {initialization_error[:300]}")
-        return False
+        reason = "transactional worktree initialization unavailable"
+        print(f"  BLOCKED {task.id}: {reason}")
+        return _prelaunch_blocked_result(reason)
     _record_worktree_birth(task, wt, branch, checkout_ref, pr_base, existing_pr=bool(pr_head))
     _mark_machine_admission_born(task.id)
 
     pushed = False
     try:
-        agent_args = _workspace_agent_args(agent, base_agent_args, wt)
+        try:
+            agent_args = _workspace_agent_args(agent, base_agent_args, wt)
+        except WorkstreamLaunchContractError:
+            return _prelaunch_workstream_successor_result("workstream launch contract unavailable")
         agent_cmd = [binary, *agent_args, prompt]
         start_head_result = _git(["rev-parse", "HEAD"], wt)
         start_head = start_head_result.stdout.strip() if start_head_result.returncode == 0 else ""
@@ -5326,27 +5332,28 @@ def _isolated_local_run(
 def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str | PlanHandoffResult:
     if not agent_can_run_task(agent, task):
         print(f"  SKIP {task.id}: {agent} is gated for Limen registry discovery tasks")
-        return False
+        return _prelaunch_blocked_result("agent is gated for Limen registry discovery tasks")
     try:
         agent_args = _agent_argv(agent, task)
-    except WorkstreamLaunchContractError as exc:
-        reason = str(exc)
+    except WorkstreamLaunchContractError:
+        reason = "workstream launch contract unavailable"
         print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
-        return _workstream_successor_result(reason)
-    except ProviderSelectionError as exc:
-        reason = str(exc)
+        return _prelaunch_workstream_successor_result(reason)
+    except ProviderSelectionError:
+        reason = "provider selection unavailable"
         print(f"  BLOCKED {task.id}: {reason}")
-        return _blocked_result(reason)
-    except ClaudeLaunchContractError as exc:
-        print(f"  BLOCKED {task.id}: {exc}; refusing provider launch so the lane can cascade")
-        return False
+        return _prelaunch_blocked_result(reason)
+    except ClaudeLaunchContractError:
+        reason = "Claude launch contract unavailable"
+        print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can cascade")
+        return _prelaunch_blocked_result(reason)
     if agent == "opencode" and "-m" not in agent_args:
         reason = "no healthy code-capable model is exposed by the live OpenCode catalog"
         if dry_run:
             print(f"  would BLOCK {task.id}: {reason}")
             return True
         print(f"  BLOCKED {task.id}: {reason}")
-        return _blocked_result(reason)
+        return _prelaunch_blocked_result(reason)
     if _worktree_isolation_enabled():
         return _isolated_local_run(agent, task, dry_run, agent_args)
     # ── legacy in-place path (escape hatch; edits the live checkout directly)
@@ -5358,19 +5365,19 @@ def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str | Pla
             print(f"  would [{msg}; clone first]: {binary} {' '.join(agent_args)} …")
             return True
         print(f"  SKIP {task.id}: {msg} — clone it under $LIMEN_WORKDIR first")
-        return False
+        return _prelaunch_blocked_result(msg)
     if _workstream_packet_for(task) is not None:
         reason = "conducted workstream packets require the isolated local launch path"
         print(f"  BLOCKED {task.id}: {reason}")
-        return False
+        return _prelaunch_workstream_successor_result(reason)
     cmd = [binary, *agent_args, _build_prompt(task)]
     if not dry_run:
         try:
             cmd = _stable_agent_host_command(cmd)
-        except StableAgentHostError as exc:
-            reason = str(exc)
+        except StableAgentHostError:
+            reason = "stable agent host unavailable"
             print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
-            return _blocked_result(reason)
+            return _prelaunch_blocked_result(reason)
     return _run_cmd(cmd, task, dry_run, cwd=str(cwd))
 
 
@@ -5661,14 +5668,25 @@ def _reserve_serial_dispatch(
         before_data = prior_task.model_dump(mode="json", exclude_none=True)
         ticket_id = "serial-claim-" + task_state_sha256({"before": before_data, "agent": agent})
         root = tickets_root(tasks_path)
-        pending_path = root / "inbox" / f"{ticket_id}.json"
-        archive_path = root / "archive" / f"{ticket_id}.json"
-        if archive_path.exists() or (root / "rejected" / f"{ticket_id}.json").exists():
+        pending_path = root / "serial-claims" / "inbox" / f"{ticket_id}.json"
+        archive_path = root / "serial-claims" / "archive" / f"{ticket_id}.json"
+        legacy_pending = root / "inbox" / f"{ticket_id}.json"
+        # A legacy archive may mean generic ACK or provider handoff. Preserve
+        # it under a reconciliation hold; absence of launch cannot be inferred.
+        if any(
+            path.exists()
+            for path in (
+                archive_path,
+                root / "archive" / f"{ticket_id}.json",
+                root / "rejected" / f"{ticket_id}.json",
+            )
+        ):
             raise RuntimeError("canonical claim already has terminal ticket custody; reconcile existing claim")
         retained_ticket = None
         try:
-            if pending_path.exists():
-                retained_ticket = Ticket.model_validate_json(pending_path.read_text(encoding="utf-8"))
+            retained_path = pending_path if pending_path.exists() else legacy_pending
+            if retained_path.exists():
+                retained_ticket = Ticket.model_validate_json(retained_path.read_text(encoding="utf-8"))
                 now = retained_ticket.timestamp
                 reservation_id = str((retained_ticket.log or {}).get("session_id") or "")
                 if not re.fullmatch(r"[0-9a-f]{64}", reservation_id):
@@ -5705,9 +5723,16 @@ def _reserve_serial_dispatch(
             if retained_ticket is not None:
                 if retained_ticket != ticket:
                     raise ValueError("claim request changed")
-            else:
-                submit_ticket(tasks_path, ticket)
+            if legacy_pending.exists() and Ticket.model_validate_json(legacy_pending.read_bytes()) != ticket:
+                raise ValueError("legacy claim request changed")
+            if not pending_path.exists():
+                submit_ticket(tasks_path, ticket, custody="serial-claims")
             _sync_serial_ticket_custody(pending_path.parent, tasks_path)
+            if legacy_pending.exists():
+                # Migrate only the identical pending request while holding the
+                # generic drain's queue lock; durable new custody comes first.
+                legacy_pending.unlink()
+                _sync_serial_ticket_custody(legacy_pending.parent, tasks_path)
         except Exception as exc:
             raise _SerialClaimUnavailable("canonical claim request could not obtain exact durable custody") from exc
         try:
@@ -5764,6 +5789,25 @@ def _reserve_serial_dispatch(
             pending_path.unlink()
             _sync_serial_ticket_custody(pending_path.parent, tasks_path)
         except Exception as exc:
+            # This call has not reached provider handoff. Settle only the exact
+            # acknowledged claim; archived tickets alone never prove prelaunch
+            # on a later process restart and must never authorize relaunch.
+            fresh.tasks = [reserved_task if row.id == task_id else row for row in fresh.tasks]
+            try:
+                _commit_serial_reserved_result(
+                    tasks_path,
+                    fresh,
+                    reserved_task,
+                    agent,
+                    _prelaunch_blocked_result("canonical claim handoff custody unavailable"),
+                    now,
+                    selected_contract_hash,
+                    _lifecycle_ownership_token(reserved_task),
+                )
+            except Exception:
+                raise _SerialClaimUnavailable(
+                    "canonical prelaunch settlement unavailable; exact claim retained"
+                ) from None
             raise _SerialClaimUnavailable(
                 "canonical claim handoff custody unavailable; reconcile existing claim"
             ) from exc
@@ -5841,13 +5885,12 @@ def _commit_serial_reserved_result(
                 except FileExistsError:
                     # A retry can encounter the identical immutable ticket.
                     # Never overwrite a distinct result or count it committed.
-                    from limen.tabularius import tickets_root
-
                     prior = Ticket.model_validate_json(
                         (tickets_root(tasks_path) / "inbox" / f"{ticket.ticket_id}.json").read_text()
                     )
                     if prior != ticket:
                         raise RuntimeError("existing serial result ticket differs")
+                _sync_serial_ticket_custody(tickets_root(tasks_path) / "inbox", tasks_path)
             except Exception:
                 may_clear = False
                 if selection is not None:
@@ -6058,6 +6101,7 @@ def dispatch_tasks(
         )
         if committed is True and _is_prelaunch_result(result):
             remaining += reserved_task.budget_cost
+            dispatched -= 1
         if result == _RATELIMIT:
             print(f"── lane {agent_filter} rate-limited — cooling, {dispatched} dispatched this cycle")
             return
