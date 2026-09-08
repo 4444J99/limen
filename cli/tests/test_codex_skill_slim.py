@@ -58,6 +58,31 @@ def _point_at(mod, home: Path) -> None:
     mod.LOGDB = home / "logs_2.sqlite"
 
 
+def test_native_catalog_differences_do_not_certify_rendered_budget(tmp_path):
+    mod = _load()
+    _point_at(mod, _synthetic_home(tmp_path))
+    candidate = mod.catalog_evidence()["entries"][0]
+    native = {
+        "entries": [
+            {
+                "name": candidate["name"],
+                "path_fingerprint": candidate["path_fingerprint"],
+                "description_fingerprint": "different-native-description",
+            }
+        ],
+        "native_skills": 1,
+        "runtime_budget": None,
+        "stripped_descriptions": None,
+    }
+    result = mod.catalog_evidence(native)
+    assert result["scope"] == "native_catalog_and_filesystem_candidates"
+    assert result["candidate_not_in_native"] == result["candidate_skills"] - 1
+    assert result["native_description_differences"] == 1
+    assert result["omitted_skills"] is None
+    assert not result["fresh_native_loading_witness"]
+    assert result["exit"] == 77
+
+
 def _write_trunc_log(
     home: Path,
     ts: int,

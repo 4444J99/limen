@@ -188,3 +188,90 @@ Documentation used: [Serena dashboard](https://oraios.github.io/serena/02-usage/
 Next verification owner action after host admission recovers: rerun only `pytest-cli` through
 `scripts/verify.py` admission with adequate bounded output, inspect the failed cases, and retain
 these unchanged green shard receipts. No additional scheduler or background watcher was added.
+
+## Completion continuation — 2026-09-08, current Codex execution
+
+The user requires three independent outcomes: implementation verified, exact changes deployed, and the estate ideal satisfied. Every required registration must have fresh passing evidence; both denominators and all seven defect counts must be explicit, with every defect count zero. Partial receipts, drafts, queued merges and filed blockers remain intermediate states. None of the three whole-estate outcomes is claimed by this receipt.
+
+Protected session `mcp-estate-complete-20260908` acquired Limen run `run-d41cd64aaf7052a1ac3de532d52f897a`, lease generation 1036, and Domus run `run-4595a4de901a376edce92627c0f9ee28`, lease generation 1037. Existing branch work was preserved. The broker rejected cancellation of the unstarted protected Domus reservation; it was subsequently claimed for the authorized work, rather than abandoned. No peer session was signalled or displaced.
+
+### Implemented and verified in this continuation
+
+- Retained malformed undeclared registrations in the denominator; duplicate JSON keys and malformed launch fields fail closed. Invalid plugin/project containers no longer hide the remaining registrations. Per-client environment inputs resolve relocated configuration roots independently.
+- Installed-plugin registry selection distinguishes user/project scope and exact installed version from older cache candidates. Overridden cache manifests remain sanitized provenance. Claude enabled-plugin settings are read separately from its MCP configuration. This remains partial effective configuration coverage, not proof of every client loader.
+- Added `mcp_native_observer.py`: a bounded Codex app-server observation producer, using the installed CLI schema inspected in this session (0.153.4). It requires an active, fresh Codex broker execution lease and host admission; it checks binary/configuration stability, independent native version identity, pagination, native catalog shapes and owned cleanup. It requests no model turn, login, config write or refresh. MCP status is requested only when the active inventory has explicit quiet-launch evidence.
+- Canary acceptance now binds broker run, native connection identity, collection timestamp, dependency fingerprint and observed versions. A supplied receipt bundle has no observation authority. A native route observation cannot satisfy missing startup UI, dashboard or isolation evidence.
+- Extended skill accounting to compare an in-process native catalog with filesystem candidates, distinguishing native-only/candidate-only entries and changed descriptions. Rendered token-budget evidence, model-context omissions and description stripping remain unknown. Listing skills is not a fresh model-rendering witness.
+- Domus adds exact-target, policy- and source-version-bound conditional rollback with private write-ahead custody, original mode restoration and late-write/interruption preservation. Source: companion #379, commit `6e54474d`.
+- Reused the exact diurnal/GPG fixture corrections from prerequisite `256cc3f5c`; no production key-validation logic changed. The already-landed Danse instruction-reference repair was integrated from main without recreating the retired app tree.
+
+The estate focused MCP/native/skill batch passed 67 tests; four additional collector race/pagination/version tests passed. A native refusal fixture had a leader-exit cleanup race; keeping its synthetic leader alive until owned cleanup corrected it, and the sole failed test passed. All 20 scoped cheap gates passed; subsequent source changes invalidate only their syntax/lint/format and focused-test shards, which are rerun separately. Heavy admission returned 75 on swap pressure. Domus has 58 focused tests passing, ownership validation passing and commit hooks passing. These are scoped receipts, not a full estate implementation pass.
+
+### Prerequisite and live evidence
+
+Prerequisite #2569 exact head `256cc3f5c29a135326ce6f2bbfd65568c958ea2f` passed both remote CI and PR Gate. The previously failing full CLI suite now reports **6842 passed, 4 skipped**, and API reports **48 passed**. Receipts: https://github.com/4444J99/limen/actions/runs/34264919650 and https://github.com/4444J99/limen/actions/runs/34264919678 . The declared local build/deploy admission remains unavailable and is not replaced by advisory CI. No merge or Worker deployment occurred.
+
+The direct native catalog attempt was denied before app-server startup (`swap-fraction,vitals-shed`, exit 77). No fresh native-client canary or rendered skill-budget witness was produced. The remaining twelve adapter producers, per-client effective environment/configuration witnesses, complete gateway route/capability equivalence, broader owner modifiers, and UI/isolation/process measurements remain implementation and acceptance work. They cannot be certified from direct server probes or synthetic tests.
+
+Read-only LaunchDarkly status again returned exit 1 and `not_logged_in`. The direct route is preserved; consent and the authenticated exchange remain owned by `L-LAUNCHDARKLY-OAUTH-CONSENT`. No health check initiated login.
+
+Unfiltered **inventory-only** measurement against current live files and the candidate Domus policy returned **77**: **123 service identities, 156 registrations**, 14 coverage gaps. Defects: missing capabilities **12**, ownership conflicts **6**, unintended launches **0**, protocol failures **0**, authentication gaps **0**, unmeasured integrations **155**, abandoned processes **0**. Inventory zeros do not establish protocol/authentication/UI/cleanup success; the separate LaunchDarkly observation remains an authentication gap. Neither source branch nor policy is deployed.
+
+### Canonical task-update exclusion receipt
+
+The completion requirement is durable in the execution packet and this continuation. Its canonical task-context update returned the complete sanitized busy response below. The exact conflicting graph was inspected: this is the sessions own active scoped Limen lease, not a peer. The deployed keeper still adds repository-wide exclusion to the strict board-only packet. The task remains `open`; no local projection edit or task completion occurred. Owner: #2569 publisher/claim isolation. Next command after its local admission and exact deployment: resubmit the broker-owned context update, then a second real task mutation, verifying both publication receipts without manual ref restoration.
+
+```json
+{
+  "schema_version": "limen.conduct_submit_result.v1",
+  "status": "busy",
+  "busy_receipt_id": "busy-f105af734d2c474a03d05529",
+  "work_id": "mcp-estate-completion-requirement-20260908",
+  "conflicts": [
+    {
+      "lease_id": "lease-1036-d41cd64aaf7052a1",
+      "run_id": "run-d41cd64aaf7052a1ac3de532d52f897a",
+      "keys": [
+        [
+          "repo/4444j99/limen/write",
+          "branch/4444j99/limen/feat/mcp-estate-contract-20260908"
+        ],
+        [
+          "repo/4444j99/limen/write",
+          "branch/4444j99/limen/fix/keeper-publication-recovery-20260908"
+        ],
+        [
+          "repo/4444j99/limen/write",
+          "path/4444j99/limen/main/AGENTS.md"
+        ],
+        [
+          "repo/4444j99/limen/write",
+          "path/4444j99/limen/main/cli"
+        ],
+        [
+          "repo/4444j99/limen/write",
+          "path/4444j99/limen/main/docs/agent-instruction-standard.md"
+        ],
+        [
+          "repo/4444j99/limen/write",
+          "path/4444j99/limen/main/docs/receipts"
+        ],
+        [
+          "repo/4444j99/limen/write",
+          "path/4444j99/limen/main/mcp"
+        ],
+        [
+          "repo/4444j99/limen/write",
+          "path/4444j99/limen/main/scripts"
+        ],
+        [
+          "repo/4444j99/limen/write",
+          "path/4444j99/limen/main/web/worker"
+        ]
+      ]
+    }
+  ]
+}
+```
+
+Remaining acceptance and deployment ownership stays with MCP-ESTATE-20260908, Limen #2567/#2569 and Domus #379. No implementation-complete, deployed, estate-ideal or terminal closeout claim is made.

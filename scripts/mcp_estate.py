@@ -12,6 +12,7 @@ import importlib.util
 import json
 import math
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -51,7 +52,18 @@ def fingerprint(value):
     return hashlib.sha256(raw).hexdigest()
 
 
+def unique_fields(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate configuration field")
+        result[key] = value
+    return result
+
+
 def read_config(path):
+    if path.stat().st_size > 16 * 1024 * 1024:
+        raise ValueError("configuration ceiling")
     raw = path.read_bytes()
     if len(raw) > 16 * 1024 * 1024:
         raise ValueError("configuration ceiling")
@@ -65,9 +77,9 @@ def read_config(path):
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             raw_json = module._strip_jsonc(raw.decode())
-            data = json.loads(raw_json)
+            data = json.loads(raw_json, object_pairs_hook=unique_fields)
         else:
-            data = json.loads(raw)
+            data = json.loads(raw, object_pairs_hook=unique_fields)
     if not isinstance(data, dict):
         raise ValueError("configuration must be a mapping")
     return data, fingerprint(raw)
@@ -106,6 +118,8 @@ def load_policy(path):
 
 
 def normalize(spec):
+    if not isinstance(spec, dict):
+        return {**normalize({}), "invalid": True}
     command = spec.get("command")
     url = spec.get("url") or spec.get("serverUrl") or spec.get("httpUrl")
     args = spec.get("args", [])
@@ -118,6 +132,9 @@ def normalize(spec):
         invalid
         or (command is not None and not isinstance(command, str))
         or (url is not None and not isinstance(url, str))
+        or (command is not None and url is not None)
+        or any(key in spec and type(spec[key]) is not bool for key in ("enabled", "disabled"))
+        or any(spec.get(key) is not None and not isinstance(spec[key], str) for key in ("cwd", "bearer_token_env_var"))
     )
     for field in ("env", "headers", "http_headers", "env_http_headers"):
         value = spec.get(field, {})
@@ -141,8 +158,84 @@ def normalize(spec):
     }
 
 
-def inventory(policy, config_paths=None, project=None):
-    paths = config_paths if config_paths is not None else [(c, active_config_path(c)) for c in MCP_VENDOR_KEYS]
+def installed_plugin_roots(path, plugin, project):
+    """Select the installed registry entry; cached older versions are provenance only."""
+    name = plugin.split("@", 1)[0]
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", name):
+        raise ValueError("invalid plugin identity")
+    registry_path = path.parent / "plugins/installed_plugins.json"
+    if not registry_path.exists():
+        return sorted((path.parent / "plugins/cache").glob(f"*/{name}/*")), "cache_candidate"
+    registry, _ = read_config(registry_path)
+    entries = registry.get("plugins", {}).get(plugin, [])
+    if not isinstance(entries, list):
+        raise ValueError("invalid installed plugin entries")
+    selected = []
+    priority = {"user": 0, "project": 1, "local": 2}
+    for entry in entries:
+        if not isinstance(entry, dict) or entry.get("scope") not in priority:
+            raise ValueError("unsupported plugin scope")
+        if entry["scope"] != "user" and (
+            project is None or Path(entry.get("projectPath", "")).resolve() != Path(project).resolve()
+        ):
+            continue
+        root = Path(entry.get("installPath", ""))
+        if not root.is_absolute() or not root.is_dir() or not entry.get("version"):
+            raise ValueError("installed plugin unavailable")
+        if root.name != str(entry["version"]):
+            raise ValueError("installed plugin version mismatch")
+        selected.append((priority[entry["scope"]], root))
+    if not selected:
+        return [], "installed_registry"
+    rank = max(item[0] for item in selected)
+    return list(dict.fromkeys(root for level, root in selected if level == rank)), "installed_registry"
+
+
+def plugin_spec(spec, enabled):
+    if not isinstance(spec, dict):
+        return spec
+    return {**spec, "enabled": enabled is True and spec.get("enabled", True) is not False}
+
+
+def quiet_probe_allowed(record):
+    spec, owner = record["spec"], record["policy"]
+    if not spec or spec["invalid"] or not owner:
+        return False
+    if record["service"] == "serena":
+        args = spec.get("args", [])
+        return any(args[i : i + 2] == ["--open-web-dashboard", "false"] for i in range(len(args)))
+    return spec["transport"] == "http" or owner.get("verification", {}).get("quiet_probe") is True
+
+
+def plugin_provenance(path, plugin, selected):
+    name = plugin.split("@", 1)[0]
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", name):
+        return []
+    selected = {p.resolve() for p in selected}
+    candidates = []
+    for root in sorted((path.parent / "plugins/cache").glob(f"*/{name}/*")):
+        if root.resolve() in selected:
+            continue
+        for relative in (".mcp.json", ".codex-plugin/plugin.json", ".claude-plugin/plugin.json"):
+            manifest = root / relative
+            if manifest.is_file():
+                try:
+                    _, value = read_config(manifest)
+                    candidates.append({"source": "overridden-plugin-cache", "active": False, "fingerprint": value})
+                except (ValueError, OSError):
+                    candidates.append({"source": "overridden-plugin-cache", "active": False, "state": "unmeasured"})
+    return candidates
+
+
+def inventory(policy, config_paths=None, project=None, client_environments=None):
+    # Native collectors pass each client's observed environment separately. Shell
+    # inheritance is a candidate location, never evidence of another app's loader.
+    client_environments = client_environments or {}
+    paths = (
+        config_paths
+        if config_paths is not None
+        else [(c, active_config_path(c, client_environments.get(c))) for c in MCP_VENDOR_KEYS]
+    )
     if config_paths is None:
         home = Path.home()
         paths += [
@@ -187,16 +280,35 @@ def inventory(policy, config_paths=None, project=None):
         if client == "ianva" and not table:
             table = {k: v for k, v in data.items() if isinstance(v, dict)}
         for name, spec in table.items():
-            if isinstance(spec, dict):
-                add(client, name, spec, "active-config", digest)
-            else:
+            add(client, name, spec, "active-config", digest)
+            if not isinstance(spec, dict):
                 issues.append({"client": client, "reason": "invalid_registration", "owner": "domus-genoma"})
-        for plugin, settings in data.get("plugins", {}).items():
+        plugins = data.get("plugins", {})
+        if client == "claude":
+            settings_path = path.parent / "settings.json"
+            if settings_path.exists():
+                try:
+                    settings_data, settings_digest = read_config(settings_path)
+                    enabled = settings_data.get("enabledPlugins", {})
+                    if not isinstance(enabled, dict) or any(type(v) is not bool for v in enabled.values()):
+                        raise ValueError("invalid enabled plugins")
+                    plugins = {key: {"enabled": value} for key, value in enabled.items()}
+                    digest = fingerprint([digest, settings_digest])
+                except (ValueError, OSError):
+                    issues.append({"client": client, "reason": "plugin_state_unmeasured", "owner": "domus-genoma"})
+        if not isinstance(plugins, dict):
+            issues.append({"client": client, "reason": "plugin_state_unmeasured", "owner": "domus-genoma"})
+            plugins = {}
+        for plugin, settings in plugins.items():
             if not isinstance(settings, dict):
                 issues.append({"client": client, "reason": "plugin_state_unmeasured", "owner": "domus-genoma"})
                 continue
             plugin_name = plugin.split("@", 1)[0]
-            roots = list((path.parent / "plugins/cache").glob(f"*/{plugin_name}/*"))
+            try:
+                roots, selection = installed_plugin_roots(path, plugin, project)
+            except (ValueError, OSError, TypeError, AttributeError):
+                roots, selection = [], "installed_registry_unmeasured"
+            overridden = plugin_provenance(path, plugin, roots)
             manifests = [r / ".mcp.json" for r in roots if (r / ".mcp.json").exists()]
             if len(roots) == 1 and not manifests:
                 try:
@@ -210,11 +322,13 @@ def inventory(policy, config_paths=None, project=None):
                             add(
                                 client,
                                 name,
-                                {**spec, "enabled": settings.get("enabled", True)},
+                                plugin_spec(spec, settings.get("enabled", True)),
                                 "plugin-inline",
                                 fingerprint([digest, metadata]),
                                 plugin,
                             )
+                            records[(client, name, plugin)]["plugin_selection"] = selection
+                            records[(client, name, plugin)]["provenance"] = overridden
                         continue
                 except (OSError, ValueError):
                     pass
@@ -234,23 +348,31 @@ def inventory(policy, config_paths=None, project=None):
                 manifest, plugin_digest = read_config(manifests[0])
                 plugin_table = server_map(manifest) or manifest
                 for name, spec in plugin_table.items():
-                    if not isinstance(spec, dict):
-                        raise ValueError("invalid plugin server")
-                    enabled = settings.get("enabled", True) and settings.get("mcp_servers", {}).get(name, {}).get(
-                        "enabled", True
-                    )
+                    overrides = settings.get("mcp_servers", {})
+                    if not isinstance(overrides, dict) or not isinstance(overrides.get(name, {}), dict):
+                        raise ValueError("invalid plugin overrides")
+                    enabled = settings.get("enabled", True) and overrides.get(name, {}).get("enabled", True)
                     add(
                         client,
                         name,
-                        {**spec, "enabled": enabled},
+                        plugin_spec(spec, enabled),
                         "plugin",
                         fingerprint([digest, plugin_digest]),
                         plugin,
                     )
+                    records[(client, name, plugin)]["plugin_selection"] = selection
+                    records[(client, name, plugin)]["provenance"] = overridden
             except (ValueError, OSError):
                 issues.append({"client": client, "reason": "plugin_manifest_unreadable", "owner": "domus-genoma"})
         if client == "claude":
-            for location, scoped in data.get("projects", {}).items():
+            projects = data.get("projects", {})
+            if not isinstance(projects, dict):
+                issues.append({"client": client, "reason": "project_state_unmeasured", "owner": "domus-genoma"})
+                projects = {}
+            for location, scoped in projects.items():
+                if not isinstance(scoped, dict):
+                    issues.append({"client": client, "reason": "project_config_unreadable", "owner": "domus-genoma"})
+                    continue
                 for name, spec in server_map(scoped).items():
                     if isinstance(spec, dict):
                         selected = project is not None and Path(location).resolve() == Path(project).resolve()
@@ -264,7 +386,7 @@ def inventory(policy, config_paths=None, project=None):
                             selected,
                         )
         if config_paths is None and client in MCP_VENDOR_KEYS:
-            for candidate in candidate_config_paths(client):
+            for candidate in candidate_config_paths(client, client_environments.get(client)):
                 if candidate.resolve() == path.resolve() or not candidate.exists():
                     continue
                 try:
@@ -283,7 +405,7 @@ def inventory(policy, config_paths=None, project=None):
                 except (ValueError, OSError):
                     issues.append({"client": client, "reason": "project_config_unreadable", "owner": "domus-genoma"})
     if config_paths is None:
-        cache = active_config_path("codex").parent / "plugins/cache"
+        cache = active_config_path("codex", client_environments.get("codex")).parent / "plugins/cache"
         for root in sorted(cache.glob("*/*/*")):
             if not root.is_dir():
                 continue
@@ -475,6 +597,12 @@ def apply_client_receipts(rows, receipts, policy, now=None, observations=None):
                 or witness.get("dependency_fingerprint") != receipt.get("dependency_fingerprint")
                 or witness.get("client_version") != receipt.get("client_version")
                 or witness.get("server_version") != receipt.get("server_version")
+                or not receipt.get("run_id")
+                or not receipt.get("native_session_id")
+                or witness.get("run_id") != receipt.get("run_id")
+                or witness.get("native_session_id") != receipt.get("native_session_id")
+                or witness.get("observed_at") != observed_at
+                or (row.get("server_version") is not None and row["server_version"] != receipt["server_version"])
             ):
                 continue
             dimensions = receipt.get("dimensions", {})
@@ -486,8 +614,56 @@ def apply_client_receipts(rows, receipts, policy, now=None, observations=None):
             row["client_version"] = receipt["client_version"]
             row["dependency_fingerprint"] = witness["dependency_fingerprint"]
             row["evidence_age_seconds"] = age
-            accepted.add(key[0])
+            if all(
+                row["dimensions"].get(k) in ("pass", "not_applicable")
+                for k in ("startup_ui", "explicit_ui", "isolation", "client_route")
+            ):
+                accepted.add(key[0])
     return accepted
+
+
+def native_receipts(rows, policy, observation):
+    """Bind direct collector output to one unambiguous registration and its policy."""
+    receipts, witnesses = [], {}
+    if observation.get("schema_version") != "limen.native_observation.v1" or observation.get("client") != "codex":
+        return receipts, witnesses
+    for server in observation.get("servers", []):
+        matches = [
+            r
+            for r in rows
+            if r["client"] == "codex"
+            and r["name"] == server["name"]
+            and ((r["route"] == "standalone" and not server.get("plugin_id")) or r["route"] == server.get("plugin_id"))
+        ]
+        if len(matches) != 1 or not server.get("server_version"):
+            continue
+        row = matches[0]
+        dependency = fingerprint(
+            [
+                observation["binary_fingerprint"],
+                observation["configuration_fingerprint"],
+                row["fingerprint"],
+                server["server_version"],
+            ]
+        )
+        receipt = {
+            "schema_version": "limen.mcp_client_canary.v1",
+            **{k: row[k] for k in ("client", "name", "route", "fingerprint")},
+            "contract_fingerprint": fingerprint(policy["services"].get(row["service"], {})),
+            **{k: observation[k] for k in ("run_id", "native_session_id", "client_version", "observed_at")},
+            "server_version": server["server_version"],
+            "dependency_fingerprint": dependency,
+            "dimensions": {"client_route": "pass" if server.get("runtime_status") == "connected" else "unmeasured"},
+        }
+        receipts.append(receipt)
+        witnesses[(row["client"], row["name"], row["route"])] = {
+            "receipt_fingerprint": fingerprint(receipt),
+            "dependency_fingerprint": dependency,
+            "client_version": receipt["client_version"],
+            "server_version": receipt["server_version"],
+            **{k: receipt[k] for k in ("run_id", "native_session_id", "observed_at")},
+        }
+    return receipts, witnesses
 
 
 def measure(policy, records, issues, inventory_only=False, service=None, timeout=15, total_timeout=120):
@@ -515,6 +691,8 @@ def measure(policy, records, issues, inventory_only=False, service=None, timeout
             repair_outcome="not_attempted",
             provenance=record.get("provenance", []) + [{k: record[k] for k in ("source", "fingerprint", "active")}],
         )
+        if "plugin_selection" in record:
+            row["plugin_selection"] = record["plugin_selection"]
         if len(enabled_routes.get((record["client"], record["service"]), [])) > 1:
             d["ownership"] = "fail"
         if spec and spec["invalid"]:
@@ -531,10 +709,7 @@ def measure(policy, records, issues, inventory_only=False, service=None, timeout
         elif not inventory_only and owner and time.monotonic() < deadline:
             contract = owner.get("verification", {})
             # Unknown launchers can pop UI or initiate auth. They remain counted, never launched speculatively.
-            quiet = spec["transport"] == "http" or contract.get("quiet_probe") is True
-            if record["service"] == "serena":
-                args = spec.get("args", [])
-                quiet = any(args[i : i + 2] == ["--open-web-dashboard", "false"] for i in range(len(args)))
+            quiet = quiet_probe_allowed(record)
             if quiet:
                 result = verify(
                     spec,
@@ -579,6 +754,10 @@ def main(argv=None):
     parser.add_argument("--strict", action="store_true")
     parser.add_argument("--apply", action="store_true", help="one policy-owned Serena settings repair; no login")
     parser.add_argument("--receipts", type=Path, help="private client canary receipt bundle")
+    parser.add_argument(
+        "--collect-codex", action="store_true", help="fresh admitted native catalog and route observation"
+    )
+    parser.add_argument("--broker-run", help="active broker execution run owning the native observation")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
     if not 0 < args.timeout <= 120 or not 0 < args.total_timeout <= 600:
@@ -590,12 +769,46 @@ def main(argv=None):
         # receipt is required; absence is visible even on a machine without that client installed.
         payload = measure(policy, records, issues, args.inventory_only, args.service, args.timeout, args.total_timeout)
         accepted = set()
+        if args.collect_codex:
+            from mcp_native_observer import collect_codex, ProtocolError
+            from limen.host_admission import AdmissionDenied
+            from limen.conduct.broker import ConductError
+
+            try:
+                if not args.broker_run:
+                    raise ValueError("native collection requires its broker run")
+                from limen.conduct.client import client_from_env
+
+                # Listing status can start every configured MCP. Require every active
+                # declaration to have an owner-declared quiet probe before doing so.
+                codex_records = [
+                    r
+                    for r in records
+                    if r["client"] == "codex" and r["active"] and r["spec"] and not r["spec"]["disabled"]
+                ]
+                quiet = bool(codex_records) and all(quiet_probe_allowed(r) for r in codex_records)
+                observation = collect_codex(
+                    client_from_env(),
+                    args.broker_run,
+                    args.project or Path.cwd(),
+                    timeout=min(args.total_timeout, 120),
+                    include_mcp=quiet and not args.inventory_only,
+                )
+                fresh_records, _, _, _ = inventory(policy, project=args.project)
+                if fingerprint(records) != fingerprint(fresh_records):
+                    raise ValueError("configuration changed during native collection")
+                receipts, witnesses = native_receipts(payload["servers"], policy, observation)
+                accepted |= apply_client_receipts(payload["servers"], receipts, policy, observations=witnesses)
+                payload["native_observation"] = {k: v for k, v in observation.items() if k != "servers"}
+                payload["native_observation"]["observed_servers"] = len(observation["servers"])
+            except (ValueError, OSError, ProtocolError, ConductError, AdmissionDenied, subprocess.SubprocessError):
+                issues.append({"client": "codex", "reason": "native_collection_unavailable", "owner": "limen"})
         if args.receipts:
             try:
                 receipts = json.loads(args.receipts.read_text())
                 if not isinstance(receipts, list):
                     raise ValueError("invalid receipt bundle")
-                accepted = apply_client_receipts(payload["servers"], receipts, policy)
+                accepted |= apply_client_receipts(payload["servers"], receipts, policy)
             except (ValueError, OSError, TypeError):
                 issues.append({"reason": "canary_receipts_unavailable", "owner": "limen"})
         for client in policy.get("required_client_adapters", []):
