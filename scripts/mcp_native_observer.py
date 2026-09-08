@@ -124,15 +124,38 @@ def native_skills(response):
     }
 
 
-def collect_codex(broker, run_id, project, timeout=45, include_mcp=False):
+def native_call_contract(calls):
+    if not isinstance(calls, list) or len(calls) > 10:
+        raise ProtocolError("invalid native functional batch")
+    for call in calls:
+        if (
+            not isinstance(call, dict)
+            or call.get("read_only") is not True
+            or call.get("method") != "tools/call"
+            or not isinstance(call.get("server"), str)
+            or not isinstance(call.get("params"), dict)
+            or not isinstance(call["params"].get("name"), str)
+            or not isinstance(call["params"].get("arguments", {}), dict)
+            or not isinstance(call.get("launch_fingerprint"), str)
+        ):
+            raise ProtocolError("native call lacks an owner-bound read-only contract")
+
+
+def collect_codex(broker, run_id, project, timeout=45, include_mcp=False, safe_calls=None):
     """Produce observations directly from a new native process under host admission.
 
     Skills listing proves the native catalog, not the model's rendered context budget.
     MCP status can initialize configured servers; callers must prove quiet configuration
     before requesting it. The default only reads configuration and skill metadata.
     """
+    from mcp_estate import native_configuration_index
+
     started = time.time()
     binding = require_live_run(broker, run_id, started)
+    calls = [] if safe_calls is None else safe_calls
+    native_call_contract(calls)
+    if calls and not include_mcp:
+        raise ProtocolError("native functional calls require admitted MCP startup")
     if not 0 < timeout <= 120:
         raise ValueError("native collector deadline outside bounds")
     executable = shutil.which("codex")
@@ -166,11 +189,20 @@ def collect_codex(broker, run_id, project, timeout=45, include_mcp=False):
                 raise ProtocolError("native client version identity mismatch")
             wire.exchange("initialized", notification=True)
             config_before = wire.exchange("config/read", {"includeLayers": True})
+            effective = native_configuration_index("codex", config_before)
             catalog = native_skills(
                 wire.exchange("skills/list", {"cwds": [str(Path(project).resolve())], "forceReload": True})
             )
             servers, cursor, seen = [], None, set()
+            thread_id = None
+            functional = {"attempted": 0, "passed": 0, "state": "unmeasured"}
+            per_server = {}
             if include_mcp:
+                started_thread = wire.exchange("thread/start", {"cwd": str(Path(project).resolve()), "ephemeral": True})
+                thread = started_thread.get("thread")
+                if not isinstance(thread, dict) or not isinstance(thread.get("id"), str) or not thread["id"]:
+                    raise ProtocolError("missing native thread identity")
+                thread_id = thread["id"]
                 for _ in range(100):
                     params = {"limit": 100}
                     if cursor is not None:
@@ -187,6 +219,57 @@ def collect_codex(broker, run_id, project, timeout=45, include_mcp=False):
                     seen.add(cursor)
                 else:
                     raise ProtocolError("native pagination ceiling")
+                if calls and (
+                    wire.exchange("config/read", {"includeLayers": True}) != config_before
+                    or file_digest(executable) != binary_before
+                ):
+                    raise ProtocolError("native dependencies changed before functional calls")
+                # Validate the complete batch against native configuration and catalog
+                # before the first call. A name match alone cannot bind a route.
+                for call in calls:
+                    matches = [
+                        server
+                        for server in servers
+                        if isinstance(server, dict) and server.get("name") == call["server"]
+                    ]
+                    declaration = effective.get("registrations", {}).get(call["server"], {})
+                    if (
+                        len(matches) != 1
+                        or matches[0].get("runtimeStatus") != "connected"
+                        or call["params"]["name"] not in matches[0].get("tools", {})
+                        or declaration.get("valid") is not True
+                        or declaration.get("disabled") is not False
+                        or declaration.get("launch_fingerprint") != call["launch_fingerprint"]
+                    ):
+                        raise ProtocolError("native functional route is not bound")
+                for call in calls:
+                    functional["attempted"] += 1
+                    outcome = per_server.setdefault(
+                        call["server"], {"attempted": 0, "passed": 0, "state": "unmeasured"}
+                    )
+                    outcome["attempted"] += 1
+                    result = wire.exchange(
+                        "mcpServer/tool/call",
+                        {
+                            "threadId": thread_id,
+                            "server": call["server"],
+                            "tool": call["params"]["name"],
+                            "arguments": call["params"].get("arguments", {}),
+                        },
+                    )
+                    if result.get("isError") is True or not isinstance(result.get("content"), list):
+                        functional["state"] = "fail"
+                        outcome["state"] = "fail"
+                        break
+                    functional["passed"] += 1
+                    outcome["passed"] += 1
+                    outcome["state"] = "pass"
+                if calls and functional["passed"] == len(calls):
+                    functional["state"] = "pass"
+                for name, outcome in per_server.items():
+                    if outcome["state"] != "fail":
+                        required = sum(call["server"] == name for call in calls)
+                        outcome["state"] = "pass" if outcome["passed"] == required else "unmeasured"
             config_after = wire.exchange("config/read", {"includeLayers": True})
             if config_before != config_after or binary_before != file_digest(executable):
                 raise ProtocolError("native dependencies changed during collection")
@@ -214,19 +297,21 @@ def collect_codex(broker, run_id, project, timeout=45, include_mcp=False):
                 "auth_status": server.get("authStatus"),
                 "runtime_status": server.get("runtimeStatus"),
                 "tool_names": sorted(tools),
+                "functional": per_server.get(server["name"], {"state": "unmeasured"}),
             }
         )
     return {
         "schema_version": "limen.native_observation.v1",
         "client": "codex",
         **binding,
-        "native_session_id": str(uuid.uuid4()),
+        "native_session_id": thread_id or str(uuid.uuid4()),
         "client_version": version,
-        "native_session_kind": "app-server-connection",
+        "native_session_kind": "ephemeral-native-thread" if thread_id else "app-server-connection",
         "native_process_id": wire.process.pid,
         "native_version_fingerprint": digest(initialized.get("userAgent")),
         "binary_fingerprint": binary_before,
         "configuration_fingerprint": digest(config_before),
+        "effective_configuration": effective,
         "started_at": started,
         "observed_at": time.time(),
         "latency_ms": int((time.time() - started) * 1000),
@@ -234,4 +319,5 @@ def collect_codex(broker, run_id, project, timeout=45, include_mcp=False):
         "processes": wire.custody.report() if getattr(wire, "custody", None) else {"measurement": "unmeasured"},
         "skills": catalog,
         "servers": clean_servers,
+        "functional": functional,
     }
