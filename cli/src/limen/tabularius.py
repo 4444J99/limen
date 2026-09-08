@@ -869,8 +869,21 @@ def _local_budget_refund(board: dict[str, Any], task: dict[str, Any], event: dic
     budget = (board.get("portal") or {}).get("budget") or {}
     if not budget or not amount:
         return
+    timestamp = claim.get("timestamp")
+    try:
+        if not isinstance(timestamp, str) or not re.fullmatch(
+            r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|\+00:00)", timestamp
+        ):
+            raise ValueError("unknown canonical UTC claim timestamp")
+        claim_day = datetime.fromisoformat(timestamp.replace("Z", "+00:00")).date().isoformat()
+    except ValueError as exc:
+        raise ValueError(f"task {task['id']} cannot derive a canonical budget refund window") from exc
     _reset_local_budget_window(budget, str(event["timestamp"]))
     track = budget["track"]
+    # The reservation was already retired by rollover; it owns no credit in
+    # this day's ledger, even if later metadata was written in this window.
+    if track["date"] != claim_day:
+        return
     track.setdefault("per_agent", {})
     track["spent"] = max(0, int(track.get("spent") or 0) - amount)
     track["per_agent"][agent] = max(0, int(track["per_agent"].get(agent) or 0) - amount)

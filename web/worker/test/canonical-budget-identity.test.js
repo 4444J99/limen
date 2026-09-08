@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { applyTaskPacketProjectionEvent } from "../src/conduct/projection.js";
+import { applyTaskPacketProjectionEvent, applyTaskCompatibilityEvent } from "../src/conduct/projection.js";
 
 function fixture() {
   return {
@@ -153,4 +153,95 @@ test("postlaunch reroute retains each attempt debit and immutable cost", () => {
   assertTrack(board, 14, 9);
   board = applyTaskPacketProjectionEvent(board, event("task.status", { status: "open" }, "dispatched", "second-refund")).board;
   assertTrack(board, 11, 6);
+});
+
+function windowEvent(taskId, kind, patch, priorStatus, timestamp, eventId, agent = "codex") {
+  const request = event(kind, patch, priorStatus, eventId, agent);
+  request.task_id = taskId;
+  request.intent.task_id = taskId;
+  request.timestamp = timestamp;
+  return request;
+}
+for (const newAgent of ["codex", "jules"]) {
+  for (const metadata of [false, true]) {
+    test(`previous UTC window refund preserves new claims: ${newAgent}, metadata=${metadata}`, () => {
+      let board = fundedBoard();
+      board.tasks.push({ ...structuredClone(board.tasks[0]), id: "NEW", target_agent: newAgent, budget_cost: 5 });
+      board = applyTaskPacketProjectionEvent(board, windowEvent("FIXTURE", "task.claim", { status: "dispatched" }, "open", "2026-09-08T23:59:00Z", "old-claim")).board;
+      board = applyTaskPacketProjectionEvent(board, windowEvent("NEW", "task.claim", { status: "dispatched" }, "open", "2026-09-09T00:01:00Z", "new-claim", newAgent)).board;
+      if (metadata) {
+        board = applyTaskPacketProjectionEvent(board, windowEvent("FIXTURE", "task.mutate", { title: "Unrelated update" }, "dispatched", "2026-09-09T00:02:00Z", "metadata")).board;
+      }
+      const expected = structuredClone(board.portal.budget.track);
+      board = applyTaskPacketProjectionEvent(board, windowEvent("FIXTURE", "task.status", { status: "open" }, "dispatched", "2026-09-09T00:03:00Z", "old-refund")).board;
+      assert.equal(board.tasks[0].status, "open");
+      assert.deepEqual(board.portal.budget.track, expected);
+      assert.equal(board.portal.budget.track.spent, 5);
+      assert.equal(board.portal.budget.track.per_agent[newAgent], 5);
+      board = applyTaskPacketProjectionEvent(board, windowEvent("NEW", "task.status", { status: "open" }, "dispatched", "2026-09-09T00:04:00Z", "new-refund", newAgent)).board;
+      assert.equal(board.portal.budget.track.spent, 0);
+      assert.equal(board.portal.budget.track.per_agent[newAgent], 0);
+    });
+  }
+}
+for (const refundTime of ["2026-09-08T23:59:59Z", "2026-09-09T00:00:00Z"]) {
+  test(`same-window refund and first rollover leave no spend: ${refundTime}`, () => {
+    let board = fixture();
+    board = applyTaskPacketProjectionEvent(board, windowEvent("FIXTURE", "task.claim", { status: "dispatched" }, "open", "2026-09-08T23:59:00Z", "claim")).board;
+    board = applyTaskPacketProjectionEvent(board, windowEvent("FIXTURE", "task.status", { status: "open" }, "dispatched", refundTime, "refund")).board;
+    assert.equal(board.portal.budget.track.date, refundTime.slice(0, 10));
+    assert.equal(board.portal.budget.track.spent, 0);
+    assert.equal(board.portal.budget.track.per_agent.codex, 0);
+  });
+}
+for (const timestamp of [null, "unknown", "2026-09-08T12:00:00", "2026-02-30T12:00:00Z"]) {
+  test(`unknown canonical claim window fails closed: ${timestamp}`, () => {
+    const board = claim(fixture());
+    board.tasks[0].dispatch_log[0].timestamp = timestamp;
+    const before = structuredClone(board);
+    assert.throws(() => applyTaskPacketProjectionEvent(board, event("task.status", { status: "open" }, "dispatched", "refund")), /canonical budget refund window/);
+    assert.deepEqual(board, before);
+  });
+}
+
+function legacyEvent(taskId, action, timestamp, runId = taskId) {
+  return { schema_version: "limen.task_compatibility_event.v1", task_id: taskId,
+    event_id: `${runId}:${action}`, kind: action === "debit" ? "task.dispatched" : "task.cancelled",
+    timestamp, run_id: runId, lease_id: `lease-${runId}`, generation: 1, agent: "codex", session_id: runId,
+    status: action === "debit" ? "dispatched" : "open", from_statuses: [action === "debit" ? "open" : "dispatched"],
+    budget_action: action, output: "Synthetic canonical reservation" };
+}
+for (const nextDay of [false, true]) {
+  test(`legacy cancellation refunds only its canonical budget window: nextDay=${nextDay}`, () => {
+    let board = fixture();
+    board.tasks.push({ ...structuredClone(board.tasks[0]), id: "NEW", budget_cost: 5 });
+    board = applyTaskCompatibilityEvent(board, legacyEvent("FIXTURE", "debit", "2026-09-08T23:58:00Z")).board;
+    const day = nextDay ? "2026-09-09" : "2026-09-08";
+    board = applyTaskCompatibilityEvent(board, legacyEvent("NEW", "debit", `${day}T23:59:00Z`)).board;
+    board = applyTaskCompatibilityEvent(board, legacyEvent("FIXTURE", "refund", `${day}T23:59:30Z`)).board;
+    assert.equal(board.portal.budget.track.spent, 5);
+    assert.equal(board.portal.budget.track.per_agent.codex, 5);
+  });
+}
+test("legacy cancellation cannot refund a different canonical reservation", () => {
+  const board = applyTaskCompatibilityEvent(fixture(), legacyEvent("FIXTURE", "debit", "2026-09-08T23:58:00Z")).board;
+  const before = structuredClone(board);
+  assert.throws(() => applyTaskCompatibilityEvent(board, legacyEvent("FIXTURE", "refund", "2026-09-08T23:59:00Z", "unrelated-run")), /canonical budget refund reservation/);
+  assert.deepEqual(board, before);
+});
+test("postlaunch reroute then new-day claim refunds only the new attempt", () => {
+  let board = fixture();
+  const first = windowEvent("FIXTURE", "task.claim", { status: "dispatched" }, "open", "2026-09-08T23:58:00Z", "first");
+  Object.assign(first.intent.log, { session_id: "d".repeat(64), execution_contract_hash: "e".repeat(64) });
+  board = applyTaskPacketProjectionEvent(board, first).board;
+  const reroute = windowEvent("FIXTURE", "task.status", { status: "open" }, "dispatched", "2026-09-08T23:59:00Z", "reroute");
+  Object.assign(reroute.intent.log, { lifecycle_repair: "provider-reroute", execution_started: true,
+    execution_reservation_id: "d".repeat(64), execution_contract_hash: "e".repeat(64) });
+  board = applyTaskPacketProjectionEvent(board, reroute).board;
+  assert.equal(board.portal.budget.track.spent, 2);
+  board = applyTaskPacketProjectionEvent(board, windowEvent("FIXTURE", "task.claim", { status: "dispatched" }, "open", "2026-09-09T00:01:00Z", "second")).board;
+  assert.equal(board.portal.budget.track.spent, 2);
+  board = applyTaskPacketProjectionEvent(board, windowEvent("FIXTURE", "task.status", { status: "open" }, "dispatched", "2026-09-09T00:02:00Z", "refund")).board;
+  assert.equal(board.portal.budget.track.spent, 0);
+  assert.equal(board.portal.budget.track.per_agent.codex, 0);
 });
