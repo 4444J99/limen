@@ -60,15 +60,17 @@ def _emit(monkeypatch, tmp_path, total, *, metadata_available=True):
         "default_check_policy": "no_required_checks",
         "default_check_policy_complete": True,
         "default_check_policy_error": None,
+        "default_check_policy_receipt": {"status": "no_required_checks", "complete": True},
         "required_check_count": 0,
         "issues": 0,
         "branches": 1,
         "checks": [],
+        "check_total": 0,
     }
     monkeypatch.setattr(collector, "_metadata", lambda _gitvs, _repo: metadata if metadata_available else None)
     fetched = []
 
-    def remote_page(_gitvs, _repo, kind, cursor):
+    def remote_page(_gitvs, _repo, kind, cursor, *, default_sha=None):
         fetched.append(kind)
         assert cursor is None
         if kind == "branches":
@@ -150,7 +152,16 @@ def test_actual_collector_partial_zero_is_not_empty_inventory(monkeypatch, tmp_p
 
 
 @pytest.mark.parametrize(
-    "change", ["cursor", "receipt", "missing_receipt", "inconsistent_generation", "incomplete_partition"]
+    "change",
+    [
+        "cursor",
+        "receipt",
+        "missing_receipt",
+        "inconsistent_generation",
+        "incomplete_partition",
+        "consistently_forged_generation",
+        "metadata_identity",
+    ],
 )
 def test_existing_repository_receipt_binds_connection_generation(monkeypatch, tmp_path, change):
     snapshot, _fetched = _emit(monkeypatch, tmp_path, 2)
@@ -163,6 +174,12 @@ def test_existing_repository_receipt_binds_connection_generation(monkeypatch, tm
     elif change == "inconsistent_generation":
         snapshot["cursors"][0]["source_generation"] = "f" * 64
         snapshot["repository_receipts"][0]["connection_receipt_digest"] = _canonical_sha256(snapshot["cursors"])
+    elif change == "consistently_forged_generation":
+        for cursor in snapshot["cursors"]:
+            cursor["source_generation"] = "f" * 64
+        snapshot["repository_receipts"][0]["connection_receipt_digest"] = _canonical_sha256(snapshot["cursors"])
+    elif change == "metadata_identity":
+        snapshot["repositories"][0]["default_sha"] = "f" * 40
     else:
         snapshot["cursors"][1]["complete"] = False
         snapshot["repository_receipts"][0]["connection_receipt_digest"] = _canonical_sha256(snapshot["cursors"])
