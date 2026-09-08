@@ -1779,8 +1779,8 @@ def _journaled_agent_dispatch(
     store = default_work_loan_journal_store() if journal_root is None else default_work_loan_journal_store(journal_root)
     try:
         store.record_reservation(task, agent=canonical_agent(agent), reservation_id=reservation_id)
-    except WorkLoanJournalError as exc:
-        return _prelaunch_blocked_result(f"work-loan reservation failed: {exc}")
+    except WorkLoanJournalError:
+        return _prelaunch_blocked_result("work-loan reservation failed: WorkLoanJournalError")
     started = time.monotonic()
     try:
         result = call_agent_dispatch(agent, task, dry_run=False)
@@ -1799,9 +1799,23 @@ def _journaled_agent_dispatch(
                 # without inventing a completed/started provider run.
                 metrics={"runs": None},
             )
-        except WorkLoanJournalError as accounting_exc:
-            accounting_failure = f"; work-loan actual accounting also failed: {accounting_exc}"
-        raise _ProviderDispatchError(f"{exc}{accounting_failure}") from exc
+        except WorkLoanJournalError:
+            accounting_failure = "; work-loan actual accounting also failed: WorkLoanJournalError"
+        error_code = (
+            type(exc).__name__
+            if type(exc)
+            in {
+                RuntimeError,
+                ValueError,
+                TypeError,
+                KeyError,
+                OSError,
+                TimeoutError,
+                ConnectionError,
+            }
+            else "ProviderError"
+        )
+        raise _ProviderDispatchError(f"{error_code}{accounting_failure}") from exc
     elapsed_seconds = max(0.0, time.monotonic() - started)
     # Only an explicit prelaunch result proves no capacity was consumed. A
     # blocker reported after a provider attempt must not erase that usage.
@@ -1815,8 +1829,11 @@ def _journaled_agent_dispatch(
             local_host=canonical_agent(agent) in LOCAL_CHECKOUT_AGENTS,
             metrics={"runs": launched_runs},
         )
-    except WorkLoanJournalError as exc:
-        return _blocked_result(f"work-loan actual accounting failed after provider launch: {exc}")
+    except WorkLoanJournalError:
+        if _is_prelaunch_result(result):
+            print(f"  ACCOUNTING DEFERRED {task.id}: WorkLoanJournalError; proven no-launch result retained")
+            return result
+        return _blocked_result("work-loan actual accounting failed after provider launch: WorkLoanJournalError")
     return result
 
 
@@ -5628,7 +5645,7 @@ def _reserve_serial_dispatch(
             receipt = apply_limen_file_sync(
                 tasks_path,
                 fresh,
-                agent="dispatch",
+                agent=agent,
                 session_id="serial-reserve",
                 before=before,
                 now=now,
@@ -5667,8 +5684,10 @@ def _commit_serial_reserved_result(
     now: datetime,
     selected_contract_hash: str,
     reserved_lifecycle_token: str,
-) -> bool:
-    """Commit through canonical CAS; no local projection write needs a queue lock.
+) -> bool | None:
+    """Return True for commit, None for durable deferral, False for stale ownership.
+
+    Commit through canonical CAS; no local projection write needs a queue lock.
 
     A local lock timeout used to discard synchronous outcomes with no provider
     state for harvest to reconstruct. Both sides of this bounded delta retain
@@ -5717,6 +5736,7 @@ def _commit_serial_reserved_result(
                 patch=target_data,
                 log=target.dispatch_log[-1].model_dump(mode="json", exclude_none=True),
                 precondition={"task_sha256": task_state_sha256(before_data)},
+                canonical_base=before_data,
             )
             try:
                 try:
@@ -5739,7 +5759,7 @@ def _commit_serial_reserved_result(
                     _REMOTE_SUBMISSION_RECEIPTS[reserved_task.id] = remote
                 raise
             print(f"  RESULT DEFERRED {target.id}: exact result ticket preserved; canonical commit unacknowledged")
-            raise
+            return None
         return True
     finally:
         if may_clear:
@@ -5939,7 +5959,7 @@ def dispatch_tasks(
             selected_contract_hash,
             reserved_lifecycle_token,
         )
-        if committed and _is_prelaunch_result(result):
+        if committed is True and _is_prelaunch_result(result):
             remaining += reserved_task.budget_cost
         if result == _RATELIMIT:
             print(f"── lane {agent_filter} rate-limited — cooling, {dispatched} dispatched this cycle")

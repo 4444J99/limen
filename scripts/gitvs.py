@@ -630,6 +630,7 @@ def _classify_open_pr(repo: str, row: dict, policy: dict, now: datetime) -> dict
         "private": False,
         "owner": owner,
         "owner_source": owner_source,
+        "author_login": (row.get("author") or {}).get("login"),
         "exact_head_owner": {
             "owner": owner,
             "owner_source": owner_source,
@@ -710,6 +711,7 @@ def _redact_pr_row(row: dict) -> dict:
         "number": None,
         "url": None,
         "owner": None,
+        "author_login": None,
         "head_oid": None,
         "exact_head_owner": None,
         "predicate": None,

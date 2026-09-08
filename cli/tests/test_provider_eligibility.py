@@ -2,10 +2,12 @@
 
 from copy import deepcopy
 from datetime import datetime, timezone
+import json
+from pathlib import Path
 
 import pytest
 
-from limen.execution_contract import execution_contract_hash, execution_contract_payload
+from limen.execution_contract import ExecutionContractError, execution_contract_hash, execution_contract_payload
 from limen.provider_eligibility import (
     EVIDENCE_VERSION,
     POLICY_VERSION,
@@ -14,11 +16,24 @@ from limen.provider_eligibility import (
     policy_sha256,
     provider_eligibility_reason,
     validate_policy,
+    validate_policy_update,
 )
 from limen.provider_selection import ExecutionProfile, ModelCapability, select_opencode_model
 
 
 NOW = datetime(2026, 9, 7, 12, tzinfo=timezone.utc)
+POLICY_CASES = json.loads(
+    (Path(__file__).parents[2] / "web/worker/test/fixtures/provider-eligibility-policies.json").read_text()
+)
+
+
+@pytest.mark.parametrize("case", POLICY_CASES, ids=lambda case: case["name"])
+def test_shared_python_worker_policy_schema(case):
+    if case["valid"]:
+        assert validate_policy(case["policy"]) == case["normalized"]
+    else:
+        with pytest.raises(EligibilityPolicyError):
+            validate_policy(case["policy"])
 
 
 def policy():
@@ -91,8 +106,41 @@ def test_explicit_falsey_policy_is_not_policy_free(value):
 def test_strict_policy_rejects_ambiguous_scope(field, value):
     request = policy()
     request[field] = value
-    with pytest.raises(ValueError):
+    with pytest.raises(EligibilityPolicyError):
         validate_policy(request)
+
+
+def test_malformed_destination_has_domain_error_and_contract_translation():
+    request = policy() | {"destinations": ["https://["]}
+    with pytest.raises(EligibilityPolicyError, match="^invalid destination$"):
+        validate_policy(request)
+    with pytest.raises(ExecutionContractError, match="provider_eligibility"):
+        execution_contract_payload(
+            {
+                "id": "FIXTURE",
+                "title": "Read receipts",
+                "target_agent": "fixture",
+                "repo": "example/fixture",
+                "provider_eligibility": request,
+            }
+        )
+
+
+@pytest.mark.parametrize("replacement", [None, policy() | {"max_retention_days": 30}])
+def test_bound_policy_cannot_be_removed_or_replaced(replacement):
+    existing = {"repo": "example/fixture", "provider_eligibility": policy()}
+    with pytest.raises(EligibilityPolicyError, match="provider_eligibility_change_unauthorized"):
+        validate_policy_update(existing, existing | {"provider_eligibility": replacement})
+
+
+def test_bound_policy_normalization_and_repository_match():
+    existing = {"repo": "example/fixture", "provider_eligibility": policy()}
+    candidate = existing | {"provider_eligibility": policy() | {"repository": "EXAMPLE/Fixture"}}
+    assert validate_policy_update(existing, candidate) == policy()
+    assert validate_policy_update(existing, existing | {"title": "unrelated change"}) == policy()
+    with pytest.raises(EligibilityPolicyError, match="provider_eligibility_repository_mismatch"):
+        validate_policy_update(existing, existing | {"repo": "example/other"})
+    assert validate_policy_update(None, {"repo": "example/fixture", "provider_eligibility": None}) is None
 
 
 def test_type_valid_is_not_authenticated_and_production_stays_blocked():

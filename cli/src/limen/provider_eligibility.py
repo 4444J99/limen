@@ -24,6 +24,7 @@ _REVISION = re.compile(r"[0-9a-f]{40}\Z")
 _DIGEST = re.compile(r"[0-9a-f]{64}\Z")
 _IDENTIFIER = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}\Z")
 _REPOSITORY = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*/[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
+_ORIGIN_AUTHORITY = re.compile(r"(?:\[[0-9A-Fa-f:.]+\]|[^:/@?#\[\]]+)(?::[0-9]+)?\Z")
 _POLICY_KEYS = {
     "schema_version",
     "repository",
@@ -82,14 +83,16 @@ def _strings(value: object, *, origins: bool = False) -> list[str]:
         if (
             parsed.scheme != "https"
             or not parsed.hostname
-            or parsed.username
-            or parsed.password
+            or parsed.username is not None
+            or parsed.password is not None
             or parsed.path
             or parsed.query
             or parsed.fragment
             or "*" in item
-            or any(char.isspace() for char in item)
+            or "\\" in item
+            or any(char.isspace() or ord(char) < 32 or ord(char) == 127 for char in item)
             or item != "https://" + parsed.netloc
+            or not _ORIGIN_AUTHORITY.fullmatch(parsed.netloc)
         ):
             raise EligibilityPolicyError("destination must be an exact HTTPS origin")
         try:
@@ -128,6 +131,25 @@ def validate_policy(value: object) -> dict[str, Any]:
 def policy_sha256(policy: object) -> str:
     encoded = json.dumps(validate_policy(policy), sort_keys=True, separators=(",", ":")).encode()
     return hashlib.sha256(encoded).hexdigest()
+
+
+def validate_policy_update(existing: Mapping[str, Any] | None, candidate: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Validate canonical intake without granting policy-removal authority.
+
+    ``candidate`` is the merged task row, never an unmerged partial patch.
+    Existing bound policies may only be restated with equivalent normalized
+    values. No agent-provided migration marker can remove or replace them.
+    """
+    value = candidate.get("provider_eligibility")
+    normalized = None if value is None else validate_policy(value)
+    prior = existing.get("provider_eligibility") if existing is not None else None
+    if prior is not None and normalized != validate_policy(prior):
+        raise EligibilityPolicyError("provider_eligibility_change_unauthorized")
+    if normalized is not None:
+        repository = candidate.get("repo")
+        if not isinstance(repository, str) or repository.lower() != normalized["repository"]:
+            raise EligibilityPolicyError("provider_eligibility_repository_mismatch")
+    return normalized
 
 
 def _timestamp(value: object) -> datetime:
