@@ -113,7 +113,14 @@ reader, infers an answer, or posts a receipt.
 3. Commit the response set and decision memo on this same branch. On that clean
    exact head, create the ready-to-post marked receipt candidate:
 
-   `python3 docs/positioning/program/w07_blinded_reader_workflow.py receipt docs/receipts/positioning/psp-p03-w07-reader-responses.json docs/receipts/positioning/psp-p03-w07-decision-memo.md --output /tmp/psp-p03-w07-receipt-candidate.md`
+   `python3 docs/positioning/program/w07_blinded_reader_workflow.py receipt docs/receipts/positioning/psp-p03-w07-reader-responses.json docs/receipts/positioning/psp-p03-w07-decision-memo.md --authority-file /tmp/psp-p03-w07-current-authority.json --output /tmp/psp-p03-w07-receipt-candidate.md`
+
+   Supply the existing receipt `authority` object from the actual current protected
+   direct-human registration or authenticated broker lease in the private authority
+   file. Do not reuse a past session ID or generate an identifier to satisfy the
+   command. A missing registration is a blocker. The command checks the object's
+   shape; it does not authenticate the broker or grant authority. The authorized
+   publisher must verify that registration is current before posting a candidate.
 
 The receipt command refuses pending, invalid, dirty, untracked, stale-memo, or
 below-threshold evidence. It binds the candidate to the accepted stimulus head
@@ -123,4 +130,3 @@ authority, changed paths, and rollback. The candidate is still not completion:
 post it only through the authorized GitHub surface, then run
 `python3 scripts/positioning-program.py --verify-work PSP-P03-W07` and close
 #2188 only after that verifier passes.
-
