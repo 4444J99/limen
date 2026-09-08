@@ -1,0 +1,87 @@
+{
+  "branch": "work/git-finishline-handoff-20260908",
+  "contract": {
+    "authorization": {
+      "approval_mode": "never",
+      "mode": "full_non_destructive",
+      "retained_gates": [
+        "destructive",
+        "credential",
+        "paid_spend",
+        "public_send",
+        "runtime_or_host_mutation"
+      ],
+      "reversible_in_scope": "proceed_without_confirmation",
+      "sandbox": "workspace-write"
+    },
+    "conductor": {
+      "boundary_rule": "recheck_remaining_runway_before_each_packet",
+      "expiry_rule": "stop_or_emit_successor_before_zero",
+      "lane_selection": "derive_from_live_capabilities",
+      "mode": "route_bounded_packets",
+      "provider_and_model": "provider_neutral"
+    },
+    "runway": {
+      "deadline_at": null,
+      "deadline_epoch": null,
+      "duration_seconds": 14400,
+      "requested": "4h",
+      "started_at": null,
+      "started_epoch": null
+    },
+    "schema": "limen.workstream.contract.v1"
+  },
+  "private_capsule": {
+    "content": "redacted",
+    "modules": [
+      "README.md",
+      "manifest.md",
+      "workstream.json",
+      "workstream-contract.py",
+      "intent.md",
+      "runtime.md",
+      "closeout.md",
+      "kickstart.sh",
+      "capsule.identity"
+    ]
+  },
+  "schema": "limen.workstream.receipt.v1",
+  "slug": "git-finishline-handoff-20260908",
+  "workstream": null,
+  "continuation": {
+    "owner": "https://github.com/4444J99/limen/pull/2573",
+    "prepared_from": "4b76be3ef799d3a486fdefc14470f4ae6bef1055",
+    "human_protected": true,
+    "preparation_verified": true,
+    "agent_launched": false,
+    "retain_prepared_checkout": true,
+    "launch_command": "bash .limen-workstream/kickstart.sh",
+    "launch_working_directory": "handoff worktree repository root",
+    "inherited_owner": "docs/continuations/git-finishline-20260908/",
+    "inherited_ledgers": [
+      "receipt.json",
+      "stash-custody.json",
+      "branch-custody.json",
+      "pr-custody.json",
+      "review-dispositions.json"
+    ],
+    "validation": {
+      "production_head": "1fb83ecd33381e4bb135dbb9ef957a77389e8bc4",
+      "cheap_gates_passed": 32,
+      "scoped_exit_code": 75,
+      "heavy_wave": "not executed; machine-wide host admission rejected swap pressure",
+      "capsule_only_head": "4b76be3ef799d3a486fdefc14470f4ae6bef1055",
+      "capsule_differential_cheap_gates_passed": 4,
+      "capsule_differential_exit_code": 0,
+      "resume_rule": "Preserve unchanged green receipts; run only denied heavy shards under genuine admission, plus predicates implicated by changed inputs."
+    },
+    "merge_condition": {
+      "repository": "4444J99/limen",
+      "pr": 2573,
+      "expected_published_head": "4b76be3ef799d3a486fdefc14470f4ae6bef1055",
+      "predicate": "All implicated local exact-head predicates satisfied, including previously denied heavy shards under host admission.",
+      "action": "Verify the current PR head and squash through the fast lane with --match-head-commit bound to that verified head.",
+      "head_movement": "Assess changed inputs and invalidate only implicated shard receipts."
+    }
+  }
+}
