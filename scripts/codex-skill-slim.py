@@ -1,47 +1,20 @@
 #!/usr/bin/env python3
-"""codex-skill-slim.py — distill Codex skill/plugin descriptions to fit the skills budget.
+"""Codex skill metadata custody, candidate accounting, and native catalog observation.
 
-The pain: Codex warns "skill descriptions were shortened to fit the 2% skills context
-budget" every session and then mangles descriptions on its own. The session-noise-containment
-doctrine (domus-genoma reliquary, Rule 1) BANS the obvious "fix" — disabling plugins/skills —
-because that reduces capability to silence noise. And letting the notice ride is rug-sweeping.
+Filesystem candidates include cached plugins, user skills and memory skills. Historical
+truncation logs inform a conservative description-size estimate; neither source establishes
+the current native catalog or the model context actually rendered in a new session.
 
-The third path (his directive 2026-07-02): make the descriptions THINNER. Keep EVERY skill;
-distill each description to a meaning-preserving lead so the total fits the budget and Codex
-never has to shorten anything. This is "distillation, not reduction."
+--catalog-json reports candidate identities, paths, descriptions and formatting. Adding
+--native-run RUN collects a fresh Codex app-server catalog under a live broker execution
+lease and host admission, then reports differences between native and filesystem populations.
+Native listing does not expose rendered token-budget telemetry: omissions from the model
+context and stripped descriptions remain unknown until that independent evidence exists.
 
-GROUND TRUTH (corrected 2026-07-03): Codex loads skill metadata from EVERY cached marketplace
-plugin — not just the ones enabled in config.toml — plus `~/.codex/skills` and
-`~/.codex/memories/skills`. Its own render log proves it: `budget_limit=5440 total_skills=133`
-with only 9 plugins enabled. So this organ enumerates the FULL loaded set, and the cap is
-DERIVED from Codex's live per-skill allowance (budget ÷ skill-count), never a hardcoded number —
-the earlier 240-char / enabled-only version was scoped to ~17 of the 133 skills and left the
-warning firing. Slimming below Codex's own allowance is what makes truncation stop.
-
-DURABILITY: the fat lives in `~/.codex/plugins/cache/**` (marketplace caches) which REVERT on
-refresh, so this is a REPAIR organ, not a one-shot edit (containment Rule 6): idempotent, run
-every beat, re-distilling anything that reverted to fat. A backup ledger + `--restore` is the
-revert guard (Rule 10); `--check` is standing detection so a reversion surfaces in the beat log —
-never hidden.
-
-`--check` is deliberately NOT self-referential (the failure that shipped once: a green byte-count
-that only proved we agreed with ourselves). It couples TWO signals: (1) predictive — anything over
-the derived cap will be truncated on Codex's next render; (2) confirmatory — Codex's OWN render log
-(`logs_2.sqlite`) as an independent witness: if Codex truncated AFTER our last real slim (ledger
-mtime), the cap was silently too loose and we exit 1 EVEN IF every description looks under-cap. The
-witness overrides the proxy, so a false-green cannot recur.
-
-Modes:
-  (no flag)   dry-run report — rank every description, show what WOULD be slimmed. Safe.
-  --apply     write the distilled descriptions (atomic, validated, backed up first).
-  --check     exit 1 if any tracked description exceeds the cap OR Codex's log shows it truncated
-              since the last slim (predictive proxy + ground-truth witness; for the beat/CI).
-  --restore   put every original description back from the backup ledger (revert guard).
-  --quiet     one summary line instead of per-entry lines (used by the beat).
-
-Missing evidence returns 77. A metadata-size proxy never certifies native skill loading.
-Never prints secrets; descriptions are public plugin metadata, but logs stay counts-only under
---quiet. Read-only outside --apply/--restore.
+--apply changes description metadata only, with validated private write-ahead custody.
+--restore is conditional on unchanged installed artifacts. Instruction bodies are preserved.
+--check returns 77 when fresh native rendering evidence is missing. No size estimate,
+historical truncation log or caller-supplied receipt bundle can certify native loading.
 """
 
 from __future__ import annotations
@@ -455,7 +428,7 @@ def _key(t: dict) -> str:
     return f"{t['path']}::{t['field']}"
 
 
-def catalog_evidence() -> dict:
+def catalog_evidence(native_catalog=None) -> dict:
     """Enumerate candidate metadata without confusing a filesystem census with native loading."""
     import yaml
 
@@ -485,6 +458,7 @@ def catalog_evidence() -> dict:
                 name=metadata["name"],
                 name_chars=len(metadata["name"]),
                 description_chars=len(description or ""),
+                description_fingerprint=_digest(description or ""),
                 body_fingerprint=_digest(parts[2]),
                 state="description_missing" if not description else "parsed",
             )
@@ -499,7 +473,7 @@ def catalog_evidence() -> dict:
             pass
         entries.append(row)
     telemetry = codex_skill_budget()
-    return {
+    result = {
         "schema_version": "limen.codex_skill_catalog.v1",
         "exit": 77,
         "scope": "filesystem_candidates",
@@ -513,6 +487,24 @@ def catalog_evidence() -> dict:
         "runtime_budget": telemetry,
         "fresh_native_loading_witness": False,
     }
+    if native_catalog is not None:
+        # Only the in-process native collector supplies this argument. A receipt
+        # bundle or old truncation log cannot promote a filesystem census.
+        native_entries = native_catalog["entries"]
+        candidates = {r["path_fingerprint"]: r for r in entries}
+        native = {r["path_fingerprint"]: r for r in native_entries}
+        result.update(
+            scope="native_catalog_and_filesystem_candidates",
+            native_telemetry="catalog_without_render_budget",
+            native_catalog=native_catalog,
+            candidate_not_in_native=len(set(candidates) - set(native)),
+            native_not_in_candidates=len(set(native) - set(candidates)),
+            native_description_differences=sum(
+                candidates[key].get("description_fingerprint") != native[key]["description_fingerprint"]
+                for key in set(candidates) & set(native)
+            ),
+        )
+    return result
 
 
 def run(mode: str, quiet: bool) -> int:
@@ -682,9 +674,27 @@ def main() -> int:
     g.add_argument("--restore", action="store_true", help="restore original descriptions from the ledger")
     ap.add_argument("--quiet", action="store_true", help="one summary line (for the beat)")
     g.add_argument("--catalog-json", action="store_true", help="sanitized metadata accounting and native evidence gaps")
+    ap.add_argument("--native-run", help="collect a fresh native catalog under this active broker run")
     args = ap.parse_args()
     if args.catalog_json:
-        payload = catalog_evidence()
+        native = None
+        binding = None
+        if args.native_run:
+            sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli/src"))
+            from mcp_native_observer import collect_codex, ProtocolError
+            from limen.conduct.client import client_from_env
+            from limen.conduct.broker import ConductError
+            from limen.host_admission import AdmissionDenied
+            import subprocess
+
+            try:
+                binding = collect_codex(client_from_env(), args.native_run, Path.cwd())
+                native = binding["skills"]
+            except (ProtocolError, ConductError, AdmissionDenied, ValueError, OSError, subprocess.SubprocessError):
+                binding = {"state": "native_collection_unavailable"}
+        payload = catalog_evidence(native)
+        if binding:
+            payload["observation"] = {k: v for k, v in binding.items() if k not in ("skills", "servers")}
         print(json.dumps(payload, indent=2))
         return payload["exit"]
     if not CODEX_HOME.is_dir():
