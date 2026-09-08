@@ -168,3 +168,58 @@ def test_existing_repository_receipt_binds_connection_generation(monkeypatch, tm
         snapshot["repository_receipts"][0]["connection_receipt_digest"] = _canonical_sha256(snapshot["cursors"])
     with pytest.raises(InventoryAdmissionError):
         _count(snapshot)
+
+
+def test_actual_collector_content_digest_binds_authored_count(monkeypatch, tmp_path):
+    snapshot, _fetched = _emit(monkeypatch, tmp_path, 2)
+    assert _count(snapshot) == 1
+    original_digest = snapshot["source_report"]["content_sha256"]
+    for leaf in snapshot["leaves"]:
+        if leaf["kind"] == "pull_request":
+            leaf["author_login"] = "another-author"
+    assert _canonical_sha256(snapshot["leaves"]) != original_digest
+    with pytest.raises(InventoryAdmissionError, match="inventory_content_digest_invalid"):
+        _count(snapshot)
+
+
+@pytest.mark.parametrize("digest", [None, "", "0" * 64, 42])
+def test_actual_collector_requires_content_digest(monkeypatch, tmp_path, digest):
+    snapshot, _fetched = _emit(monkeypatch, tmp_path, 2)
+    snapshot["source_report"]["content_sha256"] = digest
+    with pytest.raises(InventoryAdmissionError, match="inventory_content_digest_invalid"):
+        _count(snapshot)
+
+
+@pytest.mark.parametrize("field", ["normalized_leaf_count", "known_leaf_count"])
+@pytest.mark.parametrize("value", [None, True, -1, 0, "3"])
+def test_actual_collector_reported_leaf_count_is_exact(monkeypatch, tmp_path, field, value):
+    snapshot, _fetched = _emit(monkeypatch, tmp_path, 2)
+    report = snapshot["source_report"]
+    target = report["cursor"] if field == "known_leaf_count" else report
+    target[field] = value
+    with pytest.raises(InventoryAdmissionError, match="inventory_leaf_count_invalid"):
+        _count(snapshot)
+
+
+def test_actual_collector_incomplete_leaf_count_fails_closed(monkeypatch, tmp_path):
+    snapshot, _fetched = _emit(monkeypatch, tmp_path, 0)
+    snapshot["source_report"]["cursor"]["leaf_count_complete"] = False
+    with pytest.raises(InventoryAdmissionError, match="inventory_leaf_count_invalid"):
+        _count(snapshot)
+
+
+def test_actual_collector_hashes_all_leaf_kinds(monkeypatch, tmp_path):
+    snapshot, _fetched = _emit(monkeypatch, tmp_path, 2)
+    branch = next(leaf for leaf in snapshot["leaves"] if leaf["kind"] == "branch")
+    branch["private_note"] = "sensitive-synthetic-value"
+    with pytest.raises(InventoryAdmissionError) as error:
+        _count(snapshot)
+    assert str(error.value) == "inventory_content_digest_invalid"
+
+
+def test_actual_collector_unhashable_content_has_redacted_denial(monkeypatch, tmp_path):
+    snapshot, _fetched = _emit(monkeypatch, tmp_path, 2)
+    snapshot["leaves"][0]["private_note"] = {"sensitive-synthetic-value"}
+    with pytest.raises(InventoryAdmissionError) as error:
+        _count(snapshot)
+    assert str(error.value) == "inventory_content_digest_invalid"

@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from limen.conduct.store import MemoryStateStore
-from limen.github_estate_census import build_github_estate_census
+from limen.github_estate_census import _canonical_sha256, build_github_estate_census
 from limen.inventory_admission import (
     InventoryAdmissionError,
     inventory_count,
@@ -20,14 +20,17 @@ PRIOR = {"id": "GEN-org-repo-tests", "status": "open", "labels": []}
 DESIRED = {**PRIOR, "status": "dispatched"}
 
 
-def census(count=2, aliases=("organvm/example",)):
+def census(count=2, aliases=("organvm/example",), *, author_logins=None):
     def page(_repo, kind, cursor):
         assert kind == "pull_requests"
         start = int(cursor or "0")
         end = min(start + 100, count)
         return {
             "total_count": count,
-            "nodes": [{"number": i + 1, "author_login": "4444J99"} for i in range(start, end)],
+            "nodes": [
+                {"number": i + 1, "author_login": author_logins[i] if author_logins else "4444J99"}
+                for i in range(start, end)
+            ],
             "has_next_page": end < count,
             "end_cursor": str(end) if end < count else None,
         }
@@ -66,8 +69,7 @@ def admit(snapshot, reservations=0):
 
 
 def test_authored_scope_is_distinct_from_all_authors():
-    snapshot = census()
-    snapshot["leaves"][1]["author_login"] = "dependabot[bot]"
+    snapshot = census(author_logins=["4444J99", "dependabot[bot]"])
     assert count(snapshot) == 1
 
 
@@ -105,6 +107,8 @@ def test_migration_aliases_deduplicate_stable_repository_id():
     snapshot = census(1, aliases=("organvm/example", "new-org/example"))
     assert count(snapshot) == 1
     snapshot["leaves"][1]["author_login"] = "somebody-else"
+    # A self-consistent content receipt cannot authorize conflicting identities.
+    snapshot["source_report"]["content_sha256"] = _canonical_sha256(snapshot["leaves"])
     with pytest.raises(InventoryAdmissionError, match="migration_conflict"):
         count(snapshot)
 

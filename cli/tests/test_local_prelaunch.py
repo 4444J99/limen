@@ -137,15 +137,18 @@ def test_local_presubmit_rejections_record_zero_provider_runs(tmp_path, monkeypa
         assert dispatch._is_workstream_successor_result(result)
 
 
+@pytest.mark.parametrize(("limit", "budget_cap"), [(1, 2), (2, 1)])
 @pytest.mark.parametrize("refund_ack", [True, False])
-def test_local_prelaunch_refund_restores_remainder_only_after_canonical_acceptance(tmp_path, monkeypatch, refund_ack):
+def test_local_prelaunch_refund_restores_remainder_only_after_canonical_acceptance(
+    tmp_path, monkeypatch, refund_ack, limit, budget_cap
+):
     path = tmp_path / "tasks.yaml"
     board = _open_board(path)
     first = board.tasks[0].id
     board.tasks[0].priority = "critical"
     board.tasks.append(board.tasks[0].model_copy(update={"id": "NEXT", "priority": "high"}, deep=True))
-    board.portal.budget.daily = 1
-    board.portal.budget.per_agent["codex"] = 1
+    board.portal.budget.daily = budget_cap
+    board.portal.budget.per_agent["codex"] = budget_cap
     save_limen_file(path, board)
     actuals = _journal(monkeypatch)
     launched = []
@@ -178,7 +181,7 @@ def test_local_prelaunch_refund_restores_remainder_only_after_canonical_acceptan
     monkeypatch.setattr(dispatch, "apply_limen_file_sync", commit)
     monkeypatch.setattr(dispatch, "_down_lanes", lambda: set())
     monkeypatch.setattr(dispatch, "run_always_working_before_dispatch", lambda *a, **kw: True)
-    dispatch.dispatch_tasks(board, path, agent="codex", budget=1, limit=2, dry_run=False)
+    dispatch.dispatch_tasks(board, path, agent="codex", budget=budget_cap, limit=limit, dry_run=False)
     assert launched == (["NEXT"] if refund_ack else [])
     assert actuals[0]["metrics"] == {"runs": 0}
     assert events == (["canonical-refund-accepted", "provider-start"] if refund_ack else [])
