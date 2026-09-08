@@ -211,11 +211,8 @@ def test_stdio_probe_resolves_relative_command_against_declared_cwd(
 
     ok, detail = module._probe_stdio(server, timeout=1)
 
-    assert ok is True
-    assert detail in {
-        "boots (alive, no handshake within timeout)",
-        "boots (clean start, no handshake)",
-    }
+    assert ok is False
+    assert detail == "ProtocolError"
 
 
 def test_bearer_status_requires_the_named_environment_value(
@@ -323,7 +320,8 @@ def test_estate_ownership_scan_hardcodes_no_agent_config_path() -> None:
     """
     shell = VERIFY.read_text(encoding="utf-8")
 
-    assert "agent_config_paths.py" in shell
+    assert "mcp-server-boot.py" in shell
+    assert "--strict" in shell
     for hardcoded in (
         '"$HOME/.codex/config.toml"',
         '"${CODEX_HOME:-$HOME/.codex}/config.toml"',
