@@ -637,12 +637,40 @@ def _run(mode: str, quiet: bool) -> int:
         k = _key(t)
         # Versioned path plus whole-file digest binds custody to this exact installed artifact.
         # Persist custody BEFORE mutation; interrupted attempts remain visible and never replay.
-        if k in led:
-            continue
         if _get(t) != cur:
             continue
         before_digest = _digest(t["path"].read_text(encoding="utf-8"))
-        led[k] = {"original": cur, "before_digest": before_digest, "after_digest": None, "state": "prepared"}
+        previous = led.get(k)
+        history = []
+        original = cur
+        if previous is not None:
+            # A completed generation is not a permanent path reservation. Plugin
+            # refresh may replace bytes at the same versioned path, and the native
+            # budget may shrink while the installed artifact remains unchanged.
+            # Neither case permits replay of an interrupted, ambiguous mutation.
+            if (
+                not isinstance(previous, dict)
+                or previous.get("state") != "applied"
+                or not previous.get("after_digest")
+                or not isinstance(previous.get("original"), str)
+                or not isinstance(previous.get("history", []), list)
+            ):
+                continue
+            history = [
+                *previous.get("history", []),
+                {key: value for key, value in previous.items() if key != "history"},
+            ]
+            if before_digest == previous["after_digest"]:
+                # Re-compacting the same generation retains its source description
+                # as the rollback value; refreshed bytes get their own new original.
+                original = previous["original"]
+        led[k] = {
+            "original": original,
+            "before_digest": before_digest,
+            "after_digest": None,
+            "state": "prepared",
+            "history": history,
+        }
         _save_ledger(led)
         if _set(t, new, expected_digest=before_digest):
             led[k]["after_digest"] = _digest(t["path"].read_text(encoding="utf-8"))
@@ -663,7 +691,11 @@ def _run(mode: str, quiet: bool) -> int:
             f"codex-skill-slim: distilled {changed} description(s); budget {total}→{new_total}B "
             f"across {len(rows)} entries (cap {cap}); every skill preserved"
         )
-    return 77 if any(not isinstance(entry, dict) or entry.get("state") != "applied" for entry in led.values()) else 0
+    incomplete = any(not isinstance(entry, dict) or entry.get("state") != "applied" for entry in led.values())
+    # A raced or skipped target is not an applied result merely because all older
+    # ledger generations succeeded. Re-read descriptions before returning success.
+    incomplete |= any((value := _get(target)) is None or len(value) > cap for _, target, _, _ in rows)
+    return 77 if incomplete else 0
 
 
 def main() -> int:

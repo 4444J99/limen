@@ -141,7 +141,9 @@ def native_call_contract(calls):
             raise ProtocolError("native call lacks an owner-bound read-only contract")
 
 
-def collect_codex(broker, run_id, project, timeout=45, include_mcp=False, safe_calls=None):
+def collect_codex(
+    broker, run_id, project, timeout=45, include_mcp=False, safe_calls=None, collect_render_metrics=False
+):
     """Produce observations directly from a new native process under host admission.
 
     Skills listing proves the native catalog, not the model's rendered context budget.
@@ -156,6 +158,8 @@ def collect_codex(broker, run_id, project, timeout=45, include_mcp=False, safe_c
     native_call_contract(calls)
     if calls and not include_mcp:
         raise ProtocolError("native functional calls require admitted MCP startup")
+    if collect_render_metrics and not include_mcp:
+        raise ProtocolError("native rendering requires admitted thread startup")
     if not 0 < timeout <= 120:
         raise ValueError("native collector deadline outside bounds")
     executable = shutil.which("codex")
@@ -178,7 +182,15 @@ def collect_codex(broker, run_id, project, timeout=45, include_mcp=False, safe_c
         "native",
     )
     with hold_lease("heavy", owner=f"mcp-native-{os.getpid()}", surface="mcp-estate-native"):
+        metrics = None
         try:
+            if collect_render_metrics:
+                from mcp_native_metrics import RenderMetrics
+
+                metrics = RenderMetrics(version.split()[-1])
+                wire.server["args"] += ["-c", metrics.configuration()]
+                wire.server["env"] = {"OTEL_METRIC_EXPORT_INTERVAL": "100", "OTEL_METRIC_EXPORT_TIMEOUT": "1000"}
+                metrics.start()
             wire.start()
             initialized = wire.exchange("initialize", {"clientInfo": {"name": "limen-estate", "version": "1"}})
             if (
@@ -270,11 +282,27 @@ def collect_codex(broker, run_id, project, timeout=45, include_mcp=False, safe_c
                     if outcome["state"] != "fail":
                         required = sum(call["server"] == name for call in calls)
                         outcome["state"] = "pass" if outcome["passed"] == required else "unmeasured"
+            if metrics:
+                rendering = metrics.evidence(sum(entry["enabled"] for entry in catalog["entries"]), wire.remaining())
+                if catalog["parse_failures"]:
+                    rendering["state"] = "unmeasured"
+                    rendering["fresh_native_loading_witness"] = False
+                catalog["rendering"] = rendering
+                catalog["fresh_native_loading_witness"] = rendering["state"] == "pass"
+                if rendering["fresh_native_loading_witness"]:
+                    values = rendering["native_metrics"]
+                    catalog["omitted_skills"] = values["enabled"] - values["kept"]
+                    catalog["truncated_description_chars"] = values["truncated_chars"]
+                    catalog["stripped_descriptions"] = 0 if values["truncated_chars"] == 0 else None
             config_after = wire.exchange("config/read", {"includeLayers": True})
             if config_before != config_after or binary_before != file_digest(executable):
                 raise ProtocolError("native dependencies changed during collection")
         finally:
-            wire.close()
+            try:
+                wire.close()
+            finally:
+                if metrics:
+                    metrics.close()
     # Only sanitized metadata leaves the collector; no command env, URL, tool
     # arguments, resource URI, config values or raw native notifications escape.
     clean_servers = []
@@ -310,7 +338,18 @@ def collect_codex(broker, run_id, project, timeout=45, include_mcp=False, safe_c
         "native_process_id": wire.process.pid,
         "native_version_fingerprint": digest(initialized.get("userAgent")),
         "binary_fingerprint": binary_before,
-        "configuration_fingerprint": digest(config_before),
+        # The disposable telemetry endpoint must not create a new dependency
+        # episode on every identical MCP observation. Keep the full snapshot as
+        # separate evidence while binding repairs to the effective MCP map/profile.
+        "configuration_fingerprint": digest(
+            {
+                "effective_mcp": effective,
+                "profile": str(Path(os.environ.get("CODEX_HOME", Path.home() / ".codex")).resolve()),
+            }
+        )
+        if collect_render_metrics
+        else digest(config_before),
+        "native_configuration_snapshot_fingerprint": digest(config_before),
         "effective_configuration": effective,
         "started_at": started,
         "observed_at": time.time(),
