@@ -9,7 +9,6 @@ import json
 import os
 import subprocess
 import sys
-import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -30,16 +29,21 @@ def run_stale(tmp_path: Path, env: dict | None = None, extra_args: list[str] | N
     if env:
         child_env.update(env)
     return subprocess.run(
-        [sys.executable, str(SCRIPT), *(extra_args or [])], capture_output=True, text=True, env=child_env
+        [sys.executable, "-c",
+         "import runpy,sys; m=runpy.run_path(sys.argv[1]); "
+         "m['main'].__globals__.update("
+         "_boot_identity=lambda: \"fixture-boot\", _active_monotonic=lambda: 200000.0); "
+         "sys.exit(m['main'](sys.argv[2:]))",
+         str(SCRIPT), *(extra_args or [])], capture_output=True, text=True, env=child_env
     )
 
 
 def write_status(tmp_path: Path, sampled_at: datetime, completed_at: datetime | None = None) -> None:
     seat = tmp_path / "logs" / "vigilia"
     seat.mkdir(parents=True, exist_ok=True)
-    boot_identity = _load_watchdog()._boot_identity()
+    boot_identity = "fixture-boot"
     age = max(0.0, (datetime.now(timezone.utc) - sampled_at).total_seconds())
-    active_now = time.clock_gettime(getattr(time, "CLOCK_UPTIME_RAW", time.CLOCK_MONOTONIC))
+    active_now = 200000.0
     (seat / "status.json").write_text(
         json.dumps(
             {

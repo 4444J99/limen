@@ -48,6 +48,11 @@ class CompletionTests(unittest.TestCase):
                                          "evidence": copy.deepcopy(landing)})
         landing.update(verification_receipt_ref=receipt["ref"], verification_receipt_sha256=receipt["sha256"])
         self.data["atoms"][0]["outcome"]["evidence"].append(landing)
+        self.data.update(count_status="reconciled", private_extraction_sha256="d" * 64)
+        self.data["atoms"][0]["candidate_ids"] = ["C1"]
+        self.data["candidate_inventory"] = self.write("candidates", {
+            "private_extraction_sha256": "d" * 64,
+            "candidates": [{"candidate_id": "C1", "source_ids": ["stash:0"]}]})
 
     def write(self, name, value):
         path = self.root / "docs" / (name + ".json")
@@ -65,6 +70,21 @@ class CompletionTests(unittest.TestCase):
 
     def test_missing_source(self):
         self.data["sources"] = []
+        self.assertEqual(self.result()["status"], "FAIL")
+
+    def test_omitted_candidate_despite_reciprocal_source_coverage(self):
+        self.data["atoms"][0]["candidate_ids"] = []
+        self.assertEqual(self.result()["status"], "FAIL")
+
+    def test_provisional_count_is_not_completion(self):
+        self.data["count_status"] = "provisional"
+        self.assertEqual(self.result()["status"], "FAIL")
+
+    def test_stale_extraction_and_missing_lineage(self):
+        self.data["private_extraction_sha256"] = "e" * 64
+        self.assertEqual(self.result()["status"], "FAIL")
+        self.data["private_extraction_sha256"] = "d" * 64
+        self.data["atoms"][0]["source_ids"] = []
         self.assertEqual(self.result()["status"], "FAIL")
 
     def test_stale_evidence(self):
