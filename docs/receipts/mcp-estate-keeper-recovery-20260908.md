@@ -1,5 +1,36 @@
 # MCP estate keeper prerequisite receipt
 
+## Resumed implementation evidence
+
+Protected session `mcp-estate-resume-20260908` restored credentials using the documented bootstrap.
+The full claim response `busy-99d7002144349fe1339b88ed` showed the implicit
+`repo/4444j99/limen/write` claim conflicting with four active leases:
+`lease-1030-40d6b65160c4dc39`, `lease-1031-44b23122942200c9`,
+`lease-1032-bd2a984ebb54ac4f`, and `lease-1033-c6b155f901806b78`.
+Their live graph identifies unrelated git-finishline branch/path scopes, including a separate
+serial-governor branch. Those peers were preserved. An explicit two-branch execution packet was
+accepted as `run-3890a837deca93e3ca65ac4ef1bce340`, lease `lease-1034-3890a837deca93e3`,
+generation 1034, and claimed by this protected session. The canonical estate task claim remains
+unaccepted; this separate execution record is not a board transition.
+
+Python and Worker claim normalization now recognize the existing strict non-capacity projection
+contract before adding the code-write fallback. Only exact zero-cost keeper-owned board packets
+avoid repository-wide exclusion. Task exclusion remains; malformed or paid packets retain the
+conservative fallback. Focused regression: one Python test passed and 20 Worker projection and
+work-loan tests passed. No scope from a peer was changed.
+
+Remote Worker job `102150509863` in run `34252627214` failed before tests on four fast-uri
+advisories: GHSA-5jgf-p345-68v8, GHSA-f65p-4m7j-42xc, GHSA-fph4-wmhf-6fwf,
+GHSA-jqff-g426-hqxp. The Worker override now requires fast-uri >=3.1.6 within 3.x;
+the regenerated lockfile audit reports zero vulnerabilities.
+
+The resumed scoped batch passed all 12 cheap gates, including type checking, lint and formatting.
+Its heavy wave returned exit 75 (`swap-fraction,vitals-shed`). Live host evidence showed no
+conflicting host lease, 6.56 GB swap on 17.18 GB physical memory (38.2%), and VITALS shed.
+No host threshold, process or admission rule was changed. Deployment and the two live publication
+mutations remain unverified. The gate remains owned by this prerequisite PR; the next command is
+the scoped verification command below when admitted, followed by the exact merged deployment rail.
+
 Owner: Codex; parent intent and residual acceptance owner: `MCP-ESTATE-20260908`.
 Source branch: `fix/keeper-publication-recovery-20260908`.
 Protected broker session: `mcp-estate-20260908-implementation`.
