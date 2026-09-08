@@ -85,6 +85,7 @@ def test_explicit_falsey_policy_is_not_policy_free(value):
         ("destinations", ["https://example.test/path"]),
         ("destinations", ["http://example.test"]),
         ("destinations", ["https://example.test:bad"]),
+        ("destinations", ["https://["]),
     ],
 )
 def test_strict_policy_rejects_ambiguous_scope(field, value):
