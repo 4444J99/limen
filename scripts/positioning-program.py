@@ -2312,20 +2312,54 @@ def remote_parity(
     return result
 
 
+def accepted_work_for_admission(
+    graph: dict[str, Any], mapping: dict[str, Any], remote: dict[str, dict[str, Any]]
+) -> tuple[set[str], list[str]]:
+    """Validate each closed prerequisite once, including its transitive work ancestry.
+
+    Aggregate phase/projection debt belongs to closure_integrity, not admission of
+    unrelated leaf work. A closed issue alone never admits its descendants.
+    """
+    closed = {key for key, row in remote.items() if str(row.get("state") or "").lower() == "closed"}
+    accepted: set[str] = set()
+    rejected: set[str] = set()
+
+    def validate(work_id: str) -> bool:
+        if work_id in accepted:
+            return True
+        if work_id in rejected or work_id not in closed:
+            return False
+        packet = graph["work_by_id"][work_id]
+        if not all(validate(dependency) for dependency in packet.get("depends_on") or []):
+            rejected.add(work_id)
+            return False
+        try:
+            fetch_work_receipt(work_id, graph, mapping)
+        except ProgramError:
+            rejected.add(work_id)
+            return False
+        accepted.add(work_id)
+        return True
+
+    for work_id in graph["work_by_id"]:
+        validate(work_id)
+    return accepted, sorted(rejected)
+
+
 def ready_work(graph: dict[str, Any], mapping: dict[str, Any]) -> list[dict[str, Any]]:
     validate_map(mapping, graph, complete=True)
     remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
     if set(remote) != set(graph["ordered_ids"]):
         raise ProgramError("remote graph is incomplete; run --verify-remote")
     closed = {object_id for object_id, row in remote.items() if str(row.get("state") or "").lower() == "closed"}
-    closure_integrity(graph, mapping, remote)
+    accepted, reconciliation = accepted_work_for_admission(graph, mapping, remote)
     ready: list[dict[str, Any]] = []
     for phase in graph["phases"]:
         phase_dependencies = set(phase.get("depends_on") or [])
         for packet in phase["work"]:
             work_id = packet["id"]
             dependencies = set(packet.get("depends_on") or [])
-            if work_id in closed or not dependencies.issubset(closed):
+            if work_id in closed or not dependencies.issubset(accepted):
                 continue
             row = mapping["issues"][work_id]
             repository_identity = repository_identity_for(packet["target_repo"], graph)
@@ -2347,6 +2381,8 @@ def ready_work(graph: dict[str, Any], mapping: dict[str, Any]) -> list[dict[str,
                     "human_gates": packet["human_gates"],
                     "phase_id": phase["id"],
                     "phase_close_blocked_by": sorted(phase_dependencies - closed),
+                    "closed_work_requiring_reconciliation": reconciliation,
+                    "aggregate_integrity": "separately_required_by_phase_and_omega",
                     "chunk_id": graph["work_chunk"][work_id],
                 }
             )

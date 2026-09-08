@@ -1249,6 +1249,69 @@ def test_ready_work_uses_exact_leaf_dependencies_without_global_phase_stall(monk
     assert ready_rows["PSP-P05-W04"]["phase_close_blocked_by"] == ["PSP-P02", "PSP-P03", "PSP-P04"]
 
 
+def test_leaf_admission_isolates_invalid_sibling_and_memoizes_receipts(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {key: {"state": "open"} for key in graph["ordered_ids"]}
+    for key in ("PSP-P00-W01", "PSP-P00-W02", "PSP-P00-W04"):
+        remote[key]["state"] = "closed"
+    calls = []
+
+    def receipt(work_id, _graph, _mapping):
+        calls.append(work_id)
+        if work_id == "PSP-P00-W02":
+            raise MODULE.ProgramError("synthetic invalid receipt")
+        return {"work_id": work_id}, "https://example.test/receipt"
+
+    monkeypatch.setattr(MODULE, "fetch_work_receipt", receipt)
+    accepted, rejected = MODULE.accepted_work_for_admission(graph, mapping, remote)
+    assert accepted == {"PSP-P00-W01", "PSP-P00-W04"}
+    assert rejected == ["PSP-P00-W02"]
+    assert len(calls) == len(set(calls)) == 3
+
+
+def test_leaf_admission_rejects_invalid_transitive_closed_ancestry(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {key: {"state": "open"} for key in graph["ordered_ids"]}
+    for key in ("PSP-P00-W01", "PSP-P00-W02", "PSP-P00-W03"):
+        remote[key]["state"] = "closed"
+
+    def receipt(work_id, _graph, _mapping):
+        if work_id == "PSP-P00-W01":
+            raise MODULE.ProgramError("synthetic invalid ancestor")
+        pytest.fail("descendant receipt must not substitute for invalid ancestry")
+
+    monkeypatch.setattr(MODULE, "fetch_work_receipt", receipt)
+    accepted, rejected = MODULE.accepted_work_for_admission(graph, mapping, remote)
+    assert accepted == set()
+    assert rejected == ["PSP-P00-W01", "PSP-P00-W02", "PSP-P00-W03"]
+
+
+def test_ready_work_reports_debt_without_global_phase_or_sibling_stall(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {
+        key: {"state": "open", "number": value["number"], "body": MODULE.marker(key)}
+        for key, value in mapping["issues"].items()
+    }
+    remote["PSP-P00"]["state"] = "closed"  # aggregate remains invalid: children are open
+    remote["PSP-P00-W01"]["state"] = "closed"
+    remote["PSP-P00-W02"]["state"] = "closed"
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+
+    def receipt(work_id, _graph, _mapping):
+        if work_id == "PSP-P00-W02":
+            raise MODULE.ProgramError("synthetic invalid sibling")
+        return {"work_id": work_id}, "https://example.test/receipt"
+
+    monkeypatch.setattr(MODULE, "fetch_work_receipt", receipt)
+    rows = {row["id"]: row for row in MODULE.ready_work(graph, mapping)}
+    assert "PSP-P00-W04" in rows
+    assert "PSP-P00-W03" not in rows
+    assert "PSP-P00-W05" not in rows
+    assert rows["PSP-P00-W04"]["closed_work_requiring_reconciliation"] == ["PSP-P00-W02"]
+    with pytest.raises(MODULE.ProgramError, match="closed before child issues"):
+        MODULE.closure_integrity(graph, mapping, remote)
+
+
 def test_p12_can_start_before_p10_closes_and_unlock_p10_w08(monkeypatch) -> None:
     graph, mapping = graph_and_map()
     remote = {
