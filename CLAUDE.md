@@ -20,7 +20,7 @@ the script/schema/code rather than trusting memory.
 - `docs/agent-instruction-standard.md` owns the rationale and cross-surface standard.
 - `.github/copilot-instructions.md` is a deliberate **pointer file** (Copilot reads that path
   natively) — it defers to `AGENTS.md` and must never grow into a second rulebook.
-- Directory-scoped `AGENTS.md` files (today: `apps/danse/AGENTS.md`) are closest-wins for their
+- Directory-scoped `AGENTS.md` files, where present, are closest-wins for their
   subtree — more specific, never higher-ranked than the root contract.
 - If you change task states, precedence, agent names, referenced scripts, or status examples, update
   `scripts/check-agent-docs.py` in the same change. Do not add a competing instruction file unless a
@@ -63,7 +63,7 @@ Run/Next.js/FastAPI can be swapped.
 | `spec/contracts/` (incl. `spec/contracts/conduct/`) | Portable JSON Schemas the generated surface contracts must satisfy. | `node scripts/validate-contract-schemas.mjs` |
 | `scripts/` (~420 files) | The operational fleet: `metabolize.sh`/`heartbeat-loop.sh` (the beat), `verify-whole.sh` (whole-system predicate), `merge-policy.sh` (merge decision), `organ-health.py` (liveness), `creds-hydrate.py` (credential organ), plus per-organ generators. | run directly |
 | `organs/`, `organ-ladder.json`, `pillars.yaml`, `his-hand-levers.json` | Declarative registries: the self-* organ ladder, platform pillars, and the owned human-gated lever registry. | data files |
-| `apps/` | Product applications (`danse/`, `vision-board-studio/`). `apps/danse/AGENTS.md` is the one directory-scoped instruction file — closest wins for files under it. | per-app |
+| `apps/` | Product applications and migration pointers. `apps/danse/README.md` points to Danse's canonical external source; its duplicate local source and instructions were retired. | per-app |
 | `studium/` | The study/publishing estate (essays, film, music, rubric, ledger) — the repo's largest component by file count; declarative + content, no build gate. | data/content files |
 | `censor/` | Insight→correction lineage: `censor/precedents.jsonl` is the precedent registry "the registry owns the answer" queries; mirrored to `censor`-labelled issues by `scripts/sync-censor-issues.py`. | data files |
 
