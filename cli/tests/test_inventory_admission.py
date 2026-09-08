@@ -6,7 +6,12 @@ from datetime import UTC, datetime, timedelta
 import pytest
 
 from limen.conduct.store import MemoryStateStore
-from limen.github_estate_census import build_github_estate_census
+from limen.github_estate_census import (
+    CONNECTION_KINDS,
+    _canonical_sha256,
+    build_github_estate_census,
+    paginate_exact,
+)
 from limen.inventory_admission import (
     InventoryAdmissionError,
     inventory_count,
@@ -20,31 +25,65 @@ PRIOR = {"id": "GEN-org-repo-tests", "status": "open", "labels": []}
 DESIRED = {**PRIOR, "status": "dispatched"}
 
 
-def census(count=2, aliases=("organvm/example",)):
-    def page(_repo, kind, cursor):
-        assert kind == "pull_requests"
-        start = int(cursor or "0")
-        end = min(start + 100, count)
+def census(count=2, name="organvm/example"):
+    # Match the real collector: each repository hashes its own metadata under
+    # the overall census generation, and proven empty partitions fetch no pages.
+    inputs = {
+        "source_generation": GENERATION,
+        "repository": name,
+        "repository_updated_at": NOW.isoformat(),
+        "default_sha": "a" * 40,
+        "default_check_policy": "required",
+        "required_check_count": 0,
+        "check_total": 0,
+        "open_pr_total": count,
+        "issue_total": 0,
+        "branch_total": 0,
+    }
+    generation = _canonical_sha256(inputs)
+    totals = {"pull_requests": count, "issues": 0, "branches": 0, "checks": 0}
+    repository = {
+        "name_with_owner": name,
+        "repository_id": "42",
+        "private": True,
+        "default_branch": "main",
+        "default_sha": inputs["default_sha"],
+        "default_check_policy": inputs["default_check_policy"],
+        "required_check_count": 0,
+        "connection_generation": generation,
+        "connection_generation_inputs": inputs,
+        "connection_totals": totals,
+    }
+
+    def fetch_page(repo, kind, cursor):
+        assert repo == name
+        assert kind == "pull_requests"  # Empty partitions must not perform IO.
+        offset = int(cursor or 0)
+        end = min(offset + 100, count)
         return {
             "total_count": count,
-            "nodes": [{"number": i + 1, "author_login": "4444J99"} for i in range(start, end)],
+            "nodes": [{"number": i + 1, "author_login": "4444J99"} for i in range(offset, end)],
             "has_next_page": end < count,
             "end_cursor": str(end) if end < count else None,
         }
 
-    full, _tracked = build_github_estate_census(
-        [
-            {
-                "name_with_owner": name,
-                "repository_id": "42",
-                "connection_totals": {"pull_requests": count, "issues": 0, "branches": 0, "checks": 0},
-            }
-            for name in aliases
-        ],
-        page,
-        repository_cursor={"expected_total": len(aliases), "page_count": 1, "exhaustive": True},
+    results = {
+        (name, kind): paginate_exact(
+            kind,
+            lambda cursor, kind=kind: fetch_page(name, kind, cursor),
+            expected_total=totals[kind],
+            repository=name,
+            source_generation=generation,
+        )
+        for kind in CONNECTION_KINDS
+    }
+    full, _ = build_github_estate_census(
+        [repository],
+        fetch_page,
+        repository_cursor={"expected_total": 1, "page_count": 1, "exhaustive": True},
         now=NOW,
         source_generation=GENERATION,
+        connection_results=results,
     )
     return full
 
@@ -102,10 +141,76 @@ def test_unknown_partial_stale_or_racing_observation_fails_closed(change):
 
 
 def test_migration_aliases_deduplicate_stable_repository_id():
-    snapshot = census(1, aliases=("organvm/example", "new-org/example"))
+    snapshot = census(1)
+    renamed = census(1, "new-org/example")
+    snapshot["repositories"].extend(renamed["repositories"])
+    snapshot["source_report"]["cursor"]["repository"].update(expected_total=2, known_count=2)
+    snapshot["cursors"].extend(renamed["cursors"])
+    snapshot["repository_receipts"].extend(renamed["repository_receipts"])
+    snapshot["leaves"].extend(renamed["leaves"])
     assert count(snapshot) == 1
     snapshot["leaves"][1]["author_login"] = "somebody-else"
     with pytest.raises(InventoryAdmissionError, match="migration_conflict"):
+        count(snapshot)
+
+
+def test_collector_repository_generation_differs_from_census_generation():
+    snapshot = census()
+    assert snapshot["cursors"][0]["source_generation"] != GENERATION
+    assert count(snapshot) == 2
+
+
+def test_collector_proven_empty_partition_requires_no_pages():
+    snapshot = census(0)
+    assert snapshot["cursors"][0]["page_count"] == 0
+    assert count(snapshot) == 0
+    admit(snapshot)
+
+
+@pytest.mark.parametrize("pr_count", [0, 2])
+@pytest.mark.parametrize(
+    "change",
+    [
+        lambda x: x["cursors"][0].update(source_generation=GENERATION),
+        lambda x: x["cursors"][0].update(source_generation="2" * 64),
+        lambda x: x["repositories"][0].pop("connection_generation_inputs"),
+        lambda x: x["repositories"][0].update(connection_generation="2" * 64),
+        lambda x: x["repositories"][0]["connection_generation_inputs"].update(source_generation="2" * 64),
+        lambda x: x["repositories"][0]["connection_generation_inputs"].update(repository="other/example"),
+        lambda x: x["repositories"][0].update(default_sha="b" * 40),
+        lambda x: x["repositories"][0]["connection_totals"].update(pull_requests=100),
+        lambda x: x["cursors"][0].update(complete=False),
+        lambda x: x["cursors"][0].update(exhaustive=False),
+        lambda x: x["cursors"][0].update(page_cursor="unfinished"),
+    ],
+)
+def test_repository_generation_or_empty_partition_mismatch_fails_closed(pr_count, change):
+    snapshot = census(pr_count)
+    change(snapshot)
+    with pytest.raises(InventoryAdmissionError):
+        count(snapshot)
+
+
+def test_cursor_cannot_borrow_another_repository_generation():
+    snapshot = census(1)
+    other = census(1, "another/example")
+    snapshot["cursors"][0]["source_generation"] = other["cursors"][0]["source_generation"]
+    with pytest.raises(InventoryAdmissionError, match="connection_generation_invalid"):
+        count(snapshot)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [("source_generation", "2" * 64), ("repository", "other/example"), ("default_sha", "b" * 40)],
+)
+def test_consistently_rehashed_cursor_still_requires_current_census_and_repository(field, value):
+    snapshot = census()
+    repository = snapshot["repositories"][0]
+    repository["connection_generation_inputs"][field] = value
+    generation = _canonical_sha256(repository["connection_generation_inputs"])
+    repository["connection_generation"] = generation
+    snapshot["cursors"][0]["source_generation"] = generation
+    with pytest.raises(InventoryAdmissionError, match="repository_generation_invalid"):
         count(snapshot)
 
 
