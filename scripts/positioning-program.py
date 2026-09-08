@@ -159,26 +159,34 @@ def _command_owned_by_packet(command: str, packet: dict[str, Any]) -> bool:
         return False
     if any(token in {";", "|", "||", "&&"} or any(char in token for char in "$`()") for token in tokens):
         return False
-    executable = (
-        tokens[1] if Path(tokens[0]).name in {"python", "python3", "python3.13"} and len(tokens) > 1 else tokens[0]
-    )
+    script_runner = Path(tokens[0]).name in {"python", "python3", "python3.13"} or tokens[0] == "node_modules/.bin/tsx"
+    executable = tokens[1] if script_runner and len(tokens) > 1 else tokens[0]
     executable = executable.removeprefix("./")
-    if Path(executable).is_absolute() or Path(executable).name in {
-        "bash",
-        "dash",
-        "env",
-        "ksh",
-        "sh",
-        "zsh",
-        "true",
-        "false",
-        "echo",
-        "printf",
-    }:
+    if (
+        Path(executable).is_absolute()
+        or ".." in Path(executable).parts
+        or Path(executable).name
+        in {
+            "bash",
+            "dash",
+            "env",
+            "ksh",
+            "sh",
+            "zsh",
+            "true",
+            "false",
+            "echo",
+            "printf",
+        }
+    ):
         return False
     if "-c" in tokens or executable.endswith("/true") or executable.endswith("/false"):
         return False
     target_paths = [str(path).rstrip("/") for path in packet.get("target_paths") or []]
+    # Ownership is relative to the packet's repository, not this controller's
+    # checkout. A remote template-owned verifier need not exist in Limen.
+    if any(executable == target or executable.startswith(target + "/") for target in target_paths):
+        return True
     if not any(
         path == "scripts" or path.startswith(("scripts/", "docs/", "src/")) or path.endswith((".py", ".sh"))
         for path in target_paths

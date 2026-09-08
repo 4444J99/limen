@@ -1,0 +1,42 @@
+{
+  "schema_version": "limen.positioning_receipt_candidate.v1",
+  "status": "not_posted_not_accepted",
+  "owner_issue": "https://github.com/4444J99/limen/issues/2251",
+  "controller_dependency": "https://github.com/4444J99/limen/pull/2566",
+  "scope": "PSP-P11-W03 only; preflight output does not close eight work IDs",
+  "evidence_note": "Captured result from the actual private default-branch tree, recorded during the 2026-09-08 inspection. validateAuditReport was also invoked independently and passed. No private implementation change or external effect occurred.",
+  "release_condition": "After the controller correction is integrated, revalidate the actual repository head, prerequisite receipt, and candidate against accepted controller code. If unchanged and valid, post the ordinary marked receipt, run verify-work, then close the issue. Do not post this wrapper as a completion receipt.",
+  "receipt": {
+    "acceptance_sha256": "5e65a9d832dfa3e1c48c93f733eaf470f5f2beb92e9d87864cc8a192184d7e83",
+    "authority": {
+      "kind": "direct_human_session",
+      "session_id": "019fe3fe-1458-76f2-aa3a-70745d270885",
+      "executor": "Codex",
+      "human_protected": true
+    },
+    "changed_paths": [],
+    "evidence_urls": [
+      "https://github.com/4444J99/limen/issues/2251#issuecomment-5588481910",
+      "https://github.com/organvm-iii-ergon/collaboration-operations-platform/pull/139"
+    ],
+    "observed_heads": {
+      "organvm-iii-ergon/collaboration-operations-platform": "d141d71ed76f7df2fcc6f6db4c45cf02a115afda"
+    },
+    "outcome": "succeeded",
+    "predicate": {
+      "command": "node_modules/.bin/tsx scripts/validate-production-systems-preflight.ts",
+      "command_output_sha256": "d69632e18bc6d308bb07fc82e362874fcd1d8db60c1ee4b6fc68c38418e88727",
+      "command_sha256": "8e2137bb4fc8180de2c8e2cf253152ed0349c40d3cbe97820ba675cecd94790f",
+      "exit_code": 0,
+      "observed_at": "2026-09-08T16:25:26Z",
+      "output": "{\"status\":\"pass\",\"state\":\"prepared_preflight\",\"workIds\":8,\"contracts\":6,\"externalEffects\":0,\"formalPredicatesRun\":false,\"issues\":[]}\n",
+      "output_sha256": "bec46e60cc569e62281160482b945fff45a8ce4a125a8605f3a87fb2e5a043ed"
+    },
+    "rollback": {
+      "invoked": false,
+      "state": "not needed"
+    },
+    "schema_version": "limen.positioning_work_receipt.v2",
+    "work_id": "PSP-P11-W03"
+  }
+}

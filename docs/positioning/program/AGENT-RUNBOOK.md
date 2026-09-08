@@ -37,21 +37,20 @@ model selection, or permission to cross its named human gates.
 Use `EXECUTION-CHUNKS.md` to select the conductor whose resolved scope contains the ready leaf.
 C10 still interleaves P12 with P10-W08 and must follow its prompt exactly.
 
-The seed is not a lease. It is cross-agent input carrying the human model override, from which a
-registered conductor creates a live `WorkPacketV1` with current identity, deadline, resource
-claims, spend, retry, and authority.
-
-PSP strategy execution runs in fresh Codex tasks using the exact registry-derived model, effort,
-dependencies, repository, and scope. Generic cross-agent or broker support is reusable substrate,
-not a program acceptance gate: a non-Codex canary must never block ready expert-positioning work
-unless a newer explicit human requirement adds that exact condition.
+The seed is not a lease. Historical model fields are not a current provider-availability or budget
+observation. Resolve current capabilities and finite capacity before autonomous dispatch; preserve
+the real executing provider identity. The September twelve-package recalibration is cross-provider,
+not a requirement to launch another Codex task for every leaf. Reuse the existing isolated owner
+lane, source evidence and bounded prompt. Never launch a duplicate to work around unavailable usage.
 
 ## 2. Claim before mutation
 
-Register the native session under its real identity and submit the bounded packet to the conduct
-broker. The packet must scope repositories and paths, declare external effects, reserve finite
-capacity, and name its receipt target. If the authenticated broker is unavailable, continue only
-with read-only inspection or already-leased work. Never simulate a claim by editing `tasks.yaml`.
+For autonomous dispatch, register the native session under its real identity and submit the bounded
+packet to the conduct broker. The packet must scope repositories and paths, declare external
+effects, reserve finite capacity, and name its receipt target. Without the authenticated broker,
+new autonomous claims, children and task transitions fail closed. A direct human session follows
+the explicit current request and the direct-session rules in `AGENTS.md`; do not invent a broker
+lease for it or use it to authorize hidden fanout. Never edit `tasks.yaml` to simulate a transition.
 
 ## 3. Work in one bounded lane
 
@@ -80,6 +79,13 @@ receipt’s predicate. Add focused probes only when they clarify a failure. Reus
 receipts; do not rerun whole suites for reassurance. For public experience work, verify the rendered
 result in a browser and attach visual evidence. For claims, include source, observation date,
 method, machine-assistance treatment, and limits.
+
+Executable ownership is relative to the packet's target repository. A verifier under a declared
+template path need not exist in the controller checkout. For the existing TypeScript delivery
+validator, use the repository-installed `node_modules/.bin/tsx` with the declared script path,
+not inline evaluation or a downloader. For P11-W03 the aggregate validator exercises the synthetic
+audit-report acceptance, but a passing preflight does not establish unrelated leaf or phase
+completion. Every acceptance still needs its own deliverable/dependency audit and real receipt.
 
 Generate the receipt skeleton, replace every placeholder, and post it as one JSON code block after
 the exact marker shown below. For an ordinary, non-quarantined chain, the latest marked comment is
