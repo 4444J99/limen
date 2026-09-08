@@ -1,0 +1,148 @@
+[
+  {
+    "step": "install",
+    "argv": [
+      "npm",
+      "exec",
+      "--yes",
+      "--package=node@20",
+      "--package=npm@11.17.0",
+      "--",
+      "npm",
+      "ci",
+      "--ignore-scripts"
+    ],
+    "started_at": "2026-09-08T21:36:13.600688+00:00",
+    "state": "finished",
+    "exit_code": 0,
+    "finished_at": "2026-09-08T21:37:17.247719+00:00",
+    "output_sha256": "6b1698300d15f7e9edfcebd503a5a39bd2aad7cfc745121fed762ac433ab6984"
+  },
+  {
+    "step": "server-tests",
+    "receipt": {
+      "schema_version": "limen.positioning_flagship_receipt.v1",
+      "flagship_id": "public_records",
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "default_branch": "main",
+      "exact_head": "04eb20eeba2391a053c4a129f0090f5295c1460e",
+      "predicate": {
+        "argv": [
+          "npm",
+          "exec",
+          "--yes",
+          "--package=node@20",
+          "--package=npm@11.17.0",
+          "--",
+          "npm",
+          "exec",
+          "--",
+          "vitest",
+          "run",
+          "--config",
+          "vitest.config.server.ts",
+          "--coverage.enabled=false",
+          "--reporter=json",
+          "--outputFile=/workspace/scratch/41d1c2850cad/ucc-tests.json"
+        ],
+        "timeout_seconds": 300
+      },
+      "environment": {
+        "platform": "Linux-6.18.35-x86_64-with-glibc2.39",
+        "python": "3.12.13"
+      },
+      "started_at": "2026-09-08T21:37:17.251270Z",
+      "finished_at": "2026-09-08T21:37:39.992626Z",
+      "exit_code": 0,
+      "result": "current_pass",
+      "artifact_digest": "c62bc34ef6b695d455fd7713c6d04db9a54c0169c38d0b5b3816263f64f4ed40",
+      "output_bytes": 319,
+      "limitations": [
+        "Repository correctness gate only; server coverage enforcement is disabled by the owning workflow.",
+        "No database, Redis, live scraper, client data, deployment or end-user journey is asserted.",
+        "The frontend build uses tsc --noCheck and is not a TypeScript diagnostic pass."
+      ],
+      "errors": []
+    }
+  },
+  {
+    "step": "lint",
+    "receipt": {
+      "schema_version": "limen.positioning_flagship_receipt.v1",
+      "flagship_id": "public_records",
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "default_branch": "main",
+      "exact_head": "04eb20eeba2391a053c4a129f0090f5295c1460e",
+      "predicate": {
+        "argv": [
+          "npm",
+          "exec",
+          "--yes",
+          "--package=node@20",
+          "--package=npm@11.17.0",
+          "--",
+          "npm",
+          "run",
+          "lint"
+        ],
+        "timeout_seconds": 120
+      },
+      "environment": {
+        "platform": "Linux-6.18.35-x86_64-with-glibc2.39",
+        "python": "3.12.13"
+      },
+      "started_at": "2026-09-08T21:37:39.993075Z",
+      "finished_at": "2026-09-08T21:38:00.656261Z",
+      "exit_code": 0,
+      "result": "current_pass",
+      "artifact_digest": "44e0973de7569a0d10cc6221c23b1d1fd97b165644a77239d68e18b20f9f716a",
+      "output_bytes": 597,
+      "limitations": [
+        "Repository correctness gate only; server coverage enforcement is disabled by the owning workflow.",
+        "No database, Redis, live scraper, client data, deployment or end-user journey is asserted.",
+        "The frontend build uses tsc --noCheck and is not a TypeScript diagnostic pass."
+      ],
+      "errors": []
+    }
+  },
+  {
+    "step": "build",
+    "receipt": {
+      "schema_version": "limen.positioning_flagship_receipt.v1",
+      "flagship_id": "public_records",
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "default_branch": "main",
+      "exact_head": "04eb20eeba2391a053c4a129f0090f5295c1460e",
+      "predicate": {
+        "argv": [
+          "npm",
+          "exec",
+          "--yes",
+          "--package=node@20",
+          "--package=npm@11.17.0",
+          "--",
+          "npm",
+          "run",
+          "build:render"
+        ],
+        "timeout_seconds": 180
+      },
+      "environment": {
+        "platform": "Linux-6.18.35-x86_64-with-glibc2.39",
+        "python": "3.12.13"
+      },
+      "started_at": "2026-09-08T21:38:00.656857Z",
+      "finished_at": "2026-09-08T21:38:22.824486Z",
+      "exit_code": 0,
+      "result": "current_pass",
+      "artifact_digest": "0ad49135e83b8b01d7e49510707e3b1db428f997e12a58aca068fdfabfdd811f",
+      "output_bytes": 23102,
+      "limitations": [
+        "Repository correctness gate only; server coverage enforcement is disabled by the owning workflow.",
+        "No database, Redis, live scraper, client data, deployment or end-user journey is asserted.",
+        "The frontend build uses tsc --noCheck and is not a TypeScript diagnostic pass."
+      ],
+      "errors": []
+    }
+  }
+]
