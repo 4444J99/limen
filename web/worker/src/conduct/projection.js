@@ -796,9 +796,16 @@ export async function recoverProjectionBranch(env, fetchImpl = fetch) {
     throw new ConductProjectionError("projection recovery repository/default branch mismatch");
   }
   const refUrl = githubRefUrl(env);
+  const validPublicationRef = (value) => value.ref === `refs/heads/${branch}`
+    && value.object?.type === "commit" && /^[0-9a-f]{40}$/.test(String(value.object?.sha || ""));
   const existing = await fetchImpl(refUrl, { method: "GET", headers: githubHeaders(env) });
   // Never reset an existing ref, even if another publisher created it after the merge failed.
-  if (existing.ok) return defaultBranch;
+  if (existing.ok) {
+    if (!validPublicationRef(await existing.json())) {
+      throw new ConductProjectionError("projection recovery observed an invalid publication ref");
+    }
+    return defaultBranch;
+  }
   if (existing.status !== 404) {
     throw new ConductProjectionError(`projection recovery ref read failed (${existing.status})`);
   }
@@ -818,8 +825,7 @@ export async function recoverProjectionBranch(env, fetchImpl = fetch) {
   }
   // A conflict is success only after independently observing the exact intended ref.
   const observed = await read(refUrl);
-  if (observed.ref !== `refs/heads/${branch}` || observed.object?.type !== "commit"
-      || !/^[0-9a-f]{40}$/.test(String(observed.object?.sha || ""))) {
+  if (!validPublicationRef(observed)) {
     throw new ConductProjectionError("projection recovery did not observe a valid publication ref");
   }
   return defaultBranch;
