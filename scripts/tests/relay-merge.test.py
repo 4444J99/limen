@@ -2,6 +2,8 @@
 
 import copy
 import importlib.util
+import json
+import subprocess
 import sys
 import unittest
 from pathlib import Path
@@ -41,6 +43,7 @@ class FakeGitHub:
         self.producer = APP
         self.after_success = lambda: None
         self.auto_merge = None
+        self.fail_cleanup = False
 
     def __call__(self, path, method="GET", body=None):
         self.events.append((path, method, copy.deepcopy(body)))
@@ -59,6 +62,8 @@ class FakeGitHub:
         if path.endswith("/check-runs/42"):
             if body.get("conclusion") == "success":
                 self.after_success()
+            if body.get("conclusion") == "failure" and self.fail_cleanup:
+                raise ConnectionError("cleanup unavailable")
             return {}
         if path.endswith("/pulls/1/merge"):
             # Model documented server enforcement, not a proof of GitHub behavior.
@@ -100,6 +105,12 @@ class Transactions(unittest.TestCase):
         posted = next(e[2] for e in self.api.events if e[1] == "POST")
         self.assertEqual(posted["head_sha"], M)
         self.assertNotEqual(posted["head_sha"], H)
+
+    def test_cleanup_failure_does_not_erase_confirmed_merge_receipt(self):
+        self.api.fail_cleanup = True
+        result = self.run_transaction()
+        self.assertEqual(result["landed"], L)
+        self.assertTrue(self.api.landed)
 
     def test_failed_evaluator_never_merges_despite_old_success(self):
         def fail(candidate):
@@ -170,6 +181,61 @@ class Transactions(unittest.TestCase):
         self.assertEqual(self.api.merges(), [])
 
 
+class ExecutionContext(unittest.TestCase):
+    def test_github_client_sends_governor_bearer_token(self):
+        seen = {}
+
+        class Response:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self, limit):
+                return b"{}"
+
+        class Opener:
+            def open(self, request, timeout):
+                seen["authorization"] = request.get_header("Authorization")
+                return Response()
+
+        token = "unit-" + "test-credential"
+        with patch.object(relay.urllib.request, "build_opener", return_value=Opener()):
+            relay.GitHub(token)(f"/repos/{relay.REPOSITORY}/pulls/1")
+        self.assertEqual(seen["authorization"], "Bearer " + token)
+
+    def test_trusted_workflow_bodies_run_from_checked_out_repository(self):
+        calls = []
+        workflow = {
+            "jobs": {
+                "policy": {
+                    "steps": [
+                        {"name": name, "shell": "bash", "run": "true"}
+                        for name in relay.STEPS
+                    ]
+                }
+            }
+        }
+
+        def completed(args, **kwargs):
+            calls.append((args, kwargs))
+            return subprocess.CompletedProcess(args, 0, stdout=b"", stderr=b"")
+
+        with (
+            patch.object(relay.tempfile, "TemporaryDirectory") as temporary,
+            patch.object(Path, "read_bytes", return_value=json.dumps(workflow).encode()),
+            patch.object(relay.subprocess, "run", side_effect=completed),
+        ):
+            temporary.return_value.__enter__.return_value = "/tmp/relay-context-test"
+            temporary.return_value.__exit__.return_value = False
+            relay.evaluate({"base": B, "head": H, "head_repository": relay.REPOSITORY}, "f" * 40, "read-token")
+
+        workflow_calls = [kwargs for args, kwargs in calls if args and args[0] == "bash"]
+        self.assertEqual(len(workflow_calls), len(relay.STEPS))
+        self.assertTrue(all(str(kwargs["cwd"]).endswith("/trusted") for kwargs in workflow_calls))
+
+
 class Controls(unittest.TestCase):
     def test_invalid_ids(self):
         for value in (0, -1, True, 15368, 2**53, "812345"):
@@ -223,6 +289,42 @@ class Routing(unittest.TestCase):
             self.assertEqual(module.merge(relay.REPOSITORY, 1, H, "direct"), "FAILED")
             self.assertEqual(module.merge(relay.REPOSITORY, 1, H, "queue"), "REFUSED")
             gh.assert_not_called()
+
+    def test_one_shot_relay_refuses_existing_queue_custody(self):
+        spec = importlib.util.spec_from_file_location("merge_drain_queue_test", SCRIPTS / "merge-drain.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        with (
+            patch.object(
+                module,
+                "_queue_state",
+                return_value={"state": "OPEN", "head": H, "queued": True},
+            ),
+            patch.object(module, "assess") as assess,
+            patch.object(module.subprocess, "run") as run,
+        ):
+            self.assertEqual(module.submit_one(relay.REPOSITORY, 1, H), 1)
+            assess.assert_not_called()
+            run.assert_not_called()
+
+    def test_relay_wrapper_exceeds_controller_worst_case_budget(self):
+        spec = importlib.util.spec_from_file_location("merge_drain_timeout_test", SCRIPTS / "merge-drain.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        receipt = {"repository": relay.REPOSITORY, "pr": 1, "head": H, "landed": L}
+        completed = subprocess.CompletedProcess([], 0, stdout=json.dumps(receipt), stderr="")
+        with (
+            patch.object(module, "merge_prohibition", return_value=None),
+            patch.object(module.subprocess, "run", return_value=completed) as run,
+        ):
+            self.assertEqual(module.merge(relay.REPOSITORY, 1, H, "direct"), "MERGED")
+            setup_budget = (3 + 2 * len(relay.ROOTS)) * 120
+            workflow_budget = len(relay.STEPS) * 600
+            api_budget = 17 * 30
+            self.assertGreater(
+                run.call_args.kwargs["timeout"],
+                setup_budget + workflow_budget + api_budget + 60,
+            )
 
 
 if __name__ == "__main__":
