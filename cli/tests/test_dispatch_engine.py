@@ -243,17 +243,45 @@ def test_heal_dispatch_funnel_transitions(tmp_path):
     import subprocess
     import sys
     from limen.io import load_limen_file, save_limen_file
-    from limen.models import Budget, BudgetTrack, LimenFile, Portal, Task
+    from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task
+    from limen.tabularius import apply_limen_file_sync
 
     today = datetime.date.today()
     tasks = [
-        Task(id=i, title="t", repo="x/y", target_agent="codex", status="dispatched", created=today)
+        Task(
+            id=i,
+            title="t",
+            repo="x/y",
+            target_agent="codex",
+            status="open",
+            created=today,
+            source_origin="human_prompt",
+            horizon="present",
+            value_case="Synthetic canonical reservation for bounded recovery acceptance",
+            predicate="python3 scripts/check.py",
+            receipt_target=f"github:x/y:pull-request:{i}",
+        )
         for i in ("M", "C", "N", "O")
     ]
     lf = LimenFile(
         portal=Portal(budget=Budget(daily=300, per_agent={}, track=BudgetTrack(date=str(today)))), tasks=tasks
     )
     save_limen_file(tmp_path / "tasks.yaml", lf)
+    # Recovery requires a genuine canonical claim and its debit. An active row
+    # without keeper-owned history remains insufficient refund authority.
+    for task in lf.tasks:
+        task.status = "dispatched"
+        task.dispatch_log.append(
+            DispatchLogEntry(
+                timestamp=datetime.datetime.now(datetime.timezone.utc),
+                agent="codex",
+                session_id="heal-fixture-reservation",
+                status="dispatched",
+            )
+        )
+    claimed = apply_limen_file_sync(tmp_path / "tasks.yaml", lf, agent="codex", session_id="reserve")
+    assert claimed.applied == 4
+    assert load_limen_file(tmp_path / "tasks.yaml").portal.budget.track.spent == 4
     (tmp_path / "logs").mkdir()
     (tmp_path / "logs" / "dispatch-verify.json").write_text(
         json.dumps(
