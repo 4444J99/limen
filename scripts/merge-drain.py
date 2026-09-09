@@ -439,9 +439,10 @@ def merge(repo, num, expected_head, mode_hint):
             result = subprocess.run(
                 [sys.executable, str(ROOT / "scripts/_relay_merge.py"),
                  "--pr", str(num), "--expected-head", expected_head],
-                # Controller worst case: setup/fetch/tree checks plus four 600s
-                # trusted bodies and API cleanup. Keep the wrapper outside that budget.
-                capture_output=True, text=True, timeout=5400, check=False,
+                # Declared controller budgets total 5430s: 21 setup/tree calls,
+                # four trusted bodies and 17 API calls including cleanup. Preserve
+                # additional room for process overhead and the final receipt.
+                capture_output=True, text=True, timeout=6000, check=False,
             )
             receipt = json.loads(result.stdout) if result.returncode == 0 else {}
             return "MERGED" if (receipt.get("repository") == "4444J99/organvm-ci-relay"

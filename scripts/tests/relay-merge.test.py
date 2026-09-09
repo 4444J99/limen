@@ -318,7 +318,13 @@ class Routing(unittest.TestCase):
             patch.object(module.subprocess, "run", return_value=completed) as run,
         ):
             self.assertEqual(module.merge(relay.REPOSITORY, 1, H, "direct"), "MERGED")
-            self.assertGreaterEqual(run.call_args.kwargs["timeout"], 5400)
+            setup_budget = (3 + 2 * len(relay.ROOTS)) * 120
+            workflow_budget = len(relay.STEPS) * 600
+            api_budget = 17 * 30
+            self.assertGreater(
+                run.call_args.kwargs["timeout"],
+                setup_budget + workflow_budget + api_budget + 60,
+            )
 
 
 if __name__ == "__main__":
