@@ -645,7 +645,9 @@ class WorkLoanJournalStore:
         subject_id = str(_value(task, "id") or "")
         usage = _capacity_from_mapping(
             metrics,
-            default_runs=1,
+            # Explicit null means the adapter launch outcome is unknown; do
+            # not fabricate one run. Omitted counts retain the legacy default.
+            default_runs=None if metrics is not None and "runs" in metrics and metrics["runs"] is None else 1,
             elapsed_seconds=elapsed_seconds,
             local_host=local_host,
         )

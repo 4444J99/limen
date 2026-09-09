@@ -28,8 +28,16 @@ def load_module(name: str, path: Path):
     return module
 
 
-V = load_module("w07_validator_for_workflow_test", VALIDATOR_PATH)
 W = load_module("w07_workflow_for_test", WORKFLOW_PATH)
+V = W.V
+
+# Synthetic authority is confined to unit tests; it is never a real receipt.
+TEST_AUTHORITY = {
+    "kind": "direct_human_session",
+    "session_id": "11111111-2222-4333-8444-555555555555",
+    "executor": "codex-test",
+    "human_protected": True,
+}
 
 
 def passing_payload() -> dict:
@@ -165,11 +173,13 @@ def test_receipt_candidate_is_bound_to_stimulus_head_and_exact_output_hash() -> 
         changed_paths=[response_path, memo_path],
         response_path=response_path,
         memo_path=memo_path,
+        authority=TEST_AUTHORITY,
     )
     fence = chr(96) * 3
     receipt = json.loads(comment.split(f"{fence}json\n", 1)[1].split(f"\n{fence}", 1)[0])
     expected_output = V.render_verdict(verdict) + "\n"
     assert receipt["observed_heads"] == {"organvm/limen": observed_head}
+    assert receipt["authority"] == TEST_AUTHORITY
     assert receipt["predicate"]["output_sha256"] == hashlib.sha256(expected_output.encode("utf-8")).hexdigest()
     assert V.STIMULUS["issue_comment"] in receipt["evidence_urls"]
     assert all(observed_head in url for url in receipt["evidence_urls"][-2:])
@@ -191,6 +201,7 @@ def test_receipt_candidate_refuses_below_threshold_evidence() -> None:
             changed_paths=[],
             response_path="responses.json",
             memo_path="memo.md",
+            authority=TEST_AUTHORITY,
         )
 
 
@@ -200,3 +211,63 @@ def test_write_exact_is_idempotent_but_never_overwrites(tmp_path: Path) -> None:
     W._write_exact(output, "one\n")
     with pytest.raises(W.WorkflowError, match="refusing to overwrite"):
         W._write_exact(output, "two\n")
+
+
+@pytest.mark.parametrize(
+    "authority",
+    [
+        None,
+        {},
+        {**TEST_AUTHORITY, "session_id": ""},
+        {**TEST_AUTHORITY, "session_id": "00000000-0000-0000-0000-000000000000"},
+        {**TEST_AUTHORITY, "human_protected": False},
+        {**TEST_AUTHORITY, "executor": ""},
+        {"kind": "broker", "run_id": "run-local", "lease_id": "lease-local", "executor": "codex-test"},
+    ],
+)
+def test_receipt_authority_never_defaults_or_accepts_placeholder_identity(authority) -> None:
+    with pytest.raises(W.WorkflowError):
+        W.validated_authority(authority)
+
+
+def test_receipt_requires_authority_file_before_output(tmp_path: Path) -> None:
+    with pytest.raises(SystemExit) as caught:
+        W._parser().parse_args(["receipt", "responses.json", "memo.md", "--output", str(tmp_path / "receipt.md")])
+    assert caught.value.code == 2
+    assert not (tmp_path / "receipt.md").exists()
+
+
+def test_receipt_copies_explicit_broker_authority_without_replacing_identity() -> None:
+    authority = {
+        "kind": "broker",
+        "run_id": "run-" + "a" * 32,
+        "lease_id": "lease-123-" + "a" * 16,
+        "executor": "codex-test",
+    }
+    assert W.validated_authority(authority) == authority
+    assert W.validated_authority(authority) is not authority
+
+
+@pytest.mark.parametrize("session_id", ["direct-session", "codex:reader/session_1@host+test", "a" * 256])
+def test_receipt_accepts_broker_valid_protected_session_identifiers(session_id: str) -> None:
+    from limen.conduct.models import AgentIdentityV1, ConductorSessionV1
+
+    identity = AgentIdentityV1(agent="codex-test", surface="test", session_id=session_id)
+    session = ConductorSessionV1(session_id=session_id, identity=identity, origin="direct", human_protected=True)
+    authority = {**TEST_AUTHORITY, "session_id": session.session_id}
+    assert W.validated_authority(authority) == authority
+
+
+@pytest.mark.parametrize(
+    "session_id", ["a" * 257, " direct-session", "direct session", "direct\x00session", "/session", True]
+)
+def test_receipt_rejects_non_protocol_session_identifiers(session_id) -> None:
+    with pytest.raises(W.WorkflowError, match="bounded session identifier"):
+        W.validated_authority({**TEST_AUTHORITY, "session_id": session_id})
+
+
+@pytest.mark.parametrize("lease_id", ["lease-123-" + "b" * 16, "lease-0-" + "a" * 16, "lease-01-" + "a" * 16])
+def test_receipt_rejects_mixed_or_impossible_broker_lease(lease_id: str) -> None:
+    authority = {"kind": "broker", "run_id": "run-" + "a" * 32, "lease_id": lease_id, "executor": "codex-test"}
+    with pytest.raises(W.WorkflowError, match="broker"):
+        W.validated_authority(authority)

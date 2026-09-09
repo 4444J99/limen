@@ -95,6 +95,10 @@ class DispatchLogEntry(BaseModel):
             "pr-closed-reconcile",
             "routine-recovered",
             "provider-terminal",
+            "provider-attempt-unknown",
+            "plan-handoff-complete",
+            "provider-reroute",
+            "prelaunch-successor-hold",
             "stale-successor-hold",
             "recurrence-reopen",
         ]
@@ -144,7 +148,7 @@ def dispatch_session_id(entry: object) -> str:
 
 
 def dispatch_agent(entry: object) -> str:
-    """Return the producer lane while leaving authenticated keeper identity intact."""
+    """Return read-only producer correlation; never use it as execution authority."""
 
     if isinstance(entry, dict):
         logical = entry.get("logical_agent")
@@ -153,6 +157,19 @@ def dispatch_agent(entry: object) -> str:
         logical = getattr(entry, "logical_agent", None)
         server_owned = getattr(entry, "agent", None)
     return str(logical if logical not in {None, ""} else server_owned or "")
+
+
+def canonical_dispatch_agent(entry: object) -> str:
+    """Return only keeper-owned executor identity for lifecycle authorization.
+
+    Historical dispatcher identities and absent canonical identities are not
+    upgraded from producer correlation. Callers must match a selected executor.
+    """
+    if isinstance(entry, dict):
+        server_owned = entry.get("agent")
+    else:
+        server_owned = getattr(entry, "agent", None)
+    return server_owned if isinstance(server_owned, str) else ""
 
 
 class ExecutionRequirement(BaseModel):
@@ -212,6 +229,9 @@ class Task(BaseModel):
     # Immutable provider-neutral workstream policy carried from a generated packet into
     # the actual adapter launch seam. Historical tasks omit it.
     workstream_contract: dict[str, Any] | None = None
+    # Explicit policy is an eligibility constraint, never its own evidence of
+    # provider admission. Historical tasks omit it and retain their contract.
+    provider_eligibility: dict[str, Any] | None = None
     # A provider-neutral, digest-bound plan that must select its builder again
     # from live capability and capacity evidence. Historical tasks omit it.
     plan_receipt: dict[str, Any] | None = None
@@ -250,6 +270,15 @@ class Task(BaseModel):
         from limen.workstream_contract import validate_packet_contract
 
         return validate_packet_contract(value)
+
+    @field_validator("provider_eligibility", mode="before")
+    @classmethod
+    def validate_provider_eligibility(cls, value: Any) -> dict[str, Any] | None:
+        if value is None:
+            return None
+        from limen.provider_eligibility import validate_policy
+
+        return validate_policy(value)
 
     @field_validator("plan_receipt")
     @classmethod

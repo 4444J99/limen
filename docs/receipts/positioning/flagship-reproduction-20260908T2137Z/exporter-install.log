@@ -1,0 +1,31 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+npm warn Unknown project config "auto-install-peers". This will stop working in the next major version of npm.
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +500
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 500, reused 122, downloaded 0, added 122
+Progress: resolved 500, reused 122, downloaded 1, added 122
+Progress: resolved 500, reused 122, downloaded 16, added 138
+Progress: resolved 500, reused 122, downloaded 17, added 138
+Progress: resolved 500, reused 122, downloaded 32, added 154
+Progress: resolved 500, reused 122, downloaded 33, added 154
+Progress: resolved 500, reused 122, downloaded 48, added 170
+Progress: resolved 500, reused 122, downloaded 49, added 170
+Progress: resolved 500, reused 122, downloaded 64, added 186
+Progress: resolved 500, reused 122, downloaded 65, added 186
+Progress: resolved 500, reused 122, downloaded 80, added 202
+Progress: resolved 500, reused 122, downloaded 81, added 202
+Progress: resolved 500, reused 122, downloaded 96, added 218
+Progress: resolved 500, reused 122, downloaded 97, added 218
+Progress: resolved 500, reused 122, downloaded 112, added 234
+Progress: resolved 500, reused 122, downloaded 113, added 234
+Progress: resolved 500, reused 122, downloaded 128, added 250
+Progress: resolved 500, reused 122, downloaded 129, added 250
+Progress: resolved 500, reused 122, downloaded 144, added 266
+Progress: resolved 500, reused 122, downloaded 145, added 266
+Progress: resolved 500, reused 122, downloaded 160, added 282
+Progress: resolved 500, reused 122, downloaded 161, added 282
+Progress: resolved 500, reused 122, downloaded 176, added 298
+Progress: resolved 500, reused 122, downloaded 177, added 298
+Progress: resolved 500, reused 122, downloaded 192, added 314

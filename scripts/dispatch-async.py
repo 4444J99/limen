@@ -45,7 +45,7 @@ from limen.capacity import LOCAL_CHECKOUT_AGENTS, _weak_proxy_exhaustion, select
 from limen.execution_contract import execution_contract_hash  # noqa: E402
 from limen.intake import IntakeContractError, normalize_selected_legacy_task  # noqa: E402
 from limen.io import load_limen_file  # noqa: E402
-from limen.models import DispatchLogEntry, dispatch_agent, dispatch_session_id  # noqa: E402
+from limen.models import DispatchLogEntry, canonical_dispatch_agent, dispatch_session_id  # noqa: E402
 from limen.provider_selection import execution_profile_for  # noqa: E402
 from limen.resource_envelope import current_required_free_gib  # noqa: E402
 from limen.remote_execution import (  # noqa: E402
@@ -238,7 +238,7 @@ def _rollback_unlaunched_reservation(
         if task is None or task.status != "dispatched":
             return True
         last = task.dispatch_log[-1] if task.dispatch_log else None
-        if last is None or dispatch_session_id(last) != reservation_id or dispatch_agent(last) != agent:
+        if last is None or dispatch_session_id(last) != reservation_id or canonical_dispatch_agent(last) != agent:
             return True
         successor_required = WORKSTREAM_SUCCESSOR_REQUIRED_LABEL in (task.labels or [])
         task.status = "failed" if successor_required else "open"
@@ -586,7 +586,7 @@ def harvest() -> int:
                     and reservation_matches
                     and last is not None
                     and last.status == "dispatched"
-                    and dispatch_agent(last) == agent
+                    and canonical_dispatch_agent(last) == agent
                 )
 
             authoritative_worker_receipt = custody_ok
@@ -595,7 +595,7 @@ def harvest() -> int:
             last = t.dispatch_log[-1] if t is not None and t.dispatch_log else None
             requires_remote_identity = remote_hint or "github_actions" in {
                 str(t.target_agent if t is not None else ""),
-                dispatch_agent(last) if last is not None else "",
+                canonical_dispatch_agent(last) if last is not None else "",
             }
             result_value = data.get("result")
             remote_preflight_blocked = bool(
@@ -612,7 +612,7 @@ def harvest() -> int:
                         or not isinstance(reservation_id, str)
                         or not _ASYNC_RESERVATION_RE.fullmatch(reservation_id)
                         or dispatch_session_id(last) != reservation_id
-                        or dispatch_agent(last) != agent
+                        or canonical_dispatch_agent(last) != agent
                     ):
                         raise RemoteExecutionError(
                             "remote async result no longer matches the current authoritative reservation"
@@ -637,7 +637,7 @@ def harvest() -> int:
                         remote_submission,
                         result=data.get("result"),
                         agent=agent,
-                        expected_agent=dispatch_agent(last),
+                        expected_agent=canonical_dispatch_agent(last),
                         expected_request_contract=expected_request_contract,
                         task_id=t.id,
                         task_repo=t.repo,
@@ -772,7 +772,7 @@ def reap_stale(max_age_s: int):
                 markerless.append(
                     (
                         t.id,
-                        dispatch_agent(last) or t.target_agent,
+                        canonical_dispatch_agent(last) or t.target_agent,
                         reservation_id,
                         max(0.0, (now - stamp).total_seconds()),
                     )
@@ -812,7 +812,7 @@ def reap_stale(max_age_s: int):
                 reservation_matches = bool(
                     last is not None
                     and last.status == "dispatched"
-                    and dispatch_agent(last) == agent
+                    and canonical_dispatch_agent(last) == agent
                     and (
                         (marker_reservation_id is None and last_reservation_id == "async-reserve")
                         or last_reservation_id == marker_reservation_id
@@ -1340,7 +1340,7 @@ def recover_exact_task(
             # must not be able to block recovery of current reservation B.
             expected_marker = _running_marker_path(
                 task_id,
-                dispatch_agent(last) or task.target_agent,
+                canonical_dispatch_agent(last) or task.target_agent,
                 active_reservation_id,
             )
             marker_paths = [expected_marker] if expected_marker.is_file() else []
@@ -1373,7 +1373,7 @@ def recover_exact_task(
                 }
             if marker_data.get("reservation_id") != active_reservation_id:
                 continue
-            if marker_agent != dispatch_agent(last):
+            if marker_agent != canonical_dispatch_agent(last):
                 return {
                     "status": "blocked",
                     "recovered_count": 0,
@@ -1529,10 +1529,7 @@ def _pick_reservations(
     unbounded_remaining = _effectively_unbounded_remaining(lf)
     value_repos = _value_tier_repos()
     resource_admitted, resource_reason = _resource_envelope_admission()
-    disk_pressure = (
-        _truthy_env("LIMEN_DISK_PRESSURE_VALUE_ONLY", True)
-        and not resource_admitted
-    )
+    disk_pressure = _truthy_env("LIMEN_DISK_PRESSURE_VALUE_ONLY", True) and not resource_admitted
     # Loud-not-silent (PR #1329): the WorkLoan admission gate inside _dispatchable now filters
     # un-underwritten candidates BEFORE they reach normalization, where the "INTAKE BLOCKED"
     # notice used to surface.  Report each agent-relevant rejection here, once, so a legacy
@@ -1783,7 +1780,13 @@ def reserve_and_launch(
             reserved_ids = {tid: dispatch_session_id(by_id[tid].dispatch_log[-1]) for _agent, tid in picked}
             if not dry and (picked or reset_changed):
                 try:
-                    apply_limen_file_sync(TASKS, lf, agent="dispatch-async", session_id="reserve")
+                    apply_limen_file_sync(
+                        TASKS,
+                        lf,
+                        agent="dispatch-async",
+                        claim_agents={task_id: selected_agent for selected_agent, task_id in picked},
+                        session_id="reserve",
+                    )
                 except Exception:
                     for agent, tid in picked:
                         if agent in LOCAL_CHECKOUT_AGENTS:

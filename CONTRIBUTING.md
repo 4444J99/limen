@@ -14,7 +14,7 @@ and, for Claude Code specifically, `CLAUDE.md` (the operating charter) instead.
 | `web/app/` | Next.js dashboard (static export → Cloudflare Pages; the Firebase Hosting step is dormant) |
 | `mcp/`, `ianva/` | MCP server + doorway/aggregator |
 | `moneta/` | Self-hosted Bitcoin licence mint (TypeScript; `cd moneta && npm test`) |
-| `apps/`, `studium/` | Product applications (`apps/danse/` has its own `AGENTS.md`) and the study/publishing estate |
+| `apps/`, `studium/` | Product applications, migration pointers (`apps/danse/README.md`), and the study/publishing estate |
 | `spec/contracts/` | Portable JSON Schemas the generated surfaces must satisfy |
 | `scripts/` | The operational fleet (heartbeat, verification, merge policy, organs) |
 | `institutio/governance/` | Declared registries: gates, sensors, session streams (`gates.yaml` owns the gate matrix) |
@@ -90,7 +90,7 @@ python -m pytest cli/tests/test_dispatch.py::test_x
 
 When changing any surface of the instruction estate — `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`,
 this file, `docs/agent-instruction-standard.md`, `.github/copilot-instructions.md` (a pointer
-file, never a second rulebook), directory-scoped `AGENTS.md` files (e.g. `apps/danse/AGENTS.md`),
+file, never a second rulebook), directory-scoped `AGENTS.md` files where present,
 or generated instruction templates — keep the root protocol authoritative and run
 `python scripts/check-agent-docs.py`. Status vocabulary, precedence, agent names, and referenced
 scripts should stay machine-checked rather than manually remembered.

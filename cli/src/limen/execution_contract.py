@@ -17,11 +17,13 @@ import json
 from typing import Any, Mapping
 
 from limen.plan_handoff import PlanReceiptError, validate_plan_receipt
+from limen.provider_eligibility import EligibilityPolicyError, validate_policy
 from limen.workstream_contract import ContractError as WorkstreamContractError
 from limen.workstream_contract import validate_packet_contract
 
 
 EXECUTION_CONTRACT_SCHEMA_VERSION = "limen-execution-contract.v4"
+POLICY_EXECUTION_CONTRACT_SCHEMA_VERSION = "limen-execution-contract.v5"
 
 
 class ExecutionContractError(ValueError):
@@ -119,7 +121,7 @@ def execution_contract_payload(task: Mapping[str, Any] | object) -> dict[str, An
     """Return the strict, versioned canonical payload for one task execution."""
 
     data = _task_mapping(task)
-    return {
+    payload = {
         "schema_version": EXECUTION_CONTRACT_SCHEMA_VERSION,
         "id": _string(data, "id", default=None),
         "title": _string(data, "title", default=None),
@@ -141,6 +143,20 @@ def execution_contract_payload(task: Mapping[str, Any] | object) -> dict[str, An
         "claude_tier": _string(data, "claude_tier", default=None, nullable=True),
         "depends_on": _string_list(data, "depends_on"),
     }
+    # Historical policy-free reservations keep their exact v4 fingerprint.
+    # An explicit policy is immutable execution input, not a lifecycle extra.
+    policy = data.get("provider_eligibility")
+    if policy is not None:
+        try:
+            normalized = validate_policy(policy)
+            repository = data.get("repo")
+            if not isinstance(repository, str) or normalized["repository"] != repository.lower():
+                raise EligibilityPolicyError("provider eligibility repository mismatch")
+            payload["provider_eligibility"] = normalized
+        except EligibilityPolicyError as exc:
+            raise ExecutionContractError("execution contract field 'provider_eligibility' is invalid") from exc
+        payload["schema_version"] = POLICY_EXECUTION_CONTRACT_SCHEMA_VERSION
+    return payload
 
 
 def execution_contract_hash(task: Mapping[str, Any] | object) -> str:
