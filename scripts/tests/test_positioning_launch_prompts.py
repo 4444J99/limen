@@ -29,7 +29,7 @@ class LaunchContractTests(unittest.TestCase):
     def render(self):
         return LAUNCH.render(self.contract, self.snapshot, self.program, self.issue_map)
 
-    def assert_drift_rejected(self, mutated):
+    def assert_drift_rejected(self, mutated, source=None, reason="drifted"):
         """The check must reject a bad copied block without repairing/overwriting it."""
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -37,9 +37,11 @@ class LaunchContractTests(unittest.TestCase):
                 target = root / relative
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes((ROOT / relative).read_bytes())
+            if source is not None:
+                (root / LAUNCH.CONTRACT).write_text(json.dumps(source))
             output = root / LAUNCH.OUTPUT
             output.write_text(mutated)
-            with self.assertRaisesRegex(LAUNCH.ContractError, "drifted"):
+            with self.assertRaisesRegex(LAUNCH.ContractError, reason):
                 LAUNCH.check(root)
             self.assertEqual(mutated, output.read_text())
 
@@ -54,7 +56,7 @@ class LaunchContractTests(unittest.TestCase):
                 self.assertIn("re-query current ownership", block)
                 self.assertIn("autonomous dispatch requires its own broker reservation", block)
                 self.assertIn("No fake leases", block)
-                self.assertIn("ongoing monitoring are authorized by these prompts", block)
+                self.assertIn("These prompts grant no publication, send, spend, account-action or monitoring authority.", block)
                 self.assertIn("live capabilities and budget", block)
                 self.assertIn("cheapest adequate currently available model", block)
                 self.assertIn("exact tested/accepted heads", block)
@@ -95,6 +97,14 @@ class LaunchContractTests(unittest.TestCase):
         self.contract["package_overrides"]["R10"]["boundary"] = self.contract["package_overrides"]["R10"]["boundary"].replace("Do not start autonomous monitoring without separate recorded user scheduling authority", "Start autonomous monitoring now")
         with self.assertRaisesRegex(LAUNCH.ContractError, "R10 observation"):
             self.render()
+
+    def test_same_source_and_output_authority_polarity_change_is_rejected(self):
+        original = self.render()
+        source = copy.deepcopy(self.contract)
+        safe = source["shared"]["authority"]
+        unsafe = safe.replace("These prompts grant no publication", "These prompts grant publication")
+        source["shared"]["authority"] = unsafe
+        self.assert_drift_rejected(original.replace(safe, unsafe), source=source, reason="authority")
 
     def test_source_cannot_move_live_receipts_before_deployment(self):
         self.contract["package_overrides"]["R05"]["exit"] = self.contract["package_overrides"]["R05"]["exit"].replace("after authorized deployment", "before deployment")

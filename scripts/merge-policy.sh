@@ -75,6 +75,16 @@ mss=$(jq -r '.mergeStateStatus' "$j")
 draft=$(jq -r '.isDraft' "$j")
 head=$(jq -r '.headRefOid // empty' "$j")
 
+# The personal relay uses the keeper's synchronous evaluator + one-shot merge.
+# Standalone callers (including governor release helpers) cannot mint a generic
+# CLEARED result from a spoofable Actions rollup or reuse its earlier App pass.
+canonical_repo=$(printf '%s' "$url" | sed -nE 's#^https://github\.com/([^/]+/[^/]+)/pull/[0-9]+.*#\1#p' | tr '[:upper:]' '[:lower:]')
+requested_repo=$(printf '%s' "$REPO" | tr '[:upper:]' '[:lower:]')
+if [ "$canonical_repo" = "4444j99/organvm-ci-relay" ] || [ "$requested_repo" = "4444j99/organvm-ci-relay" ]; then
+  echo "VERDICT: HOLD — relay requires the deployed governor merge transaction via merge-drain.py."
+  exit 2
+fi
+
 # Merge-queue capability is live, branch-specific repository state. Only a positive GraphQL
 # Repository.mergeQueue object is authoritative enough to route through the queue. An unavailable
 # API/schema/permission or malformed response is "unknown" and preserves the direct-merge

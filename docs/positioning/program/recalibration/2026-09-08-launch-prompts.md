@@ -14,7 +14,7 @@ Copy this block as the task input:
 Continue PSP package R00 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
 Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.
 Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.
-Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts.
+Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.
 Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.
 Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.
 Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.
@@ -37,7 +37,7 @@ Copy this block as the task input:
 Continue PSP package R01 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
 Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.
 Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.
-Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts.
+Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.
 Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.
 Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.
 Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.
@@ -60,7 +60,7 @@ Copy this block as the task input:
 Continue PSP package R02 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
 Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.
 Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.
-Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts.
+Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.
 Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.
 Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.
 Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.
@@ -83,7 +83,7 @@ Copy this block as the task input:
 Continue PSP package R03 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
 Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.
 Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.
-Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts.
+Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.
 Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.
 Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.
 Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.
@@ -106,7 +106,7 @@ Copy this block as the task input:
 Continue PSP package R04 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
 Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.
 Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.
-Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts.
+Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.
 Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.
 Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.
 Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.
@@ -129,7 +129,7 @@ Copy this block as the task input:
 Continue PSP package R05 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
 Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.
 Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.
-Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts.
+Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.
 Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.
 Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.
 Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.
@@ -153,7 +153,7 @@ Copy this block as the task input:
 Continue PSP package R06 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
 Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.
 Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.
-Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts.
+Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.
 Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.
 Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.
 Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.
@@ -176,7 +176,7 @@ Copy this block as the task input:
 Continue PSP package R07 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
 Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.
 Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.
-Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts.
+Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.
 Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.
 Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.
 Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.
@@ -199,7 +199,7 @@ Copy this block as the task input:
 Continue PSP package R08 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
 Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.
 Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.
-Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts.
+Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.
 Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.
 Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.
 Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.
@@ -222,7 +222,7 @@ Copy this block as the task input:
 Continue PSP package R09 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
 Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.
 Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.
-Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts.
+Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.
 Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.
 Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.
 Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.
@@ -245,7 +245,7 @@ Copy this block as the task input:
 Continue PSP package R10 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
 Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.
 Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.
-Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts.
+Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.
 Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.
 Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.
 Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.
@@ -269,7 +269,7 @@ Copy this block as the task input:
 Continue PSP package R11 from .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
 Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.
 Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.
-Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts.
+Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.
 Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.
 Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.
 Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.
@@ -291,7 +291,7 @@ Resume the named package from its latest durable issue/PR receipt. Read that pac
 Recalibration plan: .codex/plans/2026-09-08-psp-alpha-omega-recalibration.md.
 Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.
 Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.
-Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits, human-atom closures, publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts.
+Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.
 Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.
 Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.
 Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.

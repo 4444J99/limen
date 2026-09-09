@@ -304,6 +304,11 @@ def assess(rn):
             return (repo, num, disposition.removeprefix("lifecycle:").upper())
         if d.get("mergeable") == "CONFLICTING":
             return (repo, num, "CONFLICT")
+        if repo.lower() == "4444j99/organvm-ci-relay":
+            # The controller creates a merge-commit check inside its transaction.
+            # Missing/consumed checks and diagnostic rollups cannot authorize it.
+            head = str(d.get("headRefOid") or "")
+            return (repo, num, "READY", head, "direct") if head else (repo, num, "ERR")
         states = [(c.get("conclusion") or c.get("state") or "") for c in (d.get("statusCheckRollup") or [])]
         if any(s in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED") for s in states):
             failing_required = _failing_required_checks(repo, num)
@@ -427,6 +432,21 @@ def merge(repo, num, expected_head, mode_hint):
     """
     if merge_prohibition() is not None:
         return "REFUSED"
+    if repo.lower() == "4444j99/organvm-ci-relay":
+        if mode_hint != "direct":
+            return "REFUSED"
+        try:
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "scripts/_relay_merge.py"),
+                 "--pr", str(num), "--expected-head", expected_head],
+                capture_output=True, text=True, timeout=2700, check=False,
+            )
+            receipt = json.loads(result.stdout) if result.returncode == 0 else {}
+            return "MERGED" if (receipt.get("repository") == "4444J99/organvm-ci-relay"
+                                and receipt.get("pr") == num and receipt.get("head") == expected_head
+                                and receipt.get("landed")) else "FAILED"
+        except (OSError, ValueError, subprocess.TimeoutExpired):
+            return "FAILED"
     if mode_hint == "queue":
         current = _queue_state(repo, num)
         if current is None or current["head"] != expected_head:

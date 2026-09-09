@@ -65,7 +65,7 @@ def validate(contract: dict, snapshot: dict, program: dict, issue_map: dict) -> 
     shared = contract["shared"]
     require(shared["inputs"], ("current AGENTS.md", "current repository version", str(SNAPSHOT)), "inputs")
     require(shared["freshness"], ("dated planning evidence, not dispatch authority", "re-query current ownership", "admission and exact acceptance", "before mutation"), "freshness")
-    require(shared["authority"], ("autonomous dispatch requires its own broker reservation", "publication/sends/spend/account actions or ongoing monitoring are authorized by these prompts", "No fake leases"), "authority")
+    require(shared["authority"], ("autonomous dispatch requires its own broker reservation", "These prompts grant no publication, send, spend, account-action or monitoring authority.", "No fake leases, hidden fanout, task-projection edits or human-atom closures."), "authority")
     require(shared["verification"], ("preserve their scope-bound evidence", "Do not rerun all research, all tests, all receipts or the full estate census"), "verification")
     require(shared["provider"], ("live capabilities and budget", "identity and authority do not transfer", "cheapest adequate currently available model"), "provider")
     require(shared["evidence"], ("artifact link", "exact tested/accepted heads", "real exit evidence", "actual authority source"), "evidence")
