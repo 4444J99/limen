@@ -537,7 +537,7 @@ gates:
     owner: tabularius
     note: "Recovery remains effect-separated and fail-closed: repository-qualified ref proofs, exact review pagination, zero-step runner admission, one-use signed CAS deletion, crash reconciliation, and the read-only aggregate predicate stay independently testable."
   remote-execution-admission-test:
-    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_remote_execution.py cli/tests/test_gh_app_token.py -q"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_remote_execution.py cli/tests/test_gh_app_token.py cli/tests/test_transfer_script_coordinates.py -q"
     paths:
       - ".github/workflows/limen-agent.yml"
       - "cli/src/limen/harvest.py"
@@ -547,6 +547,8 @@ gates:
       - "cli/tests/test_gh_app_token.py"
       - "scripts/gh-app-token.sh"
       - "scripts/bootstrap-github-app.py"
+      - "institutio/github/estate.yaml"
+      - "cli/tests/test_transfer_script_coordinates.py"
       - "scripts/consolidation-gates.py"
       - "scripts/conductor-tranche.py"
       - "scripts/session-blockers-ledger.py"
