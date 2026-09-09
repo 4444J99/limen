@@ -13,6 +13,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import tempfile
 import urllib.request
 import uuid
@@ -350,7 +351,7 @@ def transact(api, number, head, governor_app, ruleset_id, evaluator):
                 },
             )
         except Exception:  # noqa: BLE001 - cleanup cannot erase the merge/readback receipt
-            pass
+            print("WARNING: governor check cleanup failed; reconcile before retry.", file=sys.stderr)
 
 
 def main():
