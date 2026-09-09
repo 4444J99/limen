@@ -1741,7 +1741,7 @@ phases:
         title: Create the audit report and executive verdict template
         outcome: Findings convert technical evidence into a prioritized decision, gate specification, and bounded next step.
         target_repo: organvm-iii-ergon/collaboration-operations-platform
-        target_paths: [templates/production-systems, rubrics]
+        target_paths: [templates/production-systems, rubrics, scripts/validate-production-systems-preflight.ts]
         capabilities: [executive_writing, technical_audit]
         reasoning: deep
         effect: write

@@ -123,9 +123,15 @@ def test_issue_bodies_are_complete_and_stably_marked() -> None:
     assert "## Acceptance condition" in work
     assert "## Executable completion predicate" in work
     assert "measurement, inference, implication, and prominence" in work
-    assert "Assigned model: `gpt-5.6-sol`" in work
-    assert "Assigned effort: `max`" in work
+    assert "Historical model: `gpt-5.6-sol`" in work
+    assert "Historical effort: `max`" in work
     assert "**Execution chunk:** `PSP-C02`" in work
+    for body in (root, phase, dependent_phase, work):
+        assert "Historical" in body
+        assert "Historical assignments are advisory metadata, not executable overrides." in body
+        assert "honor any explicit current human override" in body
+        assert "- If unavailable:" not in body
+        assert "- Assigned model:" not in body
     assert "`PSP-C00` — Land the program control plane" in root
 
 
@@ -369,7 +375,7 @@ def test_live_catalog_validator_checks_every_assigned_pair(monkeypatch) -> None:
     assert sum(result["chunk_assignments"].values()) == 13
 
 
-def test_packet_seed_carries_the_human_model_override_and_is_not_a_lease() -> None:
+def test_packet_seed_requires_current_selection_and_is_not_a_lease() -> None:
     graph, mapping = graph_and_map()
 
     seed = MODULE.packet_seed("PSP-P01-W01", graph, mapping)
@@ -377,8 +383,9 @@ def test_packet_seed_carries_the_human_model_override_and_is_not_a_lease() -> No
     assert seed["schema_version"] == MODULE.SEED_SCHEMA
     assert seed["not_a_lease"] is True
     assert seed["execution_requirements"]["reasoning_class"] == "routine"
-    assert seed["execution_requirements"]["model_override"]["slug"] == "gpt-5.6-luna"
-    assert seed["execution_requirements"]["model_override"]["effort"] == "medium"
+    assert "model_override" not in seed["execution_requirements"]
+    assert seed["execution_requirements"]["model_selection"]["discover_capabilities_at_dispatch"] is True
+    assert seed["historical_model_assignment"]["slug"] == "gpt-5.6-luna"
     assert seed["receipt_target"] == "github:4444J99/limen:issue:11"
 
 
@@ -508,6 +515,26 @@ def test_forged_receipts_fail_exact_corruption_shapes() -> None:
         mutate(forged)
         with pytest.raises(MODULE.ProgramError, match=message):
             MODULE.validate_work_receipt(forged, work_id, graph)
+
+
+def test_remote_template_predicate_uses_packet_scope_not_controller_checkout() -> None:
+    graph, _mapping = graph_and_map()
+    packet = graph["work_by_id"]["PSP-P11-W03"]
+    assert MODULE._command_owned_by_packet("python3 templates/production-systems/verify-audit-report.py", packet)
+    assert MODULE._command_owned_by_packet(
+        "node_modules/.bin/tsx scripts/validate-production-systems-preflight.ts", packet
+    )
+    for command in (
+        "python3 templates/production-systems/../../unowned.py",
+        "python3 /tmp/verify-audit-report.py",
+        "python3 unowned/verify-audit-report.py",
+        "python3 -c 'print(1)'",
+        "node_modules/.bin/tsx -e 'validateAuditReport()'",
+        "node_modules/.bin/tsx scripts/unowned.ts",
+        "other/tsx scripts/validate-production-systems-preflight.ts",
+        "python3 templates/production-systems/verify-audit-report.py && true",
+    ):
+        assert not MODULE._command_owned_by_packet(command, packet), command
 
 
 def test_w07_receipt_requires_five_reader_records_and_decision_evidence() -> None:
@@ -663,7 +690,7 @@ def test_phase_binding_digest_is_local_and_stable(monkeypatch) -> None:
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: (receipts[work_id], f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: (receipts[work_id], f"https://example.test/{work_id}"),
     )
     first_receipts = MODULE._phase_child_receipt_digest("PSP-P00", graph, mapping)
     receipts["PSP-P00-W01"]["revision"] = 2
@@ -707,7 +734,7 @@ def test_phase_proof_is_receipt_independent_and_checks_children_and_projection(m
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/{work_id}"),
     )
 
     result = MODULE.phase_proof("PSP-P00", graph, mapping)
@@ -741,7 +768,7 @@ def test_phase_proof_requires_closed_valid_upstream_phase(monkeypatch) -> None:
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/{work_id}"),
     )
 
     with pytest.raises(MODULE.ProgramError, match="PSP-P01 upstream phase PSP-P00 is not closed"):
@@ -779,7 +806,7 @@ def test_phase_proof_reports_missing_upstream_projection_neutrally(monkeypatch) 
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/{work_id}"),
     )
     monkeypatch.setattr(
         MODULE,
@@ -806,7 +833,7 @@ def test_phase_proof_requires_full_transitive_upstream_chain(monkeypatch) -> Non
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/{work_id}"),
     )
     monkeypatch.setattr(
         MODULE,
@@ -831,7 +858,7 @@ def test_phase_proof_enforces_transitive_chunk_predecessors(monkeypatch) -> None
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/{work_id}"),
     )
     monkeypatch.setattr(
         MODULE,
@@ -857,7 +884,7 @@ def test_phase_proof_enforces_partial_predecessor_chunk_work(monkeypatch) -> Non
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/{work_id}"),
     )
     monkeypatch.setattr(
         MODULE,
@@ -894,7 +921,7 @@ def test_phase_proof_recovers_only_missing_phase_objects(monkeypatch) -> None:
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/{work_id}"),
     )
 
     result = MODULE.phase_proof("PSP-P00", graph, mapping)
@@ -910,7 +937,7 @@ def test_phase_proof_rejects_stale_child_receipt(monkeypatch) -> None:
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: (
+        lambda work_id, _graph, _mapping, **_kwargs: (
             (_ for _ in ()).throw(MODULE.ProgramError(f"{work_id} stale receipt"))
             if work_id == "PSP-P00-W01"
             else ({"work_id": work_id}, f"https://example.test/{work_id}")
@@ -928,7 +955,7 @@ def test_phase_proof_rejects_stale_routing_labels_and_phase_local_orphans(monkey
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/{work_id}"),
     )
 
     remote["PSP-P00-W01"]["labels"].append({"name": "model:stale"})
@@ -958,7 +985,7 @@ def test_phase_proof_cli_mode_is_read_only(monkeypatch, capsys) -> None:
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/{work_id}"),
     )
 
     assert MODULE.main(["--phase-proof", "PSP-P00"]) == 0
@@ -987,7 +1014,10 @@ def test_phase_receipt_template_is_read_only_cli_output(monkeypatch, capsys) -> 
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id, "revision": 1}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: (
+            {"work_id": work_id, "revision": 1},
+            f"https://example.test/{work_id}",
+        ),
     )
 
     assert MODULE.main(["--phase-receipt-template", "PSP-P00"]) == 0
@@ -1078,7 +1108,7 @@ def test_terminal_omega_leaf_phase_and_root_can_remain_open_for_readiness(monkey
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/receipts/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/receipts/{work_id}"),
     )
     monkeypatch.setattr(
         MODULE,
@@ -1115,7 +1145,7 @@ def test_closed_phase_requires_a_valid_exit_gate_receipt(monkeypatch) -> None:
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/{work_id}"),
     )
     monkeypatch.setattr(
         MODULE,
@@ -1136,7 +1166,7 @@ def test_normal_closure_requires_terminal_receipts_without_proof_exclusions(monk
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/{work_id}"),
     )
     monkeypatch.setattr(
         MODULE,
@@ -1168,6 +1198,7 @@ def test_multi_repository_receipt_requires_resolved_concrete_heads() -> None:
         "changed_paths": [],
         "predicate": {
             "command": "python3 scripts/positioning-program.py --check",
+            "source_repository": "organvm/alpha",
             "command_sha256": MODULE.hashlib.sha256(b"python3 scripts/positioning-program.py --check").hexdigest(),
             "exit_code": 0,
             "output": "pass\n",
@@ -1222,7 +1253,7 @@ def test_ready_work_uses_exact_leaf_dependencies_without_global_phase_stall(monk
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/receipts/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/receipts/{work_id}"),
     )
 
     initial = {row["id"] for row in MODULE.ready_work(graph, mapping)}
@@ -1247,6 +1278,69 @@ def test_ready_work_uses_exact_leaf_dependencies_without_global_phase_stall(monk
     assert "PSP-P05-W04" in ready_rows
     assert ready_rows["PSP-P05-W04"]["chunk_id"] == "PSP-C04"
     assert ready_rows["PSP-P05-W04"]["phase_close_blocked_by"] == ["PSP-P02", "PSP-P03", "PSP-P04"]
+
+
+def test_leaf_admission_isolates_invalid_sibling_and_memoizes_receipts(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {key: {"state": "open"} for key in graph["ordered_ids"]}
+    for key in ("PSP-P00-W01", "PSP-P00-W02", "PSP-P00-W04"):
+        remote[key]["state"] = "closed"
+    calls = []
+
+    def receipt(work_id, _graph, _mapping, **_kwargs):
+        calls.append(work_id)
+        if work_id == "PSP-P00-W02":
+            raise MODULE.ProgramError("synthetic invalid receipt")
+        return {"work_id": work_id}, "https://example.test/receipt"
+
+    monkeypatch.setattr(MODULE, "fetch_work_receipt", receipt)
+    accepted, rejected = MODULE.accepted_work_for_admission(graph, mapping, remote)
+    assert accepted == {"PSP-P00-W01", "PSP-P00-W04"}
+    assert rejected == ["PSP-P00-W02"]
+    assert len(calls) == len(set(calls)) == 3
+
+
+def test_leaf_admission_rejects_invalid_transitive_closed_ancestry(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {key: {"state": "open"} for key in graph["ordered_ids"]}
+    for key in ("PSP-P00-W01", "PSP-P00-W02", "PSP-P00-W03"):
+        remote[key]["state"] = "closed"
+
+    def receipt(work_id, _graph, _mapping, **_kwargs):
+        if work_id == "PSP-P00-W01":
+            raise MODULE.ProgramError("synthetic invalid ancestor")
+        pytest.fail("descendant receipt must not substitute for invalid ancestry")
+
+    monkeypatch.setattr(MODULE, "fetch_work_receipt", receipt)
+    accepted, rejected = MODULE.accepted_work_for_admission(graph, mapping, remote)
+    assert accepted == set()
+    assert rejected == ["PSP-P00-W01", "PSP-P00-W02", "PSP-P00-W03"]
+
+
+def test_ready_work_reports_debt_without_global_phase_or_sibling_stall(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {
+        key: {"state": "open", "number": value["number"], "body": MODULE.marker(key)}
+        for key, value in mapping["issues"].items()
+    }
+    remote["PSP-P00"]["state"] = "closed"  # aggregate remains invalid: children are open
+    remote["PSP-P00-W01"]["state"] = "closed"
+    remote["PSP-P00-W02"]["state"] = "closed"
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+
+    def receipt(work_id, _graph, _mapping, **_kwargs):
+        if work_id == "PSP-P00-W02":
+            raise MODULE.ProgramError("synthetic invalid sibling")
+        return {"work_id": work_id}, "https://example.test/receipt"
+
+    monkeypatch.setattr(MODULE, "fetch_work_receipt", receipt)
+    rows = {row["id"]: row for row in MODULE.ready_work(graph, mapping)}
+    assert "PSP-P00-W04" in rows
+    assert "PSP-P00-W03" not in rows
+    assert "PSP-P00-W05" not in rows
+    assert rows["PSP-P00-W04"]["closed_work_requiring_reconciliation"] == ["PSP-P00-W02"]
+    with pytest.raises(MODULE.ProgramError, match="closed before child issues"):
+        MODULE.closure_integrity(graph, mapping, remote)
 
 
 def test_p12_can_start_before_p10_closes_and_unlock_p10_w08(monkeypatch) -> None:
@@ -1274,7 +1368,7 @@ def test_p12_can_start_before_p10_closes_and_unlock_p10_w08(monkeypatch) -> None
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/receipts/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/receipts/{work_id}"),
     )
     monkeypatch.setattr(
         MODULE,
@@ -1307,7 +1401,7 @@ def test_closed_work_cannot_precede_its_exact_dependencies(monkeypatch) -> None:
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/{work_id}"),
     )
 
     with pytest.raises(MODULE.ProgramError, match="PSP-P00-W02 is closed before dependency issues"):
@@ -1324,7 +1418,7 @@ def test_closed_phase_cannot_precede_upstream_phase(monkeypatch) -> None:
     monkeypatch.setattr(
         MODULE,
         "fetch_work_receipt",
-        lambda work_id, _graph, _mapping: ({"work_id": work_id}, f"https://example.test/{work_id}"),
+        lambda work_id, _graph, _mapping, **_kwargs: ({"work_id": work_id}, f"https://example.test/{work_id}"),
     )
     monkeypatch.setattr(
         MODULE,
@@ -1498,11 +1592,12 @@ def test_chunk_prompt_and_render_are_deterministic(tmp_path: Path) -> None:
     first = tmp_path / "first.md"
     second = tmp_path / "second.md"
 
-    assert packet["conductor_assignment"]["slug"] == "gpt-5.6-sol"
-    assert packet["conductor_assignment"]["effort"] == "max"
+    assert packet["historical_conductor_assignment"]["slug"] == "gpt-5.6-sol"
+    assert packet["historical_conductor_assignment"]["effort"] == "max"
     assert packet["work"][-1]["id"] == "PSP-P10-W08"
-    assert "Continue draft PR #2156" in bootstrap["launch_prompt"]
-    assert "Start from current `main` only after C00 is closed" in packet["launch_prompt"]
+    assert "Resume the existing owner branch" in bootstrap["launch_prompt"]
+    assert "cheapest adequate available model" in packet["launch_prompt"]
+    assert "exact model/effort assignment" not in packet["launch_prompt"]
     assert "Continue from relay at <absolute-pointer-path>" in packet["launch_prompt"]
     assert "An open upstream phase or chunk may block aggregate closeout" in packet["launch_prompt"]
     assert "A blocker local to one leaf is not a global stop" in packet["launch_prompt"]
@@ -1517,3 +1612,259 @@ def test_chunk_prompt_and_render_are_deterministic(tmp_path: Path) -> None:
     assert "Chunk arrows govern aggregate proof and closeout order, not leaf admission" in rendered
     assert "a human gate on one leaf cannot idle unrelated reversible work" in rendered
     assert "former P10↔P12 phase-gating deadlock" in rendered
+
+
+@pytest.mark.parametrize("failure", [FileNotFoundError("gh"), MODULE.subprocess.TimeoutExpired("gh", 120)])
+def test_github_observation_launch_failure_is_not_receipt_debt(monkeypatch, failure) -> None:
+    def unavailable(*args, **kwargs):
+        raise failure
+
+    monkeypatch.setattr(MODULE.subprocess, "run", unavailable)
+    with pytest.raises(MODULE.RemoteObservationError, match="observation unavailable"):
+        MODULE._gh(["api", "repos/example/repo"])
+
+
+def test_ready_observation_validates_map_once_and_preserves_receipt_debt(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {
+        key: {"state": "open", "number": value["number"], "body": MODULE.marker(key)}
+        for key, value in mapping["issues"].items()
+    }
+    remote["PSP-P00-W01"]["state"] = "closed"
+    checks = []
+    original = MODULE.validate_map
+
+    def validate(*args, **kwargs):
+        checks.append(True)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(MODULE, "validate_map", validate)
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(MODULE, "_pages", lambda *_args: [])
+    with pytest.raises(MODULE.ProgramError, match="closed_work_requiring_reconciliation: PSP-P00-W01"):
+        MODULE.ready_work(graph, mapping)
+    assert len(checks) == 1
+
+
+def test_standalone_receipt_and_admission_reject_invalid_map_before_observation(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    del mapping["issues"]["PSP-P00-W01"]
+    monkeypatch.setattr(MODULE, "_pages", lambda *_args: pytest.fail("invalid map must fail before remote read"))
+    with pytest.raises(MODULE.ProgramError):
+        MODULE.fetch_work_receipt("PSP-P00-W01", graph, mapping)
+    with pytest.raises(MODULE.ProgramError):
+        MODULE.accepted_work_for_admission(graph, mapping, {})
+
+
+@pytest.mark.parametrize("code, output", [(1, ""), (0, "invalid-json")])
+def test_github_observation_response_failure_is_not_receipt_debt(monkeypatch, code, output) -> None:
+    monkeypatch.setattr(
+        MODULE.subprocess, "run", lambda *args, **kwargs: SimpleNamespace(returncode=code, stdout=output, stderr="")
+    )
+    with pytest.raises(MODULE.RemoteObservationError):
+        MODULE._gh(["api", "repos/example/repo"])
+
+
+def test_admission_propagates_unavailable_remote_observation(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    remote = {key: {"state": "open"} for key in graph["ordered_ids"]}
+    remote["PSP-P00-W01"]["state"] = "closed"
+
+    def unavailable(*args, **kwargs):
+        raise MODULE.RemoteObservationError("GitHub unavailable")
+
+    monkeypatch.setattr(MODULE, "fetch_work_receipt", unavailable)
+    with pytest.raises(MODULE.RemoteObservationError, match="GitHub unavailable"):
+        MODULE.accepted_work_for_admission(graph, mapping, remote)
+
+
+@pytest.mark.parametrize("debt", [[], ["PSP-P00-W01"]])
+def test_empty_ready_result_never_hides_closed_receipt_debt(monkeypatch, debt) -> None:
+    graph, mapping = graph_and_map()
+    remote = {key: {"state": "closed"} for key in graph["ordered_ids"]}
+    monkeypatch.setattr(MODULE, "fetch_program_issues", lambda _graph: remote)
+    monkeypatch.setattr(MODULE, "accepted_work_for_admission", lambda *args, **kwargs: (set(), debt))
+    if debt:
+        with pytest.raises(MODULE.ProgramError, match="closed_work_requiring_reconciliation: PSP-P00-W01"):
+            MODULE.ready_work(graph, mapping)
+    else:
+        assert MODULE.ready_work(graph, mapping) == []
+
+
+def _source_bound_receipt(graph, mapping, *, legacy=False):
+    work_id = "PSP-P11-W03"
+    receipt = MODULE.receipt_template(work_id, graph, mapping)
+    command = "node_modules/.bin/tsx templates/production-systems/missing-delivery-proof.ts"
+    output = "pass\n"
+    receipt.update(
+        schema_version=MODULE.LEGACY_RECEIPT_SCHEMA if legacy else MODULE.RECEIPT_SCHEMA,
+        authority={
+            "kind": "direct_human_session",
+            "session_id": "synthetic-unit-test",
+            "executor": "codex",
+            "human_protected": True,
+        },
+        observed_heads={graph["work_by_id"][work_id]["target_repo"]: "a" * 40},
+    )
+    receipt["predicate"].update(
+        command=command,
+        command_sha256=MODULE.hashlib.sha256(command.encode()).hexdigest(),
+        output=output,
+        output_sha256=MODULE.hashlib.sha256(output.encode()).hexdigest(),
+        command_output_sha256=MODULE.hashlib.sha256((command + "\n" + output).encode()).hexdigest(),
+        observed_at="2026-08-01T12:00:00Z",
+    )
+    return receipt
+
+
+@pytest.mark.parametrize("entry_type, mode", [(None, None), ("tree", "040000"), ("blob", "120000"), ("blob", "100644")])
+def test_formal_receipt_fetch_checks_executable_at_remote_exact_head(monkeypatch, entry_type, mode) -> None:
+    graph, mapping = graph_and_map()
+    receipt = _source_bound_receipt(graph, mapping)
+    work_id = receipt["work_id"]
+    assert MODULE.validate_work_receipt(receipt, work_id, graph) == receipt  # Shape is not source proof.
+    comment = {
+        "id": 1,
+        "body": MODULE.receipt_marker(work_id) + "\n```json\n" + json.dumps(receipt) + "\n```",
+        "html_url": "https://example.test/receipt",
+    }
+    monkeypatch.setattr(MODULE, "_pages", lambda *args: [comment])
+    calls = []
+
+    def tree(repository, path):
+        calls.append((repository, path))
+        entries = (
+            []
+            if entry_type is None
+            else [
+                {
+                    "path": "templates/production-systems/missing-delivery-proof.ts",
+                    "type": entry_type,
+                    "mode": mode,
+                    "sha": "b" * 40,
+                }
+            ]
+        )
+        return {"truncated": False, "tree": entries}
+
+    monkeypatch.setattr(MODULE, "_api", tree)
+    if mode == "100644":
+        assert MODULE.fetch_work_receipt(work_id, graph, mapping) == (receipt, comment["html_url"])
+    else:
+        with pytest.raises(MODULE.ProgramError, match="predicate executable .* absent from"):
+            MODULE.fetch_work_receipt(work_id, graph, mapping)
+    assert calls == [("organvm-iii-ergon/collaboration-operations-platform", "git/trees/" + "a" * 40 + "?recursive=1")]
+
+
+def test_truncated_source_tree_is_unavailable_not_invalid_receipt(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    receipt = _source_bound_receipt(graph, mapping)
+    monkeypatch.setattr(MODULE, "_api", lambda *args: {"truncated": True, "tree": []})
+    with pytest.raises(MODULE.RemoteObservationError, match="incomplete predicate source observation"):
+        MODULE._verify_predicate_source(receipt)
+
+
+def test_formal_receipt_fetch_preserves_legacy_cutover(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    receipt = _source_bound_receipt(graph, mapping, legacy=True)
+    work_id = receipt["work_id"]
+    comment = {
+        "id": 1,
+        "created_at": "2026-08-01T12:00:00Z",
+        "updated_at": "2026-08-01T12:00:00Z",
+        "body": MODULE.receipt_marker(work_id) + "\n```json\n" + json.dumps(receipt) + "\n```",
+        "html_url": "https://example.test/receipt",
+    }
+    monkeypatch.setattr(MODULE, "_pages", lambda *args: [comment])
+    monkeypatch.setattr(MODULE, "_api", lambda *args: pytest.fail("legacy receipt must retain cutover rules"))
+    assert MODULE.fetch_work_receipt(work_id, graph, mapping) == (receipt, comment["html_url"])
+
+
+def _multi_repository_source_receipt(graph, mapping):
+    receipt = _source_bound_receipt(graph, mapping)
+    work_id = "PSP-P14-W06"
+    owner = graph["program"]["repository"]
+    target = "organvm-vii-kerygma/portfolio"
+    command = "python3 scripts/verify-release-recovery.py"
+    output = receipt["predicate"]["output"]
+    receipt.update(
+        work_id=work_id,
+        acceptance_sha256=MODULE.acceptance_digest(graph["work_by_id"][work_id]),
+        resolved_repositories=[owner, target],
+        observed_heads={owner: "a" * 40, target: "b" * 40},
+    )
+    receipt["predicate"].update(
+        command=command,
+        source_repository=owner,
+        command_sha256=MODULE.hashlib.sha256(command.encode()).hexdigest(),
+        command_output_sha256=MODULE.hashlib.sha256((command + "\n" + output).encode()).hexdigest(),
+    )
+    return receipt
+
+
+def _source_receipt_comment(receipt):
+    return {
+        "id": 1,
+        "body": MODULE.receipt_marker(receipt["work_id"]) + "\n```json\n" + json.dumps(receipt) + "\n```",
+        "html_url": "https://example.test/receipt",
+    }
+
+
+def test_multi_repository_receipt_binds_central_verifier_to_its_observed_owner(monkeypatch) -> None:
+    graph, mapping = graph_and_map()
+    receipt = _multi_repository_source_receipt(graph, mapping)
+    work_id = receipt["work_id"]
+    assert MODULE.receipt_template(work_id, graph, mapping)["predicate"]["source_repository"].startswith("REPLACE_")
+    comment = _source_receipt_comment(receipt)
+    monkeypatch.setattr(MODULE, "_pages", lambda *_args: [comment])
+    calls = []
+
+    def tree(repository, path):
+        calls.append((repository, path))
+        return {
+            "truncated": False,
+            "tree": [{"path": "scripts/verify-release-recovery.py", "type": "blob", "mode": "100644", "sha": "c" * 40}],
+        }
+
+    monkeypatch.setattr(MODULE, "_api", tree)
+    assert MODULE.fetch_work_receipt(work_id, graph, mapping) == (receipt, comment["html_url"])
+    assert calls == [(graph["program"]["repository"], "git/trees/" + "a" * 40 + "?recursive=1")]
+
+
+@pytest.mark.parametrize("failure", ["missing", "unobserved", "ambiguous", "historical_alias", "malformed"])
+def test_multi_repository_receipt_rejects_unbound_predicate_owner_before_source_read(monkeypatch, failure) -> None:
+    graph, mapping = graph_and_map()
+    receipt = _multi_repository_source_receipt(graph, mapping)
+    if failure == "missing":
+        del receipt["predicate"]["source_repository"]
+    elif failure == "unobserved":
+        receipt["predicate"]["source_repository"] = "organvm/unobserved"
+    elif failure in {"ambiguous", "historical_alias"}:
+        alias = "4444j99/limen" if failure == "ambiguous" else "organvm/limen"
+        receipt["resolved_repositories"].append(alias)
+        receipt["observed_heads"][alias] = "d" * 40
+    else:
+        receipt["predicate"]["source_repository"] = [graph["program"]["repository"]]
+    monkeypatch.setattr(MODULE, "_pages", lambda *_args: [_source_receipt_comment(receipt)])
+    monkeypatch.setattr(MODULE, "_api", lambda *_args: pytest.fail("invalid owner must fail before source read"))
+    with pytest.raises(MODULE.ProgramError, match="predicate.source_repository"):
+        MODULE.fetch_work_receipt(receipt["work_id"], graph, mapping)
+
+
+def test_multi_repository_selector_requires_explicit_owner_even_with_one_resolved_repository() -> None:
+    graph, mapping = graph_and_map()
+    receipt = _multi_repository_source_receipt(graph, mapping)
+    owner = graph["program"]["repository"]
+    receipt["resolved_repositories"] = [owner]
+    receipt["observed_heads"] = {owner: "a" * 40}
+    del receipt["predicate"]["source_repository"]
+    with pytest.raises(MODULE.ProgramError, match="predicate.source_repository is required"):
+        MODULE.validate_work_receipt(receipt, receipt["work_id"], graph)
+
+
+def test_single_repository_receipt_cannot_override_its_observed_predicate_owner() -> None:
+    graph, mapping = graph_and_map()
+    receipt = _source_bound_receipt(graph, mapping)
+    receipt["predicate"]["source_repository"] = "4444J99/limen"
+    with pytest.raises(MODULE.ProgramError, match="predicate.source_repository must identify exactly one"):
+        MODULE.validate_work_receipt(receipt, receipt["work_id"], graph)

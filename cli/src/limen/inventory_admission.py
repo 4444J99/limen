@@ -1,9 +1,10 @@
 """Fail-closed inventory containment for Limen #269.
 
-This module has no production authority adapter. Callers must obtain the private
-canonical census, frozen repository IDs and generation through a trusted keeper
-integration; task fields, local files and supplied receipts are not authority.
-The default claim boundary rejects routine growth while that adapter is absent.
+The local compatibility boundary remains closed: private census authority lives
+in the authenticated remote keeper adapter, not local JSON or task fields.
+The existing collector also uses this validator before its explicit publication;
+remote admission independently validates custody, scope, generation and reserves
+capacity with the canonical board mutation.
 """
 
 from __future__ import annotations

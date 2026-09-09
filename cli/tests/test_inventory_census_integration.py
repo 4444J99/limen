@@ -26,7 +26,7 @@ def _load_collector():
     return module
 
 
-def _emit(monkeypatch, tmp_path, total, *, metadata_available=True):
+def _emit(monkeypatch, tmp_path, total, *, metadata_available=True, inventory_authority=None):
     collector = _load_collector()
     gitvs = collector._gitvs()
     monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
@@ -101,7 +101,7 @@ def _emit(monkeypatch, tmp_path, total, *, metadata_available=True):
         "collect_local_git_census",
         lambda _root, **_kwargs: ({"summary": {"failure_count": 0}, "roots": [], "worktrees": []}, {}),
     )
-    full, _tracked = collector.collect(workers=1)
+    full, _tracked = collector.collect(workers=1, inventory_authority=inventory_authority)
     return full, fetched
 
 
@@ -223,3 +223,102 @@ def test_actual_collector_unhashable_content_has_redacted_denial(monkeypatch, tm
     with pytest.raises(InventoryAdmissionError) as error:
         _count(snapshot)
     assert str(error.value) == "inventory_content_digest_invalid"
+
+
+def test_inventory_collector_uses_frozen_remote_contract_without_local_custody(monkeypatch, tmp_path):
+    authority = {
+        "schema_version": "limen.inventory_authority.v1",
+        "principal_id": "synthetic-collector",
+        "repository_ids": ["42"],
+        "source_generation": "a" * 64,
+    }
+    snapshot, fetched = _emit(monkeypatch, tmp_path, 2, inventory_authority=authority)
+    assert _count(snapshot) == 1
+    assert "pull_requests" in fetched
+    assert snapshot["source_report"]["source_generation"] == authority["source_generation"]
+    assert snapshot["inventory_collection"]["started_at"] == snapshot["source_report"]["generated_at"]
+    assert all(cursor["reused"] is False for cursor in snapshot["cursors"])
+    assert "local_git_census" not in snapshot
+    assert "universe_baseline" not in snapshot
+    assert not (tmp_path / "private-cache.json").exists()
+
+
+def test_inventory_collector_does_not_expand_authenticated_scope(monkeypatch, tmp_path):
+    authority = {"repository_ids": ["43"], "source_generation": "a" * 64}
+    with pytest.raises(RuntimeError, match="inventory_scope_changed"):
+        _emit(monkeypatch, tmp_path, 0, inventory_authority=authority)
+
+
+def test_inventory_publication_requires_valid_fresh_observation_and_acceptance(monkeypatch, tmp_path):
+    authority = {
+        "schema_version": "limen.inventory_authority.v1",
+        "principal_id": "synthetic-collector",
+        "repository_ids": ["42"],
+        "source_generation": "a" * 64,
+    }
+    snapshot, _ = _emit(monkeypatch, tmp_path, 2, inventory_authority=authority)
+    collector = _load_collector()
+    events = []
+
+    class Client:
+        def inventory_authority(self):
+            events.append("authority")
+            return authority
+
+        def publish_inventory_observation(self, observation):
+            events.append("publish")
+            assert observation is snapshot
+            return {
+                "schema_version": "limen.inventory_acceptance.v1",
+                "status": "accepted",
+                "observed_at": snapshot["source_report"]["generated_at"],
+            }
+
+    def collect(**kwargs):
+        events.append("collect")
+        assert kwargs == {"workers": 1, "inventory_authority": authority}
+        return snapshot, {}
+
+    monkeypatch.setattr(collector, "collect", collect)
+    collector.collect_and_publish_inventory(Client(), workers=1)
+    assert events == ["authority", "collect", "publish"]
+    events.clear()
+    snapshot["source_report"]["exhaustive"] = False
+    with pytest.raises(InventoryAdmissionError, match="partial"):
+        collector.collect_and_publish_inventory(Client(), workers=1)
+    assert events == ["authority", "collect"]
+
+
+def test_inventory_cli_consumes_collector_secret_before_collection(monkeypatch):
+    import os
+
+    from limen.conduct.client import HttpConductClient
+
+    collector = _load_collector()
+    monkeypatch.setattr("sys.argv", ["github-estate-census.py", "--publish-inventory"])
+    monkeypatch.setenv("LIMEN_CONDUCT_URL", "https://keeper.invalid")
+    monkeypatch.setenv("LIMEN_INVENTORY_COLLECTOR_TOKEN", "synthetic-collector-secret")
+
+    def publish(client, **kwargs):
+        assert isinstance(client, HttpConductClient)
+        assert client.token == "synthetic-collector-secret"
+        assert "LIMEN_INVENTORY_COLLECTOR_TOKEN" not in os.environ
+        raise RuntimeError("synthetic-stop-before-collection")
+
+    monkeypatch.setattr(collector, "collect_and_publish_inventory", publish)
+    with pytest.raises(RuntimeError, match="synthetic-stop-before-collection"):
+        collector.main()
+
+
+def test_inventory_client_preserves_fixed_authenticated_routes(monkeypatch):
+    from limen.conduct.client import HttpConductClient
+
+    calls = []
+    client = HttpConductClient("https://keeper.invalid", "synthetic-collector-secret")
+    monkeypatch.setattr(client, "_request", lambda *args: calls.append(args) or {})
+    client.inventory_authority()
+    client.publish_inventory_observation({"schema": "synthetic"})
+    assert calls == [
+        ("GET", "/api/conduct/inventory/authority"),
+        ("POST", "/api/conduct/inventory/observations", {"observation": {"schema": "synthetic"}}),
+    ]

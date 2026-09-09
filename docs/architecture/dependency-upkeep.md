@@ -17,7 +17,8 @@ human, preservation, blocked and superseded PRs even after a batch observation.
 
 The repositories produce `organvm.dependency-evidence.v1` artifacts named
 `dependency-evidence-RUN_ID-RUN_ATTEMPT`. Each archive contains exactly one
-`dependency-evidence.json`: base/head/tested revisions, workflow identity,
+`dependency-evidence.json`: base/head/tested revisions, dependency revision equal
+to the tested merge, workflow identity,
 lockfile SHA256 values, graph changes and baseline-to-candidate advisory results.
 Frozen installs, formatting, compiler checks, tests and builds have independent
 job/step evidence; skipped or advisory compatibility is insufficient.
@@ -34,6 +35,11 @@ It runs no candidate scripts. It verifies:
 - The exact run/attempt artifact, GitHub artifact digest, bounded regular ZIP
   member, lockfile Git blob identity and SHA256, and independently reconstructed
   graph changes.
+- Explicit trusted manifest paths, including existing workspaces, with complete
+  inventory equality from base/head/tested lockfiles and regular-file checks.
+- Provider run start/update timestamps within the configured age limit (at most
+  24 hours), rechecked before review. The deployed host must keep its UTC clock
+  synchronized; artifact timestamps cannot refresh an old audit.
 - Complete advisory evidence with no newly introduced or remaining high/critical
   findings and no producer-declared policy exceptions.
 - Fresh B/H/M and workflow attempt readback after evidence collection.
@@ -50,7 +56,9 @@ comment cannot erase it. Transport ambiguity produces an unconfirmed exception
 and the next bounded beat reads live custody before another request. A review
 request or comment is never an approval, merge receipt or completed acceptance.
 
-The drain's `DEPS-REVIEW` rows remain quiet. `DEPS-EXCEPTION` rows and review
+The drain's `DEPS-REVIEW` and `DEPS-PENDING` rows remain quiet. Known trusted
+workflows still running wait for a later beat without review or merge effects.
+Completed compatibility failures become exceptions. `DEPS-EXCEPTION` rows and review
 request failures use the existing channel-aware notification broker with stable
 repository/PR/head/reason identities. The registered event includes macOS and
 ntfy channels; live remote delivery still requires a deployed broker and channel
@@ -73,6 +81,8 @@ producer verification. Its per-repository contract is:
 | `trusted_files` | Exact Git blob OIDs for every required workflow and `scripts/dependency-evidence.mjs`, plus any imported evidence helper |
 | `required_workflows` | Distinct paths; `jobs` maps actual job names to successful required step names; `checkout_jobs` names jobs whose checkout logs must prove M |
 | `lockfiles` | Complete authoritative package-lock paths |
+| `manifests` | Complete explicit root/workspace manifest paths matching each B/H/M lock inventory; no candidate-created paths |
+| `max_evidence_age_seconds` | Positive maximum audit/run age, no more than 86,400 seconds; provider times and trusted-host UTC clock |
 | `reviewer` | Independently configured bot login and numeric ID, not the candidate author |
 
 The policy is deployment-owned configuration, never accepted from a PR artifact

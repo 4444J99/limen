@@ -36,8 +36,11 @@ import webbrowser
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[1]
+ESTATE = ROOT / "institutio" / "github" / "estate.yaml"
 CLI_SRC = ROOT / "cli" / "src"
 if str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
@@ -166,6 +169,27 @@ def wait_for_repository_installation(repo: str, timeout: int, *, poll_seconds: f
         time.sleep(min(poll_seconds, remaining))
 
 
+def app_permissions() -> dict[str, str]:
+    """Use the estate's declared contract; missing policy cannot broaden an App."""
+    try:
+        document = yaml.safe_load(ESTATE.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as exc:
+        raise ValueError("cannot read estate App permission policy") from exc
+    app = document.get("app") if isinstance(document, dict) else None
+    permissions = app.get("expected_permissions") if isinstance(app, dict) else None
+    if not isinstance(permissions, dict) or not permissions:
+        raise ValueError("estate app.expected_permissions must be a nonempty mapping")
+    if any(
+        not isinstance(name, str)
+        or not re.fullmatch(r"[a-z][a-z0-9_]*", name)
+        or not isinstance(level, str)
+        or level not in {"read", "write"}
+        for name, level in permissions.items()
+    ):
+        raise ValueError("estate App permissions require valid names and read/write levels")
+    return dict(permissions)
+
+
 def build_manifest(verification_repo: str, redirect_url: str, app_name: str) -> dict[str, Any]:
     return {
         "name": app_name,
@@ -178,17 +202,7 @@ def build_manifest(verification_repo: str, redirect_url: str, app_name: str) -> 
         "redirect_url": redirect_url,
         "callback_urls": [redirect_url],
         "public": False,
-        "default_permissions": {
-            "administration": "write",
-            "contents": "write",
-            "pull_requests": "write",
-            "workflows": "write",
-            "actions": "write",
-            "issues": "write",
-            "metadata": "read",
-            "organization_administration": "write",
-            "members": "read",
-        },
+        "default_permissions": app_permissions(),
     }
 
 
@@ -286,6 +300,7 @@ class BootstrapServer(http.server.ThreadingHTTPServer):
         install_owner = install_repo.split("/", 1)[0]
         if install_owner.casefold() != app_owner.casefold():
             raise ValueError("private App owner must match the exact installation repository owner")
+        manifest = build_manifest(install_repo, "", app_name)
         super().__init__(addr, handler)
         self.app_owner = app_owner
         self.app_owner_type = app_owner_type
@@ -295,7 +310,9 @@ class BootstrapServer(http.server.ThreadingHTTPServer):
         self.state = secrets.token_urlsafe(24)
         host, port = self.server_address[:2]
         self.redirect_url = f"http://{host}:{port}/callback"
-        self.manifest = build_manifest(install_repo, self.redirect_url, app_name)
+        manifest["redirect_url"] = self.redirect_url
+        manifest["callback_urls"] = [self.redirect_url]
+        self.manifest = manifest
         self.manifest_action = manifest_settings_url(app_owner, app_owner_type, self.state)
         self.done = threading.Event()
         self.error: str | None = None
@@ -328,6 +345,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         verify_repo = canonical_verification_target(args.verify_repo or os.environ.get("LIMEN_GITHUB_TARGET_REPO"))
+        app_permissions()
     except ValueError as exc:
         parser.error(str(exc))
     app_owner = verify_repo.split("/", 1)[0]

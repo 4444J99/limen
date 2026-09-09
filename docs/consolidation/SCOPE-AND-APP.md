@@ -1,5 +1,12 @@
 # Consolidation Scope Unblock + limen[bot] GitHub App Path
 
+## Superseded App setup recipe
+
+The historical instructions below are retained as evidence. Current provisioning follows
+`docs/github-app-architecture.md`, `institutio/github/estate.yaml` `app.expected_permissions`,
+and the exact-repository App-only verifier. The old broad permission list, all-repository
+installation, and installation-wide tokens are not the current execution contract.
+
 ## 2026-06-28 live status
 
 - `gh auth status` now shows `admin:org` and `workflow`; the personal-token scope blocker in this document is resolved for the current `4444J99` `gh` login.
