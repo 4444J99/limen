@@ -21,6 +21,39 @@ schema_version: 0.1
 
 parameters:
 
+  # Isolated relay governor deployment; never fleet-wide credential hydration.
+  LIMEN_RELAY_GOVERNOR_APP_ID:
+    default: ""
+    env: LIMEN_RELAY_GOVERNOR_APP_ID
+    self_update: none
+    owner: vigilia
+    note: "Dedicated governor App numeric ID; no shared Actions identity."
+  LIMEN_RELAY_UPDATE_RULESET_ID:
+    default: ""
+    env: LIMEN_RELAY_UPDATE_RULESET_ID
+    self_update: none
+    owner: vigilia
+    note: "Active update-only PR-exemption ruleset ID on the personal relay."
+  LIMEN_RELAY_POLICY_SHA:
+    default: ""
+    env: LIMEN_RELAY_POLICY_SHA
+    self_update: none
+    owner: vigilia
+    note: "Audited immutable relay policy deployment commit; no default trust root."
+  LIMEN_RELAY_GOVERNOR_TOKEN:
+    default: ""
+    env: LIMEN_RELAY_GOVERNOR_TOKEN
+    self_update: none
+    owner: vigilia
+    note: "Short-lived dedicated installation token, private governor deployment only; never candidate or fleet environment."
+  LIMEN_RELAY_READ_TOKEN:
+    default: ""
+    env: LIMEN_RELAY_READ_TOKEN
+    self_update: none
+    owner: vigilia
+    note: "Separate read-only evaluator token; never the governor write credential."
+
+
   # --- autonomy governor: stale-pause-marker auto-clear -------------------------
   LIMEN_AUTONOMY_MARKER_AUTOCLEAR:
     default: 1

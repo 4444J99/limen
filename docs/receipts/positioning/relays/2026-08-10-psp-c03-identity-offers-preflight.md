@@ -62,7 +62,7 @@ C04 integration input after C03 closure: replace provisional claim IDs with C02-
 | --- | --- | --- | --- | --- |
 | PSP-P11-W01 | #2249 | gpt-5.6-sol / xhigh | `organvm-iii-ergon/collaboration-operations-platform`: `security`, `schemas`, `playbooks/production-systems` | Draft a read-only intake threat model and synthetic schema fixtures. |
 | PSP-P11-W02 | #2250 | gpt-5.6-sol / max | same repository: `playbooks/production-systems`, `rubrics` | Map the Audit deliverables, verdicts, uncertainties, and acceptance rubric. |
-| PSP-P11-W03 | #2251 | gpt-5.6-terra / high | same repository: `templates/production-systems`, `rubrics` | Draft report and executive-verdict templates with symbolic claim/evidence fields. |
+| PSP-P11-W03 | #2251 | gpt-5.6-terra / high | same repository: `templates/production-systems`, `rubrics`, `scripts/validate-production-systems-preflight.ts` | Draft report and executive-verdict templates with symbolic claim/evidence fields. |
 | PSP-P11-W04 | #2252 | gpt-5.6-terra / high | same repository: `playbooks/production-systems`, `templates` | Draft the one-team/pipeline Governance Install runbook and handoff skeleton. |
 | PSP-P11-W05 | #2253 | gpt-5.6-terra / high | same repository: `playbooks/production-systems`, `templates` | Draft the finite-cadence retainer contract; exclude on-call and unlimited delivery. |
 | PSP-P11-W06 | #2254 | gpt-5.6-sol / xhigh | same repository: `schemas`, `workspaces`, `tests` | Design private-workspace boundaries and synthetic logs only; ingest no client material. |
@@ -70,6 +70,11 @@ C04 integration input after C03 closure: replace provisional claim IDs with C02-
 | PSP-P11-W08 | #2256 | gpt-5.6-sol / xhigh | same repository: `templates`, `security`, `playbooks` | Draft consent and sanitization gates with synthetic proof; publish nothing. |
 
 C05 integration input after C03 closure: materialize the proposal/SOW blueprints under their registered owner, preserve the Audit/Install/Retainer authority boundaries, and require HG-PRICE-ANCHORS, HG-CONTRACT, and HG-OPERATOR-TERMS for their respective effects.
+
+2026-09-08 scope reconciliation: W03 now explicitly includes its existing private-repository
+validator, so the receipt can bind the real executable rather than an inline invocation. This
+updates the managed path projection only; it is not a historical acceptance receipt or current
+authorization to use the model snapshots in this table.
 
 ## Formal C03 integration relay
 

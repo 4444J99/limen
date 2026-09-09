@@ -220,6 +220,15 @@ chmod +x "$stubdir/python3"
 mkjson OPEN false CLEAN "$DOC_FILES" "$NONE"; check "resolver unavailable (forced sensitive)" 2
 rm -f "$stubdir/python3"
 
+# Personal relay cannot fall through a standalone policy helper even with a
+# passing duplicate context, --repo case variation, or canonical URL discovery.
+mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
+check "relay governor required" 2 --repo 4444J99/organvm-ci-relay
+check "relay case-folded identity" 2 --repo 4444j99/ORGANVM-CI-RELAY
+jq '.url="https://github.com/4444J99/organvm-ci-relay/pull/1"' "$fixture" > "$stubdir/canonical.json"
+mv "$stubdir/canonical.json" "$fixture"
+check "relay canonical URL guard" 2
+
 echo
 echo "passed=$pass failed=$fail"
 if [ "$fail" -eq 0 ]; then
