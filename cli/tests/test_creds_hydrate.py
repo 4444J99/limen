@@ -767,6 +767,9 @@ def test_cloudflare_delivery_preflight_is_bounded_exact_and_secret_safe(monkeypa
         ("apply", "candidate"),
         ("apply", "app"),
         ("apply", "mint"),
+        ("apply", "grant"),
+        ("apply", "stale"),
+        ("apply", "source_query"),
         ("apply", "write"),
         ("apply", "transport"),
     ],
@@ -796,6 +799,8 @@ def test_hosted_delivery_uses_exact_app_principal_and_never_exposes_tokens(monke
     monkeypatch.setenv("GITHUB_APP_ID", "fixture-app")
     monkeypatch.setenv("GITHUB_APP_PRIVATE_KEY", "" if failure == "app" else "fixture-key")
     monkeypatch.setenv("GITHUB_TOKEN", "unrelated-workflow-token")
+    monkeypatch.setenv("EXPECTED_SHA", "a" * 40)
+    monkeypatch.setenv("SOURCE_GITHUB_TOKEN", "source-read-token")
     calls = []
 
     def run(command, **kwargs):
@@ -805,7 +810,22 @@ def test_hosted_delivery_uses_exact_app_principal_and_never_exposes_tokens(monke
         if command[0] == "bash":
             assert command[-4:] == ["--repo", module.TARGET, "--app-only", "--require-secrets-write"]
             assert kwargs["timeout"] == 60
-            return SimpleNamespace(returncode=1 if failure == "mint" else 0, stdout=app_token)
+            return SimpleNamespace(
+                returncode=1 if failure in ("mint", "grant") else 0,
+                stdout=app_token,
+                stderr="exact-repository App token lacks the required Secrets-write grant"
+                if failure == "grant"
+                else "",
+            )
+        if command[1] == "api":
+            assert command == ["gh", "api", "repos/4444J99/limen/git/ref/heads/main", "--jq", ".object.sha"]
+            assert kwargs["env"]["GH_TOKEN"] == "source-read-token"
+            assert "GITHUB_APP_PRIVATE_KEY" not in kwargs["env"]
+            assert "CLOUDFLARE_API_TOKEN" not in kwargs["env"]
+            assert kwargs["timeout"] == 15
+            return SimpleNamespace(
+                returncode=1 if failure == "source_query" else 0, stdout="b" * 40 if failure == "stale" else "a" * 40
+            )
         assert command == ["gh", "secret", "set", "CLOUDFLARE_API_TOKEN", "-R", module.TARGET]
         assert kwargs["input"] == source_token
         assert kwargs["env"]["GH_TOKEN"] == app_token
@@ -819,5 +839,7 @@ def test_hosted_delivery_uses_exact_app_principal_and_never_exposes_tokens(monke
     assert module.main() == (1 if failure else 0)
     if mode == "preflight" or failure in ("candidate", "app"):
         assert calls == []
+    if failure in ("stale", "source_query"):
+        assert not any(command[:3] == ["gh", "secret", "set"] for command in calls)
     output = capsys.readouterr().out
     assert source_token not in output and app_token not in output
