@@ -229,6 +229,14 @@ jq '.url="https://github.com/4444J99/organvm-ci-relay/pull/1"' "$fixture" > "$st
 mv "$stubdir/canonical.json" "$fixture"
 check "relay canonical URL guard" 2
 
+mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
+check "portfolio unavailable evidence holds" 2 --repo organvm-vii-kerygma/portfolio
+check "UCC unavailable evidence holds" 2 --repo organvm-iii-ergon/public-record-data-scrapper
+check "portfolio previous name holds" 2 --repo 4444J99/portfolio
+jq '.url="https://github.com/organvm-vii-kerygma/portfolio/pull/234"' "$fixture" > "$stubdir/canonical.json"
+mv "$stubdir/canonical.json" "$fixture"
+check "dependency canonical URL guard" 2
+
 echo
 echo "passed=$pass failed=$fail"
 if [ "$fail" -eq 0 ]; then

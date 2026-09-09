@@ -20,6 +20,7 @@ SENSORS = ROOT / "institutio" / "governance" / "sensors.yaml"
 PRODUCER_ID_RE = re.compile(r"stable_id\s*=\s*[\"'](limen\.[a-z0-9_.-]+)[\"']")
 EVENT_LITERAL_RE = re.compile(r"[\"'](limen\.[a-z0-9_.-]+)[\"']")
 NON_EVENT_PROTOCOL_IDS = {
+    "limen.ci_red_subjects.v1",  # merge-drain persistence schema; not a notification event
     "limen.notification_events.v1",
     "limen.notification-canary-receipt.v1",
     "limen.notification-status.v1",
