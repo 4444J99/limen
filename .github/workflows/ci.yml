@@ -135,7 +135,7 @@ jobs:
     # already ran in its owning job (docs/plans/ci-bounded-shards.md: the
     # aggregate must never rerun a successful child).
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    needs: [python, worker, web]
+    needs: [python, worker, web, npm-audit]
     runs-on: ubuntu-latest
     steps:
       # Full history, matching pr-gate/fleet-gate. verify-whole.sh runs
@@ -195,6 +195,27 @@ jobs:
       - name: Compile Python modules on ${{ matrix.python-version }}
         run: python -m py_compile web/api/main.py cli/src/limen/*.py mcp/src/limen_mcp/server.py ianva/src/ianva/*.py
 
+  # Audits report independently: an advisory cannot erase compatibility evidence.
+  # The post-merge aggregate still requires both audit and compatibility success.
+  npm-audit:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package-directory: [web/app, web/worker]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: ${{ matrix.package-directory }}/package-lock.json
+
+      - name: Audit npm dependencies
+        run: python3 scripts/npm-audit-gate.py "${{ matrix.package-directory }}"
+
   worker:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
@@ -210,9 +231,6 @@ jobs:
       - name: Install Worker dependencies
         run: npm ci
         working-directory: web/worker
-
-      - name: Audit npm dependencies
-        run: python3 scripts/npm-audit-gate.py web/worker
 
       - name: Check Worker syntax
         run: npm run check
@@ -236,9 +254,6 @@ jobs:
       - name: Install dashboard dependencies
         run: npm ci
         working-directory: web/app
-
-      - name: Audit npm dependencies
-        run: python3 scripts/npm-audit-gate.py web/app
 
       - name: TypeScript type-check
         run: npx --yes -p typescript tsc --noEmit -p tsconfig.json
