@@ -150,11 +150,19 @@ EXPECTED_PROFILE_METADATA_RESULT = {
     "blog": "https://organvm.github.io/portfolio/",
 }
 EXPECTED_LIVE_PROFILE_BLOG = "https://organvm-vii-kerygma.github.io/portfolio/"
-LIVE_PROFILE_PERSONAL_PUBLIC_REPOS = 9
-LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS = 226
-LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS = 197
-LIVE_PROFILE_ORGANIZATION_FORKS = 29
-LIVE_PROFILE_TOTAL_PUBLIC_REPOS = 235
+# Historical receipts above stay immutable. The current profile must instead
+# reconcile current public counts within the same reviewed organization scope.
+PROFILE_ORGANIZATION_ALIASES = {f"org_{index}": login for index, login in enumerate(sorted(EXPECTED_ORGANIZATION_KEYS))}
+PROFILE_LIVE_OBSERVATION_QUERY = (
+    PROFILE_CONTRIBUTION_QUERY[:-1]
+    + " ".join(
+        f'{alias}: organization(login: "{login}") {{ login '
+        "public: repositories(first: 1, privacy: PUBLIC, ownerAffiliations: [OWNER]) { totalCount } "
+        "original: repositories(first: 1, privacy: PUBLIC, ownerAffiliations: [OWNER], isFork: false) { totalCount } }"
+        for alias, login in PROFILE_ORGANIZATION_ALIASES.items()
+    )
+    + " }"
+)
 LIVE_REFERENCE_ISSUE_NUMBER = 1245
 LIMEN_CANONICAL_REPOSITORY = LIMEN_REPOSITORY_IDENTITY.canonical_coordinate
 LIMEN_HISTORICAL_REPOSITORY = LIMEN_REPOSITORY_IDENTITY.historical_aliases[0]
@@ -1912,12 +1920,11 @@ def validate_live_profile_observations(
     live_profile_expectations = {
         key: EXPECTED_PROFILE_METADATA_RESULT[key] for key in ("login", "id", "type", "created_at")
     }
-    live_profile_expectations["public_repos"] = LIVE_PROFILE_PERSONAL_PUBLIC_REPOS
     live_profile_expectations["blog"] = EXPECTED_LIVE_PROFILE_BLOG
     for key, expected in live_profile_expectations.items():
         if type(profile.get(key)) is not type(expected) or profile.get(key) != expected:
             errors.append(f"live profile metadata {key} must remain {expected!r}")
-    for key in ("followers", "following"):
+    for key in ("public_repos", "followers", "following"):
         if not _nonnegative_integer(profile.get(key)):
             errors.append(f"live profile metadata {key} must be a non-negative integer")
     profile_updated_at = _rfc3339(profile.get("updated_at"))
@@ -1963,29 +1970,16 @@ def validate_live_profile_observations(
     if stat_value("member_since") != "2016":
         errors.append("live profile manifest tenure must remain bound to the account creation year")
     current_organization_repos = stat_value("ecosystem_public_repos")
-    if current_organization_repos != LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS:
-        errors.append(
-            "live profile manifest ecosystem public repository count must remain "
-            f"{LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS}"
-        )
-    if stat_value("ecosystem_original_repos") != LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS:
-        errors.append(
-            "live profile manifest ecosystem original repository count must remain "
-            f"{LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS}"
-        )
-    if stat_value("ecosystem_forks") != LIVE_PROFILE_ORGANIZATION_FORKS:
-        errors.append(f"live profile manifest ecosystem fork count must remain {LIVE_PROFILE_ORGANIZATION_FORKS}")
-    if (
-        _nonnegative_integer(current_personal_repos)
-        and _nonnegative_integer(current_organization_repos)
-        and current_personal_repos + current_organization_repos != LIVE_PROFILE_TOTAL_PUBLIC_REPOS
+    current_original_repos = stat_value("ecosystem_original_repos")
+    current_forks = stat_value("ecosystem_forks")
+    for key, value in (
+        ("personal_public_repos", current_personal_repos),
+        ("ecosystem_public_repos", current_organization_repos),
+        ("ecosystem_original_repos", current_original_repos),
+        ("ecosystem_forks", current_forks),
     ):
-        errors.append(
-            "live profile public repository total must remain "
-            f"{LIVE_PROFILE_TOTAL_PUBLIC_REPOS} "
-            f"({LIVE_PROFILE_PERSONAL_PUBLIC_REPOS} personal plus "
-            f"{LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS} organization)"
-        )
+        if not _nonnegative_integer(value):
+            errors.append(f"live profile stat {key} must be a non-negative integer")
     manifest_contributions = stat_value("contributions_last_year")
     if not _nonnegative_integer(manifest_contributions) or manifest_contributions < PROFILE_RENDERED_CONTRIBUTIONS:
         errors.append(
@@ -2121,11 +2115,37 @@ def validate_live_profile_observations(
                 errors.append("ahead live profile comparison needs a positive commit distance")
 
     try:
-        contribution_payload = gh_fetch(["api", "graphql", "-f", f"query={PROFILE_CONTRIBUTION_QUERY}"])
+        contribution_payload = gh_fetch(["api", "graphql", "-f", f"query={PROFILE_LIVE_OBSERVATION_QUERY}"])
     except AdjudicationError as exc:
         errors.append(f"cannot reproduce live contribution calendar: {exc}")
         contribution_payload = None
     data = contribution_payload.get("data") if isinstance(contribution_payload, dict) else None
+    if isinstance(contribution_payload, dict) and "errors" in contribution_payload:
+        errors.append("live profile GraphQL response must not contain partial errors")
+    organization_counts: list[tuple[int, int]] = []
+    for alias, login in PROFILE_ORGANIZATION_ALIASES.items():
+        organization = data.get(alias) if isinstance(data, dict) else None
+        if not isinstance(organization, dict) or organization.get("login") != login:
+            errors.append(f"live organization count must retain declared identity {login}")
+            continue
+        public = organization.get("public")
+        original = organization.get("original")
+        total = public.get("totalCount") if isinstance(public, dict) else None
+        originals = original.get("totalCount") if isinstance(original, dict) else None
+        if not _nonnegative_integer(total) or not _nonnegative_integer(originals) or originals > total:
+            errors.append(f"live organization {login} must expose valid public and original counts")
+            continue
+        organization_counts.append((total, originals))
+    if len(organization_counts) == len(PROFILE_ORGANIZATION_ALIASES):
+        total = sum(count for count, _originals in organization_counts)
+        originals = sum(count for _total, count in organization_counts)
+        for key, actual, expected in (
+            ("ecosystem_public_repos", current_organization_repos, total),
+            ("ecosystem_original_repos", current_original_repos, originals),
+            ("ecosystem_forks", current_forks, total - originals),
+        ):
+            if actual != expected:
+                errors.append(f"live profile stat {key} must match the current declared public organization scope")
     user = data.get("user") if isinstance(data, dict) else None
     collection = user.get("contributionsCollection") if isinstance(user, dict) else None
     calendar = collection.get("contributionCalendar") if isinstance(collection, dict) else None

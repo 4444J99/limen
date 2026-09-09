@@ -174,12 +174,12 @@ def _live_profile_fixture():
 
     stats = {}
     for name, value in {
-        "personal_public_repos": MODULE.LIVE_PROFILE_PERSONAL_PUBLIC_REPOS,
+        "personal_public_repos": 9,
         "followers": 41,
         "member_since": "2016",
-        "ecosystem_public_repos": MODULE.LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS,
-        "ecosystem_original_repos": MODULE.LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS,
-        "ecosystem_forks": MODULE.LIVE_PROFILE_ORGANIZATION_FORKS,
+        "ecosystem_public_repos": 226,
+        "ecosystem_original_repos": 197,
+        "ecosystem_forks": 29,
         "contributions_last_year": 33203,
     }.items():
         stats[name] = {
@@ -210,7 +210,7 @@ def _live_profile_fixture():
     public_payloads = {
         MODULE.PROFILE_USER_API_URL: {
             **MODULE.EXPECTED_PROFILE_METADATA_RESULT,
-            "public_repos": MODULE.LIVE_PROFILE_PERSONAL_PUBLIC_REPOS,
+            "public_repos": 9,
             "blog": MODULE.EXPECTED_LIVE_PROFILE_BLOG,
             "updated_at": "2026-08-12T08:00:00Z",
         },
@@ -255,6 +255,12 @@ def _live_profile_fixture():
             }
         }
     }
+    for index, (alias, login) in enumerate(MODULE.PROFILE_ORGANIZATION_ALIASES.items()):
+        contribution_payload["data"][alias] = {
+            "login": login,
+            "public": {"totalCount": 226 if index == 0 else 0},
+            "original": {"totalCount": 197 if index == 0 else 0},
+        }
     return now, public_payloads, contribution_payload
 
 
@@ -271,11 +277,7 @@ def test_historical_profile_receipt_counts_remain_frozen_while_live_counts_advan
     assert MODULE.EXPECTED_W01_RESULT["profile_basis_reconciliation"] == (
         "8 personal public repositories + 227 public organization repositories = 235 public repositories"
     )
-    assert MODULE.LIVE_PROFILE_PERSONAL_PUBLIC_REPOS == 9
-    assert MODULE.LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS == 226
-    assert MODULE.LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS == 197
-    assert MODULE.LIVE_PROFILE_ORGANIZATION_FORKS == 29
-    assert MODULE.LIVE_PROFILE_TOTAL_PUBLIC_REPOS == 235
+    assert set(MODULE.PROFILE_ORGANIZATION_ALIASES.values()) == MODULE.EXPECTED_ORGANIZATION_KEYS
 
 
 @pytest.mark.parametrize("filename", ("research-adjudication.json", "w08-receipt.json"))
@@ -1175,7 +1177,7 @@ def test_live_profile_observations_reproduce_all_moving_public_claim_inputs() ->
 
     assert errors == []
     assert set(public_calls) == set(public_payloads)
-    assert graphql_calls == [["api", "graphql", "-f", f"query={MODULE.PROFILE_CONTRIBUTION_QUERY}"]]
+    assert graphql_calls == [["api", "graphql", "-f", f"query={MODULE.PROFILE_LIVE_OBSERVATION_QUERY}"]]
     assert set(http_calls) == {url for url, _status in MODULE.EXPECTED_HTTP_RECEIPTS.values()}
 
 
@@ -1260,11 +1262,13 @@ def test_live_profile_observations_fail_neutrally_on_drift_and_malformed_payload
 
     changed_profile = copy.deepcopy(public_payloads)
     changed_profile[MODULE.PROFILE_USER_API_URL]["public_repos"] = 8
-    assert any("live profile metadata public_repos must remain 9" in error for error in validate(changed_profile))
+    assert "live profile manifest and API personal repository counts must agree" in validate(changed_profile)
 
     changed_forks = copy.deepcopy(public_payloads)
     changed_forks[MODULE.PROFILE_MANIFEST_RAW_URL]["stats"]["ecosystem_forks"]["value"] = 28
-    assert "live profile manifest ecosystem fork count must remain 29" in validate(changed_forks)
+    assert "live profile stat ecosystem_forks must match the current declared public organization scope" in validate(
+        changed_forks
+    )
 
     missing_runs = copy.deepcopy(public_payloads)
     missing_runs[MODULE.PROFILE_RUNS_API_URL] = {"workflow_runs": []}
@@ -1298,6 +1302,84 @@ def test_live_profile_observations_fail_neutrally_on_drift_and_malformed_payload
     assert "live scheduled workflow response must be a mapping" in malformed_errors
     assert "live profile main-head response must be a mapping" in malformed_errors
     assert "live contribution calendar response must contain the expected mapping" in malformed_errors
+
+
+def _validate_current_profile(payloads, graphql_payload, now):
+    return MODULE.validate_live_profile_observations(
+        _bundle()["receipt"],
+        gh_fetch=lambda _args: copy.deepcopy(graphql_payload),
+        public_fetch=lambda url: copy.deepcopy(payloads[url]),
+        http_fetch=lambda url: {
+            "status": next(
+                status for expected_url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values() if expected_url == url
+            ),
+            "url": url,
+        },
+        now=now,
+    )
+
+
+def test_current_public_counts_can_advance_without_rewriting_historical_claims() -> None:
+    now, payloads, graphql_payload = _live_profile_fixture()
+    payloads[MODULE.PROFILE_USER_API_URL]["public_repos"] = 11
+    stats = payloads[MODULE.PROFILE_MANIFEST_RAW_URL]["stats"]
+    stats["personal_public_repos"]["value"] = 11
+    stats["ecosystem_public_repos"]["value"] = 228
+    stats["ecosystem_original_repos"]["value"] = 199
+    first = next(iter(MODULE.PROFILE_ORGANIZATION_ALIASES))
+    graphql_payload["data"][first]["public"]["totalCount"] = 228
+    graphql_payload["data"][first]["original"]["totalCount"] = 199
+    assert _validate_current_profile(payloads, graphql_payload, now) == []
+    assert MODULE.EXPECTED_PROFILE_METADATA_RESULT["public_repos"] == 8
+    assert MODULE.EXPECTED_W01_RESULT["public_repository_count"] == 235
+    assert _errors(_bundle()) == []
+
+
+@pytest.mark.parametrize(
+    "kind", ["missing", "null", "wrong-login", "boolean", "negative", "inverted", "errors", "empty-errors"]
+)
+def test_current_organization_counts_reject_partial_or_invalid_evidence(kind) -> None:
+    now, payloads, graphql_payload = _live_profile_fixture()
+    first = next(iter(MODULE.PROFILE_ORGANIZATION_ALIASES))
+    if kind == "missing":
+        del graphql_payload["data"][first]
+    elif kind == "null":
+        graphql_payload["data"][first] = None
+    elif kind == "wrong-login":
+        graphql_payload["data"][first]["login"] = "unreviewed-organization"
+    elif kind == "boolean":
+        graphql_payload["data"][first]["public"]["totalCount"] = True
+    elif kind == "negative":
+        graphql_payload["data"][first]["original"]["totalCount"] = -1
+    elif kind == "inverted":
+        graphql_payload["data"][first]["original"]["totalCount"] = 227
+    else:
+        graphql_payload["errors"] = [] if kind == "empty-errors" else [{"message": "partial result"}]
+    assert _validate_current_profile(payloads, graphql_payload, now)
+
+
+@pytest.mark.parametrize(
+    "name", ["personal_public_repos", "ecosystem_public_repos", "ecosystem_original_repos", "ecosystem_forks"]
+)
+def test_current_manifest_repository_counts_require_typed_matching_api_values(name) -> None:
+    now, payloads, graphql_payload = _live_profile_fixture()
+    stats = payloads[MODULE.PROFILE_MANIFEST_RAW_URL]["stats"]
+    stats[name]["value"] += 1
+    assert _validate_current_profile(payloads, graphql_payload, now)
+    stats[name]["value"] = True
+    assert f"live profile stat {name} must be a non-negative integer" in _validate_current_profile(
+        payloads, graphql_payload, now
+    )
+
+
+def test_current_count_query_preserves_public_declared_owner_scope() -> None:
+    query = MODULE.PROFILE_LIVE_OBSERVATION_QUERY
+    assert query.count("organization(login:") == len(MODULE.EXPECTED_ORGANIZATION_KEYS)
+    for alias, login in MODULE.PROFILE_ORGANIZATION_ALIASES.items():
+        assert f'{alias}: organization(login: "{login}")' in query
+    assert query.count("privacy: PUBLIC, ownerAffiliations: [OWNER]") == 2 * len(MODULE.EXPECTED_ORGANIZATION_KEYS)
+    assert query.count("isFork: false") == len(MODULE.EXPECTED_ORGANIZATION_KEYS)
+    assert "nodes" not in query and "PRIVATE" not in query
 
 
 def test_daily_runs_are_distinct_scheduled_and_window_bound() -> None:
