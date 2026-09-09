@@ -110,6 +110,15 @@ class Reviews(unittest.TestCase):
         self.assertEqual(result, ("exception", ["reviewer-unconfigured"]))
         self.assertEqual(self.provider.calls, [])
 
+    def test_running_evidence_defers_without_request_or_exception(self):
+        self.assertEqual(self.request({"route": "pending"}), ("pending", []))
+        self.assertEqual(self.provider.calls, [])
+
+    def test_rerun_starting_before_request_remains_quiet(self):
+        with patch.object(upkeep, "inspect", side_effect=[EVIDENCE, {"route": "pending"}]):
+            self.assertEqual(upkeep.request_review(REPO, 1, HEAD, self.provider), ("pending", []))
+        self.assertEqual(self.provider.mutations(), [])
+
     def test_human_identity_cannot_be_silently_selected(self):
         self.provider.kind = "User"
         self.assertEqual(self.request()[1], ["reviewer-identity-mismatch"])
@@ -157,7 +166,7 @@ class Drain(unittest.TestCase):
         self.assertEqual(row[2], "DEPS-REVIEW")
 
     def test_no_dependency_route_can_enter_generic_merge(self):
-        for route in ("delegated-review", "exception", "unknown"):
+        for route in ("delegated-review", "pending", "exception", "unknown"):
             with (
                 self.subTest(route=route),
                 patch.object(self.drain, "merge_prohibition", return_value=None),
@@ -165,6 +174,39 @@ class Drain(unittest.TestCase):
                 patch.object(self.drain, "gh", side_effect=AssertionError("unexpected merge")),
             ):
                 self.assertEqual(self.drain.merge(REPO, 1, HEAD, "direct"), "REFUSED")
+
+    def test_pending_dependency_beat_has_no_review_merge_or_notification(self):
+        response = SimpleNamespace(
+            returncode=0,
+            stdout=json.dumps({"state": "OPEN", "isDraft": False, "headRefOid": HEAD, "labels": []}),
+            stderr="",
+        )
+        with (
+            patch.object(self.drain, "gh", return_value=response),
+            patch.object(upkeep, "inspect", return_value={"route": "pending"}),
+        ):
+            row = self.drain.assess((REPO, 1))
+        self.assertEqual(row[2], "DEPS-PENDING")
+        with (
+            patch.object(sys, "argv", ["merge-drain.py"]),
+            patch.object(
+                self.drain,
+                "enumerate_open_prs_result",
+                return_value=SimpleNamespace(rows=[(REPO, 1)], success=True, complete=True),
+            ),
+            patch.object(self.drain, "rotating_window", return_value=[(REPO, 1)]),
+            patch.object(self.drain, "assess", return_value=row),
+            patch.object(self.drain, "merge_prohibition", return_value=None),
+            patch.object(self.drain, "reconcile_ci_red_subjects"),
+            patch.object(self.drain, "LOG", "/dev/null"),
+            patch.object(upkeep, "request_review") as request,
+            patch.object(self.drain, "dependency_exception") as notify,
+            patch.object(self.drain, "merge") as merge,
+        ):
+            self.assertEqual(self.drain.main(), 0)
+        request.assert_not_called()
+        notify.assert_not_called()
+        merge.assert_not_called()
 
     def test_queued_dependency_does_not_claim_accepted_handoff(self):
         with (

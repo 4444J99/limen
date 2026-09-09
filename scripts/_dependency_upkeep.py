@@ -58,6 +58,8 @@ def request_review(repo, number, head, gh):
 
     try:
         evidence = inspect(repo, number, head, gh)
+        if evidence.get("route") == "pending":
+            return "pending", []
         if evidence.get("route") != "delegated-review":
             return "exception", evidence.get("reasons", ["evidence-not-ready"])
         reviewer = evidence.get("reviewer") or {}
@@ -110,6 +112,8 @@ def request_review(repo, number, head, gh):
         # A batch assessment cannot authorize a later request after a rerun,
         # policy promotion, head change or base movement.
         fresh = inspect(repo, number, head, gh)
+        if fresh.get("route") == "pending":
+            return "pending", []
         if fresh != evidence:
             return "exception", ["review-evidence-changed"]
         current = read(prefix)

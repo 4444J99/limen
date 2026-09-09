@@ -330,7 +330,9 @@ def assess(rn):
             head = str(d.get("headRefOid") or "")
             evidence = _dependency_upkeep.inspect(repo, num, head, gh)
             if evidence.get("route") != "not-dependency":
-                status = "DEPS-REVIEW" if evidence.get("route") == "delegated-review" else "DEPS-EXCEPTION"
+                status = {"delegated-review": "DEPS-REVIEW", "pending": "DEPS-PENDING"}.get(
+                    evidence.get("route"), "DEPS-EXCEPTION"
+                )
                 return (repo, num, status, head, evidence)
         if disposition is None:
             return (repo, num, "LIFECYCLE-UNKNOWN")
@@ -486,9 +488,12 @@ def merge(repo, num, expected_head, mode_hint):
                     "--expected-head",
                     expected_head,
                 ],
+                # Declared controller budgets total 5430s: 21 setup/tree calls,
+                # four trusted bodies and 17 API calls including cleanup. Preserve
+                # additional room for process overhead and the final receipt.
                 capture_output=True,
                 text=True,
-                timeout=2700,
+                timeout=6000,
                 check=False,
             )
             receipt = json.loads(result.stdout) if result.returncode == 0 else {}
@@ -576,6 +581,9 @@ def submit_one(repo: str, num: int, expected_head: str) -> int:
             print(f"MERGE-SUBMISSION {identity}: DEFERRED — dependency review requires the upkeep route")
             return 2
     if current["queued"]:
+        if repo.lower() == "4444j99/organvm-ci-relay":
+            print(f"MERGE-SUBMISSION {identity}: REFUSED — relay requires direct governor custody")
+            return 1
         print(f"MERGE-SUBMISSION {identity}: QUEUED — already owned by GitHub")
         return 0
 
@@ -674,7 +682,7 @@ def main() -> int:
         f"merged={len(merged)} queued={len(queued)} trivial-skipped={b['TRIVIAL']} | "
         f"blocked: conflict={b['CONFLICT']} "
         f"ci-red={b['CI-RED']} ci-pending={b['CI-PENDING']} "
-        f"deps-review={b['DEPS-REVIEW']} deps-exception={b['DEPS-EXCEPTION']} "
+        f"deps-review={b['DEPS-REVIEW']} deps-pending={b['DEPS-PENDING']} deps-exception={b['DEPS-EXCEPTION']} "
         f"stale-core={b['STALE-CORE']} stale-base={b['STALE-BASE']}"
     )
     print(summary)

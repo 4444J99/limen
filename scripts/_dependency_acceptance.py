@@ -15,6 +15,7 @@ import json
 import re
 import subprocess
 import zipfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 PILOT_REPOSITORIES = frozenset(
@@ -33,6 +34,10 @@ MAX_BLOB = 8 * 1024 * 1024
 
 class Hold(ValueError):
     """Evidence cannot authorize even delegated review."""
+
+
+class Pending(Hold):
+    """A known trusted workflow is still collecting evidence; remain quiet."""
 
 
 def require(condition, reason):
@@ -66,16 +71,12 @@ def read_evidence_archive(raw):
     require(isinstance(raw, bytes) and len(raw) <= MAX_ARCHIVE, "archive-size-or-type")
     with zipfile.ZipFile(io.BytesIO(raw)) as archive:
         entries = archive.infolist()
-        require(
-            1 <= len(entries) <= 20 and sum(item.file_size for item in entries) <= MAX_BLOB,
-            "archive-member-count-or-size",
-        )
+        require(len(entries) == 1, "archive-member-count-or-size")
         names = [item.filename for item in entries]
         require(len(names) == len(set(names)) and names.count("dependency-evidence.json") == 1, "archive-member-count")
         for item in entries:
             require(
-                item.filename == "dependency-evidence.json"
-                or re.fullmatch(r"audit-(?:base|head)-[A-Za-z0-9_.-]+", item.filename),
+                item.filename == "dependency-evidence.json",
                 "archive-member-path",
             )
             require(not item.flag_bits & 1 and not item.is_dir(), "archive-member-type")
@@ -138,6 +139,18 @@ def content(api, repository, path, revision):
     item = api(f"/repos/{repository}/contents/{path}?ref={sha(revision)}")
     require(item["type"] == "file" and item["path"] == path, "nonregular-policy-file")
     sha(item["sha"])
+    # Contents dereferences some symlinks and calls them files. The immutable
+    # Git tree mode, not that convenience response, proves regular source.
+    tree = api(f"/repos/{repository}/git/trees/{revision}?recursive=1")
+    require(tree.get("truncated") is False and isinstance(tree.get("tree"), list), "incomplete-git-tree")
+    entries = [entry for entry in tree["tree"] if entry.get("path") == path]
+    require(
+        len(entries) == 1
+        and entries[0].get("type") == "blob"
+        and entries[0].get("mode") in ("100644", "100755")
+        and entries[0].get("sha") == item["sha"],
+        "nonregular-policy-file",
+    )
     return item
 
 
@@ -156,6 +169,54 @@ def blob_bytes(api, repository, item):
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"))
+
+
+def policy_dependency_files(policy):
+    locks, manifests = policy.get("lockfiles"), policy.get("manifests")
+    for paths, basename in ((locks, "package-lock.json"), (manifests, "package.json")):
+        require(
+            isinstance(paths, list)
+            and 0 < len(paths) <= 100
+            and all(
+                isinstance(path, str)
+                and re.fullmatch(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*", path)
+                and not {".", ".."}.intersection(path.split("/"))
+                and path.rsplit("/", 1)[-1] == basename
+                for path in paths
+            )
+            and len(set(paths)) == len(paths),
+            "dependency-paths-unconfigured",
+        )
+    require(
+        {path.removesuffix("package-lock.json") + "package.json" for path in locks} <= set(manifests),
+        "lock-root-manifest-missing",
+    )
+    return set(locks) | set(manifests)
+
+
+def manifest_inventory(lock, path):
+    require(isinstance(lock.get("packages"), dict) and "" in lock["packages"], "invalid-lockfile-graph")
+    prefix = path.removesuffix("package-lock.json")
+    return {
+        prefix + (package + "/" if package else "") + "package.json"
+        for package in lock["packages"]
+        if "node_modules" not in package.split("/")
+    }
+
+
+def verify_evidence_age(run, policy):
+    maximum = policy.get("max_evidence_age_seconds")
+    require(type(maximum) is int and 0 < maximum <= 86400, "evidence-age-unconfigured")
+    moments = []
+    for field in ("run_started_at", "updated_at"):
+        value = run.get(field)
+        require(
+            isinstance(value, str) and bool(re.fullmatch(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ", value)), "workflow-time"
+        )
+        moments.append(datetime.fromisoformat(value.replace("Z", "+00:00")))
+    now = datetime.now(timezone.utc)
+    require(moments[0] <= moments[1] <= now, "workflow-time")
+    require((now - moments[0]).total_seconds() <= maximum, "dependency-evidence-expired")
 
 
 def graph_delta(before, after, lockfile):
@@ -222,7 +283,10 @@ def current_run(api, repository, workflow, state, policy):
     )
     require(run["head_sha"] == state["head_sha"] and positive(run["run_attempt"]), "workflow-revision")
     require(not run.get("referenced_workflows"), "unreviewed-reusable-workflow")
+    if run["status"] in ("queued", "in_progress", "waiting", "requested", "pending"):
+        raise Pending("trusted-workflow-in-progress")
     require(run["status"] == "completed" and run["conclusion"] == "success", "workflow-not-successful")
+    verify_evidence_age(run, policy)
     return run
 
 
@@ -278,6 +342,7 @@ def evaluate(api, archive_reader, repository, number, expected_head, policy, log
     """Return review routing only; every API callback here is a GET."""
     require(positive(policy.get("repository_id")) and positive(policy.get("dependabot_actor_id")), "policy-identity")
     require(policy.get("base_ref") == "main" and policy.get("package_manager") == "npm", "policy-runtime")
+    policy_dependency_files(policy)
     reviewer = policy.get("reviewer")
     require(
         isinstance(reviewer, dict)
@@ -328,6 +393,7 @@ def evaluate(api, archive_reader, repository, number, expected_head, policy, log
     require(receipt["schema"] == SCHEMA and receipt["repository"] == repository, "receipt-schema-or-repository")
     for field in ("base_sha", "head_sha", "tested_sha"):
         require(receipt[field] == state[field], "receipt-revision")
+    require(receipt.get("dependency_revision_sha") == state["tested_sha"], "dependency-revision")
     require(
         receipt["workflow_sha"] == state["tested_sha"] and receipt["workflow_path"] == policy["workflow_path"],
         "receipt-workflow",
@@ -342,15 +408,23 @@ def evaluate(api, archive_reader, repository, number, expected_head, policy, log
         "lockfiles-incomplete",
     )
     actual_graph = {"added": [], "removed": [], "changed": []}
+    inventories = {revision: set() for revision in (state["base_sha"], state["head_sha"], state["tested_sha"])}
     for path in lockfiles:
         item = content(api, repository, path, state["tested_sha"])
         data = blob_bytes(api, repository, item)
         require(hashlib.sha256(data).hexdigest() == receipt["lockfile_sha256"][path], "lockfile-digest")
         before = strict_json(blob_bytes(api, repository, content(api, repository, path, state["base_sha"])), MAX_BLOB)
         after = strict_json(data, MAX_BLOB)
+        source = strict_json(blob_bytes(api, repository, content(api, repository, path, state["head_sha"])), MAX_BLOB)
+        for revision, lock in ((state["base_sha"], before), (state["head_sha"], source), (state["tested_sha"], after)):
+            inventories[revision].update(manifest_inventory(lock, path))
         observed = graph_delta(before, after, path)
         for field in actual_graph:
             actual_graph[field].extend(observed[field])
+    for revision, manifests in inventories.items():
+        require(manifests == set(policy["manifests"]), "workspace-inventory-drift")
+        for path in sorted(manifests):
+            content(api, repository, path, revision)
     require(
         receipt["route"] in ("delegated-review", "exception")
         and isinstance(receipt["exceptions"], list)
@@ -420,12 +494,19 @@ def inspect_candidate(repo, number, expected_head, gh_callable, trust_policy_pat
     repo = canonical[repo.casefold()]
     result = {"route": "exception", "reasons": [], "head_sha": expected_head, "automatic_acceptance": False}
     prefix = f"/repos/{repo}"
+    immutable_trees = {}
 
     def api(path):
         require(path.startswith(prefix + "/"), "api-scope")
+        is_tree = bool(re.fullmatch(re.escape(prefix) + r"/git/trees/[0-9a-f]{40}\?recursive=1", path))
+        if is_tree and path in immutable_trees:
+            return immutable_trees[path]
         response = gh_callable(["api", path], timeout=60)
         require(response.returncode == 0, "github-read-unavailable")
-        return strict_json(response.stdout, 12 * 1024 * 1024)
+        value = strict_json(response.stdout, 12 * 1024 * 1024)
+        if is_tree:
+            immutable_trees[path] = value
+        return value
 
     def archive_reader(repository, artifact_id):
         require(repository == repo and positive(artifact_id), "archive-api-scope")
@@ -467,11 +548,11 @@ def inspect_candidate(repo, number, expected_head, gh_callable, trust_policy_pat
         require(document["schema"] == TRUST_SCHEMA and document.get("installed") is True, "trust-policy-not-installed")
         policy = document["repositories"].get(repo)
         require(isinstance(policy, dict), "repository-policy-unconfigured")
-        allowed = set(policy["lockfiles"]) | {
-            p.removesuffix("package-lock.json") + "package.json" for p in policy["lockfiles"]
-        }
+        allowed = policy_dependency_files(policy)
         require(names <= allowed, "unusual-dependency-files")
         return evaluate(api, archive_reader, repo, number, expected_head, policy, log_reader)
+    except Pending as error:
+        result.update(route="pending", reasons=[str(error)])
     except Hold as error:
         result["reasons"] = [str(error)]
     except (KeyError, TypeError, ValueError, OSError, zipfile.BadZipFile, RuntimeError, subprocess.SubprocessError):

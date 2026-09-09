@@ -10,6 +10,7 @@ import sys
 import tempfile
 import unittest
 import zipfile
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -31,6 +32,8 @@ POLICY = {
     "workflow_path": WORKFLOW,
     "trusted_files": {WORKFLOW: PIN, "scripts/dependency-evidence.mjs": PIN},
     "lockfiles": ["package-lock.json"],
+    "manifests": ["package.json"],
+    "max_evidence_age_seconds": 86400,
     "reviewer": {"login": "review-bot[bot]", "id": 789},
     "required_workflows": [
         {
@@ -54,6 +57,10 @@ class Fixture:
         self.policy = copy.deepcopy(POLICY)
         self.base, self.head, self.merge = B, H, M
         self.parents = [B, H]
+        self.locks = {B: json.loads(LOCK_BEFORE), H: json.loads(LOCK), M: json.loads(LOCK)}
+        self.blobs = {}
+        self.nonregular_manifests = set()
+        self.dereferenced_symlinks = set()
         self.calls = []
         self.pr = {
             "number": 1,
@@ -77,7 +84,8 @@ class Fixture:
             "conclusion": "success",
             "repository": {"id": 123, "full_name": REPO},
             "head_repository": {"id": 123},
-            "updated_at": "2026-09-09T00:00:00Z",
+            "run_started_at": (datetime.now(timezone.utc) - timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "updated_at": (datetime.now(timezone.utc) - timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
         self.job = {
             "id": 200,
@@ -97,6 +105,7 @@ class Fixture:
             "base_sha": B,
             "head_sha": H,
             "tested_sha": M,
+            "dependency_revision_sha": M,
             "workflow_sha": M,
             "workflow_path": WORKFLOW,
             "run_id": "100",
@@ -131,12 +140,34 @@ class Fixture:
             return {"object": {"sha": self.merge}}
         if "/git/commits/" in path:
             return {"parents": [{"sha": value} for value in self.parents]}
+        if "/git/trees/" in path:
+            revision = path.split("/git/trees/")[1].split("?")[0]
+            names = set(self.policy["trusted_files"]) | set(self.policy["manifests"]) | set(self.policy["lockfiles"])
+            data = json.dumps(self.locks[revision], separators=(",", ":")).encode()
+            digest = hashlib.sha1(f"blob {len(data)}\0".encode() + data).hexdigest()
+            return {
+                "truncated": False,
+                "tree": [
+                    {
+                        "path": name,
+                        "type": "blob",
+                        "mode": "120000" if name in self.dereferenced_symlinks else "100644",
+                        "sha": digest if name == "package-lock.json" else self.pin,
+                    }
+                    for name in names
+                ],
+            }
         if "/contents/" in path:
             name = path.split("/contents/")[1].split("?")[0]
-            digest = LOCK_BEFORE_SHA if f"ref={B}" in path else LOCK_SHA
-            return {"type": "file", "path": name, "sha": digest if name == "package-lock.json" else self.pin}
+            digest = self.pin
+            if name == "package-lock.json":
+                revision = path.split("?ref=")[1]
+                data = json.dumps(self.locks[revision], separators=(",", ":")).encode()
+                digest = hashlib.sha1(f"blob {len(data)}\0".encode() + data).hexdigest()
+                self.blobs[digest] = data
+            return {"type": "symlink" if name in self.nonregular_manifests else "file", "path": name, "sha": digest}
         if "/git/blobs/" in path:
-            data = LOCK_BEFORE if path.endswith(LOCK_BEFORE_SHA) else LOCK
+            data = self.blobs[path.rsplit("/", 1)[-1]]
             return {"encoding": "base64", "size": len(data), "content": base64.b64encode(data).decode()}
         if "/actions/runs?" in path:
             return {"total_count": 1, "workflow_runs": [copy.deepcopy(self.run)]}
@@ -250,7 +281,7 @@ class EvidenceAdmission(unittest.TestCase):
             self.f.evaluate()
 
     def test_receipt_wrong_revision_or_attempt(self):
-        for field in ("base_sha", "head_sha", "tested_sha", "workflow_sha", "run_attempt"):
+        for field in ("base_sha", "head_sha", "tested_sha", "dependency_revision_sha", "workflow_sha", "run_attempt"):
             with self.subTest(field=field):
                 self.f = Fixture()
                 self.f.receipt[field] = "e" * 40
@@ -341,13 +372,98 @@ class EvidenceAdmission(unittest.TestCase):
             self.f.evaluate()
 
     def test_full_cli_adapter_route(self):
+        self.assertEqual(self.inspect()["route"], "delegated-review")
+
+    def inspect(self):
         with tempfile.TemporaryDirectory() as temporary:
             file = Path(temporary) / "policy.json"
             file.write_text(
                 json.dumps({"schema": admission.TRUST_SCHEMA, "installed": True, "repositories": {REPO: self.f.policy}})
             )
             result = admission.inspect_candidate(REPO, 1, H, self.f.gh, file)
-        self.assertEqual(result["route"], "delegated-review")
+        return result
+
+    def workspace(self):
+        self.f.policy["manifests"].append("packages/core/package.json")
+        for revision in (B, H, M):
+            self.f.locks[revision]["packages"]["packages/core"] = {"name": "@scope/core", "version": "1.0.0"}
+        data = json.dumps(self.f.locks[M], separators=(",", ":")).encode()
+        self.f.receipt["lockfile_sha256"]["package-lock.json"] = hashlib.sha256(data).hexdigest()
+        self.f.files[0]["filename"] = "packages/core/package.json"
+
+    def test_existing_trusted_workspace_patch_routes(self):
+        self.workspace()
+        self.assertEqual(self.inspect()["route"], "delegated-review")
+
+    def test_unknown_missing_nonregular_or_changed_workspace_inventory_holds(self):
+        for case in ("unknown", "missing-root", "unlisted", "new", "nonregular"):
+            with self.subTest(case=case):
+                self.f = Fixture()
+                self.workspace()
+                if case == "unknown":
+                    self.f.files[0]["filename"] = "unknown/package.json"
+                elif case == "missing-root":
+                    self.f.policy["manifests"].remove("package.json")
+                elif case == "unlisted":
+                    self.f.policy["manifests"].remove("packages/core/package.json")
+                elif case == "new":
+                    del self.f.locks[B]["packages"]["packages/core"]
+                else:
+                    self.f.nonregular_manifests.add("packages/core/package.json")
+                self.assertEqual(self.inspect()["route"], "exception")
+
+    def test_workspace_add_remove_rename_remains_exception(self):
+        self.workspace()
+        for status in ("added", "removed", "renamed"):
+            self.f.files[0]["status"] = status
+            self.assertEqual(self.inspect()["reasons"], ["dependency-file-addition-removal-or-rename"])
+
+    def test_old_malformed_future_and_reversed_workflow_times_hold(self):
+        now = datetime.now(timezone.utc)
+
+        def stamp(moment):
+            return moment.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        for change in (
+            {"run_started_at": stamp(now - timedelta(days=2))},
+            {"run_started_at": "not-a-time"},
+            {"run_started_at": "2026-99-09T00:00:00Z"},
+            {"updated_at": stamp(now + timedelta(minutes=1))},
+            {"updated_at": stamp(now - timedelta(hours=1))},
+        ):
+            with self.subTest(change=change):
+                self.f = Fixture()
+                self.f.run.update(change)
+                self.assertEqual(self.inspect()["route"], "exception")
+
+    def test_artifact_generated_at_cannot_refresh_old_provider_run(self):
+        self.f.run["run_started_at"] = "2020-01-01T00:00:00Z"
+        self.f.receipt["generated_at"] = datetime.now(timezone.utc).isoformat()
+        self.assertEqual(self.inspect()["reasons"], ["dependency-evidence-expired"])
+
+    def test_known_running_workflow_is_quiet_pending_but_failure_is_exception(self):
+        for status in ("queued", "in_progress", "waiting"):
+            self.f.run.update(status=status, conclusion=None)
+            result = self.inspect()
+            self.assertEqual(result["route"], "pending")
+            self.assertFalse(result["automatic_acceptance"])
+        self.f.run.update(status="completed", conclusion="failure")
+        self.assertEqual(self.inspect()["route"], "exception")
+        self.f.run.update(status="in_progress", conclusion=None, event="push")
+        self.assertEqual(self.inspect()["route"], "exception")
+
+    def test_extra_archive_member_is_not_part_of_primary_evidence(self):
+        stream = io.BytesIO(self.f.raw())
+        with zipfile.ZipFile(stream, "a") as archive:
+            archive.writestr("audit-base-package-lock.json", "{}")
+        with self.assertRaisesRegex(admission.Hold, "archive-member-count"):
+            admission.read_evidence_archive(stream.getvalue())
+
+    def test_contents_dereferenced_symlink_cannot_claim_regular_file(self):
+        for name in (WORKFLOW, "package.json", "package-lock.json"):
+            self.f = Fixture()
+            self.f.dereferenced_symlinks.add(name)
+            self.assertEqual(self.inspect()["reasons"], ["nonregular-policy-file"])
 
     def test_unconfigured_or_author_reviewer_holds(self):
         for reviewer in (None, {"login": "dependabot[bot]", "id": 456}):
