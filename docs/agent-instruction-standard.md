@@ -24,7 +24,7 @@ layers. The job is to **converge on them, not rebuild** them.
 | `integrations/copilot/limen-conductor.agent.md` | Canonical source for the organization-level Copilot cloud adapter to authenticated remote ianva | Repository placement that overrides the organization profile, provider/model pinning, or direct lifecycle rules |
 | `CONTRIBUTING.md` | Human setup, style, gates, branch/PR requirements | Agent dispatch protocol |
 | `.github/copilot-instructions.md` | Pointer file only — routes Copilot (which reads this path natively) to `AGENTS.md`, the closest directory-scoped `AGENTS.md`, and `CONTRIBUTING.md` | Any rule of its own beyond the pointer; it self-declares stale wherever it disagrees with its targets |
-| Directory-scoped `AGENTS.md` (today: `apps/danse/AGENTS.md`) | Component-local knowledge for its subtree — closest wins, more specific never higher-ranked | Cross-agent protocol, task states, or anything the root contract owns |
+| Directory-scoped `AGENTS.md`, where present | Component-local knowledge for its subtree — closest wins, more specific never higher-ranked | Cross-agent protocol, task states, or anything the root contract owns |
 | `docs/deployment.md` | Production deployment variables, commands, and safety checks | Agent task claiming or lifecycle state |
 | Generated templates | Starter guidance for other tools/editors | Repo-specific truth copied out of date |
 
@@ -225,7 +225,7 @@ Full Lifecycle Closure covenant phrases; **R** — exit-code discipline phrases
 (`PIPESTATUS`, one-command-per-judged-invocation); **S** — the instruction-surface byte budget
 from `institutio/governance/gates.yaml → instruction_surfaces` (budget/ceiling/slack, and a
 `debt:` line required iff a surface exceeds budget); **T** — the pointer file
-(`.github/copilot-instructions.md`) and directory-scoped surfaces (`apps/danse/AGENTS.md`) stay
+(`.github/copilot-instructions.md`) and declared directory-scoped surfaces stay
 in the estate: the pointer keeps its self-subordination clause and points at `AGENTS.md`, scoped
 files keep "root wins" deference, and neither presents non-canonical status values. A new check
 letters itself here when added.

@@ -1,0 +1,48 @@
+{
+  "observed_at": "2026-09-08T21:42:12.617706+00:00",
+  "work_id": "PSP-P05-W04",
+  "issue": "https://github.com/4444J99/limen/issues/2201",
+  "acceptance": "unaccepted",
+  "fresh_exact_head_predicate_sets_observed": 1,
+  "selected_flagships": 3,
+  "flagships": [
+    {
+      "flagship_id": "public_records",
+      "repository_id": 1083287130,
+      "repository": "organvm-iii-ergon/public-record-data-scrapper",
+      "exact_head": "04eb20eeba2391a053c4a129f0090f5295c1460e",
+      "status": "bounded_predicates_pass",
+      "predicate_receipts": [
+        "ucc-server-tests-receipt.json",
+        "ucc-lint-receipt.json",
+        "ucc-build-receipt.json"
+      ],
+      "tests_passed": 1504,
+      "tests_skipped": 6,
+      "test_files": 93,
+      "coverage_measured": false,
+      "live_ingestion_verified": false,
+      "customer_outcome_verified": false
+    },
+    {
+      "flagship_id": "ai_chat_exporter",
+      "repository_id": 1114290112,
+      "repository": "organvm-iii-ergon/a-i-chat--exporter",
+      "exact_head": "900da0fa256b443b3fe976963c9b2c67e8c09176",
+      "status": "not_current",
+      "reason": "Declared frozen dependency installation started, but its terminal execution result was not retained; no test/lint/build invocation followed. No exit status is inferred.",
+      "next_predicate": "Restore reliable terminal-result capture under admitted capacity, then execute the repository test, lint and site build at the exact head."
+    },
+    {
+      "flagship_id": "limen",
+      "repository_id": 1255213941,
+      "repository": "4444J99/limen",
+      "exact_head": "ac351ed163e83aba37e549fe1954cffa38b1c2a3",
+      "status": "not_current",
+      "reason": "No new accepted-main full reproduction in this observation; R00 candidate verification has remaining failures and unavailable live GitHub CLI observation.",
+      "next_predicate": "Existing R00 owner resolves recorded native process sensor and authenticated GitHub CLI capabilities; finish affected required checks before integration."
+    }
+  ],
+  "leaf_receipt_delta": 0,
+  "external_outcome_delta": 0
+}

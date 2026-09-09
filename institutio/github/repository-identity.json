@@ -9,6 +9,46 @@
       "historical_aliases": [
         "organvm/limen"
       ]
+    },
+    {
+      "schema_version": "limen.repository_identity.v1",
+      "repository_id": 1258551472,
+      "canonical_coordinate": "4444J99/euro-trip-2026",
+      "historical_aliases": [
+        "organvm/euro-trip-2026"
+      ]
+    },
+    {
+      "schema_version": "limen.repository_identity.v1",
+      "repository_id": 1248716739,
+      "canonical_coordinate": "4444J99/opencode-plans",
+      "historical_aliases": [
+        "organvm/opencode-plans"
+      ]
+    },
+    {
+      "schema_version": "limen.repository_identity.v1",
+      "repository_id": 1247808935,
+      "canonical_coordinate": "4444J99/personal",
+      "historical_aliases": [
+        "organvm/personal"
+      ]
+    },
+    {
+      "schema_version": "limen.repository_identity.v1",
+      "repository_id": 1248665097,
+      "canonical_coordinate": "4444J99/prompt-registry-archive",
+      "historical_aliases": [
+        "organvm/prompt-registry-archive"
+      ]
+    },
+    {
+      "schema_version": "limen.repository_identity.v1",
+      "repository_id": 1204250615,
+      "canonical_coordinate": "4444J99/sovereign--ground--4444j99",
+      "historical_aliases": [
+        "organvm/sovereign--ground--4444j99"
+      ]
     }
   ]
 }

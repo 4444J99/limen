@@ -1,0 +1,44 @@
+{
+  "schema_version": "limen.positioning_flagship_receipt.v1",
+  "flagship_id": "public_records",
+  "repository": "organvm-iii-ergon/public-record-data-scrapper",
+  "default_branch": "main",
+  "exact_head": "04eb20eeba2391a053c4a129f0090f5295c1460e",
+  "predicate": {
+    "argv": [
+      "npm",
+      "exec",
+      "--yes",
+      "--package=node@20",
+      "--package=npm@11.17.0",
+      "--",
+      "npm",
+      "exec",
+      "--",
+      "vitest",
+      "run",
+      "--config",
+      "vitest.config.server.ts",
+      "--coverage.enabled=false",
+      "--reporter=json",
+      "--outputFile=/workspace/scratch/41d1c2850cad/ucc-tests.json"
+    ],
+    "timeout_seconds": 300
+  },
+  "environment": {
+    "platform": "Linux-6.18.35-x86_64-with-glibc2.39",
+    "python": "3.12.13"
+  },
+  "started_at": "2026-09-08T21:37:17.251270Z",
+  "finished_at": "2026-09-08T21:37:39.992626Z",
+  "exit_code": 0,
+  "result": "current_pass",
+  "artifact_digest": "c62bc34ef6b695d455fd7713c6d04db9a54c0169c38d0b5b3816263f64f4ed40",
+  "output_bytes": 319,
+  "limitations": [
+    "Repository correctness gate only; server coverage enforcement is disabled by the owning workflow.",
+    "No database, Redis, live scraper, client data, deployment or end-user journey is asserted.",
+    "The frontend build uses tsc --noCheck and is not a TypeScript diagnostic pass."
+  ],
+  "errors": []
+}
