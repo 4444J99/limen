@@ -1053,6 +1053,62 @@ test("declared conductor identity matches its principal-bound session (#1408)", 
   }), /does not match its registered session/);
 });
 
+test("authenticated HTTP task claims cannot promote a declared provider over the token principal", async () => {
+  const codexToken = "synthetic-codex-credential-for-principal-test";
+  const julesToken = "synthetic-jules-credential-for-principal-test";
+  const board = {
+    portal: { budget: { daily: 10, per_agent: { codex: 10, jules: 10 },
+      track: { date: "2026-07-18", spent: 0, per_agent: {} } } },
+    tasks: [{ id: "HTTP-SELECTED", title: "Synthetic principal claim", repo: "organvm/limen",
+      target_agent: "jules", budget_cost: 1, status: "open", created: "2026-07-18",
+      source_origin: "human_prompt", horizon: "present", value_case: "Verify authenticated executor authority",
+      predicate: "npm test", receipt_target: "github:organvm/limen:pull-request:HTTP-SELECTED",
+      dispatch_log: [] }],
+  };
+  let canonical = structuredClone(board);
+  const durable = Object.create(ConductKeeperDurableObject.prototype);
+  durable.env = { LIMEN_CONDUCT_PRINCIPAL_REGISTRY: principalRegistry(
+    { principal_id: "http-codex", agent: "codex", surface: "cloud", roles: ["conductor"], bearer: codexToken },
+    { principal_id: "http-jules", agent: "jules", surface: "cloud", roles: ["conductor"], bearer: julesToken },
+  ) };
+  durable.service = new SerializedConductService(new MemoryConductStore(), {
+    clock: () => NOW,
+    projectTaskEvent(event) {
+      const projected = applyTaskPacketProjectionEvent(canonical, event);
+      canonical = projected.board;
+      return projected;
+    },
+  });
+  const request = (path, body, token) => durable.fetch(new Request(`https://limen.example${path}`, {
+    method: "POST", headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify(body),
+  }));
+  const declared = session("jules", { sessionId: "http-declared-jules", capabilities: ["task-submit"] });
+  const registration = await request("/api/conduct/sessions", declared, codexToken);
+  assert.equal(registration.status, 200);
+  const bound = await registration.json();
+  assert.equal(bound.identity.agent, "codex");
+  const intent = { kind: "task.claim", task_id: "HTTP-SELECTED", expected_status: "open",
+    patch: { status: "dispatched" }, log: { agent: "jules", status: "dispatched" } };
+  const denied = await request("/api/conduct/runs", await taskPacket({
+    workId: "http-unauthorized-jules", conductor: bound.identity, intent,
+  }), codexToken);
+  assert.equal(denied.status, 409);
+  assert.match((await denied.json()).detail, /not claim agent codex/);
+  assert.deepEqual(canonical, board);
+
+  const admitted = await request("/api/conduct/sessions",
+    session("jules", { sessionId: "http-authorized-jules", capabilities: ["task-submit"] }), julesToken);
+  const authorized = await admitted.json();
+  const claimed = await request("/api/conduct/runs", await taskPacket({
+    workId: "http-authorized-jules", conductor: authorized.identity, intent,
+  }), julesToken);
+  assert.equal(claimed.status, 200);
+  assert.equal(canonical.tasks[0].dispatch_log.at(-1).agent, "jules");
+  assert.equal(canonical.portal.budget.track.per_agent.jules, 1);
+  assert.equal(canonical.portal.budget.track.per_agent.codex || 0, 0);
+});
+
 test("executor attempts are capability-bound, durable, idempotent, and token-free", async () => {
   const codex = session("codex");
   const { service } = await serviceWith([codex], {
@@ -3103,6 +3159,26 @@ test("task claims derive canonical debit and identity while canonical transition
     },
   };
   const first = applyTaskPacketProjectionEvent(board, claim);
+  const policyBoard = structuredClone(board);
+  const policy = {
+    schema_version: "limen.provider_eligibility.v1", repository: "organvm/limen", source_revision: "a".repeat(40),
+    data_classification: "synthetic", max_retention_days: 0, tools: [], destinations: [],
+  };
+  policyBoard.tasks[0].provider_eligibility = policy;
+  const originalPolicyBoard = structuredClone(policyBoard);
+  for (const stripPolicy of [false, true]) {
+    const policyClaim = structuredClone(claim);
+    if (stripPolicy) policyClaim.intent.patch.provider_eligibility = null;
+    assert.throws(
+      () => applyTaskPacketProjectionEvent(policyBoard, policyClaim),
+      /provider_eligibility_adapter_unavailable/,
+    );
+    assert.deepEqual(policyBoard, originalPolicyBoard);
+  }
+  const policyUpdate = structuredClone(claim);
+  policyUpdate.intent.kind = "task.mutate";
+  policyUpdate.intent.patch = { title: "policy retained through unrelated update" };
+  assert.deepEqual(applyTaskPacketProjectionEvent(policyBoard, policyUpdate).task.provider_eligibility, policy);
   const duplicate = applyTaskPacketProjectionEvent(first.board, claim);
   assert.equal(first.board.portal.budget.track.spent, 2);
   assert.equal(first.board.portal.budget.track.date, "2026-07-18");
@@ -3324,7 +3400,8 @@ test("exceptional task transitions require exact structured evidence", () => {
 
   const reservation = {
     timestamp: "2026-07-18T00:00:00.000Z",
-    agent: "dispatch-async",
+    agent: "codex",
+    logical_agent: "dispatch-async",
     session_id: "keeper-reserve",
     logical_session_id: "async-reserve:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
     status: "dispatched",
@@ -3340,6 +3417,102 @@ test("exceptional task transitions require exact structured evidence", () => {
   assert.equal(
     apply(task({ status: "dispatched", dispatch_log: [reservation] }), provider).status,
     "failed_blocked",
+  );
+
+  const plan = event("dispatched", "open", {
+    lifecycle_repair: "plan-handoff-complete",
+    execution_started: true,
+    execution_contract_hash: "a".repeat(64),
+    execution_reservation_id: reservation.logical_session_id,
+  }, { target_agent: "opencode" });
+  const planBoard = {
+    portal: {
+      budget: {
+        daily: 10,
+        per_agent: { codex: 10 },
+        track: { date: "2026-07-18", spent: 1, per_agent: { codex: 1 } },
+      },
+    },
+    tasks: [task({ status: "dispatched", dispatch_log: [reservation] })],
+  };
+  const planned = applyTaskPacketProjectionEvent(planBoard, plan);
+  assert.equal(planned.task.status, "open");
+  assert.equal(planned.task.target_agent, "opencode");
+  assert.equal(planned.board.portal.budget.track.spent, 1);
+  assert.equal(planned.board.portal.budget.track.per_agent.codex, 1);
+
+  const unknown = event("dispatched", "failed", {
+    lifecycle_repair: "provider-attempt-unknown",
+    execution_started: null,
+    execution_result_kind: "failed",
+    execution_contract_hash: "a".repeat(64),
+    execution_reservation_id: reservation.logical_session_id,
+  });
+  const unknownResult = applyTaskPacketProjectionEvent(planBoard, unknown);
+  assert.equal(unknownResult.task.status, "failed");
+  assert.equal(unknownResult.task.dispatch_log.at(-1).execution_started ?? null, null);
+  assert.equal(unknownResult.board.portal.budget.track.spent, 1);
+  assert.equal(unknownResult.board.portal.budget.track.per_agent.codex, 1);
+  for (const change of [
+    { execution_started: true },
+    { execution_started: false },
+    { execution_contract_hash: "b".repeat(64) },
+    { execution_reservation_id: "wrong-reservation" },
+    { execution_result_kind: "done" },
+  ]) {
+    const forged = structuredClone(unknown);
+    Object.assign(forged.intent.log, change);
+    assert.throws(() => applyTaskPacketProjectionEvent(planBoard, forged), /cannot transition/);
+  }
+  for (const status of ["done", "failed_blocked", "open"]) {
+    const forged = structuredClone(unknown);
+    forged.intent.patch.status = status;
+    forged.intent.log.status = status;
+    forged.intent.log.execution_result_kind = status;
+    assert.throws(() => applyTaskPacketProjectionEvent(planBoard, forged), /cannot transition|lifecycle repair evidence/);
+  }
+
+  const forgedPlan = structuredClone(plan);
+  forgedPlan.event_id += ":forged";
+  forgedPlan.intent.log.execution_reservation_id = "wrong-reservation";
+  assert.throws(() => applyTaskPacketProjectionEvent(planBoard, forgedPlan), /lifecycle repair evidence/);
+  assert.equal(planBoard.portal.budget.track.spent, 1);
+  assert.equal(planBoard.portal.budget.track.per_agent.codex, 1);
+
+  const reroute = event("dispatched", "open", {
+    lifecycle_repair: "provider-reroute",
+    execution_started: true,
+    execution_contract_hash: "a".repeat(64),
+    execution_reservation_id: reservation.logical_session_id,
+  }, { target_agent: "opencode" });
+  const rerouted = applyTaskPacketProjectionEvent(planBoard, reroute);
+  assert.equal(rerouted.task.status, "open");
+  assert.equal(rerouted.board.portal.budget.track.spent, 1);
+  assert.equal(rerouted.board.portal.budget.track.per_agent.codex, 1);
+  const forgedReroute = structuredClone(reroute);
+  forgedReroute.event_id += ":forged";
+  forgedReroute.intent.log.execution_contract_hash = "b".repeat(64);
+  assert.throws(() => applyTaskPacketProjectionEvent(planBoard, forgedReroute), /lifecycle repair evidence/);
+  assert.equal(planBoard.portal.budget.track.spent, 1);
+  assert.equal(planBoard.portal.budget.track.per_agent.codex, 1);
+
+  const prelaunchSuccessor = event("dispatched", "failed", {
+    lifecycle_repair: "prelaunch-successor-hold",
+    execution_started: false,
+    execution_contract_hash: "a".repeat(64),
+    execution_reservation_id: reservation.logical_session_id,
+  }, { labels: ["workstream:successor-required"] });
+  const successor = applyTaskPacketProjectionEvent(planBoard, prelaunchSuccessor);
+  assert.equal(successor.task.status, "failed");
+  assert.deepEqual(successor.task.labels, ["workstream:successor-required"]);
+  assert.equal(successor.board.portal.budget.track.spent, 0);
+  assert.equal(successor.board.portal.budget.track.per_agent.codex, 0);
+  const forgedSuccessor = structuredClone(prelaunchSuccessor);
+  forgedSuccessor.event_id += ":forged";
+  forgedSuccessor.intent.log.execution_started = true;
+  assert.throws(
+    () => applyTaskPacketProjectionEvent(planBoard, forgedSuccessor),
+    /cannot transition/,
   );
 
   const stale = event("dispatched", "failed", {
