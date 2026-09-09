@@ -21,8 +21,11 @@ The remote execution path is `.github/workflows/ucc-cloudflare-delivery.yml`. Ac
 to its implementation automatically run a read-only account/D1 probe using Limen's existing
 `CLOUDFLARE_API_TOKEN` Actions cache, independently of 1Password availability. It reports only the
 candidate verdict and whether App-delivery credentials are configured. An exact-main manual
-`apply` run uses `scripts/gh-app-token.sh --repo organvm-iii-ergon/public-record-data-scrapper --app-only`
-to establish the destination principal before delivery. GitHub's ordinary workflow token is never
+`apply` run uses `scripts/gh-app-token.sh --repo organvm-iii-ergon/public-record-data-scrapper --app-only --require-secrets-write`
+to establish the destination principal and verify its returned Secrets-write grant before delivery.
+The assertion does not expand the App's permissions: the ordinary governor/finalizer App profile
+does not declare Secrets-write and cannot satisfy it unless a credential-delivery principal with
+that existing authorized grant is configured. GitHub's ordinary workflow token is never
 treated as cross-repository secret-write authority. Missing App configuration or failed target
 resolution leaves the destination unchanged; no new token source is inferred or minted.
 

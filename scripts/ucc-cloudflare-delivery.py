@@ -40,7 +40,7 @@ def main() -> int:
         return 1
     try:
         minted = subprocess.run(
-            ["bash", str(ROOT / "scripts/gh-app-token.sh"), "--repo", TARGET, "--app-only"],
+            ["bash", str(ROOT / "scripts/gh-app-token.sh"), "--repo", TARGET, "--app-only", "--require-secrets-write"],
             capture_output=True,
             text=True,
             timeout=60,
@@ -51,15 +51,7 @@ def main() -> int:
             return 1
         environment = {**os.environ, "GH_TOKEN": minted.stdout.strip()}
         environment.pop("GITHUB_TOKEN", None)
-        delivered = subprocess.run(
-            ["gh", "secret", "set", SECRET_NAME, "--repo", TARGET],
-            input=candidate,
-            capture_output=True,
-            text=True,
-            timeout=30,
-            env=environment,
-        )
-        if delivered.returncode != 0:
+        if not hydrate.gh_secret_set(TARGET, SECRET_NAME, candidate, env=environment):
             print("FAIL: verified UCC App principal could not write the target secret")
             return 1
     except Exception:  # noqa: BLE001 — no subprocess payload or exception may expose credentials

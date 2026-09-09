@@ -600,7 +600,7 @@ def gh_secret_present(repo: str, name: str, timeout: int = 15) -> bool | None:
     return name in names
 
 
-def gh_secret_set(repo: str, name: str, value: str, timeout: int = 30) -> bool:
+def gh_secret_set(repo: str, name: str, value: str, timeout: int = 30, env: dict | None = None) -> bool:
     """Set a GitHub Actions secret. The value is piped via STDIN (never in argv, never on screen) and
     never logged. Returns True on success, False on any failure (fail-open — logged by NAME only)."""
     if not have_gh():
@@ -612,6 +612,7 @@ def gh_secret_set(repo: str, name: str, value: str, timeout: int = 30) -> bool:
             capture_output=True,
             text=True,
             timeout=timeout,
+            env=env,
         )
     except (FileNotFoundError, subprocess.TimeoutExpired, OSError):
         return False
