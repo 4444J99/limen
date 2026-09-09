@@ -339,9 +339,17 @@ positioning-offer-contract-test
 profile-engine-test
 research-adjudication-test
 positioning-launch-prompts-test
+positioning-connector-test
 positioning-p14-control-plane-test
 check-gates
 check-note-links' institutio/governance/gates.yaml
+
+expect connector-host-change 'syntax-changed
+diff-hygiene
+direct-main-writer-contract
+positioning-connector-test
+check-params
+check-note-links' scripts/positioning-connector-driver.js
 
 # P05-W01 source changes invalidate its actual independent review evidence.
 expect report-source-change 'syntax-changed
