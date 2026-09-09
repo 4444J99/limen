@@ -559,6 +559,17 @@ gates:
     paths: ["scripts/estate-classification.py", "scripts/tests/estate-classification.test.py", "institutio/github/estate.yaml", "institutio/github/access.yaml", "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json", "scripts/gitvs.py"]
     owner: positioning-program
     note: "The W02 classifier validates its policy schema, preserves exact one-class coverage, and rejects case-insensitive private repository tokens across reviewed added content and paths without printing private identities."
+  positioning-report-reviewed-source:
+    command: "python3 -B docs/positioning/proof/test_limen_report_review.py && python3 -B docs/positioning/proof/verify_limen_report.py --check --json"
+    paths:
+      - "docs/positioning/proof/limen-*.md"
+      - "docs/positioning/proof/verify_limen_report.py"
+      - "docs/positioning/proof/test_limen_report_review.py"
+      - "docs/receipts/positioning/2026-09-09-limen-report-review-observation.json"
+      - "institutio/governance/gates.yaml"
+    owner: positioning-program
+    note: "P05-W01 owns preservation of the exact source independently reviewed in #2198: reject changed report bytes, missing dated claim rows, substituted verdicts and invalid observation chronology. This offline gate proves recorded reviewed-source preservation only; it does not replay historical runs, grant publication authority or replace canonical receipt/dependency acceptance."
+
   positioning-foundry-technical-readiness-test:
     command: "python3 -B docs/positioning/foundry/psp-c11/test_technical_readiness.py && python3 -B scripts/tests/test_positioning_foundry_handoff.py && python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --json"
     paths:
