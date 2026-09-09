@@ -85,6 +85,20 @@ if [ "$canonical_repo" = "4444j99/organvm-ci-relay" ] || [ "$requested_repo" = "
   exit 2
 fi
 
+# Pilot dependency updates use the evidence/review lane. A standalone helper
+# cannot upgrade an Actions rollup into automatic dependency acceptance.
+for dependency_repo in "$canonical_repo" "$requested_repo"; do
+  case "$dependency_repo" in
+    organvm-vii-kerygma/portfolio|organvm-iii-ergon/public-record-data-scrapper|4444j99/portfolio)
+      if ! python3 "$_root/scripts/_dependency_upkeep.py" --repo "$dependency_repo" --pr "$PR" --expected-head "$head"; then
+        echo "VERDICT: HOLD — dependency evidence/review route requires trusted upkeep; automatic acceptance is inactive."
+        exit 2
+      fi
+      break
+      ;;
+  esac
+done
+
 # Merge-queue capability is live, branch-specific repository state. Only a positive GraphQL
 # Repository.mergeQueue object is authoritative enough to route through the queue. An unavailable
 # API/schema/permission or malformed response is "unknown" and preserves the direct-merge

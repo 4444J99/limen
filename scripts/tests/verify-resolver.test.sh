@@ -211,6 +211,7 @@ ruff-format' mcp/src/limen_mcp/server.py
 expect merge-policy-change 'syntax-changed
 diff-hygiene
 merge-policy-test
+dependency-acceptance-test
 merge-queue-contract-test
 direct-main-writer-contract
 check-params
