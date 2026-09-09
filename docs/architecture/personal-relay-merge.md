@@ -152,3 +152,35 @@ are corrected in this draft. Existing historical-object/public-live predicates
 and the snapshot's tracked-root census prevented a complete local verdict; no
 full-tree acceptance is claimed. The normal remote gates must assess this exact
 published tree before promotion.
+
+## September 9 verification continuation
+
+Owner: Limen PR #2574, current direct-session control-gates repair. Source inspected
+at `9abf12ae791f521562365c9315fcd4e8acf4fcfc` (tree
+`95412439c352a9c94d41e6add984ad6d9edc130f`). A fresh complete remote clone and
+linked worktree restored the historical Git objects and tracked-root census;
+real process-bound writer admission succeeded without an override.
+
+The declared scoped batch selected 33 cheap gates and the CLI heavy tail. Its
+first cheap wave exposed missing test dependencies. After installing the owning
+`cli[test]` package in an isolated environment, only those 16 failed cheap shards
+were replayed: 15 passed, while the 17 unchanged passing shards were retained.
+The resulting evidence is **32 of 33 cheap gates passed**, including all 14 relay
+transaction cases, 43 merge-policy cases, 108 merge-queue contract cases, and
+the direct-main-writer, root, parameter, lifecycle and registry checks.
+
+The remaining `positioning-foundry-technical-readiness-public-live` gate failed
+closed at live GitHub observation. This execution surface has no authenticated
+`gh` executable; the predicate requires its bounded REST and GraphQL reads.
+No cached response or synthetic observation was substituted. The failed cheap
+wave did not admit the heavy tail, so full CLI verification remains unexecuted.
+Continue that exact public-live predicate on the existing authenticated rail,
+then the declared heavy tail under genuine host admission. Do not repeat the
+32 unchanged green shards or interpret this preparation as merge acceptance.
+
+Relay PR #30 now contains the independently reviewed document-root parser repair
+at `c1a2162f28bf0472b960b63c4133c99523f865e4`; both changed source/test blobs were
+read back exactly. Its 212 policy regressions, four dynamic policy acceptance
+cases and 25 receipt-runtime cases passed. It retains the separate frozen-root
+promotion and governor-activation gates. No App installation, protection change,
+trusted deployment or protected canary was performed by this continuation.
