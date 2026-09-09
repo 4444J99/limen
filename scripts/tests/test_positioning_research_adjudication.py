@@ -208,6 +208,15 @@ def _live_profile_fixture():
         f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/{latest_trigger}...{current_head}"
     )
     public_payloads = {
+        MODULE.PROFILE_REPOSITORY_API_URL: {
+            "id": MODULE.PROFILE_REPOSITORY_ID,
+            "full_name": MODULE.PROFILE_REPOSITORY,
+            "private": False,
+            "visibility": "public",
+            "default_branch": "main",
+            "url": MODULE.PROFILE_REPOSITORY_API_URL,
+            "html_url": f"https://github.com/{MODULE.PROFILE_REPOSITORY}",
+        },
         MODULE.PROFILE_USER_API_URL: {
             **MODULE.EXPECTED_PROFILE_METADATA_RESULT,
             "public_repos": 9,
@@ -1145,11 +1154,16 @@ def test_http_receipts_bind_url_time_status_and_reproduction() -> None:
 def test_live_profile_observations_reproduce_all_moving_public_claim_inputs() -> None:
     now, public_payloads, contribution_payload = _live_profile_fixture()
     public_calls = []
+    api_calls = []
     graphql_calls = []
     http_calls = []
 
     def public_fetch(url):
         public_calls.append(url)
+        return copy.deepcopy(public_payloads[url])
+
+    def api_fetch(url):
+        api_calls.append(url)
         return copy.deepcopy(public_payloads[url])
 
     def gh_fetch(args):
@@ -1171,14 +1185,177 @@ def test_live_profile_observations_reproduce_all_moving_public_claim_inputs() ->
         _bundle()["receipt"],
         gh_fetch=gh_fetch,
         public_fetch=public_fetch,
+        api_fetch=api_fetch,
         http_fetch=http_fetch,
         now=now,
     )
 
     assert errors == []
-    assert set(public_calls) == set(public_payloads)
+    assert public_calls == [MODULE.PROFILE_MANIFEST_RAW_URL]
+    assert set(api_calls) == set(public_payloads) - {MODULE.PROFILE_MANIFEST_RAW_URL}
     assert graphql_calls == [["api", "graphql", "-f", f"query={MODULE.PROFILE_LIVE_OBSERVATION_QUERY}"]]
     assert set(http_calls) == {url for url, _status in MODULE.EXPECTED_HTTP_RECEIPTS.values()}
+
+
+def test_profile_api_transport_uses_only_declared_github_get_endpoints() -> None:
+    _now, payloads, _graphql = _live_profile_fixture()
+    calls = []
+
+    def fetch(args):
+        calls.append(args)
+        return {"response": "preserved"}
+
+    for url in payloads:
+        if url == MODULE.PROFILE_MANIFEST_RAW_URL:
+            continue
+        assert MODULE._profile_api_json(url, fetch) == {"response": "preserved"}
+        assert calls[-1] == [
+            "api",
+            "--hostname",
+            "github.com",
+            "--method",
+            "GET",
+            url.removeprefix("https://api.github.com/"),
+        ]
+
+
+@pytest.mark.parametrize(
+    "url",
+    (
+        "https://api.github.com.evil.invalid/users/4444J99",
+        "https://evil.invalid/users/4444J99",
+        "http://api.github.com/users/4444J99",
+        "https://api.github.com:443/users/4444J99",
+        "https://token@api.github.com/users/4444J99",
+        "https://api.github.com/users/4444J99?access_token=example",
+        "https://api.github.com/users/4444J99#fragment",
+        "https://api.github.com/user",
+        "https://api.github.com/repos/4444J99/private-example/commits/main",
+        "https://api.github.com/repos/4444J99/4444J99/compare/main...other",
+        "https://api.github.com/repos/4444J99/4444J99/compare/" + "a" * 40 + "..." + "b" * 40 + "/extra",
+        MODULE.PROFILE_RUNS_API_URL + "&per_page=100",
+        MODULE.PROFILE_MANIFEST_RAW_URL,
+    ),
+)
+def test_profile_api_transport_rejects_auth_spill_and_unbound_paths(url) -> None:
+    calls = []
+    with pytest.raises(MODULE.AdjudicationError, match="exact permitted GitHub endpoint"):
+        MODULE._profile_api_json(url, lambda args: calls.append(args))
+    assert calls == []
+
+
+@pytest.mark.parametrize(
+    "change",
+    (
+        None,
+        {"id": True},
+        {"id": 1},
+        {"full_name": "4444J99/substitute"},
+        {"private": True},
+        {"private": 0},
+        {"visibility": "private"},
+        {"default_branch": "replacement"},
+        {"url": "https://api.github.com/repos/4444J99/substitute"},
+        {"html_url": "https://github.com/4444J99/substitute"},
+    ),
+)
+def test_profile_api_provenance_failure_prevents_repository_content_reads(change) -> None:
+    now, payloads, _graphql = _live_profile_fixture()
+    repository = copy.deepcopy(payloads[MODULE.PROFILE_REPOSITORY_API_URL])
+    repository = None if change is None else {**repository, **change}
+    calls = []
+
+    def api_fetch(url):
+        calls.append(url)
+        assert url == MODULE.PROFILE_REPOSITORY_API_URL
+        return repository
+
+    def unexpected_transport(_arg):
+        pytest.fail("unverified repository must not authorize dependent observations")
+
+    errors = MODULE.validate_live_profile_observations(
+        _bundle()["receipt"],
+        api_fetch=api_fetch,
+        gh_fetch=unexpected_transport,
+        public_fetch=unexpected_transport,
+        http_fetch=unexpected_transport,
+        now=now,
+    )
+    assert errors == ["live profile API repository must retain its exact public identity and default branch"]
+    assert calls == [MODULE.PROFILE_REPOSITORY_API_URL]
+
+
+def test_profile_api_error_stays_closed_without_anonymous_retry() -> None:
+    now, payloads, graphql = _live_profile_fixture()
+    api_calls = []
+    public_calls = []
+
+    def api_fetch(url):
+        api_calls.append(url)
+        if url == MODULE.PROFILE_USER_API_URL:
+            raise MODULE.AdjudicationError("GitHub query returned HTTP 403")
+        return copy.deepcopy(payloads[url])
+
+    def public_fetch(url):
+        public_calls.append(url)
+        assert url == MODULE.PROFILE_MANIFEST_RAW_URL
+        return copy.deepcopy(payloads[url])
+
+    errors = MODULE.validate_live_profile_observations(
+        _bundle()["receipt"],
+        api_fetch=api_fetch,
+        gh_fetch=lambda _args: copy.deepcopy(graphql),
+        public_fetch=public_fetch,
+        http_fetch=lambda url: {
+            "status": next(status for endpoint, status in MODULE.EXPECTED_HTTP_RECEIPTS.values() if endpoint == url),
+            "url": url,
+        },
+        now=now,
+    )
+    assert "cannot reproduce live profile metadata: GitHub query returned HTTP 403" in errors
+    assert api_calls.count(MODULE.PROFILE_USER_API_URL) == 1
+    assert public_calls == [MODULE.PROFILE_MANIFEST_RAW_URL]
+
+
+def test_public_manifest_and_pages_probes_never_inherit_github_auth(monkeypatch) -> None:
+    monkeypatch.setenv("GH_TOKEN", "test-only-token")
+    monkeypatch.setenv("GITHUB_TOKEN", "test-only-token")
+    requests = []
+
+    class Response:
+        status = 200
+
+        def __init__(self, request):
+            self.request = request
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return b'{"login": "4444J99"}'
+
+        def geturl(self):
+            return self.request.full_url
+
+    def urlopen(request, timeout):
+        assert timeout == 20
+        requests.append(request)
+        return Response(request)
+
+    monkeypatch.setattr(MODULE, "urlopen", urlopen)
+    assert MODULE._public_json(MODULE.PROFILE_MANIFEST_RAW_URL) == {"login": "4444J99"}
+    for url, _status in MODULE.EXPECTED_HTTP_RECEIPTS.values():
+        assert MODULE._http_observation(url) == {"status": 200, "url": url}
+    for request in requests:
+        assert not {"authorization", "proxy-authorization", "cookie"} & {
+            key.lower() for key, _value in request.header_items()
+        }
+    with pytest.raises(MODULE.AdjudicationError, match="exact anonymous profile manifest endpoint"):
+        MODULE._public_json(MODULE.PROFILE_USER_API_URL)
+    assert len(requests) == 1 + len(MODULE.EXPECTED_HTTP_RECEIPTS)
 
 
 def test_live_profile_window_ignores_older_failures_and_truncated_compare_commits() -> None:
@@ -1208,6 +1385,7 @@ def test_live_profile_window_ignores_older_failures_and_truncated_compare_commit
         _bundle()["receipt"],
         gh_fetch=lambda _args: copy.deepcopy(contribution_payload),
         public_fetch=lambda url: copy.deepcopy(public_payloads[url]),
+        api_fetch=lambda url: copy.deepcopy(public_payloads[url]),
         http_fetch=lambda url: {
             "status": next(
                 status for expected_url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values() if expected_url == url
@@ -1235,6 +1413,7 @@ def test_live_profile_accepts_transitive_scheduled_trigger_ancestry() -> None:
         _bundle()["receipt"],
         gh_fetch=lambda _args: copy.deepcopy(contribution_payload),
         public_fetch=lambda url: copy.deepcopy(public_payloads[url]),
+        api_fetch=lambda url: copy.deepcopy(public_payloads[url]),
         http_fetch=lambda url: {
             "status": next(
                 status for expected_url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values() if expected_url == url
@@ -1256,6 +1435,7 @@ def test_live_profile_observations_fail_neutrally_on_drift_and_malformed_payload
             _bundle()["receipt"],
             gh_fetch=lambda _args: copy.deepcopy(contribution),
             public_fetch=lambda url: copy.deepcopy(payloads[url]),
+            api_fetch=lambda url: copy.deepcopy(payloads[url]),
             http_fetch=lambda url: {"status": statuses[url], "url": url},
             now=now,
         )
@@ -1309,6 +1489,7 @@ def _validate_current_profile(payloads, graphql_payload, now):
         _bundle()["receipt"],
         gh_fetch=lambda _args: copy.deepcopy(graphql_payload),
         public_fetch=lambda url: copy.deepcopy(payloads[url]),
+        api_fetch=lambda url: copy.deepcopy(payloads[url]),
         http_fetch=lambda url: {
             "status": next(
                 status for expected_url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values() if expected_url == url
