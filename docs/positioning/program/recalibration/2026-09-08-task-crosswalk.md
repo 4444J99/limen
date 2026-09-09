@@ -118,5 +118,5 @@ All assignments use live provider discovery (or provider Auto) and the specified
 | PSP-P14-W08 | [#2282](https://github.com/4444J99/limen/issues/2282) | R10 | not verified open | synthesis / high | Inspect existing artifacts before implementing the acceptance gap; one bounded lane. |
 | PSP-P14-W09 | [#2283](https://github.com/4444J99/limen/issues/2283) | R11 | not verified open | review / high | Inspect existing artifacts before implementing the acceptance gap; one bounded lane. |
 
-The adjacent snapshot contains each leaf's exact dependencies, external-decision gates, source-owned scope, deliverables, predicate, artifact-presence observation and source links. It is the machine-readable crosswalk; the canonical manifest remains authoritative for formal acceptance.
+The adjacent [snapshot](2026-09-08-snapshot.json) contains each leaf's exact dependencies, external-decision gates, source-owned scope, deliverables, predicate, artifact-presence observation and source links. It is the machine-readable crosswalk; the canonical manifest remains authoritative for formal acceptance.
 
