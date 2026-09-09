@@ -127,6 +127,7 @@ PROFILE_FRESH_CONTRIBUTIONS = 33168
 PROFILE_CONTRIBUTION_WORDING = "33,130 contributions in the last year"
 PROFILE_REPOSITORY = "4444J99/4444J99"
 PROFILE_REPOSITORY_ID = 1292733696
+PROFILE_REPOSITORY_API_URL = f"https://api.github.com/repos/{PROFILE_REPOSITORY}"
 PROFILE_USER_API_URL = "https://api.github.com/users/4444J99"
 PROFILE_RUNS_API_URL = (
     "https://api.github.com/repos/4444J99/4444J99/actions/workflows/"
@@ -1628,11 +1629,32 @@ def _gh_json(args: list[str]) -> Any:
         raise AdjudicationError("GitHub query returned invalid JSON") from exc
 
 
-def _public_json(url: str) -> Any:
-    """Fetch one credential-free public JSON endpoint with a finite deadline."""
+def _profile_api_json(url: str, fetch: Callable[[list[str]], Any] = _gh_json) -> Any:
+    """Read only declared GitHub profile API facts with the existing GitHub identity.
 
-    if url != PROFILE_RUNS_API_URL and not _credential_free_https_url(url):
-        raise AdjudicationError("public JSON query needs a credential-free HTTPS URL")
+    API measurements already use authenticated gh in the accepted W08 receipt.
+    Anonymous raw-manifest and Pages probes separately prove public availability.
+    Never pass arbitrary URLs, query fields, or ambient alternate hosts to gh.
+    """
+
+    fixed_endpoints = {
+        PROFILE_REPOSITORY_API_URL,
+        PROFILE_USER_API_URL,
+        PROFILE_RUNS_API_URL,
+        PROFILE_MAIN_COMMIT_API_URL,
+    }
+    compare_pattern = re.escape(f"{PROFILE_REPOSITORY_API_URL}/compare/") + r"[0-9a-f]{40}\.\.\.[0-9a-f]{40}"
+    if url not in fixed_endpoints and re.fullmatch(compare_pattern, url) is None:
+        raise AdjudicationError("profile API query needs an exact permitted GitHub endpoint")
+    endpoint = url.removeprefix("https://api.github.com/")
+    return fetch(["api", "--hostname", "github.com", "--method", "GET", endpoint])
+
+
+def _public_json(url: str) -> Any:
+    """Fetch the declared raw manifest anonymously with a finite deadline."""
+
+    if url != PROFILE_MANIFEST_RAW_URL:
+        raise AdjudicationError("public JSON query needs the exact anonymous profile manifest endpoint")
     request = Request(
         url,
         headers={
@@ -1900,20 +1922,42 @@ def validate_live_profile_observations(
     public_fetch: Callable[[str], Any] = _public_json,
     http_fetch: Callable[[str], Any] = _http_observation,
     now: datetime | None = None,
+    api_fetch: Callable[[str], Any] = _profile_api_json,
 ) -> list[str]:
     """Reproduce every moving public observation that supports current profile claims."""
 
     errors: list[str] = []
     observed_now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
 
-    def fetch_public(label: str, url: str) -> Any:
+    def fetch_observation(label: str, url: str) -> Any:
         try:
-            return public_fetch(url)
+            if url == PROFILE_MANIFEST_RAW_URL:
+                return public_fetch(url)
+            return api_fetch(url)
         except AdjudicationError as exc:
             errors.append(f"cannot reproduce live {label}: {exc}")
             return None
 
-    profile = fetch_public("profile metadata", PROFILE_USER_API_URL)
+    # Bind public provenance before using an authenticated response for any
+    # repository-scoped fact; auth must never admit private or moved evidence.
+    repository = fetch_observation("profile API repository identity", PROFILE_REPOSITORY_API_URL)
+    expected_repository = {
+        "id": PROFILE_REPOSITORY_ID,
+        "full_name": PROFILE_REPOSITORY,
+        "private": False,
+        "visibility": "public",
+        "default_branch": "main",
+        "url": PROFILE_REPOSITORY_API_URL,
+        "html_url": f"https://github.com/{PROFILE_REPOSITORY}",
+    }
+    if not isinstance(repository, dict) or any(
+        type(repository.get(key)) is not type(expected) or repository.get(key) != expected
+        for key, expected in expected_repository.items()
+    ):
+        errors.append("live profile API repository must retain its exact public identity and default branch")
+        return errors
+
+    profile = fetch_observation("profile metadata", PROFILE_USER_API_URL)
     if not isinstance(profile, dict):
         errors.append("live profile metadata response must be a mapping")
         profile = {}
@@ -1934,7 +1978,7 @@ def validate_live_profile_observations(
     elif accepted_updated_at is not None and profile_updated_at < accepted_updated_at:
         errors.append("live profile metadata updated_at predates the accepted observation")
 
-    manifest = fetch_public("profile stats manifest", PROFILE_MANIFEST_RAW_URL)
+    manifest = fetch_observation("profile stats manifest", PROFILE_MANIFEST_RAW_URL)
     if not isinstance(manifest, dict):
         errors.append("live profile stats manifest response must be a mapping")
         manifest = {}
@@ -1986,7 +2030,7 @@ def validate_live_profile_observations(
             f"live profile manifest contributions must still support the published {PROFILE_RENDERED_CONTRIBUTIONS:,} count"
         )
 
-    runs_payload = fetch_public("scheduled profile workflow history", PROFILE_RUNS_API_URL)
+    runs_payload = fetch_observation("scheduled profile workflow history", PROFILE_RUNS_API_URL)
     if not isinstance(runs_payload, dict):
         errors.append("live scheduled workflow response must be a mapping")
         runs_payload = {}
@@ -2039,7 +2083,7 @@ def validate_live_profile_observations(
     ):
         errors.append("latest successful scheduled profile run must be within 48 hours")
 
-    current_commit = fetch_public("profile main head", PROFILE_MAIN_COMMIT_API_URL)
+    current_commit = fetch_observation("profile main head", PROFILE_MAIN_COMMIT_API_URL)
     if not isinstance(current_commit, dict):
         errors.append("live profile main-head response must be a mapping")
         current_commit = {}
@@ -2061,7 +2105,7 @@ def validate_live_profile_observations(
         trigger_compare_url = (
             f"https://api.github.com/repos/{PROFILE_REPOSITORY}/compare/{trigger_head}...{current_head}"
         )
-        trigger_comparison = fetch_public(
+        trigger_comparison = fetch_observation(
             "profile scheduled-run trigger continuity",
             trigger_compare_url,
         )
@@ -2091,7 +2135,7 @@ def validate_live_profile_observations(
     accepted_head = accepted_profile.get("head") if isinstance(accepted_profile, dict) else None
     if isinstance(accepted_head, str) and HEAD_RE.fullmatch(accepted_head) and current_head:
         compare_url = f"https://api.github.com/repos/{PROFILE_REPOSITORY}/compare/{accepted_head}...{current_head}"
-        comparison = fetch_public("profile main-line continuity", compare_url)
+        comparison = fetch_observation("profile main-line continuity", compare_url)
         if not isinstance(comparison, dict):
             errors.append("live profile comparison response must be a mapping")
         else:
