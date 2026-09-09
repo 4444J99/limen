@@ -439,7 +439,9 @@ def merge(repo, num, expected_head, mode_hint):
             result = subprocess.run(
                 [sys.executable, str(ROOT / "scripts/_relay_merge.py"),
                  "--pr", str(num), "--expected-head", expected_head],
-                capture_output=True, text=True, timeout=2700, check=False,
+                # Controller worst case: setup/fetch/tree checks plus four 600s
+                # trusted bodies and API cleanup. Keep the wrapper outside that budget.
+                capture_output=True, text=True, timeout=5400, check=False,
             )
             receipt = json.loads(result.stdout) if result.returncode == 0 else {}
             return "MERGED" if (receipt.get("repository") == "4444J99/organvm-ci-relay"
@@ -514,6 +516,9 @@ def submit_one(repo: str, num: int, expected_head: str) -> int:
         print(f"MERGE-SUBMISSION {identity}: FAILED — PR state is {current['state'] or 'unknown'}")
         return 1
     if current["queued"]:
+        if repo.lower() == "4444j99/organvm-ci-relay":
+            print(f"MERGE-SUBMISSION {identity}: REFUSED — relay requires direct governor custody")
+            return 1
         print(f"MERGE-SUBMISSION {identity}: QUEUED — already owned by GitHub")
         return 0
 
