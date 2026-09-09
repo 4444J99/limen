@@ -34,7 +34,6 @@ jobs:
     timeout-minutes: 5
     env:
       EXPECTED_SHA: ${{ inputs.expected_sha || github.sha }}
-      DELIVERY_MODE: ${{ inputs.mode || 'preflight' }}
     steps:
       - name: Require the accepted main revision
         shell: bash
@@ -60,7 +59,7 @@ jobs:
         run: |
           printf 'UCC App delivery credentials configured: %s\n' "$APP_CONFIGURED"
       - name: Deliver through verified UCC App principal
-        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'apply'
+        if: github.event_name == 'push' || inputs.mode == 'apply'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           GITHUB_APP_ID: ${{ secrets.GITHUB_APP_ID }}
