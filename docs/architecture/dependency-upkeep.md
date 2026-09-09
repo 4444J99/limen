@@ -3,7 +3,10 @@
 Owner: dependency acceptance pilot for `organvm-vii-kerygma/portfolio` and
 `organvm-iii-ergon/public-record-data-scrapper`. Source routing is implemented;
 trusted installation, live review dispatch and automatic acceptance are not
-established. The tracked `institutio/github/dependency-trust.json` deliberately
+established. Automatic acceptance still requires source implementation as well
+as provisioning: there is no pilot dependency merge transaction or transition
+from an approved review to that transaction. The tracked
+`institutio/github/dependency-trust.json` deliberately
 has `installed: false` until the evidence producers have landed and their exact
 trusted source and reviewer identities have been audited.
 
@@ -56,6 +59,12 @@ comment cannot erase it. Transport ambiguity produces an unconfirmed exception
 and the next bounded beat reads live custody before another request. A review
 request or comment is never an approval, merge receipt or completed acceptance.
 
+The current completed-review state is a routing result, not a completed
+maintenance result. `request_review()` returns `reviewed` for a completed
+exact-head comment or approval; the drain does not merge either result. Even a
+valid exact-head `APPROVED` review currently stops here. Installing reviewer
+identities, credentials or repository settings cannot supply the missing code.
+
 The drain's `DEPS-REVIEW` and `DEPS-PENDING` rows remain quiet. Known trusted
 workflows still running wait for a later beat without review or merge effects.
 Completed compatibility failures become exceptions. `DEPS-EXCEPTION` rows and review
@@ -101,12 +110,51 @@ controls and requires actual `gate` and `validate-dependencies` jobs. Its Action
 publisher binding is ordinary gate hardening, not proof of workflow identity.
 
 After producer source acceptance, the owning administration channel applies the
-reviewed settings and verifies complete readback and failing-check canaries.
-Automatic acceptance additionally needs the existing dedicated governor's
-isolated credential custody, trusted deployment and protected freshness canaries
-described in [personal-relay-merge.md](personal-relay-merge.md). Relay issue #3
-and relay PR #30 remain the trust-root/deployment owners. This pilot does not
-replace their synchronous one-shot transaction or enable automatic merging.
+reviewed compatibility settings and verifies complete readback and failing-check
+canaries. This improves the gates; it does not activate dependency acceptance.
+
+### Remaining implementation owner and boundary
+
+The dependency-upkeep workstream in Limen, introduced by PR #2585, owns the
+missing pilot acceptance code. Its existing extension points are
+`_dependency_upkeep.request_review()`, the `DEPS-REVIEW` branch in
+`merge-drain.main()`, and the dependency holds in `merge-drain.merge()` and
+`submit_one()`. The standalone `merge-policy.sh` dependency hold must continue
+to prevent a generic fallback until an accepted transaction owns the effect.
+
+The accepted relay transaction in `_relay_merge.py` is a reference for that
+implementation, not an installed pilot adapter. Its repository identity, API
+scope, protection readback and trusted evaluator are hard-bound to
+`4444J99/organvm-ci-relay` (ID `1350979676`). Relay issue #3 and relay PR #30 own
+that separate trust root and deployment. Supplying their credentials or passing
+their canaries cannot enable merging in portfolio or UCC.
+
+The remaining pilot implementation must connect a fresh, independent exact-head
+`APPROVED` review to a synchronous transaction over the current B/H/M tuple and
+reviewed producer evidence. Comments, pending/dismissed reviews, or outstanding
+changes-requested decisions cannot authorize it. The transaction must verify
+the target repository and dedicated App identity, read back strict independently
+enforced controls, publish its one-shot authorization only on M, recheck the
+tuple and review before the exact-head merge, and retain positive landing and
+cleanup/reconciliation receipts. Governor write credentials remain isolated
+from candidate execution and from the read-only evidence consumer.
+
+The protection contract must also account for ordinary project changes before
+installation. A required governor check and exclusive App update rule on `main`
+apply to **all** pull requests targeting that branch. Copying the relay rules
+into a pilot while implementing only dependency acceptance would strand
+ordinary PRs: their current generic route neither produces that required check
+nor supplies the isolated App transaction. A reviewed, independently tested
+route for those ordinary PRs, or an equally enforceable alternative, is therefore
+an implementation prerequisite to any exclusive App control on the pilots.
+
+Until these code and enforcement contracts are accepted, keep pilot automatic
+acceptance disabled and preserve the existing review-only/no-fallback behavior.
+The subsequent activation boundary is actual private credential delivery,
+trusted deployment, complete settings readback, and protected positive/negative
+GitHub canaries for each pilot. Source tests and an `installed` flag cannot
+replace those live receipts. Missing implementation and missing provisioning
+remain distinct; neither is a request to repeat standing user authorization.
 
 ## Verification
 
