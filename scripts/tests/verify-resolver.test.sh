@@ -264,7 +264,8 @@ research-adjudication-test
 workflow-yaml
 check-gates
 check-runner-coverage
-check-note-links' .github/workflows/ci.yml
+check-note-links
+npm-audit-contract' .github/workflows/ci.yml
 
 expect foundry-pr-gate-permission-change 'syntax-changed
 diff-hygiene

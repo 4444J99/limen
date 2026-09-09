@@ -1135,6 +1135,11 @@ gates:
     ci_job: "ci.yml:web"
     owner: surfaces
     note: "Standalone schema validation in the whole matrix; scoped runs cover it inside web-build."
+  npm-audit-contract:
+    command: "python3 scripts/tests/npm-audit-gate.test.py"
+    paths: ["scripts/npm-audit-gate.py", "scripts/tests/npm-audit-gate.test.py", ".github/workflows/ci.yml"]
+    owner: dependencies
+    note: "Reject incomplete audit responses and retain independent compatibility evidence when advisories fail."
   worker-check:
     command: "bash -c 'cd web/worker && npm run check'"
     paths: ["web/worker/**"]
