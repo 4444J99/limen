@@ -1,0 +1,191 @@
+{
+  "cursors": [
+    {
+      "complete": true,
+      "error": null,
+      "exhaustive": true,
+      "expected_total": 2,
+      "kind": "pull_requests",
+      "known_count": 2,
+      "observed_total": 2,
+      "page_count": 1,
+      "page_cursor": null,
+      "private": false,
+      "repository": "example/project",
+      "retry_failures": [],
+      "reused": false,
+      "source_generation": "9536483ead55993ee5150bf27faaab54405e4ef63d37f518f9ffe12657a0cb2d"
+    },
+    {
+      "complete": true,
+      "error": null,
+      "exhaustive": true,
+      "expected_total": 0,
+      "kind": "issues",
+      "known_count": 0,
+      "observed_total": 0,
+      "page_count": 0,
+      "page_cursor": null,
+      "private": false,
+      "repository": "example/project",
+      "retry_failures": [],
+      "reused": false,
+      "source_generation": "9536483ead55993ee5150bf27faaab54405e4ef63d37f518f9ffe12657a0cb2d"
+    },
+    {
+      "complete": true,
+      "error": null,
+      "exhaustive": true,
+      "expected_total": 1,
+      "kind": "branches",
+      "known_count": 1,
+      "observed_total": 1,
+      "page_count": 1,
+      "page_cursor": null,
+      "private": false,
+      "repository": "example/project",
+      "retry_failures": [],
+      "reused": false,
+      "source_generation": "9536483ead55993ee5150bf27faaab54405e4ef63d37f518f9ffe12657a0cb2d"
+    },
+    {
+      "complete": true,
+      "error": null,
+      "exhaustive": true,
+      "expected_total": 0,
+      "kind": "checks",
+      "known_count": 0,
+      "observed_total": 0,
+      "page_count": 0,
+      "page_cursor": null,
+      "private": false,
+      "repository": "example/project",
+      "retry_failures": [],
+      "reused": false,
+      "source_generation": "9536483ead55993ee5150bf27faaab54405e4ef63d37f518f9ffe12657a0cb2d"
+    }
+  ],
+  "failures": [],
+  "inventory_collection": {
+    "started_at": "2026-09-09T12:55:14.338950Z"
+  },
+  "leaves": [
+    {
+      "author_login": "4444J99",
+      "custody_classification": "active_custody",
+      "custody_debt": false,
+      "kind": "pull_request",
+      "leaf_id": "example/project:pull-request:1",
+      "merge_condition": "github:merge-queue:example/project#1:ready-and-required-checks-green",
+      "number": 1,
+      "owner": "4444J99",
+      "predicate": "github:required-checks:example/project@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "private": false,
+      "repository": "example/project",
+      "status": "owned",
+      "url": "https://example.invalid/project/pull/1"
+    },
+    {
+      "author_login": "dependabot[bot]",
+      "custody_classification": "active_custody",
+      "custody_debt": false,
+      "kind": "pull_request",
+      "leaf_id": "example/project:pull-request:2",
+      "merge_condition": "github:merge-queue:example/project#2:ready-and-required-checks-green",
+      "number": 2,
+      "owner": "dependabot[bot]",
+      "predicate": "github:required-checks:example/project@bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "private": false,
+      "repository": "example/project",
+      "status": "owned",
+      "url": "https://example.invalid/project/pull/2"
+    },
+    {
+      "custody_debt": false,
+      "head_oid": null,
+      "is_default": true,
+      "kind": "branch",
+      "leaf_id": "example/project:branch:main",
+      "name": "main",
+      "private": false,
+      "repository": "example/project",
+      "status": "owned"
+    }
+  ],
+  "repositories": [
+    {
+      "archived": false,
+      "connection_generation": null,
+      "connection_generation_inputs": null,
+      "connection_totals": {
+        "branches": 1,
+        "checks": 0,
+        "issues": 0,
+        "pull_requests": 2
+      },
+      "default_check_policy": "no_required_checks",
+      "default_check_status": "no_required_checks",
+      "default_generation": "5e5f62071131162ed49d6e3aa74eaeb6281ea2dab8ab65bdd9be1efec9b95aec",
+      "default_ref": "refs/heads/main",
+      "default_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "name_with_owner": "example/project",
+      "private": false,
+      "repository_id": "42",
+      "required_check_count": 0
+    }
+  ],
+  "repository_receipts": [
+    {
+      "archived": false,
+      "complete": true,
+      "connection_receipt_digest": "55a509f04cea987b0a13f5820b70ec4d90e82b2dad22b572c323e39edff33e6f",
+      "default_check_policy": "no_required_checks",
+      "default_check_status": "no_required_checks",
+      "default_generation": "5e5f62071131162ed49d6e3aa74eaeb6281ea2dab8ab65bdd9be1efec9b95aec",
+      "default_ref": "refs/heads/main",
+      "default_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "private": false,
+      "repository": "example/project",
+      "repository_id": "42",
+      "required_check_count": 0,
+      "source_generation": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    }
+  ],
+  "schema": "limen.github-estate-census.v1",
+  "source_report": {
+    "content_sha256": "a7b6a515a99db7f296200143dd3ae7199303e953e822b658d70689f05c7bb814",
+    "cursor": {
+      "connection_count": 4,
+      "failed_connection_count": 0,
+      "known_leaf_count": 3,
+      "leaf_count_complete": true,
+      "repository": {
+        "exhaustive": true,
+        "expected_total": 1,
+        "known_count": 1,
+        "page_count": 1
+      }
+    },
+    "exhaustive": true,
+    "generated_at": "2026-09-09T12:55:14.338950Z",
+    "normalized_leaf_count": 3,
+    "schema": "limen.progress-source-report.v1",
+    "semantic_status": "ready",
+    "source_generation": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "source_id": "github-estate",
+    "unaccounted": 0
+  },
+  "summary": {
+    "debt_counts": {},
+    "failure_count": 0,
+    "kind_counts": {
+      "branch": 1,
+      "pull_request": 2
+    },
+    "known_leaf_count": 3,
+    "leaf_count_complete": true,
+    "private_repository_count": 0,
+    "repository_count": 1,
+    "unaccounted": 0
+  }
+}

@@ -1,6 +1,6 @@
 const encoder = new TextEncoder();
 const IDENTIFIER_RE = /^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$/;
-const ROLES = new Set(["observer", "conductor", "executor", "compatibility"]);
+const ROLES = new Set(["observer", "conductor", "executor", "compatibility", "inventory_collector"]);
 
 function invalidRegistry(detail = "conduct principal registry is invalid") {
   return { ok: false, status: 503, detail };
@@ -42,6 +42,7 @@ export function configuredConductPrincipals(env) {
       || !Array.isArray(roles)
       || !roles.length
       || roles.some((role) => !ROLES.has(role))
+      || (roles.includes("inventory_collector") && roles.length !== 1)
       || typeof bearer !== "string"
       || bearer.length < 24
       || bearer.length > 4096
