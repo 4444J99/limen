@@ -777,10 +777,13 @@ def test_hosted_delivery_uses_exact_app_principal_and_never_exposes_tokens(monke
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     source_token, app_token = "synthetic-source-private", "synthetic-app-private"
+    sink_transport = _hydrate_module("clavis_existing_sink")
+    monkeypatch.setattr(sink_transport, "have_gh", lambda: True)
     entry = {"gh_secret": {"repo": module.TARGET, "name": module.SECRET_NAME}}
     fake_hydrate = SimpleNamespace(
         DEFAULT_MAP=[entry],
         verify_cloudflare_delivery=lambda entry, value: (failure != "candidate", "bounded result"),
+        gh_secret_set=sink_transport.gh_secret_set,
     )
     monkeypatch.setattr(
         module.importlib.util,
@@ -800,10 +803,10 @@ def test_hosted_delivery_uses_exact_app_principal_and_never_exposes_tokens(monke
         assert source_token not in command and app_token not in command
         assert kwargs["capture_output"] is True
         if command[0] == "bash":
-            assert command[-3:] == ["--repo", module.TARGET, "--app-only"]
+            assert command[-4:] == ["--repo", module.TARGET, "--app-only", "--require-secrets-write"]
             assert kwargs["timeout"] == 60
             return SimpleNamespace(returncode=1 if failure == "mint" else 0, stdout=app_token)
-        assert command == ["gh", "secret", "set", "CLOUDFLARE_API_TOKEN", "--repo", module.TARGET]
+        assert command == ["gh", "secret", "set", "CLOUDFLARE_API_TOKEN", "-R", module.TARGET]
         assert kwargs["input"] == source_token
         assert kwargs["env"]["GH_TOKEN"] == app_token
         assert "GITHUB_TOKEN" not in kwargs["env"]

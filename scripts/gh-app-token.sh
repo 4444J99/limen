@@ -21,6 +21,8 @@
 #   GITHUB_TOKEN=$(bash scripts/gh-app-token.sh --repo OWNER/REPO --app-only) # mutation/finalizer path
 #   bash scripts/gh-app-token.sh --repo OWNER/REPO --which
 #   bash scripts/gh-app-token.sh --repo OWNER/REPO --verify-app
+#   bash scripts/gh-app-token.sh --repo OWNER/REPO --app-only --require-secrets-write
+# The optional Secrets-write assertion checks the returned grant; it never expands App permissions.
 #
 # Credentials (set via scripts/set-credential.sh — never on a command line / in history):
 #   GITHUB_APP_ID                — the App's numeric id (Settings → Developer settings → GitHub Apps)
@@ -37,6 +39,7 @@ ENV_FILE="${LIMEN_ENV:-$HOME/.limen.env}"
 API="${GITHUB_API:-https://api.github.com}"
 MODE=""
 APP_ONLY=0
+REQUIRE_SECRETS_WRITE=0
 TARGET_REPO="${LIMEN_GITHUB_TARGET_REPO:-}"
 TARGET_REPO_SOURCE="${TARGET_REPO:+environment}"
 
@@ -62,12 +65,21 @@ while [ "$#" -gt 0 ]; do
       APP_ONLY=1
       shift
       ;;
+    --require-secrets-write)
+      REQUIRE_SECRETS_WRITE=1
+      shift
+      ;;
     *)
       echo "gh-app-token: unknown argument: $1" >&2 # allow-secret: diagnostic label only
       exit 2
       ;;
   esac
 done
+
+if [ "$REQUIRE_SECRETS_WRITE" = "1" ] && [ "$APP_ONLY" != "1" ]; then
+  echo "gh-app-token: --require-secrets-write requires --app-only" >&2
+  exit 2
+fi
 
 log() { echo "gh-app-token: $*" >&2; }
 
@@ -179,6 +191,17 @@ mint_app_token() {
               -H "Content-Type: application/json" --data "$request_body" \
               "$API/app/installations/${inst}/access_tokens" 2>/dev/null) || {
     log "numeric-repository-scoped installation token request rejected"; return 1; }
+  if [ "$REQUIRE_SECRETS_WRITE" = "1" ]; then
+    printf '%s' "$resp" | python3 -c 'import json, sys
+try:
+    payload = json.load(sys.stdin)
+    permissions = payload.get("permissions", {})
+    allowed = isinstance(permissions, dict) and permissions.get("secrets") == "write"
+except (ValueError, TypeError, AttributeError):
+    allowed = False
+raise SystemExit(0 if allowed else 1)' || {
+      log "exact-repository App token lacks the required Secrets-write grant"; return 1; }
+  fi
   tok=$(printf '%s' "$resp" | json_field token) || {
     log "numeric-repository-scoped installation token missing from API response"; return 1; }
   [ -z "$tok" ] && {
