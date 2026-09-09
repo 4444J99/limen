@@ -7,6 +7,7 @@ import argparse
 import importlib.util
 import os
 from pathlib import Path
+import re
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,6 +39,11 @@ def main() -> int:
     if not os.environ.get("GITHUB_APP_ID") or not os.environ.get("GITHUB_APP_PRIVATE_KEY"):
         print("FAIL: UCC delivery App credential configuration is absent; destination unchanged")
         return 1
+    expected_sha = os.environ.get("EXPECTED_SHA", "")
+    source_token = os.environ.get("SOURCE_GITHUB_TOKEN", "")
+    if not re.fullmatch(r"[0-9a-f]{40}", expected_sha) or not source_token:
+        print("FAIL: current-main verification inputs are unavailable; destination unchanged")
+        return 1
     try:
         minted = subprocess.run(
             ["bash", str(ROOT / "scripts/gh-app-token.sh"), "--repo", TARGET, "--app-only", "--require-secrets-write"],
@@ -47,10 +53,30 @@ def main() -> int:
             stdin=subprocess.DEVNULL,
         )
         if minted.returncode != 0 or not minted.stdout.strip():
-            print("FAIL: exact UCC App principal could not be established; destination unchanged")
+            if "exact-repository App token lacks the required Secrets-write grant" in minted.stderr:
+                print("FAIL: exact UCC App principal lacks Secrets-write; destination unchanged")
+            else:
+                print("FAIL: exact UCC App principal could not be established; destination unchanged")
+            return 1
+        read_environment = {**os.environ, "GH_TOKEN": source_token}
+        for key in ("GITHUB_TOKEN", "GITHUB_APP_PRIVATE_KEY", SECRET_NAME):
+            read_environment.pop(key, None)
+        current = subprocess.run(
+            ["gh", "api", "repos/4444J99/limen/git/ref/heads/main", "--jq", ".object.sha"],
+            capture_output=True,
+            text=True,
+            timeout=15,
+            stdin=subprocess.DEVNULL,
+            env=read_environment,
+        )
+        if current.returncode != 0 or current.stdout.strip() != expected_sha:
+            print(
+                "FAIL: source main changed or could not be verified immediately before delivery; destination unchanged"
+            )
             return 1
         environment = {**os.environ, "GH_TOKEN": minted.stdout.strip()}
-        environment.pop("GITHUB_TOKEN", None)
+        for key in ("GITHUB_TOKEN", "GITHUB_APP_PRIVATE_KEY", "SOURCE_GITHUB_TOKEN", SECRET_NAME):
+            environment.pop(key, None)
         if not hydrate.gh_secret_set(TARGET, SECRET_NAME, candidate, env=environment):
             print("FAIL: verified UCC App principal could not write the target secret")
             return 1

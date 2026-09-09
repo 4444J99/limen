@@ -29,6 +29,9 @@ does not declare Secrets-write and cannot satisfy it unless a credential-deliver
 that existing authorized grant is configured. GitHub's ordinary workflow token is never
 treated as cross-repository secret-write authority. Missing App configuration or failed target
 resolution leaves the destination unchanged; no new token source is inferred or minted.
+Immediately before delivery, the runner reads Limen's current main with the read-only workflow
+token and requires it to match the authorized source SHA. A queued stale run therefore cannot
+replace UCC's credential. This check does not give the workflow token any destination-write role.
 
 Execute on the established credential host with promptless 1Password access and GitHub secret-write
 capability for UCC. The first command reads no secret. The second reads only the declared source,
