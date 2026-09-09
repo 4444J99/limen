@@ -708,6 +708,19 @@ gates:
     timeout_seconds: 60
     owner: positioning-program
     note: "Each copied package and resume input derives current-policy, freshness, authority and bounded-verification constraints from one launch contract; R05 authority precedes real receipts, R10 observations require actual periods, and snapshot scope remains bound to canonical leaf/issue identities. Omission and mutation regressions reject stale or weakened handoffs without dispatching or claiming operational acceptance."
+  positioning-connector-test:
+    command: "python3 scripts/tests/test_github_connector.py && node scripts/tests/test_positioning_connector_driver.js"
+    paths:
+      - "cli/src/limen/github_connector.py"
+      - "scripts/positioning-program.py"
+      - "scripts/positioning-connector-driver.js"
+      - "scripts/tests/test_github_connector.py"
+      - "scripts/tests/test_positioning_connector_driver.js"
+      - "docs/positioning/program/CONNECTOR-EXECUTION.md"
+      - "institutio/governance/gates.yaml"
+    timeout_seconds: 60
+    owner: positioning-program
+    note: "Authenticated connector observations drive the canonical receipt verifier through bounded correlated read-only RPC, preserving exact raw GitHub fields and refusing failure, replay, mutation, truncation and terminal echo."
   positioning-p14-control-plane-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_positioning_p14_control_plane.py -q"
     paths: ["scripts/positioning-p14-control-plane.py", "cli/tests/test_positioning_p14_control_plane.py", "cli/tests/fixtures/positioning-p14/**", "institutio/positioning/p14/**", "docs/positioning/p14/**", "docs/receipts/positioning/relays/2026-08-10-psp-c12-control-plane-preflight.md", "institutio/governance/gates.yaml"]

@@ -1,5 +1,8 @@
 # Agent runbook
 
+For authenticated ChatGPT execution without shell `gh`, use
+[the connector transport](CONNECTOR-EXECUTION.md) and the same canonical verifier.
+
 This runbook is the cross-provider operating contract for the Production-Systems Positioning
 Program. It supplements, and never overrides, the repository’s `AGENTS.md` and conduct protocol.
 
