@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import re
 import subprocess
 import sys
 from collections import Counter
@@ -16,11 +17,16 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[3]
+CLI_SRC = ROOT / "cli" / "src"
+if str(CLI_SRC) not in sys.path:
+    sys.path.insert(0, str(CLI_SRC))
+
+from limen.conduct.models import _identifier  # noqa: E402
+
+
 PROGRAM = ROOT / "docs/positioning/program"
 VALIDATOR_PATH = PROGRAM / "validate_p03_w07_blinded_reader.py"
 IMPORT_SCHEMA_VERSION = "psp-p03-w07-reader-import.v1"
-DIRECT_HUMAN_SESSION_ID = "019fed0e-7216-7422-8398-f83354946f54"
-EXECUTOR = "Codex"
 
 SPEC = importlib.util.spec_from_file_location("validate_p03_w07_blinded_reader", VALIDATOR_PATH)
 if not SPEC or not SPEC.loader:
@@ -259,6 +265,48 @@ def re_full_digest(value: str) -> bool:
     return len(value) == 64 and all(character in "0123456789abcdef" for character in value)
 
 
+def validated_authority(value: Any) -> dict[str, Any]:
+    """Check an explicitly supplied existing authority object; never invent a session.
+
+    This is candidate validation, not broker authentication or an execution grant.
+    The authorized publisher must verify the supplied registration before posting.
+    """
+    if not isinstance(value, dict):
+        raise WorkflowError("receipt authority must be an explicit existing registration object")
+    kind = value.get("kind")
+    if kind == "direct_human_session":
+        fields = {"kind", "session_id", "executor", "human_protected"}
+        _exact_keys(value, fields, "receipt authority")
+        session_id = value["session_id"]
+        try:
+            if not isinstance(session_id, str) or session_id == "00000000-0000-0000-0000-000000000000":
+                raise ValueError("missing session identity")
+            _identifier(session_id, "session_id")
+        except ValueError:
+            raise WorkflowError("receipt authority requires an existing bounded session identifier") from None
+        if value["human_protected"] is not True:
+            raise WorkflowError("receipt authority requires a protected direct human session")
+    elif kind == "broker":
+        fields = {"kind", "run_id", "lease_id", "executor"}
+        _exact_keys(value, fields, "receipt authority")
+        if not isinstance(value["run_id"], str) or not re.fullmatch(r"run-[0-9a-f]{32}", value["run_id"]):
+            raise WorkflowError("receipt authority requires an existing broker run identifier")
+        lease = (
+            re.fullmatch(r"lease-([1-9][0-9]*)-([0-9a-f]{16})", value["lease_id"])
+            if isinstance(value["lease_id"], str)
+            else None
+        )
+        if lease is None:
+            raise WorkflowError("receipt authority requires an existing broker lease identifier")
+        if lease.group(2) != value["run_id"].removeprefix("run-")[:16]:
+            raise WorkflowError("receipt authority lease must belong to its broker run")
+    else:
+        raise WorkflowError("receipt authority kind must match an existing direct session or broker lease")
+    if not isinstance(value["executor"], str) or not value["executor"].strip():
+        raise WorkflowError("receipt authority requires the actual executor identity")
+    return dict(value)
+
+
 def build_receipt_comment(
     payload: dict[str, Any],
     verdict: V.Verdict,
@@ -269,6 +317,7 @@ def build_receipt_comment(
     changed_paths: list[str],
     response_path: str,
     memo_path: str,
+    authority: dict[str, Any],
 ) -> str:
     if verdict.state != "pass":
         raise WorkflowError("receipt candidate requires a passing five-reader verdict")
@@ -284,12 +333,7 @@ def build_receipt_comment(
         "schema_version": "limen.positioning_work_receipt.v2",
         "work_id": V.WORK_ID,
         "acceptance_sha256": acceptance_sha256,
-        "authority": {
-            "kind": "direct_human_session",
-            "session_id": DIRECT_HUMAN_SESSION_ID,
-            "executor": EXECUTOR,
-            "human_protected": True,
-        },
+        "authority": validated_authority(authority),
         "changed_paths": sorted(changed_paths),
         "evidence_urls": [
             "https://github.com/organvm/limen/issues/2188",
@@ -334,6 +378,7 @@ def receipt_candidate(
     responses: Path,
     memo: Path,
     *,
+    authority: dict[str, Any],
     observed_at: str | None = None,
 ) -> str:
     payload = V.load_payload(responses)
@@ -366,6 +411,7 @@ def receipt_candidate(
         changed_paths=changed,
         response_path=response_relative,
         memo_path=memo_relative,
+        authority=authority,
     )
 
 
@@ -389,6 +435,12 @@ def _parser() -> argparse.ArgumentParser:
     receipt.add_argument("memo", type=Path)
     receipt.add_argument("--output", required=True, type=Path)
     receipt.add_argument("--observed-at")
+    receipt.add_argument(
+        "--authority-file",
+        required=True,
+        type=Path,
+        help="private JSON containing the existing current session/broker receipt authority object",
+    )
 
     return parser
 
@@ -429,6 +481,7 @@ def main(argv: list[str] | None = None) -> int:
         candidate = receipt_candidate(
             args.responses,
             args.memo,
+            authority=validated_authority(load_json(args.authority_file)),
             observed_at=args.observed_at,
         )
         _write_exact(args.output, candidate)

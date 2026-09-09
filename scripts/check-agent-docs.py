@@ -106,7 +106,9 @@ AGY_SKILL = ROOT / ".agents" / "skills" / "agy_conductor" / "SKILL.md"
 COPILOT_PROFILE = ROOT / "integrations" / "copilot" / "limen-conductor.agent.md"
 COPILOT_REPO_OVERRIDE = ROOT / ".github" / "agents" / "limen-conductor.agent.md"
 COPILOT_POINTER = ROOT / ".github" / "copilot-instructions.md"
-SCOPED_AGENTS = [ROOT / "apps" / "danse" / "AGENTS.md"]
+# The duplicate Danse instruction surface was retired with its source in #2554.
+# Keep an explicit inventory; missing declared surfaces must still fail closed.
+SCOPED_AGENTS: list[Path] = []
 REFERENCE_DOCS = DOCS + [
     ROOT / "CONTRIBUTING.md",
     STANDARD,
