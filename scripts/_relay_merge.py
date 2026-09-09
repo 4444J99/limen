@@ -202,8 +202,15 @@ def evaluate(candidate, policy_sha, read_token):
             "LANG": "C.UTF-8",
         }
 
-        def run(args, timeout=120):
-            result = subprocess.run(args, cwd=root, env=env, capture_output=True, timeout=timeout, check=False)
+        def run(args, timeout=120, working_directory=None):
+            result = subprocess.run(
+                args,
+                cwd=root if working_directory is None else working_directory,
+                env=env,
+                capture_output=True,
+                timeout=timeout,
+                check=False,
+            )
             require(result.returncode == 0, "trusted evaluation failed")
             return result.stdout.decode()
 
@@ -251,7 +258,11 @@ def evaluate(candidate, policy_sha, read_token):
                 step.get("shell") == "bash" and isinstance(step.get("run"), str) and "${{" not in step["run"],
                 "unsupported trusted step",
             )
-            run(["bash", "--noprofile", "--norc", "-euo", "pipefail", "-c", step["run"]], timeout=600)
+            run(
+                ["bash", "--noprofile", "--norc", "-euo", "pipefail", "-c", step["run"]],
+                timeout=600,
+                working_directory=root / "trusted",
+            )
         return hashlib.sha256(workflow).hexdigest()
 
 
@@ -325,18 +336,21 @@ def transact(api, number, head, governor_app, ruleset_id, evaluator):
     finally:
         # Consume the authorization, including an ambiguous merge response. Never
         # retry a merge after a timeout; reconcile its receipt on the next session.
-        api(
-            check_path,
-            "PATCH",
-            {
-                "status": "completed",
-                "conclusion": "failure",
-                "output": {
-                    "title": "Governor authorization consumed" if authorized else "Governor evaluation failed",
-                    "summary": "One-shot authorization. A new attempt must evaluate again.",
+        try:
+            api(
+                check_path,
+                "PATCH",
+                {
+                    "status": "completed",
+                    "conclusion": "failure",
+                    "output": {
+                        "title": "Governor authorization consumed" if authorized else "Governor evaluation failed",
+                        "summary": "One-shot authorization. A new attempt must evaluate again.",
+                    },
                 },
-            },
-        )
+            )
+        except Exception:  # noqa: BLE001 - cleanup cannot erase the merge/readback receipt
+            pass
 
 
 def main():
