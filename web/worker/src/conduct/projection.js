@@ -6,7 +6,10 @@ import {
   validatePrivateBoard,
 } from "./private-board.js";
 import { taskWorkLoanMissingFields, workLoanDenial } from "./work-loan.js";
-import { inventoryAdmissionDenied, inventoryClassificationChanged } from "./inventory-admission.js";
+import {
+  eventRequiresInventory, inventoryClassificationChanged, inventoryProjectionContext,
+  recordInventoryTransition, requireInventoryCapacity,
+} from "./inventory-admission.js";
 import {
   ProviderEligibilityError,
   validateProviderEligibilityUpdate,
@@ -349,13 +352,11 @@ function validatePolicyUpdate(existing, candidate, taskId) {
   }
 }
 
-function requireInventoryAdmission(existing, candidate, taskId) {
+function requireInventoryAdmission(board, existing, candidate, taskId, inventoryContext) {
   if (inventoryClassificationChanged(existing, candidate)) {
     throw new ConductProjectionError(`task ${taskId} inventory_classification_change_unauthorized`, 409);
   }
-  if (inventoryAdmissionDenied(existing, candidate)) {
-    throw new ConductProjectionError(`task ${taskId} inventory_admission_adapter_unavailable`, 409);
-  }
+  requireInventoryCapacity(board, existing, candidate, inventoryContext);
 }
 
 function resetBudgetWindow(budget, event) {
@@ -679,7 +680,7 @@ function isLifecycleRepairAuthorized(task, nextStatus, log, patch) {
   return false;
 }
 
-export function applyTaskPacketProjectionEvent(input, event) {
+export function applyTaskPacketProjectionEvent(input, event, inventoryContext = null) {
   const board = clone(input);
   const intent = event.intent || {};
   const kind = String(intent.kind || "");
@@ -697,7 +698,7 @@ export function applyTaskPacketProjectionEvent(input, event) {
     const supplied = clone(intent.task || {});
     validateTaskShape(supplied, taskId);
     validatePolicyUpdate(existing, { ...existing, ...supplied }, taskId);
-    requireInventoryAdmission(existing, { ...existing, ...supplied }, taskId);
+    requireInventoryAdmission(board, existing, { ...existing, ...supplied }, taskId, inventoryContext);
     if (!existing && ["dispatched", "in_progress"].includes(supplied.status)) {
       throw new ConductProjectionError(`task ${taskId} canonical_reservation_required`, 409);
     }
@@ -785,7 +786,7 @@ export function applyTaskPacketProjectionEvent(input, event) {
   }
   const candidate = { ...existing, ...patch };
   validatePolicyUpdate(existing, candidate, taskId);
-  requireInventoryAdmission(existing, candidate, taskId);
+  requireInventoryAdmission(board, existing, candidate, taskId, inventoryContext);
   if (candidate.provider_eligibility != null) patch.provider_eligibility = candidate.provider_eligibility;
   const lifecycleRepair = kind === "task.status"
     && isLifecycleRepairAuthorized(existing, nextStatus, intent.log, patch);
@@ -812,6 +813,7 @@ export function applyTaskPacketProjectionEvent(input, event) {
           && intent.log?.lifecycle_repair === "prelaunch-successor-hold"))) {
     applyCanonicalBudgetRefund(board, existing, event);
   }
+  recordInventoryTransition(board, existing, candidate, event);
   Object.assign(existing, clone(patch));
   existing.updated = event.timestamp;
   existing.dispatch_log ||= [];
@@ -851,9 +853,9 @@ function ensureBudget(board, task, event) {
   }
 }
 
-export function applyTaskCompatibilityEvent(input, event) {
+export function applyTaskCompatibilityEvent(input, event, inventoryContext = null) {
   if (event.schema_version === "limen.task_packet_projection_event.v1") {
-    return applyTaskPacketProjectionEvent(input, event);
+    return applyTaskPacketProjectionEvent(input, event, inventoryContext);
   }
   const board = clone(input);
   if (eventAlreadyApplied(board, event.event_id)) {
@@ -862,7 +864,7 @@ export function applyTaskCompatibilityEvent(input, event) {
   const task = (board.tasks || []).find((candidate) => candidate.id === event.task_id);
   if (!task) throw new ConductProjectionError(`task ${event.task_id} not found in canonical board`, 409);
   validatePolicyUpdate(task, { ...task, status: event.status }, event.task_id);
-  requireInventoryAdmission(task, { ...task, status: event.status }, event.task_id);
+  requireInventoryAdmission(board, task, { ...task, status: event.status }, event.task_id, inventoryContext);
   if (["dispatched", "in_progress"].includes(event.status)) {
     const missing = taskWorkLoanMissingFields(task);
     if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 409);
@@ -874,6 +876,7 @@ export function applyTaskCompatibilityEvent(input, event) {
     );
   }
   ensureBudget(board, task, event);
+  recordInventoryTransition(board, task, { ...task, status: event.status }, event);
   task.status = event.status;
   task.updated = event.timestamp;
   task.dispatch_log ||= [];
@@ -1243,7 +1246,8 @@ export async function initializePrivateBoard(
 export async function commitTaskCompatibilityEvent(
   env,
   event,
-  { fetchImpl = fetch, maxAttempts = 4, storage = null } = {},
+  { fetchImpl = fetch, maxAttempts = 4, storage = null, inventoryAuthority = null,
+    inventoryObservation = null, now = new Date() } = {},
 ) {
   if (!event) return { status: "not_applicable" };
   const inline = inlineBoardSource(env);
@@ -1267,7 +1271,9 @@ export async function commitTaskCompatibilityEvent(
         503,
       );
     }
-    const applied = applyTaskCompatibilityEvent(current, event);
+    const context = eventRequiresInventory(current, event)
+      ? await inventoryProjectionContext(inventoryAuthority, inventoryObservation, now) : null;
+    const applied = applyTaskCompatibilityEvent(current, event, context);
     if (applied.duplicate) {
       return {
         status: "duplicate",

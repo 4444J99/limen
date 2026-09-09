@@ -13,6 +13,8 @@ order-independent without rewriting every direct writer.
 import json
 import os
 import sys
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 import pytest
@@ -65,12 +67,35 @@ def _stable_agent_host_fixture(tmp_path_factory) -> str:
 
 
 @pytest.fixture(autouse=True)
-def _restore_os_environ(tmp_path, _stable_agent_host_fixture):
+def _restore_os_environ(tmp_path, tmp_path_factory, _stable_agent_host_fixture, monkeypatch):
     """Give each test one isolated explicit keeper and restore its environment."""
     saved = dict(os.environ)
     os.environ.pop("LIMEN_CONDUCT_URL", None)
     os.environ.pop("LIMEN_CONDUCT_TOKEN", None)
     os.environ["LIMEN_CONDUCT_STATE"] = str(tmp_path / "conduct.sqlite3")
+    # Dispatch reloads LIMEN_ENV after fixture setup. Never let that reload
+    # resurrect the operator's authenticated broker or provider credentials.
+    # Fixture-owned credentials must not contaminate the filesystem a test is
+    # auditing, retaining, transferring, or expecting to remain untouched.
+    environment = tmp_path_factory.mktemp("broker-isolation") / "limen.env"
+    environment.write_text("")
+    environment.chmod(0o600)
+    os.environ["LIMEN_ENV"] = str(environment)
+    # The shell bootstrap rejects an existing cache without authenticated
+    # credentials. Point it at an absent private fixture path so offline tests
+    # can proceed without ever falling back to the operator's default cache.
+    os.environ["LIMEN_CONDUCT_ENV_FILE"] = str(environment.with_name("absent-conduct.env"))
+    original_open = urllib.request.OpenerDirector.open
+
+    def isolated_open(opener, fullurl, *args, **kwargs):
+        url = fullurl.full_url if isinstance(fullurl, urllib.request.Request) else fullurl
+        path = urllib.parse.urlsplit(url).path
+        if path.startswith(("/api/conduct/", "/api/board/")):
+            raise AssertionError("test attempted real broker access; use the temporary keeper or mock transport")
+        return original_open(opener, fullurl, *args, **kwargs)
+
+    # Guard below urlopen so transport unit tests can still install their mocks.
+    monkeypatch.setattr(urllib.request.OpenerDirector, "open", isolated_open)
     # Hermetic runs never reach the phone. _notify's body-gate already withholds osascript
     # for non-organism roots; this belt keeps the suite silent even for a future notifier
     # that bypasses _notify or a test handed an organism-shaped fixture root.
