@@ -32,6 +32,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan, _notify
 import _notify  # noqa: E402
+import _dependency_upkeep  # noqa: E402
 from _pr_scan import (  # noqa: E402
     enumerate_open_prs_result,
     merge_queue_capability,
@@ -83,8 +84,8 @@ def merge_prohibition() -> str | None:
     return None
 
 
-def gh(args, timeout=60):
-    return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout)
+def gh(args, timeout=60, binary=False):
+    return subprocess.run(["gh", *args], capture_output=True, text=not binary, timeout=timeout)
 
 
 def _is_trivial(repo, num):
@@ -277,6 +278,25 @@ def _reserve_ci_red_notification(subject: dict[str, object]) -> bool:
     return result.reserved or result.status == "duplicate"
 
 
+def dependency_exception(repo, num, head, reasons):
+    """Reuse the channel-aware notification broker; routine work is quiet."""
+    import hashlib
+
+    codes = sorted({str(reason) for reason in reasons})
+    reason_key = hashlib.sha256(json.dumps(codes).encode()).hexdigest()[:16]
+    identity = f"{repo}#{num}@{head}"
+    return _notify.emit_event_v1(
+        ROOT,
+        stable_id=f"{identity}:{reason_key}",
+        transition="onset",
+        subject_key=identity,
+        event_id="limen.dependency.exception",
+        facts={"identity": identity, "reasons": ", ".join(codes)},
+        evidence_ref=f"https://github.com/{repo}/pull/{num}",
+        producer="merge-drain",
+    )
+
+
 def assess(rn):
     repo, num = rn
     try:
@@ -298,9 +318,23 @@ def assess(rn):
         if d.get("state") != "OPEN" or d.get("isDraft"):
             return (repo, num, "SKIP")
         disposition = lifecycle_disposition(d.get("labels"))
+        declared_lifecycle = any(
+            str(label.get("name") if isinstance(label, dict) else label).strip().lower() in LIFECYCLE_LABELS
+            for label in (d.get("labels") or [])
+        )
+        delivery = disposition == "lifecycle:delivery"
+        if declared_lifecycle and not delivery:
+            status = disposition.removeprefix("lifecycle:").upper() if disposition else "LIFECYCLE-UNKNOWN"
+            return (repo, num, status)
+        if _dependency_upkeep.pilot(repo):
+            head = str(d.get("headRefOid") or "")
+            evidence = _dependency_upkeep.inspect(repo, num, head, gh)
+            if evidence.get("route") != "not-dependency":
+                status = "DEPS-REVIEW" if evidence.get("route") == "delegated-review" else "DEPS-EXCEPTION"
+                return (repo, num, status, head, evidence)
         if disposition is None:
             return (repo, num, "LIFECYCLE-UNKNOWN")
-        if disposition != "lifecycle:delivery":
+        if not delivery:
             return (repo, num, disposition.removeprefix("lifecycle:").upper())
         if d.get("mergeable") == "CONFLICTING":
             return (repo, num, "CONFLICT")
@@ -432,19 +466,42 @@ def merge(repo, num, expected_head, mode_hint):
     """
     if merge_prohibition() is not None:
         return "REFUSED"
+    # Recheck even when invoked directly with a forged READY row or an old
+    # rollup. Dependency evidence admits review only; the dedicated automatic
+    # acceptance transaction has not been activated for these repositories.
+    if _dependency_upkeep.pilot(repo):
+        evidence = _dependency_upkeep.inspect(repo, num, expected_head, gh)
+        if evidence.get("route") != "not-dependency":
+            return "REFUSED"
     if repo.lower() == "4444j99/organvm-ci-relay":
         if mode_hint != "direct":
             return "REFUSED"
         try:
             result = subprocess.run(
-                [sys.executable, str(ROOT / "scripts/_relay_merge.py"),
-                 "--pr", str(num), "--expected-head", expected_head],
-                capture_output=True, text=True, timeout=2700, check=False,
+                [
+                    sys.executable,
+                    str(ROOT / "scripts/_relay_merge.py"),
+                    "--pr",
+                    str(num),
+                    "--expected-head",
+                    expected_head,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=2700,
+                check=False,
             )
             receipt = json.loads(result.stdout) if result.returncode == 0 else {}
-            return "MERGED" if (receipt.get("repository") == "4444J99/organvm-ci-relay"
-                                and receipt.get("pr") == num and receipt.get("head") == expected_head
-                                and receipt.get("landed")) else "FAILED"
+            return (
+                "MERGED"
+                if (
+                    receipt.get("repository") == "4444J99/organvm-ci-relay"
+                    and receipt.get("pr") == num
+                    and receipt.get("head") == expected_head
+                    and receipt.get("landed")
+                )
+                else "FAILED"
+            )
         except (OSError, ValueError, subprocess.TimeoutExpired):
             return "FAILED"
     if mode_hint == "queue":
@@ -513,6 +570,11 @@ def submit_one(repo: str, num: int, expected_head: str) -> int:
     if current["state"] != "OPEN":
         print(f"MERGE-SUBMISSION {identity}: FAILED — PR state is {current['state'] or 'unknown'}")
         return 1
+    if _dependency_upkeep.pilot(repo):
+        evidence = _dependency_upkeep.inspect(repo, num, expected_head, gh)
+        if evidence.get("route") != "not-dependency":
+            print(f"MERGE-SUBMISSION {identity}: DEFERRED — dependency review requires the upkeep route")
+            return 2
     if current["queued"]:
         print(f"MERGE-SUBMISSION {identity}: QUEUED — already owned by GitHub")
         return 0
@@ -591,6 +653,15 @@ def main() -> int:
     merged = []
     queued = []
     if not a.dry_run:
+        if merge_prohibition() is None:
+            review_rows = [row for row in rows if row[2] == "DEPS-REVIEW"][: a.limit]
+            for repo, num, _status, head, _evidence in review_rows:
+                review_status, reasons = _dependency_upkeep.request_review(repo, num, head, gh)
+                if review_status == "exception":
+                    dependency_exception(repo, num, head, reasons)
+        for row in rows:
+            if row[2] == "DEPS-EXCEPTION":
+                dependency_exception(row[0], row[1], row[3], row[4].get("reasons", []))
         for repo, num, head, mode_hint in ready:
             outcome = merge(repo, num, head, mode_hint)
             if outcome == "MERGED":
@@ -603,6 +674,7 @@ def main() -> int:
         f"merged={len(merged)} queued={len(queued)} trivial-skipped={b['TRIVIAL']} | "
         f"blocked: conflict={b['CONFLICT']} "
         f"ci-red={b['CI-RED']} ci-pending={b['CI-PENDING']} "
+        f"deps-review={b['DEPS-REVIEW']} deps-exception={b['DEPS-EXCEPTION']} "
         f"stale-core={b['STALE-CORE']} stale-base={b['STALE-BASE']}"
     )
     print(summary)
