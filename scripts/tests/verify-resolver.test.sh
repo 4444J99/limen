@@ -326,6 +326,7 @@ verify-parallel-test
 agent-docs
 github-estate-census-custody-test
 remote-execution-admission-test
+positioning-report-reviewed-source
 positioning-foundry-technical-readiness-test
 positioning-foundry-technical-readiness-public-live
 flagship-proof-set-test
@@ -339,6 +340,18 @@ positioning-launch-prompts-test
 positioning-p14-control-plane-test
 check-gates
 check-note-links' institutio/governance/gates.yaml
+
+# P05-W01 source changes invalidate its actual independent review evidence.
+expect report-source-change 'syntax-changed
+diff-hygiene
+positioning-report-reviewed-source
+check-docs-exports
+check-note-links' docs/positioning/proof/limen-engineering-report.md
+expect report-observation-change 'syntax-changed
+diff-hygiene
+positioning-report-reviewed-source
+check-docs-exports
+check-note-links' docs/receipts/positioning/2026-09-09-limen-report-review-observation.json
 
 # The W03 collector is a static-gate input. The scoped public-evidence rail does
 # not invoke that census; the private-inclusive operator predicate remains whole-only.
