@@ -1,0 +1,46 @@
+{
+  "README.md": {
+    "bytes": 3129,
+    "sha256": "b62f9092ab17a58fc2d6620df0a307f400c6a3a9b6722a6c69e5ff54ef6f2404"
+  },
+  "exporter-environment.log": {
+    "bytes": 219,
+    "sha256": "8d94d095f13bc817256de3e6361dfd948a979a8f923b93dc147db88ce3f33af8"
+  },
+  "exporter-install.log": {
+    "bytes": 1945,
+    "sha256": "74e5ca76e77d7ae83fb1b2283442b6b181f29efbd7e349e2cb4587c7fdb886f7"
+  },
+  "observation.json": {
+    "bytes": 2091,
+    "sha256": "5a39b584346a192c667776f2141190c6f7dec7d1494a40a17d4c928b793b1b5c"
+  },
+  "ucc-build-receipt.json": {
+    "bytes": 1166,
+    "sha256": "4c11866e7ee70decdaf98955c9a661360f7c4063c0490d61677f70cb062767e0"
+  },
+  "ucc-install.log": {
+    "bytes": 2165,
+    "sha256": "6b1698300d15f7e9edfcebd503a5a39bd2aad7cfc745121fed762ac433ab6984"
+  },
+  "ucc-lint-receipt.json": {
+    "bytes": 1156,
+    "sha256": "7d04a2bafdb555089ba762bf5d2309ce19416f1cdf1ba69b3ae9d47a951b8329"
+  },
+  "ucc-reproduction-results.json": {
+    "bytes": 4748,
+    "sha256": "7224860d88c49d4e461dc19af76dad9016b4edfd3bf0c9f264876c9a842b238f"
+  },
+  "ucc-server-tests-receipt.json": {
+    "bytes": 1363,
+    "sha256": "2611faa51747d79b29d428ebcfffdcc647a6e4657dac45fe41d4ffc4fc5309a1"
+  },
+  "ucc-test-summary.json": {
+    "bytes": 12447,
+    "sha256": "aa2221d735777ecc2b48d7c9c207ce4014b9ab591dfe0347308ee724cc9388e8"
+  },
+  "ucc-tests.json.gz": {
+    "bytes": 55291,
+    "sha256": "99da5efb903098825dc30a7bcf86eb5a1d24520e4f91e031bfaabb50c5372094"
+  }
+}
