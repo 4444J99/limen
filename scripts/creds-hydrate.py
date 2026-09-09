@@ -60,6 +60,7 @@ Usage:
   python3 scripts/creds-hydrate.py --verify      # VALIDITY — authenticate each cred against its service; exit 1 if any dead
   python3 scripts/creds-hydrate.py --apply        # promptless lanes only; no Touch-ID / op prompt
   python3 scripts/creds-hydrate.py --apply --op   # deliberate op:// read → materialize static creds
+  python3 scripts/creds-hydrate.py --apply --refresh-ci-secret gh:owner/repo:NAME  # replace ONE declared sink
   LIMEN_CREDS_MAP=/path/map.json python3 scripts/creds-hydrate.py --apply   # override the named map
 
 The MAP is a NAMED, tweakable parameter (one entry per credential). Edit DEFAULT_MAP below or point
@@ -191,6 +192,20 @@ DEFAULT_MAP: list[dict] = [
         # (L-CLOUDFLARE-DEPLOY). /accounts returns 200 for any live token, 401/403 for a revoked
         # one — the correct validity semantics for the generic probe. Fixed 2026-07-01.
         "verify": {"url": "https://api.cloudflare.com/client/v4/accounts", "auth": "bearer"},
+    },
+    {
+        # UCC owns Cloudflare staging resources/deployment (#239); CLAVIS owns delivery (#320).
+        # Presence is not scope: its existing token authenticated but D1 returned 401/10000.
+        # After the source token has the required scope, --refresh-ci-secret replaces this exact
+        # sink even when it exists. UCC's deployment preflight remains the capability proof.
+        "lane": "cloudflare (public-record-data-scrapper CI secret)",
+        "ref": "op://Personal/Cloudflare API Token/credential",
+        "gh_secret": {
+            "repo": "organvm-iii-ergon/public-record-data-scrapper",
+            "name": "CLOUDFLARE_API_TOKEN",
+        },
+        "cloudflare_delivery_account": "e0921b840fd656d8ea46426f1f114c30",
+        "enabled": True,
     },
     {
         # SUPERSEDED + PARKED (enabled=False) — kept ONLY as the worked example of the gh_secret multi-sink
@@ -656,6 +671,50 @@ def gh_sink_set(s: dict, value: str, timeout: int = 30) -> bool:
     return gh_secret_set(s["repo"], s["name"], value, timeout)
 
 
+def verify_cloudflare_delivery(entry: dict, value: str) -> tuple[bool, str]:
+    """UCC's token must reach its approved account and D1 before replacing the existing secret.
+
+    No writes, redirects, arbitrary hosts, raw response/error logging, or secret-shaped diagnostics.
+    This establishes account/D1 read capability only; UCC owns write/resource/deployment preflight.
+    """
+    account = entry.get("cloudflare_delivery_account")
+    if account is None:
+        return True, "no delivery preflight declared"
+    if not isinstance(account, str) or not re.fullmatch(r"[0-9a-f]{32}", account):
+        return False, "invalid declared Cloudflare account"
+
+    class NoRedirect(urllib.request.HTTPRedirectHandler):
+        def redirect_request(self, req, fp, code, msg, headers, newurl):
+            return None
+
+    opener = urllib.request.build_opener(NoRedirect())
+    for capability, suffix in (("account", ""), ("D1", "/d1/database?per_page=1")):
+        try:
+            request = urllib.request.Request(
+                f"https://api.cloudflare.com/client/v4/accounts/{account}{suffix}",
+                headers={"Authorization": f"Bearer {value}", "Accept": "application/json"},
+                method="GET",
+            )
+            with opener.open(request, timeout=15) as response:
+                if response.status != 200:
+                    return False, f"{capability} preflight rejected"
+                body = response.read(65537)
+            if len(body) > 65536:
+                return False, f"{capability} preflight response exceeded limit"
+            payload = json.loads(body)
+            if not isinstance(payload, dict) or payload.get("success") is not True:
+                return False, f"{capability} preflight did not confirm success"
+            result = payload.get("result")
+            if capability == "account":
+                if not isinstance(result, dict) or result.get("id") != account:
+                    return False, "account preflight identity mismatch"
+            elif not isinstance(result, list):
+                return False, "D1 preflight response was not a resource list"
+        except Exception:  # noqa: BLE001 — never expose provider payloads, headers, or exception text
+            return False, f"{capability} preflight unavailable or rejected"
+    return True, "approved account and D1 read access confirmed"
+
+
 def _ensure_env_file() -> None:
     if not ENV_FILE.exists():
         ENV_FILE.touch()
@@ -1005,6 +1064,14 @@ def main() -> int:
         "Combine with --apply to write; alone it dry-runs the plan.",
     )
     ap.add_argument(
+        "--refresh-ci-secret",
+        metavar="SINK",
+        help="refresh exactly one enabled declared sink (gh:owner/repo:NAME or gh-org:org:NAME), "
+        "including an already-present secret. No other sink, env cache, or tool file is written. "
+        "Default is a plan; --apply writes and exits nonzero if delivery fails. Source reads still "
+        "require promptless op authentication or explicit --op. Delivery does not prove provider scope.",
+    )
+    ap.add_argument(
         "--op",
         action="store_true",
         help="ALSO read op:// lanes — may raise a 1Password Touch-ID/GUI prompt. OFF by default: "
@@ -1014,13 +1081,33 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    load_service_account_token()  # hydrate OP_SERVICE_ACCOUNT_TOKEN from its file if present → silent `op read`
+    if args.refresh_ci_secret == "":
+        ap.error("--refresh-ci-secret requires a nonempty declared sink")
+    if args.refresh_ci_secret and (args.check or args.verify or args.sweep_all):
+        ap.error("--refresh-ci-secret only supports --apply or --dry-run")
+
+    cred_map = [e for e in load_map() if e.get("enabled", True)]
+    if args.refresh_ci_secret:
+        matches = [
+            (entry, sink)
+            for entry in cred_map
+            for sink in _gh_sinks(entry)
+            if _sink_ref(sink) == args.refresh_ci_secret
+        ]
+        if len(matches) != 1:
+            ap.error("--refresh-ci-secret must identify exactly one enabled declared sink")
+        entry, sink = matches[0]
+        # Retain the owned source, but restrict the entire operation to the selected destination.
+        entry = {k: v for k, v in entry.items() if k not in ("env", "file", "gh_secret")}
+        cred_map = [{**entry, "gh_secret": sink}]
+
+    if args.apply or args.sweep_all:
+        load_service_account_token()  # promptless auth; dry-run never reads the token file
 
     # --sweep-all is the catch-all pass; it complements the curated map rather than iterating it.
     if getattr(args, "sweep_all", False):
         return sweep_all(apply=args.apply)
 
-    cred_map = [e for e in load_map() if e.get("enabled", True)]
     if not cred_map:
         print("creds-hydrate: map is empty (all entries disabled) — nothing to do")
         return 0
@@ -1079,9 +1166,9 @@ def main() -> int:
             )
         return 1 if any_invalid else 0
 
-    if not have_op():
+    if not have_op() and (args.apply or args.check):
         print("creds-hydrate: `op` (1Password CLI) not found — install it, then `op signin`. Skipping (fail-open).")
-        return 0
+        return 1 if args.refresh_ci_secret and args.apply else 0
 
     # --check: presence only, no secret reads of the env file's values
     if args.check:
@@ -1132,7 +1219,7 @@ def main() -> int:
         )
 
     print(f"creds-hydrate {'--apply' if apply else '--dry-run (no reads, no writes — pass --apply to hydrate)'}:")
-    hydrated, skipped = 0, 0
+    hydrated, skipped, failed = 0, 0, 0
 
     # ── ONE-PROMPT BATCH ───────────────────────────────────────────────────────────────────────────
     # When several op:// lanes will be read this run, read them ALL in one `op inject` pass — one
@@ -1146,6 +1233,8 @@ def main() -> int:
     sink_present_cache: dict[str, bool | None] = {}
 
     def _sink_present_cached(s: dict) -> bool | None:
+        if args.refresh_ci_secret:
+            return False  # explicit exact-sink refresh must not be suppressed by presence
         key = _sink_ref(s)
         if key not in sink_present_cache:
             sink_present_cache[key] = gh_sink_present(s)
@@ -1201,6 +1290,12 @@ def main() -> int:
             print(f"  SKIP {e['lane']:28} {source} — {why}")
             skipped += 1
             continue
+        delivery_ok, delivery_detail = verify_cloudflare_delivery(e, val)
+        if not delivery_ok:
+            del val
+            print(f"  ✗ {e['lane']:28} — {delivery_detail}; destination unchanged")
+            failed += 1
+            continue
         for k in envs:
             write_env(k, val)
         wrote_file = write_tool_file(fspec, val) if fspec else None
@@ -1213,12 +1308,16 @@ def main() -> int:
             parts.append(wrote_file)
         for s, ok in gh_results:
             parts.append(_sink_ref(s) + ("" if ok else " (set FAILED)"))
-        print(f"  ✓ {e['lane']:28} -> {' + '.join(parts)}")
-        hydrated += 1
+        delivered = all(ok for _sink, ok in gh_results)
+        print(f"  {'✓' if delivered else '✗'} {e['lane']:28} -> {' + '.join(parts)}")
+        if delivered:
+            hydrated += 1
+        else:
+            failed += 1
 
     if apply:
         print(
-            f"creds-hydrate: {hydrated} hydrated, {skipped} skipped. "
+            f"creds-hydrate: {hydrated} hydrated, {skipped} skipped, {failed} failed. "
             "Validate with the credential verifier: python3 scripts/creds-hydrate.py --verify"
         )
         if skipped:
@@ -1229,6 +1328,9 @@ def main() -> int:
                 else "  (skipped = op:// lanes are opt-in and `--op` was not passed — this is the NO-PROMPT "
                 "default. Promptless `derive` lanes hydrated. Pass `--op` at a terminal to hydrate op://.)"
             )
+    if args.refresh_ci_secret and args.apply:
+        print("CI-secret delivery is not provider capability proof; run the consuming repository's preflight.")
+        return 1 if skipped or failed else 0
     return 0
 
 

@@ -1,0 +1,68 @@
+name: UCC Cloudflare credential delivery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/ucc-cloudflare-delivery.yml
+      - scripts/ucc-cloudflare-delivery.py
+      - scripts/creds-hydrate.py
+  workflow_dispatch:
+    inputs:
+      expected_sha:
+        description: Exact main SHA authorized for this pass
+        required: true
+        type: string
+      mode:
+        description: Probe the owner cache or deliver the verified candidate
+        required: true
+        default: preflight
+        type: choice
+        options: [preflight, apply]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clavis-ucc-cloudflare-delivery
+  cancel-in-progress: false
+
+jobs:
+  delivery:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      EXPECTED_SHA: ${{ inputs.expected_sha || github.sha }}
+      DELIVERY_MODE: ${{ inputs.mode || 'preflight' }}
+    steps:
+      - name: Require the accepted main revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/main
+          test "$GITHUB_SHA" = "$EXPECTED_SHA"
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Verify cached candidate against approved account and D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/ucc-cloudflare-delivery.py --mode preflight
+      - name: Record delivery principal configuration
+        if: always()
+        env:
+          APP_CONFIGURED: ${{ secrets.GITHUB_APP_ID != '' && secrets.GITHUB_APP_PRIVATE_KEY != '' }}
+        run: |
+          printf 'UCC App delivery credentials configured: %s\n' "$APP_CONFIGURED"
+      - name: Deliver through verified UCC App principal
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'apply'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GITHUB_APP_ID: ${{ secrets.GITHUB_APP_ID }}
+          GITHUB_APP_PRIVATE_KEY: ${{ secrets.GITHUB_APP_PRIVATE_KEY }}
+        run: python scripts/ucc-cloudflare-delivery.py --mode apply
