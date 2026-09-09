@@ -397,6 +397,7 @@ def _pr_leaf(repo: str, private: bool, node: dict[str, Any]) -> dict[str, Any]:
         "url": node.get("url"),
         "status": "debt" if custody_debt else "owned",
         "custody_classification": classification,
+        "author_login": node.get("author_login"),
         "custody_debt": custody_debt,
         "owner": owner,
         "predicate": predicate,

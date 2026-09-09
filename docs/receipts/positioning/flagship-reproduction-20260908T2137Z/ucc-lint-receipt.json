@@ -1,0 +1,37 @@
+{
+  "schema_version": "limen.positioning_flagship_receipt.v1",
+  "flagship_id": "public_records",
+  "repository": "organvm-iii-ergon/public-record-data-scrapper",
+  "default_branch": "main",
+  "exact_head": "04eb20eeba2391a053c4a129f0090f5295c1460e",
+  "predicate": {
+    "argv": [
+      "npm",
+      "exec",
+      "--yes",
+      "--package=node@20",
+      "--package=npm@11.17.0",
+      "--",
+      "npm",
+      "run",
+      "lint"
+    ],
+    "timeout_seconds": 120
+  },
+  "environment": {
+    "platform": "Linux-6.18.35-x86_64-with-glibc2.39",
+    "python": "3.12.13"
+  },
+  "started_at": "2026-09-08T21:37:39.993075Z",
+  "finished_at": "2026-09-08T21:38:00.656261Z",
+  "exit_code": 0,
+  "result": "current_pass",
+  "artifact_digest": "44e0973de7569a0d10cc6221c23b1d1fd97b165644a77239d68e18b20f9f716a",
+  "output_bytes": 597,
+  "limitations": [
+    "Repository correctness gate only; server coverage enforcement is disabled by the owning workflow.",
+    "No database, Redis, live scraper, client data, deployment or end-user journey is asserted.",
+    "The frontend build uses tsc --noCheck and is not a TypeScript diagnostic pass."
+  ],
+  "errors": []
+}

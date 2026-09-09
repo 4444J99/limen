@@ -169,14 +169,28 @@ The resulting evidence is **32 of 33 cheap gates passed**, including all 14 rela
 transaction cases, 43 merge-policy cases, 108 merge-queue contract cases, and
 the direct-main-writer, root, parameter, lifecycle and registry checks.
 
-The remaining `positioning-foundry-technical-readiness-public-live` gate failed
-closed at live GitHub observation. This execution surface has no authenticated
-`gh` executable; the predicate requires its bounded REST and GraphQL reads.
-No cached response or synthetic observation was substituted. The failed cheap
-wave did not admit the heavy tail, so full CLI verification remains unexecuted.
-Continue that exact public-live predicate on the existing authenticated rail,
-then the declared heavy tail under genuine host admission. Do not repeat the
-32 unchanged green shards or interpret this preparation as merge acceptance.
+The local `positioning-foundry-technical-readiness-public-live` gate failed
+closed because this execution surface has no authenticated `gh` executable.
+The local failed cheap wave did not admit its heavy tail.
+
+Subsequent retrieval of the actual hosted
+[PR-gate job 102195798896](https://github.com/4444J99/limen/actions/runs/34266117959/job/102195798896)
+resolved that observation gap: its checkout was synthetic merge
+`7c969082d680f4e622951b43925aa479042b8e49`, with parents `ac351ed…` and `9abf12a…`.
+All 33 cheap gates passed there, including authenticated public-live validation.
+The heavy CLI result was **6,839 passed, two failed, four skipped**; both failures
+were stale July receipt fixtures in `test_diurnal_shipping.py`, which aged past
+the consumer's 30-day retention boundary. This is historical exact-source
+evidence, not a newly passing full integration run.
+
+The single current-main integration incorporates accepted governor #2552 and
+dependency #2561 from main `1b8b5f44096d69f562df7e7c893992cad8bf6507`. Main already
+contains the shipping-fixture correction (fixed consumer clock plus a real
+retention-boundary assertion). On that composition all 14 shipping tests and
+all 14 relay transaction tests pass. The controller, routing and gate-registry
+blobs are unchanged from the reviewed source above. Preserve the hosted green
+shards and accepted-main governor evidence while reviewing the composition;
+these separate receipts do not claim a new full-suite pass or live activation.
 
 Relay PR #30 now contains the independently reviewed document-root parser repair
 at `c1a2162f28bf0472b960b63c4133c99523f865e4`; both changed source/test blobs were

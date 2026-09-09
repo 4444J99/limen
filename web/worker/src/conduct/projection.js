@@ -6,6 +6,11 @@ import {
   validatePrivateBoard,
 } from "./private-board.js";
 import { taskWorkLoanMissingFields, workLoanDenial } from "./work-loan.js";
+import { inventoryAdmissionDenied, inventoryClassificationChanged } from "./inventory-admission.js";
+import {
+  ProviderEligibilityError,
+  validateProviderEligibilityUpdate,
+} from "./provider-eligibility.js";
 
 const GITHUB_API = "https://api.github.com";
 const inlineBoards = new WeakMap();
@@ -49,6 +54,7 @@ const PATCHABLE_TASK_FIELDS = new Set([
   "receipt_verified",
   "execution_requirements",
   "workstream_contract",
+  "provider_eligibility",
   "claude_tier",
   "depends_on",
 ]);
@@ -150,6 +156,10 @@ const ENUM_STRUCTURED_LOG_FIELDS = new Map([
     "pr-closed-reconcile",
     "routine-recovered",
     "provider-terminal",
+    "provider-attempt-unknown",
+    "plan-handoff-complete",
+    "provider-reroute",
+    "prelaunch-successor-hold",
     "stale-successor-hold",
     "recurrence-reopen",
   ])],
@@ -325,6 +335,29 @@ function validateTaskShape(task, taskId) {
   }
 }
 
+function validatePolicyUpdate(existing, candidate, taskId) {
+  let policy;
+  try {
+    policy = validateProviderEligibilityUpdate(existing, candidate);
+  } catch (error) {
+    if (!(error instanceof ProviderEligibilityError)) throw error;
+    throw new ConductProjectionError(`task ${taskId} ${error.message}`, 422);
+  }
+  if (policy !== null) candidate.provider_eligibility = policy;
+  if (policy !== null && ["dispatched", "in_progress"].includes(candidate.status)) {
+    throw new ConductProjectionError(`task ${taskId} provider_eligibility_adapter_unavailable`, 409);
+  }
+}
+
+function requireInventoryAdmission(existing, candidate, taskId) {
+  if (inventoryClassificationChanged(existing, candidate)) {
+    throw new ConductProjectionError(`task ${taskId} inventory_classification_change_unauthorized`, 409);
+  }
+  if (inventoryAdmissionDenied(existing, candidate)) {
+    throw new ConductProjectionError(`task ${taskId} inventory_admission_adapter_unavailable`, 409);
+  }
+}
+
 function resetBudgetWindow(budget, event) {
   budget.track ||= { date: "", spent: 0, per_agent: {} };
   const currentDate = String(event.timestamp).slice(0, 10);
@@ -352,6 +385,17 @@ function canonicalClaimAgent(task, event) {
   return agent;
 }
 
+function requireReservedBudgetCost(prior, desired) {
+  // A reservation's debit and eventual refund must use the same amount.
+  // Open tasks may be repriced before a separate canonical claim.
+  if (prior
+      && (["dispatched", "in_progress"].includes(prior.status)
+        || ["dispatched", "in_progress"].includes(desired.status))
+      && prior.budget_cost !== desired.budget_cost) {
+    throw new ConductProjectionError(`task ${prior.id} reservation_budget_cost_immutable`, 409);
+  }
+}
+
 function applyCanonicalBudgetDebit(board, task, event, patch) {
   const amount = Number(task.budget_cost || 0);
   if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount < 0) {
@@ -373,16 +417,38 @@ function applyCanonicalBudgetDebit(board, task, event, patch) {
   budget.track.per_agent[agent] = priorAgent + amount;
 }
 
-function applyCanonicalBudgetRefund(board, task, event) {
-  const amount = Number(task.budget_cost || 0);
-  const latest = task.dispatch_log?.at(-1);
-  const agent = String(latest?.logical_agent || latest?.agent || "");
+function applyCanonicalBudgetRefund(board, task, event, legacy = false) {
+  const amount = Number(legacy ? (task.budget_cost ?? event.budget_cost ?? 1) : (task.budget_cost || 0));
+  let claim;
+  // Preserve the executor that acquired this reservation across subsequent
+  // dispatched metadata updates; logical labels never own canonical spend.
+  for (const entry of [...(task.dispatch_log || [])].reverse()) {
+    if (entry?.status !== "dispatched") break;
+    claim = entry;
+  }
+  const agent = String(claim?.agent || "");
   if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount < 0 || !agent || agent === "any") {
     throw new ConductProjectionError(`task ${task.id} cannot derive a canonical budget refund`, 422);
   }
   const budget = board.portal?.budget;
   if (!budget || !amount) return;
+  if (legacy && (!claim.conduct_run_id || claim.conduct_run_id !== event.run_id
+      || !claim.conduct_lease_id || claim.conduct_lease_id !== event.lease_id
+      || claim.conduct_generation !== event.generation)) {
+    throw new ConductProjectionError(`task ${task.id} cannot derive a canonical budget refund reservation`, 409);
+  }
+  const timestamp = claim.timestamp;
+  const parsed = typeof timestamp === "string" ? Date.parse(timestamp) : Number.NaN;
+  if (typeof timestamp !== "string"
+      || !/^(?!0000)\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|\+00:00)$/.test(timestamp)
+      || !Number.isFinite(parsed)
+      || new Date(parsed).toISOString().slice(0, 19) !== timestamp.slice(0, 19)) {
+    throw new ConductProjectionError(`task ${task.id} cannot derive a canonical budget refund window`, 409);
+  }
   resetBudgetWindow(budget, event);
+  // Rollover already retired this reservation's debit. Later metadata does
+  // not transfer it into another UTC day's ledger.
+  if (budget.track.date !== timestamp.slice(0, 10)) return;
   budget.track.per_agent ||= {};
   budget.track.spent = Math.max(0, Number(budget.track.spent || 0) - amount);
   budget.track.per_agent[agent] = Math.max(
@@ -519,12 +585,58 @@ function isLifecycleRepairAuthorized(task, nextStatus, log, patch) {
   }
   const priorEntry = (task.dispatch_log || []).at(-1) || {};
   const priorReservation = logicalLogSession(priorEntry);
+  if (marker === "provider-attempt-unknown") {
+    const contractHash = String(log?.execution_contract_hash || "");
+    return priorStatus === "dispatched"
+      && nextStatus === "failed"
+      && log?.execution_started == null
+      && log?.execution_result_kind === "failed"
+      && /^[0-9a-f]{64}$/.test(contractHash)
+      && contractHash === String(priorEntry.execution_contract_hash || "")
+      && String(log?.execution_reservation_id || "") === priorReservation
+      && Boolean(priorReservation)
+      && priorEntry.status === "dispatched";
+  }
   if (marker === "provider-terminal") {
     const contractHash = String(log?.execution_contract_hash || "");
     return priorStatus === "dispatched"
       && ["done", "failed", "failed_blocked"].includes(nextStatus)
       && log?.execution_started === true
       && log?.execution_result_kind === nextStatus
+      && /^[0-9a-f]{64}$/.test(contractHash)
+      && contractHash === String(priorEntry.execution_contract_hash || "")
+      && String(log?.execution_reservation_id || "") === priorReservation
+      && Boolean(priorReservation)
+      && priorEntry.status === "dispatched";
+  }
+  if (marker === "plan-handoff-complete") {
+    const contractHash = String(log?.execution_contract_hash || "");
+    return priorStatus === "dispatched"
+      && nextStatus === "open"
+      && log?.execution_started === true
+      && /^[0-9a-f]{64}$/.test(contractHash)
+      && contractHash === String(priorEntry.execution_contract_hash || "")
+      && String(log?.execution_reservation_id || "") === priorReservation
+      && Boolean(priorReservation)
+      && priorEntry.status === "dispatched";
+  }
+  if (marker === "provider-reroute") {
+    const contractHash = String(log?.execution_contract_hash || "");
+    return priorStatus === "dispatched"
+      && nextStatus === "open"
+      && log?.execution_started === true
+      && /^[0-9a-f]{64}$/.test(contractHash)
+      && contractHash === String(priorEntry.execution_contract_hash || "")
+      && String(log?.execution_reservation_id || "") === priorReservation
+      && Boolean(priorReservation)
+      && priorEntry.status === "dispatched";
+  }
+  if (marker === "prelaunch-successor-hold") {
+    const contractHash = String(log?.execution_contract_hash || "");
+    return priorStatus === "dispatched"
+      && nextStatus === "failed"
+      && labels.has("workstream:successor-required")
+      && log?.execution_started === false
       && /^[0-9a-f]{64}$/.test(contractHash)
       && contractHash === String(priorEntry.execution_contract_hash || "")
       && String(log?.execution_reservation_id || "") === priorReservation
@@ -584,6 +696,11 @@ export function applyTaskPacketProjectionEvent(input, event) {
     }
     const supplied = clone(intent.task || {});
     validateTaskShape(supplied, taskId);
+    validatePolicyUpdate(existing, { ...existing, ...supplied }, taskId);
+    requireInventoryAdmission(existing, { ...existing, ...supplied }, taskId);
+    if (!existing && ["dispatched", "in_progress"].includes(supplied.status)) {
+      throw new ConductProjectionError(`task ${taskId} canonical_reservation_required`, 409);
+    }
     if (supplied.receipt_verified === true) {
       throw new ConductProjectionError(
         `task ${taskId} receipt credit requires an evidence-bound status transition`,
@@ -607,11 +724,16 @@ export function applyTaskPacketProjectionEvent(input, event) {
         Object.entries(supplied).filter(([field]) => PATCHABLE_TASK_FIELDS.has(field)),
       );
       validatePatch(patch, taskId);
+      const candidate = { ...existing, ...patch };
+      validatePolicyUpdate(existing, candidate, taskId);
+      requireReservedBudgetCost(existing, candidate);
+      if (candidate.provider_eligibility != null) patch.provider_eligibility = candidate.provider_eligibility;
       Object.assign(task, patch);
       task.dispatch_log = history;
       if (created !== undefined) task.created = created;
     }
     if (!existing) {
+      validatePolicyUpdate(null, task, taskId);
       const missing = taskWorkLoanMissingFields(task);
       if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 422);
     }
@@ -644,7 +766,7 @@ export function applyTaskPacketProjectionEvent(input, event) {
       409,
     );
   }
-  const patch = intent.patch || {};
+  const patch = clone(intent.patch || {});
   validatePatch(patch, taskId);
   if (kind === "task.status" && !Object.prototype.hasOwnProperty.call(patch, "status")) {
     throw new ConductProjectionError(`task ${taskId} status intent requires a status patch`, 422);
@@ -652,16 +774,42 @@ export function applyTaskPacketProjectionEvent(input, event) {
   const nextStatus = patch.status ?? existing.status;
   requireReceiptCredit(taskId, existing, patch, intent.log);
   if (["dispatched", "in_progress"].includes(nextStatus)) {
+    // A policy document is not a trusted provider attestation. Preserve it,
+    // but admit no policy-bearing execution until the live adapter exists.
+    // Checking both sides also forbids stripping policy during the claim.
+    if (existing.provider_eligibility != null || patch.provider_eligibility != null) {
+      throw new ConductProjectionError(`task ${taskId} provider_eligibility_adapter_unavailable`, 409);
+    }
     const missing = taskWorkLoanMissingFields({ ...existing, ...patch });
     if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 409);
   }
-  if (!isHeldJulesLandingRecovery(existing, nextStatus, intent.log)
-      && !(kind === "task.status"
-        && isLifecycleRepairAuthorized(existing, nextStatus, intent.log, patch))) {
+  const candidate = { ...existing, ...patch };
+  validatePolicyUpdate(existing, candidate, taskId);
+  requireInventoryAdmission(existing, candidate, taskId);
+  if (candidate.provider_eligibility != null) patch.provider_eligibility = candidate.provider_eligibility;
+  const lifecycleRepair = kind === "task.status"
+    && isLifecycleRepairAuthorized(existing, nextStatus, intent.log, patch);
+  // A malformed execution receipt is not a prelaunch cancellation. Reject it
+  // before the ordinary dispatched -> open fallback can refund its debit.
+  if (["plan-handoff-complete", "provider-reroute", "provider-attempt-unknown"]
+    .includes(intent.log?.lifecycle_repair) && !lifecycleRepair) {
+    throw new ConductProjectionError(
+      `task ${taskId} cannot transition: lifecycle repair evidence does not match reservation`, 409,
+    );
+  }
+  if (!isHeldJulesLandingRecovery(existing, nextStatus, intent.log) && !lifecycleRepair) {
     validateTransition(taskId, existing.status, nextStatus, kind);
   }
+  requireReservedBudgetCost(existing, candidate);
   if (kind === "task.claim") applyCanonicalBudgetDebit(board, existing, event, patch);
-  if (kind === "task.status" && existing.status === "dispatched" && nextStatus === "open") {
+  if (kind === "task.status"
+      && existing.status === "dispatched"
+      && ((nextStatus === "open"
+        && !(lifecycleRepair && ["plan-handoff-complete", "provider-reroute"]
+          .includes(intent.log?.lifecycle_repair)))
+        || (nextStatus === "failed"
+          && lifecycleRepair
+          && intent.log?.lifecycle_repair === "prelaunch-successor-hold"))) {
     applyCanonicalBudgetRefund(board, existing, event);
   }
   Object.assign(existing, clone(patch));
@@ -678,6 +826,10 @@ export function applyTaskPacketProjectionEvent(input, event) {
 }
 
 function ensureBudget(board, task, event) {
+  if (event.budget_action === "refund") {
+    applyCanonicalBudgetRefund(board, task, event, true);
+    return;
+  }
   const budget = board.portal?.budget;
   if (!budget || event.budget_action === "none") return;
   resetBudgetWindow(budget, event);
@@ -696,9 +848,6 @@ function ensureBudget(board, task, event) {
     }
     budget.track.spent = priorTotal + cost;
     budget.track.per_agent[event.agent] = priorAgent + cost;
-  } else if (event.budget_action === "refund") {
-    budget.track.spent = Math.max(0, priorTotal - cost);
-    budget.track.per_agent[event.agent] = Math.max(0, priorAgent - cost);
   }
 }
 
@@ -712,6 +861,8 @@ export function applyTaskCompatibilityEvent(input, event) {
   }
   const task = (board.tasks || []).find((candidate) => candidate.id === event.task_id);
   if (!task) throw new ConductProjectionError(`task ${event.task_id} not found in canonical board`, 409);
+  validatePolicyUpdate(task, { ...task, status: event.status }, event.task_id);
+  requireInventoryAdmission(task, { ...task, status: event.status }, event.task_id);
   if (["dispatched", "in_progress"].includes(event.status)) {
     const missing = taskWorkLoanMissingFields(task);
     if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 409);
