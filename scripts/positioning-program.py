@@ -50,6 +50,9 @@ if str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
 
 from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY  # noqa: E402
+from limen.github_connector import ConnectorError, StdioGitHubConnector  # noqa: E402
+
+GITHUB_CONNECTOR: StdioGitHubConnector | None = None
 
 DEFAULT_MANIFEST = ROOT / "institutio" / "positioning" / "program.yaml"
 DEFAULT_MAP = ROOT / "institutio" / "positioning" / "github-map.json"
@@ -1297,6 +1300,13 @@ def labels_for(object_id: str, graph: dict[str, Any]) -> list[str]:
 
 
 def _gh(args: list[str], *, input_value: object | None = None, allow_failure: bool = False) -> Any:
+    if GITHUB_CONNECTOR is not None:
+        try:
+            return GITHUB_CONNECTOR.request(args, input_value)
+        except ConnectorError as exc:
+            if allow_failure:
+                return None
+            raise RemoteObservationError(str(exc)) from exc
     try:
         result = subprocess.run(
             ["gh", *args],
@@ -2922,6 +2932,7 @@ def omega(
 
 
 def main(argv: list[str] | None = None) -> int:
+    global GITHUB_CONNECTOR
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true")
@@ -2947,8 +2958,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--github-map", type=Path, default=DEFAULT_MAP)
     parser.add_argument("--index", type=Path, default=DEFAULT_INDEX)
     parser.add_argument("--chunks", type=Path, default=DEFAULT_CHUNKS)
+    parser.add_argument(
+        "--github-transport", choices=("gh", "connector"), default="gh",
+        help="connector uses live authenticated REST GET responses over stdin/stderr; never GitHub writes",
+    )
     args = parser.parse_args(argv)
+    GITHUB_CONNECTOR = StdioGitHubConnector() if args.github_transport == "connector" else None
     try:
+        if args.github_transport == "connector" and args.apply:
+            raise ProgramError("connector transport is read-only; --apply is unavailable")
         if args.apply and not args.sync:
             raise ProgramError("--apply is valid only with --sync")
         if args.omega_pass is not None and not args.omega:
@@ -3024,6 +3042,9 @@ def main(argv: list[str] | None = None) -> int:
     except ProgramError as exc:
         print(f"positioning-program: BLOCKED — {exc}", file=sys.stderr)
         return 2
+    finally:
+        if GITHUB_CONNECTOR is not None:
+            GITHUB_CONNECTOR.close()
 
 
 if __name__ == "__main__":
