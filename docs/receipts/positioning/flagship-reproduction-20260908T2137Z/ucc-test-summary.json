@@ -1,0 +1,484 @@
+{
+  "numTotalTestSuites": 568,
+  "numPassedTestSuites": 568,
+  "numFailedTestSuites": 0,
+  "numPendingTestSuites": 0,
+  "numTotalTests": 1510,
+  "numPassedTests": 1504,
+  "numFailedTests": 0,
+  "numPendingTests": 6,
+  "numTodoTests": 0,
+  "startTime": 1788903452673,
+  "success": true,
+  "source_sha256": "2fd73aa9b4deee2ef9f30977b90cc087d13be6cd7ea26731bd016b3282fcefcd",
+  "source_bytes": 465654,
+  "source_artifact": "ucc-tests.json.gz",
+  "test_file_count": 93,
+  "test_files": [
+    {
+      "path": "server/__tests__/serverlessApp.test.ts",
+      "status": "passed",
+      "assertions": 6
+    },
+    {
+      "path": "server/__tests__/config/index.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "path": "server/__tests__/integrations/stripe.tierMapping.test.ts",
+      "status": "passed",
+      "assertions": 7
+    },
+    {
+      "path": "server/__tests__/middleware/apiKeyAuth.test.ts",
+      "status": "passed",
+      "assertions": 8
+    },
+    {
+      "path": "server/__tests__/middleware/authMiddleware.test.ts",
+      "status": "passed",
+      "assertions": 25
+    },
+    {
+      "path": "server/__tests__/middleware/dataTier.test.ts",
+      "status": "passed",
+      "assertions": 21
+    },
+    {
+      "path": "server/__tests__/middleware/errorHandler.test.ts",
+      "status": "passed",
+      "assertions": 11
+    },
+    {
+      "path": "server/__tests__/middleware/httpsRedirect.test.ts",
+      "status": "passed",
+      "assertions": 16
+    },
+    {
+      "path": "server/__tests__/middleware/rateLimiter.test.ts",
+      "status": "passed",
+      "assertions": 17
+    },
+    {
+      "path": "server/__tests__/middleware/requestLogger.test.ts",
+      "status": "passed",
+      "assertions": 15
+    },
+    {
+      "path": "server/__tests__/middleware/tierGate.test.ts",
+      "status": "passed",
+      "assertions": 7
+    },
+    {
+      "path": "server/__tests__/middleware/validateRequest.test.ts",
+      "status": "passed",
+      "assertions": 15
+    },
+    {
+      "path": "server/__tests__/middleware/webhookAuth.test.ts",
+      "status": "passed",
+      "assertions": 20
+    },
+    {
+      "path": "server/__tests__/queue/connection.test.ts",
+      "status": "passed",
+      "assertions": 17
+    },
+    {
+      "path": "server/__tests__/queue/queues.test.ts",
+      "status": "passed",
+      "assertions": 22
+    },
+    {
+      "path": "server/__tests__/queue/scheduler.test.ts",
+      "status": "passed",
+      "assertions": 35
+    },
+    {
+      "path": "server/__tests__/routes/agentic.test.ts",
+      "status": "passed",
+      "assertions": 10
+    },
+    {
+      "path": "server/__tests__/routes/apiKeys.test.ts",
+      "status": "passed",
+      "assertions": 12
+    },
+    {
+      "path": "server/__tests__/routes/billing.checkout.test.ts",
+      "status": "passed",
+      "assertions": 6
+    },
+    {
+      "path": "server/__tests__/routes/billing.webhook.test.ts",
+      "status": "passed",
+      "assertions": 7
+    },
+    {
+      "path": "server/__tests__/routes/communications.test.ts",
+      "status": "passed",
+      "assertions": 24
+    },
+    {
+      "path": "server/__tests__/routes/competitive.test.ts",
+      "status": "passed",
+      "assertions": 18
+    },
+    {
+      "path": "server/__tests__/routes/competitors.test.ts",
+      "status": "passed",
+      "assertions": 12
+    },
+    {
+      "path": "server/__tests__/routes/compliance.test.ts",
+      "status": "passed",
+      "assertions": 20
+    },
+    {
+      "path": "server/__tests__/routes/contacts.test.ts",
+      "status": "passed",
+      "assertions": 27
+    },
+    {
+      "path": "server/__tests__/routes/deals.test.ts",
+      "status": "passed",
+      "assertions": 35
+    },
+    {
+      "path": "server/__tests__/routes/discovery.test.ts",
+      "status": "passed",
+      "assertions": 14
+    },
+    {
+      "path": "server/__tests__/routes/enrichment.test.ts",
+      "status": "passed",
+      "assertions": 16
+    },
+    {
+      "path": "server/__tests__/routes/health.test.ts",
+      "status": "passed",
+      "assertions": 14
+    },
+    {
+      "path": "server/__tests__/routes/leadExport.test.ts",
+      "status": "passed",
+      "assertions": 8
+    },
+    {
+      "path": "server/__tests__/routes/metrics.test.ts",
+      "status": "passed",
+      "assertions": 19
+    },
+    {
+      "path": "server/__tests__/routes/outreach.test.ts",
+      "status": "passed",
+      "assertions": 18
+    },
+    {
+      "path": "server/__tests__/routes/portfolio.test.ts",
+      "status": "passed",
+      "assertions": 12
+    },
+    {
+      "path": "server/__tests__/routes/prospects-engines.test.ts",
+      "status": "passed",
+      "assertions": 12
+    },
+    {
+      "path": "server/__tests__/routes/prospects.claim.test.ts",
+      "status": "passed",
+      "assertions": 18
+    },
+    {
+      "path": "server/__tests__/routes/prospects.test.ts",
+      "status": "passed",
+      "assertions": 22
+    },
+    {
+      "path": "server/__tests__/routes/scrape.test.ts",
+      "status": "passed",
+      "assertions": 9
+    },
+    {
+      "path": "server/__tests__/routes/status.test.ts",
+      "status": "passed",
+      "assertions": 14
+    },
+    {
+      "path": "server/__tests__/routes/underwriting.test.ts",
+      "status": "passed",
+      "assertions": 5
+    },
+    {
+      "path": "server/__tests__/routes/webhooks.inbound.test.ts",
+      "status": "passed",
+      "assertions": 7
+    },
+    {
+      "path": "server/__tests__/services/AlertService.persistence.test.ts",
+      "status": "passed",
+      "assertions": 9
+    },
+    {
+      "path": "server/__tests__/services/ApiKeyService.test.ts",
+      "status": "passed",
+      "assertions": 12
+    },
+    {
+      "path": "server/__tests__/services/AuditService.test.ts",
+      "status": "passed",
+      "assertions": 25
+    },
+    {
+      "path": "server/__tests__/services/BankStatementAnalyzer.test.ts",
+      "status": "passed",
+      "assertions": 10
+    },
+    {
+      "path": "server/__tests__/services/CommunicationsService.test.ts",
+      "status": "passed",
+      "assertions": 39
+    },
+    {
+      "path": "server/__tests__/services/CompetitiveHeatMapService.test.ts",
+      "status": "passed",
+      "assertions": 11
+    },
+    {
+      "path": "server/__tests__/services/CompetitorsService.test.ts",
+      "status": "passed",
+      "assertions": 16
+    },
+    {
+      "path": "server/__tests__/services/ComplianceReportService.test.ts",
+      "status": "passed",
+      "assertions": 18
+    },
+    {
+      "path": "server/__tests__/services/ConsentService.test.ts",
+      "status": "passed",
+      "assertions": 32
+    },
+    {
+      "path": "server/__tests__/services/ContactsService.test.ts",
+      "status": "passed",
+      "assertions": 43
+    },
+    {
+      "path": "server/__tests__/services/CoverageAlertService.test.ts",
+      "status": "passed",
+      "assertions": 11
+    },
+    {
+      "path": "server/__tests__/services/DataQualityService.test.ts",
+      "status": "passed",
+      "assertions": 15
+    },
+    {
+      "path": "server/__tests__/services/DealsService.test.ts",
+      "status": "passed",
+      "assertions": 37
+    },
+    {
+      "path": "server/__tests__/services/DisclosureCalculator.test.ts",
+      "status": "passed",
+      "assertions": 28
+    },
+    {
+      "path": "server/__tests__/services/DisclosureService.test.ts",
+      "status": "passed",
+      "assertions": 28
+    },
+    {
+      "path": "server/__tests__/services/EnrichmentService.test.ts",
+      "status": "passed",
+      "assertions": 15
+    },
+    {
+      "path": "server/__tests__/services/EquipmentLifecycleDetector.test.ts",
+      "status": "passed",
+      "assertions": 18
+    },
+    {
+      "path": "server/__tests__/services/ExecutionContractService.test.ts",
+      "status": "passed",
+      "assertions": 10
+    },
+    {
+      "path": "server/__tests__/services/FilingVelocityService.test.ts",
+      "status": "passed",
+      "assertions": 10
+    },
+    {
+      "path": "server/__tests__/services/FreshCapacityService.test.ts",
+      "status": "passed",
+      "assertions": 14
+    },
+    {
+      "path": "server/__tests__/services/LeadExportService.test.ts",
+      "status": "passed",
+      "assertions": 3
+    },
+    {
+      "path": "server/__tests__/services/MLScoringModel.test.ts",
+      "status": "passed",
+      "assertions": 7
+    },
+    {
+      "path": "server/__tests__/services/NarrativeService.test.ts",
+      "status": "passed",
+      "assertions": 19
+    },
+    {
+      "path": "server/__tests__/services/OutreachSequenceService.test.ts",
+      "status": "passed",
+      "assertions": 15
+    },
+    {
+      "path": "server/__tests__/services/PortfolioService.test.ts",
+      "status": "passed",
+      "assertions": 18
+    },
+    {
+      "path": "server/__tests__/services/PreCallBriefingService.test.ts",
+      "status": "passed",
+      "assertions": 13
+    },
+    {
+      "path": "server/__tests__/services/ProspectsService.test.ts",
+      "status": "passed",
+      "assertions": 33
+    },
+    {
+      "path": "server/__tests__/services/QualificationService.test.ts",
+      "status": "passed",
+      "assertions": 23
+    },
+    {
+      "path": "server/__tests__/services/ScoringService.test.ts",
+      "status": "passed",
+      "assertions": 34
+    },
+    {
+      "path": "server/__tests__/services/ScrapeJobService.test.ts",
+      "status": "passed",
+      "assertions": 11
+    },
+    {
+      "path": "server/__tests__/services/StackAnalysisService.test.ts",
+      "status": "passed",
+      "assertions": 20
+    },
+    {
+      "path": "server/__tests__/services/SuppressionService.test.ts",
+      "status": "passed",
+      "assertions": 38
+    },
+    {
+      "path": "server/__tests__/services/TelemetryPersistenceService.test.ts",
+      "status": "passed",
+      "assertions": 26
+    },
+    {
+      "path": "server/__tests__/services/UCCSearchService.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "path": "server/__tests__/services/UnderwritingService.test.ts",
+      "status": "passed",
+      "assertions": 21
+    },
+    {
+      "path": "server/__tests__/services/commercialSources.test.ts",
+      "status": "passed",
+      "assertions": 8
+    },
+    {
+      "path": "server/__tests__/services/funderIntel.test.ts",
+      "status": "passed",
+      "assertions": 4
+    },
+    {
+      "path": "server/__tests__/services/improvementExecutor.test.ts",
+      "status": "passed",
+      "assertions": 14
+    },
+    {
+      "path": "server/__tests__/services/leadDiscovery.test.ts",
+      "status": "passed",
+      "assertions": 14
+    },
+    {
+      "path": "server/__tests__/services/outreachSequence.recordReply.test.ts",
+      "status": "passed",
+      "assertions": 7
+    },
+    {
+      "path": "server/__tests__/services/replyHandling.test.ts",
+      "status": "passed",
+      "assertions": 17
+    },
+    {
+      "path": "server/__tests__/services/sbaLoansChannel.test.ts",
+      "status": "passed",
+      "assertions": 9
+    },
+    {
+      "path": "server/__tests__/services/secEdgarRegistrantsChannel.test.ts",
+      "status": "passed",
+      "assertions": 9
+    },
+    {
+      "path": "server/__tests__/services/socrataBuildingPermitsChannel.test.ts",
+      "status": "passed",
+      "assertions": 10
+    },
+    {
+      "path": "server/__tests__/utils/logger.test.ts",
+      "status": "passed",
+      "assertions": 1
+    },
+    {
+      "path": "server/__tests__/queue/workers/digestWorker.test.ts",
+      "status": "passed",
+      "assertions": 18
+    },
+    {
+      "path": "server/__tests__/queue/workers/enrichmentWorker.test.ts",
+      "status": "passed",
+      "assertions": 23
+    },
+    {
+      "path": "server/__tests__/queue/workers/healthWorker.test.ts",
+      "status": "passed",
+      "assertions": 32
+    },
+    {
+      "path": "server/__tests__/queue/workers/ingestionWorker.test.ts",
+      "status": "passed",
+      "assertions": 10
+    },
+    {
+      "path": "server/__tests__/queue/workers/outreachWorker.test.ts",
+      "status": "passed",
+      "assertions": 11
+    },
+    {
+      "path": "server/__tests__/queue/workers/portalProbeWorker.test.ts",
+      "status": "passed",
+      "assertions": 19
+    },
+    {
+      "path": "server/__tests__/queue/workers/terminationDetectionWorker.test.ts",
+      "status": "passed",
+      "assertions": 7
+    },
+    {
+      "path": "server/__tests__/queue/workers/velocityAnalysisWorker.test.ts",
+      "status": "passed",
+      "assertions": 5
+    }
+  ]
+}

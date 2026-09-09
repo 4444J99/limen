@@ -1,0 +1,31 @@
+{
+  "url": "https://api.github.com/repos/4444J99/limen",
+  "http_status": 200,
+  "observed_at": "2026-09-09T12:35:14.705089+00:00",
+  "raw_body_sha256": "sha256:a98d450d708dc652d165b4f9c87d5751f219b023b3917da90d281722f7d673ba",
+  "receipt_type": "normalized-github-repository-observation",
+  "normalized_body": {
+    "id": 1255213941,
+    "full_name": "4444J99/limen",
+    "html_url": "https://github.com/4444J99/limen",
+    "description": "Self-healing agent fleet \u2014 autonomic organs for health, credentials, state sync, failure escalation. Zero ops work; runs on heartbeat.",
+    "homepage": "https://github.com/organvm",
+    "topics": [
+      "agent-orchestration",
+      "agent-reliability",
+      "autonomous-systems",
+      "fleet-management",
+      "heartbeat-driven",
+      "infrastructure-automation",
+      "organ-architecture",
+      "self-healing",
+      "zero-ops"
+    ],
+    "license": null,
+    "default_branch": "main",
+    "archived": false
+  },
+  "normalization": "Only public repository identity, metadata, license and branch fields retained; the raw-body digest binds the complete API response.",
+  "source_commit": "1a5c4cae6676b1b63cc3c4ff09c8ba305632c5d0",
+  "root_license_paths": []
+}
