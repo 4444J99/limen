@@ -200,9 +200,10 @@ class ExecutionContext(unittest.TestCase):
                 seen["authorization"] = request.get_header("Authorization")
                 return Response()
 
+        token = "unit-" + "test-credential"
         with patch.object(relay.urllib.request, "build_opener", return_value=Opener()):
-            relay.GitHub("governor-secret")(f"/repos/{relay.REPOSITORY}/pulls/1")
-        self.assertEqual(seen["authorization"], "Bearer governor-secret")
+            relay.GitHub(token)(f"/repos/{relay.REPOSITORY}/pulls/1")
+        self.assertEqual(seen["authorization"], "Bearer " + token)
 
     def test_trusted_workflow_bodies_run_from_checked_out_repository(self):
         calls = []
