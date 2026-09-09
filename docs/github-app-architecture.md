@@ -45,7 +45,7 @@ A **PAT acts as the human** and shares that account's authorization and rate-lim
 
 - its own actor (`limen[bot]`), independent of any human account,
 - per-repo **least-privilege, auto-expiring** installation tokens,
-- 15k/hr rate limit,
+- an installation-specific rate-limit budget,
 - selects the installation for one exact target repository before minting.
 
 (A bot *user* account is the inferior alternative; a fine-grained PAT is only a bootstrap.)
@@ -74,18 +74,29 @@ When App credentials are present, missing/invalid targeting or mint failure exit
 falling back to PAT or `gh`. `bash scripts/gh-app-token.sh --repo OWNER/REPO --which` reports which
 path would be used, printing no secret.
 
-## The one human atom (to flip identity from PAT → App)
+## Provision the App identity
 
-Everything below is the irreducible manual step a script cannot do (it generates a private key):
+Standing GitHub authorization is recorded in credential-wall issue #320. App creation,
+installation, durable credential delivery, and exact-repository verification remain technical
+provisioning until their live receipts exist. A saved connector permission setting does not mint
+an App credential. Do not ask the user to repeat the same authorization.
+
+The permission source is `app.expected_permissions` in `institutio/github/estate.yaml`.
+The bootstrap derives its manifest from that map and refuses missing or malformed policy before
+starting the browser flow. The current contract is Administration, Contents, and Pull requests
+write; Actions and Metadata read. No workflow, issue, member, or organization-administration grant
+is added independently by the bootstrap.
 
 1. **Register the App**: GitHub → Settings → Developer settings → GitHub Apps → New.
-   - Name `limen[bot]`; permissions least-privilege (Contents: RW, Pull requests: RW,
-     Actions: R, Metadata: R); no webhook needed for token minting.
+   - Use the current estate permission map; no webhook is needed for token minting.
    - Generate a **private key** (downloads a `.pem`). Note the numeric **App ID**.
-2. **Install** the App only where required, beginning with the exact controller repository
-   `4444J99/limen`, then each exact organization target that a trusted finalizer must mutate.
-   Derive targets from live repository identity at execution time; do not grant blanket estate
-   access or select an arbitrary repository from an owner-wide installation.
+2. **Install** only on the exact target selected by `--verify-repo OWNER/REPO`.
+   The bootstrap creates a private App in that repository owner's account. The default target is
+   `4444J99/limen`, owned by `4444J99`. That same private App cannot be installed in a different
+   organization. An organization target requires an owner-local App, a unique `--app-name`, and
+   separate `--key-path` and `LIMEN_ENV` custody so controller credentials are not overwritten.
+   [GitHub's private-App installation boundary](https://docs.github.com/en/apps/creating-github-apps/registering-a-github-app/making-a-github-app-public-or-private)
+   applies; do not change visibility or grant blanket estate access to bypass it.
 3. **Hand the conductor the creds** (silent, never echoed):
    ```sh
    scripts/bootstrap-github-app.py
@@ -99,4 +110,12 @@ Everything below is the irreducible manual step a script cannot do (it generates
 5. **Let the Enterprise trial lapse.** No migration, no payment. (Do NOT delete `organvm` — it
    now holds 301 repos; the earlier "delete the empty organvm" note is stale.)
 
-Until step 1–3 are done, the fleet keeps running on the PAT fallback — zero behavior change.
+App-dependent mutation and finalizer paths require `--app-only` and remain blocked until the
+exact-repository App probe succeeds. The helper's legacy PAT/gh fallback is available only to
+callers that permit it; it does not satisfy App-only acceptance.
+
+The bootstrap's local files are a delivery cache, not durable credential custody. Provision from
+an approved runtime connected to the existing credential organ and preserve credentials there
+before declaring the setup complete. Never put a PEM or token in a repository, issue, or chat.
+Use the dedicated isolated App/protection contract in `docs/architecture/personal-relay-merge.md`
+for the CI relay; the generic estate App and generic protection rollout are not its governor.

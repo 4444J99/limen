@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 
 import pytest
+import yaml
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -129,3 +130,70 @@ def test_bootstrap_private_app_rejects_cross_owner_target() -> None:
             app_name="limen-bot-test",
             install_repo="4444J99/limen",
         )
+
+
+def test_bootstrap_manifest_uses_exact_estate_permission_contract() -> None:
+    bootstrap = _load_script("bootstrap_permission_contract", "scripts/bootstrap-github-app.py")
+    policy = yaml.safe_load(bootstrap.ESTATE.read_text())
+    manifest = bootstrap.build_manifest("4444J99/limen", "http://127.0.0.1/callback", "limen-test")
+
+    assert manifest["default_permissions"] == policy["app"]["expected_permissions"]
+    assert manifest["default_permissions"]["actions"] == "read"
+    assert (
+        not {"workflows", "issues", "organization_administration", "members"} & manifest["default_permissions"].keys()
+    )
+    assert manifest["public"] is False
+
+
+@pytest.mark.parametrize(
+    "policy",
+    [
+        "",
+        "[]",
+        "app: []",
+        "app: {}",
+        "app: {expected_permissions: {}}",
+        "app: {expected_permissions: [contents]}",
+        "app: {expected_permissions: {contents: admin}}",
+        "app: {expected_permissions: {contents: true}}",
+        "app: {expected_permissions: {contents: []}}",
+        "app: {expected_permissions: {42: read}}",
+        "app: {expected_permissions: {'invalid scope': write}}",
+        "app: [",
+    ],
+)
+def test_bootstrap_invalid_policy_fails_before_server_bind(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, policy: str
+) -> None:
+    bootstrap = _load_script("bootstrap_invalid_permission_policy", "scripts/bootstrap-github-app.py")
+    estate = tmp_path / "estate.yaml"
+    estate.write_text(policy)
+    monkeypatch.setattr(bootstrap, "ESTATE", estate)
+    monkeypatch.setattr(
+        bootstrap.http.server.ThreadingHTTPServer,
+        "__init__",
+        lambda *_args, **_kwargs: pytest.fail("bound server before policy validation"),
+    )
+
+    with pytest.raises(ValueError, match="estate"):
+        bootstrap.BootstrapServer(
+            ("127.0.0.1", 0),
+            bootstrap.BootstrapHandler,
+            app_owner="4444J99",
+            app_owner_type="User",
+            app_name="test",
+            install_repo="4444J99/limen",
+        )
+
+
+def test_bootstrap_missing_policy_stops_before_account_lookup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    bootstrap = _load_script("bootstrap_missing_permission_policy", "scripts/bootstrap-github-app.py")
+    monkeypatch.setattr(bootstrap, "ESTATE", tmp_path / "missing.yaml")
+    monkeypatch.setattr(bootstrap.sys, "argv", ["bootstrap-github-app.py", "--verify-repo", "4444J99/limen"])
+    monkeypatch.setattr(
+        bootstrap, "github_account_type", lambda *_: pytest.fail("called GitHub before policy validation")
+    )
+
+    with pytest.raises(SystemExit) as exc:
+        bootstrap.main()
+    assert exc.value.code == 2
