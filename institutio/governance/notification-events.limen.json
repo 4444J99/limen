@@ -2,6 +2,7 @@
   "namespace": "limen",
   "schema_version": 1,
   "events": {
+    "limen.dependency.exception": {"class":"actionable","severity":"normal","owner":"limen","privacy":"public-safe","channels":["macos","ntfy"],"dedupe_key":"{stable_id}:{subject_key}","recovery":"none","title":"Limen dependency upkeep","templates":{"onset":"{identity} requires dependency review: {reasons}."}},
     "limen.legacy.ntfy": {"class":"diagnostic","severity":"quiet","owner":"limen","privacy":"public-safe","channels":["ntfy"],"dedupe_key":"{stable_id}:{subject_key}","recovery":"none","title":"{title}","templates":{"milestone":"{message}"}},
     "limen.summary.morning": {"class":"summary","severity":"normal","owner":"limen","privacy":"public-safe","channels":["macos","ntfy"],"dedupe_key":"{stable_id}:{subject_key}","recovery":"none","title":"Limen morning snapshot","templates":{"summary":"Snapshot as of {snapshot_time}: {summary}"}},
     "limen.summary.midday": {"class":"summary","severity":"normal","owner":"limen","privacy":"public-safe","channels":["macos","ntfy"],"dedupe_key":"{stable_id}:{subject_key}","recovery":"none","title":"Limen midday snapshot","templates":{"summary":"Snapshot as of {snapshot_time}: {summary}"}},

@@ -299,6 +299,11 @@ gates:
     note: "Personal relay governor transaction rejects spoofed producers, stale base/head tuples, weakened controls, and generic merge fallback; fixtures do not substitute for protected live canaries."
     paths: ["scripts/_relay_merge.py", "scripts/merge-drain.py", "scripts/tests/relay-merge.test.py"]
     owner: merge-policy
+  dependency-acceptance-test:
+    command: "python3 scripts/tests/dependency-acceptance.test.py && python3 scripts/tests/dependency-upkeep.test.py"
+    paths: ["scripts/_dependency_acceptance.py", "scripts/_dependency_upkeep.py", "scripts/merge-drain.py", "scripts/merge-policy.sh", "scripts/tests/dependency-acceptance.test.py", "scripts/tests/dependency-upkeep.test.py", "institutio/github/dependency-trust.json", "docs/architecture/dependency-upkeep.md"]
+    owner: merge-policy
+    note: "Dependency upkeep routes exact trusted native-CI evidence to independent review, holds malformed/stale/untrusted evidence and all automatic pilot dependency merges, and requests at most one configured review after fresh readback. Unit fixtures do not prove protected GitHub enforcement or deployed background operation."
   merge-queue-contract-test:
     command: "env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_EDITOR=true GIT_SEQUENCE_EDITOR=true VISUAL=true EDITOR=true python3 scripts/tests/merge-queue-contract.test.py && bash scripts/run-pytest-hermetic.sh cli/tests/test_pr_scan.py cli/tests/test_merge_drain.py cli/tests/test_self_heal.py cli/tests/test_tabularius.py -q"
     paths: [".github/workflows/pr-gate.yml", ".github/workflows/auto-scale.yml", ".github/workflows/operate.yml", "cli/src/limen/tabularius.py", "cli/tests/test_pr_scan.py", "cli/tests/test_merge_drain.py", "cli/tests/test_self_heal.py", "cli/tests/test_tabularius.py", "scripts/tabularius-organ.py", "scripts/setup-rulesets.py", "scripts/_pr_scan.py", "scripts/merge-policy.sh", "scripts/await-pr.sh", "scripts/merge-drain.py", "scripts/self-heal.py", "scripts/verify.py", "scripts/tests/merge-queue-contract.test.py"]
