@@ -119,6 +119,7 @@ positioning-foundry-technical-readiness-test
 positioning-foundry-technical-readiness-public-live
 positioning-offer-contract-test
 research-adjudication-test
+positioning-launch-prompts-test
 check-note-links' institutio/positioning/program.yaml
 
 expect p03-evidence-matrix-offer-input-change 'syntax-changed
@@ -152,7 +153,21 @@ expect research-adjudication-live-input-change 'syntax-changed
 diff-hygiene
 positioning-foundry-technical-readiness-public-live
 research-adjudication-test
+positioning-launch-prompts-test
 check-note-links' institutio/positioning/github-map.json
+
+# Copied handoffs and their planning source have a narrow deterministic owner;
+# editing them never selects unrelated public-live observation gates.
+for launch_path in \
+  docs/positioning/program/recalibration/launch-contract.json \
+  docs/positioning/program/recalibration/2026-09-08-launch-prompts.md \
+  docs/positioning/program/recalibration/2026-09-08-snapshot.json; do
+expect "launch-contract-$launch_path" 'syntax-changed
+diff-hygiene
+positioning-launch-prompts-test
+check-docs-exports
+check-note-links' "$launch_path"
+done
 
 # io.py is a DIRECT child of cli/src/limen — load-bearing for check-effectors, whose glob dialect
 # makes `cli/src/limen/**/*.py` match only NESTED files. Scoping its paths to .py without also
@@ -311,6 +326,7 @@ verify-parallel-test
 agent-docs
 github-estate-census-custody-test
 remote-execution-admission-test
+positioning-report-reviewed-source
 positioning-foundry-technical-readiness-test
 positioning-foundry-technical-readiness-public-live
 flagship-proof-set-test
@@ -320,9 +336,22 @@ agentic-delivery-audit-decision-test
 positioning-offer-contract-test
 profile-engine-test
 research-adjudication-test
+positioning-launch-prompts-test
 positioning-p14-control-plane-test
 check-gates
 check-note-links' institutio/governance/gates.yaml
+
+# P05-W01 source changes invalidate its actual independent review evidence.
+expect report-source-change 'syntax-changed
+diff-hygiene
+positioning-report-reviewed-source
+check-docs-exports
+check-note-links' docs/positioning/proof/limen-engineering-report.md
+expect report-observation-change 'syntax-changed
+diff-hygiene
+positioning-report-reviewed-source
+check-docs-exports
+check-note-links' docs/receipts/positioning/2026-09-09-limen-report-review-observation.json
 
 # The W03 collector is a static-gate input. The scoped public-evidence rail does
 # not invoke that census; the private-inclusive operator predicate remains whole-only.

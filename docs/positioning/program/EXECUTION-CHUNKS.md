@@ -2,7 +2,7 @@
 
 Generated from `institutio/positioning/program.yaml`. Do not edit by hand. The manifest and live GitHub state outrank this projection.
 
-These prompts are conductor envelopes: the chunk conductor coordinates the work, while every leaf retains its own exact model/effort assignment, lease, authority boundary, predicate, and receipt.
+These prompts are conductor envelopes: the chunk conductor coordinates the work, while every leaf retains its lease, authority boundary, predicate, and receipt. Model assignments below are historical; discover current capabilities and allocation before selecting the cheapest adequate available model.
 
 ## Dependency order
 
@@ -41,7 +41,7 @@ Chunk arrows govern aggregate proof and closeout order, not leaf admission. The 
 
 ## Chunk index
 
-| Chunk | Scope | Conductor | Depends on | Leaves | Exit gate |
+| Chunk | Scope | Historical conductor | Depends on | Leaves | Exit gate |
 |---|---|---|---|---:|---|
 | `PSP-C00` Land the program control plane | `PSP-P00` | `gpt-5.6-sol` / `max` | — | 7 | P00 is closed; model validation, issue parity, ready-work discovery, packet seeding, and registry-derived Codex task routing are green. |
 | `PSP-C01` Repair and freeze the foundation | `PSP-P01` | `gpt-5.6-terra` / `high` | `PSP-C00` | 5 | P01 is closed and PRs 2136 and 2141 have terminal durable owners with a frozen baseline receipt. |
@@ -61,7 +61,7 @@ Chunk arrows govern aggregate proof and closeout order, not leaf admission. The 
 
 1. Start from the live `--ready --json` output. A ready leaf may run even while an upstream aggregate phase or chunk remains open.
 2. Run every concurrent leaf in its own isolated worktree and broker lease.
-3. Use the prompt for the chunk whose resolved scope contains the ready leaf and preserve its assigned model and effort.
+3. Use the prompt for the chunk whose resolved scope contains the ready leaf; select model and effort from current provider capabilities and finite allocation, preserving native provider identity.
 4. If a session exhausts context or usage, use `RELAY-TEMPLATE.md`; the next agent resumes the same chunk rather than skipping ahead.
 5. The live `--ready --json` result controls which leaf starts next. Issue numbers are not execution order.
 
@@ -72,12 +72,12 @@ Copy and paste:
 ```text
 Execute Production-Systems Program chunk PSP-C00: Land the program control plane.
 
-Run this conductor session with `gpt-5.6-sol` at `max` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
-- Repository: `organvm/limen`
+- Repository: `4444J99/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
-- Bootstrap: Continue draft PR #2156 on branch `codex/production-systems-program`; do not recreate the graph or its issues. Use the repository merge rail only when live authority permits it.
+- Bootstrap: Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156.
 - Phase scope: PSP-P00
 - Resolved leaf count: 7
 - Excluded leaves: none
@@ -106,12 +106,12 @@ Copy and paste:
 ```text
 Execute Production-Systems Program chunk PSP-C01: Repair and freeze the foundation.
 
-Run this conductor session with `gpt-5.6-terra` at `high` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
-- Repository: `organvm/limen`
+- Repository: `4444J99/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
-- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
+- Bootstrap: Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156.
 - Phase scope: PSP-P01
 - Resolved leaf count: 5
 - Excluded leaves: none
@@ -140,12 +140,12 @@ Copy and paste:
 ```text
 Execute Production-Systems Program chunk PSP-C02: Establish estate truth and evidence.
 
-Run this conductor session with `gpt-5.6-sol` at `max` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
-- Repository: `organvm/limen`
+- Repository: `4444J99/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
-- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
+- Bootstrap: Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156.
 - Phase scope: PSP-P02
 - Resolved leaf count: 8
 - Excluded leaves: none
@@ -174,12 +174,12 @@ Copy and paste:
 ```text
 Execute Production-Systems Program chunk PSP-C03: Ratify identity and commercial offers.
 
-Run this conductor session with `gpt-5.6-sol` at `max` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
-- Repository: `organvm/limen`
+- Repository: `4444J99/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
-- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
+- Bootstrap: Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156.
 - Phase scope: PSP-P03, PSP-P04
 - Resolved leaf count: 14
 - Excluded leaves: none
@@ -208,12 +208,12 @@ Copy and paste:
 ```text
 Execute Production-Systems Program chunk PSP-C04: Produce proof and design the experience.
 
-Run this conductor session with `gpt-5.6-sol` at `xhigh` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
-- Repository: `organvm/limen`
+- Repository: `4444J99/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
-- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
+- Bootstrap: Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156.
 - Phase scope: PSP-P05, PSP-P06
 - Resolved leaf count: 13
 - Excluded leaves: none
@@ -242,12 +242,12 @@ Copy and paste:
 ```text
 Execute Production-Systems Program chunk PSP-C05: Build the service-delivery operating system.
 
-Run this conductor session with `gpt-5.6-sol` at `max` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
-- Repository: `organvm/limen`
+- Repository: `4444J99/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
-- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
+- Bootstrap: Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156.
 - Phase scope: PSP-P11
 - Resolved leaf count: 8
 - Excluded leaves: none
@@ -276,12 +276,12 @@ Copy and paste:
 ```text
 Execute Production-Systems Program chunk PSP-C06: Implement and verify public surfaces.
 
-Run this conductor session with `gpt-5.6-terra` at `high` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
-- Repository: `organvm/limen`
+- Repository: `4444J99/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
-- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
+- Bootstrap: Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156.
 - Phase scope: PSP-P07
 - Resolved leaf count: 9
 - Excluded leaves: none
@@ -310,12 +310,12 @@ Copy and paste:
 ```text
 Execute Production-Systems Program chunk PSP-C07: Build private inbound operations.
 
-Run this conductor session with `gpt-5.6-sol` at `xhigh` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
-- Repository: `organvm/limen`
+- Repository: `4444J99/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
-- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
+- Bootstrap: Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156.
 - Phase scope: PSP-P08
 - Resolved leaf count: 7
 - Excluded leaves: none
@@ -344,12 +344,12 @@ Copy and paste:
 ```text
 Execute Production-Systems Program chunk PSP-C08: Stage and distribute proof-led content.
 
-Run this conductor session with `gpt-5.6-terra` at `high` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
-- Repository: `organvm/limen`
+- Repository: `4444J99/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
-- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
+- Bootstrap: Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156.
 - Phase scope: PSP-P09
 - Resolved leaf count: 8
 - Excluded leaves: none
@@ -378,12 +378,12 @@ Copy and paste:
 ```text
 Execute Production-Systems Program chunk PSP-C09: Build qualification and conversion before the pilot.
 
-Run this conductor session with `gpt-5.6-sol` at `xhigh` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
-- Repository: `organvm/limen`
+- Repository: `4444J99/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
-- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
+- Bootstrap: Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156.
 - Phase scope: PSP-P10
 - Resolved leaf count: 7
 - Excluded leaves: PSP-P10-W08
@@ -412,12 +412,12 @@ Copy and paste:
 ```text
 Execute Production-Systems Program chunk PSP-C10: Obtain commercial proof and close the demand experiment.
 
-Run this conductor session with `gpt-5.6-sol` at `max` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
-- Repository: `organvm/limen`
+- Repository: `4444J99/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
-- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
+- Bootstrap: Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156.
 - Phase scope: PSP-P12
 - Resolved leaf count: 7
 - Excluded leaves: none
@@ -446,12 +446,12 @@ Copy and paste:
 ```text
 Execute Production-Systems Program chunk PSP-C11: Prove the governed foundry handoff.
 
-Run this conductor session with `gpt-5.6-sol` at `max` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
-- Repository: `organvm/limen`
+- Repository: `4444J99/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
-- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
+- Bootstrap: Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156.
 - Phase scope: PSP-P13
 - Resolved leaf count: 9
 - Excluded leaves: none
@@ -480,12 +480,12 @@ Copy and paste:
 ```text
 Execute Production-Systems Program chunk PSP-C12: Close the return loops and prove Omega.
 
-Run this conductor session with `gpt-5.6-sol` at `ultra` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
-- Repository: `organvm/limen`
+- Repository: `4444J99/limen`
 - Root program: https://github.com/organvm/limen/issues/2157
-- Bootstrap: Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00.
+- Bootstrap: Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156.
 - Phase scope: PSP-P14
 - Resolved leaf count: 9
 - Excluded leaves: none
