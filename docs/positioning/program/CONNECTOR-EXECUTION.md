@@ -35,7 +35,9 @@ returned observation summary. Do not log private response bodies or tokens.
 
 After a successful `--verify-work`, use the existing PSP issue-closeout sequence
 in [README.md](README.md): link the real output and receipt, then close the mapped
-GitHub issue through the connector. Re-read its state. That projection operation
+GitHub issue with the native GitHub app's `github_update_issue` action. Re-read
+its state with `github_fetch_issue`. These host actions are separate from the
+read-only verifier transport; `--apply` is not used. That projection operation
 does not assert a TABVLARIVS task transition. If an actual canonical task/lease
 also needs transition, it still goes through the existing broker. Do not invent
 a task mapping or add a broker prerequisite to an ordinary PSP issue closeout.
