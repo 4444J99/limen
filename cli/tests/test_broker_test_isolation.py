@@ -11,7 +11,7 @@ from limen.dispatch import _load_limen_env
 
 def test_dispatch_reload_retains_temporary_keeper(tmp_path):
     environment = Path(os.environ["LIMEN_ENV"])
-    assert environment.read_text() == ""
+    assert Path(os.environ["LIMEN_ENV"]).read_text() == ""
     assert environment.stat().st_mode & 0o777 == 0o600
     assert environment.parent != tmp_path
     assert list(tmp_path.iterdir()) == []

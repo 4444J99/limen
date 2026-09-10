@@ -9,6 +9,7 @@ from typing import Any, Dict, List, Literal, Optional, cast
 
 import yaml
 from mcp.server.fastmcp import FastMCP
+from mcp.types import ToolAnnotations
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from limen.conduct.client import client_from_env
@@ -775,6 +776,33 @@ def agent_claim(task_id: str, agent_name: str = "opencode") -> str:
             return _submission_message(f"submitted claim for {agent_name} on", task_id, result)
 
     raise ValueError(f"Task {task_id} not found")
+
+
+@mcp.tool(annotations=ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=False))
+def mcp_estate_status(service: Optional[str] = None) -> dict:
+    """Read the sanitized MCP inventory; never launch servers, repair settings, or log in.
+
+    Returns the same JSON contract and unavailable-evidence exit code as the native CLI.
+    A service filter cannot certify the whole estate.
+    """
+    root = Path(__file__).resolve().parents[3]
+    argv = [sys.executable, str(root / "scripts/mcp-server-boot.py"), "--inventory-only", "--json"]
+    if service is not None:
+        if not re.fullmatch(r"[A-Za-z0-9_.:/@+-]{1,160}", service):
+            raise ValueError("invalid service identity")
+        argv.extend(["--service", service])
+    try:
+        result = subprocess.run(argv, capture_output=True, text=True, timeout=20, cwd=root)
+        payload = json.loads(result.stdout)
+        if (
+            not isinstance(payload, dict)
+            or payload.get("schema_version") != "limen.mcp_estate.v1"
+            or payload.get("exit") != result.returncode
+        ):
+            raise ValueError("invalid estate evidence")
+        return payload
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return {"schema_version": "limen.mcp_estate.v1", "exit": 77, "reason": "inventory_unavailable"}
 
 
 @mcp.tool()

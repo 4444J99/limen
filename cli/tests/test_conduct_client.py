@@ -15,6 +15,16 @@ from limen.conduct.client import BrokerQuotaExhausted, HttpConductClient
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def test_session_audit_is_read_only_and_encodes_the_native_identity(monkeypatch):
+    observed = []
+    client = HttpConductClient("https://limen-runtime.example", "fixture-token")
+    monkeypatch.setattr(
+        client, "_request", lambda method, path: observed.append((method, path)) or {"coverage": "fixture"}
+    )
+    assert client.session_audit("session/with:scope") == {"coverage": "fixture"}
+    assert observed == [("GET", "/api/conduct/sessions/session%2Fwith%3Ascope/audit")]
+
+
 def test_http_client_sends_stable_user_agent(monkeypatch):
     captured = {}
 

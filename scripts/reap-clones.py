@@ -527,10 +527,11 @@ def main() -> int:
     free_gib = disk_free_gib(WORKSPACE)
     # Pressure waives only the idle age, never a preservation predicate. Percent
     # remains display-only; the live envelope is the sole storage authority.
+    # Unknown telemetry cannot establish pressure: preserve the idle-age gate.
     pressure = (
         args.pressure
         if args.pressure is not None
-        else (required_free is None or free_gib is None or free_gib < required_free)
+        else (required_free is not None and free_gib is not None and free_gib < required_free)
     )
     active = active_task_slugs(LIMEN_ROOT / "tasks.yaml")
     now = time.time()

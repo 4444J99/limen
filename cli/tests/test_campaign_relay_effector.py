@@ -80,8 +80,9 @@ def _run_agent_resolution() -> None:
 
 
 def _git(root: Path, *args: str) -> str:
+    git_dir = ["--git-dir", str(root)] if (root / "HEAD").is_file() and (root / "objects").is_dir() else []
     result = subprocess.run(
-        ["git", *args],
+        ["git", *git_dir, *args],
         cwd=root,
         capture_output=True,
         text=True,
@@ -364,7 +365,7 @@ def test_full_relay_exec_proof_closes_while_keepalive_remains_live(
         if f"{index:064x}" != launch.receipt.relay_id
     )
     subprocess.run(
-        ["git", "update-ref", "--stdin"],
+        ["git", "--git-dir", str(root.parent / "origin.git"), "update-ref", "--stdin"],
         cwd=root.parent / "origin.git",
         input=historical_refs,
         capture_output=True,

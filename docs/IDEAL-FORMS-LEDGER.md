@@ -846,3 +846,12 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
   `note-link-baseline.txt` exactly one way — by writing the note it names — and a stale line fails
   the gate, so the baseline cannot quietly become permission. `at-ideal` is an empty baseline.
 - **Owner:** Claude (`scripts/check-note-links.py` · `institutio/governance/note-link-baseline.txt`).
+
+### IF-MCP-ESTATE
+
+Every declared MCP service and client registration remains visible, including disabled, missing,
+unsupported and authentication-required routes. Domus owns configuration; ianva owns routing;
+Limen measures protocol, capabilities, startup effects, isolation and probe cleanup independently.
+
+- **Distance:** DERIVED — `bash scripts/verify-mcp-estate.sh --strict`; inventory alone is never health.
+The implementation receipt and the live estate verdict are separate. No handwritten healthy status.

@@ -40,8 +40,9 @@ def _base_env() -> dict[str, str]:
 
 
 def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
+    git_dir = ["--git-dir", str(cwd)] if (cwd / "HEAD").is_file() and (cwd / "objects").is_dir() else []
     return subprocess.run(
-        ["git", *args],
+        ["git", *git_dir, *args],
         cwd=str(cwd),
         env={**_base_env(), **GIT_ENV},
         capture_output=True,

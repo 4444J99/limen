@@ -1,6 +1,7 @@
 import { ChunkedDurableStateStore } from "./durable-store.js";
 import { acceptInventoryObservation, requireInventoryCollector } from "./inventory-admission.js";
 import notificationRegistry from "../../../../institutio/governance/notification-events.limen.json" with { type: "json" };
+import { sessionAudit } from "./session-audit.js";
 import { conflictingKeys, parseResource, sortedClaims } from "./resources.js";
 import {
   canonicalHash,
@@ -282,6 +283,7 @@ export class ConductKernel {
       }
       case "register": return this.register(payload.session, payload.principal);
       case "capabilities": return this.capabilities(payload.principal);
+      case "session_audit": return sessionAudit(this.state, payload.session_id);
       case "task_run": return this.taskRun(payload.task_id);
       case "submit": return this.submit(payload.packet, payload.principal);
       case "submit_graph": return this.submitGraph(payload.packets, payload.principal);
@@ -1784,7 +1786,7 @@ export class ConductKernel {
     const codeWriteScopeKinds = new Set(["branch", "path", "base-integrate", "repo-write"]);
     const hasCodeWriteScope = claims.some((claim) =>
       codeWriteScopeKinds.has(parseResource(claim.key).kind));
-    if (packet.effect === "write" && !hasCodeWriteScope) {
+    if (packet.effect === "write" && !hasCodeWriteScope && !packetIsNonCapacityProjection(packet)) {
       const repositories = [...packet.authority.repositories].sort();
       if (!repositories.length || repositories.includes("*")) {
         claims.push({ schema_version: "limen.resource_claim.v1", key: "repo/*/*/write", mode: "exclusive" });
