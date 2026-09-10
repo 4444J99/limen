@@ -83,6 +83,8 @@ class Wire:
             selector.register(self.process.stdout, selectors.EVENT_READ)
             while b"\n" not in self.buffer:
                 if not selector.select(self.remaining()):
+                    if self.process is not None and self.process.poll() is not None:
+                        raise ProtocolError("EOF without response")
                     raise TimeoutError("protocol deadline")
                 chunk = os.read(self.process.stdout.fileno(), 65536)
                 if not chunk:
