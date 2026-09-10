@@ -11,10 +11,12 @@ function statusLabel(status: string) {
 }
 
 export default function PublicSurface() {
-  const { statusData, prData, manifest } = getPublicSurfaceData();
+  const { statusData, prData, issueData, repoHealthData, manifest } = getPublicSurfaceData();
   const summary = statusData.summary;
   const throughput = summary.throughput;
   const prSummary = prData?.summary;
+  const issueSummary = issueData?.summary;
+  const repoHealthSummary = repoHealthData?.summary;
   const completion = Math.round(summary.completion_rate * 100);
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
   const active = summary.active || 0;
@@ -113,7 +115,23 @@ export default function PublicSurface() {
             <span>Pull requests</span>
             <strong>{formatNumber(prSummary?.total_open_prs)} open across {formatNumber(prSummary?.total_repos)} tracked repos</strong>
           </div>
-          <p className="surfaceCopy">{formatNumber(prSummary?.prs_with_failing_ci)} open pull requests currently report failing CI checks.</p>
+          <p className="surfaceCopy">{formatNumber(prSummary?.prs_with_failing_ci)} failing CI · {formatNumber(prSummary?.prs_with_pending_checks)} pending checks · {formatNumber(prSummary?.ready_to_merge_prs)} ready to merge.</p>
+        </div>
+
+        <div className="surfacePanel">
+          <div className="panelTitle">
+            <span>Issue triage</span>
+            <strong>{formatNumber(issueSummary?.total_open_issues)} open across {formatNumber(issueSummary?.total_repos)} tracked repos</strong>
+          </div>
+          <p className="surfaceCopy">{formatNumber(issueSummary?.ready_to_triage)} ready to triage · {formatNumber(issueSummary?.stale_issues)} stale · {formatNumber(issueSummary?.unlabeled_issues)} missing labels.</p>
+        </div>
+
+        <div className="surfacePanel">
+          <div className="panelTitle">
+            <span>Repo health</span>
+            <strong>{formatNumber(repoHealthSummary?.degraded_repos)} degraded repos</strong>
+          </div>
+          <p className="surfaceCopy">{formatNumber(repoHealthSummary?.failing_workflows)} failing workflow runs · {formatNumber(repoHealthSummary?.in_progress_runs)} currently in progress.</p>
         </div>
 
         <div className="surfacePanel">

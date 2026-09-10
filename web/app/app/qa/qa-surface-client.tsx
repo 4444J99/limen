@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { IssueStatusData, PRStatusData, RepoHealthData } from "../dashboard-client";
 import SurfaceNav from "../surface-nav";
 import type { QASteeringItem, QAStatusData, ReadinessData, SurfaceManifestData } from "../lib/data";
 import AssignmentPanel from "./assignment-panel";
@@ -14,6 +15,9 @@ type LoadState = {
   statusData: QAStatusData | null;
   manifest: SurfaceManifestData | null;
   readiness: ReadinessData | null;
+  prData: PRStatusData | null;
+  issueData: IssueStatusData | null;
+  repoHealthData: RepoHealthData | null;
 };
 
 const phaseTone: Record<QASteeringItem["phase"], string> = {
@@ -42,7 +46,16 @@ function repoName(repo: string) {
 
 export default function QASurfaceClient({ apiUrl }: { apiUrl: string }) {
   const [token, setToken] = useState("");
-  const [state, setState] = useState<LoadState>({ loading: false, error: "", statusData: null, manifest: null, readiness: null });
+  const [state, setState] = useState<LoadState>({
+    loading: false,
+    error: "",
+    statusData: null,
+    manifest: null,
+    readiness: null,
+    prData: null,
+    issueData: null,
+    repoHealthData: null,
+  });
 
   async function loadSurface(nextToken = token, clearExisting = true) {
     if (!apiUrl) return;
@@ -52,13 +65,20 @@ export default function QASurfaceClient({ apiUrl }: { apiUrl: string }) {
       statusData: clearExisting ? null : current.statusData,
       manifest: clearExisting ? null : current.manifest,
       readiness: clearExisting ? null : current.readiness,
+      prData: clearExisting ? null : current.prData,
+      issueData: clearExisting ? null : current.issueData,
+      repoHealthData: clearExisting ? null : current.repoHealthData,
     }));
-    const headers: Record<string, string> = nextToken ? { Authorization: `Bearer ${nextToken}` } : {};
+    const headers: Record<string, string> = nextToken ? { Authorization: "Bearer " + nextToken } : {};
     try {
-      const [qaRes, manifestRes, readinessRes] = await Promise.all([
+      const optionalFetch = (path: string) => fetch(`${apiUrl}${path}`, { headers }).catch(() => null);
+      const [qaRes, manifestRes, readinessRes, prRes, issueRes, repoHealthRes] = await Promise.all([
         fetch(`${apiUrl}/api/qa-status`, { headers }),
         fetch(`${apiUrl}/api/surface-manifest`, { headers }),
         fetch(`${apiUrl}/api/readiness`, { headers }),
+        optionalFetch("/api/pr-status"),
+        optionalFetch("/api/issue-status"),
+        optionalFetch("/api/repo-health"),
       ]);
       const qaPayload = await qaRes.json();
       const manifestPayload = await manifestRes.json();
@@ -66,9 +86,27 @@ export default function QASurfaceClient({ apiUrl }: { apiUrl: string }) {
       if (!qaRes.ok) throw new Error(qaPayload.detail || qaRes.statusText);
       if (!manifestRes.ok) throw new Error(manifestPayload.detail || manifestRes.statusText);
       if (!readinessRes.ok) throw new Error(readinessPayload.detail || readinessRes.statusText);
-      setState({ loading: false, error: "", statusData: qaPayload, manifest: manifestPayload, readiness: readinessPayload });
+      setState({
+        loading: false,
+        error: "",
+        statusData: qaPayload,
+        manifest: manifestPayload,
+        readiness: readinessPayload,
+        prData: prRes && prRes.ok ? await prRes.json() : null,
+        issueData: issueRes && issueRes.ok ? await issueRes.json() : null,
+        repoHealthData: repoHealthRes && repoHealthRes.ok ? await repoHealthRes.json() : null,
+      });
     } catch (error) {
-      setState({ loading: false, error: error instanceof Error ? error.message : "QA load failed", statusData: null, manifest: null, readiness: null });
+      setState({
+        loading: false,
+        error: error instanceof Error ? error.message : "QA load failed",
+        statusData: null,
+        manifest: null,
+        readiness: null,
+        prData: null,
+        issueData: null,
+        repoHealthData: null,
+      });
     }
   }
 
@@ -145,6 +183,70 @@ export default function QASurfaceClient({ apiUrl }: { apiUrl: string }) {
               <VerifyPanel items={statusData.steering.qa_queue} apiUrl={apiUrl} initialToken={token} onComplete={refreshAfterAction} />
               <AssignmentPanel items={nextBatch} apiUrl={apiUrl} initialToken={token} onComplete={refreshAfterAction} />
               <ArchivePanel items={statusData.steering.archive_queue} apiUrl={apiUrl} initialToken={token} onComplete={refreshAfterAction} />
+
+              <section className="surfacePanel">
+                <div className="panelTitle">
+                  <span>PR watch</span>
+                  <strong>{state.prData?.summary.total_open_prs || 0} open</strong>
+                </div>
+                <p className="surfaceCopy">
+                  {(state.prData?.summary.review_pending_prs || 0)} awaiting review · {(state.prData?.summary.prs_with_pending_checks || 0)} pending checks · {(state.prData?.summary.ready_to_merge_prs || 0)} ready
+                </p>
+                <div className="mechanismList">
+                  {(state.prData?.repos || []).slice(0, 4).map((repo) => (
+                    <article key={repo.repo}>
+                      <div>
+                        <span>{repoName(repo.repo)}</span>
+                        <strong>{repo.ready_to_merge_count || 0} ready · {repo.blocked_count || 0} blocked</strong>
+                      </div>
+                      <b>{repo.count}</b>
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              <section className="surfacePanel">
+                <div className="panelTitle">
+                  <span>Issue triage</span>
+                  <strong>{state.issueData?.summary.total_open_issues || 0} open</strong>
+                </div>
+                <p className="surfaceCopy">
+                  {(state.issueData?.summary.ready_to_triage || 0)} triage-ready · {(state.issueData?.summary.stale_issues || 0)} stale · {(state.issueData?.summary.unassigned_issues || 0)} unassigned
+                </p>
+                <div className="mechanismList">
+                  {(state.issueData?.repos || []).slice(0, 4).map((repo) => (
+                    <article key={repo.repo}>
+                      <div>
+                        <span>{repoName(repo.repo)}</span>
+                        <strong>{repo.ready_to_triage_count} ready · {repo.unlabeled_count} unlabeled</strong>
+                      </div>
+                      <b>{repo.count}</b>
+                    </article>
+                  ))}
+                </div>
+              </section>
+
+              <section className="surfacePanel">
+                <div className="panelTitle">
+                  <span>Repo health</span>
+                  <strong>{state.repoHealthData?.summary.degraded_repos || 0} degraded</strong>
+                </div>
+                <p className="surfaceCopy">
+                  {(state.repoHealthData?.summary.failing_workflows || 0)} failing workflow runs · {(state.repoHealthData?.summary.in_progress_runs || 0)} in progress
+                </p>
+                <div className="mechanismList">
+                  {(state.repoHealthData?.repos || []).slice(0, 4).map((repo) => (
+                    <article key={repo.repo}>
+                      <div>
+                        <span>{repoName(repo.repo)}</span>
+                        <strong>{repo.latest_run?.name || "No latest run"}</strong>
+                        <code>{repo.latest_run?.conclusion || repo.latest_run?.status || repo.status}</code>
+                      </div>
+                      <b>{repo.status}</b>
+                    </article>
+                  ))}
+                </div>
+              </section>
 
               <section className="surfacePanel">
                 <div className="panelTitle">

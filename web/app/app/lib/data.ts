@@ -1,6 +1,6 @@
 import { readFileSync } from "fs";
 import { join } from "path";
-import type { DashboardData, PRStatusData, Task, ThroughputSummary } from "../dashboard-client";
+import type { DashboardData, IssueStatusData, PRStatusData, RepoHealthData, Task, ThroughputSummary } from "../dashboard-client";
 
 export interface PublicStatusData {
   status: string;
@@ -259,6 +259,8 @@ export function getPublicSurfaceData() {
       },
     }),
     prData: readJson<PRStatusData | null>(join(publicDir, "pr-status.json"), null),
+    issueData: readJson<IssueStatusData | null>(join(publicDir, "issue-status.json"), null),
+    repoHealthData: readJson<RepoHealthData | null>(join(publicDir, "repo-health.json"), null),
     manifest: getSurfaceManifest(),
   };
 }

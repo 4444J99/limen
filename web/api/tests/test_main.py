@@ -673,6 +673,75 @@ def test_public_status_is_aggregate_only(client: TestClient, tmp_path: Path) -> 
     assert "Private implementation detail" not in str(payload)
 
 
+def test_public_status_includes_public_monitoring_rollups(
+    client: TestClient,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    write_board(tmp_path / "tasks.yaml", [])
+    public_dir = tmp_path / "web" / "app" / "public"
+    public_dir.mkdir(parents=True)
+    (public_dir / "pr-status.json").write_text(
+        json.dumps(
+            {
+                "generated_at": main.now_iso(),
+                "repos": [],
+                "summary": {
+                    "total_repos": 1,
+                    "total_open_prs": 2,
+                    "prs_with_failing_ci": 1,
+                    "prs_with_pending_checks": 1,
+                    "review_pending_prs": 1,
+                    "ready_to_merge_prs": 0,
+                    "blocked_prs": 1,
+                    "merge_readiness": {"blocked": 1},
+                },
+            }
+        )
+    )
+    (public_dir / "issue-status.json").write_text(
+        json.dumps(
+            {
+                "generated_at": main.now_iso(),
+                "repos": [],
+                "summary": {
+                    "total_repos": 1,
+                    "total_open_issues": 5,
+                    "unlabeled_issues": 2,
+                    "unassigned_issues": 3,
+                    "stale_issues": 1,
+                    "ready_to_triage": 4,
+                    "priority_counts": {"unset": 4, "high": 1},
+                },
+            }
+        )
+    )
+    (public_dir / "repo-health.json").write_text(
+        json.dumps(
+            {
+                "generated_at": main.now_iso(),
+                "repos": [],
+                "summary": {
+                    "total_repos": 1,
+                    "degraded_repos": 1,
+                    "healthy_repos": 0,
+                    "failing_workflows": 2,
+                    "in_progress_runs": 1,
+                },
+            }
+        )
+    )
+    monkeypatch.setattr(main, "WEB_APP_PUBLIC", public_dir)
+
+    response = client.get("/api/public-status")
+
+    assert response.status_code == 200
+    monitoring = response.json()["summary"]["monitoring"]
+    assert monitoring["prs"]["total_open_prs"] == 2
+    assert monitoring["issues"]["ready_to_triage"] == 4
+    assert monitoring["repo_health"]["degraded_repos"] == 1
+
+
 def test_status_summary_reports_creation_age_and_run_ledger(client: TestClient, tmp_path: Path) -> None:
     write_board(
         tmp_path / "tasks.yaml",
@@ -833,6 +902,58 @@ def test_owner_persona_can_reach_owner_surfaces(tmp_path: Path, monkeypatch: pyt
     assert sorted(surface["id"] for surface in payload["surfaces"]) == ["client", "internal", "public", "qa"]
     assert "internal" in payload["contracts"]
     assert "qa" in payload["contracts"]
+
+
+def test_owner_monitoring_endpoints_are_owner_only(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(tasks_path, [])
+    public_dir = tmp_path / "web" / "app" / "public"
+    private_dir = tmp_path / "web" / "app" / ".generated" / "surfaces"
+    private_dir.mkdir(parents=True)
+    public_dir.mkdir(parents=True)
+    (private_dir / "pr-status-owner.json").write_text(
+        json.dumps(
+            {
+                "generated_at": main.now_iso(),
+                "repos": [{"repo": "4444J99/limen", "count": 1, "prs": []}],
+                "summary": {"total_repos": 1, "total_open_prs": 1, "prs_with_failing_ci": 0},
+            }
+        )
+    )
+    (private_dir / "issue-status-owner.json").write_text(
+        json.dumps(
+            {
+                "generated_at": main.now_iso(),
+                "repos": [{"repo": "4444J99/limen", "count": 2, "issues": []}],
+                "summary": {"total_repos": 1, "total_open_issues": 2, "ready_to_triage": 1},
+            }
+        )
+    )
+    (private_dir / "repo-health-owner.json").write_text(
+        json.dumps(
+            {
+                "generated_at": main.now_iso(),
+                "repos": [{"repo": "4444J99/limen", "status": "degraded", "latest_run": None}],
+                "summary": {"total_repos": 1, "degraded_repos": 1, "failing_workflows": 1},
+            }
+        )
+    )
+    monkeypatch.setenv("LIMEN_TASKS", str(tasks_path))
+    monkeypatch.setenv("LIMEN_CLIENT_TOKEN", "client-secret")
+    monkeypatch.setattr(main, "GITHUB_REPO", "")
+    monkeypatch.setattr(main, "LIMEN_TOKEN", "owner-secret")
+    monkeypatch.setattr(main, "WEB_APP_PRIVATE", private_dir)
+    monkeypatch.setattr(main, "WEB_APP_PUBLIC", public_dir)
+    client = TestClient(main.app)
+    client_headers = {"Authorization": "******"}
+    owner_headers = {"Authorization": "******"}
+
+    assert client.get("/api/pr-status", headers=client_headers).status_code == 403
+    assert client.get("/api/issue-status", headers=client_headers).status_code == 403
+    assert client.get("/api/repo-health", headers=client_headers).status_code == 403
+    assert client.get("/api/pr-status", headers=owner_headers).json()["repos"][0]["repo"] == "4444J99/limen"
+    assert client.get("/api/issue-status", headers=owner_headers).json()["summary"]["ready_to_triage"] == 1
+    assert client.get("/api/repo-health", headers=owner_headers).json()["summary"]["degraded_repos"] == 1
 
 
 def test_qa_status_derives_lifecycle_without_private_logs(client: TestClient, tmp_path: Path) -> None:

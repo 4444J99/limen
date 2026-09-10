@@ -36,7 +36,7 @@ export default function ClientSurfaceClient({ apiUrl }: { apiUrl: string }) {
   async function load() {
     if (!apiUrl || state.loading) return;
     setState({ loading: true, error: "", statusData: null, manifest: null, readiness: null });
-    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    const headers: Record<string, string> = token ? { Authorization: "Bearer " + token } : {};
     try {
       const [statusRes, manifestRes] = await Promise.all([
         fetch(`${apiUrl}/api/client-status`, { headers }),
@@ -118,26 +118,39 @@ export default function ClientSurfaceClient({ apiUrl }: { apiUrl: string }) {
                 <strong>Current delivery gates</strong>
               </div>
               <ul className="rankList">
-                {Object.entries(summary.lifecycle).map(([phase, count]) => (
-                  <li key={phase}><span>{phase}</span><strong>{count}</strong></li>
+                <li><span>Recover</span><strong>{summary.lifecycle.recover}</strong></li>
+                <li><span>Verify</span><strong>{summary.lifecycle.verify}</strong></li>
+                <li><span>Assign</span><strong>{summary.lifecycle.assign}</strong></li>
+                <li><span>Archive</span><strong>{summary.lifecycle.archive}</strong></li>
+                <li><span>Archived</span><strong>{summary.lifecycle.archived}</strong></li>
+              </ul>
+            </div>
+
+            <div className="surfacePanel">
+              <div className="panelTitle">
+                <span>Repo mix</span>
+                <strong>Most active repositories</strong>
+              </div>
+              <ul className="rankList">
+                {summary.top_repos.slice(0, 6).map((entry) => (
+                  <li key={entry.repo}><span>{repoName(entry.repo)}</span><strong>{entry.count}</strong></li>
                 ))}
               </ul>
             </div>
 
             <div className="surfacePanel">
               <div className="panelTitle">
-                <span>Repos</span>
-                <strong>Current workload distribution</strong>
+                <span>Runtime</span>
+                <strong>{state.manifest?.source.api_runtime || "connected"}</strong>
               </div>
-              <ul className="rankList">
-                {summary.top_repos.slice(0, 6).map((repo) => (
-                  <li key={repo.repo}><span>{repoName(repo.repo)}</span><strong>{repo.count}</strong></li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="surfacePanel">
-              <RuntimeStatusPanel apiUrl={apiUrl} endpoint="/api/client-status" title="Client runtime refresh" tokenRequired initialToken={token} />
+              <p className="surfaceCopy">Client disclosure stays redacted: active tasks, lifecycle gates, and repo distribution only.</p>
+              <RuntimeStatusPanel
+                apiUrl={apiUrl}
+                endpoint="/api/client-status"
+                title="Client runtime refresh"
+                tokenRequired
+                initialToken={token}
+              />
             </div>
           </section>
         </>

@@ -41,7 +41,7 @@ export default function RecoveryPanel({
     if (!apiReady || state.loading) return;
     setState((current) => ({ ...current, loading: dryRun ? "preview" : "release", result: "", error: "", candidates: dryRun ? [] : current.candidates }));
     const headers: Record<string, string> = {};
-    if (apiToken) headers.Authorization = `Bearer ${apiToken}`;
+    if (apiToken) headers.Authorization = "Bearer " + apiToken;
     try {
       const params = new URLSearchParams({
         hours: normalizedHours,

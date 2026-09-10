@@ -56,6 +56,12 @@ export interface RepoStatus {
   repo: string;
   prs: PR[];
   count: number;
+  failing_ci_count?: number;
+  pending_checks_count?: number;
+  review_pending_count?: number;
+  ready_to_merge_count?: number;
+  blocked_count?: number;
+  merge_readiness?: Record<string, number>;
 }
 
 export interface PRStatusData {
@@ -65,6 +71,78 @@ export interface PRStatusData {
     total_repos: number;
     total_open_prs: number;
     prs_with_failing_ci: number;
+    prs_with_pending_checks?: number;
+    review_pending_prs?: number;
+    ready_to_merge_prs?: number;
+    blocked_prs?: number;
+    merge_readiness?: Record<string, number>;
+  };
+}
+
+export interface Issue {
+  number: number;
+  title: string;
+  html_url: string;
+  labels: string[];
+  assignees: string[];
+  created_at?: string;
+  updated_at?: string;
+  priority: string;
+  stale: boolean;
+  ready_to_triage: boolean;
+}
+
+export interface IssueRepoStatus {
+  repo: string;
+  issues: Issue[];
+  count: number;
+  unlabeled_count: number;
+  unassigned_count: number;
+  stale_count: number;
+  ready_to_triage_count: number;
+  priority_counts: Record<string, number>;
+}
+
+export interface IssueStatusData {
+  generated_at: string;
+  repos: IssueRepoStatus[];
+  summary: {
+    total_repos: number;
+    total_open_issues: number;
+    unlabeled_issues: number;
+    unassigned_issues: number;
+    stale_issues: number;
+    ready_to_triage: number;
+    priority_counts: Record<string, number>;
+  };
+}
+
+export interface RepoHealthRun {
+  name: string;
+  status: string;
+  conclusion: string | null;
+  updated_at?: string;
+  html_url?: string;
+}
+
+export interface RepoHealthStatus {
+  repo: string;
+  status: string;
+  failing_runs: number;
+  in_progress_runs: number;
+  latest_run: RepoHealthRun | null;
+  recent_runs?: RepoHealthRun[];
+}
+
+export interface RepoHealthData {
+  generated_at: string;
+  repos: RepoHealthStatus[];
+  summary: {
+    total_repos: number;
+    degraded_repos: number;
+    healthy_repos: number;
+    failing_workflows: number;
+    in_progress_runs: number;
   };
 }
 
@@ -241,7 +319,7 @@ function latestEvent(task: Task) {
   return [...(task.dispatch_log || [])].sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))[0];
 }
 
-export default function DashboardClient({ data, prData, apiUrl, initialToken = "", doneTasks = null, doneLoading = false, onLoadDoneTasks }: { data: DashboardData; prData: PRStatusData | null; apiUrl: string; initialToken?: string; doneTasks?: Task[] | null; doneLoading?: boolean; onLoadDoneTasks?: () => void }) {
+export default function DashboardClient({ data, prData, issueData, repoHealthData, apiUrl, initialToken = "", doneTasks = null, doneLoading = false, onLoadDoneTasks }: { data: DashboardData; prData: PRStatusData | null; issueData: IssueStatusData | null; repoHealthData: RepoHealthData | null; apiUrl: string; initialToken?: string; doneTasks?: Task[] | null; doneLoading?: boolean; onLoadDoneTasks?: () => void }) {
   const [phase, setPhase] = useState<Phase | "ALL">("ALL");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
@@ -438,7 +516,80 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
         <Metric title="Queue" value={`${data.summary.total}`} tone="blue" detail={`${active} active, ${data.summary.stale_count} stale`} />
         <Metric title="Completed" value={`${throughput?.done ?? done}`} tone="green" detail={`${throughput?.not_done ?? data.summary.total - done} not done`} />
         <Metric title="PR health" value={`${prData?.summary.total_open_prs || 0}`} tone={prData?.summary.prs_with_failing_ci ? "amber" : "green"} detail={`${prData?.summary.prs_with_failing_ci || 0} with failing CI`} />
+        <Metric title="Issue triage" value={`${issueData?.summary.total_open_issues || 0}`} tone={issueData?.summary.ready_to_triage ? "amber" : "green"} detail={`${issueData?.summary.ready_to_triage || 0} ready to triage`} />
+        <Metric title="Repo health" value={`${repoHealthData?.summary.degraded_repos || 0}`} tone={repoHealthData?.summary.degraded_repos ? "amber" : "green"} detail={`${repoHealthData?.summary.failing_workflows || 0} failing workflow runs`} />
         <Metric title="Failures" value={`${failed}`} tone={failed ? "red" : "green"} detail="Failed or blocked task states" />
+      </section>
+
+      <section aria-label="GitHub monitoring" style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", margin: "1rem 0" }}>
+        <div style={{ padding: "1rem 1.25rem", border: "1px solid #2a2f3a", borderRadius: 10, background: "#0f1320" }}>
+          <div className="panelTitle">
+            <span>PRs &amp; reviews</span>
+            <strong>{prData?.summary.total_open_prs || 0} open</strong>
+          </div>
+          <p style={{ color: "#94a3b8" }}>
+            {(prData?.summary.prs_with_pending_checks || 0)} pending checks · {(prData?.summary.review_pending_prs || 0)} awaiting review · {(prData?.summary.ready_to_merge_prs || 0)} ready
+          </p>
+          <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.75rem" }}>
+            {(prData?.repos || []).slice(0, 5).map((repo) => (
+              <div key={repo.repo} style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem" }}>
+                <div>
+                  <strong>{shortRepo(repo.repo)}</strong>
+                  <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+                    {repo.review_pending_count} review · {repo.pending_checks_count} pending · {repo.ready_to_merge_count} ready
+                  </div>
+                </div>
+                <span className={`status ${repo.blocked_count ? "red" : repo.ready_to_merge_count ? "green" : "amber"}`}>{repo.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ padding: "1rem 1.25rem", border: "1px solid #2a2f3a", borderRadius: 10, background: "#0f1320" }}>
+          <div className="panelTitle">
+            <span>Issues &amp; triage</span>
+            <strong>{issueData?.summary.total_open_issues || 0} open</strong>
+          </div>
+          <p style={{ color: "#94a3b8" }}>
+            {(issueData?.summary.unlabeled_issues || 0)} unlabeled · {(issueData?.summary.unassigned_issues || 0)} unassigned · {(issueData?.summary.stale_issues || 0)} stale
+          </p>
+          <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.75rem" }}>
+            {(issueData?.repos || []).slice(0, 5).map((repo) => (
+              <div key={repo.repo} style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem" }}>
+                <div>
+                  <strong>{shortRepo(repo.repo)}</strong>
+                  <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+                    {repo.ready_to_triage_count} triage · {repo.stale_count} stale · {repo.unlabeled_count} unlabeled
+                  </div>
+                </div>
+                <span className={`status ${repo.ready_to_triage_count ? "amber" : "green"}`}>{repo.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ padding: "1rem 1.25rem", border: "1px solid #2a2f3a", borderRadius: 10, background: "#0f1320" }}>
+          <div className="panelTitle">
+            <span>CI &amp; repo health</span>
+            <strong>{repoHealthData?.summary.degraded_repos || 0} degraded repos</strong>
+          </div>
+          <p style={{ color: "#94a3b8" }}>
+            {(repoHealthData?.summary.failing_workflows || 0)} failing runs · {(repoHealthData?.summary.in_progress_runs || 0)} in progress
+          </p>
+          <div style={{ display: "grid", gap: "0.5rem", marginTop: "0.75rem" }}>
+            {(repoHealthData?.repos || []).slice(0, 5).map((repo) => (
+              <div key={repo.repo} style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem" }}>
+                <div>
+                  <strong>{shortRepo(repo.repo)}</strong>
+                  <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+                    {repo.latest_run?.name || "No workflow run"} · {repo.latest_run?.conclusion || repo.latest_run?.status || repo.status}
+                  </div>
+                </div>
+                <span className={`status ${repo.status === "degraded" ? "red" : repo.status === "healthy" ? "green" : "amber"}`}>{repo.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       <VendorCapacity vendors={data.summary.per_vendor || []} dailyTotal={data.summary.daily_total} />
