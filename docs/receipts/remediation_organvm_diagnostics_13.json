@@ -1,0 +1,32 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:07:54Z",
+  "target": {
+    "repository": "organvm/_diagnostics",
+    "pull_request": 13,
+    "head": "3b91de36ca47a16f21ba89ca73b5e43c5b8df4f5",
+    "base": "main",
+    "branch": "dependabot/npm_and_yarn/inquiry/report/npm_and_yarn-6b7f7a8c69",
+    "title": "chore: Bump postcss from 8.5.15 to 8.5.23 in /inquiry/report in the npm_and_yarn group across 1 directory"
+  },
+  "remediation": {
+    "worktree": ".worktrees/remediate-organvm-13-postcss-bump",
+    "lifecycle": "limen.worktree_initialization.v1",
+    "actions": [
+      "rebase onto origin/main",
+      "fix .github/workflows/standards.yml actions/checkout from nonexistent v7 to v4"
+    ]
+  },
+  "verification": {
+    "command": "bash tools/standards-lint.sh",
+    "executed_at": "2026-08-26T13:07:40Z",
+    "exit_status": 0,
+    "standards_status": "PASS",
+    "result": "100% standards lint verification passed"
+  },
+  "push": {
+    "lease": true,
+    "target_ref": "dependabot/npm_and_yarn/inquiry/report/npm_and_yarn-6b7f7a8c69",
+    "pushed_head": "3b91de36ca47a16f21ba89ca73b5e43c5b8df4f5"
+  }
+}

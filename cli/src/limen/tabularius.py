@@ -820,7 +820,7 @@ def _require_reserved_budget_cost(prior: dict[str, Any] | None, desired: dict[st
         )
         and prior.get("budget_cost") != desired.get("budget_cost")
     ):
-        raise ValueError(f"task {prior['id']} reservation_budget_cost_immutable")
+        raise ValueError(f"task {prior['id']} reservation_budget_cost_immutable: reserved budget_cost cannot change")
 
 
 def _local_budget_debit(
@@ -1149,6 +1149,7 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             task["dispatch_log"] = history
             if created is not None:
                 task["created"] = created
+            _require_reserved_budget_cost(existing, task)
         require_inventory_admission(existing or {"status": "open"}, task)
         policy = validate_policy_update(existing, task)
         if policy is not None:
@@ -1211,6 +1212,7 @@ def _project_local_task_event(board: LimenFile, event: dict[str, Any]) -> tuple[
             patch["provider_eligibility"] = policy
         prior_status = str(existing.get("status") or "")
         next_status = str(patch.get("status") or prior_status)
+        _require_reserved_budget_cost(existing, {**existing, **patch})
         if next_status in {"dispatched", "in_progress"}:
             if existing.get("provider_eligibility") is not None or patch.get("provider_eligibility") is not None:
                 raise ValueError(f"task {task_id} provider_eligibility_adapter_unavailable")

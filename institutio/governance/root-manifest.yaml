@@ -26,6 +26,7 @@ sanctioned:
   - {path: .gitmodules, kind: config, owner: continuity, why: "registers the preserved Domus custody gitlink so Git tooling can traverse the repository safely"}
   - {path: .ruff.toml, kind: config, owner: fleet, why: "lint config (py311, line-length 120)"}
   - {path: AGENTS.md, kind: doc, owner: docs, why: "dispatch/task contract — agent-instruction standard requires root placement"}
+  - {path: BRANCHES.md, kind: doc, owner: governance, why: "generated branch constitution — check-branch-families.py holds it to branch-families.yaml"}
   - {path: CLAUDE.md, kind: doc, owner: docs, why: "Claude operating charter — agent-instruction standard requires root placement"}
   - {path: CONTRIBUTING.md, kind: doc, owner: docs, why: "human contributor guidance"}
   - {path: EVERY-ASK-LEDGER.md, kind: doc, owner: docs, why: "live ask ledger — prompt-lifecycle-ledger.py consumes it at this path"}
@@ -36,6 +37,8 @@ sanctioned:
   - {path: README.md, kind: doc, owner: docs, why: "front door"}
   - {path: SCHEMA.md, kind: doc, owner: docs, why: "data-shape reference"}
   - {path: START-HERE.md, kind: doc, owner: docs, why: "orientation index"}
+  - {path: TEST_INFRA.md, kind: doc, owner: testing, why: "test infrastructure readiness and execution notes"}
+  - {path: TEST_READY.md, kind: doc, owner: testing, why: "test readiness receipt and launch context"}
   - {path: apps, kind: dir, owner: apps, why: "standalone app surfaces"}
   - {path: censor, kind: dir, owner: censor, why: "insight/correction lineage store"}
   - {path: cli, kind: dir, owner: cli, why: "the limen CLI package"}
@@ -79,6 +82,7 @@ sanctioned:
   - {path: state, kind: dir, owner: governance, why: "live gate input (aug1-view.py / AUG1-10K-GATE)"}
   - {path: studium, kind: dir, owner: studium, why: "first-class component with its own scripts/studium-* family"}
   - {path: tasks.yaml, kind: registry, owner: tabularius, why: "the board projection (TABVLARIVS keeper)"}
+  - {path: tests, kind: dir, owner: testing, why: "repository-level E2E and ecosystem verification suite"}
   - {path: value-discovery-dispositions.json, kind: registry, owner: governance, why: "value-discovery dispositions (parameters.yaml consumes)"}
   - {path: value-repos.json, kind: registry, owner: observation, why: "value-repo census (65 referents)"}
   - {path: web, kind: dir, owner: web, why: "worker + api + dashboard"}

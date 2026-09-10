@@ -1,0 +1,232 @@
+{
+  "schema": "limen.original_pr_custody.v1",
+  "repository": "4444J99/limen",
+  "claimed_original_count": 10,
+  "verified_original_count": 9,
+  "correction": "The original before-and-after gh pr list receipts both contain nine heads. Later PRs are separate concurrent work, never retroactive evidence for ten.",
+  "pull_requests": [
+    {
+      "number": 2565,
+      "original_head": "e892b23978498e2dcc83f92df84e2bfdcd05e817",
+      "url": "https://github.com/4444J99/limen/pull/2565",
+      "owner": "4444J99/limen#2565",
+      "disposition": "merged_by_parallel_PSP_owner"
+    },
+    {
+      "number": 2564,
+      "original_head": "b4b41e4dbe1ad574ca508bcde46a58fc4728414f",
+      "url": "https://github.com/4444J99/limen/pull/2564",
+      "owner": "4444J99/limen#2564",
+      "disposition": "corrected_successor_this_continuation"
+    },
+    {
+      "number": 2563,
+      "original_head": "85f40f705cddc13b39e614e09f235178d82e946a",
+      "url": "https://github.com/4444J99/limen/pull/2563",
+      "owner": "4444J99/limen#2563",
+      "disposition": "merged_after_exact_head_local_scoped_predicate",
+      "landing_receipt": {
+        "headRefOid": "85f40f705cddc13b39e614e09f235178d82e946a",
+        "mergeCommit": {
+          "oid": "32f62917d25dde4b8ac7b2b1127ed18705f1080a"
+        },
+        "mergedAt": "2026-09-08T16:45:32Z",
+        "state": "MERGED"
+      }
+    },
+    {
+      "number": 2562,
+      "original_head": "14d111097636f92b324ab544d8aede17a5ad7498",
+      "url": "https://github.com/4444J99/limen/pull/2562",
+      "owner": "4444J99/limen#2562",
+      "disposition": "preserved_pending_project_build"
+    },
+    {
+      "number": 2561,
+      "original_head": "632693995e2d8674860a84f6f2a23ab0a7ac72ca",
+      "url": "https://github.com/4444J99/limen/pull/2561",
+      "owner": "4444J99/limen#2561",
+      "disposition": "preserved_heavy_local_gate_admission_blocked"
+    },
+    {
+      "number": 2553,
+      "original_head": "46abf4d0ae7ef8e767dae0598e5a089597af370d",
+      "url": "https://github.com/4444J99/limen/pull/2553",
+      "owner": "4444J99/limen#2553",
+      "disposition": "draft_owned_dependency_and_reader_acceptance"
+    },
+    {
+      "number": 2552,
+      "original_head": "1f018e78dee12659cba8b4d8403d5fbbeca66812",
+      "url": "https://github.com/4444J99/limen/pull/2552",
+      "owner": "4444J99/limen#2552",
+      "disposition": "corrected_successor_this_continuation",
+      "additional_integrated_head": "ebe3229f02df8487e5ad5f602e1eab66139ff4a1"
+    },
+    {
+      "number": 2551,
+      "original_head": "86fda7685fa1ee492b0a58f99573b59ed9a6896e",
+      "url": "https://github.com/4444J99/limen/pull/2551",
+      "owner": "4444J99/limen#2551",
+      "disposition": "merged_after_exact_head_local_scoped_predicate",
+      "landing_receipt": {
+        "headRefOid": "86fda7685fa1ee492b0a58f99573b59ed9a6896e",
+        "mergeCommit": {
+          "oid": "e97d333a2a43f36b2a2e9d02c003d04a379ff444"
+        },
+        "mergedAt": "2026-09-08T16:44:28Z",
+        "state": "MERGED"
+      }
+    },
+    {
+      "number": 2550,
+      "original_head": "db5bdc20b7e05c85ff3a1f14ca6f0d87218d18a6",
+      "url": "https://github.com/4444J99/limen/pull/2550",
+      "owner": "4444J99/limen#2550",
+      "disposition": "source_and_historical_receipts_preserved_in_corrected_successor",
+      "source_path_dispositions": [
+        {
+          "source_path": "cli/tests/test_notification_schedule.py",
+          "source_blob": "8a70506b4c5ddc38776a87173b9ceddbb6868681",
+          "successor_path": "cli/tests/test_notification_schedule.py",
+          "disposition": "evolved corrected source or newer dated snapshot",
+          "exists": true
+        },
+        {
+          "source_path": "cli/tests/test_notify_events.py",
+          "source_blob": "c269b44ca3cabc6e15de2739871835d5f741c47f",
+          "successor_path": "cli/tests/test_notify_events.py",
+          "disposition": "evolved corrected source or newer dated snapshot",
+          "exists": true
+        },
+        {
+          "source_path": "cli/tests/test_ships_24h_refresh.py",
+          "source_blob": "f818eea1945f9b7d7ac42e21af1257cfe22325ac",
+          "successor_path": "cli/tests/test_ships_24h_refresh.py",
+          "disposition": "evolved corrected source or newer dated snapshot",
+          "exists": true
+        },
+        {
+          "source_path": "docs/continuations/universe-finish-line-20260827/README.md",
+          "source_blob": "f00224e55a35f33a441ffb7bcef5c746075fbe3b",
+          "successor_path": "docs/continuations/git-finishline-20260908/history/pr-2550-readme.md",
+          "disposition": "historical source wrapper",
+          "exists": true
+        },
+        {
+          "source_path": "docs/continuations/universe-finish-line-20260827/agy-claim-reconciliation.json",
+          "source_blob": "f844dbefd54efa3ba00bdefa998ef363831f3026",
+          "successor_path": "docs/continuations/git-finishline-20260908/history/agy-claim-reconciliation.json",
+          "disposition": "historical source wrapper",
+          "exists": true
+        },
+        {
+          "source_path": "docs/continuations/universe-finish-line-20260827/blockers.json",
+          "source_blob": "4f23396a8571561539cb741cac29da458fcec9e2",
+          "successor_path": "docs/continuations/git-finishline-20260908/history/blockers.json",
+          "disposition": "historical source wrapper",
+          "exists": true
+        },
+        {
+          "source_path": "docs/continuations/universe-finish-line-20260827/main-normalization-plan.json",
+          "source_blob": "8d95aa5eff3a788b3aca44770224dac21f0e79b1",
+          "successor_path": "docs/continuations/git-finishline-20260908/history/main-normalization-plan.json",
+          "disposition": "historical source wrapper",
+          "exists": true
+        },
+        {
+          "source_path": "docs/continuations/universe-finish-line-20260827/main-normalization-receipt.json",
+          "source_blob": "68c8b9a6848f1c3cf6322338f134dfb89b28a973",
+          "successor_path": "docs/continuations/git-finishline-20260908/history/main-normalization-receipt.json",
+          "disposition": "historical source wrapper",
+          "exists": true
+        },
+        {
+          "source_path": "docs/continuations/universe-finish-line-20260827/notification-recovery-receipt.json",
+          "source_blob": "aadcdad1e0b3d4757813f4708082984f1b6248d6",
+          "successor_path": "docs/continuations/git-finishline-20260908/history/notification-recovery-receipt.json",
+          "disposition": "historical source wrapper",
+          "exists": true
+        },
+        {
+          "source_path": "docs/github-estate-census.json",
+          "source_blob": "79fa4d6a3614c0b496991f5c7fbd42dad146493e",
+          "successor_path": "docs/github-estate-census.json",
+          "disposition": "evolved corrected source or newer dated snapshot",
+          "exists": true
+        },
+        {
+          "source_path": "docs/receipts/universe-baseline.json",
+          "source_blob": "1656b156f320eb45a617859fbadeb47a15c25a74",
+          "successor_path": "docs/receipts/universe-baseline.json",
+          "disposition": "evolved corrected source or newer dated snapshot",
+          "exists": true
+        },
+        {
+          "source_path": "docs/worktree-preservation-receipts.json",
+          "source_blob": "20fd32c26b953756bf9164b28d008f9d8ea1ea2c",
+          "successor_path": "docs/worktree-preservation-receipts.json",
+          "disposition": "evolved corrected source or newer dated snapshot",
+          "exists": true
+        },
+        {
+          "source_path": "institutio/governance/notification-events.limen.json",
+          "source_blob": "4709c09b995d8c394bffe37b201eb5be06bd2c6c",
+          "successor_path": "institutio/governance/notification-events.limen.json",
+          "disposition": "evolved corrected source or newer dated snapshot",
+          "exists": true
+        },
+        {
+          "source_path": "institutio/governance/parameters.yaml",
+          "source_blob": "22b6b3dd91386e041616b5d7e62cc50f3ee15689",
+          "successor_path": "institutio/governance/parameters.yaml",
+          "disposition": "evolved corrected source or newer dated snapshot",
+          "exists": true
+        },
+        {
+          "source_path": "scripts/_notify.py",
+          "source_blob": "c9658be8a744b841d5d75b853cef0613c1e8495b",
+          "successor_path": "scripts/_notify.py",
+          "disposition": "evolved corrected source or newer dated snapshot",
+          "exists": true
+        },
+        {
+          "source_path": "scripts/notification-one-shot.py",
+          "source_blob": "ff9cddf54ffa316634edbc7b6a068624cd065431",
+          "successor_path": "scripts/notification-one-shot.py",
+          "disposition": "evolved corrected source or newer dated snapshot",
+          "exists": true
+        },
+        {
+          "source_path": "scripts/notification-schedule.py",
+          "source_blob": "6289c58bcdf052efc977fb2d788aa51a7012955b",
+          "successor_path": "scripts/notification-schedule.py",
+          "disposition": "evolved corrected source or newer dated snapshot",
+          "exists": true
+        },
+        {
+          "source_path": "scripts/notify-events.py",
+          "source_blob": "8d602adf8f0c273351f4a89b2de5f72fce1291bc",
+          "successor_path": "scripts/notify-events.py",
+          "disposition": "evolved corrected source or newer dated snapshot",
+          "exists": true
+        },
+        {
+          "source_path": "scripts/ships-24h-refresh.py",
+          "source_blob": "2e9d004e2c11b7bf390b5401d19ec36cde7b9443",
+          "successor_path": "scripts/ships-24h-refresh.py",
+          "disposition": "evolved corrected source or newer dated snapshot",
+          "exists": true
+        }
+      ]
+    }
+  ],
+  "original_pr_companion_bundle": {
+    "name": "original-pr-heads-20260908.bundle",
+    "sha256": "150ed56c807aaca78fa84259394effbc7ed86c37952edefa6b1bc65ac69d61ac",
+    "bytes": 660439,
+    "restore_order": "Restore original stash archive first, then this incremental PR-head bundle into the same otherwise empty repository.",
+    "excluded_base": "26b82ebc65bc2057b39dcef1499edc78308c0489",
+    "reason": "Some original PR heads postdate the original stash archive; preserved remote branches were not proof they were included in that archive."
+  }
+}

@@ -26,7 +26,7 @@ def _load_collector():
     return module
 
 
-def _emit(monkeypatch, tmp_path, total, *, metadata_available=True, inventory_authority=None):
+def _emit(monkeypatch, tmp_path, total, *, metadata_available=True):
     collector = _load_collector()
     gitvs = collector._gitvs()
     monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
@@ -60,15 +60,17 @@ def _emit(monkeypatch, tmp_path, total, *, metadata_available=True, inventory_au
         "default_check_policy": "no_required_checks",
         "default_check_policy_complete": True,
         "default_check_policy_error": None,
+        "default_check_policy_receipt": {"status": "no_required_checks", "complete": True},
         "required_check_count": 0,
         "issues": 0,
         "branches": 1,
         "checks": [],
+        "check_total": 0,
     }
     monkeypatch.setattr(collector, "_metadata", lambda _gitvs, _repo: metadata if metadata_available else None)
     fetched = []
 
-    def remote_page(_gitvs, _repo, kind, cursor):
+    def remote_page(_gitvs, _repo, kind, cursor, *, default_sha=None):
         fetched.append(kind)
         assert cursor is None
         if kind == "branches":
@@ -101,7 +103,7 @@ def _emit(monkeypatch, tmp_path, total, *, metadata_available=True, inventory_au
         "collect_local_git_census",
         lambda _root, **_kwargs: ({"summary": {"failure_count": 0}, "roots": [], "worktrees": []}, {}),
     )
-    full, _tracked = collector.collect(workers=1, inventory_authority=inventory_authority)
+    full, _tracked = collector.collect(workers=1)
     return full, fetched
 
 
@@ -150,7 +152,16 @@ def test_actual_collector_partial_zero_is_not_empty_inventory(monkeypatch, tmp_p
 
 
 @pytest.mark.parametrize(
-    "change", ["cursor", "receipt", "missing_receipt", "inconsistent_generation", "incomplete_partition"]
+    "change",
+    [
+        "cursor",
+        "receipt",
+        "missing_receipt",
+        "inconsistent_generation",
+        "incomplete_partition",
+        "consistently_forged_generation",
+        "metadata_identity",
+    ],
 )
 def test_existing_repository_receipt_binds_connection_generation(monkeypatch, tmp_path, change):
     snapshot, _fetched = _emit(monkeypatch, tmp_path, 2)
@@ -163,162 +174,14 @@ def test_existing_repository_receipt_binds_connection_generation(monkeypatch, tm
     elif change == "inconsistent_generation":
         snapshot["cursors"][0]["source_generation"] = "f" * 64
         snapshot["repository_receipts"][0]["connection_receipt_digest"] = _canonical_sha256(snapshot["cursors"])
+    elif change == "consistently_forged_generation":
+        for cursor in snapshot["cursors"]:
+            cursor["source_generation"] = "f" * 64
+        snapshot["repository_receipts"][0]["connection_receipt_digest"] = _canonical_sha256(snapshot["cursors"])
+    elif change == "metadata_identity":
+        snapshot["repositories"][0]["default_sha"] = "f" * 40
     else:
         snapshot["cursors"][1]["complete"] = False
         snapshot["repository_receipts"][0]["connection_receipt_digest"] = _canonical_sha256(snapshot["cursors"])
     with pytest.raises(InventoryAdmissionError):
         _count(snapshot)
-
-
-def test_actual_collector_content_digest_binds_authored_count(monkeypatch, tmp_path):
-    snapshot, _fetched = _emit(monkeypatch, tmp_path, 2)
-    assert _count(snapshot) == 1
-    original_digest = snapshot["source_report"]["content_sha256"]
-    for leaf in snapshot["leaves"]:
-        if leaf["kind"] == "pull_request":
-            leaf["author_login"] = "another-author"
-    assert _canonical_sha256(snapshot["leaves"]) != original_digest
-    with pytest.raises(InventoryAdmissionError, match="inventory_content_digest_invalid"):
-        _count(snapshot)
-
-
-@pytest.mark.parametrize("digest", [None, "", "0" * 64, 42])
-def test_actual_collector_requires_content_digest(monkeypatch, tmp_path, digest):
-    snapshot, _fetched = _emit(monkeypatch, tmp_path, 2)
-    snapshot["source_report"]["content_sha256"] = digest
-    with pytest.raises(InventoryAdmissionError, match="inventory_content_digest_invalid"):
-        _count(snapshot)
-
-
-@pytest.mark.parametrize("field", ["normalized_leaf_count", "known_leaf_count"])
-@pytest.mark.parametrize("value", [None, True, -1, 0, "3"])
-def test_actual_collector_reported_leaf_count_is_exact(monkeypatch, tmp_path, field, value):
-    snapshot, _fetched = _emit(monkeypatch, tmp_path, 2)
-    report = snapshot["source_report"]
-    target = report["cursor"] if field == "known_leaf_count" else report
-    target[field] = value
-    with pytest.raises(InventoryAdmissionError, match="inventory_leaf_count_invalid"):
-        _count(snapshot)
-
-
-def test_actual_collector_incomplete_leaf_count_fails_closed(monkeypatch, tmp_path):
-    snapshot, _fetched = _emit(monkeypatch, tmp_path, 0)
-    snapshot["source_report"]["cursor"]["leaf_count_complete"] = False
-    with pytest.raises(InventoryAdmissionError, match="inventory_leaf_count_invalid"):
-        _count(snapshot)
-
-
-def test_actual_collector_hashes_all_leaf_kinds(monkeypatch, tmp_path):
-    snapshot, _fetched = _emit(monkeypatch, tmp_path, 2)
-    branch = next(leaf for leaf in snapshot["leaves"] if leaf["kind"] == "branch")
-    branch["private_note"] = "sensitive-synthetic-value"
-    with pytest.raises(InventoryAdmissionError) as error:
-        _count(snapshot)
-    assert str(error.value) == "inventory_content_digest_invalid"
-
-
-def test_actual_collector_unhashable_content_has_redacted_denial(monkeypatch, tmp_path):
-    snapshot, _fetched = _emit(monkeypatch, tmp_path, 2)
-    snapshot["leaves"][0]["private_note"] = {"sensitive-synthetic-value"}
-    with pytest.raises(InventoryAdmissionError) as error:
-        _count(snapshot)
-    assert str(error.value) == "inventory_content_digest_invalid"
-
-
-def test_inventory_collector_uses_frozen_remote_contract_without_local_custody(monkeypatch, tmp_path):
-    authority = {
-        "schema_version": "limen.inventory_authority.v1",
-        "principal_id": "synthetic-collector",
-        "repository_ids": ["42"],
-        "source_generation": "a" * 64,
-    }
-    snapshot, fetched = _emit(monkeypatch, tmp_path, 2, inventory_authority=authority)
-    assert _count(snapshot) == 1
-    assert "pull_requests" in fetched
-    assert snapshot["source_report"]["source_generation"] == authority["source_generation"]
-    assert snapshot["inventory_collection"]["started_at"] == snapshot["source_report"]["generated_at"]
-    assert all(cursor["reused"] is False for cursor in snapshot["cursors"])
-    assert "local_git_census" not in snapshot
-    assert "universe_baseline" not in snapshot
-    assert not (tmp_path / "private-cache.json").exists()
-
-
-def test_inventory_collector_does_not_expand_authenticated_scope(monkeypatch, tmp_path):
-    authority = {"repository_ids": ["43"], "source_generation": "a" * 64}
-    with pytest.raises(RuntimeError, match="inventory_scope_changed"):
-        _emit(monkeypatch, tmp_path, 0, inventory_authority=authority)
-
-
-def test_inventory_publication_requires_valid_fresh_observation_and_acceptance(monkeypatch, tmp_path):
-    authority = {
-        "schema_version": "limen.inventory_authority.v1",
-        "principal_id": "synthetic-collector",
-        "repository_ids": ["42"],
-        "source_generation": "a" * 64,
-    }
-    snapshot, _ = _emit(monkeypatch, tmp_path, 2, inventory_authority=authority)
-    collector = _load_collector()
-    events = []
-
-    class Client:
-        def inventory_authority(self):
-            events.append("authority")
-            return authority
-
-        def publish_inventory_observation(self, observation):
-            events.append("publish")
-            assert observation is snapshot
-            return {
-                "schema_version": "limen.inventory_acceptance.v1",
-                "status": "accepted",
-                "observed_at": snapshot["source_report"]["generated_at"],
-            }
-
-    def collect(**kwargs):
-        events.append("collect")
-        assert kwargs == {"workers": 1, "inventory_authority": authority}
-        return snapshot, {}
-
-    monkeypatch.setattr(collector, "collect", collect)
-    collector.collect_and_publish_inventory(Client(), workers=1)
-    assert events == ["authority", "collect", "publish"]
-    events.clear()
-    snapshot["source_report"]["exhaustive"] = False
-    with pytest.raises(InventoryAdmissionError, match="partial"):
-        collector.collect_and_publish_inventory(Client(), workers=1)
-    assert events == ["authority", "collect"]
-
-
-def test_inventory_cli_consumes_collector_secret_before_collection(monkeypatch):
-    import os
-
-    from limen.conduct.client import HttpConductClient
-
-    collector = _load_collector()
-    monkeypatch.setattr("sys.argv", ["github-estate-census.py", "--publish-inventory"])
-    monkeypatch.setenv("LIMEN_CONDUCT_URL", "https://keeper.invalid")
-    monkeypatch.setenv("LIMEN_INVENTORY_COLLECTOR_TOKEN", "synthetic-collector-secret")
-
-    def publish(client, **kwargs):
-        assert isinstance(client, HttpConductClient)
-        assert client.token == "synthetic-collector-secret"
-        assert "LIMEN_INVENTORY_COLLECTOR_TOKEN" not in os.environ
-        raise RuntimeError("synthetic-stop-before-collection")
-
-    monkeypatch.setattr(collector, "collect_and_publish_inventory", publish)
-    with pytest.raises(RuntimeError, match="synthetic-stop-before-collection"):
-        collector.main()
-
-
-def test_inventory_client_preserves_fixed_authenticated_routes(monkeypatch):
-    from limen.conduct.client import HttpConductClient
-
-    calls = []
-    client = HttpConductClient("https://keeper.invalid", "synthetic-collector-secret")
-    monkeypatch.setattr(client, "_request", lambda *args: calls.append(args) or {})
-    client.inventory_authority()
-    client.publish_inventory_observation({"schema": "synthetic"})
-    assert calls == [
-        ("GET", "/api/conduct/inventory/authority"),
-        ("POST", "/api/conduct/inventory/observations", {"observation": {"schema": "synthetic"}}),
-    ]

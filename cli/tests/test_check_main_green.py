@@ -34,6 +34,7 @@ def _seed(tmp: Path, conclusion: str) -> None:
             {
                 "checked_at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
                 "conclusion": conclusion,
+                "run_id": 1,
                 "head_sha": "deadbeef" * 5,
                 "url": "https://github.com/4444J99/limen/actions/runs/1",
             }
@@ -56,12 +57,20 @@ def _empty_board(tmp: Path) -> Path:
 
 
 def run(tmp: Path, *extra, apply=False):
+    fixture_bin = tmp / "bin"
+    fixture_bin.mkdir(exist_ok=True)
+    gh = fixture_bin / "gh"
+    gh.write_text(
+        f"#!{sys.executable}\n"
+        + "import json,sys\nendpoint = sys.argv[2] if len(sys.argv) > 2 else ''\nif '/jobs' in endpoint:\n print(json.dumps({'jobs':[{'id':100,'conclusion':'failure','steps':[{'name':'test'}]}]}))\nelif '/annotations' in endpoint:\n print('[]')\nelse:\n raise SystemExit(1)\n"
+    )
+    gh.chmod(0o755)
     env = {
         "LIMEN_ROOT": str(tmp),
         "LIMEN_TASKS": str(tmp / "tasks.yaml"),
         "LIMEN_MAIN_GREEN_THROTTLE": "100000",  # force cache use
         "LIMEN_MAIN_GREEN_APPLY": "1" if apply else "0",
-        "PATH": "/usr/bin:/bin",
+        "PATH": str(fixture_bin) + ":/usr/bin:/bin",
     }
     import os
 
@@ -527,13 +536,13 @@ def test_classify_real_failure_when_steps_executed(monkeypatch):
     assert klass == "executed_code_failure"
 
 
-def test_classify_fails_open_to_ci_fail(monkeypatch):
+def test_classify_unavailable_is_unknown_and_never_merge_admissible(monkeypatch):
     m = _load()
     monkeypatch.setattr(m, "_gh_json", lambda args, default: default)  # API unavailable
     for result in (m.classify_red_run(123), m.classify_red_run(0)):
-        assert result.classification == "executed_code_failure"
-        assert result.execution_result == "CI_CODE_RED"
-        assert result.code_red is True
+        assert result.classification == "unknown"
+        assert result.execution_result == "CI_UNKNOWN"
+        assert result.code_red is False
         assert result.merge_admissible is False
 
 
@@ -743,3 +752,20 @@ def test_visibility_drift_detects_registry_public_but_observed_private(tmp_path,
     # a repo the registry WANTS private, observed private, is not a drift
     monkeypatch.setattr(m, "_gh_json", lambda args, default: True if "arca" in args[1] else default)
     assert m._visibility_drift("organvm/arca") is False
+
+
+def test_unreadable_later_job_annotations_never_permit_rerun(monkeypatch):
+    m = _load()
+
+    def query(args, default):
+        if "/jobs" in args[1]:
+            return _jobs(steps=0)
+        if "/100/annotations" in args[1]:
+            return []
+        return default
+
+    monkeypatch.setattr(m, "_gh_json", query)
+    result = m.classify_red_run(123)
+    assert result.classification == "unknown"
+    assert result.retry_allowed is False
+    assert result.code_red is False

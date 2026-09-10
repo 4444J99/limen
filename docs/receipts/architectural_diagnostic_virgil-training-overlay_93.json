@@ -1,0 +1,43 @@
+{
+  "schema": "limen.architectural_assessment.v1",
+  "receipt_type": "architectural_assessment",
+  "generated": "2026-08-26T17:29:57Z",
+  "target": {
+    "chamber": "organvm",
+    "repository": "organvm/virgil-training-overlay",
+    "pull_request": 93,
+    "head_branch": "sentinel-log-injection-fix-17636897279465860404",
+    "base_branch": "main",
+    "author": "google-labs-jules",
+    "is_draft": true,
+    "url": "https://github.com/organvm/virgil-training-overlay/pull/93"
+  },
+  "diagnostic_assessment": {
+    "classification": "Unverified architectural triage",
+    "category": "Security Matrices & Vulnerability Defense",
+    "blocker_type": "Unverified hypothesis: GitHub Actions / Workflow Script Injection Vulnerability",
+    "observed_divergence": "Unverified hypothesis: PR #93 (sentinel-log-injection-fix-17636897279465860404) patches untrusted input interpolation in GitHub Actions workflow steps and issue notifications.",
+    "affected_subsystems": [
+      "GitHub Actions Workflows",
+      "Issue Notification Effector",
+      "Event Webhook Dispatcher"
+    ],
+    "breaking_impact_analysis": "Unverified hypothesis: Altering workflow step argument passing requires updating action step environment mappings and verifying webhook payload parsing.",
+    "operator_recommendations": [
+      "Candidate for review: Option A: Move untrusted inputs into intermediate environment variables (`env: TITLE: ${{ github.event.issue.title }}`) instead of direct script template expansion.",
+      "Candidate for review: Option B: Adopt hardened third-party notification actions pinned to exact commit SHA."
+    ],
+    "disposition": "UNVERIFIED_ASSESSMENT"
+  },
+  "diagnostic_comment_body": "### Unverified architectural triage\n\norganvm/virgil-training-overlay PR #93\n\nMetadata suggests the category: Security Matrices & Vulnerability Defense.\n\nThis is a title and branch heuristic for review. The source diff, remote PR state, custody, landing, protected boundaries, and merge quarantine have not been verified. No human approval requirement is established by this assessment.",
+  "integrity_note": "Unverified metadata assessment only; no custody, landing, isolation, or lifecycle proof.",
+  "verification_status": "unverified",
+  "evidence_basis": "inventory metadata heuristics; source diff and runtime uninspected",
+  "establishes_custody": false,
+  "establishes_landing": false,
+  "protected_boundary_assessment": {
+    "status": "unverified",
+    "zero_touch_verified": false,
+    "quarantined_from_auto_merge": false
+  }
+}

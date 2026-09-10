@@ -83,6 +83,8 @@ class Wire:
             selector.register(self.process.stdout, selectors.EVENT_READ)
             while b"\n" not in self.buffer:
                 if not selector.select(self.remaining()):
+                    if self.process is not None and self.process.poll() is not None:
+                        raise ProtocolError("EOF without response")
                     raise TimeoutError("protocol deadline")
                 chunk = os.read(self.process.stdout.fileno(), 65536)
                 if not chunk:
@@ -110,7 +112,13 @@ class Wire:
         body = json.dumps(request).encode() + b"\n"
         if self.process:
             # Probe requests are deliberately below PIPE_BUF; never block on a silent reader.
-            if len(body) > 4096 or os.write(self.process.stdin.fileno(), body) != len(body):
+            if len(body) > 4096:
+                raise ProtocolError("request write failed")
+            try:
+                written = os.write(self.process.stdin.fileno(), body)
+            except BrokenPipeError as exc:
+                raise ProtocolError("request write failed") from exc
+            if written != len(body):
                 raise ProtocolError("request write failed")
             if notification:
                 return {}
@@ -202,13 +210,7 @@ class Wire:
             self.cleanup = self.custody.close() if self.custody else "unmeasured"
         finally:
             for stream in (self.process.stdin, self.process.stdout):
-                try:
-                    stream.close()
-                except (BrokenPipeError, OSError):
-                    # An already-exited peer can break the pipe between our last read/write
-                    # and cleanup; a close-time flush failure is not a new protocol fact and
-                    # must not surface as an unclassified exception to the caller.
-                    pass
+                stream.close()
 
 
 def verify(server, timeout=15, expected=None, version="2025-11-25", safe_calls=None):

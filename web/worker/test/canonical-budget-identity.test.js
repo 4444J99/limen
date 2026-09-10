@@ -64,6 +64,64 @@ test("new open upsert discards caller-supplied dispatch history", () => {
   assert.equal(created.dispatch_log[0].conduct_event_id, "new-upsert");
 });
 
+function spentFixture() {
+  const board = fixture();
+  board.portal.budget.track.spent = 5;
+  board.portal.budget.track.per_agent.codex = 5;
+  return board;
+}
+
+for (const cost of [1, 1000]) {
+  test(`claim cannot reprice its debit or refund to ${cost}`, () => {
+    const board = spentFixture();
+    const before = structuredClone(board);
+    assert.throws(() => applyTaskPacketProjectionEvent(board,
+      event("task.claim", { status: "dispatched", budget_cost: cost }, "open", "reprice")),
+    /reserved budget_cost cannot change/);
+    assert.deepEqual(board, before);
+    const claimed = applyTaskPacketProjectionEvent(board, event("task.claim", { status: "dispatched" }, "open", "claim")).board;
+    assert.equal(claimed.portal.budget.track.spent, 7);
+    const refunded = applyTaskPacketProjectionEvent(claimed, event("task.status", { status: "open" }, "dispatched", "refund")).board;
+    assert.equal(refunded.portal.budget.track.spent, 5);
+    assert.deepEqual(refunded.portal.budget.track.per_agent, { codex: 5 });
+  });
+}
+
+for (const kind of ["task.mutate", "task.status", "task.upsert"]) {
+  for (const activeStatus of ["dispatched", "in_progress"]) {
+    test(`${kind} cannot inflate ${activeStatus} reservation cost`, () => {
+      let claimed = applyTaskPacketProjectionEvent(spentFixture(), event("task.claim", { status: "dispatched" }, "open", "claim")).board;
+      if (activeStatus === "in_progress") {
+        claimed = applyTaskPacketProjectionEvent(claimed, event("task.status", { status: "in_progress" }, "dispatched", "start")).board;
+      }
+      const before = structuredClone(claimed);
+      const update = event(kind, { status: activeStatus, budget_cost: 1000 }, activeStatus, "inflate");
+      if (kind === "task.upsert") update.intent.task = { ...claimed.tasks[0], budget_cost: 1000 };
+      assert.throws(() => applyTaskPacketProjectionEvent(claimed, update), /reserved budget_cost cannot change/);
+      assert.deepEqual(claimed, before);
+      assert.equal(claimed.portal.budget.track.spent, 7);
+      if (activeStatus === "dispatched") {
+        const refunded = applyTaskPacketProjectionEvent(claimed, event("task.status", { status: "open" }, "dispatched", "refund")).board;
+        assert.equal(refunded.portal.budget.track.spent, 5);
+        assert.deepEqual(refunded.portal.budget.track.per_agent, { codex: 5 });
+      }
+    });
+  }
+}
+
+test("cancellation cannot change cost as it releases reservation", () => {
+  const claimed = applyTaskPacketProjectionEvent(spentFixture(), event("task.claim", { status: "dispatched" }, "open", "claim")).board;
+  assert.throws(() => applyTaskPacketProjectionEvent(claimed,
+    event("task.status", { status: "open", budget_cost: 1000 }, "dispatched", "refund")),
+  /reserved budget_cost cannot change/);
+});
+
+test("unreserved task can change cost before admission", () => {
+  const updated = applyTaskPacketProjectionEvent(spentFixture(), event("task.mutate", { budget_cost: 3 }, "open", "update")).board;
+  const claimed = applyTaskPacketProjectionEvent(updated, event("task.claim", { status: "dispatched" }, "open", "claim")).board;
+  assert.equal(claimed.portal.budget.track.spent, 8);
+});
+
 function fundedBoard(cost = 2) {
   const board = fixture();
   board.tasks[0].budget_cost = cost;

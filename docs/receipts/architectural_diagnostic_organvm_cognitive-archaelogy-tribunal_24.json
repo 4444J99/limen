@@ -1,0 +1,43 @@
+{
+  "schema": "limen.architectural_assessment.v1",
+  "receipt_type": "architectural_assessment",
+  "generated": "2026-08-26T17:29:57Z",
+  "target": {
+    "chamber": "organvm",
+    "repository": "organvm/cognitive-archaelogy-tribunal",
+    "pull_request": 24,
+    "head_branch": "sentinel-fix-github-token-exposure-5927256447654911156",
+    "base_branch": "main",
+    "author": "google-labs-jules",
+    "is_draft": true,
+    "url": "https://github.com/organvm/cognitive-archaelogy-tribunal/pull/24"
+  },
+  "diagnostic_assessment": {
+    "classification": "Unverified architectural triage",
+    "category": "Security Matrices & Vulnerability Defense",
+    "blocker_type": "Unverified hypothesis: CLI Argument Credential Exposure & Deprecation",
+    "observed_divergence": "Unverified hypothesis: PR #24 (sentinel-fix-github-token-exposure-5927256447654911156) deprecates and removes plain-text `--github-token` CLI flags in favor of environment variable or vault resolution.",
+    "affected_subsystems": [
+      "CLI Entrypoint",
+      "Credential Hydration Layer",
+      "Subprocess Argument Sanitizer"
+    ],
+    "breaking_impact_analysis": "Unverified hypothesis: Immediate removal of CLI token argument breaks automated shell scripts and CI jobs relying on legacy argument passing.",
+    "operator_recommendations": [
+      "Candidate for review: Option A: Introduce a 2-stage deprecation: emit a security warning to stderr while reading from environment variable fallback.",
+      "Candidate for review: Option B: Enforce environment variable / credential-wall resolution exclusively and update all orchestrator invocation scripts."
+    ],
+    "disposition": "UNVERIFIED_ASSESSMENT"
+  },
+  "diagnostic_comment_body": "### Unverified architectural triage\n\norganvm/cognitive-archaelogy-tribunal PR #24\n\nMetadata suggests the category: Security Matrices & Vulnerability Defense.\n\nThis is a title and branch heuristic for review. The source diff, remote PR state, custody, landing, protected boundaries, and merge quarantine have not been verified. No human approval requirement is established by this assessment.",
+  "integrity_note": "Unverified metadata assessment only; no custody, landing, isolation, or lifecycle proof.",
+  "verification_status": "unverified",
+  "evidence_basis": "inventory metadata heuristics; source diff and runtime uninspected",
+  "establishes_custody": false,
+  "establishes_landing": false,
+  "protected_boundary_assessment": {
+    "status": "unverified",
+    "zero_touch_verified": false,
+    "quarantined_from_auto_merge": false
+  }
+}

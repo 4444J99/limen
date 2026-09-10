@@ -5776,55 +5776,55 @@ def _reserve_serial_dispatch(
         ):
             raise _SerialClaimUnavailable("canonical keeper returned a mismatched claim receipt")
 
-        fresh.tasks = [reserved_task if row.id == task_id else row for row in fresh.tasks]
-        reserved_lifecycle_token = _lifecycle_ownership_token(reserved_task)
         # Archive before handing the authenticated claim to a provider. A later
-        # stale projection must not reuse this acknowledgement for another launch.
-        # Existing archive custody cannot prove whether that handoff already ran.
-        archived_here = False
+        # stale projection must not turn this already-consumed acknowledgement
+        # into authority for another launch. Interrupted custody stays charged
+        # and requires the existing keeper reconciliation path.
+        archive_path.parent.mkdir(parents=True, exist_ok=True)
         try:
-            archive_path.parent.mkdir(parents=True, exist_ok=True)
             os.link(pending_path, archive_path)
-            archived_here = True
+        except FileExistsError as exc:
+            # Another process already created this exact archive entry. That
+            # collision alone cannot prove whether the other process reached
+            # provider handoff, so this process must never self-settle a
+            # "blocked" prelaunch result here: doing so could clobber or
+            # duplicate an already-real launch. Retain the claim untouched for
+            # keeper reconciliation instead of attempting to commit anything.
+            raise _SerialClaimUnavailable(
+                "canonical claim handoff custody unavailable; reconcile existing claim"
+            ) from exc
+        try:
             # Persist the handoff marker before removing pending custody. A
             # crash can retain both links, but can never authorize two launches.
             _sync_serial_ticket_custody(archive_path.parent, tasks_path)
             pending_path.unlink()
             _sync_serial_ticket_custody(pending_path.parent, tasks_path)
         except Exception as exc:
-            if archived_here:
-                # This invocation created the marker and has not returned any
-                # provider authority. Settle its known no-launch result through
-                # the existing keeper CAS/refund and durable result-ticket path.
-                # Never infer this evidence from archive existence on a retry.
-                try:
-                    released = _commit_serial_reserved_result(
-                        tasks_path,
-                        fresh,
-                        reserved_task,
-                        agent,
-                        _prelaunch_blocked_result("canonical claim handoff custody unavailable"),
-                        now,
-                        selected_contract_hash,
-                        reserved_lifecycle_token,
-                    )
-                except Exception as release_error:
-                    raise _SerialClaimUnavailable(
-                        "canonical claim handoff custody unavailable; prelaunch release custody unacknowledged"
-                    ) from release_error
-                outcome = (
-                    "reservation released"
-                    if released is True
-                    else "exact prelaunch release deferred"
-                    if released is None
-                    else "prelaunch release fenced"
+            # This call has not reached provider handoff. Settle only the exact
+            # acknowledged claim; archived tickets alone never prove prelaunch
+            # on a later process restart and must never authorize relaunch.
+            fresh.tasks = [reserved_task if row.id == task_id else row for row in fresh.tasks]
+            try:
+                _commit_serial_reserved_result(
+                    tasks_path,
+                    fresh,
+                    reserved_task,
+                    agent,
+                    _prelaunch_blocked_result("canonical claim handoff custody unavailable"),
+                    now,
+                    selected_contract_hash,
+                    _lifecycle_ownership_token(reserved_task),
                 )
-                raise _SerialClaimUnavailable(f"canonical claim handoff custody unavailable; {outcome}") from exc
+            except Exception:
+                raise _SerialClaimUnavailable(
+                    "prelaunch release custody unacknowledged; exact claim retained"
+                ) from None
             raise _SerialClaimUnavailable(
                 "canonical claim handoff custody unavailable; reconcile existing claim"
             ) from exc
 
-        return fresh, reserved_task, reserved_lifecycle_token, reservation_id
+        fresh.tasks = [reserved_task if row.id == task_id else row for row in fresh.tasks]
+        return fresh, reserved_task, _lifecycle_ownership_token(reserved_task), reservation_id
 
 
 def _commit_serial_reserved_result(

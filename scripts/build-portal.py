@@ -38,8 +38,8 @@ def load_repository_aliases(path: Path = IDENTITY_REGISTRY) -> dict[str, str]:
         for coordinate in [canonical, *historical]:
             if coordinate.count("/") != 1:
                 raise ValueError(f"repository identity coordinate must be owner/name: {coordinate}")
-            previous = aliases.setdefault(coordinate, canonical)
-            if previous != canonical:
+            previous = aliases.setdefault(coordinate.casefold(), canonical)
+            if previous.casefold() != canonical.casefold():
                 raise ValueError(f"repository identity alias maps to multiple repositories: {coordinate}")
     return aliases
 
@@ -47,7 +47,7 @@ def load_repository_aliases(path: Path = IDENTITY_REGISTRY) -> dict[str, str]:
 def canonical_coordinate(coordinate: str, aliases: dict[str, str]) -> str:
     """Resolve stale census/policy coordinates through stable repository identity aliases."""
 
-    return aliases.get(coordinate, coordinate)
+    return aliases.get(coordinate.casefold(), coordinate.casefold())
 
 
 def build_portal_data(estate: dict, census: dict, aliases: dict[str, str]) -> dict:

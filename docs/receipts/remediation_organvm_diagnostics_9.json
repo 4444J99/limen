@@ -1,0 +1,28 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:07:18Z",
+  "target": {
+    "repository": "organvm/_diagnostics",
+    "pull_request": 9,
+    "head": "fe1f01d20da6e900dd30f6346e917b598d18d48b",
+    "base": "main",
+    "branch": "dependabot/npm_and_yarn/inquiry/report/eslint-plugin-react-refresh-0.5.3",
+    "title": "chore: Bump eslint-plugin-react-refresh from 0.5.2 to 0.5.3 in /inquiry/report"
+  },
+  "remediation": {
+    "status": "MERGED",
+    "merge_mode": "direct",
+    "policy_verdict": "CLEARED"
+  },
+  "verification": {
+    "command": "scripts/merge-policy.sh 9 --repo organvm/_diagnostics",
+    "executed_at": "2026-08-26T13:07:14Z",
+    "exit_status": 0,
+    "checks": {
+      "standards": "SUCCESS",
+      "lint": "SUCCESS",
+      "CodeQL": "NEUTRAL"
+    },
+    "result": "Exact-head matching verified, merge policy cleared, PR squash merged"
+  }
+}

@@ -24,6 +24,18 @@ def _result(payload: dict, returncode: int = 0) -> subprocess.CompletedProcess:
     return subprocess.CompletedProcess([], returncode, json.dumps(payload), "")
 
 
+def _observed_budget():
+    return {
+        "status": "observed",
+        "scope": "organization",
+        "product": "actions",
+        "policy_matches": True,
+        "projected_within_budget": True,
+        "enforced_headroom_available": True,
+        "stop_on_exhaustion_configured": True,
+    }
+
+
 def test_terminal_human_levers_cannot_be_current_gitvs_owners(tmp_path, monkeypatch) -> None:
     module = _load()
     rows = [{"id": "L-OPEN", "status": "open", "issue": 1}]
@@ -41,6 +53,7 @@ def test_terminal_human_levers_cannot_be_current_gitvs_owners(tmp_path, monkeypa
 
 def test_usage_projects_actions_product_not_all_github_products(tmp_path, monkeypatch) -> None:
     module = _load()
+    monkeypatch.setattr(module, "_actions_budget_observation", lambda *_args, **_kwargs: _observed_budget())
     monkeypatch.setattr(module.shutil, "which", lambda _command: "/usr/bin/gh")
     monkeypatch.setattr(module, "owners", lambda _estate: ["organvm"])
     monkeypatch.setattr(
@@ -70,6 +83,7 @@ def test_usage_projects_actions_product_not_all_github_products(tmp_path, monkey
 
 def test_usage_no_write_preserves_immutable_observer_source(tmp_path, monkeypatch) -> None:
     module = _load()
+    monkeypatch.setattr(module, "_actions_budget_observation", lambda *_args, **_kwargs: _observed_budget())
     monkeypatch.setattr(module.shutil, "which", lambda _command: "/usr/bin/gh")
     monkeypatch.setattr(module, "owners", lambda _estate: ["organvm"])
     monkeypatch.setattr(
@@ -145,6 +159,7 @@ def test_runner_admission_preserves_executed_step_evidence(monkeypatch) -> None:
 
 def test_usage_strict_prefers_unreadable_admission_over_budget_failure(tmp_path, monkeypatch, capsys) -> None:
     module = _load()
+    monkeypatch.setattr(module, "_actions_budget_observation", lambda *_args, **_kwargs: _observed_budget())
     monkeypatch.setattr(module.shutil, "which", lambda _command: "/usr/bin/gh")
     monkeypatch.setattr(module, "owners", lambda _estate: ["organvm"])
     monkeypatch.setattr(
@@ -163,6 +178,7 @@ def test_usage_strict_prefers_unreadable_admission_over_budget_failure(tmp_path,
 
 def test_usage_reports_provider_admission_text_without_account_diagnosis(tmp_path, monkeypatch, capsys) -> None:
     module = _load()
+    monkeypatch.setattr(module, "_actions_budget_observation", lambda *_args, **_kwargs: _observed_budget())
     monkeypatch.setattr(module.shutil, "which", lambda _command: "/usr/bin/gh")
     monkeypatch.setattr(module, "owners", lambda _estate: ["organvm"])
     monkeypatch.setattr(
