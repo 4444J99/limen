@@ -8,7 +8,7 @@
 `133 passed`; exact merged runtime installed; runtime-lag predicate `OK`;
 handoff relay `OK`; scoped verification reports no local diff.
 
-**Launch:** `python3 scripts/live-root-gate.py --write --fetch`
+**Launch:** `bash docs/continuations/mcp-estate-closeout-20260910/kickstart.sh`
 
 **Owner boundary:** The only remaining residue is the protected live-root and
 heartbeat activation gate recorded in `docs/dispatch-health.md` and

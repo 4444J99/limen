@@ -3,7 +3,7 @@
 - Repository: `4444J99/limen`
 - Merged PR: `#2607`
 - Merge commit: `bc19871ac688f6a0892d61bffdd699070b6df620`
-- Installed runtime: exact merge SHA, verified by `scripts/check-runtime-lag.py`
+- Installed runtime: exact merge SHA, verified by the capsule's explicit receipt-SHA equality check
 - Local MCP estate proof: `133 passed`
 - Handoff proof: `python3 scripts/handoff-relay.py --check`
 - Working tree at capsule creation: generated ledgers pending explicit commit

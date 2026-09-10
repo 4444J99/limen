@@ -21,8 +21,8 @@ bash docs/continuations/mcp-estate-closeout-20260910/kickstart.sh
 ```
 
 The command enters the capsule's isolated worktree when available, validates
-the finite runway, and re-derives the protected host gate. It is read-only
-with respect to branch switching and launchd.
+the finite runway, refreshes the tracked gate receipt, and re-derives the
+protected host gate. It does not switch branches or reload launchd.
 
 The bounded workstream contract is `workstream.json`; it grants a four-hour
 renewable runway and retains runtime/host mutations as operator-gated.

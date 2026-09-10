@@ -36,7 +36,7 @@ Done from receipt: `5`
 | 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | mail index unavailable; active flagged state is unverified |
 | 30 | `MAIL-HISTORICAL-BACKLOG` | `assigned_from_existing_work` | mail index unavailable; historical backlog state is unverified |
 | 40 | `REPO-BOIL-UP` | `needs_assignment` | repo surface ledger missing; assignment must refresh existing roots before new work |
-| 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
+| 50 | `PROMPT-PACKETS` | `assigned_from_existing_work` | canonical private packet indexes unavailable; clearance is unverified |
 | 60 | `VALUE-REPOS` | `assigned_from_existing_work` | 19 value repos define the funded work lane |
 | 70 | `TABVLARIVS-STATUS-WRITERS` | `done_from_receipt` | status-mutator tier is recorded closed |
 

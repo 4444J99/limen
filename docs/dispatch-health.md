@@ -64,13 +64,13 @@ Status: `blocked`
 - Live root: `~/Workspace/limen`.
 - Branch: `main`; status `## main...origin/main`.
 - HEAD: `74505dddaad6892fd101dee0928bda44166b3d21`.
-- origin/main: `74505dddaad6892fd101dee0928bda44166b3d21`.
-- Matches origin/main: `True`; ahead `0` behind `0`.
+- origin/main: `74505dddaad6892fd101dee0928bda44166b3d21` (cached at receipt generation).
+- Matches origin/main: `True`; ahead `0` behind `0` in the cached observation only.
 - Dirty entries: `0`.
 
 ## Verified Worktree
 
-- Verified worktree: `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention`.
+- Verified worktree: current producer worktree (ephemeral; not a durable receipt path).
 - Branch: `4444j99-verify-heal-mcp-wave0`; status `## 4444j99-verify-heal-mcp-wave0`.
 - HEAD matches origin/main: `False`.
 
