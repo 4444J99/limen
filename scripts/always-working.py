@@ -124,10 +124,10 @@ def now_iso() -> str:
 
 def relpath(path: Path) -> str:
     try:
-        return "~/" + str(path.expanduser().resolve().relative_to(HOME))
+        return str(path.resolve().relative_to(ROOT.resolve()))
     except (OSError, ValueError):
         try:
-            return str(path.resolve().relative_to(ROOT))
+            return "~/" + str(path.expanduser().resolve().relative_to(HOME))
         except (OSError, ValueError):
             return str(path)
 
@@ -708,8 +708,9 @@ def mail_story_receipt(
 def mail_receipts() -> list[dict[str, Any]]:
     stats = mail_stats()
     census = mail_census()
-    flagged = int(stats.get("flagged_non_deleted") or 0)
-    not_deleted = int(stats.get("not_deleted_messages") or 0)
+    mail_available = bool(stats.get("present")) and not stats.get("error")
+    flagged = int(stats.get("flagged_non_deleted") or 0) if mail_available else 0
+    not_deleted = int(stats.get("not_deleted_messages") or 0) if mail_available else 0
     flagged_story = mail_story_receipt("flagged", flagged)
     history_batch_target = min(500, not_deleted) if not_deleted else 0
     history_story = mail_story_receipt(
@@ -718,9 +719,9 @@ def mail_receipts() -> list[dict[str, Any]]:
         expected_limit=500,
         require_flagged_total=False,
     )
-    active_done = flagged == 0 or bool(flagged_story.get("classified_current"))
+    active_done = mail_available and (flagged == 0 or bool(flagged_story.get("classified_current")))
     active_status = STATUS_DONE if active_done else STATUS_ASSIGNED
-    history_done = not_deleted == 0 or bool(history_story.get("classified_current"))
+    history_done = mail_available and (not_deleted == 0 or bool(history_story.get("classified_current")))
     history_status = STATUS_DONE if history_done else STATUS_ASSIGNED
     common = {
         "evidence": {"mail_stats": stats, "mail_census": census, "mail_story": flagged_story},

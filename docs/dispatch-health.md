@@ -42,12 +42,12 @@ Status: `blocked`
 ## Prompt Packet Gate
 
 - Prompt packet index present: `True`.
-- Prompt packet status: `clear`.
+- Prompt packet status: `unavailable`.
 - Open prompt packets: `0`.
 - Conductor-required packets: `0`.
 - Ready-after-predicate packets: `0`.
 - Recorded packets: `0`.
-- Public packet ledger: `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/prompt-packet-ledger.md`.
+- Public packet ledger: `docs/prompt-packet-ledger.md`.
 
 ## Always-Working Gate
 
@@ -57,7 +57,7 @@ Status: `blocked`
 - Blocked workstreams: `0`.
 - Done from receipt: `0`.
 - Next item: `` (``).
-- Public reconciliation: `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/always-working.md`.
+- Public reconciliation: `docs/always-working.md`.
 
 ## Live Root
 

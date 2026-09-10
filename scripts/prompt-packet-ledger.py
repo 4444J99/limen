@@ -293,6 +293,7 @@ def build_snapshot(limit: int) -> dict[str, Any]:
     priority = load_json(PRIORITY_INDEX)
     attack = load_json(ATTACK_INDEX)
     resolution_receipts = load_json(RESOLUTION_RECEIPTS)
+    inputs_available = all((review, priority, attack))
     resolutions = resolution_lookup(resolution_receipts)
     packets = build_packets(review, priority, attack, resolutions)
     recorded_packets = [
@@ -308,6 +309,7 @@ def build_snapshot(limit: int) -> dict[str, Any]:
     now = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     return {
         "generated_at": now,
+        "inputs_available": inputs_available,
         "inputs": {
             "prompt_batch_review_ledger": {"path": str(BATCH_REVIEW_INDEX), "present": bool(review)},
             "prompt_priority_map": {"path": str(PRIORITY_INDEX), "present": bool(priority)},
@@ -453,6 +455,9 @@ def main() -> int:
     args = parser.parse_args()
 
     snapshot = build_snapshot(limit=max(1, args.limit))
+    if not snapshot["inputs_available"]:
+        print("prompt-packet-ledger: required private indexes unavailable; preserving prior projection", file=sys.stderr)
+        return 1
     markdown = render_markdown(snapshot, limit=max(1, args.limit))
     if args.write:
         write_outputs(snapshot, markdown)
