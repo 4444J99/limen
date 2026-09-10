@@ -23,3 +23,8 @@ def test_unknown_branch_is_rejected() -> None:
     result = run("--branch", "unowned-experiment")
     assert result.returncode == 1
     assert "expected exactly one owning family" in result.stderr
+
+
+def test_unintegrated_branch_has_a_durable_owner_receipt() -> None:
+    result = run("--branch", "capture/main-deferred")
+    assert result.returncode == 0, result.stderr

@@ -30,6 +30,20 @@ def render(registry: dict) -> str:
         f"| {row['name']} | `{row['match']}` | {row['owner']} | {row['intent']} | {row['receipt']} |"
         for row in rows
     )
+    receipts = registry.get("unintegrated_branch_receipts") or []
+    if receipts:
+        lines.extend(
+            [
+                "",
+                "## Unintegrated branch receipts",
+                "",
+                "These branches have no pull-request record. Their exact-delta reconciliation is owned by the linked issue.",
+                "",
+                "| Branch | Family | Owner issue |",
+                "|---|---|---|",
+            ]
+        )
+        lines.extend(f"| `{row['branch']}` | {row['family']} | #{row['owner_issue']} |" for row in receipts)
     lines.extend(
         [
             "",
@@ -50,4 +64,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
