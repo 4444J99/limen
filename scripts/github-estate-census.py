@@ -34,6 +34,7 @@ from limen.github_estate_census import (  # noqa: E402
 )
 from limen.local_git_census import collect_local_git_census  # noqa: E402
 from limen.universe_baseline import build_universe_baseline_receipt  # noqa: E402
+from limen.inventory_admission import inventory_count  # noqa: E402
 
 
 SOURCE_REPORT = ROOT / "logs" / "progress-sources" / "github-estate.json"
@@ -725,7 +726,10 @@ def _remote_page(gitvs, repo: str, kind: str, cursor: str | None) -> dict[str, A
         raise ValueError("github-page-invalid") from exc
 
 
-def collect(*, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
+def collect(
+    *, workers: int = 8, inventory_authority: dict[str, Any] | None = None
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    collection_started = datetime.now(UTC)
     gitvs = _gitvs()
     estate = gitvs.load_estate()
     requested = gitvs.owners(estate)
@@ -762,16 +766,26 @@ def collect(*, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
         return inventory_rows, page_count, failures
 
     repositories, repository_pages, inventory_failures = inventory_all()
+    if inventory_authority is not None:
+        # Scope is read from the authenticated keeper before collection, never
+        # widened to match a partial runtime denominator or a local cache.
+        actual_ids = {str(row.get("repository_id")) for row in repositories.values()}
+        if actual_ids != set(inventory_authority["repository_ids"]) or owner_failures or inventory_failures:
+            raise RuntimeError("inventory_scope_changed")
     owner_failures += inventory_failures
     denominator_generation = _repository_generation(repositories)
     cache_failure: str | None = None
     try:
-        cached_generation, cursor_cache = _load_cursor_cache(denominator_generation)
+        cached_generation, cursor_cache = (
+            (None, {}) if inventory_authority is not None else _load_cursor_cache(denominator_generation)
+        )
     except RuntimeError as exc:
         cached_generation, cursor_cache = None, {}
         cache_failure = str(exc)
-    now = datetime.now(UTC)
-    source_generation = cached_generation or _canonical_sha256(
+    now = collection_started if inventory_authority is not None else datetime.now(UTC)
+    source_generation = (
+        inventory_authority["source_generation"] if inventory_authority is not None else cached_generation
+    ) or _canonical_sha256(
         {
             "denominator_generation": denominator_generation,
             "owners": canonical,
@@ -914,12 +928,13 @@ def collect(*, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
                 cursor_cache[_connection_key(repo, kind)] = result.as_resume_dict()
             for kind, result in build_results.items():
                 connection_results[(repo, kind)] = result
-            _write_cursor_cache(
-                denominator_generation,
-                source_generation,
-                cursor_cache,
-                complete=False,
-            )
+            if inventory_authority is None:
+                _write_cursor_cache(
+                    denominator_generation,
+                    source_generation,
+                    cursor_cache,
+                    complete=False,
+                )
 
     final_repositories, _, final_inventory_failures = inventory_all()
     repository_failures: list[dict[str, Any]] = []
@@ -965,6 +980,10 @@ def collect(*, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
         connection_results=connection_results,
         source_generation=source_generation,
     )
+    if inventory_authority is not None:
+        full["inventory_collection"] = {"started_at": collection_started.isoformat().replace("+00:00", "Z")}
+        # No local Git paths, archive facts, or baseline bodies cross this seam.
+        return full, tracked
     local_full, local_tracked = collect_local_git_census(ROOT, observed_at=now)
     baseline = build_universe_baseline_receipt(full, local_full)
     full["local_git_census"] = local_full
@@ -980,6 +999,33 @@ def collect(*, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
     return full, tracked
 
 
+def collect_and_publish_inventory(client: Any, *, workers: int = 8) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Explicit collector operation; never ingest PRIVATE_FACTS or resume cursors."""
+    authority = client.inventory_authority()
+    ids = authority.get("repository_ids")
+    generation = authority.get("source_generation")
+    if (
+        authority.get("schema_version") != "limen.inventory_authority.v1"
+        or not isinstance(ids, list)
+        or not ids
+        or any(not isinstance(value, str) or not value for value in ids)
+        or len(set(ids)) != len(ids)
+        or not isinstance(generation, str)
+        or len(generation) != 64
+    ):
+        raise RuntimeError("inventory_authority_invalid")
+    full, tracked = collect(workers=workers, inventory_authority=authority)
+    inventory_count(full, expected_repository_ids=frozenset(ids), expected_generation=generation, now=datetime.now(UTC))
+    receipt = client.publish_inventory_observation(full)
+    if (
+        receipt.get("schema_version") != "limen.inventory_acceptance.v1"
+        or receipt.get("status") != "accepted"
+        or receipt.get("observed_at") != full["source_report"]["generated_at"]
+    ):
+        raise RuntimeError("inventory_acceptance_receipt_invalid")
+    return full, tracked
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true", help="exit 1 unless every cursor is exhaustive")
@@ -990,6 +1036,11 @@ def main() -> int:
     )
     parser.add_argument("--json", action="store_true", help="print the redacted report summary")
     parser.add_argument("--write", action="store_true", help="write owner, source, and tracked receipts")
+    parser.add_argument(
+        "--publish-inventory",
+        action="store_true",
+        help="fresh census into the authenticated private keeper; requires its dedicated collector credential",
+    )
     parser.add_argument("--workers", type=int, default=8, help="bounded concurrent repository packets (1-32)")
     parser.add_argument(
         "--record", action="store_true", help="run the census when due; ship the tracked ledger on change"
@@ -998,9 +1049,21 @@ def main() -> int:
     args = parser.parse_args()
     if args.workers < 1 or args.workers > 32:
         parser.error("--workers must be between 1 and 32")
+    if args.publish_inventory and (args.record or args.dry_run or args.write):
+        parser.error(
+            "--publish-inventory is an explicit private operation; it cannot combine with --record, --dry-run or --write"
+        )
     if args.record:
         return record(workers=args.workers, dry_run=args.dry_run)
-    full, tracked = collect(workers=args.workers)
+    if args.publish_inventory:
+        from limen.conduct.client import HttpConductClient
+
+        client = HttpConductClient(
+            os.environ.get("LIMEN_CONDUCT_URL", ""), os.environ.pop("LIMEN_INVENTORY_COLLECTOR_TOKEN", "")
+        )
+        full, tracked = collect_and_publish_inventory(client, workers=args.workers)
+    else:
+        full, tracked = collect(workers=args.workers)
     report = full["source_report"]
     if args.write:
         SOURCE_REPORT.parent.mkdir(parents=True, exist_ok=True)

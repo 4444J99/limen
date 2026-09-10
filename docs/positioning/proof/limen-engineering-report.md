@@ -1,8 +1,12 @@
 # Limen — Engineering Report
 
-**Status:** source-backed case study draft; not a completed P05-W01 acceptance or a publication approval.
+**Status:** source-backed case study; P05-W01 acceptance and external publication require separate evidence and authority.
 **Observation date:** 2026-09-08.
+**Factual review date:** 2026-09-09; review evidence belongs to [P05-W01](https://github.com/4444J99/limen/issues/2198).
 **Authorship:** Architected and directed by one person through a governed, multi-agent production system.
+
+The authorship statement follows the existing project policy; it is not a line-by-line authorship
+audit or proof that every execution complied with that policy. E09.
 
 ## The expensive problem
 
@@ -26,10 +30,10 @@ checks and host-admitted heavy work. A denied heavy run is unverified, even if t
 passed. This distinction is a design and implementation fact, not a guarantee about every past
 execution. See E03 and E04.
 
-Repository integration is explicitly qualified by the registry. Limen's current single-owner
+Repository integration is explicitly qualified by the registry. Limen's cited single-owner
 configuration uses exact-head local verification and a PR merge; other declared configurations may
 use a queue. A moving default branch is not by itself a reason to restart every successful check.
-These are current operating rules, not proof that every historical merge obeyed them. See E05.
+These are rules at the cited baseline, not proof that every historical merge obeyed them. See E05.
 
 ## Decisions and tradeoffs
 
@@ -48,7 +52,7 @@ accepted baseline when the September observation was taken.
 
 ## What the observations show
 
-1. **A complete task graph exists.** The September structural check passed for 111 work packets,
+1. **The recorded task graph passed its structural check.** The September snapshot reports 111 work packets,
    15 phases, 13 chunks and 127 mapped objects. This proves structural coverage, not delivery. E06.
 2. **Issue closure is insufficient evidence.** The same observation found 36 closed leaf issues,
    but only 35 passed stored-receipt validation. P05-W01 had no marked receipt; three phase receipts
@@ -56,13 +60,16 @@ accepted baseline when the September observation was taken.
 3. **The system has required genuine correction.** The recovery PR quarantined forged receipts.
    Historical P03/P04 closure documents were subsequently labelled invalid evidence. The invalid
    records are retained for custody, not rehabilitated by a new narrative. E07.
-4. **Runtime access is a separate fact.** The current execution session's CLI and connected broker
-   capability reads reported that the broker was unconfigured. That does not establish the health
-   of every deployment; it prevents a claim of autonomous broker operation from this session. E08.
-5. **Verification can be partial.** R00's 57 focused tests and 14 lightweight scoped gates passed,
-   and its live readiness query returned eight preparation rows. The complete scoped command
-   nevertheless exited 75 because the host denied its heavy tail. These findings are attached to
-   the unmerged repair, not presented as a fully admitted release. E08.
+4. **Runtime access is a separate fact.** The September 8 execution reports describe CLI and connected broker
+   capability reads returning an unconfigured broker. That does not establish the health
+   of every deployment or the state of a later session. E08.
+5. **Verification can be partial, and a blocker can change.** The later September 8 checkpoint
+   records actual heavy-work admission after an earlier denial. Fourteen cheap gates passed, but
+   the public-live observation failed without authenticated GitHub CLI access. Its CLI suite
+   recorded 6,720 passed, 126 failed and 16 skipped; the API suite recorded 48 passed. A subsequent
+   114-test run resolved 33 import-affected failures, leaving 93 earlier failures unverified.
+   These are the executor's dated results for correction `81d57e6f71bd`, not an independent rerun
+   or a fully green release. The original host denial must not be described as the final state. E08.
 
 ## A bounded demonstration
 
@@ -85,7 +92,8 @@ problem. Repository volume alone does not establish quality, business value or e
 
 The next commercial test is deliberately limited: can an evidence-backed audit help a named sponsor
 make a better decision about one agent-assisted delivery initiative? Client outcomes, prices and
-the expected economic benefit are not asserted here.
+the expected economic benefit are not asserted here. The audit is a proposed offer from the
+existing commercial contract, not evidence of a sold engagement. E09.
 
 ## Limits and review status
 
@@ -94,9 +102,11 @@ claim or independent replication is established by these sources. The observatio
 and unverified work. Current-source evidence can become stale when code, contracts or deployments
 change.
 
-The report is ready for a bounded independent factual/publication review. P05-W01 remains
-unaccepted until that review, the claim-to-source audit and the required durable completion receipt
-exist. A document merge alone cannot satisfy that condition.
+The claim-to-source review and any explicit findings belong to
+[P05-W01](https://github.com/4444J99/limen/issues/2198). That task remains unaccepted until the
+independent verdict, canonical prerequisites and required durable completion receipt pass its
+owning predicate. A document merge or a publishable editorial verdict does not authorize external
+publication or satisfy task acceptance by itself.
 
 - [Evidence appendix](limen-evidence-appendix.md)
 - [Limitations and withheld claims](limen-limitations.md)

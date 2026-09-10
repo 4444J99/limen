@@ -1,0 +1,824 @@
+[
+  {
+    "name": "baseline",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": true,
+    "normalized": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    }
+  },
+  {
+    "name": "normalized scopes",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "EXAMPLE/Fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "write",
+        "read"
+      ],
+      "destinations": [
+        "https://z.test",
+        "https://a.test:443"
+      ]
+    },
+    "valid": true,
+    "normalized": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read",
+        "write"
+      ],
+      "destinations": [
+        "https://a.test:443",
+        "https://z.test"
+      ]
+    }
+  },
+  {
+    "name": "exact origin https://example.test:0",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test:0"
+      ]
+    },
+    "valid": true,
+    "normalized": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test:0"
+      ]
+    }
+  },
+  {
+    "name": "exact origin https://example.test:65535",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test:65535"
+      ]
+    },
+    "valid": true,
+    "normalized": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test:65535"
+      ]
+    }
+  },
+  {
+    "name": "exact origin https://EXAMPLE.test:443",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://EXAMPLE.test:443"
+      ]
+    },
+    "valid": true,
+    "normalized": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://EXAMPLE.test:443"
+      ]
+    }
+  },
+  {
+    "name": "exact origin https://[::1]",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://[::1]"
+      ]
+    },
+    "valid": true,
+    "normalized": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://[::1]"
+      ]
+    }
+  },
+  {
+    "name": "exact origin https://[::ffff:192.0.2.1]:443",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://[::ffff:192.0.2.1]:443"
+      ]
+    },
+    "valid": true,
+    "normalized": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://[::ffff:192.0.2.1]:443"
+      ]
+    }
+  },
+  {
+    "name": "falsey None",
+    "policy": null,
+    "valid": false
+  },
+  {
+    "name": "falsey {}",
+    "policy": {},
+    "valid": false
+  },
+  {
+    "name": "falsey False",
+    "policy": false,
+    "valid": false
+  },
+  {
+    "name": "falsey ''",
+    "policy": "",
+    "valid": false
+  },
+  {
+    "name": "falsey []",
+    "policy": [],
+    "valid": false
+  },
+  {
+    "name": "falsey 0",
+    "policy": 0,
+    "valid": false
+  },
+  {
+    "name": "invalid schema_version 'future'",
+    "policy": {
+      "schema_version": "future",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid repository '*/*'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "*/*",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid repository 'example/fixture\\n'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture\n",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid source_revision 'main'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "main",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid source_revision 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\n'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid data_classification 'probably-public'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "probably-public",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid max_retention_days True",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": true,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid max_retention_days -1",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": -1,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid max_retention_days 36501",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 36501,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid max_retention_days 0.5",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0.5,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid tools ['*']",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "*"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid tools ['read', 'read']",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read",
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid tools ['read\\n']",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read\n"
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid tools [7]",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        7
+      ],
+      "destinations": [
+        "https://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid destinations 'https://example.test'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": "https://example.test"
+    },
+    "valid": false
+  },
+  {
+    "name": "extra field",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test"
+      ],
+      "verified": true
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://*.example.test'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://*.example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://user:secret@example.test'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://user:secret@example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://@example.test'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://@example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://example.test/path'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test/path"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://example.test/'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test/"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'http://example.test'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "http://example.test"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://example.test:bad'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test:bad"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://example.test:'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test:"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://example.test:65536'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test:65536"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://['",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://["
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://[::1]garbage'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://[::1]garbage"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://[v1.future]'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://[v1.future]"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://[fe80::1%25eth0]'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://[fe80::1%25eth0]"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://example.test\\\\evil'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test\\evil"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://example.test\\x00'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test\u0000"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://example.test\\n'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test\n"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://example.test?'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test?"
+      ]
+    },
+    "valid": false
+  },
+  {
+    "name": "invalid origin 'https://example.test#'",
+    "policy": {
+      "schema_version": "limen.provider_eligibility.v1",
+      "repository": "example/fixture",
+      "source_revision": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "data_classification": "synthetic",
+      "max_retention_days": 0,
+      "tools": [
+        "read"
+      ],
+      "destinations": [
+        "https://example.test#"
+      ]
+    },
+    "valid": false
+  }
+]

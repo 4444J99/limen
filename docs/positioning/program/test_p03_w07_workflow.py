@@ -241,8 +241,33 @@ def test_receipt_copies_explicit_broker_authority_without_replacing_identity() -
     authority = {
         "kind": "broker",
         "run_id": "run-" + "a" * 32,
-        "lease_id": "lease-123-" + "b" * 16,
+        "lease_id": "lease-123-" + "a" * 16,
         "executor": "codex-test",
     }
     assert W.validated_authority(authority) == authority
     assert W.validated_authority(authority) is not authority
+
+
+@pytest.mark.parametrize("session_id", ["direct-session", "codex:reader/session_1@host+test", "a" * 256])
+def test_receipt_accepts_broker_valid_protected_session_identifiers(session_id: str) -> None:
+    from limen.conduct.models import AgentIdentityV1, ConductorSessionV1
+
+    identity = AgentIdentityV1(agent="codex-test", surface="test", session_id=session_id)
+    session = ConductorSessionV1(session_id=session_id, identity=identity, origin="direct", human_protected=True)
+    authority = {**TEST_AUTHORITY, "session_id": session.session_id}
+    assert W.validated_authority(authority) == authority
+
+
+@pytest.mark.parametrize(
+    "session_id", ["a" * 257, " direct-session", "direct session", "direct\x00session", "/session", True]
+)
+def test_receipt_rejects_non_protocol_session_identifiers(session_id) -> None:
+    with pytest.raises(W.WorkflowError, match="bounded session identifier"):
+        W.validated_authority({**TEST_AUTHORITY, "session_id": session_id})
+
+
+@pytest.mark.parametrize("lease_id", ["lease-123-" + "b" * 16, "lease-0-" + "a" * 16, "lease-01-" + "a" * 16])
+def test_receipt_rejects_mixed_or_impossible_broker_lease(lease_id: str) -> None:
+    authority = {"kind": "broker", "run_id": "run-" + "a" * 32, "lease_id": lease_id, "executor": "codex-test"}
+    with pytest.raises(W.WorkflowError, match="broker"):
+        W.validated_authority(authority)
