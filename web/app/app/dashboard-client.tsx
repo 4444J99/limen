@@ -85,6 +85,7 @@ export interface IssueStatusData {
     stale_issues: number;
     ready_to_triage: number;
     priority_counts: Record<string, number>;
+    stale_repos?: number;
   };
 }
 
@@ -97,6 +98,7 @@ export interface RepoHealthData {
     healthy_repos: number;
     failing_workflows: number;
     in_progress_runs: number;
+    stale_repos?: number;
   };
 }
 
@@ -470,8 +472,8 @@ export default function DashboardClient({ data, prData, issueData, healthData, a
         <Metric title="Queue" value={`${data.summary.total}`} tone="blue" detail={`${active} active, ${data.summary.stale_count} stale`} />
         <Metric title="Completed" value={`${throughput?.done ?? done}`} tone="green" detail={`${throughput?.not_done ?? data.summary.total - done} not done`} />
         <Metric title="GitHub queue" value={`${prData?.summary.total_open_prs || 0}`} tone={prData?.summary.prs_with_failing_ci ? "amber" : "green"} detail={`${prData?.summary.total_open_issues || 0} open issues · ${prData?.summary.total_active_work_branches || 0} active branches · ${prData?.summary.work_branches_without_open_pr || 0} without PR`} />
-        <Metric title="Issue triage" value={issueData ? `${issueData.summary.ready_to_triage}` : "n/a"} tone={!issueData ? "grey" : issueData.summary.ready_to_triage ? "amber" : "green"} detail={issueData ? `${issueData.summary.unlabeled_issues} unlabeled · ${issueData.summary.unassigned_issues} unassigned · ${issueData.summary.stale_issues} stale` : "Feed unavailable"} />
-        <Metric title="Repo health" value={healthData ? `${healthData.summary.degraded_repos}` : "n/a"} tone={!healthData ? "grey" : healthData.summary.degraded_repos ? "amber" : "green"} detail={healthData ? `${healthData.summary.failing_workflows} failing workflows · ${healthData.summary.in_progress_runs} in progress` : "Feed unavailable"} />
+        <Metric title="Issue triage" value={issueData ? `${issueData.summary.ready_to_triage}` : "n/a"} tone={!issueData || issueData.summary.stale_repos ? "grey" : issueData.summary.ready_to_triage ? "amber" : "green"} detail={issueData ? (issueData.summary.stale_repos ? `Partial data (${issueData.summary.stale_repos} repo(s) unavailable)` : `${issueData.summary.unlabeled_issues} unlabeled · ${issueData.summary.unassigned_issues} unassigned · ${issueData.summary.stale_issues} stale`) : "Feed unavailable"} />
+        <Metric title="Repo health" value={healthData ? `${healthData.summary.degraded_repos}` : "n/a"} tone={!healthData || healthData.summary.stale_repos ? "grey" : healthData.summary.degraded_repos ? "amber" : "green"} detail={healthData ? (healthData.summary.stale_repos ? `Partial data (${healthData.summary.stale_repos} repo(s) unavailable)` : `${healthData.summary.failing_workflows} failing workflows · ${healthData.summary.in_progress_runs} in progress`) : "Feed unavailable"} />
         <Metric title="Failures" value={`${failed}`} tone={failed ? "red" : "green"} detail="Failed or blocked task states" />
       </section>
 
