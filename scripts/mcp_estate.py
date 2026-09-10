@@ -7,6 +7,7 @@ remain process-local: reports expose only stable identities and content fingerpr
 from __future__ import annotations
 
 import argparse
+from functools import cmp_to_key
 import hashlib
 import importlib.util
 import json
@@ -115,6 +116,22 @@ def load_policy(path):
         seen.add(key)
         if registration["service"] not in policy["services"]:
             raise ValueError("unknown service policy")
+    capabilities = policy.get("plugin_capabilities", [])
+    if not isinstance(capabilities, list):
+        raise ValueError("invalid native plugin capability policy")
+    for capability in capabilities:
+        if (not isinstance(capability, dict)
+                or not all(isinstance(capability.get(k), str) for k in ("client", "name", "route", "service"))
+                or capability["service"] not in policy["services"]
+                or not isinstance(capability.get("required"), list)
+                or not capability["required"]
+                or not all(isinstance(k, str) for k in capability["required"])
+                or not set(capability["required"]) <= {"hooks", "skills", "apps", "commands", "agents", "lsp", "native_tools"}):
+            raise ValueError("invalid native plugin capability obligation")
+        key = (capability["client"], capability["name"], capability["route"])
+        if key in seen:
+            raise ValueError("duplicate registration/capability obligation")
+        seen.add(key)
     return policy, digest
 
 
@@ -180,11 +197,58 @@ def native_configuration_index(client, response):
     return {"state": "observed", "registrations": rows}
 
 
-def installed_plugin_roots(path, plugin, project):
+def codex_plugin_roots(path, plugin):
+    """Codex 0.153.4 PluginStore selection, independent of Claude's registry.
+
+    The native store gives `local` priority, then compares semver pairs by
+    precedence and other pairs lexically. Unsupported build ties stay ambiguous.
+    Native effective-configuration matching still owns runtime proof.
+    """
+    parts = plugin.split("@")
+    if len(parts) != 2 or any(not re.fullmatch(r"[A-Za-z0-9_.-]+", part) for part in parts):
+        raise ValueError("invalid Codex plugin identity")
+    name, market = parts
+    base = path.parent / "plugins/cache" / market / name
+    if not base.is_dir():
+        return [], "codex_store_missing"
+    roots = [p for p in base.iterdir() if p.is_dir() and not p.is_symlink()
+             and p.name not in (".", "..") and re.fullmatch(r"[A-Za-z0-9_.+-]+", p.name)]
+    local = next((p for p in roots if p.name == "local"), None)
+    if local:
+        return [local], "codex_store"
+
+    def semver(value):
+        match = re.fullmatch(r"(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([A-Za-z0-9.-]+))?", value)
+        if not match:
+            return None
+        major, minor, patch, pre = match.groups()
+        identifiers = []
+        for part in pre.split(".") if pre else []:
+            if not part or (part.isdigit() and len(part) > 1 and part[0] == "0"):
+                return None
+            identifiers.append((0, int(part)) if part.isdigit() else (1, part))
+        return (int(major), int(minor), int(patch), pre is None, tuple(identifiers))
+
+    def compare(left, right):
+        a, b = semver(left.name), semver(right.name)
+        if a is None or b is None:
+            a, b = left.name, right.name
+        return (a > b) - (a < b)
+
+    # Build-metadata ordering has an additional native tie-breaker. Do not guess
+    # which installation wins until its native catalog selects that version.
+    if len(roots) > 1 and any("+" in p.name for p in roots):
+        return sorted(roots), "codex_store_version_unmeasured"
+    return ([max(roots, key=cmp_to_key(compare))] if roots else []), "codex_store"
+
+
+def installed_plugin_roots(path, plugin, project, client=None):
     """Select the installed registry entry; cached older versions are provenance only."""
     name = plugin.split("@", 1)[0]
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", name):
         raise ValueError("invalid plugin identity")
+    if client == "codex":
+        return codex_plugin_roots(path, plugin)
     registry_path = path.parent / "plugins/installed_plugins.json"
     if not registry_path.exists():
         return sorted((path.parent / "plugins/cache").glob(f"*/{name}/*")), "cache_candidate"
@@ -338,7 +402,7 @@ def inventory(policy, config_paths=None, project=None, client_environments=None)
                 continue
             plugin_name = plugin.split("@", 1)[0]
             try:
-                roots, selection = installed_plugin_roots(plugin_path, plugin, project)
+                roots, selection = installed_plugin_roots(plugin_path, plugin, project, client)
             except (ValueError, OSError, TypeError, AttributeError):
                 roots, selection = [], "installed_registry_unmeasured"
             overridden = plugin_provenance(plugin_path, plugin, roots)
@@ -349,6 +413,14 @@ def inventory(policy, config_paths=None, project=None, client_environments=None)
                     metadata_path = next((p for p in metadata_paths if p.is_file()), metadata_paths[0])
                     metadata, _ = read_config(metadata_path)
                     if "mcpServers" not in metadata:
+                        configs.append({
+                            "client": client, "kind": "plugin_capability", "name": plugin_name,
+                            "route": plugin, "manifest_fingerprint": fingerprint(metadata),
+                            "plugin_version": metadata.get("version"), "plugin_selection": selection,
+                            "enabled": settings.get("enabled", True),
+                            "declared_capabilities": sorted([k for k in ("hooks", "skills", "apps", "commands", "agents") if k in metadata]
+                                                            + (["lsp"] if "lspServers" in metadata else [])),
+                        })
                         continue  # installed plugin explicitly has no MCP entry point
                     if isinstance(metadata["mcpServers"], dict):
                         for name, spec in metadata["mcpServers"].items():
@@ -629,9 +701,12 @@ def apply_client_receipts(rows, receipts, policy, now=None, observations=None):
             dimensions = receipt.get("dimensions", {})
             if not isinstance(dimensions, dict):
                 continue
-            for dimension in ("startup_ui", "explicit_ui", "isolation", "client_route", "functional"):
-                if dimensions.get(dimension) in ("pass", "fail", "not_applicable"):
+            for dimension in ("startup_ui", "explicit_ui", "isolation", "client_route", "functional",
+                              "transport", "protocol", "capabilities", "cleanup", "authentication"):
+                if dimensions.get(dimension) in ("pass", "fail", "not_applicable", "required"):
                     row["dimensions"][dimension] = dimensions[dimension]
+            if type(receipt.get("missing_capabilities")) is int and receipt["missing_capabilities"] >= 0:
+                row["missing_capabilities"] = max(row.get("missing_capabilities", 0), receipt["missing_capabilities"])
             row["client_version"] = receipt["client_version"]
             row["dependency_fingerprint"] = witness["dependency_fingerprint"]
             row["evidence_age_seconds"] = age
@@ -681,6 +756,13 @@ def native_receipts(rows, policy, observation):
                 server["server_version"],
             ]
         )
+        connected = server.get("runtime_status") == "connected"
+        expected = policy["services"].get(row["service"], {}).get("verification", {}).get("expected", {})
+        missing = None
+        if (connected and expected and set(expected) <= {"tools"}
+                and isinstance(expected.get("tools"), list) and expected["tools"]
+                and isinstance(server.get("tool_names"), list)):
+            missing = len(set(expected["tools"]) - set(server["tool_names"]))
         receipt = {
             "schema_version": "limen.mcp_client_canary.v1",
             **{k: row[k] for k in ("client", "name", "route", "fingerprint")},
@@ -689,10 +771,20 @@ def native_receipts(rows, policy, observation):
             "server_version": server["server_version"],
             "dependency_fingerprint": dependency,
             "dimensions": {
-                "client_route": "pass" if server.get("runtime_status") == "connected" else "unmeasured",
+                "client_route": "pass" if connected else "unmeasured",
+                # Native connected status plus the bound serverInfo version is
+                # the client's completed handshake witness. An owner placeholder
+                # protocol string is never sent through the native client.
+                "transport": "pass" if connected else "unmeasured",
+                "protocol": "pass" if connected else "unmeasured",
+                "capabilities": ("pass" if missing == 0 else "fail") if missing is not None else "unmeasured",
+                "cleanup": observation.get("cleanup", "unmeasured"),
+                "authentication": "required" if server.get("auth_status") in ("not_logged_in", "notLoggedIn", "needs-auth") else "unmeasured",
                 "functional": server.get("functional", {}).get("state", "unmeasured"),
             },
         }
+        if missing is not None:
+            receipt["missing_capabilities"] = missing
         receipts.append(receipt)
         witnesses[(row["client"], row["name"], row["route"])] = {
             "receipt_fingerprint": fingerprint(receipt),
@@ -702,6 +794,28 @@ def native_receipts(rows, policy, observation):
             **{k: receipt[k] for k in ("run_id", "native_session_id", "observed_at")},
         }
     return receipts, witnesses
+
+
+def plugin_capability_evidence(policy, configurations):
+    """Retain native plugin obligations independently of MCP registration counts."""
+    rows, issues = [], []
+    for desired in policy.get("plugin_capabilities", []):
+        matches = [c for c in configurations if c.get("kind") == "plugin_capability"
+                   and all(c.get(k) == desired[k] for k in ("client", "name", "route"))]
+        observed = matches[0] if len(matches) == 1 else {}
+        configured = observed.get("enabled") is True and set(desired["required"]) <= set(observed.get("declared_capabilities", []))
+        rows.append({
+            **{key: desired[key] for key in ("client", "name", "route", "service", "required")},
+            "manifest_fingerprint": observed.get("manifest_fingerprint"),
+            "plugin_version": observed.get("plugin_version"),
+            "configuration": "pass" if configured else "unmeasured",
+            "native_capabilities": dict.fromkeys(desired["required"], "unmeasured"),
+            "state": "unmeasured",
+        })
+        issues.append({"client": desired["client"], "service": desired["service"],
+                       "reason": "fresh_native_plugin_canary_required" if configured else "native_plugin_configuration_unmeasured",
+                       "owner": "limen" if configured else "domus-genoma"})
+    return rows, issues
 
 
 def measure(policy, records, issues, inventory_only=False, service=None, timeout=15, total_timeout=120):
@@ -805,9 +919,13 @@ def main(argv=None):
     try:
         policy, digest = load_policy(args.policy)
         records, issues, stale, configs = inventory(policy, project=args.project)
+        plugin_capabilities, plugin_issues = plugin_capability_evidence(policy, configs)
+        issues.extend(plugin_issues)
         # Desktop/hosted clients have no universal local configuration format. A declared adapter
         # receipt is required; absence is visible even on a machine without that client installed.
         payload = measure(policy, records, issues, args.inventory_only, args.service, args.timeout, args.total_timeout)
+        payload["native_plugin_capabilities"] = plugin_capabilities
+        payload["denominator"]["plugin_capabilities"] = len(plugin_capabilities)
         accepted = set()
         collectors = set(args.collect_client) | ({"codex"} if args.collect_codex else set())
         collection_deadline = time.monotonic() + args.total_timeout

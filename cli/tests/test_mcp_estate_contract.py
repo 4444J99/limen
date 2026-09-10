@@ -53,7 +53,7 @@ def test_apply_entrypoint_reuses_episode_without_certifying_cached_evidence(tmp_
     assert calls == ["repair"]
     assert first["repair"]["reused"] is False
     assert second["repair"]["reused"] is True
-    assert second["denominator"] == {"services": 1, "registrations": 1}
+    assert second["denominator"] == {"services": 1, "registrations": 1, "plugin_capabilities": 0}
     assert second["distance"]["unmeasured_integrations"] > 0
 
 
@@ -355,7 +355,7 @@ def test_installed_plugin_version_wins_over_old_cache(tmp_path):
     records, issues, _, _ = estate.inventory(policy(), [("codex", path)])
     plugin = next(r for r in records if r["route"] == "serena@market")
     assert plugin["spec"]["command"] == "2"
-    assert plugin["plugin_selection"] == "installed_registry"
+    assert plugin["plugin_selection"] == "codex_store"
     assert plugin["provenance"][0]["source"] == "overridden-plugin-cache"
     assert not plugin["provenance"][0]["active"]
     assert not issues
@@ -387,6 +387,63 @@ def test_installed_project_plugin_cannot_override_another_project(tmp_path):
     path = tmp_path / "config.toml"
     assert estate.installed_plugin_roots(path, "serena@market", tmp_path / "other")[0] == [roots[0]]
     assert estate.installed_plugin_roots(path, "serena@market", tmp_path / "project")[0] == [roots[1]]
+
+
+@pytest.mark.parametrize("versions,selected", [
+    (["1.0.9", "1.0.10"], "1.0.10"),
+    (["1.0.0-beta.9", "1.0.0-beta.10"], "1.0.0-beta.10"),
+    (["1.0.0-beta", "1.0.0"], "1.0.0"),
+    (["99.0.0", "local"], "local"),
+    (["1", "2"], "2"),
+])
+def test_codex_store_matches_installed_native_version_selection(tmp_path, versions, selected):
+    for version in versions:
+        (tmp_path / "plugins/cache/market/plugin" / version).mkdir(parents=True)
+    # Claude's unrelated install registry cannot override the native Codex store.
+    (tmp_path / "plugins/installed_plugins.json").write_text('{"invalid": true}')
+    roots, source = estate.installed_plugin_roots(tmp_path / "config.toml", "plugin@market", None, "codex")
+    assert roots == [tmp_path / "plugins/cache/market/plugin" / selected]
+    assert source == "codex_store"
+
+
+def test_native_store_plugin_without_mcp_preserves_required_owner_gap(tmp_path):
+    for version in ("1.0.0", "1.1.0"):
+        root = tmp_path / "plugins/cache/market/chrome" / version / ".codex-plugin"
+        root.mkdir(parents=True)
+        (root / "plugin.json").write_text(json.dumps({"name": "chrome", "version": version, "skills": "./skills", "hooks": "./hooks.json"}))
+    path = tmp_path / "config.toml"
+    path.write_text('[plugins."chrome@market"]\nenabled=true\n')
+    owner = policy()
+    owner["services"]["codex/chrome"] = {"source_owner": "domus-genoma"}
+    owner["registrations"].append({"client": "codex", "name": "chrome", "route": "chrome@market", "service": "codex/chrome"})
+    records, issues, _, _ = estate.inventory(owner, [("codex", path)])
+    chrome = next(r for r in records if r["name"] == "chrome")
+    assert chrome["spec"] is None
+    assert chrome["active"] is False
+    assert chrome["source"] == "expected-missing"
+    assert not any(i["reason"] == "plugin_cache_unmeasured" for i in issues)
+
+
+def test_reclassified_plugin_keeps_service_and_native_acceptance_debt(tmp_path, monkeypatch, capsys):
+    owner = policy()
+    owner["services"]["codex/chrome"] = {"source_owner": "domus-genoma"}
+    obligation = {"client": "codex", "name": "chrome", "route": "chrome@market", "service": "codex/chrome", "required": ["hooks", "skills"]}
+    owner["plugin_capabilities"] = [obligation]
+    records, _, _, configs = estate.inventory(owner, [])
+    configs.append({**obligation, "kind": "plugin_capability", "enabled": True, "declared_capabilities": ["hooks", "skills"], "manifest_fingerprint": "bound", "plugin_version": "1"})
+    rows, issues = estate.plugin_capability_evidence(owner, configs)
+    assert rows[0]["configuration"] == "pass"
+    assert rows[0]["native_capabilities"] == {"hooks": "unmeasured", "skills": "unmeasured"}
+    assert issues[0]["reason"] == "fresh_native_plugin_canary_required"
+    monkeypatch.setattr(estate, "load_policy", lambda path: (owner, "policy"))
+    monkeypatch.setattr(estate, "inventory", lambda *args, **kwargs: (records, [], [], configs))
+    monkeypatch.setattr(estate, "gateway_reconciliation", lambda: {})
+    assert estate.main(["--inventory-only", "--json"]) == 77
+    result = json.loads(capsys.readouterr().out)
+    assert result["denominator"]["services"] == 2
+    assert result["denominator"]["registrations"] == len(owner["registrations"])
+    assert result["denominator"]["plugin_capabilities"] == 1
+    assert result["distance"]["unmeasured_integrations"] > 0
 
 
 def test_observed_client_environments_do_not_share_shell_roots(tmp_path, monkeypatch):
