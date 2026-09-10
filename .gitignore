@@ -106,6 +106,12 @@ issue_comment_plan.json
 build_peer_audited_comments.py
 generate_peer_audit_comments.py
 
+# lever triage — build artifacts (regenerable; the source is his-hand-levers.json)
+his-hand-levers-enriched.json
+lever-triage-results.json
+his-hand-levers.json.bak-*
+/tmp/out-levers.json
+
 # constellation atlas — generated HTML register (regenerable via constellation-atlas.py)
 logs/constellation/
 github-universe-ledger.json
