@@ -31,7 +31,7 @@ const REQUEST_TIMEOUT_MS = Number(process.env.LIMEN_PR_STATUS_REQUEST_TIMEOUT_MS
 
 function githubHeaders() {
   const headers = { Accept: "application/vnd.github.v3+json" };
-  if (GITHUB_TOKEN) headers.Authorization = `******;
+  if (GITHUB_TOKEN) headers.Authorization = "Bearer " + GITHUB_TOKEN;
   return headers;
 }
 
