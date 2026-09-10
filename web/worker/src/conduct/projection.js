@@ -679,7 +679,7 @@ function isLifecycleRepairAuthorized(task, nextStatus, log, patch) {
   return false;
 }
 
-export function applyTaskPacketProjectionEvent(input, event) {
+export function applyTaskPacketProjectionEvent(input, event, inventoryContext = null) {
   const board = clone(input);
   const intent = event.intent || {};
   const kind = String(intent.kind || "");
@@ -814,6 +814,7 @@ export function applyTaskPacketProjectionEvent(input, event) {
           && intent.log?.lifecycle_repair === "prelaunch-successor-hold"))) {
     applyCanonicalBudgetRefund(board, existing, event);
   }
+  recordInventoryTransition(board, existing, candidate, event);
   Object.assign(existing, clone(patch));
   existing.updated = event.timestamp;
   existing.dispatch_log ||= [];
@@ -853,9 +854,9 @@ function ensureBudget(board, task, event) {
   }
 }
 
-export function applyTaskCompatibilityEvent(input, event) {
+export function applyTaskCompatibilityEvent(input, event, inventoryContext = null) {
   if (event.schema_version === "limen.task_packet_projection_event.v1") {
-    return applyTaskPacketProjectionEvent(input, event);
+    return applyTaskPacketProjectionEvent(input, event, inventoryContext);
   }
   const board = clone(input);
   if (eventAlreadyApplied(board, event.event_id)) {
@@ -876,6 +877,7 @@ export function applyTaskCompatibilityEvent(input, event) {
     );
   }
   ensureBudget(board, task, event);
+  recordInventoryTransition(board, task, { ...task, status: event.status }, event);
   task.status = event.status;
   task.updated = event.timestamp;
   task.dispatch_log ||= [];
@@ -1245,7 +1247,8 @@ export async function initializePrivateBoard(
 export async function commitTaskCompatibilityEvent(
   env,
   event,
-  { fetchImpl = fetch, maxAttempts = 4, storage = null } = {},
+  { fetchImpl = fetch, maxAttempts = 4, storage = null, inventoryAuthority = null,
+    inventoryObservation = null, now = new Date() } = {},
 ) {
   if (!event) return { status: "not_applicable" };
   const inline = inlineBoardSource(env);
@@ -1269,7 +1272,9 @@ export async function commitTaskCompatibilityEvent(
         503,
       );
     }
-    const applied = applyTaskCompatibilityEvent(current, event);
+    const context = eventRequiresInventory(current, event)
+      ? await inventoryProjectionContext(inventoryAuthority, inventoryObservation, now) : null;
+    const applied = applyTaskCompatibilityEvent(current, event, context);
     if (applied.duplicate) {
       return {
         status: "duplicate",

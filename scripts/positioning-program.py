@@ -50,6 +50,9 @@ if str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
 
 from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY  # noqa: E402
+from limen.github_connector import ConnectorError, StdioGitHubConnector  # noqa: E402
+
+GITHUB_CONNECTOR: StdioGitHubConnector | None = None
 
 DEFAULT_MANIFEST = ROOT / "institutio" / "positioning" / "program.yaml"
 DEFAULT_MAP = ROOT / "institutio" / "positioning" / "github-map.json"
@@ -116,6 +119,10 @@ class ProgramError(RuntimeError):
     pass
 
 
+class RemoteObservationError(ProgramError):
+    """Remote evidence could not be observed; this is not invalid-receipt debt."""
+
+
 def _canonical_repository_coordinate(repository: str) -> str:
     """Compare Limen receipts by stable repository identity, without rewriting evidence."""
 
@@ -150,35 +157,50 @@ def _valid_broker_id(value: object, prefix: str) -> bool:
     return isinstance(value, str) and bool(BROKER_ID_RE.fullmatch(value)) and value.startswith(prefix + "-")
 
 
-def _command_owned_by_packet(command: str, packet: dict[str, Any]) -> bool:
+def _command_executable(command: str) -> str | None:
     try:
         tokens = shlex.split(command)
     except ValueError:
-        return False
+        return None
     if not tokens:
-        return False
+        return None
     if any(token in {";", "|", "||", "&&"} or any(char in token for char in "$`()") for token in tokens):
-        return False
-    executable = (
-        tokens[1] if Path(tokens[0]).name in {"python", "python3", "python3.13"} and len(tokens) > 1 else tokens[0]
-    )
+        return None
+    script_runner = Path(tokens[0]).name in {"python", "python3", "python3.13"} or tokens[0] == "node_modules/.bin/tsx"
+    executable = tokens[1] if script_runner and len(tokens) > 1 else tokens[0]
     executable = executable.removeprefix("./")
-    if Path(executable).is_absolute() or Path(executable).name in {
-        "bash",
-        "dash",
-        "env",
-        "ksh",
-        "sh",
-        "zsh",
-        "true",
-        "false",
-        "echo",
-        "printf",
-    }:
-        return False
+    if (
+        Path(executable).is_absolute()
+        or ".." in Path(executable).parts
+        or Path(executable).name
+        in {
+            "bash",
+            "dash",
+            "env",
+            "ksh",
+            "sh",
+            "zsh",
+            "true",
+            "false",
+            "echo",
+            "printf",
+        }
+    ):
+        return None
     if "-c" in tokens or executable.endswith("/true") or executable.endswith("/false"):
+        return None
+    return executable
+
+
+def _command_owned_by_packet(command: str, packet: dict[str, Any]) -> bool:
+    executable = _command_executable(command)
+    if executable is None:
         return False
     target_paths = [str(path).rstrip("/") for path in packet.get("target_paths") or []]
+    # Ownership is relative to the packet's repository, not this controller's
+    # checkout. A remote template-owned verifier need not exist in Limen.
+    if any(executable == target or executable.startswith(target + "/") for target in target_paths):
+        return True
     if not any(
         path == "scripts" or path.startswith(("scripts/", "docs/", "src/")) or path.endswith((".py", ".sh"))
         for path in target_paths
@@ -1049,16 +1071,18 @@ def _checklist(items: Iterable[str], mapping: dict[str, Any], labels: dict[str, 
 def _assignment_lines(object_id: str, graph: dict[str, Any]) -> list[str]:
     assignment = model_assignment_for(object_id, graph)
     return [
-        "## Assigned model / effort",
+        "## Historical model / effort",
         "",
         f"- Adapter: `{assignment['adapter']}`",
         f"- Model: `{assignment['slug']}`",
         f"- Effort: `{assignment['effort']}`",
         f"- Basis: {assignment['basis']}",
         f"- Rationale: {assignment['rationale']}",
-        f"- Human override: {assignment['authority']}",
+        f"- Historical authority: {assignment['authority']}",
         f"- Catalog observed: `{assignment['catalog_validated_at']}`",
-        f"- If unavailable: {assignment['unavailable_action']}",
+        "- Dispatch: discover current provider capabilities and finite allocation; select the cheapest adequate "
+        "available model and effort. Preserve native identity and honor any explicit current human override. "
+        "Historical assignments are advisory metadata, not executable overrides.",
     ]
 
 
@@ -1069,7 +1093,9 @@ def _chunk_lines(object_id: str, graph: dict[str, Any]) -> list[str]:
     for chunk_id in chunk_ids:
         chunk = graph["chunk_by_id"][chunk_id]
         assignment = chunk_assignment_for(chunk_id, graph)
-        lines.append(f"- `{chunk_id}` — {chunk['title']} · conductor `{assignment['slug']}` / `{assignment['effort']}`")
+        lines.append(
+            f"- `{chunk_id}` — {chunk['title']} · historical conductor `{assignment['slug']}` / `{assignment['effort']}`"
+        )
     return lines
 
 
@@ -1204,12 +1230,14 @@ def body_for(object_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> 
         "",
         f"- Effect: `{packet['effect']}`",
         f"- Reasoning class: `{packet['reasoning']}`",
-        f"- Assigned model: `{assignment['slug']}` via `{assignment['adapter']}`",
-        f"- Assigned effort: `{assignment['effort']}`",
+        f"- Historical model: `{assignment['slug']}` via `{assignment['adapter']}`",
+        f"- Historical effort: `{assignment['effort']}`",
         f"- Assignment basis: {assignment['basis']} — {assignment['rationale']}",
-        f"- Model authority: {assignment['authority']}",
+        f"- Historical model authority: {assignment['authority']}",
         f"- Catalog observed: `{assignment['catalog_validated_at']}`",
-        f"- If unavailable: {assignment['unavailable_action']}",
+        "- Dispatch: discover current provider capabilities and finite allocation; select the cheapest adequate "
+        "available model and effort. Preserve native identity and honor any explicit current human override. "
+        "Historical assignments are advisory metadata, not executable overrides.",
         f"- Required capabilities: {', '.join(f'`{item}`' for item in packet['capabilities'])}",
         authority_line,
     ]
@@ -1272,24 +1300,36 @@ def labels_for(object_id: str, graph: dict[str, Any]) -> list[str]:
 
 
 def _gh(args: list[str], *, input_value: object | None = None, allow_failure: bool = False) -> Any:
-    result = subprocess.run(
-        ["gh", *args],
-        input=json.dumps(input_value) if input_value is not None else None,
-        capture_output=True,
-        text=True,
-        check=False,
-        timeout=120,
-    )
+    if GITHUB_CONNECTOR is not None:
+        try:
+            return GITHUB_CONNECTOR.request(args, input_value)
+        except ConnectorError as exc:
+            if allow_failure:
+                return None
+            raise RemoteObservationError(str(exc)) from exc
+    try:
+        result = subprocess.run(
+            ["gh", *args],
+            input=json.dumps(input_value) if input_value is not None else None,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=120,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        if allow_failure:
+            return None
+        raise RemoteObservationError(f"GitHub observation unavailable: {exc}") from exc
     if result.returncode != 0:
         if allow_failure:
             return None
-        raise ProgramError(result.stderr.strip() or result.stdout.strip() or f"gh {' '.join(args)} failed")
+        raise RemoteObservationError(result.stderr.strip() or result.stdout.strip() or f"gh {' '.join(args)} failed")
     if not result.stdout.strip():
         return None
     try:
         return json.loads(result.stdout)
     except json.JSONDecodeError as exc:
-        raise ProgramError(f"GitHub returned non-JSON output for {' '.join(args)}") from exc
+        raise RemoteObservationError(f"GitHub returned non-JSON output for {' '.join(args)}") from exc
 
 
 def _api(
@@ -1345,7 +1385,7 @@ def _pages(repository: str, path: str) -> list[dict[str, Any]]:
         separator = "&" if "?" in path else "?"
         value = _api(repository, f"{path}{separator}per_page=100&page={page}")
         if not isinstance(value, list):
-            raise ProgramError(f"GitHub list endpoint returned a non-list: {path}")
+            raise RemoteObservationError(f"GitHub list endpoint returned a non-list: {path}")
         rows.extend(item for item in value if isinstance(item, dict))
         if len(value) < 100:
             return rows
@@ -1501,10 +1541,45 @@ def receipt_template(work_id: str, graph: dict[str, Any], mapping: dict[str, Any
     if packet["target_repo"].startswith("multi-repository:"):
         receipt["resolved_repositories"] = ["REPLACE_WITH_OWNER/REPOSITORY"]
         observed_heads = {"REPLACE_WITH_OWNER/REPOSITORY": "REPLACE_WITH_EXACT_40_CHARACTER_GIT_HEAD"}
+        receipt["predicate"]["source_repository"] = "REPLACE_WITH_OWNER/REPOSITORY"
     else:
         observed_heads = {packet["target_repo"]: "REPLACE_WITH_EXACT_40_CHARACTER_GIT_HEAD"}
     receipt["observed_heads"] = observed_heads
     return receipt
+
+
+def _predicate_source_owner(receipt: dict[str, Any], *, require_explicit: bool = False) -> tuple[str, str]:
+    """Resolve the predicate owner to exactly one recorded repository/head.
+
+    A central verifier can observe several repositories without being copied into
+    each. Its owner must itself be in observed_heads; a separate unobserved source
+    repository or independent source head is never inferred.
+    """
+    observed = receipt.get("observed_heads")
+    if not isinstance(observed, dict) or not observed:
+        raise ProgramError("predicate source requires recorded observed_heads")
+    predicate = receipt.get("predicate")
+    if not isinstance(predicate, dict):
+        raise ProgramError("predicate must be a mapping")
+    owner = predicate.get("source_repository")
+    if owner is None:
+        if require_explicit or len(observed) != 1:
+            raise ProgramError("predicate.source_repository is required for multi-repository receipts")
+        owner = next(iter(observed))
+    if not isinstance(owner, str) or not REPOSITORY_RE.fullmatch(owner):
+        raise ProgramError("predicate.source_repository must be a concrete owner/repository")
+    canonical_owner = _canonical_repository_coordinate(owner)
+    matches = [
+        head
+        for repository, head in observed.items()
+        if isinstance(repository, str)
+        and _canonical_repository_coordinate(repository).casefold() == canonical_owner.casefold()
+    ]
+    if len(matches) != 1:
+        raise ProgramError("predicate.source_repository must identify exactly one observed_heads repository")
+    if not _valid_exact_head(matches[0]):
+        raise ProgramError("predicate source repository must have a valid exact observed head")
+    return canonical_owner, matches[0]
 
 
 def validate_work_receipt(
@@ -1592,6 +1667,11 @@ def validate_work_receipt(
     if not isinstance(predicate, dict):
         failures.append("predicate must be a mapping")
     else:
+        if strengthened:
+            try:
+                _predicate_source_owner(receipt, require_explicit=expected_repository.startswith("multi-repository:"))
+            except ProgramError as exc:
+                failures.append(str(exc))
         command = predicate.get("command")
         if not _is_nonempty_text(command):
             failures.append("predicate.command must be non-empty")
@@ -2057,10 +2137,36 @@ def phase_receipt_template(phase_id: str, graph: dict[str, Any], mapping: dict[s
     }
 
 
-def fetch_work_receipt(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> tuple[dict[str, Any], str]:
+def _verify_predicate_source(receipt: dict[str, Any]) -> None:
+    """Bind a v2 predicate file to its recorded owner/head before acceptance.
+
+    Shape validation alone cannot prove a remote path exists. A complete Git tree
+    distinguishes an absent file from transport loss or an incomplete observation.
+    This check does not claim to reproduce execution or authenticate authority.
+    """
+    executable = _command_executable(receipt["predicate"]["command"])
+    repository, head = _predicate_source_owner(receipt)
+    tree = _api(repository, f"git/trees/{head}?recursive=1")
+    if not isinstance(tree, dict) or tree.get("truncated") is not False or not isinstance(tree.get("tree"), list):
+        raise RemoteObservationError(f"incomplete predicate source observation for {repository}@{head}")
+    if not any(
+        isinstance(entry, dict)
+        and entry.get("path") == executable
+        and entry.get("type") == "blob"
+        and entry.get("mode") in {"100644", "100755"}
+        and _valid_exact_head(entry.get("sha"))
+        for entry in tree["tree"]
+    ):
+        raise ProgramError(f"predicate executable {executable!r} absent from {repository}@{head}")
+
+
+def fetch_work_receipt(
+    work_id: str, graph: dict[str, Any], mapping: dict[str, Any], *, _validated_map: bool = False
+) -> tuple[dict[str, Any], str]:
     if work_id not in graph["work_by_id"]:
         raise ProgramError(f"unknown work id: {work_id}")
-    validate_map(mapping, graph, complete=True)
+    if not _validated_map:
+        validate_map(mapping, graph, complete=True)
     repository = graph["program"]["repository"]
     issue_number = int(mapping["issues"][work_id]["number"])
     comments = _pages(repository, f"issues/{issue_number}/comments")
@@ -2085,12 +2191,15 @@ def fetch_work_receipt(work_id: str, graph: dict[str, Any], mapping: dict[str, A
         receipt.get("schema_version"), latest
     ):
         raise ProgramError(f"{work_id} legacy v1 receipt was posted after the contract cutover")
-    return validate_work_receipt(
+    validated = validate_work_receipt(
         receipt,
         work_id,
         graph,
         allow_legacy_v1=_legacy_receipt_allowed(receipt.get("schema_version"), latest),
-    ), str(latest.get("html_url") or "")
+    )
+    if validated["schema_version"] == RECEIPT_SCHEMA:
+        _verify_predicate_source(validated)
+    return validated, str(latest.get("html_url") or "")
 
 
 def verify_work(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
@@ -2312,20 +2421,58 @@ def remote_parity(
     return result
 
 
+def accepted_work_for_admission(
+    graph: dict[str, Any], mapping: dict[str, Any], remote: dict[str, dict[str, Any]], *, _validated_map: bool = False
+) -> tuple[set[str], list[str]]:
+    """Validate each closed prerequisite once, including its transitive work ancestry.
+
+    Aggregate phase/projection debt belongs to closure_integrity, not admission of
+    unrelated leaf work. A closed issue alone never admits its descendants.
+    """
+    if not _validated_map:
+        validate_map(mapping, graph, complete=True)
+    closed = {key for key, row in remote.items() if str(row.get("state") or "").lower() == "closed"}
+    accepted: set[str] = set()
+    rejected: set[str] = set()
+
+    def validate(work_id: str) -> bool:
+        if work_id in accepted:
+            return True
+        if work_id in rejected or work_id not in closed:
+            return False
+        packet = graph["work_by_id"][work_id]
+        if not all(validate(dependency) for dependency in packet.get("depends_on") or []):
+            rejected.add(work_id)
+            return False
+        try:
+            fetch_work_receipt(work_id, graph, mapping, _validated_map=True)
+        except RemoteObservationError:
+            raise
+        except ProgramError:
+            rejected.add(work_id)
+            return False
+        accepted.add(work_id)
+        return True
+
+    for work_id in graph["work_by_id"]:
+        validate(work_id)
+    return accepted, sorted(rejected)
+
+
 def ready_work(graph: dict[str, Any], mapping: dict[str, Any]) -> list[dict[str, Any]]:
     validate_map(mapping, graph, complete=True)
     remote = recover_mapped_issues(graph, mapping, fetch_program_issues(graph))
     if set(remote) != set(graph["ordered_ids"]):
         raise ProgramError("remote graph is incomplete; run --verify-remote")
     closed = {object_id for object_id, row in remote.items() if str(row.get("state") or "").lower() == "closed"}
-    closure_integrity(graph, mapping, remote)
+    accepted, reconciliation = accepted_work_for_admission(graph, mapping, remote, _validated_map=True)
     ready: list[dict[str, Any]] = []
     for phase in graph["phases"]:
         phase_dependencies = set(phase.get("depends_on") or [])
         for packet in phase["work"]:
             work_id = packet["id"]
             dependencies = set(packet.get("depends_on") or [])
-            if work_id in closed or not dependencies.issubset(closed):
+            if work_id in closed or not dependencies.issubset(accepted):
                 continue
             row = mapping["issues"][work_id]
             repository_identity = repository_identity_for(packet["target_repo"], graph)
@@ -2341,16 +2488,32 @@ def ready_work(graph: dict[str, Any], mapping: dict[str, Any]) -> list[dict[str,
                     "target_paths": packet["target_paths"],
                     "capabilities": packet["capabilities"],
                     "reasoning": packet["reasoning"],
-                    "model_assignment": model_assignment_for(work_id, graph),
+                    "historical_model_assignment": model_assignment_for(work_id, graph),
+                    "model_selection": current_model_selection(),
                     "effect": packet["effect"],
                     "predicate": packet["predicate"],
                     "human_gates": packet["human_gates"],
                     "phase_id": phase["id"],
                     "phase_close_blocked_by": sorted(phase_dependencies - closed),
+                    "closed_work_requiring_reconciliation": reconciliation,
+                    "aggregate_integrity": "separately_required_by_phase_and_omega",
                     "chunk_id": graph["work_chunk"][work_id],
                 }
             )
+    if not ready and reconciliation:
+        raise ProgramError("no ready work; closed_work_requiring_reconciliation: " + ", ".join(reconciliation))
     return ready
+
+
+def current_model_selection() -> dict[str, Any]:
+    """Dispatch requirements, not a claim of capacity or an executable override."""
+    return {
+        "discover_capabilities_at_dispatch": True,
+        "selection": "cheapest_adequate_available",
+        "preserve_native_provider_identity": True,
+        "require_finite_allocation_and_ceiling": True,
+        "increase_effort_only_for_demonstrated_gap": True,
+    }
 
 
 def packet_seed(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) -> dict[str, Any]:
@@ -2365,7 +2528,7 @@ def packet_seed(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) ->
         "path_prefixes": packet["target_paths"],
         "required_capabilities": packet["capabilities"],
         "reasoning_class": packet["reasoning"],
-        "model_override": model_assignment_for(work_id, graph),
+        "model_selection": current_model_selection(),
         "effect": packet["effect"],
         "human_gates": packet["human_gates"],
         "dependencies": packet["depends_on"],
@@ -2390,6 +2553,7 @@ def packet_seed(work_id: str, graph: dict[str, Any], mapping: dict[str, Any]) ->
         "rollback": packet["rollback"],
         "return_evidence": packet["return_evidence"],
         "not_a_lease": True,
+        "historical_model_assignment": model_assignment_for(work_id, graph),
     }
 
 
@@ -2397,7 +2561,6 @@ def chunk_launch_prompt(chunk_id: str, graph: dict[str, Any], mapping: dict[str,
     chunk = graph["chunk_by_id"].get(chunk_id)
     if chunk is None:
         raise ProgramError(f"unknown execution chunk: {chunk_id}")
-    assignment = chunk_assignment_for(chunk_id, graph)
     work_ids = graph["chunk_work"][chunk_id]
     phase_scope = ", ".join(chunk["phase_ids"])
     dependency_scope = ", ".join(chunk.get("depends_on") or []) or "none"
@@ -2405,18 +2568,13 @@ def chunk_launch_prompt(chunk_id: str, graph: dict[str, Any], mapping: dict[str,
     extras = ", ".join(chunk.get("extra_work_ids") or []) or "none"
     root_row = mapping.get("issues", {}).get("PSP-ROOT") or {}
     root_url = str(root_row.get("url") or "https://github.com/4444J99/limen/issues/2157")
-    if chunk_id == "PSP-C00":
-        bootstrap = (
-            "Continue draft PR #2156 on branch `codex/production-systems-program`; do not recreate the graph or "
-            "its issues. Use the repository merge rail only when live authority permits it."
-        )
-    else:
-        bootstrap = (
-            "Start from current `main` only after C00 is closed and PR #2156 has landed; otherwise stop and resume C00."
-        )
+    bootstrap = (
+        "Resume the existing owner branch and accepted evidence from the latest recalibration checkpoint. "
+        "Derive leaf admission from accepted dependencies; do not restart completed C00 or PR #2156."
+    )
     return f"""Execute Production-Systems Program chunk {chunk_id}: {chunk["title"]}.
 
-Run this conductor session with `{assignment["slug"]}` at `{assignment["effort"]}` effort. Leaf executors must use the exact model/effort assignment on each issue; never silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest adequate available model and effort, preserve native provider identity, and record the ceiling and receipt destination. Historical issue model assignments are advisory metadata, not executable overrides.
 
 Scope
 - Repository: `{graph["program"]["repository"]}`
@@ -2454,7 +2612,8 @@ def chunk_packet(chunk_id: str, graph: dict[str, Any], mapping: dict[str, Any]) 
         "depends_on": chunk.get("depends_on") or [],
         "objective": chunk["objective"],
         "exit_gate": chunk["exit_gate"],
-        "conductor_assignment": chunk_assignment_for(chunk_id, graph),
+        "historical_conductor_assignment": chunk_assignment_for(chunk_id, graph),
+        "model_selection": current_model_selection(),
         "phase_ids": chunk["phase_ids"],
         "exclude_work_ids": chunk.get("exclude_work_ids") or [],
         "extra_work_ids": chunk.get("extra_work_ids") or [],
@@ -2463,7 +2622,7 @@ def chunk_packet(chunk_id: str, graph: dict[str, Any], mapping: dict[str, Any]) 
                 "id": work_id,
                 "title": graph["work_by_id"][work_id]["title"],
                 "issue": mapping.get("issues", {}).get(work_id),
-                "leaf_assignment": model_assignment_for(work_id, graph),
+                "historical_leaf_assignment": model_assignment_for(work_id, graph),
             }
             for work_id in graph["chunk_work"][chunk_id]
         ],
@@ -2479,7 +2638,8 @@ def render_execution_chunks(graph: dict[str, Any], mapping: dict[str, Any], path
         "state outrank this projection.",
         "",
         "These prompts are conductor envelopes: the chunk conductor coordinates the work, while every leaf retains "
-        "its own exact model/effort assignment, lease, authority boundary, predicate, and receipt.",
+        "its lease, authority boundary, predicate, and receipt. Model assignments below are historical; "
+        "discover current capabilities and allocation before selecting the cheapest adequate available model.",
         "",
         "## Dependency order",
         "",
@@ -2503,7 +2663,7 @@ def render_execution_chunks(graph: dict[str, Any], mapping: dict[str, Any], path
         "",
         "## Chunk index",
         "",
-        "| Chunk | Scope | Conductor | Depends on | Leaves | Exit gate |",
+        "| Chunk | Scope | Historical conductor | Depends on | Leaves | Exit gate |",
         "|---|---|---|---|---:|---|",
     ]
     for chunk in graph["chunks"]:
@@ -2526,8 +2686,8 @@ def render_execution_chunks(graph: dict[str, Any], mapping: dict[str, Any], path
         "1. Start from the live `--ready --json` output. A ready leaf may run even while an upstream aggregate "
         "phase or chunk remains open.",
         "2. Run every concurrent leaf in its own isolated worktree and broker lease.",
-        "3. Use the prompt for the chunk whose resolved scope contains the ready leaf and preserve its assigned "
-        "model and effort.",
+        "3. Use the prompt for the chunk whose resolved scope contains the ready leaf; select model and effort "
+        "from current provider capabilities and finite allocation, preserving native provider identity.",
         "4. If a session exhausts context or usage, use `RELAY-TEMPLATE.md`; the next agent resumes the same chunk "
         "rather than skipping ahead.",
         "5. The live `--ready --json` result controls which leaf starts next. Issue numbers are not execution order.",
@@ -2772,6 +2932,7 @@ def omega(
 
 
 def main(argv: list[str] | None = None) -> int:
+    global GITHUB_CONNECTOR
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true")
@@ -2797,8 +2958,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--github-map", type=Path, default=DEFAULT_MAP)
     parser.add_argument("--index", type=Path, default=DEFAULT_INDEX)
     parser.add_argument("--chunks", type=Path, default=DEFAULT_CHUNKS)
+    parser.add_argument(
+        "--github-transport", choices=("gh", "connector"), default="gh",
+        help="connector uses live authenticated REST GET responses over stdin/stderr; never GitHub writes",
+    )
     args = parser.parse_args(argv)
+    GITHUB_CONNECTOR = StdioGitHubConnector() if args.github_transport == "connector" else None
     try:
+        if args.github_transport == "connector" and args.apply:
+            raise ProgramError("connector transport is read-only; --apply is unavailable")
         if args.apply and not args.sync:
             raise ProgramError("--apply is valid only with --sync")
         if args.omega_pass is not None and not args.omega:
@@ -2874,6 +3042,9 @@ def main(argv: list[str] | None = None) -> int:
     except ProgramError as exc:
         print(f"positioning-program: BLOCKED — {exc}", file=sys.stderr)
         return 2
+    finally:
+        if GITHUB_CONNECTOR is not None:
+            GITHUB_CONNECTOR.close()
 
 
 if __name__ == "__main__":

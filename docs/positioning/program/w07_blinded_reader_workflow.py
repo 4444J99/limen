@@ -17,6 +17,13 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[3]
+CLI_SRC = ROOT / "cli" / "src"
+if str(CLI_SRC) not in sys.path:
+    sys.path.insert(0, str(CLI_SRC))
+
+from limen.conduct.models import _identifier  # noqa: E402
+
+
 PROGRAM = ROOT / "docs/positioning/program"
 VALIDATOR_PATH = PROGRAM / "validate_p03_w07_blinded_reader.py"
 IMPORT_SCHEMA_VERSION = "psp-p03-w07-reader-import.v1"
@@ -284,7 +291,12 @@ def validated_authority(value: Any) -> dict[str, Any]:
         _exact_keys(value, fields, "receipt authority")
         if not isinstance(value["run_id"], str) or not re.fullmatch(r"run-[0-9a-f]{32}", value["run_id"]):
             raise WorkflowError("receipt authority requires an existing broker run identifier")
-        if not isinstance(value["lease_id"], str) or not re.fullmatch(r"lease-[0-9]+-[0-9a-f]{16}", value["lease_id"]):
+        lease = (
+            re.fullmatch(r"lease-([1-9][0-9]*)-([0-9a-f]{16})", value["lease_id"])
+            if isinstance(value["lease_id"], str)
+            else None
+        )
+        if lease is None:
             raise WorkflowError("receipt authority requires an existing broker lease identifier")
         if value["lease_id"].rsplit("-", 1)[1] != value["run_id"][4:20]:
             raise WorkflowError("receipt authority lease does not belong to the supplied run")

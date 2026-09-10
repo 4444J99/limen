@@ -1,0 +1,123 @@
+{
+  "schema_version": "limen.positioning_flagship_freshness_observation.v1",
+  "work_id": "PSP-P05-W04",
+  "flagship_id": "public_records",
+  "observed_at": "2026-09-08T16:57:46Z",
+  "repository": "organvm-iii-ergon/public-record-data-scrapper",
+  "repository_id": 1083287130,
+  "visibility": "public",
+  "archived": false,
+  "default_branch": "main",
+  "observed_head": "04eb20eeba2391a053c4a129f0090f5295c1460e",
+  "head_url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/commit/04eb20eeba2391a053c4a129f0090f5295c1460e",
+  "result": "not_current",
+  "reason": "Hosted gate and scheduled scrape checks are visible at the observed head. Their executed predicate, coverage and output have not been independently inspected in this observation; a check label alone is not a flagship reproduction receipt.",
+  "fresh_reproduction_receipt": null,
+  "receipt_age_days": null,
+  "age_note": "No accepted fresh reproduction receipt was collected; commit age and a check completion date are not receipt age.",
+  "collection": {
+    "source": "https://api.github.com/repos/organvm-iii-ergon/public-record-data-scrapper/commits/04eb20eeba2391a053c4a129f0090f5295c1460e/check-runs",
+    "pages_read": 2,
+    "check_run_count": 32,
+    "returned_count": 32,
+    "complete": true,
+    "maintenance_checks_omitted_from_display": 21
+  },
+  "hosted_checks": [
+    {
+      "completed_at": "2026-09-08T06:51:30Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/34196432865/job/101965084084",
+      "name": "scrape",
+      "started_at": "2026-09-08T06:50:13Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-09-07T06:55:51Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/34092931056/job/101650092464",
+      "name": "scrape",
+      "started_at": "2026-09-07T06:54:42Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-09-06T06:46:59Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/34017342587/job/101443346728",
+      "name": "scrape",
+      "started_at": "2026-09-06T06:45:46Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-09-05T06:37:13Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/33950254998/job/101263552176",
+      "name": "scrape",
+      "started_at": "2026-09-05T06:35:56Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-09-04T06:58:51Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/33846091879/job/100938195772",
+      "name": "scrape",
+      "started_at": "2026-09-04T06:51:05Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-09-03T06:47:09Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/33724749069/job/100551133204",
+      "name": "scrape",
+      "started_at": "2026-09-03T06:45:51Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-09-02T06:44:24Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/33600120091/job/100151744733",
+      "name": "scrape",
+      "started_at": "2026-09-02T06:43:20Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-09-01T07:08:07Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/33480591722/job/99769107239",
+      "name": "scrape",
+      "started_at": "2026-09-01T07:06:55Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-31T21:49:20Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/33443147098/job/99655899626",
+      "name": "gate",
+      "started_at": "2026-08-31T21:47:56Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-31T21:48:02Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/33443147090/job/99655899056",
+      "name": "Secret Pattern Detection",
+      "started_at": "2026-08-31T21:47:55Z",
+      "status": "completed"
+    },
+    {
+      "completed_at": "2026-08-31T21:48:00Z",
+      "conclusion": "success",
+      "html_url": "https://github.com/organvm-iii-ergon/public-record-data-scrapper/actions/runs/33443147106/job/99655898899",
+      "name": "validate-dependencies",
+      "started_at": "2026-08-31T21:47:55Z",
+      "status": "completed"
+    }
+  ],
+  "limitations": [
+    "Read-only metadata observation, not execution or re-execution of product tests.",
+    "No runtime health, customer adoption or commercial outcome claim.",
+    "A passing hosted check is preserved as evidence to inspect, not relabelled as a failed test.",
+    "No workflow dispatch, repository change, account effect or spend was initiated."
+  ],
+  "next_action": "Inspect the repository-owned predicate and exact-head hosted execution evidence, or reproduce it on an admitted host, then append a new dated receipt. Preserve this observation."
+}

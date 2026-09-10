@@ -1,7 +1,11 @@
 # Limen — Executive Summary
 
-**Status:** source-backed engineering case study; independent publication review pending.
+**Status:** source-backed engineering case study; external publication requires separate authority.
+**Observation date:** 2026-09-08; factual review evidence is recorded under [P05-W01](https://github.com/4444J99/limen/issues/2198).
 **Authorship:** Architected and directed by one person through a governed, multi-agent production system.
+
+This authorship wording is the project's existing policy statement, not a line-by-line authorship
+audit. The appendix binds it and the proposed audit offer to their source (E09).
 
 Limen addresses a concrete delegation problem: work performed by several agents becomes difficult
 to trust when ownership, implementation, verification and delivery are reported as the same event.
@@ -20,7 +24,7 @@ could hide unrelated eligible work. These observations limit broad reliability c
 specific engineering corrections. They are not evidence of customer adoption, positive ROI or a
 fully autonomous operation.
 
-For a prospective client, the initial service is a bounded **Agentic Delivery Audit**: examine one
+For a prospective client, the proposed initial service is a bounded **Agentic Delivery Audit**: examine one
 initiative's evidence and decision boundaries, then deliver a justified keep, narrow, govern or stop
 recommendation. Production changes, ongoing operations and commercial commitments are separate
 decisions. For a recruiter, the case supports discussion of systems architecture, verification and

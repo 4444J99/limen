@@ -184,5 +184,7 @@ def test_contract_drift_blocks_only_the_lane_so_dispatch_can_cascade(monkeypatch
     )
     task = Task(id="T-NO-MODAL", title="fixture", target_agent="claude", created=date(2026, 7, 14))
 
-    assert D._call_local_agent("claude", task, dry_run=False) is False
+    result = D._call_local_agent("claude", task, dry_run=False)
+    assert D._is_prelaunch_result(result)
+    assert result == "__prelaunch_failed_blocked__:Claude launch contract unavailable"
     assert "refusing provider launch so the lane can cascade" in capsys.readouterr().out
