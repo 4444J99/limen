@@ -1598,9 +1598,9 @@ def create_verified_bundle(
 
             commands = (
                 ["git", "clone", "--mirror", f"https://github.com/{coordinate}.git", str(mirror)],
-                ["git", "-C", str(mirror), "fetch", "origin", "+refs/pull/*/head:refs/pull/*/head"],
-                ["git", "-C", str(mirror), "bundle", "create", str(candidate), "--all"],
-                ["git", "-C", str(mirror), "bundle", "verify", str(candidate)],
+                ["git", "--git-dir", str(mirror), "fetch", "origin", "+refs/pull/*/head:refs/pull/*/head"],
+                ["git", "--git-dir", str(mirror), "bundle", "create", str(candidate), "--all"],
+                ["git", "--git-dir", str(mirror), "bundle", "verify", str(candidate)],
                 ["git", "clone", "--mirror", str(candidate), str(restore)],
             )
             for command in commands:
@@ -1610,7 +1610,7 @@ def create_verified_bundle(
 
             def refs(root: Path) -> list[str]:
                 result = runner(
-                    ["git", "-C", str(root), "for-each-ref", "--format=%(refname) %(objectname)"],
+                    ["git", "--git-dir", str(root), "for-each-ref", "--format=%(refname) %(objectname)"],
                     capture_output=True,
                     text=True,
                     check=False,
@@ -1677,7 +1677,7 @@ def verify_existing_bundle(
         if clone.returncode != 0:
             raise TransferCaptureError("existing Git bundle restore clone failed")
         restored = runner(
-            ["git", "-C", str(restore), "for-each-ref", "--format=%(refname) %(objectname)"],
+            ["git", "--git-dir", str(restore), "for-each-ref", "--format=%(refname) %(objectname)"],
             capture_output=True,
             text=True,
             check=False,

@@ -15,6 +15,8 @@ import sys
 import time
 from pathlib import Path
 
+import pytest
+
 SCRIPTS = Path(__file__).resolve().parents[2] / "scripts"
 _spec = importlib.util.spec_from_file_location("reap_clones", SCRIPTS / "reap-clones.py")
 reap = importlib.util.module_from_spec(_spec)
@@ -85,6 +87,67 @@ def test_fresh_mirror_is_reaped_under_pressure(tmp_path):
     v = _verdict(clone, age_days=0, pressure=True)
     assert v.reap is True
     assert v.reason == "pushed-mirror-under-pressure"
+
+
+@pytest.mark.parametrize("age_days", [0, 10], ids=["fresh", "idle"])
+@pytest.mark.parametrize(
+    ("required_free", "free_gib", "flags", "expected_pressure"),
+    [
+        (ValueError, 117.0, [], False),
+        (RuntimeError, 117.0, [], False),
+        (None, 117.0, [], False),
+        (20.0, None, [], False),
+        (ValueError, None, [], False),
+        (20.0, 117.0, [], False),
+        (20.0, 20.0, [], False),
+        (20.0, 19.0, [], True),
+        (ValueError, None, ["--pressure"], True),
+        (20.0, 117.0, ["--pressure"], True),
+        (20.0, 19.0, ["--no-pressure"], False),
+        (ValueError, None, ["--no-pressure"], False),
+    ],
+)
+def test_main_pressure_requires_evidence_or_override(
+    tmp_path, monkeypatch, capsys, age_days, required_free, free_gib, flags, expected_pressure
+):
+    clone = _init_origin_and_clone(tmp_path, "pressure-mirror")
+    now = time.time()
+    os.utime(clone, (now - age_days * 86400, now - age_days * 86400))
+
+    def envelope():
+        if isinstance(required_free, type) and issubclass(required_free, Exception):
+            raise required_free("resource envelope unavailable")
+        return required_free
+
+    monkeypatch.setattr(sys, "argv", ["reap-clones.py", "--max", "1", *flags])
+    monkeypatch.setenv("LIMEN_REAP_IDLE_DAYS", "2")
+    monkeypatch.setattr(reap, "LIMEN_ROOT", tmp_path / "limen")
+    monkeypatch.setattr(reap, "WORKSPACE", tmp_path)
+    monkeypatch.setattr(reap, "LOG", tmp_path / "logs" / "reap-clones.jsonl")
+    monkeypatch.setattr(reap, "CORE", set())
+    monkeypatch.setattr(reap, "_ACTIVE_PROCESS_CWDS", {})
+    monkeypatch.setattr(reap, "active_process_cwds", lambda: {})
+    monkeypatch.setattr(reap, "active_task_slugs", lambda path: set())
+    monkeypatch.setattr(reap, "load_clone_reap_acceptance", lambda: [])
+    monkeypatch.setattr(reap, "current_required_free_gib", envelope)
+    monkeypatch.setattr(reap, "disk_pct_used", lambda path: 99.0)
+    monkeypatch.setattr(reap, "disk_free_gib", lambda path: free_gib)
+    monkeypatch.setattr(reap, "discover_clones", lambda workspace, depth: [clone])
+    monkeypatch.setattr(reap, "confirm_recloneable", lambda repo: True)
+
+    assert reap.main() == 0
+    output = capsys.readouterr().out
+    assert f"pressure={'ON' if expected_pressure else 'off'}" in output
+    assert f"idle-gate={'waived' if expected_pressure else '2d'}" in output
+    if expected_pressure or age_days >= 2:
+        assert "would reap 1 clone(s)" in output
+        reason = "pushed-mirror-under-pressure" if expected_pressure else "pushed-mirror"
+        assert f", {reason})" in output
+    else:
+        assert "would reap 0 clone(s)" in output
+        assert "kept 1 (fresh=1)" in output
+    assert clone.is_dir()
+    assert not reap.LOG.exists()
 
 
 def test_unpushed_commit_is_never_reaped(tmp_path):
@@ -509,7 +572,9 @@ def test_belt_refuses_deleted_branch_with_stale_tracking_ref(tmp_path):
     _git(clone, "checkout", "-q", "main")
     # delete feature directly on the bare origin so THIS clone's tracking ref stays stale (not pruned)
     subprocess.run(
-        ["git", "-C", str(tmp_path / "delbranch.git"), "branch", "-D", "feature"], check=True, capture_output=True
+        ["git", "--git-dir", str(tmp_path / "delbranch.git"), "branch", "-D", "feature"],
+        check=True,
+        capture_output=True,
     )
     # classify is stale-permissive here (the tracking ref still advertises D) — the belt is what saves it
     assert _verdict(clone, age_days=99, pressure=True).reap is True

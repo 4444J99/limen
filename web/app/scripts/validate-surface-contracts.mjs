@@ -62,6 +62,9 @@ if (publicText.includes("context")) fail("public status exposes task context");
 if (publicText.includes("urls")) fail("public status exposes task URLs");
 if (!Array.isArray(prStatus.repos) || prStatus.repos.length !== 0) fail("pr-status.json must expose summary only");
 if (typeof prStatus.summary?.prs_with_failing_ci !== "number") fail("pr-status.json missing failing CI aggregate");
+if (typeof prStatus.summary?.total_open_issues !== "number") fail("pr-status.json missing issue aggregate");
+if (typeof prStatus.summary?.total_active_work_branches !== "number") fail("pr-status.json missing branch aggregate");
+if (typeof prStatus.summary?.work_branches_without_open_pr !== "number") fail("pr-status.json missing orphan branch aggregate");
 if (JSON.stringify(prStatus).includes("html_url")) fail("pr-status.json exposes PR URLs");
 
 for (const task of tasks.tasks || []) {
