@@ -945,8 +945,8 @@ def test_owner_monitoring_endpoints_are_owner_only(tmp_path: Path, monkeypatch: 
     monkeypatch.setattr(main, "WEB_APP_PRIVATE", private_dir)
     monkeypatch.setattr(main, "WEB_APP_PUBLIC", public_dir)
     client = TestClient(main.app)
-    client_headers = {"Authorization": "******"}
-    owner_headers = {"Authorization": "******"}
+    client_headers = {"Authorization": "Bearer client-secret"}
+    owner_headers = {"Authorization": "Bearer owner-secret"}
 
     assert client.get("/api/pr-status", headers=client_headers).status_code == 403
     assert client.get("/api/issue-status", headers=client_headers).status_code == 403

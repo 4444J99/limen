@@ -22,6 +22,7 @@
         "by_status": { "type": "object" },
         "generated_at": { "type": "string" },
         "throughput": { "$ref": "#/$defs/throughput" },
+        "monitoring": { "$ref": "#/$defs/monitoring" },
         "stale_count": { "type": "number" },
         "lifecycle": { "$ref": "#/$defs/lifecycle" },
         "budget": { "type": "object" },
@@ -70,6 +71,57 @@
         "by_event_status": { "type": "object" },
         "by_event_agent": { "type": "object" },
         "by_event_date": { "type": "object" }
+      }
+    },
+    "monitoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["prs", "issues", "repo_health"],
+      "properties": {
+        "prs": { "$ref": "#/$defs/prSummary" },
+        "issues": { "$ref": "#/$defs/issueSummary" },
+        "repo_health": { "$ref": "#/$defs/repoHealthSummary" }
+      }
+    },
+    "prSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total_repos", "total_open_prs", "prs_with_failing_ci", "prs_with_pending_checks", "review_pending_prs", "ready_to_merge_prs", "blocked_prs", "merge_readiness"],
+      "properties": {
+        "total_repos": { "type": "number" },
+        "total_open_prs": { "type": "number" },
+        "prs_with_failing_ci": { "type": "number" },
+        "prs_with_pending_checks": { "type": "number" },
+        "review_pending_prs": { "type": "number" },
+        "ready_to_merge_prs": { "type": "number" },
+        "blocked_prs": { "type": "number" },
+        "merge_readiness": { "type": "object" }
+      }
+    },
+    "issueSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total_repos", "total_open_issues", "unlabeled_issues", "unassigned_issues", "stale_issues", "ready_to_triage", "priority_counts"],
+      "properties": {
+        "total_repos": { "type": "number" },
+        "total_open_issues": { "type": "number" },
+        "unlabeled_issues": { "type": "number" },
+        "unassigned_issues": { "type": "number" },
+        "stale_issues": { "type": "number" },
+        "ready_to_triage": { "type": "number" },
+        "priority_counts": { "type": "object" }
+      }
+    },
+    "repoHealthSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total_repos", "degraded_repos", "healthy_repos", "failing_workflows", "in_progress_runs"],
+      "properties": {
+        "total_repos": { "type": "number" },
+        "degraded_repos": { "type": "number" },
+        "healthy_repos": { "type": "number" },
+        "failing_workflows": { "type": "number" },
+        "in_progress_runs": { "type": "number" }
       }
     },
     "lifecycle": {
