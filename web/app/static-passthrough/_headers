@@ -28,6 +28,12 @@
 /public-surface-manifest.json
   Cache-Control: public, max-age=30
 
+/issue-status.json
+  Cache-Control: public, max-age=30
+
+/repo-health.json
+  Cache-Control: public, max-age=30
+
 /logs/fleet-status.json
   Cache-Control: public, max-age=10
 

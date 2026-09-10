@@ -211,9 +211,26 @@ function classifyIssues(issues, now = Date.now()) {
   return summary;
 }
 
+function latestRunPerWorkflow(runs) {
+  const latest = new Map();
+  for (const run of runs) {
+    const key = run.workflow_id;
+    const existing = latest.get(key);
+    if (!existing || Date.parse(run.created_at) > Date.parse(existing.created_at)) {
+      latest.set(key, run);
+    }
+  }
+  return Array.from(latest.values());
+}
+
 function classifyHealth(runs) {
-  const failing_workflows = runs.filter((run) => run.conclusion === "failure").length;
-  const in_progress_runs = runs.filter((run) => ["queued", "in_progress", "waiting"].includes(run.status)).length;
+  // Only the latest run per workflow reflects current health; counting every
+  // historical run would report workflows as failing long after they recovered.
+  const latestRuns = latestRunPerWorkflow(runs);
+  const failing_workflows = latestRuns.filter((run) => run.conclusion === "failure").length;
+  const in_progress_runs = runs.filter((run) =>
+    ["queued", "in_progress", "waiting", "requested", "pending"].includes(run.status)
+  ).length;
   return {
     failing_workflows,
     in_progress_runs,
