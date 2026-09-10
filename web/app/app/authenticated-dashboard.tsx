@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import DashboardClient, { type DashboardData, type PRStatusData, type Task } from "./dashboard-client";
+import DashboardClient, { type DashboardData, type IssueStatusData, type PRStatusData, type RepoHealthData, type Task } from "./dashboard-client";
 import SurfaceNav from "./surface-nav";
 
 type LoadState = {
@@ -14,6 +14,8 @@ export default function AuthenticatedDashboard({ apiUrl }: { apiUrl: string }) {
   const [token, setToken] = useState("");
   const [state, setState] = useState<LoadState>({ loading: false, error: "", data: null });
   const [prData, setPrData] = useState<PRStatusData | null>(null);
+  const [issueData, setIssueData] = useState<IssueStatusData | null>(null);
+  const [healthData, setHealthData] = useState<RepoHealthData | null>(null);
   const [doneTasks, setDoneTasks] = useState<Task[] | null>(null);
   const [doneLoading, setDoneLoading] = useState(false);
 
@@ -29,8 +31,14 @@ export default function AuthenticatedDashboard({ apiUrl }: { apiUrl: string }) {
         const d = await res.json();
         const prRes = await fetch("/pr-status.json").catch(() => null);
         const pr = prRes && prRes.ok ? await prRes.json() : null;
+        const issueRes = await fetch("/issue-status.json").catch(() => null);
+        const issue = issueRes && issueRes.ok ? await issueRes.json() : null;
+        const healthRes = await fetch("/repo-health.json").catch(() => null);
+        const health = healthRes && healthRes.ok ? await healthRes.json() : null;
         if (!alive) return;
         if (pr) setPrData(pr);
+        if (issue) setIssueData(issue);
+        if (health) setHealthData(health);
         setState({ loading: false, error: "", data: {
           version: "static", portal: d.portal || { name: "Limen", description: "" },
           tasks: d.tasks || [], summary: d.summary, storage: d.storage } });
@@ -89,6 +97,8 @@ export default function AuthenticatedDashboard({ apiUrl }: { apiUrl: string }) {
     return <DashboardClient
       data={state.data}
       prData={prData}
+      issueData={issueData}
+      healthData={healthData}
       apiUrl={apiUrl}
       initialToken={token}
       doneTasks={doneTasks}
