@@ -37,7 +37,7 @@ export default function ArchivePanel({
     if (!apiReady || !selected || !archiveReady || state.loading) return;
     setState({ loading: true, result: "", error: "" });
     const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (apiToken) headers.Authorization = `Bearer ${apiToken}`;
+    if (apiToken) headers.Authorization = "Bearer " + apiToken;
     try {
       const response = await fetch(`${apiUrl}/api/tasks/${encodeURIComponent(selected.id)}/archive`, {
         method: "POST",

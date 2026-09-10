@@ -89,7 +89,7 @@ if (runtimeAttached) {
   assertIncludes("index.html", ["Limen is tracking", "Run plan", "Unrecorded capacity"]);
   assertIncludes("internal.html", ["Owner access", "Owner token required", "Load internal"]);
   assertIncludes("client.html", ["Client token required", "Load client"]);
-  assertIncludes("public.html", ["Public runtime refresh", "Unrecorded capacity", "Pull requests"]);
+  assertIncludes("public.html", ["Public runtime refresh", "Unrecorded capacity", "Pull requests", "Issue triage", "Repo health"]);
   assertIncludes("qa.html", ["Owner token required", "Load QA"]);
   assertIncludes("corpus.html", ["Corpus Command Center", "Prompt atlas"]);
   assertNotIncludes("client.html", ["Static snapshot only", "Build with NEXT_PUBLIC_API_URL to enable runtime refresh."]);
@@ -100,7 +100,7 @@ if (runtimeAttached) {
   assertIncludes("qa.html", ["Runtime unavailable"]);
   assertIncludes("corpus.html", ["Corpus Command Center", "Prompt atlas"]);
   assertIncludes("client.html", ["Runtime unavailable"]);
-  assertIncludes("public.html", ["Static snapshot only", "Build with NEXT_PUBLIC_API_URL to enable runtime refresh."]);
+  assertIncludes("public.html", ["Static snapshot only", "Build with NEXT_PUBLIC_API_URL to enable runtime refresh.", "Issue triage", "Repo health"]);
 }
 assertIncludes("public.html", ["/public-surface-manifest.json"]);
 

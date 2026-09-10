@@ -121,6 +121,9 @@ app.add_middleware(
 )
 
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "limen")))
+REPO_ROOT = Path(__file__).resolve().parents[2]
+WEB_APP_PUBLIC = REPO_ROOT / "web" / "app" / "public"
+WEB_APP_PRIVATE = REPO_ROOT / "web" / "app" / ".generated" / "surfaces"
 LIMEN_TOKEN = os.environ.get("LIMEN_API_TOKEN", "")
 GITHUB_API = os.environ.get("LIMEN_GITHUB_API", "https://api.github.com")
 GITHUB_REPO = os.environ.get("LIMEN_GITHUB_REPO", "")
@@ -131,6 +134,61 @@ DEFAULT_BRANCH_WRITE_BLOCK = (
     "GitHub-backed board mutations are keeper-owned and cannot be written by the FastAPI adapter"
 )
 TABULARIUS_TICKET_ACTION = "Submit a TABVLARIVS ticket and let the keeper publish the board projection PR"
+
+
+def read_json_file(path: Path, fallback: dict[str, Any]) -> dict[str, Any]:
+    try:
+        return json.loads(path.read_text())
+    except (OSError, ValueError):
+        return copy.deepcopy(fallback)
+
+
+def monitoring_stub(kind: str) -> dict[str, Any]:
+    generated_at = datetime.fromtimestamp(0, timezone.utc).isoformat()
+    if kind == "pr":
+        summary = {
+            "total_repos": 0,
+            "total_open_prs": 0,
+            "prs_with_failing_ci": 0,
+            "prs_with_pending_checks": 0,
+            "review_pending_prs": 0,
+            "ready_to_merge_prs": 0,
+            "blocked_prs": 0,
+            "merge_readiness": {},
+        }
+    elif kind == "issue":
+        summary = {
+            "total_repos": 0,
+            "total_open_issues": 0,
+            "unlabeled_issues": 0,
+            "unassigned_issues": 0,
+            "stale_issues": 0,
+            "ready_to_triage": 0,
+            "priority_counts": {},
+        }
+    else:
+        summary = {
+            "total_repos": 0,
+            "degraded_repos": 0,
+            "healthy_repos": 0,
+            "failing_workflows": 0,
+            "in_progress_runs": 0,
+        }
+    return {"generated_at": generated_at, "repos": [], "summary": summary}
+
+
+def public_monitoring_status(kind: str) -> dict[str, Any]:
+    name = {"pr": "pr-status.json", "issue": "issue-status.json", "repo_health": "repo-health.json"}[kind]
+    return read_json_file(WEB_APP_PUBLIC / name, monitoring_stub(kind))
+
+
+def owner_monitoring_status(kind: str) -> dict[str, Any]:
+    name = {
+        "pr": "pr-status-owner.json",
+        "issue": "issue-status-owner.json",
+        "repo_health": "repo-health-owner.json",
+    }[kind]
+    return read_json_file(WEB_APP_PRIVATE / name, monitoring_stub(kind))
 
 
 def is_valid_url(url: str) -> bool:
@@ -944,6 +1002,11 @@ def public_summary(data: dict[str, Any]) -> dict[str, Any]:
         "by_status": raw["by_status"],
         "generated_at": now_iso(),
         "throughput": raw["throughput"],
+        "monitoring": {
+            "prs": public_monitoring_status("pr").get("summary", {}),
+            "issues": public_monitoring_status("issue").get("summary", {}),
+            "repo_health": public_monitoring_status("repo_health").get("summary", {}),
+        },
     }
 
 
@@ -1439,6 +1502,24 @@ def get_client_status(authorization: str | None = Header(None)) -> dict[str, Any
 def get_public_status() -> dict[str, Any]:
     data = load_board()
     return {"status": "ok", "surface": "public", "summary": public_summary(data)}
+
+
+@app.get("/api/pr-status")
+def get_pr_status(authorization: str | None = Header(None)) -> dict[str, Any]:
+    require_persona(authorization, {"owner"})
+    return owner_monitoring_status("pr")
+
+
+@app.get("/api/issue-status")
+def get_issue_status(authorization: str | None = Header(None)) -> dict[str, Any]:
+    require_persona(authorization, {"owner"})
+    return owner_monitoring_status("issue")
+
+
+@app.get("/api/repo-health")
+def get_repo_health(authorization: str | None = Header(None)) -> dict[str, Any]:
+    require_persona(authorization, {"owner"})
+    return owner_monitoring_status("repo_health")
 
 
 @app.get("/api/qa-status")

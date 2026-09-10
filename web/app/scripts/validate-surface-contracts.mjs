@@ -16,7 +16,7 @@ function fail(message) {
   process.exit(1);
 }
 
-for (const name of ["tasks.json", "client-status.json", "internal-status.json", "qa-status.json", "corpus-status.json", "observatory-status.json", "owner-surface-manifest.json", "client-surface-manifest.json", "readiness.json"]) {
+for (const name of ["tasks.json", "client-status.json", "internal-status.json", "qa-status.json", "corpus-status.json", "observatory-status.json", "owner-surface-manifest.json", "client-surface-manifest.json", "readiness.json", "pr-status-owner.json", "issue-status-owner.json", "repo-health-owner.json"]) {
   if (existsSync(join(publicDir, name))) fail(`${name} must not be hosted from public/`);
 }
 
@@ -29,6 +29,11 @@ const ownerSurfaceManifest = readJson(privateDir, "owner-surface-manifest.json")
 const clientSurfaceManifest = readJson(privateDir, "client-surface-manifest.json");
 const publicSurfaceManifest = readJson(publicDir, "public-surface-manifest.json");
 const prStatus = readJson(publicDir, "pr-status.json");
+const ownerPrStatus = readJson(privateDir, "pr-status-owner.json");
+const issueStatus = readJson(publicDir, "issue-status.json");
+const ownerIssueStatus = readJson(privateDir, "issue-status-owner.json");
+const repoHealthStatus = readJson(publicDir, "repo-health.json");
+const ownerRepoHealthStatus = readJson(privateDir, "repo-health-owner.json");
 const readiness = readJson(privateDir, "readiness.json");
 const qaStatus = readJson(privateDir, "qa-status.json");
 const corpusStatus = readJson(privateDir, "corpus-status.json");
@@ -62,7 +67,20 @@ if (publicText.includes("context")) fail("public status exposes task context");
 if (publicText.includes("urls")) fail("public status exposes task URLs");
 if (!Array.isArray(prStatus.repos) || prStatus.repos.length !== 0) fail("pr-status.json must expose summary only");
 if (typeof prStatus.summary?.prs_with_failing_ci !== "number") fail("pr-status.json missing failing CI aggregate");
+if (typeof prStatus.summary?.prs_with_pending_checks !== "number") fail("pr-status.json missing pending-check aggregate");
+if (typeof prStatus.summary?.ready_to_merge_prs !== "number") fail("pr-status.json missing merge-ready aggregate");
 if (JSON.stringify(prStatus).includes("html_url")) fail("pr-status.json exposes PR URLs");
+if (!Array.isArray(ownerPrStatus.repos)) fail("pr-status-owner.json missing repo detail");
+if (!Array.isArray(issueStatus.repos) || issueStatus.repos.length !== 0) fail("issue-status.json must expose summary only");
+if (typeof issueStatus.summary?.total_open_issues !== "number") fail("issue-status.json missing open issue aggregate");
+if (typeof issueStatus.summary?.ready_to_triage !== "number") fail("issue-status.json missing triage aggregate");
+if (JSON.stringify(issueStatus).includes("html_url")) fail("issue-status.json exposes issue URLs");
+if (!Array.isArray(ownerIssueStatus.repos)) fail("issue-status-owner.json missing repo detail");
+if (!Array.isArray(repoHealthStatus.repos) || repoHealthStatus.repos.length !== 0) fail("repo-health.json must expose summary only");
+if (typeof repoHealthStatus.summary?.degraded_repos !== "number") fail("repo-health.json missing degraded repo aggregate");
+if (typeof repoHealthStatus.summary?.failing_workflows !== "number") fail("repo-health.json missing workflow aggregate");
+if (JSON.stringify(repoHealthStatus).includes("html_url")) fail("repo-health.json exposes workflow URLs");
+if (!Array.isArray(ownerRepoHealthStatus.repos)) fail("repo-health-owner.json missing repo detail");
 
 for (const task of tasks.tasks || []) {
   if (task.title && publicText.includes(task.title)) fail(`public status leaks task title ${task.id}`);

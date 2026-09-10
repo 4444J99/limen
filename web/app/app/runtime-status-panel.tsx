@@ -29,7 +29,7 @@ export default function RuntimeStatusPanel({
     if (!apiReady || state.loading) return;
     setState({ loading: true, result: "", error: "" });
     const headers: Record<string, string> = {};
-    if (apiToken) headers.Authorization = `Bearer ${apiToken}`;
+    if (apiToken) headers.Authorization = "Bearer " + apiToken;
     try {
       const response = await fetch(`${apiUrl}${endpoint}`, { headers });
       const payload = await response.json();

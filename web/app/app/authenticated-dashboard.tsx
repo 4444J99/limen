@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import DashboardClient, { type DashboardData, type PRStatusData, type Task } from "./dashboard-client";
+import DashboardClient, { type DashboardData, type IssueStatusData, type PRStatusData, type RepoHealthData, type Task } from "./dashboard-client";
 import SurfaceNav from "./surface-nav";
 
 type LoadState = {
@@ -10,48 +10,71 @@ type LoadState = {
   data: DashboardData | null;
 };
 
+async function readOptionalJson(path: string) {
+  const response = await fetch(path).catch(() => null);
+  return response && response.ok ? response.json() : null;
+}
+
 export default function AuthenticatedDashboard({ apiUrl }: { apiUrl: string }) {
   const [token, setToken] = useState("");
   const [state, setState] = useState<LoadState>({ loading: false, error: "", data: null });
   const [prData, setPrData] = useState<PRStatusData | null>(null);
+  const [issueData, setIssueData] = useState<IssueStatusData | null>(null);
+  const [repoHealthData, setRepoHealthData] = useState<RepoHealthData | null>(null);
   const [doneTasks, setDoneTasks] = useState<Task[] | null>(null);
   const [doneLoading, setDoneLoading] = useState(false);
 
-  // STATIC-FIRST (detach-safe): render the baked dashboard.json directly — no runtime
-  // needed. The daemon's web voice regenerates it each cycle, so it stays near-real-time.
-  // dashboard.json is slim (active tasks only); done-tasks.json is lazy-fetched on demand.
   useEffect(() => {
     let alive = true;
     const pull = async () => {
       try {
-        const res = await fetch("/dashboard.json");
-        if (!res.ok) return;
-        const d = await res.json();
-        const prRes = await fetch("/pr-status.json").catch(() => null);
-        const pr = prRes && prRes.ok ? await prRes.json() : null;
+        const [dashboardRes, pr, issues, repoHealth] = await Promise.all([
+          fetch("/dashboard.json"),
+          readOptionalJson("/pr-status.json"),
+          readOptionalJson("/issue-status.json"),
+          readOptionalJson("/repo-health.json"),
+        ]);
+        if (!dashboardRes.ok) return;
+        const dashboard = await dashboardRes.json();
         if (!alive) return;
-        if (pr) setPrData(pr);
-        setState({ loading: false, error: "", data: {
-          version: "static", portal: d.portal || { name: "Limen", description: "" },
-          tasks: d.tasks || [], summary: d.summary, storage: d.storage } });
-      } catch { /* fall back to the runtime gate below */ }
+        setPrData(pr);
+        setIssueData(issues);
+        setRepoHealthData(repoHealth);
+        setState({
+          loading: false,
+          error: "",
+          data: {
+            version: "static",
+            portal: dashboard.portal || { name: "Limen", description: "" },
+            tasks: dashboard.tasks || [],
+            summary: dashboard.summary,
+            storage: dashboard.storage,
+          },
+        });
+      } catch {
+        // fall back to the runtime gate below
+      }
     };
     pull();
-    const id = setInterval(pull, 60000);  // live: re-pull every 60s (ETag/304 friendly)
-    return () => { alive = false; clearInterval(id); };
+    const id = setInterval(pull, 60000);
+    return () => {
+      alive = false;
+      clearInterval(id);
+    };
   }, []);
 
-  // Lazy-fetch done tasks only when requested (avoids loading them on every page load).
   async function loadDoneTasks() {
     if (doneLoading || doneTasks !== null) return;
     setDoneLoading(true);
     try {
       const res = await fetch("/done-tasks.json");
       if (res.ok) {
-        const d = await res.json();
-        setDoneTasks(d.tasks || []);
+        const payload = await res.json();
+        setDoneTasks(payload.tasks || []);
       }
-    } catch { /* ignore */ } finally {
+    } catch {
+      // ignore
+    } finally {
       setDoneLoading(false);
     }
   }
@@ -60,15 +83,22 @@ export default function AuthenticatedDashboard({ apiUrl }: { apiUrl: string }) {
     if (!apiUrl || state.loading) return;
     setState({ loading: true, error: "", data: null });
     try {
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-      const [statusResponse, tasksResponse] = await Promise.all([
+      const headers: Record<string, string> = token ? { Authorization: "Bearer " + token } : {};
+      const optionalFetch = (path: string) => fetch(`${apiUrl}${path}`, { headers }).catch(() => null);
+      const [statusResponse, tasksResponse, prResponse, issueResponse, repoHealthResponse] = await Promise.all([
         fetch(`${apiUrl}/api/status`, { headers }),
         fetch(`${apiUrl}/api/tasks`, { headers }),
+        optionalFetch("/api/pr-status"),
+        optionalFetch("/api/issue-status"),
+        optionalFetch("/api/repo-health"),
       ]);
       const payload = await statusResponse.json();
       if (!statusResponse.ok) throw new Error(payload.detail || statusResponse.statusText);
       const tasksPayload = await tasksResponse.json();
       if (!tasksResponse.ok) throw new Error(tasksPayload.detail || tasksResponse.statusText);
+      setPrData(prResponse && prResponse.ok ? await prResponse.json() : null);
+      setIssueData(issueResponse && issueResponse.ok ? await issueResponse.json() : null);
+      setRepoHealthData(repoHealthResponse && repoHealthResponse.ok ? await repoHealthResponse.json() : null);
       setState({
         loading: false,
         error: "",
@@ -86,15 +116,19 @@ export default function AuthenticatedDashboard({ apiUrl }: { apiUrl: string }) {
   }
 
   if (state.data) {
-    return <DashboardClient
-      data={state.data}
-      prData={prData}
-      apiUrl={apiUrl}
-      initialToken={token}
-      doneTasks={doneTasks}
-      doneLoading={doneLoading}
-      onLoadDoneTasks={loadDoneTasks}
-    />;
+    return (
+      <DashboardClient
+        data={state.data}
+        prData={prData}
+        issueData={issueData}
+        repoHealthData={repoHealthData}
+        apiUrl={apiUrl}
+        initialToken={token}
+        doneTasks={doneTasks}
+        doneLoading={doneLoading}
+        onLoadDoneTasks={loadDoneTasks}
+      />
+    );
   }
 
   return (
