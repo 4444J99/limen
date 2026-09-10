@@ -222,6 +222,7 @@ def test_vitals_warn_streak_counts_resets_and_escalates(tmp_path, monkeypatch):
 
 
 def test_organ_health_vigilia_uses_fast_sample_clock(monkeypatch):
+    monkeypatch.setenv("LIMEN_VITALS_SAMPLE_SECONDS", "300")
     script = Path(__file__).resolve().parents[2] / "scripts" / "organ-health.py"
     spec = importlib.util.spec_from_file_location("organ_health_vigilia_test", script)
     assert spec is not None and spec.loader is not None
