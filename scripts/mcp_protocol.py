@@ -202,7 +202,13 @@ class Wire:
             self.cleanup = self.custody.close() if self.custody else "unmeasured"
         finally:
             for stream in (self.process.stdin, self.process.stdout):
-                stream.close()
+                try:
+                    stream.close()
+                except (BrokenPipeError, OSError):
+                    # An already-exited peer can break the pipe between our last read/write
+                    # and cleanup; a close-time flush failure is not a new protocol fact and
+                    # must not surface as an unclassified exception to the caller.
+                    pass
 
 
 def verify(server, timeout=15, expected=None, version="2025-11-25", safe_calls=None):
