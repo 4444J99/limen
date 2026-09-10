@@ -3,6 +3,8 @@ import test from "node:test";
 
 import fixtures from "../../../spec/contracts/work-loan-v1-fixtures.json" with { type: "json" };
 import { validateWorkPacket } from "../src/conduct/schemas.js";
+import { ConductKernel } from "../src/conduct/keeper.js";
+import { conflictingKeys } from "../src/conduct/resources.js";
 import {
   durableReceiptTarget,
   executablePredicate,
@@ -153,6 +155,7 @@ test("only an exact zero-cost task projection bypasses capacity underwriting", (
     receipt_target: `git:organvm/limen:tasks.yaml#${taskId}`,
     authority: {
       actions: ["task.status"],
+      repositories: ["organvm/limen"],
       path_prefixes: ["tasks.yaml"],
       external_effects: [],
       may_delegate: false,
@@ -164,7 +167,12 @@ test("only an exact zero-cost task projection bypasses capacity underwriting", (
 
   assert.equal(packetIsNonCapacityProjection(packet), true);
   assert.deepEqual(packetWorkLoanMissingFields(packet), []);
+  const claims = ConductKernel.prototype.effectiveClaims(packet);
+  assert.deepEqual(claims.map((claim) => claim.key), [`task/${taskId}`]);
+  assert.deepEqual(conflictingKeys(claims, [{ key: "path/organvm/limen/topic/cli", mode: "exclusive" }]), []);
+  assert.equal(conflictingKeys(claims, claims).length, 1);
   packet.spend.limit = 1;
+  assert.ok(ConductKernel.prototype.effectiveClaims(packet).some((claim) => claim.key === "repo/organvm/limen/write"));
   assert.equal(packetIsNonCapacityProjection(packet), false);
   assert.deepEqual(packetWorkLoanMissingFields(packet), [
     "source_origin",

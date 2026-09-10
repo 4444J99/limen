@@ -132,6 +132,12 @@ class HttpConductClient:
 
         return self._request("GET", "/api/board/private")
 
+    def session_audit(self, session_id: str) -> dict[str, Any]:
+        """Read bounded redacted lifecycle evidence; missing history stays unmeasured."""
+
+        session = urllib.parse.quote(session_id, safe="")
+        return self._request("GET", f"/api/conduct/sessions/{session}/audit")
+
     def initialize_private_board(self, board: dict[str, Any]) -> dict[str, Any]:
         """Seed private custody once; the keeper publishes only its aggregate projection."""
 
