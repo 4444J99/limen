@@ -79,12 +79,12 @@ Done from receipt: `5`
 - Existing receipts:
   - `/Volumes/Archive4T/_OPERATIONS/STORAGE-OPERATING-MANUAL-2026-06-15.md`
   - `/Volumes/Archive4T/_OPERATIONS/LOCAL-DISK-EXPULSION-POLICY-2026-06-15.md`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/vltima-absorb-cadence.md`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/vltima-prior-excavations.md`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/photos-universe-recovery-2026-06-29.md`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/estate-custody-primitives.md`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/worktree-reclaim-candidates.md`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/worktree-reclaim-candidates.json`
+  - `docs/vltima-absorb-cadence.md`
+  - `docs/vltima-prior-excavations.md`
+  - `docs/photos-universe-recovery-2026-06-29.md`
+  - `docs/estate-custody-primitives.md`
+  - `docs/worktree-reclaim-candidates.md`
+  - `docs/worktree-reclaim-candidates.json`
   - `https://github.com/4444J99/limen/issues/685`
   - `https://github.com/4444J99/limen/issues/688`
   - `https://github.com/organvm/media-ark/issues/56`
@@ -99,9 +99,9 @@ Done from receipt: `5`
 - Receipt target: `git:4444J99/4444J99:README.md`
 - Stop condition: profile README has current metrics, live links, approved positioning, and no forbidden ranking claims
 - Existing receipts:
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/positioning/_frontdoor.md`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/his-hand-levers.json`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/face-ownership.json`
+  - `docs/positioning/_frontdoor.md`
+  - `his-hand-levers.json`
+  - `face-ownership.json`
   - `~/Workspace/organvm/4444J99/README.md`
   - `https://github.com/4444J99/4444J99`
 
@@ -129,11 +129,11 @@ Done from receipt: `5`
 - Receipt target: `git:4444J99/limen:docs/repo-surface-ledger.md`
 - Stop condition: all discovered roots are classified or recorded with blocker/gate
 - Existing receipts:
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/repo-surface-ledger.md`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/consolidation/GATES.md`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/consolidation/EXECUTION-MANIFEST.md`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/scripts/repo-surface-ledger.py`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/scripts/salvage-yard-map.py`
+  - `docs/repo-surface-ledger.md`
+  - `docs/consolidation/GATES.md`
+  - `docs/consolidation/EXECUTION-MANIFEST.md`
+  - `scripts/repo-surface-ledger.py`
+  - `scripts/salvage-yard-map.py`
 
 ### VALUE-REPOS
 
@@ -144,6 +144,6 @@ Done from receipt: `5`
 - Receipt target: `git:4444J99/limen:docs/product-ledger.md`
 - Stop condition: top value repo has shipped PR, open PR with predicate, owner task, or blocker
 - Existing receipts:
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/value-repos.json`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/product-ledger.md`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/positioning/_frontdoor.md`
+  - `value-repos.json`
+  - `docs/product-ledger.md`
+  - `docs/positioning/_frontdoor.md`
