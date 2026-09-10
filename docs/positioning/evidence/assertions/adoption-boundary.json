@@ -1,0 +1,26 @@
+{
+  "contract_name": "assertion-evidence.v1",
+  "contract_version": 1,
+  "assertion_id": "limen-adoption-boundary-20260831",
+  "assertion_class": "ratified_axiom",
+  "statement": "Current public evidence does not authorize claims of customer adoption, revenue, comparative reliability, or zero-maintenance operation for Limen.",
+  "verification_state": "verified",
+  "evidence_references": [
+    {
+      "evidence_id": "limen-commercial-claim-boundary",
+      "independence_group": "limen-positioning-policy",
+      "evidence_type": "ratified_constitutional_record",
+      "reference": "institutio/positioning/commercial-contract.yaml",
+      "body_hash": "sha256:8677230d49475107c535ea5183cfc892ccfa8818e6276a1bdecc40bc63ee604d",
+      "observed_at": "2026-08-31T22:35:19Z"
+    },
+    {
+      "evidence_id": "limen-public-evidence-boundary",
+      "independence_group": "limen-owner-record",
+      "evidence_type": "owner_record",
+      "reference": "docs/positioning/evidence/limen.md",
+      "body_hash": "sha256:f7d0a2d34ba18f4fac8de967050041864112da84f4b74a530b169882276608c0",
+      "observed_at": "2026-08-31T22:35:19Z"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "contract_name": "assertion-evidence.v1",
+  "contract_version": 1,
+  "assertion_id": "limen-authorship-disclosure-20260831",
+  "assertion_class": "historical_record",
+  "statement": "The project's ratified public authorship treatment is: architected and directed by one person through a governed multi-agent production system, with machine assistance disclosed rather than represented as unassisted hand-authorship.",
+  "verification_state": "verified",
+  "evidence_references": [
+    {
+      "evidence_id": "limen-authorship-policy",
+      "independence_group": "limen-positioning-policy",
+      "evidence_type": "ratified_constitutional_record",
+      "reference": "docs/positioning/authorship-disclosure-policy.md",
+      "body_hash": "sha256:eca493e7a4d78857ca98050e5f688376d3ada37f13ed63bfe9453c257a441f6d",
+      "observed_at": "2026-08-31T22:35:19Z"
+    },
+    {
+      "evidence_id": "limen-commercial-authorship-contract",
+      "independence_group": "limen-positioning-policy",
+      "evidence_type": "ratified_constitutional_record",
+      "reference": "institutio/positioning/commercial-contract.yaml",
+      "body_hash": "sha256:8677230d49475107c535ea5183cfc892ccfa8818e6276a1bdecc40bc63ee604d",
+      "observed_at": "2026-08-31T22:35:19Z"
+    }
+  ]
+}

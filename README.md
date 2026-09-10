@@ -1,10 +1,52 @@
 # Limen
 
-[![CI](https://github.com/4444J99/limen/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/4444J99/limen/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![CI](https://github.com/4444J99/limen/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/4444J99/limen/actions/workflows/ci.yml) [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 
-Limen is a cross-agent, cross-repo, budget-capped task intake system. Every AI agent reads a single `tasks.yaml` to discover work. TABVLARIVS is the deterministic state authority and lease keeper. The CLI + SaaS dashboard provide unified visibility, budget management, and lifecycle control across your entire agent fleet.
+> Limen coordinates work across AI coding agents so each task has one owner, a bounded budget,
+> explicit permissions, and inspectable completion evidence.
 
-## Proof destination
+[View public status](https://limen-dashboard.pages.dev/public) ·
+[Two-minute explanation](docs/audiences/general.md) ·
+[Technical documentation](docs/audiences/technical.md) ·
+[Evidence and limitations](docs/positioning/evidence/limen.md)
+
+## What am I looking at?
+
+This is the source repository and documented project record for Limen. A repository is the
+organized collection of code, tests, operating rules, design decisions, and revision history used
+to build and inspect the system.
+
+Limen is a control plane for multi-agent software work. It does not make an agent's output correct
+by itself. It governs how work is admitted, assigned, bounded, verified, and recorded so that a
+chat message, a branch, or a plausible-looking log is not mistaken for completed work.
+
+## Choose your reading path
+
+| I am reading as... | Start here |
+|---|---|
+| A general or nontechnical reader | [What Limen does in ordinary language](docs/audiences/general.md) |
+| A software or platform engineer | [Architecture, interfaces, tests, and failure modes](docs/audiences/technical.md) |
+| A humanities scholar, artist, or educator | [Authority, memory, authorship, and delegated machine labor](docs/audiences/humanities.md) |
+| An operator, founder, or prospective client | [Operational applications and adoption requirements](docs/audiences/business.md) |
+| A hiring manager, collaborator, or funder | [Contribution, status, and inspection guide](docs/audiences/evaluator.md) |
+
+These are alternate routes through one project, not separate stories. Shared claims resolve to
+[`project-record.yml`](project-record.yml), and their inspectable support and limits are recorded in
+the [public evidence packet](docs/positioning/evidence/limen.md).
+
+## Project at a glance
+
+| | |
+|---|---|
+| **What it is** | A governance and orchestration system for bounded work across multiple AI-agent lanes and repositories. |
+| **Problem addressed** | Duplicate authority, uncontrolled spend, conflicting edits, hidden failure, and completion claims without reproducible proof. |
+| **Current state** | `operational-internal`: used in the owner's environment, with public aggregate status and a deployed runtime health surface. This is not evidence of customer adoption. |
+| **Primary users** | The system operator, platform engineers, and agent executor services participating in a governed delivery workflow. |
+| **What Anthony built** | Defined the architecture, operating doctrine, authority and evidence boundaries, and directed a multi-agent implementation and review process. |
+| **Evidence** | Versioned protocol schemas, source modules, focused tests, repository gates, workflow receipts, and public runtime endpoints. |
+| **Known limitations** | No public evidence of customer adoption, revenue, comparative reliability, or zero-maintenance autonomy; no license file is present in the verified tree. |
+
+## Canonical project record
 
 ### Problem
 
@@ -64,6 +106,8 @@ trails rather than presented as unassisted authorship.
   throughput superiority, or outcome quality.
 - Protected workflows require broker and persona credentials; the public endpoint cannot reproduce
   private operations.
+- The repository currently contains no license file. Public source availability must not be
+  represented as an open-source grant until an explicit licensing decision is committed.
 
 ### What this proves
 
@@ -322,7 +366,11 @@ probe inputs are missing.
 
 ## How It Works
 
-Every AI agent reads `tasks.yaml` at session start, finds open tasks matching their name, claims one, executes, and writes results back. Budget is tracked per agent and per day — no agent exceeds its allocation.
+An agent or conductor inspects the read-only `tasks.yaml` projection or the authenticated keeper,
+then submits or accepts a bounded work packet. TABVLARIVS grants the eligible executor an exclusive
+lease, enforces the packet's authority and spend envelope, and accepts a terminal receipt only when
+the declared evidence and lifecycle rules hold. The keeper—not an agent editing the projection—owns
+task-state and budget transitions.
 
 ## Agents
 
@@ -334,9 +382,9 @@ Every AI agent reads `tasks.yaml` at session start, finds open tasks matching th
 
 ## Support / Sponsor
 
-Limen and [MONETA](moneta/) — the sovereign Bitcoin licence mint that powers the Pro tiers,
-with no payment processor in the path — are free and open source. If this system or its
-organs help you, you can support the work here:
+Limen's source is publicly inspectable. The verified tree does not currently contain a license
+file, so this repository does not yet make a documented open-source permission grant. If this
+system or its organs help you, you can support the work here:
 
 - **[GitHub Sponsors](https://github.com/sponsors/organvm)**
 - **[Ko-fi](https://ko-fi.com/4444j99)**
