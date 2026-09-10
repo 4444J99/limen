@@ -184,7 +184,7 @@ def test_merged_pr_custody_clears_exact_retry_ref_then_clean_beat_is_fixed_point
         )
 
     git(tmp_path, "init", "--bare", str(remote))
-    git(remote, "symbolic-ref", "HEAD", "refs/heads/main")
+    git(remote, "--git-dir", str(remote), "symbolic-ref", "HEAD", "refs/heads/main")
     git(tmp_path, "clone", str(remote), str(root))
     git(root, "config", "user.name", "Test")
     git(root, "config", "user.email", "test@example.invalid")

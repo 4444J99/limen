@@ -225,9 +225,10 @@ def _run_telemetry(tmp_path, jules_consumed, extra_env=None):
     (limen_root / "logs").mkdir(parents=True)
     (home / ".claude" / "projects").mkdir(parents=True)
     (home / ".codex" / "sessions").mkdir(parents=True)
-    today = datetime.now(timezone.utc).date().isoformat()
+    dispatched_at = datetime.now(timezone.utc) - timedelta(seconds=1)
+    today = dispatched_at.date().isoformat()
     jules_log = [
-        {"timestamp": f"{today}T12:00:00+00:00", "agent": "jules", "session_id": "sim", "status": "dispatched"}
+        {"timestamp": dispatched_at.isoformat(), "agent": "jules", "session_id": "sim", "status": "dispatched"}
         for _ in range(jules_consumed)
     ]
     (limen_root / "tasks.yaml").write_text(
