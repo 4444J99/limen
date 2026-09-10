@@ -21,9 +21,22 @@ records to **117 root findings and 38 replies**. Every native body matches the
 frozen extraction. The 38 replies were individually assessed as correction
 receipts or acknowledgements of their parent finding, with their body digests
 retained in `review-reply-assessments.json`. They are folded into their finding's
-candidate set, not discarded. The working manifest therefore has 1,112 atoms and
-still covers all 1,150 candidates exactly once. This is still a provisional
-useful-intent count: source variants and actual delivery remain unresolved.
+candidate set, not discarded.
+
+The follow-up source-delta predicate compares the stash base, staged index,
+worktree, and a default-branch ancestor captured before the stash's recorded
+creation time. It proves that **801 task candidates are carried projection
+observations**, with no recovered request delta, and keeps **148 added or changed
+task requests**. A staged-only request or changed execution authority prevents
+observation classification. Stash 16 illustrates the original inflation: its old
+branch base made 706 already-present default records appear newly requested.
+
+Those 801 records now belong to the existing dated-observation preservation
+intent with an explicit role stating that their underlying tasks are not being
+declared complete. The manifest therefore has **311 provisional atoms**: 148 task
+requests, 28 other source intents, 18 branch/PR lineage intents, and 117 root
+review findings. It still covers all **1,150 candidates exactly once**. Remaining
+source variants and actual delivery are unresolved.
 
 All 16 historical stash labels are individually reassessed in
 `source-reconciliation.json`. A dated observation or board projection remains in
@@ -47,10 +60,15 @@ completion.
 
 The scoped integration batch against starting head `47131d901` passed all five
 implicated cheap gates, including the 17 existing completion counterexamples.
-The live completion predicate returned exit 1 with 44 sources, 1,112 provisional
-atoms, all 1,150 candidates retained, and zero verified delivered atoms. Its
-failure remains the campaign's acceptance result; the passing source checks do
-not replace it.
+Five further counterexamples cover source-delta classification and lossless
+observation grouping. The live completion predicate remains exit 1; the passing
+source checks do not replace campaign acceptance.
+
+Reproduce the source-delta classification, then bind it to the working manifest:
+
+```sh
+python3 docs/continuations/git-finishline-20260908/reconcile-delta-origin.py --extraction-dir PRIVATE_EXTRACTION_DIRECTORY --canonical-board PRIVATE_CANONICAL_BOARD --generation 6e2b554f76eb0ccdcd5a1b133fabb2c452de9220 --output docs/continuations/git-finishline-20260908/source-delta-origin.json --bind-manifest docs/continuations/git-finishline-20260908/completion.json
+```
 
 ## Landing and custody
 
@@ -62,6 +80,16 @@ three changed files is byte-identical at #2531's merge, #2528's merge, and the
 captured default. `pr2531-equivalence.json` records all three blob identities.
 This proves source preservation; its 43-rung heartbeat runtime predicates still
 require their own deployment evidence.
+
+One recovered request has a complete positive delivery binding: the original
+Domus #147 failing-CI repair. All 13 completed checks succeeded at its exact head,
+GitHub records the merged head, and its merge commit is ancestral to the captured
+Domus default generation. The three typed receipts under `deliveries/` retain
+those existing checks; no old successful suite was rerun. This is the original
+repair's delivery, not a claim that current MCP authentication or fleet health is
+complete. Five historical repair PRs have positive landing observations; the
+other four lack a complete retained CI predicate here. Limen #400 is closed
+unmerged and its historical checks failed, so it is not counted as delivered.
 
 The fresh archive predicate passed using only the three immutable bundles. It
 restored **26 stashes, nine deleted tips, and nine original PR heads** in new empty

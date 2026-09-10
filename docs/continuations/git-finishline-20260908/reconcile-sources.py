@@ -246,6 +246,10 @@ def bind_manifest(manifest: dict, reconciliation: dict, decisions: dict, evidenc
         parent["review_lineage_assessment"] = "native root finding; assessed replies retained as evidence"
     for row in reconciliation["tasks"]:
         atom = assigned[row["candidate_id"]]
+        if atom["candidate_ids"] != [row["candidate_id"]]:
+            role = atom.setdefault("candidate_roles", {}).setdefault(row["candidate_id"], {})
+            role["lineage_assessment"] = row["lineage_assessment"]
+            continue
         atom["lineage_assessment"] = row["lineage_assessment"]
         atom["source_reconciliation"] = evidence
         atom["canonical_status_observation"] = row["canonical_status_observation"]
