@@ -1,0 +1,104 @@
+{
+  "schema": "limen.deleted_branch_custody.v1",
+  "repository": "4444J99/limen",
+  "original_default_sha": "26b82ebc65bc2057b39dcef1499edc78308c0489",
+  "expected_deleted_refs": 9,
+  "companion_bundle": {
+    "name": "board-projection-20260908.bundle",
+    "sha256": "6e306e35cd344f3bf385795a55d8758271bc1426493dd30e00c34f7238d0cead",
+    "bytes": 85234651,
+    "independent_restore_verified": true
+  },
+  "branches": [
+    {
+      "ref": "codex/limen-closeout-20260822",
+      "tip": "6526fd06a06e598bd02e92ba912ea55af09e713c",
+      "archive": "original",
+      "original_pr": 2532,
+      "successor_pr": 2538,
+      "successor_receipt": "https://github.com/4444J99/limen/pull/2532#issuecomment-5386413960",
+      "disposition": "successor_correction_preserved; historical privacy history remains private",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "ref": "copilot/create-grouped-notifications-list",
+      "tip": "26b82ebc65bc2057b39dcef1499edc78308c0489",
+      "archive": "original",
+      "original_pr": null,
+      "successor_pr": null,
+      "successor_receipt": null,
+      "disposition": "exact original default tip; no unique delta",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "ref": "copilot/grouped-repo-notifications",
+      "tip": "26b82ebc65bc2057b39dcef1499edc78308c0489",
+      "archive": "original",
+      "original_pr": null,
+      "successor_pr": null,
+      "successor_receipt": null,
+      "disposition": "exact original default tip; no unique delta",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "ref": "corrective/recovery-audit-2539-2540",
+      "tip": "f6b7804cca26eb01a569fe1c57883f986c7e4b00",
+      "archive": "original",
+      "original_pr": 2542,
+      "successor_pr": 2548,
+      "successor_receipt": "https://github.com/4444J99/limen/pull/2542#issuecomment-5442698581",
+      "disposition": "successor correction with published range comparison",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "ref": "feat/conduct-role-hardening-and-permissions",
+      "tip": "ccdb04c88164b3639b93f4621b1fcaa8fd96dada",
+      "archive": "original",
+      "original_pr": 2544,
+      "successor_pr": 2543,
+      "successor_receipt": "https://github.com/4444J99/limen/pull/2544#issuecomment-5415894049",
+      "disposition": "successor ancestry and predicate receipt",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "ref": "feat/notification-registry",
+      "tip": "ae62c6cd1fde7dffc90f82b4d31a4c6e42b7d98f",
+      "archive": "original",
+      "original_pr": 2527,
+      "successor_pr": 2528,
+      "successor_receipt": "https://github.com/4444J99/limen/pull/2527#issuecomment-5373455144",
+      "disposition": "successor merged; surviving review corrections belong to this continuation",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "ref": "fix/discharge-card-hold",
+      "tip": "7262c7363b503539142cae660c043f83f1f417de",
+      "archive": "original",
+      "original_pr": 2529,
+      "successor_pr": 2528,
+      "successor_receipt": "https://github.com/4444J99/limen/pull/2529#issuecomment-5373456256",
+      "disposition": "successor merged; four surviving review corrections belong to this continuation",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "ref": "tabularius/board-projection",
+      "tip": "2c667f2637e3def7bb0fca7e28eb7c276da504d6",
+      "archive": "companion",
+      "original_pr": null,
+      "successor_pr": null,
+      "successor_receipt": null,
+      "disposition": "keeper projection snapshot preserved; never replay into canonical task state",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    },
+    {
+      "ref": "work/on-demand-runtime-rollout-closeout",
+      "tip": "e7c2f16294b851618ad26e910a6bb8d16e97bc4b",
+      "archive": "original",
+      "original_pr": 2530,
+      "successor_pr": 2531,
+      "successor_receipt": "https://github.com/4444J99/limen/pull/2530#issuecomment-5373382788",
+      "disposition": "corrected continuation has named successor; historical tip retained",
+      "owner": "4444J99/limen:docs/continuations/git-finishline-20260908/README.md"
+    }
+  ]
+}

@@ -29,9 +29,9 @@
     {
       "schema_version": "limen.repository_identity.v1",
       "repository_id": 1247808935,
-      "canonical_coordinate": "4444J99/personal",
+      "canonical_coordinate": "organvm/personal",
       "historical_aliases": [
-        "organvm/personal"
+        "4444J99/personal"
       ]
     },
     {

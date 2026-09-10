@@ -393,7 +393,7 @@ function requireReservedBudgetCost(prior, desired) {
       && (["dispatched", "in_progress"].includes(prior.status)
         || ["dispatched", "in_progress"].includes(desired.status))
       && prior.budget_cost !== desired.budget_cost) {
-    throw new ConductProjectionError(`task ${prior.id} reservation_budget_cost_immutable`, 409);
+    throw new ConductProjectionError(`task ${prior.id} reservation_budget_cost_immutable: reserved budget_cost cannot change`, 409);
   }
 }
 
@@ -726,6 +726,7 @@ export function applyTaskPacketProjectionEvent(input, event, inventoryContext = 
       );
       validatePatch(patch, taskId);
       const candidate = { ...existing, ...patch };
+      requireReservedBudgetCost(existing, candidate);
       validatePolicyUpdate(existing, candidate, taskId);
       requireReservedBudgetCost(existing, candidate);
       if (candidate.provider_eligibility != null) patch.provider_eligibility = candidate.provider_eligibility;
@@ -773,6 +774,7 @@ export function applyTaskPacketProjectionEvent(input, event, inventoryContext = 
     throw new ConductProjectionError(`task ${taskId} status intent requires a status patch`, 422);
   }
   const nextStatus = patch.status ?? existing.status;
+  requireReservedBudgetCost(existing, { ...existing, ...patch });
   requireReceiptCredit(taskId, existing, patch, intent.log);
   if (["dispatched", "in_progress"].includes(nextStatus)) {
     // A policy document is not a trusted provider attestation. Preserve it,

@@ -14,6 +14,8 @@ from limen.universe_recovery import (
     CustodyCopyV1,
     CustodyProofV1,
     CursorReceiptV1,
+    MergeBatchReceiptV1,
+    MergeLandingV1,
     RefDispositionV2,
     ReapCapabilityV1,
     ReapJournalState,
@@ -21,6 +23,7 @@ from limen.universe_recovery import (
     ReapPlanV1,
     RecoveryDispositionReceiptV1,
     RecoveryStableObservationV1,
+    RepositoryDefaultObservationV1,
     ReviewLineageClosureV2,
     ReviewThreadClosureV2,
     SourceCoverageV1,
@@ -511,8 +514,53 @@ def test_universe_baseline_receipt_refuses_partial_or_inconsistent_completeness(
         complete=False,
     )
     assert partial.unaccounted == 1
-    with pytest.raises(ValueError, match="aggregate completeness"):
+    with pytest.raises(ValueError, match="aggregate failure count|aggregate completeness"):
         UniverseBaselineReceiptV1.model_validate(complete.model_dump(mode="json") | {"failure_count": 1})
+
+
+def test_repository_default_observation_binds_app_qualified_check_evidence():
+    observation = RepositoryDefaultObservationV1(
+        repository_identity=IDENTITY,
+        repository="4444J99/limen",
+        default_ref="refs/heads/main",
+        default_sha=BASE,
+        default_check_status="green",
+        required_check_requirements=("pr-gate@app:15368",),
+        observed_check_requirements=("pr-gate@app:15368", "CodeRabbit@app:29110"),
+        check_evidence_digest="4" * 64,
+        complete=True,
+    )
+
+    assert observation.complete is True
+    with pytest.raises(ValueError, match="exact check evidence"):
+        RepositoryDefaultObservationV1.model_validate(
+            observation.model_dump(mode="json") | {"observed_check_requirements": []}
+        )
+
+
+def test_merge_batch_receipt_is_repository_qualified_and_excludes_rolling_window():
+    landing = MergeLandingV1(
+        repository_identity=IDENTITY,
+        repository="4444J99/limen",
+        pull_request=2550,
+        expected_head=TIP,
+        landed_sha=BASE,
+        merged_at=NOW,
+        evidence_ref="https://github.com/4444J99/limen/pull/2550",
+    )
+    receipt = MergeBatchReceiptV1(
+        batch_id="estate-wave-0001",
+        source_generation="5" * 64,
+        observed_at=NOW,
+        landings=(landing,),
+        batch_merged_count=1,
+        generation_merged_count=7,
+    )
+
+    assert receipt.batch_merged_count == 1
+    assert "rolling" not in receipt.model_dump(mode="json")
+    with pytest.raises(ValueError, match="batch merge count"):
+        MergeBatchReceiptV1.model_validate(receipt.model_dump(mode="json") | {"batch_merged_count": 2})
 
 
 def test_cursor_receipt_binds_repository_connection_cursor_and_generation():
