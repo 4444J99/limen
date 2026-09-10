@@ -70,6 +70,10 @@ async function fetchPaginatedArray(url, label, pageLimit = 10) {
     rows.push(...payload);
     next = nextLink(res.headers.get("link"));
   }
+  if (next) {
+    console.error(`Failed to fetch ${label}: exceeded ${pageLimit} pages`);
+    return null;
+  }
   return rows;
 }
 
@@ -87,6 +91,7 @@ async function fetchPRs(repo) {
     mergeable_state: pr.mergeable_state,
     html_url: pr.html_url,
     head: pr.head.ref,
+    head_sha: pr.head.sha,
     base: pr.base.ref,
     head_repo: pr.head.repo?.full_name || null,
     labels: pr.labels.map((label) => label.name),
@@ -183,12 +188,13 @@ async function main() {
 
     const prsWithChecks = [];
     for (const pr of prs) {
-      const checks = await fetchCheckRuns(repo, pr.head);
+      const checks = await fetchCheckRuns(repo, pr.head_sha);
       prsWithChecks.push({ ...pr, checks });
     }
     const nonDefaultBranches = branches.filter((branch) => branch.name !== repoMeta.default_branch);
     const branchesWithOpenPr = new Set(
       prsWithChecks
+        .filter((pr) => pr.head_repo === repo)
         .map((pr) => pr.head)
     );
     const branchesWithoutOpenPr = nonDefaultBranches.filter((branch) => !branchesWithOpenPr.has(branch.name));
