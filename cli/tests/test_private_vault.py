@@ -1690,6 +1690,26 @@ def test_real_gpg_round_trip_with_scratch_key(
         ).stdout,
         encoding="utf-8",
     )
+    # Build the fixture from a public-only keyring, matching the production import
+    # boundary. A secret-keyring export can be normalized on import by GnuPG.
+    # Do not relax production byte-for-byte canonical-armor validation.
+    with tempfile.TemporaryDirectory(prefix="limen-vault-public-") as public_home:
+        Path(public_home).chmod(0o700)
+        subprocess.run(
+            ["gpg", "--batch", "--homedir", public_home, "--import", str(public_key)],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        canonical = subprocess.run(
+            ["gpg", "--batch", "--homedir", public_home, "--armor", "--export", fingerprint],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=30,
+        ).stdout
+        public_key.write_text(canonical, encoding="ascii")
     monkeypatch.setattr(vault, "PUBKEY", public_key)
     monkeypatch.setattr(vault, "FINGERPRINT", fingerprint)
     monkeypatch.setattr(vault, "ENCRYPTION_SUBKEY_ID", encryption_key_id)

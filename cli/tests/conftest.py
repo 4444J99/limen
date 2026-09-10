@@ -75,15 +75,10 @@ def _restore_os_environ(tmp_path, tmp_path_factory, _stable_agent_host_fixture, 
     os.environ["LIMEN_CONDUCT_STATE"] = str(tmp_path / "conduct.sqlite3")
     # Dispatch reloads LIMEN_ENV after fixture setup. Never let that reload
     # resurrect the operator's authenticated broker or provider credentials.
-    # Fixture-owned credentials must not contaminate the filesystem a test is
-    # auditing, retaining, transferring, or expecting to remain untouched.
     environment = tmp_path_factory.mktemp("broker-isolation") / "limen.env"
     environment.write_text("")
     environment.chmod(0o600)
     os.environ["LIMEN_ENV"] = str(environment)
-    # The shell bootstrap rejects an existing cache without authenticated
-    # credentials. Point it at an absent private fixture path so offline tests
-    # can proceed without ever falling back to the operator's default cache.
     os.environ["LIMEN_CONDUCT_ENV_FILE"] = str(environment.with_name("absent-conduct.env"))
     original_open = urllib.request.OpenerDirector.open
 
