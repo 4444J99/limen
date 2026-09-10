@@ -88,7 +88,7 @@ test("collectRepoStatuses falls back to cached repo monitoring when GitHub reque
         {
           repo: "4444J99/limen",
           default_branch: "main",
-          prs: [],
+          prs: [{ number: 1, checks: null }, { number: 2, checks: null }],
           count: 2,
           issue_count: 11,
           active_work_branches: 4,

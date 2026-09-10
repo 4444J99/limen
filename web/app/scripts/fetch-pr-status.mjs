@@ -247,7 +247,7 @@ export async function collectRepoStatuses(repos, previous, githubToken = resolve
       repo,
       default_branch: mergedDefaultBranch,
       prs: mergedPrs,
-      count: prs === null ? (fallback?.count ?? mergedPrs.length) : mergedPrs.length,
+      count: mergedPrs.length,
       issue_count: issueCount ?? fallback?.issue_count ?? 0,
       active_work_branches: activeWorkBranchCount,
       work_branches_without_open_pr: workBranchesWithoutOpenPrCount,
