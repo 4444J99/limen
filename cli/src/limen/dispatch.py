@@ -5780,9 +5780,20 @@ def _reserve_serial_dispatch(
         # stale projection must not turn this already-consumed acknowledgement
         # into authority for another launch. Interrupted custody stays charged
         # and requires the existing keeper reconciliation path.
+        archive_path.parent.mkdir(parents=True, exist_ok=True)
         try:
-            archive_path.parent.mkdir(parents=True, exist_ok=True)
             os.link(pending_path, archive_path)
+        except FileExistsError as exc:
+            # Another process already created this exact archive entry. That
+            # collision alone cannot prove whether the other process reached
+            # provider handoff, so this process must never self-settle a
+            # "blocked" prelaunch result here: doing so could clobber or
+            # duplicate an already-real launch. Retain the claim untouched for
+            # keeper reconciliation instead of attempting to commit anything.
+            raise _SerialClaimUnavailable(
+                "canonical claim handoff custody unavailable; reconcile existing claim"
+            ) from exc
+        try:
             # Persist the handoff marker before removing pending custody. A
             # crash can retain both links, but can never authorize two launches.
             _sync_serial_ticket_custody(archive_path.parent, tasks_path)
@@ -5806,7 +5817,7 @@ def _reserve_serial_dispatch(
                 )
             except Exception:
                 raise _SerialClaimUnavailable(
-                    "canonical prelaunch settlement unavailable; exact claim retained"
+                    "prelaunch release custody unacknowledged; exact claim retained"
                 ) from None
             raise _SerialClaimUnavailable(
                 "canonical claim handoff custody unavailable; reconcile existing claim"
