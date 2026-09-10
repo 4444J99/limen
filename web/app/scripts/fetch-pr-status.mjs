@@ -108,7 +108,7 @@ async function fetchCheckRuns(repo, headSha) {
 }
 
 async function fetchIssueCount(repo) {
-  const query = encodeURIComponent(`repo:${repo} is:issue is:open`);
+  const query = encodeURIComponent(`repo:${repo} is:issue is:open -is:pr`);
   const res = await fetchJson(`https://api.github.com/search/issues?q=${query}&per_page=1`, `open issues for ${repo}`);
   if (!res) return null;
   const payload = await res.json();
@@ -143,7 +143,7 @@ async function main() {
   const previousGeneratedAt = previousPrivate?.generated_at || previousPublic?.generated_at;
   if (previousGeneratedAt) {
     const ageMin = (Date.now() - new Date(previousGeneratedAt).getTime()) / 60000;
-    if (Number.isFinite(ageMin) && ageMin < ttlMin && previousPrivate) {
+    if (Number.isFinite(ageMin) && ageMin < ttlMin) {
       console.log(`PR status cache fresh (${ageMin.toFixed(0)}m < ${ttlMin}m) — skipping fetch.`);
       return;
     }
@@ -189,7 +189,6 @@ async function main() {
     const nonDefaultBranches = branches.filter((branch) => branch.name !== repoMeta.default_branch);
     const branchesWithOpenPr = new Set(
       prsWithChecks
-        .filter((pr) => pr.head_repo === repo)
         .map((pr) => pr.head)
     );
     const branchesWithoutOpenPr = nonDefaultBranches.filter((branch) => !branchesWithOpenPr.has(branch.name));
