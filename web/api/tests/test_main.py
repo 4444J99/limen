@@ -835,6 +835,28 @@ def test_owner_persona_can_reach_owner_surfaces(tmp_path: Path, monkeypatch: pyt
     assert "qa" in payload["contracts"]
 
 
+def test_owner_monitoring_feeds_are_available_without_public_detail(
+    client: TestClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    feed_dir = tmp_path / "monitoring"
+    feed_dir.mkdir()
+    (feed_dir / "issue-status.json").write_text(json.dumps({"open": 3, "repos": []}))
+    (feed_dir / "repo-health.json").write_text(json.dumps({"degraded": 1, "repos": []}))
+    monkeypatch.setattr(main, "MONITORING_DIR", feed_dir)
+    monkeypatch.setattr(main, "LIMEN_TOKEN", "owner-secret")
+
+    owner_headers = {"Authorization": "Bearer owner-secret"}
+    assert client.get("/api/issue-status", headers=owner_headers).json() == {
+        "open": 3,
+        "repos": [],
+    }
+    assert client.get("/api/repo-health", headers=owner_headers).json() == {
+        "degraded": 1,
+        "repos": [],
+    }
+    assert client.get("/api/issue-status").status_code == 401
+
+
 def test_qa_status_derives_lifecycle_without_private_logs(client: TestClient, tmp_path: Path) -> None:
     write_board(
         tmp_path / "tasks.yaml",

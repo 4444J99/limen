@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://limen.local/contracts/issue-status.schema.json",
+  "title": "Limen Public Issue Status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["generated_at", "repos", "summary"],
+  "properties": {
+    "generated_at": { "type": "string" },
+    "repos": { "type": "array" },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total_repos",
+        "total_open_issues",
+        "unlabeled_issues",
+        "unassigned_issues",
+        "stale_issues",
+        "ready_to_triage",
+        "priority_counts"
+      ],
+      "properties": {
+        "total_repos": { "type": "number" },
+        "total_open_issues": { "type": "number" },
+        "unlabeled_issues": { "type": "number" },
+        "unassigned_issues": { "type": "number" },
+        "stale_issues": { "type": "number" },
+        "ready_to_triage": { "type": "number" },
+        "priority_counts": { "type": "object" }
+      }
+    }
+  }
+}

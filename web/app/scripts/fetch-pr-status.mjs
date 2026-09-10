@@ -9,6 +9,10 @@ const __dirname = dirname(THIS_FILE);
 const REPO_ROOT = join(__dirname, "..", "..", "..");
 const PUBLIC_OUT_PATH = join(__dirname, "..", "public", "pr-status.json");
 const PRIVATE_OUT_PATH = join(__dirname, "..", ".generated", "surfaces", "pr-status.json");
+const ISSUE_PUBLIC_OUT_PATH = join(__dirname, "..", "public", "issue-status.json");
+const ISSUE_PRIVATE_OUT_PATH = join(__dirname, "..", ".generated", "surfaces", "issue-status.json");
+const HEALTH_PUBLIC_OUT_PATH = join(__dirname, "..", "public", "repo-health.json");
+const HEALTH_PRIVATE_OUT_PATH = join(__dirname, "..", ".generated", "surfaces", "repo-health.json");
 const REQUEST_TIMEOUT_MS = Number(process.env.LIMEN_PR_STATUS_REQUEST_TIMEOUT_MS || 15_000);
 const TOPIC_BRANCH_PREFIXES = [
   "feat/",
@@ -157,6 +161,66 @@ async function fetchIssueCount(repo, githubToken) {
   return Number.isFinite(payload?.total_count) ? payload.total_count : null;
 }
 
+async function fetchIssues(repo, githubToken) {
+  const issues = await fetchPaginatedArray(
+    `https://api.github.com/repos/${repo}/issues?state=open&per_page=100`,
+    `issues for ${repo}`,
+    githubToken
+  );
+  if (issues === null) return null;
+  return issues.filter((issue) => !issue.pull_request).map((issue) => ({
+    number: issue.number,
+    title: issue.title,
+    created_at: issue.created_at,
+    updated_at: issue.updated_at,
+    labels: issue.labels.map((label) => label.name),
+    assignees: issue.assignees.map((assignee) => assignee.login),
+  }));
+}
+
+async function fetchWorkflowRuns(repo, githubToken) {
+  const res = await fetchJson(
+    `https://api.github.com/repos/${repo}/actions/runs?per_page=100`,
+    `workflow runs for ${repo}`,
+    githubToken
+  );
+  if (!res) return null;
+  const payload = await res.json();
+  return Array.isArray(payload.workflow_runs) ? payload.workflow_runs : null;
+}
+
+function issuePriority(labels) {
+  const priority = labels.find((label) => /^p[0-3]$/i.test(label) || /^(critical|high|medium|low)$/i.test(label));
+  return priority ? priority.toLowerCase() : "unprioritized";
+}
+
+function classifyIssues(issues, now = Date.now()) {
+  const staleCutoff = now - 30 * 24 * 60 * 60 * 1000;
+  const summary = {
+    total_open_issues: issues.length,
+    unlabeled_issues: issues.filter((issue) => issue.labels.length === 0).length,
+    unassigned_issues: issues.filter((issue) => issue.assignees.length === 0).length,
+    stale_issues: issues.filter((issue) => Date.parse(issue.updated_at) < staleCutoff).length,
+    ready_to_triage: issues.filter((issue) => issue.labels.length === 0 || issue.assignees.length === 0).length,
+    priority_counts: {},
+  };
+  for (const issue of issues) {
+    const priority = issuePriority(issue.labels);
+    summary.priority_counts[priority] = (summary.priority_counts[priority] || 0) + 1;
+  }
+  return summary;
+}
+
+function classifyHealth(runs) {
+  const failing_workflows = runs.filter((run) => run.conclusion === "failure").length;
+  const in_progress_runs = runs.filter((run) => ["queued", "in_progress", "waiting"].includes(run.status)).length;
+  return {
+    failing_workflows,
+    in_progress_runs,
+    degraded: failing_workflows > 0 || in_progress_runs > 0,
+  };
+}
+
 async function fetchRepoMeta(repo, githubToken) {
   const res = await fetchJson(`https://api.github.com/repos/${repo}`, `repo metadata for ${repo}`, githubToken);
   if (!res) return null;
@@ -220,11 +284,13 @@ export async function collectRepoStatuses(repos, previous, githubToken = resolve
   for (const repo of repos) {
     const fallback = previousRepo(previous, repo);
     const fallbackPrsByNumber = new Map((fallback?.prs || []).map((pr) => [pr.number, pr]));
-    const [prs, issueCount, repoMeta, branches] = await Promise.all([
+    const [prs, issueCount, repoMeta, branches, issues, workflowRuns] = await Promise.all([
       fetchPRs(repo, githubToken),
       fetchIssueCount(repo, githubToken),
       fetchRepoMeta(repo, githubToken),
       fetchBranches(repo, githubToken),
+      fetchIssues(repo, githubToken),
+      fetchWorkflowRuns(repo, githubToken),
     ]);
     const effectivePrs = [];
     for (const pr of prs || []) {
@@ -257,12 +323,69 @@ export async function collectRepoStatuses(repos, previous, githubToken = resolve
       work_branches_without_open_pr: workBranchesWithoutOpenPrCount,
       ...(stale ? { stale: true, error: "fetch_failed" } : {}),
     };
+    result.issues = issues ?? fallback?.issues ?? [];
+    result.issue_summary = classifyIssues(result.issues);
+    result.workflow_health = classifyHealth(workflowRuns ?? fallback?.workflow_runs ?? []);
+    result.workflow_runs = workflowRuns ?? fallback?.workflow_runs ?? [];
     results.push(result);
     console.log(
       `  ${repo}: ${result.count} open PRs, ${result.issue_count} open issues, ${result.active_work_branches} active work branches`
     );
   }
-  return results;
+    return results;
+}
+
+export function buildMonitoringOutputs(results, totalRepos, generatedAt = new Date().toISOString()) {
+    const issueSummaries = results.map((repo) => ({
+      repo: repo.repo,
+      ...repo.issue_summary,
+      issues: repo.issues,
+    }));
+    const issueSummary = issueSummaries.reduce(
+      (summary, repo) => ({
+        total_open_issues: summary.total_open_issues + repo.total_open_issues,
+        unlabeled_issues: summary.unlabeled_issues + repo.unlabeled_issues,
+        unassigned_issues: summary.unassigned_issues + repo.unassigned_issues,
+        stale_issues: summary.stale_issues + repo.stale_issues,
+        ready_to_triage: summary.ready_to_triage + repo.ready_to_triage,
+        priority_counts: Object.entries(repo.priority_counts).reduce(
+          (counts, [priority, count]) => ({ ...counts, [priority]: (counts[priority] || 0) + count }),
+          summary.priority_counts
+        ),
+      }),
+      { total_open_issues: 0, unlabeled_issues: 0, unassigned_issues: 0, stale_issues: 0, ready_to_triage: 0, priority_counts: {} }
+    );
+    const healthRepos = results.map((repo) => ({ repo: repo.repo, ...repo.workflow_health, runs: repo.workflow_runs }));
+    const healthSummary = healthRepos.reduce(
+      (summary, repo) => ({
+        degraded_repos: summary.degraded_repos + (repo.degraded ? 1 : 0),
+        failing_workflows: summary.failing_workflows + repo.failing_workflows,
+        in_progress_runs: summary.in_progress_runs + repo.in_progress_runs,
+      }),
+      { degraded_repos: 0, failing_workflows: 0, in_progress_runs: 0 }
+    );
+    return {
+      issuePublicOutput: { generated_at: generatedAt, repos: [], summary: { total_repos: totalRepos, ...issueSummary } },
+      issuePrivateOutput: { generated_at: generatedAt, repos: issueSummaries, summary: { total_repos: totalRepos, ...issueSummary } },
+      healthPublicOutput: {
+        generated_at: generatedAt,
+        repos: [],
+        summary: {
+          total_repos: totalRepos,
+          ...healthSummary,
+          healthy_repos: totalRepos - healthSummary.degraded_repos,
+        },
+      },
+      healthPrivateOutput: {
+        generated_at: generatedAt,
+        repos: healthRepos,
+        summary: {
+          total_repos: totalRepos,
+          ...healthSummary,
+          healthy_repos: totalRepos - healthSummary.degraded_repos,
+        },
+      },
+    };
 }
 
 export async function main() {
@@ -284,10 +407,16 @@ export async function main() {
   console.log("Fetching PR status for", repos.length, "repos...");
   const results = await collectRepoStatuses(repos, previous, resolveGitHubToken());
   const { publicOutput, privateOutput } = buildOutputs(results, repos.length);
+  const monitoring = buildMonitoringOutputs(results, repos.length, publicOutput.generated_at);
 
+  mkdirSync(join(__dirname, "..", "public"), { recursive: true });
   mkdirSync(join(__dirname, "..", ".generated", "surfaces"), { recursive: true });
   writeFileSync(PUBLIC_OUT_PATH, JSON.stringify(publicOutput, null, 2));
   writeFileSync(PRIVATE_OUT_PATH, JSON.stringify(privateOutput, null, 2));
+  writeFileSync(ISSUE_PUBLIC_OUT_PATH, JSON.stringify(monitoring.issuePublicOutput, null, 2));
+  writeFileSync(ISSUE_PRIVATE_OUT_PATH, JSON.stringify(monitoring.issuePrivateOutput, null, 2));
+  writeFileSync(HEALTH_PUBLIC_OUT_PATH, JSON.stringify(monitoring.healthPublicOutput, null, 2));
+  writeFileSync(HEALTH_PRIVATE_OUT_PATH, JSON.stringify(monitoring.healthPrivateOutput, null, 2));
   console.log(
     `Wrote ${PUBLIC_OUT_PATH} (${publicOutput.summary.total_open_prs} PRs, ` +
     `${publicOutput.summary.total_open_issues} issues, ${publicOutput.summary.total_active_work_branches} active branches across ${repos.length} repos)`
