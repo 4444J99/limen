@@ -1165,6 +1165,11 @@ gates:
     ci_job: "ci.yml:worker"
     owner: worker
     note: "Worker lint/typecheck; the live runtime deploys on-demand via wrangler, not on merge."
+  keeper-publication-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_keeper_publication_verifier.py -q"
+    paths: ["scripts/verify-keeper-publication.py", "cli/tests/test_keeper_publication_verifier.py"]
+    owner: worker
+    note: "Bounded offline regression for the explicit live publication canary: wrong deployment, missing publication receipt, failed canonical reread, duplicate intent, interrupted receipt, and divergent publication history fail closed without another mutation."
   moneta-tests:
     command: "bash -c 'cd moneta && npm test'"
     paths: ["moneta/**"]

@@ -34,7 +34,7 @@ sanctioned:
   - {path: research, kind: dir, owner: docs, why: "research notes"}
   - {path: reviews, kind: dir, owner: docs, why: "reviews, retros, dated audits"}
   - {path: runbooks, kind: dir, owner: docs, why: "operational runbooks"}
-  - {path: stewardship, kind: dir, owner: docs, why: "repository stewardship audit records"}
+  - {path: stewardship, kind: dir, owner: docs, why: "dated repository-stewardship audit records (#2604)"}
   - {path: AUG1-10K-GATE.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/aug1-gate.sh (+1 more)"}
   - {path: CANON.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/evocator.py"}
   - {path: CODEX-SESSION-LIFECYCLE.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_codex_quicken.py (+1 more)"}
