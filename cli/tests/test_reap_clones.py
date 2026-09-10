@@ -572,7 +572,9 @@ def test_belt_refuses_deleted_branch_with_stale_tracking_ref(tmp_path):
     _git(clone, "checkout", "-q", "main")
     # delete feature directly on the bare origin so THIS clone's tracking ref stays stale (not pruned)
     subprocess.run(
-        ["git", "-C", str(tmp_path / "delbranch.git"), "branch", "-D", "feature"], check=True, capture_output=True
+        ["git", "--git-dir", str(tmp_path / "delbranch.git"), "branch", "-D", "feature"],
+        check=True,
+        capture_output=True,
     )
     # classify is stale-permissive here (the tracking ref still advertises D) — the belt is what saves it
     assert _verdict(clone, age_days=99, pressure=True).reap is True
