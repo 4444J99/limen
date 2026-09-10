@@ -1,4 +1,5 @@
 import { ChunkedDurableStateStore } from "./durable-store.js";
+import { acceptInventoryObservation, requireInventoryCollector } from "./inventory-admission.js";
 import notificationRegistry from "../../../../institutio/governance/notification-events.limen.json" with { type: "json" };
 import { sessionAudit } from "./session-audit.js";
 import { conflictingKeys, parseResource, sortedClaims } from "./resources.js";
@@ -250,6 +251,7 @@ export class ConductKernel {
       capabilitySecret = null,
       runtimeIdentity = null,
       notificationAssignments = notificationRegistry,
+      inventoryAuthority = null,
     } = {},
   ) {
     this.state = validateLoadedState(input);
@@ -261,12 +263,24 @@ export class ConductKernel {
     this.capabilitySecret = capabilitySecret;
     this.runtimeIdentity = runtimeIdentity;
     this.notificationAssignments = clone(notificationAssignments);
+    this.inventoryAuthority = inventoryAuthority;
     this.projectionEvents = [];
     this.mutated = false;
   }
 
   async execute(operation, payload = {}) {
     switch (operation) {
+      case "inventory_authority":
+        requireInventoryCollector(this.inventoryAuthority, payload.principal);
+        return clone(this.inventoryAuthority);
+      case "inventory_observation": {
+        const accepted = await acceptInventoryObservation(this.inventoryAuthority, payload.principal,
+          payload.observation, this.state.inventory_observation, this.now);
+        this.state.inventory_observation = accepted;
+        this.mutated = true;
+        return { schema_version: "limen.inventory_acceptance.v1", status: "accepted",
+          observed_at: accepted.observation.source_report.generated_at, accepted_at: accepted.accepted_at };
+      }
       case "register": return this.register(payload.session, payload.principal);
       case "capabilities": return this.capabilities(payload.principal);
       case "session_audit": return sessionAudit(this.state, payload.session_id);
@@ -1928,6 +1942,7 @@ export class SerializedConductService {
       steadyHeartbeatPersistence = true,
       runtimeIdentity = null,
       notificationAssignments = notificationRegistry,
+      inventoryAuthority = null,
     } = {},
   ) {
     this.store = store;
@@ -1941,6 +1956,7 @@ export class SerializedConductService {
       capabilitySecret,
       runtimeIdentity,
       notificationAssignments,
+      inventoryAuthority,
     };
     this.tail = Promise.resolve();
   }
@@ -1992,7 +2008,11 @@ export class SerializedConductService {
       const result = await kernel.execute(operation, payload);
       const projectionReceipts = [];
       for (const event of kernel.projectionEvents) {
-        projectionReceipts.push(await this.projectTaskEvent(event));
+        projectionReceipts.push(await this.projectTaskEvent(event, {
+          inventoryAuthority: this.options.inventoryAuthority,
+          inventoryObservation: kernel.state.inventory_observation,
+          now,
+        }));
       }
       if (projectionReceipts.length && result && typeof result === "object") {
         result.projection_receipts = projectionReceipts;

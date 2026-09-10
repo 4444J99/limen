@@ -328,7 +328,7 @@ def test_unverifiable_provider_model_override_becomes_routing_blocker(monkeypatc
     result = D._call_local_agent("codex", _task("codex"), dry_run=True)
 
     assert D._is_blocked_result(result)
-    assert "no live model catalog" in D._blocked_reason(result)
+    assert D._blocked_reason(result) == "provider selection unavailable"
 
 
 def test_shared_command_spawn_rechecks_runway_after_provider_preflight(monkeypatch):
@@ -365,5 +365,6 @@ def test_claude_auth_retry_rechecks_runway_before_second_process(monkeypatch, tm
     result = D._run_isolated_agent("claude", task, tmp_path, ["claude", "prompt"], 30)
 
     assert D._is_workstream_successor_result(result)
-    assert "runway is exhausted" in D._workstream_successor_reason(result)
+    assert D._workstream_successor_reason(result) == "workstream launch contract unavailable"
+    assert not D._is_prelaunch_result(result)
     assert calls == 1

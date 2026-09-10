@@ -119,6 +119,53 @@ uv run --project cli --extra test pytest -q \
 
 ## Remaining cutover boundary
 
+### Private inventory admission (#269)
+
+The remote keeper has a disabled-by-default inventory adapter. An administrator installs
+`LIMEN_INVENTORY_AUTHORITY` with schema `limen.inventory_authority.v1`, one dedicated
+`principal_id`, an exact nonempty `repository_ids` array, and a 64-hex `source_generation`.
+That principal has only the `inventory_collector` role in the existing secret principal
+registry. Combining that role with observer, conductor, executor or compatibility is invalid.
+The credential cannot read the private board, register sessions, launch work or change tasks.
+
+The existing census command's explicit `--publish-inventory` operation reads this contract
+from authenticated `GET /api/conduct/inventory/authority`, freezes it before enumeration,
+requires the runtime repository IDs to match, and collects every connection afresh without
+reading or updating the cursor cache. It sends remote facts to
+`POST /api/conduct/inventory/observations` using `LIMEN_CONDUCT_URL` and the dedicated
+`LIMEN_INVENTORY_COLLECTOR_TOKEN`. It neither ingests an existing local JSON file nor sends
+local Git census or universe-baseline material. The ordinary daily recorder is unchanged.
+
+The keeper validates full content, repository and connection receipts, exact totals,
+complete pagination, frozen scope and generation, scan start, and strictly increasing
+observation time. The 250 authored-PR ceiling and 900-second freshness limit are unchanged.
+Private observations live only in the existing chunked conduct state; no observation-read
+endpoint, response body, task field, public projection or log contains their facts.
+Reconfiguration invalidates prior accepted observations until the new contract is satisfied.
+
+New routine task claims consume that server-owned context in the existing serialized
+keeper-to-board projection before budget debit. The private board derives active routine
+reservations and retains settled reservations until an accepted fresh scan started after
+settlement and includes that repository. A publication timestamp alone does not release a
+slot. Reopened tasks retain older unobserved attempts separately. Canonically validated
+prelaunch refunds release unused reservations; uncertain outcomes remain conservative.
+Missing or stale authority blocks new growth while existing execution and settlement remain
+available. Inline, GitHub-only and local compatibility paths remain closed to new growth.
+
+Source acceptance is distinct from installation: production use still needs the exact keeper
+target, administrator-installed scope/generation and collector credential, authorized deployment,
+rollback identity, private ingest/readback and a live last-slot denial receipt. No schedule or
+deployment is installed by this change. The daily 24-hour recorder cannot satisfy a 15-minute
+admission window for most of the day; the collector operation must finish and be consumed within
+that window. Rollback removes the authority config first, preserving held reservations and
+private state; prior deny-only source then refuses new growth without erasing custody.
+
+Focused predicates: `node --test test/inventory-admission.test.js test/inventory-keeper.test.js`
+from `web/worker`, and the existing Python inventory admission/collector integration tests.
+The Worker suite includes a synthetic fixture emitted by the actual Python collector, HTTP
+authentication and private chunk-store reload, stale/partial/replayed/scope denial, privacy,
+and concurrent final-slot claims with exactly one canonical debit/reservation.
+
 Serial dispatch and stale-release still construct some legacy final-state deltas. The relay correctly
 rejects any delta that the canonical Worker transition graph cannot apply atomically with the right
 generation and budget semantics. Do not synthesize intermediate claims, execution, or spend merely

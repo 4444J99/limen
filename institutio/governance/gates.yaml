@@ -294,6 +294,16 @@ gates:
     paths: ["scripts/merge-policy.sh", "scripts/tests/merge-policy.test.sh", "institutio/governance/gates.yaml"]
     owner: merge-policy
     note: "Verdict-matrix regression for the self-merge predicate; gates.yaml is implicated because deploy_triggers feed the verdict (PR3)."
+  relay-merge-test:
+    command: "python3 scripts/tests/relay-merge.test.py"
+    note: "Personal relay governor transaction rejects spoofed producers, stale base/head tuples, weakened controls, and generic merge fallback; fixtures do not substitute for protected live canaries."
+    paths: ["scripts/_relay_merge.py", "scripts/merge-drain.py", "scripts/tests/relay-merge.test.py"]
+    owner: merge-policy
+  dependency-acceptance-test:
+    command: "python3 scripts/tests/dependency-acceptance.test.py && python3 scripts/tests/dependency-upkeep.test.py"
+    paths: ["scripts/_dependency_acceptance.py", "scripts/_dependency_upkeep.py", "scripts/merge-drain.py", "scripts/merge-policy.sh", "scripts/tests/dependency-acceptance.test.py", "scripts/tests/dependency-upkeep.test.py", "institutio/github/dependency-trust.json", "docs/architecture/dependency-upkeep.md"]
+    owner: merge-policy
+    note: "Dependency upkeep routes exact trusted native-CI evidence to independent review, holds malformed/stale/untrusted evidence and all automatic pilot dependency merges, and requests at most one configured review after fresh readback. Unit fixtures do not prove protected GitHub enforcement or deployed background operation."
   merge-queue-contract-test:
     command: "env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_EDITOR=true GIT_SEQUENCE_EDITOR=true VISUAL=true EDITOR=true python3 scripts/tests/merge-queue-contract.test.py && bash scripts/run-pytest-hermetic.sh cli/tests/test_pr_scan.py cli/tests/test_merge_drain.py cli/tests/test_self_heal.py cli/tests/test_tabularius.py -q"
     paths: [".github/workflows/pr-gate.yml", ".github/workflows/auto-scale.yml", ".github/workflows/operate.yml", "cli/src/limen/tabularius.py", "cli/tests/test_pr_scan.py", "cli/tests/test_merge_drain.py", "cli/tests/test_self_heal.py", "cli/tests/test_tabularius.py", "scripts/tabularius-organ.py", "scripts/setup-rulesets.py", "scripts/_pr_scan.py", "scripts/merge-policy.sh", "scripts/await-pr.sh", "scripts/merge-drain.py", "scripts/self-heal.py", "scripts/verify.py", "scripts/tests/merge-queue-contract.test.py"]
@@ -532,7 +542,7 @@ gates:
     owner: tabularius
     note: "Recovery remains effect-separated and fail-closed: repository-qualified ref proofs, exact review pagination, zero-step runner admission, one-use signed CAS deletion, crash reconciliation, and the read-only aggregate predicate stay independently testable."
   remote-execution-admission-test:
-    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_remote_execution.py cli/tests/test_gh_app_token.py -q"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_remote_execution.py cli/tests/test_gh_app_token.py cli/tests/test_transfer_script_coordinates.py -q"
     paths:
       - ".github/workflows/limen-agent.yml"
       - "cli/src/limen/harvest.py"
@@ -542,6 +552,8 @@ gates:
       - "cli/tests/test_gh_app_token.py"
       - "scripts/gh-app-token.sh"
       - "scripts/bootstrap-github-app.py"
+      - "institutio/github/estate.yaml"
+      - "cli/tests/test_transfer_script_coordinates.py"
       - "scripts/consolidation-gates.py"
       - "scripts/conductor-tranche.py"
       - "scripts/session-blockers-ledger.py"
@@ -554,6 +566,17 @@ gates:
     paths: ["scripts/estate-classification.py", "scripts/tests/estate-classification.test.py", "institutio/github/estate.yaml", "institutio/github/access.yaml", "docs/receipts/psp-p02-w01-estate-census-preflight-20260810.json", "scripts/gitvs.py"]
     owner: positioning-program
     note: "The W02 classifier validates its policy schema, preserves exact one-class coverage, and rejects case-insensitive private repository tokens across reviewed added content and paths without printing private identities."
+  positioning-report-reviewed-source:
+    command: "python3 -B docs/positioning/proof/test_limen_report_review.py && python3 -B docs/positioning/proof/verify_limen_report.py --check --json"
+    paths:
+      - "docs/positioning/proof/limen-*.md"
+      - "docs/positioning/proof/verify_limen_report.py"
+      - "docs/positioning/proof/test_limen_report_review.py"
+      - "docs/receipts/positioning/2026-09-09-limen-report-review-observation.json"
+      - "institutio/governance/gates.yaml"
+    owner: positioning-program
+    note: "P05-W01 owns preservation of the exact source independently reviewed in #2198: reject changed report bytes, missing dated claim rows, substituted verdicts and invalid observation chronology. This offline gate proves recorded reviewed-source preservation only; it does not replay historical runs, grant publication authority or replace canonical receipt/dependency acceptance."
+
   positioning-foundry-technical-readiness-test:
     command: "python3 -B docs/positioning/foundry/psp-c11/test_technical_readiness.py && python3 -B scripts/tests/test_positioning_foundry_handoff.py && python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --json"
     paths:
@@ -674,6 +697,35 @@ gates:
     scoped: false
     owner: positioning-program
     note: "PSP-P02-W08's live predicate observes latest receipts, repository/source identities, issue state, and mutable public-profile metadata. It remains an owner/whole-system observation, never exact-tree source admission: follower counts and live profile totals can drift while identical code is under review. The adjacent hermetic research-adjudication-test owns deterministic pre-push correctness."
+  positioning-launch-prompts-test:
+    command: "python3 scripts/positioning-launch-prompts.py --check && python3 scripts/tests/test_positioning_launch_prompts.py"
+    paths:
+      - "AGENTS.md"
+      - ".codex/plans/2026-09-08-psp-alpha-omega-recalibration.md"
+      - "docs/positioning/program/recalibration/launch-contract.json"
+      - "docs/positioning/program/recalibration/2026-09-08-launch-prompts.md"
+      - "docs/positioning/program/recalibration/2026-09-08-snapshot.json"
+      - "institutio/positioning/program.yaml"
+      - "institutio/positioning/github-map.json"
+      - "scripts/positioning-launch-prompts.py"
+      - "scripts/tests/test_positioning_launch_prompts.py"
+      - "institutio/governance/gates.yaml"
+    timeout_seconds: 60
+    owner: positioning-program
+    note: "Each copied package and resume input derives current-policy, freshness, authority and bounded-verification constraints from one launch contract; R05 authority precedes real receipts, R10 observations require actual periods, and snapshot scope remains bound to canonical leaf/issue identities. Omission and mutation regressions reject stale or weakened handoffs without dispatching or claiming operational acceptance."
+  positioning-connector-test:
+    command: "python3 scripts/tests/test_github_connector.py && node scripts/tests/test_positioning_connector_driver.js"
+    paths:
+      - "cli/src/limen/github_connector.py"
+      - "scripts/positioning-program.py"
+      - "scripts/positioning-connector-driver.js"
+      - "scripts/tests/test_github_connector.py"
+      - "scripts/tests/test_positioning_connector_driver.js"
+      - "docs/positioning/program/CONNECTOR-EXECUTION.md"
+      - "institutio/governance/gates.yaml"
+    timeout_seconds: 60
+    owner: positioning-program
+    note: "Authenticated connector observations drive the canonical receipt verifier through bounded correlated read-only RPC, preserving exact raw GitHub fields and refusing failure, replay, mutation, truncation and terminal echo."
   positioning-p14-control-plane-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_positioning_p14_control_plane.py -q"
     paths: ["scripts/positioning-p14-control-plane.py", "cli/tests/test_positioning_p14_control_plane.py", "cli/tests/fixtures/positioning-p14/**", "institutio/positioning/p14/**", "docs/positioning/p14/**", "docs/receipts/positioning/relays/2026-08-10-psp-c12-control-plane-preflight.md", "institutio/governance/gates.yaml"]
@@ -1096,6 +1148,11 @@ gates:
     ci_job: "ci.yml:web"
     owner: surfaces
     note: "Standalone schema validation in the whole matrix; scoped runs cover it inside web-build."
+  npm-audit-contract:
+    command: "python3 scripts/tests/npm-audit-gate.test.py"
+    paths: ["scripts/npm-audit-gate.py", "scripts/tests/npm-audit-gate.test.py", ".github/workflows/ci.yml"]
+    owner: dependencies
+    note: "Reject incomplete audit responses and retain independent compatibility evidence when advisories fail."
   worker-check:
     command: "bash -c 'cd web/worker && npm run check'"
     paths: ["web/worker/**"]

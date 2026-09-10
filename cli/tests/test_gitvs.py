@@ -578,7 +578,8 @@ def test_private_pr_rows_are_redacted_in_tracked_projection() -> None:
 
 def test_pr_debt_census_deduplicates_renamed_owner_aliases(monkeypatch) -> None:
     module = _load()
-    monkeypatch.setattr(module, "_token", lambda: "opaque")
+    monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
+    monkeypatch.setattr(module.shutil, "which", lambda command: "/synthetic/gh" if command == "gh" else None)
     monkeypatch.setattr(module, "owners", lambda _estate: ["old-owner", "renamed-owner"])
     monkeypatch.setattr(module, "_resolve_owner_login", lambda _owner, _token: "renamed-owner")
     inventory_calls = []
@@ -667,7 +668,8 @@ def test_archived_repository_owns_missing_disposition_as_blocked() -> None:
 
 def test_tracked_failed_census_exposes_count_without_private_failure_names(monkeypatch) -> None:
     module = _load()
-    monkeypatch.setattr(module, "_token", lambda: "opaque")
+    monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
+    monkeypatch.setattr(module.shutil, "which", lambda command: "/synthetic/gh" if command == "gh" else None)
     monkeypatch.setattr(module, "owners", lambda _estate: ["private-owner"])
     monkeypatch.setattr(module, "_resolve_owner_login", lambda _owner, _token: "private-owner")
     monkeypatch.setattr(module, "_owner_repo_inventory", lambda _owner, _token: None)
