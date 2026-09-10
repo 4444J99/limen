@@ -6,6 +6,13 @@
 # integration or preservation receipt that must exist first.
 schema_version: 1
 repository: 4444J99/limen
+unintegrated_branch_receipts:
+  - {branch: capture/main-deferred, family: capture, owner_issue: 2614}
+  - {branch: copilot/fix-bug-in-data-import, family: copilot, owner_issue: 2614}
+  - {branch: recovery/agy-project-md-20260823, family: recovery, owner_issue: 2614}
+  - {branch: work/git-finishline-handoff-20260908, family: work, owner_issue: 2614}
+  - {branch: work/recovery-green-20260908, family: work, owner_issue: 2614}
+  - {branch: work/recovery-intent-completion-20260908, family: work, owner_issue: 2614}
 families:
   - {name: trunk, match: "^main$", owner: governance, intent: "protected production trunk", receipt: "merged pull request"}
   - {name: feature, match: "^feat/.+$", owner: product, intent: "new product capability", receipt: "open or merged pull request"}

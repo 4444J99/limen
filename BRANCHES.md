@@ -25,4 +25,17 @@ This document is generated from `institutio/governance/branch-families.yaml`; do
 | workspace | `^4444j99-plan-requested-change$` | copilot | active Copilot workspace branch | open pull request or session owner receipt |
 | repair-exception | `^fix-(profile-api-observation-transport|live-profile-count-acceptance)-20260909$` | engineering | legacy repair branch | linked preservation receipt |
 
+## Unintegrated branch receipts
+
+These branches have no pull-request record. Their exact-delta reconciliation is owned by the linked issue.
+
+| Branch | Family | Owner issue |
+|---|---|---|
+| `capture/main-deferred` | capture | #2614 |
+| `copilot/fix-bug-in-data-import` | copilot | #2614 |
+| `recovery/agy-project-md-20260823` | recovery | #2614 |
+| `work/git-finishline-handoff-20260908` | work | #2614 |
+| `work/recovery-green-20260908` | work | #2614 |
+| `work/recovery-intent-completion-20260908` | work | #2614 |
+
 Successor branches retain a linked predecessor and integration receipt; they do not erase historical branches or pull requests. Stacked branches declare their merge order in their pull requests and are not independent `main` work.
