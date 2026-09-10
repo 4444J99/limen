@@ -74,6 +74,34 @@ export interface PRStatusData {
   };
 }
 
+export interface IssueStatusData {
+  generated_at: string;
+  repos: { repo: string; [key: string]: unknown }[];
+  summary: {
+    total_repos: number;
+    total_open_issues: number;
+    unlabeled_issues: number;
+    unassigned_issues: number;
+    stale_issues: number;
+    ready_to_triage: number;
+    priority_counts: Record<string, number>;
+    stale_repos?: number;
+  };
+}
+
+export interface RepoHealthData {
+  generated_at: string;
+  repos: { repo: string; [key: string]: unknown }[];
+  summary: {
+    total_repos: number;
+    degraded_repos: number;
+    healthy_repos: number;
+    failing_workflows: number;
+    in_progress_runs: number;
+    stale_repos?: number;
+  };
+}
+
 export interface DashboardData {
   version: string;
   portal: {
@@ -247,7 +275,7 @@ function latestEvent(task: Task) {
   return [...(task.dispatch_log || [])].sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))[0];
 }
 
-export default function DashboardClient({ data, prData, apiUrl, initialToken = "", doneTasks = null, doneLoading = false, onLoadDoneTasks }: { data: DashboardData; prData: PRStatusData | null; apiUrl: string; initialToken?: string; doneTasks?: Task[] | null; doneLoading?: boolean; onLoadDoneTasks?: () => void }) {
+export default function DashboardClient({ data, prData, issueData, healthData, apiUrl, initialToken = "", doneTasks = null, doneLoading = false, onLoadDoneTasks }: { data: DashboardData; prData: PRStatusData | null; issueData: IssueStatusData | null; healthData: RepoHealthData | null; apiUrl: string; initialToken?: string; doneTasks?: Task[] | null; doneLoading?: boolean; onLoadDoneTasks?: () => void }) {
   const [phase, setPhase] = useState<Phase | "ALL">("ALL");
   const [filter, setFilter] = useState<FilterKey>("all");
   const [query, setQuery] = useState("");
@@ -444,6 +472,8 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
         <Metric title="Queue" value={`${data.summary.total}`} tone="blue" detail={`${active} active, ${data.summary.stale_count} stale`} />
         <Metric title="Completed" value={`${throughput?.done ?? done}`} tone="green" detail={`${throughput?.not_done ?? data.summary.total - done} not done`} />
         <Metric title="GitHub queue" value={`${prData?.summary.total_open_prs || 0}`} tone={prData?.summary.prs_with_failing_ci ? "amber" : "green"} detail={`${prData?.summary.total_open_issues || 0} open issues · ${prData?.summary.total_active_work_branches || 0} active branches · ${prData?.summary.work_branches_without_open_pr || 0} without PR`} />
+        <Metric title="Issue triage" value={issueData ? `${issueData.summary.ready_to_triage}` : "n/a"} tone={!issueData || issueData.summary.stale_repos ? "grey" : issueData.summary.ready_to_triage ? "amber" : "green"} detail={issueData ? (issueData.summary.stale_repos ? `Partial data (${issueData.summary.stale_repos} repo(s) unavailable)` : `${issueData.summary.unlabeled_issues} unlabeled · ${issueData.summary.unassigned_issues} unassigned · ${issueData.summary.stale_issues} stale`) : "Feed unavailable"} />
+        <Metric title="Repo health" value={healthData ? `${healthData.summary.degraded_repos}` : "n/a"} tone={!healthData || healthData.summary.stale_repos ? "grey" : healthData.summary.degraded_repos ? "amber" : "green"} detail={healthData ? (healthData.summary.stale_repos ? `Partial data (${healthData.summary.stale_repos} repo(s) unavailable)` : `${healthData.summary.failing_workflows} failing workflows · ${healthData.summary.in_progress_runs} in progress`) : "Feed unavailable"} />
         <Metric title="Failures" value={`${failed}`} tone={failed ? "red" : "green"} detail="Failed or blocked task states" />
       </section>
 

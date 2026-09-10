@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://limen.local/contracts/repo-health.schema.json",
+  "title": "Limen Public Repository Health",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["generated_at", "repos", "summary"],
+  "properties": {
+    "generated_at": { "type": "string" },
+    "repos": { "type": "array" },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total_repos",
+        "degraded_repos",
+        "healthy_repos",
+        "failing_workflows",
+        "in_progress_runs"
+      ],
+      "properties": {
+        "total_repos": { "type": "number" },
+        "degraded_repos": { "type": "number" },
+        "healthy_repos": { "type": "number" },
+        "failing_workflows": { "type": "number" },
+        "in_progress_runs": { "type": "number" },
+        "stale_repos": { "type": "number" }
+      }
+    }
+  }
+}
