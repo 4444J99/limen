@@ -1,0 +1,373 @@
+{
+  "schema": "limen.recovery_missing_repair_observations.v1",
+  "observed_at": "2026-09-08T23:51:10.428888+00:00",
+  "pull_requests": [
+    {
+      "baseRefOid": "5699dd75194329e6d7b36f78091c39e08524ecba",
+      "headRefOid": "6396ecc4dfb8adf78c0bc3d2f74bc186d2ee25c6",
+      "mergeCommit": {
+        "oid": "97b3f2c6169b83a20e0d1a61ef95b6621d0e1533"
+      },
+      "mergedAt": "2026-07-03T22:58:25Z",
+      "number": 147,
+      "state": "MERGED",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T21:52:44Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/domus-genoma/actions/runs/28684871254/job/85075564058",
+          "name": "Build, Test, and Lint",
+          "startedAt": "2026-07-03T21:51:31Z",
+          "status": "COMPLETED",
+          "workflowName": "CI"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T21:51:53Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/domus-genoma/actions/runs/28684871227/job/85075564076",
+          "name": "ShellCheck",
+          "startedAt": "2026-07-03T21:51:31Z",
+          "status": "COMPLETED",
+          "workflowName": "Lint & Validate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T21:51:41Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/domus-genoma/actions/runs/28684871227/job/85075564040",
+          "name": "YAML Lint",
+          "startedAt": "2026-07-03T21:51:31Z",
+          "status": "COMPLETED",
+          "workflowName": "Lint & Validate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T21:51:39Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/domus-genoma/actions/runs/28684871227/job/85075564055",
+          "name": "JSON Validation",
+          "startedAt": "2026-07-03T21:51:31Z",
+          "status": "COMPLETED",
+          "workflowName": "Lint & Validate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T21:51:45Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/domus-genoma/actions/runs/28684871227/job/85075564057",
+          "name": "Python Lint",
+          "startedAt": "2026-07-03T21:51:31Z",
+          "status": "COMPLETED",
+          "workflowName": "Lint & Validate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T21:52:04Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/domus-genoma/actions/runs/28684871227/job/85075603131",
+          "name": "Doc References",
+          "startedAt": "2026-07-03T21:51:57Z",
+          "status": "COMPLETED",
+          "workflowName": "Lint & Validate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T21:51:51Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/domus-genoma/actions/runs/28684871227/job/85075581692",
+          "name": "Shell Formatting",
+          "startedAt": "2026-07-03T21:51:42Z",
+          "status": "COMPLETED",
+          "workflowName": "Lint & Validate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T21:52:11Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/domus-genoma/actions/runs/28684871227/job/85075603123",
+          "name": "Template Validation",
+          "startedAt": "2026-07-03T21:51:57Z",
+          "status": "COMPLETED",
+          "workflowName": "Lint & Validate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T21:52:06Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/domus-genoma/actions/runs/28684871227/job/85075589916",
+          "name": "Python Tests",
+          "startedAt": "2026-07-03T21:51:50Z",
+          "status": "COMPLETED",
+          "workflowName": "Lint & Validate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T21:52:46Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/domus-genoma/actions/runs/28684871227/job/85075603139",
+          "name": "BATS Tests",
+          "startedAt": "2026-07-03T21:51:57Z",
+          "status": "COMPLETED",
+          "workflowName": "Lint & Validate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T21:52:21Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/domus-genoma/actions/runs/28684871227/job/85075630089",
+          "name": "AI Config Parity",
+          "startedAt": "2026-07-03T21:52:15Z",
+          "status": "COMPLETED",
+          "workflowName": "Lint & Validate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T21:53:05Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/domus-genoma/actions/runs/28684871227/job/85075686013",
+          "name": "Secret Scanning",
+          "startedAt": "2026-07-03T21:52:50Z",
+          "status": "COMPLETED",
+          "workflowName": "Lint & Validate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T21:52:56Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/domus-genoma/actions/runs/28684871227/job/85075686018",
+          "name": "Version Sync",
+          "startedAt": "2026-07-03T21:52:50Z",
+          "status": "COMPLETED",
+          "workflowName": "Lint & Validate"
+        }
+      ],
+      "title": "fix(ci): resolve YAML indentation, line-length, test teardown, and missing +x bits",
+      "url": "https://github.com/organvm/domus-genoma/pull/147"
+    },
+    {
+      "baseRefOid": "32da31ce7fa7565cf033b83a2204d0d42722d166",
+      "headRefOid": "f5661620dc8ae986f752cef56f6564586cea349f",
+      "mergeCommit": {
+        "oid": "1fc78a4e9e5999c619c98e6a48c8e34a6775c50c"
+      },
+      "mergedAt": "2026-07-03T23:48:21Z",
+      "number": 68,
+      "state": "MERGED",
+      "statusCheckRollup": [],
+      "title": "feat(discovery): DISCOVERY.md \u2014 estate memory layer value thesis",
+      "url": "https://github.com/organvm/my-knowledge-base/pull/68"
+    },
+    {
+      "baseRefOid": "d125ac57e07846f6770fcceb4b2c14c117dd440d",
+      "headRefOid": "202720f6c26e86cb264644f65621b955e5360481",
+      "mergeCommit": {
+        "oid": "358a1ea6c70c6bc6ebc18f71f87b11fff4453087"
+      },
+      "mergedAt": "2026-07-03T21:25:03Z",
+      "number": 335,
+      "state": "MERGED",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T20:58:06Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/organvm-corpvs-testamentvm/actions/runs/28683062557/job/85070346366",
+          "name": "Analyze (javascript-typescript)",
+          "startedAt": "2026-07-03T20:57:16Z",
+          "status": "COMPLETED",
+          "workflowName": "CodeQL"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-07-03T20:58:13Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/organvm/organvm-corpvs-testamentvm/actions/runs/28683062557/job/85070346360",
+          "name": "Analyze (python)",
+          "startedAt": "2026-07-03T20:57:16Z",
+          "status": "COMPLETED",
+          "workflowName": "CodeQL"
+        }
+      ],
+      "title": "Triangulation Self-Application \u2014 DONE-507 + IRF backfill + IRF-SYS-164/165/166 vacuums (5 commits, 2 sessions bundled)",
+      "url": "https://github.com/organvm/organvm-corpvs-testamentvm/pull/335"
+    },
+    {
+      "baseRefOid": "04e992f8bb98ae2ea000ed64efc85d9a6b86b97b",
+      "headRefOid": "2daa2dec31add45759c8df226afcaf03be41122d",
+      "mergeCommit": {
+        "oid": "f65851d0f361fc7e3d0a3515099937ff4386ef6e"
+      },
+      "mergedAt": "2026-08-26T18:27:56Z",
+      "number": 434,
+      "state": "MERGED",
+      "statusCheckRollup": [
+        {
+          "__typename": "StatusContext",
+          "context": "CodeRabbit",
+          "startedAt": "2026-08-26T18:28:06Z",
+          "state": "SUCCESS",
+          "targetUrl": ""
+        }
+      ],
+      "title": "docs(irf): DONE-587..589 sales-lifecycle campaign closure + 5 new vacuum rows",
+      "url": "https://github.com/organvm/organvm-corpvs-testamentvm/pull/434"
+    },
+    {
+      "baseRefOid": "9ca1d1c7115a25daf25f2ee6d5fe486cda249bea",
+      "headRefOid": "12e11e62a9836f74c359ae6c92ebdac9a881a08b",
+      "mergeCommit": {
+        "oid": "04e992f8bb98ae2ea000ed64efc85d9a6b86b97b"
+      },
+      "mergedAt": "2026-08-26T18:27:04Z",
+      "number": 445,
+      "state": "MERGED",
+      "statusCheckRollup": [
+        {
+          "__typename": "StatusContext",
+          "context": "CodeRabbit",
+          "startedAt": "2026-08-26T18:27:29Z",
+          "state": "SUCCESS",
+          "targetUrl": ""
+        }
+      ],
+      "title": "docs(irf): preserve detached discovered-items commit",
+      "url": "https://github.com/organvm/organvm-corpvs-testamentvm/pull/445"
+    },
+    {
+      "baseRefOid": "66c2ec25cd945e0e9e9f655f94b294af4676c5c9",
+      "headRefOid": "965d07d7fc41bcc167b54d8d6dafe53a85c2503b",
+      "mergeCommit": null,
+      "mergedAt": null,
+      "number": 400,
+      "state": "CLOSED",
+      "statusCheckRollup": [
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-06-29T08:12:48Z",
+          "conclusion": "FAILURE",
+          "detailsUrl": "https://github.com/4444J99/limen/actions/runs/28357964198/job/84005384894",
+          "name": "python",
+          "startedAt": "2026-06-29T08:11:44Z",
+          "status": "COMPLETED",
+          "workflowName": "CI"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-06-29T08:12:31Z",
+          "conclusion": "FAILURE",
+          "detailsUrl": "https://github.com/4444J99/limen/actions/runs/28357964207/job/84005385111",
+          "name": "pr-gate",
+          "startedAt": "2026-06-29T08:11:44Z",
+          "status": "COMPLETED",
+          "workflowName": "PR Gate"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-06-29T08:12:16Z",
+          "conclusion": "FAILURE",
+          "detailsUrl": "https://github.com/4444J99/limen/actions/runs/28357964198/job/84005385014",
+          "name": "python-311",
+          "startedAt": "2026-06-29T08:11:44Z",
+          "status": "COMPLETED",
+          "workflowName": "CI"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-06-29T08:11:57Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/4444J99/limen/actions/runs/28357964198/job/84005384922",
+          "name": "worker",
+          "startedAt": "2026-06-29T08:11:44Z",
+          "status": "COMPLETED",
+          "workflowName": "CI"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-06-29T08:13:10Z",
+          "conclusion": "SUCCESS",
+          "detailsUrl": "https://github.com/4444J99/limen/actions/runs/28357964198/job/84005384891",
+          "name": "web",
+          "startedAt": "2026-06-29T08:11:44Z",
+          "status": "COMPLETED",
+          "workflowName": "CI"
+        },
+        {
+          "__typename": "CheckRun",
+          "completedAt": "2026-06-29T08:13:10Z",
+          "conclusion": "SKIPPED",
+          "detailsUrl": "https://github.com/4444J99/limen/actions/runs/28357964198/job/84005652910",
+          "name": "verify",
+          "startedAt": "2026-06-29T08:13:11Z",
+          "status": "COMPLETED",
+          "workflowName": "CI"
+        }
+      ],
+      "title": "[limen GEN-organvm-limen-ci-green-0629] Make organvm/limen CI green",
+      "url": "https://github.com/4444J99/limen/pull/400"
+    }
+  ],
+  "ancestry": [
+    {
+      "pr": 147,
+      "repository": "organvm/domus-genoma",
+      "default_generation": "5a3b88f0ddab140bc5a93531e38346ec71a5db2d",
+      "merged_commit": "97b3f2c6169b83a20e0d1a61ef95b6621d0e1533",
+      "comparison": {
+        "merge_base": "97b3f2c6169b83a20e0d1a61ef95b6621d0e1533",
+        "status": "ahead"
+      },
+      "reachable_from_default": true
+    },
+    {
+      "pr": 68,
+      "repository": "organvm/my-knowledge-base",
+      "default_generation": "12e69816525b825961092d06708ad0f6831753d1",
+      "merged_commit": "1fc78a4e9e5999c619c98e6a48c8e34a6775c50c",
+      "comparison": {
+        "merge_base": "1fc78a4e9e5999c619c98e6a48c8e34a6775c50c",
+        "status": "ahead"
+      },
+      "reachable_from_default": true
+    },
+    {
+      "pr": 335,
+      "repository": "organvm/organvm-corpvs-testamentvm",
+      "default_generation": "6ba6dd67b8ba9639f23ecd57adddcd2453fd877a",
+      "merged_commit": "358a1ea6c70c6bc6ebc18f71f87b11fff4453087",
+      "comparison": {
+        "merge_base": "358a1ea6c70c6bc6ebc18f71f87b11fff4453087",
+        "status": "ahead"
+      },
+      "reachable_from_default": true
+    },
+    {
+      "pr": 434,
+      "repository": "organvm/organvm-corpvs-testamentvm",
+      "default_generation": "6ba6dd67b8ba9639f23ecd57adddcd2453fd877a",
+      "merged_commit": "f65851d0f361fc7e3d0a3515099937ff4386ef6e",
+      "comparison": {
+        "merge_base": "f65851d0f361fc7e3d0a3515099937ff4386ef6e",
+        "status": "ahead"
+      },
+      "reachable_from_default": true
+    },
+    {
+      "pr": 445,
+      "repository": "organvm/organvm-corpvs-testamentvm",
+      "default_generation": "6ba6dd67b8ba9639f23ecd57adddcd2453fd877a",
+      "merged_commit": "04e992f8bb98ae2ea000ed64efc85d9a6b86b97b",
+      "comparison": {
+        "merge_base": "04e992f8bb98ae2ea000ed64efc85d9a6b86b97b",
+        "status": "ahead"
+      },
+      "reachable_from_default": true
+    }
+  ],
+  "source_private_sha256": {
+    "pr": "b2b645cd574a4fd72087bad7bd07685e17b338a59b1174c25269809112ac469c",
+    "ancestry": "034536b0883f84602c7bd73698ae5ff7886da7d5a1412aa7b979ba2fa64e4648"
+  },
+  "scope": "five historical repair PRs landed; PR400 is closed unmerged; only Domus147 has complete original CI delivery bound here"
+}
