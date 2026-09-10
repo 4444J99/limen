@@ -228,8 +228,7 @@ export async function collectRepoStatuses(repos, previous, githubToken = resolve
     ]);
     const effectivePrs = [];
     for (const pr of prs || []) {
-      const headRepo = pr.head_repo && !sameRepo(pr.head_repo, repo) ? pr.head_repo : repo;
-      const checks = await fetchCheckRuns(headRepo, pr.head_sha, githubToken);
+      const checks = await fetchCheckRuns(repo, pr.head_sha, githubToken);
       effectivePrs.push({ ...pr, checks: checks ?? fallbackPrsByNumber.get(pr.number)?.checks ?? null });
     }
     const mergedPrs = prs === null ? (fallback?.prs || []) : effectivePrs;
