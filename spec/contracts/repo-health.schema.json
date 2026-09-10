@@ -23,7 +23,8 @@
         "degraded_repos": { "type": "number" },
         "healthy_repos": { "type": "number" },
         "failing_workflows": { "type": "number" },
-        "in_progress_runs": { "type": "number" }
+        "in_progress_runs": { "type": "number" },
+        "stale_repos": { "type": "number" }
       }
     }
   }

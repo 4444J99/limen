@@ -27,7 +27,8 @@
         "unassigned_issues": { "type": "number" },
         "stale_issues": { "type": "number" },
         "ready_to_triage": { "type": "number" },
-        "priority_counts": { "type": "object" }
+        "priority_counts": { "type": "object" },
+        "stale_repos": { "type": "number" }
       }
     }
   }
