@@ -119,6 +119,14 @@ class HttpConductClient:
     def capabilities(self) -> dict[str, Any]:
         return self._request("GET", "/api/conduct/capabilities")
 
+    def inventory_authority(self) -> dict[str, Any]:
+        """Read the administrator-installed contract using a collector principal."""
+        return self._request("GET", "/api/conduct/inventory/authority")
+
+    def publish_inventory_observation(self, observation: dict[str, Any]) -> dict[str, Any]:
+        """Submit fresh remote census facts; the keeper owns acceptance and custody."""
+        return self._request("POST", "/api/conduct/inventory/observations", {"observation": observation})
+
     def private_board(self) -> dict[str, Any]:
         """Read the authenticated full board from private keeper custody."""
 

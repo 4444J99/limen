@@ -1,0 +1,38 @@
+{
+  "schema_version": "psp.launch_contract.v1",
+  "authority_sources": [
+    "AGENTS.md",
+    ".codex/plans/2026-09-08-psp-alpha-omega-recalibration.md",
+    "institutio/positioning/program.yaml"
+  ],
+  "shared": {
+    "inputs": "Read current AGENTS.md, the recalibration plan, the current repository version of docs/positioning/program/recalibration/2026-09-08-snapshot.json and only the named package's sources.",
+    "freshness": "Treat the snapshot as dated planning evidence, not dispatch authority; re-query current ownership, repository identity, admission and exact acceptance for the named microphase. Resolve the existing repository/branch/head and real owner before mutation. Keep existing issue IDs/PR owners.",
+    "authority": "Direct-human work retains current authority; autonomous dispatch requires its own broker reservation. No fake leases, hidden fanout, task-projection edits or human-atom closures. These prompts grant no publication, send, spend, account-action or monitoring authority.",
+    "isolation": "Use one isolated writable checkout. Do not paste private evidence or source identities into public receipts.",
+    "provider": "Re-select an available native provider/model from live capabilities and budget; identity and authority do not transfer with a relay. Use the cheapest adequate currently available model; record the actual native provider/model and effort.",
+    "verification": "Confirm which exact-tree checks already passed and preserve their scope-bound evidence. Do not rerun all research, all tests, all receipts or the full estate census.",
+    "evidence": "Return the artifact link, exact tested/accepted heads, real exit evidence, actual authority source, usage/time when available and one next action. Keep private evidence in its private owner."
+  },
+  "r00_scope": "existing P00 control-plane owners, root #2157 and the specific closure/receipt discrepancies; no new foundational program or duplicate work IDs.",
+  "r00_admission": "Do not launch other implementation packages until you return a truthful live admission result.",
+  "r00_instructions": "Reconcile the missing #2198 receipt and P00/P01/P02 parity first; preserve accepted child receipts and quarantined evidence. Retain the existing #2563 owner. Make any required custody/admission/model/terminal-contract correction one bounded, reviewed change with explicit migration tests, rather than resetting all task receipts. Return valid live ready rows, or the precise unresolved owner if admission still fails. Never label offline dependency candidates as live-ready.",
+  "package_admission": "Select the first eligible microphase, honoring the canonical leaf dependencies and existing owner. The package dependency list is planning order; actual leaf evidence decides admission. Do not wait on an unrelated phase or human-gated sibling.",
+  "reuse": "Reuse existing merged/prepared artifacts before creating anything. If a real human/external gate is reached, prepare the exact decision artifact once, leave the actual decision outstanding, and continue another eligible reversible microphase within this package.",
+  "package_overrides": {
+    "R05": {
+      "boundary_label": "Deployment/publication gate",
+      "boundary": "Preparation-only unless separate recorded owner authority covers the exact deployment target and release, the rollback plan is recorded, and the relevant identity/domain/account gates are satisfied. This prompt itself grants no publication authority; missing gates remain with their real owner while reversible preparation continues.",
+      "exit": "Accepted public identity decisions plus actual live deployed/browser/link/capture receipts bound to the authorized target and release, including rollback verification. Collect these receipts after authorized deployment; missing or failed receipts leave acceptance outstanding. Mere builds and PRs do not count."
+    },
+    "R10": {
+      "boundary_label": "Observation boundary",
+      "boundary": "Preparation, templates and controlled-fixture tests may finish now. Start each weekly/monthly/quarterly clock only when its owning inputs and protocol are ready. Four consecutive weekly reviews, two consecutive monthly audits and the actual strategy review require real data from their respective elapsed observation periods; preparation or synthetic data cannot satisfy them. Do not start autonomous monitoring without separate recorded user scheduling authority; this prompt grants none.",
+      "exit": "All P14-W01..W08 evidence exists across its actual observation periods and declared prerequisite leaves. Record each observation period and its source evidence; keep pending periods explicitly outstanding."
+    }
+  },
+  "execution": "One exact-tree scoped verification batch and the current repo-qualified merge rail only when authorized. No synchronous CI/review waits or unchanged green reruns.",
+  "closeout": "Return the concrete artifact and delta. If the scope cannot converge in one corrective batch, preserve the exact owner/head and explain the smallest contract change needed; do not start another reviewer/validator loop.",
+  "resume": "Resume the named package from its latest durable issue/PR receipt. Read that package's complete current launch block, including its package-specific authority and observation boundaries, before continuing the single recorded next microphase. Keep the recorded remaining run ceiling; resumption does not reset capacity or authorize a new run.",
+  "relay": "Record package and leaf IDs; current owner; canonical repository; branch/PR; public exact tested and accepted head references; changed paths; completed deliverable; bare predicate result and durable evidence; unchanged evidence reused; actual authority source; human/external gate if any; usage/time if available; one next command/action; remaining run ceiling. Private locations, customer content and authority material stay in their private owner."
+}

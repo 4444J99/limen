@@ -127,6 +127,7 @@ PROFILE_FRESH_CONTRIBUTIONS = 33168
 PROFILE_CONTRIBUTION_WORDING = "33,130 contributions in the last year"
 PROFILE_REPOSITORY = "4444J99/4444J99"
 PROFILE_REPOSITORY_ID = 1292733696
+PROFILE_REPOSITORY_API_URL = f"https://api.github.com/repos/{PROFILE_REPOSITORY}"
 PROFILE_USER_API_URL = "https://api.github.com/users/4444J99"
 PROFILE_RUNS_API_URL = (
     "https://api.github.com/repos/4444J99/4444J99/actions/workflows/"
@@ -150,11 +151,19 @@ EXPECTED_PROFILE_METADATA_RESULT = {
     "blog": "https://organvm.github.io/portfolio/",
 }
 EXPECTED_LIVE_PROFILE_BLOG = "https://organvm-vii-kerygma.github.io/portfolio/"
-LIVE_PROFILE_PERSONAL_PUBLIC_REPOS = 9
-LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS = 226
-LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS = 197
-LIVE_PROFILE_ORGANIZATION_FORKS = 29
-LIVE_PROFILE_TOTAL_PUBLIC_REPOS = 235
+# Historical receipts above stay immutable. The current profile must instead
+# reconcile current public counts within the same reviewed organization scope.
+PROFILE_ORGANIZATION_ALIASES = {f"org_{index}": login for index, login in enumerate(sorted(EXPECTED_ORGANIZATION_KEYS))}
+PROFILE_LIVE_OBSERVATION_QUERY = (
+    PROFILE_CONTRIBUTION_QUERY[:-1]
+    + " ".join(
+        f'{alias}: organization(login: "{login}") {{ login '
+        "public: repositories(first: 1, privacy: PUBLIC, ownerAffiliations: [OWNER]) { totalCount } "
+        "original: repositories(first: 1, privacy: PUBLIC, ownerAffiliations: [OWNER], isFork: false) { totalCount } }"
+        for alias, login in PROFILE_ORGANIZATION_ALIASES.items()
+    )
+    + " }"
+)
 LIVE_REFERENCE_ISSUE_NUMBER = 1245
 LIMEN_CANONICAL_REPOSITORY = LIMEN_REPOSITORY_IDENTITY.canonical_coordinate
 LIMEN_HISTORICAL_REPOSITORY = LIMEN_REPOSITORY_IDENTITY.historical_aliases[0]
@@ -1620,11 +1629,32 @@ def _gh_json(args: list[str]) -> Any:
         raise AdjudicationError("GitHub query returned invalid JSON") from exc
 
 
-def _public_json(url: str) -> Any:
-    """Fetch one credential-free public JSON endpoint with a finite deadline."""
+def _profile_api_json(url: str, fetch: Callable[[list[str]], Any] = _gh_json) -> Any:
+    """Read only declared GitHub profile API facts with the existing GitHub identity.
 
-    if url != PROFILE_RUNS_API_URL and not _credential_free_https_url(url):
-        raise AdjudicationError("public JSON query needs a credential-free HTTPS URL")
+    API measurements already use authenticated gh in the accepted W08 receipt.
+    Anonymous raw-manifest and Pages probes separately prove public availability.
+    Never pass arbitrary URLs, query fields, or ambient alternate hosts to gh.
+    """
+
+    fixed_endpoints = {
+        PROFILE_REPOSITORY_API_URL,
+        PROFILE_USER_API_URL,
+        PROFILE_RUNS_API_URL,
+        PROFILE_MAIN_COMMIT_API_URL,
+    }
+    compare_pattern = re.escape(f"{PROFILE_REPOSITORY_API_URL}/compare/") + r"[0-9a-f]{40}\.\.\.[0-9a-f]{40}"
+    if url not in fixed_endpoints and re.fullmatch(compare_pattern, url) is None:
+        raise AdjudicationError("profile API query needs an exact permitted GitHub endpoint")
+    endpoint = url.removeprefix("https://api.github.com/")
+    return fetch(["api", "--hostname", "github.com", "--method", "GET", endpoint])
+
+
+def _public_json(url: str) -> Any:
+    """Fetch the declared raw manifest anonymously with a finite deadline."""
+
+    if url != PROFILE_MANIFEST_RAW_URL:
+        raise AdjudicationError("public JSON query needs the exact anonymous profile manifest endpoint")
     request = Request(
         url,
         headers={
@@ -1892,32 +1922,53 @@ def validate_live_profile_observations(
     public_fetch: Callable[[str], Any] = _public_json,
     http_fetch: Callable[[str], Any] = _http_observation,
     now: datetime | None = None,
+    api_fetch: Callable[[str], Any] = _profile_api_json,
 ) -> list[str]:
     """Reproduce every moving public observation that supports current profile claims."""
 
     errors: list[str] = []
     observed_now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
 
-    def fetch_public(label: str, url: str) -> Any:
+    def fetch_observation(label: str, url: str) -> Any:
         try:
-            return public_fetch(url)
+            if url == PROFILE_MANIFEST_RAW_URL:
+                return public_fetch(url)
+            return api_fetch(url)
         except AdjudicationError as exc:
             errors.append(f"cannot reproduce live {label}: {exc}")
             return None
 
-    profile = fetch_public("profile metadata", PROFILE_USER_API_URL)
+    # Bind public provenance before using an authenticated response for any
+    # repository-scoped fact; auth must never admit private or moved evidence.
+    repository = fetch_observation("profile API repository identity", PROFILE_REPOSITORY_API_URL)
+    expected_repository = {
+        "id": PROFILE_REPOSITORY_ID,
+        "full_name": PROFILE_REPOSITORY,
+        "private": False,
+        "visibility": "public",
+        "default_branch": "main",
+        "url": PROFILE_REPOSITORY_API_URL,
+        "html_url": f"https://github.com/{PROFILE_REPOSITORY}",
+    }
+    if not isinstance(repository, dict) or any(
+        type(repository.get(key)) is not type(expected) or repository.get(key) != expected
+        for key, expected in expected_repository.items()
+    ):
+        errors.append("live profile API repository must retain its exact public identity and default branch")
+        return errors
+
+    profile = fetch_observation("profile metadata", PROFILE_USER_API_URL)
     if not isinstance(profile, dict):
         errors.append("live profile metadata response must be a mapping")
         profile = {}
     live_profile_expectations = {
         key: EXPECTED_PROFILE_METADATA_RESULT[key] for key in ("login", "id", "type", "created_at")
     }
-    live_profile_expectations["public_repos"] = LIVE_PROFILE_PERSONAL_PUBLIC_REPOS
     live_profile_expectations["blog"] = EXPECTED_LIVE_PROFILE_BLOG
     for key, expected in live_profile_expectations.items():
         if type(profile.get(key)) is not type(expected) or profile.get(key) != expected:
             errors.append(f"live profile metadata {key} must remain {expected!r}")
-    for key in ("followers", "following"):
+    for key in ("public_repos", "followers", "following"):
         if not _nonnegative_integer(profile.get(key)):
             errors.append(f"live profile metadata {key} must be a non-negative integer")
     profile_updated_at = _rfc3339(profile.get("updated_at"))
@@ -1927,7 +1978,7 @@ def validate_live_profile_observations(
     elif accepted_updated_at is not None and profile_updated_at < accepted_updated_at:
         errors.append("live profile metadata updated_at predates the accepted observation")
 
-    manifest = fetch_public("profile stats manifest", PROFILE_MANIFEST_RAW_URL)
+    manifest = fetch_observation("profile stats manifest", PROFILE_MANIFEST_RAW_URL)
     if not isinstance(manifest, dict):
         errors.append("live profile stats manifest response must be a mapping")
         manifest = {}
@@ -1963,36 +2014,23 @@ def validate_live_profile_observations(
     if stat_value("member_since") != "2016":
         errors.append("live profile manifest tenure must remain bound to the account creation year")
     current_organization_repos = stat_value("ecosystem_public_repos")
-    if current_organization_repos != LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS:
-        errors.append(
-            "live profile manifest ecosystem public repository count must remain "
-            f"{LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS}"
-        )
-    if stat_value("ecosystem_original_repos") != LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS:
-        errors.append(
-            "live profile manifest ecosystem original repository count must remain "
-            f"{LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS}"
-        )
-    if stat_value("ecosystem_forks") != LIVE_PROFILE_ORGANIZATION_FORKS:
-        errors.append(f"live profile manifest ecosystem fork count must remain {LIVE_PROFILE_ORGANIZATION_FORKS}")
-    if (
-        _nonnegative_integer(current_personal_repos)
-        and _nonnegative_integer(current_organization_repos)
-        and current_personal_repos + current_organization_repos != LIVE_PROFILE_TOTAL_PUBLIC_REPOS
+    current_original_repos = stat_value("ecosystem_original_repos")
+    current_forks = stat_value("ecosystem_forks")
+    for key, value in (
+        ("personal_public_repos", current_personal_repos),
+        ("ecosystem_public_repos", current_organization_repos),
+        ("ecosystem_original_repos", current_original_repos),
+        ("ecosystem_forks", current_forks),
     ):
-        errors.append(
-            "live profile public repository total must remain "
-            f"{LIVE_PROFILE_TOTAL_PUBLIC_REPOS} "
-            f"({LIVE_PROFILE_PERSONAL_PUBLIC_REPOS} personal plus "
-            f"{LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS} organization)"
-        )
+        if not _nonnegative_integer(value):
+            errors.append(f"live profile stat {key} must be a non-negative integer")
     manifest_contributions = stat_value("contributions_last_year")
     if not _nonnegative_integer(manifest_contributions) or manifest_contributions < PROFILE_RENDERED_CONTRIBUTIONS:
         errors.append(
             f"live profile manifest contributions must still support the published {PROFILE_RENDERED_CONTRIBUTIONS:,} count"
         )
 
-    runs_payload = fetch_public("scheduled profile workflow history", PROFILE_RUNS_API_URL)
+    runs_payload = fetch_observation("scheduled profile workflow history", PROFILE_RUNS_API_URL)
     if not isinstance(runs_payload, dict):
         errors.append("live scheduled workflow response must be a mapping")
         runs_payload = {}
@@ -2045,7 +2083,7 @@ def validate_live_profile_observations(
     ):
         errors.append("latest successful scheduled profile run must be within 48 hours")
 
-    current_commit = fetch_public("profile main head", PROFILE_MAIN_COMMIT_API_URL)
+    current_commit = fetch_observation("profile main head", PROFILE_MAIN_COMMIT_API_URL)
     if not isinstance(current_commit, dict):
         errors.append("live profile main-head response must be a mapping")
         current_commit = {}
@@ -2067,7 +2105,7 @@ def validate_live_profile_observations(
         trigger_compare_url = (
             f"https://api.github.com/repos/{PROFILE_REPOSITORY}/compare/{trigger_head}...{current_head}"
         )
-        trigger_comparison = fetch_public(
+        trigger_comparison = fetch_observation(
             "profile scheduled-run trigger continuity",
             trigger_compare_url,
         )
@@ -2097,7 +2135,7 @@ def validate_live_profile_observations(
     accepted_head = accepted_profile.get("head") if isinstance(accepted_profile, dict) else None
     if isinstance(accepted_head, str) and HEAD_RE.fullmatch(accepted_head) and current_head:
         compare_url = f"https://api.github.com/repos/{PROFILE_REPOSITORY}/compare/{accepted_head}...{current_head}"
-        comparison = fetch_public("profile main-line continuity", compare_url)
+        comparison = fetch_observation("profile main-line continuity", compare_url)
         if not isinstance(comparison, dict):
             errors.append("live profile comparison response must be a mapping")
         else:
@@ -2121,11 +2159,37 @@ def validate_live_profile_observations(
                 errors.append("ahead live profile comparison needs a positive commit distance")
 
     try:
-        contribution_payload = gh_fetch(["api", "graphql", "-f", f"query={PROFILE_CONTRIBUTION_QUERY}"])
+        contribution_payload = gh_fetch(["api", "graphql", "-f", f"query={PROFILE_LIVE_OBSERVATION_QUERY}"])
     except AdjudicationError as exc:
         errors.append(f"cannot reproduce live contribution calendar: {exc}")
         contribution_payload = None
     data = contribution_payload.get("data") if isinstance(contribution_payload, dict) else None
+    if isinstance(contribution_payload, dict) and "errors" in contribution_payload:
+        errors.append("live profile GraphQL response must not contain partial errors")
+    organization_counts: list[tuple[int, int]] = []
+    for alias, login in PROFILE_ORGANIZATION_ALIASES.items():
+        organization = data.get(alias) if isinstance(data, dict) else None
+        if not isinstance(organization, dict) or organization.get("login") != login:
+            errors.append(f"live organization count must retain declared identity {login}")
+            continue
+        public = organization.get("public")
+        original = organization.get("original")
+        total = public.get("totalCount") if isinstance(public, dict) else None
+        originals = original.get("totalCount") if isinstance(original, dict) else None
+        if not _nonnegative_integer(total) or not _nonnegative_integer(originals) or originals > total:
+            errors.append(f"live organization {login} must expose valid public and original counts")
+            continue
+        organization_counts.append((total, originals))
+    if len(organization_counts) == len(PROFILE_ORGANIZATION_ALIASES):
+        total = sum(count for count, _originals in organization_counts)
+        originals = sum(count for _total, count in organization_counts)
+        for key, actual, expected in (
+            ("ecosystem_public_repos", current_organization_repos, total),
+            ("ecosystem_original_repos", current_original_repos, originals),
+            ("ecosystem_forks", current_forks, total - originals),
+        ):
+            if actual != expected:
+                errors.append(f"live profile stat {key} must match the current declared public organization scope")
     user = data.get("user") if isinstance(data, dict) else None
     collection = user.get("contributionsCollection") if isinstance(user, dict) else None
     calendar = collection.get("contributionCalendar") if isinstance(collection, dict) else None

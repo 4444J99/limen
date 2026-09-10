@@ -13,6 +13,7 @@ import {
   initializePrivateBoard,
 } from "./projection.js";
 import { loadPrivateBoard } from "./private-board.js";
+import { configuredInventoryAuthority, InventoryAdmissionError } from "./inventory-admission.js";
 import {
   ConductValidationError,
   validateExecutorAttempt,
@@ -153,10 +154,13 @@ export class ConductKeeperDurableObject {
   constructor(ctx, env) {
     this.ctx = ctx;
     this.env = env;
+    let inventoryAuthority = null;
+    try { inventoryAuthority = configuredInventoryAuthority(env); } catch { /* Disabled until installed. */ }
     this.service = new SerializedConductService(
       new DurableConductStore(ctx.storage),
       {
-        projectTaskEvent: (event) => commitTaskCompatibilityEvent(env, event, { storage: ctx.storage }),
+        projectTaskEvent: (event, inventory) => commitTaskCompatibilityEvent(env, event, { storage: ctx.storage, ...inventory }),
+        inventoryAuthority,
         sessionTtlMs: duration(env, "LIMEN_CONDUCT_SESSION_TTL_SECONDS", 5 * 60 * 1000),
         adoptionAfterMs: duration(env, "LIMEN_CONDUCT_ADOPTION_AFTER_SECONDS", 10 * 60 * 1000),
         leaseTtlMs: duration(env, "LIMEN_CONDUCT_LEASE_TTL_SECONDS", 15 * 60 * 1000),
@@ -176,7 +180,8 @@ export class ConductKeeperDurableObject {
     try {
       return await this.route(request, auth.principal);
     } catch (err) {
-      if (err instanceof ConductValidationError || err instanceof ConductError || err instanceof ConductProjectionError) {
+      if (err instanceof ConductValidationError || err instanceof ConductError || err instanceof ConductProjectionError
+          || err instanceof InventoryAdmissionError) {
         return errorResponse(err.message, err.status || 500, this.env);
       }
       return errorResponse(err instanceof Error ? err.message : "conduct keeper error", 500, this.env);
@@ -185,6 +190,15 @@ export class ConductKeeperDurableObject {
 
   async route(request, principal) {
     const path = new URL(request.url).pathname;
+    if (path === "/api/conduct/inventory/authority" && request.method === "GET") {
+      requireRole(principal, "inventory_collector");
+      return json(await this.service.call("inventory_authority", { principal }), 200, this.env);
+    }
+    if (path === "/api/conduct/inventory/observations" && request.method === "POST") {
+      requireRole(principal, "inventory_collector");
+      const body = await parseBody(request, 12 * 1024 * 1024);
+      return json(await this.service.call("inventory_observation", { principal, observation: body.observation }), 200, this.env);
+    }
     if (path === "/api/board/private" && request.method === "GET") {
       requireRole(principal, "observer", "conductor", "compatibility");
       const board = await loadPrivateBoard(this.ctx.storage);

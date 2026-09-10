@@ -217,3 +217,26 @@ def test_a_merge_prohibiting_marker_blocks_both_reap_and_ship(mod, root, monkeyp
     mod._run = lambda *a, **k: (_ for _ in ()).throw(AssertionError("no subprocess"))  # noqa: SLF001
 
     assert mod.ship_pages(root, "evening") == 0
+
+
+def test_receipt_retention_boundary_remains_exercised(mod, root, monkeypatch):
+    """Freezing fixture time must not bypass the production pruning boundary."""
+    _receipts(
+        root,
+        {
+            "docs/diurnal/2026-07-02.md": {"digest": "old", "pr": None},
+            "docs/diurnal/2026-07-03.md": {"digest": "boundary", "pr": None},
+        },
+    )
+    page = "docs/diurnal/2026-08-02.md"
+    (root / page).write_text("synthetic page", encoding="utf-8")
+    monkeypatch.setattr(mod, "unshipped_pages", lambda _r: [page])
+    monkeypatch.setattr(mod, "reap_shipped", lambda *a: 0)
+    monkeypatch.setattr(mod, "_run", lambda *a, **k: (0, "merged"))
+
+    mod.ship_pages(root, "evening")
+
+    receipts = mod.shipped_receipts(root)
+    assert "docs/diurnal/2026-07-02.md" not in receipts
+    assert receipts["docs/diurnal/2026-07-03.md"]["digest"] == "boundary"
+    assert receipts[page]["digest"] == mod._digest(root / page)

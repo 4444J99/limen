@@ -174,12 +174,12 @@ def _live_profile_fixture():
 
     stats = {}
     for name, value in {
-        "personal_public_repos": MODULE.LIVE_PROFILE_PERSONAL_PUBLIC_REPOS,
+        "personal_public_repos": 9,
         "followers": 41,
         "member_since": "2016",
-        "ecosystem_public_repos": MODULE.LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS,
-        "ecosystem_original_repos": MODULE.LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS,
-        "ecosystem_forks": MODULE.LIVE_PROFILE_ORGANIZATION_FORKS,
+        "ecosystem_public_repos": 226,
+        "ecosystem_original_repos": 197,
+        "ecosystem_forks": 29,
         "contributions_last_year": 33203,
     }.items():
         stats[name] = {
@@ -208,9 +208,18 @@ def _live_profile_fixture():
         f"https://api.github.com/repos/{MODULE.PROFILE_REPOSITORY}/compare/{latest_trigger}...{current_head}"
     )
     public_payloads = {
+        MODULE.PROFILE_REPOSITORY_API_URL: {
+            "id": MODULE.PROFILE_REPOSITORY_ID,
+            "full_name": MODULE.PROFILE_REPOSITORY,
+            "private": False,
+            "visibility": "public",
+            "default_branch": "main",
+            "url": MODULE.PROFILE_REPOSITORY_API_URL,
+            "html_url": f"https://github.com/{MODULE.PROFILE_REPOSITORY}",
+        },
         MODULE.PROFILE_USER_API_URL: {
             **MODULE.EXPECTED_PROFILE_METADATA_RESULT,
-            "public_repos": MODULE.LIVE_PROFILE_PERSONAL_PUBLIC_REPOS,
+            "public_repos": 9,
             "blog": MODULE.EXPECTED_LIVE_PROFILE_BLOG,
             "updated_at": "2026-08-12T08:00:00Z",
         },
@@ -255,6 +264,12 @@ def _live_profile_fixture():
             }
         }
     }
+    for index, (alias, login) in enumerate(MODULE.PROFILE_ORGANIZATION_ALIASES.items()):
+        contribution_payload["data"][alias] = {
+            "login": login,
+            "public": {"totalCount": 226 if index == 0 else 0},
+            "original": {"totalCount": 197 if index == 0 else 0},
+        }
     return now, public_payloads, contribution_payload
 
 
@@ -271,11 +286,7 @@ def test_historical_profile_receipt_counts_remain_frozen_while_live_counts_advan
     assert MODULE.EXPECTED_W01_RESULT["profile_basis_reconciliation"] == (
         "8 personal public repositories + 227 public organization repositories = 235 public repositories"
     )
-    assert MODULE.LIVE_PROFILE_PERSONAL_PUBLIC_REPOS == 9
-    assert MODULE.LIVE_PROFILE_ORGANIZATION_PUBLIC_REPOS == 226
-    assert MODULE.LIVE_PROFILE_ORGANIZATION_ORIGINAL_REPOS == 197
-    assert MODULE.LIVE_PROFILE_ORGANIZATION_FORKS == 29
-    assert MODULE.LIVE_PROFILE_TOTAL_PUBLIC_REPOS == 235
+    assert set(MODULE.PROFILE_ORGANIZATION_ALIASES.values()) == MODULE.EXPECTED_ORGANIZATION_KEYS
 
 
 @pytest.mark.parametrize("filename", ("research-adjudication.json", "w08-receipt.json"))
@@ -1143,11 +1154,16 @@ def test_http_receipts_bind_url_time_status_and_reproduction() -> None:
 def test_live_profile_observations_reproduce_all_moving_public_claim_inputs() -> None:
     now, public_payloads, contribution_payload = _live_profile_fixture()
     public_calls = []
+    api_calls = []
     graphql_calls = []
     http_calls = []
 
     def public_fetch(url):
         public_calls.append(url)
+        return copy.deepcopy(public_payloads[url])
+
+    def api_fetch(url):
+        api_calls.append(url)
         return copy.deepcopy(public_payloads[url])
 
     def gh_fetch(args):
@@ -1169,14 +1185,177 @@ def test_live_profile_observations_reproduce_all_moving_public_claim_inputs() ->
         _bundle()["receipt"],
         gh_fetch=gh_fetch,
         public_fetch=public_fetch,
+        api_fetch=api_fetch,
         http_fetch=http_fetch,
         now=now,
     )
 
     assert errors == []
-    assert set(public_calls) == set(public_payloads)
-    assert graphql_calls == [["api", "graphql", "-f", f"query={MODULE.PROFILE_CONTRIBUTION_QUERY}"]]
+    assert public_calls == [MODULE.PROFILE_MANIFEST_RAW_URL]
+    assert set(api_calls) == set(public_payloads) - {MODULE.PROFILE_MANIFEST_RAW_URL}
+    assert graphql_calls == [["api", "graphql", "-f", f"query={MODULE.PROFILE_LIVE_OBSERVATION_QUERY}"]]
     assert set(http_calls) == {url for url, _status in MODULE.EXPECTED_HTTP_RECEIPTS.values()}
+
+
+def test_profile_api_transport_uses_only_declared_github_get_endpoints() -> None:
+    _now, payloads, _graphql = _live_profile_fixture()
+    calls = []
+
+    def fetch(args):
+        calls.append(args)
+        return {"response": "preserved"}
+
+    for url in payloads:
+        if url == MODULE.PROFILE_MANIFEST_RAW_URL:
+            continue
+        assert MODULE._profile_api_json(url, fetch) == {"response": "preserved"}
+        assert calls[-1] == [
+            "api",
+            "--hostname",
+            "github.com",
+            "--method",
+            "GET",
+            url.removeprefix("https://api.github.com/"),
+        ]
+
+
+@pytest.mark.parametrize(
+    "url",
+    (
+        "https://api.github.com.evil.invalid/users/4444J99",
+        "https://evil.invalid/users/4444J99",
+        "http://api.github.com/users/4444J99",
+        "https://api.github.com:443/users/4444J99",
+        "https://token@api.github.com/users/4444J99",
+        "https://api.github.com/users/4444J99?access_token=example",
+        "https://api.github.com/users/4444J99#fragment",
+        "https://api.github.com/user",
+        "https://api.github.com/repos/4444J99/private-example/commits/main",
+        "https://api.github.com/repos/4444J99/4444J99/compare/main...other",
+        "https://api.github.com/repos/4444J99/4444J99/compare/" + "a" * 40 + "..." + "b" * 40 + "/extra",
+        MODULE.PROFILE_RUNS_API_URL + "&per_page=100",
+        MODULE.PROFILE_MANIFEST_RAW_URL,
+    ),
+)
+def test_profile_api_transport_rejects_auth_spill_and_unbound_paths(url) -> None:
+    calls = []
+    with pytest.raises(MODULE.AdjudicationError, match="exact permitted GitHub endpoint"):
+        MODULE._profile_api_json(url, lambda args: calls.append(args))
+    assert calls == []
+
+
+@pytest.mark.parametrize(
+    "change",
+    (
+        None,
+        {"id": True},
+        {"id": 1},
+        {"full_name": "4444J99/substitute"},
+        {"private": True},
+        {"private": 0},
+        {"visibility": "private"},
+        {"default_branch": "replacement"},
+        {"url": "https://api.github.com/repos/4444J99/substitute"},
+        {"html_url": "https://github.com/4444J99/substitute"},
+    ),
+)
+def test_profile_api_provenance_failure_prevents_repository_content_reads(change) -> None:
+    now, payloads, _graphql = _live_profile_fixture()
+    repository = copy.deepcopy(payloads[MODULE.PROFILE_REPOSITORY_API_URL])
+    repository = None if change is None else {**repository, **change}
+    calls = []
+
+    def api_fetch(url):
+        calls.append(url)
+        assert url == MODULE.PROFILE_REPOSITORY_API_URL
+        return repository
+
+    def unexpected_transport(_arg):
+        pytest.fail("unverified repository must not authorize dependent observations")
+
+    errors = MODULE.validate_live_profile_observations(
+        _bundle()["receipt"],
+        api_fetch=api_fetch,
+        gh_fetch=unexpected_transport,
+        public_fetch=unexpected_transport,
+        http_fetch=unexpected_transport,
+        now=now,
+    )
+    assert errors == ["live profile API repository must retain its exact public identity and default branch"]
+    assert calls == [MODULE.PROFILE_REPOSITORY_API_URL]
+
+
+def test_profile_api_error_stays_closed_without_anonymous_retry() -> None:
+    now, payloads, graphql = _live_profile_fixture()
+    api_calls = []
+    public_calls = []
+
+    def api_fetch(url):
+        api_calls.append(url)
+        if url == MODULE.PROFILE_USER_API_URL:
+            raise MODULE.AdjudicationError("GitHub query returned HTTP 403")
+        return copy.deepcopy(payloads[url])
+
+    def public_fetch(url):
+        public_calls.append(url)
+        assert url == MODULE.PROFILE_MANIFEST_RAW_URL
+        return copy.deepcopy(payloads[url])
+
+    errors = MODULE.validate_live_profile_observations(
+        _bundle()["receipt"],
+        api_fetch=api_fetch,
+        gh_fetch=lambda _args: copy.deepcopy(graphql),
+        public_fetch=public_fetch,
+        http_fetch=lambda url: {
+            "status": next(status for endpoint, status in MODULE.EXPECTED_HTTP_RECEIPTS.values() if endpoint == url),
+            "url": url,
+        },
+        now=now,
+    )
+    assert "cannot reproduce live profile metadata: GitHub query returned HTTP 403" in errors
+    assert api_calls.count(MODULE.PROFILE_USER_API_URL) == 1
+    assert public_calls == [MODULE.PROFILE_MANIFEST_RAW_URL]
+
+
+def test_public_manifest_and_pages_probes_never_inherit_github_auth(monkeypatch) -> None:
+    monkeypatch.setenv("GH_TOKEN", "test-only-token")
+    monkeypatch.setenv("GITHUB_TOKEN", "test-only-token")
+    requests = []
+
+    class Response:
+        status = 200
+
+        def __init__(self, request):
+            self.request = request
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return b'{"login": "4444J99"}'
+
+        def geturl(self):
+            return self.request.full_url
+
+    def urlopen(request, timeout):
+        assert timeout == 20
+        requests.append(request)
+        return Response(request)
+
+    monkeypatch.setattr(MODULE, "urlopen", urlopen)
+    assert MODULE._public_json(MODULE.PROFILE_MANIFEST_RAW_URL) == {"login": "4444J99"}
+    for url, _status in MODULE.EXPECTED_HTTP_RECEIPTS.values():
+        assert MODULE._http_observation(url) == {"status": 200, "url": url}
+    for request in requests:
+        assert not {"authorization", "proxy-authorization", "cookie"} & {
+            key.lower() for key, _value in request.header_items()
+        }
+    with pytest.raises(MODULE.AdjudicationError, match="exact anonymous profile manifest endpoint"):
+        MODULE._public_json(MODULE.PROFILE_USER_API_URL)
+    assert len(requests) == 1 + len(MODULE.EXPECTED_HTTP_RECEIPTS)
 
 
 def test_live_profile_window_ignores_older_failures_and_truncated_compare_commits() -> None:
@@ -1206,6 +1385,7 @@ def test_live_profile_window_ignores_older_failures_and_truncated_compare_commit
         _bundle()["receipt"],
         gh_fetch=lambda _args: copy.deepcopy(contribution_payload),
         public_fetch=lambda url: copy.deepcopy(public_payloads[url]),
+        api_fetch=lambda url: copy.deepcopy(public_payloads[url]),
         http_fetch=lambda url: {
             "status": next(
                 status for expected_url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values() if expected_url == url
@@ -1233,6 +1413,7 @@ def test_live_profile_accepts_transitive_scheduled_trigger_ancestry() -> None:
         _bundle()["receipt"],
         gh_fetch=lambda _args: copy.deepcopy(contribution_payload),
         public_fetch=lambda url: copy.deepcopy(public_payloads[url]),
+        api_fetch=lambda url: copy.deepcopy(public_payloads[url]),
         http_fetch=lambda url: {
             "status": next(
                 status for expected_url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values() if expected_url == url
@@ -1254,17 +1435,20 @@ def test_live_profile_observations_fail_neutrally_on_drift_and_malformed_payload
             _bundle()["receipt"],
             gh_fetch=lambda _args: copy.deepcopy(contribution),
             public_fetch=lambda url: copy.deepcopy(payloads[url]),
+            api_fetch=lambda url: copy.deepcopy(payloads[url]),
             http_fetch=lambda url: {"status": statuses[url], "url": url},
             now=now,
         )
 
     changed_profile = copy.deepcopy(public_payloads)
     changed_profile[MODULE.PROFILE_USER_API_URL]["public_repos"] = 8
-    assert any("live profile metadata public_repos must remain 9" in error for error in validate(changed_profile))
+    assert "live profile manifest and API personal repository counts must agree" in validate(changed_profile)
 
     changed_forks = copy.deepcopy(public_payloads)
     changed_forks[MODULE.PROFILE_MANIFEST_RAW_URL]["stats"]["ecosystem_forks"]["value"] = 28
-    assert "live profile manifest ecosystem fork count must remain 29" in validate(changed_forks)
+    assert "live profile stat ecosystem_forks must match the current declared public organization scope" in validate(
+        changed_forks
+    )
 
     missing_runs = copy.deepcopy(public_payloads)
     missing_runs[MODULE.PROFILE_RUNS_API_URL] = {"workflow_runs": []}
@@ -1298,6 +1482,85 @@ def test_live_profile_observations_fail_neutrally_on_drift_and_malformed_payload
     assert "live scheduled workflow response must be a mapping" in malformed_errors
     assert "live profile main-head response must be a mapping" in malformed_errors
     assert "live contribution calendar response must contain the expected mapping" in malformed_errors
+
+
+def _validate_current_profile(payloads, graphql_payload, now):
+    return MODULE.validate_live_profile_observations(
+        _bundle()["receipt"],
+        gh_fetch=lambda _args: copy.deepcopy(graphql_payload),
+        public_fetch=lambda url: copy.deepcopy(payloads[url]),
+        api_fetch=lambda url: copy.deepcopy(payloads[url]),
+        http_fetch=lambda url: {
+            "status": next(
+                status for expected_url, status in MODULE.EXPECTED_HTTP_RECEIPTS.values() if expected_url == url
+            ),
+            "url": url,
+        },
+        now=now,
+    )
+
+
+def test_current_public_counts_can_advance_without_rewriting_historical_claims() -> None:
+    now, payloads, graphql_payload = _live_profile_fixture()
+    payloads[MODULE.PROFILE_USER_API_URL]["public_repos"] = 11
+    stats = payloads[MODULE.PROFILE_MANIFEST_RAW_URL]["stats"]
+    stats["personal_public_repos"]["value"] = 11
+    stats["ecosystem_public_repos"]["value"] = 228
+    stats["ecosystem_original_repos"]["value"] = 199
+    first = next(iter(MODULE.PROFILE_ORGANIZATION_ALIASES))
+    graphql_payload["data"][first]["public"]["totalCount"] = 228
+    graphql_payload["data"][first]["original"]["totalCount"] = 199
+    assert _validate_current_profile(payloads, graphql_payload, now) == []
+    assert MODULE.EXPECTED_PROFILE_METADATA_RESULT["public_repos"] == 8
+    assert MODULE.EXPECTED_W01_RESULT["public_repository_count"] == 235
+    assert _errors(_bundle()) == []
+
+
+@pytest.mark.parametrize(
+    "kind", ["missing", "null", "wrong-login", "boolean", "negative", "inverted", "errors", "empty-errors"]
+)
+def test_current_organization_counts_reject_partial_or_invalid_evidence(kind) -> None:
+    now, payloads, graphql_payload = _live_profile_fixture()
+    first = next(iter(MODULE.PROFILE_ORGANIZATION_ALIASES))
+    if kind == "missing":
+        del graphql_payload["data"][first]
+    elif kind == "null":
+        graphql_payload["data"][first] = None
+    elif kind == "wrong-login":
+        graphql_payload["data"][first]["login"] = "unreviewed-organization"
+    elif kind == "boolean":
+        graphql_payload["data"][first]["public"]["totalCount"] = True
+    elif kind == "negative":
+        graphql_payload["data"][first]["original"]["totalCount"] = -1
+    elif kind == "inverted":
+        graphql_payload["data"][first]["original"]["totalCount"] = 227
+    else:
+        graphql_payload["errors"] = [] if kind == "empty-errors" else [{"message": "partial result"}]
+    assert _validate_current_profile(payloads, graphql_payload, now)
+
+
+@pytest.mark.parametrize(
+    "name", ["personal_public_repos", "ecosystem_public_repos", "ecosystem_original_repos", "ecosystem_forks"]
+)
+def test_current_manifest_repository_counts_require_typed_matching_api_values(name) -> None:
+    now, payloads, graphql_payload = _live_profile_fixture()
+    stats = payloads[MODULE.PROFILE_MANIFEST_RAW_URL]["stats"]
+    stats[name]["value"] += 1
+    assert _validate_current_profile(payloads, graphql_payload, now)
+    stats[name]["value"] = True
+    assert f"live profile stat {name} must be a non-negative integer" in _validate_current_profile(
+        payloads, graphql_payload, now
+    )
+
+
+def test_current_count_query_preserves_public_declared_owner_scope() -> None:
+    query = MODULE.PROFILE_LIVE_OBSERVATION_QUERY
+    assert query.count("organization(login:") == len(MODULE.EXPECTED_ORGANIZATION_KEYS)
+    for alias, login in MODULE.PROFILE_ORGANIZATION_ALIASES.items():
+        assert f'{alias}: organization(login: "{login}")' in query
+    assert query.count("privacy: PUBLIC, ownerAffiliations: [OWNER]") == 2 * len(MODULE.EXPECTED_ORGANIZATION_KEYS)
+    assert query.count("isFork: false") == len(MODULE.EXPECTED_ORGANIZATION_KEYS)
+    assert "nodes" not in query and "PRIVATE" not in query
 
 
 def test_daily_runs_are_distinct_scheduled_and_window_bound() -> None:
