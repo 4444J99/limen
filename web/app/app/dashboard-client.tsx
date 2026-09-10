@@ -57,8 +57,8 @@ export interface RepoStatus {
   prs: PR[];
   count: number;
   issue_count?: number;
-  non_default_branches?: number;
-  branches_without_open_pr?: number;
+  active_work_branches?: number;
+  work_branches_without_open_pr?: number;
 }
 
 export interface PRStatusData {
@@ -69,8 +69,8 @@ export interface PRStatusData {
     total_open_prs: number;
     prs_with_failing_ci: number;
     total_open_issues: number;
-    total_non_default_branches: number;
-    branches_without_open_pr: number;
+    total_active_work_branches: number;
+    work_branches_without_open_pr: number;
   };
 }
 
@@ -443,7 +443,7 @@ export default function DashboardClient({ data, prData, apiUrl, initialToken = "
         <Metric title="Dispatches recorded" value={throughput ? `${throughput.recorded_starts}` : "0"} tone={throughput?.recorded_starts ? "blue" : "red"} detail={throughput ? `${throughput.recorded_events} log events · ${throughput.unrecorded_capacity_runs} capacity slots unused since launch` : "No run ledger"} />
         <Metric title="Queue" value={`${data.summary.total}`} tone="blue" detail={`${active} active, ${data.summary.stale_count} stale`} />
         <Metric title="Completed" value={`${throughput?.done ?? done}`} tone="green" detail={`${throughput?.not_done ?? data.summary.total - done} not done`} />
-        <Metric title="GitHub queue" value={`${prData?.summary.total_open_prs || 0}`} tone={prData?.summary.prs_with_failing_ci ? "amber" : "green"} detail={`${prData?.summary.total_open_issues || 0} open issues · ${prData?.summary.total_non_default_branches || 0} branches · ${prData?.summary.branches_without_open_pr || 0} without PR`} />
+        <Metric title="GitHub queue" value={`${prData?.summary.total_open_prs || 0}`} tone={prData?.summary.prs_with_failing_ci ? "amber" : "green"} detail={`${prData?.summary.total_open_issues || 0} open issues · ${prData?.summary.total_active_work_branches || 0} active branches · ${prData?.summary.work_branches_without_open_pr || 0} without PR`} />
         <Metric title="Failures" value={`${failed}`} tone={failed ? "red" : "green"} detail="Failed or blocked task states" />
       </section>
 

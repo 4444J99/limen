@@ -127,9 +127,9 @@ export default function PublicSurface() {
         <div className="surfacePanel">
           <div className="panelTitle">
             <span>Branches</span>
-            <strong>{formatNumber(prSummary?.total_non_default_branches)} non-default branches remain in flight</strong>
+            <strong>{formatNumber(prSummary?.total_active_work_branches)} active work branches remain in flight</strong>
           </div>
-          <p className="surfaceCopy">{formatNumber(prSummary?.branches_without_open_pr)} of those branches currently have no open pull request attached.</p>
+          <p className="surfaceCopy">{formatNumber(prSummary?.work_branches_without_open_pr)} of those branches currently have no open pull request attached.</p>
         </div>
 
         <div className="surfacePanel">
