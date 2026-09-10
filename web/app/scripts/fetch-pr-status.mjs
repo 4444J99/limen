@@ -71,6 +71,10 @@ function previousRepo(previous, repo) {
   return previous?.repos?.find((item) => item.repo === repo) || null;
 }
 
+function sameRepo(left, right) {
+  return (left || "").trim().toLowerCase() === (right || "").trim().toLowerCase();
+}
+
 function nextLink(linkHeader) {
   const match = /<([^>]+)>;\s*rel="next"/.exec(linkHeader || "");
   return match?.[1] || null;
@@ -224,7 +228,8 @@ export async function collectRepoStatuses(repos, previous, githubToken = resolve
     ]);
     const effectivePrs = [];
     for (const pr of prs || []) {
-      const checks = await fetchCheckRuns(pr.head_repo || repo, pr.head_sha, githubToken);
+      const headRepo = pr.head_repo && !sameRepo(pr.head_repo, repo) ? pr.head_repo : repo;
+      const checks = await fetchCheckRuns(headRepo, pr.head_sha, githubToken);
       effectivePrs.push({ ...pr, checks: checks ?? fallbackPrsByNumber.get(pr.number)?.checks ?? null });
     }
     const mergedPrs = prs === null ? (fallback?.prs || []) : effectivePrs;
@@ -235,7 +240,7 @@ export async function collectRepoStatuses(repos, previous, githubToken = resolve
       const workBranches = activeWorkBranches(branches, mergedDefaultBranch);
       const branchesWithOpenPr = new Set(
         mergedPrs
-          .filter((pr) => pr.head_repo === repo)
+          .filter((pr) => sameRepo(pr.head_repo || repo, repo))
           .map((pr) => pr.head)
       );
       const workBranchesWithoutOpenPr = workBranches.filter((branch) => !branchesWithOpenPr.has(branch.name));
