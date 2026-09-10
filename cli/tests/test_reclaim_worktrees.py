@@ -302,7 +302,7 @@ def test_detached_head_cached_only_in_stale_remote_ref_is_not_preserved(
         check=True,
     )
     subprocess.run(
-        ["git", "update-ref", "-d", "refs/heads/main"],
+        ["git", "--git-dir", str(remote), "update-ref", "-d", "refs/heads/main"],
         cwd=remote,
         check=True,
     )
