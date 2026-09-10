@@ -1,0 +1,102 @@
+{
+  "schema": "limen.git_finishline_handoff_state.v1",
+  "repository": "4444J99/limen",
+  "owner": "https://github.com/4444J99/limen/pull/2573",
+  "verified_default_generation": "ac351ed163e83aba37e549fe1954cffa38b1c2a3",
+  "merged_receipts_remain_ancestors": true,
+  "active_stashes": 0,
+  "original_pr_denominator": 9,
+  "original_prs": [
+    {
+      "headRefOid": "e892b23978498e2dcc83f92df84e2bfdcd05e817",
+      "isDraft": false,
+      "number": 2565,
+      "state": "MERGED",
+      "url": "https://github.com/4444J99/limen/pull/2565"
+    },
+    {
+      "headRefOid": "b4b41e4dbe1ad574ca508bcde46a58fc4728414f",
+      "isDraft": false,
+      "number": 2564,
+      "state": "CLOSED",
+      "url": "https://github.com/4444J99/limen/pull/2564"
+    },
+    {
+      "headRefOid": "85f40f705cddc13b39e614e09f235178d82e946a",
+      "isDraft": false,
+      "number": 2563,
+      "state": "MERGED",
+      "url": "https://github.com/4444J99/limen/pull/2563"
+    },
+    {
+      "headRefOid": "14d111097636f92b324ab544d8aede17a5ad7498",
+      "isDraft": false,
+      "number": 2562,
+      "state": "OPEN",
+      "url": "https://github.com/4444J99/limen/pull/2562"
+    },
+    {
+      "headRefOid": "632693995e2d8674860a84f6f2a23ab0a7ac72ca",
+      "isDraft": false,
+      "number": 2561,
+      "state": "OPEN",
+      "url": "https://github.com/4444J99/limen/pull/2561"
+    },
+    {
+      "headRefOid": "46abf4d0ae7ef8e767dae0598e5a089597af370d",
+      "isDraft": true,
+      "number": 2553,
+      "state": "OPEN",
+      "url": "https://github.com/4444J99/limen/pull/2553"
+    },
+    {
+      "headRefOid": "fd43f52efb27938c7d734fe16c18ff245f67eab0",
+      "isDraft": false,
+      "number": 2552,
+      "state": "OPEN",
+      "url": "https://github.com/4444J99/limen/pull/2552"
+    },
+    {
+      "headRefOid": "86fda7685fa1ee492b0a58f99573b59ed9a6896e",
+      "isDraft": false,
+      "number": 2551,
+      "state": "MERGED",
+      "url": "https://github.com/4444J99/limen/pull/2551"
+    },
+    {
+      "headRefOid": "db5bdc20b7e05c85ff3a1f14ca6f0d87218d18a6",
+      "isDraft": false,
+      "number": 2550,
+      "state": "CLOSED",
+      "url": "https://github.com/4444J99/limen/pull/2550"
+    }
+  ],
+  "correction_pr": {
+    "headRefOid": "4b76be3ef799d3a486fdefc14470f4ae6bef1055",
+    "isDraft": true,
+    "number": 2573,
+    "state": "OPEN",
+    "url": "https://github.com/4444J99/limen/pull/2573"
+  },
+  "deleted_ref_reappearance": [],
+  "archive_restore": {
+    "stashes": 26,
+    "deleted_tips": 9,
+    "original_pr_heads": 9,
+    "status": "PASS"
+  },
+  "source_verification": {
+    "head": "1fb83ecd33381e4bb135dbb9ef957a77389e8bc4",
+    "cheap_gates_passed": 32,
+    "scoped_exit_code": 75,
+    "heavy_wave": "not_admitted_swap_pressure"
+  },
+  "capsule_verification": {
+    "head": "4b76be3ef799d3a486fdefc14470f4ae6bef1055",
+    "differential_scoped_exit_code": 0,
+    "cheap_gates_passed": 4,
+    "prepare_only_exit_code": 0,
+    "native_agent_launched": false
+  },
+  "ownership": "PR2550/2564 superseded by2573 with original branches preserved;2552 stays with concurrent author;2561/2562 own denied dependency checks;2553 owns declared upstream/metadata gates. No blanket completion or merged claim."
+}

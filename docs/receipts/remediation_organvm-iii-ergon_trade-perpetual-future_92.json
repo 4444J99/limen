@@ -1,0 +1,30 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:03:08.873057+00:00",
+  "target": {
+    "repository": "organvm-iii-ergon/trade-perpetual-future",
+    "pull_request": 92,
+    "initial_head": "eef02aec8ab18a053cc0ef58492ba15128394f00",
+    "remediated_head": "eef02aec8ab18a053cc0ef58492ba15128394f00",
+    "base_ref": "main"
+  },
+  "remediation": {
+    "category": "clean_verification",
+    "root_cause": "passing_ci_verification",
+    "patches_applied": []
+  },
+  "verification": {
+    "local_command": "scripts/merge-policy.sh 92 --repo organvm-iii-ergon/trade-perpetual-future",
+    "local_exit_code": 0,
+    "ci_status_rollup": {
+      "total": 1,
+      "failing": 0,
+      "pending": 0,
+      "required_scope": "required"
+    },
+    "merge_policy_verdict": "CLEARED",
+    "merge_mode": "direct",
+    "merge_commit": "602ec63f0571012394bf33867bf6765450e7be69"
+  },
+  "integrity_note": "Verified via merge-policy.sh with complete passing CI status prior to squash merge."
+}

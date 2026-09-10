@@ -10,7 +10,7 @@
   "products": [
     {
       "rank": 1,
-      "repo": "organvm/a-i-chat--exporter",
+      "repo": "organvm-iii-ergon/a-i-chat--exporter",
       "product": "ChatGPT Exporter",
       "stage": "deploy-ready",
       "whose_hand": "yours",
@@ -20,7 +20,7 @@
     },
     {
       "rank": 2,
-      "repo": "organvm/public-record-data-scrapper",
+      "repo": "organvm-iii-ergon/public-record-data-scrapper",
       "product": "Public Record Data Scraper",
       "stage": "building",
       "whose_hand": "mine",

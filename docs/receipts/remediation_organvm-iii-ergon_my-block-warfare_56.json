@@ -1,0 +1,30 @@
+{
+  "schema": "limen.scoped_verification_receipt.v1",
+  "generated": "2026-08-26T13:02:52.455613+00:00",
+  "target": {
+    "repository": "organvm-iii-ergon/my-block-warfare",
+    "pull_request": 56,
+    "initial_head": "a15f419ae3197b6b7baf4b4ed25b4848927ad25b",
+    "remediated_head": "a15f419ae3197b6b7baf4b4ed25b4848927ad25b",
+    "base_ref": "main"
+  },
+  "remediation": {
+    "category": "clean_verification",
+    "root_cause": "passing_ci_verification",
+    "patches_applied": []
+  },
+  "verification": {
+    "local_command": "scripts/merge-policy.sh 56 --repo organvm-iii-ergon/my-block-warfare",
+    "local_exit_code": 0,
+    "ci_status_rollup": {
+      "total": 1,
+      "failing": 0,
+      "pending": 0,
+      "required_scope": "required"
+    },
+    "merge_policy_verdict": "CLEARED",
+    "merge_mode": "direct",
+    "merge_commit": "55f839cbc639950488d0b7d2535d5f4fdd00f863"
+  },
+  "integrity_note": "Verified via merge-policy.sh with complete passing CI status prior to squash merge."
+}

@@ -15,6 +15,7 @@ import json
 import os
 import hashlib
 import subprocess
+import sys
 import time
 from collections.abc import Callable
 from datetime import datetime, timezone
@@ -28,6 +29,12 @@ def _now() -> datetime:
 
 
 def _boot_identity() -> str:
+    if sys.platform.startswith("linux"):
+        try:
+            value = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
+            return value or "unavailable"
+        except OSError:
+            return "unavailable"
     try:
         result = subprocess.run(["sysctl", "-n", "kern.boottime"], capture_output=True, text=True, timeout=3)
         if result.returncode != 0 or not result.stdout.strip():

@@ -120,6 +120,8 @@ def test_ships_24h_reads_ground_truth_cache_not_merge_drain_log(tmp_path: Path):
                 "total": 63,
                 "by_repo": {"organvm/limen": 63},
                 "recent": ["organvm/limen#2482", "organvm/limen#2480"],
+                "complete": True,
+                "error": None,
             }
         )
     )

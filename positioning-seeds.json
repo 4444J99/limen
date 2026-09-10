@@ -9,8 +9,8 @@
   "_flagships_note": "The Level-1 set selected in docs/positioning/portfolio-information-architecture.md. Repository entries reuse their judgment-layer seeds; inline entries are separately verified public surfaces and do not change value-repos.json funding priorities.",
   "flagships": [
    "4444J99/limen",
-   "organvm/public-record-data-scrapper",
-   "organvm/a-i-chat--exporter",
+   "organvm-iii-ergon/public-record-data-scrapper",
+   "organvm-iii-ergon/a-i-chat--exporter",
    {
     "repo": "organvm-iv-taxis/a-i--skills",
     "display_name": "a-i--skills",
@@ -73,7 +73,7 @@
   }
  },
  "repos": {
-  "organvm/public-record-data-scrapper": {
+  "organvm-iii-ergon/public-record-data-scrapper": {
    "display_name": "UCC Public-Records Intelligence Platform",
    "what_it_is": "A platform that collects UCC-1 filings from Secretary-of-State portals — four state collectors implemented (CA, TX, FL, NY) on a fifty-state architecture — enriches each record with SEC / OSHA / USPTO / Census and key-gated premium sources, and scores every prospect 0–100 on financing likelihood with an A–F health grade — delivered via dashboard, REST API, and CLI.",
    "frontdoor_summary": "A working prototype with four state collectors implemented on a fifty-state architecture; deployment and adoption are unvalidated.",
@@ -273,7 +273,7 @@
     "email-management"
    ]
   },
-  "organvm/a-i-chat--exporter": {
+  "organvm-iii-ergon/a-i-chat--exporter": {
    "display_name": "AI Chat Exporter",
    "what_it_is": "A browser userscript that exports your AI chat conversations into five portable, archival-quality formats — Markdown, HTML, JSON, PNG, and plain text — entirely in-browser. No account, no server, no data leaves your machine; it reverse-engineers the platform's internal API and linearizes the branching message tree, with a provider layer live for ChatGPT and scaffolded for Claude and Gemini.",
    "frontdoor_summary": "A deployed public exporter with an active repository and MIT licence; functionality metrics remain repository-asserted on the linked Level-2 page.",

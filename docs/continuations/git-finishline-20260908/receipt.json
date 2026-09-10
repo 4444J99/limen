@@ -1,0 +1,72 @@
+{
+  "schema": "limen.git_finishline_receipt.v1",
+  "repository": "4444J99/limen",
+  "branch": "work/git-finishline-20260908",
+  "scope": {
+    "stashes": 26,
+    "original_prs": 9,
+    "deleted_refs": 9
+  },
+  "custody_predicate": {
+    "command": "python3 docs/continuations/git-finishline-20260908/verify-custody.py --stash-bundle ORIGINAL_PRIVATE_BUNDLE --board-bundle COMPANION_PRIVATE_BUNDLE --pr-bundle PR_HEAD_PRIVATE_BUNDLE",
+    "exit_code": 0,
+    "independent_restoration": true,
+    "independently_restored_stashes": 26,
+    "independently_restored_deleted_tips": 9,
+    "independently_restored_original_pr_heads": 9
+  },
+  "verified_landing": [
+    {
+      "pr": 2551,
+      "head": "86fda7685fa1ee492b0a58f99573b59ed9a6896e",
+      "merge_commit": "e97d333a2a43f36b2a2e9d02c003d04a379ff444",
+      "scoped_exit": 0
+    },
+    {
+      "pr": 2563,
+      "head": "85f40f705cddc13b39e614e09f235178d82e946a",
+      "merge_commit": "32f62917d25dde4b8ac7b2b1127ed18705f1080a",
+      "scoped_exit": 0
+    }
+  ],
+  "correction_validation": "Focused correction shards passed; the published successor PR body owns the final combined scoped result and exact-head merge condition.",
+  "blockers": [
+    {
+      "owner": "4444J99/limen#2561 and this correction successor",
+      "atom": "machine-wide host admission rejects heavy verification",
+      "predicate": "scripts/verify-scoped.sh for each implicated exact head",
+      "observation": "host-admission allowed=false; reasons swap-fraction and vitals-shed; no heavy lease was active",
+      "next_command": "Run only the previously denied heavy shard once host admission allows it; retain unchanged green cheap receipts."
+    }
+  ],
+  "reader_owner": {
+    "pr": 2553,
+    "schema_successor": "organvm-iv-taxis/schema-definitions#17",
+    "engine_successor": "organvm/organvm-engine#175",
+    "editorial_owner": "organvm/editorial-standards#12",
+    "acceptance": "Declared upstream contracts, strict schema/runtime, identity, evidence and GitHub About metadata predicates remain independently owned."
+  },
+  "remote_owner": "https://github.com/4444J99/limen/tree/work/git-finishline-20260908/docs/continuations/git-finishline-20260908",
+  "integration_heads": [
+    "b4b41e4dbe1ad574ca508bcde46a58fc4728414f",
+    "ebe3229f02df8487e5ad5f602e1eab66139ff4a1",
+    "cc481ed7cd293a0984f2787e2da01d4354622301",
+    "32f62917d25dde4b8ac7b2b1127ed18705f1080a"
+  ],
+  "branch_preservation": "Original branch tips remain recoverable; source PR supersession is recorded only after a remote correction owner exists. Open/closed PR state alone never proves landing.",
+  "archive_inputs": {
+    "original": {
+      "name": "limen-stash-archive-20260908.bundle",
+      "unchanged": true
+    },
+    "board_projection_companion": {
+      "name": "board-projection-20260908.bundle",
+      "independent_restore": true
+    },
+    "original_pr_companion": {
+      "name": "original-pr-heads-20260908.bundle",
+      "incremental_after_original": true,
+      "independent_restore": true
+    }
+  }
+}

@@ -24,7 +24,7 @@ def _load():
     return m
 
 
-def _write_cache(root: Path, *, generated_at: str, total=0, by_repo=None, recent=None):
+def _write_cache(root: Path, *, generated_at: str, total=0, by_repo=None, recent=None, complete=True, error=None):
     logs = root / "logs"
     logs.mkdir(parents=True, exist_ok=True)
     (logs / "ships-24h.json").write_text(
@@ -34,6 +34,8 @@ def _write_cache(root: Path, *, generated_at: str, total=0, by_repo=None, recent
                 "total": total,
                 "by_repo": by_repo or {},
                 "recent": recent or [],
+                "complete": complete,
+                "error": error,
             }
         )
     )

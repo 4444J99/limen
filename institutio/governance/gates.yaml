@@ -161,6 +161,11 @@ file_sets:
     exclude: []
 
 gates:
+  recovery-completion-contract:
+    command: "python3 docs/continuations/git-finishline-20260908/test_completion.py"
+    paths: ["docs/continuations/git-finishline-20260908/**", "cli/src/limen/prompt_corpus.py"]
+    owner: recovery
+    note: "Counterexamples for cohort completion evidence; the campaign acceptance command remains separately fail-closed until every source intent is delivered."
   # ── the always-on floor ─────────────────────────────────────────────────────
   syntax-changed:
     kind: per_file

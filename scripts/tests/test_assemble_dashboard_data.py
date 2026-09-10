@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+from fnmatch import fnmatchcase
 from pathlib import Path
 
 
@@ -121,3 +122,39 @@ def test_dashboard_consumers_share_the_checked_in_policy() -> None:
     for source in (workflow, ci, refresh, verify_whole, gates, generator, validator):
         assert "MAX_LOG = 3" not in source
         assert "dispatch_log<=3" not in source
+
+
+def test_pages_security_baseline_combines_with_existing_cache_rules() -> None:
+    """Check effective matching rules at the static host, not Next's unused headers()."""
+    rules: dict[str, dict[str, str]] = {}
+    headers: dict[str, str] = {}
+    source = ROOT / "web" / "app" / "static-passthrough" / "_headers"
+    for line in source.read_text(encoding="utf-8").splitlines():
+        if not line.strip() or line.startswith("#"):
+            continue
+        if not line.startswith(" "):
+            headers = rules.setdefault(line.strip(), {})
+        else:
+            key, value = line.strip().split(":", 1)
+            headers[key.lower()] = value.strip()
+
+    for path, cache in (
+        ("/", None),
+        ("/client", None),
+        ("/_next/static/chunks/app-123.js", "public, max-age=31536000, immutable"),
+        ("/public-status.json", "public, max-age=30"),
+        ("/logs/fleet-status.json", "public, max-age=10"),
+    ):
+        effective = {
+            key: value
+            for pattern, values in rules.items()
+            if fnmatchcase(path, pattern)
+            for key, value in values.items()
+        }
+        assert effective["x-content-type-options"] == "nosniff"
+        assert effective["referrer-policy"] == "strict-origin-when-cross-origin"
+        assert effective["x-xss-protection"] == "0"
+        assert effective.get("cache-control") == cache
+        assert "x-frame-options" not in effective
+        assert "permissions-policy" not in effective
+        assert "content-security-policy" not in effective

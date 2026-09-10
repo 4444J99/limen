@@ -1203,12 +1203,14 @@ async function route(request, env) {
 
 export default {
   async fetch(request, env) {
+    let response;
     try {
-      return await route(request, env);
+      response = await route(request, env);
     } catch (err) {
-      if (err instanceof Response) return err;
-      if (err instanceof BoardMutationDeferred) {
-        return json({
+      if (err instanceof Response) {
+        response = err;
+      } else if (err instanceof BoardMutationDeferred) {
+        response = json({
           status: "mutation_deferred",
           code: err.code,
           retryable: err.retryable,
@@ -1217,10 +1219,17 @@ export default {
           detail: err.message,
           next_action: TABULARIUS_TICKET_ACTION,
         }, 409, env);
+      } else {
+        const status = Number.isInteger(err?.status) ? err.status : 500;
+        response = error(err instanceof Error ? err.message : "runtime error", status, env);
       }
-      const status = Number.isInteger(err?.status) ? err.status : 500;
-      return error(err instanceof Error ? err.message : "runtime error", status, env);
     }
+    // Forwarded responses may have immutable headers. Preserve their body/status/CORS.
+    const secured = new Response(response.body, response);
+    secured.headers.set("X-Content-Type-Options", "nosniff");
+    secured.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    secured.headers.set("X-XSS-Protection", "0");
+    return secured;
   },
 };
 

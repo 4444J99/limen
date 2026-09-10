@@ -1,0 +1,43 @@
+{
+  "schema": "limen.architectural_assessment.v1",
+  "receipt_type": "architectural_assessment",
+  "generated": "2026-08-26T17:29:57Z",
+  "target": {
+    "chamber": "organvm",
+    "repository": "organvm/domus-genoma",
+    "pull_request": 231,
+    "head_branch": "limen/gh-organvm-domus-genoma-202-ba5a3701",
+    "base_branch": "master",
+    "author": "4444J99",
+    "is_draft": false,
+    "url": "https://github.com/organvm/domus-genoma/pull/231"
+  },
+  "diagnostic_assessment": {
+    "classification": "Unverified architectural triage",
+    "category": "Conduct Principal RBAC & Authorization Authority",
+    "blocker_type": "Unverified hypothesis: Authentication & Role-Based Access Control Reconfiguration",
+    "observed_divergence": "Unverified hypothesis: PR #231 (limen/gh-organvm-domus-genoma-202-ba5a3701) modifies authorization contracts or authentication session handling.",
+    "affected_subsystems": [
+      "Auth Middleware",
+      "Access Control List",
+      "Session Manager"
+    ],
+    "breaking_impact_analysis": "Unverified hypothesis: Modifies role resolution and endpoint authorization checks.",
+    "operator_recommendations": [
+      "Candidate for review: Option A: Verify role permission matrices against `institutio/governance/gates.yaml`.",
+      "Candidate for review: Option B: Test role fallback handlers with isolated unit tests."
+    ],
+    "disposition": "UNVERIFIED_ASSESSMENT"
+  },
+  "diagnostic_comment_body": "### Unverified architectural triage\n\norganvm/domus-genoma PR #231\n\nMetadata suggests the category: Conduct Principal RBAC & Authorization Authority.\n\nThis is a title and branch heuristic for review. The source diff, remote PR state, custody, landing, protected boundaries, and merge quarantine have not been verified. No human approval requirement is established by this assessment.",
+  "integrity_note": "Unverified metadata assessment only; no custody, landing, isolation, or lifecycle proof.",
+  "verification_status": "unverified",
+  "evidence_basis": "inventory metadata heuristics; source diff and runtime uninspected",
+  "establishes_custody": false,
+  "establishes_landing": false,
+  "protected_boundary_assessment": {
+    "status": "unverified",
+    "zero_touch_verified": false,
+    "quarantined_from_auto_merge": false
+  }
+}
