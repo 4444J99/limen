@@ -1,0 +1,34 @@
+{
+  "schema_version": "limen.positioning_flagship_freshness_observation.v1",
+  "work_id": "PSP-P05-W04",
+  "flagship_id": "limen",
+  "observed_at": "2026-09-08T16:57:46Z",
+  "repository": "4444J99/limen",
+  "repository_id": 1255213941,
+  "visibility": "public",
+  "archived": false,
+  "default_branch": "main",
+  "observed_head": "aaa5cad2b6aec2ec1998f64eb51dd5cc0e453132",
+  "head_url": "https://github.com/4444J99/limen/commit/aaa5cad2b6aec2ec1998f64eb51dd5cc0e453132",
+  "result": "not_current",
+  "reason": "No check runs were returned for the observed default-branch commit. Earlier topic-branch tests and document-only merge checks do not establish a current flagship-level predicate on this commit.",
+  "fresh_reproduction_receipt": null,
+  "receipt_age_days": null,
+  "age_note": "No accepted fresh reproduction receipt was collected; commit age and a check completion date are not receipt age.",
+  "collection": {
+    "source": "https://api.github.com/repos/4444J99/limen/commits/aaa5cad2b6aec2ec1998f64eb51dd5cc0e453132/check-runs",
+    "pages_read": 1,
+    "check_run_count": 0,
+    "returned_count": 0,
+    "complete": true,
+    "maintenance_checks_omitted_from_display": 0
+  },
+  "hosted_checks": [],
+  "limitations": [
+    "Read-only metadata observation, not execution or re-execution of product tests.",
+    "No runtime health, customer adoption or commercial outcome claim.",
+    "A passing hosted check is preserved as evidence to inspect, not relabelled as a failed test.",
+    "No workflow dispatch, repository change, account effect or spend was initiated."
+  ],
+  "next_action": "Inspect the repository-owned predicate and exact-head hosted execution evidence, or reproduce it on an admitted host, then append a new dated receipt. Preserve this observation."
+}

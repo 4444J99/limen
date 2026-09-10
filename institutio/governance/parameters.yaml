@@ -21,6 +21,39 @@ schema_version: 0.1
 
 parameters:
 
+  # Isolated relay governor deployment; never fleet-wide credential hydration.
+  LIMEN_RELAY_GOVERNOR_APP_ID:
+    default: ""
+    env: LIMEN_RELAY_GOVERNOR_APP_ID
+    self_update: none
+    owner: vigilia
+    note: "Dedicated governor App numeric ID; no shared Actions identity."
+  LIMEN_RELAY_UPDATE_RULESET_ID:
+    default: ""
+    env: LIMEN_RELAY_UPDATE_RULESET_ID
+    self_update: none
+    owner: vigilia
+    note: "Active update-only PR-exemption ruleset ID on the personal relay."
+  LIMEN_RELAY_POLICY_SHA:
+    default: ""
+    env: LIMEN_RELAY_POLICY_SHA
+    self_update: none
+    owner: vigilia
+    note: "Audited immutable relay policy deployment commit; no default trust root."
+  LIMEN_RELAY_GOVERNOR_TOKEN:
+    default: ""
+    env: LIMEN_RELAY_GOVERNOR_TOKEN
+    self_update: none
+    owner: vigilia
+    note: "Short-lived dedicated installation token, private governor deployment only; never candidate or fleet environment."
+  LIMEN_RELAY_READ_TOKEN:
+    default: ""
+    env: LIMEN_RELAY_READ_TOKEN
+    self_update: none
+    owner: vigilia
+    note: "Separate read-only evaluator token; never the governor write credential."
+
+
   # --- autonomy governor: stale-pause-marker auto-clear -------------------------
   LIMEN_AUTONOMY_MARKER_AUTOCLEAR:
     default: 1
@@ -1618,7 +1651,19 @@ parameters:
     env: LIMEN_CONDUCT_PRINCIPAL_REGISTRY
     self_update: "credential wall rotation only"
     owner: dispatch
-    note: "Secret JSON registry installed only in the remote keeper. Each entry binds one bearer to a stable principal ID, native agent, surface, and observer/conductor/executor/compatibility roles. Values never enter git, logs, responses, or receipts."
+    note: "Secret JSON registry installed only in the remote keeper. Each entry binds one bearer to a stable principal ID, native agent, surface, and observer/conductor/executor/compatibility roles, or the mutually exclusive inventory_collector role. Values never enter git, logs, responses, or receipts."
+  LIMEN_INVENTORY_AUTHORITY:
+    default: ""
+    env: LIMEN_INVENTORY_AUTHORITY
+    self_update: "administrator installation only"
+    owner: dispatch
+    note: "Private keeper inventory authority v1 JSON: frozen repository_ids, source_generation and dedicated principal_id. Blank or invalid disables routine growth admission. It never changes the 250 ceiling or 900-second freshness limit; request fields cannot override this installed contract."
+  LIMEN_INVENTORY_COLLECTOR_TOKEN:
+    default: ""
+    env: LIMEN_INVENTORY_COLLECTOR_TOKEN
+    self_update: "credential wall rotation only"
+    owner: dispatch
+    note: "Dedicated collector-only bearer used by the existing census --publish-inventory operation. It cannot register sessions, launch work, write task boards or read private board contents. Never included in source, output, or provider launches."
   LIMEN_CONDUCT_CAPABILITY_SECRET:
     default: ""
     env: LIMEN_CONDUCT_CAPABILITY_SECRET

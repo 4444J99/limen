@@ -1,5 +1,8 @@
 # Agent runbook
 
+For authenticated ChatGPT execution without shell `gh`, use
+[the connector transport](CONNECTOR-EXECUTION.md) and the same canonical verifier.
+
 This runbook is the cross-provider operating contract for the Production-Systems Positioning
 Program. It supplements, and never overrides, the repository’s `AGENTS.md` and conduct protocol.
 
@@ -27,24 +30,32 @@ gate while a predecessor remains incomplete. Multiple ready leaves and chunks ma
 in isolated worktrees and leases. This distinction keeps genuine human gates local instead of
 turning one blocked leaf into a program-wide stop.
 
+Leaf admission also validates transitive work prerequisites and reads each closed work receipt at
+most once per observation. `closed_work_requiring_reconciliation` names invalid closed work without
+admitting its descendants or hiding an independent leaf. When no rows are ready, outstanding debt
+is reported as an error instead of an empty success. Remote observation failures abort admission;
+they are not classified as invalid receipts. This does not repair or close that work.
+`aggregate_integrity` explicitly remains separate: phase proof, remote closure integrity and Omega
+still require their complete evidence. A ready row is not aggregate completion, a lease, a live
+model selection, or permission to cross its named human gates.
+
 Use `EXECUTION-CHUNKS.md` to select the conductor whose resolved scope contains the ready leaf.
 C10 still interleaves P12 with P10-W08 and must follow its prompt exactly.
 
-The seed is not a lease. It is cross-agent input carrying the human model override, from which a
-registered conductor creates a live `WorkPacketV1` with current identity, deadline, resource
-claims, spend, retry, and authority.
-
-PSP strategy execution runs in fresh Codex tasks using the exact registry-derived model, effort,
-dependencies, repository, and scope. Generic cross-agent or broker support is reusable substrate,
-not a program acceptance gate: a non-Codex canary must never block ready expert-positioning work
-unless a newer explicit human requirement adds that exact condition.
+The seed is not a lease. Historical model fields are not a current provider-availability or budget
+observation. Resolve current capabilities and finite capacity before autonomous dispatch; preserve
+the real executing provider identity. The September twelve-package recalibration is cross-provider,
+not a requirement to launch another Codex task for every leaf. Reuse the existing isolated owner
+lane, source evidence and bounded prompt. Never launch a duplicate to work around unavailable usage.
 
 ## 2. Claim before mutation
 
-Register the native session under its real identity and submit the bounded packet to the conduct
-broker. The packet must scope repositories and paths, declare external effects, reserve finite
-capacity, and name its receipt target. If the authenticated broker is unavailable, continue only
-with read-only inspection or already-leased work. Never simulate a claim by editing `tasks.yaml`.
+For autonomous dispatch, register the native session under its real identity and submit the bounded
+packet to the conduct broker. The packet must scope repositories and paths, declare external
+effects, reserve finite capacity, and name its receipt target. Without the authenticated broker,
+new autonomous claims, children and task transitions fail closed. A direct human session follows
+the explicit current request and the direct-session rules in `AGENTS.md`; do not invent a broker
+lease for it or use it to authorize hidden fanout. Never edit `tasks.yaml` to simulate a transition.
 
 ## 3. Work in one bounded lane
 
@@ -69,10 +80,20 @@ command bare, and capture its true exit status and output digest. The command ma
 test, a tracked evidence validator, a live-state query, or a review-rubric checker; it may not call,
 directly or indirectly, the program’s own `--verify-work` command. `--verify-work` validates the
  durable receipt after the underlying work has passed; it is never the evidence recorded as that
-receipt’s predicate. Add focused probes only when they clarify a failure. Reuse unchanged green
+receipt’s predicate. Formal v2 receipt acceptance also requires the predicate file to exist as a
+regular blob in the recorded repository at its exact head. Local JSON shape validation alone does
+not establish that binding, execution, authority, or the external outcome. Legacy cutover rules
+remain unchanged. Add focused probes only when they clarify a failure. Reuse unchanged green
 receipts; do not rerun whole suites for reassurance. For public experience work, verify the rendered
 result in a browser and attach visual evidence. For claims, include source, observation date,
 method, machine-assistance treatment, and limits.
+
+Executable ownership is relative to the packet's target repository. A verifier under a declared
+template path need not exist in the controller checkout. For the existing TypeScript delivery
+validator, use the repository-installed `node_modules/.bin/tsx` with the declared script path,
+not inline evaluation or a downloader. For P11-W03 the aggregate validator exercises the synthetic
+audit-report acceptance, but a passing preflight does not establish unrelated leaf or phase
+completion. Every acceptance still needs its own deliverable/dependency audit and real receipt.
 
 Generate the receipt skeleton, replace every placeholder, and post it as one JSON code block after
 the exact marker shown below. For an ordinary, non-quarantined chain, the latest marked comment is
@@ -107,6 +128,15 @@ target repository. For a `multi-repository:<selector>` packet, the receipt must 
 `resolved_repositories` list of concrete `owner/repository` names, and the `observed_heads` keys must
 equal that set exactly. Record the head of every resolved target tree on which the predicate passed;
 an unrelated, additional, or omitted repository head does not satisfy the packet.
+
+A v2 multi-repository receipt also names `predicate.source_repository`: the one observed repository
+that owns the executable predicate. Include a central verifier's repository in the resolved and
+observed set when it participates in the proof. Its source head comes from that repository's
+`observed_heads` entry; no separate or unobserved head is accepted. The file must exist at that
+owner/head, while the other observed repositories need not contain a copy of it. Missing, unobserved,
+or ambiguous owners fail validation. Single-repository receipts may omit this field and retain the
+declared target as their implicit owner. Source ownership does not expand execution authority or
+replace evidence of the results on every resolved target.
 
 Phase closure has an additional proof boundary. The phase’s `exit_gate` is the prose end state; it
 is not a command. Each phase has a separate, manifest-owned `exit_predicate` with the exact
@@ -206,15 +236,16 @@ transfer merely because a relay file exists.
 
 ## 7. Model allocation
 
-Read the exact assigned model and effort from the issue or generated ready-work row. Before claiming
-a leaf, run `python3 scripts/positioning-program.py --verify-model-assignments`. These values are a
-human override validated against `codex debug models`, not a fallback table. If the assigned pair is
-absent, report blocked and update the manifest through review; do not silently substitute.
+Discover current provider capabilities and finite allocation before dispatch. Select the cheapest
+adequate available model and effort for the bounded leaf, preserve native provider identity, and
+record the ceiling and receipt destination. Honor any explicit current human model override.
 
-The assignment ladder uses Mini/low for simple reads, Luna/medium for routine construction,
-Terra/high for substantial bounded work, Sol/xhigh for sensitive or cross-repository work, Sol/max
-for frontier decisions, and Sol/ultra only for root/P14 orchestration and final Omega. Exact phase
-overrides and the full matrix live in `institutio/positioning/program.yaml`.
+The model pairs in `institutio/positioning/program.yaml`, historical issue bodies and generated
+metadata record the original allocation; they are advisory, not executable overrides. The optional
+`python3 scripts/positioning-program.py --verify-model-assignments` command audits that historical
+catalog mapping. It is not a prerequisite for claiming work and does not establish present capacity.
+If no adequate model is currently available, record the actual provider/allocation blocker rather
+than treating a missing historical pair as a failed task predicate.
 
 | Reasoning class | Appropriate work |
 |---|---|
