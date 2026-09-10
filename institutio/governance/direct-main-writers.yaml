@@ -21,6 +21,9 @@ surfaces:
   .github/workflows/deploy-worker.yml:
     disposition: read-only-exact-main-deploy-source-no-git-write
     expected: {default_ref_literal: 2}
+  .github/workflows/ucc-cloudflare-delivery.yml:
+    disposition: read-only-exact-main-credential-source-no-git-write
+    expected: {default_ref_literal: 2}
   .github/workflows/cloud-maintenance.yml:
     disposition: read-only-exact-main-operator-dispatched-maintenance-no-git-write
     expected: {default_ref_literal: 1}
