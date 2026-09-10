@@ -4848,6 +4848,16 @@ def agy_storage_signature(path: Path) -> dict[str, int] | None:
     return storage
 
 
+def agy_wal_content_digest(path: Path, signature: dict[str, int], *, maximum: int) -> str | None:
+    """Bound the bytes whose ctime SQLite may change while initializing a reader."""
+    if signature["wal_inode"] == 0:
+        return None
+    payload = _bounded_file_bytes(Path(f"{path}-wal"), {"size": signature["wal_size"]}, maximum=maximum)
+    if payload is None:
+        raise ValueError("WAL content unavailable within the bounded reader initialization ceiling")
+    return hashlib.sha256(payload).hexdigest()
+
+
 def sqlite_cell_fingerprint(value: Any) -> Any:
     if isinstance(value, bytes):
         return {"kind": "bytes", "size": len(value), "sha256": hashlib.sha256(value).hexdigest()}
@@ -5460,6 +5470,35 @@ def scan_agy_conversations(
             continue
         connection.row_factory = sqlite3.Row
         try:
+            # A read-only SQLite connection can chmod its WAL on the first read,
+            # changing ctime without changing any prompt bytes. Discard that
+            # initialization transaction before binding the actual read snapshot.
+            # Only a byte-identical WAL metadata change is tolerated: replacement,
+            # content changes and unsafe sidecars fail before events are emitted.
+            initialization_wal_digest = agy_wal_content_digest(
+                path, storage_signature, maximum=active_limits.max_source_bytes_per_unit
+            )
+            if agy_storage_signature(path) != storage_signature:
+                raise ValueError("database or WAL changed during reader initialization; cursor not advanced")
+            connection.execute("BEGIN")
+            connection.execute("PRAGMA schema_version").fetchone()
+            connection.rollback()
+            initialized_signature = agy_storage_signature(path)
+            if initialized_signature is None or any(
+                initialized_signature[field] != value
+                for field, value in storage_signature.items()
+                if field != "wal_ctime_ns"
+            ):
+                raise ValueError("database or WAL changed during reader initialization; cursor not advanced")
+            if agy_conversation_storage_error(path):
+                raise ValueError("SQLite sidecar custody changed during reader initialization; cursor not advanced")
+            if (
+                agy_wal_content_digest(path, initialized_signature, maximum=active_limits.max_source_bytes_per_unit)
+                != initialization_wal_digest
+                or agy_storage_signature(path) != initialized_signature
+            ):
+                raise ValueError("WAL content changed during reader initialization; cursor not advanced")
+            storage_signature = initialized_signature
             connection.execute("BEGIN")
             schema_error = agy_steps_schema_error(connection)
             if schema_error:
