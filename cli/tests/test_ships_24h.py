@@ -34,6 +34,8 @@ def _write_cache(root: Path, *, generated_at: str, total=0, by_repo=None, recent
                 "total": total,
                 "by_repo": by_repo or {},
                 "recent": recent or [],
+                "complete": True,
+                "error": None,
             }
         )
     )
