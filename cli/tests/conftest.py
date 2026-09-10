@@ -67,7 +67,7 @@ def _stable_agent_host_fixture(tmp_path_factory) -> str:
 
 
 @pytest.fixture(autouse=True)
-def _restore_os_environ(tmp_path, _stable_agent_host_fixture, monkeypatch):
+def _restore_os_environ(tmp_path, tmp_path_factory, _stable_agent_host_fixture, monkeypatch):
     """Give each test one isolated explicit keeper and restore its environment."""
     saved = dict(os.environ)
     os.environ.pop("LIMEN_CONDUCT_URL", None)
@@ -75,10 +75,11 @@ def _restore_os_environ(tmp_path, _stable_agent_host_fixture, monkeypatch):
     os.environ["LIMEN_CONDUCT_STATE"] = str(tmp_path / "conduct.sqlite3")
     # Dispatch reloads LIMEN_ENV after fixture setup. Never let that reload
     # resurrect the operator's authenticated broker or provider credentials.
-    environment = tmp_path / "limen.env"
+    environment = tmp_path_factory.mktemp("broker-isolation") / "limen.env"
     environment.write_text("")
+    environment.chmod(0o600)
     os.environ["LIMEN_ENV"] = str(environment)
-    os.environ["LIMEN_CONDUCT_ENV_FILE"] = str(environment)
+    os.environ["LIMEN_CONDUCT_ENV_FILE"] = str(environment.with_name("absent-conduct.env"))
     original_open = urllib.request.OpenerDirector.open
 
     def isolated_open(opener, fullurl, *args, **kwargs):
