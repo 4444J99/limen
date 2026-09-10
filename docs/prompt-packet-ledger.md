@@ -45,7 +45,7 @@ Generated: `2026-09-10T23:39:29+00:00`
 
 ## Private Output
 
-- Prompt packet private index: `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/.limen-private/session-corpus/lifecycle/prompt-packet-ledger.json`.
+- Prompt packet private index: `.limen-private/session-corpus/lifecycle/prompt-packet-ledger.json` (worktree-local; not a durable public receipt).
 - The private index keeps packet membership, prompt hashes, session keys, worktree slugs, and attack-path evidence; it contains no prompt text.
 - Public packet resolution receipts: `docs/prompt-packet-resolution-receipts.json`.
 
