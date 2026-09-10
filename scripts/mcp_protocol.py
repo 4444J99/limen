@@ -112,7 +112,13 @@ class Wire:
         body = json.dumps(request).encode() + b"\n"
         if self.process:
             # Probe requests are deliberately below PIPE_BUF; never block on a silent reader.
-            if len(body) > 4096 or os.write(self.process.stdin.fileno(), body) != len(body):
+            if len(body) > 4096:
+                raise ProtocolError("request write failed")
+            try:
+                written = os.write(self.process.stdin.fileno(), body)
+            except BrokenPipeError as exc:
+                raise ProtocolError("request write failed") from exc
+            if written != len(body):
                 raise ProtocolError("request write failed")
             if notification:
                 return {}
