@@ -60,14 +60,35 @@ Only return the raw JSON object.
     return lever
 
 def main():
+    import argparse
+    ap = argparse.ArgumentParser(description="Enrich levers with pros/cons via Gemini (optional, offline heuristic is default)")
+    ap.add_argument("--in", dest="inp", default="his-hand-levers.json")
+    ap.add_argument("--out", default="his-hand-levers-enriched.json")
+    ap.add_argument("--dry-run", action="store_true", help="Skip API call, just report what would be enriched")
+    ap.add_argument("--force", action="store_true", help="Re-enrich even if pros already present")
+    args = ap.parse_args()
+
     print("Loading levers...")
-    with open("his-hand-levers.json", "r") as f:
+    inp = args.inp
+    if not api_key:
+        print("ERROR: no GEMINI_API_KEY (set in ~/.limen.env or env). Heuristic pros/cons remain the offline default.", flush=True)
+        if not args.dry_run:
+            raise SystemExit(2)
+    with open(inp, "r") as f:
         data = json.load(f)
     
     levers = data.get("levers", [])
     open_levers = [lv for lv in levers if lv.get("status", "open").lower() in ("open", "", "needs_human")]
-    
-    print(f"Enriching {len(open_levers)} open levers using Gemini API...")
+    if not args.force:
+        open_levers = [lv for lv in open_levers if not lv.get("pros")]
+
+    print(f"Enriching {len(open_levers)} open levers using Gemini API (dry_run={args.dry_run})...")
+    if args.dry_run:
+        print("Dry-run: would enrich " + ", ".join(lv["id"] for lv in open_levers[:10]) + (" ..." if len(open_levers) > 10 else ""))
+        return
+    if not open_levers:
+        print("Nothing to enrich (all have pros or not triaged).")
+        return
     enriched = []
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
@@ -85,9 +106,9 @@ def main():
                     break
                     
     data["levers"] = levers
-    with open("his-hand-levers-enriched.json", "w") as f:
+    with open(args.out, "w") as f:
         json.dump(data, f, indent=2)
-    print("Done!")
+    print(f"Wrote {args.out} ({len(levers)} levers)")
 
 if __name__ == "__main__":
     main()
