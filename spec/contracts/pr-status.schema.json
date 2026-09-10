@@ -11,11 +11,16 @@
     "summary": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["total_repos", "total_open_prs", "prs_with_failing_ci"],
+      "required": ["total_repos", "total_open_prs", "prs_with_failing_ci", "prs_with_pending_checks", "review_pending_prs", "ready_to_merge_prs", "blocked_prs", "merge_readiness"],
       "properties": {
         "total_repos": { "type": "number" },
         "total_open_prs": { "type": "number" },
-        "prs_with_failing_ci": { "type": "number" }
+        "prs_with_failing_ci": { "type": "number" },
+        "prs_with_pending_checks": { "type": "number" },
+        "review_pending_prs": { "type": "number" },
+        "ready_to_merge_prs": { "type": "number" },
+        "blocked_prs": { "type": "number" },
+        "merge_readiness": { "type": "object" }
       }
     }
   }
