@@ -33,8 +33,8 @@ Done from receipt: `5`
 | 10 | `PUBLIC-FACE-PROFILE` | `blocked` | profile repo README missing |
 | 15 | `PUBLIC-FACE-CONTRIBUTION-BALANCE` | `assigned_from_existing_work` | GitHub activity mix needs owner action: commits 69.6%, PRs 17.2%, issues 12.4%, reviews 0.7% |
 | 18 | `CREDENTIAL-WALL-TOKEN-HYGIENE` | `done_from_receipt` | credential wall and historical token tombstone receipt are present |
-| 20 | `MAIL-ACTIVE-FLAGGED` | `done_from_receipt` | no active flagged messages remain |
-| 30 | `MAIL-HISTORICAL-BACKLOG` | `done_from_receipt` | no indexed mail backlog visible |
+| 20 | `MAIL-ACTIVE-FLAGGED` | `assigned_from_existing_work` | mail index unavailable; active flagged state is unverified |
+| 30 | `MAIL-HISTORICAL-BACKLOG` | `assigned_from_existing_work` | mail index unavailable; historical backlog state is unverified |
 | 40 | `REPO-BOIL-UP` | `needs_assignment` | repo surface ledger missing; assignment must refresh existing roots before new work |
 | 50 | `PROMPT-PACKETS` | `done_from_receipt` | packet ledger clear from receipts |
 | 60 | `VALUE-REPOS` | `assigned_from_existing_work` | 19 value repos define the funded work lane |
@@ -51,22 +51,22 @@ Done from receipt: `5`
 - Receipt target: `git:4444J99/limen:docs/worktree-preservation-receipts.json`
 - Stop condition: one tranche removes at most three accepted roots or records that no accepted root remains; every residual root stays preserved for a later packet
 - Existing receipts:
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/logs/heartbeat.out.log`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/logs/reclaim-generated-state.jsonl`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/logs/reclaim-tool-caches.jsonl`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/logs/reclaim-ollama-models.jsonl`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/substrate-storage-pressure.md`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/opencode-db-corpus-intake.md`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/scripts/cvstos-organ.py`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/scripts/dispatch-health.py`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/scripts/opencode-db-corpus-intake.py`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/scripts/reclaim-generated-state.py`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/scripts/reclaim-ollama-models.py`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/scripts/reclaim-tool-caches.py`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/scripts/reclaim-worktrees.py`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/scripts/reap-clones.py`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/scripts/substrate-storage-pressure.py`
-  - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/scripts/worktree-debt.py`
+  - `logs/heartbeat.out.log`
+  - `logs/reclaim-generated-state.jsonl`
+  - `logs/reclaim-tool-caches.jsonl`
+  - `logs/reclaim-ollama-models.jsonl`
+  - `docs/substrate-storage-pressure.md`
+  - `docs/opencode-db-corpus-intake.md`
+  - `scripts/cvstos-organ.py`
+  - `scripts/dispatch-health.py`
+  - `scripts/opencode-db-corpus-intake.py`
+  - `scripts/reclaim-generated-state.py`
+  - `scripts/reclaim-ollama-models.py`
+  - `scripts/reclaim-tool-caches.py`
+  - `scripts/reclaim-worktrees.py`
+  - `scripts/reap-clones.py`
+  - `scripts/substrate-storage-pressure.py`
+  - `scripts/worktree-debt.py`
 
 ### ESTATE-CUSTODY
 
@@ -147,4 +147,3 @@ Done from receipt: `5`
   - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/value-repos.json`
   - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/product-ledger.md`
   - `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/docs/positioning/_frontdoor.md`
-

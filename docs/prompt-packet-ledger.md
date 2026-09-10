@@ -11,6 +11,7 @@ Generated: `2026-09-10T23:39:29+00:00`
 
 ## Coverage
 
+- **Input status:** `unavailable`; the prior tracked projection must be preserved until canonical private indexes are loaded.
 - Source review batches: `0`.
 - Batches needing packetization: `0`.
 - Packets emitted: `0`.
