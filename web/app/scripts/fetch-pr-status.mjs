@@ -189,9 +189,19 @@ async function fetchWorkflowRuns(repo, githubToken) {
   return Array.isArray(payload.workflow_runs) ? payload.workflow_runs : null;
 }
 
+// Canonical task priority vocabulary (mcp/src/limen_mcp/server.py:31). p0-p3 are
+// accepted as aliases from label conventions but always mapped to these buckets so
+// issue priority counts are comparable with the existing triage priorities.
+const CANONICAL_PRIORITIES = ["critical", "high", "medium", "low", "backlog"];
+const PRIORITY_ALIASES = { p0: "critical", p1: "high", p2: "medium", p3: "low" };
+
 function issuePriority(labels) {
-  const priority = labels.find((label) => /^p[0-3]$/i.test(label) || /^(critical|high|medium|low)$/i.test(label));
-  return priority ? priority.toLowerCase() : "unprioritized";
+  const normalized = labels.map((label) => label.toLowerCase());
+  const canonical = normalized.find((label) => CANONICAL_PRIORITIES.includes(label));
+  if (canonical) return canonical;
+  const aliased = normalized.find((label) => PRIORITY_ALIASES[label]);
+  if (aliased) return PRIORITY_ALIASES[aliased];
+  return "unprioritized";
 }
 
 function classifyIssues(issues, now = Date.now()) {
@@ -340,9 +350,14 @@ export async function collectRepoStatuses(repos, previous, githubToken = resolve
       work_branches_without_open_pr: workBranchesWithoutOpenPrCount,
       ...(stale ? { stale: true, error: "fetch_failed" } : {}),
     };
+    // Fail closed: a transient fetch failure must never publish false healthy data.
+    // Reuse the cached domain when available; only fall back to an empty array (and
+    // flag it) when there is truly nothing cached to preserve.
+    const issuesStale = issues === null && !fallback?.issues;
+    const healthStale = workflowRuns === null && !fallback?.workflow_runs;
     result.issues = issues ?? fallback?.issues ?? [];
-    result.issue_summary = classifyIssues(result.issues);
-    result.workflow_health = classifyHealth(workflowRuns ?? fallback?.workflow_runs ?? []);
+    result.issue_summary = { ...classifyIssues(result.issues), ...(issuesStale ? { stale: true } : {}) };
+    result.workflow_health = { ...classifyHealth(workflowRuns ?? fallback?.workflow_runs ?? []), ...(healthStale ? { stale: true } : {}) };
     result.workflow_runs = workflowRuns ?? fallback?.workflow_runs ?? [];
     results.push(result);
     console.log(
@@ -369,8 +384,9 @@ export function buildMonitoringOutputs(results, totalRepos, generatedAt = new Da
           (counts, [priority, count]) => ({ ...counts, [priority]: (counts[priority] || 0) + count }),
           summary.priority_counts
         ),
+        stale_repos: summary.stale_repos + (repo.stale ? 1 : 0),
       }),
-      { total_open_issues: 0, unlabeled_issues: 0, unassigned_issues: 0, stale_issues: 0, ready_to_triage: 0, priority_counts: {} }
+      { total_open_issues: 0, unlabeled_issues: 0, unassigned_issues: 0, stale_issues: 0, ready_to_triage: 0, priority_counts: {}, stale_repos: 0 }
     );
     const healthRepos = results.map((repo) => ({ repo: repo.repo, ...repo.workflow_health, runs: repo.workflow_runs }));
     const healthSummary = healthRepos.reduce(
@@ -378,8 +394,9 @@ export function buildMonitoringOutputs(results, totalRepos, generatedAt = new Da
         degraded_repos: summary.degraded_repos + (repo.degraded ? 1 : 0),
         failing_workflows: summary.failing_workflows + repo.failing_workflows,
         in_progress_runs: summary.in_progress_runs + repo.in_progress_runs,
+        stale_repos: summary.stale_repos + (repo.stale ? 1 : 0),
       }),
-      { degraded_repos: 0, failing_workflows: 0, in_progress_runs: 0 }
+      { degraded_repos: 0, failing_workflows: 0, in_progress_runs: 0, stale_repos: 0 }
     );
     return {
       issuePublicOutput: { generated_at: generatedAt, repos: [], summary: { total_repos: totalRepos, ...issueSummary } },
@@ -414,7 +431,20 @@ export async function main() {
   if (previousGeneratedAt) {
     const ageMin = (Date.now() - new Date(previousGeneratedAt).getTime()) / 60000;
     const privateCurrent = previousPrivate?.generated_at === previousGeneratedAt && summaryIsCurrent(previousPrivate?.summary);
-    if (Number.isFinite(ageMin) && ageMin < ttlMin && summaryIsCurrent(previousPublic?.summary) && privateCurrent) {
+    // The issue/repo-health feeds must also exist and be current, or a rollout / a
+    // previously-missing artifact would keep them unavailable indefinitely even
+    // though the pr-status cache alone looks fresh.
+    const monitoringArtifactsCurrent = [ISSUE_PRIVATE_OUT_PATH, HEALTH_PRIVATE_OUT_PATH].every((path) => {
+      const payload = previousPayload(path);
+      return payload?.generated_at === previousGeneratedAt;
+    });
+    if (
+      Number.isFinite(ageMin) &&
+      ageMin < ttlMin &&
+      summaryIsCurrent(previousPublic?.summary) &&
+      privateCurrent &&
+      monitoringArtifactsCurrent
+    ) {
       console.log(`PR status cache fresh (${ageMin.toFixed(0)}m < ${ttlMin}m) — skipping fetch.`);
       return;
     }
