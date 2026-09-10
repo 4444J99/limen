@@ -161,6 +161,11 @@ file_sets:
     exclude: []
 
 gates:
+  recovery-completion-contract:
+    command: "python3 docs/continuations/git-finishline-20260908/test_completion.py"
+    paths: ["docs/continuations/git-finishline-20260908/**", "cli/src/limen/prompt_corpus.py"]
+    owner: recovery
+    note: "Counterexamples for cohort completion evidence; the campaign acceptance command remains separately fail-closed until every source intent is delivered."
   # ── the always-on floor ─────────────────────────────────────────────────────
   syntax-changed:
     kind: per_file
@@ -954,6 +959,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "ROOT-MANIFEST drift: the repo root is a curated surface, not a landing strip — every tracked top-level entry is declared in root-manifest.yaml (sanctioned, with kind/owner/why) or counted as grandfathered fat carrying its target home (or DELETE with the receipt authority). Asserts schema, exact two-way root↔registry parity via git ls-tree HEAD (committed truth — untracked bloat is the board's, e.g. #1260), and that a rehomed entry takes its row with it: deleting the row IS the receipt. The `*` path implicates the gate on any root-level change so new fat cannot land silently between full-matrix runs. Founded on the measured defect: 85 tracked root entries of which 22 were strays (a Beowulf composition kit, Shahnameh scrapers, dead one-shot patchers, an accidentally committed error.log/.coverage) — accumulated with no predicate watching the surface."
+  check-branch-families:
+    command: "python3 scripts/check-branch-families.py --remote && bash scripts/run-pytest-hermetic.sh cli/tests/test_branch_families.py -q"
+    paths: ["BRANCHES.md", "institutio/governance/branch-families.yaml", "scripts/derive-branches.py", "scripts/check-branch-families.py", "cli/tests/test_branch_families.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "BRANCH-FAMILIES drift: BRANCHES.md is derived from the sole branch-family registry, so human guidance cannot outlive machine policy. Every locally known origin branch must match exactly one owned family and every family declares its durable integration or preservation receipt; unowned branches, overlapping patterns, and a hand-edited branch constitution are red checks. Age never grants cleanup authority, and successor families retain linked predecessor evidence."
   check-docs-manifest:
     command: "python3 scripts/check-root-manifest.py --surface docs"
     paths: ["docs/*", "institutio/governance/docs-manifest.yaml", "scripts/check-root-manifest.py", "cli/tests/test_root_manifest.py"]

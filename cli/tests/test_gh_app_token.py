@@ -4,6 +4,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "gh-app-token.sh"
@@ -45,7 +47,7 @@ case " $* " in
         ;;
       *'{"repository_ids":[125]}'*)
         [ "${MOCK_FINAL_TOKEN_FAILURE:-0}" = "0" ] || exit 22
-        printf '{"token":"app-token"}'
+        printf '{"token":"app-token","permissions":{"secrets":"%s"}}' "${MOCK_SECRETS_PERMISSION:-}"
         ;;
       *) exit 25 ;;
     esac
@@ -119,6 +121,31 @@ def test_app_token_resolves_exact_installation_and_scopes_one_numeric_repository
     assert calls.index("/app/installations/77/access_tokens") < calls.rindex("/repos/acme/project")
     assert calls.rindex("/app/installations/77/access_tokens") > calls.rindex("/repos/acme/project")
     assert "must-not-fallback" not in result.stdout + result.stderr + calls
+
+
+@pytest.mark.parametrize("grant", ["", "read", "write"])
+def test_required_secrets_write_checks_grant_without_expanding_permission(tmp_path: Path, grant: str) -> None:
+    env, log = _app_environment(tmp_path, MOCK_SECRETS_PERMISSION=grant, GITHUB_TOKEN="must-not-fallback")
+    result = _run(env, "--repo", "acme/project", "--app-only", "--require-secrets-write")
+    if grant == "write":
+        assert result.returncode == 0
+        assert result.stdout == "app-token\n"
+    else:
+        assert result.returncode != 0
+        assert result.stdout == ""
+        assert "lacks the required Secrets-write grant" in result.stderr
+    calls = log.read_text()
+    assert '{"repository_ids":[125]}' in calls
+    assert '"permissions"' not in calls  # checks the returned grant; never requests an expanded grant
+    assert "must-not-fallback" not in result.stdout + result.stderr + calls
+
+
+def test_secrets_write_assertion_requires_app_only_before_any_network(tmp_path: Path) -> None:
+    env, log = _app_environment(tmp_path)
+    result = _run(env, "--repo", "acme/project", "--require-secrets-write")
+    assert result.returncode == 2
+    assert not log.exists()
+    assert result.stdout == ""
 
 
 def test_app_credentials_without_exact_repo_fail_without_pat_or_gh_fallback(tmp_path: Path) -> None:

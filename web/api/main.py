@@ -20,6 +20,8 @@ import rfc8785
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
+from starlette.datastructures import MutableHeaders
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from limen_intake import IntakeContractError, validate_intake_contract
 from limen_work_loan import task_work_loan_missing_fields, work_loan_denial
@@ -106,6 +108,24 @@ def get_cors_origins() -> list[str]:
     return [origin.strip() for origin in cors_env.split(",") if origin.strip()]
 
 
+class SecurityHeadersMiddleware:
+    """Apply the shared response baseline without changing CORS or embedding policy."""
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        async def send_with_headers(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                headers = MutableHeaders(scope=message)
+                headers["X-Content-Type-Options"] = "nosniff"
+                headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+                headers["X-XSS-Protection"] = "0"
+            await send(message)
+
+        await self.app(scope, receive, send_with_headers)
+
+
 app = FastAPI(
     title="Limen API",
     description="Universal agent task intake backend",
@@ -119,6 +139,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH"],
     allow_headers=["*"],
 )
+app.add_middleware(SecurityHeadersMiddleware)
 
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "limen")))
 LIMEN_TOKEN = os.environ.get("LIMEN_API_TOKEN", "")

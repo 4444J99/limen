@@ -1,0 +1,58 @@
+{
+  "schema": "limen.exact_head_pr_predicates.v1",
+  "repository": "4444J99/limen",
+  "proofs": [
+    {
+      "pr": 2551,
+      "head": "86fda7685fa1ee492b0a58f99573b59ed9a6896e",
+      "base": "91eedfac8ef8edd8b0dee5eb6b6b805cdec2a575",
+      "command": [
+        "bash",
+        "scripts/verify-scoped.sh",
+        "--base",
+        "91eedfac8ef8edd8b0dee5eb6b6b805cdec2a575",
+        "--require-base",
+        "--jobs",
+        "2",
+        "--gate-timeout-seconds",
+        "300",
+        "--gate-output-bytes",
+        "131072"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 12.89,
+      "full_output_bytes": 112211,
+      "output_truncated": false,
+      "log_sha256": "a71da49025d7996e476cea87a4bc5a0c2707ea4b4a5910ef6509c716cddd24e3",
+      "observed_head": "86fda7685fa1ee492b0a58f99573b59ed9a6896e",
+      "status": ""
+    },
+    {
+      "pr": 2563,
+      "head": "85f40f705cddc13b39e614e09f235178d82e946a",
+      "base": "26b82ebc65bc2057b39dcef1499edc78308c0489",
+      "command": [
+        "bash",
+        "scripts/verify-scoped.sh",
+        "--base",
+        "26b82ebc65bc2057b39dcef1499edc78308c0489",
+        "--require-base",
+        "--jobs",
+        "2",
+        "--gate-timeout-seconds",
+        "300",
+        "--gate-output-bytes",
+        "131072"
+      ],
+      "exit_code": 0,
+      "timed_out": false,
+      "seconds": 64.66,
+      "full_output_bytes": 31829,
+      "output_truncated": false,
+      "log_sha256": "f27695a425d2c277de9f3507724a353a46eeb79ea965ac982f50467b97c0d5aa",
+      "observed_head": "85f40f705cddc13b39e614e09f235178d82e946a",
+      "status": ""
+    }
+  ]
+}

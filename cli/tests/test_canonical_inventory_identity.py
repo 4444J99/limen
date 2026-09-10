@@ -2,7 +2,7 @@
 
 import pytest
 
-from limen.tabularius import _project_local_task_event
+from limen.tabularius import Ticket, _compatibility_intent, _project_local_task_event
 from test_tabularius import _board, _task
 
 
@@ -143,3 +143,81 @@ def test_new_open_upsert_discards_caller_supplied_dispatch_history():
     assert history[0].agent == "codex"
     assert history[0].status == "open"
     assert history[0].conduct_event_id == "probe"
+
+
+def budget_fixture():
+    board = _board([_task("FIXTURE", status="open", budget_cost=2)])
+    board.portal.budget.daily = 10
+    board.portal.budget.per_agent = {"codex": 10}
+    board.portal.budget.track.date = "2026-09-08"
+    board.portal.budget.track.spent = 5
+    board.portal.budget.track.per_agent = {"codex": 5}
+    return board
+
+
+@pytest.mark.parametrize("cost", [1, 1000])
+def test_claim_cannot_reprice_its_debit_or_refund(cost):
+    board = budget_fixture()
+    before = board.model_dump(mode="json")
+    with pytest.raises(ValueError, match="reserved budget_cost cannot change"):
+        _project_local_task_event(board, event("task.claim", {"status": "dispatched", "budget_cost": cost}))
+    assert board.model_dump(mode="json") == before
+
+    claimed, _ = _project_local_task_event(board, event("task.claim", {"status": "dispatched"}))
+    assert claimed.portal.budget.track.spent == 7
+    refunded, _ = _project_local_task_event(
+        claimed, event("task.status", {"status": "open"}, status="dispatched", event_id="refund")
+    )
+    assert refunded.portal.budget.track.spent == 5
+    assert refunded.portal.budget.track.per_agent == {"codex": 5}
+
+
+@pytest.mark.parametrize("kind", ["task.mutate", "task.status", "task.upsert", "legacy-replace"])
+@pytest.mark.parametrize("active_status", ["dispatched", "in_progress"])
+def test_active_reservation_cannot_inflate_cost_via_metadata_or_replacement(kind, active_status):
+    claimed, _ = _project_local_task_event(budget_fixture(), event("task.claim", {"status": "dispatched"}))
+    if active_status == "in_progress":
+        claimed, _ = _project_local_task_event(
+            claimed, event("task.status", {"status": "in_progress"}, status="dispatched", event_id="start")
+        )
+    before = claimed.model_dump(mode="json")
+    supplied = claimed.tasks[0].model_dump(mode="json", exclude_none=True)
+    update = event(kind, {"status": active_status, "budget_cost": 1000}, status=active_status, event_id="inflate")
+    if kind == "task.upsert":
+        update["intent"]["task"] = {**supplied, "budget_cost": 1000}
+    elif kind == "legacy-replace":
+        ticket = Ticket(
+            ticket_id="inflate",
+            timestamp=update["timestamp"],
+            agent="codex",
+            session_id="probe",
+            intent="task.upsert",
+            task_id="FIXTURE",
+            patch={**supplied, "budget_cost": 1000},
+        )
+        update["intent"] = _compatibility_intent(ticket, supplied)
+    with pytest.raises(ValueError, match="reserved budget_cost cannot change"):
+        _project_local_task_event(claimed, update)
+    assert claimed.model_dump(mode="json") == before
+    assert claimed.portal.budget.track.spent == 7
+    if active_status == "dispatched":
+        refunded, _ = _project_local_task_event(
+            claimed, event("task.status", {"status": "open"}, status="dispatched", event_id="refund")
+        )
+        assert refunded.portal.budget.track.spent == 5
+        assert refunded.portal.budget.track.per_agent == {"codex": 5}
+
+
+def test_cancellation_cannot_change_cost_as_it_releases_reservation():
+    claimed, _ = _project_local_task_event(budget_fixture(), event("task.claim", {"status": "dispatched"}))
+    with pytest.raises(ValueError, match="reserved budget_cost cannot change"):
+        _project_local_task_event(
+            claimed,
+            event("task.status", {"status": "open", "budget_cost": 1000}, status="dispatched", event_id="refund"),
+        )
+
+
+def test_unreserved_task_can_change_cost_before_admission():
+    updated, _ = _project_local_task_event(budget_fixture(), event("task.mutate", {"budget_cost": 3}))
+    claimed, _ = _project_local_task_event(updated, event("task.claim", {"status": "dispatched"}, event_id="claim"))
+    assert claimed.portal.budget.track.spent == 8

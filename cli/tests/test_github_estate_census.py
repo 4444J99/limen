@@ -44,12 +44,18 @@ def test_live_connection_queries_close_every_graphql_scope() -> None:
     pull_requests = github_connection_query("pull_requests")
     issues = github_connection_query("issues")
     branches = github_connection_query("branches")
+    checks = github_connection_query("checks")
 
     assert "connection:pullRequests(states:OPEN,first:100,after:$cursor" in pull_requests
     assert "connection:issues(states:OPEN,first:100,after:$cursor)" in issues
     assert 'connection:refs(refPrefix:"refs/heads/",first:100,after:$cursor)' in branches
+    assert "connection:contexts(first:100,after:$cursor)" in checks
+    assert "workflowRun{databaseId updatedAt file{path repositoryName repositoryFileUrl}" in checks
+    assert "target:object(oid:$commit)" in checks
+    assert "defaultBranchRef" not in checks
     assert issues.endswith("}}}}")
     assert branches.endswith("}}}}")
+    assert checks.endswith("}}}}}")
 
 
 def test_exact_connection_paginates_beyond_one_thousand() -> None:

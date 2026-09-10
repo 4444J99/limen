@@ -43,7 +43,19 @@ ConnectionFetcher = Callable[[str, str, str | None], dict[str, Any]]
 
 
 def github_connection_query(kind: str) -> str:
-    """Return the exact issue/branch GraphQL connection query used by the live adapter."""
+    """Return the exact remote GraphQL connection query used by the live adapter."""
+
+    if kind == "checks":
+        return (
+            "query($owner:String!,$name:String!,$cursor:String,$commit:GitObjectID!){repository(owner:$owner,name:$name){"
+            "databaseId nameWithOwner target:object(oid:$commit){... on Commit{oid statusCheckRollup{"
+            "connection:contexts(first:100,after:$cursor){totalCount nodes{__typename "
+            "... on CheckRun{id name status conclusion detailsUrl startedAt completedAt checkSuite{"
+            "id status conclusion updatedAt app{databaseId slug} workflowRun{databaseId updatedAt "
+            "file{path repositoryName repositoryFileUrl} workflow{name resourcePath}}}} "
+            "... on StatusContext{id context state targetUrl updatedAt creator{login}}} "
+            "pageInfo{hasNextPage endCursor}}}}}}}"
+        )
 
     if kind == "pull_requests":
         connection = "pullRequests(states:OPEN,first:100,after:$cursor,orderBy:{field:UPDATED_AT,direction:DESC})"
@@ -208,6 +220,8 @@ def _failure_retry_class(exc: BaseException) -> str:
         marker in detail
         for marker in (
             "page-unavailable",
+            "github-api-unavailable",
+            "github-graphql-transient",
             "rate-limit",
             "timed out",
             "timeout",
@@ -490,6 +504,9 @@ def _repository_record(repository: dict[str, Any]) -> dict[str, Any]:
     default_sha = str(repository.get("default_sha") or "") or None
     return {
         "name_with_owner": name,
+        "connection_generation": repository.get("connection_generation"),
+        "connection_generation_inputs": repository.get("connection_generation_inputs"),
+        "connection_totals": repository.get("connection_totals"),
         "repository_id": repository.get("repository_id"),
         "private": bool(repository.get("private")),
         "archived": bool(repository.get("archived")),

@@ -1,0 +1,331 @@
+{
+  "schema": "limen.recovery_broker_receipts.v1",
+  "records": [
+    {
+      "scope": "source-reconciliation",
+      "receipt": {
+        "schema_version": "limen.run_receipt.v1",
+        "receipt_id": "recovery-intent-completion-source-reconciliation",
+        "run_id": "run-e7629ab05549dbef7fc87b53ec949d75",
+        "lease_id": "lease-1039-e7629ab05549dbef",
+        "lease_generation": 1039,
+        "executor": {
+          "schema_version": "limen.agent_identity.v1",
+          "agent": "codex",
+          "surface": "direct",
+          "session_id": "codex-recovery-intent-completion-20260908",
+          "native_run_id": null,
+          "provider_identity": "codex"
+        },
+        "provider_identity": "codex",
+        "observed_heads_before": {},
+        "observed_heads_after": {
+          "4444J99/limen": "2870d0e7a721ded84de8ef3e2284a8262425f027"
+        },
+        "changed_paths": [],
+        "provider_run_url": null,
+        "predicate": {
+          "command": "python3 docs/continuations/git-finishline-20260908/verify-completion.py",
+          "exit_code": 1,
+          "summary": "44 sources covered,1150 provisional candidates, semantic deduplication and delivery evidence incomplete. Archive custody26/9/9 passes;34 cheap gates pass;heavy batch denied exit75;docs-only5 gates pass. Published existing draft2573, no completion or merge claim.",
+          "observed_at": "2026-09-08T19:43:02.422567Z"
+        },
+        "checks": [],
+        "reviews": [],
+        "spend": {
+          "runs": 1
+        },
+        "child_runs": [],
+        "campaign": null,
+        "outcome": "partial",
+        "completed_at": "2026-09-08T19:43:02.423590Z"
+      },
+      "broker_result": {
+        "schema_version": "limen.conduct_report_result.v1",
+        "run_id": "run-e7629ab05549dbef7fc87b53ec949d75",
+        "receipt_id": "recovery-intent-completion-source-reconciliation",
+        "mutation_authorized": false,
+        "run_status": "running"
+      }
+    },
+    {
+      "scope": "completion-verification",
+      "receipt": {
+        "schema_version": "limen.run_receipt.v1",
+        "receipt_id": "recovery-intent-completion-completion-verification",
+        "run_id": "run-d9746fa8f4078497403cc7e18978c999",
+        "lease_id": "lease-1040-d9746fa8f4078497",
+        "lease_generation": 1040,
+        "executor": {
+          "schema_version": "limen.agent_identity.v1",
+          "agent": "codex",
+          "surface": "direct",
+          "session_id": "codex-recovery-intent-completion-20260908",
+          "native_run_id": null,
+          "provider_identity": "codex"
+        },
+        "provider_identity": "codex",
+        "observed_heads_before": {},
+        "observed_heads_after": {
+          "4444J99/limen": "2870d0e7a721ded84de8ef3e2284a8262425f027"
+        },
+        "changed_paths": [],
+        "provider_run_url": null,
+        "predicate": {
+          "command": "python3 docs/continuations/git-finishline-20260908/verify-completion.py",
+          "exit_code": 1,
+          "summary": "44 sources covered,1150 provisional candidates, semantic deduplication and delivery evidence incomplete. Archive custody26/9/9 passes;34 cheap gates pass;heavy batch denied exit75;docs-only5 gates pass. Published existing draft2573, no completion or merge claim.",
+          "observed_at": "2026-09-08T19:43:03.975672Z"
+        },
+        "checks": [],
+        "reviews": [],
+        "spend": {
+          "runs": 1
+        },
+        "child_runs": [],
+        "campaign": null,
+        "outcome": "partial",
+        "completed_at": "2026-09-08T19:43:03.975731Z"
+      },
+      "broker_result": {
+        "schema_version": "limen.conduct_report_result.v1",
+        "run_id": "run-d9746fa8f4078497403cc7e18978c999",
+        "receipt_id": "recovery-intent-completion-completion-verification",
+        "mutation_authorized": false,
+        "run_status": "running"
+      }
+    },
+    {
+      "scope": "root",
+      "receipt": {
+        "schema_version": "limen.run_receipt.v1",
+        "receipt_id": "recovery-intent-completion-root",
+        "run_id": "run-54c617ecf2a5e20c18ad94ea724d2d22",
+        "lease_id": "lease-1038-54c617ecf2a5e20c",
+        "lease_generation": 1038,
+        "executor": {
+          "schema_version": "limen.agent_identity.v1",
+          "agent": "codex",
+          "surface": "direct",
+          "session_id": "codex-recovery-intent-completion-20260908",
+          "native_run_id": null,
+          "provider_identity": "codex"
+        },
+        "provider_identity": "codex",
+        "observed_heads_before": {},
+        "observed_heads_after": {
+          "4444J99/limen": "2870d0e7a721ded84de8ef3e2284a8262425f027"
+        },
+        "changed_paths": [
+          "cli/src/limen/dispatch.py",
+          "cli/src/limen/inventory_admission.py",
+          "cli/src/limen/tabularius.py",
+          "cli/tests/test_canonical_budget_cost.py",
+          "cli/tests/test_canonical_budget_window.py",
+          "cli/tests/test_dispatch.py",
+          "cli/tests/test_inventory_admission.py",
+          "cli/tests/test_local_prelaunch.py",
+          "cli/tests/test_serial_claim_custody.py",
+          "cli/tests/test_serial_custody_followup.py",
+          "docs/continuations/git-finishline-20260908/README.md",
+          "docs/continuations/git-finishline-20260908/completion-acceptance.json",
+          "docs/continuations/git-finishline-20260908/completion-execution.json",
+          "docs/continuations/git-finishline-20260908/completion.json",
+          "docs/continuations/git-finishline-20260908/resume-heavy.py",
+          "docs/continuations/git-finishline-20260908/stash-custody.json",
+          "docs/continuations/git-finishline-20260908/test_completion.py",
+          "docs/continuations/git-finishline-20260908/verify-completion.py",
+          "docs/positioning/a-i-chat--exporter.md",
+          "docs/positioning/program/recalibration/2026-09-08-launch-prompts.md",
+          "docs/positioning/program/test_p03_w07_workflow.py",
+          "docs/positioning/program/w07_blinded_reader_workflow.py",
+          "docs/positioning/public-record-data-scrapper.md",
+          "institutio/github/repository-identity.json",
+          "institutio/governance/gates.yaml",
+          "positioning-seeds.json",
+          "revenue-ladder.json",
+          "scripts/build-portal.py",
+          "scripts/creds-hydrate.py",
+          "web/worker/src/conduct/projection.js",
+          "web/worker/test/canonical-budget-identity.test.js"
+        ],
+        "provider_run_url": null,
+        "predicate": {
+          "command": "python3 docs/continuations/git-finishline-20260908/verify-completion.py",
+          "exit_code": 1,
+          "summary": "44 sources covered,1150 provisional candidates, semantic deduplication and delivery evidence incomplete. Archive custody26/9/9 passes;34 cheap gates pass;heavy batch denied exit75;docs-only5 gates pass. Published existing draft2573, no completion or merge claim.",
+          "observed_at": "2026-09-08T19:43:05.458835Z"
+        },
+        "checks": [],
+        "reviews": [],
+        "spend": {
+          "runs": 1
+        },
+        "child_runs": [
+          "run-e7629ab05549dbef7fc87b53ec949d75",
+          "run-d9746fa8f4078497403cc7e18978c999"
+        ],
+        "campaign": null,
+        "outcome": "partial",
+        "completed_at": "2026-09-08T19:43:05.458974Z"
+      },
+      "broker_result": {
+        "schema_version": "limen.conduct_report_result.v1",
+        "run_id": "run-54c617ecf2a5e20c18ad94ea724d2d22",
+        "receipt_id": "recovery-intent-completion-root",
+        "mutation_authorized": false,
+        "run_status": "running"
+      }
+    },
+    {
+      "scope": "source-reconciliation",
+      "receipt": {
+        "schema_version": "limen.run_receipt.v1",
+        "receipt_id": "recovery-intent-completion-read-release-source-reconciliation",
+        "run_id": "run-e7629ab05549dbef7fc87b53ec949d75",
+        "lease_id": "lease-1039-e7629ab05549dbef",
+        "lease_generation": 1039,
+        "executor": {
+          "schema_version": "limen.agent_identity.v1",
+          "agent": "codex",
+          "surface": "direct",
+          "session_id": "codex-recovery-intent-completion-20260908",
+          "native_run_id": null,
+          "provider_identity": "codex"
+        },
+        "provider_identity": "codex",
+        "observed_heads_before": {
+          "4444J99/limen": "2870d0e7a721ded84de8ef3e2284a8262425f027"
+        },
+        "observed_heads_after": {
+          "4444J99/limen": "2870d0e7a721ded84de8ef3e2284a8262425f027"
+        },
+        "changed_paths": [],
+        "provider_run_url": null,
+        "predicate": {
+          "command": "python3 docs/continuations/git-finishline-20260908/verify-completion.py",
+          "exit_code": 1,
+          "summary": "Read-only broker audit release; no new repository mutation since the preceding evidence report. Implementation used the separate direct-human writer scope, not this read-only reservation. 44 sources covered,1150 provisional candidates, semantic deduplication and delivery evidence incomplete. Archive custody26/9/9 passes;34 cheap gates pass;heavy batch denied exit75;docs-only5 gates pass. Published existing draft2573, no completion or merge claim.",
+          "observed_at": "2026-09-08T19:43:43.479404Z"
+        },
+        "checks": [],
+        "reviews": [],
+        "spend": {
+          "runs": 1
+        },
+        "child_runs": [],
+        "campaign": null,
+        "outcome": "partial",
+        "completed_at": "2026-09-08T19:43:43.480297Z"
+      },
+      "broker_result": {
+        "schema_version": "limen.conduct_report_result.v1",
+        "run_id": "run-e7629ab05549dbef7fc87b53ec949d75",
+        "receipt_id": "recovery-intent-completion-read-release-source-reconciliation",
+        "mutation_authorized": true,
+        "run_status": "failed"
+      }
+    },
+    {
+      "scope": "completion-verification",
+      "receipt": {
+        "schema_version": "limen.run_receipt.v1",
+        "receipt_id": "recovery-intent-completion-read-release-completion-verification",
+        "run_id": "run-d9746fa8f4078497403cc7e18978c999",
+        "lease_id": "lease-1040-d9746fa8f4078497",
+        "lease_generation": 1040,
+        "executor": {
+          "schema_version": "limen.agent_identity.v1",
+          "agent": "codex",
+          "surface": "direct",
+          "session_id": "codex-recovery-intent-completion-20260908",
+          "native_run_id": null,
+          "provider_identity": "codex"
+        },
+        "provider_identity": "codex",
+        "observed_heads_before": {
+          "4444J99/limen": "2870d0e7a721ded84de8ef3e2284a8262425f027"
+        },
+        "observed_heads_after": {
+          "4444J99/limen": "2870d0e7a721ded84de8ef3e2284a8262425f027"
+        },
+        "changed_paths": [],
+        "provider_run_url": null,
+        "predicate": {
+          "command": "python3 docs/continuations/git-finishline-20260908/verify-completion.py",
+          "exit_code": 1,
+          "summary": "Read-only broker audit release; no new repository mutation since the preceding evidence report. Implementation used the separate direct-human writer scope, not this read-only reservation. 44 sources covered,1150 provisional candidates, semantic deduplication and delivery evidence incomplete. Archive custody26/9/9 passes;34 cheap gates pass;heavy batch denied exit75;docs-only5 gates pass. Published existing draft2573, no completion or merge claim.",
+          "observed_at": "2026-09-08T19:43:44.856770Z"
+        },
+        "checks": [],
+        "reviews": [],
+        "spend": {
+          "runs": 1
+        },
+        "child_runs": [],
+        "campaign": null,
+        "outcome": "partial",
+        "completed_at": "2026-09-08T19:43:44.856814Z"
+      },
+      "broker_result": {
+        "schema_version": "limen.conduct_report_result.v1",
+        "run_id": "run-d9746fa8f4078497403cc7e18978c999",
+        "receipt_id": "recovery-intent-completion-read-release-completion-verification",
+        "mutation_authorized": true,
+        "run_status": "failed"
+      }
+    },
+    {
+      "scope": "root",
+      "receipt": {
+        "schema_version": "limen.run_receipt.v1",
+        "receipt_id": "recovery-intent-completion-read-release-root",
+        "run_id": "run-54c617ecf2a5e20c18ad94ea724d2d22",
+        "lease_id": "lease-1038-54c617ecf2a5e20c",
+        "lease_generation": 1038,
+        "executor": {
+          "schema_version": "limen.agent_identity.v1",
+          "agent": "codex",
+          "surface": "direct",
+          "session_id": "codex-recovery-intent-completion-20260908",
+          "native_run_id": null,
+          "provider_identity": "codex"
+        },
+        "provider_identity": "codex",
+        "observed_heads_before": {
+          "4444J99/limen": "2870d0e7a721ded84de8ef3e2284a8262425f027"
+        },
+        "observed_heads_after": {
+          "4444J99/limen": "2870d0e7a721ded84de8ef3e2284a8262425f027"
+        },
+        "changed_paths": [],
+        "provider_run_url": null,
+        "predicate": {
+          "command": "python3 docs/continuations/git-finishline-20260908/verify-completion.py",
+          "exit_code": 1,
+          "summary": "Read-only broker audit release; no new repository mutation since the preceding evidence report. Implementation used the separate direct-human writer scope, not this read-only reservation. 44 sources covered,1150 provisional candidates, semantic deduplication and delivery evidence incomplete. Archive custody26/9/9 passes;34 cheap gates pass;heavy batch denied exit75;docs-only5 gates pass. Published existing draft2573, no completion or merge claim.",
+          "observed_at": "2026-09-08T19:43:46.297085Z"
+        },
+        "checks": [],
+        "reviews": [],
+        "spend": {
+          "runs": 1
+        },
+        "child_runs": [
+          "run-e7629ab05549dbef7fc87b53ec949d75",
+          "run-d9746fa8f4078497403cc7e18978c999"
+        ],
+        "campaign": null,
+        "outcome": "partial",
+        "completed_at": "2026-09-08T19:43:46.297318Z"
+      },
+      "broker_result": {
+        "schema_version": "limen.conduct_report_result.v1",
+        "run_id": "run-54c617ecf2a5e20c18ad94ea724d2d22",
+        "receipt_id": "recovery-intent-completion-read-release-root",
+        "mutation_authorized": true,
+        "run_status": "failed"
+      }
+    }
+  ]
+}

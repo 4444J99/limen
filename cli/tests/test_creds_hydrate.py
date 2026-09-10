@@ -6,11 +6,15 @@ presence — the predicate that catches a dead token sitting behind a green --ch
 
 import importlib.util
 import io
+import json
 import os
 import subprocess
 import sys
 import urllib.error
 from pathlib import Path
+from types import SimpleNamespace
+
+import pytest
 
 from limen.dispatch import _load_limen_env
 
@@ -617,3 +621,225 @@ def test_gh_secret_list_fans_out_to_every_repo_in_verify(tmp_path):
     assert r.returncode == 0
     assert "gh:organvm/media-ark:GCP_SA_KEY" in r.stdout
     assert "gh:organvm/limen:GCP_SA_KEY" in r.stdout
+
+
+_UCC_SINK = "gh:organvm-iii-ergon/public-record-data-scrapper:CLOUDFLARE_API_TOKEN"
+_UCC_ACCOUNT = "e0921b840fd656d8ea46426f1f114c30"
+
+
+def _refresh_fixture(tmp_path, monkeypatch):
+    mod = _hydrate_module("creds_refresh")
+    ucc = next(e for e in mod.DEFAULT_MAP if e["lane"] == "cloudflare (public-record-data-scrapper CI secret)")
+    # Exercise exact-destination selection even if this becomes a shared entry later.
+    entry = {
+        **ucc,
+        "env": ["UNRELATED_CACHE"],
+        "file": {"path": str(tmp_path / "unrelated-auth"), "template": "{value}"},
+        "gh_secret": [ucc["gh_secret"], {"repo": "other/repo", "name": "OTHER_TOKEN"}],
+    }
+    mod, env_file = _batch_wiring_module(tmp_path, monkeypatch, "creds_refresh_wired", json.dumps([entry]))
+    monkeypatch.setattr(sys, "argv", ["creds-hydrate", "--apply", "--op", "--refresh-ci-secret", _UCC_SINK])
+    return mod, env_file, ucc
+
+
+def test_refresh_existing_secret_selects_only_requested_destination(tmp_path, monkeypatch, capsys):
+    mod, env_file, ucc = _refresh_fixture(tmp_path, monkeypatch)
+    reads, writes = [], []
+    monkeypatch.setattr(mod, "op_read", lambda ref: (reads.append(ref), "synthetic-private-value")[1])
+    monkeypatch.setattr(mod, "verify_cloudflare_delivery", lambda entry, value: (True, "confirmed"))
+    monkeypatch.setattr(mod, "gh_sink_present", lambda sink: pytest.fail("refresh must not presence-skip"))
+    monkeypatch.setattr(mod, "gh_sink_set", lambda sink, value: (writes.append((sink, value)), True)[1])
+    assert mod.main() == 0
+    assert reads == [ucc["ref"]]
+    assert writes == [(ucc["gh_secret"], "synthetic-private-value")]
+    assert not env_file.exists()
+    assert not (tmp_path / "unrelated-auth").exists()
+    assert "synthetic-private-value" not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("failure", ["no_op", "unreadable", "write", "scope"])
+def test_refresh_failure_is_nonzero_and_scope_failure_never_writes(tmp_path, monkeypatch, failure):
+    mod, env_file, _ucc = _refresh_fixture(tmp_path, monkeypatch)
+    writes = []
+    monkeypatch.setattr(mod, "have_op", lambda: failure != "no_op")
+    monkeypatch.setattr(mod, "op_read", lambda ref: None if failure == "unreadable" else "synthetic-token")
+    monkeypatch.setattr(mod, "verify_cloudflare_delivery", lambda entry, value: (failure != "scope", "D1 rejected"))
+    monkeypatch.setattr(mod, "gh_sink_set", lambda sink, value: (writes.append(sink), False)[1])
+    assert mod.main() == 1
+    assert bool(writes) is (failure == "write")
+    assert not env_file.exists()
+
+
+def test_refresh_plan_needs_no_op_and_does_not_read_auth(tmp_path, monkeypatch):
+    mod, env_file, _ucc = _refresh_fixture(tmp_path, monkeypatch)
+    monkeypatch.setattr(sys, "argv", ["creds-hydrate", "--dry-run", "--refresh-ci-secret", _UCC_SINK])
+    monkeypatch.setattr(mod, "have_op", lambda: False)
+    for method in (
+        "load_service_account_token",
+        "op_read",
+        "gh_sink_present",
+        "gh_sink_set",
+        "verify_cloudflare_delivery",
+    ):
+        monkeypatch.setattr(mod, method, lambda *a, **k: pytest.fail("plan touched credentials or network"))
+    assert mod.main() == 0
+    assert not env_file.exists()
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["--apply", "--refresh-ci-secret", "gh:unknown/repo:TOKEN"],
+        ["--apply", "--refresh-ci-secret", ""],
+        ["--sweep-all", "--refresh-ci-secret", ""],
+        ["--sweep-all", "--refresh-ci-secret", _UCC_SINK],
+        ["--verify", "--refresh-ci-secret", _UCC_SINK],
+    ],
+)
+def test_refresh_rejects_unknown_or_broad_operations_before_auth(tmp_path, monkeypatch, args):
+    mod, _env_file, _ucc = _refresh_fixture(tmp_path, monkeypatch)
+    monkeypatch.setattr(sys, "argv", ["creds-hydrate", *args])
+    monkeypatch.setattr(mod, "load_service_account_token", lambda: pytest.fail("invalid target read auth"))
+    with pytest.raises(SystemExit) as exc:
+        mod.main()
+    assert exc.value.code == 2
+
+
+@pytest.mark.parametrize(
+    "failure", [None, "wrong_account", "d1_denied", "redirect", "malformed", "oversized", "header", "body_error"]
+)
+def test_cloudflare_delivery_preflight_is_bounded_exact_and_secret_safe(monkeypatch, capsys, failure):
+    mod = _hydrate_module("creds_delivery_probe")
+    token = "synthetic-private-value"
+    requests = []
+
+    class Response:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def read(self, limit):
+            assert limit == 65537
+            if failure == "body_error":
+                raise OSError(token)
+            if failure == "oversized":
+                return b"x" * limit
+            if failure == "malformed":
+                return b"not-json"
+            result = [] if len(requests) == 2 else {"id": "other" if failure == "wrong_account" else _UCC_ACCOUNT}
+            return json.dumps({"success": True, "result": result}).encode()
+
+    class Opener:
+        def open(self, request, timeout):
+            assert timeout == 15
+            assert request.get_method() == "GET"
+            assert request.get_header("Authorization") == f"Bearer {token}"
+            requests.append(request.full_url)
+            if failure == "header":
+                raise ValueError(token)
+            if failure == "redirect" or (failure == "d1_denied" and len(requests) == 2):
+                raise urllib.error.HTTPError(request.full_url, 302 if failure == "redirect" else 401, token, {}, None)
+            return Response()
+
+    def build_opener(handler):
+        assert handler.redirect_request(None, None, 302, "", {}, "https://untrusted.example") is None
+        return Opener()
+
+    monkeypatch.setattr(mod.urllib.request, "build_opener", build_opener)
+    ok, detail = mod.verify_cloudflare_delivery({"cloudflare_delivery_account": _UCC_ACCOUNT}, token)
+    assert ok is (failure is None)
+    assert token not in detail + capsys.readouterr().out
+    expected = f"https://api.cloudflare.com/client/v4/accounts/{_UCC_ACCOUNT}"
+    assert requests[0] == expected
+    if len(requests) == 2:
+        assert requests[1] == expected + "/d1/database?per_page=1"
+
+
+@pytest.mark.parametrize(
+    "mode,failure",
+    [
+        ("preflight", None),
+        ("apply", None),
+        ("apply", "candidate"),
+        ("apply", "app"),
+        ("apply", "mint"),
+        ("apply", "grant"),
+        ("apply", "stale"),
+        ("apply", "source_query"),
+        ("apply", "write"),
+        ("apply", "transport"),
+    ],
+)
+def test_hosted_delivery_uses_exact_app_principal_and_never_exposes_tokens(monkeypatch, capsys, mode, failure):
+    path = HYDRATE.parent / "ucc-cloudflare-delivery.py"
+    spec = importlib.util.spec_from_file_location("ucc_delivery", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    source_token, app_token = "synthetic-source-private", "synthetic-app-private"
+    sink_transport = _hydrate_module("clavis_existing_sink")
+    monkeypatch.setattr(sink_transport, "have_gh", lambda: True)
+    entry = {"gh_secret": {"repo": module.TARGET, "name": module.SECRET_NAME}}
+    fake_hydrate = SimpleNamespace(
+        DEFAULT_MAP=[entry],
+        verify_cloudflare_delivery=lambda entry, value: (failure != "candidate", "bounded result"),
+        gh_secret_set=sink_transport.gh_secret_set,
+    )
+    monkeypatch.setattr(
+        module.importlib.util,
+        "spec_from_file_location",
+        lambda *args: SimpleNamespace(loader=SimpleNamespace(exec_module=lambda mod: None)),
+    )
+    monkeypatch.setattr(module.importlib.util, "module_from_spec", lambda *args: fake_hydrate)
+    monkeypatch.setattr(sys, "argv", ["ucc-delivery", "--mode", mode])
+    monkeypatch.setenv("CLOUDFLARE_API_TOKEN", source_token)
+    monkeypatch.setenv("GITHUB_APP_ID", "fixture-app")
+    monkeypatch.setenv("GITHUB_APP_PRIVATE_KEY", "" if failure == "app" else "fixture-key")
+    monkeypatch.setenv("GITHUB_TOKEN", "unrelated-workflow-token")
+    monkeypatch.setenv("EXPECTED_SHA", "a" * 40)
+    monkeypatch.setenv("SOURCE_GITHUB_TOKEN", "source-read-token")
+    calls = []
+
+    def run(command, **kwargs):
+        calls.append(command)
+        assert source_token not in command and app_token not in command
+        assert kwargs["capture_output"] is True
+        if command[0] == "bash":
+            assert command[-4:] == ["--repo", module.TARGET, "--app-only", "--require-secrets-write"]
+            assert kwargs["timeout"] == 60
+            return SimpleNamespace(
+                returncode=1 if failure in ("mint", "grant") else 0,
+                stdout=app_token,
+                stderr="exact-repository App token lacks the required Secrets-write grant"
+                if failure == "grant"
+                else "",
+            )
+        if command[1] == "api":
+            assert command == ["gh", "api", "repos/4444J99/limen/git/ref/heads/main", "--jq", ".object.sha"]
+            assert kwargs["env"]["GH_TOKEN"] == "source-read-token"
+            assert "GITHUB_APP_PRIVATE_KEY" not in kwargs["env"]
+            assert "CLOUDFLARE_API_TOKEN" not in kwargs["env"]
+            assert kwargs["timeout"] == 15
+            return SimpleNamespace(
+                returncode=1 if failure == "source_query" else 0, stdout="b" * 40 if failure == "stale" else "a" * 40
+            )
+        assert command == ["gh", "secret", "set", "CLOUDFLARE_API_TOKEN", "-R", module.TARGET]
+        assert kwargs["input"] == source_token
+        assert kwargs["env"]["GH_TOKEN"] == app_token
+        assert "GITHUB_TOKEN" not in kwargs["env"]
+        assert kwargs["timeout"] == 30
+        if failure == "transport":
+            raise OSError(source_token)
+        return SimpleNamespace(returncode=1 if failure == "write" else 0)
+
+    monkeypatch.setattr(module.subprocess, "run", run)
+    assert module.main() == (1 if failure else 0)
+    if mode == "preflight" or failure in ("candidate", "app"):
+        assert calls == []
+    if failure in ("stale", "source_query"):
+        assert not any(command[:3] == ["gh", "secret", "set"] for command in calls)
+    output = capsys.readouterr().out
+    assert source_token not in output and app_token not in output

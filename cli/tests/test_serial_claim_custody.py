@@ -148,6 +148,7 @@ def test_claim_directory_sync_failure_blocks_submission_or_handoff(tmp_path, mon
     board = _open_board(path)
     real_fsync = os.fsync
     claims = []
+    settlements = []
 
     def directory_sync_failure(descriptor):
         if stat.S_ISDIR(os.fstat(descriptor).st_mode) and (stage == "inbox" or claims):
@@ -155,6 +156,9 @@ def test_claim_directory_sync_failure_blocks_submission_or_handoff(tmp_path, mon
         return real_fsync(descriptor)
 
     def acknowledged(_path, desired, **kwargs):
+        if kwargs.get("session_id") == "serial-results":
+            settlements.append(desired.tasks[-1])
+            return tabularius.DrainResult()
         claims.append(kwargs["prepared_claims"]["ACK-CUSTODY"])
         return tabularius.DrainResult(
             projected_tasks={"ACK-CUSTODY": desired.tasks[0].model_dump(mode="json", exclude_none=True)}
@@ -166,6 +170,10 @@ def test_claim_directory_sync_failure_blocks_submission_or_handoff(tmp_path, mon
         _reserve(path, board)
     assert "private directory" not in str(error.value)
     assert len(claims) == (stage == "archive")
+    assert len(settlements) == (stage == "archive")
+    if settlements:
+        assert settlements[0].status == "open"
+        assert settlements[0].dispatch_log[-1].execution_started is False
     pending = list((tabularius.tickets_root(path) / "serial-claims" / "inbox").glob("*.json"))
     assert len(pending) == 1
     if stage == "archive":

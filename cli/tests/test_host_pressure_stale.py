@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 import os
-import hashlib
 import subprocess
 import sys
 import time
@@ -38,7 +37,7 @@ def run_stale(tmp_path: Path, env: dict | None = None, extra_args: list[str] | N
 def write_status(tmp_path: Path, sampled_at: datetime, completed_at: datetime | None = None) -> None:
     seat = tmp_path / "logs" / "vigilia"
     seat.mkdir(parents=True, exist_ok=True)
-    boot = subprocess.run(["sysctl", "-n", "kern.boottime"], capture_output=True, text=True, timeout=3)
+    boot_identity = _load_watchdog()._boot_identity()
     age = max(0.0, (datetime.now(timezone.utc) - sampled_at).total_seconds())
     active_now = time.clock_gettime(getattr(time, "CLOCK_UPTIME_RAW", time.CLOCK_MONOTONIC))
     (seat / "status.json").write_text(
@@ -46,7 +45,7 @@ def write_status(tmp_path: Path, sampled_at: datetime, completed_at: datetime | 
             {
                 "sampled_at": sampled_at.isoformat(),
                 "completed_at": completed_at.isoformat() if completed_at else None,
-                "boot_identity": hashlib.sha256(boot.stdout.strip().encode()).hexdigest()[:20],
+                "boot_identity": boot_identity,
                 "sampled_monotonic_seconds": active_now - age,
                 "wake_state": "FullWake",
             }
@@ -206,21 +205,92 @@ def test_sampler_timeout_is_inside_staleness_grace(tmp_path):
     assert proc.returncode == 0, proc.stdout + proc.stderr
 
 
-def test_darkwake_never_pages(tmp_path):
+def test_persisted_darkwake_cannot_hide_a_stale_sample(tmp_path):
     write_status(tmp_path, datetime.now(timezone.utc) - timedelta(days=1))
     path = tmp_path / "logs" / "vigilia" / "status.json"
     payload = json.loads(path.read_text())
     payload["wake_state"] = "MaintenanceDarkWake"
+    payload["sampled_monotonic_seconds"] = max(0.0, payload["sampled_monotonic_seconds"])
     path.write_text(json.dumps(payload))
     proc = run_stale(tmp_path)
-    assert proc.returncode == 0
-    assert "cannot page" in proc.stdout
+    assert proc.returncode == 1
+    assert "STALE" in proc.stdout
 
 
-def test_legacy_metadata_gets_sample_first_grace(tmp_path):
+def test_legacy_metadata_requires_successful_explicit_refresh(tmp_path):
     seat = tmp_path / "logs" / "vigilia"
     seat.mkdir(parents=True)
     (seat / "status.json").write_text(json.dumps({"sampled_at": "2020-01-01T00:00:00Z"}))
     proc = run_stale(tmp_path, env={"LIMEN_NOTIFY": "0"})
-    assert proc.returncode == 0
+    assert proc.returncode == 1
     assert "sample-first refresh" in proc.stdout
+
+
+def _load_watchdog():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("watchdog_under_test", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_unavailable_boot_is_not_a_compatible_identity(monkeypatch):
+    module = _load_watchdog()
+    monkeypatch.setattr(module.sys, "platform", "darwin")
+    monkeypatch.setattr(module.subprocess, "run", lambda *a, **kw: subprocess.CompletedProcess(a, 1, "", "unsupported"))
+    assert module._boot_identity() == "unavailable"
+
+
+def test_failed_refresh_cannot_report_success(tmp_path, monkeypatch):
+    module = _load_watchdog()
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_ENV_FILE", str(tmp_path / "none"))
+    monkeypatch.setenv("LIMEN_VIGILIA", "1")
+    monkeypatch.setenv("LIMEN_HOST_PRESSURE_STALE", "1")
+    monkeypatch.setattr(module, "_boot_identity", lambda: "current")
+    monkeypatch.setattr(module._notify, "notify_once", lambda *a: None)
+    seat = tmp_path / "logs/vigilia/status.json"
+    seat.parent.mkdir(parents=True)
+    seat.write_text(json.dumps({"boot_identity": "prior"}))
+    monkeypatch.setattr(module.subprocess, "run", lambda *a, **kw: subprocess.CompletedProcess(a, 1))
+    assert module.main(["--apply"]) == 1
+    monkeypatch.setattr(module.subprocess, "run", lambda *a, **kw: subprocess.CompletedProcess(a, 0))
+    assert module.main(["--apply"]) == 1  # exit zero without a compatible written record
+
+
+def test_successful_refresh_rechecks_record_and_read_only_never_refreshes(tmp_path, monkeypatch):
+    module = _load_watchdog()
+    for name, value in {
+        "LIMEN_ROOT": str(tmp_path),
+        "LIMEN_ENV_FILE": str(tmp_path / "none"),
+        "LIMEN_VIGILIA": "1",
+        "LIMEN_HOST_PRESSURE_STALE": "1",
+    }.items():
+        monkeypatch.setenv(name, value)
+    monkeypatch.setattr(module, "_boot_identity", lambda: "current")
+    monkeypatch.setattr(module, "_active_monotonic", lambda: 1000.0)
+    monkeypatch.setattr(module._notify, "clear_condition", lambda *a: None)
+    seat = tmp_path / "logs/vigilia/status.json"
+    seat.parent.mkdir(parents=True)
+    seat.write_text(json.dumps({"boot_identity": "prior"}))
+    calls = []
+
+    def refresh(*args, **kwargs):
+        calls.append(args)
+        seat.write_text(
+            json.dumps(
+                {
+                    "boot_identity": "current",
+                    "sampled_monotonic_seconds": 999.0,
+                    "sampled_at": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+        )
+        return subprocess.CompletedProcess(args, 0)
+
+    monkeypatch.setattr(module.subprocess, "run", refresh)
+    assert module.main(["--apply", "--read-only"]) == 1
+    assert calls == []
+    assert module.main(["--apply"]) == 0
+    assert len(calls) == 1
