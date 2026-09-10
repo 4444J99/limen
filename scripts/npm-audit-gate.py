@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -47,6 +48,53 @@ def ghsa_ids(via) -> set[str]:
     return out
 
 
+def validate_report(report: object, returncode: int) -> dict:
+    """Reject incomplete/error responses before they can be called clean."""
+    if returncode not in (0, 1) or not isinstance(report, dict) or report.get("error"):
+        raise ValueError("npm audit failed or returned an error payload")
+    if report.get("auditReportVersion") != 2 or not isinstance(report.get("vulnerabilities"), dict):
+        raise ValueError("npm audit did not return a complete v2 vulnerability report")
+    counts = report.get("metadata", {}).get("vulnerabilities", {})
+    actual = dict.fromkeys(("info", "low", "moderate", "high", "critical"), 0)
+    vulnerabilities = report["vulnerabilities"]
+    for name, vuln in vulnerabilities.items():
+        if not isinstance(vuln, dict) or vuln.get("severity") not in actual:
+            raise ValueError(f"invalid vulnerability record: {name}")
+        actual[vuln["severity"]] += 1
+        via = vuln.get("via")
+        if not isinstance(via, list) or not via:
+            raise ValueError(f"missing advisory chain: {name}")
+        for source in via:
+            if isinstance(source, str) and source in vulnerabilities:
+                continue
+            if isinstance(source, dict) and re.fullmatch(
+                r"https://github.com/advisories/GHSA-[23456789cfghjmpqrvwx]{4}-[23456789cfghjmpqrvwx]{4}-[23456789cfghjmpqrvwx]{4}",
+                str(source.get("url", "")),
+            ):
+                continue
+            raise ValueError(f"unresolved advisory chain: {name}")
+    for name, vuln in vulnerabilities.items():
+        if vuln["severity"] not in BLOCKING:
+            continue
+        pending, seen, identified = [name], set(), False
+        while pending:
+            current = pending.pop()
+            if current in seen:
+                continue
+            seen.add(current)
+            record = vulnerabilities[current]
+            identified |= bool(ghsa_ids(record["via"])) and record["severity"] in BLOCKING
+            pending.extend(source for source in record["via"] if isinstance(source, str))
+        if not identified:
+            raise ValueError(f"blocking vulnerability has no identifiable blocking advisory: {name}")
+    actual["total"] = len(vulnerabilities)
+    if not isinstance(counts, dict) or any(type(counts.get(k)) is not int or counts[k] != v for k, v in actual.items()):
+        raise ValueError("npm audit vulnerability totals are missing or inconsistent")
+    if returncode == 1 and not (actual["high"] or actual["critical"]):
+        raise ValueError("npm audit failed without a blocking advisory to explain its exit status")
+    return report
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("package_dir", help="directory containing package-lock.json")
@@ -60,11 +108,12 @@ def main() -> int:
         cwd=pkg,
         capture_output=True,
         text=True,
+        timeout=120,
     )
     try:
-        report = json.loads(proc.stdout or "{}")
-    except json.JSONDecodeError:
-        print(f"npm-audit-gate: npm audit produced unparseable output (exit {proc.returncode})")
+        report = validate_report(json.loads(proc.stdout), proc.returncode)
+    except (ValueError, AttributeError):
+        print(f"npm-audit-gate: npm audit produced incomplete or invalid output (exit {proc.returncode})")
         print(proc.stdout[:2000])
         print(proc.stderr[:2000], file=sys.stderr)
         return 1

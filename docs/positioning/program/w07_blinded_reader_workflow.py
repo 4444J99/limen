@@ -14,10 +14,16 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from uuid import UUID
 
 
 ROOT = Path(__file__).resolve().parents[3]
+CLI_SRC = ROOT / "cli" / "src"
+if str(CLI_SRC) not in sys.path:
+    sys.path.insert(0, str(CLI_SRC))
+
+from limen.conduct.models import _identifier  # noqa: E402
+
+
 PROGRAM = ROOT / "docs/positioning/program"
 VALIDATOR_PATH = PROGRAM / "validate_p03_w07_blinded_reader.py"
 IMPORT_SCHEMA_VERSION = "psp-p03-w07-reader-import.v1"
@@ -273,11 +279,11 @@ def validated_authority(value: Any) -> dict[str, Any]:
         _exact_keys(value, fields, "receipt authority")
         session_id = value["session_id"]
         try:
-            session = UUID(session_id) if isinstance(session_id, str) else None
+            if not isinstance(session_id, str) or session_id == "00000000-0000-0000-0000-000000000000":
+                raise ValueError("missing session identity")
+            _identifier(session_id, "session_id")
         except ValueError:
-            session = None
-        if session is None or session.int == 0 or str(session) != session_id:
-            raise WorkflowError("receipt authority requires a canonical nonzero session UUID")
+            raise WorkflowError("receipt authority requires an existing bounded session identifier") from None
         if value["human_protected"] is not True:
             raise WorkflowError("receipt authority requires a protected direct human session")
     elif kind == "broker":
@@ -285,8 +291,15 @@ def validated_authority(value: Any) -> dict[str, Any]:
         _exact_keys(value, fields, "receipt authority")
         if not isinstance(value["run_id"], str) or not re.fullmatch(r"run-[0-9a-f]{32}", value["run_id"]):
             raise WorkflowError("receipt authority requires an existing broker run identifier")
-        if not isinstance(value["lease_id"], str) or not re.fullmatch(r"lease-[0-9]+-[0-9a-f]{16}", value["lease_id"]):
+        lease = (
+            re.fullmatch(r"lease-([1-9][0-9]*)-([0-9a-f]{16})", value["lease_id"])
+            if isinstance(value["lease_id"], str)
+            else None
+        )
+        if lease is None:
             raise WorkflowError("receipt authority requires an existing broker lease identifier")
+        if lease.group(2) != value["run_id"].removeprefix("run-")[:16]:
+            raise WorkflowError("receipt authority lease must belong to its broker run")
     else:
         raise WorkflowError("receipt authority kind must match an existing direct session or broker lease")
     if not isinstance(value["executor"], str) or not value["executor"].strip():
