@@ -111,3 +111,67 @@ test("collectRepoStatuses falls back to cached repo monitoring when GitHub reque
     globalThis.fetch = originalFetch;
   }
 });
+
+test("collectRepoStatuses only reuses cached fields for the requests that fail", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    if (url.includes("/pulls?")) {
+      return response([
+        {
+          number: 18,
+          title: "Fresh PR",
+          user: { login: "4444J99" },
+          created_at: "2026-09-10T00:00:00Z",
+          updated_at: "2026-09-10T00:00:00Z",
+          draft: false,
+          mergeable_state: "clean",
+          html_url: "https://github.com/4444J99/limen/pull/18",
+          head: { ref: "fix/fresh", sha: "def456", repo: { full_name: "4444J99/limen" } },
+          base: { ref: "main" },
+          labels: [],
+        },
+      ]);
+    }
+    if (url.includes("/check-runs?")) {
+      return response({ check_runs: [] });
+    }
+    if (url.includes("/search/issues?")) {
+      return response({}, { ok: false, status: 503 });
+    }
+    if (url.endsWith("/repos/4444J99/limen")) {
+      return response({ default_branch: "main" });
+    }
+    if (url.includes("/branches?")) {
+      return response([
+        { name: "main", protected: true },
+        { name: "fix/fresh", protected: false },
+        { name: "chore/cache", protected: false },
+      ]);
+    }
+    throw new Error(`unexpected url ${url}`);
+  };
+
+  try {
+    const previous = {
+      repos: [
+        {
+          repo: "4444J99/limen",
+          default_branch: "main",
+          prs: [],
+          count: 9,
+          issue_count: 14,
+          active_work_branches: 9,
+          work_branches_without_open_pr: 8,
+        },
+      ],
+    };
+    const results = await collectRepoStatuses(["4444J99/limen"], previous, "token");
+    assert.equal(results[0].count, 1);
+    assert.equal(results[0].issue_count, 14);
+    assert.equal(results[0].active_work_branches, 2);
+    assert.equal(results[0].work_branches_without_open_pr, 1);
+    assert.equal(results[0].stale, true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

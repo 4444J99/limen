@@ -214,57 +214,47 @@ export function buildOutputs(results, totalRepos, generatedAt = new Date().toISO
 export async function collectRepoStatuses(repos, previous, githubToken = resolveGitHubToken()) {
   const results = [];
   for (const repo of repos) {
+    const fallback = previousRepo(previous, repo);
     const [prs, issueCount, repoMeta, branches] = await Promise.all([
       fetchPRs(repo, githubToken),
       fetchIssueCount(repo, githubToken),
       fetchRepoMeta(repo, githubToken),
       fetchBranches(repo, githubToken),
     ]);
-    if (prs === null || issueCount === null || repoMeta === null || branches === null) {
-      const fallback = previousRepo(previous, repo);
-      if (fallback) {
-        results.push({ ...fallback, stale: true, error: "fetch_failed" });
-        console.log(`  ${repo}: reused cached monitoring summary`);
-      } else {
-        results.push({
-          repo,
-          default_branch: "main",
-          prs: [],
-          count: 0,
-          issue_count: 0,
-          active_work_branches: 0,
-          work_branches_without_open_pr: 0,
-          stale: true,
-          error: "fetch_failed",
-        });
-        console.log(`  ${repo}: no cached monitoring data`);
-      }
-      continue;
-    }
-
-    const prsWithChecks = [];
-    for (const pr of prs) {
+    const effectivePrs = [];
+    for (const pr of prs || []) {
       const checks = await fetchCheckRuns(pr.head_repo || repo, pr.head_sha, githubToken);
-      prsWithChecks.push({ ...pr, checks });
+      effectivePrs.push({ ...pr, checks });
     }
-    const workBranches = activeWorkBranches(branches, repoMeta.default_branch);
-    const branchesWithOpenPr = new Set(
-      prsWithChecks
-        .filter((pr) => pr.head_repo === repo)
-        .map((pr) => pr.head)
-    );
-    const workBranchesWithoutOpenPr = workBranches.filter((branch) => !branchesWithOpenPr.has(branch.name));
-    results.push({
+    const mergedPrs = prs === null ? (fallback?.prs || []) : effectivePrs;
+    const mergedDefaultBranch = repoMeta?.default_branch || fallback?.default_branch || "main";
+    let activeWorkBranchCount = fallback?.active_work_branches || 0;
+    let workBranchesWithoutOpenPrCount = fallback?.work_branches_without_open_pr || 0;
+    if (branches !== null && mergedDefaultBranch) {
+      const workBranches = activeWorkBranches(branches, mergedDefaultBranch);
+      const branchesWithOpenPr = new Set(
+        mergedPrs
+          .filter((pr) => pr.head_repo === repo)
+          .map((pr) => pr.head)
+      );
+      const workBranchesWithoutOpenPr = workBranches.filter((branch) => !branchesWithOpenPr.has(branch.name));
+      activeWorkBranchCount = workBranches.length;
+      workBranchesWithoutOpenPrCount = workBranchesWithoutOpenPr.length;
+    }
+    const stale = prs === null || issueCount === null || repoMeta === null || branches === null;
+    const result = {
       repo,
-      default_branch: repoMeta.default_branch,
-      prs: prsWithChecks,
-      count: prsWithChecks.length,
-      issue_count: issueCount,
-      active_work_branches: workBranches.length,
-      work_branches_without_open_pr: workBranchesWithoutOpenPr.length,
-    });
+      default_branch: mergedDefaultBranch,
+      prs: mergedPrs,
+      count: prs === null ? (fallback?.count || mergedPrs.length) : mergedPrs.length,
+      issue_count: issueCount ?? fallback?.issue_count ?? 0,
+      active_work_branches: activeWorkBranchCount,
+      work_branches_without_open_pr: workBranchesWithoutOpenPrCount,
+      ...(stale ? { stale: true, error: "fetch_failed" } : {}),
+    };
+    results.push(result);
     console.log(
-      `  ${repo}: ${prsWithChecks.length} open PRs, ${issueCount} open issues, ${workBranches.length} active work branches`
+      `  ${repo}: ${result.count} open PRs, ${result.issue_count} open issues, ${result.active_work_branches} active work branches`
     );
   }
   return results;
