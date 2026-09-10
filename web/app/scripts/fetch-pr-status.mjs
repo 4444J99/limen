@@ -244,7 +244,7 @@ export async function collectRepoStatuses(repos, previous, githubToken = resolve
 
     const prsWithChecks = [];
     for (const pr of prs) {
-      const checks = await fetchCheckRuns(repo, pr.head_sha, githubToken);
+      const checks = await fetchCheckRuns(pr.head_repo || repo, pr.head_sha, githubToken);
       prsWithChecks.push({ ...pr, checks });
     }
     const workBranches = activeWorkBranches(branches, repoMeta.default_branch);
@@ -278,7 +278,8 @@ export async function main() {
   const previousGeneratedAt = previousPrivate?.generated_at || previousPublic?.generated_at;
   if (previousGeneratedAt) {
     const ageMin = (Date.now() - new Date(previousGeneratedAt).getTime()) / 60000;
-    if (Number.isFinite(ageMin) && ageMin < ttlMin && summaryIsCurrent(previousPublic?.summary)) {
+    const privateCurrent = previousPrivate?.generated_at === previousGeneratedAt && summaryIsCurrent(previousPrivate?.summary);
+    if (Number.isFinite(ageMin) && ageMin < ttlMin && summaryIsCurrent(previousPublic?.summary) && privateCurrent) {
       console.log(`PR status cache fresh (${ageMin.toFixed(0)}m < ${ttlMin}m) — skipping fetch.`);
       return;
     }
