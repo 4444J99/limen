@@ -11,11 +11,21 @@
     "summary": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["total_repos", "total_open_prs", "prs_with_failing_ci"],
+      "required": [
+        "total_repos",
+        "total_open_prs",
+        "prs_with_failing_ci",
+        "total_open_issues",
+        "total_non_default_branches",
+        "branches_without_open_pr"
+      ],
       "properties": {
         "total_repos": { "type": "number" },
         "total_open_prs": { "type": "number" },
-        "prs_with_failing_ci": { "type": "number" }
+        "prs_with_failing_ci": { "type": "number" },
+        "total_open_issues": { "type": "number" },
+        "total_non_default_branches": { "type": "number" },
+        "branches_without_open_pr": { "type": "number" }
       }
     }
   }
