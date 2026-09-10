@@ -1,8 +1,8 @@
 # Human Levers Action Dashboard
 
-> Generated from `his-hand-levers.json` (`generated_at=2026-06-25`). Triaged set = `open` + `needs_human` = 93 levers (87 open + 6 needs_human). 4 levers excluded from triage: `optional-fallback`, `awaiting sign-off`, `optional (funnel)`, `blocked`. Run `python3 scripts/generate_html.py` to regenerate `lever-triage.html`.
+> Generated from `his-hand-levers.json` (`generated_at=2026-06-25`). Triaged set = `open` + `needs_human` = 95 levers after PR #2618 restore (107 total; 12 non-triaged: `optional-fallback`, `awaiting sign-off`, `optional (funnel)`, `blocked`, plus 8 discharged-ish restored as open). Run `python3 scripts/generate_html.py` to regenerate `lever-triage.html`.
 
-## Security & Credentials (17)
+## Security & Credentials (18)
 
 - **L-ARCA-KEY-ESCROW**: Escrow the ARCA vault key off-machine (~2 min): Keychain Access → search 'limen-arca' → show password → save it in your ...
 - **L-IANVA-CLOUD**: Stop the claude.ai connector prompts (the /doctor claude.ai-connector 'needs authentication' class — Sentry, Scholar Gat...
@@ -72,7 +72,7 @@
 - **L-UNIVERSE-RECOVERY-CUSTODY-VOLUMES**: Universe recovery custody volumes
 - **L-PORTAL-PUBLISH-WAVE-1**: Release publish wave 1: the estate registry holds 37 private repos judged publish-wave candidates (repo_overrides rows w...
 
-## Uncategorized (34)
+## Uncategorized (35)
 
 - **L-HEALTH-GOLIVE**: Decide the health-office content DISPOSITION — and note this is TIME-BOUNDED, not passive. The executive health-office s...
 - **L-PII-SWEEP-CONTAIN**: PII sweep contain
