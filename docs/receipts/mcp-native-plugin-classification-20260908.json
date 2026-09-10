@@ -1,0 +1,167 @@
+{
+  "schema_version": "limen.mcp_plugin_classification.v1",
+  "codex_version": "0.153.4",
+  "selection_source": "https://github.com/openai/codex/blob/rust-v0.153.4/codex-rs/core-plugins/src/store.rs",
+  "fingerprint_algorithm": "sha256(json.dumps(parsed_manifest,sort_keys=True))",
+  "owner": "domus-genoma",
+  "rows": [
+    {
+      "client": "codex",
+      "name": "chrome",
+      "route": "chrome@openai-bundled",
+      "manifest_fingerprint": "a7661001f95589ef0ad8482489e34b9dda32ca82223e4781630c3b5a5879052f",
+      "plugin_version": "26.901.51231",
+      "service": "codex/chrome",
+      "mcp_entrypoint_declared": false,
+      "required": [
+        "hooks",
+        "skills"
+      ],
+      "native_evidence": "unmeasured",
+      "classification": "plugin-capability"
+    },
+    {
+      "client": "codex",
+      "name": "visualize",
+      "route": "visualize@openai-bundled",
+      "manifest_fingerprint": "28369085725d807d48563ade9125e40230e99f8e8eb207d81a3e703d3eda6044",
+      "plugin_version": "1.0.29",
+      "service": "codex/visualize",
+      "mcp_entrypoint_declared": false,
+      "required": [
+        "skills"
+      ],
+      "native_evidence": "unmeasured",
+      "classification": "plugin-capability"
+    },
+    {
+      "client": "codex",
+      "name": "browser",
+      "route": "browser@openai-bundled",
+      "manifest_fingerprint": "ed9d75f36b282ea46d9e6e368c263766bd2155f032413034b25fc8abda34619b",
+      "plugin_version": "26.901.51231",
+      "service": "codex/browser",
+      "mcp_entrypoint_declared": false,
+      "required": [
+        "hooks",
+        "skills"
+      ],
+      "native_evidence": "unmeasured",
+      "classification": "plugin-capability"
+    },
+    {
+      "client": "codex",
+      "name": "typescript-lsp",
+      "route": "typescript-lsp@claude-plugins-official",
+      "manifest_fingerprint": "07e433b211fd1a597794285020da3b38b556d1227bf0bcb7f744a3a3e779df8e",
+      "plugin_version": "1.0.0",
+      "service": "codex/typescript-lsp",
+      "mcp_entrypoint_declared": false,
+      "required": [
+        "lsp"
+      ],
+      "native_evidence": "unmeasured",
+      "classification": "plugin-capability"
+    },
+    {
+      "client": "codex",
+      "name": "documents",
+      "route": "documents@openai-primary-runtime",
+      "manifest_fingerprint": "80a2544914b976dc16b5ee450e477430d68747d327ef4139b45322828876d37e",
+      "plugin_version": "26.905.11957",
+      "service": "codex/documents",
+      "mcp_entrypoint_declared": false,
+      "required": [
+        "skills"
+      ],
+      "native_evidence": "unmeasured",
+      "classification": "plugin-capability"
+    },
+    {
+      "client": "codex",
+      "name": "pdf",
+      "route": "pdf@openai-primary-runtime",
+      "manifest_fingerprint": "46bccabf363372e1f70ee12e8ba5cee4f056c4addc1e059eb7a19bc0c06e1455",
+      "plugin_version": "26.905.11957",
+      "service": "codex/pdf",
+      "mcp_entrypoint_declared": false,
+      "required": [
+        "skills"
+      ],
+      "native_evidence": "unmeasured",
+      "classification": "plugin-capability"
+    },
+    {
+      "client": "codex",
+      "name": "spreadsheets",
+      "route": "spreadsheets@openai-primary-runtime",
+      "manifest_fingerprint": "3ee4e9d72e68bfbfbaa35f862e5b7787b85c89a7594f8215803ca91a793f636b",
+      "plugin_version": "26.905.11957",
+      "service": "codex/spreadsheets",
+      "mcp_entrypoint_declared": false,
+      "required": [
+        "apps",
+        "skills"
+      ],
+      "native_evidence": "unmeasured",
+      "classification": "plugin-capability"
+    },
+    {
+      "client": "codex",
+      "name": "presentations",
+      "route": "presentations@openai-primary-runtime",
+      "manifest_fingerprint": "6a7825280c754e919b9de69d2851b3587c9cc86ab7fd4526df4afbb22f130098",
+      "plugin_version": "26.905.11957",
+      "service": "codex/presentations",
+      "mcp_entrypoint_declared": false,
+      "required": [
+        "skills"
+      ],
+      "native_evidence": "unmeasured",
+      "classification": "plugin-capability"
+    },
+    {
+      "client": "codex",
+      "name": "template-creator",
+      "route": "template-creator@openai-primary-runtime",
+      "manifest_fingerprint": "a998a1fdbf2ce2a49dfd237819a468c480ae105897e68369b6965f0f732d5463",
+      "plugin_version": "26.905.11957",
+      "service": "codex/template-creator",
+      "mcp_entrypoint_declared": false,
+      "required": [
+        "skills"
+      ],
+      "native_evidence": "unmeasured",
+      "classification": "plugin-capability"
+    },
+    {
+      "client": "codex",
+      "name": "sites",
+      "route": "sites@openai-bundled",
+      "manifest_fingerprint": "3fb78307c230150f231e84de70ef9093a84bd0d8c7de7a7171f7779e3956ce52",
+      "plugin_version": "0.1.57",
+      "service": "codex/sites",
+      "mcp_entrypoint_declared": false,
+      "required": [
+        "apps",
+        "skills"
+      ],
+      "native_evidence": "unmeasured",
+      "classification": "plugin-capability"
+    },
+    {
+      "client": "codex",
+      "name": "codex-app-tools",
+      "route": "codex-app-tools@openai-bundled",
+      "manifest_fingerprint": "fdc82eeff3a739d3f9bab39d6fcee802a38c0c404f7ff9def317e9ca2f0c0f92",
+      "plugin_version": "0.1.3",
+      "service": "codex/codex-app-tools",
+      "mcp_entrypoint_declared": false,
+      "required": [
+        "native_tools"
+      ],
+      "native_evidence": "unmeasured",
+      "classification": "owner-capability-detail-required"
+    }
+  ]
+}
