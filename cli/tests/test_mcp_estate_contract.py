@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import sys
 import threading
+from types import SimpleNamespace
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
@@ -74,6 +75,19 @@ def test_silent_clean_exit_and_partial_line_fail(code):
     assert result["dimensions"]["protocol"] == "fail"
     assert result["dimensions"]["cleanup"] == "pass"
     assert result["latency_ms"] < 2000
+
+
+def test_closed_stdio_input_is_a_protocol_failure(monkeypatch: pytest.MonkeyPatch):
+    wire = protocol.Wire(stdio("pass"), timeout=1, version="2025-11-25")
+    wire.process = SimpleNamespace(stdin=SimpleNamespace(fileno=lambda: 3))
+
+    def closed_pipe(_fd: int, _body: bytes) -> int:
+        raise BrokenPipeError
+
+    monkeypatch.setattr(protocol.os, "write", closed_pipe)
+
+    with pytest.raises(protocol.ProtocolError, match="request write failed"):
+        wire.exchange("initialize")
 
 
 SERVER = """import sys,json
