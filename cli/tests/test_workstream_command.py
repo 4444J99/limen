@@ -30,7 +30,8 @@ ADMITTED_PROVIDER_INSTRUCTION = (
 
 
 def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
-    result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True)
+    git_dir = ["--git-dir", str(cwd)] if (cwd / "HEAD").is_file() and (cwd / "objects").is_dir() else []
+    result = subprocess.run(["git", *git_dir, *args], cwd=cwd, text=True, capture_output=True)
     if result.returncode != 0:
         raise AssertionError(f"git {' '.join(args)} failed\n{result.stdout}\n{result.stderr}")
     return result
