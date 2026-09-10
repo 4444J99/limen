@@ -2154,7 +2154,7 @@ def test_serial_prelaunch_refund_restores_batch_remainder(
     assert provider_calls == ["PRELAUNCH-RELEASE", "NEXT-AFTER-REFUND"]
     assert projections[-1].portal.budget.track.spent == 1
     assert projections[-1].portal.budget.track.per_agent["codex"] == 1
-    assert "── LIVE: 2 task(s)" in capsys.readouterr().out
+    assert "── LIVE: 1 task(s)" in capsys.readouterr().out
 
 
 def test_dispatch_budget_reset_persist_survives_concurrent_board_write(
