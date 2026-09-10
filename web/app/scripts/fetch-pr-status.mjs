@@ -215,6 +215,7 @@ export async function collectRepoStatuses(repos, previous, githubToken = resolve
   const results = [];
   for (const repo of repos) {
     const fallback = previousRepo(previous, repo);
+    const fallbackPrsByNumber = new Map((fallback?.prs || []).map((pr) => [pr.number, pr]));
     const [prs, issueCount, repoMeta, branches] = await Promise.all([
       fetchPRs(repo, githubToken),
       fetchIssueCount(repo, githubToken),
@@ -224,7 +225,7 @@ export async function collectRepoStatuses(repos, previous, githubToken = resolve
     const effectivePrs = [];
     for (const pr of prs || []) {
       const checks = await fetchCheckRuns(pr.head_repo || repo, pr.head_sha, githubToken);
-      effectivePrs.push({ ...pr, checks });
+      effectivePrs.push({ ...pr, checks: checks ?? fallbackPrsByNumber.get(pr.number)?.checks ?? null });
     }
     const mergedPrs = prs === null ? (fallback?.prs || []) : effectivePrs;
     const mergedDefaultBranch = repoMeta?.default_branch || fallback?.default_branch || "main";

@@ -175,3 +175,64 @@ test("collectRepoStatuses only reuses cached fields for the requests that fail",
     globalThis.fetch = originalFetch;
   }
 });
+
+test("collectRepoStatuses reuses cached PR checks when the check-run fetch fails", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    if (url.includes("/pulls?")) {
+      return response([
+        {
+          number: 30,
+          title: "Check fallback",
+          user: { login: "4444J99" },
+          created_at: "2026-09-10T00:00:00Z",
+          updated_at: "2026-09-10T00:00:00Z",
+          draft: false,
+          mergeable_state: "clean",
+          html_url: "https://github.com/4444J99/limen/pull/30",
+          head: { ref: "fix/checks", sha: "ghi789", repo: { full_name: "4444J99/limen" } },
+          base: { ref: "main" },
+          labels: [],
+        },
+      ]);
+    }
+    if (url.includes("/check-runs?")) {
+      return response({}, { ok: false, status: 503 });
+    }
+    if (url.includes("/search/issues?")) {
+      return response({ total_count: 2 });
+    }
+    if (url.endsWith("/repos/4444J99/limen")) {
+      return response({ default_branch: "main" });
+    }
+    if (url.includes("/branches?")) {
+      return response([
+        { name: "main", protected: true },
+        { name: "fix/checks", protected: false },
+      ]);
+    }
+    throw new Error(`unexpected url ${url}`);
+  };
+
+  try {
+    const previous = {
+      repos: [
+        {
+          repo: "4444J99/limen",
+          default_branch: "main",
+          prs: [{ number: 30, checks: { total: 1, failed: 1, passed: 0, pending: 0 } }],
+          count: 1,
+          issue_count: 9,
+          active_work_branches: 1,
+          work_branches_without_open_pr: 0,
+        },
+      ],
+    };
+    const results = await collectRepoStatuses(["4444J99/limen"], previous, "token");
+    assert.deepEqual(results[0].prs[0].checks, { total: 1, failed: 1, passed: 0, pending: 0 });
+    const { publicOutput } = buildOutputs(results, 1, "2026-09-10T00:00:00Z");
+    assert.equal(publicOutput.summary.prs_with_failing_ci, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
