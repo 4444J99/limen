@@ -26,7 +26,8 @@ RECLAIM = ROOT / "scripts" / "reclaim-worktrees.py"
 
 
 def _git(*args, cwd, check=True, env=None):
-    r = subprocess.run(["git", *args], cwd=str(cwd), capture_output=True, text=True, env=env)
+    git_dir = ["--git-dir", str(cwd)] if (cwd / "HEAD").is_file() and (cwd / "objects").is_dir() else []
+    r = subprocess.run(["git", *git_dir, *args], cwd=str(cwd), capture_output=True, text=True, env=env)
     if check and r.returncode != 0:
         raise AssertionError(f"git {' '.join(args)} -> {r.returncode}\n{r.stderr}")
     return r
