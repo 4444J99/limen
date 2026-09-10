@@ -10,8 +10,8 @@ This audit covers `4444J99/limen` as observed on 2026-09-10. Remote GitHub state
 | Open pull requests | 11 |
 | Remote branches | 46 |
 | Closed, unmerged pull requests | 48 |
-| Latest `main` CI | Success, run `34476328951`, head `49d90512` |
-| Latest `main` deploy | Success, run `34488832128` |
+| Latest completed `main` CI | Success, run `34476328951`, head `49d90512` |
+| Latest completed `main` deploy | Success, run `34488832128`, head `49d90512` |
 | Local worktrees | 2; live `main` plus this isolated audit worktree |
 | `BRANCHES.md` | Absent |
 
@@ -19,14 +19,14 @@ The open-issue count is intentionally not treated as a work count. Labels overla
 
 ## Default-branch health
 
-`origin/main` is currently at `1ff1aa0a`, one commit ahead of this audit branch. The audit branch is based on `49d90512`; the only divergence is the expected `his-hand-levers.json` update from the latest closeout repair. It must not be reverted or merged incidentally.
+At this audit's observation, `origin/main` was at `1ff1aa0a`, one commit ahead of this audit branch. The audit branch is based on `49d90512`; the only divergence was the expected `his-hand-levers.json` update from the latest closeout repair. It must not be reverted or merged incidentally.
 
-The latest `main` CI is green, but the recent failure history contains two actionable classes:
+The last completed `main` CI before that observation was green for `49d90512`; it did not verify `1ff1aa0a`. The recent failure history contains two actionable classes:
 
 1. Runs `34375899662` and `34377845552` failed in `estate-contract` because the live public GitHub API returned HTTP 403. The resulting profile metadata and scheduled-run assertions were derivative failures, not evidence that the profile data itself was wrong.
 2. Run `34373227039` failed in the worker runtime probe because its fake server did not become ready. The cleanup path did execute, but readiness is still a real gate failure.
 
-The correct Wave 0 posture is therefore **green current head, unresolved historical failure families**. Do not reopen or rewrite the default branch merely to erase historical red runs; attach fixes to the owning predicates and preserve the evidence.
+The correct Wave 0 posture is therefore **last verified green commit `49d90512`, unresolved historical failure families**. Do not reopen or rewrite the default branch merely to erase historical red runs; attach fixes to the owning predicates and preserve the evidence.
 
 ## In-flight family verdict cards
 
@@ -83,7 +83,7 @@ The constitution should be added only when it can be derived from and checked ag
 
 ### Wave 0 — verify the substrate
 
-1. Keep `main` at the current green head; record the two CI failure classes as predicate-owned follow-up work.
+1. Treat `49d90512` as the last verified green commit at this audit observation; record the two CI failure classes as predicate-owned follow-up work.
 2. Run `scripts/verify-scoped.sh` against each proposed repair branch before any merge or rebasing.
 3. Confirm the governance registry and workflow arming state; disabled workflows are not counted as healthy automation.
 4. Preserve `his-hand-levers.json` as the authoritative human-gated state.
