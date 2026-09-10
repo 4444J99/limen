@@ -28,6 +28,29 @@ pip install -e mcp/            # MCP server (optional)
 (cd web/app && npm install)    # dashboard (optional)
 ```
 
+## Copilot cloud setup and approval boundaries
+
+`.github/workflows/copilot-setup-steps.yml` installs the declared Python dependencies and restores
+default-branch history for history-dependent tests. It takes effect for new cloud sessions after
+landing on the default branch; its workflow can also be run manually to verify setup.
+
+The authenticated broker is separate from local verification. The native Copilot MCP configuration
+is owned by `integrations/copilot/limen-conductor.agent.md` and the credential Wall (#320).
+Missing CLI environment variables do not prove the remote broker is down: check the available MCP
+surface first. A normal cloud session does not inherit organization/repository Actions secrets;
+only explicitly configured `copilot` environment values are exposed to it. Do not substitute an
+unauthenticated local keeper or expose credentials to make a fleet claim succeed.
+
+GitHub requires a user with write access to approve Actions workflows triggered by Copilot PRs.
+An `action_required` run with zero jobs has not tested the code; it is not a failing test.
+The PR's Checks/Actions approval is an external prerequisite, not something to bypass with a
+workflow trigger or a different identity. Copilot does not independently merge or close PRs.
+See [GitHub's cloud-agent safety controls](https://docs.github.com/en/copilot/responsible-use/agents#copilot-cloud-agent).
+
+When verification is red, repair reversible local causes first (dependencies, missing history,
+explicit bare Git targets, and failing tests). Record exact-head evidence and the remaining
+approval owner on the PR; do not report repository-wide completion from a partial test pass.
+
 ## Verification — scoped by default
 
 ```bash

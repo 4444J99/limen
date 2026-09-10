@@ -117,6 +117,22 @@ export default function PublicSurface() {
         </div>
 
         <div className="surfacePanel">
+          <div className="panelTitle">
+            <span>Issues</span>
+            <strong>{formatNumber(prSummary?.total_open_issues)} open issues are currently recorded</strong>
+          </div>
+          <p className="surfaceCopy">Issue count is derived alongside the PR feed so public backlog pressure is visible without exposing owner-only triage detail.</p>
+        </div>
+
+        <div className="surfacePanel">
+          <div className="panelTitle">
+            <span>Branches</span>
+            <strong>{formatNumber(prSummary?.total_active_work_branches)} active work branches remain in flight</strong>
+          </div>
+          <p className="surfaceCopy">{formatNumber(prSummary?.work_branches_without_open_pr)} of those branches currently have no open pull request attached.</p>
+        </div>
+
+        <div className="surfacePanel">
           <RuntimeStatusPanel
             apiUrl={apiUrl}
             endpoint="/api/public-status"

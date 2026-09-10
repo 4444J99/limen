@@ -1,0 +1,10 @@
+[
+  {
+    "task_id": "MCP-ESTATE-20260908",
+    "amendment": "Delivery correction (2026-09-08): continue this campaign through implementation, exact landing and deployment receipts, and fresh live acceptance for every required registration. Retain both denominators and all seven zero-defect criteria. A source increment, draft PR, queued merge, filed gate, or released execution lease is intermediate evidence. Continue independent admissible work while a specific lane is blocked; do not terminate the campaign at another partial handoff. Keeper prerequisite: Limen #2569."
+  },
+  {
+    "task_id": "MCP-ESTATE-20260908",
+    "amendment": "Authentication durability correction (2026-09-08): avoid recurring logins by preserving and reusing the native credential owner's existing grant across client restart, plugin refresh, and native token refresh. Diagnose credential profile/storage identity, refresh and issuer binding before considering consent. Generic not_logged_in output must not launch another login or treat a historical successful-login receipt as current authentication proof. Any actual consent remains human-controlled; acceptance requires authenticated native calls and durable reuse evidence. Owners: Domus #380 and Limen #2577."
+  }
+]
