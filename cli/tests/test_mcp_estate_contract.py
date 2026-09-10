@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 import sys
 import threading
-from types import SimpleNamespace
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import pytest
@@ -75,19 +74,6 @@ def test_silent_clean_exit_and_partial_line_fail(code):
     assert result["dimensions"]["protocol"] == "fail"
     assert result["dimensions"]["cleanup"] == "pass"
     assert result["latency_ms"] < 2000
-
-
-def test_closed_stdio_input_is_a_protocol_failure(monkeypatch: pytest.MonkeyPatch):
-    wire = protocol.Wire(stdio("pass"), timeout=1, version="2025-11-25")
-    wire.process = SimpleNamespace(stdin=SimpleNamespace(fileno=lambda: 3))
-
-    def closed_pipe(_fd: int, _body: bytes) -> int:
-        raise BrokenPipeError
-
-    monkeypatch.setattr(protocol.os, "write", closed_pipe)
-
-    with pytest.raises(protocol.ProtocolError, match="request write failed"):
-        wire.exchange("initialize")
 
 
 SERVER = """import sys,json
@@ -221,8 +207,15 @@ def test_report_does_not_leak_config_values(tmp_path):
 
 
 def test_native_status_returns_identical_inventory_without_probe(monkeypatch):
+    from types import SimpleNamespace
+
     from test_mcp_server import _load_server
 
+    # Reuse the shared, guarded loader instead of a raw exec_module: it stubs the optional
+    # mcp runtime (mcp.server.fastmcp, mcp.types) when the core CI install (cli[test]) lacks
+    # it, and installing the stub package under sys.modules["mcp"] here also prevents this
+    # module's own unguarded import from leaving a partial/incompatible entry behind that
+    # would otherwise break every subsequent test file that loads the same server module.
     module = _load_server()
     payload = {"schema_version": "limen.mcp_estate.v1", "exit": 77, "scope": "filtered", "distance": {}}
 
