@@ -221,14 +221,9 @@ def test_report_does_not_leak_config_values(tmp_path):
 
 
 def test_native_status_returns_identical_inventory_without_probe(monkeypatch):
-    import importlib.util
-    from types import SimpleNamespace
+    from test_mcp_server import _load_server
 
-    root = Path(__file__).resolve().parents[2]
-    monkeypatch.syspath_prepend(str(root / "mcp/src"))
-    spec = importlib.util.spec_from_file_location("estate_native_status_test", root / "mcp/src/limen_mcp/server.py")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    module = _load_server()
     payload = {"schema_version": "limen.mcp_estate.v1", "exit": 77, "scope": "filtered", "distance": {}}
 
     def observe(argv, **kwargs):
