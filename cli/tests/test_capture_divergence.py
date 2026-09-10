@@ -33,8 +33,9 @@ GIT_ENV = {
 
 def _git(*args, cwd, env=None):
     e = {**GIT_ENV, **(env or {})}
+    git_dir = ["--git-dir", str(cwd)] if (cwd / "HEAD").is_file() and (cwd / "objects").is_dir() else []
     return subprocess.run(
-        ["git", *args],
+        ["git", *git_dir, *args],
         cwd=str(cwd),
         env={**_base_env(), **e},
         capture_output=True,
