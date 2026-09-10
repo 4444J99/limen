@@ -29,6 +29,8 @@ const ownerSurfaceManifest = readJson(privateDir, "owner-surface-manifest.json")
 const clientSurfaceManifest = readJson(privateDir, "client-surface-manifest.json");
 const publicSurfaceManifest = readJson(publicDir, "public-surface-manifest.json");
 const prStatus = readJson(publicDir, "pr-status.json");
+const issueStatus = readJson(publicDir, "issue-status.json");
+const repoHealth = readJson(publicDir, "repo-health.json");
 const readiness = readJson(privateDir, "readiness.json");
 const qaStatus = readJson(privateDir, "qa-status.json");
 const corpusStatus = readJson(privateDir, "corpus-status.json");
@@ -66,6 +68,10 @@ if (typeof prStatus.summary?.total_open_issues !== "number") fail("pr-status.jso
 if (typeof prStatus.summary?.total_active_work_branches !== "number") fail("pr-status.json missing branch aggregate");
 if (typeof prStatus.summary?.work_branches_without_open_pr !== "number") fail("pr-status.json missing orphan branch aggregate");
 if (JSON.stringify(prStatus).includes("html_url")) fail("pr-status.json exposes PR URLs");
+if (!Array.isArray(issueStatus.repos) || issueStatus.repos.length !== 0) fail("issue-status.json must expose summary only");
+if (!Array.isArray(repoHealth.repos) || repoHealth.repos.length !== 0) fail("repo-health.json must expose summary only");
+if (typeof issueStatus.summary?.total_open_issues !== "number") fail("issue-status.json missing issue aggregate");
+if (typeof repoHealth.summary?.degraded_repos !== "number") fail("repo-health.json missing degraded-repo aggregate");
 
 for (const task of tasks.tasks || []) {
   if (task.title && publicText.includes(task.title)) fail(`public status leaks task title ${task.id}`);

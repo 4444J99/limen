@@ -87,6 +87,8 @@ for (const name of ["public-status.json"]) {
   validateFile("status-summary.schema.json", name);
 }
 validateFile("pr-status.schema.json", "pr-status.json");
+validateFile("issue-status.schema.json", "issue-status.json");
+validateFile("repo-health.schema.json", "repo-health.json");
 for (const name of ["client-status.json", "internal-status.json"]) {
   validateFile("status-summary.schema.json", name, privateDir);
 }

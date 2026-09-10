@@ -142,6 +142,7 @@ app.add_middleware(
 app.add_middleware(SecurityHeadersMiddleware)
 
 LIMEN_ROOT = Path(os.environ.get("LIMEN_ROOT", str(Path.home() / "limen")))
+MONITORING_DIR = LIMEN_ROOT / "web" / "app" / ".generated" / "surfaces"
 LIMEN_TOKEN = os.environ.get("LIMEN_API_TOKEN", "")
 GITHUB_API = os.environ.get("LIMEN_GITHUB_API", "https://api.github.com")
 GITHUB_REPO = os.environ.get("LIMEN_GITHUB_REPO", "")
@@ -1447,6 +1448,32 @@ def get_status(authorization: str | None = Header(None)) -> dict[str, Any]:
         "summary": summary(data),
         "storage": storage_status(),
     }
+
+
+def load_monitoring_feed(name: str) -> dict[str, Any]:
+    path = MONITORING_DIR / f"{name}.json"
+    try:
+        with path.open(encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=503, detail=f"{name} monitoring feed unavailable") from exc
+    except (OSError, json.JSONDecodeError) as exc:
+        raise HTTPException(status_code=503, detail=f"{name} monitoring feed invalid") from exc
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=503, detail=f"{name} monitoring feed invalid")
+    return payload
+
+
+@app.get("/api/issue-status")
+def get_issue_status(authorization: str | None = Header(None)) -> dict[str, Any]:
+    require_persona(authorization, {"owner"})
+    return load_monitoring_feed("issue-status")
+
+
+@app.get("/api/repo-health")
+def get_repo_health(authorization: str | None = Header(None)) -> dict[str, Any]:
+    require_persona(authorization, {"owner"})
+    return load_monitoring_feed("repo-health")
 
 
 @app.get("/api/client-status")
