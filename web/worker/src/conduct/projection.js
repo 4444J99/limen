@@ -6,7 +6,13 @@ import {
   validatePrivateBoard,
 } from "./private-board.js";
 import { taskWorkLoanMissingFields, workLoanDenial } from "./work-loan.js";
-import { inventoryAdmissionDenied, inventoryClassificationChanged } from "./inventory-admission.js";
+import {
+  eventRequiresInventory,
+  inventoryClassificationChanged,
+  inventoryProjectionContext,
+  recordInventoryTransition,
+  requireInventoryCapacity,
+} from "./inventory-admission.js";
 import {
   ProviderEligibilityError,
   validateProviderEligibilityUpdate,
@@ -349,13 +355,11 @@ function validatePolicyUpdate(existing, candidate, taskId) {
   }
 }
 
-function requireInventoryAdmission(existing, candidate, taskId) {
+function requireInventoryAdmission(board, existing, candidate, taskId, inventoryContext) {
   if (inventoryClassificationChanged(existing, candidate)) {
     throw new ConductProjectionError(`task ${taskId} inventory_classification_change_unauthorized`, 409);
   }
-  if (inventoryAdmissionDenied(existing, candidate)) {
-    throw new ConductProjectionError(`task ${taskId} inventory_admission_adapter_unavailable`, 409);
-  }
+  requireInventoryCapacity(board, existing, candidate, inventoryContext);
 }
 
 function resetBudgetWindow(budget, event) {
@@ -697,7 +701,7 @@ export function applyTaskPacketProjectionEvent(input, event, inventoryContext = 
     const supplied = clone(intent.task || {});
     validateTaskShape(supplied, taskId);
     validatePolicyUpdate(existing, { ...existing, ...supplied }, taskId);
-    requireInventoryAdmission(existing, { ...existing, ...supplied }, taskId);
+    requireInventoryAdmission(board, existing, { ...existing, ...supplied }, taskId, inventoryContext);
     if (!existing && ["dispatched", "in_progress"].includes(supplied.status)) {
       throw new ConductProjectionError(`task ${taskId} canonical_reservation_required`, 409);
     }
@@ -787,7 +791,7 @@ export function applyTaskPacketProjectionEvent(input, event, inventoryContext = 
   }
   const candidate = { ...existing, ...patch };
   validatePolicyUpdate(existing, candidate, taskId);
-  requireInventoryAdmission(existing, candidate, taskId);
+  requireInventoryAdmission(board, existing, candidate, taskId, inventoryContext);
   if (candidate.provider_eligibility != null) patch.provider_eligibility = candidate.provider_eligibility;
   const lifecycleRepair = kind === "task.status"
     && isLifecycleRepairAuthorized(existing, nextStatus, intent.log, patch);
@@ -865,7 +869,7 @@ export function applyTaskCompatibilityEvent(input, event, inventoryContext = nul
   const task = (board.tasks || []).find((candidate) => candidate.id === event.task_id);
   if (!task) throw new ConductProjectionError(`task ${event.task_id} not found in canonical board`, 409);
   validatePolicyUpdate(task, { ...task, status: event.status }, event.task_id);
-  requireInventoryAdmission(task, { ...task, status: event.status }, event.task_id);
+  requireInventoryAdmission(board, task, { ...task, status: event.status }, event.task_id, inventoryContext);
   if (["dispatched", "in_progress"].includes(event.status)) {
     const missing = taskWorkLoanMissingFields(task);
     if (missing.length) throw new ConductProjectionError(workLoanDenial(missing), 409);
