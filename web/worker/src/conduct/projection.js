@@ -930,17 +930,78 @@ function githubRefUrl(env) {
   return `${githubRepositoryUrl(env)}/git/refs/heads/${branch}`;
 }
 
+export async function recoverProjectionBranch(env, fetchImpl = fetch) {
+  const repo = String(env.LIMEN_GITHUB_REPO || "");
+  const branch = githubProjectionBranch(env);
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo)) {
+    throw new ConductProjectionError("invalid projection repository");
+  }
+  const read = async (url) => {
+    const response = await fetchImpl(url, { method: "GET", headers: githubHeaders(env) });
+    if (!response.ok) {
+      throw new ConductProjectionError(`projection recovery read failed (${response.status})`);
+    }
+    return response.json();
+  };
+  const repository = await read(githubRepositoryUrl(env));
+  const defaultBranch = String(repository.default_branch || "");
+  if (String(repository.full_name || "").toLowerCase() !== repo.toLowerCase()
+      || !defaultBranch || branch === defaultBranch
+      || (env.LIMEN_GITHUB_DEFAULT_BRANCH && env.LIMEN_GITHUB_DEFAULT_BRANCH !== defaultBranch)) {
+    throw new ConductProjectionError("projection recovery repository/default branch mismatch");
+  }
+  const refUrl = githubRefUrl(env);
+  const validPublicationRef = (value) => value.ref === `refs/heads/${branch}`
+    && value.object?.type === "commit" && /^[0-9a-f]{40}$/.test(String(value.object?.sha || ""));
+  const existing = await fetchImpl(refUrl, { method: "GET", headers: githubHeaders(env) });
+  // Never reset an existing ref, even if another publisher created it after the merge failed.
+  if (existing.ok) {
+    if (!validPublicationRef(await existing.json())) {
+      throw new ConductProjectionError("projection recovery observed an invalid publication ref");
+    }
+    return defaultBranch;
+  }
+  if (existing.status !== 404) {
+    throw new ConductProjectionError(`projection recovery ref read failed (${existing.status})`);
+  }
+  const defaultRef = await read(`${githubRepositoryUrl(env)}/git/ref/heads/${defaultBranch.split("/").map(encodeURIComponent).join("/")}`);
+  const sha = String(defaultRef.object?.sha || "");
+  if (defaultRef.ref !== `refs/heads/${defaultBranch}`
+      || defaultRef.object?.type !== "commit" || !/^[0-9a-f]{40}$/.test(sha)) {
+    throw new ConductProjectionError("projection recovery default ref is not a valid commit");
+  }
+  const created = await fetchImpl(`${githubRepositoryUrl(env)}/git/refs`, {
+    method: "POST",
+    headers: githubHeaders(env, true),
+    body: JSON.stringify({ ref: `refs/heads/${branch}`, sha }),
+  });
+  if (![201, 409, 422].includes(created.status)) {
+    throw new ConductProjectionError(`projection recovery creation failed (${created.status})`);
+  }
+  // A conflict is success only after independently observing the exact intended ref.
+  const observed = await read(refUrl);
+  if (!validPublicationRef(observed)) {
+    throw new ConductProjectionError("projection recovery did not observe a valid publication ref");
+  }
+  return defaultBranch;
+}
+
 async function reconcileProjectionBranch(env, fetchImpl) {
   const branch = githubProjectionBranch(env);
-  const response = await fetchImpl(`${githubRepositoryUrl(env)}/merges`, {
+  const merge = (head) => fetchImpl(`${githubRepositoryUrl(env)}/merges`, {
     method: "POST",
     headers: githubHeaders(env, true),
     body: JSON.stringify({
       base: branch,
-      head: String(env.LIMEN_GITHUB_DEFAULT_BRANCH || "main"),
+      head,
       commit_message: "tabularius: reconcile projection branch with current main",
     }),
   });
+  let response = await merge(String(env.LIMEN_GITHUB_DEFAULT_BRANCH || "main"));
+  if (response.status === 404) {
+    const defaultBranch = await recoverProjectionBranch(env, fetchImpl);
+    response = await merge(defaultBranch);
+  }
   const text = await response.text();
   if (![201, 204].includes(response.status)) {
     throw new ConductProjectionError(
@@ -1283,13 +1344,14 @@ export async function commitTaskCompatibilityEvent(
         event_id: event.event_id,
       };
     }
-    await publishPublicBoard(env, applied.board, { fetchImpl, maxAttempts });
+    const publication = await publishPublicBoard(env, applied.board, { fetchImpl, maxAttempts });
     await savePrivateBoard(storage, applied.board);
     return {
       status: "committed",
       mode: "private-canonical",
       task: applied.task,
       event_id: event.event_id,
+      publication,
     };
   }
   if (!env.LIMEN_GITHUB_REPO || !env.LIMEN_GITHUB_TOKEN) {

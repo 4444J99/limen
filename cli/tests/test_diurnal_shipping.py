@@ -15,7 +15,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import sys
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -32,15 +32,12 @@ def mod(monkeypatch):
     sys.modules["diurnal"] = module
     spec.loader.exec_module(module)
 
-    class ShippingClock(datetime):
+    class FixtureClock(datetime):
         @classmethod
         def now(cls, tz=None):
-            instant = cls(2026, 8, 2, 12, tzinfo=UTC)
-            return instant.astimezone(tz) if tz is not None else instant.replace(tzinfo=None)
+            return cls(2026, 8, 2, 12, tzinfo=tz)
 
-    # These receipts describe the August 2 incident. Freeze the consumer clock:
-    # otherwise July fixtures silently age past production's 30-day retention.
-    monkeypatch.setattr(module, "datetime", ShippingClock)
+    monkeypatch.setattr(module, "datetime", FixtureClock)
     return module
 
 

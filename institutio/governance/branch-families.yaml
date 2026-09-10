@@ -1,0 +1,34 @@
+# BRANCH FAMILIES — branch ownership and lineage policy.
+#
+# `scripts/check-branch-families.py` checks this registry against every locally
+# known origin branch and against the generated BRANCHES.md. A branch is never
+# cleanup-eligible merely because it is old: its family declares the durable
+# integration or preservation receipt that must exist first.
+schema_version: 1
+repository: 4444J99/limen
+unintegrated_branch_receipts:
+  - {branch: capture/main-deferred, family: capture, owner_issue: 2614}
+  - {branch: copilot/fix-bug-in-data-import, family: copilot, owner_issue: 2614}
+  - {branch: recovery/agy-project-md-20260823, family: recovery, owner_issue: 2614}
+  - {branch: work/git-finishline-handoff-20260908, family: work, owner_issue: 2614}
+  - {branch: work/recovery-green-20260908, family: work, owner_issue: 2614}
+  - {branch: work/recovery-intent-completion-20260908, family: work, owner_issue: 2614}
+families:
+  - {name: trunk, match: "^main$", owner: governance, intent: "protected production trunk", receipt: "merged pull request"}
+  - {name: feature, match: "^feat/.+$", owner: product, intent: "new product capability", receipt: "open or merged pull request"}
+  - {name: repair, match: "^fix/.+$", owner: engineering, intent: "targeted defect repair", receipt: "open or merged pull request"}
+  - {name: healing, match: "^heal/.+$", owner: engineering, intent: "reconciliation or self-healing repair", receipt: "open or merged pull request"}
+  - {name: maintenance, match: "^chore/.+$", owner: engineering, intent: "maintenance and tooling", receipt: "open or merged pull request"}
+  - {name: documentation, match: "^docs/.+$", owner: docs, intent: "documentation-only change", receipt: "open or merged pull request"}
+  - {name: refactor, match: "^refactor/.+$", owner: engineering, intent: "behavior-preserving restructure", receipt: "open or merged pull request"}
+  - {name: codex, match: "^codex/.+$", owner: codex, intent: "Codex-native work", receipt: "open or merged pull request"}
+  - {name: copilot, match: "^copilot/.+$", owner: copilot, intent: "Copilot-native work", receipt: "open or merged pull request"}
+  - {name: security, match: "^security(?:/.+|-.+)?$", owner: security, intent: "security remediation", receipt: "open or merged pull request"}
+  - {name: recovery, match: "^recovery(?:/.+|-.+)?$", owner: recovery, intent: "historical recovery work", receipt: "open or merged pull request"}
+  - {name: successor, match: "^successor/.+$", owner: recovery, intent: "lineage-preserving successor", receipt: "linked predecessor and open or merged pull request"}
+  - {name: work, match: "^work/.+$", owner: fleet, intent: "bounded fleet work", receipt: "open or merged pull request"}
+  - {name: corrective, match: "^corrective/.+$", owner: governance, intent: "governance correction", receipt: "open or merged pull request"}
+  - {name: capture, match: "^capture/.+$", owner: fleet, intent: "durable capture work", receipt: "open or merged pull request"}
+  - {name: dependency, match: "^dependency(?:/.+|-.+)?$", owner: dependencies, intent: "dependency maintenance", receipt: "open or merged pull request"}
+  - {name: workspace, match: "^4444j99-plan-requested-change$", owner: copilot, intent: "active Copilot workspace branch", receipt: "open pull request or session owner receipt"}
+  - {name: repair-exception, match: "^fix-(profile-api-observation-transport|live-profile-count-acceptance)-20260909$", owner: engineering, intent: "legacy repair branch", receipt: "linked preservation receipt"}

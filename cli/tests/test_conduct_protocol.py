@@ -39,6 +39,40 @@ from limen.work_loan import WorkLoanV1
 NOW = datetime(2026, 7, 18, 15, 0, tzinfo=timezone.utc)
 
 
+def test_exact_projection_claim_preserves_task_exclusion_without_code_exclusivity():
+    ident = AgentIdentityV1(agent="codex", surface="test", session_id="projection-test")
+    packet = WorkPacketV1(
+        work_id="projection-test",
+        work_key="projection-test",
+        intent={"kind": "task.status", "task_id": "T-1"},
+        execution={"adapter": "tabularius", "projection": "tasks.yaml"},
+        initiator=ident,
+        conductor=ident,
+        preferred_agent="tabularius",
+        required_capabilities=frozenset({"board-write"}),
+        resource_claims=(ResourceClaimV1(key="task/T-1"),),
+        predicate="python3 scripts/validate-task-board.py --tasks tasks.yaml",
+        receipt_target="git:organvm/limen:tasks.yaml#T-1",
+        authority=AuthorityEnvelopeV1(
+            actions=frozenset({"task.status"}),
+            repositories=frozenset({"organvm/limen"}),
+            path_prefixes=frozenset({"tasks.yaml"}),
+            may_delegate=False,
+        ),
+        effect="write",
+        spend=SpendEnvelopeV1(limit=0),
+        task_id="T-1",
+        deadline=NOW,
+    )
+    broker = ConductBroker(MemoryStateStore())
+    claims = broker._effective_claims(packet)
+    assert [claim.key for claim in claims] == ["task/T-1"]
+    assert resources_overlap(claims[0], claims[0])
+    assert not resources_overlap(claims[0], ResourceClaimV1(key="path/organvm/limen/topic/cli"))
+    forged = packet.model_copy(update={"spend": SpendEnvelopeV1(limit=1)})
+    assert "repo/organvm/limen/write" in {claim.key for claim in broker._effective_claims(forged)}
+
+
 def storage_claim(identifier: str = "storageClaimIdentifier01") -> StorageEnvelopeClaimV1:
     return StorageEnvelopeClaimV1(
         claim_id=identifier,

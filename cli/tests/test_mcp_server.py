@@ -68,23 +68,30 @@ def _load_server():
         mcp_package = types.ModuleType("mcp")
         mcp_server_package = types.ModuleType("mcp.server")
         fastmcp_module = types.ModuleType("mcp.server.fastmcp")
+        mcp_types_module = types.ModuleType("mcp.types")
 
         class FastMCP:
             def __init__(self, _name):
                 pass
 
-            def tool(self):
+            def tool(self, **_kwargs):
                 return lambda function: function
 
             def run(self):
                 pass
 
+        class ToolAnnotations:
+            def __init__(self, **_kwargs):
+                pass
+
         fastmcp_module.FastMCP = FastMCP
+        mcp_types_module.ToolAnnotations = ToolAnnotations
         mcp_package.server = mcp_server_package
         mcp_server_package.fastmcp = fastmcp_module
         sys.modules["mcp"] = mcp_package
         sys.modules["mcp.server"] = mcp_server_package
         sys.modules["mcp.server.fastmcp"] = fastmcp_module
+        sys.modules["mcp.types"] = mcp_types_module
     # server.py imports its own package absolutely (`from limen_mcp.intake import …`), so the repo's
     # mcp/src must be importable even when limen_mcp isn't pip-installed — otherwise this test FAILS
     # (not skips) on any host that has the `mcp` runtime but not the limen_mcp package: the skip

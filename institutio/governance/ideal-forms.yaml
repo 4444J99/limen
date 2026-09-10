@@ -57,6 +57,31 @@ prose_status_vocabulary:
 
 ideals:
 
+  IF-RECORD-KEEPER-COVENANT:
+    ideal: >
+      Every testament-class artifact has one declared keeper, one authenticated mutation
+      lane and a guard against direct writes, as described in the existing ideal ledger.
+    owner: tabularius
+    probe: null
+    probe_absent_reason: >
+      The ledger already declares this ideal, but no composite predicate proves both
+      authenticated keeper operation and every artifact guard. Agent-document parity alone
+      cannot establish that runtime covenant; the missing measurement remains counted.
+
+  IF-MCP-ESTATE:
+    ideal: >
+      Every expected local, plugin, brokered and hosted MCP registration retains capabilities,
+      uses its declared client route with project isolation, starts quietly, completes a valid
+      MCP exchange and leaves no probe-owned processes. Disabled and unavailable entries remain counted.
+    owner: "Domus (configuration), ianva (routing), Limen (measurement and repair)"
+    probe:
+      command: "bash scripts/verify-mcp-estate.sh --strict"
+      derives: >
+        Seven separate defect counts over the declared estate; exit 77 is unavailable evidence,
+        and only complete applicable coverage returns zero.
+      environment: host
+      at_ideal_when: exit_zero
+
   IF-FIRST-DOLLAR:
     ideal: >
       An executable first-dollar predicate that is green only when a real payment has cleared;

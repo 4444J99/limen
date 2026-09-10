@@ -248,13 +248,14 @@ class GitVault:
         with tempfile.TemporaryDirectory(prefix="limen-arca-remote-") as temporary:
             snapshot = Path(temporary) / "snapshot.git"
             _run(["git", "init", "--bare", "--quiet", str(snapshot)], cwd=self.root)
+            git = ["git", "--git-dir", str(snapshot)]
             alternates = snapshot / "objects" / "info" / "alternates"
             alternates.parent.mkdir(parents=True, exist_ok=True)
             alternates.write_text(f"{(common_dir / 'objects').resolve()}\n", encoding="utf-8")
             remote_ref = "refs/limen/remote-main"
             _run(
                 [
-                    "git",
+                    *git,
                     "fetch",
                     "--quiet",
                     "--no-tags",
@@ -264,37 +265,37 @@ class GitVault:
                 ],
                 cwd=snapshot,
             )
-            if _run(["git", "rev-parse", remote_ref], cwd=snapshot) != head:
+            if _run([*git, "rev-parse", remote_ref], cwd=snapshot) != head:
                 raise PipelineError("ARCA remote main changed during completed-receipt verification")
 
             candidates = _run(
-                ["git", "rev-list", remote_ref, "--", receipt_path.as_posix()],
+                [*git, "rev-list", remote_ref, "--", receipt_path.as_posix()],
                 cwd=snapshot,
             ).splitlines()
             matches = [
                 commit
                 for commit in candidates
-                if _run(["git", "show", "-s", "--format=%s", commit], cwd=snapshot) == message
+                if _run([*git, "show", "-s", "--format=%s", commit], cwd=snapshot) == message
             ]
             if len(matches) != 1:
                 raise PipelineError("ARCA remote history does not contain one exact completed receipt")
             receipt_commit = matches[0]
             changed = set(
                 _run(
-                    ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", receipt_commit],
+                    [*git, "diff-tree", "--no-commit-id", "--name-only", "-r", receipt_commit],
                     cwd=snapshot,
                 ).splitlines()
             )
             if changed != {receipt_path.as_posix()}:
                 raise PipelineError("ARCA remote receipt commit has unexpected files")
             history = _run(
-                ["git", "rev-list", "--parents", "-n", "1", receipt_commit],
+                [*git, "rev-list", "--parents", "-n", "1", receipt_commit],
                 cwd=snapshot,
             ).split()
             if len(history) != 2:
                 raise PipelineError("ARCA remote receipt commit has invalid history")
             receipt = _run(
-                ["git", "show", f"{receipt_commit}:{receipt_path.as_posix()}"],
+                [*git, "show", f"{receipt_commit}:{receipt_path.as_posix()}"],
                 cwd=snapshot,
             )
             return history[1], receipt_commit, receipt
@@ -336,13 +337,14 @@ class GitVault:
         with tempfile.TemporaryDirectory(prefix="limen-arca-remote-") as temporary:
             snapshot = Path(temporary) / "snapshot.git"
             _run(["git", "init", "--bare", "--quiet", str(snapshot)], cwd=self.root)
+            git = ["git", "--git-dir", str(snapshot)]
             alternates = snapshot / "objects" / "info" / "alternates"
             alternates.parent.mkdir(parents=True, exist_ok=True)
             alternates.write_text(f"{(common_dir / 'objects').resolve()}\n", encoding="utf-8")
             remote_ref = "refs/limen/remote-main"
             _run(
                 [
-                    "git",
+                    *git,
                     "fetch",
                     "--quiet",
                     "--no-tags",
@@ -352,9 +354,9 @@ class GitVault:
                 ],
                 cwd=snapshot,
             )
-            if _run(["git", "rev-parse", remote_ref], cwd=snapshot) != remote_output[0]:
+            if _run([*git, "rev-parse", remote_ref], cwd=snapshot) != remote_output[0]:
                 raise PipelineError("ARCA remote main changed during payload restoration")
-            _run(["git", "merge-base", "--is-ancestor", payload_commit, remote_ref], cwd=snapshot)
+            _run([*git, "merge-base", "--is-ancestor", payload_commit, remote_ref], cwd=snapshot)
 
             destination.mkdir(parents=True)
             try:
@@ -363,7 +365,7 @@ class GitVault:
                     restored = destination / path
                     restored.write_bytes(
                         _run_bytes(
-                            ["git", "show", f"{payload_commit}:{git_path}"],
+                            [*git, "show", f"{payload_commit}:{git_path}"],
                             cwd=snapshot,
                         )
                     )
