@@ -126,7 +126,7 @@ def test_always_working_reconciles_existing_work_before_assignment(monkeypatch, 
         encoding="utf-8",
     )
     (lifecycle / "prompt-packet-ledger.json").write_text(
-        json.dumps({"open_packets": [], "recorded_packets": [{"id": "p1"}]}),
+        json.dumps({"inputs_available": True, "open_packets": [], "recorded_packets": [{"id": "p1"}]}),
         encoding="utf-8",
     )
     (lifecycle / "product-ledger.json").write_text(json.dumps({"next_unblocked": [{"id": "v1"}]}), encoding="utf-8")
@@ -864,6 +864,27 @@ def test_mail_active_flagged_done_when_story_ledger_covers_current_flags(monkeyp
     assert "classified into 1 clusters" in receipts["MAIL-ACTIVE-FLAGGED"]["verdict"]
 
 
+def test_mail_receipts_fail_closed_when_mail_index_is_unavailable(monkeypatch, tmp_path):
+    mod = _load("always_working_mail_unavailable_uut", ALWAYS_WORKING)
+    root = tmp_path / "limen"
+    root.mkdir()
+
+    monkeypatch.setattr(mod, "ROOT", root)
+    monkeypatch.setattr(mod, "MAIL_INDEX", tmp_path / "missing-envelope-index")
+    monkeypatch.setattr(mod, "MAIL_STORY_LOG", root / "logs" / "mail-story-ledger.json")
+    monkeypatch.setattr(mod, "mail_census", lambda: {"ok": False, "error": "mail census unavailable"})
+
+    receipts = {item["id"]: item for item in mod.mail_receipts()}
+
+    assert receipts["MAIL-ACTIVE-FLAGGED"]["status"] == mod.STATUS_ASSIGNED
+    assert receipts["MAIL-HISTORICAL-BACKLOG"]["status"] == mod.STATUS_ASSIGNED
+    assert receipts["MAIL-ACTIVE-FLAGGED"]["verdict"] == "mail index unavailable; active flagged state is unverified"
+    assert (
+        receipts["MAIL-HISTORICAL-BACKLOG"]["verdict"]
+        == "mail index unavailable; historical backlog state is unverified"
+    )
+
+
 def test_mail_historical_done_when_bounded_batch_is_atomized(monkeypatch, tmp_path):
     mod = _load("always_working_mail_history_uut", ALWAYS_WORKING)
     root = tmp_path / "limen"
@@ -909,6 +930,19 @@ def test_mail_historical_done_when_bounded_batch_is_atomized(monkeypatch, tmp_pa
     assert receipts["MAIL-HISTORICAL-BACKLOG"]["status"] == mod.STATUS_DONE
     assert receipts["MAIL-HISTORICAL-BACKLOG"]["evidence"]["mail_story"]["classified_current"] is True
     assert "bounded batch" in receipts["MAIL-HISTORICAL-BACKLOG"]["verdict"]
+
+
+def test_prompt_packet_receipt_requires_canonical_input_attestation(monkeypatch, tmp_path):
+    mod = _load("always_working_prompt_packet_unavailable_uut", ALWAYS_WORKING)
+    index = tmp_path / "prompt-packet-ledger.json"
+    index.write_text(json.dumps({"open_packets": [], "recorded_packets": []}), encoding="utf-8")
+    monkeypatch.setattr(mod, "PROMPT_PACKET_INDEX", index)
+
+    receipt = mod.prompt_packet_receipt()
+
+    assert receipt["status"] == mod.STATUS_ASSIGNED
+    assert receipt["verdict"] == "canonical private packet indexes unavailable; clearance is unverified"
+    assert receipt["evidence"]["inputs_available"] is False
 
 
 def test_repo_surface_done_when_fresh_duplicates_are_recorded(monkeypatch, tmp_path):

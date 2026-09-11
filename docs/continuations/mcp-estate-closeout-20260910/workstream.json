@@ -1,0 +1,33 @@
+{
+  "schema": "limen.workstream.receipt.v1",
+  "slug": "mcp-estate-closeout-20260910",
+  "branch": "4444j99-verify-heal-mcp-wave0",
+  "contract": {
+    "schema": "limen.workstream.contract.v1",
+    "authorization": {
+      "approval_mode": "never",
+      "mode": "full_non_destructive",
+      "retained_gates": ["destructive", "credential", "paid_spend", "public_send", "runtime_or_host_mutation"],
+      "reversible_in_scope": "proceed_without_confirmation",
+      "sandbox": "workspace-write"
+    },
+    "runway": {
+      "requested": "4h",
+      "duration_seconds": 14400,
+      "deadline_epoch": null,
+      "started_epoch": null
+    },
+    "conductor": {
+      "mode": "route_bounded_packets",
+      "provider_and_model": "provider_neutral",
+      "lane_selection": "derive_from_live_capabilities",
+      "expiry_rule": "stop_or_emit_successor_before_zero"
+    }
+  },
+  "continuation": {
+    "owner": "https://github.com/4444J99/limen/pull/2620",
+    "human_protected": true,
+    "launch_command": "bash docs/continuations/mcp-estate-closeout-20260910/kickstart.sh",
+    "launch_working_directory": "repository root"
+  }
+}

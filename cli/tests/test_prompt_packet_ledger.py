@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 
@@ -127,6 +128,26 @@ def test_prompt_packet_ledger_groups_stalled_batches_without_raw_text(tmp_path: 
     assert "Prompt Packet Ledger" in markdown
     assert packets.DOC_PATH.exists()
     assert packets.PRIVATE_INDEX.exists()
+
+
+def test_prompt_packet_ledger_preserves_existing_outputs_without_private_inputs(monkeypatch, tmp_path: Path):
+    packets = _load()
+    packets.ROOT = tmp_path
+    packets.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    packets.BATCH_REVIEW_INDEX = packets.PRIVATE_ROOT / "lifecycle" / "prompt-batch-review-ledger.json"
+    packets.PRIORITY_INDEX = packets.PRIVATE_ROOT / "lifecycle" / "prompt-priority-map.json"
+    packets.ATTACK_INDEX = packets.PRIVATE_ROOT / "lifecycle" / "session-attack-paths.json"
+    packets.DOC_PATH = tmp_path / "docs" / "prompt-packet-ledger.md"
+    packets.PRIVATE_INDEX = packets.PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
+    packets.DOC_PATH.parent.mkdir()
+    packets.DOC_PATH.write_text("prior public projection\n", encoding="utf-8")
+    packets.PRIVATE_INDEX.parent.mkdir(parents=True)
+    packets.PRIVATE_INDEX.write_text('{"prior": "private projection"}\n', encoding="utf-8")
+    monkeypatch.setattr(sys, "argv", ["prompt-packet-ledger.py", "--write"])
+
+    assert packets.main() == 1
+    assert packets.DOC_PATH.read_text(encoding="utf-8") == "prior public projection\n"
+    assert packets.PRIVATE_INDEX.read_text(encoding="utf-8") == '{"prior": "private projection"}\n'
 
 
 def test_prompt_packet_ledger_records_packet_resolution_receipts(tmp_path: Path):
