@@ -1,6 +1,6 @@
 # Campaign Heartbeat Health
 
-Generated: `2026-09-10T23:39:29+00:00`
+Generated: `2026-09-11T00:07:47+00:00`
 
 Status: `blocked`
 
@@ -12,7 +12,7 @@ Status: `blocked`
 
 ## Heartbeat
 
-- Generated plist probe: `False` from `~/Workspace/organvm/copilot-worktrees/limen/4444j99-probable-invention/scripts/gen-launchd-plist.sh`.
+- Generated plist probe: `False` from `scripts/gen-launchd-plist.sh`.
 - Generated LIMEN_WORKTREES: `None`.
 - Generated LIMEN_WORKTREE_ROOT: `None`.
 - Generated LIMEN_CAMPAIGN_WAKE_TIMEOUT: `None`.
@@ -29,7 +29,7 @@ Status: `blocked`
 - Loaded LIMEN_CAMPAIGN_WAKE_TIMEOUT: `None`.
 - Watchdog plist present: `False`.
 - Watchdog launchd state: `missing` pid `None`.
-- Watchdog dry-run healthy: `False`; `[watchdog] 2026-09-10T23:39:30.868490+00:00 UNHEALTHY sig=beating+daemon-up`.
+- Watchdog dry-run healthy: `False`; `[watchdog] 2026-09-11T00:07:47.333902+00:00 UNHEALTHY sig=beating+daemon-up`.
 
 ## Legacy Manual Async Diagnostic
 
@@ -51,21 +51,26 @@ Status: `blocked`
 
 ## Always-Working Gate
 
-- Reconciliation index present: `False`.
-- Reconciliation status: `missing`.
-- Required open workstreams: `0`.
-- Blocked workstreams: `0`.
-- Done from receipt: `0`.
-- Next item: `` (``).
+- Reconciliation index present: `True`.
+- Reconciliation status: `needs-work`.
+- Required open workstreams: `7`.
+- Blocked workstreams: `2`.
+- Done from receipt: `2`.
+- Next item: `SUBSTRATE-DISK-TEMP` (`assigned_from_existing_work`).
 - Public reconciliation: `docs/always-working.md`.
+  - `SUBSTRATE-DISK-TEMP`: `substrate` / `assigned_from_existing_work`; substrate lifecycle predicate is failing.
+  - `PUBLIC-FACE-CONTRIBUTION-BALANCE`: `contribution-balance` / `assigned_from_existing_work`; GitHub activity mix needs owner action: commits 69.6%, PRs 17.2%, issues 12.4%, reviews 0.7%.
+  - `MAIL-ACTIVE-FLAGGED`: `mail-active` / `assigned_from_existing_work`; mail index unavailable; active flagged state is unverified.
+  - `MAIL-HISTORICAL-BACKLOG`: `mail-historical` / `assigned_from_existing_work`; mail index unavailable; historical backlog state is unverified.
+  - `REPO-BOIL-UP`: `repo-boil-up` / `needs_assignment`; repo surface ledger missing; assignment must refresh existing roots before new work.
 
 ## Live Root
 
 - Live root: `~/Workspace/limen`.
-- Branch: `main`; status `## main...origin/main`.
+- Branch: `main`; status `## main...origin/main [behind 1]`.
 - HEAD: `74505dddaad6892fd101dee0928bda44166b3d21`.
-- origin/main: `74505dddaad6892fd101dee0928bda44166b3d21` (cached at receipt generation).
-- Matches origin/main: `True`; ahead `0` behind `0` in the cached observation only.
+- origin/main: `bc19871ac688f6a0892d61bffdd699070b6df620`.
+- Matches origin/main: `False`; ahead `0` behind `1`.
 - Dirty entries: `0`.
 
 ## Verified Worktree
@@ -79,7 +84,9 @@ Status: `blocked`
 - `heartbeat-plist-missing`: LaunchAgent plist was not found.
 - `heartbeat-launchd-not-running`: launchd state is missing.
 - `heartbeat-watchdog-unhealthy`:   ok  not-wedged: {"reason": "no PARALLEL beats in window", "recent_pr_counts": [], "max_fails_threshold": 3}
-- `always-working-reconciliation-missing`: No current always-working reconciliation receipt is available.
+- `live-root-not-at-origin-main`: live root branch main head 74505dddaad6 differs from origin/main bc19871ac688.
+- `prompt-packet-index-unavailable`: Prompt packet private index lacks canonical input attestation; packet clearance is unverified.
+- `always-working-required-work-open`: 7 required promise workstream(s) remain open; next item SUBSTRATE-DISK-TEMP.
 
 ## Commands
 

@@ -20,17 +20,20 @@ remaining lane is host-owned runtime activation and heartbeat custody.
 bash docs/continuations/mcp-estate-closeout-20260910/kickstart.sh
 ```
 
-The command enters the capsule's isolated worktree when available, validates
-the finite runway, refreshes the tracked gate receipt, and re-derives the
-protected host gate. It does not switch branches or reload launchd.
+Run this from the capsule worktree. The script re-enters the worktree that
+contains the script, verifies it is on the capsule branch, validates the finite
+runway, refreshes the tracked gate receipt, and re-derives the protected host
+gate. It starts only this bounded successor receipt-refresh lane; it does not
+switch branches, reload launchd, or enable async work.
 
-The bounded workstream contract is `workstream.json`; it grants a four-hour
-renewable runway and retains runtime/host mutations as operator-gated.
+The bounded kickstart contract is `workstream.json`; it grants a four-hour
+renewable runway for receipt refresh and retains runtime/host mutations as
+operator-gated.
 
 ## Current boundary
 
 The live checkout is one commit behind the installed release and the heartbeat
 LaunchAgent is absent. `docs/dispatch-health.md` and
 `docs/always-working.md` are the owning records. Do not switch the live branch,
-reload launchd, or enable asynchronous work without the operator gate emitted
-by `live-root-gate.py`.
+reload launchd, or enable asynchronous work without the read-only operator gate
+receipt emitted by `live-root-gate.py`.

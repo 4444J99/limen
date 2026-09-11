@@ -101,9 +101,12 @@ def run_command(
 
 def relpath(path: Path) -> str:
     try:
-        return "~/" + str(path.expanduser().resolve().relative_to(HOME))
+        return str(path.resolve().relative_to(ROOT.resolve()))
     except (OSError, ValueError):
-        return str(path)
+        try:
+            return "~/" + str(path.expanduser().resolve().relative_to(HOME))
+        except (OSError, ValueError):
+            return str(path)
 
 
 def command_summary(result: dict[str, Any]) -> dict[str, Any]:
@@ -455,6 +458,21 @@ def prompt_packet_snapshot() -> dict[str, Any]:
             "top_open_packets": [],
         }
 
+    if index.get("inputs_available") is not True:
+        return {
+            "present": True,
+            "path": str(PROMPT_PACKET_INDEX),
+            "public_doc": str(PROMPT_PACKET_DOC),
+            "status": "unavailable",
+            "generated_at": index.get("generated_at"),
+            "open_packets": 0,
+            "conductor_required_packets": 0,
+            "ready_after_predicate_packets": 0,
+            "recorded_packets": 0,
+            "dispatchability": {},
+            "top_open_packets": [],
+        }
+
     open_packets = [item for item in index.get("open_packets") or [] if isinstance(item, dict)]
     recorded_packets = [item for item in index.get("recorded_packets") or [] if isinstance(item, dict)]
     dispatchability: dict[str, int] = {}
@@ -625,7 +643,14 @@ def derive_blockers(snapshot: dict[str, Any]) -> list[dict[str, str]]:
                 }
             )
 
-    if int(prompt_packets.get("conductor_required_packets") or 0):
+    if prompt_packets.get("status") == "unavailable":
+        blockers.append(
+            {
+                "id": "prompt-packet-index-unavailable",
+                "evidence": "Prompt packet private index lacks canonical input attestation; packet clearance is unverified.",
+            }
+        )
+    elif int(prompt_packets.get("conductor_required_packets") or 0):
         blockers.append(
             {
                 "id": "prompt-packets-need-conductor",
@@ -805,7 +830,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         "",
         "## Verified Worktree",
         "",
-        f"- Verified worktree: `{relpath(Path(verified.get('path') or ROOT))}`.",
+        "- Verified worktree: current producer worktree (ephemeral; not a durable receipt path).",
         f"- Branch: `{verified.get('branch')}`; status `{verified.get('status_summary')}`.",
         f"- HEAD matches origin/main: `{verified.get('matches_origin_main')}`.",
         "",
