@@ -8,12 +8,13 @@ The host activation residue belongs to the live-root/heartbeat owner:
 - `docs/dispatch-health.md` records the missing LaunchAgent, missing launchd
   state, and missing reconciliation inputs.
 - `docs/always-working.md` records the current required workstreams.
-- `scripts/live-root-gate.py --write --fetch` is the next bounded receipt refresh.
+- `scripts/live-root-gate.py --write --fetch` is the next bounded receipt
+  refresh, not a blocked-state predicate.
 
-The live-root gate is read-only and records that branch switching, launchd
-reload, and async enablement require operator approval after live-root state
-is preserved or intentionally resolved. No agent in this capsule bypasses
-that boundary.
+The live-root gate is read-only. It records that branch switching, launchd
+reload, and async enablement require operator approval after live-root state is
+preserved or intentionally resolved; it does not itself enforce those actions.
+No agent in this capsule bypasses that boundary.
 
 Terminal repository evidence:
 

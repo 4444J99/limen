@@ -8,7 +8,7 @@
 - Handoff proof: `python3 scripts/handoff-relay.py --check`
 - Working tree at capsule creation: generated ledgers pending explicit commit
 
-The live-root predicate reports one protected mismatch: the live checkout is
-one commit behind the release, and the heartbeat LaunchAgent is not present.
-The gate's own packet requires operator approval before reconciliation or
-launchd activation. This capsule does not claim those effects.
+The live-root receipt reports one protected mismatch: the live checkout is one
+commit behind the release, and the heartbeat LaunchAgent is not present. The
+gate's own packet requires operator approval before reconciliation or launchd
+activation. This capsule does not claim those effects.

@@ -969,6 +969,7 @@ def test_dispatch_health_blocks_on_unresolved_prompt_packets(tmp_path: Path):
         json.dumps(
             {
                 "generated_at": "2026-07-06T00:00:00+00:00",
+                "inputs_available": True,
                 "recorded_packets": [],
                 "open_packets": [
                     {
@@ -1044,6 +1045,44 @@ def test_dispatch_health_blocks_on_unresolved_prompt_packets(tmp_path: Path):
     assert "Prompt Packet Gate" in markdown
     assert "packet-prompt-batch-critical-stalled-review-001-github_review" in markdown
     assert "prompt-packets-need-conductor" in markdown
+
+
+def test_dispatch_health_marks_unattested_prompt_packet_index_unavailable(tmp_path: Path):
+    dispatch = _load(DISPATCH_HEALTH_SCRIPT, "dispatch_health_prompt_index_unavailable")
+    dispatch.PRIVATE_ROOT = tmp_path / ".limen-private" / "session-corpus"
+    dispatch.PROMPT_PACKET_INDEX = dispatch.PRIVATE_ROOT / "lifecycle" / "prompt-packet-ledger.json"
+    dispatch.PROMPT_PACKET_DOC = tmp_path / "docs" / "prompt-packet-ledger.md"
+    dispatch.PROMPT_PACKET_INDEX.parent.mkdir(parents=True)
+    dispatch.PROMPT_PACKET_INDEX.write_text(
+        json.dumps(
+            {
+                "generated_at": "2026-09-10T23:39:29+00:00",
+                "recorded_packets": [],
+                "open_packets": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    prompt_packets = dispatch.prompt_packet_snapshot()
+    blockers = dispatch.derive_blockers(
+        {
+            "generated_heartbeat_plist": {"present": False, "env": {}},
+            "heartbeat_plist": {"present": False, "env": {}},
+            "launchd": {"present": False, "running": False, "state": "missing", "env": {}},
+            "watchdog_plist": {"present": False},
+            "watchdog_launchd": {"present": False, "running": False, "state": "missing"},
+            "live_root_git": {"present": False, "dirty_entries": 0},
+            "watchdog": {"healthy": True, "first_line": "[watchdog] HEALTHY — heartbeat retired"},
+            "async_probe": {"requested": False},
+            "prompt_packets": prompt_packets,
+            "always_working": {"present": True, "required_open_count": 0},
+        }
+    )
+
+    assert prompt_packets["present"] is True
+    assert prompt_packets["status"] == "unavailable"
+    assert {blocker["id"] for blocker in blockers} == {"prompt-packet-index-unavailable"}
 
 
 def test_dispatch_health_parses_async_skipped_down_lanes():

@@ -745,6 +745,8 @@ def mail_receipts() -> list[dict[str, Any]]:
                 if active_done and flagged
                 else f"{flagged} active flagged non-deleted messages require classification"
                 if flagged
+                else "mail index unavailable; active flagged state is unverified"
+                if not mail_available
                 else "no active flagged messages remain"
             ),
             **common,
@@ -768,6 +770,8 @@ def mail_receipts() -> list[dict[str, Any]]:
                 if history_done and not_deleted
                 else f"{not_deleted} indexed non-deleted messages exist; process in batches, not one giant run"
                 if not_deleted
+                else "mail index unavailable; historical backlog state is unverified"
+                if not mail_available
                 else "no indexed mail backlog visible"
             ),
             **{**common, "evidence": {**common["evidence"], "mail_story": history_story}},
@@ -839,16 +843,24 @@ def prompt_packet_receipt() -> dict[str, Any]:
     open_packets = index.get("open_packets") if isinstance(index, dict) else []
     recorded = index.get("recorded_packets") if isinstance(index, dict) else []
     open_count = len(open_packets) if isinstance(open_packets, list) else 0
-    status = STATUS_DONE if index and open_count == 0 else STATUS_ASSIGNED
+    inputs_available = index.get("inputs_available") is True
+    status = STATUS_DONE if inputs_available and open_count == 0 else STATUS_ASSIGNED
     return {
         "id": "PROMPT-PACKETS",
         "workstream": "prompt-packets",
         "priority": PRIORITY["prompt-packets"],
         "status": status,
         "title": "Reconcile prompt packet receipts before counting prompt progress",
-        "verdict": f"{open_count} open packet(s)" if open_count else "packet ledger clear from receipts",
+        "verdict": (
+            f"{open_count} open packet(s)"
+            if inputs_available and open_count
+            else "packet ledger clear from receipts"
+            if inputs_available
+            else "canonical private packet indexes unavailable; clearance is unverified"
+        ),
         "evidence": {
             "index_present": bool(index),
+            "inputs_available": inputs_available,
             "open_packets": open_count,
             "recorded_packets": len(recorded) if isinstance(recorded, list) else 0,
         },
@@ -1477,7 +1489,7 @@ def render_markdown(snapshot: dict[str, Any]) -> str:
         for receipt in item.get("existing_receipts") or []:
             lines.append(f"  - `{receipt}`")
         lines.append("")
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines)
 
 
 def write_outputs(snapshot: dict[str, Any], markdown: str) -> None:

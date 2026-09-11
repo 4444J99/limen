@@ -1,10 +1,10 @@
 # Always-Working Reconciliation
 
-Generated: `2026-09-10T23:39:34+00:00`
+Generated: `2026-09-11T00:07:47+00:00`
 Status: `needs-work`
-Required open: `4`
+Required open: `7`
 Blocked: `2`
-Done from receipt: `5`
+Done from receipt: `2`
 
 ## Contract
 
@@ -120,6 +120,36 @@ Done from receipt: `5`
   - `https://github.com/4444J99/limen/issues/687`
   - `https://github.com/4444J99`
 
+### MAIL-ACTIVE-FLAGGED
+
+- Lane fit: `local-codex-or-opencode`
+- Repo/root: `4444J99/limen`
+- Task: Run python3 scripts/mail-story-ledger.py --scope flagged --write. Use existing mail-story atoms and UMA obligations to classify the active flagged set; draft/park, never send.
+- Predicate: `python3 -m pytest cli/tests/test_mail_story_ledger.py -q`
+- Receipt target: `git:4444J99/limen:docs/mail-story-ledger.md`
+- Stop condition: flagged set has classified atoms, obligations, and needs-human buckets
+- Existing receipts:
+  - `docs/mail-story-ledger.md`
+  - `docs/his-hand-registry-mail-a290329e.md`
+  - `obligations-ledger.json`
+  - `scripts/mail-story-ledger.py`
+  - `scripts/mail-beat.sh`
+
+### MAIL-HISTORICAL-BACKLOG
+
+- Lane fit: `local-codex-or-opencode`
+- Repo/root: `4444J99/limen`
+- Task: Continue the historical metadata sweep from existing receipts; emit batch cursor/count receipt before any thread enrichment.
+- Predicate: `python3 scripts/mail-story-ledger.py --scope all --limit 500 --write`
+- Receipt target: `git:4444J99/limen:docs/mail-story-ledger.md`
+- Stop condition: next 500 historical messages are atomized or a precise cursor/blocker is recorded
+- Existing receipts:
+  - `docs/mail-story-ledger.md`
+  - `docs/his-hand-registry-mail-a290329e.md`
+  - `obligations-ledger.json`
+  - `scripts/mail-story-ledger.py`
+  - `scripts/mail-beat.sh`
+
 ### REPO-BOIL-UP
 
 - Lane fit: `agy-or-opencode-readonly`
@@ -134,6 +164,19 @@ Done from receipt: `5`
   - `docs/consolidation/EXECUTION-MANIFEST.md`
   - `scripts/repo-surface-ledger.py`
   - `scripts/salvage-yard-map.py`
+
+### PROMPT-PACKETS
+
+- Lane fit: `codex-conductor`
+- Repo/root: `4444J99/limen`
+- Task: Map each open prompt packet to merged PR, open PR, owner task, supersession, or precise blocker.
+- Predicate: `python3 scripts/prompt-packet-ledger.py --write`
+- Receipt target: `git:4444J99/limen:docs/prompt-packet-ledger.md`
+- Stop condition: open prompt packet count is zero or every packet has an owner receipt
+- Existing receipts:
+  - `docs/prompt-packet-ledger.md`
+  - `docs/prompt-packet-resolution-receipts.json`
+  - `docs/current-session-fanout.md`
 
 ### VALUE-REPOS
 
