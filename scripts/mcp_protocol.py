@@ -26,6 +26,24 @@ class ProtocolError(Exception):
     pass
 
 
+class RpcResponseError(ProtocolError):
+    """A valid JSON-RPC error response, without retaining server-controlled detail."""
+
+    _CLASSES = {
+        -32700: "parse_error",
+        -32600: "invalid_request",
+        -32601: "method_not_found",
+        -32602: "invalid_params",
+        -32603: "internal_error",
+    }
+
+    def __init__(self, error: object):
+        code = error.get("code") if isinstance(error, dict) else None
+        self.code = code if type(code) is int else None
+        self.error_class = self._CLASSES.get(self.code, "other_rpc_error")
+        super().__init__("server RPC error")
+
+
 class AuthenticationRequired(ProtocolError):
     pass
 
@@ -195,10 +213,12 @@ class Wire:
             not isinstance(response, dict)
             or response.get("jsonrpc") != "2.0"
             or response.get("id") != request["id"]
-            or "error" in response
-            or not isinstance(response.get("result"), dict)
         ):
-            raise ProtocolError("invalid or error RPC response")
+            raise ProtocolError("invalid RPC envelope")
+        if "error" in response:
+            raise RpcResponseError(response["error"])
+        if not isinstance(response.get("result"), dict):
+            raise ProtocolError("invalid RPC result")
         if self.custody:
             self.custody.sample()
         return response["result"]
@@ -246,6 +266,8 @@ def _verify(server, timeout=15, expected=None, version="2025-11-25", safe_calls=
         "server_version": None,
         "protocol_version": version,
         "capability_names": {},
+        "rpc_error_code": None,
+        "rpc_error_class": None,
         "reason": None,
     }
     if version not in VERSIONS:
@@ -330,6 +352,11 @@ def _verify(server, timeout=15, expected=None, version="2025-11-25", safe_calls=
     except AuthenticationRequired:
         dimensions["authentication"] = "required"
         report["reason"] = "authentication_required"
+    except RpcResponseError as exc:
+        dimensions["protocol"] = "fail"
+        report["reason"] = "server_rpc_error"
+        report["rpc_error_code"] = exc.code
+        report["rpc_error_class"] = exc.error_class
     except (OSError, ValueError, ProtocolError, TimeoutError) as exc:
         dimensions["protocol"] = "fail"
         report["reason"] = type(exc).__name__

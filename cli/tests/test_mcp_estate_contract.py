@@ -87,6 +87,14 @@ for line in sys.stdin:
 """
 
 
+RPC_ERROR_SERVER = """import sys,json
+for line in sys.stdin:
+ q=json.loads(line)
+ if 'id' in q:
+  print(json.dumps({'jsonrpc':'2.0','id':q['id'],'error':{'code':-32603,'message':'server detail must not enter receipts','data':{'token':'private'}}}),flush=True)
+"""
+
+
 @pytest.mark.parametrize("version", ["2025-11-25", "2026-07-28"])
 def test_protocol_adapters_discover_capabilities(version):
     result = protocol.verify(stdio(SERVER), expected={"tools": ["open_dashboard"]}, version=version)
@@ -100,6 +108,19 @@ def test_missing_tool_and_unsupported_protocol():
     assert result["dimensions"]["capabilities"] == "fail"
     result = protocol.verify(stdio("raise Exception('must not launch')"), version="future")
     assert result["reason"] == "unsupported_protocol"
+
+
+def test_json_rpc_error_is_classified_without_retaining_server_detail():
+    result = protocol.verify(stdio(RPC_ERROR_SERVER))
+
+    assert result["dimensions"]["protocol"] == "fail"
+    assert result["dimensions"]["cleanup"] == "pass"
+    assert result["reason"] == "server_rpc_error"
+    assert result["rpc_error_code"] == -32603
+    assert result["rpc_error_class"] == "internal_error"
+    serialized = json.dumps(result)
+    assert "server detail must not enter receipts" not in serialized
+    assert "private" not in serialized
 
 
 @pytest.mark.parametrize("status,auth", [(200, "unmeasured"), (401, "required")])
