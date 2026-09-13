@@ -6,6 +6,7 @@ import {
   forwardPrivateBoardRequest,
 } from "./conduct/durable-object.js";
 import { internalConductPrincipal } from "./conduct/auth.js";
+import { handleConductMcp } from "./conduct/mcp.js";
 import { readInlineProjection } from "./conduct/projection.js";
 import { canonicalHash } from "./conduct/schemas.js";
 import { taskWorkLoanMissingFields, workLoanDenial } from "./conduct/work-loan.js";
@@ -888,9 +889,11 @@ async function withBoard(env, fn, { privateCanonical = false } = {}) {
 }
 
 async function route(request, env) {
-  if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders(env) });
   const url = new URL(request.url);
   const path = url.pathname;
+
+  if (path === "/mcp") return handleConductMcp(request, env);
+  if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders(env) });
 
   if (path.startsWith("/api/conduct/")) return forwardConductRequest(request, env);
   if (path === "/api/board/private" || path === "/api/board/initialize") {
