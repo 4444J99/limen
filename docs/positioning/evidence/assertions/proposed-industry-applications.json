@@ -1,0 +1,19 @@
+{
+  "contract_name": "assertion-evidence.v1",
+  "contract_version": 1,
+  "assertion_id": "limen-proposed-industry-applications-20260831",
+  "assertion_class": "inference",
+  "statement": "Because the audited conduct protocol supports bounded work, resource claims, receipts, and persona-separated projections, multi-agent software delivery, consulting delivery governance, and research engineering operations are substantive proposed applications; no deployment or outcome in those contexts is established.",
+  "inference_label": "Proposed workflow mapping, not industry deployment or outcome evidence.",
+  "verification_state": "verified",
+  "evidence_references": [
+    {
+      "evidence_id": "limen-business-workflow-analysis",
+      "independence_group": "reader-mode-business-analysis",
+      "evidence_type": "artifact",
+      "reference": "docs/audiences/business.md",
+      "body_hash": "sha256:ced1b11349d88ee1776c1500903eec4afa86fed2b20df07bf942498248f3d296",
+      "observed_at": "2026-08-31T23:15:00Z"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "receipt_type": "normalized-http-observation",
+  "observed_at": "2026-08-31T23:13:15Z",
+  "method": "curl --fail --silent --show-error --location --max-time 20",
+  "observations": [
+    {
+      "url": "https://limen-runtime.ivixivi.workers.dev/health",
+      "http_status": 200,
+      "raw_body_sha256": "sha256:0fb1319fbb31910f811eb50c5504c8cee28ab3b9845c404ff608d2b14f9a0e75",
+      "normalized_body": {
+        "status": "ok",
+        "storage": {
+          "mode": "private-durable-object",
+          "access": "private_read_write_public_aggregate",
+          "configured": true,
+          "writable": true,
+          "mutation_owner": "conduct_keeper",
+          "public_projection": "github-aggregate-only",
+          "repo": "organvm/limen",
+          "branch": "tabularius/board-projection",
+          "path": "tasks.yaml"
+        }
+      },
+      "normalization": "Removed the response time field; retained every other response field."
+    },
+    {
+      "url": "https://limen-dashboard.pages.dev/public-status.json",
+      "http_status": 200,
+      "raw_body_sha256": "sha256:0867819ee0c58d863cd428d30ec9780c58edc4927b854d1a9a62a6c93e4019d6",
+      "normalized_body": {
+        "status": "ok",
+        "surface": "public",
+        "summary_generated_at": "2026-08-20T23:21:16.041Z",
+        "total": 0,
+        "completed": 0,
+        "active": 0
+      },
+      "normalization": "Retained status, surface, summary timestamp, and top-level aggregate counts. The raw digest binds the complete response body."
+    }
+  ],
+  "boundary": "This is a dated reachability and response observation, not an SLA, customer deployment, or adoption record."
+}
