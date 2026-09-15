@@ -2,7 +2,11 @@
   "schema_version": 1,
   "owner": "4444J99/limen#2623",
   "reviewed_base_head": "f773c3b9db30c21b1b85364e4b1bceb7780937fe",
-  "default_branch_result": "pending_landing",
+  "default_branch_result": {
+    "merge_commit": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+    "accepted_head": "8187416c3ccdbecfcb7c5e9d7e8b1da6efe0a5c6",
+    "tree_equivalence_verified": true
+  },
   "finding_count": 33,
   "source_sha256": {
     ".codex/plans/2026-09-15-gap-filling-implementation.md": "2f92b9226ef7d1abe95dc89384087cf48221e32827609ae36b62c524964c9653",

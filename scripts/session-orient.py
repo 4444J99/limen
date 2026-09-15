@@ -149,17 +149,22 @@ def section_health():
 def section_board():
     """tasks.yaml status mix, counting only task records, not dispatch_log transitions."""
     if yaml is None:
-        return ""
+        return "**Board** — unmeasured (YAML dependency unavailable)"
     counts = {}
     tasks_path = Path(os.environ.get("LIMEN_ORIENT_TASKS") or ROOT / "tasks.yaml")
     try:
         sys.path.insert(0, str(ROOT / "cli" / "src"))
-        from limen.private_board import operational_board_path
+        from limen.private_board import PrivateCustodyUnavailable, operational_board_path
+    except ImportError:
+        return "**Board** — unmeasured (custody dependency unavailable)"
 
+    try:
         text = operational_board_path(tasks_path).read_text(encoding="utf-8", errors="replace")
         data = yaml.load(text, Loader=_SafeLoader) if _SafeLoader else yaml.safe_load(text)
+    except PrivateCustodyUnavailable:
+        return "**Board** — unmeasured (private custody unavailable)"
     except Exception:
-        return ""
+        return "**Board** — unmeasured (board unreadable)"
     tasks = data.get("tasks") if isinstance(data, dict) else []
     for task in tasks if isinstance(tasks, list) else []:
         if not isinstance(task, dict):

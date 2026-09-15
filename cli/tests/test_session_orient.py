@@ -122,3 +122,17 @@ def test_git_section_states_the_sha_and_whether_refs_are_fresh(tmp_path, monkeyp
     assert "def5678" in rendered, "the origin/main sha being compared against must be stated"
     assert "behind 7" in rendered
     assert "STALE" in rendered, "an unfetched read must announce itself, never look like parity"
+
+
+def test_public_aggregate_without_custody_is_visible_and_does_not_crash(tmp_path, monkeypatch):
+    monkeypatch.delenv("LIMEN_PRIVATE_TASKS", raising=False)
+    monkeypatch.delenv("LIMEN_PRIVATE_ROOT", raising=False)
+    (tmp_path / "tasks.yaml").write_text("schema_version: limen.public_board_projection.v1\ntasks: []\n")
+    rendered = _load(monkeypatch, tmp_path).section_board()
+    assert rendered == "**Board** — unmeasured (private custody unavailable)"
+    assert "0 open" not in rendered
+
+
+def test_unreadable_board_remains_visible(tmp_path, monkeypatch):
+    (tmp_path / "tasks.yaml").write_text("tasks: [")
+    assert "unmeasured" in _load(monkeypatch, tmp_path).section_board()

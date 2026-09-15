@@ -163,5 +163,54 @@
     "changed_gate_batch_passed": 9,
     "public_tunnel_launched": false,
     "scope": "Local unauthenticated rejection precondition; full MCP authentication and restart persistence remain unverified."
+  },
+  "first_tranche_landing": {
+    "pr": "https://github.com/4444J99/limen/pull/2623",
+    "head": "8187416c3ccdbecfcb7c5e9d7e8b1da6efe0a5c6",
+    "merge_commit": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+    "merged_at": "2026-09-15T23:34:07Z",
+    "default_readback": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+    "head_tree_matches_default": true
+  },
+  "adoption": {
+    "worker": {
+      "run": "https://github.com/4444J99/limen/actions/runs/35036820355",
+      "workflow_reenabled": true,
+      "workflow_trigger": "manual_only",
+      "result": "success",
+      "observed_git_sha": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+      "observed_version_id": "4839ca12-ac13-4b48-a215-57b727117243",
+      "rollback_version_id": "c15efaf3-3595-4e01-bf70-d41c2d7da9c5"
+    },
+    "heartbeat": {
+      "installed_sha": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+      "plan_sha256": "05202da4c6bd1bf95afa3952abcc89a59af54fae6e713b05dadd213f6f16f744",
+      "runtime_digest": "094323f60f3202cd06c3f7231f3a36329d50637583678c96bdc17823fdb91566",
+      "label_loaded": true,
+      "verified": true,
+      "surviving_process_count": 0,
+      "status": "finding",
+      "retired_editables": []
+    },
+    "default_ci": {
+      "run": "https://github.com/4444J99/limen/actions/runs/35036245723",
+      "status": "failure",
+      "failed_component": "session-orient missing private custody handling",
+      "local_repair_tests_passed": 7,
+      "component_predicate": "bash scripts/done-session-orient.sh",
+      "component_predicate_result": "pass",
+      "repair_changed_gates_passed": 8
+    }
+  },
+  "inventory_activation_gate": {
+    "owner": "4444J99/limen#269",
+    "credential_owner": "4444J99/limen#320",
+    "observed_http": 403,
+    "reason": "ordinary principal lacks inventory_collector role",
+    "bootstrap_checked": "docs/tabularius-record-keeper.md and registered local credential cache",
+    "dedicated_collector_credential_present": false,
+    "required_authority": "Dedicated inventory-only principal and configured frozen LIMEN_INVENTORY_AUTHORITY scope; do not widen the ordinary conductor credential.",
+    "next_action": "After administrator provisions the dedicated credential and authority, run the documented census --publish-inventory operation and verify accepted reservation receipts.",
+    "routine_growth": "remains_contained"
   }
 }
