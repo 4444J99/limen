@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
+import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import TypedDict, cast
@@ -40,6 +42,7 @@ class ReadinessReport(TypedDict):
     budget: BudgetInfo
     checks: list[Check]
     next_actions: list[str]
+    lane_liveness: dict | None
 
 
 class TaskLifecycle(TypedDict):
@@ -128,7 +131,37 @@ def stale_tasks(
     return candidates
 
 
-def readiness_report(limen: LimenFile, tasks_path: Path, agent: str = "jules") -> ReadinessReport:
+def _lane_liveness(tasks_path: Path, lane: str) -> dict:
+    """Read the lane predicate without letting a missing runtime masquerade as healthy."""
+    repo_root = Path(__file__).resolve().parents[3]
+    script = repo_root / "scripts" / "lane-liveness.py"
+    if not script.exists():
+        return {"status": "fail", "unmeasured": True, "error": f"missing predicate: {script}"}
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script), "--lane", lane, "--tasks", str(tasks_path), "--json"],
+            cwd=repo_root,
+            env={**os.environ, "LIMEN_ROOT": str(repo_root)},
+            # The board may be private custody outside the repository root. The predicate
+            # receives it explicitly; it must never silently fall back to the public aggregate.
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        report = json.loads(result.stdout) if result.stdout.strip() else {}
+        if not isinstance(report, dict):
+            raise ValueError("lane predicate returned a non-object")
+        if result.returncode and report.get("status") != "fail":
+            report["status"] = "fail"
+        return report
+    except (OSError, subprocess.SubprocessError, ValueError, json.JSONDecodeError) as exc:
+        return {"status": "fail", "unmeasured": True, "error": f"lane predicate unavailable: {exc}"}
+
+
+def readiness_report(
+    limen: LimenFile, tasks_path: Path, agent: str = "jules", lane: str | None = None
+) -> ReadinessReport:
     stale = stale_tasks(limen, agent=agent)
     open_tasks = [task for task in limen.tasks if task.status == "open" and task.target_agent in (agent, "any")]
     active_tasks = [task for task in limen.tasks if task.status in ("dispatched", "in_progress")]
@@ -178,6 +211,17 @@ def readiness_report(limen: LimenFile, tasks_path: Path, agent: str = "jules") -
             },
         ],
     )
+    lane_report = _lane_liveness(tasks_path, lane) if lane else None
+    if lane_report is not None:
+        lane_rows = lane_report.get("lanes") or []
+        lane_state = lane_rows[0].get("state", "unmeasured") if lane_rows else "unmeasured"
+        checks.append(
+            {
+                "id": "lane_liveness",
+                "status": "pass" if lane_report.get("status") == "pass" else "fail",
+                "detail": f"lane={lane} state={lane_state}",
+            }
+        )
     if any(check["status"] == "fail" for check in checks):
         status = "blocked"
     elif any(check["status"] == "warn" for check in checks):
@@ -203,6 +247,7 @@ def readiness_report(limen: LimenFile, tasks_path: Path, agent: str = "jules") -
         },
         "checks": checks,
         "next_actions": next_actions(stale, open_tasks, remaining, agent_reachable, agent),
+        "lane_liveness": lane_report,
     }
 
 

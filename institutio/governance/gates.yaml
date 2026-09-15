@@ -365,6 +365,16 @@ gates:
     paths: ["scripts/check-live-checkout.py", "scripts/tests/live-checkout-currency.test.sh", "institutio/governance/sensors.yaml"]
     owner: substrate
     note: "The deployment-currency probe must persist its answer: coherent/drift/unverifiable-here are three RECORDED states, never two plus a silence. `unverifiable-here` is the load-bearing case — a consumer that cannot establish currency must be able to tell that apart from established-fine, which is the 2026-08-07 defect class in one assertion. The receipt body carries no wall-clock, so consecutive runs are byte-identical and every diff is a real change."
+  his-hand-registry-test:
+    command: "python3 scripts/check-his-hand.py --check --now 2026-09-15T23:59:59Z && python3 scripts/lever-classify.py --check && bash scripts/run-pytest-hermetic.sh cli/tests/test_check_his_hand.py -q"
+    paths: ["his-hand-levers.json", "scripts/check-his-hand.py", "scripts/lever-classify.py", "cli/tests/test_check_his_hand.py"]
+    owner: observe
+    note: "The his-hand registry must be structurally readable: unique IDs, enum statuses, required intent fields, and parseable non-future diagnosis timestamps. Diagnosis age is derived at read time. The classifier remains the implementation decision: open levers are either irreducible sovereignty or explicit design debt; no mass closure or deletion is implied."
+  lane-liveness-test:
+    command: "bash scripts/tests/lane-liveness.test.sh"
+    paths: ["scripts/lane-liveness.py", "cli/src/limen/doctor.py", "cli/src/limen/cli.py", "cli/tests/test_lane_liveness.py", "scripts/tests/lane-liveness.test.sh", "institutio/governance/sensors.yaml"]
+    owner: dispatch
+    note: "Lane liveness must distinguish idle from stalled, surface unreadable projections as unmeasured, use the census catalog, and preserve a receipt atomically across restarts without taking lifecycle action."
   heartbeat-notification-contract:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_heartbeat_supervisor.py cli/tests/test_notification_effect.py cli/tests/test_notify_body_gate.py cli/tests/test_notification_registry.py -q"
     paths: ["cli/src/limen/heartbeat.py", "cli/src/limen/notification_effect.py", "scripts/_notify.py", "spec/scheduled-process-contracts.json", "institutio/governance/notification-events.limen.json", "scripts/check-notification-registry.py", "cli/tests/test_heartbeat_supervisor.py", "cli/tests/test_notification_effect.py", "cli/tests/test_notify_body_gate.py", "cli/tests/test_notification_registry.py"]

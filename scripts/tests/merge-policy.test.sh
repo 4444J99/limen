@@ -22,6 +22,10 @@ trap 'rm -rf "$stubdir"' EXIT
 cat > "$stubdir/gh" <<STUB
 #!/usr/bin/env bash
 # fake gh: emit the current fixture for any 'pr view ... --json ...' call.
+if [[ "\$*" == *"pr view"* ]] && [ -n "\${GH_PR_VIEW_ERROR:-}" ]; then
+  printf '%s\n' "\$GH_PR_VIEW_ERROR" >&2
+  exit 1
+fi
 case "\$*" in
   *"api graphql"*)
     case "\${GH_QUEUE_CAPABILITY:-unknown}" in
@@ -198,6 +202,44 @@ check_output "unknown queue + BEHIND" 3 "merge queue capability is unknown"
 mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
 check_output "unknown queue + CLEAN" 0 "MERGE-MODE: direct" "MERGE-MODE: queue"
 unset GH_QUEUE_CAPABILITY
+
+# GitHub transport/quota failures are HOLDs, never BLOCKED, and stderr must stay in a
+# temporary file rather than leaving a repository-root err.txt behind.
+rate_limit_case() {
+  local message="$1"
+  rm -f "$here/../../err.txt"
+  export GH_PR_VIEW_ERROR="$message"
+  set +e
+  PATH="$stubdir:$PATH" bash "$policy" 1 --repo o/r >/dev/null 2>&1
+  local got=$?
+  set -e
+  if [ "$got" = 2 ] && [ ! -e "$here/../../err.txt" ]; then
+    printf '  ok   %-34s exit=%s\n' "rate-limit: $message" "$got"
+    pass=$((pass+1))
+  else
+    printf '  FAIL %-34s want=2 got=%s residue=%s\n' "rate-limit: $message" "$got" "$( [ -e "$here/../../err.txt" ] && echo yes || echo no )"
+    fail=$((fail+1))
+  fi
+  unset GH_PR_VIEW_ERROR
+}
+rate_limit_case "rate limit exceeded"
+rate_limit_case "API quota exhausted"
+rate_limit_case "HTTP 403 from api.github.com"
+rate_limit_case "HTTP 429 Too Many Requests"
+rate_limit_case "fetch exhausted after retries"
+export GH_PR_VIEW_ERROR="repository not found"
+set +e
+PATH="$stubdir:$PATH" bash "$policy" 1 --repo o/r >/dev/null 2>&1
+got=$?
+set -e
+if [ "$got" = 3 ]; then
+  printf '  ok   %-34s exit=%s\n' "ordinary gh read error" "$got"
+  pass=$((pass+1))
+else
+  printf '  FAIL %-34s want=3 got=%s\n' "ordinary gh read error" "$got"
+  fail=$((fail+1))
+fi
+unset GH_PR_VIEW_ERROR
 
 # The check rollup must remain attached to the exact head captured in the first PR snapshot.
 export GH_RECHECK_HEAD=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb

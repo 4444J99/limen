@@ -62,10 +62,18 @@ if [ -z "$PR" ]; then
   [ -z "$PR" ] && { echo "merge-policy: no PR number given and none open for the current branch." >&2; exit 3; }
 fi
 
-j="$(mktemp)"; trap 'rm -f "$j"' EXIT
+j="$(mktemp)"; err="$(mktemp)"; trap 'rm -f "$j" "$err"' EXIT
 gh pr view "$PR" "${repo_args[@]+"${repo_args[@]}"}" \
   --json number,title,url,state,isDraft,mergeStateStatus,baseRefName,headRefName,headRefOid,files,statusCheckRollup \
-  > "$j" 2>/dev/null || { echo "merge-policy: cannot read PR #$PR (wrong repo?)." >&2; exit 3; }
+  > "$j" 2>"$err" || {
+    gh_error=$(cat "$err" 2>/dev/null || true)
+    if printf '%s' "$gh_error" | grep -Eqi 'rate limit|api quota|403|429|fetch exhausted'; then
+      echo "VERDICT: HOLD — GitHub API access is rate-limited; retry after the quota window." >&2
+      exit 2
+    fi
+    echo "merge-policy: cannot read PR #$PR (wrong repo?)." >&2
+    exit 3
+  }
 
 title=$(jq -r '.title' "$j")
 url=$(jq -r '.url' "$j")
