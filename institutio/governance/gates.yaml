@@ -528,8 +528,7 @@ gates:
   # ── session/docs/board predicates ───────────────────────────────────────────
   session-orient:
     command: "bash scripts/done-session-orient.sh"
-    paths: ["scripts/session-orient.py", "scripts/hooks/session-orient.sh", "scripts/session-lifecycle-pressure.py", "scripts/hooks/session-lifecycle-pressure.sh", "scripts/done-session-orient.sh"]
-    scoped: false
+    paths: ["scripts/session-orient.py", "scripts/hooks/session-orient.sh", "scripts/session-lifecycle-pressure.py", "scripts/hooks/session-lifecycle-pressure.sh", "scripts/done-session-orient.sh", "cli/tests/test_session_orient.py", "cli/src/limen/private_board.py"]
     owner: continuity
     note: "Session orientation + lifecycle-pressure hooks stay wired and PII-clean."
   agent-docs:
