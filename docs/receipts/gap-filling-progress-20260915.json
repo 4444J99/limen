@@ -72,9 +72,10 @@
   "liveness_regressions_passed": 12,
   "continuation_cheap_gates_passed": 34,
   "decision_records": {
-    "selected": 18,
-    "requires_component_review": 79,
-    "terminal_histories_retained": 10
+    "selected": 29,
+    "requires_component_review": 68,
+    "terminal_histories_retained": 10,
+    "engineering_or_external_completion_claimed": false
   },
   "relay_source_coverage": {
     "ledger_commit": "0a656e47accc6378b44b1a70d45b6f0129ca96fa",
@@ -212,5 +213,11 @@
     "required_authority": "Dedicated inventory-only principal and configured frozen LIMEN_INVENTORY_AUTHORITY scope; do not widen the ordinary conductor credential.",
     "next_action": "After administrator provisions the dedicated credential and authority, run the documented census --publish-inventory operation and verify accepted reservation receipts.",
     "routine_growth": "remains_contained"
+  },
+  "estate_decision_tranche": {
+    "records_changed": 11,
+    "permanent_records_and_lifecycles_preserved": 107,
+    "focused_registry_tests_passed": 25,
+    "source_policy": "Current estate, ACCESS, exact-tip reaper and private inventory contracts; historical prices and admission annotations are not account-state proof."
   }
 }

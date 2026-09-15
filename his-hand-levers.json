@@ -1410,11 +1410,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Dispatch native lanes only through broker-owned leases with live capability, budget and inventory admission. Maintain the 250-item ceiling and 900-second freshness bound independently of concurrency; preserve existing work and settlement.",
+        "rationale": "Derive engineering behavior from the current owning registry and implementation; retain only the exact residual human authority and require fresh live acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-FLEET-DISPATCH"
+          "his-hand-levers.json#L-FLEET-DISPATCH",
+          "docs/tabularius-record-keeper.md",
+          "docs/architecture/dynamic-provider-selection.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1422,14 +1424,17 @@
         ],
         "owner": "workstream auto-partition (limen#595) over channels (limen#579); 2026-07-04 fury that no parallel workstream sessions were running; safe-by-default gate metabolize.sh:10-11.",
         "acceptance": {
-          "condition": "unattended parallel fleet execution — the routed, partitioned backlog drains outward across all vendor lanes + workstream channels with no attended Claude session driving each wave. This is the 'multiple workstream sessions doing everything' state.",
+          "condition": "Current frozen inventory is accepted and competing last-slot claims admit exactly one run with no debit or launch on rejected evidence.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "docs/tabularius-record-keeper.md",
+          "docs/architecture/dynamic-provider-selection.md"
+        ],
+        "remaining_human_action": "Only a missing account grant or spending authorization; routine implementation choices belong to engineering.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1755,11 +1760,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare a least-privilege App manifest and repository selection from the governed-owner inventory; keep the relay governor identity and credentials isolated from general fleet automation.",
+        "rationale": "Derive engineering behavior from the current owning registry and implementation; retain only the exact residual human authority and require fresh live acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-LIMENBOT-INSTALL"
+          "his-hand-levers.json#L-LIMENBOT-INSTALL",
+          "institutio/github/estate.yaml",
+          "docs/architecture/personal-relay-merge.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1767,14 +1774,17 @@
         ],
         "owner": "GITVS estate (institutio/github/estate.yaml app / app_installation)",
         "acceptance": {
-          "condition": "Verified exact-repository App machine identity and the GITVS app_installation predicate; installation rate limits are provider-dependent.",
+          "condition": "Live installation identity, repository selection and permission readback match the reviewed manifest; a bounded API canary succeeds.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "institutio/github/estate.yaml",
+          "docs/architecture/personal-relay-merge.md"
+        ],
+        "remaining_human_action": "App creation or installation consent for the exact prepared manifest.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1791,11 +1801,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Derive protection from each live repository identity and its registry class; preserve stricter controls, enforce PR-only/no-force boundaries, and use the separate dedicated-governor contract for the relay.",
+        "rationale": "Derive engineering behavior from the current owning registry and implementation; retain only the exact residual human authority and require fresh live acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-BRANCH-PROTECTION"
+          "his-hand-levers.json#L-BRANCH-PROTECTION",
+          "institutio/github/estate.yaml",
+          "scripts/setup-rulesets.py",
+          "docs/architecture/personal-relay-merge.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1803,14 +1816,18 @@
         ],
         "owner": "GITVS estate (institutio/github/estate.yaml branch_protection) + #257",
         "acceptance": {
-          "condition": "required-check protection on the governed repos; the GITVS branch_protection resource (class A/G) goes green",
+          "condition": "Live settings satisfy the selected class and required contexts identify real jobs; protected canaries prove the intended write boundary.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "institutio/github/estate.yaml",
+          "scripts/setup-rulesets.py",
+          "docs/architecture/personal-relay-merge.md"
+        ],
+        "remaining_human_action": "Exact administration authorization for the prepared settings delta, where not already granted.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1827,11 +1844,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Compare live collaborators and pending invitations against ACCESS grant rows and role ceilings. Prepare exact repository-scoped changes without transferring custody or inventing recipients.",
+        "rationale": "Derive engineering behavior from the current owning registry and implementation; retain only the exact residual human authority and require fresh live acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-PARTNER-GRANTS"
+          "his-hand-levers.json#L-PARTNER-GRANTS",
+          "institutio/github/access.yaml",
+          "institutio/github/estate.yaml",
+          "scripts/collab-sync.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1839,14 +1859,18 @@
         ],
         "owner": "GITVS estate (institutio/github/estate.yaml repo_collaborators) + institutio/github/access.yaml",
         "acceptance": {
-          "condition": "declared partner grants go live (invite fired) or stay clean (undeclared access removed); the GITVS repo_collaborators resource (class N) goes green",
+          "condition": "A fresh collaborator census matches ACCESS with no undeclared access, over-ceiling roles or unresolved invitations.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "institutio/github/access.yaml",
+          "institutio/github/estate.yaml",
+          "scripts/collab-sync.py"
+        ],
+        "remaining_human_action": "Approve the exact invitation or role/account action where not already authorized.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1976,11 +2000,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Use one keeper-signed, repository-qualified cleanup plan and exact-tip compare-and-swap deletion. Require custody, review closure and named landing proof before redemption; reconcile ambiguous outcomes before another attempt.",
+        "rationale": "Derive engineering behavior from the current owning registry and implementation; retain only the exact residual human authority and require fresh live acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-REMOTE-REAP-APPLY"
+          "his-hand-levers.json#L-REMOTE-REAP-APPLY",
+          "scripts/remote-reap-effect.py",
+          "cli/src/limen/remote_reap.py",
+          "AGENTS.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1988,14 +2015,18 @@
         ],
         "owner": "GITVS remote_branch resource · limen PR #901 (reap-remote-branches.py) · registry-gap found 2026-07-14 (valve existed with no lever entry)",
         "acceptance": {
-          "condition": "the 744-branch remote-gap backlog starts draining on the reconcile cadence (receipts to docs/remote-branch-reap-acceptance.jsonl, currently 0 entries); lifecycle pressure's `remote branches unresolved` term can finally move toward zero",
+          "condition": "The signed plan binds the exact repository/ref/tip and custody proof; the journal records the effect and an authoritative absence readback.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "remote branch deletion is not reflog-recoverable, and the auto-mode classifier denies the agent appending a persistence-arming env flag (Unauthorized Persistence) — this arming is deliberately your hand",
-        "decision_status": "requires_component_review"
+        "dependencies": [
+          "scripts/remote-reap-effect.py",
+          "cli/src/limen/remote_reap.py",
+          "AGENTS.md"
+        ],
+        "remaining_human_action": "Any deletion authorization not already embodied in the keeper-issued capability.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2017,11 +2048,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Classify every branch and worktree by exact tip, active ownership, custody and landing evidence; preserve unlanded intent in a named durable owner before cleanup. A branch count or age does not authorize deletion.",
+        "rationale": "Derive engineering behavior from the current owning registry and implementation; retain only the exact residual human authority and require fresh live acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-BRANCH-REAP-DECIDED-GRANT"
+          "his-hand-levers.json#L-BRANCH-REAP-DECIDED-GRANT",
+          "AGENTS.md",
+          "scripts/remote-reap-effect.py",
+          "cli/src/limen/remote_reap.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2029,14 +2063,18 @@
         ],
         "owner": "asked 2026-08-07 (\"why do we need 469 live work branches?\") → measured: of 457 ledger entries, 230 never pushed, 87 closed-unmerged, 49 open-PR, 11 merged-but-missed, 80 genuinely unfulfilled · limen PR feat/branch-reap-decided-proof",
         "acceptance": {
-          "condition": "80 of the 562 local branches become reapable on the beat's reap rung; local_branches residue (562 vs the LIMEN_RESIDUE_LOCAL_BRANCHES=40 cap) gets its first mechanism that can actually reduce it, rather than a cap measuring a quantity nothing is empowered to lower",
+          "condition": "Every candidate has repository-qualified landing or preservation proof, review disposition and a terminal owner; protected active work is untouched.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "this widens what the fleet may DELETE without a per-branch human key — an authority boundary, not a mechanism, so the organ files it rather than taking it",
-        "decision_status": "requires_component_review"
+        "dependencies": [
+          "AGENTS.md",
+          "scripts/remote-reap-effect.py",
+          "cli/src/limen/remote_reap.py"
+        ],
+        "remaining_human_action": "Only residual destructive cleanup authorization after the per-candidate proof exists.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2322,11 +2360,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Measure current organization plans and the specific required private-repository feature gap before preparing any plan change. Preserve name-reservation owners and use existing supported execution routes while purchase is unresolved.",
+        "rationale": "Derive engineering behavior from the current owning registry and implementation; retain only the exact residual human authority and require fresh live acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-ORG-TEAM-UPGRADE"
+          "his-hand-levers.json#L-ORG-TEAM-UPGRADE",
+          "institutio/github/estate.yaml",
+          "docs/github-estate-runbook.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2334,14 +2374,17 @@
         ],
         "owner": "GITVS estate (institutio/github/estate.yaml orgs.canonical plan_ok); docs/github-estate-runbook.md step 3",
         "acceptance": {
-          "condition": "private-repo rulesets/branch protection (#257); required merge checks on the 105 private repos",
+          "condition": "Current account readback supports the required feature and the protected feature canary succeeds; old pricing or runner-admission text is insufficient.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "org billing checkout — a purchase; only the org owner can buy; never automatable",
-        "decision_status": "requires_component_review"
+        "dependencies": [
+          "institutio/github/estate.yaml",
+          "docs/github-estate-runbook.md"
+        ],
+        "remaining_human_action": "Purchase consent only for a currently demonstrated plan capability gap and a current quote.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2869,11 +2912,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Measure the personal account capability required by the custody/protection design and prepare a minimal upgrade only if the current plan cannot enforce it. Keep public and private execution/custody requirements distinct.",
+        "rationale": "Derive engineering behavior from the current owning registry and implementation; retain only the exact residual human authority and require fresh live acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-PERSONAL-PRO"
+          "his-hand-levers.json#L-PERSONAL-PRO",
+          "institutio/github/estate.yaml",
+          "docs/architecture/source-of-truth-and-local-cache.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2881,14 +2926,17 @@
         ],
         "owner": "custody v4.0.0 wave 2026-07-30 (plan tranquil-spinning-possum; doc-verification of GitHub pricing 2026-07-30)",
         "acceptance": {
-          "condition": "branch protection + required reviews on every partner lane, at flat cost, forever seat-free",
+          "condition": "Current account and repository capability evidence demonstrates the required protection and custody behavior without relying on historical subscription assumptions.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "personal-account billing checkout — a purchase; never automatable",
-        "decision_status": "requires_component_review"
+        "dependencies": [
+          "institutio/github/estate.yaml",
+          "docs/architecture/source-of-truth-and-local-cache.md"
+        ],
+        "remaining_human_action": "Purchase consent for the evidenced account capability gap, if one remains.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3140,11 +3188,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare per-PR dependency acceptance using actual changed packages, relevant executed checks and repository policy. Actions-only updates use their relevant checks; dependency majors require repository-specific validation. Keep runner-admission failures distinct from code failures.",
+        "rationale": "Derive engineering behavior from the current owning registry and implementation; retain only the exact residual human authority and require fresh live acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-DEPENDABOT-DELIVERY-ARM"
+          "his-hand-levers.json#L-DEPENDABOT-DELIVERY-ARM",
+          "institutio/github/estate.yaml",
+          "scripts/merge-policy.sh"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3152,14 +3202,18 @@
         ],
         "owner": "GITVS-UNCAPPED-PR-DEBT-0715 estate drain (docs/plans/2026-08-07-pr-debt-estate-drain.md, issue #1950) — dependabot cohort fail-closed as lifecycle:blocked via SHA-pinned manifest ae6ff627a3c1b8785b35acf003cfd55b8d9f3f512a1d3171dc83c68e2926e95f (docs/receipts/pr-lifecycle-dependabot-blocked-manifest-20260807.json)",
         "acceptance": {
-          "condition": "autonomous drain of the dependabot two-thirds of the open-PR estate (200 of ~1300 open PRs); the stale-pr-sweep count drops by up to 200 without another human touch",
+          "condition": "Each integrated dependency head has its required validation and exact landing receipt; unexecuted, failed and major-version obligations remain visible.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "lifecycle:delivery ARMS merge-drain's autonomous merge rail (scripts/merge-drain.py), and mass cross-org merges are a standing human-gated lever class (CLAUDE.md → Still human-gated levers) — the system may not upgrade 200 PRs from blocked to machine-mergeable on its own authority",
-        "decision_status": "requires_component_review"
+        "dependencies": [
+          "institutio/github/estate.yaml",
+          "scripts/merge-policy.sh",
+          ".codex/plans/2026-09-15-gap-filling-implementation.md"
+        ],
+        "remaining_human_action": "Any standing bulk-automation grant beyond the individually authorized scope of this plan.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3179,11 +3233,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Keep growth valves contained until live inventory admission and execution receipts pass. Route supply and landing through current bounded contracts and the broker; do not revive the retired daemon or infer capacity from historical daily targets.",
+        "rationale": "Derive engineering behavior from the current owning registry and implementation; retain only the exact residual human authority and require fresh live acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-FLYWHEEL-VALVE-ARM"
+          "his-hand-levers.json#L-FLYWHEEL-VALVE-ARM",
+          "docs/tabularius-record-keeper.md",
+          "spec/scheduled-process-contracts.json",
+          ".codex/plans/2026-09-15-gap-filling-adoption.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3191,14 +3248,18 @@
         ],
         "owner": "jules-flywheel program (docs/plans/2026-08-06-jules-flywheel.md, issue #1874, PR #1893) — both dry-runs reviewed 2026-08-07: backfill census 168 mintable / 520 honestly refused / 0 failures; drain 375 receipts, 15 distinct PRs, 0 verdict flips (325 draft-skip, 50 route-to-heal). The session's env-file append was classifier-blocked, so the two lines are yours.",
         "acceptance": {
-          "condition": "the ramp from the 25/day dispatch bootstrap toward 100/day: the backfill valve mints ~168 loan-ready packets (supply) and the drain valve lands the 308 blocked jules PRs earning landed/dispatched >= 0.30 (landing) — both reviewed dry-run-clean 2026-08-07, armed by two env lines",
+          "condition": "Deployment identity, fresh private inventory, atomic reservations and accepted execution/settlement receipts prove the configured growth contract.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "the sensors read the daemon env; ~/.limen.env is sourced at loop start only, hence the kickstart. Verify after the next metabolize pass: logs/work-loan-backfill.jsonl gains applied:true rows and logs/owner-route-drain.jsonl gains outcome!=dry-run rows.",
-        "decision_status": "requires_component_review"
+        "dependencies": [
+          "docs/tabularius-record-keeper.md",
+          "spec/scheduled-process-contracts.json",
+          ".codex/plans/2026-09-15-gap-filling-adoption.md"
+        ],
+        "remaining_human_action": "Only a specific residual account or paid-capacity authorization; no blanket restart or historical throughput target is acceptance.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3442,11 +3503,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Remeasure drafts and bind each to its originating intent, current head and successor evidence. Prepare individual continue, superseded or preservation dispositions; do not convert cohort age or inactivity into blanket closure authority.",
+        "rationale": "Derive engineering behavior from the current owning registry and implementation; retain only the exact residual human authority and require fresh live acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-PR-DRAFT-COHORT-DISPOSITION"
+          "his-hand-levers.json#L-PR-DRAFT-COHORT-DISPOSITION",
+          "AGENTS.md",
+          "institutio/github/estate.yaml"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3454,14 +3517,17 @@
         ],
         "owner": "PR lifecycle campaign #1981, W4",
         "acceptance": {
-          "condition": "a declared default disposition for drafts, allowing the lifecycle converger to classify them without guessing and the PR-estate campaign to reach a complete denominator",
+          "condition": "Every draft has a named owner and an evidence-backed per-head disposition; any cleanup has separate preservation and authorization receipts.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "a bulk disposition changes the treatment of hundreds of externally visible PRs; the registry may name the cohort but cannot choose that governance policy for you",
-        "decision_status": "requires_component_review"
+        "dependencies": [
+          "AGENTS.md",
+          "institutio/github/estate.yaml"
+        ],
+        "remaining_human_action": "A specific external closure or governance decision that remains outside existing authorization.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
