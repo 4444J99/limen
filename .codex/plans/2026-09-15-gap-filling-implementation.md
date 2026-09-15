@@ -1,0 +1,31 @@
+# Gap-filling implementation contract
+
+Owner: Codex direct session gap-filling-20260915. Integration owner: 4444J99/limen PR #2623.
+
+## Accepted scope
+
+Preserve the dirty root, existing branches and active sessions. Keep #2623 the single Limen integration candidate. Do not expand fleet capacity until #269/#1995 have current admission evidence; preserve the 250-item inventory ceiling and 900-second freshness contract.
+
+1. Repair worker fixture Git identity; registry producers, malformed input and diagnosis provenance; per-task broker lease liveness; observer and bounded heartbeat integration; doctor root routing; atomic receipts; quota versus authorization lookup errors and caller-file preservation.
+2. Add implementation decisions without deleting permanent lever IDs or changing lifecycle state. Cover 97 nonterminal entries and retain the ten terminal records. Separate mechanical preparation from consent. Execute design-debt predicates at repository root. Keep triage apply excluded until repaired.
+3. Establish #269/#1995 deployment identity, private inventory authority, fresh ingestion, atomic reservations, and execution receipts. Preserve relay #30's independently reviewed trust-root promotion and dedicated governor authority. Establish protected canaries, then refresh the six existing targets without adding another.
+4. Repair shared workflow and security policies centrally, propagate bounded PRs, distinguish runner admission from executed failures, and repair products in evidence-derived priority order. Preserve archived/excluded/unknown coverage in the estate denominator.
+
+## Acceptance
+
+Code landing, default-branch CI, runtime installation/adoption, and external outcomes each require separate receipts. Compilation alone is insufficient. Host-admission refusal is incomplete verification. Never bypass custody, governor trust, independent review, consent, or account authority. Reuse unchanged green verification shards and submit integration once. Task transitions stay broker-owned.
+
+## Current delivery boundary
+
+The control-plane implementation is being repaired in #2623. Estate activation, all individual lever execution, and external outcomes are not completed by these local changes. Subsequent work stays owned here until replaced by a specific repository receipt. Reader-mode depends on Editorial #12 at 416c0679c8f06a57e4f70ffacd8218874f242bee (open); relay #30 remains open at 6375d43c629ee15f8ca6296c56fe7806559c32e0. These are observations, not landing evidence.
+
+## Verification receipt and remaining owner work
+
+- Process ownership: all ten runtime/worker success, failure, signal, forced-cleanup and occupied-port cases passed.
+- Initial scoped cheap batch: 47 gates passed, formatting failed; corrected affected shards then all 12 passed. Quota matrix now has 56 passing cases, including both lookup modes.
+- Final focused registry, liveness, heartbeat-rollout and observatory suite: 27 passed.
+- Required heavy verification: admission refused with `swap-fraction`, exit 75. Owner: PR #2623. Next command after host admission is available: `bash scripts/verify-scoped.sh --base origin/main --jobs 2`. No merge, default-branch CI, deployment or runtime adoption is asserted.
+- Decision coverage: 107 permanent records have additive implementation records. Seven nonterminal family decisions are selected from the supplied plan; 90 remain explicitly `requires_component_review`. All ten terminal histories are retained. Coverage is not completed implementation. Read-only entry point: `python3 scripts/lever-decision-report.py`.
+- Broker registration succeeded after loading the registered environment. No task claim, transition, capacity expansion, or external repository synchronization occurred.
+- Review disposition: malformed-input, unknown-lane, custody, receipt replacement, gate dependency, authorization-403 and test-residue findings corrected. Doctor uses an argv list with shell disabled; lane text is one argument, so the reported shell-injection concern does not apply. Configured runtime root is trusted operator input, not a remote field.
+- Remaining estate and individual-component work retains this plan and PR #2623 as its continuation owner; it is not discharged by this patch. The missing heavy verification prevents acceptance of the first integration tranche.

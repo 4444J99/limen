@@ -133,7 +133,7 @@ def stale_tasks(
 
 def _lane_liveness(tasks_path: Path, lane: str) -> dict:
     """Read the lane predicate without letting a missing runtime masquerade as healthy."""
-    repo_root = Path(__file__).resolve().parents[3]
+    repo_root = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[3]).expanduser().resolve()
     script = repo_root / "scripts" / "lane-liveness.py"
     if not script.exists():
         return {"status": "fail", "unmeasured": True, "error": f"missing predicate: {script}"}

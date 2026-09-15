@@ -35,7 +35,9 @@
       },
       "mode": "read_only_one_shot",
       "owner": "4444J99/limen#2528",
-      "allowed_effects": ["notification_event_v1"],
+      "allowed_effects": [
+        "notification_event_v1"
+      ],
       "max_notification_events_per_fire": 1,
       "runtime_artifacts": [
         "cli/src/limen/heartbeat.py",
@@ -43,106 +45,178 @@
         "cli/src/limen/host_admission.py",
         "cli/src/limen/notification_effect.py",
         "cli/src/limen/cli.py",
-        "scripts/check-beat-freshness.py"
+        "scripts/check-beat-freshness.py",
+        "scripts/lane-liveness.py",
+        "scripts/_board_custody.py",
+        "cli/src/limen/census.py",
+        "cli/src/limen/conduct/client.py"
       ],
       "probes": [
         {
           "cadence_seconds": 1800,
-          "command": ["python", "scripts/host-pressure-stale.py", "--read-only"],
+          "command": [
+            "python",
+            "scripts/host-pressure-stale.py",
+            "--read-only"
+          ],
           "cost": "cheap",
           "name": "host-pressure-freshness",
           "timeout_seconds": 15
         },
         {
           "cadence_seconds": 1800,
-          "command": ["python", "scripts/background-items-census.py", "--check", "--no-receipt"],
+          "command": [
+            "python",
+            "scripts/background-items-census.py",
+            "--check",
+            "--no-receipt"
+          ],
           "cost": "cheap",
           "name": "background-items-census",
           "timeout_seconds": 30
         },
         {
           "cadence_seconds": 1800,
-          "command": ["python", "scripts/check-notification-registry.py"],
+          "command": [
+            "python",
+            "scripts/check-notification-registry.py"
+          ],
           "cost": "cheap",
           "name": "notification-registry-parity",
           "timeout_seconds": 20
         },
         {
           "cadence_seconds": 3600,
-          "command": ["python", "scripts/beat-sensors.py", "--canary"],
+          "command": [
+            "python",
+            "scripts/beat-sensors.py",
+            "--canary"
+          ],
           "cost": "cheap",
           "name": "sensor-canary",
           "timeout_seconds": 30
         },
         {
           "cadence_seconds": 3600,
-          "command": ["python", "scripts/orphan-watchers.py", "--check"],
+          "command": [
+            "python",
+            "scripts/orphan-watchers.py",
+            "--check"
+          ],
           "cost": "cheap",
           "name": "orphan-watcher",
           "timeout_seconds": 30
         },
         {
           "cadence_seconds": 7200,
-          "command": ["python", "scripts/harness-root-probe.py"],
+          "command": [
+            "python",
+            "scripts/harness-root-probe.py"
+          ],
           "cost": "cheap",
           "name": "harness-root-probe",
           "timeout_seconds": 30
         },
         {
           "cadence_seconds": 7200,
-          "command": ["bash", "scripts/dialogs-silenced.sh", "--agent-curable-only"],
+          "command": [
+            "bash",
+            "scripts/dialogs-silenced.sh",
+            "--agent-curable-only"
+          ],
           "cost": "cheap",
           "name": "dialogs-silenced",
           "timeout_seconds": 30
         },
         {
           "cadence_seconds": 7200,
-          "command": ["python", "scripts/check-live-checkout.py", "--no-receipt"],
+          "command": [
+            "python",
+            "scripts/check-live-checkout.py",
+            "--no-receipt"
+          ],
           "cost": "cheap",
           "name": "live-checkout-currency",
           "timeout_seconds": 30
         },
         {
           "cadence_seconds": 7200,
-          "command": ["python", "scripts/check-notify-gate.py"],
+          "command": [
+            "python",
+            "scripts/check-notify-gate.py"
+          ],
           "cost": "cheap",
           "name": "notify-gate",
           "timeout_seconds": 30
         },
         {
           "cadence_seconds": 21600,
-          "command": ["python", "scripts/cloud-storage-doctor.py", "--check", "--no-write"],
+          "command": [
+            "python",
+            "scripts/cloud-storage-doctor.py",
+            "--check",
+            "--no-write"
+          ],
           "cost": "heavy",
           "name": "cloud-storage-doctor",
           "timeout_seconds": 90
         },
         {
           "cadence_seconds": 21600,
-          "command": ["python", "scripts/residue-census.py", "--check"],
+          "command": [
+            "python",
+            "scripts/residue-census.py",
+            "--check"
+          ],
           "cost": "heavy",
           "name": "residue-census",
           "timeout_seconds": 90
         },
         {
           "cadence_seconds": 43200,
-          "command": ["python", "scripts/tcc-track-c-closeout.py", "--probe", "--json", "--no-write"],
+          "command": [
+            "python",
+            "scripts/tcc-track-c-closeout.py",
+            "--probe",
+            "--json",
+            "--no-write"
+          ],
           "cost": "heavy",
           "name": "tcc-track-c",
           "timeout_seconds": 90
         },
         {
           "cadence_seconds": 43200,
-          "command": ["python", "scripts/horrevm-custody.py", "--status"],
+          "command": [
+            "python",
+            "scripts/horrevm-custody.py",
+            "--status"
+          ],
           "cost": "heavy",
           "name": "horrevm-custody",
           "timeout_seconds": 90
         },
         {
           "cadence_seconds": 86400,
-          "command": ["bash", "scripts/verify-hot-cache.sh"],
+          "command": [
+            "bash",
+            "scripts/verify-hot-cache.sh"
+          ],
           "cost": "heavy",
           "name": "hot-cache",
           "timeout_seconds": 90
+        },
+        {
+          "name": "lane-liveness",
+          "command": [
+            "python",
+            "scripts/lane-liveness.py",
+            "--check",
+            "--json"
+          ],
+          "timeout_seconds": 30,
+          "cadence_seconds": 7200,
+          "cost": "cheap"
         }
       ],
       "review": {

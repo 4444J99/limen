@@ -40,7 +40,7 @@ def evaluate(path: Path, now: datetime) -> tuple[list[str], dict]:
     try:
         levers = load(path)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
-        return [f"registry unreadable: {exc}"], {"path": str(path), "total": 0}
+        return [f"registry unreadable: {exc}"], {"path": str(path), "total": 0, "diagnosed": 0}
 
     ids: set[str] = set()
     ages: list[int] = []
@@ -59,7 +59,7 @@ def evaluate(path: Path, now: datetime) -> tuple[list[str], dict]:
             errors.append(f"{prefix} {lid}: duplicate id")
         ids.add(lid)
         status = lever.get("status")
-        if status not in STATUSES:
+        if not isinstance(status, str) or status not in STATUSES:
             errors.append(f"{prefix} {lid}: invalid status {status!r}")
         stamp = lever.get("diagnosed_at")
         if stamp is None:
@@ -81,7 +81,8 @@ def evaluate(path: Path, now: datetime) -> tuple[list[str], dict]:
         "days_since_diagnosed_min": min(ages) if ages else None,
         "days_since_diagnosed_max": max(ages) if ages else None,
         "statuses": {
-            status: sum(1 for lever in levers if lever.get("status") == status) for status in sorted(STATUSES)
+            status: sum(1 for lever in levers if isinstance(lever, dict) and lever.get("status") == status)
+            for status in sorted(STATUSES)
         },
         "violations": len(errors),
     }
