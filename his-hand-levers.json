@@ -319,7 +319,7 @@
       "implementation": {
         "schema_version": 1,
         "behavior": "Prepare one authenticated HTTPS gateway with explicit upstream health and credential states. Reject unauthorized clients; surface expired or revoked credentials as auth_needed without launching repeated login flows. Verify the local gateway before any public tunnel or hosted connector registration.",
-        "rationale": "The tunnel currently checks only an unauthenticated GET and has an unverified force override. That does not establish protocol authentication or permanent upstream authorization.",
+        "rationale": "A direct public tunnel requires local authentication rejection; external-auth assertions cannot establish that boundary. GET-only refusal is a launch precondition, while full MCP authentication and persistence require separate canaries.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
           "his-hand-levers.json#L-IANVA-CLOUD",
@@ -343,7 +343,13 @@
         ],
         "remaining_human_action": "Authorize public exposure and register the hosted connector; grant only the specific upstream consent shown necessary by current probes.",
         "historical_gate_requires_verification": null,
-        "decision_status": "chosen_pending_evidence"
+        "decision_status": "chosen_pending_evidence",
+        "design_debt": {
+          "organ": "ianva/scripts/ianva-tunnel.sh",
+          "status": "built",
+          "dissolves_when": "bash scripts/run-pytest-hermetic.sh cli/tests/test_ianva_tunnel.py -q",
+          "scope": "Local unauthenticated tunnel-launch precondition only; this does not establish full protocol authentication, persistence, public exposure or hosted consent."
+        }
       },
       "historical_guidance": [
         {

@@ -156,5 +156,12 @@
       "cli/tests/test_lever_classify.py": "caec1ac6dbfc2ad4a47ea9fe20305f93ffe2c6d4c3544c8f4559b043e6a7a124"
     },
     "api_tests_passed": 52
+  },
+  "tunnel_launch_verification": {
+    "owner": "L-IANVA-CLOUD",
+    "mocked_cases_passed": 7,
+    "changed_gate_batch_passed": 9,
+    "public_tunnel_launched": false,
+    "scope": "Local unauthenticated rejection precondition; full MCP authentication and restart persistence remain unverified."
   }
 }

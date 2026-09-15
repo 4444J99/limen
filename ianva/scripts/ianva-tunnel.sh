@@ -20,20 +20,19 @@ LOCAL="http://127.0.0.1:${PORT}"
 command -v cloudflared >/dev/null || { echo "cloudflared not found (brew install cloudflared)"; exit 1; }
 
 # Health + AUTH gate. A public unauthenticated /mcp is an open proxy to every upstream's creds, so
-# we refuse to expose unless the endpoint rejects an un-credentialed request. Set IANVA_TUNNEL_FORCE=1
-# only if you have other auth in front (and you know what you're doing).
+# reject exposure unless the local endpoint rejects an uncredentialed request.
+# A caller assertion about external auth cannot prove protection for this direct tunnel.
 CODE="$(curl -s -o /dev/null -w '%{http_code}' --max-time 4 "${LOCAL}/mcp" 2>/dev/null || echo 000)"
 if [ "$CODE" = "000" ]; then
   echo "error: ${LOCAL}/mcp not responding — start it first with \`ianva up\`."; exit 1
 fi
-if [ "$CODE" != "401" ] && [ "$CODE" != "403" ] && [ "${IANVA_TUNNEL_FORCE:-0}" != "1" ]; then
+if [ "$CODE" != "401" ] && [ "$CODE" != "403" ]; then
   echo "REFUSING to expose: ${LOCAL}/mcp answered HTTP ${CODE} to an UNAUTHENTICATED request."
   echo "That would publish an open proxy to all your upstream credentials. Add a bearer first:"
   echo "  ianva bearer --new  →  store IANVA_BEARER_TOKEN  →  ianva up   (re-enables enforcement)"
-  echo "(override with IANVA_TUNNEL_FORCE=1 only if you front it with your own auth.)"
   exit 1
 fi
-echo "auth gate OK: ${LOCAL}/mcp requires auth (HTTP ${CODE}). Safe to expose."
+echo "auth gate OK: ${LOCAL}/mcp rejected the unauthenticated probe (HTTP ${CODE})."
 
 if [ "${1:-}" = "--named" ]; then
   NAME="${2:-ianva}"
