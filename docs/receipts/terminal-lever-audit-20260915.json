@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "owner": "4444J99/limen#2625",
+  "scope": "all ten terminal lever records",
+  "registry_lifecycles_changed": false,
+  "audit_count": 10,
+  "closed_issue_count": 4,
+  "open_issue_count": 5,
+  "merged_pr_count": 1,
+  "current_execution_or_custody_inferred_from_issue_closure": false,
+  "findings": [
+    {
+      "id": "L-IANVA-LOCAL",
+      "owner_url": "https://github.com/4444J99/limen/issues/262",
+      "owner_state": "CLOSED",
+      "disposition": "Historical gateway activation receipt retained; present service health requires a new live probe, not reuse of issue closure."
+    },
+    {
+      "id": "L-CARD-FRAUD-HOLD",
+      "owner_url": "https://github.com/4444J99/limen/issues/182",
+      "owner_state": "CLOSED",
+      "disposition": "Owner issue explicitly retains a discharged historical incident; later billing/admission failures require new causal evidence."
+    },
+    {
+      "id": "L-STORAGE-DRAIN-PUSHED",
+      "owner_url": "https://github.com/4444J99/limen/issues/912",
+      "owner_state": "OPEN",
+      "disposition": "Registry retires the old human grant, while the issue body still requests it. Preserve retirement; the issue owner must reconcile that stale projection without reactivating the old free-space target."
+    },
+    {
+      "id": "L-LAUNCHAGENT-HEAL",
+      "owner_url": "https://github.com/4444J99/limen/issues/1046",
+      "owner_state": "OPEN",
+      "disposition": "Registry records the historical grant as discharged. An open owner issue does not revoke that grant or prove the present effector is running."
+    },
+    {
+      "id": "L-CONST-CUSTODY-MIGRATION",
+      "owner_url": "https://github.com/4444J99/limen/issues/1642",
+      "owner_state": "CLOSED",
+      "disposition": "Historical migration disposition retained. Issue closure alone is not proof of current custody or every transferred repository."
+    },
+    {
+      "id": "L-GITVS-DEMOTE-ARM",
+      "owner_url": "https://github.com/4444J99/limen/issues/1643",
+      "owner_state": "CLOSED",
+      "disposition": "Historical arming disposition retained. Current visibility and runtime effects remain separate live observations."
+    },
+    {
+      "id": "L-HEARTBEAT-WORKTREE-VOLUME-GONE",
+      "owner_url": "https://github.com/4444J99/limen/issues/1776",
+      "owner_state": "OPEN",
+      "disposition": "Registry discharges the retired resident scheduler problem. The newly authorized bounded one-shot contract is a separate architecture; do not restore the old missing-volume scheduler."
+    },
+    {
+      "id": "L-COLLABORATION-OPERATIONS-PLATFORM-GENESIS",
+      "owner_url": "https://github.com/4444J99/limen/issues/1779",
+      "owner_state": "OPEN",
+      "disposition": "Issue body is an explicit authorization receipt with retained private/owner-only boundaries. Consent discharge and an open engineering owner are compatible."
+    },
+    {
+      "id": "L-CLOUDFLARE-DO-QUOTA",
+      "owner_url": "https://github.com/4444J99/limen/issues/2054",
+      "owner_state": "OPEN",
+      "disposition": "Issue explicitly supersedes the human account/support diagnosis with internal persistence work. Keep the human lever retired and engineering debt visible."
+    },
+    {
+      "id": "L-LIMEN-PERSONAL-CONTROL-PLANE-TRANSFER",
+      "owner_url": "https://github.com/4444J99/limen/pull/2543",
+      "owner_state": "MERGED",
+      "disposition": "Owner is a merged pull request, not an ordinary issue. Live repository ID 1255213941 resolves to 4444J99/limen, supporting the recorded hosting transfer."
+    }
+  ],
+  "projection_remediation": {
+    "issues": [
+      912,
+      1046,
+      1776
+    ],
+    "action": "Added current registry disposition above preserved historical request text",
+    "readback_verified": true,
+    "issue_states_preserved": "OPEN",
+    "lever_lifecycles_changed": false
+  }
+}
