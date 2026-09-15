@@ -18,6 +18,8 @@ policy="$here/../merge-policy.sh"
 # --- stub `gh` so the predicate reads our fixture instead of the network ---
 stubdir="$(mktemp -d)"
 fixture="$stubdir/pr.json"
+cd "$stubdir"
+printf "%s\n" "caller-owned" > err.txt
 trap 'rm -rf "$stubdir"' EXIT
 cat > "$stubdir/gh" <<STUB
 #!/usr/bin/env bash
@@ -207,26 +209,32 @@ unset GH_QUEUE_CAPABILITY
 # temporary file rather than leaving a repository-root err.txt behind.
 rate_limit_case() {
   local message="$1"
-  rm -f "$here/../../err.txt"
+  local want="${2:-2}"
+  local mode="${3:-explicit}"
+  local pr_arg=1
+  [ "$mode" = explicit ] || pr_arg=""
   export GH_PR_VIEW_ERROR="$message"
   set +e
-  PATH="$stubdir:$PATH" bash "$policy" 1 --repo o/r >/dev/null 2>&1
+  PATH="$stubdir:$PATH" bash "$policy" $pr_arg --repo o/r >/dev/null 2>&1
   local got=$?
   set -e
-  if [ "$got" = 2 ] && [ ! -e "$here/../../err.txt" ]; then
+  if [ "$got" = "$want" ] && [ "$(cat err.txt)" = "caller-owned" ]; then
     printf '  ok   %-34s exit=%s\n' "rate-limit: $message" "$got"
     pass=$((pass+1))
   else
-    printf '  FAIL %-34s want=2 got=%s residue=%s\n' "rate-limit: $message" "$got" "$( [ -e "$here/../../err.txt" ] && echo yes || echo no )"
+    printf '  FAIL %-34s want=2 got=%s residue=%s\n' "rate-limit: $message" "$got" "$(cat err.txt)"
     fail=$((fail+1))
   fi
   unset GH_PR_VIEW_ERROR
 }
 rate_limit_case "rate limit exceeded"
 rate_limit_case "API quota exhausted"
-rate_limit_case "HTTP 403 from api.github.com"
+rate_limit_case "HTTP 403 from api.github.com" 3
 rate_limit_case "HTTP 429 Too Many Requests"
 rate_limit_case "fetch exhausted after retries"
+rate_limit_case "API quota exhausted" 2 auto
+rate_limit_case "HTTP 403 forbidden" 3 auto
+rate_limit_case "HTTP 401 unauthorized" 3 auto
 export GH_PR_VIEW_ERROR="repository not found"
 set +e
 PATH="$stubdir:$PATH" bash "$policy" 1 --repo o/r >/dev/null 2>&1

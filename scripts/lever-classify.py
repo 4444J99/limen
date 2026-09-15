@@ -44,6 +44,7 @@ import json
 import os
 import re
 import subprocess
+from pathlib import Path
 import sys
 
 REGISTRY = os.environ.get(
@@ -273,7 +274,7 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    root = os.path.dirname(os.path.dirname(os.path.abspath(REGISTRY)))
+    root = os.environ.get("LIMEN_ROOT") or str(Path(__file__).resolve().parents[1])
     d = load_registry(REGISTRY)
     levers = d.get("levers", [])
     if not isinstance(levers, list) or not levers:

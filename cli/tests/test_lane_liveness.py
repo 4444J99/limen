@@ -5,6 +5,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location("lane_liveness", ROOT / "scripts" / "lane-liveness.py")
@@ -73,3 +76,94 @@ def test_unreadable_projection_is_unmeasured(tmp_path, monkeypatch):
     assert report["status"] == "fail"
     assert report["unmeasured"] is True
     assert report["lanes"][0]["state"] == "unmeasured"
+
+
+@pytest.fixture(autouse=True)
+def broker(monkeypatch, tmp_path):
+    class Broker:
+        def capabilities(self):
+            return {"available": True}
+
+        def task_run(self, task_id):
+            return {"found": True, "root_run_id": task_id, "run_id": task_id}
+
+        def graph(self, task_id):
+            tasks = yaml.safe_load((tmp_path / "tasks.yaml").read_text())["tasks"]
+            task = next(t for t in tasks if t["id"] == task_id)
+            return {
+                "nodes": [
+                    {
+                        "run_id": task_id,
+                        "lease": {
+                            "executor": {"agent": task.get("executor", task["target_agent"])},
+                            "state": "active",
+                            "heartbeat_at": task["dispatch_log"][0]["timestamp"],
+                        },
+                    }
+                ]
+            }
+
+    monkeypatch.setattr("limen.conduct.client.client_from_env", Broker)
+
+
+def test_unknown_lane_is_unmeasured(tmp_path):
+    write_tasks(tmp_path, [])
+    report = lane_liveness.evaluate(tmp_path, "invented", datetime.now(timezone.utc), 24)
+    assert report["unmeasured"]
+
+
+def test_stale_sibling_cannot_hide_behind_fresh_task(tmp_path):
+    tasks = [
+        {
+            "id": name,
+            "target_agent": "any",
+            "executor": "codex",
+            "status": "in_progress",
+            "dispatch_log": [{"timestamp": stamp}],
+        }
+        for name, stamp in [("old", "2026-09-10T00:00:00Z"), ("new", "2026-09-15T12:00:00Z")]
+    ]
+    (tmp_path / "tasks.yaml").write_text(yaml.safe_dump({"tasks": tasks}))
+    report = lane_liveness.evaluate(tmp_path, "codex", datetime(2026, 9, 15, 13, tzinfo=timezone.utc), 24)
+    assert report["lanes"][0]["state"] == "stalled"
+    assert report["lanes"][0]["active_tasks"] == 2
+
+
+def test_receipt_replacement(tmp_path):
+    path = tmp_path / "receipt.json"
+    lane_liveness.write_receipt(path, {"status": "pass"})
+    lane_liveness.write_receipt(path, {"status": "fail"})
+    import json
+
+    assert json.loads(path.read_text()) == {"status": "fail"}
+    assert list(tmp_path.iterdir()) == [path]
+
+
+def test_missing_private_custody_is_unmeasured(tmp_path, monkeypatch):
+    def missing(_path):
+        raise lane_liveness.PrivateCustodyUnavailable("missing")
+
+    monkeypatch.setattr(lane_liveness, "board_path", missing)
+    report = lane_liveness.evaluate(tmp_path, "codex", datetime.now(timezone.utc), 24)
+    assert report["unmeasured"]
+    assert report["status"] == "fail"
+
+
+def test_broker_failure_is_unmeasured(tmp_path, monkeypatch):
+    write_tasks(tmp_path, [])
+
+    def unavailable():
+        raise RuntimeError("offline")
+
+    monkeypatch.setattr("limen.conduct.client.client_from_env", unavailable)
+    assert lane_liveness.evaluate(tmp_path, "codex", datetime.now(timezone.utc), 24)["unmeasured"]
+
+
+def test_doctor_uses_configured_runtime_root(tmp_path, monkeypatch):
+    from limen.doctor import _lane_liveness
+
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (scripts / "lane-liveness.py").write_text("print(" + repr('{"status":"pass","source":"configured"}') + ")")
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    assert _lane_liveness(tmp_path / "tasks.yaml", "codex")["source"] == "configured"

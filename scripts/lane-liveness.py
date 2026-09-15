@@ -13,16 +13,29 @@ import json
 import os
 import sys
 import tempfile
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import yaml
+try:
+    import yaml
+except ImportError:
+    yaml = None
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from _board_custody import board_path  # noqa: E402
+try:
+    from _board_custody import PrivateCustodyUnavailable, board_path
+except ImportError:
+
+    class PrivateCustodyUnavailable(Exception):
+        pass
+
+    def board_path(path):
+        raise PrivateCustodyUnavailable("custody dependency unavailable")
+
 
 try:
     from limen.census import VENDORS, canonical
@@ -60,6 +73,8 @@ def task_events(task: dict) -> list[datetime]:
 
 
 def load_tasks(path: Path) -> tuple[list[dict], str | None]:
+    if yaml is None:
+        return [], "YAML dependency unavailable"
     if not path.exists():
         return [], f"tasks projection missing: {path}"
     try:
@@ -69,7 +84,17 @@ def load_tasks(path: Path) -> tuple[list[dict], str | None]:
     tasks = payload.get("tasks") if isinstance(payload, dict) else None
     if not isinstance(tasks, list):
         return [], "tasks projection has no list at 'tasks'"
-    return [task for task in tasks if isinstance(task, dict)], None
+    if any(not isinstance(task, dict) for task in tasks):
+        return [], "tasks projection contains malformed entries"
+    if any(
+        not isinstance(task.get("id"), str)
+        or not task["id"]
+        or not isinstance(task.get("status"), str)
+        or not isinstance(task.get("target_agent"), str)
+        for task in tasks
+    ):
+        return [], "tasks projection has malformed task identities"
+    return tasks, None
 
 
 def lane_names(tasks: list[dict], requested: str | None) -> list[str]:
@@ -88,7 +113,7 @@ def evaluate(
 ) -> dict:
     try:
         tasks_source = board_path(tasks_path or (root / "tasks.yaml"))
-    except Exception as exc:
+    except (PrivateCustodyUnavailable, Exception) as exc:
         tasks_source = None
         error = f"task custody unavailable: {exc}"
     else:
@@ -96,31 +121,63 @@ def evaluate(
     if tasks_source is None:
         tasks = []
     cutoff = now - timedelta(hours=max_age_hours)
-    rows: list[dict] = []
-    for lane in lane_names(tasks, requested):
-        assigned = [
-            task
-            for task in tasks
-            if canonical(str(task.get("target_agent") or "")) == lane
-            and task.get("status") in {"dispatched", "in_progress"}
-        ]
-        events = [event for task in assigned for event in task_events(task)]
-        latest = max(events) if events else None
-        if error:
-            state = "unmeasured"
-            detail = error
-        elif not assigned:
-            state = "idle"
-            detail = "no dispatched or in_progress tasks"
-        elif latest is None:
-            state = "stalled"
-            detail = f"{len(assigned)} active task(s) have no lifecycle timestamp"
-        elif latest < cutoff:
-            state = "stalled"
-            detail = f"latest lifecycle event is {latest.isoformat()}"
+    catalog = {vendor.name for vendor in VENDORS}
+    if not catalog:
+        error = error or "vendor catalog unavailable"
+    observations = []
+    client = None
+    broker_error = None
+    try:
+        from limen.conduct.client import client_from_env
+
+        client = client_from_env()
+        client.timeout = 3
+        client.capabilities()
+    except Exception:
+        broker_error = "conduct broker unavailable"
+    deadline = time.monotonic() + 20
+    graphs = {}
+    for task in tasks:
+        if task.get("status") not in ("dispatched", "in_progress"):
+            continue
+        lane = canonical(str(task.get("target_agent") or "unknown"))
+        state, detail, stamp = "unmeasured", broker_error, None
+        try:
+            if client is None or time.monotonic() >= deadline:
+                raise ValueError("broker unavailable or observation deadline exhausted")
+            current = client.task_run(str(task["id"]))
+            if not current.get("found"):
+                raise ValueError("active projection task has no broker run")
+            root_id = current["root_run_id"]
+            if root_id not in graphs:
+                graphs[root_id] = client.graph(root_id)
+            node = next(n for n in graphs[root_id]["nodes"] if n["run_id"] == current["run_id"])
+            lease = node["lease"]
+            lane = canonical(lease["executor"]["agent"])
+            stamp = parse_time(lease.get("heartbeat_at"))
+            if lane not in catalog or stamp is None or stamp > now:
+                raise ValueError("unknown executor or invalid heartbeat")
+            state = "active" if stamp >= cutoff and lease.get("state") in ("reserved", "active") else "stalled"
+            detail = "broker lease heartbeat evaluated"
+        except Exception:
+            detail = "broker lease evidence unavailable or malformed"
+        observations.append({"lane": lane, "state": state, "latest": stamp, "detail": detail})
+    rows = []
+    names = lane_names(tasks, requested)
+    if not requested:
+        names = list(dict.fromkeys(names + [o["lane"] for o in observations]))
+    for lane in names:
+        assigned = [o for o in observations if o["lane"] == lane]
+        unresolved = any(o["lane"] in ("any", "unknown") for o in observations)
+        if error or broker_error or lane not in catalog or unresolved:
+            state, detail = "unmeasured", error or broker_error or "unknown executor lane"
+        elif any(o["state"] == "unmeasured" for o in assigned):
+            state, detail = "unmeasured", "one or more tasks lack broker evidence"
+        elif any(o["state"] == "stalled" for o in assigned):
+            state, detail = "stalled", "one or more task leases are stale"
         else:
-            state = "active"
-            detail = f"{len(assigned)} active task(s); latest event {latest.isoformat()}"
+            state, detail = ("active", "all task leases fresh") if assigned else ("idle", "no active tasks")
+        latest = max((o["latest"] for o in assigned if o["latest"]), default=None)
         rows.append(
             {
                 "lane": lane,
@@ -130,15 +187,15 @@ def evaluate(
                 "latest_event_at": latest.isoformat() if latest else None,
             }
         )
-    bad = [row for row in rows if row["state"] in {"stalled", "unmeasured"}]
+    unmeasured = bool(error or broker_error or not rows or any(r["state"] == "unmeasured" for r in rows))
     return {
         "schema_version": "limen.lane_liveness.v1",
         "generated_at": now.isoformat(),
         "max_age_hours": max_age_hours,
         "requested_lane": canonical(requested) if requested else None,
-        "status": "fail" if bad else "pass",
+        "status": "fail" if unmeasured or any(r["state"] == "stalled" for r in rows) else "pass",
         "lanes": rows,
-        "unmeasured": bool(error),
+        "unmeasured": unmeasured,
     }
 
 
@@ -149,6 +206,8 @@ def write_receipt(path: Path, report: dict) -> None:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             json.dump(report, handle, indent=2, sort_keys=True)
             handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
         os.replace(temporary, path)
     finally:
         if os.path.exists(temporary):
