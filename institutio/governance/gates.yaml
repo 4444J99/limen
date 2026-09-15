@@ -378,7 +378,7 @@ gates:
     note: "The his-hand registry must be structurally readable: unique IDs, enum statuses, required intent fields, and parseable non-future diagnosis timestamps. Diagnosis age is derived at read time. The classifier remains the implementation decision: open levers are either irreducible sovereignty or explicit design debt; no mass closure or deletion is implied."
   lane-liveness-test:
     command: "bash scripts/tests/lane-liveness.test.sh"
-    paths: ["scripts/lane-liveness.py", "scripts/_board_custody.py", "cli/src/limen/census.py", "cli/src/limen/models.py", "cli/src/limen/conduct/client.py", "cli/src/limen/observer.py", "spec/scheduled-process-contracts.json", "institutio/governance/heartbeat-ownership.json", "cli/src/limen/doctor.py", "cli/src/limen/cli.py", "cli/tests/test_lane_liveness.py", "scripts/tests/lane-liveness.test.sh", "institutio/governance/sensors.yaml"]
+    paths: ["scripts/lane-liveness.py", "scripts/_board_custody.py", "cli/src/limen/private_board.py", "cli/src/limen/census.py", "cli/src/limen/models.py", "cli/src/limen/conduct/client.py", "cli/src/limen/observer.py", "spec/scheduled-process-contracts.json", "institutio/governance/heartbeat-ownership.json", "cli/src/limen/doctor.py", "cli/src/limen/cli.py", "cli/tests/test_lane_liveness.py", "scripts/tests/lane-liveness.test.sh", "institutio/governance/sensors.yaml"]
     owner: dispatch
     note: "Lane liveness must distinguish idle from stalled, surface unreadable projections as unmeasured, use the census catalog, and preserve a receipt atomically across restarts without taking lifecycle action."
   heartbeat-notification-contract:
