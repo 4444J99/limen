@@ -35,3 +35,7 @@ The control-plane implementation is being repaired in #2623. Estate activation, 
 The operator explicitly directed continued work until the full plan is complete. A partial PR, denied local gate, or published prerequisite is not the terminal target. Continue independent work while preserving the full acceptance denominator. Current cross-repository progress and exact deployment observations are in `docs/receipts/gap-filling-progress-20260915.json`.
 
 Schema #19 supplies the hosting-identity prerequisite; registry #553 contains the stable-ID-bound Editorial correction. Schema's one exact-head merge-drain submission returned DEFERRED/LIFECYCLE-UNKNOWN. Do not repeat that unchanged submission. Editorial generated context remains untouched until its registry input is accepted. The current deployed Worker reports 6f9626e95eec4aaf92e359186c01b1013e76fde6 and its inventory authority route returns 404; exact current-main deployment and rollback/readback remain required.
+
+## Host and custody decisions reviewed
+
+Ten further nonterminal decisions now distinguish reversible preparation from current OS grants or physical custody. The implementation report now has 17 selected decisions and 80 requiring component review; lifecycle states remain unchanged. The firewall diagnostic and active lever guidance no longer recommend disabling protection or pinning Node. The previous guidance is retained under `historical_guidance`. Listener binding and update behavior remain acceptance work; this documentation change does not assert a cured prompt.

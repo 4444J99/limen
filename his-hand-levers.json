@@ -20,11 +20,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Use the keyed IMAP draft path for Gmail; keep the hosted Apple Mail adapter available for non-Gmail drafts. Sending remains a separate authorized effect.",
+        "rationale": "Separate reversible engineering from the specific OS or custody authority; preserve automatic updates, source custody and evidence-backed acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-MAIL-AUTOMATION-GRANT"
+          "his-hand-levers.json#L-MAIL-AUTOMATION-GRANT",
+          "scripts/mail-beat.sh"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -32,14 +33,16 @@
         ],
         "owner": "mail organ · C_MAIL draft effector (limen PR #958); designed out for Gmail by the keyed path (UMA #168 + creds lane)",
         "acceptance": {
-          "condition": "autonomic per-beat draft creation on non-Gmail accounts (draft-only; never auto-sent). Gmail drafts already work headlessly once creds-hydrate lands GMAIL_APP_PASSWORD + GMAIL_USER in ~/.limen.env.",
+          "condition": "A successful draft readback in the intended account; no Sent receipt is implied.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "macOS TCC Automation (GUI approval for the fixed Domus Agent Host) + one env flag — only for non-Gmail accounts' drafts",
-        "decision_status": "requires_component_review"
+        "dependencies": [
+          "L-DOMUS-AGENT-HOST-TCC"
+        ],
+        "remaining_human_action": "Only an actually required non-Gmail Mail Automation grant through the fixed host.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -56,11 +59,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Verify encrypted archive restoration using an independently recoverable key held in the credential organ; never expose the key in logs, Git or chat.",
+        "rationale": "Separate reversible engineering from the specific OS or custody authority; preserve automatic updates, source custody and evidence-backed acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-ARCA-KEY-ESCROW"
+          "his-hand-levers.json#L-ARCA-KEY-ESCROW",
+          "scripts/arca.sh"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -68,14 +72,14 @@
         ],
         "owner": "ARCA build 2026-07-08",
         "acceptance": {
-          "condition": "full off-machine restore of the encrypted private estate (health/legal/people/finance/life)",
+          "condition": "Restore a bounded archive with the escrowed key independently of the current Mac Keychain.",
           "predicate": null,
           "status": "not_currently_verified"
         },
         "dependencies": [],
-        "remaining_human_action": null,
+        "remaining_human_action": "Authorize and complete escrow in an off-machine credential custody home if no verified independent copy exists.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -92,11 +96,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare the source/target manifest and two-copy restore receipts before any relocation; preserve active sessions and source bytes until custody is proved.",
+        "rationale": "Separate reversible engineering from the specific OS or custody authority; preserve automatic updates, source custody and evidence-backed acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CONTAINER-CUTOVER"
+          "his-hand-levers.json#L-CONTAINER-CUTOVER",
+          "docs/architecture/run-and-gun-substrate.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -104,14 +109,14 @@
         ],
         "owner": "ASK-2, ASK-20",
         "acceptance": {
-          "condition": "durable single-body identity",
+          "condition": "Both independently identified copies restore and hashes match before source removal.",
           "predicate": null,
           "status": "not_currently_verified"
         },
         "dependencies": [],
-        "remaining_human_action": null,
+        "remaining_human_action": "Physical custody media and authorization for any irreversible personal-data relocation or deletion.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -650,11 +655,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Represent Mail/Messages coverage as unmeasured until the fixed host can read them; add Time Machine only as a separately verified backup target.",
+        "rationale": "Separate reversible engineering from the specific OS or custody authority; preserve automatic updates, source custody and evidence-backed acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-BACKUP-FDA"
+          "his-hand-levers.json#L-BACKUP-FDA",
+          "docs/architecture/tcc-stable-agent-host.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -662,14 +668,16 @@
         ],
         "owner": "needs_human digest (optional tier)",
         "acceptance": {
-          "condition": "(optional) a 4th backup tier (Time Machine); Mail+Messages added to offsite preservation",
+          "condition": "Per-store coverage and a completed restore receipt; an old three-copy assertion is insufficient.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "both are local-machine settings only you can grant — never automatable; neither blocks anything. Any protected Limen read must run beneath the fixed Domus host.",
-        "decision_status": "requires_component_review"
+        "dependencies": [
+          "L-DOMUS-AGENT-HOST-TCC"
+        ],
+        "remaining_human_action": "Required Full Disk Access grant on the fixed host and any physical backup destination.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -710,11 +718,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Route managed protected reads through the signed fixed host, retain automatic updates, and measure vendor-disclaimed children separately instead of promising inherited grants.",
+        "rationale": "Separate reversible engineering from the specific OS or custody authority; preserve automatic updates, source custody and evidence-backed acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-DOMUS-AGENT-HOST-TCC"
+          "his-hand-levers.json#L-DOMUS-AGENT-HOST-TCC",
+          "scripts/tcc-identity-audit"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -722,14 +731,14 @@
         ],
         "owner": "Auto-Updates Without TCC Permission Sprawl · docs/architecture/tcc-stable-agent-host.md",
         "acceptance": {
-          "condition": "foreground agents, background PTYs/spares, MCP descendants, and Python control-plane commands retain protected access across executable version rotation with no repeated privacy prompts",
-          "predicate": null,
+          "condition": "Hosted strict identity audit, unchanged unrelated grants, and a real non-noop update observation.",
+          "predicate": "domus-agent-host run -- scripts/tcc-identity-audit --strict",
           "status": "not_currently_verified"
         },
         "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "macOS TCC (GUI approval) — tccutil can only reset, never grant, so this atom is irreducible. One click on the STABLE HOST ends the class; one click per version does not.",
-        "decision_status": "requires_component_review"
+        "remaining_human_action": "Only missing Full Disk Access or App Management grants on the fixed host; vendor-disclaimed child behavior remains upstream work.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -755,11 +764,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Derive the current rotating-client grant set immediately before repair; remove only evidenced path grants and route subsequent operations through the fixed host.",
+        "rationale": "Separate reversible engineering from the specific OS or custody authority; preserve automatic updates, source custody and evidence-backed acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-TCC-VERSIONED-CLIENT-LEAK-2-1-222"
+          "his-hand-levers.json#L-TCC-VERSIONED-CLIENT-LEAK-2-1-222",
+          "scripts/tcc-identity-audit"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -767,14 +777,16 @@
         ],
         "owner": "post-discharge inventory regression · docs/receipts/tcc-track-c-1703/closeout-20260805T165301Z.json onward · L-DOMUS-AGENT-HOST-TCC",
         "acceptance": {
-          "condition": "beat sensor `tcc-track-c` returns green (active_leaks 0, new_managed 0); osascript/Mail automation and removable-volume access survive the next Claude Code version rotation without a fresh prompt",
-          "predicate": null,
+          "condition": "Fresh strict identity audit proves no active rotating grants and preserves unrelated bundle grants.",
+          "predicate": "domus-agent-host run -- scripts/tcc-identity-audit --strict",
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "macOS TCC (GUI approval + per-row removal) — never automatable",
-        "decision_status": "requires_component_review"
+        "dependencies": [
+          "L-DOMUS-AGENT-HOST-TCC"
+        ],
+        "remaining_human_action": "OS approval for the exact current grant changes, if needed. Do not replay the historical eight-row list blindly.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -820,15 +832,15 @@
     },
     {
       "id": "L-FIREWALL-PROMPT",
-      "label": "Silence the 'python/node wants to accept incoming connections' dialog FOR GOOD. ROOT (found 2026-06-25): the macOS Application Firewall is ON, and the ianva gateway's mcphub backend (@samanhappy/mcphub) calls app.listen(port) with NO host arg, so node binds ALL interfaces (*:7666) instead of loopback — and mcphub exposes no HOST/BIND env to fix it. node is ad-hoc-signed, so every `brew upgrade node` rotates its path+cdhash and the firewall re-prompts. An AI cannot lower this: socketfilterfw needs root (sudo has no NOPASSWD here) — that impossibility is the guardrail. THE CURE (your hand, once): turn the app firewall off (defensible on a single-user box behind NAT, fully reversible) or allow node explicitly. `bash scripts/dialogs-silenced.sh` prints the exact paste and verifies the whole dialog estate.",
+      "label": "Resolve recurring incoming-connection prompts by verifying local listener binding and runtime identity; retain firewall posture and automatic updates.",
       "owner": "yours",
       "cost": "one `sudo` paste (~30s, one Touch-ID), then silent forever",
       "unlocks": "the 'node/python wants to accept incoming connections' firewall dialog never appears again",
-      "gate": "turning the OS firewall off is a security-posture decision — your call; the allow-list alternative keeps it on but re-prompts on each node upgrade unless you also `brew pin node`",
+      "gate": "Only a demonstrated OS-level permission change on the identified service; disabling the firewall and pinning runtimes are not the selected implementation.",
       "steps": [
-        "Recommended (zero prompts, reversible): sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate off",
-        "Conservative (keep firewall on): N=\"$(readlink -f $(command -v node))\"; sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add \"$N\" --unblockapp \"$N\"",
-        "Verify: bash scripts/dialogs-silenced.sh must print ALL CLEAR. Closes when the firewall class is silenced."
+        "Inspect current listener addresses and owning executable.",
+        "Bind services intended only for this host to loopback through their supported configuration or source repair.",
+        "Verify on an actual updated runtime; request only a demonstrated, narrow OS permission if still necessary."
       ],
       "source_task": "dialogs-silenced predicate (fix/silence-permission-dialogs; 2026-06-25)",
       "note": "The 1Password/Touch-ID dialog class is ALREADY CURED (not a lever): the op service-account token is installed at ~/.config/op/service-account-token and exported via ~/.zshenv, so every op read is promptless — zero Touch-ID; dialogs-silenced.sh verifies it. Sibling levers cover the remaining dialog classes: L-AGENT-BASH-PROMPT #183 (Claude bash prompts) and L-BACKUP-FDA #184 (file-access FDA). scripts/dialogs-silenced.sh is the single executable predicate over all of them. See memory: macos-tcc-gatekeeper-dialogs-solved.",
@@ -839,11 +851,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Keep automatic updates enabled and preserve firewall posture. Bind local-only gateway listeners to loopback and verify the actual runtime identity before requesting any narrowly scoped firewall permission.",
+        "rationale": "Separate reversible engineering from the specific OS or custody authority; preserve automatic updates, source custody and evidence-backed acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-FIREWALL-PROMPT"
+          "his-hand-levers.json#L-FIREWALL-PROMPT",
+          "docs/architecture/tcc-stable-agent-host.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -851,14 +864,23 @@
         ],
         "owner": "dialogs-silenced predicate (fix/silence-permission-dialogs; 2026-06-25)",
         "acceptance": {
-          "condition": "the 'node/python wants to accept incoming connections' firewall dialog never appears again",
+          "condition": "Current listener addresses are loopback-only for local services and an observed runtime update does not recreate the prompt.",
           "predicate": null,
           "status": "not_currently_verified"
         },
         "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "turning the OS firewall off is a security-posture decision — your call; the allow-list alternative keeps it on but re-prompts on each node upgrade unless you also `brew pin node`",
-        "decision_status": "requires_component_review"
+        "remaining_human_action": "Only a demonstrated OS-level permission change on the identified service; disabling the firewall and pinning runtimes are not the selected implementation.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
+      },
+      "historical_guidance": {
+        "label": "Silence the 'python/node wants to accept incoming connections' dialog FOR GOOD. ROOT (found 2026-06-25): the macOS Application Firewall is ON, and the ianva gateway's mcphub backend (@samanhappy/mcphub) calls app.listen(port) with NO host arg, so node binds ALL interfaces (*:7666) instead of loopback — and mcphub exposes no HOST/BIND env to fix it. node is ad-hoc-signed, so every `brew upgrade node` rotates its path+cdhash and the firewall re-prompts. An AI cannot lower this: socketfilterfw needs root (sudo has no NOPASSWD here) — that impossibility is the guardrail. THE CURE (your hand, once): turn the app firewall off (defensible on a single-user box behind NAT, fully reversible) or allow node explicitly. `bash scripts/dialogs-silenced.sh` prints the exact paste and verifies the whole dialog estate.",
+        "gate": "turning the OS firewall off is a security-posture decision — your call; the allow-list alternative keeps it on but re-prompts on each node upgrade unless you also `brew pin node`",
+        "steps": [
+          "Recommended (zero prompts, reversible): sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate off",
+          "Conservative (keep firewall on): N=\"$(readlink -f $(command -v node))\"; sudo /usr/libexec/ApplicationFirewall/socketfilterfw --add \"$N\" --unblockapp \"$N\"",
+          "Verify: bash scripts/dialogs-silenced.sh must print ALL CLEAR. Closes when the firewall class is silenced."
+        ]
       }
     },
     {
@@ -1008,11 +1030,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Use the native hosted recorder for screen and system audio; retain account and OS permission readback as explicit evidence.",
+        "rationale": "Separate reversible engineering from the specific OS or custody authority; preserve automatic updates, source custody and evidence-backed acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-TCC-RECORDER"
+          "his-hand-levers.json#L-TCC-RECORDER",
+          "docs/architecture/tcc-stable-agent-host.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1020,14 +1043,16 @@
         ],
         "owner": "media organ · recorder · L-DOMUS-AGENT-HOST-TCC",
         "acceptance": {
-          "condition": "native screen + SYSTEM-AUDIO recording (no BlackHole needed)",
+          "condition": "A bounded authorized capture has the expected screen/audio streams and stable responsible identity.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "macOS TCC (GUI approval)",
-        "decision_status": "requires_component_review"
+        "dependencies": [
+          "L-DOMUS-AGENT-HOST-TCC"
+        ],
+        "remaining_human_action": "Required Screen Recording and Microphone consent for the fixed host.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1046,11 +1071,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Use native capture first. Prepare the virtual audio driver fallback only for a reproduced source that native capture cannot record.",
+        "rationale": "Separate reversible engineering from the specific OS or custody authority; preserve automatic updates, source custody and evidence-backed acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-AUDIO-BLACKHOLE"
+          "his-hand-levers.json#L-AUDIO-BLACKHOLE",
+          "docs/architecture/tcc-stable-agent-host.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1058,14 +1084,14 @@
         ],
         "owner": "media organ · recorder (fallback)",
         "acceptance": {
-          "condition": "system-audio capture for the rare SCK-untappable source",
+          "condition": "A source-specific capture comparison demonstrates the native gap and verifies the fallback audio stream.",
           "predicate": null,
           "status": "not_currently_verified"
         },
         "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "privileged driver install (sudo + security approval + likely reboot)",
-        "decision_status": "requires_component_review"
+        "remaining_human_action": "Privileged driver installation and any required restart, only after the native-source gap is demonstrated.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1084,11 +1110,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Keep the Photos importer on demand and execute it under the fixed host; verify the imported asset instead of treating a successful script exit as import proof.",
+        "rationale": "Separate reversible engineering from the specific OS or custody authority; preserve automatic updates, source custody and evidence-backed acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-TCC-PHOTOS-AUTOMATION"
+          "his-hand-levers.json#L-TCC-PHOTOS-AUTOMATION",
+          "docs/architecture/tcc-stable-agent-host.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1096,14 +1123,16 @@
         ],
         "owner": "media organ · screen-capture-importer · L-DOMUS-AGENT-HOST-TCC",
         "acceptance": {
-          "condition": "auto-import of screengrabs/recordings into Photos.app",
+          "condition": "The intended Photos asset is read back with expected content after the authorized import.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "macOS TCC Automation (GUI approval)",
-        "decision_status": "requires_component_review"
+        "dependencies": [
+          "L-DOMUS-AGENT-HOST-TCC"
+        ],
+        "remaining_human_action": "Photos Automation consent for the fixed host when required.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
