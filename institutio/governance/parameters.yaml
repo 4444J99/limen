@@ -2701,6 +2701,30 @@ parameters:
     self_update: none
     owner: dispatch
     note: "Rolling window (in days) lane-fitness.py uses when counting dispatch_log attempts. Entries older than this are excluded, so the fitness table stays current with recent fleet behavior rather than anchoring on stale history. Derive-not-pin."
+  LIMEN_LANE_LIVENESS:
+    default: "1"
+    env: LIMEN_LANE_LIVENESS
+    self_update: none
+    owner: dispatch
+    note: "Read-only lane liveness sensor. It derives active, idle, stalled, or unmeasured from the canonical vendor catalog and task lifecycle evidence; it never dispatches or repairs a lane."
+  LIMEN_LANE_LIVENESS_MAX_AGE_HOURS:
+    default: 24
+    env: LIMEN_LANE_LIVENESS_MAX_AGE_HOURS
+    self_update: none
+    owner: dispatch
+    note: "Maximum age of the latest lifecycle evidence before assigned work is stalled. Idle lanes do not require a heartbeat."
+  LIMEN_LANE_LIVENESS_CADENCE:
+    default: 4
+    env: LIMEN_LANE_LIVENESS_CADENCE
+    self_update: none
+    owner: dispatch
+    note: "Beat cadence for the lane-liveness sensor."
+  LIMEN_LANE_LIVENESS_TIMEOUT:
+    default: 60
+    env: LIMEN_LANE_LIVENESS_TIMEOUT
+    self_update: none
+    owner: dispatch
+    note: "Bounded execution timeout for the lane-liveness sensor."
   LIMEN_LANE_FITNESS:
     default: "1"
     env: LIMEN_LANE_FITNESS
