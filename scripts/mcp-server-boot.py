@@ -360,7 +360,11 @@ def _probe_stdio(server: dict, timeout: int) -> tuple[bool, str]:
 
     result = verify(server, timeout=timeout)
     ok = result["dimensions"]["protocol"] == "pass"
-    return ok, "MCP exchange verified" if ok else result.get("reason", "unmeasured")
+    if ok:
+        return True, "MCP exchange verified"
+    if result.get("reason") == "server_rpc_error" and type(result.get("rpc_error_code")) is int:
+        return False, f"server_rpc_error:{result['rpc_error_code']}"
+    return False, result.get("reason", "unmeasured")
 
 
 def probe(server: dict, timeout: int) -> dict:

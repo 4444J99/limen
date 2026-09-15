@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+import sys
 
 import pytest
 
@@ -213,6 +214,36 @@ def test_stdio_probe_resolves_relative_command_against_declared_cwd(
 
     assert ok is False
     assert detail == "ProtocolError"
+
+
+def test_stdio_probe_surfaces_only_the_sanitized_rpc_error_code(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    module = _load_module(monkeypatch, tmp_path / "codex")
+    code = (
+        "import json,sys\n"
+        "for line in sys.stdin:\n"
+        " request=json.loads(line)\n"
+        " if 'id' in request:\n"
+        "  print(json.dumps({'jsonrpc':'2.0','id':request['id'],'error':"
+        "{'code':-32603,'message':'do not expose this message','data':{'credential':'private'}}}),flush=True)\n"
+    )
+    server = {
+        "agent": "codex",
+        "name": "computer-use",
+        "transport": "stdio",
+        "command": sys.executable,
+        "args": ["-u", "-c", code],
+        "env": {},
+    }
+
+    ok, detail = module._probe_stdio(server, timeout=1)
+
+    assert ok is False
+    assert detail == "server_rpc_error:-32603"
+    assert "do not expose" not in detail
+    assert "private" not in detail
 
 
 def test_bearer_status_requires_the_named_environment_value(
