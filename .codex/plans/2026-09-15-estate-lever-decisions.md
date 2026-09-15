@@ -23,3 +23,25 @@ Observe its eventual result without holding a synchronous CI wait or rerunning
 green work. Reader-mode schema #19 remains open at its unchanged published head;
 its prior merge submission is not rearmed. Remaining relay, template/security,
 product and custody obligations stay active under the full plan.
+
+## Acceptance-definition and terminal audit continuation
+
+The read-only report now distinguishes implementation-object coverage, selected
+decisions and declared acceptance predicates. Current result: 29 selected,
+68 requiring component review, two acceptance predicates present and 95 missing.
+Malformed input is unmeasured, with unknown totals for unreadable registries; it
+never becomes empty successful coverage. Five changed gates passed, including
+22 registry/classifier tests.
+
+All ten terminal records were audited against their current owner issue/PR and
+registry context. Four owner issues are closed, five remain open, and one owner
+is a merged PR with live stable repository identity corroboration. No lifecycle
+was changed. Open engineering or authorization-receipt owners do not reactivate
+terminal levers. The retired storage-grant issue still has stale request prose;
+its existing owner retains that projection debt. Details are in
+docs/receipts/terminal-lever-audit-20260915.json.
+
+The stale terminal-owner projections were then reconciled on issues #912, #1046
+and #1776: current registry dispositions now precede the preserved historical
+requests. Exact body readback and unchanged OPEN states were verified. No issue
+or lever was closed or reopened.

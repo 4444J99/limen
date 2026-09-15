@@ -75,7 +75,9 @@
     "selected": 29,
     "requires_component_review": 68,
     "terminal_histories_retained": 10,
-    "engineering_or_external_completion_claimed": false
+    "engineering_or_external_completion_claimed": false,
+    "with_acceptance_predicate": 2,
+    "needs_acceptance_definition": 95
   },
   "relay_source_coverage": {
     "ledger_commit": "0a656e47accc6378b44b1a70d45b6f0129ca96fa",
@@ -219,5 +221,11 @@
     "permanent_records_and_lifecycles_preserved": 107,
     "focused_registry_tests_passed": 25,
     "source_policy": "Current estate, ACCESS, exact-tip reaper and private inventory contracts; historical prices and admission annotations are not account-state proof."
+  },
+  "terminal_audit": {
+    "records_audited": 10,
+    "registry_lifecycles_changed": false,
+    "receipt": "docs/receipts/terminal-lever-audit-20260915.json",
+    "owner_projection_debt": "Current dispositions added to issues #912/#1046/#1776; exact bodies and unchanged OPEN states read back."
   }
 }

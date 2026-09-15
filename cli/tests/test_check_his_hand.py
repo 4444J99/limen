@@ -151,3 +151,56 @@ def test_observatory_preserves_source_diagnosis_without_inventing_one():
     unknown = to_lever({"id": "L-UNKNOWN"}, None)
     assert unknown["diagnosed_at"] is None
     assert unknown["diagnosis_provenance"] == "unknown"
+
+
+def test_decision_report_distinguishes_selection_from_acceptance(tmp_path):
+    spec = importlib.util.spec_from_file_location("decision_report", ROOT / "scripts/lever-decision-report.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    path = tmp_path / "registry.json"
+    path.write_text(
+        json.dumps(
+            {
+                "levers": [
+                    {
+                        "id": "L-SELECTED",
+                        "status": "open",
+                        "implementation": {
+                            "decision_status": "chosen_pending_evidence",
+                            "acceptance": {"predicate": None},
+                        },
+                    },
+                    {
+                        "id": "L-DEFINED",
+                        "status": "open",
+                        "implementation": {
+                            "decision_status": "chosen_pending_evidence",
+                            "acceptance": {"predicate": "owner check"},
+                        },
+                    },
+                    {"id": "L-UNASSESSED", "status": "open", "implementation": {}},
+                    42,
+                ]
+            }
+        )
+    )
+    result = module.report(path)
+    assert result["total"] == result["nonterminal"] == 4
+    assert result["covered"] == 3
+    assert result["decisions_selected"] == result["requires_component_review"] == 2
+    assert result["with_acceptance_predicate"] == 1
+    assert result["needs_acceptance_definition"] == 3
+    assert result["unmeasured"] and result["errors"]
+
+
+def test_unreadable_decision_registry_has_unknown_denominator(tmp_path):
+    spec = importlib.util.spec_from_file_location("decision_report", ROOT / "scripts/lever-decision-report.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    path = tmp_path / "registry.json"
+    for raw in [b"not-json", b'{"levers":{}}', b"\xff"]:
+        path.write_bytes(raw)
+        result = module.report(path)
+        assert result["total"] is None
+        assert result["covered"] is None
+        assert result["unmeasured"]
