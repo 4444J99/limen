@@ -39,3 +39,29 @@ Schema #19 supplies the hosting-identity prerequisite; registry #553 contains th
 ## Host and custody decisions reviewed
 
 Ten further nonterminal decisions now distinguish reversible preparation from current OS grants or physical custody. The implementation report now has 17 selected decisions and 80 requiring component review; lifecycle states remain unchanged. The firewall diagnostic and active lever guidance no longer recommend disabling protection or pinning Node. The previous guidance is retained under `historical_guidance`. Listener binding and update behavior remain acceptance work; this documentation change does not assert a cured prompt.
+
+## Mixed design-debt mechanism
+
+The existing classifier now accepts `implementation.design_debt` as a separate engineering record. A satisfied nested predicate records engineering completion while retaining the lever, consent and terminal history. Its apply path reads metadata before writing, uses atomic replacement, and refuses a registry changed during predicate execution. The read-only decision report remains the execution default; no live dissolution was run. Tests cover consent preservation, metadata preservation, repository-relative predicates, dry-run behavior and a concurrent-change refusal.
+
+### Cloud connector decision refinement
+
+Selected the authenticated gateway behavior after inspecting the tunnel and preflight source.
+The existing GET-only check and force override do not prove protocol authentication;
+missing/invalid/valid credentials, revocation and restart canaries remain component work.
+Removed permanent-authentication claims from source guidance. No tunnel or account was activated.
+The registry now has 18 selected implementation decisions, 79 awaiting component review,
+and 10 terminal histories retained.
+
+### Admission and CLI continuation
+
+Host admission accepted the bounded CLI run. All 31 cheap gates passed. The first
+CLI attempt was interrupted by the overly small 4000-byte output cap, without a
+completion receipt. Replaying only that gate with its normal bounded allowance
+completed: 7661 passed, three notification-fixture failures, two skipped.
+The August notification fixtures had crossed the real retention window. Their
+module-local clock is now fixed; production retention and delivery remain unchanged.
+All 30 tests across the repaired notification shard and registry/classifier shards
+pass. Preserve unchanged green shards; this is not a claim of a clean full-suite rerun.
+Relay ledger checksum and all six live stable repository IDs/defaults were verified;
+current-source receipt coverage remains two of six, with protection still absent.

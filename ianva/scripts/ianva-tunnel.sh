@@ -2,9 +2,9 @@
 # ianva-tunnel.sh — the CLOUD face. Expose the local ianva endpoint over public HTTPS so the
 # claude.ai connectors (which run OAuth from Anthropic's cloud, not your machine) can reach it.
 #
-# Why this is the ONLY way to stop the claude.ai connector prompts: claude.ai is itself the MCP
-# client; a local gateway can't intercept it. But a public, self-authenticating gateway that
-# holds all upstream creds behind it and never returns 401 connects with no prompt — forever.
+# The hosted MCP client needs a reachable endpoint. A gateway can centralize credential
+# handling, but upstream expiry, revocation and consent can still require authentication.
+# Reject unauthorized clients and report upstream auth failures explicitly.
 #
 #   bash ianva-tunnel.sh            # quick (ephemeral *.trycloudflare.com) tunnel — for testing
 #   bash ianva-tunnel.sh --named ianva   # stable named tunnel (needs a Cloudflare account + DNS)

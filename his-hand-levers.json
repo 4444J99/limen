@@ -296,7 +296,7 @@
     },
     {
       "id": "L-IANVA-CLOUD",
-      "label": "Stop the claude.ai connector prompts (the /doctor claude.ai-connector 'needs authentication' class — Sentry, Scholar Gateway, Indeed, Candid, Cloudflare Developer Platform, Jam, Netlify; every one shows '! Needs authentication' in `claude mcp list`) — the ONE re-auth disease a local gateway physically cannot fix, because claude.ai runs that OAuth from Anthropic's cloud, not your machine. Cure = expose ianva as ONE public, bearer-enforced HTTPS connector that holds every upstream's creds behind it and never returns 401, then add a SINGLE custom connector in claude.ai pointing at it — replacing the dozen per-service connectors. Needs the local face (L-IANVA-LOCAL) running first. The cost is real and honest: it is internet-reachable, so it goes up bearer-first and the tunnel script REFUSES to expose an endpoint that answers /mcp without auth.",
+      "label": "Prepare one authenticated ianva HTTPS connector, verify local protocol authentication and persistent upstream credential handling, then register the hosted connector after public-exposure authorization. Expiry, revocation and missing consent remain visible auth_needed states.",
       "cost": "~15 min once + a security pass; durable — one connector that never expires from your side",
       "owner": "yours",
       "unlocks": "the claude.ai connector re-auth prompts stop — one bearer'd connector replaces the ~17 per-service ones",
@@ -318,11 +318,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare one authenticated HTTPS gateway with explicit upstream health and credential states. Reject unauthorized clients; surface expired or revoked credentials as auth_needed without launching repeated login flows. Verify the local gateway before any public tunnel or hosted connector registration.",
+        "rationale": "The tunnel currently checks only an unauthenticated GET and has an unverified force override. That does not establish protocol authentication or permanent upstream authorization.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-IANVA-CLOUD"
+          "his-hand-levers.json#L-IANVA-CLOUD",
+          "ianva/scripts/ianva-tunnel.sh",
+          "ianva/src/ianva/preflight.py",
+          "ianva/docs/ARCHITECTURE.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -330,15 +333,24 @@
         ],
         "owner": "ianva (session 6cdc53d9) — disease A",
         "acceptance": {
-          "condition": "the claude.ai connector re-auth prompts stop — one bearer'd connector replaces the ~17 per-service ones",
+          "condition": "Protocol canaries reject missing and invalid credentials, accept the intended authorized client, retain revoked upstreams visibly as auth_needed, and verify restart persistence; public exposure and hosted registration have separate authorized receipts.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
-        "historical_gate_requires_verification": "HOLD — touches your claude.ai account and exposes a public endpoint; do L-IANVA-LOCAL first",
-        "decision_status": "requires_component_review"
-      }
+        "dependencies": [
+          "L-IANVA-LOCAL",
+          "Authenticated MCP protocol canaries, including missing and invalid bearer, valid initialization, and revoked upstream credentials"
+        ],
+        "remaining_human_action": "Authorize public exposure and register the hosted connector; grant only the specific upstream consent shown necessary by current probes.",
+        "historical_gate_requires_verification": null,
+        "decision_status": "chosen_pending_evidence"
+      },
+      "historical_guidance": [
+        {
+          "label": "Stop the claude.ai connector prompts (the /doctor claude.ai-connector 'needs authentication' class — Sentry, Scholar Gateway, Indeed, Candid, Cloudflare Developer Platform, Jam, Netlify; every one shows '! Needs authentication' in `claude mcp list`) — the ONE re-auth disease a local gateway physically cannot fix, because claude.ai runs that OAuth from Anthropic's cloud, not your machine. Cure = expose ianva as ONE public, bearer-enforced HTTPS connector that holds every upstream's creds behind it and never returns 401, then add a SINGLE custom connector in claude.ai pointing at it — replacing the dozen per-service connectors. Needs the local face (L-IANVA-LOCAL) running first. The cost is real and honest: it is internet-reachable, so it goes up bearer-first and the tunnel script REFUSES to expose an endpoint that answers /mcp without auth.",
+          "reason": "Permanent authentication and never-401 claims superseded by explicit credential-state and protocol-canary requirements."
+        }
+      ]
     },
     {
       "id": "L-MODEL-TIER",

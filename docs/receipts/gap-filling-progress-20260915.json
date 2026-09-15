@@ -45,6 +45,18 @@
       "pr_gate_observed_status": "in_progress",
       "local_heavy_admission": "swap-fraction",
       "disposition": "no merge or default verification claimed"
+    },
+    {
+      "requirement": "Relay protected merge enforcement",
+      "default_sha": "b53a47f93ef861044eb5a3b888a4fc72801dc4cf",
+      "protected": false,
+      "rulesets": [],
+      "trust_candidate_pr": 30,
+      "trust_candidate_head": "6375d43c629ee15f8ca6296c56fe7806559c32e0",
+      "disposition": "Unactivated; preserve independent trust-root promotion and dedicated governor requirements. No dispatch or protection mutation performed.",
+      "owner": "4444J99/organvm-ci-relay#3",
+      "acceptance": "docs/architecture/personal-relay-merge.md#Adversarial-acceptance",
+      "next_action": "Read back dedicated governor deployment and both independent server-side controls before protected canaries."
     }
   ],
   "schema_merge_submission": {
@@ -58,5 +70,91 @@
     "lifecycle_remediation": "Added canonical lifecycle:delivery label to the explicit delivery PR; unchanged submission not repeated."
   },
   "liveness_regressions_passed": 12,
-  "continuation_cheap_gates_passed": 34
+  "continuation_cheap_gates_passed": 34,
+  "decision_records": {
+    "selected": 18,
+    "requires_component_review": 79,
+    "terminal_histories_retained": 10
+  },
+  "relay_source_coverage": {
+    "ledger_commit": "0a656e47accc6378b44b1a70d45b6f0129ca96fa",
+    "receipt_sha256_verified": true,
+    "receipt_run": "https://github.com/4444J99/organvm-ci-relay/actions/runs/34778338835",
+    "targets": [
+      {
+        "repository": "organvm/process-environment-enactment",
+        "stable_repository_id": "1350942566",
+        "default_branch": "main",
+        "default_sha": "ffebb6fa1020098e18020f6a4a845cf933c0df3c",
+        "receipt_matches_default": true,
+        "receipt_profiles": [
+          "process-environment-enactment-v1"
+        ]
+      },
+      {
+        "repository": "organvm/learning-resources",
+        "stable_repository_id": "1155240211",
+        "default_branch": "main",
+        "default_sha": "b5f3aba021238135a12497a121f78b3ec2985eb0",
+        "receipt_matches_default": false,
+        "receipt_profiles": []
+      },
+      {
+        "repository": "organvm/organvm-engine",
+        "stable_repository_id": "1160447354",
+        "default_branch": "main",
+        "default_sha": "bd223cfc9f2ee90782d6182101e849a6f97e0c99",
+        "receipt_matches_default": false,
+        "receipt_profiles": []
+      },
+      {
+        "repository": "organvm/laurea",
+        "stable_repository_id": "1289397231",
+        "default_branch": "main",
+        "default_sha": "faf6c5f67130925518233f5f99a76182b544fb85",
+        "receipt_matches_default": true,
+        "receipt_profiles": [
+          "python-pytest-test-v1"
+        ]
+      },
+      {
+        "repository": "organvm/the-thing-without-a-name",
+        "stable_repository_id": "1320324017",
+        "default_branch": "main",
+        "default_sha": "73da6dc1c4339c9cc75c8253c7ef5173e4091256",
+        "receipt_matches_default": false,
+        "receipt_profiles": []
+      },
+      {
+        "repository": "organvm/alchemical-synthesizer",
+        "stable_repository_id": "1157553907",
+        "default_branch": "main",
+        "default_sha": "8de2bd7bdbc075a8971e5de224bed5d020b0d8f4",
+        "receipt_matches_default": false,
+        "receipt_profiles": []
+      }
+    ],
+    "matching": 2,
+    "denominator": 6,
+    "trust_boundary": "Execution observation only; protected governor activation remains unverified."
+  },
+  "registry_repair_verification": {
+    "cheap_gates_passed": 31,
+    "full_cli_before_fixture_repair": {
+      "passed": 7661,
+      "failed": 3,
+      "skipped": 2,
+      "elapsed_seconds": 242.22
+    },
+    "failure_cause": "Fixed August event fixtures crossed the real retention window; production notification code unchanged.",
+    "corrected_shard_command": "bash scripts/run-pytest-hermetic.sh cli/tests/test_notify_event_dedupe.py cli/tests/test_lever_classify.py cli/tests/test_check_his_hand.py -q",
+    "corrected_shard_passed": 30,
+    "receipt_policy": "Retain unchanged passing CLI shards; repaired notification shard passes. No clean full-suite rerun claimed.",
+    "source_sha256": {
+      "scripts/lever-classify.py": "7a84c0d1493bb5d6188c12e82f55d03a8ccf77f307e8d7c7324ae27c7e3176c2",
+      "cli/tests/test_notify_event_dedupe.py": "a083854f15bb61d5a3a16dd1ea7f2f41e42124ca34210f7ea14f5785da3b744c",
+      "cli/tests/test_lever_classify.py": "caec1ac6dbfc2ad4a47ea9fe20305f93ffe2c6d4c3544c8f4559b043e6a7a124"
+    },
+    "api_tests_passed": 52
+  }
 }
