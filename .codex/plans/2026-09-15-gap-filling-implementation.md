@@ -75,3 +75,21 @@ and launch for 401/403 rejection. No network or tunnel is exercised by these tes
 Registered the focused gate and homed the engineering subcondition under
 L-IANVA-CLOUD implementation.design_debt, retaining the actual consent action and
 full protocol/restart acceptance requirements.
+
+### First-tranche review acceptance
+
+The earlier heavy-admission blocker is superseded by the admitted CLI run and
+corrected-shard evidence recorded above, plus 52 passing API tests. The latest
+review batch passed all ten checks: 20 registry/classifier cases, 15 liveness
+cases, 34 heartbeat/notification cases, 56 merge-policy cases, scoped resolver,
+gate registry, syntax, diff hygiene and both Ruff checks. Unchanged green shards
+remain evidence. All 33 observed review findings have source-bound dispositions
+in docs/receipts/gap-filling-review-dispositions-20260915.json.
+
+This tranche fixes private-board double resolution, Unicode failures, capability
+probe follow-up, non-string IDs and malformed decision records; delegated private
+custody is now bound into runtime artifacts and scoped dependency selection.
+Source diagnosis timestamps are preserved; conversion time is not invented as
+diagnosis. The registry declares Limen a single-owner fast lane. Submit this
+verified head once via exact-head squash merge, then establish default CI and
+runtime adoption independently. All remaining estate work stays active.

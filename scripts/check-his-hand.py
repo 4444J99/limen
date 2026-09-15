@@ -52,12 +52,13 @@ def evaluate(path: Path, now: datetime) -> tuple[list[str], dict]:
         missing = sorted(REQUIRED - lever.keys())
         if missing:
             errors.append(f"{prefix} {lever.get('id', '<unnamed>')}: missing {','.join(missing)}")
-        lid = str(lever.get("id", ""))
-        if not lid:
-            errors.append(f"{prefix}: id is empty")
+        lid = lever.get("id")
+        if not isinstance(lid, str) or not lid.strip():
+            errors.append(f"{prefix}: id must be a nonempty string")
         elif lid in ids:
             errors.append(f"{prefix} {lid}: duplicate id")
-        ids.add(lid)
+        else:
+            ids.add(lid)
         status = lever.get("status")
         if not isinstance(status, str) or status not in STATUSES:
             errors.append(f"{prefix} {lid}: invalid status {status!r}")

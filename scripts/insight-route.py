@@ -199,8 +199,8 @@ def route_anthony_insight(insight, apply):
         "source_task": f"insight-cadence ({insight.get('source', 'unknown')})",
         "gate": "insight-route",
         "status": "open",
-        "diagnosed_at": None,
-        "diagnosis_provenance": "unknown",
+        "diagnosed_at": insight.get("diagnosed_at"),
+        "diagnosis_provenance": "insight-route.source" if insight.get("diagnosed_at") else "unknown",
         "issue": None,
     }
     levers.append(new_lever)

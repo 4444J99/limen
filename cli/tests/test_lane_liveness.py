@@ -194,3 +194,36 @@ def test_long_running_lease_uses_heartbeat_not_initial_transition(tmp_path):
 def test_malformed_projection_is_not_idle(tmp_path, tasks):
     (tmp_path / "tasks.yaml").write_text(yaml.safe_dump({"tasks": tasks}))
     assert lane_liveness.evaluate(tmp_path, "codex", datetime.now(timezone.utc), 24)["unmeasured"]
+
+
+def test_non_utf8_projection_is_unmeasured(tmp_path):
+    (tmp_path / "tasks.yaml").write_bytes(b"tasks: [\xff]")
+    result = lane_liveness.evaluate(tmp_path, "codex", datetime.now(timezone.utc), 24)
+    assert result["unmeasured"]
+
+
+def test_resolved_private_board_is_not_resolved_twice(tmp_path, monkeypatch):
+    private = tmp_path / "private.yaml"
+    private.write_text("tasks: []\n")
+    monkeypatch.setenv("LIMEN_PRIVATE_TASKS", str(private))
+    result = lane_liveness.evaluate(tmp_path, "codex", datetime.now(timezone.utc), 24, private)
+    assert result["status"] == "pass"
+    assert result["lanes"][0]["state"] == "idle"
+
+
+def test_failed_capabilities_prevents_followup_broker_calls(tmp_path, monkeypatch):
+    write_tasks(tmp_path, [{"id": "active", "status": "in_progress", "target_agent": "codex"}])
+    calls = []
+
+    class Unavailable:
+        def capabilities(self):
+            raise RuntimeError("offline")
+
+        def task_run(self, task_id):
+            calls.append(task_id)
+            raise AssertionError("must not retry unavailable broker")
+
+    monkeypatch.setattr("limen.conduct.client.client_from_env", Unavailable)
+    result = lane_liveness.evaluate(tmp_path, "codex", datetime.now(timezone.utc), 24)
+    assert result["unmeasured"]
+    assert calls == []

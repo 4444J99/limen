@@ -63,7 +63,7 @@ lookup_failure() {
     echo "VERDICT: HOLD — GitHub API quota is exhausted." >&2
     exit 2
   fi
-  echo "VERDICT: BLOCKED — cannot read PR; repository access or authorization unavailable." >&2
+  echo "VERDICT: BLOCKED — cannot read PR; lookup failure cause is unverified." >&2
   exit 3
 }
 if [ -z "$PR" ]; then

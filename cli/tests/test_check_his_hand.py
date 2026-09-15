@@ -105,3 +105,49 @@ def test_implementation_report_preserves_registry_bytes():
     assert result["covered"] == result["nonterminal"]
     assert result["total"] == 107
     assert path.read_bytes() == before
+
+
+def test_decision_report_keeps_malformed_implementations_unmeasured(tmp_path):
+    import importlib.util
+    import json
+
+    spec = importlib.util.spec_from_file_location("decision_report", ROOT / "scripts/lever-decision-report.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    path = tmp_path / "registry.json"
+    path.write_text(
+        json.dumps(
+            {
+                "levers": [
+                    {"id": "L-BAD", "status": "open", "implementation": "pending"},
+                    {"id": "L-MISSING", "status": "open"},
+                    {"id": "L-OLD", "status": "retired", "implementation": "historical"},
+                ]
+            }
+        )
+    )
+    result = module.report(path)
+    assert result["total"] == 3
+    assert result["nonterminal"] == result["unmeasured_implementation"] == 2
+    assert result["requires_component_review"] == 2
+    assert result["covered"] == 0
+
+
+def test_non_string_identifiers_do_not_enter_identity_census(tmp_path):
+    path = tmp_path / "levers.json"
+    write_registry(path, [lever(id=value) for value in [None, 42, [], {}, " "]])
+    errors, census = check_his_hand.evaluate(path, datetime.now(timezone.utc))
+    assert len(errors) == 5
+    assert census["unique_ids"] == 0
+
+
+def test_observatory_preserves_source_diagnosis_without_inventing_one():
+    from limen.observatory.lever import to_lever
+
+    stamp = "2026-08-01T12:00:00Z"
+    diagnosed = to_lever({"id": "L-DIAGNOSED", "diagnosed_at": stamp}, None)
+    assert diagnosed["diagnosed_at"] == stamp
+    assert diagnosed["diagnosis_provenance"] == "observatory.experiment"
+    unknown = to_lever({"id": "L-UNKNOWN"}, None)
+    assert unknown["diagnosed_at"] is None
+    assert unknown["diagnosis_provenance"] == "unknown"

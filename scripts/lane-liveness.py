@@ -83,7 +83,7 @@ def load_tasks(path: Path) -> tuple[list[dict], str | None]:
         return [], f"tasks projection missing: {path}"
     try:
         payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    except (OSError, yaml.YAMLError) as exc:
+    except (OSError, UnicodeDecodeError, yaml.YAMLError) as exc:
         return [], f"tasks projection unreadable: {exc}"
     tasks = payload.get("tasks") if isinstance(payload, dict) else None
     if not isinstance(tasks, list):
@@ -119,7 +119,17 @@ def evaluate(
     root: Path, requested: str | None, now: datetime, max_age_hours: float, tasks_path: Path | None = None
 ) -> dict:
     try:
-        tasks_source = board_path(tasks_path or (root / "tasks.yaml"))
+        # Doctor supplies an already-resolved path. Anchor custody resolution at
+        # the public projection when this is the configured private board.
+        configured_private = os.environ.get("LIMEN_PRIVATE_TASKS", "").strip()
+        source = tasks_path or (root / "tasks.yaml")
+        if (
+            tasks_path is not None
+            and configured_private
+            and tasks_path.expanduser().resolve() == Path(configured_private).expanduser().resolve()
+        ):
+            source = root / "tasks.yaml"
+        tasks_source = board_path(source)
     except (PrivateCustodyUnavailable, Exception) as exc:
         tasks_source = None
         error = f"task custody unavailable: {exc}"
@@ -141,6 +151,7 @@ def evaluate(
         client.timeout = 3
         client.capabilities()
     except Exception:
+        client = None
         broker_error = "conduct broker unavailable"
     deadline = time.monotonic() + 20
     graphs = {}

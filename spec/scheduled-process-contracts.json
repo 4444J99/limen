@@ -48,6 +48,7 @@
         "scripts/check-beat-freshness.py",
         "scripts/lane-liveness.py",
         "scripts/_board_custody.py",
+        "cli/src/limen/private_board.py",
         "cli/src/limen/census.py",
         "cli/src/limen/conduct/client.py",
         "cli/src/limen/models.py"

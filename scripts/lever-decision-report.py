@@ -19,8 +19,11 @@ def report(path: Path) -> dict:
         "nonterminal": len(nonterminal),
         "covered": sum(isinstance(row["implementation"], dict) for row in nonterminal),
         "requires_component_review": sum(
-            (row["implementation"] or {}).get("decision_status") == "requires_component_review" for row in nonterminal
+            not isinstance(row["implementation"], dict)
+            or row["implementation"].get("decision_status") == "requires_component_review"
+            for row in nonterminal
         ),
+        "unmeasured_implementation": sum(not isinstance(row["implementation"], dict) for row in nonterminal),
         "rows": rows,
     }
 
