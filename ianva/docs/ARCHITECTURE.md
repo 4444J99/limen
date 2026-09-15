@@ -21,9 +21,9 @@ fleet's credential discipline. Four faces, one endpoint.
 **MCPHub** (`@samanhappy/mcphub`, verified on npm) is the wrapped core: it implements the full
 upstream OAuth 2.1 client flow (Authorization-Code + PKCE, WWW-Authenticate/RFC8414 discovery,
 DCR/RFC7591, resource indicators/RFC8707) **and persistent auto-refresh** — tokens cached and renewed
-before expiry, written back so they survive restarts. That silent-renewal property (OAuth 2.1 §4.3:
-a refresh token mints new access tokens with no user interaction) is what makes "authenticate once,
-forever" true. ianva owns the settings file and supervises the process; it runs MCPHub in
+before expiry, written back so they survive restarts. Refresh can avoid repeated interaction while the grant remains valid; expiry,
+revocation or additional consent can still require authentication. Preserve those states in
+health results rather than promising permanent authorization. ianva owns the settings file and supervises the process; it runs MCPHub in
 `~/.config/ianva` so MCPHub finds `mcp_settings.json` in its CWD.
 
 **Alternate backend (docker face):** the fleet's 2026-03-25 decision picked the Docker MCP gateway.

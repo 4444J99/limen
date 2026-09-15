@@ -3,6 +3,7 @@
   "runtime": "com.limen.heartbeat",
   "runtime_mode": "resource_bounded_read_only_one_shot",
   "rungs": {
+    "lane-liveness": {"owner":"observe_remote","timeout_seconds":30,"receipt":"heartbeat counts-only receipt","predicate":"every active task has a known executor and fresh broker lease evidence"},
     "enactment-audit": {"owner":"cloud_or_broker","timeout_seconds":120,"receipt":"cloud-routine exact-head receipt","predicate":"routine succeeds at immutable runtime SHA"},
     "github-estate-reconcile": {"owner":"explicit_maintenance","timeout_seconds":300,"receipt":"gitvs reconcile receipt","predicate":"operator explicitly arms reconcile"},
     "github-pr-debt": {"owner":"cloud_or_broker","timeout_seconds":120,"receipt":"cloud-routine exact-head receipt","predicate":"bounded remote census succeeds"},

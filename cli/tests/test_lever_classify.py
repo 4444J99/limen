@@ -100,3 +100,74 @@ def test_every_sovereign_reason_is_a_boundary_not_a_task():
         "device_grant",
         "governance_choice",
     }
+
+
+def test_nested_debt_preserves_consent_and_registry_metadata(tmp_path, monkeypatch):
+    import json
+
+    m = _mod()
+    lever = _lever(
+        status="open",
+        implementation={
+            "remaining_human_action": "Approve publication",
+            "design_debt": {"organ": "prepare.py", "status": "partial", "dissolves_when": "test -f acceptance.txt"},
+        },
+    )
+    terminal = _lever(id="L-OLD", status="retired")
+    path = tmp_path / "registry.json"
+    path.write_text(json.dumps({"metadata": {"history": "retained"}, "levers": [lever, terminal]}))
+    (tmp_path / "acceptance.txt").write_text("verified")
+    monkeypatch.setattr(m, "REGISTRY", str(path))
+    monkeypatch.setenv("LIMEN_LEVER_DISSOLVE_APPLY", "1")
+    assert m.cmd_dissolve([lever, terminal], str(tmp_path), True) == 0
+    result = json.loads(path.read_text())
+    assert result["metadata"] == {"history": "retained"}
+    updated = result["levers"][0]
+    assert updated["status"] == "open" and "discharged" not in updated
+    assert updated["implementation"]["remaining_human_action"] == "Approve publication"
+    assert updated["implementation"]["design_debt"]["status"] == "built"
+    assert result["levers"][1] == terminal
+
+
+def test_dissolve_dry_run_never_writes(tmp_path, monkeypatch):
+    m = _mod()
+    lever = _lever(implementation={"design_debt": {"organ": "prepare.py", "dissolves_when": "true"}})
+    monkeypatch.setattr(m, "REGISTRY", str(tmp_path / "absent.json"))
+    assert m.cmd_dissolve([lever], str(tmp_path), False) == 0
+    assert not (tmp_path / "absent.json").exists()
+
+
+def test_dissolve_rejects_registry_changed_during_predicate(tmp_path, monkeypatch):
+    import json
+
+    m = _mod()
+    lever = _lever(design_debt={"organ": "prepare.py", "dissolves_when": "true"})
+    path = tmp_path / "registry.json"
+    path.write_text(json.dumps({"levers": [lever]}))
+    monkeypatch.setattr(m, "REGISTRY", str(path))
+    monkeypatch.setenv("LIMEN_LEVER_DISSOLVE_APPLY", "1")
+
+    def changed(*_args):
+        path.write_text('{"concurrent":"preserved","levers":[]}')
+        return True, "pass"
+
+    monkeypatch.setattr(m, "run_predicate", changed)
+    assert m.cmd_dissolve([lever], str(tmp_path), True) == 1
+    assert json.loads(path.read_text())["concurrent"] == "preserved"
+    assert not list(tmp_path.glob(".registry.json.*"))
+
+
+def test_legacy_debt_preserves_document_when_recording(tmp_path, monkeypatch):
+    import json
+
+    m = _mod()
+    lever = _lever(design_debt={"organ": "prepare.py", "dissolves_when": "true"}, implementation="malformed")
+    path = tmp_path / "registry.json"
+    path.write_text(json.dumps({"metadata": {"retained": True}, "levers": [lever]}))
+    monkeypatch.setattr(m, "REGISTRY", str(path))
+    monkeypatch.setenv("LIMEN_LEVER_DISSOLVE_APPLY", "1")
+    assert m.cmd_dissolve([lever], str(tmp_path), True) == 0
+    result = json.loads(path.read_text())
+    assert result["metadata"] == {"retained": True}
+    assert result["levers"][0]["id"] == lever["id"]
+    assert "discharged" in result["levers"][0]

@@ -96,6 +96,7 @@ HOST_PROBES = [
 ]
 
 REMOTE_PROBES = [
+    ("lane-liveness", [sys.executable, "scripts/lane-liveness.py", "--check", "--json"], 30),
     (
         "github-estate-census",
         [sys.executable, "scripts/github-estate-census.py", "--check-repositories", "--json"],

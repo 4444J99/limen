@@ -1281,6 +1281,24 @@ sensors:
         severity: silent
         escalation: "lane-fitness refresh skipped or exceeded its bound — dispatch continues fail-open"
 
+  lane-liveness:
+    section: "0h3"
+    title: "lane liveness — distinguish active, idle, stalled, and unmeasured execution lanes"
+    gate: LIMEN_LANE_LIVENESS
+    default: "1"
+    source: [metabolize, heartbeat]
+    owner: dispatch
+    cadence:
+      env: LIMEN_LANE_LIVENESS_CADENCE
+      default: 4
+    timeout:
+      env: LIMEN_LANE_LIVENESS_TIMEOUT
+      default: 60
+    steps:
+      - command: "python3 scripts/lane-liveness.py --check --receipt logs/lane-liveness.json"
+        severity: advisory
+        escalation: "lane liveness is stalled or unmeasured — inspect the canonical task projection and heartbeat evidence; no automatic dispatch repair is attempted"
+
   ask-gate:
     section: "0i"
     title: "ask gate — every intake-window ask carries one done-predicate, or gets split"

@@ -56,16 +56,23 @@ if [ -z "$DEPLOY_RE" ]; then
   DEPLOY_RE='^$'
 fi
 
-# Resolve the PR for the current branch when not given.
+# Both lookup modes classify the same captured GitHub diagnostic.
+j="$(mktemp)"; err="$(mktemp)"; trap 'rm -f "$j" "$err"' EXIT
+lookup_failure() {
+  if grep -Eqi 'rate limit|api quota|429|fetch exhausted' "$err"; then
+    echo "VERDICT: HOLD — GitHub API quota is exhausted." >&2
+    exit 2
+  fi
+  echo "VERDICT: BLOCKED — cannot read PR; lookup failure cause is unverified." >&2
+  exit 3
+}
 if [ -z "$PR" ]; then
-  PR="$(gh pr view "${repo_args[@]+"${repo_args[@]}"}" --json number -q .number 2>/dev/null || true)"
-  [ -z "$PR" ] && { echo "merge-policy: no PR number given and none open for the current branch." >&2; exit 3; }
+  PR="$(gh pr view "${repo_args[@]+"${repo_args[@]}"}" --json number -q .number 2>"$err")" || lookup_failure
+  [ -n "$PR" ] || { echo "merge-policy: no open PR for current branch." >&2; exit 3; }
 fi
-
-j="$(mktemp)"; trap 'rm -f "$j"' EXIT
 gh pr view "$PR" "${repo_args[@]+"${repo_args[@]}"}" \
   --json number,title,url,state,isDraft,mergeStateStatus,baseRefName,headRefName,headRefOid,files,statusCheckRollup \
-  > "$j" 2>/dev/null || { echo "merge-policy: cannot read PR #$PR (wrong repo?)." >&2; exit 3; }
+  > "$j" 2>"$err" || lookup_failure
 
 title=$(jq -r '.title' "$j")
 url=$(jq -r '.url' "$j")

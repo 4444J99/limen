@@ -8,6 +8,7 @@ import json
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -23,6 +24,15 @@ def _load():
     assert spec.loader is not None
     sys.modules[name] = module
     spec.loader.exec_module(module)
+
+    class FixtureClock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            # Event fixtures must stay inside retention as the real calendar advances.
+            instant = cls(2026, 8, 13, 12, tzinfo=timezone.utc)
+            return instant.astimezone(tz) if tz is not None else instant.replace(tzinfo=None)
+
+    module.datetime = FixtureClock
     return module
 
 

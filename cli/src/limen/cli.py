@@ -424,14 +424,15 @@ def release_stale(hours, agent, dry_run, json_output, report_file):
 
 @main.command()
 @click.option("--agent", default="jules", help="Agent readiness to check")
+@click.option("--lane", default=None, help="Canonical execution lane to inspect for liveness")
 @click.option("--json-output", "json_output", is_flag=True, help="Print machine-readable JSON")
 @click.option("--report-file", default=None, help="Write machine-readable JSON to this path")
-def doctor(agent, json_output, report_file):
+def doctor(agent, lane, json_output, report_file):
     """Report local readiness for dispatch and stale-claim recovery."""
     root = resolve_root()
     tasks_path = resolve_tasks_path(root)
     limen = load_limen_file(tasks_path)
-    report = readiness_report(limen, tasks_path, agent=agent)
+    report = readiness_report(limen, tasks_path, agent=agent, lane=lane)
     write_report(report, Path(report_file).expanduser() if report_file else None)
     if json_output:
         click.echo(json.dumps(report, indent=2))

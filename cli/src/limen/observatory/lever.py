@@ -38,6 +38,9 @@ def to_lever(experiment: dict, hero: str | None) -> dict:
         "unlocks": experiment.get("unlocks", "a measured activation lift on the hero repo"),
         "source_task": experiment.get("task_id", "OBS-EXP"),
         "issue": None,
+        "status": "open",
+        "diagnosed_at": experiment.get("diagnosed_at"),
+        "diagnosis_provenance": "observatory.experiment" if experiment.get("diagnosed_at") else "unknown",
     }
 
 

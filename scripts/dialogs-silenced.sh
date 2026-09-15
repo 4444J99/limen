@@ -251,13 +251,12 @@ else
   cur_node="$(readlink -f "$(command -v node 2>/dev/null)" 2>/dev/null || true)"
   if [ -n "$cur_node" ] && "$FW" --listapps 2>/dev/null | grep -qF "$cur_node"; then
     green "Firewall: on, but the current node ($cur_node) is allow-listed"
-    note "A future 'brew upgrade node' rotates the path and re-prompts — turn the firewall off, or 'brew pin node', to make it durable."
+    note "A runtime update may rotate this path; verify the listener binding and stable responsible identity. Keep automatic updates enabled."
   else
     red "Firewall: on, and the current node is not allow-listed → mcphub (binds all interfaces) will re-prompt"
-    cure "Zero prompts forever (recommended — single-user box behind NAT, fully reversible):"
-    cure "   sudo $FW --setglobalstate off"
-    cure "Or keep the firewall on and allow the one offender (re-prompts on each node upgrade unless you also 'brew pin node'):"
-    cure "   N=\"\$(readlink -f \$(command -v node))\"; sudo $FW --add \"\$N\" --unblockapp \"\$N\""
+    cure "Inspect the actual listener address and owning runtime; bind local-only services to loopback."
+    cure "Keep firewall posture and automatic updates intact; request only a demonstrated narrow OS permission."
+    note "The historical recommendation to disable the firewall or pin Node is superseded."
     note "Homed as L-FIREWALL-PROMPT."
   fi
 fi
