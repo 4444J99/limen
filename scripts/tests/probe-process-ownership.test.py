@@ -110,6 +110,26 @@ def write_executable(path: Path, body: str) -> None:
 
 
 def prepare_fixture(fixture: Path) -> None:
+    subprocess.run(["git", "init", "--quiet", str(fixture)], check=True)
+    subprocess.run(
+        [
+            "git",
+            "-C",
+            str(fixture),
+            "-c",
+            "user.name=Probe Fixture",
+            "-c",
+            "user.email=probe@example.invalid",
+            "-c",
+            "commit.gpgsign=false",
+            "commit",
+            "--quiet",
+            "--allow-empty",
+            "-m",
+            "fixture identity",
+        ],
+        check=True,
+    )
     scripts = fixture / "scripts"
     worker_root = fixture / "web/worker"
     wrangler_cli = worker_root / "node_modules/wrangler/wrangler-dist/cli.js"
@@ -281,9 +301,9 @@ def start_case(
 
     if case.name == "worker":
         assert cli_file.exists(), "worker: fake node did not record its CLI argument"
-        assert cli_file.read_text().strip() == str(
-            fixture / "web/worker/node_modules/wrangler/wrangler-dist/cli.js"
-        ), "worker: probe did not invoke Wrangler's real CLI entrypoint"
+        assert cli_file.read_text().strip() == str(fixture / "web/worker/node_modules/wrangler/wrangler-dist/cli.js"), (
+            "worker: probe did not invoke Wrangler's real CLI entrypoint"
+        )
 
     return RunningProbe(process, server_pid, temp_parent, release_file, cli_file, port)
 

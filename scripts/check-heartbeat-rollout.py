@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify the evolved heartbeat's 43-rung ownership and live receipt proof."""
+"""Verify the evolved heartbeat's 44-rung ownership and live receipt proof."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OWNERSHIP = ROOT / "institutio" / "governance" / "heartbeat-ownership.json"
 CONTRACTS = ROOT / "spec" / "scheduled-process-contracts.json"
 OBSERVER = ROOT / "cli" / "src" / "limen" / "observer.py"
-EXPECTED_RUNG_COUNT = 43
+EXPECTED_RUNG_COUNT = 44
 ALLOWED_OWNERS = {
     "cloud_or_broker",
     "explicit_maintenance",

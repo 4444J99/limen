@@ -407,3 +407,10 @@ def test_contract_initialization_failure_persists_before_kill_switch_failure(tmp
             clock=lambda: 1_000_000,
             disable_launch_agent=fail_disable,
         )
+
+
+def test_lane_liveness_is_scheduled_and_content_pinned():
+    contract, _ = heartbeat._load_contract(ROOT)
+    probes = {probe["name"]: probe for probe in contract["probes"]}
+    assert probes["lane-liveness"]["timeout_seconds"] == 30
+    assert "scripts/lane-liveness.py" in contract["runtime_artifacts"]

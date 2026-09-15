@@ -1,0 +1,361 @@
+{
+  "schema_version": 1,
+  "owner": "4444J99/limen#2623",
+  "reviewed_base_head": "f773c3b9db30c21b1b85364e4b1bceb7780937fe",
+  "default_branch_result": "pending_landing",
+  "finding_count": 33,
+  "source_sha256": {
+    ".codex/plans/2026-09-15-gap-filling-implementation.md": "2f92b9226ef7d1abe95dc89384087cf48221e32827609ae36b62c524964c9653",
+    "AGENTS.md": "92e26571e2f3e1475e6d1def6e887bf1d92f14f10378108d5e75ef36eafe7ef2",
+    "cli/src/limen/doctor.py": "fa479b7a038b964aae0e8ca3849e35c395688d2c61b3e7734687291965a754f2",
+    "cli/src/limen/observatory/lever.py": "1eceaee8fe7633dd15f4e82341870f778efc65fb889fd2a757e180c971dedeec",
+    "cli/tests/test_check_his_hand.py": "f5e7b3d7873ddc74b531b948e70b3ae65e9999885ca8956d741c5e4f8fed3c78",
+    "cli/tests/test_lane_liveness.py": "79eec7f26151475fff74eb7823be21fbf263d860603213decc6bbd0ed51e7606",
+    "cli/tests/test_lever_classify.py": "caec1ac6dbfc2ad4a47ea9fe20305f93ffe2c6d4c3544c8f4559b043e6a7a124",
+    "institutio/governance/gates.yaml": "242fd97bca091d8e907de205e3165697ad8c2e6084007a3692df720dd1b86976",
+    "scripts/check-his-hand.py": "f0f2839051dfe0c526edcef9610e8874fc340c6e4e0da1cd43c61aec4267a0d4",
+    "scripts/insight-route.py": "1a322f639260a3b09d48e58a6c98512f6c191dfc029b2b638f2221ee675a070f",
+    "scripts/lane-liveness.py": "ec9b0c4cc155e56103997a673cd016e8ca56c9a4d41511b32d7eb816c7eeae84",
+    "scripts/lever-classify.py": "7a84c0d1493bb5d6188c12e82f55d03a8ccf77f307e8d7c7324ae27c7e3176c2",
+    "scripts/lever-decision-report.py": "154b6da0440ea3fb5a7adbf4fe1eb21293d0cb4fef0469f2f705845c0c5653d5",
+    "scripts/merge-policy.sh": "8b5ed7ef94e977fb465b008df94b321f99c86d88a907a0c263e7495c00fc3303",
+    "scripts/tests/merge-policy.test.sh": "12e1139604e5a36b6a5712bb1f51fa58c57289bf2f4ba7c15e46300da50acb3f",
+    "spec/scheduled-process-contracts.json": "1005886229b4c14a79b250e4e819965ff74ff3b2cee294efe935b95072731da2"
+  },
+  "findings": [
+    {
+      "comment_id": 4020330620,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020330620",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/check-his-hand.py",
+        "cli/tests/test_check_his_hand.py"
+      ],
+      "reason": "Malformed objects, statuses and non-string IDs are rejected without corrupting the identity census."
+    },
+    {
+      "comment_id": 4020390356,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020390356",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/check-his-hand.py",
+        "cli/tests/test_check_his_hand.py"
+      ],
+      "reason": "Malformed objects, statuses and non-string IDs are rejected without corrupting the identity census."
+    },
+    {
+      "comment_id": 4020397959,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020397959",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/check-his-hand.py",
+        "cli/tests/test_check_his_hand.py"
+      ],
+      "reason": "Malformed objects, statuses and non-string IDs are rejected without corrupting the identity census."
+    },
+    {
+      "comment_id": 4020706616,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020706616",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/check-his-hand.py",
+        "cli/tests/test_check_his_hand.py"
+      ],
+      "reason": "Malformed objects, statuses and non-string IDs are rejected without corrupting the identity census."
+    },
+    {
+      "comment_id": 4020330628,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020330628",
+      "disposition": "not_applicable",
+      "evidence": [
+        "cli/src/limen/doctor.py"
+      ],
+      "reason": "Subprocess uses an argv list with shell disabled. Configured runtime root is trusted operator configuration; lane is one argument, not shell input."
+    },
+    {
+      "comment_id": 4020639698,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020639698",
+      "disposition": "not_applicable",
+      "evidence": [
+        "cli/src/limen/doctor.py"
+      ],
+      "reason": "Subprocess uses an argv list with shell disabled. Configured runtime root is trusted operator configuration; lane is one argument, not shell input."
+    },
+    {
+      "comment_id": 4020390320,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020390320",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "institutio/governance/gates.yaml"
+      ],
+      "reason": "Production gate uses current time; fixed clocks are confined to tests."
+    },
+    {
+      "comment_id": 4020390324,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020390324",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/lane-liveness.py",
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Each active task resolves its broker executor, heartbeat and hard deadline before lane aggregation."
+    },
+    {
+      "comment_id": 4020390328,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020390328",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/lane-liveness.py",
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Each active task resolves its broker executor, heartbeat and hard deadline before lane aggregation."
+    },
+    {
+      "comment_id": 4020706605,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020706605",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/lane-liveness.py",
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Each active task resolves its broker executor, heartbeat and hard deadline before lane aggregation."
+    },
+    {
+      "comment_id": 4020390333,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020390333",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/lane-liveness.py",
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Unknown, malformed, missing custody, decoding and broker failures remain unmeasured. Failed capabilities prevent follow-up calls; resolved private custody is anchored at the public projection."
+    },
+    {
+      "comment_id": 4020397999,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020397999",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/lane-liveness.py",
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Unknown, malformed, missing custody, decoding and broker failures remain unmeasured. Failed capabilities prevent follow-up calls; resolved private custody is anchored at the public projection."
+    },
+    {
+      "comment_id": 4020390361,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020390361",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/lane-liveness.py",
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Unknown, malformed, missing custody, decoding and broker failures remain unmeasured. Failed capabilities prevent follow-up calls; resolved private custody is anchored at the public projection."
+    },
+    {
+      "comment_id": 4020397991,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020397991",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/lane-liveness.py",
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Unknown, malformed, missing custody, decoding and broker failures remain unmeasured. Failed capabilities prevent follow-up calls; resolved private custody is anchored at the public projection."
+    },
+    {
+      "comment_id": 4020398008,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020398008",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/lane-liveness.py",
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Unknown, malformed, missing custody, decoding and broker failures remain unmeasured. Failed capabilities prevent follow-up calls; resolved private custody is anchored at the public projection."
+    },
+    {
+      "comment_id": 4020789779,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020789779",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/lane-liveness.py",
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Unknown, malformed, missing custody, decoding and broker failures remain unmeasured. Failed capabilities prevent follow-up calls; resolved private custody is anchored at the public projection."
+    },
+    {
+      "comment_id": 4020796630,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020796630",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/lane-liveness.py",
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Unknown, malformed, missing custody, decoding and broker failures remain unmeasured. Failed capabilities prevent follow-up calls; resolved private custody is anchored at the public projection."
+    },
+    {
+      "comment_id": 4020796637,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020796637",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/lane-liveness.py",
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Unknown, malformed, missing custody, decoding and broker failures remain unmeasured. Failed capabilities prevent follow-up calls; resolved private custody is anchored at the public projection."
+    },
+    {
+      "comment_id": 4020390337,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020390337",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/merge-policy.sh",
+        "scripts/tests/merge-policy.test.sh"
+      ],
+      "reason": "Both lookup modes classify explicit quota diagnostics as HOLD and other failures as BLOCKED; generic failures no longer assert an authorization cause."
+    },
+    {
+      "comment_id": 4020390351,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020390351",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/merge-policy.sh",
+        "scripts/tests/merge-policy.test.sh"
+      ],
+      "reason": "Both lookup modes classify explicit quota diagnostics as HOLD and other failures as BLOCKED; generic failures no longer assert an authorization cause."
+    },
+    {
+      "comment_id": 4020398016,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020398016",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/merge-policy.sh",
+        "scripts/tests/merge-policy.test.sh"
+      ],
+      "reason": "Both lookup modes classify explicit quota diagnostics as HOLD and other failures as BLOCKED; generic failures no longer assert an authorization cause."
+    },
+    {
+      "comment_id": 4020706614,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020706614",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/merge-policy.sh",
+        "scripts/tests/merge-policy.test.sh"
+      ],
+      "reason": "Both lookup modes classify explicit quota diagnostics as HOLD and other failures as BLOCKED; generic failures no longer assert an authorization cause."
+    },
+    {
+      "comment_id": 4020390341,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020390341",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "cli/src/limen/observatory/lever.py",
+        "scripts/insight-route.py",
+        "cli/tests/test_check_his_hand.py"
+      ],
+      "reason": "Both producers supply the required schema and preserve supplied source diagnosis timestamps."
+    },
+    {
+      "comment_id": 4020706612,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020706612",
+      "disposition": "source_preserved_no_inferred_diagnosis",
+      "evidence": [
+        "cli/src/limen/observatory/lever.py",
+        "scripts/insight-route.py",
+        "cli/tests/test_check_his_hand.py"
+      ],
+      "reason": "Creating or converting a record does not prove the original diagnosis time. Preserve an explicit source diagnosis; otherwise keep unknown rather than substitute conversion time."
+    },
+    {
+      "comment_id": 4020390365,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020390365",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "cli/src/limen/doctor.py",
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Doctor honors the resolved configured runtime root for installed-package routing."
+    },
+    {
+      "comment_id": 4020397931,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020397931",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Receipt replacement verifies one complete JSON document and no temporary residue."
+    },
+    {
+      "comment_id": 4020397934,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020397934",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "institutio/governance/gates.yaml",
+        "spec/scheduled-process-contracts.json"
+      ],
+      "reason": "Custody adapter and delegated private_board implementation join scoped dependencies and runtime artifact binding."
+    },
+    {
+      "comment_id": 4020706623,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020706623",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "institutio/governance/gates.yaml",
+        "spec/scheduled-process-contracts.json"
+      ],
+      "reason": "Custody adapter and delegated private_board implementation join scoped dependencies and runtime artifact binding."
+    },
+    {
+      "comment_id": 4020398025,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020398025",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/tests/merge-policy.test.sh"
+      ],
+      "reason": "Residue tests use temporary directories and preserve caller err.txt."
+    },
+    {
+      "comment_id": 4020789774,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020789774",
+      "disposition": "rejected_conflicts_with_accepted_plan",
+      "evidence": [
+        ".codex/plans/2026-09-15-gap-filling-implementation.md",
+        "cli/tests/test_lane_liveness.py"
+      ],
+      "reason": "Unavailable broker evidence must remain visibly unmeasured, including when the local projection claims no active tasks. Idle is healthy only with readable evidence."
+    },
+    {
+      "comment_id": 4020789801,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020789801",
+      "disposition": "not_applicable",
+      "evidence": [
+        "scripts/lane-liveness.py",
+        "AGENTS.md"
+      ],
+      "reason": "Explicit --receipt authorizes a reversible local receipt write. The scheduled contract already names this evidence output; no redundant approval flag is required."
+    },
+    {
+      "comment_id": 4020789806,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020789806",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/lever-decision-report.py",
+        "cli/tests/test_check_his_hand.py"
+      ],
+      "reason": "Malformed implementation values are counted as unmeasured and requiring review; they do not crash or disappear from the denominator."
+    },
+    {
+      "comment_id": 4020796624,
+      "url": "https://github.com/4444J99/limen/pull/2623#discussion_r4020796624",
+      "disposition": "corrected_pending_landing",
+      "evidence": [
+        "scripts/lever-classify.py",
+        "cli/tests/test_lever_classify.py"
+      ],
+      "reason": "Reads metadata before opening a replacement, atomically replaces the file and refuses observed concurrent changes."
+    }
+  ],
+  "verification": {
+    "changed_gates_passed": 10,
+    "registry_classifier_tests": 20,
+    "lane_liveness_tests": 15,
+    "heartbeat_notification_tests": 34,
+    "merge_policy_cases": 56
+  }
+}

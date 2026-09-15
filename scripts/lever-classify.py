@@ -23,6 +23,10 @@ Every OPEN lever must resolve to exactly one of:
       `dissolves_when` is a shell predicate (exit 0 => dissolved). When it goes
       green the beat AUTO-DISCHARGES the lever, crediting the organ, not him.
 
+For mixed work, place the same design_debt record under implementation.design_debt.
+A passing nested predicate records engineering evidence only; it never discharges
+the lever or supplies consent.
+
 Classification is DERIVED from each lever's own prose (its gate/label/note state
 WHY the human is needed) unless an explicit field overrides it. Derivation fails
 CLOSED: anything without a clear irreducible signal and without an explicit tag
@@ -44,6 +48,8 @@ import json
 import os
 import re
 import subprocess
+import tempfile
+from pathlib import Path
 import sys
 
 REGISTRY = os.environ.get(
@@ -125,13 +131,22 @@ def evidence_blob(lever: dict) -> str:
     return " ".join(parts).lower()
 
 
+def mechanical_debt(lever: dict) -> dict | None:
+    """Nested debt is engineering work only; it never owns consent disposition."""
+    implementation = lever.get("implementation")
+    if isinstance(implementation, dict) and isinstance(implementation.get("design_debt"), dict):
+        return implementation["design_debt"]
+    debt = lever.get("design_debt")
+    return debt if isinstance(debt, dict) else None
+
+
 def classify(lever: dict) -> dict:
     """Return {kind, reason|organ, source, evidence}. kind in {sovereignty, design_debt, UNCLASSIFIED}."""
     # 1. Explicit field wins — the distinction is data.
     sov = lever.get("sovereignty")
     if isinstance(sov, dict) and sov.get("reason") in SOVEREIGN_REASONS:
         return {"kind": "sovereignty", "reason": sov["reason"], "source": "explicit"}
-    dd = lever.get("design_debt")
+    dd = mechanical_debt(lever)
     if isinstance(dd, dict) and str(dd.get("organ", "")).strip() and str(dd.get("dissolves_when", "")).strip():
         status = dd.get("status", "built")
         return {
@@ -159,7 +174,7 @@ def malformed_reasons(lever: dict) -> list[str]:
     sov = lever.get("sovereignty")
     if isinstance(sov, dict) and sov.get("reason") not in SOVEREIGN_REASONS:
         problems.append(f"sovereignty.reason '{sov.get('reason')}' not in {sorted(SOVEREIGN_REASONS)}")
-    dd = lever.get("design_debt")
+    dd = mechanical_debt(lever)
     if isinstance(dd, dict):
         if not str(dd.get("organ", "")).strip():
             problems.append("design_debt.organ empty")
@@ -192,7 +207,8 @@ def cmd_list(levers: list[dict], root: str) -> int:
         elif c["kind"] == "design_debt":
             dd += 1
             green, note = run_predicate(c["dissolves_when"], root)
-            state = "DISSOLVABLE→discharge" if green else "not-yet"
+            nested = isinstance(lev.get("implementation"), dict) and "design_debt" in lev["implementation"]
+            state = ("engineering-ready; lever retained" if nested else "DISSOLVABLE→discharge") if green else "not-yet"
             print(f"  {lid:32s} design_debt            organ={c['organ']} [{c['status']}] {state} ({note})")
         else:
             unc += 1
@@ -227,37 +243,60 @@ def cmd_dissolve(levers: list[dict], root: str, apply: bool) -> int:
     armed = apply and os.environ.get("LIMEN_LEVER_DISSOLVE_APPLY") == "1"
     if apply and not armed:
         print("note  --apply given but LIMEN_LEVER_DISSOLVE_APPLY != 1 — dry-run (double-dark gate)")
-    dissolved = []
+    registry_path = Path(REGISTRY)
+    original = registry_path.read_bytes() if armed else None
+    document = json.loads(original) if original is not None else None
+    # Do not overwrite newer records using a caller's stale list.
+    if document is not None and document.get("levers") != levers:
+        print("FAIL  registry changed before dissolution; no write")
+        return 1
+    satisfied = []
     for lev in (l for l in levers if is_open(l)):
-        c = classify(lev)
-        if c["kind"] != "design_debt":
+        debt = mechanical_debt(lev)
+        if not debt or malformed_reasons(lev):
             continue
-        green, note = run_predicate(c["dissolves_when"], root)
+        green, note = run_predicate(debt["dissolves_when"], root)
         if green:
-            dissolved.append((lev, c, note))
-            print(f"DISSOLVED  {lev.get('id')}: {c['organ']} satisfies dissolves_when ({note})")
-    if not dissolved:
-        print("ok    no design_debt lever is dissolvable this pass (nothing to auto-discharge)")
+            nested = isinstance(lev.get("implementation"), dict) and "design_debt" in lev["implementation"]
+            retains_consent = (
+                nested
+                or classify(lev)["kind"] == "sovereignty"
+                or (
+                    isinstance(lev.get("implementation"), dict)
+                    and bool(lev["implementation"].get("remaining_human_action"))
+                )
+            )
+            satisfied.append((lev, debt, note, retains_consent))
+            print(
+                f"PREDICATE PASS  {lev.get('id')}: engineering satisfied; "
+                + ("lever retained" if retains_consent else "eligible for discharge")
+            )
+    if not satisfied or not armed:
         return 0
-    if not armed:
-        print(
-            f"\n{len(dissolved)} lever(s) DISSOLVABLE — re-run with --apply and LIMEN_LEVER_DISSOLVE_APPLY=1 to discharge."
-        )
-        return 0
-    # Arm: stamp discharged crediting the organ, not the human.
-    for lev, c, note in dissolved:
-        lev["discharged"] = (
-            f"dissolved by organ {c['organ']} — dissolves_when green ({note}); "
-            f"no human action taken. (lever-classify --dissolve)"
-        )
-    with open(REGISTRY, "w") as fh:
-        json.dump(
-            {k: v for k, v in load_registry(REGISTRY).items() if k != "levers"} | {"levers": levers}, fh, indent=2
-        )
-        fh.write("\n")
-    print(
-        f"\nDischarged {len(dissolved)} lever(s), crediting the organ. Run scripts/sync-hishand-issues.py --apply to close their issues."
-    )
+    for lev, debt, note, retains_consent in satisfied:
+        if retains_consent:
+            debt["status"] = "built"
+            debt["predicate_receipt"] = {"command": debt["dissolves_when"], "result": "pass"}
+        else:
+            lev["discharged"] = (
+                f"dissolved by organ {debt['organ']} — dissolves_when green; "
+                "no human action taken. (lever-classify --dissolve)"
+            )
+    document["levers"] = levers
+    fd, temporary = tempfile.mkstemp(prefix=f".{registry_path.name}.", dir=registry_path.parent)
+    try:
+        with os.fdopen(fd, "w") as handle:
+            json.dump(document, handle, indent=2)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        if registry_path.read_bytes() != original:
+            print("FAIL  registry changed during predicates; no write")
+            return 1
+        os.replace(temporary, registry_path)
+    finally:
+        Path(temporary).unlink(missing_ok=True)
+    print(f"Recorded {len(satisfied)} satisfied predicates; residual consent and IDs retained.")
     return 0
 
 
@@ -273,7 +312,7 @@ def main() -> int:
     )
     args = ap.parse_args()
 
-    root = os.path.dirname(os.path.dirname(os.path.abspath(REGISTRY)))
+    root = os.environ.get("LIMEN_ROOT") or str(Path(__file__).resolve().parents[1])
     d = load_registry(REGISTRY)
     levers = d.get("levers", [])
     if not isinstance(levers, list) or not levers:
