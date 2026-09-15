@@ -65,3 +65,13 @@ All 30 tests across the repaired notification shard and registry/classifier shar
 pass. Preserve unchanged green shards; this is not a claim of a clean full-suite rerun.
 Relay ledger checksum and all six live stable repository IDs/defaults were verified;
 current-source receipt coverage remains two of six, with protection still absent.
+
+### Authenticated tunnel launch boundary
+
+Removed IANVA_TUNNEL_FORCE bypass: the direct tunnel now requires the local
+endpoint to reject an unauthenticated request regardless of caller flags. Seven
+mocked cases verify refusal for success/redirect/missing/error/unreachable replies
+and launch for 401/403 rejection. No network or tunnel is exercised by these tests.
+Registered the focused gate and homed the engineering subcondition under
+L-IANVA-CLOUD implementation.design_debt, retaining the actual consent action and
+full protocol/restart acceptance requirements.
