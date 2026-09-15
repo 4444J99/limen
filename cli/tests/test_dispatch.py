@@ -6464,3 +6464,37 @@ def test_serial_durable_deferral_continues_without_unacknowledged_refund(tmp_pat
     assert ticket.canonical_base["status"] == "dispatched"
     assert ticket.patch["status"] == "open"
     assert "── LIVE:" in capsys.readouterr().out
+
+
+def test_release_stale_default_surfaces_scoped_past_deadline_claim(tmp_path):
+    """HOSPES #2404: the unscoped maintenance rung must see targeted claims."""
+    tasks_path = tmp_path / "tasks.yaml"
+    write_board(
+        tasks_path,
+        [
+            {
+                "id": "GH-organvm-hospes-9",
+                "title": "Past-deadline scoped claim",
+                "repo": "organvm/hospes",
+                "target_agent": "codex",
+                "status": "in_progress",
+                "priority": "critical",
+                "created": "2026-07-23",
+                "labels": ["deadline-2026-08-05"],
+                "dispatch_log": [
+                    {
+                        "timestamp": "2026-07-23T00:00:00+00:00",
+                        "agent": "codex",
+                        "session_id": "targeted-session",
+                        "status": "in_progress",
+                    }
+                ],
+            }
+        ],
+    )
+    before = tasks_path.read_bytes()
+    report = release_stale_tasks(load_limen_file(tasks_path), tasks_path, dry_run=True)
+    assert report["count"] == 1
+    assert report["candidates"][0]["id"] == "GH-organvm-hospes-9"
+    assert report["candidates"][0]["action"] in {"release", "hold", "harvest", "recover"}
+    assert tasks_path.read_bytes() == before

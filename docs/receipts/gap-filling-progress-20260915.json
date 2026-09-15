@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "owner": "4444J99/limen#2623",
+  "goal": "complete the full supplied gap-filling plan",
+  "status": "in_progress",
+  "observations": [
+    {
+      "requirement": "HOSPES #2404 live claim",
+      "task_id": "GH-organvm-hospes-9",
+      "broker_task_status": "open",
+      "run_status": "succeeded",
+      "lease_state": "released",
+      "broker_updated_at": "2026-08-15T14:46:01.123Z",
+      "disposition": "historical claim already unstuck; default maintenance discovery regression passed"
+    },
+    {
+      "requirement": "#269/#1995 runtime adoption",
+      "runtime_git_sha": "6f9626e95eec4aaf92e359186c01b1013e76fde6",
+      "deployment_id": "c15efaf3-3595-4e01-bf70-d41c2d7da9c5",
+      "inventory_authority_http": 404,
+      "disposition": "deployed inventory endpoint unavailable; preserve growth containment"
+    },
+    {
+      "requirement": "Reader-mode Editorial dependency",
+      "schema_pr": "https://github.com/organvm-iv-taxis/schema-definitions/pull/19",
+      "schema_head": "dbf5f452cb469852871f33fef9c4b2e2b98b7a69",
+      "schema_tests_passed": 89,
+      "registry_pr": "https://github.com/organvm/organvm-corpvs-testamentvm/pull/553",
+      "registry_head": "6b73dec",
+      "identity_tests_passed": 27,
+      "editorial_stable_repository_id": 1160364281,
+      "logical_organ_preserved": "ORGAN-V",
+      "editorial_record_schema": "pass",
+      "merged_engine_registry": "pass",
+      "full_registry_preexisting_schema_errors": 45,
+      "new_schema_errors": 0,
+      "disposition": "published prerequisites; landing and generated-context acceptance pending"
+    },
+    {
+      "requirement": "Limen exact-head verification",
+      "head": "4b3609fdcf6faa744d8bb5bb91ec8facdc1ff08b",
+      "ci_run": "https://github.com/4444J99/limen/actions/runs/35029227708",
+      "ci_status": "success",
+      "pr_gate_run": "https://github.com/4444J99/limen/actions/runs/35029227719",
+      "pr_gate_observed_status": "in_progress",
+      "local_heavy_admission": "swap-fraction",
+      "disposition": "no merge or default verification claimed"
+    }
+  ],
+  "schema_merge_submission": {
+    "repo": "organvm-iv-taxis/schema-definitions",
+    "pr": 19,
+    "expected_head": "dbf5f452cb469852871f33fef9c4b2e2b98b7a69",
+    "result": "DEFERRED",
+    "reason": "LIFECYCLE-UNKNOWN",
+    "attempts": 1,
+    "next_owner": "repository lifecycle registry; do not re-arm unchanged submission",
+    "lifecycle_remediation": "Added canonical lifecycle:delivery label to the explicit delivery PR; unchanged submission not repeated."
+  },
+  "liveness_regressions_passed": 12,
+  "continuation_cheap_gates_passed": 34
+}

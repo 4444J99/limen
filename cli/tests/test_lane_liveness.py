@@ -97,7 +97,8 @@ def broker(monkeypatch, tmp_path):
                         "lease": {
                             "executor": {"agent": task.get("executor", task["target_agent"])},
                             "state": "active",
-                            "heartbeat_at": task["dispatch_log"][0]["timestamp"],
+                            "heartbeat_at": task.get("heartbeat_at", task["dispatch_log"][0]["timestamp"]),
+                            "hard_deadline": task.get("hard_deadline", "2099-01-01T00:00:00Z"),
                         },
                     }
                 ]
@@ -167,3 +168,29 @@ def test_doctor_uses_configured_runtime_root(tmp_path, monkeypatch):
     (scripts / "lane-liveness.py").write_text("print(" + repr('{"status":"pass","source":"configured"}') + ")")
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     assert _lane_liveness(tmp_path / "tasks.yaml", "codex")["source"] == "configured"
+
+
+def test_long_running_lease_uses_heartbeat_not_initial_transition(tmp_path):
+    task = {
+        "id": "long",
+        "target_agent": "any",
+        "executor": "codex",
+        "status": "in_progress",
+        "dispatch_log": [{"timestamp": "2026-08-01T00:00:00Z"}],
+        "heartbeat_at": "2026-09-15T12:00:00Z",
+    }
+    (tmp_path / "tasks.yaml").write_text(yaml.safe_dump({"tasks": [task]}))
+    report = lane_liveness.evaluate(tmp_path, "codex", datetime(2026, 9, 15, 13, tzinfo=timezone.utc), 24)
+    assert report["lanes"][0]["state"] == "active"
+
+
+@pytest.mark.parametrize(
+    "tasks",
+    [
+        [{"id": "bad", "status": "invented", "target_agent": "codex"}],
+        [{"id": "dup", "status": "open", "target_agent": "codex"}] * 2,
+    ],
+)
+def test_malformed_projection_is_not_idle(tmp_path, tasks):
+    (tmp_path / "tasks.yaml").write_text(yaml.safe_dump({"tasks": tasks}))
+    assert lane_liveness.evaluate(tmp_path, "codex", datetime.now(timezone.utc), 24)["unmeasured"]
