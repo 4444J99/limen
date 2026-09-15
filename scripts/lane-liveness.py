@@ -75,6 +75,10 @@ def task_events(task: dict) -> list[datetime]:
 def load_tasks(path: Path) -> tuple[list[dict], str | None]:
     if yaml is None:
         return [], "YAML dependency unavailable"
+    try:
+        from limen.models import VALID_STATUSES
+    except ImportError:
+        return [], "task schema dependency unavailable"
     if not path.exists():
         return [], f"tasks projection missing: {path}"
     try:
@@ -90,10 +94,13 @@ def load_tasks(path: Path) -> tuple[list[dict], str | None]:
         not isinstance(task.get("id"), str)
         or not task["id"]
         or not isinstance(task.get("status"), str)
+        or task.get("status") not in VALID_STATUSES
         or not isinstance(task.get("target_agent"), str)
         for task in tasks
     ):
         return [], "tasks projection has malformed task identities"
+    if len({task["id"] for task in tasks}) != len(tasks):
+        return [], "tasks projection contains duplicate task identities"
     return tasks, None
 
 
@@ -155,9 +162,14 @@ def evaluate(
             lease = node["lease"]
             lane = canonical(lease["executor"]["agent"])
             stamp = parse_time(lease.get("heartbeat_at"))
-            if lane not in catalog or stamp is None or stamp > now:
+            hard_deadline = parse_time(lease.get("hard_deadline"))
+            if lane not in catalog or stamp is None or stamp > now or hard_deadline is None:
                 raise ValueError("unknown executor or invalid heartbeat")
-            state = "active" if stamp >= cutoff and lease.get("state") in ("reserved", "active") else "stalled"
+            state = (
+                "active"
+                if stamp >= cutoff and hard_deadline > now and lease.get("state") in ("reserved", "active")
+                else "stalled"
+            )
             detail = "broker lease heartbeat evaluated"
         except Exception:
             detail = "broker lease evidence unavailable or malformed"

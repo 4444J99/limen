@@ -29,3 +29,9 @@ The control-plane implementation is being repaired in #2623. Estate activation, 
 - Broker registration succeeded after loading the registered environment. No task claim, transition, capacity expansion, or external repository synchronization occurred.
 - Review disposition: malformed-input, unknown-lane, custody, receipt replacement, gate dependency, authorization-403 and test-residue findings corrected. Doctor uses an argv list with shell disabled; lane text is one argument, so the reported shell-injection concern does not apply. Configured runtime root is trusted operator input, not a remote field.
 - Remaining estate and individual-component work retains this plan and PR #2623 as its continuation owner; it is not discharged by this patch. The missing heavy verification prevents acceptance of the first integration tranche.
+
+## Full-goal continuation order
+
+The operator explicitly directed continued work until the full plan is complete. A partial PR, denied local gate, or published prerequisite is not the terminal target. Continue independent work while preserving the full acceptance denominator. Current cross-repository progress and exact deployment observations are in `docs/receipts/gap-filling-progress-20260915.json`.
+
+Schema #19 supplies the hosting-identity prerequisite; registry #553 contains the stable-ID-bound Editorial correction. Schema's one exact-head merge-drain submission returned DEFERRED/LIFECYCLE-UNKNOWN. Do not repeat that unchanged submission. Editorial generated context remains untouched until its registry input is accepted. The current deployed Worker reports 6f9626e95eec4aaf92e359186c01b1013e76fde6 and its inventory authority route returns 404; exact current-main deployment and rollback/readback remain required.
