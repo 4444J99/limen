@@ -313,6 +313,48 @@ def submit(packet_file: Path) -> None:
     _emit(client_from_env().submit(WorkPacketV1.model_validate(_read_json(packet_file))))
 
 
+@conduct_group.command("compile-dependency-assessment")
+@click.option("--hint", "hint_file", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--contract", "contract_file", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--source-repository", required=True, type=click.Path(path_type=Path, exists=True, file_okay=False))
+def compile_dependency_assessment(hint_file: Path, contract_file: Path, source_repository: Path) -> None:
+    """Print a source-bound packet; do not submit, reserve, or execute it."""
+    from datetime import datetime
+
+    from limen.conduct.assessment_packet import compile_assessment_packet
+    from limen.conduct.assessor_source import capture_assessor
+    from limen.work_loan import WorkLoanV1
+
+    contract = _read_json(contract_file)
+    expected = {
+        "identity",
+        "executor_session_id",
+        "deadline",
+        "predicate",
+        "receipt_target",
+        "work_loan",
+        "source_commit",
+        "script_sha256",
+    }
+    try:
+        if set(contract) != expected:
+            raise ValueError("unexpected contract fields")
+        source = capture_assessor(source_repository, contract["source_commit"], contract["script_sha256"])
+        packet = compile_assessment_packet(
+            _read_json(hint_file),
+            source=source,
+            identity=AgentIdentityV1.model_validate(contract["identity"]),
+            executor_session_id=contract["executor_session_id"],
+            deadline=datetime.fromisoformat(contract["deadline"].replace("Z", "+00:00")),
+            predicate=contract["predicate"],
+            receipt_target=contract["receipt_target"],
+            work_loan=WorkLoanV1.model_validate(contract["work_loan"]),
+        )
+    except (ValueError, TypeError, KeyError, AttributeError):
+        raise click.ClickException("assessment deployment contract is incomplete or invalid") from None
+    _emit(packet.model_dump(mode="json"))
+
+
 @conduct_group.command("dependency-completions")
 def dependency_completions() -> None:
     """Read completion hints from the authenticated keeper."""
