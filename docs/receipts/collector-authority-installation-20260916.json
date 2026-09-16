@@ -1,0 +1,36 @@
+{
+  "schema_version": "limen.collector-activation-progress.v1",
+  "recorded_at": "2026-09-16T14:26:48.840694+00:00",
+  "source_commit": "6f085443da0667d0b0f183f67a9785d04ea447f8",
+  "deployment_url": "https://github.com/4444J99/limen/actions/runs/35107186768",
+  "deployment_status": "success",
+  "principal": {
+    "id": "estate-collector",
+    "roles": [
+      "inventory_collector"
+    ],
+    "custody": "op://Limen-Automation/limen-inventory-collector/password",
+    "prior_principals_preserved": 10,
+    "live_full_registry_fingerprint_matched": true,
+    "conductor_registry_read_denied_http": 403
+  },
+  "authority": {
+    "owner_count": 11,
+    "repository_count": 326,
+    "repository_pages": 12,
+    "compact_binding_bytes": 5079,
+    "authenticated_live_readback_matched": true,
+    "inventory_ceiling": 250,
+    "freshness_seconds": 900
+  },
+  "inventory_ingestion": "pending_running_collection",
+  "admission": "unverified",
+  "default_ci": {
+    "url": "https://github.com/4444J99/limen/actions/runs/35107147669",
+    "status": "failure",
+    "failed_predicate": "live profile scheduled history",
+    "later_local_live_predicate": "passed; 13 claims, 8 LAVREA axes, 18 issue projections",
+    "cause": "unverified; current authenticated run history contains eight consecutive days including today"
+  },
+  "registry_cache_caution": "Local environment registry predates collector installation. Reconstruct the additive candidate from canonical custody and compare live fingerprints before any registry write."
+}
