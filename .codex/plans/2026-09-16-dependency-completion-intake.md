@@ -121,3 +121,21 @@ bypass is needed. The production native wake route remains deployment work owned
 by PR #2651, conditional on the existing #269/#1995 admission evidence and isolated
 reviewed credentials. No live registration, lease, provider launch or activation
 occurred during this verification. The full plan remains incomplete.
+
+## Verification refusal: paired-custody cleanup
+
+The first full CLI batch for the cross-language gate failed at
+`test_single_rail_output_is_rejected_at_limit_plus_one` (stdout case): cleanup
+returned `single-rail-check-termination-failed` instead of the original output
+limit error. This recurred despite the existing five-second kill/reap budget.
+The batch had 7,835 passing tests and two skips; it is not a green receipt.
+
+Owner: Codex / this implementation PR and the paired-custody component. The root
+cause remains unverified. The bounded cleanup now attaches a path-free stage
+reason (TERM refusal, KILL refusal, unreaped leader, or surviving process group),
+and the failing test preserves the original exception chain and those reasons.
+Four deterministic tests assert that each stage still fails closed. Neither the
+cleanup requirement nor the output ceiling or deadline was relaxed. The next
+predicate is the admitted full CLI shard through `scripts/verify-scoped.sh`,
+with focused paired-custody verification preceding it. Any later green run does
+not by itself explain this intermittent refusal.
