@@ -255,7 +255,9 @@ class LocalConductClient:
     def __init__(self, path: Path | str):
         self.path = Path(path).expanduser().resolve()
         self.store = SQLiteStateStore(self.path)
-        self.broker = ConductBroker(self.store)
+        from limen.inventory_admission import execution_policy
+
+        self.broker = ConductBroker(self.store, execution_policy=execution_policy())
 
     def capabilities(self) -> dict[str, Any]:
         return self.broker.capabilities()

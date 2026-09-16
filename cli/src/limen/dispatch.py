@@ -799,6 +799,20 @@ def dispatch_admission_check(
         "next_command": "",
         "sources": [],
     }
+    from limen.inventory_admission import InventoryAdmissionError, require_approved_priority
+
+    try:
+        require_approved_priority(task_id, root=root)
+    except InventoryAdmissionError as exc:
+        result.update(
+            allow=False,
+            dispatch_allowed=False,
+            status="blocked",
+            exit_code=10,
+            reason=str(exc),
+            sources=["approved-priorities"],
+        )
+        return result
     pause_marker = root / "logs" / "AUTONOMY_PAUSED"
     if pause_marker.exists() and os.environ.get("LIMEN_FORCE_AUTONOMY") != "1":
         try:

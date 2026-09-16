@@ -219,8 +219,10 @@ class ConductBroker:
         capability_secret: str | bytes | None = None,
         runtime_identity: dict[str, str] | None = None,
         notification_registry_path: Path | str | None = None,
+        execution_policy: dict | None = None,
     ):
         self.store = store
+        self.execution_policy = execution_policy
         self.session_ttl = session_ttl
         self.adoption_after = adoption_after
         self.lease_ttl = lease_ttl
@@ -416,6 +418,16 @@ class ConductBroker:
                 packet,
                 principal_id=principal.principal_id if principal_enforced else None,
             )
+            from limen.inventory_admission import admit_execution, InventoryAdmissionError
+
+            try:
+                admission = (
+                    None
+                    if _is_task_compatibility_packet(packet)
+                    else admit_execution(self.execution_policy, state, _dump(packet), now)
+                )
+            except InventoryAdmissionError as exc:
+                raise ConductConflict(str(exc)) from exc
             executor = self._select_executor(state, packet, now)
             if (
                 packet.effect == "write"
@@ -486,6 +498,8 @@ class ConductBroker:
                 if key and value
             }
             hard_deadline = min(packet.deadline, now + self.lease_ttl)
+            if admission:
+                hard_deadline = min(hard_deadline, datetime.fromisoformat(admission["attempt_deadline"]))
             lease = LeaseV1(
                 lease_id=lease_id,
                 run_id=run_id,
@@ -505,6 +519,7 @@ class ConductBroker:
                 "root_run_id": root_run_id,
                 "parent_run_id": packet.parent_run_id,
                 "packet": _dump(packet),
+                "execution_admission": admission,
                 "conductor_session_id": packet.conductor.session_id,
                 "conductor_principal_id": principal.principal_id,
                 "executor_session_id": executor.session_id,
@@ -611,6 +626,7 @@ class ConductBroker:
                 session_ttl=self.session_ttl,
                 adoption_after=self.adoption_after,
                 lease_ttl=self.lease_ttl,
+                execution_policy=self.execution_policy,
                 capability_secret=self.capability_secret,
             )
             results = []
@@ -982,7 +998,13 @@ class ConductBroker:
             lease = lease.model_copy(
                 update={
                     "heartbeat_at": now,
-                    "hard_deadline": min(packet.deadline, now + self.lease_ttl),
+                    "hard_deadline": min(
+                        packet.deadline,
+                        now + self.lease_ttl,
+                        datetime.fromisoformat(
+                            (run.get("execution_admission") or {}).get("attempt_deadline", packet.deadline.isoformat())
+                        ),
+                    ),
                     "state": "active",
                 }
             )
@@ -1123,7 +1145,13 @@ class ConductBroker:
             capability_token_hash=self._token_hash(token),
             acquired_at=now,
             heartbeat_at=now,
-            hard_deadline=min(packet.deadline, now + self.lease_ttl),
+            hard_deadline=min(
+                packet.deadline,
+                now + self.lease_ttl,
+                datetime.fromisoformat(
+                    (run.get("execution_admission") or {}).get("attempt_deadline", packet.deadline.isoformat())
+                ),
+            ),
         )
         state["leases"][lease.lease_id] = _dump(lease.model_copy(update={"state": "released", "heartbeat_at": now}))
         state["leases"][lease_id] = _dump(replacement)
@@ -1307,6 +1335,7 @@ class ConductBroker:
                     session_ttl=self.session_ttl,
                     adoption_after=self.adoption_after,
                     lease_ttl=self.lease_ttl,
+                    execution_policy=self.execution_policy,
                     capability_secret=self.capability_secret,
                 )
                 try:

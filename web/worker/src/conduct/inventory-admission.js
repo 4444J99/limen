@@ -236,3 +236,37 @@ export function recordInventoryTransition(board, prior, candidate, event) {
     else row.settled_at = event.timestamp;
   }
 }
+
+// Admission is independent of task completion. The administrator's policy owns
+// outcome membership; packet names and caller-supplied labels cannot approve work.
+export function executionAdmission(policy, state, packet, now) {
+  if (policy === undefined) return null; // pure keeper fixtures; production always supplies policy
+  const parent = packet.parent_run_id && state.runs[packet.parent_run_id];
+  const inherited = parent?.execution_admission?.outcome_id;
+  const priorities = Array.isArray(policy.approved_priorities) ? policy.approved_priorities : [];
+  const priority = priorities.find((row) => row.outcome_id === inherited
+    || (!parent && row.work_keys?.includes(packet.work_key)));
+  requireFact(priority && priority.enabled === true, "execution_priority_not_approved");
+  requireFact(policy.mode === "dispatch" || (policy.mode === "recovery" && priority.recovery === true),
+    "execution_contained");
+  const runs = Object.values(state.runs);
+  const active = runs.filter((run) => ["reserved", "running", "stop_requested"].includes(run.status));
+  requireFact(active.length < (policy.mode === "recovery" ? 1 : 2), "execution_concurrency_exhausted");
+  const prior = runs.filter((run) => run.execution_admission?.outcome_id === priority.outcome_id);
+  // Reserve the entire attempt before dispatch. Interrupted runs retain their
+  // reservation, so a restart, rename, or replacement cannot replenish allowance.
+  requireFact(prior.reduce((sum, run) => sum + run.execution_admission.reserved_seconds, 0) + 1800 <= 7200,
+    "execution_outcome_budget_exhausted");
+  if (!parent) {
+    const roots = prior.filter((run) => !run.parent_run_id);
+    requireFact(roots.length < 2, "execution_corrective_retry_exhausted");
+    requireFact(roots.every((run) => run.packet.execution_hash !== packet.execution_hash),
+      "execution_retry_inputs_unchanged");
+  }
+  requireFact(packet.retry.max_attempts <= 1, "execution_retry_requires_changed_inputs");
+  const deadline = Math.min(Date.parse(packet.deadline), now.getTime() + 1800000,
+    parent ? Date.parse(parent.execution_admission?.attempt_deadline || parent.packet.deadline) : Infinity);
+  requireFact(deadline > now.getTime(), "execution_attempt_exhausted");
+  return { outcome_id: priority.outcome_id, reserved_seconds: 1800,
+    attempt_deadline: new Date(deadline).toISOString(), verification_seconds: 600 };
+}

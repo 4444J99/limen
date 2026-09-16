@@ -4010,6 +4010,7 @@ test("Durable Object HTTP routes match the authenticated client surface and surv
   const storage = new FakeStorage();
   const bearer = "http-conduct-secret-at-least-24-characters";
   const env = {
+    LIMEN_EXECUTION_POLICY: JSON.stringify({mode: "dispatch", approved_priorities: [{outcome_id: "http", enabled: true, work_keys: ["http-work"]}]}),
     LIMEN_CONDUCT_PRINCIPAL_REGISTRY: principalRegistry({
       principal_id: "codex-http",
       agent: "codex",
@@ -4033,6 +4034,7 @@ test("Durable Object HTTP routes match the authenticated client surface and surv
   assert.equal((await first.fetch(request("/api/conduct/sessions", "POST", codex))).status, 200);
   const work = await packet({
     workId: "http-work",
+    maxAttempts: 1,
     conductor: codex.identity,
     deadline: new Date(liveNow.getTime() + 60 * 60 * 1000),
   });

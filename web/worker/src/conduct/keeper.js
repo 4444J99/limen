@@ -1,5 +1,5 @@
 import { ChunkedDurableStateStore } from "./durable-store.js";
-import { acceptInventoryObservation, requireInventoryCollector } from "./inventory-admission.js";
+import { acceptInventoryObservation, requireInventoryCollector, executionAdmission } from "./inventory-admission.js";
 import notificationRegistry from "../../../../institutio/governance/notification-events.limen.json" with { type: "json" };
 import { sessionAudit } from "./session-audit.js";
 import { conflictingKeys, parseResource, sortedClaims } from "./resources.js";
@@ -252,6 +252,7 @@ export class ConductKernel {
       runtimeIdentity = null,
       notificationAssignments = notificationRegistry,
       inventoryAuthority = null,
+      executionPolicy = undefined,
     } = {},
   ) {
     this.state = validateLoadedState(input);
@@ -264,6 +265,7 @@ export class ConductKernel {
     this.runtimeIdentity = runtimeIdentity;
     this.notificationAssignments = clone(notificationAssignments);
     this.inventoryAuthority = inventoryAuthority;
+    this.executionPolicy = executionPolicy;
     this.projectionEvents = [];
     this.mutated = false;
   }
@@ -626,6 +628,8 @@ export class ConductKernel {
       return this.submitResult(run, true);
     }
     const parent = this.validateLineage(packet, enforced ? principal.principal_id : null);
+    const admission = isTaskCompatibilityPacket(packet) ? null
+      : executionAdmission(this.executionPolicy, this.state, packet, this.now);
     const executor = this.selectExecutor(packet);
     if (packet.effect === "write" && (executor.capabilities || []).includes("local-worktree") && !packet.storage_envelope_claims.length) {
       throw new ConductError("selected local-worktree executor requires storage_envelope_claims");
@@ -698,6 +702,7 @@ export class ConductKernel {
     }
     const hardDeadline = new Date(Math.min(
       asDate(packet.deadline).getTime(),
+      admission ? asDate(admission.attempt_deadline).getTime() : Infinity,
       this.now.getTime() + this.leaseTtlMs,
     ));
     const lease = {
@@ -721,6 +726,7 @@ export class ConductKernel {
       root_run_id: rootRunId,
       parent_run_id: packet.parent_run_id,
       packet: clone(packet),
+      execution_admission: admission,
       conductor_session_id: packet.conductor.session_id,
       conductor_principal_id: principal.principal_id,
       executor_session_id: executor.session_id,
@@ -1057,6 +1063,7 @@ export class ConductKernel {
     lease.heartbeat_at = this.timestamp;
     lease.hard_deadline = new Date(Math.min(
       asDate(run.packet.deadline).getTime(),
+      run.execution_admission ? asDate(run.execution_admission.attempt_deadline).getTime() : Infinity,
       this.now.getTime() + this.leaseTtlMs,
     )).toISOString();
     lease.state = "active";
@@ -1202,6 +1209,7 @@ export class ConductKernel {
       heartbeat_at: this.timestamp,
       hard_deadline: new Date(Math.min(
         asDate(run.packet.deadline).getTime(),
+      run.execution_admission ? asDate(run.execution_admission.attempt_deadline).getTime() : Infinity,
         this.now.getTime() + this.leaseTtlMs,
       )).toISOString(),
       state: "reserved",
@@ -1943,6 +1951,7 @@ export class SerializedConductService {
       runtimeIdentity = null,
       notificationAssignments = notificationRegistry,
       inventoryAuthority = null,
+      executionPolicy = undefined,
     } = {},
   ) {
     this.store = store;
@@ -1957,6 +1966,7 @@ export class SerializedConductService {
       runtimeIdentity,
       notificationAssignments,
       inventoryAuthority,
+      executionPolicy,
     };
     this.tail = Promise.resolve();
   }

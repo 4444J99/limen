@@ -409,6 +409,14 @@ def iter_worktree_targets(limen_root: Path | None = None, *, strict: bool = Fals
         for repo_root in _discover_repo_local_roots(root, strict=strict):
             targets.extend(_children(repo_root, repo_age, f"repo-local:{repo_root}", strict=strict))
 
+    chamber = Path(os.environ.get("LIMEN_CHAMBER_WORKTREE_ROOT", Path.home() / "Workspace" / "chamber_worktrees"))
+    if _flag("LIMEN_RECLAIM_CHAMBER_WT", broad_default) and _inventory_is_dir(
+        chamber, strict=strict, source="chamber-worktrees"
+    ):
+        for path in _discover_workspace_checkouts(strict=strict):
+            if chamber in path.parents and path.name.startswith("pr-") and (path / ".git").is_file():
+                targets.append(WorktreeTarget(path=path, min_age_h=24, source="chamber-worktrees"))
+
     if _flag("LIMEN_RECLAIM_REGISTERED_WT", broad_default):
         registered_age = _float_env("LIMEN_RECLAIM_REGISTERED_AGE_H", 24)
         targets.extend(
