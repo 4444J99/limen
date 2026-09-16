@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import signal
 import stat
 import subprocess
 import sys
@@ -1073,9 +1074,14 @@ def test_single_rail_output_is_rejected_at_limit_plus_one(
         max_seconds=5,
     )
 
-    # Keep the original exception traceback when cleanup masks the limit error.
-    with pytest.raises(PairedCustodyError, match=f"^{expected}$"):
+    # Include cleanup stage and preserve its exception chain if it masks the limit.
+    try:
         invoke_single_rail(script, request)
+    except PairedCustodyError as error:
+        if str(error) != expected:
+            raise AssertionError(f"expected {expected}; observed {error}; reasons={error.reasons}") from error
+    else:
+        pytest.fail("the output ceiling was not enforced")
 
 
 @pytest.mark.parametrize(
@@ -1234,3 +1240,33 @@ def test_projection_is_path_free_and_no_arca_invocation_exists(tmp_path: Path) -
     assert "secret" not in encoded.lower()
     assert "arca" not in encoded.lower()
     assert all("arca" not in repr(request).lower() for request in runner.requests)
+
+
+@pytest.mark.parametrize(
+    "stage", ["term-signal-refused", "kill-signal-refused", "leader-not-reaped", "process-group-still-present"]
+)
+def test_cleanup_failure_identifies_stage_without_weakening_failure(monkeypatch, stage):
+    class Process:
+        pid = 12345
+
+        def wait(self, timeout):
+            if stage == "leader-not-reaped":
+                raise subprocess.TimeoutExpired("fixture", timeout)
+            return 0
+
+    def signal_group(pid, sig):
+        assert pid == 12345
+        if (
+            stage == "term-signal-refused"
+            and sig == signal.SIGTERM
+            or stage == "kill-signal-refused"
+            and sig == signal.SIGKILL
+        ):
+            raise PermissionError("fixture")
+
+    monkeypatch.setattr(paired_module.os, "killpg", signal_group)
+    monkeypatch.setattr(paired_module, "_wait_for_process_group_exit", lambda *args, **kwargs: False)
+    with pytest.raises(PairedCustodyError) as caught:
+        paired_module._terminate_process_group(Process(), mode="check")
+    assert caught.value.code == "single-rail-check-termination-failed"
+    assert caught.value.reasons == (stage,)
