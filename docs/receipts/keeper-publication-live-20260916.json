@@ -1,0 +1,43 @@
+{
+  "initial_ref_missing": true,
+  "initial_ref_sha": null,
+  "manual_ref_writes": 0,
+  "mutations": [
+    {
+      "amendment_sha256": "2546eeb8617f529b35c8f1d51baafbe8ad5c4df4e809e0fe84ab39b36f80c0e6",
+      "event_id": "conduct:run-b85a191bef622c5608450b4552dd52cf:1054:compatibility",
+      "expected_revision": "2026-09-08T15:52:05.641Z",
+      "observed_revision": "2026-09-16T03:56:16.962Z",
+      "publication_sha": "cdabd58a48890d4764af00149d4aedbe0ed1cabd",
+      "retained_status": "open",
+      "run_id": "run-b85a191bef622c5608450b4552dd52cf",
+      "sequence": 1,
+      "status": "verified",
+      "task_id": "MCP-ESTATE-20260908",
+      "work_id": "publication-5ea8d88a70383af89038b09d769648a9f382179a"
+    },
+    {
+      "amendment_sha256": "df63eed7054f2f95f5913bb3f32a98dc2c5de48f3867ab4ccea94602ef54e67c",
+      "event_id": "conduct:run-2f30a705fab5885e33a63e70c80c6c0e:1055:compatibility",
+      "expected_revision": "2026-09-16T03:56:16.962Z",
+      "observed_revision": "2026-09-16T03:56:26.187Z",
+      "publication_sha": "3e1c6092b1180ab9484dadd14421da8a597428ad",
+      "retained_status": "open",
+      "run_id": "run-2f30a705fab5885e33a63e70c80c6c0e",
+      "sequence": 2,
+      "status": "verified",
+      "task_id": "MCP-ESTATE-20260908",
+      "work_id": "publication-82f870ee6902e91aaa086d55c0cdf6813677b299"
+    }
+  ],
+  "publication_ref": "tabularius/board-projection",
+  "repository": "4444J99/limen",
+  "runtime_identity": {
+    "deployment_id": "4839ca12-ac13-4b48-a215-57b727117243",
+    "git_sha": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+    "schema_version": "limen.conduct_runtime_identity.v1"
+  },
+  "schema_version": "limen.keeper_publication_verification.v1",
+  "status": "passed",
+  "verified_at": "2026-09-16T03:56:31.847540+00:00"
+}
