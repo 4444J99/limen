@@ -96,6 +96,17 @@
   "issues_closed": 0,
   "linked_worktrees_after": 100,
   "linked_worktrees_before": 165,
+  "local_count_followup": {
+    "exhaustive": false,
+    "existing_paths": 229,
+    "probe_errors": 17,
+    "receipt_sha256": "d29e10cd5d415a98251dfa2637e8cb9a84e1ce19f0825bf2b91d951c3337844c",
+    "registered_linked_worktrees": 93,
+    "registered_paths": 241,
+    "repository_groups": 149,
+    "retirement_attribution": "only 66 receipt-proven removals attributed to this recovery",
+    "scope": "original-home-discovery-seeds-plus-companion"
+  },
   "managed_cache_owner_readonly_plan": {
     "apply": false,
     "blocked_count": 13,
@@ -6800,5 +6811,14 @@
       "repository_path_sha256": "520c406845a630249eb385fed7f925f94782639eda5d0f72d36e3e7d52733a0b"
     }
   ],
-  "status": "partial-checkpoint"
+  "status": "partial-checkpoint",
+  "verification_deadline_followup": {
+    "fanout_scenarios_passed": 32,
+    "fanout_verification_window": "keeper-owned persistent deadline, maximum 600 seconds",
+    "fingerprint_deadline": "checked during dependency and file-content walk",
+    "recovery_scenarios_passed": 19,
+    "timeout_cleanup": "existing process-group termination helper",
+    "verifier_ci_hardening_fixtures": "passed",
+    "verifier_parallel_fixtures": "passed"
+  }
 }

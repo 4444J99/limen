@@ -299,3 +299,20 @@ def test_registered_api_branch_producer_denies_before_remote_write(monkeypatch, 
             module.heal({"surfaces": [{"type": "github_readme", "ref": "owner/repo", "id": "sample"}]}, True)
     assert calls
     assert all("POST" not in args and "PUT" not in args for args in calls)
+
+
+def test_fingerprint_stops_when_deadline_expires_during_input_walk(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    path = Path(__file__).resolve().parents[2] / "scripts/verify.py"
+    spec = importlib.util.spec_from_file_location("deadline_fingerprint", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    monkeypatch.setattr(module, "git_paths", lambda *args: ["large.bin"])
+    monkeypatch.setattr(module.importlib.metadata, "distributions", lambda: [])
+    ticks = iter([0, 1, 2, 3, 4, 5])
+    monkeypatch.setattr(module, "time", SimpleNamespace(monotonic=lambda: next(ticks, 6)))
+    (tmp_path / "large.bin").write_bytes(b"x" * (3 * 1024 * 1024))
+    with pytest.raises(TimeoutError, match="fingerprint deadline exhausted"):
+        module.verification_fingerprint({}, {}, [], deadline=3)

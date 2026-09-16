@@ -681,12 +681,18 @@ def run_gate(
     return True
 
 
-def verification_fingerprint(gate: dict, registry: dict, changed: list[str]) -> str:
+def verification_fingerprint(gate: dict, registry: dict, changed: list[str], *, deadline: float = float("inf")) -> str:
     """Conservative content identity; never persist environment values or private bytes.
 
     Gates can execute arbitrary code. Until their dependency closure is declared,
     all tracked inputs are relevant. Live/network predicates are never cached.
     """
+
+    def check_deadline():
+        if time.monotonic() >= deadline:
+            raise TimeoutError("verification fingerprint deadline exhausted")
+
+    check_deadline()
     digest = hashlib.sha256()
     cache = gate.get("cache") or {}
     inputs = cache.get("inputs") if isinstance(cache, dict) else None
@@ -699,7 +705,11 @@ def verification_fingerprint(gate: dict, registry: dict, changed: list[str]) -> 
     for key, value in sorted(os.environ.items()):
         if key not in {"SHLVL", "_", "PWD", "OLDPWD"}:
             digest.update(f"{key}={value}\0".encode())
-    packages = sorted((d.metadata.get("Name", ""), d.version) for d in importlib.metadata.distributions())
+    packages = []
+    for distribution in importlib.metadata.distributions():
+        check_deadline()
+        packages.append((distribution.metadata.get("Name", ""), distribution.version))
+    packages.sort()
     digest.update(json.dumps(packages).encode())
     paths = (
         set(git_paths("ls-files", "-z"))
@@ -714,6 +724,7 @@ def verification_fingerprint(gate: dict, registry: dict, changed: list[str]) -> 
     paths.add("scripts/verify.py")
     paths.update(["node_modules/.package-lock.json", "web/worker/node_modules/.package-lock.json"])
     for name in sorted(paths):
+        check_deadline()
         if any(name == root or name.startswith(root + "/") for root in PRIVATE_CUSTODY_ROOTS):
             continue
         path = ROOT / name
@@ -724,9 +735,11 @@ def verification_fingerprint(gate: dict, registry: dict, changed: list[str]) -> 
             digest.update(str(path.stat().st_mode).encode())
             with path.open("rb") as source:
                 for block in iter(lambda: source.read(1024 * 1024), b""):
+                    check_deadline()
                     digest.update(block)
         else:
             digest.update(b"absent")
+    check_deadline()
     return digest.hexdigest()
 
 
@@ -785,7 +798,11 @@ def run_gate_wave(
             if time.monotonic() >= deadline:
                 output_paths[gate_id].write_text("aggregate verification deadline exhausted\n")
                 return False, time.monotonic() - started
-            fingerprint = verification_fingerprint(gates[gate_id], registry, changed)
+            try:
+                fingerprint = verification_fingerprint(gates[gate_id], registry, changed, deadline=deadline)
+            except (OSError, TimeoutError) as exc:
+                output_paths[gate_id].write_text(f"fingerprint unavailable: {type(exc).__name__}\n")
+                return False, time.monotonic() - started
             receipt = cache_path(gate_id, fingerprint)
             reusable = cacheable(gates[gate_id])
             if reusable:
@@ -818,11 +835,15 @@ def run_gate_wave(
                 except Exception as exc:  # noqa: BLE001 - a gate crash is a failed predicate
                     log_line(output, f"FAILED: {gate_id} raised {type(exc).__name__}")
                     passed = False
-            if (
-                passed
-                and time.monotonic() < deadline
-                and fingerprint == verification_fingerprint(gates[gate_id], registry, changed)
-            ):
+            unchanged = False
+            if passed:
+                try:
+                    unchanged = fingerprint == verification_fingerprint(
+                        gates[gate_id], registry, changed, deadline=deadline
+                    )
+                except (OSError, TimeoutError):
+                    passed = False
+            if passed and unchanged and time.monotonic() < deadline:
                 receipt.parent.mkdir(parents=True, exist_ok=True)
                 with tempfile.NamedTemporaryFile(mode="w", dir=receipt.parent, delete=False) as saved:
                     json.dump(
@@ -847,7 +868,7 @@ def run_gate_wave(
                         continue  # Another verifier may have pruned this receipt.
                 for _, stale in sorted(existing, reverse=True)[4:]:
                     stale.unlink(missing_ok=True)
-            return passed, time.monotonic() - started
+            return passed and time.monotonic() < deadline, time.monotonic() - started
 
         executor = concurrent.futures.ThreadPoolExecutor(
             max_workers=worker_count,

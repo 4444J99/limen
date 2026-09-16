@@ -44,3 +44,8 @@ its exact run receipt atomically before retiring disposable copies. Cleanup rest
 revalidates remote PR/head evidence, resumes the existing detach lifecycle and consumes
 no replacement checkout reservation. The supporting clone remains an explicitly indexed
 recovery anchor; unfinished payloads are never discarded to manufacture a clean release.
+
+Provider-result predicates use the same keeper-owned verification deadline as the
+verification runner, including across retries and restarts. Check admission before
+creating their verification checkout; use the existing process-group timeout helper
+for the actual predicate. Input hashing consumes the verification allowance too.

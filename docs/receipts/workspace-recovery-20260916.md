@@ -69,3 +69,16 @@ initializer also proves rejection leaves branch refs and checkout registrations 
 The recovery suite passes 18 tests and initializer suite passes 6. CI on 859a9463f found
 a Python 3.12/mypy inference issue in census error redaction; an explicit dictionary type
 fixes it without changing runtime behavior. The corrected module passes local type checking.
+
+
+A fresh bounded pass over the original home-discovery seeds plus the companion checkout
+observed 149 Git groups, 241 registered paths, 93 registered linked worktrees and 229
+existing paths, with 17 failed probes. This is a separate nonexhaustive snapshot; only the
+66 journaled removals are attributed to this recovery. No stale registration was pruned.
+
+The deadline audit also corrected fanout predicates: the authenticated keeper owns their
+shared ten-minute window, checked before creating the verification checkout and before
+execution; timeout kills the process group through the existing helper. Verifier input
+fingerprinting now checks the same deadline while enumerating dependencies and hashing
+file content. Validation: 32 fanout tests, 19 recovery tests, type checking, and both
+verifier scheduling/CI-hardening fixture suites passed.

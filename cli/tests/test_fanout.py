@@ -1068,3 +1068,28 @@ def test_interrupted_landing_release_retains_receipt_and_reuses_root(monkeypatch
     _release_landing_copies(root, packet, receipt)
     assert first == (root / "landing-custody.json").read_bytes()
     assert len(reservations) == 1
+
+
+def test_fanout_predicate_uses_original_keeper_window_on_restart(monkeypatch):
+    import limen.fanout_executor as executor
+    from limen.conduct.client import HttpConductClient
+
+    deadline = (datetime.now(timezone.utc) + timedelta(seconds=30)).isoformat()
+    client = object.__new__(HttpConductClient)
+    calls = []
+
+    def reserve(*args):
+        calls.append(args)
+        return {"deadline": deadline}
+
+    client.reserve_growth = reserve
+    monkeypatch.setattr(executor, "client_from_env", lambda: client)
+    packet = {"work_key": "approved", "deadline": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()}
+    first = executor._admit_predicate(packet)
+    restarted = executor._admit_predicate(packet)
+    assert first["deadline"] == restarted["deadline"] == deadline
+    assert executor._predicate_timeout(restarted) <= 30
+    assert calls[0] == calls[1]
+    client.reserve_growth = lambda *args: {"deadline": (datetime.now(timezone.utc) - timedelta(seconds=1)).isoformat()}
+    with pytest.raises(executor.FanoutExecutionError, match="deadline exhausted"):
+        executor._admit_predicate(packet)
