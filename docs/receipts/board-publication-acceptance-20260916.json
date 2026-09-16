@@ -1,0 +1,33 @@
+{
+  "counts": {
+    "active": 0,
+    "by_priority": {
+      "backlog": 1,
+      "critical": 85,
+      "high": 1327,
+      "low": 80,
+      "medium": 1693
+    },
+    "by_status": {
+      "archived": 459,
+      "done": 1388,
+      "failed_blocked": 345,
+      "needs_human": 118,
+      "open": 876
+    },
+    "completed": 1847,
+    "completion_rate": 0.58,
+    "total": 3186
+  },
+  "default_sha": "c11d749c0ce82e197940ae84af8e348b72935e90",
+  "deployment_id": "4839ca12-ac13-4b48-a215-57b727117243",
+  "observed_at": "2026-09-16T04:44:34.080933+00:00",
+  "public_blob_sha": "2d140cab1389f29eaa0cdb2538f60e10c5260e03",
+  "reason": "current_counts_only_parity",
+  "repository": "4444J99/limen",
+  "repository_id": 1255213941,
+  "runtime_sha": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+  "schema": "limen.board_publication_acceptance.v1",
+  "scope": "Current default/public and authenticated private snapshot parity; no task mutation or lifecycle discharge.",
+  "status": "passed"
+}
