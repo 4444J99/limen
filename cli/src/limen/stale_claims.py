@@ -25,7 +25,7 @@ def stale_claim_holds(
     resolved_agents: dict[str, str] | None = None,
 ) -> dict[str, str | None]:
     """Return a hold reason, or terminal ownership evidence, for every task."""
-    result = {task.id: "conduct_unmeasured" for task in tasks}
+    result: dict[str, str | None] = {task.id: "conduct_unmeasured" for task in tasks}
     if not tasks:
         return result
     deadline = clock() + 20

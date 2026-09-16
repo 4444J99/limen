@@ -6989,6 +6989,7 @@ class ReleaseStaleCandidate(TypedDict, total=False):
     status: str
     action: str
     remote_status: str
+    executor_agent: str | None
 
 
 class ReleaseStaleReport(TypedDict):
@@ -7396,6 +7397,8 @@ def release_stale_tasks(
                 recover_ready.append(task.id)
             print(f"  {action.upper()}: {task.id} remote={remote_status} — {task.title}")
 
+    for candidate_row in candidate_rows:
+        candidate_row["executor_agent"] = resolved_agents.get(candidate_row["id"])
     return {
         "status": "dry_run" if dry_run else "applied",
         "agent": agent,

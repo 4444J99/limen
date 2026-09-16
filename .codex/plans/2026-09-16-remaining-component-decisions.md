@@ -215,3 +215,11 @@ The change belongs to the explicit release command; runtime installation and liv
 release evidence remain distinct. Focused development probes passed 61 cases;
 consolidated verification follows this implementation batch. No live task was
 mutated.
+
+Verification update: the 10fa90322 consolidated batch passed 31 cheap gates and
+failed type annotation and gate-owner checks. Both were corrected; complete
+Python typechecking and gate validation then passed. The final executor-report
+field passed the 61-case ownership/provider shard; focused lint and format pass.
+Heavy verification did not run, so the draft's existing admission/whole-suite
+obligation remains open. No green sibling gate was replayed solely for the two
+metadata/type corrections.
