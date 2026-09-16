@@ -1636,3 +1636,26 @@ def test_issue_map_change_selects_the_bounded_live_research_adjudication_gate() 
         if step.get("name") == "Run whole-repo verification (verify-whole.sh)"
     )
     assert whole_verify["env"]["GH_TOKEN"] == "${{ github.token }}"
+
+
+def test_live_schedule_failure_records_bounded_public_observation() -> None:
+    now, payloads, contribution = _live_profile_fixture()
+    runs = payloads[MODULE.PROFILE_RUNS_API_URL]["workflow_runs"]
+    for run in runs:
+        created = datetime.fromisoformat(run["created_at"].replace("Z", "+00:00")) - timedelta(days=10)
+        run["created_at"] = _rfc3339(created)
+        run["updated_at"] = _rfc3339(created + timedelta(minutes=5))
+        run["untrusted_extra"] = "must-not-enter-diagnostics"
+    errors = _validate_current_profile(payloads, contribution, now)
+    assert "latest successful scheduled profile run must be within 48 hours" in errors
+    diagnostic = next(error for error in errors if error.startswith("live profile schedule observation: "))
+    observed = json.loads(diagnostic.split(": ", 1)[1])
+    assert observed["observed_at"] == now.isoformat()
+    assert len(observed["latest_runs"]) == 8
+    assert observed["latest_runs"][0] == {"id": 9000, "created_at": "2026-08-02T07:00:00+00:00"}
+    assert "must-not-enter-diagnostics" not in diagnostic
+
+
+def test_healthy_live_schedule_needs_no_failure_diagnostic() -> None:
+    now, payloads, contribution = _live_profile_fixture()
+    assert _validate_current_profile(payloads, contribution, now) == []
