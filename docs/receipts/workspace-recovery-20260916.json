@@ -105,6 +105,21 @@
     "receipt_sha256": "720cc93bdc0f9c785443b63affd37d34eb7c9e75cac2aedaf96ccd3e33826c27"
   },
   "net_free_space_delta": "unmeasured-no-before-snapshot",
+  "producer_boundary_followup": {
+    "api_branch_producers": [
+      "sync-marketplace-config",
+      "link-health"
+    ],
+    "ci_type_inference_correction": "tracked_failures explicit list[dict[str, Any]]",
+    "initializer_suite_passed": 6,
+    "issue_producers": [
+      "sync-censor-issues",
+      "sync-hishand-issues",
+      "decorum-keeper"
+    ],
+    "recovery_suite_passed": 18,
+    "unapproved_outbound_effects": 0
+  },
   "refs_deleted": 0,
   "remaining_chambers": [
     {

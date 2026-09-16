@@ -179,3 +179,15 @@ def test_branch_collision_records_add_phase_without_deleting_existing_branch(tmp
     assert raised.value.receipt["phase"] == "add"
     assert raised.value.receipt["crash"]["code"] == "worktree-add-failed"
     assert _git(repo, "show-ref", "--verify", "refs/heads/work/existing").returncode == 0
+
+
+def test_unapproved_initialization_creates_no_branch_or_checkout(tmp_path: Path) -> None:
+    repo = _repo(tmp_path / "repo")
+    final = tmp_path / "unapproved-copy"
+    before = _git(repo, "worktree", "list", "--porcelain").stdout
+    with pytest.raises(WorktreeInitializationError, match="priority_not_approved"):
+        initialize_worktree(repo, final, branch="work/unapproved", checkout_ref="main", task_id="UNAPPROVED")
+    assert not final.exists()
+    assert not list(tmp_path.glob(".limen-init-*"))
+    assert _git(repo, "show-ref", "--verify", "refs/heads/work/unapproved").returncode != 0
+    assert _git(repo, "worktree", "list", "--porcelain").stdout == before

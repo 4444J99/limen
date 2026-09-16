@@ -60,3 +60,12 @@ contents; successful landings journal their exact receipt before cleanup and rev
 remote evidence when cleanup resumes. Supporting clones remain recovery anchors.
 Focused validation: 31 fanout scenarios passed; the changed module passed type checking.
 No additional physical removal or deployment occurred in this follow-up.
+
+
+Producer-boundary verification now invokes the three registered issue writers and both
+GitHub API branch writers with an unapproved outcome: no outbound create/write runs.
+The issue writers share one persisted allowance across entry points. The real Git
+initializer also proves rejection leaves branch refs and checkout registrations unchanged.
+The recovery suite passes 18 tests and initializer suite passes 6. CI on 859a9463f found
+a Python 3.12/mypy inference issue in census error redaction; an explicit dictionary type
+fixes it without changing runtime behavior. The corrected module passes local type checking.
