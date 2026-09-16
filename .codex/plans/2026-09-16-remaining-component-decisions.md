@@ -69,3 +69,12 @@ creation between preflight and publication and inspection of complete bytes
 before the target appears. Ruff passes. No private packet or external removal
 request was accessed or executed. L-GITHUB-PR2532-HISTORY-REMOVAL retains its
 separate custody, support-action, postflight and immutable merged-receipt gates.
+
+## Successful default-branch verification
+
+GitHub run 35039390911 completed successfully at default SHA
+3edef1e770ada792af8e16fc047ef27bf16cc5a8, including the actual whole-repository
+verify-whole.sh step plus web, Python, Worker and dependency-audit jobs. Compat
+was skipped and is not claimed as executed. This supersedes the earlier failing
+default result for code verification only; draft changes, runtime adoption and
+external outcomes remain separate obligations.

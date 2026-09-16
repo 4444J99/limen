@@ -271,5 +271,22 @@
     "repair": "Fixture producer and subprocess consumer share a deterministic two-day monotonic clock; production freshness validation unchanged.",
     "repaired_shard_passed": 20,
     "default_success": "not_yet_verified"
+  },
+  "default_branch_verification": {
+    "repository": "4444J99/limen",
+    "sha": "3edef1e770ada792af8e16fc047ef27bf16cc5a8",
+    "run": "https://github.com/4444J99/limen/actions/runs/35039390911",
+    "conclusion": "success",
+    "whole_repository_predicate": "scripts/verify-whole.sh",
+    "whole_repository_step": "success",
+    "other_jobs_passed": [
+      "web",
+      "python",
+      "worker",
+      "npm-audit (web/app)",
+      "npm-audit (web/worker)"
+    ],
+    "compat_job": "skipped",
+    "scope": "Default-branch code verification only; subsequent PR changes, runtime adoption and external outcomes require separate evidence."
   }
 }
