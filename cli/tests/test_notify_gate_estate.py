@@ -598,6 +598,39 @@ def test_git_degradation_fallback_fails_closed_at_candidate_limit(tmp_path, chec
     assert check_gate.direct_notification_effectors(tmp_path) == [check_gate.SOURCE_SCAN_FAILURE]
 
 
+def test_archive_scan_selects_notification_sources_before_parsing(tmp_path, check_gate, monkeypatch):
+    tools = tmp_path / "tools"
+    tools.mkdir()
+    (tools / "unrelated.sh").write_text("echo 'unclosed quote\n")
+    (tools / "unrelated.py").write_text("not valid python !!!\n")
+    sender = tools / "sender.sh"
+    sender.write_text("osascript -e 'display notification \"x\"'\n")
+    parsed = []
+    original = check_gate._shell_bypasses
+
+    def inspect(path):
+        parsed.append(path)
+        return original(path)
+
+    monkeypatch.setattr(check_gate, "_shell_bypasses", inspect)
+    assert check_gate.direct_notification_effectors(tmp_path) == ["tools/sender.sh"]
+    assert parsed == [sender]
+
+
+def test_archive_scan_preserves_unreadable_candidate(tmp_path, check_gate, monkeypatch):
+    sender = tmp_path / "sender.sh"
+    sender.write_text("osascript -e 'display notification x'\n")
+    original = Path.read_bytes
+
+    def read(path):
+        if path == sender:
+            raise PermissionError("unreadable source")
+        return original(path)
+
+    monkeypatch.setattr(Path, "read_bytes", read)
+    assert check_gate.direct_notification_effectors(tmp_path) == ["sender.sh"]
+
+
 def test_clean_exact_head_reuses_source_path_scan(tmp_path, check_gate, monkeypatch):
     scripts = tmp_path / "scripts"
     scripts.mkdir()
