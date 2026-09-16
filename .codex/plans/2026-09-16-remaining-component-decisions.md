@@ -107,3 +107,18 @@ No unchanged-head merge submission was repeated.
 The merge tool's ERR came from an unreadable required-check list: gh returned no
 required-check JSON. This now reports REQUIRED-CHECKS-UNMEASURED, preserving the
 refusal. Twenty-five focused merge-drain tests and Ruff pass. No rule was weakened.
+
+## Privacy and custody decisions
+
+Four further decisions derive from the publication, identity, exact history-removal
+and paired-custody components. Public history is not private custody; source
+lineage must survive in authorized private storage. Identity presence is not
+factual correctness or disclosure consent. Removal requires exact postflight and
+a merged immutable receipt. Paired custody requires real device independence,
+equal source coverage, restores and matching reopened records.
+
+Current count: 41 selected, 56 requiring component review, 95 missing acceptance
+definitions. All 107 IDs and lifecycle states are unchanged. Twenty-two focused
+registry tests and structural validation pass. Heavy verification remains
+incomplete under the recorded host-admission gate; no live private data or device
+action was performed.
