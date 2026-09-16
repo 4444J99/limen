@@ -371,6 +371,11 @@ gates:
     tier: cheap
     owner: ianva
     note: "Direct tunnel launch requires local unauthenticated rejection; a force flag cannot publish an open endpoint."
+  conduct-principal-merge-test:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_merge_conduct_principal_registry.py -q"
+    paths: ["scripts/merge-conduct-principal-registry.py", "scripts/tests/test_merge_conduct_principal_registry.py", "scripts/deploy-conduct-registry.sh"]
+    owner: dispatch
+    note: "Legacy compatibility augmentation cannot widen a dedicated inventory collector or mutate caller state on failure."
   pr-autotype-scope-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_pr_lifecycle_autotype.py -q"
     paths: ["scripts/pr-lifecycle-autotype.py", "cli/tests/test_pr_lifecycle_autotype.py"]
