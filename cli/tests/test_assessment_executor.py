@@ -264,7 +264,7 @@ def test_callback_cli_requires_distinct_explicit_credentials(callback, tmp_path,
         assert token == "fixture-executor-only"  # allow-secret: synthetic test value
         return client
 
-    monkeypatch.setattr("limen.conduct.cli.HttpConductClient", transport)
+    monkeypatch.setattr("limen.conduct.assessment_transport.AssessmentHttpClient", transport)
     monkeypatch.setenv("FIXTURE_ASSESSOR_EXECUTOR", "fixture-executor-only")
     monkeypatch.setenv("GH_TOKEN", "ambient-must-not-authorize")
     arguments = [
@@ -284,3 +284,21 @@ def test_callback_cli_requires_distinct_explicit_credentials(callback, tmp_path,
     assert result.exit_code == 0, result.output
     assert json.loads(result.output)["automatic_acceptance"] is False
     assert "fixture-read-only" not in result.output
+
+
+def test_missing_attempt_projection_never_claims_or_launches(callback, monkeypatch):
+    client, run_id, kwargs = callback
+    original = client.graph
+
+    def incomplete(identifier):
+        graph = original(identifier)
+        graph["nodes"][0].pop("attempts")
+        return graph
+
+    def forbidden(*args, **values):
+        pytest.fail("incomplete graph must not claim")
+
+    monkeypatch.setattr(client, "graph", incomplete)
+    monkeypatch.setattr(client, "claim", forbidden)
+    with pytest.raises(AssessmentExecutorError):
+        execute_assessment_run(client, run_id, **kwargs)

@@ -362,6 +362,7 @@ def compile_dependency_assessment(hint_file: Path, contract_file: Path, source_r
 def execute_dependency_assessment(run_id: str, contract_file: Path, source_repository: Path) -> None:
     """Execute one keeper-reserved assessment using explicit deployment authority."""
     from limen.conduct.assessment_executor import execute_assessment_run
+    from limen.conduct.assessment_transport import AssessmentHttpClient
     from limen.conduct.assessor_source import capture_assessor
 
     contract = _read_json(contract_file)
@@ -396,7 +397,7 @@ def execute_dependency_assessment(run_id: str, contract_file: Path, source_repos
         if not executor_token or not read_token or executor_token == read_token:
             raise ValueError
         source = capture_assessor(source_repository, contract["source_commit"], contract["script_sha256"])
-        client = HttpConductClient(contract["broker_url"], executor_token)
+        client = AssessmentHttpClient(contract["broker_url"], executor_token)
         result = execute_assessment_run(
             client,
             run_id,
@@ -414,12 +415,19 @@ def execute_dependency_assessment(run_id: str, contract_file: Path, source_repos
         raise click.exceptions.Exit(77)
 
 
+def _dependency_client() -> HttpConductClient:
+    from limen.conduct.assessment_transport import AssessmentHttpClient
+
+    configured = client_from_env()
+    if not isinstance(configured, HttpConductClient):
+        raise click.ClickException("dependency completion requires the authenticated remote keeper")
+    return AssessmentHttpClient(configured.endpoint, configured.token)
+
+
 @conduct_group.command("dependency-completions")
 def dependency_completions() -> None:
     """Read completion hints from the authenticated keeper."""
-    client = client_from_env()
-    if not isinstance(client, HttpConductClient):
-        raise click.ClickException("dependency completion requires the authenticated remote keeper")
+    client = _dependency_client()
     _emit(client.dependency_completion_hints())
 
 
@@ -428,9 +436,7 @@ def dependency_completions() -> None:
 @click.option("--packet", "packet_file", required=True, type=click.Path(path_type=Path, exists=True))
 def consume_dependency_completion(key: str, packet_file: Path) -> None:
     """Submit one reviewed assessment packet and reconcile once; never wait."""
-    client = client_from_env()
-    if not isinstance(client, HttpConductClient):
-        raise click.ClickException("dependency completion requires the authenticated remote keeper")
+    client = _dependency_client()
     result = consume_completion(client, key, WorkPacketV1.model_validate(_read_json(packet_file)))
     _emit(result)
     assessment = result.get("assessment", {})

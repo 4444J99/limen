@@ -163,6 +163,12 @@ def test_cli_submits_once_and_reports_pending_as_unmeasured(tmp_path, monkeypatc
 
     client = KeeperFixture()
     monkeypatch.setattr("limen.conduct.cli.client_from_env", lambda: client)
+
+    def bounded(endpoint, token):
+        assert endpoint == client.endpoint and token == client.token  # allow-secret: runtime fixture comparison
+        return client
+
+    monkeypatch.setattr("limen.conduct.assessment_transport.AssessmentHttpClient", bounded)
     path = tmp_path / "packet.json"
     path.write_text(packet().model_dump_json())
     result = CliRunner().invoke(conduct_group, ["consume-dependency-completion", "--key", KEY, "--packet", str(path)])
