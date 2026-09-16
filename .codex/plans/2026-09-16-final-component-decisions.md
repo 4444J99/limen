@@ -24,3 +24,8 @@ all 107 historical records outside their additive implementation fields.
 Next: implement the remaining acceptance predicates and component work; keep
 broker transitions, private custody, runtime adoption and external receipts
 separate from this decision-coverage milestone.
+
+Verified at 099cb0287e3def95a8dd87fcd8e7cb4088b3548b: seven cheap
+gates and 7,711 CLI tests passed (two skipped), scoped predicate exit 0.
+Existing acceptance commands still need condition-by-condition coverage review;
+a nonempty command field is not evidence that its whole acceptance condition ran.
