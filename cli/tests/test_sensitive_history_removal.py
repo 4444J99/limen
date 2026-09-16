@@ -105,3 +105,36 @@ def test_redacted_receipt_contains_no_private_paths_or_artifact_content(mod, tmp
     assert context["artifact"].decode().strip() not in rendered
     assert receipt["custody_copy_count"] == 2
     assert receipt["result"] == "pass"
+
+
+def test_receipt_publication_preserves_competing_writer(mod, tmp_path, monkeypatch):
+    monkeypatch.setattr(mod, "RECEIPT_ROOT", tmp_path)
+    target = tmp_path / "receipt.json"
+    original_link = mod.os.link
+
+    def race(source, destination):
+        Path(destination).write_text("existing immutable receipt")
+        return original_link(source, destination)
+
+    monkeypatch.setattr(mod.os, "link", race)
+    with pytest.raises(mod.VerificationError, match="already exists"):
+        mod._write_receipt(target, {"result": "pass"})
+    assert target.read_text() == "existing immutable receipt"
+    assert list(tmp_path.glob(".receipt-*")) == []
+
+
+def test_receipt_is_complete_before_publication(mod, tmp_path, monkeypatch):
+    monkeypatch.setattr(mod, "RECEIPT_ROOT", tmp_path)
+    target = tmp_path / "receipt.json"
+    original_link = mod.os.link
+    receipt = {"result": "pass", "evidence": ["one", "two"]}
+
+    def inspect(source, destination):
+        assert not Path(destination).exists()
+        assert json.loads(Path(source).read_text()) == receipt
+        return original_link(source, destination)
+
+    monkeypatch.setattr(mod.os, "link", inspect)
+    mod._write_receipt(target, receipt)
+    assert json.loads(target.read_text()) == receipt
+    assert list(tmp_path.glob(".receipt-*")) == []

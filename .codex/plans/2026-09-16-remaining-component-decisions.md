@@ -58,3 +58,14 @@ Closeout loads code helpers from its own source directory while runtime state
 continues to use LIMEN_ROOT. Verification: 33 focused dispatch, healer and closeout
 tests, Ruff, classifier doctor, gate validation and diff hygiene passed. Existing
 unaffected verification receipts remain evidence; no full-suite rerun claimed.
+
+## Immutable privacy-receipt publication
+
+The sensitive-history postflight writer had a check-then-write race. It now
+flushes a complete temporary file and publishes through a same-directory hard
+link, which atomically refuses replacement. Temporary files are removed on
+success or failure. Five privacy-verifier tests pass, including an actual target
+creation between preflight and publication and inspection of complete bytes
+before the target appears. Ruff passes. No private packet or external removal
+request was accessed or executed. L-GITHUB-PR2532-HISTORY-REMOVAL retains its
+separate custody, support-action, postflight and immutable merged-receipt gates.
