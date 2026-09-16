@@ -82,6 +82,7 @@ def test_fragments_emit_no_raw_person_project_or_repository_identity() -> None:
             for repository in (
                 *((project["repo"],) if project.get("repo") else ()),
                 *(project.get("related_repos") or ()),
+                *(project.get("privacy_legacy_repos") or ()),
             )
         }
     )
@@ -173,3 +174,17 @@ def test_unsupported_field_remains_incomplete_source_debt(tmp_path: Path) -> Non
     assert not classification.enumeration_complete
     assert classification.debt_count == base_debts + 1
     assert not payload["enumeration_complete"]
+
+
+def test_malformed_privacy_history_remains_visible_debt(tmp_path: Path) -> None:
+    source = _tracked_source()
+    baseline = classify_constellation_registry(source)
+    document = yaml.safe_load(source.read_text())
+    for person in document["people"]:
+        for project in person["projects"]:
+            if "privacy_legacy_repos" in project:
+                project["privacy_legacy_repos"] = "not-a-list"
+    changed = tmp_path / "registry.yaml"
+    changed.write_text(yaml.safe_dump(document))
+    result = classify_constellation_registry(changed)
+    assert result.debt_count > baseline.debt_count
