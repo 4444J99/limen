@@ -16,6 +16,7 @@ on:
       - "mcp/**"
       - "ianva/**"
       - "institutio/governance/**"
+      - "institutio/github/dependency-completion.json"
       - ".github/workflows/**"
   pull_request:
     # tasks.yaml is push-only here (the board fast lane): a board-projection PR
@@ -30,6 +31,7 @@ on:
       - "mcp/**"
       - "ianva/**"
       - "institutio/governance/**"
+      - "institutio/github/dependency-completion.json"
       - ".github/workflows/**"
   workflow_dispatch:
   schedule:
