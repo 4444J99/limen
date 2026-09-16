@@ -85,7 +85,6 @@ def test_admitted_receipt_identity(tmp_path, remote, lookup):
     assert git("config", "user.email") == "private@example.invalid"
 
 
-
 def test_admitted_receipt_uses_push_url(tmp_path):
     def git(*args):
         return subprocess.check_output(["git", *args], cwd=tmp_path, text=True).strip()
@@ -141,8 +140,8 @@ def test_admitted_receipt_supports_machine_identity(tmp_path, machine, expected)
     gh = fake_bin / "gh"
     gh.write_text(
         "#!/bin/sh\n"
-        "case \"$*\" in\n"
-        "  *\" user --jq \"*) exit 1 ;;\n"
+        'case "$*" in\n'
+        '  *" user --jq "*) exit 1 ;;\n'
         "  *github-actions*) printf '%s\\n' '41898282+github-actions[bot]@users.noreply.github.com' ;;\n"
         "  *\" app --jq .slug\"*) printf '%s\\n' 'fixture-app' ;;\n"
         "  *fixture-app*) printf '%s\\n' '999+fixture-app[bot]@users.noreply.github.com' ;;\n"
