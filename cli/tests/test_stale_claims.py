@@ -173,6 +173,8 @@ def test_any_target_resolves_jules_before_provider_absence_check(tmp_path, monke
     assert report["held"] == ["stale"]
     assert report["released"] == []
     assert report["remote_probe"]["status"] == "unavailable"
+    assert report["candidates"][0]["target_agent"] == "any"
+    assert report["candidates"][0]["executor_agent"] == "jules"
     assert path.read_bytes() == before
 
 

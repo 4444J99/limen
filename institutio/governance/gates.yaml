@@ -397,6 +397,7 @@ gates:
     owner: observe
     note: "The his-hand registry must be structurally readable: unique IDs, enum statuses, required intent fields, and parseable non-future diagnosis timestamps. Diagnosis age is derived at read time. The classifier remains the implementation decision: open levers are either irreducible sovereignty or explicit design debt; no mass closure or deletion is implied."
   stale-claim-ownership-test:
+    owner: runtime
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_stale_claims.py cli/tests/test_dispatch.py cli/tests/test_jules_remote.py cli/tests/test_jules_session_absence_probe.py -q -k 'stale or absence'"
     paths: ["cli/src/limen/stale_claims.py", "cli/src/limen/dispatch.py", "cli/src/limen/doctor.py", "cli/src/limen/conduct/client.py", "cli/src/limen/census.py", "cli/tests/test_stale_claims.py", "cli/tests/test_dispatch.py", "cli/tests/test_jules_remote.py", "cli/tests/test_jules_session_absence_probe.py"]
     ci_job: "pr-gate.yml:pr-gate"

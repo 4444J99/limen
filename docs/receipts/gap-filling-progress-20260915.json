@@ -305,5 +305,29 @@
     "test_landing": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
     "verification_reference": "https://github.com/4444J99/limen/actions/runs/35039390911",
     "remaining_review": "Legacy non-Jules release routing and current bounded-runtime reachability require separate review; no task transition performed."
+  },
+  "stale_claim_release_guard": {
+    "owner": "4444J99/limen#2627",
+    "status": "implemented_pending_full_verification_and_landing",
+    "development_commit": "10fa90322",
+    "focused_cases_passed": 61,
+    "consolidated_cheap_gates_passed": 31,
+    "consolidated_failures_corrected": [
+      "python-typecheck",
+      "check-gates"
+    ],
+    "heavy_verification": "not_run",
+    "live_transitions_performed": false,
+    "runtime_effect": "Explicit release command only; bounded heartbeat remains read-only.",
+    "invariants": [
+      "broker ownership required",
+      "human-protected and active ownership held",
+      "unknown canonical state held",
+      "actual executor routing",
+      "Jules absence required for resumed relist",
+      "broker reads outside queue lock",
+      "new snapshot candidates held",
+      "broker-owned transitions only"
+    ]
   }
 }
