@@ -377,6 +377,28 @@ workstream_mark_provider_active() {
   export LIMEN_WORKSTREAM_PROVIDER_SESSION_ID="$LIMEN_SESSION_ID"
 }
 
+workstream_commit_admitted_receipt() (
+  # Scope identity to this generated commit; never change the owner's Git config.
+  local origin email
+  origin="$(git remote get-url origin)" || return 2
+  case "$origin" in
+    https://github.com/* | https://*@github.com/* | git@github.com:* | ssh://git@github.com/*)
+      email="$(python3 "${LIMEN_CAPSULE_DIR}/workstream-contract.py" run-bounded \
+        --timeout-seconds "${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}" -- \
+        gh api --hostname github.com user --jq '"\(.id)+\(.login)@users.noreply.github.com"')" || {
+        printf 'workstream could not resolve a privacy-safe GitHub receipt identity\n' >&2
+        return 2
+      }
+      if [[ ! "$email" =~ ^[0-9]+\+[A-Za-z0-9-]+@users\.noreply\.github\.com$ ]]; then
+        printf 'workstream received an invalid GitHub receipt identity\n' >&2
+        return 2
+      fi
+      export GIT_AUTHOR_EMAIL="$email" GIT_COMMITTER_EMAIL="$email"
+      ;;
+  esac
+  git -c commit.gpgsign=false commit "$@"
+)
+
 workstream_publish_admitted_receipt() {
   local receipt="$1"
   local expected_branch="$2"
@@ -445,7 +467,7 @@ workstream_publish_admitted_receipt() {
       printf 'workstream admitted receipt publication found unrelated staged paths\n' >&2
       return 2
     fi
-    if ! git -c commit.gpgsign=false commit -qm \
+    if ! workstream_commit_admitted_receipt -qm \
       "docs: publish admitted $slug runway" -- "$receipt_rel"; then
       printf 'workstream admitted receipt could not be committed\n' >&2
       return 2
@@ -1675,6 +1697,7 @@ PY
       workstream_jules_publish_receipt \
       workstream_exact_remote_ref_head \
       workstream_validate_launch_environment \
+      workstream_commit_admitted_receipt \
       workstream_publish_admitted_receipt \
       workstream_export_context \
       workstream_mark_provider_active \
