@@ -271,6 +271,10 @@ workstream_jules_publish_receipt() {
   if [[ "$clean_rc" -ne 0 ]]; then
     return "$clean_rc"
   fi
+  if workstream_github_push_destination; then
+    receipt_email="$(workstream_github_receipt_email)" || return 2
+  fi
+
   if ! git add -- "$receipt_rel"; then
     printf 'Jules session receipt could not be staged\n' >&2
     return 2
@@ -377,25 +381,57 @@ workstream_mark_provider_active() {
   export LIMEN_WORKSTREAM_PROVIDER_SESSION_ID="$LIMEN_SESSION_ID"
 }
 
-workstream_commit_admitted_receipt() (
-  # Scope identity to this generated commit; never change the owner's Git config.
-  local origin email
-  origin="$(git remote get-url origin)" || return 2
-  case "$origin" in
-    https://github.com/* | https://*@github.com/* | git@github.com:* | ssh://git@github.com/*)
+workstream_github_push_destination() {
+  local url=""
+  while IFS= read -r url; do
+    case "$url" in
+      https://github.com/* | https://*@github.com/* | git@github.com:* | ssh://git@github.com/*)
+        return 0
+        ;;
+    esac
+  done < <(git remote get-url --push --all origin 2>/dev/null)
+  return 1
+}
+
+workstream_github_receipt_email() {
+  local email="" slug=""
+  if ! workstream_github_push_destination; then
+    return 0
+  fi
+  email="$(python3 "${LIMEN_CAPSULE_DIR}/workstream-contract.py" run-bounded \
+    --timeout-seconds "${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}" -- \
+    gh api --hostname github.com user --jq '"\(.id)+\(.login)@users.noreply.github.com"' 2>/dev/null || true)"
+  if [[ -z "$email" && "${GITHUB_ACTIONS:-}" == "true" ]]; then
+    email="$(python3 "${LIMEN_CAPSULE_DIR}/workstream-contract.py" run-bounded \
+      --timeout-seconds "${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}" -- \
+      gh api --hostname github.com users/github-actions%5Bbot%5D \
+      --jq '"\(.id)+\(.login)@users.noreply.github.com"' 2>/dev/null || true)"
+  fi
+  if [[ -z "$email" ]]; then
+    slug="$(python3 "${LIMEN_CAPSULE_DIR}/workstream-contract.py" run-bounded \
+      --timeout-seconds "${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}" -- \
+      gh api --hostname github.com app --jq .slug 2>/dev/null || true)"
+    if [[ "$slug" =~ ^[A-Za-z0-9-]+$ ]]; then
       email="$(python3 "${LIMEN_CAPSULE_DIR}/workstream-contract.py" run-bounded \
         --timeout-seconds "${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}" -- \
-        gh api --hostname github.com user --jq '"\(.id)+\(.login)@users.noreply.github.com"')" || {
-        printf 'workstream could not resolve a privacy-safe GitHub receipt identity\n' >&2
-        return 2
-      }
-      if [[ ! "$email" =~ ^[0-9]+\+[A-Za-z0-9-]+@users\.noreply\.github\.com$ ]]; then
-        printf 'workstream received an invalid GitHub receipt identity\n' >&2
-        return 2
-      fi
-      export GIT_AUTHOR_EMAIL="$email" GIT_COMMITTER_EMAIL="$email"
-      ;;
-  esac
+        gh api --hostname github.com "users/${slug}%5Bbot%5D" \
+        --jq '"\(.id)+\(.login)@users.noreply.github.com"' 2>/dev/null || true)"
+    fi
+  fi
+  if [[ ! "$email" =~ ^[0-9]+\+[A-Za-z0-9-]+(\[bot\])?@users\.noreply\.github\.com$ ]]; then
+    printf 'workstream could not resolve a privacy-safe GitHub receipt identity\n' >&2
+    return 2
+  fi
+  printf '%s\n' "$email"
+}
+
+workstream_commit_admitted_receipt() (
+  # Scope identity to this generated commit; never change the owner's Git config.
+  local email="$1"
+  shift
+  if [[ -n "$email" ]]; then
+    export GIT_AUTHOR_EMAIL="$email" GIT_COMMITTER_EMAIL="$email"
+  fi
   git -c commit.gpgsign=false commit "$@"
 )
 
@@ -406,7 +442,7 @@ workstream_publish_admitted_receipt() {
   local contract_helper="${LIMEN_CAPSULE_DIR:-}/workstream-contract.py"
   local timeout_seconds="${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}"
   local branch="" current_head="" receipt_rel="" dirty="" staged_paths="" publish_commit=""
-  local topic_ref="" remote_line="" remote_head=""
+  local topic_ref="" remote_line="" remote_head="" receipt_email=""
   local current_subject="" changed_paths="" parent_head=""
 
   # Preserve backward compatibility for local-only fixture and owner-native repositories. A
@@ -467,7 +503,7 @@ workstream_publish_admitted_receipt() {
       printf 'workstream admitted receipt publication found unrelated staged paths\n' >&2
       return 2
     fi
-    if ! workstream_commit_admitted_receipt -qm \
+    if ! workstream_commit_admitted_receipt "$receipt_email" -qm \
       "docs: publish admitted $slug runway" -- "$receipt_rel"; then
       printf 'workstream admitted receipt could not be committed\n' >&2
       return 2
