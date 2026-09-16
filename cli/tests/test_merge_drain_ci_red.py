@@ -184,3 +184,25 @@ def test_ci_red_notification_uses_repo_pr_and_exact_head_key(monkeypatch, tmp_pa
 
     assert module._reserve_ci_red_notification({"identity": "organvm/repo#7", "head": "a" * 40, "checks": ["pr-gate"]})
     assert calls[0][1]["stable_id"] == f"organvm/repo#7@{'a' * 40}"
+
+
+def test_unreadable_required_check_list_is_explicitly_unmeasured(monkeypatch, tmp_path):
+    module = _load(tmp_path)
+    payload = {
+        "state": "OPEN",
+        "isDraft": False,
+        "labels": [{"name": "lifecycle:delivery"}],
+        "mergeable": "MERGEABLE",
+        "headRefOid": "a" * 40,
+        "statusCheckRollup": [{"conclusion": "FAILURE"}],
+    }
+    for raw in ("", "not-json", "null", "{}"):
+
+        def fake_gh(args, **kwargs):
+            if args[:2] == ["pr", "view"]:
+                return SimpleNamespace(returncode=0, stdout=json.dumps(payload))
+            assert args[:2] == ["pr", "checks"]
+            return SimpleNamespace(returncode=1, stdout=raw)
+
+        monkeypatch.setattr(module, "gh", fake_gh)
+        assert module.assess(("organvm/repo", 7)) == ("organvm/repo", 7, "REQUIRED-CHECKS-UNMEASURED")

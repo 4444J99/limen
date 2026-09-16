@@ -405,12 +405,22 @@ def sweep(reg: dict, offline: bool) -> dict:
 
     floor_i = _sev_index(order, floor)
     blocking = [f for f in findings if _sev_index(order, f["severity"]) >= floor_i]
-    passed = len(blocking) == 0
+    off_platform = reg.get("off_platform", {})
+    off_platform = off_platform if isinstance(off_platform, dict) else {"registry": None}
+    # Capture/review ingestion is not implemented: a declared slot is coverage
+    # debt, never a silently excluded or presumed-reviewed surface.
+    off_platform_status = {name: "unmeasured" for name in off_platform}
+    unmeasured = sum(value != "measured" for value in measured.values()) + len(off_platform_status)
+    status = "fail" if blocking else ("unmeasured" if unmeasured else "pass")
+    passed = status == "pass"
 
     return {
         "schema": SCHEMA,
         "generated_at": _now(),
         "pass": passed,
+        "status": status,
+        "unmeasured": bool(unmeasured),
+        "off_platform": off_platform_status,
         "verdict_floor": floor,
         "departments": measured,
         "counts": {
@@ -418,6 +428,9 @@ def sweep(reg: dict, offline: bool) -> dict:
             "blocking": len(blocking),
             "measured": sum(1 for v in measured.values() if v == "measured"),
             "skipped": sum(1 for v in measured.values() if v == "skip"),
+            "unmeasured": unmeasured,
+            "scope_total": len(measured) + len(off_platform_status),
+            "off_platform_unmeasured": len(off_platform_status),
         },
         "egg_face_findings": sorted(findings, key=lambda f: (-_sev_index(order, f["severity"]), f["lane"], f["surface"])),
     }
@@ -432,11 +445,14 @@ def _write_face(verdict: dict) -> None:
     c = verdict["counts"]
     status = "green — no egg-face" if verdict["pass"] else f"{c['blocking']} blocking finding(s)"
     color = "#137333" if verdict["pass"] else "#c5221f"
+    if verdict.get("status") == "unmeasured":
+        status = f"unmeasured — {c['unmeasured']} of {c['scope_total']} coverage units lack evidence"
+        color = "#9a6700"
     rows = "".join(
         f"<tr><td><code>{_esc(f['severity'])}</code></td><td>{_esc(f['lane'])}</td>"
         f"<td>{_esc(f['surface'])}</td><td>{_esc(f['detail'])}</td></tr>"
         for f in verdict["egg_face_findings"]
-    ) or "<tr><td colspan=4>— nothing to answer for —</td></tr>"
+    ) or "<tr><td colspan=4>No findings in the measured evidence.</td></tr>"
     depts = ", ".join(f"{k}:{v}" for k, v in verdict["departments"].items())
     html = f"""<!doctype html><meta charset=utf-8><title>DECORVM — professionalization keeper</title>
 <style>body{{font:14px/1.5 -apple-system,system-ui,sans-serif;margin:2rem;color:#202124}}
@@ -446,7 +462,7 @@ th{{background:#f1f3f4}} .meta{{color:#5f6368}}</style>
 <h1>DECORVM — the professionalization keeper</h1>
 <p class=badge>{_esc(status)}</p>
 <p class=meta>{c['findings']} findings ({c['blocking']} at/above floor '{_esc(verdict['verdict_floor'])}') ·
-{c['measured']} departments measured, {c['skipped']} skipped (fail-open) · generated {_esc(verdict['generated_at'])}</p>
+{c['measured']} departments measured, {c['skipped']} skipped · {c.get('off_platform_unmeasured', 0)} off-platform surfaces unmeasured · generated {_esc(verdict['generated_at'])}</p>
 <p class=meta>departments: {_esc(depts)}</p>
 <table><tr><th>severity</th><th>lane</th><th>surface</th><th>detail</th></tr>{rows}</table>
 """
@@ -648,6 +664,9 @@ def mirror_issues(reg: dict, verdict: dict, armed: bool) -> dict:
                 plan["vetoed"].append(fid)  # human closed it though it still stands — respect, never reopen
             continue
         if meta["state"] == "OPEN":
+            if verdict.get("unmeasured", True):
+                plan.setdefault("closure_unmeasured", []).append(fid)
+                continue
             plan["closed"].append(fid)
             if armed:
                 _gh(["issue", "close", str(meta["number"]), "--repo", repo, "--comment",
@@ -695,7 +714,7 @@ def recurrence_precedents(reg: dict, verdict: dict, armed: bool) -> dict:
                 rec["cleared"] = rec.get("cleared", 0) + 1
             rec["sweeps"] = rec.get("sweeps", 0) + 1
             rec["was_clear"] = False
-        else:
+        elif not verdict.get("unmeasured", True):
             rec["was_clear"] = True
         new_state[fid] = rec
         # escalation predicate: recurred-after-clear OR persisted past the sweep threshold
@@ -775,8 +794,10 @@ def doctor(reg: dict) -> int:
 def _print_summary(verdict: dict) -> None:
     c = verdict["counts"]
     mark = "✓ green — no egg-face" if verdict["pass"] else f"✗ {c['blocking']} blocking finding(s)"
+    if verdict.get("status") == "unmeasured":
+        mark = f"UNMEASURED — {c['unmeasured']}/{c['scope_total']} coverage units lack evidence"
     print(f"DECORVM — professionalization keeper: {mark}")
-    print(f"  departments: {c['measured']} measured, {c['skipped']} skipped (fail-open)")
+    print(f"  departments: {c['measured']} measured, {c['skipped']} skipped; off-platform: {c.get('off_platform_unmeasured', 0)} unmeasured")
     print(f"  findings: {c['findings']} total, {c['blocking']} at/above floor '{verdict['verdict_floor']}'")
     for f in verdict["egg_face_findings"][:20]:
         print(f"    [{f['severity']:<8}] {f['lane']}/{f['surface']}: {f['detail']}")
@@ -848,7 +869,7 @@ def main() -> int:
     else:
         _print_summary(verdict)
 
-    return 0 if verdict["pass"] else 2
+    return 77 if verdict.get("status") == "unmeasured" else (0 if verdict["pass"] else 2)
 
 
 if __name__ == "__main__":

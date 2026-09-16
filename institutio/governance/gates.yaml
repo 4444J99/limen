@@ -371,6 +371,16 @@ gates:
     tier: cheap
     owner: ianva
     note: "Direct tunnel launch requires local unauthenticated rejection; a force flag cannot publish an open endpoint."
+  sensitive-history-receipt-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_sensitive_history_removal.py -q"
+    paths: ["scripts/check-sensitive-history-removal.py", "cli/tests/test_sensitive_history_removal.py"]
+    owner: governance
+    note: "Postflight custody receipts publish complete bytes atomically and cannot replace a concurrent immutable receipt."
+  closeout-evidence-test:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_closeout_evidence.py cli/tests/test_verify_dispatch.py -q"
+    paths: ["scripts/reconcile-closeouts.py", "scripts/tests/test_closeout_evidence.py", "scripts/verify-dispatch.py", "cli/tests/test_verify_dispatch.py", "scripts/board.py"]
+    owner: governance
+    note: "PR references establish neither executable acceptance nor missing-resource proof after a failed read."
   conduct-principal-merge-test:
     command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_merge_conduct_principal_registry.py -q"
     paths: ["scripts/merge-conduct-principal-registry.py", "scripts/tests/test_merge_conduct_principal_registry.py", "scripts/deploy-conduct-registry.sh"]
@@ -386,6 +396,18 @@ gates:
     paths: ["his-hand-levers.json", "scripts/check-his-hand.py", "scripts/lever-classify.py", "scripts/lever-decision-report.py", "scripts/insight-route.py", "cli/src/limen/observatory/lever.py", "cli/tests/test_check_his_hand.py", "cli/tests/test_lever_classify.py"]
     owner: observe
     note: "The his-hand registry must be structurally readable: unique IDs, enum statuses, required intent fields, and parseable non-future diagnosis timestamps. Diagnosis age is derived at read time. The classifier remains the implementation decision: open levers are either irreducible sovereignty or explicit design debt; no mass closure or deletion is implied."
+  stale-claim-ownership-test:
+    owner: runtime
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_stale_claims.py cli/tests/test_dispatch.py cli/tests/test_jules_remote.py cli/tests/test_jules_session_absence_probe.py -q -k 'stale or absence'"
+    paths: ["cli/src/limen/stale_claims.py", "cli/src/limen/dispatch.py", "cli/src/limen/doctor.py", "cli/src/limen/conduct/client.py", "cli/src/limen/census.py", "cli/tests/test_stale_claims.py", "cli/tests/test_dispatch.py", "cli/tests/test_jules_remote.py", "cli/tests/test_jules_session_absence_probe.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    note: "Stale claim age is observation only: active, protected and unmeasured broker ownership cannot transition; actual executors retain provider-specific absence checks."
+  decorum-coverage-test:
+    owner: governance
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_decorum_coverage.py -q"
+    paths: ["scripts/decorum-keeper.py", "scripts/tests/test_decorum_coverage.py", "institutio/governance/decorum-surfaces.yaml"]
+    ci_job: "pr-gate.yml:pr-gate"
+    note: "Unmeasured departments and off-platform surfaces stay in coverage; absent findings cannot clear issues or recurrence state while evidence is missing."
   lane-liveness-test:
     command: "bash scripts/tests/lane-liveness.test.sh"
     paths: ["scripts/lane-liveness.py", "scripts/_board_custody.py", "cli/src/limen/private_board.py", "cli/src/limen/census.py", "cli/src/limen/models.py", "cli/src/limen/conduct/client.py", "cli/src/limen/observer.py", "spec/scheduled-process-contracts.json", "institutio/governance/heartbeat-ownership.json", "cli/src/limen/doctor.py", "cli/src/limen/cli.py", "cli/tests/test_lane_liveness.py", "scripts/tests/lane-liveness.test.sh", "institutio/governance/sensors.yaml"]
@@ -1229,6 +1251,12 @@ gates:
     note: "Boots wrangler-dev (workerd) and probes the Worker contract over HTTP; CI=1 guards against interactive login."
 
   # ── personal-facts registry drift nets (PERSONA-FEDERATA) ───────────────────
+  identity-verification-test:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_identity_verification.py -q"
+    paths: ["scripts/identity.py", "scripts/tests/test_identity_verification.py", "institutio/governance/personal-facts.yaml"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: identity
+    note: "Unsupported required verification modes remain unmeasured; presence and known missing facts retain their own results without reading private fixtures."
   personal-facts-drift:
     command: "python3 scripts/check-personal-facts.py"
     paths: ["institutio/governance/personal-facts.yaml", "scripts/identity.py", "scripts/fill-*.py"]

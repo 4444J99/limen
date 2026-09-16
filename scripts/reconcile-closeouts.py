@@ -6,10 +6,10 @@ COMPLEMENT: `status=done` CLOSEOUT claims — the "solved / shipped / merged" as
 once written, are trusted forever. A completed session (or a done task's dispatch_log) claims an
 outcome; this probes whether that outcome is real. Verdicts:
 
-  VERIFIED        : claim cites a MERGED PR (subject-consistent) — real
+  MERGE_OBSERVED  : subject-matching merge reference; acceptance remains unmeasured
   DONE_UNVERIFIED : claims done but its cited PR is OPEN/CLOSED (unmerged) — the
                     "PR #1203 solved at root" false-closeout (the PR is CONFLICTING/DIRTY)
-  PR_MISSING      : cites a PR that does not exist (deleted / wrong number)
+  PR_UNMEASURED   : PR lookup failed; absence and authorization are not distinguished
   MISCITED        : cites a MERGED PR whose subject is unrelated to the claim — the
                     #1068→arca, #361→docs phantom citations (advisory)
   HOMED_ELSEWHERE : the claimed in-repo artifact is absent but a durable EXTERNAL home is
@@ -26,7 +26,7 @@ Usage:
                                                          probe both claim sources — board dispatch_log
                                                          done-claims AND captured session closeouts
                                                          (logs/session-claims.jsonl); exit 1 on any
-                                                         DONE_UNVERIFIED / PR_MISSING
+                                                         known false-closeouts; exit 77 when acceptance is unmeasured
   reconcile-closeouts.py --fixture PATH [--json]         reconcile a JSON list of claims (live gh)
 """
 
@@ -52,7 +52,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 # --- reuse the GitHub state probe from verify-dispatch (single source) ---------------------------
 # verify-dispatch.py has a hyphen (not import-able by name); load it by path and lift gh_pr_state +
 # PR_RE so the "does this PR exist / is it merged" logic lives in exactly one place.
-_VD = ROOT / "scripts" / "verify-dispatch.py"
+_VD = Path(__file__).resolve().parent / "verify-dispatch.py"
 try:
     _spec = importlib.util.spec_from_file_location("verify_dispatch", _VD)
     _vd = importlib.util.module_from_spec(_spec)
@@ -73,7 +73,9 @@ except Exception:  # pragma: no cover - fallback keeps the predicate runnable in
             if out.returncode != 0:
                 return False, None
             d = json.loads(out.stdout)
-            return (True, "MERGED") if d.get("mergedAt") else (True, d.get("state", "OPEN"))
+            if not isinstance(d, dict) or d.get("state") not in {"OPEN", "CLOSED", "MERGED"}:
+                return False, None
+            return (True, "MERGED") if d.get("mergedAt") else (True, d["state"])
         except Exception:
             return False, None
 
@@ -84,7 +86,7 @@ except Exception:  # pragma: no cover - fallback keeps the predicate runnable in
 # lever. The effector below is a thin MAPPER onto that engine — it never re-implements routing, and
 # never writes a derived file (PREC-2026-07-10). The mutation rides insight-route's OWN existing
 # `LIMEN_INSIGHT_ROUTE_APPLY` arm, so no new silent-off valve is introduced (PREC-2026-07-08).
-_IR = ROOT / "scripts" / "insight-route.py"
+_IR = Path(__file__).resolve().parent / "insight-route.py"
 try:
     _spec_ir = importlib.util.spec_from_file_location("insight_route", _IR)
     _ir = importlib.util.module_from_spec(_spec_ir)
@@ -203,19 +205,14 @@ def classify_claim(claim: dict, state_fn=gh_pr_state, title_fn=_gh_pr_title) -> 
         else:  # OPEN / CLOSED — claimed done but not merged
             unmerged.append(f"{slug}:{state}")
 
-    # A done-claim is backed iff there EXISTS a subject-matching merged receipt — not iff EVERY
-    # cited ref is clean. Co-cited refs that are missing, unmerged, or subject-unrelated are noise
-    # (heal *targets* — the id-suffix issue a cifix healed; stale/typo'd numbers; superseded PRs),
-    # never disproof of a real merged receipt. (2026-07-18 field finding: HEAL-624 cites both merged
-    # fix #1116 AND its still-open target #624; the claim is done because #1116 merged, not undone
-    # because #624 is open. The prior any-ref-fails precedence turned 4 such multi-ref claims into
-    # phantom DONE_UNVERIFIED / PR_MISSING findings.)
+    # A matching merged reference is useful evidence even when co-cited targets
+    # remain open. It does not verify the claim's acceptance predicate or outcome.
     if merged:
-        detail = f"backed by merged PR(s): {', '.join(merged)}"
+        detail = f"acceptance unmeasured; observed merged PR(s): {', '.join(merged)}"
         noise = missing + unmerged + miscited
         if noise:
-            detail += f"; ignored co-ref(s): {', '.join(noise)}"
-        return {"id": claim.get("id"), "verdict": "VERIFIED", "refs": refs, "detail": detail}
+            detail += f"; additional unverified co-ref(s): {', '.join(noise)}"
+        return {"id": claim.get("id"), "verdict": "MERGE_OBSERVED", "refs": refs, "detail": detail}
 
     # No subject-matching merged receipt — escalate to the true problem. Unmerged is the most
     # actionable signal (a real open PR to land) → then a wrong/missing number → then a merged-but-
@@ -230,9 +227,9 @@ def classify_claim(claim: dict, state_fn=gh_pr_state, title_fn=_gh_pr_title) -> 
     if missing:
         return {
             "id": claim.get("id"),
-            "verdict": "PR_MISSING",
+            "verdict": "PR_UNMEASURED",
             "refs": refs,
-            "detail": f"cited PR(s) do not exist: {', '.join(missing)}",
+            "detail": f"PR lookup unavailable; existence not established: {', '.join(missing)}",
         }
     return {
         "id": claim.get("id"),
@@ -360,7 +357,13 @@ def _run(claims: list[dict], state_fn=gh_pr_state, title_fn=_gh_pr_title) -> dic
     counts: dict[str, int] = {}
     for f in findings:
         counts[f["verdict"]] = counts.get(f["verdict"], 0) + 1
-    return {"counts": counts, "findings": findings, "failing": [f for f in findings if f["verdict"] in HARD]}
+    return {
+        "counts": counts,
+        "findings": findings,
+        "failing": [f for f in findings if f["verdict"] in HARD],
+        "acceptance_unmeasured": [f for f in findings if f["verdict"] not in HARD],
+        "evidence_scope": "PR references only; executable acceptance and external custody are not verified",
+    }
 
 
 def _emit(report: dict) -> None:
@@ -379,8 +382,8 @@ def _doctor() -> int:
     titles = {("o", "r", "2"): "harden the widget parser", ("o", "r", "4"): "arca vault ciphertext chunk"}
     cases = [
         ({"id": "c1", "subject": "harden widget parser", "repo": "o/r", "text": "done #1"}, "DONE_UNVERIFIED"),
-        ({"id": "c2", "subject": "harden widget parser", "repo": "o/r", "text": "done #2"}, "VERIFIED"),
-        ({"id": "c3", "subject": "x", "repo": "o/r", "text": "done #3"}, "PR_MISSING"),
+        ({"id": "c2", "subject": "harden widget parser", "repo": "o/r", "text": "done #2"}, "MERGE_OBSERVED"),
+        ({"id": "c3", "subject": "x", "repo": "o/r", "text": "done #3"}, "PR_UNMEASURED"),
         ({"id": "c4", "subject": "court hearing record", "repo": "o/r", "text": "done #4"}, "MISCITED"),
         (
             {
@@ -403,10 +406,10 @@ def _doctor() -> int:
                 "repo": "o/r",
                 "text": "fix #2 landed, target #1 still open",
             },
-            "VERIFIED",
+            "MERGE_OBSERVED",
         ),
         # (c8) multi-ref: merged receipt #2 + missing co-ref #3 → VERIFIED (was phantom PR_MISSING).
-        ({"id": "c8", "subject": "harden widget parser", "repo": "o/r", "text": "done #2 (see also #3)"}, "VERIFIED"),
+        ({"id": "c8", "subject": "harden widget parser", "repo": "o/r", "text": "done #2 (see also #3)"}, "MERGE_OBSERVED"),
         # (c9) genuine over-claim: open #1 + missing #3, NONE merged → still fires DONE_UNVERIFIED.
         ({"id": "c9", "subject": "harden widget parser", "repo": "o/r", "text": "done #1 #3"}, "DONE_UNVERIFIED"),
     ]
@@ -423,7 +426,7 @@ def _doctor() -> int:
     # Effector mapper contract (network-free): a HARD finding maps to a well-formed org/repo insight;
     # a soft verdict maps to None; and _route_findings routes ONLY the HARD ones, to the right owner.
     m_hard = _finding_to_insight({"id": "T-9", "verdict": "DONE_UNVERIFIED", "detail": "d"}, "org/repo")
-    m_soft = _finding_to_insight({"id": "T-9", "verdict": "VERIFIED", "detail": "d"}, "org/repo")
+    m_soft = _finding_to_insight({"id": "T-9", "verdict": "MERGE_OBSERVED", "detail": "d"}, "org/repo")
     m_norepo = _finding_to_insight({"id": "T-9", "verdict": "PR_MISSING", "detail": "d"}, "")
     map_ok = (
         m_soft is None and m_norepo is None and m_hard is not None
@@ -434,7 +437,7 @@ def _doctor() -> int:
     seen: list[tuple] = []
     claims_x = [{"id": "T-1", "repo": "org/a"}, {"id": "T-2", "repo": "org/b"}, {"id": "T-3", "repo": "org/c"}]
     findings_x = [{"id": "T-1", "verdict": "DONE_UNVERIFIED", "detail": "d"},
-                  {"id": "T-2", "verdict": "VERIFIED", "detail": "d"},
+                  {"id": "T-2", "verdict": "MERGE_OBSERVED", "detail": "d"},
                   {"id": "T-3", "verdict": "PR_MISSING", "detail": "d"}]
     plan = _route_findings(claims_x, findings_x, apply=False,
                            router=lambda ins, ap, st: seen.append((ins["owner"], ins["id"])))
@@ -450,7 +453,7 @@ def _doctor() -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description="verify claimed-done closeouts against ground truth")
     ap.add_argument("--doctor", action="store_true", help="network-free classifier self-test")
-    ap.add_argument("--check", action="store_true", help="probe the live board; exit 1 on false-closeouts")
+    ap.add_argument("--check", action="store_true", help="probe claims; exit 1 on contradictions, 77 on unmeasured acceptance")
     ap.add_argument("--apply", action="store_true",
                     help="--check + HOME each HARD finding as a board task via insight-route "
                          "(mutation rides LIMEN_INSIGHT_ROUTE_APPLY; dry-run plan otherwise)")
@@ -488,6 +491,7 @@ def main() -> int:
 
     if not args.quiet:
         print(f"=== CLOSEOUT RECONCILIATION ({len(claims)} claim(s)) ===")
+        print(report["evidence_scope"])
         for v, n in sorted(report["counts"].items()):
             flag = "⚠ " if v in HARD else "  "
             print(f"{flag}{v:16} {n}")
@@ -499,7 +503,7 @@ def main() -> int:
             print(f"  → routed {len(routed)} HARD finding(s) to board tasks"
                   f"{'' if armed else ' [dry-run — set LIMEN_INSIGHT_ROUTE_APPLY=1 to file]'}")
 
-    return 1 if report["failing"] else 0
+    return 1 if report["failing"] else (77 if report["acceptance_unmeasured"] else 0)
 
 
 if __name__ == "__main__":

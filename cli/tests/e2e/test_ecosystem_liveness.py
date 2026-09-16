@@ -57,23 +57,40 @@ def _run_no_tasks_on_me(registry_path: Path) -> subprocess.CompletedProcess[str]
     shim_dir = registry_path.parent / "git-custody-shim"
     shim_dir.mkdir(exist_ok=True)
     git_shim = shim_dir / "git"
+    repository = registry_path.parent / "custody-repository"
+    repository.mkdir(exist_ok=True)
+    if not (repository / ".git").exists():
+        for args in (
+            ["init", "-b", "main", str(repository)],
+            [
+                "-C",
+                str(repository),
+                "-c",
+                "user.name=Fixture",
+                "-c",
+                "user.email=fixture@example.invalid",
+                "-c",
+                "core.hooksPath=/dev/null",
+                "commit",
+                "--allow-empty",
+                "-m",
+                "Fixture custody",
+            ],
+            ["-C", str(repository), "remote", "add", "origin", "."],
+            ["-C", str(repository), "update-ref", "refs/remotes/origin/main", "HEAD"],
+            ["-C", str(repository), "config", "branch.main.remote", "origin"],
+            ["-C", str(repository), "config", "branch.main.merge", "refs/heads/main"],
+        ):
+            subprocess.run([real_git, *args], capture_output=True, text=True, check=True, timeout=10)
     git_shim.write_text(
         "#!/usr/bin/env python3\n"
-        "import os\n"
-        "import sys\n"
+        "import os, sys\n"
         f"REAL_GIT = {real_git!r}\n"
+        f"REPOSITORY = {str(repository)!r}\n"
         "args = sys.argv[1:]\n"
-        "if len(args) >= 4 and args[0] == '-C' and args[2:] == ['status', '--porcelain']:\n"
-        "    raise SystemExit(0)\n"
-        "if len(args) >= 5 and args[0] == '-C' and args[2:] == "
-        "['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']:\n"
-        "    print('origin/__closeout_test_custody__')\n"
-        "    raise SystemExit(0)\n"
-        "if len(args) >= 5 and args[0] == '-C' and args[2:] == "
-        "['rev-list', '--count', 'origin/__closeout_test_custody__..HEAD']:\n"
-        "    print('0')\n"
-        "    raise SystemExit(0)\n"
-        "os.execv(REAL_GIT, [REAL_GIT, *args])\n",
+        "if args[:1] == ['-C']:\n"
+        "    args = args[2:]\n"
+        "os.execv(REAL_GIT, [REAL_GIT, '-C', REPOSITORY, *args])\n",
         encoding="utf-8",
     )
     git_shim.chmod(0o755)
@@ -82,10 +99,16 @@ def _run_no_tasks_on_me(registry_path: Path) -> subprocess.CompletedProcess[str]
             "LIMEN_HIS_HAND_LEVERS": str(registry_path),
             "LIMEN_OFFLINE": "1",
             "LIMEN_PII_DENYLIST": str(registry_path.parent / "absent-denylist.txt"),
-            # The predicate must still execute every production check, while
-            # this fixture supplies only the branch-custody fact that a
-            # detached GitHub Actions checkout cannot carry.  The production
-            # script gets no bypass or test-mode switch.
+            # Execute every production check against isolated Git/custody inputs,
+            # never the operator's branch inventory or private identity home.
+            "LIMEN_ROOT": str(registry_path.parent),
+            "LIMEN_WORKSPACE": str(registry_path.parent / "workspace"),
+            "LIMEN_BRANCH_REAP_REPO_ROOT": str(repository),
+            "LIMEN_WORKTREE_ROOT": str(registry_path.parent / "worktrees"),
+            "LIMEN_RECLAIM_WORKSPACE_ROOTS": str(registry_path.parent),
+            "LIMEN_RECLAIM_MAIN_REPOS": str(repository),
+            "LIMEN_RECLAIM_LEGACY_WORKTREE_ROOTS": str(registry_path.parent / "legacy"),
+            "LIMEN_AGY_SCRATCH_ROOT": str(registry_path.parent / "scratch"),
             "PATH": str(shim_dir) + os.pathsep + environment["PATH"],
         }
     )

@@ -212,6 +212,8 @@ def test_total_probe_budget_exhaustion_holds_every_unprobed_session() -> None:
 
 
 def test_release_stale_consumes_session_specific_absence_before_board_lock(tmp_path: Path, monkeypatch) -> None:
+    # Isolate provider absence probing after the broker ownership gate.
+    monkeypatch.setattr(dispatch_module, "stale_claim_holds", lambda tasks, **_: {task.id: None for task in tasks})
     tasks_path = tmp_path / "tasks.yaml"
     _write_stale_board(tasks_path)
     catalog = JulesRemoteSnapshot(available=True, sessions={}, exhaustive=False)
