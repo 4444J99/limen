@@ -97,7 +97,7 @@ def test_malformed_session_rows_are_counted_without_private_output(tmp_path, mon
 def test_cli_missing_source_cannot_return_empty_success(tmp_path, monkeypatch):
     mod = load()
     monkeypatch.setattr(mod, "ROOT", tmp_path)
-    monkeypatch.setattr(mod, "_board_claims", lambda *args: [])
+    monkeypatch.setattr(mod, "_board_claims", lambda *args, **kwargs: [])
     monkeypatch.setattr(sys, "argv", [str(SCRIPT), "--check", "--quiet"])
     assert mod.main() == 77
     report = json.loads((tmp_path / "logs/closeout-reconcile.json").read_text())
@@ -119,7 +119,7 @@ def test_limit_preserves_uninspected_denominator(tmp_path, monkeypatch):
 def test_incomplete_source_suppresses_routing(tmp_path, monkeypatch):
     mod = load()
     monkeypatch.setattr(mod, "ROOT", tmp_path)
-    monkeypatch.setattr(mod, "_board_claims", lambda *args: [claim()])
+    monkeypatch.setattr(mod, "_board_claims", lambda *args, **kwargs: [claim()])
     run = mod._run
     monkeypatch.setattr(mod, "_run", lambda claims: run(claims, lambda *a: (True, "OPEN")))
     def forbidden(*args):
@@ -127,3 +127,26 @@ def test_incomplete_source_suppresses_routing(tmp_path, monkeypatch):
     monkeypatch.setattr(mod, "_route_findings", forbidden)
     monkeypatch.setattr(sys, "argv", [str(SCRIPT), "--apply", "--quiet"])
     assert mod.main() == 1
+
+
+def test_done_task_without_event_is_unreceipted(tmp_path, monkeypatch):
+    mod = load()
+    board = tmp_path / "board.yaml"
+    board.write_text("tasks:\n  - id: task-1\n    status: done\n")
+    monkeypatch.setattr(mod, "board_path", lambda _: board)
+    errors = []
+    claims = mod._board_claims(0, None, source_errors=errors)
+    assert len(claims) == 1 and not errors
+    assert mod._run(claims)["counts"] == {"UNRECEIPTED": 1}
+
+
+def test_malformed_board_retains_valid_claims_and_source_error(tmp_path, monkeypatch):
+    mod = load()
+    board = tmp_path / "board.yaml"
+    board.write_text('tasks:\n  - PRIVATE malformed\n  - id: task-1\n    status: done\n    dispatch_log: wrong-type\n')
+    monkeypatch.setattr(mod, "board_path", lambda _: board)
+    errors = []
+    claims = mod._board_claims(0, None, source_errors=errors)
+    assert len(claims) == 1
+    assert errors == ["board_task_malformed", "board_events_malformed"]
+    assert "PRIVATE" not in json.dumps(errors)
