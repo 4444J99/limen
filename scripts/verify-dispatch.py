@@ -5,7 +5,7 @@ For every task in status=dispatched, verify its claimed outcome actually exists 
 GitHub instead of trusting the dispatch_log. Catches the silent-failure classes:
   - DISPATCHED_NO_PR : local lane recorded dispatched but produced no PR URL (the
                        "no-op that looked like success" — should have been failed/noop)
-  - PR_MISSING       : recorded a PR URL but the PR no longer exists (deleted/wrong)
+  - PR_UNMEASURED    : PR lookup unavailable; existence/state not established
   - PR_MERGED        : PR is merged but task still 'dispatched' → harvest should close it
   - PR_CLOSED        : PR closed unmerged → recover should reopen the task
   - PR_OPEN          : healthy, awaiting review/merge
@@ -106,11 +106,13 @@ def gh_pr_state(owner, repo, num):
             timeout=30,
         )
         if out.returncode != 0:
-            return False, None  # PR not found / repo gone
+            return False, None  # transport, authorization and absence are indistinguishable
         d = json.loads(out.stdout)
+        if not isinstance(d, dict) or d.get("state") not in {"OPEN", "CLOSED", "MERGED"}:
+            return False, None
         if d.get("mergedAt"):
             return True, "MERGED"
-        return True, d.get("state", "OPEN")  # OPEN or CLOSED
+        return True, d["state"]
     except Exception:
         return False, None
 
@@ -134,6 +136,7 @@ def main():
             "PR_MERGED",
             "PR_CLOSED",
             "PR_MISSING",
+            "PR_UNMEASURED",
             "DISPATCHED_NO_PR",
             "DISPATCHED_RUNNING",
             "JULES_ASYNC",
@@ -151,7 +154,7 @@ def main():
             owner, repo, num = m.group(1), m.group(2), m.group(3)
             exists, state = gh_pr_state(owner, repo, num)
             if not exists:
-                cats["PR_MISSING"].append((tid, sid))
+                cats["PR_UNMEASURED"].append((tid, sid))
             elif state == "MERGED":
                 cats["PR_MERGED"].append((tid, f"{owner}/{repo}#{num}"))
             elif state == "CLOSED":
@@ -201,6 +204,7 @@ def main():
             "PR_MERGED",
             "PR_CLOSED",
             "PR_MISSING",
+            "PR_UNMEASURED",
             "DISPATCHED_NO_PR",
         ):
             n = counts[k]
@@ -219,7 +223,7 @@ def main():
             )
             for i, a, r, rp in chronic:
                 print(f"    {i}  {a}  {r} reopens  {rp}")
-    return 0
+    return 77 if counts["PR_UNMEASURED"] else 0
 
 
 if __name__ == "__main__":

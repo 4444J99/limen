@@ -52,7 +52,7 @@ ROOT = Path(os.environ.get("LIMEN_ROOT", Path.home() / "Workspace" / "limen"))
 # --- reuse the GitHub state probe from verify-dispatch (single source) ---------------------------
 # verify-dispatch.py has a hyphen (not import-able by name); load it by path and lift gh_pr_state +
 # PR_RE so the "does this PR exist / is it merged" logic lives in exactly one place.
-_VD = ROOT / "scripts" / "verify-dispatch.py"
+_VD = Path(__file__).resolve().parent / "verify-dispatch.py"
 try:
     _spec = importlib.util.spec_from_file_location("verify_dispatch", _VD)
     _vd = importlib.util.module_from_spec(_spec)
@@ -73,7 +73,9 @@ except Exception:  # pragma: no cover - fallback keeps the predicate runnable in
             if out.returncode != 0:
                 return False, None
             d = json.loads(out.stdout)
-            return (True, "MERGED") if d.get("mergedAt") else (True, d.get("state", "OPEN"))
+            if not isinstance(d, dict) or d.get("state") not in {"OPEN", "CLOSED", "MERGED"}:
+                return False, None
+            return (True, "MERGED") if d.get("mergedAt") else (True, d["state"])
         except Exception:
             return False, None
 
@@ -84,7 +86,7 @@ except Exception:  # pragma: no cover - fallback keeps the predicate runnable in
 # lever. The effector below is a thin MAPPER onto that engine — it never re-implements routing, and
 # never writes a derived file (PREC-2026-07-10). The mutation rides insight-route's OWN existing
 # `LIMEN_INSIGHT_ROUTE_APPLY` arm, so no new silent-off valve is introduced (PREC-2026-07-08).
-_IR = ROOT / "scripts" / "insight-route.py"
+_IR = Path(__file__).resolve().parent / "insight-route.py"
 try:
     _spec_ir = importlib.util.spec_from_file_location("insight_route", _IR)
     _ir = importlib.util.module_from_spec(_spec_ir)
