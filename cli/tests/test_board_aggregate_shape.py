@@ -14,6 +14,9 @@ from __future__ import annotations
 import os
 import subprocess
 import sys
+
+import pytest
+import yaml
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,9 +36,11 @@ portal:
     completion_rate: 0.577
     by_status:
       done: 1357
-      open: 853
+      archived: 459
+      open: 1332
     by_priority:
       high: 1304
+      medium: 1844
 tasks: []
 """
 
@@ -168,3 +173,56 @@ def test_heal_board_without_custody_is_loud_rather_than_restoring(tmp_path: Path
     assert result.returncode == 1
     assert "limen board hydrate" in result.stderr
     assert "collapsed" not in result.stdout
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("total", True),
+        ("total", -1),
+        ("total", "3148"),
+        ("completed", 0),
+        ("active", 1),
+        ("by_status", []),
+        ("by_status", {"done": True}),
+        ("by_status", {"private-label": 3148}),
+        ("by_priority", {"high": -1}),
+        ("by_priority", {"high": 1}),
+        ("completion_rate", True),
+        ("completion_rate", float("nan")),
+        ("completion_rate", float("inf")),
+        ("completion_rate", 10**400),
+        ("completion_rate", 1),
+    ],
+)
+def test_validator_rejects_invalid_counts(tmp_path: Path, field: str, value) -> None:
+    data = yaml.safe_load(AGGREGATE_DOC)
+    data["portal"]["public_projection"][field] = value
+    board = tmp_path / "tasks.yaml"
+    board.write_text(yaml.safe_dump(data))
+    result = _run([str(VALIDATOR), "--tasks", str(board)])
+    assert result.returncode == 1
+    assert "Traceback" not in result.stderr
+    assert "private-label" not in result.stderr
+
+
+@pytest.mark.parametrize("portal", [None, [], "malformed", {"public_projection": []}])
+def test_validator_rejects_malformed_projection(tmp_path: Path, portal) -> None:
+    data = yaml.safe_load(AGGREGATE_DOC)
+    data["portal"] = portal
+    board = tmp_path / "tasks.yaml"
+    board.write_text(yaml.safe_dump(data))
+    result = _run([str(VALIDATOR), "--tasks", str(board)])
+    assert result.returncode == 1
+    assert "Traceback" not in result.stderr
+
+
+def test_validator_accepts_empty_aggregate(tmp_path: Path) -> None:
+    data = yaml.safe_load(AGGREGATE_DOC)
+    data["portal"]["public_projection"].update(
+        total=0, completed=0, active=0, completion_rate=0, by_status={}, by_priority={}
+    )
+    board = tmp_path / "tasks.yaml"
+    board.write_text(yaml.safe_dump(data))
+    result = _run([str(VALIDATOR), "--tasks", str(board)])
+    assert result.returncode == 0, result.stderr
