@@ -142,11 +142,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Reconcile the historical Summer 2026 offering with current course evidence before any activation; validate staged cadence and capstone terminology against the owning shell and preserve originals.",
+        "rationale": "The recorded term has elapsed. Age neither proves completion nor authorizes activating that offering or substituting a different term.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-ENC1101-GOLIVE"
+          "his-hand-levers.json#L-ENC1101-GOLIVE",
+          ".codex/plans/2026-09-16-component-acceptance.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -154,14 +155,18 @@
         ],
         "owner": "edu-organism ENC1101 771624",
         "acceptance": {
-          "condition": "ENC1101 live for students (term 6/25 → 8/04)",
+          "condition": "The exact offering has current disposition evidence; any authorized activation has matching dates, correct capstone terminology and Student View readback.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Exact offering identity and current state",
+          "Current registrar and syllabus sources",
+          "Historical staged import lineage"
+        ],
+        "remaining_human_action": "Retain the specific offering-activation and substantive cadence approval gate after evidence-backed preparation.",
         "historical_gate_requires_verification": "your cadence-confirm + §3 greenlight + the Set Active click (outward/identity — never automated)",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -184,26 +189,31 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Derive the weighting path from the current institutional master capability and the owning syllabus reconciliation; prepare a complete 100-percent calculation and before/after preview before the authorized LMS write.",
+        "rationale": "The two paths are conditional on a discoverable institutional constraint, not an arbitrary preference menu.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-ENC1102-GRADEBOOK"
+          "his-hand-levers.json#L-ENC1102-GRADEBOOK",
+          ".codex/plans/2026-09-16-component-acceptance.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
           "AGENTS.md#safety--evidence"
         ],
-        "owner": "edu-organism #18 (gradebook-weights.md staged; verify.sh-safe filename)",
+        "owner": "edu-organism #18",
         "acceptance": {
-          "condition": "ENC1102 gradebook sums to 100% with majors weighted as the syllabus states",
+          "condition": "Current course and master capability evidence, syllabus alignment, weights totaling 100 percent, and post-write gradebook readback all match; preparation alone is not live acceptance.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current institutional master capability",
+          "Canonical syllabus and course identity",
+          "Private LMS readback custody"
+        ],
+        "remaining_human_action": "Authorize or perform the course-side change under the retained LMS gate after the concrete preview; supply institutional authority only if it cannot be read.",
         "historical_gate_requires_verification": "the per-category-vs-flat choice depends on Broward's gradebook master (institutional policy — yours); the D2L write is outward/LMS — never automated",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -226,26 +236,31 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Read authorized LMS exports and registrar records to populate the owning term configuration, reject unresolved placeholders, then generate and validate the term cartridge in private custody.",
+        "rationale": "Export access and factual term metadata are engineering inputs when already readable; human transcription is not a required architecture. Seed dates and proportional rescaling are not accepted term facts.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-EDU-PERTERM"
+          "his-hand-levers.json#L-EDU-PERTERM",
+          ".codex/plans/2026-09-16-component-acceptance.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
           "AGENTS.md#safety--evidence"
         ],
-        "owner": "edu-organism #16 (ENC1101 fall-2026.yaml staged) + #28 (Canvas per-term export); recapitulation-engine cadence",
+        "owner": "edu-organism #16 and #28",
         "acceptance": {
-          "condition": "each new term's cartridge generates from one human edit; nothing course-side waits on me except the LMS export",
+          "condition": "A source-bound export and exact term identifiers/dates produce a validated cartridge with zero unresolved placeholders; course import or activation requires its separate receipt.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Authorized export access",
+          "Authoritative section and calendar data",
+          "Owning generator and private custody"
+        ],
+        "remaining_human_action": "Grant unavailable LMS access or resolve a genuine curricular conflict; retain separate course-side publication authority.",
         "historical_gate_requires_verification": "the LMS export + the real ref/dates are yours (inside the LMS / your registrar data); the engine + generated files are mine",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1634,26 +1649,31 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Reconcile current private engine recipes with the bounded runtime contract, prepare current shortcut artifacts and routes, and separate Mac-side installation from phone-side permissions and entry-point setup.",
+        "rationale": "A historical instruction to paste a LaunchAgent does not supersede current host admission and scheduled-process requirements. Device acceptance cannot be inferred from server tests.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-DAILY-ENGINE-PHONE-SETUP"
+          "his-hand-levers.json#L-DAILY-ENGINE-PHONE-SETUP",
+          ".codex/plans/2026-09-16-component-acceptance.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
           "AGENTS.md#safety--evidence"
         ],
-        "owner": "daily-engine wave-2 (ambient capture)",
+        "owner": "organvm/daily-engine ambient capture",
         "acceptance": {
-          "condition": "zero-tap food capture + one-sentence logging + on-demand phone app — the ambient-capture lanes run without any hand after this",
+          "condition": "Current bounded server identity and each intended phone entry point have source/version, install and end-to-end readback receipts with private payload custody.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current engine recipes",
+          "Bounded runtime owner and admission",
+          "Current phone route and device capability"
+        ],
+        "remaining_human_action": "Perform unavailable phone UI installation and grant specific device permissions; no blanket grant is inferred.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2186,26 +2206,31 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Validate the current plate and steps artifacts, private file-drop contract and ingestion idempotency; prepare device installation and verify an authorized real capture through the current server generation.",
+        "rationale": "July server proof is historical evidence, not current phone installation or permission evidence. Health samples and photographs retain private custody.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-DAILY-ENGINE-PHONE-LEAVES"
+          "his-hand-levers.json#L-DAILY-ENGINE-PHONE-LEAVES",
+          ".codex/plans/2026-09-16-component-acceptance.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
           "AGENTS.md#safety--evidence"
         ],
-        "owner": "daily-engine leaf build 2026-07-14 (organvm/daily-engine PRs #9–#12)",
+        "owner": "organvm/daily-engine #9 through #12",
         "acceptance": {
-          "condition": "the food and steps lanes go from built-armed-unused to ambient-live: plate photos and daily step counts land in the day-log with zero forms, zero menus, zero further taps",
+          "condition": "Each installed entry point produces a source-bound receipt and exactly one expected day-log result; missing device or ingestion evidence stays unmeasured.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current shortcut artifacts",
+          "Private iCloud routing and ingestion",
+          "Device permission and current server generation"
+        ],
+        "remaining_human_action": "Install the phone entry points and grant specific camera or Health access where agent capability is unavailable.",
         "historical_gate_requires_verification": "personal-device install — the agent cannot tap an iPhone; everything server-side (watcher, local vision, steps ingest, falsifiable checks) is live and proven end-to-end as of 2026-07-14",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {

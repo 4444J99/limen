@@ -18,3 +18,13 @@ Laurea source-coverage implementation is published as organvm/laurea#10,
 head 2e4fce05a825538bc48f22419f9ec5d34c9de1b0; 33 tests passed.
 The old personal coordinate redirects to this canonical owner. Exact-generation
 health collection remains follow-up, with unmeasured fields retained meanwhile.
+
+## Education and device decisions
+
+Five decisions now derive institutional grading capability, exact historical
+offering reconciliation, authoritative term metadata and current device/server
+acceptance. The private gradebook source confirms a conditional institutional
+constraint; the staged Fall term retains unresolved placeholders. No LMS write,
+course activation, phone permission or scheduled runtime installation occurred.
+Current counts: 69 selected, 28 requiring component review; 95 acceptance
+predicates remain undefined. All historical fields and lifecycle states remain.
