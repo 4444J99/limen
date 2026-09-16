@@ -371,6 +371,11 @@ gates:
     tier: cheap
     owner: ianva
     note: "Direct tunnel launch requires local unauthenticated rejection; a force flag cannot publish an open endpoint."
+  sensitive-history-receipt-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_sensitive_history_removal.py -q"
+    paths: ["scripts/check-sensitive-history-removal.py", "cli/tests/test_sensitive_history_removal.py"]
+    owner: governance
+    note: "Postflight custody receipts publish complete bytes atomically and cannot replace a concurrent immutable receipt."
   closeout-evidence-test:
     command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_closeout_evidence.py cli/tests/test_verify_dispatch.py -q"
     paths: ["scripts/reconcile-closeouts.py", "scripts/tests/test_closeout_evidence.py", "scripts/verify-dispatch.py", "cli/tests/test_verify_dispatch.py", "scripts/board.py"]
