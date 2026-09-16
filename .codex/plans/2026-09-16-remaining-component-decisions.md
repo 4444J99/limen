@@ -166,3 +166,15 @@ Consolidated verification at 7444cf024 passed all 42 cheap gates. Heavy
 verification was again refused by the machine-wide swap-fraction admission
 check (exit 75). PR #2627 remains draft; no admission bypass or unchanged-tree
 retry was performed. This updates the existing PR-owned verification blocker.
+
+## Publication and source-installation decisions
+
+Four additional decisions preserve private clinical operation, evidence-bound
+positioning, scoped cartridge installation and exact social-post authorization.
+The health record's historical daemon deadline supplies no publication authority.
+A matching cartridge remote is connection evidence only; its fail-open missing
+probe is not adoption evidence. The social scheduler still has no send adapter.
+
+Current count: 56 selected, 41 requiring component review; 95 executable acceptance
+definitions remain missing. Source references resolve. No publishing, account,
+private-data relocation or live settings action was performed.

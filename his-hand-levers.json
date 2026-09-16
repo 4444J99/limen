@@ -464,11 +464,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Keep clinical inputs and generated care-office products in authorized private custody, expose counts-only runtime observations, and review any proposed public reference material for inferential disclosure before publication.",
+        "rationale": "Private clinical custody is already the component boundary. A historical daemon deadline is not permission to publish health-related material, and the retired daemon is not a current deployment contract.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-HEALTH-GOLIVE"
+          "his-hand-levers.json#L-HEALTH-GOLIVE",
+          "scripts/health-organ.py",
+          "docs/architecture/run-and-gun-substrate.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -476,14 +478,19 @@
         ],
         "owner": "health-office-organ (local commit ff43850; 2026-06-25 verification pass)",
         "acceptance": {
-          "condition": "health-office content disposition settled before the daemon settles it by default; office stays fully functional either way",
+          "condition": "Synthetic fixtures prove that clinical inputs and generated text remain private and only counts reach public/runtime surfaces; actual private custody and any public reference release have their own receipts.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Authorized private health home",
+          "Counts-only output validation",
+          "Current bounded runtime contract",
+          "Specific publication review"
+        ],
+        "remaining_human_action": "Approve only any specific proposed public health-related disclosure; private operation does not require a publish-or-privatize menu.",
         "historical_gate_requires_verification": "outward-facing disposition of your own health data + the reference-library question — your call, TIME-BOUNDED by the daemon's auto-publish; NEVER auto-decided",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -515,11 +522,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Generate buyer-facing surfaces from current evidence-backed seeds, keep private candidates and price anchors out of public output, and verify each declared capture and publication surface independently.",
+        "rationale": "The generator already distinguishes internal anchors, publishable seeds and contact configuration. Historical deployed URLs and old activation flags cannot establish current product availability or authorize external messages.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-POSITIONING-ACTIVATE"
+          "his-hand-levers.json#L-POSITIONING-ACTIVATE",
+          "scripts/generate-positioning.py",
+          "scripts/positioning_claims.py",
+          "docs/positioning/_his-hand.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -527,14 +537,19 @@
         ],
         "owner": "inbound-magnet seeding pass (PR #243); full per-trigger detail with cheapest path lives in the owner-record docs/positioning/_his-hand.md",
         "acceptance": {
-          "condition": "the 200+ repos start pulling warm inbound by simply existing; the front door + discoverability go live; the 3 verified private repos render the moment they're public",
+          "condition": "Current-source artifacts pass claim and price guards; each public URL, metadata change and capture route has an exact readback, while recurring runtime adoption and actual replies remain separate obligations.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current claims evidence",
+          "Authorized contact identity",
+          "Current source visibility",
+          "Bounded runtime installation"
+        ],
+        "remaining_human_action": "Approve commercial commitments and the exact public identity or account changes still requiring authority; no generator flag authorizes outbound replies.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1232,11 +1247,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Keep drafts separate from authorization and delivery; bind any future publishing adapter to the exact approved account, target, content and timing, then reconcile the platform result before recording sent.",
+        "rationale": "The current scheduler refuses all sends, including token-present attempts. A queued or approved item is not delivered, and OAuth does not grant blanket publication authority.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-SOCIAL-SEND"
+          "his-hand-levers.json#L-SOCIAL-SEND",
+          "organs/media/scheduler/social_scheduler.py",
+          "cli/tests/test_social_scheduler.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1244,14 +1261,19 @@
         ],
         "owner": "media organ · social_scheduler",
         "acceptance": {
-          "condition": "assets go live on the chosen platform",
+          "condition": "Missing or mismatched authorization cannot call a platform; an authorized adapter records a verified delivery identifier or explicit ambiguous outcome without blind resend. Until implemented, publishing remains unavailable.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Implemented platform adapter",
+          "L-SOCIAL-OAUTH capability",
+          "Exact publication authorization",
+          "Delivery reconciliation"
+        ],
+        "remaining_human_action": "Authorize the exact public post, account and timing; a general scheduler activation does not authorize the queue.",
         "historical_gate_requires_verification": "outward-facing publish (irreversible)",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1404,11 +1426,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Resolve the actual chezmoi source and owning repository, preserve newer host/source changes with custody evidence, render the current target diff, and apply only the reviewed component scope through its owner.",
+        "rationale": "A matching remote establishes connection, not correct identity data or safe installation. Missing tool/source observations are unmeasured; historical branch names and blanket cleanup recipes are not current authority.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CARTRIDGE-REPOINT"
+          "his-hand-levers.json#L-CARTRIDGE-REPOINT",
+          "scripts/cartridge-connected.py",
+          "docs/architecture/concurrent-integration.md",
+          "docs/architecture/run-and-gun-substrate.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1416,14 +1441,19 @@
         ],
         "owner": "REALITY-CHECK 2026-07-02 (memory host-is-factory-system-is-cartridge); guard shipped in limen PR #560.",
         "acceptance": {
-          "condition": "the host-is-factory invariant actually holding -- a factory-clean, ejectable/re-injectable Mac whose every non-factory byte regenerates from the real cartridge (domus-genoma).",
+          "condition": "The expected source identity is verified, preserved divergences have durable owners, rendered changes match the approved component scope and post-install readback proves adoption without affecting protected sessions.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current Domus source ownership",
+          "Existing identity configuration",
+          "Preservation and divergence receipts",
+          "Component-specific installation contract"
+        ],
+        "remaining_human_action": "Supply only genuinely missing identity or signing references through their authorized home and approve any specific irreversible cleanup; ordinary reversible source repairs proceed within scope.",
         "historical_gate_requires_verification": "needs your chezmoi identity config (is_work, git identity, signing-key reference) which cannot be fabricated for you, AND blesses an irreversible `chezmoi apply` that runs run_once/cleanup scripts against the live home.",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
