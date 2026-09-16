@@ -2383,11 +2383,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Reconcile the owning publication policy with newer prompt lineage, derive the exact authorized candidate scope, require a fresh exact-source sweep per candidate, and verify each authorized visibility result independently.",
+        "rationale": "The effector cites a standing build-in-public directive, while the owning policy still requires a publication click and the historical lever describes a released-state recipe. This conflict is unresolved authority, not permission to expose repositories; retain the original records and resolve lineage before execution.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-PORTAL-PUBLISH-WAVE-1"
+          "his-hand-levers.json#L-PORTAL-PUBLISH-WAVE-1",
+          "scripts/apply-visibility.py",
+          "scripts/publish-sweep.py",
+          "organs/governance/PUBLICATION-POLICY.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2395,14 +2398,19 @@
         ],
         "owner": "publication-engine lane (PRs #1152-#1156)",
         "acceptance": {
-          "condition": [],
+          "condition": "Every candidate remains in an explicit denominator with current source-bound sweep evidence, applicable authority and remote visibility readback; unknown or stale evidence cannot authorize exposure.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current candidate identities",
+          "Resolved policy and prompt-lineage authority for the exact scope",
+          "Fresh source-bound privacy/security sweep",
+          "Remote visibility readback"
+        ],
+        "remaining_human_action": "Authorize only exposure outside the currently evidenced standing directive; covered publication scope requires engineering evidence rather than repeated consent.",
         "historical_gate_requires_verification": "fill unlocks with the sanctioned repo list; set status: released",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2554,11 +2562,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Keep the JSON token source and CSS representation consistent, prepare pinned per-surface adoption diffs, and verify each consuming surface before estate rollout.",
+        "rationale": "The token source explicitly selects pinned local copies and semantic aliases; runtime fetching and automatic estate-wide adoption are not the declared design.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-TOKENS-SIGNOFF"
+          "his-hand-levers.json#L-TOKENS-SIGNOFF",
+          "web/tokens/organvm-tokens.json",
+          "web/tokens/organvm-tokens.css"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2566,14 +2576,18 @@
         ],
         "owner": "organvm design-token layer (limen web/tokens/) — portfolio-led estate design language",
         "acceptance": {
-          "condition": "mechanical adoption PRs across the estate (dashboard utility look + MONETA editorial paper both resolve from the same primitives); the portfolio leads the aesthetic without every surface becoming one skin",
+          "condition": "The approved token version has consistent JSON/CSS values; each adoption has a pinned source reference, visual/accessibility evidence and a repository-specific acceptance receipt.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Token source parity",
+          "Per-surface consumer inventory",
+          "Visual and accessibility acceptance"
+        ],
+        "remaining_human_action": "Approve the concrete estate design language where that taste decision is still unresolved; no duplicate approval is required for already evidenced adoption scope.",
         "historical_gate_requires_verification": "owner sign-off — committing the estate to one design language is a taste/brand call only you make; the token files exist and validate, but no surface adopts them until you approve",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2592,11 +2606,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Use the intended URL registry for hostname routing, refresh observed deployment identities independently, and prepare exact DNS/custom-domain changes with rollback and endpoint readback.",
+        "rationale": "Desired hostnames and historical current_url fields are different evidence. Existing account grants and live hosting must be verified before applying the intended map.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-URL-HIERARCHY-SIGNOFF"
+          "his-hand-levers.json#L-URL-HIERARCHY-SIGNOFF",
+          "institutio/identity/url-map.yaml"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2604,14 +2619,19 @@
         ],
         "owner": "TASK-C url-map-registry (feat/url-map-registry, 2026-07-18)",
         "acceptance": {
-          "condition": "the 4444j99.dev custom-domain hierarchy goes live: each product surface becomes reachable at its intended hostname instead of the auto-generated pages.dev/github.io URL; inbound links and CTAs resolve to stable branded addresses",
+          "condition": "Each approved hostname maps to its intended current deployment, passes DNS/TLS/content readback and retains an explicit fallback/redirect disposition; registry labels alone do not prove serving.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Approved hostname-to-surface map",
+          "Current deployment identity",
+          "Scoped DNS account capability",
+          "Endpoint readback"
+        ],
+        "remaining_human_action": "Approve only the specific public hostname mapping that remains unsanctioned; after that, scoped DNS implementation is engineering work.",
         "historical_gate_requires_verification": "outward-facing domain identity — only the owner can sanction which hostname maps to which surface; once approved the DNS attach itself is fleet-executable",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3568,11 +3588,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Produce bounded source-backed findings, deduplicate them against canonical and pending task identities, and route authorized filing through the broker under a current runtime contract.",
+        "rationale": "The current CLI requires both --apply and the arming flag; a historical dry-run count or environment edit is not runtime adoption. The supported heartbeat is read-only and must not acquire a hidden filing effector.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-DECORUM-APPLY-ARM"
+          "his-hand-levers.json#L-DECORUM-APPLY-ARM",
+          "scripts/decorum-keeper.py",
+          "institutio/governance/decorum-surfaces.yaml",
+          "spec/scheduled-process-contracts.json"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3580,14 +3603,19 @@
         ],
         "owner": "/verify observation while closing the cadence-guard arc (#1990). The parameters registry ships this valve DARK with an explicit prerequisite — 'observe the DRY plan in the beat log first' — and that observation is now DONE and recorded in issue #2046. Run 2026-08-07: 3 findings, 2 at/above the 'high' floor, effector would file 3 tickets (0 already on board) against a cap of 8. Both high rows are real live defects: one public page renders body copy and CTAs near-white on near-white while its dynamic content 404s, another ships a ~9.6MB hero PNG with clipped colour bands and CORS/SRI failures on its animation scripts.",
         "acceptance": {
-          "condition": "the estate's public-surface defects become tracked work instead of a line in a log. Unarmed, DECORVM is a beat-wired organ in permanent dry-run — the exact 'the deliverable IS the live effect, and the organ never produces it' shape that armed-valve-audit exists to surface.",
+          "condition": "Fresh findings retain source/severity evidence; an authorized bounded filing run receives broker acknowledgements and a repeat observes existing IDs without duplicates. Missing custody or intake remains unmeasured.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current finding evidence",
+          "Canonical/private task custody",
+          "Broker-authorized filing",
+          "Current bounded runtime contract"
+        ],
+        "remaining_human_action": "Approve only any recurring filing authority not already covered by the current runtime contract; do not use the old environment append recipe as installation proof.",
         "historical_gate_requires_verification": "persistence-arming (writing LIMEN_*=1 to ~/.limen.env, what the beat reads) is classifier-denied to the session — and beyond the mechanism, turning on fleet-wide auto-filing is an autonomy decision about whether the estate opens its own work, which is yours by definition. Only you can persist it.",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {

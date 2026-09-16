@@ -223,3 +223,23 @@ field passed the 61-case ownership/provider shard; focused lint and format pass.
 Heavy verification did not run, so the draft's existing admission/whole-suite
 obligation remains open. No green sibling gate was replayed solely for the two
 metadata/type corrections.
+
+## Design, routing and publication authority
+
+Four more decisions now derive pinned token adoption, intended-versus-observed
+URL routing, bounded broker-owned DECORVM filing and current publication scope.
+The publication effector cites standing authority plus fresh sweeps, which differs
+from the historical lever's released-state recipe. No visibility change or new
+authorization is inferred from this review. The current read-only heartbeat is
+not armed for filing by an environment flag.
+
+Current count: 60 selected, 37 requiring component review, 95 executable acceptance
+definitions still missing. All original records and lifecycle fields are retained.
+No DNS, publication, design adoption or recurring process was changed.
+
+Authority qualification: PUBLICATION-POLICY.md still requires a publication click,
+while apply-visibility.py cites a later standing directive. The decision records
+this unresolved policy/prompt-lineage conflict. Neither source alone is treated
+as permission for a visibility change in this implementation tranche. Owner:
+publication policy and L-PORTAL-PUBLISH-WAVE-1; next action is a scoped lineage
+review before any effect.
