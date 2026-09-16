@@ -61,3 +61,28 @@ keeper test proves exact replay reuses the run and changed source pins conflict.
 Executor callback/CLI wiring, independently reviewed deployment inputs, and
 protected activation remain required before readiness. No live capacity was
 reserved or provider launched while producing this implementation.
+
+## Keeper-admitted executor callback
+
+`limen conduct execute-dependency-assessment --run-id RUN --contract CONTRACT
+--source-repository REPO` consumes an already reserved single-root packet. Its
+separate reviewed executor contract supplies executor identity, source commit and
+SHA-256, repository coordinate/ID, predicate, broker URL, and two distinct named
+credential references (`executor_credential_env`, `read_credential_env`). Generic
+GitHub, conductor, and relay credentials are not fallback credentials. No secret
+values are part of the contract or packet.
+
+The callback reconstructs and compares the whole packet against its deployment
+inputs, claims only the selected lease generation, and atomically registers one
+new attempt before launching captured source. Simultaneous callbacks, ambiguous
+admission, settled runs and changed contracts cannot launch a second assessment.
+The accepted heartbeat must leave the assessor's 95-second execution budget.
+Execution failure is a redacted blocked receipt; REVIEW_READY is an assessment
+success with automatic_acceptance=false. Lost report responses preserve keeper
+evidence and never trigger another execution. Real-broker tests cover these
+paths and actual isolated child execution.
+
+Independent source review, credential provisioning, bounded transport review,
+executor registration/wake routing, and protected production activation still
+require evidence. The production policy remains disabled. No live callback or
+new provider launch was performed to test this implementation.

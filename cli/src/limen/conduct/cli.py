@@ -355,6 +355,65 @@ def compile_dependency_assessment(hint_file: Path, contract_file: Path, source_r
     _emit(packet.model_dump(mode="json"))
 
 
+@conduct_group.command("execute-dependency-assessment")
+@click.option("--run-id", required=True)
+@click.option("--contract", "contract_file", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--source-repository", required=True, type=click.Path(path_type=Path, exists=True, file_okay=False))
+def execute_dependency_assessment(run_id: str, contract_file: Path, source_repository: Path) -> None:
+    """Execute one keeper-reserved assessment using explicit deployment authority."""
+    from limen.conduct.assessment_executor import execute_assessment_run
+    from limen.conduct.assessor_source import capture_assessor
+
+    contract = _read_json(contract_file)
+    expected = {
+        "executor",
+        "source_commit",
+        "script_sha256",
+        "repository",
+        "repository_id",
+        "predicate",
+        "broker_url",
+        "executor_credential_env",
+        "read_credential_env",
+    }
+    reserved = {
+        "GH_TOKEN",
+        "GITHUB_TOKEN",
+        "LIMEN_CONDUCT_TOKEN",
+        "LIMEN_RELAY_GOVERNOR_TOKEN",
+        "LIMEN_RELAY_READ_TOKEN",
+    }
+    try:
+        if set(contract) != expected:
+            raise ValueError
+        references = [contract["executor_credential_env"], contract["read_credential_env"]]
+        if len(set(references)) != 2 or any(
+            not isinstance(ref, str) or not re.fullmatch(r"[A-Z][A-Z0-9_]{0,127}", ref) or ref in reserved
+            for ref in references
+        ):
+            raise ValueError
+        executor_token, read_token = [os.environ.get(ref, "") for ref in references]
+        if not executor_token or not read_token or executor_token == read_token:
+            raise ValueError
+        source = capture_assessor(source_repository, contract["source_commit"], contract["script_sha256"])
+        client = HttpConductClient(contract["broker_url"], executor_token)
+        result = execute_assessment_run(
+            client,
+            run_id,
+            source=source,
+            credential=read_token,
+            repository=contract["repository"],
+            repository_id=contract["repository_id"],
+            executor=AgentIdentityV1.model_validate(contract["executor"]),
+            predicate=contract["predicate"],
+        )
+    except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError):
+        raise click.ClickException("assessment callback is unmeasured; no automatic retry") from None
+    _emit(result)
+    if result["outcome"] != "succeeded":
+        raise click.exceptions.Exit(77)
+
+
 @conduct_group.command("dependency-completions")
 def dependency_completions() -> None:
     """Read completion hints from the authenticated keeper."""
