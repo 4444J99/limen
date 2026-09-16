@@ -410,3 +410,43 @@ def test_submit_one_refuses_when_pause_marker_is_unreadable(monkeypatch, tmp_pat
 
     assert mod.submit_one("4444J99/limen", 2543, head) == 3
     assert capsys.readouterr().out.strip().endswith("REFUSED — AUTONOMY_PAUSED unreadable (IsADirectoryError)")
+
+
+@pytest.mark.parametrize("verdict", ["HOLD", "BLOCKED", "UNEXPECTED"])
+def test_policy_failure_diagnostic_is_bounded_and_redacted(monkeypatch, capsys, verdict):
+    mod = _load()
+    monkeypatch.setattr(
+        mod.subprocess,
+        "run",
+        lambda *a, **kw: SimpleNamespace(
+            returncode=2, stdout=f"VERDICT: {verdict} secret-provider-detail\n", stderr="secret-token"
+        ),
+    )
+    assert mod._merge_policy("organvm/laurea", 10, "a" * 40) is None
+    out = capsys.readouterr().out
+    expected = verdict if verdict in {"HOLD", "BLOCKED"} else "unknown"
+    assert out == f"MERGE-DIAGNOSTIC: stage=policy exit=2 verdict={expected}\n"
+
+
+@pytest.mark.parametrize("stage", ["policy", "effect"])
+def test_merge_timeout_is_unconfirmed_and_never_retried(monkeypatch, capsys, stage):
+    mod = _load()
+    calls = []
+
+    def timeout(*args, **kwargs):
+        calls.append(args)
+        raise mod.subprocess.TimeoutExpired("secret-command", 90, output="secret-output")
+
+    if stage == "policy":
+        monkeypatch.setattr(mod.subprocess, "run", timeout)
+        assert mod._merge_policy("organvm/laurea", 10, "a" * 40) is None
+    else:
+        monkeypatch.setattr(mod, "_merge_policy", lambda *args: "direct")
+        monkeypatch.setattr(mod, "gh", timeout)
+        assert mod.merge("organvm/laurea", 10, "a" * 40, "direct") == "FAILED"
+    assert len(calls) == 1
+    out = capsys.readouterr().out
+    assert "reason=timeout" in out
+    assert "secret" not in out
+    if stage == "effect":
+        assert "outcome=unconfirmed" in out
