@@ -1,0 +1,44 @@
+{
+  "schema": "limen.runtime_adoption_observation.v1",
+  "observed_at": "2026-09-16T04:35:30.898643+00:00",
+  "source_pr": "https://github.com/4444J99/limen/pull/2640",
+  "source_sha": "a60175462bee077d99544b2133d8f662f9b1c3f4",
+  "activation_plan_sha256": "5aa3e509534b2ea7c7420358b7fe0c491029ab13556a6898f5040cbdfc528cc0",
+  "verification_exit_code": 0,
+  "verification": {
+    "audit_bytes": 59614,
+    "audit_limit_bytes": 262144,
+    "consecutive_system_failures": 0,
+    "expected_runtime_digest": "d107f51ba498a09214d153e259260fd467b98c144ee7a0e39351ab94f4b08ee5",
+    "label_loaded": true,
+    "label_status": "present",
+    "limen_launcher_body_sha256": "f8f38b86e3962a71517ef94bd1baf633468f381e718187699289a0054b165201",
+    "limen_package_sha256": "3e0a1c5b39d5647ef48f1699c5c88f30174f9f886a54a306d1e55630103f3070",
+    "plist_sha256": "1d22ce1433138c78e79e33de8d7ecea132d377903f18fe33b893980bef1dd249",
+    "python_interpreter": "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/bin/python3.14",
+    "python_interpreter_sha256": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+    "reviewed_runtime_digest": "d107f51ba498a09214d153e259260fd467b98c144ee7a0e39351ab94f4b08ee5",
+    "runtime_digest": "d107f51ba498a09214d153e259260fd467b98c144ee7a0e39351ab94f4b08ee5",
+    "schema": "domus.limen_heartbeat_verification.v1",
+    "sha": "a60175462bee077d99544b2133d8f662f9b1c3f4",
+    "status": "finding",
+    "surviving_process_count": 0,
+    "surviving_process_digests": [],
+    "verified": true,
+    "watchdog_absent": true,
+    "watchdog_label_status": "absent"
+  },
+  "native_receipts": [
+    {
+      "run_id": "8c5f1574f28445ffbb350d052602b028",
+      "observed_at": "2026-09-16T04:34:06Z",
+      "observed_epoch": 1789533246.866561,
+      "runtime_sha": "a60175462bee077d99544b2133d8f662f9b1c3f4",
+      "runtime_digest": "d107f51ba498a09214d153e259260fd467b98c144ee7a0e39351ab94f4b08ee5",
+      "status": "finding",
+      "surviving_descendant_count": 0,
+      "disabled": false
+    }
+  ],
+  "scope": "Exact installed identity and controlled fire; three-fire scheduled adoption not yet established."
+}
