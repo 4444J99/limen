@@ -258,5 +258,18 @@
     "cli_skipped": 2,
     "cli_duration_seconds": 253.62,
     "subsequent_change": "Autotype scope failure shard: 21 tests and Ruff passed; unchanged CLI shards retained."
+  },
+  "default_ci_followup": {
+    "run": "https://github.com/4444J99/limen/actions/runs/35037227552",
+    "head": "d125bf3e2ed5da0166b9a959013d8515d0f00639",
+    "conclusion": "failure",
+    "passed": 7726,
+    "failed": 3,
+    "skipped": 4,
+    "failure_owner": "cli/tests/test_host_pressure_stale.py",
+    "cause": "Stale fixture ages exceed hosted runner uptime; negative monotonic values and clamped boot-time samples test the wrong branch.",
+    "repair": "Fixture producer and subprocess consumer share a deterministic two-day monotonic clock; production freshness validation unchanged.",
+    "repaired_shard_passed": 20,
+    "default_success": "not_yet_verified"
   }
 }

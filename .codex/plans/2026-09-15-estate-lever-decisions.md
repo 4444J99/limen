@@ -61,3 +61,14 @@ skipped). A subsequent autotype scope correction refuses unreadable/empty estate
 authority before any GitHub call and records unmeasured coverage. Its 21 focused
 tests and Ruff pass; unchanged CLI shard results remain evidence. The dedicated
 scoped gate covers future changes to the script as well as its tests.
+
+## Default CI repair and continued ownership
+
+Default d125bf3 CI finished with 7,726 passed, three failed, four skipped. All
+three failures arose from fixture ages exceeding fresh hosted-runner uptime. The
+fixture producer and child consumer now share a deterministic two-day monotonic
+clock. Production validation is unchanged; all 20 freshness tests pass.
+
+This verified increment can land independently. Codex continues the remaining
+65 component decisions, 95 acceptance definitions, and full estate plan from
+this committed plan and progress receipt; landing does not complete that scope.
