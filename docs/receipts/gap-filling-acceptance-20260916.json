@@ -1,16 +1,16 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-09-16T10:31:58.962916+00:00",
+  "observed_at": "2026-09-16T15:46:24.972931+00:00",
   "scope": "Acceptance reconciliation for the full supplied gap-filling plan; not an estate completion estimate.",
   "owner": "Codex / gap-filling implementation contract",
   "status": "in_progress",
-  "source_default": "3c1313aab9e03706d776bf8cbcc390883acddc68",
+  "source_default": "b643260b2075e1aa8045a80ff284dfbfa82e3397",
   "lever_counts": {
     "total": 107,
     "nonterminal": 97,
     "terminal": 10,
     "selected": 97,
-    "with_acceptance_predicate": 3
+    "with_acceptance_predicate": 4
   },
   "open_delivery": [
     {
@@ -70,7 +70,7 @@
     {
       "repository": "organvm/learning-resources",
       "pr": 11,
-      "head": "defb7a0ba0dd94abe86bcf69eec0136c6d382e50",
+      "head": "9aafd48524d34269233bea0dad8d1f794a4eede9",
       "draft": false,
       "state": "OPEN",
       "readback": "GitHub PR API",
@@ -79,7 +79,7 @@
     {
       "repository": "4444J99/organvm-ci-relay",
       "pr": 30,
-      "head": "6375d43c629ee15f8ca6296c56fe7806559c32e0",
+      "head": "5a6f0927b1d082c374cc6031ea3b6e9faede6a0b",
       "draft": false,
       "state": "OPEN",
       "readback": "GitHub PR API",
@@ -98,19 +98,22 @@
     },
     {
       "id": "default_ci",
-      "state": "in_progress",
+      "state": "latest_in_progress_prior_defaults_verified",
       "evidence": [
-        "https://github.com/4444J99/limen/actions/runs/35084026890"
+        "https://github.com/4444J99/limen/actions/runs/35116867759",
+        "https://github.com/4444J99/limen/actions/runs/35114037192",
+        "https://github.com/4444J99/limen/actions/runs/35111500785"
       ],
-      "limit": "Push CI for exact source 3c1313aab was observed in_progress, not successful. Earlier push 35073884457 passed for 4dfc034c; compilation-only schedules are not the acceptance predicate."
+      "limit": "Latest b643260 default CI remains in progress. Earlier exact defaults 1769d30 and 9c55dd6 passed executed CI; neither is proof of the latest default result."
     },
     {
       "id": "resident_adoption",
-      "state": "installed_scheduled_proof_pending",
+      "state": "scheduled_proof_observed_for_pinned_source",
       "evidence": [
-        "docs/receipts/dependency-runtime-adoption-20260916.json"
+        "docs/receipts/dependency-runtime-adoption-20260916.json",
+        "docs/receipts/dependency-scheduled-adoption-20260916.json"
       ],
-      "limit": "The digest-matched installer activated 3c1313aab and verified the loaded label/package/runtime with no surviving descendants. Three naturally spaced scheduled fires remain separately unverified; finding status is retained."
+      "limit": "Recorded three naturally spaced scheduled fires and rollout predicate pass for pinned 3c1313aab. This does not establish adoption of later source commits or current finding health."
     },
     {
       "id": "all_lever_acceptance",
@@ -122,9 +125,14 @@
     },
     {
       "id": "collector_activation",
-      "state": "external_authority_pending",
+      "state": "authority_and_ingestion_verified_growth_denied",
       "owner": "4444J99/limen#269; #1995; credential Wall #320",
-      "limit": "250 inventory ceiling and 900-second freshness remain. Dedicated collector authority must not be replaced by an ordinary token."
+      "limit": "Dedicated collector authority and full 326-repository ingestion were accepted. Eleven installed principals passed 33 live role probes. Growth canary refused at inventory_growth_ceiling without task or budget change. 250-item ceiling and 900-second freshness remain; the historic ingestion receipt does not stay fresh indefinitely.",
+      "evidence": [
+        "docs/receipts/collector-authority-installation-20260916.json",
+        "https://github.com/4444J99/limen/pull/2656",
+        "https://github.com/4444J99/limen/pull/2660"
+      ]
     },
     {
       "id": "relay_trust_and_governor",
@@ -134,11 +142,11 @@
     },
     {
       "id": "six_target_receipts",
-      "state": "not_currently_verified",
+      "state": "four_current_passes_two_executed_failures",
       "evidence": [
-        "docs/receipts/gap-filling-progress-20260915.json"
+        "https://github.com/4444J99/organvm-ci-relay/pull/30"
       ],
-      "limit": "Historical 2/6 matching observation is not current estate health; preserve matching receipts and refresh only under accepted trust."
+      "limit": "Six stable default refs reconciled against checksum-verified ledger c78d0d7f34a491b825364a997d953a1e907406e4. Process, Engine, Danse and Laurea have matching success; Laurea reuses its exact regression matrix. Learning-resources and alchemical retain error receipts. No seventh target; protected governor acceptance remains separate."
     },
     {
       "id": "shared_workflow_delivery",
@@ -175,10 +183,14 @@
     },
     {
       "id": "preservation_and_dispositions",
-      "state": "not_currently_verified",
+      "state": "bounded_arca_recovery_verified_estate_incomplete",
       "owner": "Existing private custody and estate registry owners",
-      "limit": "Local checksums, branch age and absence of open PRs do not prove durable restore custody, landing, or permission to archive."
+      "limit": "Canonical escrow recovered one committed archive without Keychain or plaintext extraction. Its ciphertext and per-archive manifest record match stable remote default. Full estate restoration, fresh-device recovery and broader preservation/disposition obligations remain unverified.",
+      "evidence": [
+        "https://github.com/4444J99/limen/pull/2658",
+        "https://github.com/4444J99/limen/issues/719"
+      ]
     }
   ],
-  "observation_scope": "This revision refreshes only shared PR #26, Limen source/default CI observation, and resident installation. Other rows retain the earlier 2026-09-16T08:37:04Z snapshot and are not newly verified."
+  "observation_scope": "Requirement rows updated from their named current or immutable receipts. Open-delivery entries other than the two revised heads retain earlier snapshots; no fresh read of every PR is claimed. All 97 implementation decisions remain distinct from executed acceptance; no permanent lever or task state changed."
 }
