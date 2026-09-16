@@ -1073,7 +1073,9 @@ def test_single_rail_output_is_rejected_at_limit_plus_one(
         max_seconds=5,
     )
 
-    assert error_code(lambda: invoke_single_rail(script, request)) == expected
+    # Keep the original exception traceback when cleanup masks the limit error.
+    with pytest.raises(PairedCustodyError, match=f"^{expected}$"):
+        invoke_single_rail(script, request)
 
 
 @pytest.mark.parametrize(
