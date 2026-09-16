@@ -1,0 +1,128 @@
+{
+  "schema": "limen.spine_closeout_operator_relay_receipt.v1",
+  "observed_at": "2026-09-16T21:24:43Z",
+  "scope": "One admitted operator-relay continuation over the noninteractive background-items census source repair and its named spine owners; not an estate-completion receipt.",
+  "boundary_state": "wait_relay",
+  "source_repair": {
+    "owner": "4444J99/limen#2664 and 4444J99/limen#2669",
+    "branch": "work/spine-closeout-20260916-bypass-successor",
+    "base": "30207a7fc91848477cb00ee5273024d14fd0b19c",
+    "previous_head": "67e9dedc6b2b0fa80029d940e70b9fe2968803bd",
+    "head": "3acb243a349f4366a8b56b26d77e2bf958b34a4a",
+    "remote_head": "3acb243a349f4366a8b56b26d77e2bf958b34a4a",
+    "changed_paths": [
+      "cli/tests/test_workstream_command.py"
+    ],
+    "repair": "The explicit Codex bypass-profile fixture now supplies --conduct plus a fake authenticated protected-session registration, matching the production danger-full-access contract.",
+    "pr_readback": {
+      "observed_at": "2026-09-16T21:20:24Z",
+      "state": "OPEN",
+      "mergeable": "MERGEABLE",
+      "merge_state_status": "UNSTABLE",
+      "checks": "new exact-head checks queued after the one changed-head push; no wait, retry, rerun, or second observation"
+    }
+  },
+  "verification": [
+    {
+      "command": "pytest -q cli/tests/test_workstream_command.py::test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv",
+      "exit_code": 0,
+      "result": "1 passed in 2.29s"
+    },
+    {
+      "command": "pytest -q cli/tests/test_workstream_command.py",
+      "exit_code": 0,
+      "result": "31 passed in 61.05s"
+    },
+    {
+      "command": "ruff check cli/tests/test_workstream_command.py",
+      "exit_code": 0,
+      "result": "All checks passed"
+    },
+    {
+      "command": "bash scripts/verify-scoped.sh",
+      "exit_code": 75,
+      "result": "all 24 cheap gates passed; the heavy wave did not run because machine-wide host admission denied swap-fraction"
+    }
+  ],
+  "runtime_readback": {
+    "installed_sha": "30207a7fc91848477cb00ee5273024d14fd0b19c",
+    "source_repair_installed": false,
+    "installed_background_census": "still contains the legacy automatic sfltool dumpbtm path",
+    "heartbeat_active_predicate": {
+      "command": "python3 scripts/check-heartbeat-rollout.py --require-active --expected-sha 30207a7fc91848477cb00ee5273024d14fd0b19c --min-fires 3",
+      "exit_code": 0,
+      "result": "44 rungs, active proof satisfied"
+    },
+    "scheduled_probe_execution": {
+      "command": "python3 scripts/check-heartbeat-rollout.py --scheduled-probes --expected-sha 30207a7fc91848477cb00ee5273024d14fd0b19c",
+      "execution_complete": false,
+      "scheduled_total": 15,
+      "observed": 6,
+      "missing": 3,
+      "stale": 5,
+      "finding": 4,
+      "unmeasured": 1
+    }
+  },
+  "relay_trust_and_governor": {
+    "owner": "4444J99/organvm-ci-relay#3 and #30",
+    "default": "6766fcc70f0c383ca2ddf70e7d6da0cbec7eeafa",
+    "candidate": "8d270867578fb8696578c20167ea0abe4b865238",
+    "candidate_state": "OPEN MERGEABLE UNSTABLE",
+    "main_protected": false,
+    "rulesets": [],
+    "acceptance": "independent trust-root promotion, isolated governor deployment, branch protection, repository rulesets, and protected positive/adversarial canaries remain with the existing owners"
+  },
+  "six_target_receipts": {
+    "ledger": "c78d0d7f34a491b825364a997d953a1e907406e4",
+    "current_defaults_unchanged": true,
+    "defaults": {
+      "organvm/process-environment-enactment": "ffebb6fa1020098e18020f6a4a845cf933c0df3c",
+      "organvm/organvm-engine": "bd223cfc9f2ee90782d6182101e849a6f97e0c99",
+      "organvm/the-thing-without-a-name": "73da6dc1c4339c9cc75c8253c7ef5173e4091256",
+      "organvm/laurea": "faf6c5f67130925518233f5f99a76182b544fb85",
+      "organvm/learning-resources": "b5f3aba021238135a12497a121f78b3ec2985eb0",
+      "organvm/alchemical-synthesizer": "8de2bd7bdbc075a8971e5de224bed5d020b0d8f4"
+    },
+    "result": "current-default coverage remains four successes and two executed failures; not six passing targets"
+  },
+  "integration_owners": [
+    "organvm/.github#26 OPEN DRAFT at f58f585d3ea71f666744fda6b32eb345a29707fe",
+    "organvm-iv-taxis/schema-definitions#19 OPEN at 06326aa548f6c4fc9dd01bead88a5f5132b6445e",
+    "organvm/organvm-corpvs-testamentvm#553 OPEN DRAFT at 2b40a63543cf7bf957e7cd278a72e9d97e0443c8",
+    "organvm/editorial-standards#12 OPEN DRAFT at b08f55d687e02e503c81406c03500dffa0999b89",
+    "organvm/laurea#10 OPEN at 7df6eda7393358846f813fc5a7487a356476d1e3",
+    "organvm/alchemical-synthesizer#47 OPEN at 6ebca82635ca37d2e6fd9d4d7d125a6e16dfea0a",
+    "organvm/learning-resources#11 OPEN at 9aafd48524d34269233bea0dad8d1f794a4eede9",
+    "organvm/hospes#1 OPEN at 5615b7737ff1c2ee572077a8e147fdeb80052cee"
+  ],
+  "execution_envelope": {
+    "capsule_deadline_epoch": 1789598650,
+    "conduct_registration": "active human-protected session keepalive",
+    "child_dispatch": "not attempted because the launched provider intentionally has no authenticated broker token; hidden native fanout remained fail-closed",
+    "host_admission": {
+      "allowed": false,
+      "reason": "swap-fraction",
+      "swap_fraction": 0.35543090815190226
+    },
+    "provider_headroom": "invalid for routing: the local usage receipt is stale and no authenticated live conduct capability readback is available inside the provider",
+    "substrate": "resource envelope unavailable without a selected conduct resource graph; direct /Volumes inspection found no mounted external data volume"
+  },
+  "retained_gates": {
+    "merge": "operator-owned after source review",
+    "deployment": "operator-owned runtime or host mutation",
+    "credentials": "isolated governor binding remains in its credential owner",
+    "server_controls": "relay branch protection and rulesets remain with the relay owner",
+    "public_send": "no issue or pull-request comment was posted"
+  },
+  "claims_not_made": [
+    "PR 2669 merged",
+    "background census deployed",
+    "naturally scheduled repaired-runtime acceptance",
+    "relay governor active or protected",
+    "six targets passing",
+    "heavy scoped verification passed",
+    "estate green",
+    "idempotent fixed point"
+  ]
+}
