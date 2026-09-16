@@ -927,5 +927,31 @@
     "healthy": 0,
     "active_leases": 0,
     "autonomous_active_leases": 0
+  },
+  "resumed_estate_census": {
+    "status": "partial-deadline-exhausted",
+    "deadline_seconds": 600,
+    "connection_results": 904,
+    "repositories_with_results": 226,
+    "connection_results_by_kind": {
+      "branches": 226,
+      "checks": 226,
+      "issues": 226,
+      "pull_requests": 226
+    },
+    "exhaustive_connections_by_kind": {
+      "branches": 226,
+      "checks": 226,
+      "issues": 226,
+      "pull_requests": 226
+    },
+    "observed_nodes_by_kind": {
+      "branches": 5992,
+      "checks": 1184,
+      "issues": 1577,
+      "pull_requests": 551
+    },
+    "private_cursor_sha256": "22b4798ef81d44cfbb6cc3acb3d394793bb8bdcef139f81fbb72eed584b830bc",
+    "recovery": "resume existing census cursor; no denominator completion claim"
   }
 }

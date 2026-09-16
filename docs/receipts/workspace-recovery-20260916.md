@@ -33,14 +33,14 @@ Worker keeper tests 66 passed; Worker inventory tests 19 passed; Worker recovery
 Existing verifier parallel and CI-hardening fixtures passed. Python type checking passed
 for 185 CLI source files. Instruction and parameter drift checks passed after corrections.
 
-The resumed implementation passed 70 Worker keeper/recovery tests, 11 recovery/cache/retirement tests, 35 dispatch-identity/fanout tests, and the Python protocol/restart/initialization tests. The scoped batch passed 32 of 34 cheap gates; the two fixture failures were corrected, and their full gates then passed (144 and 61 tests). Heavy verification was denied by host admission with `swap-fraction`, exit 75. No admission override was used. This checkpoint is not eligible for merge or deployment.
+The resumed implementation passed 70 Worker keeper/recovery tests and a combined 93-test Python recovery/cache/retirement, protocol/restart, initialization, dispatch-identity and fanout batch. The scoped batch passed 32 of 34 cheap gates; the two fixture failures were corrected, and their full gates then passed (144 and 61 tests). Heavy verification was denied by host admission with `swap-fraction`, exit 75. No admission override was used. This checkpoint is not eligible for merge or deployment.
 
 ## Explicit remaining work
 
 1. Finish adversarial end-to-end producer coverage, including external chamber tooling and every remote provider launch/cancellation path; the repository scan is not proof of the entire estate. Add HTTP admission and legacy/deferred restart scenarios.
 2. Broaden cache reuse only with declared deterministic dependency closures; current reusable results remain syntax-only. Retain relevant live integration/deployment predicates.
 3. Complete the full implicated fixture/deployment verification when host admission permits; the last blocker is `swap-fraction`. Extend release retirement beyond local dispatch to all owning lifecycles and audit scratch-root configuration.
-4. Complete home/configured-root/administered-organization inventory and per-item dispositions. The bounded GitHub census is in progress with resumable private cursor evidence. Preserve retained dirty/ignored/unique material through its existing custody owners before considering further retirement.
+4. Complete home/configured-root/administered-organization inventory and per-item dispositions. The GitHub census exhausted its 600-second allowance with 904 connection results checkpointed privately; the accompanying JSON records measured subsets and the cursor digest. The estate denominator remains incomplete. Preserve retained dirty/ignored/unique material through its existing custody owners before considering further retirement.
 5. Deploy the reviewed keeper policy and source changes through existing release rails and verify live denial and concurrency receipts. Apply the reviewed managed template through chezmoi. Local observe mode remains in effect; merging either PR must not resume unrestricted dispatch.
 
 Checkpoint is bounded by the requested attempt limit. Resume only this approved recovery outcome,
