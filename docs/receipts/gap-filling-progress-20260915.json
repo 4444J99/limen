@@ -329,5 +329,18 @@
       "new snapshot candidates held",
       "broker-owned transitions only"
     ]
+  },
+  "decorum_coverage_verification": {
+    "code_head": "08801b5b7",
+    "cheap_gates_passed": 34,
+    "focused_cases_passed": 9,
+    "heavy_admitted": true,
+    "cli_passed": 7708,
+    "cli_skipped": 2,
+    "cli_failed": 1,
+    "failure": "closeout fixture timeout",
+    "fixture_repair": "isolated real Git repository and custody roots; unchanged timeout",
+    "focused_closeout_cases_passed": 2,
+    "full_suite_after_fixture_repair": "pending"
   }
 }

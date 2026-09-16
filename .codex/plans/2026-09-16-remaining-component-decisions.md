@@ -269,3 +269,17 @@ Unmeasured sweeps cannot auto-close absent findings or mark recurrence records
 cleared. The public face and CLI distinguish incomplete coverage from green.
 Hermetic tests exercise these paths with temporary state and a mocked GitHub
 reader; no real messages, issues, captures or recurrence state were changed.
+
+## Admitted full-suite result and closeout fixture isolation
+
+At 08801b5b7 all 34 cheap gates passed, including nine DECORVM cases. Host
+admission then allowed the full CLI suite: 7,708 passed, two skipped, one failed
+in 203.64 seconds. The remaining failure was the known 30-second closeout
+fixture timeout. The earlier paired-custody failure did not recur in this batch.
+
+Inspection found that the fixture's Git shim fabricated only clean/upstream
+answers while forwarding inventory calls into the operator checkout. It now
+uses a real temporary repository with a commit and upstream, plus isolated
+worktree/custody inputs. Every production closeout check still runs; no timeout
+was raised and no production predicate was weakened. Both focused closeout
+cases pass in 8.54 seconds. Full-suite confirmation remains required.
