@@ -396,6 +396,11 @@ gates:
     paths: ["his-hand-levers.json", "scripts/check-his-hand.py", "scripts/lever-classify.py", "scripts/lever-decision-report.py", "scripts/insight-route.py", "cli/src/limen/observatory/lever.py", "cli/tests/test_check_his_hand.py", "cli/tests/test_lever_classify.py"]
     owner: observe
     note: "The his-hand registry must be structurally readable: unique IDs, enum statuses, required intent fields, and parseable non-future diagnosis timestamps. Diagnosis age is derived at read time. The classifier remains the implementation decision: open levers are either irreducible sovereignty or explicit design debt; no mass closure or deletion is implied."
+  board-publication-acceptance-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_board_publication_live.py -q"
+    paths: ["scripts/check-board-publication-live.py", "scripts/validate-task-board.py", "cli/tests/test_board_publication_live.py", "web/worker/src/conduct/private-board.js", "cli/src/limen/conduct/client.py"]
+    owner: governance
+    note: "Read-only current-default aggregate/private-count acceptance rejects source movement, malformed custody, and leaked task material without publishing private values. Live reads remain explicit and are not run by CI."
   stale-claim-ownership-test:
     owner: runtime
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_stale_claims.py cli/tests/test_dispatch.py cli/tests/test_jules_remote.py cli/tests/test_jules_session_absence_probe.py -q -k 'stale or absence'"
