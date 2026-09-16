@@ -25,7 +25,7 @@
     "observation-feed": {"owner":"cloud_or_broker","timeout_seconds":90,"receipt":"cloud-routine exact-head receipt","predicate":"feed digest is current"},
     "launch-agent-liveness": {"owner":"scheduled_contract","timeout_seconds":10,"receipt":"Domus heartbeat verification receipt","predicate":"label and plist are either jointly absent for containment or jointly present and Rule #55a compliant; legacy descendants remain absent"},
     "background-items-census": {"owner":"observe_host","timeout_seconds":30,"receipt":"observe-once counts receipt","predicate":"background census succeeds"},
-    "sensor-canary": {"owner":"observe_host","timeout_seconds":30,"receipt":"observe-once counts receipt","predicate":"canary predicate succeeds"},
+    "sensor-canary": {"owner":"observe_host","timeout_seconds":30,"receipt":"observe-once counts receipt","predicate":"every current scheduled probe has a fresh exact-runtime execution receipt; other owners remain explicitly unmeasured"},
     "orphan-watcher": {"owner":"observe_host","timeout_seconds":30,"receipt":"observe-once counts receipt","predicate":"no owned orphan is active"},
     "tcc-track-c": {"owner":"observe_host","timeout_seconds":60,"receipt":"observe-once counts receipt","predicate":"TCC receipt is current"},
     "dialogs-silenced": {"owner":"observe_host","timeout_seconds":30,"receipt":"observe-once counts receipt","predicate":"dialog census succeeds"},
