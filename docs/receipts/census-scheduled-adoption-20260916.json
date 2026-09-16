@@ -1,0 +1,40 @@
+{
+  "schema": "limen.scheduled_adoption_observation.v1",
+  "recorded_at": "2026-09-16T04:50:50.673713+00:00",
+  "predicate": "python3 scripts/check-heartbeat-rollout.py --require-active --expected-sha a60175462bee077d99544b2133d8f662f9b1c3f4",
+  "exit_code": 0,
+  "result": "heartbeat-rollout: PASS \u2014 44 rungs, active proof satisfied",
+  "fires": [
+    {
+      "run_id": "8c5f1574f28445ffbb350d052602b028",
+      "observed_at": "2026-09-16T04:34:06Z",
+      "observed_epoch": 1789533246.866561,
+      "runtime_sha": "a60175462bee077d99544b2133d8f662f9b1c3f4",
+      "runtime_digest": "d107f51ba498a09214d153e259260fd467b98c144ee7a0e39351ab94f4b08ee5",
+      "status": "finding",
+      "surviving_descendant_count": 0,
+      "disabled": false
+    },
+    {
+      "run_id": "00f714d1519d4facaf40ef9f35253a2a",
+      "observed_at": "2026-09-16T04:39:08Z",
+      "observed_epoch": 1789533548.632158,
+      "runtime_sha": "a60175462bee077d99544b2133d8f662f9b1c3f4",
+      "runtime_digest": "d107f51ba498a09214d153e259260fd467b98c144ee7a0e39351ab94f4b08ee5",
+      "status": "finding",
+      "surviving_descendant_count": 0,
+      "disabled": false
+    },
+    {
+      "run_id": "fe18f6db00a1493a95908416e39ad3bb",
+      "observed_at": "2026-09-16T04:44:24Z",
+      "observed_epoch": 1789533864.930013,
+      "runtime_sha": "a60175462bee077d99544b2133d8f662f9b1c3f4",
+      "runtime_digest": "d107f51ba498a09214d153e259260fd467b98c144ee7a0e39351ab94f4b08ee5",
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "disabled": false
+    }
+  ],
+  "scope": "Observed three-fire adoption of a60175462; findings remain visible. Later registry change c11d749c is not installed by this receipt."
+}
