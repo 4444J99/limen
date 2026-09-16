@@ -4176,7 +4176,8 @@
         "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-HOSPES-PUBLISH-CONSENT"
+          "his-hand-levers.json#L-HOSPES-PUBLISH-CONSENT",
+          "docs/receipts/hospes-repository-scope-20260916.json"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4188,7 +4189,9 @@
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
+        "dependencies": [
+          "Public repository 1352908786 exists separately from private operations 1298849497; observed visibility does not establish participant consent."
+        ],
         "remaining_human_action": "Specific publication and participant consent.",
         "historical_gate_requires_verification": null,
         "decision_status": "chosen_pending_evidence"
@@ -4218,7 +4221,8 @@
         "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-HOSPES-PILOT-RECEIPTS"
+          "his-hand-levers.json#L-HOSPES-PILOT-RECEIPTS",
+          "docs/receipts/hospes-repository-scope-20260916.json"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4226,11 +4230,13 @@
         ],
         "owner": "HOSPES full completion campaign (limen #2401, plan docs/plans/2026-08-14-hospes-full-done.md)",
         "acceptance": {
-          "condition": "organvm/hospes#9 closure; the board row GH-organvm-hospes-9 moves needs_human -> done on the receipt chain",
+          "condition": "Private operations repository 1298849497 issue #9 requires the actual participant receipt chain. Historical GH-organvm-hospes-9 remains broker-owned; public organvm/hospes#9 is not its owner.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
+        "dependencies": [
+          "Resolve operations evidence by repository ID 1298849497; public repository ID 1352908786 is a separate scope."
+        ],
         "remaining_human_action": "Actual participation and authorized recording or correspondence.",
         "historical_gate_requires_verification": null,
         "decision_status": "chosen_pending_evidence"
@@ -4260,7 +4266,8 @@
         "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-HOSPES-CUSTODY-TRANSFER"
+          "his-hand-levers.json#L-HOSPES-CUSTODY-TRANSFER",
+          "docs/receipts/hospes-repository-scope-20260916.json"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4272,7 +4279,9 @@
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
+        "dependencies": [
+          "Resolve operations evidence by repository ID 1298849497; public repository ID 1352908786 is a separate scope."
+        ],
         "remaining_human_action": "Applicable transfer authorization and account capability.",
         "historical_gate_requires_verification": null,
         "decision_status": "chosen_pending_evidence"
