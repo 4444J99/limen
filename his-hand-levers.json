@@ -1628,11 +1628,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Enforce reserved-capacity receipts and provider-neutral execution requirements at session entry using live catalog capabilities; preserve explicit human overrides and source-owned hook deployment.",
+        "rationale": "The historical model-name snippet cannot define current capacity or capability. Unknown model metadata remains unmeasured, and a warning-only hook cannot prove enforcement.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-FABLE-GUARD-ARM"
+          "his-hand-levers.json#L-FABLE-GUARD-ARM",
+          "docs/architecture/dynamic-provider-selection.md",
+          "scripts/fable-session-guard.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1640,14 +1642,18 @@
         ],
         "owner": "closeout 2026-07-09 (fable runtime cap)",
         "acceptance": {
-          "condition": "durable interactive Fable guard (no session silently defaults to Fable)",
+          "condition": "Session entry binds native identity, selected live capability, budget and reserved-capacity receipt; unknown metadata remains visible and no unauthorized reserved execution starts.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Live provider capability and budget authority",
+          "Reserved-tier acceptance receipt",
+          "Source-owned native-session hook adoption"
+        ],
+        "remaining_human_action": "Approve only an actual enforced settings-policy change or explicitly requested spending; do not substitute a fixed model-name mapping.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1664,11 +1670,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Resolve each native lane’s active configuration and enforce its registry-owned execution constraints using current provider metadata or provider Auto; retain explicit operator overrides as overrides.",
+        "rationale": "The existing opening-floor check may return success for a parked breach. That result is disclosure, not proof of compliant execution, and historical model or effort pins are not current authority.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-LANE-OPENING-FLOOR"
+          "his-hand-levers.json#L-LANE-OPENING-FLOOR",
+          "docs/architecture/dynamic-provider-selection.md",
+          "scripts/session-opening-floor.py",
+          "scripts/agent_config_paths.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1676,14 +1685,18 @@
         ],
         "owner": "F6 of the cadence-guard arc (plan docs/plans/2026-08-07-cadence-guard-fail-toward-warning.md, parent issue #1990)",
         "acceptance": {
-          "condition": "every interactive lane opens at or below a declared cadence ceiling, not just Claude",
+          "condition": "Every supported interactive lane has observed active configuration and execution evidence within declared constraints; parked, unknown and unresolved rows remain incomplete.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Active configuration path resolution",
+          "Live capability metadata",
+          "Execution-profile constraints"
+        ],
+        "remaining_human_action": "Only a deliberate product or spending override requires the operator; routine selection derives from the current authority.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3303,11 +3316,15 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare principal changes from the credential-owned registry, preserve existing valid native principals and keep inventory_collector isolated; verify each intended role against the deployed broker after an authorized secret update.",
+        "rationale": "The merged helper now rejects collector-role mixing. A helper test or Worker code deployment does not establish that required credentials and role assignments are provisioned.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CONDUCT-REGISTRY-DEPLOY"
+          "his-hand-levers.json#L-CONDUCT-REGISTRY-DEPLOY",
+          "scripts/deploy-conduct-registry.sh",
+          "scripts/merge-conduct-principal-registry.py",
+          "web/worker/src/conduct/auth.js",
+          "https://github.com/4444J99/limen/pull/2626"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3315,14 +3332,18 @@
         ],
         "owner": "GITVS-UNCAPPED-PR-DEBT-0715 estate drain (docs/plans/2026-08-07-pr-debt-estate-drain.md, issue #1950) — discharge chain composed and predicate exit 0 verified; broker rejected the relay because the live Worker's LIMEN_CONDUCT_PRINCIPAL_REGISTRY secret predates the per-agent bearer rotation in ~/.limen.env (claude-direct 401s), and the auto-mode classifier correctly blocks agent sessions from writing production secrets",
         "acceptance": {
-          "condition": "the broker discharge of the one operator-paused task on the board (making 'nothing is paused' literally true), plus every future per-agent authenticated conduct submission (claude/agy/gemini/opencode direct principals)",
+          "condition": "Each required native principal authenticates with intended roles; collector access remains exclusive, other roles are rejected for inventory ingestion, and existing valid lanes retain access.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Credential-owned principal registry",
+          "Authorized production secret deployment",
+          "Per-role authenticated readback"
+        ],
+        "remaining_human_action": "Supply or authorize the exact missing production principal credential and assignment through the credential owner; never widen an ordinary bearer into collector authority.",
         "historical_gate_requires_verification": "production secret write on the live Worker — classifier-blocked for agent sessions; the script reads bearers from ~/.limen.env and pipes to wrangler, printing nothing",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3348,11 +3369,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Classify only registry-scoped mechanical arrivals after fresh per-item checks, with bounded effects and durable receipts. Preserve human-authored items for their owner and keep dependency merge authority separate.",
+        "rationale": "The current script stops before GitHub calls if estate scope is unreadable or empty. Historical zero-untyped counts and armed flags cannot prove current coverage or safe activation.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-PR-AUTOTYPE-ARM"
+          "his-hand-levers.json#L-PR-AUTOTYPE-ARM",
+          "scripts/pr-lifecycle-autotype.py",
+          "cli/tests/test_pr_lifecycle_autotype.py",
+          "institutio/github/lifecycle.yaml"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3360,14 +3384,19 @@
         ],
         "owner": "GITVS-UNCAPPED-PR-DEBT-0715 /verify finding (issue #1978, docs/plans/2026-08-07-pr-autotype-rung.md): predicate went 0→2 untyped within the hour of discharge because arrivals had no typing organ; sensor github-pr-autotype + scripts/pr-lifecycle-autotype.py are that organ, dry-run until this lever",
         "acceptance": {
-          "condition": "the estate drain's zero-untyped state becomes self-maintaining — the one-shot drain (283 PRs typed 2026-08-07) gains its continuous loop-closer, and the morning stale-pr-sweep stops re-reporting a small nonzero untyped count every arrival",
+          "condition": "Complete scope is measured, failed reads remain unknown, only eligible mechanical items receive the derived lifecycle label, and applied labels are read back with exact repository/PR identity.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Complete current estate scope",
+          "Fresh dry-run observations",
+          "Bounded runtime ownership",
+          "Per-item current state"
+        ],
+        "remaining_human_action": "Retain only an enforced persistence-policy or external-write authorization gate, bound to reviewed scope and effect limits.",
         "historical_gate_requires_verification": "persistence-arming (writing LIMEN_*=1 to ~/.limen.env, what the beat reads) is classifier-denied to the session — only you can persist it",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3393,11 +3422,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Use the desired/observed MCP estate reducer and Domus-owned narrow repair; resolve active client configurations, keep unsupported and authentication-needed routes visible, and require fresh native-client canaries after repair.",
+        "rationale": "The current command delegates to mcp_estate and removed global reinstall/cache deletion. Historical valve instructions do not describe the current repair authority.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-MCP-BOOT-HEAL-ARM"
+          "his-hand-levers.json#L-MCP-BOOT-HEAL-ARM",
+          "scripts/mcp-server-boot.py",
+          "scripts/mcp_estate.py",
+          "spec/scheduled-process-contracts.json"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3405,14 +3437,19 @@
         ],
         "owner": "/verify observation while closing the cadence-guard arc (#1990). Measured 2026-08-07: 4 of 16 configured servers fail to boot (codex/conductor, codex/voice-scorer, claude/conductor, claude/voice-scorer). IMPORTANT and deliberate: arming heals 0 of those 4 — their root cause is an unpinned `mcp` major (2.0.0) that removed Server.list_tools inside the per-capability venvs, which is neither a dropped entry nor an npx cache. That defect is owned separately by issue #2045, which also carries the finding that the sensor's escalation text prescribes a cure not covering its own most common failure. This lever is about the failure modes the effector DOES cover, so the next occurrence of those self-heals.",
         "acceptance": {
-          "condition": "the local-MCP-boot invariant gains its effector — a dropped or cache-crashed server self-heals on the next beat rather than sitting red until someone reads the log. Today the sensor is a signal with no consumer: it reports failures and nothing acts on them.",
+          "condition": "Full desired/observed estate has current native-client and gateway evidence; missing adapters, configuration drift, unavailable probes and authentication needs remain visible. Any repair stays within Domus scope and has post-repair readback.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Domus registered repair contract",
+          "Current desired configuration policy",
+          "Broker-admitted native canary receipts",
+          "Gateway reconciliation"
+        ],
+        "remaining_human_action": "Complete only a specifically diagnosed login or OS/configuration privilege grant; do not bulk-clear caches or bypass broker admission.",
         "historical_gate_requires_verification": "auto-writing agent CLI config files is an authorization, not a default (the parameters registry's own words, mirroring LIMEN_LAUNCHAGENT_HEAL). Persistence-arming — writing LIMEN_*=1 into ~/.limen.env, what the beat actually reads — is classifier-denied to the session, and an agent arming its own config writer is the self-modification boundary. Only you can persist it.",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
