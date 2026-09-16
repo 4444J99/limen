@@ -31,8 +31,16 @@ includes Jules, Codex Cloud and the current 45-minute GitHub Actions agent job.
 A bounded provider adapter must prove deadline enforcement before admission; a
 worker restart cannot replace a missing original deadline with a new allowance.
 
-The task release routes are local dispatch, Jules landing and ship-docs, followed
+The task release routes are local dispatch, Jules landing, fanout landing and ship-docs, followed
 by the existing worktree reclaimer for interrupted or retained cleanup. Ignored
 payloads require custody proof even when their directory names resemble caches.
 The tool-cache reclaimer owns its separate generated-cache allowlist; no blanket
 home-folder relocation or ignored-file purge is a task-release action.
+
+Fanout landing roots are private, admitted and deterministic per work identity under
+the configured worktree root. A failed provider application stays available for custody
+recovery instead of disappearing with a temporary directory. A successful landing saves
+its exact run receipt atomically before retiring disposable copies. Cleanup restart
+revalidates remote PR/head evidence, resumes the existing detach lifecycle and consumes
+no replacement checkout reservation. The supporting clone remains an explicitly indexed
+recovery anchor; unfinished payloads are never discarded to manufacture a clean release.

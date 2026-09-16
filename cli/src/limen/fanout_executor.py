@@ -418,8 +418,102 @@ def _run_predicate(packet: dict[str, Any], worktree: Path) -> subprocess.Complet
             raise FanoutExecutionError(f"predicate sandbox failed: {exc}") from exc
 
 
+def _landing_root(packet: dict[str, Any]) -> Path:
+    """Reserve a durable landing root before cloning; never erase failed results."""
+    from limen.inventory_admission import reserve_growth
+    from limen.worktree_roots import default_worktrees_root
+
+    base = Path(os.environ.get("LIMEN_WORKTREES") or default_worktrees_root())
+    root = base / f"fanout-land-{canonical_hash(packet['work_id'])[:24]}"
+    if root.exists() or root.is_symlink():
+        if not root.is_symlink():
+            try:
+                prior = json.loads((root / "landing-custody.json").read_text())
+                if (
+                    prior.get("work_id") == packet["work_id"]
+                    and prior.get("work_key") == packet["work_key"]
+                    and prior.get("state") in {"release-pending", "remote-receipt-recorded"}
+                    and prior.get("run_receipt")
+                ):
+                    return root
+            except (OSError, ValueError):
+                pass
+        raise FanoutExecutionError(f"retained landing requires custody recovery: {root}")
+    reserve_growth("worktree", str(root / "repository"), work_key=packet["work_key"])
+    root.mkdir(parents=True, exist_ok=False, mode=0o700)
+    (root / "landing-custody.json").write_text(
+        json.dumps(
+            {
+                "work_id": packet["work_id"],
+                "work_key": packet["work_key"],
+                "owner": "fanout-result-landing",
+                "state": "preserved-unfinished",
+                "cleanup_owner": "scripts/reclaim-worktrees.py",
+            },
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    return root
+
+
+def _release_landing_copies(root: Path, packet: dict[str, Any], receipt: RunReceiptV1) -> None:
+    from limen.worktree_abandonment import retire_released_worktree
+
+    repository = packet["execution"]["owner_repository"]
+    head = receipt.observed_heads_after[repository]
+    branch = packet["execution"]["topic_branch"]
+    clone = root / "repository"
+    live_root = Path(
+        os.environ.get("LIMEN_LIVE_ROOT") or os.environ.get("LIMEN_ROOT") or Path.home() / "Workspace/limen"
+    )
+    custody = {
+        "work_id": packet["work_id"],
+        "work_key": packet["work_key"],
+        "owner": "fanout-result-landing",
+        "state": "release-pending",
+        "run_receipt": receipt.model_dump(mode="json"),
+        "cleanup_owner": "scripts/reclaim-worktrees.py",
+    }
+    marker = root / "landing-custody.json"
+    pending = marker.with_suffix(".pending")
+    pending.write_text(json.dumps(custody, sort_keys=True) + "\n")
+    os.replace(pending, marker)
+    releases = []
+    for copy in (root / "worktree", root / f"verify-{canonical_hash(head)[:16]}"):
+        releases.append(
+            retire_released_worktree(
+                clone,
+                copy,
+                expected_head=head,
+                remote_ref=f"refs/heads/{branch}",
+                receipt_root=live_root / "logs/worktree-abandonment",
+            )
+        )
+    pending.write_text(
+        json.dumps(
+            {
+                "work_id": packet["work_id"],
+                "work_key": packet["work_key"],
+                "owner": "fanout-result-landing",
+                "state": "remote-receipt-recorded",
+                "run_receipt": receipt.model_dump(mode="json"),
+                "receipt_id": receipt.receipt_id,
+                "head": head,
+                "branch": branch,
+                "releases": releases,
+                "clone_disposition": "retained-remote-backed-recovery-anchor",
+                "cleanup_owner": "scripts/reclaim-worktrees.py",
+            },
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    os.replace(pending, marker)
+
+
 class PatchLandingMixin:
-    """Apply one provider result in a disposable clone and leave only remote custody."""
+    """Apply provider results with durable local custody until retirement is proven."""
 
     def apply_result(self, provider_run_id: str, worktree: Path) -> None:
         raise NotImplementedError
@@ -441,38 +535,58 @@ class PatchLandingMixin:
         allowed = tuple(str(path) for path in packet["authority"]["path_prefixes"])
         if not attempt.provider_run_id or not attempt.provider_run_url:
             raise FanoutExecutionError("terminal provider attempt has no exact run receipt")
-        if remote_default_head(repository) != exact_base:
-            raise StaleResultError(f"{repository} default head moved from exact base {exact_base}")
-
-        with tempfile.TemporaryDirectory(prefix="limen-fanout-land-") as temporary:
-            root = Path(temporary)
-            clone = root / "repository"
-            worktree = root / "worktree"
-            _checked(
-                ["gh", "repo", "clone", repository, str(clone), "--", "--filter=blob:none", "--no-checkout"],
-                timeout=300,
-            )
-            _checked(["git", "fetch", "origin", exact_base], cwd=clone, timeout=300)
-            remote_branch = _run(["git", "ls-remote", "--exit-code", "--heads", "origin", branch], cwd=clone)
-            if remote_branch.returncode == 0:
-                return self._receipt_from_existing(node, attempt, clone, branch, exact_base, allowed)
-            if remote_branch.returncode != 2:
-                detail = (remote_branch.stderr or remote_branch.stdout).strip()
-                raise FanoutExecutionError(f"remote branch probe failed: {detail[-800:]}")
-            from limen.inventory_admission import reserve_growth
-
-            reserve_growth("branch", f"{repository}:{branch}", work_key=packet["work_key"])
-            reserve_growth("worktree", str(worktree), work_key=packet["work_key"])
-            _checked(["git", "worktree", "add", "-b", branch, str(worktree), exact_base], cwd=clone, timeout=180)
-            return self._land_new_result(
-                node,
-                attempt,
-                worktree,
+        root = _landing_root(packet)
+        prior = json.loads((root / "landing-custody.json").read_text())
+        if prior.get("run_receipt"):
+            receipt = RunReceiptV1.model_validate(prior["run_receipt"])
+            if receipt.run_id != node["run_id"] or receipt.receipt_id != f"receipt-{attempt.attempt_id}":
+                raise FanoutExecutionError("retained landing receipt belongs to another attempt")
+            pr_url = next((check.url for check in receipt.checks if check.name == "pull-request"), None)
+            if not pr_url:
+                raise FanoutExecutionError("retained landing has no pull-request receipt")
+            self._verify_remote_receipts(
                 repository,
                 branch,
+                _assert_topic_branch(repository, branch),
+                receipt.observed_heads_after[repository],
+                pr_url,
                 exact_base,
-                allowed,
             )
+            _release_landing_copies(root, packet, receipt)
+            return receipt
+        if remote_default_head(repository) != exact_base:
+            raise StaleResultError(f"{repository} default head moved from exact base {exact_base}")
+        clone = root / "repository"
+        worktree = root / "worktree"
+        _checked(
+            ["gh", "repo", "clone", repository, str(clone), "--", "--filter=blob:none", "--no-checkout"],
+            timeout=300,
+        )
+        _checked(["git", "fetch", "origin", exact_base], cwd=clone, timeout=300)
+        remote_branch = _run(["git", "ls-remote", "--exit-code", "--heads", "origin", branch], cwd=clone)
+        if remote_branch.returncode == 0:
+            receipt = self._receipt_from_existing(node, attempt, clone, branch, exact_base, allowed)
+            _release_landing_copies(root, packet, receipt)
+            return receipt
+        if remote_branch.returncode != 2:
+            detail = (remote_branch.stderr or remote_branch.stdout).strip()
+            raise FanoutExecutionError(f"remote branch probe failed: {detail[-800:]}")
+        from limen.inventory_admission import reserve_growth
+
+        reserve_growth("branch", f"{repository}:{branch}", work_key=packet["work_key"])
+        reserve_growth("worktree", str(worktree), work_key=packet["work_key"])
+        _checked(["git", "worktree", "add", "-b", branch, str(worktree), exact_base], cwd=clone, timeout=180)
+        receipt = self._land_new_result(
+            node,
+            attempt,
+            worktree,
+            repository,
+            branch,
+            exact_base,
+            allowed,
+        )
+        _release_landing_copies(root, packet, receipt)
+        return receipt
 
     def _land_new_result(
         self,
@@ -1590,6 +1704,7 @@ def land_succeeded_attempts(
             {
                 "run_id": node["run_id"],
                 "attempt_id": attempt.attempt_id,
+                "run_receipt": receipt.model_dump(mode="json"),
                 "receipt_id": receipt.receipt_id,
                 "provider_run_url": attempt.provider_run_url,
                 "pr": next(check.url for check in receipt.checks if check.name == "pull-request"),
