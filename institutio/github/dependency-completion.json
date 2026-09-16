@@ -1,0 +1,12 @@
+{
+  "schema": "limen.dependency_completion_policy.v1",
+  "installed": false,
+  "principal_id": "dependency-completion-observer",
+  "max_records": 100,
+  "repositories": {
+    "1154799938": {
+      "coordinate": "organvm/.github",
+      "default_branch": "main"
+    }
+  }
+}
