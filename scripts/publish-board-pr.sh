@@ -77,8 +77,9 @@ if [ "$DRY_RUN" = "1" ]; then
   exit 0
 fi
 
-body="$(
-  cat <<EOF
+body_file="$(mktemp)"
+trap 'rm -f "$body_file"' EXIT
+cat >"$body_file" <<EOF
 Carries the keeper's published board projection into \`$BASE\`.
 
 Opened by \`scripts/publish-board-pr.sh\` — the replacement for the PR-opening half of
@@ -97,7 +98,5 @@ This rung never merges: \`merge-policy.sh\` decides and the beat's merge rung ow
 
 Refs #1995
 EOF
-)"
-
-number="$(gh pr create --base "$BASE" --head "$BRANCH" --title "$TITLE" --body "$body" 2>&1 | tail -1)"
+number="$(gh pr create --base "$BASE" --head "$BRANCH" --title "$TITLE" --body-file "$body_file")"
 echo "publish-board-pr: opened $number"
