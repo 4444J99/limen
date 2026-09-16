@@ -48,3 +48,13 @@ pass. This does not implement authoritative acceptance-receipt ingestion; that
 remaining requirement stays with this component owner.
 
 Closeout correction verification: all 28 implicated scoped gates passed.
+
+## Dispatch evidence follow-through
+
+Failed PR reads now populate PR_UNMEASURED, not PR_MISSING. The observer returns
+77 and the board shows unknown coverage without counting it as recoverable work
+or printing a healthy verdict. Invalid/missing PR state is not guessed OPEN.
+Closeout loads code helpers from its own source directory while runtime state
+continues to use LIMEN_ROOT. Verification: 33 focused dispatch, healer and closeout
+tests, Ruff, classifier doctor, gate validation and diff hygiene passed. Existing
+unaffected verification receipts remain evidence; no full-suite rerun claimed.

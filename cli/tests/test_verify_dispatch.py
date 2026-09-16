@@ -223,3 +223,36 @@ def test_classification_includes_async_running_marker(tmp_path, monkeypatch):
     assert "MERGED" in ids("PR_MERGED")
     assert "RUNNING_ASYNC" in ids("DISPATCHED_RUNNING")  # live .running marker → not reopened
     assert "STRANDED" in ids("DISPATCHED_NO_PR")  # old, no marker → genuinely stranded
+
+
+def test_pr_read_failure_is_unmeasured_not_missing(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    board = {
+        "tasks": [
+            {
+                "id": "T",
+                "status": "dispatched",
+                "target_agent": "codex",
+                "dispatch_log": [{"session_id": "https://github.com/o/r/pull/1"}],
+            }
+        ]
+    }
+    (tmp_path / "tasks.yaml").write_text(yaml.safe_dump(board))
+    monkeypatch.setattr(m, "gh_pr_state", lambda *a: (False, None))
+    monkeypatch.setattr(sys, "argv", ["verify-dispatch", "--quiet"])
+    assert m.main() == 77
+    report = json.loads((tmp_path / "logs/dispatch-verify.json").read_text())
+    assert report["counts"]["PR_UNMEASURED"] == 1
+    assert report["counts"]["PR_MISSING"] == 0
+    assert report["counts"]["CHRONIC"] == 0
+
+
+def test_pr_probe_does_not_guess_open_from_missing_state(tmp_path, monkeypatch):
+    import subprocess
+
+    m = _load(tmp_path, monkeypatch)
+    for output in ("{}", "[]", '{"state":"UNKNOWN"}', "not json"):
+        monkeypatch.setattr(
+            m.subprocess, "run", lambda *a, output=output, **kw: subprocess.CompletedProcess(a, 0, output)
+        )
+        assert m.gh_pr_state("o", "r", "1") == (False, None)

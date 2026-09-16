@@ -372,8 +372,8 @@ gates:
     owner: ianva
     note: "Direct tunnel launch requires local unauthenticated rejection; a force flag cannot publish an open endpoint."
   closeout-evidence-test:
-    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_closeout_evidence.py -q"
-    paths: ["scripts/reconcile-closeouts.py", "scripts/tests/test_closeout_evidence.py", "scripts/verify-dispatch.py"]
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_closeout_evidence.py cli/tests/test_verify_dispatch.py -q"
+    paths: ["scripts/reconcile-closeouts.py", "scripts/tests/test_closeout_evidence.py", "scripts/verify-dispatch.py", "cli/tests/test_verify_dispatch.py", "scripts/board.py"]
     owner: governance
     note: "PR references establish neither executable acceptance nor missing-resource proof after a failed read."
   conduct-principal-merge-test:

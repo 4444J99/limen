@@ -181,6 +181,9 @@ def render(d, ticks, usage=None):
         for k, col in healthy:
             line += f"{C[col]}{names.get(k, k.lower())}:{integ.get(k, 0)}{C['x']}  "
         p(line)
+        unmeasured = integ.get("PR_UNMEASURED", 0)
+        if unmeasured:
+            p(f"  {C['y']}⚠ {unmeasured} PR read(s) unmeasured — restore evidence before recovery{C['x']}")
         actionable = sum(integ.get(k, 0) for k, _ in bad)
         if actionable:
             bl = "  "
@@ -190,7 +193,7 @@ def render(d, ticks, usage=None):
                     bl += f"{C[col]}⚠ {k.lower()}:{n}{C['x']}  "
             p(bl)
             p(f"  {C['gray']}{actionable} need heal (merged→done · closed/no-pr→reopen) — heal-dispatch.py{C['x']}")
-        else:
+        elif not unmeasured:
             p(f"  {C['g']}✓ no silent failures{C['x']}")
         nch = integ.get("CHRONIC", 0)
         if nch:
