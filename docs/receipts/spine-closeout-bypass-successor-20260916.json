@@ -156,6 +156,26 @@
       "confidence": "high"
     }
   },
+  "closure_predicates": {
+    "capsule": {
+      "command": "python3 docs/continuations/spine-closeout-20260916-bypass-successor/check.py",
+      "exit_code": 0,
+      "result": "clean, finite, protected bypass-all continuation capsule; estate completion unproven"
+    },
+    "credential_wall": {
+      "command": "python3 scripts/credential-wall.py --check",
+      "exit_code": 0,
+      "result": "all 29 secret atoms registered"
+    },
+    "no_tasks_on_me": {
+      "command": "bash scripts/no-tasks-on-me.sh",
+      "exit_code": 1,
+      "result": "30 landed branches remain eligible under the older branch-reap acceptance ledger",
+      "disposition": "not reaped because this capsule's current human instruction explicitly preserves branches, worktrees and inherited edits; no destructive cleanup was performed",
+      "owner": "docs/branch-reap-acceptance.jsonl and scripts/reap-branches.py"
+    },
+    "idempotent_fixed_point": false
+  },
   "retained_gates": {
     "merge": "operator-owned after source review",
     "deployment": "operator-owned runtime or host mutation",
