@@ -1804,6 +1804,13 @@ def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(t
         encoding="utf-8",
     )
     fake_codex.chmod(0o755)
+    conduct_capture = tmp_path / "conduct-register.txt"
+    fake_limen = fake_bin / "limen"
+    fake_limen.write_text(
+        '#!/usr/bin/env bash\nprintf "%s\\n" "$*" >> "$CONDUCT_CAPTURE"\n',
+        encoding="utf-8",
+    )
+    fake_limen.chmod(0o755)
     args_capture = tmp_path / "args.txt"
     prompt_capture = tmp_path / "prompt.txt"
     catalog_capture = tmp_path / "catalog.txt"
@@ -1813,6 +1820,14 @@ def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(t
         "SESSION_ARGS_CAPTURE": str(args_capture),
         "SESSION_PROMPT_CAPTURE": str(prompt_capture),
         "CATALOG_CAPTURE": str(catalog_capture),
+        "CONDUCT_CAPTURE": str(conduct_capture),
+        "LIMEN_CLI_BIN": str(fake_limen),
+        "LIMEN_CONDUCT_ENV_FILE": str(tmp_path / "missing-conduct-env"),
+        "LIMEN_CONDUCT_URL": "http://127.0.0.1:1",
+        "LIMEN_CONDUCT_TOKEN": "fixture-token",
+        "LIMEN_CONDUCT_KEEPALIVE_SECONDS": "1",
+        "LIMEN_CONDUCT_KEEPALIVE_RETRY_SECONDS": "1",
+        "LIMEN_CONDUCT_KEEPALIVE_POLL_SECONDS": "1",
     }
     launched = subprocess.run(
         [
@@ -1821,6 +1836,7 @@ def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(t
             "--autonomous",
             "--agent",
             "codex",
+            "--conduct",
             "--model",
             "fixture-sol",
             "--reasoning-effort",
@@ -1842,6 +1858,10 @@ def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(t
     assert launched.returncode == 0, launched.stdout + launched.stderr
     catalog_events = catalog_capture.read_text(encoding="utf-8").splitlines()
     assert catalog_events and set(catalog_events) == {"catalog"}
+    assert any(
+        "conduct register" in line and "--human-protected" in line
+        for line in conduct_capture.read_text(encoding="utf-8").splitlines()
+    )
     assert args_capture.read_text(encoding="utf-8").splitlines() == [
         "--model",
         "fixture-sol",
@@ -1876,6 +1896,7 @@ def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(t
             [
                 "bash",
                 str(ROOT / "scripts" / "start-worktree-session.sh"),
+                "--conduct",
                 "--model",
                 model,
                 "--reasoning-effort",
