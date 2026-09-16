@@ -130,17 +130,30 @@ def test_owners_derive_from_the_estate_authority_not_a_narrower_literal(monkeypa
     derived = mod.owners()
     authoritative = [str(o) for o in mod.GITVS.owners(mod.GITVS.load_estate())]
     assert set(derived) == set(authoritative)
-    assert len(derived) > len(mod.FALLBACK_OWNERS)
+    assert len(derived) > 2
 
 
-def test_owner_derivation_failure_is_loud_and_falls_back(monkeypatch, capsys):
+def test_owner_derivation_failure_stops_apply(monkeypatch, tmp_path, capsys):
     mod = _load()
+    derive = mod.owners
+    calls = _configure(mod, monkeypatch, tmp_path, search_rows=[], views={}, argv=["--apply"])
+    monkeypatch.setattr(mod, "owners", derive)
     monkeypatch.setattr(mod.GITVS, "load_estate", lambda: (_ for _ in ()).throw(OSError("estate gone")))
-    got = mod.owners()
-    assert got == list(mod.FALLBACK_OWNERS)
-    out = capsys.readouterr().out
-    assert "estate owner derivation FAILED" in out
-    assert "NARROWER" in out
+    assert mod.main() == 1
+    assert calls == []
+    assert _receipts(tmp_path)[0]["applied"] is False
+    assert "scope=UNKNOWN" in capsys.readouterr().out
+
+
+def test_empty_owner_scope_stops_apply(monkeypatch, tmp_path):
+    mod = _load()
+    derive = mod.owners
+    calls = _configure(mod, monkeypatch, tmp_path, search_rows=[], views={}, argv=["--apply"])
+    monkeypatch.setattr(mod, "owners", derive)
+    monkeypatch.setattr(mod.GITVS, "owners", lambda estate: [])
+    assert mod.main() == 1
+    assert calls == []
+    assert _receipts(tmp_path)[0]["outcome"] == "read-failed"
 
 
 # ---------------------------------------------------------------- the query

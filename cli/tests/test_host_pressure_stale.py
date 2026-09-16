@@ -9,12 +9,14 @@ import json
 import os
 import subprocess
 import sys
-import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "host-pressure-stale.py"
+# A fresh hosted runner may have less uptime than the stale fixture's age.
+# Keep producer and consumer on the same deterministic, sufficiently old boot clock.
+ACTIVE_NOW = 172800.0
 
 
 def run_stale(tmp_path: Path, env: dict | None = None, extra_args: list[str] | None = None):
@@ -30,7 +32,18 @@ def run_stale(tmp_path: Path, env: dict | None = None, extra_args: list[str] | N
     if env:
         child_env.update(env)
     return subprocess.run(
-        [sys.executable, str(SCRIPT), *(extra_args or [])], capture_output=True, text=True, env=child_env
+        [
+            sys.executable,
+            "-c",
+            "import runpy, sys, time; "
+            f"time.clock_gettime = lambda clock_id: {ACTIVE_NOW!r}; "
+            "sys.argv = sys.argv[1:]; runpy.run_path(sys.argv[0], run_name='__main__')",
+            str(SCRIPT),
+            *(extra_args or []),
+        ],
+        capture_output=True,
+        text=True,
+        env=child_env,
     )
 
 
@@ -39,7 +52,7 @@ def write_status(tmp_path: Path, sampled_at: datetime, completed_at: datetime | 
     seat.mkdir(parents=True, exist_ok=True)
     boot_identity = _load_watchdog()._boot_identity()
     age = max(0.0, (datetime.now(timezone.utc) - sampled_at).total_seconds())
-    active_now = time.clock_gettime(getattr(time, "CLOCK_UPTIME_RAW", time.CLOCK_MONOTONIC))
+    active_now = ACTIVE_NOW
     (seat / "status.json").write_text(
         json.dumps(
             {

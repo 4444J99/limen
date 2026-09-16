@@ -62,9 +62,9 @@ BASE_SCRIPT = Path(__file__).resolve().parent / "pr-lifecycle-manifest.py"
 ESTATE_SCRIPT = Path(__file__).resolve().parent / "pr-lifecycle-estate-manifest.py"
 GITVS_SCRIPT = Path(__file__).resolve().parent / "gitvs.py"
 
-# Last-resort scope if the estate authority cannot be read at all. Deliberately NOT a config
-# knob: a second declared owner list is exactly the divergence owners() exists to prevent.
-FALLBACK_OWNERS = ("organvm", "4444J99")
+
+class ScopeUnavailable(RuntimeError):
+    """The estate authority could not establish the complete owner scope."""
 
 
 def _load_sibling(name: str, path: Path):
@@ -95,13 +95,11 @@ def owners() -> list[str]:
     """
     try:
         derived = [str(o).strip() for o in GITVS.owners(GITVS.load_estate()) if str(o).strip()]
-    except Exception as exc:  # estate unreadable — say so; do not silently narrow the scope
-        print(
-            f"  pr-lifecycle-autotype: estate owner derivation FAILED ({type(exc).__name__}) — "
-            f"falling back to {','.join(FALLBACK_OWNERS)}; this scope is NARROWER than the predicate's"
-        )
-        return list(FALLBACK_OWNERS)
-    return derived or list(FALLBACK_OWNERS)
+    except Exception as exc:
+        raise ScopeUnavailable(f"estate owner derivation failed: {type(exc).__name__}") from exc
+    if not derived:
+        raise ScopeUnavailable("estate owner derivation returned empty scope")
+    return derived
 
 
 class _GhFailure:
@@ -298,7 +296,24 @@ def main() -> int:
 
     now = datetime.now(timezone.utc)
     stamp = now.isoformat(timespec="seconds")
-    owner_list = owners()
+    try:
+        owner_list = owners()
+    except ScopeUnavailable as exc:
+        _receipt(
+            {
+                "ts": stamp,
+                "repo": "",
+                "pr": 0,
+                "author": "",
+                "verdict": "read-failed",
+                "reason": str(exc),
+                "applied": False,
+                "outcome": "read-failed",
+                "paused": paused,
+            }
+        )
+        print(f"  pr-lifecycle-autotype: {mode} scope=UNKNOWN — {exc}; no effects attempted")
+        return 1
     cohort, cohort_ok = enumerate_untyped(AUTHORS, owner_list, gh, max_total=args.scan_max)
     human, human_ok = human_unlabeled_count(cohort, owner_list, gh, max_total=args.scan_max)
 
