@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "observed_at": "2026-09-16T08:37:04.283505+00:00",
+  "observed_at": "2026-09-16T10:31:58.962916+00:00",
   "scope": "Acceptance reconciliation for the full supplied gap-filling plan; not an estate completion estimate.",
   "owner": "Codex / gap-filling implementation contract",
   "status": "in_progress",
-  "source_default": "55d40e39e0ac998909c0f48a48f6bbf2afbf7096",
+  "source_default": "3c1313aab9e03706d776bf8cbcc390883acddc68",
   "lever_counts": {
     "total": 107,
     "nonterminal": 97,
@@ -16,10 +16,10 @@
     {
       "repository": "organvm/.github",
       "pr": 26,
-      "head": "2a070fbfcd5b7c30028845ba73bfef127f874c60",
+      "head": "f58f585d3ea71f666744fda6b32eb345a29707fe",
       "draft": true,
       "state": "OPEN",
-      "readback": "GitHub PR API",
+      "readback": "GitHub PR API at 2026-09-16T10:25Z",
       "submission_repeated": false
     },
     {
@@ -98,19 +98,19 @@
     },
     {
       "id": "default_ci",
-      "state": "not_currently_verified",
+      "state": "in_progress",
       "evidence": [
-        "https://github.com/4444J99/limen/actions/runs/35073884457"
+        "https://github.com/4444J99/limen/actions/runs/35084026890"
       ],
-      "limit": "Run was observed queued for 4dfc034c; no success inferred and no session wait."
+      "limit": "Push CI for exact source 3c1313aab was observed in_progress, not successful. Earlier push 35073884457 passed for 4dfc034c; compilation-only schedules are not the acceptance predicate."
     },
     {
       "id": "resident_adoption",
-      "state": "separate_receipt_required",
+      "state": "installed_scheduled_proof_pending",
       "evidence": [
-        "https://github.com/4444J99/limen/pull/2643"
+        "docs/receipts/dependency-runtime-adoption-20260916.json"
       ],
-      "limit": "That owner contains the 968e0abbd runtime receipt; it does not adopt subsequent source heads."
+      "limit": "The digest-matched installer activated 3c1313aab and verified the loaded label/package/runtime with no surviving descendants. Three naturally spaced scheduled fires remain separately unverified; finding status is retained."
     },
     {
       "id": "all_lever_acceptance",
@@ -144,8 +144,8 @@
       "id": "shared_workflow_delivery",
       "state": "engineering_incomplete",
       "owner": "organvm/.github#26",
-      "next_action": "Implement the explicit repository-ID policy and authenticated completion intake through the existing broker/governor owner, with bounded replay and readback tests; keep activation gated.",
-      "limit": "scripts/_dependency_upkeep.py inspect_completion is read-only review assessment for declared pilot repositories. _relay_merge.py is relay-scoped synchronous authority. Neither already authorizes shared dependency merges."
+      "next_action": "After collector admission, isolated grants and independent source review, deploy the staged completion producer and native assessor wake route. Prove server-side merge fencing and protected canaries before replacing the existing direct workflow merge step.",
+      "limit": "Limen #2651 landed the disabled broker intake, compiler, executor and cross-language receipt pipeline. Shared PR #26 has 42 passing tests and a staged completion template outside active workflows. Neither source receipt activates automatic merges."
     },
     {
       "id": "security_and_products",
@@ -179,5 +179,6 @@
       "owner": "Existing private custody and estate registry owners",
       "limit": "Local checksums, branch age and absence of open PRs do not prove durable restore custody, landing, or permission to archive."
     }
-  ]
+  ],
+  "observation_scope": "This revision refreshes only shared PR #26, Limen source/default CI observation, and resident installation. Other rows retain the earlier 2026-09-16T08:37:04Z snapshot and are not newly verified."
 }
