@@ -72,8 +72,8 @@
   "liveness_regressions_passed": 12,
   "continuation_cheap_gates_passed": 34,
   "decision_records": {
-    "selected": 52,
-    "requires_component_review": 45,
+    "selected": 56,
+    "requires_component_review": 41,
     "terminal_histories_retained": 10,
     "engineering_or_external_completion_claimed": false,
     "with_acceptance_predicate": 2,
