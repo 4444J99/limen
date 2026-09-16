@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-09-16T08:37:04.283505+00:00",
+  "scope": "Acceptance reconciliation for the full supplied gap-filling plan; not an estate completion estimate.",
+  "owner": "Codex / gap-filling implementation contract",
+  "status": "in_progress",
+  "source_default": "55d40e39e0ac998909c0f48a48f6bbf2afbf7096",
+  "lever_counts": {
+    "total": 107,
+    "nonterminal": 97,
+    "terminal": 10,
+    "selected": 97,
+    "with_acceptance_predicate": 3
+  },
+  "open_delivery": [
+    {
+      "repository": "organvm/.github",
+      "pr": 26,
+      "head": "2a070fbfcd5b7c30028845ba73bfef127f874c60",
+      "draft": true,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    },
+    {
+      "repository": "organvm/laurea",
+      "pr": 10,
+      "head": "aacd88367ebb5b4784793d08a6970169b6c33236",
+      "draft": false,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    },
+    {
+      "repository": "organvm-iv-taxis/schema-definitions",
+      "pr": 19,
+      "head": "06326aa548f6c4fc9dd01bead88a5f5132b6445e",
+      "draft": false,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    },
+    {
+      "repository": "organvm/organvm-corpvs-testamentvm",
+      "pr": 553,
+      "head": "2b40a63543cf7bf957e7cd278a72e9d97e0443c8",
+      "draft": true,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    },
+    {
+      "repository": "organvm/editorial-standards",
+      "pr": 12,
+      "head": "b08f55d687e02e503c81406c03500dffa0999b89",
+      "draft": true,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    },
+    {
+      "repository": "organvm/alchemical-synthesizer",
+      "pr": 47,
+      "head": "6ebca82635ca37d2e6fd9d4d7d125a6e16dfea0a",
+      "draft": false,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    },
+    {
+      "repository": "organvm/learning-resources",
+      "pr": 11,
+      "head": "defb7a0ba0dd94abe86bcf69eec0136c6d382e50",
+      "draft": false,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    },
+    {
+      "repository": "4444J99/organvm-ci-relay",
+      "pr": 30,
+      "head": "6375d43c629ee15f8ca6296c56fe7806559c32e0",
+      "draft": false,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "control_plane_source",
+      "state": "source_landed",
+      "evidence": [
+        "https://github.com/4444J99/limen/pull/2623",
+        "https://github.com/4444J99/limen/pull/2648"
+      ],
+      "limit": "Runtime and default CI are separate; the exact verified 2648 source had 7760 CLI passes, 2 skips, 52 API passes."
+    },
+    {
+      "id": "default_ci",
+      "state": "not_currently_verified",
+      "evidence": [
+        "https://github.com/4444J99/limen/actions/runs/35073884457"
+      ],
+      "limit": "Run was observed queued for 4dfc034c; no success inferred and no session wait."
+    },
+    {
+      "id": "resident_adoption",
+      "state": "separate_receipt_required",
+      "evidence": [
+        "https://github.com/4444J99/limen/pull/2643"
+      ],
+      "limit": "That owner contains the 968e0abbd runtime receipt; it does not adopt subsequent source heads."
+    },
+    {
+      "id": "all_lever_acceptance",
+      "state": "incomplete",
+      "evidence": [
+        "his-hand-levers.json"
+      ],
+      "limit": "Chosen decisions are not executed acceptance. Missing predicates remain visible; terminal histories stay terminal."
+    },
+    {
+      "id": "collector_activation",
+      "state": "external_authority_pending",
+      "owner": "4444J99/limen#269; #1995; credential Wall #320",
+      "limit": "250 inventory ceiling and 900-second freshness remain. Dedicated collector authority must not be replaced by an ordinary token."
+    },
+    {
+      "id": "relay_trust_and_governor",
+      "state": "unaccepted",
+      "owner": "4444J99/organvm-ci-relay#30; #3",
+      "limit": "Independent trust promotion, isolated governor and both server controls precede protected canaries. No seventh target."
+    },
+    {
+      "id": "six_target_receipts",
+      "state": "not_currently_verified",
+      "evidence": [
+        "docs/receipts/gap-filling-progress-20260915.json"
+      ],
+      "limit": "Historical 2/6 matching observation is not current estate health; preserve matching receipts and refresh only under accepted trust."
+    },
+    {
+      "id": "shared_workflow_delivery",
+      "state": "engineering_incomplete",
+      "owner": "organvm/.github#26",
+      "next_action": "Implement the explicit repository-ID policy and authenticated completion intake through the existing broker/governor owner, with bounded replay and readback tests; keep activation gated.",
+      "limit": "scripts/_dependency_upkeep.py inspect_completion is read-only review assessment for declared pilot repositories. _relay_merge.py is relay-scoped synchronous authority. Neither already authorizes shared dependency merges."
+    },
+    {
+      "id": "security_and_products",
+      "state": "integration_incomplete",
+      "owner": "organvm/alchemical-synthesizer#47; organvm/learning-resources#11",
+      "limit": "Local validation and open PRs do not establish default security or deployed behavior. Preserve prior one-shot submissions and admission findings."
+    },
+    {
+      "id": "reader_mode",
+      "state": "upstream_acceptance_pending",
+      "owner": "schema-definitions#19 -> organvm-corpvs-testamentvm#553 -> editorial-standards#12",
+      "limit": "No generated context or About mutation before accepted prerequisites."
+    },
+    {
+      "id": "laurea_evidence_model",
+      "state": "integration_incomplete",
+      "owner": "organvm/laurea#10",
+      "limit": "The source preparation remains open; executed admission, deployment and external outcomes are separate."
+    },
+    {
+      "id": "hospes_pilot",
+      "state": "engineering_verified_external_unmeasured",
+      "evidence": [
+        "docs/receipts/hospes-pilot-engineering-20260916.json"
+      ],
+      "limit": "73 synthetic tests establish validation and sequencing, not participant consent or actual pilot recordings."
+    },
+    {
+      "id": "preservation_and_dispositions",
+      "state": "not_currently_verified",
+      "owner": "Existing private custody and estate registry owners",
+      "limit": "Local checksums, branch age and absence of open PRs do not prove durable restore custody, landing, or permission to archive."
+    }
+  ]
+}
