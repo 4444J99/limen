@@ -872,7 +872,7 @@ sensors:
 
   background-items-census:
     section: "0g4b"
-    title: "background-items census — every LaunchAgent/BTM row maps to a declared owner (spec/background-items.json)"
+    title: "background-items census — every LaunchAgent maps to a declared owner; BTM inspection is intentional-only (spec/background-items.json)"
     gate: LIMEN_BACKGROUND_ITEMS_CHECK
     default: "1"
     # Same reachability lesson as its 0g4 sibling: [metabolize]-only + cadence = never runs.
@@ -883,11 +883,11 @@ sensors:
       default: 12               # the surface changes on installs/updates, not per-beat — daily-ish is plenty
     timeout:
       env: LIMEN_BACKGROUND_ITEMS_TIMEOUT
-      default: 60               # plist glob + one sfltool dumpbtm; measured ~2 s live
+      default: 60               # plist glob only; unattended census never invokes modal-capable sfltool
     steps:
       - command: "python3 scripts/background-items-census.py --check"
         severity: advisory
-        escalation: "an UNDECLARED background item is installed (no registry owner, no Rule-55a third-party exemption) — declare it in spec/background-items.json or investigate what installed it; the census never mutates (Rule 55 hook is the authority), receipt at logs/background-items-census.json"
+        escalation: "an UNDECLARED LaunchAgent is installed (no registry owner and no Rule-55a third-party exemption) — declare it in spec/background-items.json or investigate what installed it; the unattended census never invokes sfltool, BTM remains explicit optional corroboration, and the census never mutates (Rule 55 hook is the authority); receipt at logs/background-items-census.json"
 
   sensor-canary:
     section: "0g5"
