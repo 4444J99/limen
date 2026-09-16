@@ -288,5 +288,22 @@
     ],
     "compat_job": "skipped",
     "scope": "Default-branch code verification only; subsequent PR changes, runtime adoption and external outcomes require separate evidence."
+  },
+  "hospes_stale_claim_readback": {
+    "observed_at": "2026-09-16T01:07:55.300505+00:00",
+    "owner": "4444J99/limen#2404",
+    "task_id": "GH-organvm-hospes-9",
+    "canonical_task_status": "open",
+    "broker_run_status": "succeeded",
+    "broker_lease_state": "released",
+    "broker_run_id": "run-b5efa55ae27b9108950e17acc908849f",
+    "broker_run_updated_at": "2026-08-15T14:46:01.123Z",
+    "compatibility_projection": true,
+    "run_receipts_present": false,
+    "scope": "Task is no longer stuck in_progress; historical compatibility success is not new execution or HOSPES product completion.",
+    "regression_test": "cli/tests/test_dispatch.py::test_release_stale_default_surfaces_scoped_past_deadline_claim",
+    "test_landing": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+    "verification_reference": "https://github.com/4444J99/limen/actions/runs/35039390911",
+    "remaining_review": "Legacy non-Jules release routing and current bounded-runtime reachability require separate review; no task transition performed."
   }
 }
