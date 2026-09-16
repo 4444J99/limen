@@ -960,3 +960,21 @@ def test_parity_rejects_collab_that_is_also_a_publish_candidate() -> None:
         }
     )
     assert any("contradictory futures" in f for f in fails)
+
+
+def test_owners_includes_reserved_namespaces_without_classes_or_shelves() -> None:
+    module = _load()
+    estate = {
+        "classes": {"g": {"match": ["organvm/**"]}},
+        "expected_orgs": {"list": ["organvm", "a-organvm", "4444J99"]},
+    }
+    assert module.owners(estate) == ["organvm", "a-organvm", "4444J99"]
+
+
+def test_owners_refuses_malformed_declared_scope() -> None:
+    import pytest
+
+    module = _load()
+    for declared in ("a-organvm", [None], ["org/*"]):
+        with pytest.raises(ValueError):
+            module.owners({"expected_orgs": {"list": declared}})
