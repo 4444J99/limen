@@ -127,6 +127,18 @@ class HttpConductClient:
         """Submit fresh remote census facts; the keeper owns acceptance and custody."""
         return self._request("POST", "/api/conduct/inventory/observations", {"observation": observation})
 
+    def dependency_completion_hints(self) -> dict[str, Any]:
+        """Read the keeper-owned bounded hint list with a conductor credential."""
+        return self._request("GET", "/api/conduct/dependencies/completions")
+
+    def publish_dependency_completion_hint(self, hint: dict[str, Any]) -> dict[str, Any]:
+        """Submit a hint using the dedicated principal; this authorizes no work."""
+        return self._request("POST", "/api/conduct/dependencies/completions", hint)
+
+    def reconcile_dependency_assessment(self, key: str, run_id: str) -> dict[str, Any]:
+        """The keeper reads its own graph; callers cannot supply receipts."""
+        return self._request("POST", "/api/conduct/dependencies/assessments", {"key": key, "run_id": run_id})
+
     def private_board(self) -> dict[str, Any]:
         """Read the authenticated full board from private keeper custody."""
 

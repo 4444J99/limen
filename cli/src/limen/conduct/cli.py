@@ -19,7 +19,8 @@ from limen.conduct.canary_executor import (
     read_native_canary_request,
 )
 from limen.conduct.campaign_relay import CampaignRelayError
-from limen.conduct.client import client_from_env
+from limen.conduct.client import HttpConductClient, client_from_env
+from limen.conduct.dependency_completion import consume_completion
 from limen.conduct.liveness import foreign_worktree_occupant
 from limen.conduct.models import AgentIdentityV1, ConductorSessionV1, RunReceiptV1, WorkPacketV1
 from limen.conduct.supervisor import RESULT_SCHEMA, CampaignSupervisorError, run_campaign
@@ -310,6 +311,32 @@ def _dead_owner_to_supersede(detail: str, session: ConductorSessionV1) -> str | 
 @click.option("--packet", "packet_file", required=True, type=click.Path(path_type=Path, exists=True))
 def submit(packet_file: Path) -> None:
     _emit(client_from_env().submit(WorkPacketV1.model_validate(_read_json(packet_file))))
+
+
+@conduct_group.command("dependency-completions")
+def dependency_completions() -> None:
+    """Read completion hints from the authenticated keeper."""
+    client = client_from_env()
+    if not isinstance(client, HttpConductClient):
+        raise click.ClickException("dependency completion requires the authenticated remote keeper")
+    _emit(client.dependency_completion_hints())
+
+
+@conduct_group.command("consume-dependency-completion")
+@click.option("--key", required=True)
+@click.option("--packet", "packet_file", required=True, type=click.Path(path_type=Path, exists=True))
+def consume_dependency_completion(key: str, packet_file: Path) -> None:
+    """Submit one reviewed assessment packet and reconcile once; never wait."""
+    client = client_from_env()
+    if not isinstance(client, HttpConductClient):
+        raise click.ClickException("dependency completion requires the authenticated remote keeper")
+    result = consume_completion(client, key, WorkPacketV1.model_validate(_read_json(packet_file)))
+    _emit(result)
+    assessment = result.get("assessment", {})
+    if result["state"] != "assessment_observed" or assessment.get("status") != "reported":
+        raise click.exceptions.Exit(77)
+    if assessment.get("outcome") != "succeeded":
+        raise click.exceptions.Exit(1)
 
 
 @conduct_group.command("split")
