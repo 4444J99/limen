@@ -191,6 +191,7 @@ def test_heal_board_without_custody_is_loud_rather_than_restoring(tmp_path: Path
         ("completion_rate", True),
         ("completion_rate", float("nan")),
         ("completion_rate", float("inf")),
+        ("completion_rate", 10**400),
         ("completion_rate", 1),
     ],
 )
