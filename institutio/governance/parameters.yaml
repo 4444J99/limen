@@ -20,6 +20,36 @@
 schema_version: 0.1
 
 parameters:
+  LIMEN_ATTEMPT_DEADLINE:
+    default: ""
+    env: LIMEN_ATTEMPT_DEADLINE
+    self_update: none
+    owner: vigilia
+    note: "Keeper-owned deadline passed to an admitted execution process; callers cannot extend it."
+  LIMEN_CHAMBER_WORKTREE_ROOT:
+    default: "~/Workspace/chamber_worktrees"
+    env: LIMEN_CHAMBER_WORKTREE_ROOT
+    self_update: none
+    owner: vigilia
+    note: "Existing chamber checkout lifecycle inventory root."
+  LIMEN_RECLAIM_CHAMBER_WT:
+    default: 1
+    env: LIMEN_RECLAIM_CHAMBER_WT
+    self_update: none
+    owner: vigilia
+    note: "Include chamber PR checkouts in the existing reclaimer inventory."
+  LIMEN_WORK_KEY:
+    default: ""
+    env: LIMEN_WORK_KEY
+    self_update: none
+    owner: vigilia
+    note: "Approved outcome work key for shared resource admission."
+  LIMEN_EXECUTION_POLICY:
+    default: "{}"
+    env: LIMEN_EXECUTION_POLICY
+    self_update: none
+    owner: vigilia
+    note: "Administrator-installed approved priorities for the conduct keeper; empty fails closed."
   LIMEN_MCP_POLICY:
     default: "~/.config/domus/mcp-policy.json"
     env: LIMEN_MCP_POLICY

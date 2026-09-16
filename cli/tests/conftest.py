@@ -28,6 +28,32 @@ if LOCAL_SRC not in sys.path:
     sys.path.insert(0, LOCAL_SRC)
 
 
+@pytest.fixture
+def approved_execution_policy(tmp_path, monkeypatch):
+    """Tests explicitly name admitted work; unlisted work still fails closed."""
+
+    def approve(*keys):
+        root = tmp_path / "execution-authority"
+        (root / "logs").mkdir(parents=True, exist_ok=True)
+        policy = {
+            "mode": "dispatch",
+            "approved_priorities": [
+                {
+                    "outcome_id": key,
+                    "enabled": True,
+                    "work_keys": [key],
+                    "resource_limits": {"branch": 1, "worktree": 2, "issue": 1},
+                }
+                for key in keys
+            ],
+        }
+        (root / "logs/autonomy-policy.json").write_text(json.dumps(policy))
+        monkeypatch.setenv("LIMEN_LIVE_ROOT", str(root))
+        return policy
+
+    return approve
+
+
 @pytest.fixture(scope="session")
 def _stable_agent_host_fixture(tmp_path_factory) -> str:
     root = tmp_path_factory.mktemp("stable-agent-host")

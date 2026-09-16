@@ -95,6 +95,18 @@ def test_detach_denies_dirty_root_without_cleanup(tmp_path: Path) -> None:
     assert (target / "untracked.txt").read_text(encoding="utf-8") == "keep me\n"
 
 
+def test_detach_preserves_ignored_payload_without_restoration_proof(tmp_path: Path) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    (repo / ".git/info/exclude").write_text("private-payload\n")
+    payload = target / "private-payload"
+    payload.write_bytes(b"unfinished ignored content")
+    with pytest.raises(abandonment.WorktreeAbandonmentError, match="ignored-payload-custody-unproven"):
+        abandonment.detach_registered_worktree(
+            repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+        )
+    assert payload.read_bytes() == b"unfinished ignored content"
+
+
 def test_registered_worktree_scan_fails_closed_on_unresolvable_path(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
