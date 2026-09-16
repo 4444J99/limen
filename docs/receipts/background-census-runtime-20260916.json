@@ -1,0 +1,8 @@
+{
+  "schema": "limen.background_census_runtime_observation.v1",
+  "runtime_sha": "a60175462bee077d99544b2133d8f662f9b1c3f4",
+  "exit_code": 1,
+  "duration_seconds": 15.06,
+  "btm_status": "unmeasured",
+  "stderr_present": false
+}
