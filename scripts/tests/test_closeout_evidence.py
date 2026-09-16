@@ -72,3 +72,58 @@ def test_latest_session_state_replaces_old_closed_record(tmp_path, monkeypatch):
     claims = mod._session_claims(0, None)
     assert [c["id"] for c in claims] == ["unreceipted"]
     assert mod._run(claims)["counts"] == {"UNRECEIPTED": 1}
+
+
+def test_missing_session_source_remains_unmeasured(tmp_path, monkeypatch):
+    mod = load()
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    errors = []
+    assert mod._session_claims(0, None, source_errors=errors) == []
+    assert errors == ["session_ledger_unavailable"]
+
+
+def test_malformed_session_rows_are_counted_without_private_output(tmp_path, monkeypatch):
+    mod = load()
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs/session-claims.jsonl").write_text('PRIVATE invalid\n' + json.dumps(dict(id="valid", closed=True, text="done")))
+    errors = []
+    claims = mod._session_claims(0, None, source_errors=errors)
+    assert len(claims) == 1
+    assert errors == ["session_record_malformed"]
+    assert "PRIVATE" not in json.dumps(errors)
+
+
+def test_cli_missing_source_cannot_return_empty_success(tmp_path, monkeypatch):
+    mod = load()
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    monkeypatch.setattr(mod, "_board_claims", lambda *args: [])
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT), "--check", "--quiet"])
+    assert mod.main() == 77
+    report = json.loads((tmp_path / "logs/closeout-reconcile.json").read_text())
+    assert report["source_errors"] == ["session_ledger_unavailable"]
+    assert report["inspected_claim_count"] == 0
+
+
+def test_limit_preserves_uninspected_denominator(tmp_path, monkeypatch):
+    mod = load()
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    fixture = tmp_path / "claims.json"
+    fixture.write_text(json.dumps([dict(id=str(i), text="done") for i in range(3)]))
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT), "--fixture", str(fixture), "--limit", "1", "--json", "--quiet"])
+    assert mod.main() == 77
+    report = json.loads((tmp_path / "logs/closeout-reconcile.json").read_text())
+    assert (report["eligible_claim_count"], report["inspected_claim_count"], report["omitted_claim_count"]) == (3, 1, 2)
+
+
+def test_incomplete_source_suppresses_routing(tmp_path, monkeypatch):
+    mod = load()
+    monkeypatch.setattr(mod, "ROOT", tmp_path)
+    monkeypatch.setattr(mod, "_board_claims", lambda *args: [claim()])
+    run = mod._run
+    monkeypatch.setattr(mod, "_run", lambda claims: run(claims, lambda *a: (True, "OPEN")))
+    def forbidden(*args):
+        raise AssertionError("incomplete source must not route")
+    monkeypatch.setattr(mod, "_route_findings", forbidden)
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT), "--apply", "--quiet"])
+    assert mod.main() == 1
