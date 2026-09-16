@@ -13,3 +13,5 @@ custody invariants; do not manufacture evidence or weaken a predicate to report 
 A constrained dependent action does not stop independent authorized engineering. Record
 its exact failed operation and next supported step in its owner, and continue the rest.
 
+
+For a disconnected browser, use the browser skill’s documented connection recovery before switching surfaces or reporting unavailability. Existing authorization to connect covers launching its installed profile. Verify a live browser operation after recovery; discovery failure alone is not the final capability result.
