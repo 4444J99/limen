@@ -223,5 +223,80 @@ class Drain(unittest.TestCase):
         self.assertNotEqual(notify.call_args_list[0].kwargs["stable_id"], notify.call_args_list[1].kwargs["stable_id"])
 
 
+class Completion(unittest.TestCase):
+    def setUp(self):
+        self.run = {
+            "id": 5,
+            "event": "pull_request",
+            "status": "completed",
+            "conclusion": "success",
+            "repository": {"id": 7},
+            "head_repository": {"id": 7},
+            "run_attempt": 1,
+            "head_sha": HEAD,
+            "pull_requests": [{"number": 1, "head": {"sha": HEAD}, "base": {"sha": "b" * 40}}],
+        }
+        self.pr = {
+            "number": 1,
+            "state": "open",
+            "draft": False,
+            "head": {"sha": HEAD},
+            "base": {"sha": "b" * 40, "ref": "main", "repo": {"id": 7}},
+        }
+        self.calls = []
+        self.move = False
+
+    def gh(self, args, **kwargs):
+        self.calls.append(args)
+        path = args[1]
+        if path == f"repos/{REPO}":
+            value = {"id": 7, "full_name": REPO, "default_branch": "main"}
+        elif "/actions/runs/" in path:
+            value = dict(self.run)
+            if self.move and self.calls.count(args) > 1:
+                value["run_attempt"] = 2
+        else:
+            value = self.pr
+        return SimpleNamespace(returncode=0, stdout=json.dumps(value))
+
+    def test_completion_uses_existing_consumer_without_effects(self):
+        with patch.object(upkeep, "inspect", return_value=EVIDENCE) as inspect:
+            result = upkeep.inspect_completion(REPO, 5, self.gh)
+        inspect.assert_called_once_with(REPO, 1, HEAD, self.gh)
+        self.assertEqual(result["route"], "delegated-review")
+        self.assertFalse(result["automatic_acceptance"])
+        self.assertEqual(len(self.calls), 5)
+        self.assertTrue(all(args[0] == "api" and len(args) == 2 for args in self.calls))
+
+    def test_unconfigured_scope_cannot_fall_through(self):
+        self.assertEqual(upkeep.inspect_completion("organvm/.github", 5, self.gh)["route"], "exception")
+        self.assertEqual(self.calls, [])
+
+    def test_incomplete_or_wrong_source_run_never_reaches_consumer(self):
+        for key, value in (
+            ("event", "push"),
+            ("status", "in_progress"),
+            ("head_repository", {"id": 8}),
+            ("pull_requests", []),
+        ):
+            with self.subTest(key=key), patch.object(upkeep, "inspect") as inspect:
+                old = self.run[key]
+                self.run[key] = value
+                self.assertEqual(upkeep.inspect_completion(REPO, 5, self.gh)["route"], "exception")
+                inspect.assert_not_called()
+                self.run[key] = old
+
+    def test_changed_attempt_invalidates_prior_observation(self):
+        self.move = True
+        with patch.object(upkeep, "inspect", return_value=EVIDENCE):
+            result = upkeep.inspect_completion(REPO, 5, self.gh)
+        self.assertEqual(result["reasons"], ["completion-generation-moved"])
+
+    def test_missing_trust_remains_exception(self):
+        with patch.object(upkeep, "inspect", return_value={"route": "exception", "reasons": ["trust-uninstalled"]}):
+            result = upkeep.inspect_completion(REPO, 5, self.gh)
+        self.assertEqual(result["reasons"], ["trust-uninstalled"])
+
+
 if __name__ == "__main__":
     unittest.main()
