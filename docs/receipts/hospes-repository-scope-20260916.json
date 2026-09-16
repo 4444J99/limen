@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "owner": "Codex gap-filling continuation",
+  "observed_at": "2026-09-16",
+  "operations": {
+    "repository_id": 1298849497,
+    "coordinate": "organvm/hospes-operations-private",
+    "private": true,
+    "default_sha": "3a4d14eb668b96b8e279a44066a57b9c1998483e",
+    "pilot_issue": 9,
+    "pilot_issue_state": "open",
+    "historical_ask_ledger_exists": true,
+    "pilot_predicate_path_present": false
+  },
+  "public": {
+    "repository_id": 1352908786,
+    "coordinate": "organvm/hospes",
+    "private": false,
+    "default_sha": "3ea044cf521296fe70a608dc64d4d03c338479ea",
+    "issue_9_found": false,
+    "repair_pr": "https://github.com/organvm/hospes/pull/1"
+  },
+  "routing": "The reused coordinate is not an alias for private operations; resolve historical obligations through immutable repository identity. No broker task changed.",
+  "scope": "Metadata only; no private source bodies copied. Public software predicates do not prove private pilot outcomes or publication consent.",
+  "next_action": "Validate the public software repair; implement the still-missing private pilot predicate within its private owner. Reconcile remaining coordinate consumers without rewriting historical prompt or task IDs."
+}

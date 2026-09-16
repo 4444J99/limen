@@ -49,6 +49,18 @@
       "historical_aliases": [
         "organvm/sovereign--ground--4444j99"
       ]
+    },
+    {
+      "schema_version": "limen.repository_identity.v1",
+      "repository_id": 1298849497,
+      "canonical_coordinate": "organvm/hospes-operations-private",
+      "historical_aliases": []
+    },
+    {
+      "schema_version": "limen.repository_identity.v1",
+      "repository_id": 1352908786,
+      "canonical_coordinate": "organvm/hospes",
+      "historical_aliases": []
     }
   ]
 }
