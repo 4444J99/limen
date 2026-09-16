@@ -247,6 +247,16 @@ def owners(estate: dict) -> list[str]:
         o = str(org)
         if o and o not in derived:
             derived.append(o)
+    # Reserved namespaces are part of the estate even before a class or shelf
+    # contains repositories. Otherwise a newly created repository is invisible.
+    declared = (estate.get("expected_orgs") or {}).get("list", [])
+    if not isinstance(declared, list):
+        raise ValueError("expected_orgs.list must be a list")
+    for owner in declared:
+        if not isinstance(owner, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9-]*", owner):
+            raise ValueError("expected_orgs.list contains an invalid owner")
+        if owner not in derived:
+            derived.append(owner)
     return derived or ["organvm"]
 
 
