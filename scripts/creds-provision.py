@@ -66,18 +66,49 @@ def _scrub(s: str) -> str:
 
 
 def load_policy(*, strict: bool = False) -> dict:
-    """Read credentials.yaml. Fail-open to the caution defaults if PyYAML/file is unavailable."""
+    """Mutation requires explicit policy; defaults are only for read-only diagnostics."""
     try:
         import yaml  # noqa: PLC0415 — optional; defaults cover its absence
 
-        data = yaml.safe_load(POLICY_PATH.read_text()) or {}
+        data = yaml.safe_load(POLICY_PATH.read_text())
     except Exception:
         if strict:
             raise ValueError("credential policy unavailable") from None
         return dict(_POLICY_DEFAULTS)
+    if strict:
+        _validate_mutation_policy(data)
+        return data
+    if not isinstance(data, dict):
+        return dict(_POLICY_DEFAULTS)
     merged = dict(_POLICY_DEFAULTS)
     merged.update({k: v for k, v in data.items() if v is not None})
     return merged
+
+
+def _validate_mutation_policy(data: object) -> None:
+    """Never infer an account, grant or installation destination during a mutation."""
+    if not isinstance(data, dict):
+        raise ValueError("credential policy invalid")
+    vault = data.get("automation_vault")
+    sa = data.get("service_account")
+    if (
+        not isinstance(vault, str)
+        or not vault.strip()
+        or not isinstance(sa, dict)
+        or any(
+            not isinstance(sa.get(key), str) or not sa[key].strip() for key in ("name", "token_file", "create_flags")
+        )
+        or data.get("sa_readable_vaults") != [vault]
+        or not isinstance(data.get("policy"), dict)
+    ):
+        raise ValueError("credential policy invalid")
+    if not Path(sa["token_file"]).expanduser().is_absolute():
+        raise ValueError("credential installation path must be absolute")
+    if shlex.split(sa["create_flags"]) != ["--vault", f"{vault}:read_items,write_items", "--can-create-vaults"]:
+        raise ValueError("credential grants differ from policy")
+    for key in ("required_must_be_sa_readable", "warn_on_nonrequired_outliers", "derive_exempt"):
+        if type(data["policy"].get(key)) is not bool:
+            raise ValueError("credential classification policy invalid")
 
 
 def load_cred_map() -> list[dict]:
@@ -162,6 +193,16 @@ def cmd_check(policy: dict, cred_map: list[dict]) -> int:
 class ProvisionError(RuntimeError):
     """A bounded bootstrap step failed; never include provider output or secrets."""
 
+    def __init__(self, message: str, *, stage: str = "custody", reason: str = "unmeasured"):
+        super().__init__(message)
+        # Closed vocabulary: no provider text, account names, paths or arguments in diagnostics.
+        self.stage = (
+            stage
+            if stage in {"vault-list", "vault-create", "item-list", "item-create", "read", "service-account-create"}
+            else "custody"
+        )
+        self.reason = reason if reason in {"timeout", "unavailable", "rejected"} else "unmeasured"
+
 
 def _owner_environment() -> dict[str, str]:
     env = dict(os.environ)
@@ -171,12 +212,15 @@ def _owner_environment() -> dict[str, str]:
 
 
 def _op(args: list[str], env: dict[str, str], *, payload: str | None = None) -> str:
+    stage = "read" if args[:1] == ["read"] else "-".join(args[:2])
     try:
         result = subprocess.run(["op", *args], input=payload, capture_output=True, text=True, timeout=60, env=env)
+    except subprocess.TimeoutExpired:
+        raise ProvisionError("op response timed out", stage=stage, reason="timeout") from None
     except (OSError, subprocess.SubprocessError):
-        raise ProvisionError("op invocation unavailable or ambiguous; reconcile before retry") from None
+        raise ProvisionError("op invocation unavailable", stage=stage, reason="unavailable") from None
     if result.returncode:
-        raise ProvisionError("op rejected the step; later mutations were not attempted")
+        raise ProvisionError("op rejected the step", stage=stage, reason="rejected")
     return result.stdout
 
 
@@ -308,6 +352,7 @@ def cmd_bootstrap(policy: dict, cred_map: list[dict], apply: bool) -> int:
         _migration_plan(policy, cred_map)
         return 0
     try:
+        _validate_mutation_policy(policy)
         target = Path(sa["token_file"]).expanduser()
         target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         for candidate in (
@@ -324,7 +369,13 @@ def cmd_bootstrap(policy: dict, cred_map: list[dict], apply: bool) -> int:
         with os.fdopen(descriptor, "w") as handle:
             fcntl.flock(handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
             _bootstrap_locked(policy, _owner_environment(), target)
-    except (ProvisionError, OSError, ValueError, KeyError, TypeError, AttributeError):
+    except ProvisionError as error:
+        print(
+            f"creds-provision: bootstrap incomplete; stage={error.stage}; reason={error.reason}; "
+            "preserved custody must be reconciled before retry"
+        )
+        return 2
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
         print("creds-provision: bootstrap incomplete; preserved custody must be reconciled before retry")
         return 2
     print("creds-provision: installed; canonical credential and exact vault scope read back")

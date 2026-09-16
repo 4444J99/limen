@@ -72,6 +72,22 @@ async function digest(value) {
   return new Uint8Array(raw);
 }
 
+export async function conductPrincipalRegistryReadback(env) {
+  const entries = configuredConductPrincipals(env).sort((left, right) => {
+    const a = left.principal.principal_id;
+    const b = right.principal.principal_id;
+    return a < b ? -1 : a > b ? 1 : 0;
+  });
+  // Include every accepted bearer binding, but return neither bearers nor per-token hashes.
+  // Stable principal and role ordering makes whitespace/order-only source edits equivalent.
+  const bytes = await digest(JSON.stringify(entries));
+  return {
+    schema_version: "limen.conduct_principal_registry_readback.v1",
+    configuration_fingerprint: [...bytes].map(byte => byte.toString(16).padStart(2, "0")).join(""),
+    principals: entries.map(entry => entry.principal),
+  };
+}
+
 function equalBytes(left, right) {
   if (left.length !== right.length) return false;
   let mismatch = 0;

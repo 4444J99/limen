@@ -170,6 +170,22 @@ canonical claims and transitions remain unavailable.
 
 ### Authenticated full-mesh canary
 
+Before replacing the principal registry, a conductor can read
+`GET /api/conduct/principal-registry` (`HttpConductClient.principal_registry()`).
+The response lists every configured principal without bearers and includes one
+SHA-256 fingerprint of all validated identity, role and bearer bindings. It is
+non-cacheable and does not read or mutate keeper state. Observer-only, executor,
+compatibility-only, collector and dependency-observer credentials cannot use it.
+
+Compute the source fingerprint with `conductPrincipalRegistryReadback` from the
+same deployed `web/worker/src/conduct/auth.js`, supplying the candidate source
+registry privately. Principal/role order and JSON whitespace do not affect it;
+any credential rotation, identity, role, addition or removal does. A mismatch
+means the local registry is not current authority: reconcile canonical custody
+before any replacement. A match establishes the current authorization bindings,
+not a lock or compare-and-swap reservation. Deployment must still use its owning
+write lane, preserve every prior binding, and verify the new live readback.
+
 `limen conduct canary full-mesh --receipt FILE` is the fail-closed production protocol proof. It
 accepts only the authenticated HTTPS client selected by `LIMEN_CONDUCT_URL` and
 `LIMEN_CONDUCT_TOKEN`; the local SQLite adapter is rejected. The command does not launch providers,
