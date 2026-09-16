@@ -114,7 +114,7 @@ CI_SECRETS: list[dict] = [
         "name": "OP_SERVICE_ACCOUNT_TOKEN",
         "home": "file `~/.config/op/service-account-token` (1Password service account) + `~/.zshenv` export",
         "used": "`creds-hydrate.py` headless `op read` + `--sweep-all` (fleet); `~/.zshenv` exports it so every shell's `op` is promptless too (no Touch-ID anywhere)",
-        "hand": "INSTALLED ✓ — op is promptless forever (fleet + every shell), verified via `op whoami`. Scope residual: the saved SA token carries zero vault grants, so op *re-reads* return nothing — the fleet runs off the already-valid `~/.limen.env` (see `creds-hydrate.py --verify`). For op itself to re-read/rotate secrets (true full sweep), grant the SA read access to the vault(s) holding them in the 1Password console (service accounts read shared vaults; personal-vault items may need moving into one). Non-blocking.",
+        "hand": "Bootstrap readback 2026-09-16: canonical token custody verified in Limen-Automation, exact one-vault scope verified, local installation verified, previous token preserved. Existing source items have not been migrated; per-secret hydration and old-account retirement remain separate obligations. Owner-session bootstrap may require device authentication; installed service-account reads are headless.",
         "issue": "#288",
     },
     {
@@ -126,7 +126,7 @@ CI_SECRETS: list[dict] = [
     },
     {
         "name": "LIMEN_INVENTORY_COLLECTOR_TOKEN",
-        "home": "credential organ; exact secret item and production installation remain unverified",
+        "home": "op://Limen-Automation/limen-inventory-collector/password; canonical item creation and secret readback verified 2026-09-16; keeper installation remains unverified",
         "used": "scripts/github-estate-census.py authenticated inventory authority read and private observation ingestion",
         "hand": "gated — provision a dedicated inventory_collector-only principal; never reuse or widen LIMEN_CONDUCT_TOKEN; activation requires fresh ingestion and live reservation receipts",
         "issue": "#269 / #1995 / #320",
