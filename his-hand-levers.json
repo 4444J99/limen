@@ -3613,7 +3613,9 @@
           "https://github.com/4444J99/limen/pull/2626",
           "https://github.com/4444J99/limen/pull/2657",
           "docs/receipts/collector-authority-installation-20260916.json",
-          "scripts/check-conduct-registry-deployment.mjs"
+          "scripts/check-conduct-registry-deployment.mjs",
+          "scripts/check-conduct-roles.mjs",
+          "https://github.com/4444J99/limen/pull/2660"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3622,21 +3624,24 @@
         "owner": "GITVS-UNCAPPED-PR-DEBT-0715 estate drain (docs/plans/2026-08-07-pr-debt-estate-drain.md, issue #1950) — discharge chain composed and predicate exit 0 verified; broker rejected the relay because the live Worker's LIMEN_CONDUCT_PRINCIPAL_REGISTRY secret predates the per-agent bearer rotation in ~/.limen.env (claude-direct 401s), and the auto-mode classifier correctly blocks agent sessions from writing production secrets",
         "acceptance": {
           "condition": "Each required native principal authenticates with intended roles; collector access remains exclusive, other roles are rejected for inventory ingestion, and existing valid lanes retain access.",
-          "predicate": null,
-          "status": "not_currently_verified",
+          "predicate": "node scripts/check-conduct-roles.mjs",
+          "status": "observed_pass_requires_live_recheck",
           "last_observation": {
             "date": "2026-09-16",
             "result": "pass",
-            "scope": "all-11-installed-principals",
-            "native_principals": 10,
-            "isolated_collectors": 1,
-            "receipt": "https://github.com/4444J99/limen/pull/2657"
+            "principals": 11,
+            "collectors": 1,
+            "probes": 33,
+            "receipt": "https://github.com/4444J99/limen/pull/2660",
+            "source_commit": "b643260b2075e1aa8045a80ff284dfbfa82e3397",
+            "scope": "complete-installed-registry-role-probes"
           }
         },
         "dependencies": [
           "Credential-owned principal registry",
           "Authorized production secret deployment",
-          "Per-role authenticated readback"
+          "Per-role authenticated readback",
+          "Complete credential-organ registry and LIMEN_CONDUCT_URL supplied privately to the predicate; an incomplete local cache cannot satisfy installed-registry parity."
         ],
         "remaining_human_action": null,
         "historical_gate_requires_verification": "Historical production-auth refusal superseded by the September 16 installed-registry and per-principal role receipts; task discharge remains broker-owned and independently verified.",
