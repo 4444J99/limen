@@ -454,21 +454,34 @@ def _queue_state(repo, num):
 
 def _merge_policy(repo, num, expected_head):
     """Re-run the one authority immediately before mutation and return its exact mode."""
-    r = subprocess.run(
-        [
-            str(POLICY),
-            str(num),
-            "--repo",
-            repo,
-            "--expected-head",
-            expected_head,
-        ],
-        capture_output=True,
-        text=True,
-        timeout=120,
-        check=False,
-    )
+    try:
+        r = subprocess.run(
+            [
+                str(POLICY),
+                str(num),
+                "--repo",
+                repo,
+                "--expected-head",
+                expected_head,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        reason = "timeout" if isinstance(exc, subprocess.TimeoutExpired) else "launch-error"
+        print(f"MERGE-DIAGNOSTIC: stage=policy reason={reason}")
+        return None
     if r.returncode != 0:
+        # Emit only the policy vocabulary, never arbitrary provider output or secrets.
+        verdict = "unknown"
+        for line in r.stdout.splitlines():
+            if line.startswith("VERDICT: "):
+                candidate = line.removeprefix("VERDICT: ").split(maxsplit=1)
+                if candidate and candidate[0] in {"HOLD", "BLOCKED"}:
+                    verdict = candidate[0]
+        print(f"MERGE-DIAGNOSTIC: stage=policy exit={r.returncode} verdict={verdict}")
         return None
     out = r.stdout + r.stderr
     mode = ""
@@ -479,6 +492,7 @@ def _merge_policy(repo, num, expected_head):
         elif line.startswith("MERGE-HEAD: "):
             head = line.removeprefix("MERGE-HEAD: ").split(maxsplit=1)[0]
     if mode not in {"queue", "direct"} or head != expected_head:
+        print("MERGE-DIAGNOSTIC: stage=policy reason=invalid-mode-or-head")
         return None
     return mode
 
@@ -570,7 +584,14 @@ def merge(repo, num, expected_head, mode_hint):
             expected_head,
         ]
         success = "MERGED"
-    r = gh(args, timeout=90)
+    try:
+        r = gh(args, timeout=90)
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        reason = "timeout" if isinstance(exc, subprocess.TimeoutExpired) else "launch-error"
+        print(f"MERGE-DIAGNOSTIC: stage=github-effect reason={reason} outcome=unconfirmed")
+        return "FAILED"
+    if r.returncode != 0:
+        print(f"MERGE-DIAGNOSTIC: stage=github-effect exit={r.returncode} outcome=unconfirmed")
     return success if r.returncode == 0 else "FAILED"
 
 
