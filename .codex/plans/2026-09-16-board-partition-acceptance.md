@@ -7,3 +7,7 @@ Replace the stale PR-number acceptance description with a read-only check of the
 Live observation at 2026-09-16T04:44:34Z passed: 3,186 tasks, public blob 2d140cab1389f29eaa0cdb2538f60e10c5260e03, default c11d749c0ce82e197940ae84af8e348b72935e90, keeper 16fd02e1a72d7ee8d5432d637221938aa94e3cf5 / deployment 4839ca12-ac13-4b48-a215-57b727117243. This is a current observation, not a perpetual receipt. A later keeper deployment requires an explicitly captured expected SHA.
 
 The previous two-amendment keeper publication receipt remains separate evidence. No lever lifecycle or historical record is reopened or discharged. This adds one executable predicate; the other unimplemented acceptance definitions remain in the original denominator.
+
+## Verification
+
+Code head ed0e8b67b passed all 36 cheap gates, 7,759 CLI tests (two skipped), and 52 API tests through scripts/verify-scoped.sh --base origin/main. Eleven focused acceptance tests passed. The separate current heartbeat rollout check passed at the default three-fire count across 44 rungs for a60175462bee077d99544b2133d8f662f9b1c3f4; its observation is preserved in the companion scheduled-adoption receipt.
