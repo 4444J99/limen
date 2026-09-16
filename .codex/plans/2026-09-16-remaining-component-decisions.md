@@ -94,3 +94,16 @@ consumer propagation and runner admission remain separate.
 
 Shared-template submission result: DEFERRED — ERR (exit 2). No merge receipt;
 repository integration remains the owner. Do not re-arm this unchanged head.
+
+## Shared-template integration diagnosis
+
+organvm/.github#26 remains open at its submitted head. Runs 35041033387,
+35041033369 and 35041033514 each failed with zero executed job steps. Check-run
+104620714103 reports a billing-related account lock; account state and remedy
+were not independently verified. Owner: repository/account administrator;
+acceptance requires admitted execution after the account-side gate is resolved.
+No unchanged-head merge submission was repeated.
+
+The merge tool's ERR came from an unreadable required-check list: gh returned no
+required-check JSON. This now reports REQUIRED-CHECKS-UNMEASURED, preserving the
+refusal. Twenty-five focused merge-drain tests and Ruff pass. No rule was weakened.
