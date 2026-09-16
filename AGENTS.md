@@ -127,6 +127,8 @@ human gates: irreversible deletion of personal data, credential or account actio
 public identity claims, legal/medical/financial commitments, or product/values decisions that cannot
 be derived from existing doctrine.
 
+Internal work follows [authorized scope and demonstrated capability](docs/architecture/internal-project-authority.md); unfinished engineering is not a blocker.
+
 ## Session Discipline
 
 Cross-agent disciplines enforced by `scripts/check-agent-docs.py` (checks M, N, Q, R). Each is
