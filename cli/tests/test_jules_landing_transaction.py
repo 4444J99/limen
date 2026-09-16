@@ -397,6 +397,7 @@ def test_post_pr_receipt_failure_retries_by_adopting_existing_pr(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
+    monkeypatch.setattr("limen.inventory_admission.reserve_growth", lambda *_args, **_kwargs: None)
     module = load_jules_land()
     tasks_path = tmp_path / "tasks.yaml"
     repo = tmp_path / "repo"

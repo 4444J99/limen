@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Check the shared dispatch admission gate without launching workers."""
+
 from __future__ import annotations
 
 import argparse
@@ -19,12 +20,24 @@ def main() -> int:
     parser.add_argument("--task-id", help="explicit human-selected task id, if any")
     parser.add_argument("--check", action="store_true", help="return non-zero when admission blocks")
     parser.add_argument("--json", action="store_true", help="print machine-readable JSON")
+    parser.add_argument("--reserve-resource", choices=("branch", "worktree", "issue"))
+    parser.add_argument("--resource-identity")
     parser.add_argument(
         "--no-refresh-handoff",
         action="store_true",
         help="inspect the current handoff without running handoff-relay.py first",
     )
     args = parser.parse_args()
+
+    if args.reserve_resource:
+        if not args.resource_identity:
+            parser.error("--resource-identity is required")
+        from limen.dispatch import _load_limen_env
+        from limen.inventory_admission import reserve_growth
+
+        _load_limen_env()
+        reserve_growth(args.reserve_resource, args.resource_identity, work_key=args.task_id)
+        return 0
 
     root = Path(os.environ.get("LIMEN_ROOT", Path.cwd()))
     tasks = Path(args.tasks).expanduser() if args.tasks else root / "tasks.yaml"

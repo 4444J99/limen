@@ -15,17 +15,11 @@ being two scripts and become two selections over the same data:
                                      deadline, bounded output, and visible receipt.
                                      Skips are named.
                                      Exit 0 ⟺ every implicated gate passed.
-                                     CI hardening (issue #1048): --require-base (or env
-                                     LIMEN_VERIFY_REQUIRE_BASE=1) fails CLOSED — an
-                                     unresolvable merge-base or an empty changed set is a
-                                     hard error, never the silent local fallback, and a
-                                     deploy-trigger diff escalates to the whole matrix
-                                     (LIMEN_VERIFY_WHOLE_CMD, default verify-whole.sh)
-                                     unless LIMEN_VERIFY_NO_DEPLOY_ESCALATION=1, which keeps
-                                     the run scoped — CI's pull_request lane sets it because
-                                     merge-policy.sh already refuses a website-sensitive
-                                     merge until the full CI matrix is green, so pre-running
-                                     the matrix per PR commit was pure duplication.
+                                     --require-base fails closed on an unresolved base.
+                                     A batch has one aggregate deadline (at most 600s).
+                                     Registry rows may shorten deadlines, never extend them.
+                                     Deploy paths retain implicated gates without escalation.
+                                     Deterministic syntax receipts are content-bound and reused.
                                      --skip-ci-covered CI_JOB defers gates whose ci_job
                                      mirror lives in a different workflow job (they run
                                      there on the same PR; merge-policy holds on any red).
@@ -54,6 +48,9 @@ import argparse
 import concurrent.futures
 import fcntl
 import json
+import hashlib
+import platform
+import importlib.metadata
 import os
 import re
 import shlex
@@ -684,6 +681,88 @@ def run_gate(
     return True
 
 
+def verification_fingerprint(gate: dict, registry: dict, changed: list[str], *, deadline: float = float("inf")) -> str:
+    """Conservative content identity; never persist environment values or private bytes.
+
+    Gates can execute arbitrary code. Until their dependency closure is declared,
+    all tracked inputs are relevant. Live/network predicates are never cached.
+    """
+
+    def check_deadline():
+        if time.monotonic() >= deadline:
+            raise TimeoutError("verification fingerprint deadline exhausted")
+
+    check_deadline()
+    digest = hashlib.sha256()
+    cache = gate.get("cache") or {}
+    inputs = cache.get("inputs") if isinstance(cache, dict) else None
+    # Command gates do not consume the changed-path list. Their declared closure
+    # includes their own configuration; unrelated registry rows are not inputs.
+    definition = [gate, sys.version, platform.platform()]
+    if not inputs:
+        definition += [registry, sorted(changed)]
+    digest.update(json.dumps(definition, sort_keys=True).encode())
+    for key, value in sorted(os.environ.items()):
+        if key not in {"SHLVL", "_", "PWD", "OLDPWD"}:
+            digest.update(f"{key}={value}\0".encode())
+    packages = []
+    for distribution in importlib.metadata.distributions():
+        check_deadline()
+        packages.append((distribution.metadata.get("Name", ""), distribution.version))
+    packages.sort()
+    digest.update(json.dumps(packages).encode())
+    paths = (
+        set(git_paths("ls-files", "-z"))
+        | set(git_paths("ls-files", "--others", "--exclude-standard", "-z"))
+        | set(changed)
+    )
+    if inputs:
+        regexes = [glob_to_regex(pattern) for pattern in inputs]
+        paths = {name for name in paths if any(regex.fullmatch(name) for regex in regexes)}
+        paths.update(name for name in inputs if not any(c in name for c in "*?["))
+    # A verifier implementation change always invalidates old receipt semantics.
+    paths.add("scripts/verify.py")
+    paths.update(["node_modules/.package-lock.json", "web/worker/node_modules/.package-lock.json"])
+    for name in sorted(paths):
+        check_deadline()
+        if any(name == root or name.startswith(root + "/") for root in PRIVATE_CUSTODY_ROOTS):
+            continue
+        path = ROOT / name
+        digest.update(name.encode(errors="surrogateescape"))
+        if path.is_symlink():
+            digest.update(b"link:" + os.readlink(path).encode())
+        elif path.is_file():
+            digest.update(str(path.stat().st_mode).encode())
+            with path.open("rb") as source:
+                for block in iter(lambda: source.read(1024 * 1024), b""):
+                    check_deadline()
+                    digest.update(block)
+        else:
+            digest.update(b"absent")
+    check_deadline()
+    return digest.hexdigest()
+
+
+def cache_path(gate_id: str, fingerprint: str) -> Path:
+    common = Path(git("rev-parse", "--git-common-dir").strip())
+    if not common.is_absolute():
+        common = ROOT / common
+    return common / "verification-receipts" / hashlib.sha256(gate_id.encode()).hexdigest() / (fingerprint + ".json")
+
+
+def cacheable(gate: dict) -> bool:
+    # Registry opt-in requires an explicit dependency closure. Runtime/deploy/
+    # network checks retain their live predicates; receipts alone do not opt in.
+    cache = gate.get("cache")
+    if isinstance(cache, dict) and cache.get("mode") == "content" and cache.get("inputs"):
+        return gate.get("kind") is None and isinstance(gate.get("command"), str)
+    return (
+        gate.get("kind") == "per_file"
+        and bool(gate.get("per_file"))
+        and all(command in {"python3 -m py_compile {file}", "bash -n {file}"} for command in gate["per_file"].values())
+    )
+
+
 def run_gate_wave(
     gate_ids: list[str],
     gates: dict,
@@ -694,6 +773,7 @@ def run_gate_wave(
     timeout_seconds: float,
     output_limit_bytes: int,
     wave_name: str,
+    aggregate_deadline: float | None = None,
 ) -> bool:
     """Run one independent gate tier concurrently with finite per-gate receipts."""
 
@@ -712,12 +792,33 @@ def run_gate_wave(
 
         def execute(gate_id: str) -> tuple[bool, float]:
             started = time.monotonic()
-            # A gate row may declare its own deadline (GATES registry `timeout_seconds`) — heavy
-            # serialized suites like pytest-cli cannot finish inside the wave default (the
-            # 2026-07-30 300s regression made every cli-touching PR unmergeable). The row can
-            # only EXTEND the wave default, never shrink it.
             row_timeout = (gates[gate_id] or {}).get("timeout_seconds")
-            gate_deadline = max(timeout_seconds, float(row_timeout)) if row_timeout else timeout_seconds
+            gate_timeout = min(timeout_seconds, float(row_timeout)) if row_timeout else timeout_seconds
+            deadline = min(started + gate_timeout, aggregate_deadline or float("inf"))
+            if time.monotonic() >= deadline:
+                output_paths[gate_id].write_text("aggregate verification deadline exhausted\n")
+                return False, time.monotonic() - started
+            try:
+                fingerprint = verification_fingerprint(gates[gate_id], registry, changed, deadline=deadline)
+            except (OSError, TimeoutError) as exc:
+                output_paths[gate_id].write_text(f"fingerprint unavailable: {type(exc).__name__}\n")
+                return False, time.monotonic() - started
+            receipt = cache_path(gate_id, fingerprint)
+            reusable = cacheable(gates[gate_id])
+            if reusable:
+                try:
+                    prior = json.loads(receipt.read_text())
+                    if (
+                        prior.get("fingerprint") == fingerprint
+                        and prior.get("gate") == gate_id
+                        and prior.get("passed") is True
+                        and prior.get("reusable") is True
+                        and time.monotonic() < deadline
+                    ):
+                        output_paths[gate_id].write_text(f"REUSED: {gate_id} {fingerprint}\n")
+                        return True, time.monotonic() - started
+                except (OSError, ValueError):
+                    pass
             print(f"WAVE {wave_name}: START gate={gate_id}", flush=True)
             with output_paths[gate_id].open("w+b") as output:
                 try:
@@ -727,14 +828,47 @@ def run_gate_wave(
                         registry,
                         changed,
                         output=output,
-                        deadline=started + gate_deadline,
+                        deadline=deadline,
                         output_limit_bytes=output_limit_bytes,
                         cancel_event=cancel_event,
                     )
                 except Exception as exc:  # noqa: BLE001 - a gate crash is a failed predicate
                     log_line(output, f"FAILED: {gate_id} raised {type(exc).__name__}")
                     passed = False
-            return passed, time.monotonic() - started
+            unchanged = False
+            if passed:
+                try:
+                    unchanged = fingerprint == verification_fingerprint(
+                        gates[gate_id], registry, changed, deadline=deadline
+                    )
+                except (OSError, TimeoutError):
+                    passed = False
+            if passed and unchanged and time.monotonic() < deadline:
+                receipt.parent.mkdir(parents=True, exist_ok=True)
+                with tempfile.NamedTemporaryFile(mode="w", dir=receipt.parent, delete=False) as saved:
+                    json.dump(
+                        {
+                            "fingerprint": fingerprint,
+                            "gate": gate_id,
+                            "passed": True,
+                            "reusable": reusable,
+                            "duration_seconds": time.monotonic() - started,
+                        },
+                        saved,
+                    )
+                os.replace(saved.name, receipt)
+                # Receipts are a bounded cache, not another growing task ledger.
+                existing = []
+                for candidate in receipt.parent.glob("*.json"):
+                    if not re.fullmatch(r"[0-9a-f]{64}\.json", candidate.name):
+                        continue
+                    try:
+                        existing.append((candidate.stat().st_mtime_ns, candidate))
+                    except FileNotFoundError:
+                        continue  # Another verifier may have pruned this receipt.
+                for _, stale in sorted(existing, reverse=True)[4:]:
+                    stale.unlink(missing_ok=True)
+            return passed and time.monotonic() < deadline, time.monotonic() - started
 
         executor = concurrent.futures.ThreadPoolExecutor(
             max_workers=worker_count,
@@ -781,7 +915,31 @@ def cmd_changed(
     require_base: bool = False,
     skip_ci_covered: str | None = None,
     integration: bool = False,
+    total_timeout_seconds: float = 600,
 ) -> int:
+    aggregate_deadline = time.monotonic() + min(total_timeout_seconds, 600)
+    work_key = os.environ.get("LIMEN_WORK_KEY")
+    if work_key:
+        # The keeper owns the window across child processes and restarts. Reading
+        # or rerunning verification never creates another ten-minute allowance.
+        sys.path.insert(0, str(ROOT / "cli" / "src"))
+        from limen.conduct.client import client_from_env
+        from datetime import datetime, timezone
+
+        try:
+            receipt = client_from_env().reserve_growth(
+                work_key, "verification", hashlib.sha256((work_key + ":verification").encode()).hexdigest()
+            )
+            remaining = (
+                datetime.fromisoformat(receipt["deadline"].replace("Z", "+00:00")) - datetime.now(timezone.utc)
+            ).total_seconds()
+            if remaining <= 0:
+                raise ValueError("verification budget exhausted")
+            aggregate_deadline = min(aggregate_deadline, time.monotonic() + remaining)
+        except Exception as exc:
+            print(f"verification admission denied: {type(exc).__name__}", file=sys.stderr)
+            return 75
+
     if integration:
         exact_base = integration_base(base)
         if not exact_base:
@@ -842,20 +1000,6 @@ def cmd_changed(
     if hidden_history_count:
         print(f"Historical-only paths ({hidden_history_count}): [redacted; retained internally for gate selection]")
 
-    if require_base and not integration and deploy_hits(registry, changed):
-        if os.environ.get("LIMEN_VERIFY_NO_DEPLOY_ESCALATION") == "1":
-            print(
-                "deploy-trigger paths in the diff — whole-matrix escalation suppressed "
-                "(LIMEN_VERIFY_NO_DEPLOY_ESCALATION=1): running scoped gates only; "
-                "merge-policy.sh still requires the full green matrix before a "
-                "website-sensitive merge."
-            )
-        else:
-            whole = os.environ.get("LIMEN_VERIFY_WHOLE_CMD") or str(ROOT / "scripts" / "verify-whole.sh")
-            print(f"deploy-trigger paths in the diff — escalating to the whole matrix: {whole}")
-            sys.stdout.flush()
-            os.execv("/bin/bash", ["bash", whole])
-
     gates = registry.get("gates") or {}
     selected, skipped = select(registry, changed)
     for gate_id, reason in skipped:
@@ -886,6 +1030,7 @@ def cmd_changed(
         timeout_seconds=gate_timeout_seconds,
         output_limit_bytes=gate_output_bytes,
         wave_name="cheap",
+        aggregate_deadline=aggregate_deadline,
     ):
         return 1
     needs_heavy = bool(tiers["heavy"] or tiers["serialized"])
@@ -908,6 +1053,7 @@ def cmd_changed(
                 timeout_seconds=gate_timeout_seconds,
                 output_limit_bytes=gate_output_bytes,
                 wave_name="heavy",
+                aggregate_deadline=aggregate_deadline,
             ):
                 return 1
             if tiers["serialized"]:
@@ -916,7 +1062,7 @@ def cmd_changed(
                     os.path.join(os.environ.get("TMPDIR", "/tmp"), "limen-verify-whole.lock"),
                 )
                 with open(lock_path, "w") as lock:
-                    lock_deadline = time.monotonic() + gate_timeout_seconds
+                    lock_deadline = min(aggregate_deadline, time.monotonic() + gate_timeout_seconds)
                     announced_wait = False
                     while True:
                         try:
@@ -953,6 +1099,7 @@ def cmd_changed(
                             timeout_seconds=timeout_seconds,
                             output_limit_bytes=gate_output_bytes,
                             wave_name=f"serialized:{gate_id}",
+                            aggregate_deadline=aggregate_deadline,
                         ):
                             return 1
     except HostAdmissionFailure as exc:
@@ -971,7 +1118,7 @@ def cmd_changed(
             print(
                 "\nNOTE: diff touches deploy-trigger paths — the PR is website-sensitive.\n"
                 "merge-policy.sh will require green CI (the full matrix) before merge; run\n"
-                "scripts/verify-whole.sh (or let CI run it) before merging. Scoped green is a\n"
+                "the implicated deployment predicates before release. Scoped green is a\n"
                 "push gate, not a deploy gate."
             )
     print("\nScoped verification passed")
@@ -989,6 +1136,7 @@ def main() -> int:
     mode.add_argument("--full", action="store_true")
     parser.add_argument("--base", default=None)
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--total-timeout-seconds", type=bounded_seconds, default=600)
     parser.add_argument(
         "--jobs",
         type=positive_jobs,
@@ -1014,8 +1162,7 @@ def main() -> int:
         "--require-base",
         action="store_true",
         help="fail closed: merge-base must resolve and the changed set must be non-empty "
-        "(also via LIMEN_VERIFY_REQUIRE_BASE=1); deploy-trigger diffs escalate to the whole matrix "
-        "unless LIMEN_VERIFY_NO_DEPLOY_ESCALATION=1",
+        "(also via LIMEN_VERIFY_REQUIRE_BASE=1); deploy-trigger diffs remain scoped",
     )
     parser.add_argument(
         "--skip-ci-covered",
@@ -1049,6 +1196,7 @@ def main() -> int:
             require_base=args.integration or args.require_base or os.environ.get("LIMEN_VERIFY_REQUIRE_BASE") == "1",
             skip_ci_covered=args.skip_ci_covered,
             integration=args.integration,
+            total_timeout_seconds=args.total_timeout_seconds,
         )
     if args.explain is not None:
         paths = args.explain or changed_set(args.base)

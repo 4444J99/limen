@@ -1,5 +1,18 @@
 # Project: Ecosystem PR Remediation, Rebase, CI Repair, and Merge Operation
 
+## Current execution authority — workspace recovery
+
+The chamber campaign below is a preserved historical plan, not current dispatch authority.
+Its unfinished milestones remain unfinished. The user's 2026-09-16 recovery decision permits
+one recovery writer; ordinary autonomous implementation and resource growth stay contained.
+After recovery, only priorities explicitly enabled in the existing autonomy policy may launch.
+A pause expiry, merged recovery PR, historical handoff, or previously listed milestone cannot
+authorize a new chamber campaign. Use the [finite recovery contract](docs/architecture/finite-workspace-recovery.md)
+and [current receipts](docs/receipts/workspace-recovery-20260916.md).
+
+The historical counts and milestone labels below are preserved evidence, not live completion
+or ownership claims. Do not make all projects or repositories green a recovery prerequisite.
+
 ## Architecture & Operational Topology
 The Ecosystem PR Remediation operation spans all active repositories across `/Users/4jp/Workspace` and ecosystem remotes.
 Operations are strictly partitioned into isolated Chamber execution environments using temporary git worktrees (`/Users/4jp/Workspace/chamber_worktrees/<chamber>/<repo>/pr-<pr_num>`) to prevent interference with main workspaces and live daemons.
@@ -35,13 +48,19 @@ Operations are strictly partitioned into isolated Chamber execution environments
 ## Interface Contracts & Remediation Protocols
 
 ### Worktree Protocol
-- Temporary worktree creation: `git worktree add -b remediate-<pr_number> <isolated_path> origin/<base_branch>`
-- Upstream fetch & rebase: `git fetch origin <base_branch> && git rebase origin/<base_branch>`
+- Creation must use the existing admitted worktree initializer or session helper with a
+  keeper-owned approved work key. Reserve both branch and checkout allowances before creation.
+  Use configured runtime roots; historical chamber paths do not authorize fresh scratch.
+- Upstream fetch and rebase require the current task's ownership and exact-base contract.
 - Conflict resolution: 3-way merge preserving upstream improvements and PR features.
-- Local verification command: Execute target repo verification (`pytest`, `npm test`, `./scripts/verify-scoped.sh`) until 100% green.
-- Force push: `git push --force-with-lease origin HEAD:<pr_head_branch>`
-- GitHub Merge: `gh pr merge <pr_number> --squash --delete-branch` (or `--rebase --delete-branch`)
-- Worktree reaping: `git worktree remove --force <isolated_path> && git worktree prune`
+- Verification is scoped, with at most ten minutes inside the thirty-minute attempt; reuse
+  unchanged bound receipts. One changed-input correction is permitted within the existing
+  outcome's 120 cumulative agent-minutes. Exhaustion checkpoints and stops continuation.
+- Push and merge use the repository's current exact-head policy. Branch deletion uses GitVS
+  dispositions and the existing exact-tip reaper; preservation never implies merger.
+- Release records a checkout disposition. Retire only clean, inactive, durably recoverable
+  copies through the journaled non-forced lifecycle. Preserve dirty and ignored payloads,
+  advanced heads, human sessions, and uncertain custody. Resume interrupted cleanup idempotently.
 
 ### Diagnostic Retention Protocol (R4)
 - Zero unceremonious closures.
