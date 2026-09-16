@@ -1,0 +1,5 @@
+# Preserve live principals during registry deployment
+
+Collector activation left the local registry cache behind the live keeper. The legacy deployment script could silently remove that collector. Before its secret write, validate the candidate with the shipped Worker parser, read authenticated live principal metadata and fingerprint, then recompute that fingerprint over the candidate subset retaining every live identity. Refuse missing identities, changed bearers/roles, malformed responses and unavailable dependencies. Only additions or identical redeploys proceed. Rotations require their separate reconciled owning procedure.
+
+No credentials or provider errors are printed. HTTPS readback rejects redirects and has a ten-second request deadline. This is a preflight, not a server-side compare-and-swap: the existing exclusive deployment ownership still applies. Tests cover additive success, stale cache removal, credential/role mutation, malformed/unavailable readback and redirect refusal. Wire tests into the existing registry gate.
