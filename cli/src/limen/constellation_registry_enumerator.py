@@ -54,6 +54,7 @@ EXPECTED_PROJECT_KEYS = frozenset(
         "name",
         "repo",
         "related_repos",
+        "privacy_legacy_repos",
         "keywords",
         "stage",
         "public_face_state",
@@ -243,6 +244,13 @@ def classify_constellation_registry(
                 continue
             repository = project.get("repo")
             if repository is not None and (not isinstance(repository, str) or not REPOSITORY_RE.fullmatch(repository)):
+                debt_count += 1
+                continue
+            # Privacy-only history is validated but never emitted as repository ownership.
+            legacy = project.get("privacy_legacy_repos", [])
+            if not isinstance(legacy, list) or any(
+                not isinstance(item, str) or not REPOSITORY_RE.fullmatch(item) for item in legacy
+            ):
                 debt_count += 1
                 continue
             related_repositories = project.get("related_repos", [])

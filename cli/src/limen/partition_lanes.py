@@ -61,6 +61,7 @@ from __future__ import annotations
 import fnmatch
 import functools
 import os
+import re
 from pathlib import Path
 from typing import Any
 
@@ -208,7 +209,16 @@ def _constellation(root: Path) -> tuple[tuple[str, frozenset[str]], ...]:
             keywords = {
                 text for keyword in project.get("keywords") or [] if (text := str(keyword or "").strip().lower())
             }
-            projects.append((repo, frozenset(keywords)))
+            # Historical private task coordinates remain protected after a name is reused.
+            # These are confidentiality scopes only, never mutation/identity aliases.
+            legacy = project.get("privacy_legacy_repos", [])
+            if not isinstance(legacy, list) or any(
+                not isinstance(value, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", value)
+                for value in legacy
+            ):
+                raise PartitionRegistryError(f"{path}: malformed privacy_legacy_repos")
+            for coordinate in (repo, *(value.lower() for value in legacy)):
+                projects.append((coordinate, frozenset(keywords)))
     return tuple(projects)
 
 
