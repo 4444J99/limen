@@ -31,7 +31,7 @@ def write_plist(directory, label, program_args=None):
         plistlib.dump(payload, fp)
 
 
-def load_module(tmp_path, monkeypatch, *, btm_text=None):
+def load_module(tmp_path, monkeypatch, *, btm_text=None, stub_btm=True):
     agents = tmp_path / "LaunchAgents"
     agents.mkdir(exist_ok=True)
     monkeypatch.setenv("LIMEN_LAUNCHAGENTS_DIR", str(agents))
@@ -39,7 +39,8 @@ def load_module(tmp_path, monkeypatch, *, btm_text=None):
     spec = importlib.util.spec_from_file_location("bic_under_test", SPEC)
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
-    m._sfltool_dumpbtm = lambda timeout=30: btm_text
+    if stub_btm:
+        m._sfltool_dumpbtm = lambda timeout=15: btm_text
     registry_path = tmp_path / "background-items.json"
     registry_path.write_text(json.dumps(REGISTRY), encoding="utf-8")
     return m, agents, registry_path
@@ -119,7 +120,7 @@ def test_missing_dir_and_no_sfltool_fail_open(tmp_path, monkeypatch, capsys):
     assert run_main(m, registry_path, monkeypatch, "--check") == 0
     out = capsys.readouterr().out
     assert "0 estate, 0 third-party, 0 tombstone, 0 UNDECLARED" in out
-    assert "btm         skipped" in out
+    assert "btm         unmeasured" in out
 
 
 def test_receipt_written_pii_clean(tmp_path, monkeypatch):
@@ -136,3 +137,40 @@ def test_no_receipt_mode_leaves_runtime_source_immutable(tmp_path, monkeypatch):
     m, _agents, registry_path = load_module(tmp_path, monkeypatch)
     assert run_main(m, registry_path, monkeypatch, "--check", "--no-receipt") == 0
     assert not (tmp_path / "logs" / "background-items-census.json").exists()
+
+
+def test_inner_timeout_reaps_its_child_before_outer_deadline(tmp_path, monkeypatch):
+    import os
+    import sys
+    import time
+    import pytest
+
+    m, _agents, _registry = load_module(tmp_path, monkeypatch, stub_btm=False)
+    monkeypatch.setattr(m, "IS_DARWIN", True)
+    pid_file = tmp_path / "child.pid"
+    tool = tmp_path / "sfltool"
+    tool.write_text(
+        f"#!{sys.executable}\nimport os,time\nfrom pathlib import Path\nPath({str(pid_file)!r}).write_text(str(os.getpid()))\ntime.sleep(60)\n"
+    )
+    tool.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    started = time.monotonic()
+    assert m._sfltool_dumpbtm(timeout=0.5) is None
+    assert time.monotonic() - started < 5
+    with pytest.raises(ProcessLookupError):
+        os.kill(int(pid_file.read_text()), 0)
+    assert m.census_btm(None, {"estate": {}, "prefixes": []})["total"] is None
+
+
+def test_capture_output_is_bounded_and_not_parsed_as_partial_evidence(tmp_path, monkeypatch):
+    import sys
+
+    m, _agents, _registry = load_module(tmp_path, monkeypatch, stub_btm=False)
+    monkeypatch.setattr(m, "IS_DARWIN", True)
+    tool = tmp_path / "sfltool"
+    tool.write_text(f"#!{sys.executable}\nprint('Identifier: com.partial.agent\\n' + 'x' * 300000)\n")
+    tool.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    capture = m._sfltool_dumpbtm()
+    assert capture is None
+    assert m.census_btm(capture, {"estate": {}, "prefixes": []})["status"] == "unmeasured"
