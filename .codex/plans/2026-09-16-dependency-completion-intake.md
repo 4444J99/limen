@@ -52,7 +52,7 @@ credentials enter the packet.
 The compiler preserves the exact four-field hint binding, read-only repository
 authority, source commit/digest, one attempt, no children, explicit executor
 session and required dependency-assessment capability. Its finite deadline
-allows 95 seconds for the bounded assessor and is at most 900 seconds away.
+reserves more than 150 seconds for assessment and reporting and is at most 900 seconds away.
 Existing work-loan validation rejects missing underwriting, nonexecutable
 predicates and nondurable receipt targets. Persist and replay the same packet
 after ambiguous submission; do not generate a new deadline. A real in-memory
@@ -76,7 +76,7 @@ The callback reconstructs and compares the whole packet against its deployment
 inputs, claims only the selected lease generation, and atomically registers one
 new attempt before launching captured source. Simultaneous callbacks, ambiguous
 admission, settled runs and changed contracts cannot launch a second assessment.
-The accepted heartbeat must leave the assessor's 95-second execution budget.
+The accepted heartbeat must retain the 150-second execution/reporting runway.
 Execution failure is a redacted blocked receipt; REVIEW_READY is an assessment
 success with automatic_acceptance=false. Lost report responses preserve keeper
 evidence and never trigger another execution. Real-broker tests cover these
@@ -86,3 +86,20 @@ Independent source review, credential provisioning, bounded transport review,
 executor registration/wake routing, and protected production activation still
 require evidence. The production policy remains disabled. No live callback or
 new provider launch was performed to test this implementation.
+
+## Bounded callback transport
+
+The callback, hint-read and hint-consume commands now use `AssessmentHttpClient`, preserving existing protocol methods
+while isolating each HTTP exchange in Python -I. Secrets and request data arrive
+over bounded stdin, never argv or ambient environment. Each request has a
+20-second process wall limit, a 15-second socket timeout, 1 MiB request/response
+limits, and bounded process output/cleanup. Redirects and ambient proxies are
+disabled. HTTP error bodies are discarded and uncertainty never retries.
+The reviewed endpoint cannot contain userinfo, query, fragment or a path prefix.
+
+The packet and admitted lease must retain more than 150 seconds, covering the
+95-second assessor plus bounded terminal heartbeat/report calls and cleanup.
+Missing attempt, receipt, or child projection fields are unmeasured rather than
+assumed empty. Tests use actual local HTTP exchanges for redirect, proxy,
+oversize, malformed-response and authorization failures, plus timeout injection
+against the already-tested bounded-process primitive. No live service was called.

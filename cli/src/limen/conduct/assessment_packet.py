@@ -12,6 +12,9 @@ from limen.conduct.models import AgentIdentityV1, AuthorityEnvelopeV1, SpendEnve
 from limen.work_loan import WorkLoanV1, packet_work_loan_missing
 
 
+MIN_ASSESSMENT_SECONDS = 150
+
+
 class AssessmentPacketError(ValueError):
     """A hint or deployment contract cannot produce a bounded assessment packet."""
 
@@ -68,7 +71,7 @@ def compile_assessment_packet(
             or not isinstance(deadline, datetime)
             or deadline.tzinfo is None
             or now.tzinfo is None
-            or not 95 < (deadline - now).total_seconds() <= 900
+            or not MIN_ASSESSMENT_SECONDS < (deadline - now).total_seconds() <= 900
             or not isinstance(identity, AgentIdentityV1)
             or not isinstance(work_loan, WorkLoanV1)
         ):

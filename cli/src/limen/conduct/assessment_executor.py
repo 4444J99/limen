@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Literal
 
-from limen.conduct.assessment_packet import compile_assessment_packet
+from limen.conduct.assessment_packet import MIN_ASSESSMENT_SECONDS, compile_assessment_packet
 from limen.conduct.assessor_execution import AssessorExecutionError, execute_assessor
 from limen.conduct.assessor_source import AssessorSnapshot
 from limen.conduct.client import HttpConductClient
@@ -59,8 +59,9 @@ def execute_assessment_run(
         if (
             node.get("run_id") != run_id
             or node.get("status") != "reserved"
-            or node.get("attempts")
-            or node.get("receipts")
+            or node.get("attempts") != []
+            or node.get("receipts") != []
+            or node.get("children") != []
         ):
             raise ValueError
         packet = WorkPacketV1.model_validate(node["packet"])
@@ -127,7 +128,8 @@ def execute_assessment_run(
             or active.get("state") != "active"
             or active.get("executor") != executor.model_dump(mode="json")
             or active.get("observed_heads") != heads
-            or (datetime.fromisoformat(active["hard_deadline"]) - datetime.now(timezone.utc)).total_seconds() <= 95
+            or (datetime.fromisoformat(active["hard_deadline"]) - datetime.now(timezone.utc)).total_seconds()
+            <= MIN_ASSESSMENT_SECONDS
         ):
             raise ValueError
         try:
