@@ -1,0 +1,174 @@
+{
+  "schema": "limen.spine_closeout_successor_receipt.v1",
+  "observed_at": "2026-09-16T20:39:16Z",
+  "scope": "Source closeout and live owner reconciliation for the admitted spine-closeout-20260916-bypass-successor capsule; not an estate-completion receipt.",
+  "boundary_state": "wait_relay",
+  "source_delivery": {
+    "owner": "4444J99/limen#2664 and 4444J99/limen#2669",
+    "branch": "work/spine-closeout-20260916-bypass-successor",
+    "commit": "425166095d373aaa0655fc9427a307400c5114af",
+    "remote_head": "425166095d373aaa0655fc9427a307400c5114af",
+    "base_at_readback": "30207a7fc91848477cb00ee5273024d14fd0b19c",
+    "changed_paths": [
+      "scripts/background-items-census.py",
+      "cli/tests/test_background_items_census.py",
+      "cli/tests/test_heartbeat_supervisor.py",
+      "institutio/governance/sensors.yaml",
+      "institutio/governance/parameters.yaml"
+    ],
+    "behavior": {
+      "scheduled_sfltool_invocation": false,
+      "launchagent_classification_preserved": true,
+      "default_btm_status": "unmeasured",
+      "default_btm_reason": "not_requested",
+      "intentional_btm_path": "python3 scripts/background-items-census.py --inspect-btm"
+    },
+    "pr_readback": {
+      "state": "OPEN",
+      "mergeable": "MERGEABLE",
+      "merge_state_status": "UNSTABLE",
+      "completed_checks": "python, npm-audit web/app, npm-audit web/worker, worker, web and semgrep succeeded; compat, verify and Sourcery review skipped",
+      "advisory_pr_gate": "IN_PROGRESS",
+      "readback_policy": "single observation only; no synchronous wait or polling"
+    }
+  },
+  "verification": [
+    {
+      "command": "pytest -q cli/tests/test_background_items_census.py cli/tests/test_heartbeat_supervisor.py",
+      "exit_code": 0,
+      "result": "33 passed in 11.93s"
+    },
+    {
+      "command": "python3 scripts/background-items-census.py --check --no-receipt",
+      "exit_code": 0,
+      "result": "7 estate, 7 third-party, 2 tombstone, 0 undeclared; BTM unmeasured because intentional inspection was not requested"
+    },
+    {
+      "command": "pgrep -fl sfltool",
+      "exit_code": 1,
+      "result": "no matching sfltool process after the exact scheduled invocation"
+    },
+    {
+      "command": "bash scripts/verify-scoped.sh",
+      "exit_code": 75,
+      "result": "complete cheap wave passed; heavy wave not run because machine-wide host admission denied swap-fraction"
+    }
+  ],
+  "owner_audit": {
+    "background_census": {
+      "found": [
+        "exact source commit and remote branch parity",
+        "focused no-modal regression coverage",
+        "existing issue and open PR custody"
+      ],
+      "not_found": [
+        "merge",
+        "installed-runtime adoption",
+        "natural scheduled-fire acceptance on the repaired source"
+      ],
+      "confidence": "high"
+    },
+    "relay_trust_and_governor": {
+      "owner": "4444J99/organvm-ci-relay#3 and #30",
+      "found": [
+        "candidate 8d270867578fb8696578c20167ea0abe4b865238 is open and mergeable",
+        "relay default b53a47f93ef861044eb5a3b888a4fc72801dc4cf",
+        "dedicated App registration, signing-key custody and repository-only installation receipts"
+      ],
+      "not_found": [
+        "independent trust-root promotion",
+        "isolated trusted governor deployment",
+        "main branch protection",
+        "repository rulesets",
+        "protected positive and adversarial canary acceptance"
+      ],
+      "live_server_readback": {
+        "protected": false,
+        "rulesets": []
+      },
+      "confidence": "high"
+    },
+    "six_target_receipts": {
+      "ledger": "c78d0d7f34a491b825364a997d953a1e907406e4",
+      "found": [
+        {
+          "repository": "organvm/process-environment-enactment",
+          "default": "ffebb6fa1020098e18020f6a4a845cf933c0df3c",
+          "receipt": "success"
+        },
+        {
+          "repository": "organvm/organvm-engine",
+          "default": "bd223cfc9f2ee90782d6182101e849a6f97e0c99",
+          "receipt": "success"
+        },
+        {
+          "repository": "organvm/the-thing-without-a-name",
+          "default": "73da6dc1c4339c9cc75c8253c7ef5173e4091256",
+          "receipt": "success"
+        },
+        {
+          "repository": "organvm/laurea",
+          "default": "faf6c5f67130925518233f5f99a76182b544fb85",
+          "receipt": "matching checksum-verified regression matrix success"
+        },
+        {
+          "repository": "organvm/learning-resources",
+          "default": "b5f3aba021238135a12497a121f78b3ec2985eb0",
+          "receipt": "executed error; repair owned by pull request 11"
+        },
+        {
+          "repository": "organvm/alchemical-synthesizer",
+          "default": "8de2bd7bdbc075a8971e5de224bed5d020b0d8f4",
+          "receipt": "executed error; repair owned by pull request 47 and relay pull request 30"
+        }
+      ],
+      "not_found": [],
+      "confidence": "high",
+      "limit": "Current-default receipt coverage is complete as four successes and two executed failures; this is not six passing targets or protected-governor acceptance."
+    },
+    "integration_owners": {
+      "found": [
+        "organvm/.github#26 OPEN draft at f58f585d3ea71f666744fda6b32eb345a29707fe",
+        "organvm-iv-taxis/schema-definitions#19 OPEN at 06326aa548f6c4fc9dd01bead88a5f5132b6445e",
+        "organvm/organvm-corpvs-testamentvm#553 OPEN draft at 2b40a63543cf7bf957e7cd278a72e9d97e0443c8",
+        "organvm/editorial-standards#12 OPEN draft at b08f55d687e02e503c81406c03500dffa0999b89",
+        "organvm/laurea#10 OPEN at 7df6eda7393358846f813fc5a7487a356476d1e3",
+        "organvm/alchemical-synthesizer#47 OPEN at 6ebca82635ca37d2e6fd9d4d7d125a6e16dfea0a",
+        "organvm/learning-resources#11 OPEN at 9aafd48524d34269233bea0dad8d1f794a4eede9",
+        "organvm/hospes#1 OPEN at 5615b7737ff1c2ee572077a8e147fdeb80052cee"
+      ],
+      "not_found": [
+        "default-branch integration of these open owners",
+        "deployment or external-outcome acceptance"
+      ],
+      "confidence": "high"
+    },
+    "credential_automation": {
+      "owner": "organvm/domus-genoma#385",
+      "found": [
+        "pull request 386 merged as f7f9863a7fe38d1f2fc2ac24c2160dba4f064d43",
+        "installed unattended automation-vault command receipt"
+      ],
+      "not_found": [
+        "isolated governor unattended credential binding",
+        "local SSH signing acceptance"
+      ],
+      "confidence": "high"
+    }
+  },
+  "retained_gates": {
+    "merge": "operator-owned after source review",
+    "deployment": "operator-owned runtime or host mutation",
+    "credentials": "isolated governor binding remains in its credential owner",
+    "public_send": "no issue or pull-request comment was posted by this session"
+  },
+  "claims_not_made": [
+    "PR 2669 merged",
+    "background census deployed",
+    "administrator prompt absent from a naturally scheduled repaired-runtime fire",
+    "relay governor active",
+    "six targets passing",
+    "full gap-filling plan complete",
+    "estate green"
+  ]
+}
