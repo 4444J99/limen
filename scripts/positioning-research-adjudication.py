@@ -2030,6 +2030,7 @@ def validate_live_profile_observations(
             f"live profile manifest contributions must still support the published {PROFILE_RENDERED_CONTRIBUTIONS:,} count"
         )
 
+    run_error_start = len(errors)
     runs_payload = fetch_observation("scheduled profile workflow history", PROFILE_RUNS_API_URL)
     if not isinstance(runs_payload, dict):
         errors.append("live scheduled workflow response must be a mapping")
@@ -2082,6 +2083,22 @@ def validate_live_profile_observations(
         observed_now - timedelta(hours=48) <= latest_created_at <= observed_now + timedelta(minutes=5)
     ):
         errors.append("latest successful scheduled profile run must be within 48 hours")
+
+    if len(errors) > run_error_start:
+        # Only parsed public identities and dates: no response bodies or credential-relative data.
+        observed_runs = [
+            {"id": run["id"], "created_at": created_at.isoformat()}
+            for created_at, run in latest_eight
+            if isinstance(run.get("id"), int) and not isinstance(run["id"], bool)
+        ]
+        errors.append(
+            "live profile schedule observation: "
+            + json.dumps(
+                {"observed_at": observed_now.isoformat(), "latest_runs": observed_runs},
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        )
 
     current_commit = fetch_observation("profile main head", PROFILE_MAIN_COMMIT_API_URL)
     if not isinstance(current_commit, dict):
