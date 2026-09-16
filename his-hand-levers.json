@@ -1020,11 +1020,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Remeasure the current vendor bundle and LaunchServices class, preserve working deep links and stable responsible identity, and prepare a narrowly scoped registration change only if the current defect is reproduced.",
+        "rationale": "The existing inspector and healer measure different predicates; zero registrations does not establish that all dialogs or TCC identity churn are resolved.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CLAUDE-DEEPLINK-REGISTRATION"
+          "his-hand-levers.json#L-CLAUDE-DEEPLINK-REGISTRATION",
+          "scripts/claude-identity-bundle.py",
+          "scripts/heal-claude-lsregister.sh"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1032,14 +1034,19 @@
         ],
         "owner": "IF-GATEKEEPER-INERT · the second instance of the vendor-bundle class, surfaced by the keeper's class enumeration (scripts/claude-identity-bundle.py)",
         "acceptance": {
-          "condition": "IF-GATEKEEPER-INERT reaches at-ideal across every scanned domain, not just the Claude store — the last registered-but-unassessable vendor bundle on the host goes away",
+          "condition": "Current bundle identity, deep-link behavior and reproduced dialog behavior have separate receipts across the affected domains; no vendor binary is re-signed or removed.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current vendor version and code-signing evidence",
+          "Read-only registration census",
+          "Deep-link requirement",
+          "Managed configuration source"
+        ],
+        "remaining_human_action": "Approve an actual loss of deep-link functionality or a protected configuration change after the reproduced tradeoff is shown.",
         "historical_gate_requires_verification": "Writing ~/.claude/settings.json is classifier-blocked for the agent (the self-modification boundary, same as L-AGENT-BASH-PROMPT). This is ALSO a genuine feature trade, not merely a permission: disabling registration turns off claude-cli:// deep links, so it is a product decision the registry must not make for you.",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1064,11 +1071,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Reproduce the current assessment failure and prepare a vendor-preserving remedy with exact bundle identity and scope; retain security-policy changes as a separate privileged action.",
+        "rationale": "A historical allow-rule proposal cannot prove current vendor behavior or authorize bypassing system assessment. Unregistration and absence of a dialog are insufficient cure evidence.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CLAUDE-GATEKEEPER-ALLOW"
+          "his-hand-levers.json#L-CLAUDE-GATEKEEPER-ALLOW",
+          "scripts/claude-identity-bundle.py",
+          "scripts/heal-claude-lsregister.sh"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1076,14 +1085,18 @@
         ],
         "owner": "class 4b root-cause correction 2026-08-12 · the dialog recurred ~30 min after a session declared it cured; the unified log showed the real producers",
         "acceptance": {
-          "condition": "class 4b stops surfacing to the operator at all, instead of being cured after the fact by an effector that cannot prevent it",
+          "condition": "The current failure has a reproduced cause and an authorized remedy has post-change assessment and runtime evidence without disabling global protections or vendor updates.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current vendor and operating-system behavior",
+          "Exact assessed bundle identity",
+          "Privileged policy authority if still required"
+        ],
+        "remaining_human_action": "Approve and perform any still-required system-security exception after its exact scope is reviewed.",
         "historical_gate_requires_verification": "`spctl --add` mutates the SYSTEM SECURITY POLICY database and requires sudo — outside any agent's authority, and the classifier blocks it before execution. It is also a genuine security trade: it whitelists one malformed bundle path from Gatekeeper assessment.",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1361,10 +1374,11 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Preserve the recorded Cloudflare Containers hosting choice, prepare the bounded deployment and persistence checks, and verify current account entitlement and demand sequencing before deployment.",
+        "rationale": "The architectural choice is already recorded; historical token access is not current paid entitlement or authorization to spend.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
+          "his-hand-levers.json#L-MEDIA-ARK-HOST",
           "his-hand-levers.json#L-MEDIA-ARK-HOST"
         ],
         "doctrine_refs": [
@@ -1373,14 +1387,19 @@
         ],
         "owner": "media organ NEXT.md Spine A -> Phase 3 (session d7044841); host DERIVED to Cloudflare Containers after the #525/#537 GCP honesty correction, via a read-only explorer that proved the owned CF token works headless and sized the entitlement gap.",
         "acceptance": {
-          "condition": "media-ark HOSTED SaaS lands one `cf-wrangler.sh` container deploy from live (Pro billing additionally needs R2 persistence + MONETA keygen — separate later atoms). The FREE local archive product already works today, so this is pre-revenue and DELIBERATELY sequenced behind the Exporter first-dollar path (the first-dollar rail atom, resolved 2026-07-08 by arming the self-custody BTC address on the live mint — PR #718; history: issue #253) per demand-before-rails — paying to host a product with no buyer would violate that rule.",
+          "condition": "An authorized deployment has exact source/deployment identity, persistent-data verification and current service readback; local operation and hosted acceptance remain separate.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current media-ark deployment owner",
+          "Current account capability",
+          "Recorded demand-before-spend sequence",
+          "Persistence and rollback evidence"
+        ],
+        "remaining_human_action": "Authorize any required paid entitlement or overage only after the concrete deployment and cost boundary are reviewable.",
         "historical_gate_requires_verification": "SPEND, deferred behind revenue — enable Workers Paid on your owned Cloudflare account; do the Exporter first-dollar path first. No decision remains; the host is derived and the deploy credential is owned.",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1627,11 +1646,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Resolve the named custody volume from current mount and device identity evidence, inspect its archive inventory read-only, and verify bytes and restoration before importing or reclaiming anything.",
+        "rationale": "A volume name or historical mount receipt does not establish the identity, completeness or recoverability of the connected source.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-ESTATE-MOUNT-4444J99"
+          "his-hand-levers.json#L-ESTATE-MOUNT-4444J99",
+          "docs/estate-custody-primitives.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1639,14 +1659,18 @@
         ],
         "owner": "EXCAV-0708-VENDOR-ARCHIVES",
         "acceptance": {
-          "condition": "EXCAV-0708-VENDOR-ARCHIVES completion",
+          "condition": "The intended archive source is identified and required artifacts have custody and restore receipts; unavailable media remains unmeasured.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current physical source availability",
+          "Volume identity and inventory lineage",
+          "Two-copy and restore evidence"
+        ],
+        "remaining_human_action": "Connect or unlock the physical source only when existing authorized mounts cannot provide it.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2269,10 +2293,11 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare the existing checkout integration and secret references with test-mode verification; resolve the chosen vendor account and store before binding production checkout.",
+        "rationale": "Account creation, identity attestations and banking enrollment remain distinct from engineering preparation and cannot be fabricated by a successful local checkout test.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
+          "his-hand-levers.json#L-REVENUE-ACCT",
           "his-hand-levers.json#L-REVENUE-ACCT"
         ],
         "doctrine_refs": [
@@ -2281,14 +2306,19 @@
         ],
         "owner": "p0-revenue lane wire 2026-07-15",
         "acceptance": {
-          "condition": "the Pro-tier Lemon Squeezy MoR checkout rail on a-i-chat--exporter; first non-tip fiat conversion path beyond the sovereign BTC mint",
+          "condition": "The authorized production store has a verified identifier, correctly scoped secret references and a provider-confirmed checkout receipt; test mode is labeled separately.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Chosen vendor account and store",
+          "Private credential owner",
+          "Provider onboarding acceptance",
+          "Production checkout verification"
+        ],
+        "remaining_human_action": "Complete required identity, banking or contractual account attestations and authorize any actual charge.",
         "historical_gate_requires_verification": "vendor account creation + KYC (identity/banking) — the fleet cannot sign up for a payments account on your behalf",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2353,11 +2383,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Keep the optional iOS visibility check separate from browser custody; prepare the exact expected folders and verify the device view without moving or duplicating private source material.",
+        "rationale": "Browser reachability and server checks do not prove phone Files visibility, and optional phone convenience must not redefine custody completion.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CLOUD-IOS-FILES"
+          "his-hand-levers.json#L-CLOUD-IOS-FILES",
+          "docs/estate-custody-primitives.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2365,14 +2396,18 @@
         ],
         "owner": "HORREVM PR2 (feat/horrevm-custody) 2026-07-15",
         "acceptance": {
-          "condition": "the last `proven: null` manual trust gate in storage-roles.yaml flips to a dated proof",
+          "condition": "A dated device readback matches the authorized custody folders; server custody and restore proofs remain independent.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Accepted cloud custody stage",
+          "Expected folder identity",
+          "Authorized device access"
+        ],
+        "remaining_human_action": "Perform the phone UI check when the device cannot be inspected through an authorized capability.",
         "historical_gate_requires_verification": "physical iPhone in hand — non-automatable by definition",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2480,11 +2515,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare exact repository/ref preservation, sealed independent copies and restoration evidence before any offboarding action; retain lifecycle and review closure proof separately.",
+        "rationale": "Repository size and a sealed-file checksum alone do not prove restorable custody or justify deleting the remote owner.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-RSA-OFFBOARD"
+          "his-hand-levers.json#L-RSA-OFFBOARD",
+          "docs/estate-custody-primitives.md",
+          "AGENTS.md#session-discipline"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2492,14 +2529,19 @@
         ],
         "owner": "publication-engine lane (estate decision commit)",
         "acceptance": {
-          "condition": [],
+          "condition": "The exact source generation is recoverable from verified independent custody, all lifecycle debt is disposed with evidence, and any separately authorized removal has a readback receipt.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current repository and ref census",
+          "Two-copy restore proof",
+          "Review and lifecycle closure",
+          "Exact deletion scope"
+        ],
+        "remaining_human_action": "Authorize irreversible repository removal only after the preservation and closure packet is complete.",
         "historical_gate_requires_verification": "seal + verify receipt, then delete the repo",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3107,11 +3149,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Resolve the authorized private overlay owner and seed only source-supported records, preserving ciphertext custody and emitting a redacted parity receipt.",
+        "rationale": "Public slugs are an index, not evidence from which private contacts or relationship facts may be invented; historical background permission failures do not define the data model.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-PEOPLE-ROOM-CONSTELLATION-SEED"
+          "his-hand-levers.json#L-PEOPLE-ROOM-CONSTELLATION-SEED",
+          "organs/consulting/constellation/validate-constellation.py",
+          "docs/estate-custody-primitives.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3119,14 +3163,18 @@
         ],
         "owner": "custody dual-estate excavation 2026-07-29 — docs/plans/2026-07-29-custody-dual-estate-semver-lineage.md",
         "acceptance": {
-          "condition": "zero local-only partner records: every constellation record durable as vault ciphertext, satisfying Rule #2 with nothing world-readable",
+          "condition": "Every seeded record has private source lineage and durable encrypted custody, with public/private parity measured without publishing private fields.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Authoritative private sources",
+          "Authorized private writer",
+          "Encrypted custody and parity checks"
+        ],
+        "remaining_human_action": "Grant genuinely unavailable private-store access; resolve unsupported personal facts only when authoritative sources cannot.",
         "historical_gate_requires_verification": "person-scoped writes into the private stores are classifier-gated to agents in background sessions (verified 2026-07-29, repeated denials including content-neutral rewrites) — the move is yours",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3339,11 +3387,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Reconcile the current overlay against authoritative private custody, preserve existing rows and add only evidence-backed missing fields; report missing backing explicitly.",
+        "rationale": "A source-admission pass with overlay checking skipped is not evidence of restored private backing.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CONSTELLATION-OVERLAY-RESTORE"
+          "his-hand-levers.json#L-CONSTELLATION-OVERLAY-RESTORE",
+          "organs/consulting/constellation/validate-constellation.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3351,14 +3400,19 @@
         ],
         "owner": "full-heal-expand-evolve estate plan 2026-08-06 (docs/plans/2026-08-06-full-heal-expand-evolve.md, issue #1922) — storm-heal session, classifier-blocked private-person-records write rerouted to this lever",
         "acceptance": {
-          "condition": "constellation-registry Rule #6 (15 publicly-indexed people regain private backing; dossier lanes stop failing with 'no pipeline_slug in overlay'); local verify-scoped green on any organs/consulting diff",
+          "condition": "The full overlay predicate runs against reachable current custody and each required public slug has grounded private backing; no invented filler records satisfy parity.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Reachable authoritative private source",
+          "Current overlay snapshot",
+          "Non-destructive reconciliation",
+          "Full overlay parity check"
+        ],
+        "remaining_human_action": "Provide unavailable physical custody or access; approve substantive disputed personal facts only if sources remain irreconcilable.",
         "historical_gate_requires_verification": "no evidence-backed complete overlay source is reachable on this host; the system lane proceeds when an authoritative physical custody source is present",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3386,11 +3440,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Continue using the enrolled LIMEN name and prepare a reversible compatibility migration only if a newer authoritative naming ruling is recorded.",
+        "rationale": "The naming roll currently enrolls LIMEN; unminted names in conflicting historical plans do not authorize a rename or interrupt current engineering work.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-NAME-RULING-LIMEN-ASTRA-STRATVM"
+          "his-hand-levers.json#L-NAME-RULING-LIMEN-ASTRA-STRATVM",
+          "spec/index-nominum/roll.yaml",
+          "docs/plans/2026-08-06-prima-materia-reconciliation.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3398,14 +3454,18 @@
         ],
         "owner": "prima-materia reconciliation 2026-08-06 (docs/plans/2026-08-06-prima-materia-reconciliation.md, issue #1934) — two conflicting operator signals found: docs/plans/2026-07-30-portvs-astra-consolidation.md decision 1 (limen->astra, stratvm fallback; per PREC-2026-07-30-plan-decisions-dont-bind it binds nothing, ASTRA never enrolled in roll.yaml) vs the 2026-08-06 brainstorm transcript naming stratvm outright",
         "acceptance": {
-          "condition": "the entire rename/keep track of the 2026-07-30 PORTVS/ASTRA plan (ARC 3): nomenclator mint, GitHub rename with redirects, CLI compat shim, LIMEN_* alias layer — all parked until this one word; also closes the naming loop the 2026-08-06 external charters kept reopening",
+          "condition": "Current names match the roll; any future approved rename has a minted registry entry, compatible aliases and verified remote redirects before old references retire.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current naming roll",
+          "Authoritative prompt lineage",
+          "Compatibility and redirect plan if renamed"
+        ],
+        "remaining_human_action": "Resolve the substantive naming identity only if the newer corpus still leaves conflicting instructions.",
         "historical_gate_requires_verification": "identity ruling with two conflicting operator signals — only the operator can settle which name the system carries; no rename executes until this discharges",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3826,11 +3886,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare source/target ownership, deploy identity, secrets, routes and rollback inventory; verify target custody before a separately authorized transfer and post-transfer routing change.",
+        "rationale": "A client account existing is not evidence that production ownership, data and deployment capabilities have moved.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-MADDIE-CUSTODY-TRANSFER"
+          "his-hand-levers.json#L-MADDIE-CUSTODY-TRANSFER",
+          "docs/estate-custody-primitives.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3838,14 +3899,19 @@
         ],
         "owner": "maddie/spiral delta review 2026-08-12",
         "acceptance": {
-          "condition": "ends open-ended hosting of a third party's production estate on a personal account, removes you as the single point of failure for their live funnels, and makes the lane re-tierable so it leaves the session launcher",
+          "condition": "The authorized target owns the intended deployment and data with current route and recovery readbacks; source retirement follows verified custody.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current source inventory",
+          "Authorized target account",
+          "Data and secret custody",
+          "Transfer capability and rollback"
+        ],
+        "remaining_human_action": "The client establishes or authorizes the target account; principals authorize the exact hosting transfer.",
         "historical_gate_requires_verification": "Cloudflare account custody (only you hold the account) + the client creating their own account",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3868,11 +3934,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Resolve an existing partner account from authorized relationship evidence, prepare minimum-scope invitations for the recorded ventures, and keep identity confirmation separate from grants.",
+        "rationale": "A historical missing-profile note must not cause duplicate account requests or infer permission to share private repositories.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-DUSTIN-GH-PROFILE"
+          "his-hand-levers.json#L-DUSTIN-GH-PROFILE",
+          "organs/consulting/constellation/dossiers/dustin-ai-consultation.md",
+          "organs/consulting/constellation/dossiers/dustin-dsp-platform.md",
+          "organs/consulting/constellation/dossiers/dustin-social-presence.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3880,14 +3949,18 @@
         ],
         "owner": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
         "acceptance": {
-          "condition": "repo invites for all three ventures; the ten-questions and terms conversations gain a durable surface",
+          "condition": "The intended account is verified and authorized repository grants are read back at their exact scope; a prepared invitation is not accepted access.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current partner identity evidence",
+          "Venture access registry",
+          "Specific invitation authority"
+        ],
+        "remaining_human_action": "Create or confirm the partner account if none can be resolved, and authorize the scoped relationship invitation.",
         "historical_gate_requires_verification": "one conversational ask in-channel; his account creation",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3910,11 +3983,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Reconcile the ten design questions with current private answers and the owning phase ladder; implement independent phases and preserve unanswered consumer-shell decisions individually.",
+        "rationale": "The documented consumer-shell deferral must not block unrelated accepted phases, and plausible defaults cannot stand in for partner product answers.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-DSP-TEN-QUESTIONS"
+          "his-hand-levers.json#L-DSP-TEN-QUESTIONS",
+          "organs/consulting/constellation/dossiers/dustin-dsp-platform.md",
+          "docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3922,14 +3997,18 @@
         ],
         "owner": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
         "acceptance": {
-          "condition": "post-dsp-platform P09/P10 (consumer shell); v1.0.0 omega is NOT gated on this (deferral path recorded in the repo ladder)",
+          "condition": "Each question has a source-bound answer or explicit unresolved owner, and implicated consumer-shell acceptance follows the actual answers and phase predicates.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current private conversation lineage",
+          "Owning phase ladder",
+          "Question-to-acceptance mapping"
+        ],
+        "remaining_human_action": "Answer only the genuinely unresolved partner product questions, through an authorized channel.",
         "historical_gate_requires_verification": "the partner answers, in any channel, a few at a time",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3949,11 +4028,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare the scoped audit deliverable, cost assumptions and reviewable pricing artifact; isolate the commercial amount from implementation phases that do not depend on it.",
+        "rationale": "A price is a commercial commitment, while scope, tests and a draft pricing structure are engineering preparation; the owning P07 boundary should remain explicit.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CONS-PRICE"
+          "his-hand-levers.json#L-CONS-PRICE",
+          "organs/consulting/constellation/dossiers/dustin-ai-consultation.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3961,14 +4041,19 @@
         ],
         "owner": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
         "acceptance": {
-          "condition": "the-consulate P07 (pricing ladder, SOW, contract templates)",
+          "condition": "The approved amount and scope are recorded in the owning pricing artifacts and implicated P07 checks pass; no draft implies an offer or agreement.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current audit scope",
+          "Grounded cost assumptions",
+          "Owning P07 predicate",
+          "Commercial approval"
+        ],
+        "remaining_human_action": "Approve the actual price and any external offer after the concrete scope and terms are prepared.",
         "historical_gate_requires_verification": "operator decision (a number), optionally after the partner conversation",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3991,11 +4076,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare a source-grounded scope and terms draft with explicit deliverables and account-access boundaries; track proposal and mutual acceptance separately.",
+        "rationale": "An inbound request is not an agreed price or contract, and implementation preparation need not fabricate either party’s acceptance.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-NAS-TERMS"
+          "his-hand-levers.json#L-NAS-TERMS",
+          "organs/consulting/constellation/dossiers/dustin-social-presence.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4003,14 +4089,19 @@
         ],
         "owner": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
         "acceptance": {
-          "condition": "new-ancients-social P08; jointly with L-NAS-CREDENTIALS, P09",
+          "condition": "The principals’ accepted version and scope have a durable private receipt; later access grants and delivery acceptance remain separate.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current private request and scope",
+          "Draft terms owner",
+          "Principal and partner acceptance",
+          "Separate credential grants"
+        ],
+        "remaining_human_action": "Approve the commercial terms and obtain the partner’s actual acceptance through authorized correspondence.",
         "historical_gate_requires_verification": "principal names a number in-channel; partner accepts or the counter-proposal resolves",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -4249,11 +4340,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Preserve the enabled routine and prepare a private source adapter with redacted aggregate output; require a fresh source-coverage receipt before interpreting absence as no friction.",
+        "rationale": "A recurring absence report is not successful analysis. Raw transcript disclosure and retiring the routine are separate decisions, neither required to design the adapter.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-FRICTION-FEDERATION-SOURCE"
+          "his-hand-levers.json#L-FRICTION-FEDERATION-SOURCE",
+          "cloud-routines.json",
+          "docs/estate-custody-primitives.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4261,14 +4354,19 @@
         ],
         "owner": "notification-wall triage 2026-08-15 (2.AUDIT.4 friction-federation)",
         "acceptance": {
-          "condition": "friction-federation-cloud produces real cross-agent friction findings instead of a daily absence report",
+          "condition": "The routine consumes an authorized current source with explicit coverage and produces grounded findings; unavailable sources remain unmeasured.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current source registry and private lineage",
+          "Redaction contract",
+          "Bounded ingestion and freshness",
+          "External disclosure authority if applicable"
+        ],
+        "remaining_human_action": "Authorize only any specific off-machine disclosure still required after private processing is prepared.",
         "historical_gate_requires_verification": "A publishes (sanitized) transcript-derived data off-machine — a disclosure decision; C retires a fleet contract surface",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -4296,10 +4394,11 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Complete the owning score research and synchronized audiovisual proof, then present the exact proposed cut with source and rights evidence before artistic approval or submission.",
+        "rationale": "The artistic gate follows engineering and research evidence; an unreviewed score, technical playback success or presumed rights cannot substitute for that review.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
+          "his-hand-levers.json#L-DANSE-ARTISTIC-APPROVAL",
           "his-hand-levers.json#L-DANSE-ARTISTIC-APPROVAL"
         ],
         "doctrine_refs": [
@@ -4308,14 +4407,19 @@
         ],
         "owner": "organvm/the-thing-without-a-name Alpha → Omega epic #7; score/repertoire #8, shared score clock #9, re-cut #10, rights #16, submission #2",
         "acceptance": {
-          "condition": "the score-driven final cut, submission filing, public presentation, and archival Omega release",
+          "condition": "The approved cut matches the synchronized proof and documented rights; public presentation and submission each have their own authorized receipt.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Owning score and synchronization predicates",
+          "Current rights evidence",
+          "Exact cut preview",
+          "Separate submission authority"
+        ],
+        "remaining_human_action": "Give artistic judgment and any required factual/rights attestations, then approve the specific public submission.",
         "historical_gate_requires_verification": "artistic judgment, factual/rights attestations, and irreversible account/public actions cannot be inferred or automated",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -4343,11 +4447,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Rebuild the exact current PR/ref inventory and bind each candidate to preservation, successor equivalence and review-debt disposition before presenting a bounded cleanup packet.",
+        "rationale": "The historical count of 57 and draft age do not prove abandonment, landing or safe closure.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CLOUD-BULK-PR-CLOSE-N75"
+          "his-hand-levers.json#L-CLOUD-BULK-PR-CLOSE-N75",
+          "AGENTS.md#session-discipline",
+          "docs/estate-custody-primitives.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4355,14 +4461,19 @@
         ],
         "owner": "Jules backlog curation N75 (organvm/session-meta#29), expanded on 2026-08-06 from 11 to 57 live Jules drafts; umbrella closeout organvm/limen#2120",
         "acceptance": {
-          "condition": "removes the 7-8 month abandoned bot-draft cohort without allowing a cloud routine to perform a destructive external mutation from a stale count",
+          "condition": "Every authorized closure has a current repository-qualified source/ref and preservation/disposition receipt; retained active work is excluded by evidence.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current PR/ref and active-owner census",
+          "Custody and successor proof",
+          "Review-debt disposition",
+          "Exact closure authorization"
+        ],
+        "remaining_human_action": "Authorize the concrete terminal cleanup set after its evidence is reviewable.",
         "historical_gate_requires_verification": "closing 57 GitHub pull requests is a destructive external-state mutation and requires explicit human authorization",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -4390,11 +4501,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Read the exact current proposal and discussion, map its authority changes against the owning registry, and prepare an evidence-backed disposition without accepting relationship authority by implication.",
+        "rationale": "Code review and factual comparison can proceed while the principal retains the substantive external-governance decision.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CLOUD-EXTERNAL-GOVERNANCE-N77"
+          "his-hand-levers.json#L-CLOUD-EXTERNAL-GOVERNANCE-N77",
+          "AGENTS.md#precedence"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4402,14 +4514,18 @@
         ],
         "owner": "Jules backlog curation N77 (organvm/session-meta#29) from stale-PR-sweep evidence; umbrella closeout organvm/limen#2120",
         "acceptance": {
-          "condition": "resolves N77 without allowing an agent to accept or reject an external contributor's authority claim on your behalf",
+          "condition": "The exact proposal head has a reviewed authority comparison and a recorded authorized disposition; no stale PR description establishes acceptance.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current proposal head and discussion",
+          "Owning governance registry",
+          "Principal disposition"
+        ],
+        "remaining_human_action": "Decide the substantive authority or relationship change after the concrete comparison is prepared.",
         "historical_gate_requires_verification": "an external collaborator's governance proposal is a public authority and relationship decision",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -4491,11 +4607,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Reconcile the current seed lifecycle with remote repository capability and active-owner evidence, then prepare the bounded archive action and required custody receipt.",
+        "rationale": "The existing lifecycle decision is a source for desired state, but a historical seed does not prove current authority, custody or remote archival.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CLOUD-ARCHIVE-ENTERPRISE-PLUGIN-N80"
+          "his-hand-levers.json#L-CLOUD-ARCHIVE-ENTERPRISE-PLUGIN-N80",
+          "his-hand-levers.json#L-CLOUD-ARCHIVE-ENTERPRISE-PLUGIN-N80",
+          "docs/estate-custody-primitives.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4503,14 +4621,18 @@
         ],
         "owner": "N80 in organvm/session-meta#29; seed.yaml declares implementation_status=ARCHIVED, promotion_status=ARCHIVED, tier=archive; existing owner issue organvm-iii-ergon/enterprise-plugin#1",
         "acceptance": {
-          "condition": "resolves N80's four-day description/archive mismatch using the authority already declared by the repository",
+          "condition": "The approved current lifecycle matches remote archive state with source/ref custody and active work preserved.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current seed and owner issue",
+          "Current repository identity and active work",
+          "Custody and archive authority"
+        ],
+        "remaining_human_action": "Authorize the remaining account-level archive action if the current owning policy still requires it.",
         "historical_gate_requires_verification": "archiving a GitHub repository changes external repository capabilities and remains a human-gated account setting",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -4590,11 +4712,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Reconcile each of the eighteen referenced rows individually against current owner evidence, split mechanical preparation from its precise human act, and retain the original denominator and IDs.",
+        "rationale": "A shared lever is an index of distinct obligations, not proof that all eighteen are irreducibly human or resolved by one decision.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-IRF-P0-HUMAN-ACTIONS-20260808"
+          "his-hand-levers.json#L-IRF-P0-HUMAN-ACTIONS-20260808",
+          "docs/receipts/irf-p0-owner-classification-20260808.json"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4602,14 +4725,18 @@
         ],
         "owner": "IRF P0 surface receipt attached to organvm/limen#2120; exact IDs are tracked in docs/receipts/irf-p0-owner-classification-20260808.json",
         "acceptance": {
-          "condition": "keeps the IRF P0 denominator truthful: human actions remain visible in the lever registry instead of being counted as owned by self-referential IRF IDs",
+          "condition": "Each referenced row has current evidence, an executable preparation owner and the exact residual gate; terminal dispositions require their own acceptance receipts.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current IRF row lineage",
+          "Per-row implementation owner",
+          "Per-row acceptance and human action"
+        ],
+        "remaining_human_action": "Exercise only the specific identity, credential, purchase or relationship actions still required after each row’s preparation.",
         "historical_gate_requires_verification": "the rows require human identity, credentials, spend, relationship judgment, or governance choices that agents cannot exercise",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
