@@ -119,6 +119,10 @@ class HttpConductClient:
     def capabilities(self) -> dict[str, Any]:
         return self._request("GET", "/api/conduct/capabilities")
 
+    def principal_registry(self) -> dict[str, Any]:
+        """Read redacted identities and the complete binding fingerprint as a conductor."""
+        return self._request("GET", "/api/conduct/principal-registry")
+
     def inventory_authority(self) -> dict[str, Any]:
         """Read the administrator-installed contract using a collector principal."""
         return self._request("GET", "/api/conduct/inventory/authority")
