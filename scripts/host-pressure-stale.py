@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 """host-pressure-stale — watch the watcher (sensor 0o).
 
+The bounded heartbeat uses --read-only --on-demand to observe current host-admission
+sensors without requiring retired sampler logs. Measurement success is not an
+admission grant or a claim of low pressure. The default legacy mode below remains
+available for explicit maintenance of recorded sampler evidence.
+
 The VITALS gauge (memory + load axes) is the hand that throttles/sheds under host
 pressure; if the gauge itself goes silent, the valve is flying blind and nothing else
 notices — the exact failure mode the sensors registry warns about. This rung fails when
@@ -141,6 +146,39 @@ def _stale(message: str, *, read_only: bool) -> int:
     return 1
 
 
+def _observe_current_pressure() -> int:
+    """Observe the current gauge; a working gauge is not an admission grant."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+    from limen.host_admission import collect_pressure
+
+    started = time.time()
+    try:
+        pressure = collect_pressure()
+        finished = time.time()
+        numeric = ("observed_epoch", "backblaze_cpu_percent", "backblaze_rss_bytes", "swap_used_bytes", "memory_bytes")
+        valid = isinstance(pressure, dict) and all(
+            type(pressure.get(key)) in (int, float) and math.isfinite(pressure[key]) and pressure[key] >= 0
+            for key in numeric
+        )
+        valid = valid and pressure["memory_bytes"] > 0 and pressure.get("sensor_errors") == []
+        disk = pressure.get("disk_mib_per_second_samples") if isinstance(pressure, dict) else None
+        valid = (
+            valid
+            and isinstance(disk, list)
+            and len(disk) == 2
+            and all(type(value) in (int, float) and math.isfinite(value) and value >= 0 for value in disk)
+        )
+        valid = valid and pressure.get("vitals_action") in {"ok", "throttle", "shed"}
+        valid = valid and started <= pressure["observed_epoch"] <= finished and finished - started <= 15
+        if not valid:
+            raise ValueError("incomplete observation")
+    except Exception:
+        print(json.dumps({"measurement": "unmeasured", "reason": "current-host-pressure-unavailable"}))
+        return 1
+    print(json.dumps({"measurement": "current", "admission": "not_evaluated", "pressure": pressure}))
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -151,7 +189,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--apply", action="store_true", help="allow one bounded sample refresh for incompatible metadata"
     )
+    parser.add_argument(
+        "--on-demand",
+        action="store_true",
+        help="observe the current host-admission sensors instead of retired sampler logs",
+    )
     args = parser.parse_args(argv)
+    if args.on_demand:
+        if not args.read_only or args.apply:
+            parser.error("--on-demand requires --read-only and excludes --apply")
+        return _observe_current_pressure()
     if _configured_env("LIMEN_VIGILIA", "1") in ("0", "false", "False"):
         print("host-pressure-stale: VIGILIA off — nothing to watch")
         return 0
