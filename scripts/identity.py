@@ -196,6 +196,7 @@ def cmd_verify(a):
     facts = _registry()
     checked = 0
     missing = []
+    unmeasured = []
     for cid, f in facts.items():
         if not (f.get("applicable") is True and f.get("required") is True):
             continue
@@ -212,7 +213,11 @@ def cmd_verify(a):
             path = _home_path(home)
             if not (path and os.path.exists(path)):
                 missing.append(f"{cid} (pointer {home})")
+        else:
+            unmeasured.append(cid)
     strays = _reference_integrity()
+    if unmeasured:
+        print(f"[identity] UNMEASURED {len(unmeasured)}/{checked} required atoms: unsupported verification mode")
     if missing or strays:
         if missing:
             print(f"[identity] MISSING {len(missing)}/{checked} required atoms: " + ", ".join(missing))
@@ -221,6 +226,8 @@ def cmd_verify(a):
             print("[identity] REFERENCE-INTEGRITY drift (single-home): " + "; ".join(strays))
             print("[identity]   -> add the cited value to its owner class, or fix the citing store")
         sys.exit(1)
+    if unmeasured:
+        sys.exit(77)
     print(f"[identity] OK — all {checked} applicable&required atoms present; single-home intact")
     sys.exit(0)
 

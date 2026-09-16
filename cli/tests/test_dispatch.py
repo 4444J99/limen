@@ -183,6 +183,10 @@ def read_board(path: Path) -> dict:
 def capture_canonical_deltas(monkeypatch) -> list[LimenFile]:
     """Capture intended remote projections without mutating the local hot cache."""
 
+    # These projection tests start after terminal ownership was established.
+    # The broker evidence boundary is exercised independently in test_stale_claims.
+    monkeypatch.setattr(D, "stale_claim_holds", lambda tasks, **_: {task.id: None for task in tasks})
+
     projections: list[LimenFile] = []
     canonical: LimenFile | None = None
 
@@ -2219,8 +2223,9 @@ def test_release_stale_apply_survives_concurrent_board_write(
     before = tasks_path.read_bytes()
     force_broker_unavailable(monkeypatch)
 
-    with pytest.raises(BrokerUnavailable, match="test conduct broker unavailable"):
-        release_stale_tasks(stale, tasks_path, hours=24, dry_run=False)
+    report = release_stale_tasks(stale, tasks_path, hours=24, dry_run=False)
+    assert report["held"] == ["STALE-CLAIM"]
+    assert report["released"] == []
 
     tasks = {task["id"]: task for task in read_board(tasks_path)["tasks"]}
     assert set(tasks) == {"STALE-CLAIM", "CONCURRENT-FOLD"}
@@ -4771,6 +4776,8 @@ def test_release_stale_skips_candidate_when_canonical_diverged(tmp_path: Path, m
                 "id": "LIMEN-DIVERGED-1",
                 "title": "Canonical moved on",
                 "status": "done",
+                "created": "2026-06-01",
+                "target_agent": "codex",
             }
         ],
     )

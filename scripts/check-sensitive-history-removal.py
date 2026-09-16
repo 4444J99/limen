@@ -21,6 +21,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -324,7 +325,23 @@ def _write_receipt(path: Path, receipt: dict[str, Any]) -> None:
     if target.exists():
         raise VerificationError("immutable receipt target already exists")
     target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=target.parent, prefix=".receipt-", delete=False
+        ) as output:
+            temporary = Path(output.name)
+            output.write(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+            output.flush()
+            os.fsync(output.fileno())
+        # Atomic publication without replacement: a competing writer wins intact.
+        try:
+            os.link(temporary, target)
+        except FileExistsError as exc:
+            raise VerificationError("immutable receipt target already exists") from exc
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def main(argv: list[str] | None = None) -> int:
