@@ -25,3 +25,13 @@ unknown/missing predicate evidence, and cover the distinction before activation.
 Do not infer missing remote references from transport failure or accept a named
 external path as verified custody. Inspect the current classifier consumers before
 changing verdict vocabulary.
+
+## Verification receipt
+
+Eight cheap scoped gates passed. Full CLI: 7,680 passed, two failed, two
+skipped in 278.59 seconds. Failures were the paired-custody stderr output-limit
+case and the closeout fixed-point test's 30-second timeout. An immediate isolated
+rerun of both output-limit variants plus the closeout case passed all three in
+47.24 seconds. No production code or timeout limit changed. Root cause of the
+full-suite-only failures is unverified; retain that result instead of claiming a
+clean full run. Codex owns any recurrence under this PR.
