@@ -14,6 +14,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+
 PROVISION = Path(__file__).resolve().parents[2] / "scripts" / "creds-provision.py"
 # Point the policy at a nonexistent file so load_policy() fails-open to its defaults
 # (automation_vault = Limen-Automation) — hermetic, independent of the repo's credentials.yaml.
@@ -184,3 +186,62 @@ def test_owner_environment_preserves_native_session_without_service_override(mon
     assert "OP_SERVICE_ACCOUNT_TOKEN" not in env
     assert "OP_BIOMETRIC_UNLOCK_ENABLED" not in env
     assert env["OP_SESSION_test"] == "owner-fixture"
+
+
+@pytest.mark.parametrize("document", ["", "null", "[]", "false", "{}", "automation_vault: Limen-Automation"])
+def test_mutating_bootstrap_rejects_missing_policy_without_provider_call(tmp_path, monkeypatch, document):
+    module = _module()
+    policy_path = tmp_path / "policy.yaml"
+    policy_path.write_text(document)
+    monkeypatch.setattr(module, "POLICY_PATH", policy_path)
+    monkeypatch.setattr(module, "_op", lambda *a, **kw: pytest.fail("provider reached without policy"))
+    assert module.main(["bootstrap", "--apply"]) == 2
+
+
+@pytest.mark.parametrize("defect", ["relative_target", "extra_vault", "missing_name", "extra_grant", "string_boolean"])
+def test_policy_rejects_ambiguous_mutation_scope(tmp_path, monkeypatch, defect):
+    import copy
+    import yaml
+
+    module = _module()
+    policy = copy.deepcopy(module._POLICY_DEFAULTS)
+    if defect == "relative_target":
+        policy["service_account"]["token_file"] = "relative-token"
+    elif defect == "extra_vault":
+        policy["sa_readable_vaults"].append("another-vault")
+    elif defect == "missing_name":
+        del policy["service_account"]["name"]
+    elif defect == "extra_grant":
+        policy["service_account"]["create_flags"] += " --vault another-vault:read_items"
+    else:
+        policy["policy"]["derive_exempt"] = "false"
+    policy_path = tmp_path / "policy.yaml"
+    policy_path.write_text(yaml.safe_dump(policy))
+    monkeypatch.setattr(module, "POLICY_PATH", policy_path)
+    with pytest.raises(ValueError):
+        module.load_policy(strict=True)
+
+
+@pytest.mark.parametrize("failure", ["timeout", "unavailable", "rejected"])
+def test_op_failure_diagnostics_disclose_only_closed_stage_and_reason(monkeypatch, failure):
+    module = _module()
+    private = "private-provider-output-and-command-argument"
+
+    def run(*args, **kwargs):
+        if failure == "timeout":
+            raise subprocess.TimeoutExpired([private], 60, output=private, stderr=private)
+        if failure == "unavailable":
+            raise OSError(private)
+        return subprocess.CompletedProcess([private], 1, private, private)
+
+    monkeypatch.setattr(module.subprocess, "run", run)
+    with pytest.raises(module.ProvisionError) as caught:
+        module._op(["service-account", "create", private], {})
+    assert caught.value.stage == "service-account-create"
+    assert caught.value.reason == failure
+    assert private not in str(caught.value)
+
+
+def test_live_policy_is_explicit_and_valid():
+    module = _module()
+    assert module.load_policy(strict=True)["automation_vault"] == "Limen-Automation"
