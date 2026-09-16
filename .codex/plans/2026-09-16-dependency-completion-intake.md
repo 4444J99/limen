@@ -103,3 +103,21 @@ Missing attempt, receipt, or child projection fields are unmeasured rather than
 assumed empty. Tests use actual local HTTP exchanges for redirect, proxy,
 oversize, malformed-response and authorization failures, plus timeout injection
 against the already-tested bounded-process primitive. No live service was called.
+
+## Cross-language handoff evidence
+
+The actual Worker hint store/reconciler and Python keeper now have one integration
+predicate spanning session registration, hint intake, packet reservation, isolated
+callback execution, accepted receipt reconciliation and consumer restart. Another
+human-protected executor is refused before launch. A dedicated cheap gate includes
+all implicated Python, Worker and policy paths so a Worker-only change cannot
+miss this boundary. Details and the finite deployment sequence are in
+`docs/architecture/dependency-completion-assessment.md`.
+
+A bounded authenticated capability read at 2026-09-16T09:58:52.196Z observed zero
+registered dependency assessors and zero healthy unprotected assessors. Existing
+registration is sufficient as a protocol; no alternate registrar or protection
+bypass is needed. The production native wake route remains deployment work owned
+by PR #2651, conditional on the existing #269/#1995 admission evidence and isolated
+reviewed credentials. No live registration, lease, provider launch or activation
+occurred during this verification. The full plan remains incomplete.
