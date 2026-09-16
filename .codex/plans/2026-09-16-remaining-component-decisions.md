@@ -283,3 +283,16 @@ uses a real temporary repository with a commit and upstream, plus isolated
 worktree/custody inputs. Every production closeout check still runs; no timeout
 was raised and no production predicate was weakened. Both focused closeout
 cases pass in 8.54 seconds. Full-suite confirmation remains required.
+
+## Full-suite confirmation
+
+At 908e56fb06fb5ff4fa56bc78b59e706ad71da4e1, scoped verification
+against 08801b5b7 exited 0: eight cheap gates, 7,709 CLI tests (two skipped),
+and 52 API tests passed. Host admission allowed both heavy gates. This closes
+the observed fixture failure; landing and resident adoption remain separate.
+
+Read-only follow-up identified Laurea collector coverage gaps: organization read
+failures are silently omitted, organization scope lacks pagination, and repository
+rows omit immutable identity and current default SHA. These require explicit
+coverage accounting before estate health claims. No Laurea changes or private
+education portal effects were performed during this verification batch.

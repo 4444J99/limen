@@ -316,7 +316,7 @@
       "python-typecheck",
       "check-gates"
     ],
-    "heavy_verification": "not_run",
+    "heavy_verification": "Full CLI 7709 passed, 2 skipped and API 52 passed at 908e56fb06fb5ff4fa56bc78b59e706ad71da4e1; landing pending.",
     "live_transitions_performed": false,
     "runtime_effect": "Explicit release command only; bounded heartbeat remains read-only.",
     "invariants": [
@@ -341,6 +341,15 @@
     "failure": "closeout fixture timeout",
     "fixture_repair": "isolated real Git repository and custody roots; unchanged timeout",
     "focused_closeout_cases_passed": 2,
-    "full_suite_after_fixture_repair": "pending"
+    "full_suite_after_fixture_repair": {
+      "head": "908e56fb06fb5ff4fa56bc78b59e706ad71da4e1",
+      "command": "bash scripts/verify-scoped.sh --base 08801b5b7",
+      "exit_code": 0,
+      "cheap_gates_passed": 8,
+      "cli_passed": 7709,
+      "cli_skipped": 2,
+      "api_passed": 52,
+      "host_admission": "allowed"
+    }
   }
 }
