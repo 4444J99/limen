@@ -583,11 +583,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare a source-bound, current identity statement from the canonical draft and evidence; keep inbound handling separate from publication and from any acknowledgement send.",
+        "rationale": "A staged post and an armed inbound lane do not prove publication or authorize messages.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-LINKEDIN-TESTAMENT"
+          "his-hand-levers.json#L-LINKEDIN-TESTAMENT",
+          "docs/runbooks/outbound-preflight-arming.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -595,14 +596,18 @@
         ],
         "owner": "opportunity-inbound lane build (PR C); the staged post lives in 4444J99/hokage-chess",
         "acceptance": {
-          "condition": "the testament goes live on your feed as an inbound lure; every reach-out it draws is auto-classified into the inbound-lead lane and gets a SAFE first-touch ack when the send valve is armed",
+          "condition": "The approved version has an exact public post receipt; downstream drafts and sends retain their own receipts.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Canonical draft and current claim evidence",
+          "Exact account and publication approval",
+          "Separate inbound send authority"
+        ],
+        "remaining_human_action": "Approve the exact public statement and account action after review.",
         "historical_gate_requires_verification": "publishing to your own public feed is your identity — never automatable; the draft is staged, the push is your click",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1398,11 +1403,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Separate current product availability, announcement preparation and optional branded-domain routing; verify each intended route and use only a currently working URL in the approved copy.",
+        "rationale": "Historical pages.dev responses do not prove current availability, and optional registrar work need not block preparation against a verified route.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-STUDIO-GOLIVE"
+          "his-hand-levers.json#L-STUDIO-GOLIVE",
+          "docs/estate-custody-primitives.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1410,14 +1416,18 @@
         ],
         "owner": "studio public-face pass; owner-record ~/Workspace/studio/LAUNCH.md carries the thread copy + og/*.png assets. memory: studio-public-face-poiesis",
         "acceptance": {
-          "condition": "warm organic inbound toward the Aug-1 revenue gate; the studio announced in your voice; objectlessons.film resolving to the live hub",
+          "condition": "The approved announcements and any domain routing change have independent current readbacks; preparation and historical responses do not establish acceptance.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current studio owner and deployed identity",
+          "Current route readback",
+          "Specific publication and registrar capabilities"
+        ],
+        "remaining_human_action": "Approve exact identity posts and any required registrar change; no account authority is inferred from prepared assets.",
         "historical_gate_requires_verification": "publishing to your public identity (your accounts) + registrar account access",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1527,11 +1537,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Regenerate launch copy against the current measured-profile implementation, remove unsupported ranking or health implications, and prepare channel-specific previews with an observed baseline.",
+        "rationale": "Historical launch drafts predate the corrected coverage model; activity and zero-step workflow failures cannot support verified-estate claims.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-LAVREA-LAUNCH"
+          "his-hand-levers.json#L-LAVREA-LAUNCH",
+          "https://github.com/organvm/laurea/pull/10"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1539,14 +1550,18 @@
         ],
         "owner": "LAVREA awareness apparatus (session f6fa1984, 2026-07-04)",
         "acceptance": {
-          "condition": "external verdict signal: stars/followers/traffic deltas on the verdict meter; inbound for the recruiter front",
+          "condition": "Published versions match approved previews and current product behavior; post URLs and later reception observations are distinct.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current Laurea source and rendered profile",
+          "Current baseline and grounded claims",
+          "Exact channel/account approval"
+        ],
+        "remaining_human_action": "Approve the prepared public posts under the named identity.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1563,11 +1578,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Validate the launch kit links, current product behavior and every commercial claim, then prepare exact channel previews and preserve publication receipts separately from product probes.",
+        "rationale": "Merged marketing copy and historical green probes are neither current availability nor a posted announcement.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-MONETA-LAUNCH"
+          "his-hand-levers.json#L-MONETA-LAUNCH",
+          "marketing/launch-post.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1575,14 +1591,18 @@
         ],
         "owner": "REV-organvm-limen-revenue-launch-post-0708 (session vltima-0146de0a, 2026-07-08)",
         "acceptance": {
-          "condition": "inbound demand for the second product surface of the sovereign rail (MONETA as a service to other sellers) — the pain-point-is-a-product north star made public",
+          "condition": "Each authorized channel has an exact posted-version receipt; live product checks and reception measurements remain separate.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current MONETA runtime and link readback",
+          "Grounded commercial claims",
+          "Exact public post authorization"
+        ],
+        "remaining_human_action": "Approve the concrete posts under the named identity.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2371,11 +2391,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Use the existing managed exclusion checker, expose unreadable configuration as unmeasured, and require current custody proof before excluding any working source tree.",
+        "rationale": "The source already retired the preferences-pane-only premise, but previously returned success on unreadable configuration. A worktree label alone does not prove its contents are reproducible.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-BACKBLAZE-EXCLUDE"
+          "his-hand-levers.json#L-BACKBLAZE-EXCLUDE",
+          "scripts/backblaze-exclusions.py",
+          "docs/estate-custody-primitives.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2383,14 +2405,19 @@
         ],
         "owner": "IF-HOST-PRESSURE form 3 (docs/IDEAL-FORMS-LEDGER.md) — 2026-07-15 host-thrash incident; PRs #1083 (form 1) + #1085 (form 2)",
         "acceptance": {
-          "condition": "post-reboot bztransmit re-crawls skip the regenerable trees (the worktree estate alone is hundreds of thousands of small files — file count, not GiB, is what pins the crawler); one of the three stacked loads in the 2026-07-15 thrash is permanently retired; the substrate-storage-pressure backblaze-scope bucket ledgers green",
+          "condition": "The exact exclusions are read back with no unknown configuration, and every excluded non-regenerable source has current custody evidence; no backup weakening is implied.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current configuration readability",
+          "Exact intended exclusion scope",
+          "Remote or paired custody for non-regenerable contents",
+          "Managed effector verification"
+        ],
+        "remaining_human_action": "Provide missing privileged capability only if the documented managed path cannot operate; separately authorize any reduction of personal-data backup coverage.",
         "historical_gate_requires_verification": "the Backblaze preferences pane is GUI-only and writes root-context state (/Library/Backblaze.bzpkg/bzdata/bzinfo.xml) — his hand by construction; the VERIFY side is fully automated (beat sensor `backblaze-exclusions`, scripts/backblaze-exclusions.py --check, reads the world-readable bzinfo.xml and self-clears next beat after Save — no report-back needed)",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2914,11 +2941,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Keep sourcing, tailoring and staging reversible; resolve the pipeline owner’s current submission policy before any apply phase, and bind each authorized submission to its package, target and provider receipt.",
+        "rationale": "The historical lever describes two per week while the current driver names three confirmed per local day. An environment flag cannot resolve that policy conflict or prove authorization.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-APPLY-FIRE"
+          "his-hand-levers.json#L-APPLY-FIRE",
+          "scripts/application-funnel.py",
+          "docs/runbooks/outbound-preflight-arming.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2926,14 +2955,19 @@
         ],
         "owner": "outbound funnel wiring — application-funnel sensor + scripts/application-funnel.py (limen); mirrors LIMEN_MAIL_SEND for outbound mail",
         "acceptance": {
-          "condition": "end-to-end autonomous applying — the beat sources, scores, builds, stages, and submits qualified applications on its own, capped by precision limits; until armed it stops at staged and you glance before submit",
+          "condition": "Authorized submissions obey the current owner policy and have exact target/package provider receipts; staged material and launched cycles are not confirmations.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Canonical pipeline submission policy",
+          "Source-grounded application package",
+          "Specific submission authority and private autofill custody",
+          "Provider submission receipt"
+        ],
+        "remaining_human_action": "Authorize the concrete submission scope after the policy discrepancy is resolved; do not arm persistence from this implementation decision.",
         "historical_gate_requires_verification": "set LIMEN_APPLY_FIRE=1 in ~/.limen.env (writing a persistence-arming LIMEN_*=1 is classifier-gated to the agent, so this line is yours to paste) AND the pipeline's .submit-config.yaml (personal info for ATS autofill) present",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2954,11 +2988,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare the exact grounded pitch, verify its intended destination and live link, and check existing correspondence before presenting the send-ready message.",
+        "rationale": "A public deployment is not delivery to the recipient; preflight evidence prevents duplicate outreach but does not itself grant send authority.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-VIC-SHARE-PITCH"
+          "his-hand-levers.json#L-VIC-SHARE-PITCH",
+          "docs/runbooks/outbound-preflight-arming.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2966,14 +3001,18 @@
         ],
         "owner": "victoroff-os pitch deploy",
         "acceptance": {
-          "condition": "the pitch is sent to David",
+          "condition": "The approved message has a sent/delivery receipt bound to the intended recipient and version; the webpage alone is insufficient.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current pitch and target identity",
+          "Current link readback",
+          "Prior correspondence and explicit send authority"
+        ],
+        "remaining_human_action": "Approve or perform the exact external correspondence under the retained send gate.",
         "historical_gate_requires_verification": "Sending emails is irreversible external communication. The human must send it.",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {

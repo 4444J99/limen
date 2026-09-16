@@ -92,17 +92,17 @@ def test_whichfiles_all_does_not_count(tmp_path):
     assert proc.returncode == 1  # present but NOT excluded
 
 
-def test_absent_file_fails_open(tmp_path):
+def test_absent_file_is_unmeasured(tmp_path):
     proc = run_check(tmp_path / "nope.xml")
-    assert proc.returncode == 0
+    assert proc.returncode == 77
     assert "unknown" in proc.stdout
 
 
-def test_malformed_xml_fails_open(tmp_path):
+def test_malformed_xml_is_unmeasured(tmp_path):
     p = tmp_path / "bzinfo.xml"
     p.write_text("<bzinfo><unclosed")
     proc = run_check(p)
-    assert proc.returncode == 0
+    assert proc.returncode == 77
     assert "unknown" in proc.stdout
 
 
@@ -149,9 +149,9 @@ def test_apply_twice_adds_nothing_twice(tmp_path):
     assert p.read_bytes() == after_first
 
 
-def test_apply_absent_file_fails_open(tmp_path):
+def test_apply_absent_file_is_unmeasured(tmp_path):
     proc = run_apply(tmp_path / "nope.xml")
-    assert proc.returncode == 0
+    assert proc.returncode == 77
     assert "unknown" in proc.stdout
 
 
@@ -185,3 +185,21 @@ def test_apply_json_shape(tmp_path):
     assert set(report["added"]) == set(ALL_REQUIRED[1:])
     assert report["missing"] == []
     assert proc.returncode == 0
+
+
+def test_unrecognized_xml_root_is_unmeasured(tmp_path):
+    p = tmp_path / "bzinfo.xml"
+    p.write_text('<other><bzdirfilter dir="/" whichfiles="none" /></other>')
+    before = p.read_bytes()
+    assert run_check(p).returncode == 77
+    assert run_apply(p).returncode == 77
+    assert p.read_bytes() == before
+    assert list(tmp_path.iterdir()) == [p]
+
+
+def test_malformed_apply_preserves_original_without_backup(tmp_path):
+    p = tmp_path / "bzinfo.xml"
+    p.write_text("<bzinfo>")
+    assert run_apply(p, "--json").returncode == 77
+    assert p.read_text() == "<bzinfo>"
+    assert list(tmp_path.iterdir()) == [p]

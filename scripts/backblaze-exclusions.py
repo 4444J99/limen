@@ -21,8 +21,8 @@ Verbs:
             before the catch-all, XML-validate the result, atomically replace, and
             re-verify. Idempotent no-op when already green.
 
-Fail-open on an unreadable or unrecognized file (Backblaze may rewrite the format on
-upgrade): prints ``unknown`` and exits 0, never red on uncertainty. An --apply that
+An unreadable or unrecognized file (Backblaze may rewrite the format on
+upgrade) prints ``unknown`` and exits 77; uncertainty is not a successful check. An --apply that
 cannot land (file re-rooted, catch-all not found, post-insert parse failure) writes
 nothing, exits 1, and names the preferences-pane fallback. Extend the estate by
 editing REQUIRED_EXCLUDES only — the beat's armed valve (LIMEN_BACKBLAZE_APPLY)
@@ -75,6 +75,8 @@ def read_excluded_dirs(bzinfo: Path = BZINFO) -> list[str] | None:
     """The bzdirfilter whichfiles='none' prefixes, or None if unreadable/unrecognized."""
     try:
         root = ET.parse(bzinfo).getroot()
+        if root.tag != "bzinfo":
+            return None
     except Exception:
         return None
     try:
@@ -96,14 +98,13 @@ def _missing(excluded: list[str]) -> list[str]:
 def apply_excludes(bzinfo: Path = BZINFO) -> dict:
     """Insert missing REQUIRED_EXCLUDES into bzinfo.xml; never leaves a torn file.
 
-    Returns a report dict; status ∈ ok | applied | unknown | blocked. Only
-    ``blocked`` means the estate is still owed (exit 1 at the CLI).
+    Returns a report dict; status ∈ ok | applied | unknown | blocked. ``blocked`` exits 1 and ``unknown`` exits 77 at the CLI.
     """
     excluded = read_excluded_dirs(bzinfo)
     if excluded is None:
         return {
             "status": "unknown",
-            "note": f"{bzinfo} unreadable or unrecognized — fail-open",
+            "note": f"{bzinfo} unreadable or unrecognized — unmeasured",
             "added": [],
             "missing": [],
         }
@@ -197,17 +198,17 @@ def main(argv: list[str] | None = None) -> int:
             print(f"backblaze-exclusions: BLOCKED — {report['note']}")
             for m in report["missing"]:
                 print(f"  - {m}")
-        return 1 if report["status"] == "blocked" else 0
+        return 77 if report["status"] == "unknown" else (1 if report["status"] == "blocked" else 0)
 
     excluded = read_excluded_dirs(Path(args.bzinfo))
     if excluded is None:
         report = {
             "status": "unknown",
-            "note": f"{args.bzinfo} unreadable or unrecognized — fail-open",
+            "note": f"{args.bzinfo} unreadable or unrecognized — unmeasured",
             "missing": [],
         }
         print(json.dumps(report, indent=2) if args.json else f"backblaze-exclusions: unknown — {report['note']}")
-        return 0
+        return 77
 
     missing = _missing(excluded)
     report = {
