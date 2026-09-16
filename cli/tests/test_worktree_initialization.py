@@ -13,6 +13,28 @@ from limen.worktree_initialization import (
 )
 
 
+@pytest.fixture(autouse=True)
+def approved_creation(tmp_path, monkeypatch):
+    policy_root = tmp_path / "authority"
+    (policy_root / "logs").mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_ROOT", str(policy_root))
+    (policy_root / "logs/autonomy-policy.json").write_text(
+        json.dumps(
+            {
+                "mode": "dispatch",
+                "approved_priorities": [
+                    {
+                        "outcome_id": "fixture",
+                        "enabled": True,
+                        "work_keys": ["FIXTURE", "DIRTY", "MOVE-CRASH", "COLLISION", "BRANCH-COLLISION"],
+                        "resource_limits": {"branch": 2, "worktree": 2},
+                    }
+                ],
+            }
+        )
+    )
+
+
 def _repo(root: Path) -> Path:
     root.mkdir()
     subprocess.run(["git", "init", "-q", "-b", "main", str(root)], check=True)

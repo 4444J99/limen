@@ -300,3 +300,141 @@ def require_inventory_admission(
     reservations = _integer(active_reservations, "inventory_reservations_unknown")
     if count + reservations >= INVENTORY_CEILING:
         raise InventoryAdmissionError("inventory_growth_ceiling")
+
+
+def execution_policy(root=None) -> dict:
+    """Read the existing host autonomy authority; missing/corrupt is contained."""
+    import json
+    import os
+    from pathlib import Path
+
+    root = Path(root or os.environ.get("LIMEN_ROOT") or Path.home() / "Workspace" / "limen")
+    try:
+        value = json.loads((root / "logs" / "autonomy-policy.json").read_text())
+        return value if isinstance(value, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def require_approved_priority(work_key: str | None, *, root=None) -> dict:
+    policy = execution_policy(root)
+    priorities = policy.get("approved_priorities", [])
+    priority = next(
+        (
+            row
+            for row in priorities
+            if isinstance(row, dict) and work_key in row.get("work_keys", []) and row.get("enabled") is True
+        ),
+        None,
+    )
+    if priority is None:
+        raise InventoryAdmissionError("execution_priority_not_approved")
+    if policy.get("mode") != "dispatch" and not (policy.get("mode") == "recovery" and priority.get("recovery") is True):
+        raise InventoryAdmissionError("execution_contained")
+    return priority
+
+
+def reserve_growth(action: str, identity: str, *, work_key: str | None = None, root=None) -> None:
+    """One shared durable allowance across issue/branch/worktree producers.
+
+    Charge before the effect. Ambiguous or failed effects retain their charge;
+    restarting a producer never resets its limit. This is runtime evidence under
+    the existing autonomy policy, not another task registry.
+    """
+    import fcntl
+    import hashlib
+    import json
+    import os
+    from pathlib import Path
+
+    root = Path(root or os.environ.get("LIMEN_ROOT") or Path.home() / "Workspace" / "limen")
+    priority = require_approved_priority(work_key or os.environ.get("LIMEN_WORK_KEY"), root=root)
+    if action not in {"issue", "branch", "worktree"}:
+        raise InventoryAdmissionError("execution_resource_unknown")
+    limit = priority.get("resource_limits", {}).get(action, 0)
+    if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1:
+        raise InventoryAdmissionError("execution_resource_not_approved")
+    directory = root / "logs"
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / "autonomy-growth-reservations.json"
+    with (directory / "autonomy-growth-reservations.lock").open("a") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        try:
+            ledger = json.loads(path.read_text()) if path.exists() else {}
+        except (OSError, ValueError) as exc:
+            raise InventoryAdmissionError("execution_resource_ledger_unavailable") from exc
+        key = hashlib.sha256(f"{priority['outcome_id']}:{action}:{identity}".encode()).hexdigest()
+        # Repeated reservation is denied: the prior external effect may have happened.
+        if key in ledger:
+            raise InventoryAdmissionError("execution_resource_already_reserved")
+        used = sum(row["outcome_id"] == priority["outcome_id"] and row["action"] == action for row in ledger.values())
+        if used >= limit:
+            raise InventoryAdmissionError("execution_resource_budget_exhausted")
+        ledger[key] = {"outcome_id": priority["outcome_id"], "action": action}
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(json.dumps(ledger, sort_keys=True) + "\n")
+        os.replace(temporary, path)
+
+
+def admit_execution(policy: dict | None, state: dict, packet: dict, now: datetime) -> dict | None:
+    """Reserve bounded outcome capacity in the broker's existing run ledger."""
+    if policy is None:
+        return None
+    parent = state["runs"].get(packet.get("parent_run_id"))
+    inherited = (parent or {}).get("execution_admission") or {}
+    priority = next(
+        (
+            row
+            for row in policy.get("approved_priorities", [])
+            if (parent and row["outcome_id"] == inherited.get("outcome_id"))
+            or (not parent and packet["work_key"] in row.get("work_keys", []))
+        ),
+        None,
+    )
+
+    def require(ok, code):
+        if not ok:
+            raise InventoryAdmissionError(code)
+
+    if priority is None or priority.get("enabled") is not True:
+        raise InventoryAdmissionError("execution_priority_not_approved")
+    require(
+        policy.get("mode") == "dispatch" or (policy.get("mode") == "recovery" and priority.get("recovery") is True),
+        "execution_contained",
+    )
+    runs = list(state["runs"].values())
+    require(
+        sum(r["status"] in {"reserved", "running", "stop_requested"} for r in runs)
+        < (1 if policy.get("mode") == "recovery" else 2),
+        "execution_concurrency_exhausted",
+    )
+    prior = [r for r in runs if (r.get("execution_admission") or {}).get("outcome_id") == priority["outcome_id"]]
+    require(
+        sum(r["execution_admission"]["reserved_seconds"] for r in prior) + 1800 <= 7200,
+        "execution_outcome_budget_exhausted",
+    )
+    if not parent:
+        roots = [r for r in prior if not r.get("parent_run_id")]
+        require(len(roots) < 2, "execution_corrective_retry_exhausted")
+        require(
+            all(r["packet"]["execution_hash"] != packet["execution_hash"] for r in roots),
+            "execution_retry_inputs_unchanged",
+        )
+    require(packet["retry"]["max_attempts"] <= 1, "execution_retry_requires_changed_inputs")
+    from datetime import timedelta
+
+    deadline = min(datetime.fromisoformat(packet["deadline"].replace("Z", "+00:00")), now + timedelta(minutes=30))
+    if parent:
+        deadline = min(
+            deadline,
+            datetime.fromisoformat(
+                inherited.get("attempt_deadline", parent["packet"]["deadline"]).replace("Z", "+00:00")
+            ),
+        )
+    require(deadline > now, "execution_attempt_exhausted")
+    return {
+        "outcome_id": priority["outcome_id"],
+        "reserved_seconds": 1800,
+        "attempt_deadline": deadline.isoformat(),
+        "verification_seconds": 600,
+    }

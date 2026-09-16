@@ -158,11 +158,14 @@ export class ConductKeeperDurableObject {
     this.env = env;
     let inventoryAuthority = null;
     try { inventoryAuthority = configuredInventoryAuthority(env); } catch { /* Disabled until installed. */ }
+    let executionPolicy = {};
+    try { executionPolicy = JSON.parse(env.LIMEN_EXECUTION_POLICY || "{}"); } catch { /* Fail closed. */ }
     this.service = new SerializedConductService(
       new DurableConductStore(ctx.storage),
       {
         projectTaskEvent: (event, inventory) => commitTaskCompatibilityEvent(env, event, { storage: ctx.storage, ...inventory }),
         inventoryAuthority,
+        executionPolicy,
         sessionTtlMs: duration(env, "LIMEN_CONDUCT_SESSION_TTL_SECONDS", 5 * 60 * 1000),
         adoptionAfterMs: duration(env, "LIMEN_CONDUCT_ADOPTION_AFTER_SECONDS", 10 * 60 * 1000),
         leaseTtlMs: duration(env, "LIMEN_CONDUCT_LEASE_TTL_SECONDS", 15 * 60 * 1000),
