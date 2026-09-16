@@ -380,7 +380,23 @@
       "outcome": "DEFERRED",
       "reason": "LIFECYCLE-UNKNOWN",
       "exit_code": 2,
-      "attempts": 1
+      "attempts": 1,
+      "followup": "Missing lifecycle:delivery label added; unchanged head not resubmitted."
+    }
+  },
+  "education_device_decisions": {
+    "head": "b9e58bb1d3cca0f72f65abe2422334ae98037c34",
+    "selected_total": 69,
+    "component_review_remaining": 28,
+    "acceptance_predicates_missing": 95,
+    "historical_records_preserved": 107,
+    "verification": {
+      "command": "bash scripts/verify-scoped.sh --base 0978e8966",
+      "exit_code": 0,
+      "cheap_gates_passed": 7,
+      "cli_passed": 7709,
+      "cli_skipped": 2,
+      "duration_seconds": 210.8
     }
   }
 }
