@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import math
+import time
 from pathlib import Path
 import sys
 from typing import Any
@@ -92,14 +94,19 @@ def registry_errors() -> list[str]:
     return errors
 
 
-def active_errors(receipts_dir: Path, expected_sha: str, min_fires: int) -> list[str]:
+def active_errors(receipts_dir: Path, expected_sha: str, min_fires: int, *, now: float | None = None) -> list[str]:
     errors: list[str] = []
     receipts: list[dict[str, Any]] = []
+    now = time.time() if now is None else now
     for path in sorted(receipts_dir.glob("*.json")):
         try:
             payload = _load_json(path)
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             errors.append(f"{path.name}: unreadable receipt: {exc}")
+            continue
+        epoch = payload.get("observed_epoch")
+        if type(epoch) not in (int, float) or not 0 < epoch <= now or not math.isfinite(epoch):
+            errors.append(f"{path.name}: invalid or future receipt timestamp")
             continue
         receipts.append(payload)
     receipts.sort(key=lambda row: (float(row.get("observed_epoch", 0)), str(row.get("run_id", ""))))
@@ -107,7 +114,11 @@ def active_errors(receipts_dir: Path, expected_sha: str, min_fires: int) -> list
     if len(selected) < min_fires:
         errors.append(f"recorded fires are {len(selected)}, expected at least {min_fires}")
         return errors
-    interval = _load_json(CONTRACTS)["processes"]["com.limen.heartbeat"]["launchd"]["start_interval_seconds"]
+    contract = _load_json(CONTRACTS)["processes"]["com.limen.heartbeat"]
+    interval = contract["launchd"]["start_interval_seconds"]
+    maximum_age = interval + contract["limits"]["wall_seconds_per_tick"]
+    if now - selected[-1]["observed_epoch"] > maximum_age:
+        errors.append(f"latest receipt is stale: age exceeds {maximum_age}s")
     for receipt in selected:
         run_id = receipt.get("run_id", "unknown")
         if receipt.get("runtime_sha") != expected_sha:
