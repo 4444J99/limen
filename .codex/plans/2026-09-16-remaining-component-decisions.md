@@ -35,3 +35,16 @@ rerun of both output-limit variants plus the closeout case passed all three in
 47.24 seconds. No production code or timeout limit changed. Root cause of the
 full-suite-only failures is unverified; retain that result instead of claiming a
 clean full run. Codex owns any recurrence under this PR.
+
+## Closeout reference-evidence correction
+
+The classifier now emits MERGE_OBSERVED rather than VERIFIED, and failed PR
+lookups emit PR_UNMEASURED rather than asserting absence. The report explicitly
+limits its evidence to PR references and lists acceptance-unmeasured claims. CLI
+exit 77 distinguishes incomplete acceptance from a known contradiction (exit 1).
+Unknown PR reads do not generate missing-PR remediation tasks. External home
+names also remain acceptance-unmeasured. Four focused tests and classifier doctor
+pass. This does not implement authoritative acceptance-receipt ingestion; that
+remaining requirement stays with this component owner.
+
+Closeout correction verification: all 28 implicated scoped gates passed.
