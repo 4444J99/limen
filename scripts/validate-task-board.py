@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import math
 import sys
 from pathlib import Path
 
@@ -93,10 +94,53 @@ def validate_aggregate(path: Path, data: dict) -> int:
         )
         return 1
 
-    projection = ((data.get("portal") or {}).get("public_projection")) or {}
-    missing = [field for field in ("total", "completed", "by_status") if field not in projection]
-    if missing:
-        print(f"{path}: public aggregate is missing projection field(s): {missing}", file=sys.stderr)
+    portal = data.get("portal")
+    projection = portal.get("public_projection") if isinstance(portal, dict) else None
+    if not isinstance(projection, dict):
+        print(f"{path}: public aggregate projection must be an object", file=sys.stderr)
+        return 1
+    required = ("total", "completed", "active", "completion_rate", "by_status", "by_priority")
+    if any(field not in projection for field in required):
+        print(f"{path}: public aggregate is missing projection fields", file=sys.stderr)
+        return 1
+    counts = [projection[field] for field in ("total", "completed", "active")]
+    groups = (projection["by_status"], projection["by_priority"])
+    if (
+        any(type(value) is not int or value < 0 for value in counts)
+        or any(not isinstance(group, dict) for group in groups)
+        or any(type(value) is not int or value < 0 for group in groups for value in group.values())
+    ):
+        print(f"{path}: public aggregate counts must be nonnegative integers", file=sys.stderr)
+        return 1
+    statuses, priorities = groups
+    if set(statuses) - (load_valid_statuses() | {"unknown"}) or set(priorities) - {
+        "critical",
+        "high",
+        "medium",
+        "low",
+        "backlog",
+        "unknown",
+    }:
+        print(f"{path}: public aggregate has unsupported count categories", file=sys.stderr)
+        return 1
+    total, completed, active = counts
+    if (
+        sum(statuses.values()) != total
+        or sum(priorities.values()) != total
+        or completed != statuses.get("done", 0) + statuses.get("archived", 0)
+        or active != statuses.get("dispatched", 0) + statuses.get("in_progress", 0)
+    ):
+        print(f"{path}: public aggregate counts disagree", file=sys.stderr)
+        return 1
+    rate = projection["completion_rate"]
+    # The keeper rounds to three decimal places. Permit only that rounding error.
+    if (
+        type(rate) not in (int, float)
+        or not math.isfinite(rate)
+        or not 0 <= rate <= 1
+        or abs(rate - completed / max(1, total)) > 0.000500000001
+    ):
+        print(f"{path}: public aggregate completion rate disagrees", file=sys.stderr)
         return 1
 
     leaks = _leaked_task_material(data)
