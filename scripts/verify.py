@@ -688,15 +688,30 @@ def verification_fingerprint(gate: dict, registry: dict, changed: list[str]) -> 
     all tracked inputs are relevant. Live/network predicates are never cached.
     """
     digest = hashlib.sha256()
-    digest.update(
-        json.dumps([gate, registry, sorted(changed), sys.version, platform.platform()], sort_keys=True).encode()
-    )
+    cache = gate.get("cache") or {}
+    inputs = cache.get("inputs") if isinstance(cache, dict) else None
+    # Command gates do not consume the changed-path list. Their declared closure
+    # includes their own configuration; unrelated registry rows are not inputs.
+    definition = [gate, sys.version, platform.platform()]
+    if not inputs:
+        definition += [registry, sorted(changed)]
+    digest.update(json.dumps(definition, sort_keys=True).encode())
     for key, value in sorted(os.environ.items()):
         if key not in {"SHLVL", "_", "PWD", "OLDPWD"}:
             digest.update(f"{key}={value}\0".encode())
     packages = sorted((d.metadata.get("Name", ""), d.version) for d in importlib.metadata.distributions())
     digest.update(json.dumps(packages).encode())
-    paths = set(git_paths("ls-files", "-z")) | set(changed)
+    paths = (
+        set(git_paths("ls-files", "-z"))
+        | set(git_paths("ls-files", "--others", "--exclude-standard", "-z"))
+        | set(changed)
+    )
+    if inputs:
+        regexes = [glob_to_regex(pattern) for pattern in inputs]
+        paths = {name for name in paths if any(regex.fullmatch(name) for regex in regexes)}
+        paths.update(name for name in inputs if not any(c in name for c in "*?["))
+    # A verifier implementation change always invalidates old receipt semantics.
+    paths.add("scripts/verify.py")
     paths.update(["node_modules/.package-lock.json", "web/worker/node_modules/.package-lock.json"])
     for name in sorted(paths):
         if any(name == root or name.startswith(root + "/") for root in PRIVATE_CUSTODY_ROOTS):
@@ -723,8 +738,11 @@ def cache_path(gate_id: str, fingerprint: str) -> Path:
 
 
 def cacheable(gate: dict) -> bool:
-    # Explicitly deterministic local syntax gates only. Runtime/deploy/network
-    # checks retain their live predicates; a successful HTTP result is not a cache.
+    # Registry opt-in requires an explicit dependency closure. Runtime/deploy/
+    # network checks retain their live predicates; receipts alone do not opt in.
+    cache = gate.get("cache")
+    if isinstance(cache, dict) and cache.get("mode") == "content" and cache.get("inputs"):
+        return gate.get("kind") is None and isinstance(gate.get("command"), str)
     return (
         gate.get("kind") == "per_file"
         and bool(gate.get("per_file"))
@@ -764,17 +782,22 @@ def run_gate_wave(
             row_timeout = (gates[gate_id] or {}).get("timeout_seconds")
             gate_timeout = min(timeout_seconds, float(row_timeout)) if row_timeout else timeout_seconds
             deadline = min(started + gate_timeout, aggregate_deadline or float("inf"))
-            fingerprint = None
-            receipt = None
             if time.monotonic() >= deadline:
                 output_paths[gate_id].write_text("aggregate verification deadline exhausted\n")
                 return False, time.monotonic() - started
-            if cacheable(gates[gate_id]):
-                fingerprint = verification_fingerprint(gates[gate_id], registry, changed)
-                receipt = cache_path(gate_id, fingerprint)
+            fingerprint = verification_fingerprint(gates[gate_id], registry, changed)
+            receipt = cache_path(gate_id, fingerprint)
+            reusable = cacheable(gates[gate_id])
+            if reusable:
                 try:
                     prior = json.loads(receipt.read_text())
-                    if prior == {"fingerprint": fingerprint, "gate": gate_id, "passed": True}:
+                    if (
+                        prior.get("fingerprint") == fingerprint
+                        and prior.get("gate") == gate_id
+                        and prior.get("passed") is True
+                        and prior.get("reusable") is True
+                        and time.monotonic() < deadline
+                    ):
                         output_paths[gate_id].write_text(f"REUSED: {gate_id} {fingerprint}\n")
                         return True, time.monotonic() - started
                 except (OSError, ValueError):
@@ -797,13 +820,33 @@ def run_gate_wave(
                     passed = False
             if (
                 passed
-                and receipt is not None
+                and time.monotonic() < deadline
                 and fingerprint == verification_fingerprint(gates[gate_id], registry, changed)
             ):
                 receipt.parent.mkdir(parents=True, exist_ok=True)
                 with tempfile.NamedTemporaryFile(mode="w", dir=receipt.parent, delete=False) as saved:
-                    json.dump({"fingerprint": fingerprint, "gate": gate_id, "passed": True}, saved)
+                    json.dump(
+                        {
+                            "fingerprint": fingerprint,
+                            "gate": gate_id,
+                            "passed": True,
+                            "reusable": reusable,
+                            "duration_seconds": time.monotonic() - started,
+                        },
+                        saved,
+                    )
                 os.replace(saved.name, receipt)
+                # Receipts are a bounded cache, not another growing task ledger.
+                existing = []
+                for candidate in receipt.parent.glob("*.json"):
+                    if not re.fullmatch(r"[0-9a-f]{64}\.json", candidate.name):
+                        continue
+                    try:
+                        existing.append((candidate.stat().st_mtime_ns, candidate))
+                    except FileNotFoundError:
+                        continue  # Another verifier may have pruned this receipt.
+                for _, stale in sorted(existing, reverse=True)[4:]:
+                    stale.unlink(missing_ok=True)
             return passed, time.monotonic() - started
 
         executor = concurrent.futures.ThreadPoolExecutor(

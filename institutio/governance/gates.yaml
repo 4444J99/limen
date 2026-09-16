@@ -181,6 +181,9 @@ gates:
     owner: verify
     note: "Whitespace/conflict-marker hygiene; closes every run, scoped and whole."
   python-typecheck:
+    cache:
+      mode: content
+      inputs: ["cli/**", "mcp/**", "ianva/**", "web/api/**", "pyproject.toml", "mypy.ini", ".mypy.ini", "setup.cfg", "requirements*.txt", "uv.lock"]
     command: "bash -c 'cd cli && python3 -m mypy src/limen/ && cd \"$OLDPWD\" && python3 -m mypy --ignore-missing-imports mcp/src/limen_mcp/ ianva/src/ianva/'"
     paths: ["cli/src/limen/**", "mcp/src/limen_mcp/**", "ianva/src/ianva/**", "web/api/**", "cli/pyproject.toml", "mcp/pyproject.toml", "ianva/pyproject.toml"]
     ci_job: "ci.yml:python"
@@ -1117,12 +1120,18 @@ gates:
 
   # ── python estate ───────────────────────────────────────────────────────────
   ruff-lint:
+    cache:
+      mode: content
+      inputs: ["cli/**", "web/api/**", "mcp/**", "ianva/**", "apps/**", "organs/**", ".ruff.toml", "ruff.toml", "pyproject.toml", ".gitignore", "scripts/check-ruff-pin.py"]
     command: "python3 scripts/check-ruff-pin.py && python3 -m ruff check cli/src cli/tests web/api mcp ianva apps organs"
     paths: ["cli/**", "web/api/**", "mcp/**", "ianva/**", "apps/*.py", "apps/**/*.py", "organs/*.py", "organs/**/*.py"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
     note: "Lint the whole Python estate whenever any Python surface changes. apps/ and organs/ joined 2026-08-06 (35 .py files sat outside both ruff gates — a documented component was unlinted); their paths are *.py-scoped so an organs/apps docs change never pays for a lint run, with the direct-child glob listed explicitly (the ** dialect matches only NESTED files). Version-locked to the ONE ruff pin in cli/pyproject.toml (issue #1658) — a mismatched host ruff fails loud instead of red-noising 1,300 findings."
   ruff-format:
+    cache:
+      mode: content
+      inputs: ["cli/**", "web/api/**", "mcp/**", "ianva/**", "apps/**", "organs/**", ".ruff.toml", "ruff.toml", "pyproject.toml", ".gitignore", "scripts/check-ruff-pin.py"]
     command: "python3 scripts/check-ruff-pin.py && python3 -m ruff format --check cli/src cli/tests web/api mcp ianva apps organs"
     paths: ["cli/**", "web/api/**", "mcp/**", "ianva/**", "apps/*.py", "apps/**/*.py", "organs/*.py", "organs/**/*.py"]
     ci_job: "pr-gate.yml:pr-gate"

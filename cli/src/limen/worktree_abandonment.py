@@ -257,6 +257,9 @@ def detach_registered_worktree(
             raise RuntimeError("worktree-status-unavailable")
         if status.stdout:
             raise RuntimeError("worktree-not-clean")
+        ignored = _run_git(target, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
+        if ignored.returncode != 0 or ignored.stdout:
+            raise RuntimeError("ignored-payload-custody-unproven")
         head = _run_git(target, "rev-parse", "HEAD")
         if head.returncode != 0 or not head.stdout.strip():
             raise RuntimeError("worktree-head-unavailable")

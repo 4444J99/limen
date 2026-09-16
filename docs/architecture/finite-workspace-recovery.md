@@ -17,3 +17,22 @@ or retire the disposable copy through the existing reclaimer after custody verif
 Preservation is not completion. Resume interrupted cleanup from its receipts and verify
 that a second pass makes no changes. Use configured runtime roots for scratch.
 
+
+Verification stores bounded success receipts for every passing gate. Reuse requires
+an unchanged content, dependency, environment and gate-definition fingerprint.
+Command gates opt in through `cache.mode: content` and explicit relative input
+closures in the existing gate registry; syntax checks are deterministic by default.
+Live integration and deployment checks execute on each implicated run.
+
+Local agent subprocesses inherit the keeper's original attempt deadline. Remote
+providers without a demonstrated hard deadline are explicitly unavailable for new
+autonomous implementation, while observation and recovery remain available. This
+includes Jules, Codex Cloud and the current 45-minute GitHub Actions agent job.
+A bounded provider adapter must prove deadline enforcement before admission; a
+worker restart cannot replace a missing original deadline with a new allowance.
+
+The task release routes are local dispatch, Jules landing and ship-docs, followed
+by the existing worktree reclaimer for interrupted or retained cleanup. Ignored
+payloads require custody proof even when their directory names resemble caches.
+The tool-cache reclaimer owns its separate generated-cache allowlist; no blanket
+home-folder relocation or ignored-file purge is a task-release action.

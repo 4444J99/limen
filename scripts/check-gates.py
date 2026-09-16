@@ -185,6 +185,19 @@ def main() -> int:
     if set(ratchets) - RATCHET_KEYS or not all(isinstance(v, bool) for v in ratchets.values()):
         fail("A", f"ratchets must be booleans among {sorted(RATCHET_KEYS)}")
     for gate_id, gate in gates.items():
+        cache = gate.get("cache")
+        if cache is not None and (
+            not isinstance(cache, dict)
+            or cache.get("mode") != "content"
+            or not isinstance(cache.get("inputs"), list)
+            or not cache["inputs"]
+            or not all(
+                isinstance(p, str) and p and not p.startswith("/") and ".." not in p.split("/") for p in cache["inputs"]
+            )
+            or gate.get("kind") is not None
+            or not isinstance(gate.get("command"), str)
+        ):
+            fail("A", f"{gate_id}: content cache requires a command and explicit relative input closure")
         kind = gate.get("kind")
         has_command = "command" in gate
         if kind is None and not has_command:

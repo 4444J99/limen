@@ -534,6 +534,7 @@ class FakeKeeper:
 
 
 class FakeExecutionAdapter:
+    enforces_deadline = True  # synchronous fixture; no external job outlives launch
     name = "fake-remote"
     transport = "remote-fake"
     local_heavy = False
@@ -775,6 +776,34 @@ def test_start_launches_disjoint_remote_leaves_while_dependency_waits(
         "leaf-c": "waiting",
     }
     assert {work_id for work_id, _ in adapter.launches} == {"leaf-a", "leaf-b"}
+
+
+def test_admitted_outcome_refuses_unbounded_provider_before_external_launch(
+    tmp_path, monkeypatch, approved_execution_policy
+):
+    approved_execution_policy("campaign/v1")
+    payload = manifest_payload()
+    payload["leaves"][0]["retry"]["max_attempts"] = 1
+    manifest = FanoutManifestV1.model_validate(payload)
+    keeper = LocalConductClient(tmp_path / "bounded.sqlite")
+    adapter = FakeExecutionAdapter()
+    adapter.enforces_deadline = False
+    monkeypatch.setattr("limen.fanout_executor.remote_default_head", lambda repo: BASE)
+    started = start_manifest(manifest, client=keeper, allow_development_keeper=True, execution_adapters=(adapter,))
+    assert adapter.launches == []
+    graph = keeper.graph(started["root_run_id"])
+    leaf = next(node for node in graph["nodes"] if node["packet"]["work_id"] == "leaf-a")
+    assert leaf["attempts"][-1]["status"] == "failed"
+    assert "hard-deadline enforcement unavailable" in leaf["attempts"][-1]["detail"]
+
+
+def test_worker_restart_without_original_deadline_cannot_get_fresh_allowance(tmp_path, monkeypatch):
+    import limen.fanout_executor as executor
+
+    monkeypatch.setattr(executor.tempfile, "gettempdir", lambda: str(tmp_path))
+    monkeypatch.delenv("LIMEN_FANOUT_WORKER_DEADLINE", raising=False)
+    monkeypatch.setattr(executor, "client_from_env", lambda: pytest.fail("must not connect without deadline"))
+    assert executor.run_executor_worker("root", "session", "fixture") == 2
 
 
 def terminal_harvest() -> dict:

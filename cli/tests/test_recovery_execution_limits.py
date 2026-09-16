@@ -161,3 +161,46 @@ def test_verification_cache_changes_with_dependency_and_deadline_wins(tmp_path, 
     assert not module.run_gate_wave(
         ["syntax"], {"syntax": gate}, {}, ["check.py"], aggregate_deadline=time.monotonic() - 1, **kwargs
     )
+
+
+def test_declared_cache_closure_reuses_only_unchanged_inputs_and_retains_live_receipts(tmp_path, monkeypatch):
+    path = Path(__file__).resolve().parents[2] / "scripts/verify.py"
+    spec = importlib.util.spec_from_file_location("closure_verify", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    monkeypatch.setattr(module, "git_paths", lambda *args: ["check.py", "requirements.txt", "notes.md"])
+    monkeypatch.setattr(module, "git", lambda *args: str(tmp_path / ".git"))
+    (tmp_path / "check.py").write_text("pass\n")
+    (tmp_path / "requirements.txt").write_text("dep==1\n")
+    (tmp_path / "notes.md").write_text("unrelated\n")
+    gate = {
+        "note": "closure fixture",
+        "command": "python3 check.py",
+        "cache": {"mode": "content", "inputs": ["check.py", "requirements.txt"]},
+    }
+    calls = []
+    original = module.run_gate
+
+    def observed(*args, **kw):
+        calls.append(1)
+        return original(*args, **kw)
+
+    monkeypatch.setattr(module, "run_gate", observed)
+    kwargs = dict(jobs=1, timeout_seconds=10, output_limit_bytes=1024, wave_name="closure")
+    assert module.run_gate_wave(["check"], {"check": gate}, {}, ["check.py"], **kwargs)
+    (tmp_path / "notes.md").write_text("changed unrelated input\n")
+    assert module.run_gate_wave(["check"], {"check": gate}, {"unrelated": True}, ["notes.md"], **kwargs)
+    assert len(calls) == 1
+    (tmp_path / "requirements.txt").write_text("dep==2\n")
+    assert module.run_gate_wave(["check"], {"check": gate}, {}, ["requirements.txt"], **kwargs)
+    assert len(calls) == 2
+    monkeypatch.setenv("VERIFY_FIXTURE_DEPENDENCY", "changed")
+    assert module.run_gate_wave(["check"], {"check": gate}, {}, [], **kwargs)
+    assert len(calls) == 3
+    live = {"note": "live fixture", "command": "python3 check.py"}
+    for _ in range(2):
+        assert module.run_gate_wave(["live"], {"live": live}, {}, [], **kwargs)
+    assert len(calls) == 5
+    receipt = module.cache_path("live", module.verification_fingerprint(live, {}, []))
+    assert json.loads(receipt.read_text())["reusable"] is False

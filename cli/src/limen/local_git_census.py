@@ -390,6 +390,11 @@ def collect_local_git_census(
     }
     tracked_roots = [_tracked_root(row) for row in roots]
     tracked_failures = [{key: row[key] for key in ("scope", "path_key", "error") if key in row} for row in failures]
+    for failure in tracked_failures:
+        detail = str(failure.get("error", ""))
+        if "/" in detail or "\\" in detail:
+            failure["detail_sha256"] = hashlib.sha256(detail.encode()).hexdigest()
+            failure["error"] = "private-detail-retained"
     tracked_payload = {
         "schema": SCHEMA,
         "observed_at": private_payload["observed_at"],
