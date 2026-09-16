@@ -178,3 +178,19 @@ probe is not adoption evidence. The social scheduler still has no send adapter.
 Current count: 56 selected, 41 requiring component review; 95 executable acceptance
 definitions remain missing. Source references resolve. No publishing, account,
 private-data relocation or live settings action was performed.
+
+## HOSPES scoped-claim readback
+
+Issue #2404 remains open. Its regression test already landed in #2623 and is
+included in the successful default whole-repository verification. Fresh
+authenticated keeper readback now finds GH-organvm-hospes-9 open, no longer
+stuck in_progress. Its historical August 15 compatibility run is succeeded with
+a released lease and no run receipts; that is not a fresh execution receipt or
+HOSPES product completion. No task state was changed.
+
+The broader release safety review remains owned here: the legacy non-Jules
+route uses task age without a broker liveness/protection decision, and the
+release rung search reaches the retired heartbeat loop rather than the current
+bounded heartbeat. Next implementation must preserve active/human-protected
+leases and use broker-authoritative transitions, with current runtime coverage.
+Do not revive the retired daemon or infer authorization from stale local state.
