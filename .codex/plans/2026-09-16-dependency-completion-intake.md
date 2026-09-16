@@ -37,3 +37,27 @@ isolation, and runner failure redaction have focused coverage.
 The reviewed packet producer and deployment wiring remain implementation work.
 No credential was minted, assessor pin approved, policy enabled, or live assessment
 launched by this change. The full plan remains incomplete.
+
+## Read-only packet production
+
+`limen conduct compile-dependency-assessment --hint HINT --contract CONTRACT
+--source-repository REPO` emits one packet without contacting the broker or
+executing source. CONTRACT contains exactly identity, executor_session_id,
+deadline, predicate, receipt_target, work_loan, source_commit, and script_sha256.
+The caller supplies reviewed deployment inputs and a keeper-authenticated hint;
+compilation itself establishes neither authentication nor independent approval.
+The pinned source is captured from Git before compilation. No source bytes or
+credentials enter the packet.
+
+The compiler preserves the exact four-field hint binding, read-only repository
+authority, source commit/digest, one attempt, no children, explicit executor
+session and required dependency-assessment capability. Its finite deadline
+allows 95 seconds for the bounded assessor and is at most 900 seconds away.
+Existing work-loan validation rejects missing underwriting, nonexecutable
+predicates and nondurable receipt targets. Persist and replay the same packet
+after ambiguous submission; do not generate a new deadline. A real in-memory
+keeper test proves exact replay reuses the run and changed source pins conflict.
+
+Executor callback/CLI wiring, independently reviewed deployment inputs, and
+protected activation remain required before readiness. No live capacity was
+reserved or provider launched while producing this implementation.
