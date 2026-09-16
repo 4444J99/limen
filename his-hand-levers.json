@@ -1968,11 +1968,15 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Run the existing evidence collection, matched-cohort analysis and claim reconciliation as a bounded observation/proposal operation. Keep public experiments separately authorized and bind any recurring operation to the current scheduled-process contract.",
+        "rationale": "The observatory executive produces evidence and proposals; activation flags and historical beat wiring do not establish current runtime adoption or traction.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-OBSERVATORY-ACTIVATE"
+          "his-hand-levers.json#L-OBSERVATORY-ACTIVATE",
+          "cli/src/limen/observatory/__init__.py",
+          "cli/src/limen/observatory/executive.py",
+          "cli/src/limen/observatory/reconcile.py",
+          "spec/scheduled-process-contracts.json"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1980,14 +1984,18 @@
         ],
         "owner": "GEN-observatory-organ",
         "acceptance": {
-          "condition": "a daily brief with one measured activation experiment; the organ's whole loop goes live",
+          "condition": "A bounded run records source coverage and failures, produces a traceable proposal, and demonstrates actual runtime reachability. Public experiment effects require separate authorized execution and outcome readback.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current source observations and matched controls",
+          "Bounded runtime contract",
+          "Durable experiment proposal"
+        ],
+        "remaining_human_action": "Approve the specific public experiment or external publication when its evidence-backed proposal is ready; routine local observation is engineering work.",
         "historical_gate_requires_verification": null,
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2452,11 +2460,15 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Run closeout observation through the bounded runtime and distinguish merge references, unknown reads, explicit contradictions and verified acceptance. Route only evidenced contradictions to remediation; keep unmeasured acceptance visible.",
+        "rationale": "The repaired classifier no longer promotes matching PR titles into completion. Observation can reveal gaps before acceptance ingestion is complete; a doctor pass or armed flag cannot establish live coverage.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CLOSEOUT-OBSERVE-ARM"
+          "his-hand-levers.json#L-CLOSEOUT-OBSERVE-ARM",
+          "scripts/reconcile-closeouts.py",
+          "scripts/tests/test_closeout_evidence.py",
+          "scripts/closeout-fast.sh",
+          "spec/scheduled-process-contracts.json"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2464,14 +2476,18 @@
         ],
         "owner": "closeout-reconciliation organ (limen #1211) + ROOT capture (#1223) + observe/enforce decouple (#1225); the '8 Completed sessions → workstreams' lineage",
         "acceptance": {
-          "condition": "continuous ground-truth on closeouts — a claimed-done that isn't merged/receipted surfaces in the beat log instead of being trusted forever. The complement of verify-dispatch's in-flight babysitting.",
+          "condition": "The installed observer executes on current claims, distinguishes unavailable reads from missing resources, preserves the claim denominator, and never reports acceptance from references alone. Enforcement requires supported authoritative acceptance evidence.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current private claim custody",
+          "Authoritative acceptance evidence",
+          "Bounded observer integration"
+        ],
+        "remaining_human_action": "Only an actually enforced activation-policy grant remains human-owned; local observation and evidence correction proceed within existing authorization.",
         "historical_gate_requires_verification": "persistence-arming (writing LIMEN_*=1 to ~/.limen.env, what the beat reads) is classifier-denied to the session — only you can persist it",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3003,11 +3019,15 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Enforce fresh target- and content-bound preflight evidence at each declared outbound route, deploy settings through their source owner, and verify native interception without sending a real message.",
+        "rationale": "A shell hook alone cannot cover direct SDK or MCP sends. Existing declarations and their uncovered-route baseline must remain visible; a preflight receipt does not authorize a message by itself.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-OUTBOUND-PREFLIGHT-ARM"
+          "his-hand-levers.json#L-OUTBOUND-PREFLIGHT-ARM",
+          "scripts/hooks/outbound-preflight-guard.py",
+          "scripts/preflight-receipt.py",
+          "institutio/governance/outbound-effectors.yaml",
+          "scripts/check-effectors.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3015,14 +3035,19 @@
         ],
         "owner": "closeout 2026-07-31 (OUTBOUND-EFFECTORS, the fifth VIGILIA panel — PRs #1727, #1729, #1735)",
         "acceptance": {
-          "condition": "the gate goes from built-and-tested to ENFORCING. An outbound email or public GitHub comment with no fresh digest-bound receipt is DENIED, not reminded about. This is the consequence half of the 2026-07-31 escape: ten prose rules were written for the act-on-an-artifact-instead-of-reality class and all ten were followed by a recurrence, because a checklist the model self-certifies is a mirror. This one is os.stat() plus a SHA-256 compare — not a question the model gets to answer about itself.",
+          "condition": "Declared native routes reject absent, stale or mismatched evidence and preserve explicit communication authorization. Tests demonstrate rejection without sending; uncovered routes remain counted until separately enforced.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Explicit message authorization",
+          "Fresh thread/Sent evidence where applicable",
+          "Source-owned hook deployment",
+          "Declared route coverage"
+        ],
+        "remaining_human_action": "Authorize the specific external communication and any currently enforced settings-policy change; no preflight or configuration flag grants blanket sending authority.",
         "historical_gate_requires_verification": "`.claude/settings.json` is the self-modification boundary (CLAUDE.md § Standing Autonomy & Compliant Gate Reroute) — the model stages the validated snippet and may not arm it",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -4222,11 +4247,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare a read-only hosted-session scope limited to the two canonical repository identities and verify both source reads through a bounded CloudRoutineReceiptV1 run after account authorization.",
+        "rationale": "An account scope grant is distinct from successful source ingestion. Historical access-denied reports do not establish current permissions, and granting read scope must not imply write, merge or dispatch authority.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CLOUD-SESSION-SCOPE-EXPANSION"
+          "his-hand-levers.json#L-CLOUD-SESSION-SCOPE-EXPANSION",
+          "spec/contracts/cloud-routine-receipt-v1.schema.json",
+          "scripts/cloud-routine-ingest.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4234,14 +4261,19 @@
         ],
         "owner": "cloud routine access failures recorded in organvm/session-meta#29, #31, #34, #79 and attached-alert closeout organvm/limen#2120",
         "acceptance": {
-          "condition": "lets fleet audit, IRF surface, Jules curation, and disposition triage read organvm/limen plus organvm/organvm-corpvs-testamentvm instead of repeating access-denied prose",
+          "condition": "A bounded admitted run emits valid observations from both canonical sources, with access failures and missing coverage visible and no private content or credentials in public receipts.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current canonical repository identities",
+          "Hosted-session access configuration",
+          "Bounded authorized execution",
+          "Schema-valid source receipts"
+        ],
+        "remaining_human_action": "Grant the named hosted session read access to 4444J99/limen and organvm/organvm-corpvs-testamentvm only; additional scope requires its own authorization.",
         "historical_gate_requires_verification": "changing a hosted account/session allowed-repository set is an external access-governance action",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
