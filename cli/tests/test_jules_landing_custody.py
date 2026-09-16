@@ -18,6 +18,29 @@ def load_jules_land():
     return custody
 
 
+def test_release_binds_pushed_tip_and_reports_actual_disposition(monkeypatch, tmp_path: Path) -> None:
+    calls = []
+
+    def retire(repo, wt, **kwargs):
+        calls.append((repo, wt, kwargs))
+        return {"state": "completed", "refs_deleted": 0}
+
+    monkeypatch.setattr("limen.worktree_abandonment.retire_released_worktree", retire)
+    message = custody._release_note(tmp_path, tmp_path / "wt", "topic", "a" * 40)
+    assert "local root retired" in message
+    assert "branch retained: topic" in message
+    assert calls[0][2]["expected_head"] == "a" * 40
+    assert calls[0][2]["remote_ref"] == "refs/heads/topic"
+
+
+def test_ignored_payload_is_preserved_during_landing(tmp_path: Path) -> None:
+    payload = tmp_path / "build" / "unfinished.txt"
+    payload.parent.mkdir()
+    payload.write_text("unfinished work")
+    assert custody.purge_generated_payloads(tmp_path) == "retained-for-custody"
+    assert payload.read_text() == "unfinished work"
+
+
 def test_land_one_retains_local_worktree_and_branch_after_pr(
     monkeypatch,
     tmp_path: Path,
@@ -117,11 +140,11 @@ def test_land_one_retains_local_worktree_and_branch_after_pr(
     assert message.startswith("LANDED T1 -> https://github.com/organvm/example/pull/42")
     assert "local root retained" in message
     assert "branch retained" in message
-    assert "generated cleanup removed:0" in message
+    assert "generated cleanup retained-for-custody" in message
     assert "worktree-reclaim-acceptance.jsonl" in message
     assert "branch-reap-acceptance.jsonl" in message
     assert module.landed_pr_url(message, "123") == "https://github.com/organvm/example/pull/42"
-    assert ("clean", "-Xdf", "--", *module._GENERATED_CLEAN_PATHS) in git_calls
+    assert not any(call[0] == "clean" for call in git_calls)
     branch = module.landing_branch("T1", "123")
     worktree = module.WT_ROOT / branch.replace("/", "_")
     assert ("worktree", "remove", "--force", str(worktree)) not in git_calls

@@ -1281,6 +1281,12 @@ def launch_ready_nodes(
             )
             continue
         try:
+            if node.get("execution_admission"):
+                if not getattr(adapter, "enforces_deadline", False):
+                    raise FanoutExecutionError(f"{adapter.name}: provider hard-deadline enforcement unavailable")
+                packet = {**packet, "deadline": node["execution_admission"]["attempt_deadline"]}
+                if datetime.fromisoformat(packet["deadline"].replace("Z", "+00:00")) <= datetime.now(timezone.utc):
+                    raise FanoutExecutionError("execution attempt deadline exhausted before provider launch")
             if adapter.local_heavy:
                 from limen.host_admission import hold_lease
 
@@ -1627,11 +1633,12 @@ def wake_executor_workers(
         try:
             graph = lane.client.graph(root_run_id)
             root = next(node for node in graph.get("nodes", []) if node.get("run_id") == graph.get("root_run_id"))
-            environment["LIMEN_FANOUT_WORKER_DEADLINE"] = str(root["packet"]["deadline"])
+            environment["LIMEN_FANOUT_WORKER_DEADLINE"] = str(root["execution_admission"]["attempt_deadline"])
         except (KeyError, StopIteration, RuntimeError):
-            # The worker retains its finite lease-TTL fallback if this optional
-            # wake-time read is temporarily unavailable.
-            pass
+            wakes.append(
+                {"session_id": session_id, "adapter": lane.primary.name, "status": "blocked-missing-execution-deadline"}
+            )
+            continue
         with open(os.devnull, "r+", encoding="utf-8") as null:
             subprocess.Popen(
                 [
@@ -1676,7 +1683,8 @@ def run_executor_worker(root_run_id: str, session_id: str, primary_adapter: str)
         try:
             worker_deadline = datetime.fromisoformat(raw_deadline.replace("Z", "+00:00"))
         except ValueError:
-            worker_deadline = datetime.now(timezone.utc) + timedelta(hours=6)
+            return 2
+        worker_deadline = min(worker_deadline, datetime.now(timezone.utc) + timedelta(minutes=30))
         client = None
         primary = None
         lanes: dict[str, ExecutionLane] = {}

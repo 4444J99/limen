@@ -153,6 +153,7 @@ const STRING_STRUCTURED_LOG_FIELDS = new Set([
 const ENUM_STRUCTURED_LOG_FIELDS = new Map([
   ["lifecycle_repair", new Set([
     "prior-done",
+    "jules-landing-terminal",
     "human-gate-reconcile",
     "fleet-debt-park",
     "pr-observed-terminal",
@@ -532,6 +533,17 @@ function isLifecycleRepairAuthorized(task, nextStatus, log, patch) {
   const marker = String(log?.lifecycle_repair || "");
   const priorStatus = String(task.status || "");
   const labels = new Set(patch.labels ?? task.labels ?? []);
+  if (marker === "jules-landing-terminal") {
+    const keys = ["landing_session_id", "landing_branch", "landing_intent_token"];
+    const intentMatches = (task.dispatch_log || []).some((entry) => entry?.landing_event === "intent"
+      && keys.every((key) => log?.[key] && entry[key] === log[key]));
+    const ref = String(log?.session_id || "").match(/^https:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/pull\/[1-9][0-9]*$/);
+    const terminalOk = ["failed", "failed_blocked"].includes(nextStatus)
+      || (nextStatus === "done" && ref && ref[1] === String(task.repo || "") && log?.landing_outcome === "pr");
+    return priorStatus === "dispatched" && log?.landing_terminal === true
+      && log?.landing_event === "terminal" && log?.agent === "jules"
+      && Boolean(terminalOk) && intentMatches;
+  }
   if (marker === "prior-done") {
     return nextStatus === "done"
       && priorStatus !== "archived"

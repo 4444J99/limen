@@ -3363,6 +3363,23 @@ test("exceptional task transitions require exact structured evidence", () => {
   const apply = (baseTask, repairEvent) =>
     applyTaskPacketProjectionEvent({ tasks: [baseTask] }, repairEvent).task;
 
+  const landingIntent = { landing_event: "intent", landing_session_id: "123",
+    landing_branch: "topic", landing_intent_token: "recorded-intent" };
+  const landing = event("dispatched", "done", {
+    ...landingIntent, landing_event: "terminal", landing_terminal: true,
+    landing_outcome: "pr", lifecycle_repair: "jules-landing-terminal", agent: "jules",
+    session_id: "https://github.com/organvm/limen/pull/42",
+  });
+  const priorLanding = task({ status: "dispatched", dispatch_log: [landingIntent] });
+  assert.equal(apply(priorLanding, landing).status, "done");
+  assert.throws(() => apply(task({ status: "dispatched" }), landing), /cannot transition/);
+  const wrongIntent = structuredClone(landing);
+  wrongIntent.intent.log.landing_intent_token = "different-intent";
+  assert.throws(() => apply(priorLanding, wrongIntent), /cannot transition/);
+  const wrongRepository = structuredClone(landing);
+  wrongRepository.intent.log.session_id = "https://github.com/other/repo/pull/42";
+  assert.throws(() => apply(priorLanding, wrongRepository), /cannot transition/);
+
   const human = event(
     "open",
     "needs_human",
@@ -4035,7 +4052,7 @@ test("Durable Object HTTP routes match the authenticated client surface and surv
   const storage = new FakeStorage();
   const bearer = "http-conduct-secret-at-least-24-characters";
   const env = {
-    LIMEN_EXECUTION_POLICY: JSON.stringify({mode: "dispatch", approved_priorities: [{outcome_id: "http", enabled: true, work_keys: ["http-work"]}]}),
+    LIMEN_EXECUTION_POLICY: JSON.stringify({mode: "dispatch", approved_priorities: [{outcome_id: "http", enabled: true, work_keys: ["http-work"], resource_limits: {branch: 1}}]}),
     LIMEN_CONDUCT_PRINCIPAL_REGISTRY: principalRegistry({
       principal_id: "codex-http",
       agent: "codex",
@@ -4066,11 +4083,30 @@ test("Durable Object HTTP routes match the authenticated client surface and surv
   const reservedResponse = await first.fetch(request("/api/conduct/runs", "POST", work));
   assert.equal(reservedResponse.status, 200);
   const reserved = await reservedResponse.json();
+  const unapproved = await packet({workId: "unapproved-http", conductor: codex.identity, maxAttempts: 1,
+    deadline: new Date(liveNow.getTime() + 60 * 60 * 1000)});
+  const rejected = await first.fetch(request("/api/conduct/runs", "POST", unapproved));
+  assert.equal(rejected.status, 409);
+  assert.match((await rejected.json()).detail, /priority_not_approved/);
+  const resource = {work_key: "http-work", action: "branch", identity_hash: "a".repeat(64)};
+  const charged = await first.fetch(request("/api/conduct/execution/resources", "POST", resource));
+  assert.equal(charged.status, 200);
   const restarted = new ConductKeeperDurableObject({ storage }, env);
   const graphResponse = await restarted.fetch(request(`/api/conduct/runs/${reserved.run_id}/graph`));
   assert.equal(graphResponse.status, 200);
   const graph = await graphResponse.json();
   assert.equal(graph.nodes[0].lease_id, reserved.lease.lease_id);
+  const info = await restarted.fetch(request("/api/conduct/execution/info", "POST", {work_key: "http-work"}));
+  assert.equal(info.status, 200);
+  const limits = await info.json();
+  assert.ok(Date.parse(limits.attempt_deadline) <= liveNow.getTime() + 1800000 + 1000);
+  const duplicateResource = await restarted.fetch(request("/api/conduct/execution/resources", "POST", resource));
+  assert.equal(duplicateResource.status, 409);
+  const excess = await restarted.fetch(request("/api/conduct/execution/resources", "POST", {...resource, identity_hash: "b".repeat(64)}));
+  assert.equal(excess.status, 409);
+  const contained = new ConductKeeperDurableObject({storage}, {...env, LIMEN_EXECUTION_POLICY: "{}"});
+  const removedAuthority = await contained.fetch(request("/api/conduct/execution/info", "POST", {work_key: "http-work"}));
+  assert.equal(removedAuthority.status, 409);
 });
 
 // The already-homed answer is a STATUS CODE, and this keeper is the one that has to say it.

@@ -1827,6 +1827,10 @@ def _journaled_agent_dispatch(
         limits = client_from_env().execution_info(task.id)
         if datetime.fromisoformat(limits["attempt_deadline"].replace("Z", "+00:00")) <= datetime.now(timezone.utc):
             return _prelaunch_blocked_result("execution_attempt_exhausted")
+        if canonical_agent(agent) not in _LOCAL_AGENTS:
+            return _prelaunch_blocked_result(
+                f"execution hard deadline unavailable for autonomous {agent}; provider retained for observation and recovery"
+            )
     except Exception as exc:
         return _prelaunch_blocked_result(f"execution admission denied: {type(exc).__name__}")
     store = default_work_loan_journal_store() if journal_root is None else default_work_loan_journal_store(journal_root)
