@@ -125,6 +125,13 @@ CI_SECRETS: list[dict] = [
         "issue": "#320",
     },
     {
+        "name": "LIMEN_INVENTORY_COLLECTOR_TOKEN",
+        "home": "credential organ; exact secret item and production installation remain unverified",
+        "used": "scripts/github-estate-census.py authenticated inventory authority read and private observation ingestion",
+        "hand": "gated — provision a dedicated inventory_collector-only principal; never reuse or widen LIMEN_CONDUCT_TOKEN; activation requires fresh ingestion and live reservation receipts",
+        "issue": "#269 / #1995 / #320",
+    },
+    {
         "name": "LIMEN_GITHUB_TOKEN",
         "home": "Cloudflare Worker secret with least-authority access to the GitHub-owned task projection",
         "used": "TABVLARIVS Contents API SHA compare-and-swap for `tasks.yaml`",
