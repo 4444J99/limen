@@ -351,5 +351,52 @@
       "api_passed": 52,
       "host_admission": "allowed"
     }
+  },
+  "component_tranche_landing": {
+    "repository": "4444J99/limen",
+    "pr": 2627,
+    "source_head": "efd722980b0bcb5b5f681043c1ca5c7543326ceb",
+    "merge_sha": "dfc744b0428308d8309f124b5ca1f462a934b2c1",
+    "merged_at": "2026-09-16T01:52:25Z",
+    "tree_equivalence": "git diff --stat source_head origin/main returned empty",
+    "default_ci": {
+      "run": 35045776180,
+      "status": "in_progress",
+      "scope": "single observation; no synchronous waiter"
+    },
+    "runtime_adoption": "not_yet_verified"
+  },
+  "laurea_source_coverage": {
+    "repository": "organvm/laurea",
+    "pr": 10,
+    "head": "2e4fce05a825538bc48f22419f9ec5d34c9de1b0",
+    "tests_passed": 33,
+    "status": "implemented_open_pr",
+    "owner": "Codex",
+    "scope": "bounded source pagination, explicit unknown coverage, public identity/default SHA, private exclusion counts",
+    "remaining": "exact-generation executed verification, security obligations, PR readiness and administered-estate scope",
+    "deployment": "not_verified",
+    "merge_submission": {
+      "outcome": "DEFERRED",
+      "reason": "LIFECYCLE-UNKNOWN",
+      "exit_code": 2,
+      "attempts": 1,
+      "followup": "Missing lifecycle:delivery label added; unchanged head not resubmitted."
+    }
+  },
+  "education_device_decisions": {
+    "head": "b9e58bb1d3cca0f72f65abe2422334ae98037c34",
+    "selected_total": 69,
+    "component_review_remaining": 28,
+    "acceptance_predicates_missing": 95,
+    "historical_records_preserved": 107,
+    "verification": {
+      "command": "bash scripts/verify-scoped.sh --base 0978e8966",
+      "exit_code": 0,
+      "cheap_gates_passed": 7,
+      "cli_passed": 7709,
+      "cli_skipped": 2,
+      "duration_seconds": 210.8
+    }
   }
 }
