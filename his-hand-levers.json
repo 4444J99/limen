@@ -4311,7 +4311,10 @@
         "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-BOARD-PARTITION-DECISION"
+          "his-hand-levers.json#L-BOARD-PARTITION-DECISION",
+          "docs/receipts/board-publication-acceptance-20260916.json",
+          "docs/receipts/keeper-publication-live-20260916.json",
+          ".codex/plans/2026-09-16-board-partition-acceptance.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4319,8 +4322,8 @@
         ],
         "owner": "board-partition plan (limen #2069) + HOSPES full completion campaign (limen #2401)",
         "acceptance": {
-          "condition": "PR #2001 publication (public tasks.yaml stops carrying full task rows); local dispatch already sees the full board through hydrated custody",
-          "predicate": null,
+          "condition": "The current default tasks.yaml is counts-only and exactly matches the stable authenticated private-board snapshot; the expected deployed keeper SHA has default-branch ancestry. Keeper publication history and resident adoption retain their separate receipts.",
+          "predicate": "python3 scripts/check-board-publication-live.py --expected-runtime-sha 16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
           "status": "not_currently_verified"
         },
         "dependencies": [],
