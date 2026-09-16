@@ -122,3 +122,13 @@ definitions. All 107 IDs and lifecycle states are unchanged. Twenty-two focused
 registry tests and structural validation pass. Heavy verification remains
 incomplete under the recorded host-admission gate; no live private data or device
 action was performed.
+
+## Observation and outbound decisions
+
+Four more components now have selected behavior: bounded observatory proposals,
+closeout observation with unmeasured acceptance, per-route outbound preflight
+separate from message authorization, and a two-repository hosted read scope.
+Source references resolve; all 107 IDs and lifecycle states are unchanged.
+Current count: 45 selected, 52 requiring component review, 95 missing acceptance
+definitions. Twenty-two focused registry tests pass. No settings, grants, sends
+or recurring operations were activated.
