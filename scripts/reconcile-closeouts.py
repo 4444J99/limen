@@ -309,21 +309,28 @@ def _board_claims(since_hours: int, limit: int | None) -> list[dict]:
     return claims
 
 
-def _session_claims(since_hours: int, limit: int | None) -> list[dict]:
+def _session_claims(since_hours: int, limit: int | None, *, source_errors: list[str] | None = None) -> list[dict]:
     """Latest record per session owns closure state, including reopening records."""
     ledger = ROOT / "logs" / "session-claims.jsonl"
-    if not ledger.exists():
+    errors = source_errors if source_errors is not None else []
+    try:
+        lines = ledger.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError):
+        errors.append("session_ledger_unavailable")
         return []
     now = datetime.now(timezone.utc)
     latest: dict[str, dict] = {}
-    for ln in ledger.read_text(errors="replace").splitlines():
+    for ln in lines:
         if not ln.strip():
             continue
         try:
             rec = json.loads(ln)
         except (ValueError, TypeError):
+            errors.append("session_record_malformed")
             continue
-        if not isinstance(rec, dict) or not isinstance(rec.get("id"), str) or not rec["id"]:
+        if (not isinstance(rec, dict) or not isinstance(rec.get("id"), str) or not rec["id"]
+                or type(rec.get("closed")) is not bool):
+            errors.append("session_record_malformed")
             continue
         latest[rec["id"]] = rec
     selected = {}
@@ -461,20 +468,26 @@ def main() -> int:
     if args.doctor:
         return _doctor()
 
+    source_errors: list[str] = []
+    if args.limit < 0 or args.since_hours < 0:
+        ap.error("limit and since-hours must be nonnegative")
     if args.fixture:
         claims = json.loads(Path(args.fixture).read_text())
     elif args.check or args.apply:
         # both claim sources: durable board dispatch_log done-claims AND captured ephemeral session
         # closeouts (logs/session-claims.jsonl). Combined then capped so the GitHub probe stays bounded.
-        claims = _board_claims(args.since_hours, None) + _session_claims(args.since_hours, None)
-        if args.limit:
-            claims = claims[: args.limit]
+        claims = _board_claims(args.since_hours, None) + _session_claims(args.since_hours, None, source_errors=source_errors)
     else:
         ap.error("one of --doctor / --check / --apply / --fixture is required")
 
+    eligible_count = len(claims)
+    if args.limit:
+        claims = claims[:args.limit]
     report = _run(claims)
+    report.update(source_errors=sorted(set(source_errors)), eligible_claim_count=eligible_count,
+                  inspected_claim_count=len(claims), omitted_claim_count=eligible_count - len(claims))
 
-    if args.apply:
+    if args.apply and not source_errors:
         # Home HARD findings via insight-route. The mutation rides insight-route's OWN arm; unset →
         # a dry-run plan, so this is safe to beat-wire dark by default (no new silent-off valve).
         route_apply = os.environ.get("LIMEN_INSIGHT_ROUTE_APPLY", "0") == "1"
@@ -486,6 +499,7 @@ def main() -> int:
     if not args.quiet:
         print(f"=== CLOSEOUT RECONCILIATION ({len(claims)} claim(s)) ===")
         print(report["evidence_scope"])
+        print(f"coverage: inspected={len(claims)} eligible={eligible_count} source_errors={len(set(source_errors))}")
         for v, n in sorted(report["counts"].items()):
             flag = "⚠ " if v in HARD else "  "
             print(f"{flag}{v:16} {n}")
@@ -497,7 +511,7 @@ def main() -> int:
             print(f"  → routed {len(routed)} HARD finding(s) to board tasks"
                   f"{'' if armed else ' [dry-run — set LIMEN_INSIGHT_ROUTE_APPLY=1 to file]'}")
 
-    return 1 if report["failing"] else (77 if report["acceptance_unmeasured"] else 0)
+    return 1 if report["failing"] else (77 if report["acceptance_unmeasured"] or source_errors or report["omitted_claim_count"] else 0)
 
 
 if __name__ == "__main__":
