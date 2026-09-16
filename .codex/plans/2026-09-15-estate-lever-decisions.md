@@ -45,3 +45,19 @@ The stale terminal-owner projections were then reconciled on issues #912, #1046
 and #1776: current registry dispositions now precede the preserved historical
 requests. Exact body readback and unchanged OPEN states were verified. No issue
 or lever was closed or reopened.
+
+## Hook-component review
+
+Three further decisions now bind trust-hook wiring, formatting/lint feedback and
+dialog repair to their actual component contracts. Current count: 32 selected,
+65 requiring component review; acceptance definitions remain 2 present and 95
+missing. The existing hook-wiring hermetic matrix passes all 37 cases. Live
+settings, permission policy and repair valves were not modified. The historical
+daemon and vendor-bundle identity assumptions do not authorize current runtime
+activation. Current fixed-host and bounded scheduling contracts own that work.
+
+The registry batch passed eight scoped gates, including 7,681 CLI tests (two
+skipped). A subsequent autotype scope correction refuses unreadable/empty estate
+authority before any GitHub call and records unmeasured coverage. Its 21 focused
+tests and Ruff pass; unchanged CLI shard results remain evidence. The dedicated
+scoped gate covers future changes to the script as well as its tests.
