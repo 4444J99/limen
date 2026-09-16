@@ -169,18 +169,60 @@ def classify(lever: dict) -> dict:
 
 
 def malformed_reasons(lever: dict) -> list[str]:
-    """Structural problems in an explicit field (invalid reason, half-filled design_debt)."""
+    """Validate explicit fields without coercing malformed values into commands."""
     problems = []
     sov = lever.get("sovereignty")
-    if isinstance(sov, dict) and sov.get("reason") not in SOVEREIGN_REASONS:
-        problems.append(f"sovereignty.reason '{sov.get('reason')}' not in {sorted(SOVEREIGN_REASONS)}")
-    dd = mechanical_debt(lever)
-    if isinstance(dd, dict):
-        if not str(dd.get("organ", "")).strip():
-            problems.append("design_debt.organ empty")
-        if not str(dd.get("dissolves_when", "")).strip():
-            problems.append("design_debt.dissolves_when empty")
+    if "sovereignty" in lever and (
+        not isinstance(sov, dict)
+        or not isinstance(sov.get("reason"), str)
+        or sov["reason"] not in SOVEREIGN_REASONS
+    ):
+        problems.append("sovereignty must contain a valid reason")
+    implementation = lever.get("implementation")
+    if "implementation" in lever and not isinstance(implementation, dict):
+        problems.append("implementation must be an object")
+    candidates = []
+    if "design_debt" in lever:
+        candidates.append(lever["design_debt"])
+    if isinstance(implementation, dict) and "design_debt" in implementation:
+        candidates.append(implementation["design_debt"])
+    for dd in candidates:
+        if not isinstance(dd, dict):
+            problems.append("design_debt must be an object")
+            continue
+        for field in ("organ", "dissolves_when"):
+            if not isinstance(dd.get(field), str) or not dd[field].strip():
+                problems.append(f"design_debt.{field} must be nonempty text")
+        if dd.get("status", "built") not in ("built", "partial", "absent"):
+            problems.append("design_debt.status must be built, partial or absent")
     return problems
+
+
+def validate_entries(levers) -> bool:
+    """Reject the whole malformed input before any command execution or write."""
+    if not isinstance(levers, list) or not levers:
+        print("FAIL registry must contain a nonempty levers list")
+        return False
+    valid = True
+    seen = set()
+    for index, lever in enumerate(levers):
+        if not isinstance(lever, dict):
+            print(f"FAIL lever[{index}] must be an object")
+            valid = False
+            continue
+        identity = lever.get("id")
+        if not isinstance(identity, str) or not identity.strip():
+            print(f"FAIL lever[{index}] must have a nonempty identity")
+            valid = False
+        elif identity in seen:
+            print(f"FAIL lever[{index}] has a duplicate identity")
+            valid = False
+        else:
+            seen.add(identity)
+        for problem in malformed_reasons(lever):
+            print(f"FAIL lever[{index}]: {problem}")
+            valid = False
+    return valid
 
 
 def run_predicate(cmd: str, root: str) -> tuple[bool, str]:
@@ -194,6 +236,8 @@ def run_predicate(cmd: str, root: str) -> tuple[bool, str]:
 
 
 def cmd_list(levers: list[dict], root: str) -> int:
+    if not validate_entries(levers):
+        return 1
     open_levers = [l for l in levers if is_open(l)]
     sov = dd = unc = 0
     for lev in open_levers:
@@ -220,6 +264,8 @@ def cmd_list(levers: list[dict], root: str) -> int:
 
 
 def cmd_check(levers: list[dict]) -> int:
+    if not validate_entries(levers):
+        return 1
     rc = 0
     for lev in (l for l in levers if is_open(l)):
         lid = lev.get("id", "<no-id>")
@@ -240,12 +286,21 @@ def cmd_check(levers: list[dict]) -> int:
 
 
 def cmd_dissolve(levers: list[dict], root: str, apply: bool) -> int:
+    if not validate_entries(levers):
+        return 1
     armed = apply and os.environ.get("LIMEN_LEVER_DISSOLVE_APPLY") == "1"
     if apply and not armed:
         print("note  --apply given but LIMEN_LEVER_DISSOLVE_APPLY != 1 — dry-run (double-dark gate)")
     registry_path = Path(REGISTRY)
-    original = registry_path.read_bytes() if armed else None
-    document = json.loads(original) if original is not None else None
+    try:
+        original = registry_path.read_bytes() if armed else None
+        document = json.loads(original) if original is not None else None
+    except (OSError, ValueError):
+        print("FAIL registry unreadable before dissolution; no predicates run")
+        return 1
+    if armed and not isinstance(document, dict):
+        print("FAIL registry must be an object; no predicates run")
+        return 1
     # Do not overwrite newer records using a caller's stale list.
     if document is not None and document.get("levers") != levers:
         print("FAIL  registry changed before dissolution; no write")
@@ -313,7 +368,14 @@ def main() -> int:
     args = ap.parse_args()
 
     root = os.environ.get("LIMEN_ROOT") or str(Path(__file__).resolve().parents[1])
-    d = load_registry(REGISTRY)
+    try:
+        d = load_registry(REGISTRY)
+    except (OSError, ValueError):
+        print("FAIL registry unreadable; no predicates run")
+        return 1
+    if not isinstance(d, dict):
+        print("FAIL registry must be an object")
+        return 1
     levers = d.get("levers", [])
     if not isinstance(levers, list) or not levers:
         print("FAIL  registry has no 'levers' list")
