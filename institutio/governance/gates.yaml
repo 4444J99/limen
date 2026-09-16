@@ -1218,7 +1218,7 @@ gates:
     note: "Reject incomplete audit responses and retain independent compatibility evidence when advisories fail."
   worker-check:
     command: "bash -c 'cd web/worker && npm run check'"
-    paths: ["web/worker/**"]
+    paths: ["web/worker/**", "institutio/github/dependency-completion.json"]
     tier: heavy
     ci_job: "ci.yml:worker"
     owner: worker
