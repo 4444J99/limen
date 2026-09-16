@@ -204,3 +204,98 @@ def test_declared_cache_closure_reuses_only_unchanged_inputs_and_retains_live_re
     assert len(calls) == 5
     receipt = module.cache_path("live", module.verification_fingerprint(live, {}, []))
     assert json.loads(receipt.read_text())["reusable"] is False
+
+
+def _issue_producer(name):
+    import sys
+
+    path = Path(__file__).resolve().parents[2] / "scripts" / f"{name}.py"
+    spec = importlib.util.spec_from_file_location(f"recovery_{name}", path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _issue_fixture_client(monkeypatch, tmp_path, key):
+    from limen.conduct.client import HttpConductClient
+
+    (tmp_path / "logs").mkdir()
+    (tmp_path / "logs/autonomy-policy.json").write_text(json.dumps(POLICY))
+    client = object.__new__(HttpConductClient)
+    client.reserve_growth = lambda work, action, identity: reserve_growth(
+        action, identity, work_key=work, root=tmp_path
+    )
+    monkeypatch.setattr("limen.conduct.client.client_from_env", lambda: client)
+    monkeypatch.setenv("LIMEN_WORK_KEY", key)
+
+
+@pytest.mark.parametrize("name", ["sync-censor-issues", "sync-hishand-issues", "decorum-keeper"])
+def test_registered_issue_producer_denies_before_outbound_effect(monkeypatch, tmp_path, name):
+    module = _issue_producer(name)
+    _issue_fixture_client(monkeypatch, tmp_path, "unapproved")
+    calls = []
+    monkeypatch.setattr(module.subprocess, "run", lambda *a, **k: calls.append(a))
+    invoke = module._gh if name == "decorum-keeper" else module.sh
+    args = ["issue", "create", "--title", "new discovery"]
+    if name != "decorum-keeper":
+        args.insert(0, "gh")
+    with pytest.raises(InventoryAdmissionError, match="priority_not_approved"):
+        invoke(args)
+    assert calls == []
+
+
+def test_registered_issue_producers_share_one_allowance(monkeypatch, tmp_path):
+    import subprocess
+
+    modules = [_issue_producer(name) for name in ("sync-censor-issues", "sync-hishand-issues", "decorum-keeper")]
+    _issue_fixture_client(monkeypatch, tmp_path, "approved")
+    calls = []
+
+    def effect(args, **kwargs):
+        calls.append(args)
+        return subprocess.CompletedProcess(args, 0, "created", "")
+
+    monkeypatch.setattr(subprocess, "run", effect)
+    assert modules[0].sh(["gh", "issue", "create", "--title", "first"]) == "created"
+    for module, args in (
+        (modules[1], ["gh", "issue", "create", "--title", "second"]),
+        (modules[2], ["issue", "create", "--title", "third"]),
+    ):
+        with pytest.raises(InventoryAdmissionError, match="resource_budget_exhausted"):
+            (module._gh if hasattr(module, "_gh") else module.sh)(args)
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize("name", ["sync-marketplace-config", "link-health"])
+def test_registered_api_branch_producer_denies_before_remote_write(monkeypatch, tmp_path, name):
+    import base64
+    import subprocess
+
+    module = _issue_producer(name)
+    _issue_fixture_client(monkeypatch, tmp_path, "unapproved")
+    calls = []
+
+    def gh(args, **kwargs):
+        calls.append(args)
+        assert "POST" not in args and "PUT" not in args
+        if name == "sync-marketplace-config":
+            return subprocess.CompletedProcess(args, 0, "a" * 40 if "/git/ref/" in args[1] else "main", "")
+        if args[1].endswith("/readme"):
+            out = {"path": "README.md", "sha": "a" * 40, "content": base64.b64encode(b"old-url").decode()}
+        elif "/git/ref/" in args[1]:
+            out = {"object": {"sha": "a" * 40}}
+        else:
+            out = {"default_branch": "main"}
+        return 0, json.dumps(out), ""
+
+    monkeypatch.setattr(module, "_gh", gh)
+    with pytest.raises(InventoryAdmissionError, match="priority_not_approved"):
+        if name == "sync-marketplace-config":
+            module._push_config("owner/repo", "config.yml", "content", "integration")
+        else:
+            monkeypatch.setattr(module, "_pr_exists", lambda *a: False)
+            monkeypatch.setattr(module, "_fix_set", lambda *a: [("old-url", "new-url")])
+            module.heal({"surfaces": [{"type": "github_readme", "ref": "owner/repo", "id": "sample"}]}, True)
+    assert calls
+    assert all("POST" not in args and "PUT" not in args for args in calls)
