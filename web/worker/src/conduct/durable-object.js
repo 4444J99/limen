@@ -1,6 +1,7 @@
 import { DependencyCompletionError, submitCompletionHint, readCompletionHints, reconcileCompletionAssessment } from "./dependency-completion.js";
 import {
   authorizeConductRequest,
+  conductPrincipalRegistryReadback,
   internalConductPrincipal,
 } from "./auth.js";
 import {
@@ -191,6 +192,12 @@ export class ConductKeeperDurableObject {
 
   async route(request, principal) {
     const path = new URL(request.url).pathname;
+    if (path === "/api/conduct/principal-registry" && request.method === "GET") {
+      requireRole(principal, "conductor");
+      const response = json(await conductPrincipalRegistryReadback(this.env), 200, this.env);
+      response.headers.set("cache-control", "no-store");
+      return response;
+    }
     if (path === "/api/conduct/dependencies/assessments" && request.method === "POST") {
       requireRole(principal, "conductor");
       const body = await parseBody(request, 4096);
