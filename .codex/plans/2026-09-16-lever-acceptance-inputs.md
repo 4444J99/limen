@@ -35,3 +35,15 @@ authorization failures, encoded branch names and existing required failures.
 Live read-only verification of organvm/laurea confirms no failing required checks;
 no unchanged-head merge submission was repeated. Reference:
 https://docs.github.com/en/rest/repos/rules#get-rules-for-a-branch
+
+## Integration receipt
+
+The exact code tree committed as e026e9f3d passed the scoped resolver against
+7963833ec: all 14 cheap gates and the admitted CLI/API waves passed, including
+52 API tests. The resolver returned exit 0; the CLI test count was not retained
+in the final output chunk. No gate was restarted to recover an observation.
+
+HOSPES already owns pilot sequencing and receipt machinery in pilot_service.py,
+partnerships.py, and its receipt tests. Continue by checking its readiness
+predicate and rehearsal separation before adding new machinery. No HOSPES
+mutation or participant action occurred in this inspection.
