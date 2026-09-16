@@ -26,7 +26,6 @@ from __future__ import annotations
 
 import argparse
 import ast
-import math
 import sys
 from pathlib import Path
 
@@ -136,7 +135,6 @@ def validate_aggregate(path: Path, data: dict) -> int:
     # The keeper rounds to three decimal places. Permit only that rounding error.
     if (
         type(rate) not in (int, float)
-        or not math.isfinite(rate)
         or not 0 <= rate <= 1
         or abs(rate - completed / max(1, total)) > 0.000500000001
     ):
