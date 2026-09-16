@@ -20,6 +20,12 @@
 schema_version: 0.1
 
 parameters:
+  LIMEN_ATTEMPT_DEADLINE:
+    default: ""
+    env: LIMEN_ATTEMPT_DEADLINE
+    self_update: none
+    owner: vigilia
+    note: "Keeper-owned deadline passed to an admitted execution process; callers cannot extend it."
   LIMEN_CHAMBER_WORKTREE_ROOT:
     default: "~/Workspace/chamber_worktrees"
     env: LIMEN_CHAMBER_WORKTREE_ROOT

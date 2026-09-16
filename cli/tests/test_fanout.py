@@ -598,8 +598,11 @@ def test_start_uses_atomic_keeper_and_launches_every_ready_leaf(
 def test_keeper_serializes_overlapping_dependencies_and_settles_campaign(
     tmp_path: Path,
     monkeypatch,
+    approved_execution_policy,
 ) -> None:
+    approved_execution_policy("campaign/v1")
     payload = manifest_payload()
+    payload["leaves"][0]["retry"]["max_attempts"] = 1
     payload["campaign"] = campaign_context()
     payload["leaves"][0]["campaign"] = campaign_context()
     second = deepcopy(payload["leaves"][0])
@@ -725,8 +728,11 @@ def test_keeper_serializes_overlapping_dependencies_and_settles_campaign(
 def test_start_launches_disjoint_remote_leaves_while_dependency_waits(
     tmp_path: Path,
     monkeypatch,
+    approved_execution_policy,
 ) -> None:
+    approved_execution_policy("campaign/v1")
     payload = manifest_payload()
+    payload["leaves"][0]["retry"]["max_attempts"] = 1
     disjoint = deepcopy(payload["leaves"][0])
     disjoint.update(
         {

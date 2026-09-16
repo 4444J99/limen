@@ -19,11 +19,11 @@ The accompanying JSON contains the exact retirement and restoration receipts.
 The existing governor, inventory admission, conduct keepers, worktree creators, issue producers,
 verifier and census are extended. No scheduler or task registry was added.
 
-- Approved-priority checks precede local dispatch and three issue producers; resource reservations survive producer restarts.
-- Production Worker admission defaults closed without an administrator-installed policy. Broker run records reserve 30 minutes per attempt against one 120-minute outcome, cap concurrency, bound lease deadlines, and permit one changed-execution correction. Descendants retain the approved outcome.
-- The verifier has one aggregate deadline capped at 600 seconds; registry timeouts cannot extend it. Automatic whole-matrix escalation is removed. Deterministic Python/shell syntax successes have content/dependency/environment-bound reusable receipts. Other checks remain live.
+- Approved-priority checks precede local dispatch. Production issue, branch and worktree producers reserve their allowance in the authenticated keeper; reservations survive producer restarts and are shared across outcome descendants. Coverage includes the three issue producers, worktree initialization/session/cell/documentation helpers, audit fixers, marketplace/link API branches, Jules landing and fanout checkouts.
+- Production Worker admission defaults closed without an administrator-installed policy. Broker run records reserve 30 minutes per attempt against one 120-minute outcome, cap concurrency, bound lease deadlines, and permit one changed-execution correction. Descendants retain the approved outcome. Legacy task claims reserve the same allowance; the in-progress transition retains the original reservation. Waiting children reserve cumulative time before registration, retain their deadline on promotion, and expire without automatic continuation.
+- The verifier has one aggregate deadline capped at 600 seconds; registry timeouts cannot extend it. Automatic whole-matrix escalation is removed. Deterministic Python/shell syntax successes have content/dependency/environment-bound reusable receipts. Other checks remain live. Autonomous verifier invocations share a keeper-owned ten-minute deadline across restarts within the attempt. Dispatch clamps local process lifetime and holds timeout/rate-limit failures instead of automatically rerouting or retrying.
 - Chamber copies enter the existing reclaimer census. A bounded chamber adapter delegates physical retirement to the existing journaled detach implementation.
-- Canonical doctrine and the Domus managed template express finite work and release dispositions.
+- Task release invokes the existing detach journal for clean, idle, exact-remote-tip copies. Dirty, ignored, advanced and unbacked work is retained, as are all branch refs; repeated release is idempotent. Canonical doctrine and the Domus managed template express finite work and release dispositions.
 
 ## Verification
 
@@ -33,17 +33,15 @@ Worker keeper tests 66 passed; Worker inventory tests 19 passed; Worker recovery
 Existing verifier parallel and CI-hardening fixtures passed. Python type checking passed
 for 185 CLI source files. Instruction and parameter drift checks passed after corrections.
 
-The scoped batch initially found formatting, type, instruction-size and obsolete escalation-test
-failures. Their implicated checks were corrected and rerun. A complete final scoped/heavy batch
-has not passed; this checkpoint is not eligible for merge or deployment.
+The resumed implementation passed 70 Worker keeper/recovery tests, 11 recovery/cache/retirement tests, 35 dispatch-identity/fanout tests, and the Python protocol/restart/initialization tests. The scoped batch passed 32 of 34 cheap gates; the two fixture failures were corrected, and their full gates then passed (144 and 61 tests). Heavy verification was denied by host admission with `swap-fraction`, exit 75. No admission override was used. This checkpoint is not eligible for merge or deployment.
 
 ## Explicit remaining work
 
-1. Reconcile all registered producers (including external chamber tooling), task compatibility claims, waiting graph promotion and runtime relay creation with the same admission policy; current coverage is partial. Add adversarial end-to-end producer tests before activation.
-2. Connect verification allowance to broker attempt deadlines; broaden cache reuse only with declared deterministic dependency closures. Current reuse is syntax-only.
-3. Exercise dispatch and worktree-session fixture suites against explicit approved policies; integrate interrupted retirement with actual task release, not only instructions and the existing detach journal.
-4. Complete home/configured-root/administered-organization inventory and per-item dispositions. Preserve retained dirty/ignored/unique material through its existing custody owners before considering further retirement. Do not close issues to reduce counts.
-5. Deploy the reviewed keeper policy and source changes through existing release rails and verify live denial and concurrency receipts. Apply the reviewed managed template through chezmoi. Current local observe mode remains in effect; merging either PR must not resume unrestricted dispatch.
+1. Finish adversarial end-to-end producer coverage, including external chamber tooling and every remote provider launch/cancellation path; the repository scan is not proof of the entire estate. Add HTTP admission and legacy/deferred restart scenarios.
+2. Broaden cache reuse only with declared deterministic dependency closures; current reusable results remain syntax-only. Retain relevant live integration/deployment predicates.
+3. Complete the full implicated fixture/deployment verification when host admission permits; the last blocker is `swap-fraction`. Extend release retirement beyond local dispatch to all owning lifecycles and audit scratch-root configuration.
+4. Complete home/configured-root/administered-organization inventory and per-item dispositions. The bounded GitHub census is in progress with resumable private cursor evidence. Preserve retained dirty/ignored/unique material through its existing custody owners before considering further retirement.
+5. Deploy the reviewed keeper policy and source changes through existing release rails and verify live denial and concurrency receipts. Apply the reviewed managed template through chezmoi. Local observe mode remains in effect; merging either PR must not resume unrestricted dispatch.
 
 Checkpoint is bounded by the requested attempt limit. Resume only this approved recovery outcome,
 retaining its cumulative allowance and these receipts; do not spawn another implementation campaign.

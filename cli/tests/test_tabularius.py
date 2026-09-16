@@ -959,13 +959,16 @@ def test_drain_defers_all_tickets_when_broker_is_unavailable(tmp_path, monkeypat
     assert board.read_bytes() == before
 
 
-def test_local_retry_replays_committed_full_projection_after_cache_write_crash(tmp_path, monkeypatch):
+def test_local_retry_replays_committed_full_projection_after_cache_write_crash(
+    tmp_path, monkeypatch, approved_execution_policy
+):
+    approved_execution_policy("T-1")
     board = _seed_board(tmp_path)
     ticket = _ticket(
         INTENT_STATUS,
         task_id="T-1",
         patch={"status": "dispatched"},
-        log={"status": "dispatched", "output": "claimed once"},
+        log={"status": "dispatched", "output": "claimed once", "execution_contract_hash": "a" * 64},
         agent="codex",
         ticket_id="crash-retry",
     )

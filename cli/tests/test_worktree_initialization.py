@@ -18,6 +18,10 @@ def approved_creation(tmp_path, monkeypatch):
     policy_root = tmp_path / "authority"
     (policy_root / "logs").mkdir(parents=True)
     monkeypatch.setenv("LIMEN_ROOT", str(policy_root))
+    from functools import partial
+    import limen.inventory_admission as admission
+
+    monkeypatch.setattr(admission, "reserve_growth", partial(admission.reserve_growth, root=policy_root))
     (policy_root / "logs/autonomy-policy.json").write_text(
         json.dumps(
             {

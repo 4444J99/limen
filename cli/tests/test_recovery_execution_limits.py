@@ -79,6 +79,54 @@ def test_issue_limit_survives_producer_restart(tmp_path):
         reserve_growth("issue", "second", work_key="replacement", root=tmp_path)
 
 
+@pytest.mark.parametrize("condition", ["clean", "dirty", "ignored", "advanced", "active", "remote-missing"])
+def test_release_retirement_preserves_uncertain_work_and_is_idempotent(tmp_path, condition):
+    import subprocess
+    from limen.worktree_abandonment import retire_released_worktree
+
+    def git(*args, cwd=None):
+        return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True, check=True).stdout.strip()
+
+    repo, remote, wt = (tmp_path / name for name in ("repo", "remote.git", "copy"))
+    git("init", "--bare", str(remote))
+    git("init", str(repo))
+    git("config", "user.email", "test@example.invalid", cwd=repo)
+    git("config", "user.name", "Recovery fixture", cwd=repo)
+    (repo / "source").write_text("original\n")
+    (repo / ".gitignore").write_text("ignored\n")
+    git("add", ".", cwd=repo)
+    git("commit", "-m", "fixture", cwd=repo)
+    git("remote", "add", "origin", str(remote), cwd=repo)
+    git("worktree", "add", "-b", "work", str(wt), cwd=repo)
+    git("push", "origin", "work", cwd=wt)
+    head = git("rev-parse", "HEAD", cwd=wt)
+    if condition == "dirty":
+        (wt / "source").write_text("unfinished\n")
+    if condition == "ignored":
+        (wt / "ignored").write_text("private payload\n")
+    if condition == "advanced":
+        (wt / "source").write_text("advanced\n")
+        git("commit", "-am", "new work", cwd=wt)
+    if condition == "remote-missing":
+        git("push", "origin", "--delete", "work", cwd=wt)
+    kwargs = dict(
+        expected_head=head,
+        remote_ref="refs/heads/work",
+        receipt_root=tmp_path / "receipts",
+        owner_probe=lambda target: 123 if condition == "active" else None,
+    )
+    result = retire_released_worktree(repo, wt, **kwargs)
+    if condition == "clean":
+        assert result["state"] == "completed"
+        assert not wt.exists()
+        assert git("rev-parse", "refs/heads/work", cwd=repo) == head
+        assert retire_released_worktree(repo, wt, **kwargs)["state"] == "already-absent"
+    else:
+        assert result["state"] == "retained"
+        assert wt.exists()
+        assert retire_released_worktree(repo, wt, **kwargs)["state"] == "retained"
+
+
 def test_verification_cache_changes_with_dependency_and_deadline_wins(tmp_path, monkeypatch):
     path = Path(__file__).resolve().parents[2] / "scripts/verify.py"
     spec = importlib.util.spec_from_file_location("bounded_verify", path)

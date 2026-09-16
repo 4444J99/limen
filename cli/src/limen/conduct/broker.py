@@ -342,12 +342,107 @@ class ConductBroker:
                 "sessions": sessions,
             }
 
+    def _execution_run(self, state, work_key, principal, now):
+        from limen.inventory_admission import execution_active
+
+        if principal is not None:
+            self._require_role(principal, "conductor", "executor", "compatibility")
+        candidates = [
+            r
+            for r in state["runs"].values()
+            if work_key in {r["packet"]["work_key"], r["packet"].get("task_id")} and execution_active(r, now)
+        ]
+        if len(candidates) != 1:
+            raise ConductConflict("execution_active_reservation_required")
+        run = candidates[0]
+        if principal is not None and principal.principal_id not in {
+            run["conductor_principal_id"],
+            state["session_principals"].get(run["executor_session_id"]),
+        }:
+            raise ConductConflict("execution_reservation_principal_mismatch")
+        policy = self.execution_policy or {}
+        priority = next(
+            (
+                p
+                for p in policy.get("approved_priorities", [])
+                if p.get("outcome_id") == run["execution_admission"]["outcome_id"] and p.get("enabled") is True
+            ),
+            None,
+        )
+        if priority is None or not (
+            policy.get("mode") == "dispatch" or policy.get("mode") == "recovery" and priority.get("recovery") is True
+        ):
+            raise ConductConflict("execution_priority_not_approved")
+        return run
+
+    def execution_info(self, work_key, *, principal=None, now=None):
+        with self.store.transaction() as state:
+            run = self._execution_run(state, work_key, principal, now or utc_now())
+            return {
+                "run_id": run["run_id"],
+                "work_key": run["packet"]["work_key"],
+                **copy.deepcopy(run["execution_admission"]),
+            }
+
+    def reserve_growth(self, work_key, action, identity_hash, *, principal=None, now=None):
+        now = now or utc_now()
+        with self.store.transaction() as state:
+            run = self._execution_run(state, work_key, principal, now)
+            if (
+                action not in {"issue", "branch", "worktree", "verification"}
+                or len(identity_hash) != 64
+                or any(c not in "0123456789abcdef" for c in identity_hash)
+            ):
+                raise ConductConflict("execution_resource_invalid")
+            priority = next(
+                p
+                for p in self.execution_policy["approved_priorities"]
+                if p["outcome_id"] == run["execution_admission"]["outcome_id"]
+            )
+            allowance = 1 if action == "verification" else priority.get("resource_limits", {}).get(action)
+            if type(allowance) is not int or allowance < 1:
+                raise ConductConflict("execution_resource_not_approved")
+            scope = [
+                r
+                for r in state["runs"].values()
+                if (
+                    r["run_id"] == run["run_id"]
+                    if action == "verification"
+                    else (r.get("execution_admission") or {}).get("outcome_id") == priority["outcome_id"]
+                )
+            ]
+            reservations = [
+                item
+                for r in scope
+                for item in r["execution_admission"].get("resource_reservations", [])
+                if item["action"] == action
+            ]
+            duplicate = next((r for r in reservations if r["identity_hash"] == identity_hash), None)
+            if duplicate and action == "verification":
+                return copy.deepcopy(duplicate)
+            if duplicate:
+                raise ConductConflict("execution_resource_already_reserved")
+            if len(reservations) >= allowance:
+                raise ConductConflict("execution_resource_budget_exhausted")
+            receipt = {"action": action, "identity_hash": identity_hash, "reserved_at": now.isoformat()}
+            if action == "verification":
+                receipt["deadline"] = min(
+                    now + timedelta(minutes=10),
+                    datetime.fromisoformat(run["execution_admission"]["attempt_deadline"].replace("Z", "+00:00")),
+                ).isoformat()
+            run["execution_admission"].setdefault("resource_reservations", []).append(receipt)
+            _event(
+                state, "execution.resource_reserved", run_id=run["run_id"], action=action, identity_hash=identity_hash
+            )
+            return copy.deepcopy(receipt)
+
     def submit(
         self,
         packet: WorkPacketV1,
         *,
         principal: ConductPrincipalV1 | None = None,
         now: datetime | None = None,
+        retained_admission: dict | None = None,
         project_task_event: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         now = now or utc_now()
@@ -418,13 +513,24 @@ class ConductBroker:
                 packet,
                 principal_id=principal.principal_id if principal_enforced else None,
             )
-            from limen.inventory_admission import admit_execution, InventoryAdmissionError
+            from limen.inventory_admission import admit_execution, InventoryAdmissionError, projection_execution_status
 
             try:
+                legacy = _is_task_compatibility_packet(packet)
+                starts_execution = projection_execution_status(_dump(packet)) in {"dispatched", "in_progress"}
+                continuation = (
+                    legacy
+                    and projection_execution_status(_dump(packet)) == "in_progress"
+                    and self.execution_policy is not None
+                )
+                if continuation:
+                    self._execution_run(state, packet.task_id, principal, now)
                 admission = (
                     None
-                    if _is_task_compatibility_packet(packet)
-                    else admit_execution(self.execution_policy, state, _dump(packet), now)
+                    if legacy and (not starts_execution or continuation)
+                    else admit_execution(
+                        self.execution_policy, state, _dump(packet), now, legacy=legacy, retained=retained_admission
+                    )
                 )
             except InventoryAdmissionError as exc:
                 raise ConductConflict(str(exc)) from exc
@@ -550,6 +656,10 @@ class ConductBroker:
                 generation=generation,
             )
             if run["compatibility_projection"]:
+                if not starts_execution and projection_execution_status(_dump(packet)):
+                    for prior in state["runs"].values():
+                        if prior["packet"].get("task_id") == packet.task_id and prior.get("execution_admission"):
+                            prior["execution_admission"]["legacy_active"] = False
                 if project_task_event is None:
                     raise ConductConflict("task compatibility submission requires the keeper projection handler")
                 projection_event: dict[str, Any] = {
@@ -721,6 +831,12 @@ class ConductBroker:
                     }
                 return self._submit_result(state, run, duplicate=True)
             parent = self._validate_lineage(state, packet, principal_id=principal.principal_id)
+            from limen.inventory_admission import admit_execution, InventoryAdmissionError
+
+            try:
+                admission = admit_execution(self.execution_policy, state, _dump(packet), now, waiting=True)
+            except InventoryAdmissionError as exc:
+                raise ConductConflict(str(exc)) from exc
             if parent is None:
                 raise ConductConflict("dependent fanout node requires a parent run")
             dependency_runs = []
@@ -738,6 +854,7 @@ class ConductBroker:
                 "root_run_id": parent["root_run_id"],
                 "parent_run_id": packet.parent_run_id,
                 "packet": _dump(packet),
+                "execution_admission": admission,
                 "conductor_session_id": packet.conductor.session_id,
                 "conductor_principal_id": principal.principal_id,
                 "executor_session_id": None,
@@ -1290,6 +1407,14 @@ class ConductBroker:
                 if run["root_run_id"] == root_run_id and run["status"] == "waiting"
             ]
             for waiting_run in waiting:
+                admission = waiting_run.get("execution_admission")
+                if admission and datetime.fromisoformat(admission["attempt_deadline"].replace("Z", "+00:00")) <= now:
+                    current = state["runs"][waiting_run["run_id"]]
+                    current["status"] = "expired"
+                    current["updated_at"] = now.isoformat()
+                    _event(state, "fanout.run_budget_expired", run_id=current["run_id"])
+                    progress = True
+                    continue
                 dependency_states = [
                     state["runs"][run_id]["status"] for run_id in waiting_run.get("dependency_run_ids", [])
                 ]
@@ -1339,7 +1464,9 @@ class ConductBroker:
                     capability_secret=self.capability_secret,
                 )
                 try:
-                    promoted = staged.submit(packet, principal=principal, now=now)
+                    promoted = staged.submit(
+                        packet, principal=principal, now=now, retained_admission=waiting_run.get("execution_admission")
+                    )
                 except ConductError:
                     continue
                 if promoted["status"] == "busy":

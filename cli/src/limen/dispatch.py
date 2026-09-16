@@ -57,7 +57,7 @@ from limen.models import (
     has_jules_landing_hold,
 )
 from limen.conduct.client import LocalConductClient, client_from_env
-from limen.conduct.broker import ConductConflict
+from limen.conduct.broker import ConductConflict, ConductError
 from limen.stale_claims import stale_claim_holds
 from limen.partition_lanes import heuristics_may_promote
 from limen.tabularius import (
@@ -802,7 +802,21 @@ def dispatch_admission_check(
     from limen.inventory_admission import InventoryAdmissionError, require_approved_priority
 
     try:
-        require_approved_priority(task_id, root=root)
+        if task_id:
+            require_approved_priority(task_id, root=root)
+        else:
+            from limen.inventory_admission import execution_policy
+
+            policy = execution_policy(root)
+            keys = [
+                key
+                for row in policy.get("approved_priorities", [])
+                if row.get("enabled") is True
+                for key in row.get("work_keys", [])
+            ]
+            if not keys:
+                raise InventoryAdmissionError("execution_priority_not_approved")
+            require_approved_priority(keys[0], root=root)
     except InventoryAdmissionError as exc:
         result.update(
             allow=False,
@@ -1020,6 +1034,12 @@ def _restore_done_status(
 def _dispatchable(task: Task) -> bool:
     """Open, live-ready machine work only. Human-gated or done work is never reserved."""
     if task.status != "open":
+        return False
+    from limen.inventory_admission import require_approved_priority, InventoryAdmissionError
+
+    try:
+        require_approved_priority(task.id)
+    except InventoryAdmissionError:
         return False
     if has_jules_landing_hold(task):
         return False
@@ -1800,6 +1820,15 @@ def _journaled_agent_dispatch(
 
     if dry_run:
         return call_agent_dispatch(agent, task, dry_run=True)
+    from limen.inventory_admission import require_approved_priority
+
+    try:
+        require_approved_priority(task.id)
+        limits = client_from_env().execution_info(task.id)
+        if datetime.fromisoformat(limits["attempt_deadline"].replace("Z", "+00:00")) <= datetime.now(timezone.utc):
+            return _prelaunch_blocked_result("execution_attempt_exhausted")
+    except Exception as exc:
+        return _prelaunch_blocked_result(f"execution admission denied: {type(exc).__name__}")
     store = default_work_loan_journal_store() if journal_root is None else default_work_loan_journal_store(journal_root)
     try:
         store.record_reservation(task, agent=canonical_agent(agent), reservation_id=reservation_id)
@@ -4680,6 +4709,8 @@ def _bridge_agy_scratch(task: Task, wt: Path) -> None:
 
 def _lane_run_env(agent: str, wt: Path | None = None, task: Task | None = None) -> dict[str, str]:
     run_env = os.environ.copy()
+    if task is not None:
+        run_env["LIMEN_WORK_KEY"] = task.id
     if wt is not None:
         live_root = os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))
         run_env["LIMEN_LIVE_ROOT"] = live_root
@@ -4750,12 +4781,21 @@ def _run_isolated_agent(
     retry_count: int = 0,
 ) -> bool | str | PlanHandoffResult:
     try:
+        limits = client_from_env().execution_info(task.id)
+        deadline = datetime.fromisoformat(limits["attempt_deadline"].replace("Z", "+00:00"))
+        remaining = (deadline - datetime.now(timezone.utc)).total_seconds()
+        if remaining <= 0:
+            return _blocked_result("execution_attempt_exhausted")
+        lane_timeout = min(lane_timeout, max(1, int(remaining)), 1800)
         run_env = _lane_run_env(agent, wt, task)
+        run_env["LIMEN_ATTEMPT_DEADLINE"] = limits["attempt_deadline"]
         if agent == "opencode":
             run_env["LIMEN_OPENCODE_CLOCK"] = "1"
             run_env["LIMEN_TASK_ID"] = task.id
         _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
         supervised_cmd = _stable_agent_host_command(agent_cmd, run_env)
+    except (ConductError, KeyError, ValueError):
+        return _prelaunch_blocked_result("execution reservation unavailable or expired")
     except StableAgentHostError:
         reason = "stable agent host unavailable"
         print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
@@ -4766,7 +4806,7 @@ def _run_isolated_agent(
         print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
         return _workstream_successor_result(reason) if retry_count else _prelaunch_workstream_successor_result(reason)
     started_at = datetime.now(timezone.utc)
-    max_retries = provider_health_policy().same_model_retries if agent == "opencode" else retry_count
+    max_retries = retry_count  # correction needs a new keeper admission with changed inputs
     while True:
         try:
             run = _run_capture(
@@ -4775,31 +4815,6 @@ def _run_isolated_agent(
                 timeout=lane_timeout,
                 env=run_env,
             )
-            # SELF-HEAL the credential-refresh race (#48786): if claude lost the token rotation,
-            # a fresh process re-reads the now-rotated token. ONE retry only.
-            if agent == "claude" and run.returncode != 0 and _is_auth_blip((run.stderr or "") + (run.stdout or "")):
-                print(f"  AUTH-BLIP {task.id}: claude credential-refresh race — re-reading token, one retry")
-                try:
-                    run_env = _lane_run_env(agent, wt, task)
-                    _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
-                    supervised_cmd = _stable_agent_host_command(
-                        agent_cmd,
-                        run_env,
-                    )
-                except StableAgentHostError:
-                    reason = "stable agent host unavailable"
-                    print(f"  BLOCKED {task.id}: {reason}; refusing an unstable auth-retry TCC principal")
-                    return _blocked_result(reason)
-                except WorkstreamLaunchContractError:
-                    reason = "workstream launch contract unavailable"
-                    print(f"  BLOCKED {task.id}: {reason}; refusing auth retry so the lane can successor-route")
-                    return _workstream_successor_result(reason)
-                run = _run_capture(
-                    supervised_cmd,
-                    cwd=str(wt),
-                    timeout=lane_timeout,
-                    env=run_env,
-                )
         except StableAgentHostError:
             reason = "stable agent host unavailable"
             print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
@@ -4816,7 +4831,7 @@ def _run_isolated_agent(
                     retry_count += 1
                     print(f"  RETRY {task.id}: OpenCode timeout; same runtime model attempt {retry_count + 1}")
                     continue
-            print(f"  TIMEOUT {task.id} after {lane_timeout}s — too big for sync local → routing to jules (async)")
+            print(f"  TIMEOUT {task.id} after {lane_timeout}s — checkpointing without automatic continuation")
             return _TIMEOUT
         if agent == "opencode" and run.returncode != 0:
             terminal = classify_provider_terminal(
@@ -5042,12 +5057,7 @@ def _cleanup_isolated_worktree(
     pushed: bool,
     task: Task | None = None,
 ) -> None:
-    """Classify isolated worktrees for later receipt-backed cleanup.
-
-    This function intentionally does not remove roots or branch refs. Local deletion requires the
-    shared archive/redaction acceptance ledgers consumed by reclaim-worktrees.py and
-    reap-branches.py.
-    """
+    """Retire released exact-tip copies; retain all uncertain work and branch refs."""
     if not wt.exists():
         if pushed:
             print(
@@ -5058,11 +5068,38 @@ def _cleanup_isolated_worktree(
         return
 
     reason = "" if pushed else _unpreserved_work_reason(wt, base_ref)
-    generated_cleanup = _purge_generated_payloads(wt)
+    generated_cleanup = "retained-for-custody"
     if reason:
         print(f"  preserved isolated worktree {wt} for bridge ({reason}; branch {branch})")
         _record_worktree_lifecycle(task, wt, branch, "preserved", reason, generated_cleanup, pushed)
         return
+
+    if pushed:
+        from limen.worktree_abandonment import retire_released_worktree
+
+        head = _git(["rev-parse", "HEAD"], wt)
+        root = Path(
+            os.environ.get("LIMEN_LIVE_ROOT") or os.environ.get("LIMEN_ROOT") or Path.home() / "Workspace/limen"
+        )
+        released = retire_released_worktree(
+            repo_dir,
+            wt,
+            expected_head=head.stdout.strip(),
+            remote_ref=f"refs/heads/{branch}",
+            receipt_root=root / "logs/worktree-abandonment",
+        )
+        _record_worktree_lifecycle(
+            task,
+            wt,
+            branch,
+            released["state"],
+            released.get("reason", "exact-tip-retirement"),
+            generated_cleanup,
+            pushed,
+        )
+        if released["state"] in {"completed", "already-absent"}:
+            print(f"  retired released checkout {wt}; branch {branch} retained remotely")
+            return
 
     print(
         f"  retained isolated worktree {wt} ({'pushed' if pushed else 'clean-noop'}; branch {branch}); "
@@ -6235,35 +6272,12 @@ def _apply_result(
         task.status = "failed"
         if "noop" not in task.labels:
             task.labels.append("noop")
-    elif result == _RATELIMIT:
-        nxt = _cascade_or_requeue(agent)
-        entry.status = "open"
-        entry.route_to = nxt
-        entry.output = f"rate limited on {agent}; reopened to live fleet route"
-        task.status = "open"
-    elif result == _TIMEOUT:
-        if _control_host_task(task):
-            # A remote clone cannot execute a control-host mutation.  The old unconditional
-            # timeout->Jules fallback sent disk cleanup off-box, where it waited for feedback,
-            # was healed open, and then permanently blocked the correct local lane because its
-            # history contained a local timeout.  Fail this bounded unit and require a successor
-            # instead of manufacturing an impossible route.
-            entry.status = "failed"
-            entry.output = (
-                f"timeout on {agent}; control-host work cannot route off-machine; "
-                "a smaller bounded successor packet is required"
-            )
-            task.status = "failed"
-            if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in task.labels:
-                task.labels.append(WORKSTREAM_SUCCESSOR_REQUIRED_LABEL)
-        else:
-            # too big for a sync local lane → hand to jules (async, no wall-clock cap)
-            entry.status = "open"
-            entry.route_to = "jules"
-            entry.output = f"timeout on {agent}; reopened to asynchronous lane"
-            task.status = "open"
-            if "slow" not in task.labels:
-                task.labels.append("slow")
+    elif result in {_RATELIMIT, _TIMEOUT}:
+        entry.status = "failed"
+        task.status = "failed"
+        entry.output = "bounded attempt checkpointed; no automatic reroute or budget reset"
+        if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in task.labels:
+            task.labels.append(WORKSTREAM_SUCCESSOR_REQUIRED_LABEL)
     elif _is_workstream_successor_result(result):
         entry.status = "failed"
         entry.output = f"successor workstream required: {_workstream_successor_reason(result)}"
