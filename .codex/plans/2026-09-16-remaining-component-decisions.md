@@ -161,3 +161,8 @@ Six regression cases plus 27 registry/classifier cases pass (33 total). Personal
 facts structural validation and focused Ruff pass. The dedicated scoped gate
 tracks the verifier, its tests and the personal-facts registry. No private home
 was read by these fixtures.
+
+Consolidated verification at 7444cf024 passed all 42 cheap gates. Heavy
+verification was again refused by the machine-wide swap-fraction admission
+check (exit 75). PR #2627 remains draft; no admission bypass or unchanged-tree
+retry was performed. This updates the existing PR-owned verification blocker.
