@@ -157,7 +157,7 @@ def test_dissolve_rejects_registry_changed_during_predicate(tmp_path, monkeypatc
     assert not list(tmp_path.glob(".registry.json.*"))
 
 
-def test_legacy_debt_preserves_document_when_recording(tmp_path, monkeypatch):
+def test_malformed_implementation_cannot_discharge_legacy_debt(tmp_path, monkeypatch):
     import json
 
     m = _mod()
@@ -166,8 +166,49 @@ def test_legacy_debt_preserves_document_when_recording(tmp_path, monkeypatch):
     path.write_text(json.dumps({"metadata": {"retained": True}, "levers": [lever]}))
     monkeypatch.setattr(m, "REGISTRY", str(path))
     monkeypatch.setenv("LIMEN_LEVER_DISSOLVE_APPLY", "1")
-    assert m.cmd_dissolve([lever], str(tmp_path), True) == 0
-    result = json.loads(path.read_text())
-    assert result["metadata"] == {"retained": True}
-    assert result["levers"][0]["id"] == lever["id"]
-    assert "discharged" in result["levers"][0]
+    original = path.read_bytes()
+    assert m.cmd_dissolve([lever], str(tmp_path), True) == 1
+    assert path.read_bytes() == original
+
+
+def test_malformed_records_stop_all_modes_before_predicates(tmp_path, monkeypatch):
+    m = _mod()
+    calls = []
+    monkeypatch.setattr(m, "run_predicate", lambda *args: calls.append(args))
+    good = _lever(id="L-GOOD", design_debt={"organ": "x.py", "dissolves_when": "true"})
+    malformed = [
+        None,
+        "bad",
+        {},
+        _lever(id=[]),
+        _lever(sovereignty={"reason": []}),
+        _lever(design_debt="bad"),
+        _lever(design_debt={"organ": "x.py", "dissolves_when": ["true"]}),
+        _lever(implementation={"design_debt": None}),
+    ]
+    for bad in malformed:
+        rows = [good, bad]
+        assert m.cmd_check(rows) == 1
+        assert m.cmd_list(rows, str(tmp_path)) == 1
+        assert m.cmd_dissolve(rows, str(tmp_path), True) == 1
+    assert calls == []
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_duplicate_identity_prevents_predicate_execution(tmp_path, monkeypatch):
+    m = _mod()
+    monkeypatch.setattr(m, "run_predicate", lambda *args: (_ for _ in ()).throw(AssertionError("executed")))
+    lever = _lever(design_debt={"organ": "x.py", "dissolves_when": "true"})
+    assert m.cmd_dissolve([lever, dict(lever)], str(tmp_path), False) == 1
+
+
+def test_unreadable_armed_registry_is_preserved(tmp_path, monkeypatch):
+    m = _mod()
+    path = tmp_path / "registry.json"
+    path.write_text("[]")
+    monkeypatch.setattr(m, "REGISTRY", str(path))
+    monkeypatch.setenv("LIMEN_LEVER_DISSOLVE_APPLY", "1")
+    monkeypatch.setattr(m, "run_predicate", lambda *args: (_ for _ in ()).throw(AssertionError("executed")))
+    lever = _lever(design_debt={"organ": "x.py", "dissolves_when": "true"})
+    assert m.cmd_dissolve([lever], str(tmp_path), True) == 1
+    assert path.read_text() == "[]"
