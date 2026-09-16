@@ -1239,6 +1239,12 @@ gates:
     note: "Boots wrangler-dev (workerd) and probes the Worker contract over HTTP; CI=1 guards against interactive login."
 
   # ── personal-facts registry drift nets (PERSONA-FEDERATA) ───────────────────
+  identity-verification-test:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_identity_verification.py -q"
+    paths: ["scripts/identity.py", "scripts/tests/test_identity_verification.py", "institutio/governance/personal-facts.yaml"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: identity
+    note: "Unsupported required verification modes remain unmeasured; presence and known missing facts retain their own results without reading private fixtures."
   personal-facts-drift:
     command: "python3 scripts/check-personal-facts.py"
     paths: ["institutio/governance/personal-facts.yaml", "scripts/identity.py", "scripts/fill-*.py"]

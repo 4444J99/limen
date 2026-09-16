@@ -132,3 +132,32 @@ Source references resolve; all 107 IDs and lifecycle states are unchanged.
 Current count: 45 selected, 52 requiring component review, 95 missing acceptance
 definitions. Twenty-two focused registry tests pass. No settings, grants, sends
 or recurring operations were activated.
+
+## Authentication and access decisions
+
+Seven further records now distinguish account capability, implementation and
+authorized effects. Social publishing remains refused by the current scheduler;
+a token is not an implemented adapter or permission to send. OpenCode uses its
+current catalog and admitted native smoke. Cloud adoption requires verified
+actual ciphertext pushes. Provider exports require private lineage and measured
+coverage. NAS retains its written agreement and credential-organ boundary.
+LaunchDarkly consent is conditional on current semantic authentication evidence.
+Claude settings must derive from current owned sources, never the August /tmp
+candidate or historical numeric limits.
+
+Current count: 52 selected, 45 requiring component review, 95 missing acceptance
+definitions. No lifecycle, credential, settings, egress or publication state was
+changed. Source references resolve; executable acceptance remains outstanding.
+
+## Required identity verification modes
+
+A hermetic probe reproduced identity.py verify returning exit 0 and claiming one
+required atom present when its verification mode was unsupported. The verifier
+now reports UNMEASURED and exits 77 for unsupported modes; a simultaneous known
+missing fact still exits 1 with both observations visible. Unknown mode payloads
+are not printed. Presence remains presence evidence, not factual correctness.
+
+Six regression cases plus 27 registry/classifier cases pass (33 total). Personal
+facts structural validation and focused Ruff pass. The dedicated scoped gate
+tracks the verifier, its tests and the personal-facts registry. No private home
+was read by these fixtures.

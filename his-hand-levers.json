@@ -1188,11 +1188,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Keep asset preparation and the draft queue local; implement each publishing adapter only against its declared platform capability and separately authorized message.",
+        "rationale": "The scheduler currently refuses publishing even when a token exists. OAuth enables an account capability; it does not authorize queued content or prove delivery.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-SOCIAL-OAUTH"
+          "his-hand-levers.json#L-SOCIAL-OAUTH",
+          "organs/media/scheduler/social_scheduler.py",
+          "cli/tests/test_social_scheduler.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1200,14 +1202,18 @@
         ],
         "owner": "media organ · social_scheduler",
         "acceptance": {
-          "condition": "publishing screengrabs/recordings as reels/stories/feed/tiktok/tweets",
+          "condition": "Draft preparation performs no network send. Each future adapter requires credential-organ hydration, explicit content/target authorization and a platform delivery readback; unsupported adapters remain unimplemented.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Per-platform application capability",
+          "Credential-organ token custody",
+          "Separate L-SOCIAL-SEND authorization"
+        ],
+        "remaining_human_action": "Create or authorize the specific vendor application and first token only when its platform integration is ready; approve publication separately.",
         "historical_gate_requires_verification": "vendor app creation + first token mint (per platform)",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -1932,11 +1938,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Discover the current OpenCode catalog, select a capability-compatible candidate under existing capacity policy, and run an admitted bounded native read smoke before declaring the lane available.",
+        "rationale": "Authentication alone does not establish a usable model or native tool execution. Empty or incapable catalogs remain blocked without a hard-coded substitute.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-OPENCODE-AUTH"
+          "his-hand-levers.json#L-OPENCODE-AUTH",
+          "cli/src/limen/opencode_smoke.py",
+          "docs/architecture/dynamic-provider-selection.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -1944,14 +1952,18 @@
         ],
         "owner": "dynamic OpenCode capability discovery (PR #921)",
         "acceptance": {
-          "condition": "whatever additional capabilities the provider exposes to this account at runtime",
+          "condition": "A current catalog fingerprint, compatible selected model, admitted native tool-read marker and durable outcome receipt establish availability; missing catalog or execution evidence remains visible.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current provider catalog",
+          "Machine-wide admission",
+          "Provider budget and health policy"
+        ],
+        "remaining_human_action": "Complete only the provider account authorization currently required by the discovered native lane; authorize any additional spending separately.",
         "historical_gate_requires_verification": "Interactive account authorization cannot be performed by the fleet. The lane remains honest without it: an empty or incapable catalog blocks rather than selecting a named fallback.",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2221,11 +2233,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Use the declared headless cloud rails for the exact approved ciphertext payloads and non-secret recovery card; mark adoption only after fresh integrity-verified pushes and recovery evidence.",
+        "rationale": "Configured remotes and dry-run success do not establish offsite custody. Existing rail roles prohibit plaintext private egress and silent adoption.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CLOUD-EGRESS-CONSENT"
+          "his-hand-levers.json#L-CLOUD-EGRESS-CONSENT",
+          "scripts/horrevm-custody.py",
+          "institutio/governance/storage-roles.yaml"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2233,14 +2247,19 @@
         ],
         "owner": "HORREVM PR2 (feat/horrevm-custody) 2026-07-15",
         "acceptance": {
-          "condition": "HORREVM custody Stages 1-2: gates A+B go green, first real push ships (gdrive second-vendor ciphertext offsite covering the GitHub-lost-AND-Mac-lost correlated failure; dropbox break-glass kernel reachable from any borrowed browser), the freshness clock starts, and storage-roles.yaml flips gdrive/dropbox to adopted",
+          "condition": "Each declared rail has current consent for its exact egress scope, a successful actual push, clean integrity verification and recovery evidence; stale or unproven rails remain pending.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Exact approved egress list",
+          "Credential-organ OAuth custody",
+          "Sealed source payloads",
+          "Recovery verification"
+        ],
+        "remaining_human_action": "Approve the exact cloud egress scope, complete the required OAuth consent and authorize persistence arming; no additional payload or vendor is implied.",
         "historical_gate_requires_verification": "OAuth browser consent + egress-list approval + persistence-arming env write — the three atoms the fleet cannot perform",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2583,11 +2602,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Import provider exports into the private corpus with source lineage, deduplication and explicit per-provider coverage; retain missing exports in the denominator.",
+        "rationale": "Historical provider counts are not current coverage evidence. An export request or downloaded file does not establish a validated corpus import.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CCE-PROVIDER-BUNDLES"
+          "his-hand-levers.json#L-CCE-PROVIDER-BUNDLES",
+          "docs/session-corpus-ledger.md",
+          "scripts/session-corpus-ledger.py",
+          "scripts/corpus_resolve.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2595,14 +2617,18 @@
         ],
         "owner": "constellation closeout filings (limen PR #1373); CCE provider-import lane in conversation-corpus-check picks up archives dropped under the source-drop inbox.",
         "acceptance": {
-          "condition": "widens AI-chat dossier coverage to all 8 vendors — adds Gemini, Grok, Perplexity, Copilot, DeepSeek, Mistral alongside the already-imported ChatGPT + Claude corpus. The constellation program is green without it; this deepens source breadth for the cross-vendor insights engine.",
+          "condition": "Every in-scope provider has either a validated private import receipt with source lineage and coverage or an explicit missing/export-pending disposition; no raw prompt body enters public tracking.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current provider-source inventory",
+          "Private corpus custody",
+          "Validated import receipts"
+        ],
+        "remaining_human_action": "Request or download the specific vendor exports that require interactive account access and place them in their authorized private intake home.",
         "historical_gate_requires_verification": "vendor-portal logins the organ cannot perform (interactive export flows)",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -3849,11 +3875,12 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Prepare the new-ancients-social posting adapters against their repository-owned P09 contract using isolated fixtures; hydrate deployment credentials only through the credential organ after the written agreement.",
+        "rationale": "Adapter correctness, account capability and authority to publish are separate obligations. Limen records external ownership without automatically changing the product repository.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-NAS-CREDENTIALS"
+          "his-hand-levers.json#L-NAS-CREDENTIALS",
+          "docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3861,14 +3888,19 @@
         ],
         "owner": "dustin alpha→omega roadmaps (limen #2362, plan docs/plans/2026-08-13-dustin-alpha-omega-roadmaps.md, PR #2364)",
         "acceptance": {
-          "condition": "new-ancients-social P09 posting adapters",
+          "condition": "The external P09 owner supplies repository-specific adapter tests, scoped credential readback and separately authorized delivery evidence; absent agreement or credentials remains explicit.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Written agreement",
+          "External P09 implementation owner",
+          "Credential-organ handover",
+          "Per-message authorization"
+        ],
+        "remaining_human_action": "Complete the written agreement and scoped credential handover through the credential organ, never through chat.",
         "historical_gate_requires_verification": "written agreement + credential handover through the credential organ (never chat)",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -4347,11 +4379,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Resolve the source-owned hosted configuration and inspect semantic authentication and actual tool discovery; request browser consent only when that server reports authentication is needed.",
+        "rationale": "Transport reachability and a generic status from another endpoint do not prove LaunchDarkly authentication. A fresh client must adopt the hosted configuration.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-LAUNCHDARKLY-OAUTH-CONSENT"
+          "his-hand-levers.json#L-LAUNCHDARKLY-OAUTH-CONSENT",
+          "scripts/mcp_estate.py",
+          "scripts/mcp-server-boot.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4359,14 +4393,18 @@
         ],
         "owner": "attached-alert closeout #2120; domus-genoma PR #366; limen PR #2124",
         "acceptance": {
-          "condition": "authenticated LaunchDarkly hosted tool discovery instead of a transport-only startup warning",
+          "condition": "A fresh native client reports authenticated hosted LaunchDarkly discovery with the actual tool catalog; missing semantic evidence remains unmeasured and no local SDK-key substitute is introduced.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Domus-owned hosted configuration",
+          "Fresh native client process",
+          "Semantic authentication probe"
+        ],
+        "remaining_human_action": "If the current LaunchDarkly semantic probe requires it, approve its hosted OAuth request; no consent is needed when already authenticated.",
         "historical_gate_requires_verification": "OAuth browser consent acts as your hosted LaunchDarkly identity and cannot be completed headlessly on your behalf",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -4440,11 +4478,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Reconstruct any required settings repair from the current Domus-owned template and hook sources, verify rendered hook behavior, and apply only through the owning installation contract.",
+        "rationale": "The historical temporary candidate is not an installable current source. Existing settings, protected sessions and current host/runtime constraints must survive; old numeric limits are not current registry authority.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-CLAUDE-SETTINGS-ESTATE-INSTALL"
+          "his-hand-levers.json#L-CLAUDE-SETTINGS-ESTATE-INSTALL",
+          "docs/architecture/machine-wide-host-admission.md",
+          "docs/architecture/dynamic-provider-selection.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4452,14 +4492,19 @@
         ],
         "owner": "2026-08-06 settings-estate review + implementation (limen bg session 611a4757); domus-genoma commit 7df265ac (pre-repair snapshot); hook scripts + liturgy edits on disk uncommitted pending this lever",
         "acceptance": {
-          "condition": "live guard layer (force-push/branch-D/push-main/registry/IRF advisories restored; brew-zap-claude-code and LaunchAgents writes become real denies), fleetview Stop-digest un-silenced (root cause: empty stdin to async hook since ~Jul 24), PostCompact reorientation, PermissionDenied + protected-registry FileChanged audit logs, ConfigChange formatter-hazard warning, CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY=5 (16GB jetsam cap harness-enforced), cleanupPeriodDays=14, useAutoModeDuringPlan=true",
+          "condition": "The current source diff renders successfully, native hook fixtures demonstrate intended allow/deny behavior, installation readback matches that source and protected sessions remain intact; stale temporary paths are never used.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Current Domus source and instruction surfaces",
+          "Current capacity registry",
+          "Rendered settings and native hook tests",
+          "Installation policy authority"
+        ],
+        "remaining_human_action": "Perform only any settings activation that the current enforced policy reserves to the human, after reviewing the concrete current source diff; the old temporary-file recipe is not an approval target.",
         "historical_gate_requires_verification": "auto-mode classifier self-modification boundary: agent sessions cannot mutate user-level settings or arm hooks",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
