@@ -28,6 +28,7 @@ from typing import Any, Iterator, cast
 
 SCHEMA = "limen.workstream.contract.v1"
 SCHEMA_V2 = "limen.workstream.contract.v2"
+SCHEMA_V3 = "limen.workstream.contract.v3"
 RECEIPT_SCHEMA = "limen.workstream.receipt.v1"
 IDENTITY_SCHEMA = "limen.workstream.capsule-identity.v2"
 WORKSTREAM_SUCCESSOR_REQUIRED_LABEL = "workstream:successor-required"
@@ -176,6 +177,15 @@ def new_contract_v2(
     return contract
 
 
+def new_contract_v3(runway: str, *, sandbox: str) -> dict[str, Any]:
+    """Build a provider-neutral contract with an explicit Codex permission boundary."""
+
+    contract = new_contract(runway)
+    contract["schema"] = SCHEMA_V3
+    contract["authorization"] = _authorization_for_sandbox(sandbox)
+    return contract
+
+
 def _validate_v2_contract(value: dict[str, Any]) -> None:
     if set(value) != {"schema", "runway", "authorization", "conductor", "primary_launch"}:
         raise ContractError("workstream contract has unknown or missing top-level fields")
@@ -206,7 +216,7 @@ def validate_contract(value: object) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ContractError("workstream contract has unknown or missing top-level fields")
     schema = value.get("schema")
-    if schema == SCHEMA:
+    if schema in {SCHEMA, SCHEMA_V3}:
         if set(value) != {"schema", "runway", "authorization", "conductor"}:
             raise ContractError("workstream contract has unknown or missing top-level fields")
     elif schema == SCHEMA_V2:
@@ -249,8 +259,16 @@ def validate_contract(value: object) -> dict[str, Any]:
         ):
             raise ContractError("started workstream runway timing state is invalid")
 
-    if schema == SCHEMA and value.get("authorization") != AUTHORIZATION:
-        raise ContractError("workstream authorization contract is invalid")
+    if schema == SCHEMA:
+        if value.get("authorization") != AUTHORIZATION:
+            raise ContractError("workstream authorization contract is invalid")
+    elif schema == SCHEMA_V3:
+        authorization = value.get("authorization")
+        if not isinstance(authorization, dict):
+            raise ContractError("workstream authorization contract is invalid")
+        expected_authorization = _authorization_for_sandbox(str(authorization.get("sandbox") or ""))
+        if authorization != expected_authorization:
+            raise ContractError("workstream authorization contract is invalid")
     if value.get("conductor") != CONDUCTOR:
         raise ContractError("workstream conductor contract is invalid")
     return value
@@ -309,6 +327,33 @@ def validate_codex_launch(
     if reasoning_effort not in levels:
         raise ContractError(f"Codex model {model!r} does not support reasoning effort {reasoning_effort!r}")
     return selected
+
+
+def validate_codex_bypass(binary: str, *, timeout_seconds: int = 30) -> None:
+    """Require the live Codex binary to advertise the exact bypass transport."""
+
+    if not binary.strip():
+        raise ContractError("Codex binary is required for bypass validation")
+    if isinstance(timeout_seconds, bool) or not 1 <= timeout_seconds <= 120:
+        raise ContractError("Codex bypass validation timeout must be between 1 and 120 seconds")
+    try:
+        result = subprocess.run(
+            [binary, "--help"],
+            text=True,
+            capture_output=True,
+            timeout=timeout_seconds,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        raise ContractError(f"live Codex permission catalog is unavailable: {exc}") from exc
+    if result.returncode != 0:
+        raise ContractError("live Codex permission catalog query failed")
+    help_text = f"{result.stdout}\n{result.stderr}"
+    if not re.search(
+        r"(?<![A-Za-z0-9_-])--dangerously-bypass-approvals-and-sandbox(?![A-Za-z0-9_-])",
+        help_text,
+    ):
+        raise ContractError("live Codex binary does not advertise bypass-all permissions")
 
 
 def validate_packet_contract(value: object) -> dict[str, Any]:
@@ -770,6 +815,7 @@ def successor_metadata(
     *,
     runway_mode: str = "inherit",
     requested: str | None = None,
+    sandbox: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, str], str]:
     """Derive a successor contract, lineage, and its exact remotely custodied base."""
 
@@ -781,12 +827,24 @@ def successor_metadata(
         raise ContractError("renewed successors require an explicit runway")
     receipt, lineage, checkout_head = predecessor_custody(predecessor_receipt)
     predecessor = receipt["contract"]
+    effective_sandbox = sandbox
+    if effective_sandbox is None and predecessor["schema"] == SCHEMA_V3:
+        effective_sandbox = predecessor["authorization"]["sandbox"]
     if runway_mode == "inherit":
-        inherited = new_contract(predecessor["runway"]["requested"])
+        inherited = (
+            new_contract_v3(predecessor["runway"]["requested"], sandbox=effective_sandbox)
+            if effective_sandbox is not None
+            else new_contract(predecessor["runway"]["requested"])
+        )
         inherited["runway"] = copy.deepcopy(predecessor["runway"])
         return inherited, lineage, checkout_head
 
-    return new_contract(cast(str, requested)), lineage, checkout_head
+    renewed = (
+        new_contract_v3(cast(str, requested), sandbox=effective_sandbox)
+        if effective_sandbox is not None
+        else new_contract(cast(str, requested))
+    )
+    return renewed, lineage, checkout_head
 
 
 def successor_contract(
@@ -794,6 +852,7 @@ def successor_contract(
     *,
     runway_mode: str = "inherit",
     requested: str | None = None,
+    sandbox: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, str]]:
     """Derive one successor contract without changing predecessor state."""
 
@@ -801,6 +860,7 @@ def successor_contract(
         predecessor_receipt,
         runway_mode=runway_mode,
         requested=requested,
+        sandbox=sandbox,
     )
     return contract, lineage
 
@@ -812,6 +872,7 @@ def configure_successor_contract(
     runway_mode: str = "inherit",
     requested: str | None = None,
     expected_receipt_sha256: str | None = None,
+    sandbox: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, str], bool]:
     """Write an exact successor contract while preserving predecessor bytes."""
 
@@ -819,6 +880,7 @@ def configure_successor_contract(
         predecessor_receipt,
         runway_mode=runway_mode,
         requested=requested,
+        sandbox=sandbox,
     )
     if expected_receipt_sha256 is not None and lineage["receipt_sha256"] != expected_receipt_sha256:
         raise ContractError("predecessor receipt changed during successor creation")
@@ -949,34 +1011,35 @@ def configure_contract(
     reasoning_effort: str | None = None,
     sandbox: str | None = None,
 ) -> tuple[dict[str, Any], bool]:
-    launch_values = (agent, model, reasoning_effort, sandbox)
-    explicit_launch = any(value is not None for value in launch_values)
-    if explicit_launch and not all(value is not None for value in launch_values):
+    model_values = (agent, model, reasoning_effort)
+    explicit_launch = any(value is not None for value in model_values)
+    if explicit_launch and (not all(value is not None for value in model_values) or sandbox is None):
         raise ContractError("explicit workstream launch profiles require agent, model, reasoning effort, and sandbox")
 
     def configured_contract(runway: str) -> dict[str, Any]:
-        if not explicit_launch:
-            return new_contract(runway)
-        return new_contract_v2(
-            runway,
-            agent=cast(str, agent),
-            model=cast(str, model),
-            reasoning_effort=cast(str, reasoning_effort),
-            sandbox=cast(str, sandbox),
-        )
+        if explicit_launch:
+            return new_contract_v2(
+                runway,
+                agent=cast(str, agent),
+                model=cast(str, model),
+                reasoning_effort=cast(str, reasoning_effort),
+                sandbox=cast(str, sandbox),
+            )
+        if sandbox is not None:
+            return new_contract_v3(runway, sandbox=sandbox)
+        return new_contract(runway)
 
     with _contract_lock(path):
         if path.exists():
             contract = read_contract(path)
-            expected_schema = SCHEMA_V2 if explicit_launch else contract["schema"]
+            expected_schema = SCHEMA_V2 if explicit_launch else SCHEMA_V3 if sandbox is not None else contract["schema"]
             if contract["schema"] != expected_schema:
                 raise ContractError("cannot change an existing launch profile; emit a successor workstream")
-            if explicit_launch:
+            if explicit_launch or sandbox is not None:
                 expected_launch = configured_contract(contract["runway"]["requested"])
-                if (
-                    contract["primary_launch"] != expected_launch["primary_launch"]
-                    or contract["authorization"] != expected_launch["authorization"]
-                ):
+                if contract["authorization"] != expected_launch["authorization"]:
+                    raise ContractError("cannot change an existing launch profile; emit a successor workstream")
+                if explicit_launch and contract["primary_launch"] != expected_launch["primary_launch"]:
                     raise ContractError("cannot change an existing launch profile; emit a successor workstream")
             if requested is None:
                 return contract, False
@@ -993,6 +1056,11 @@ def configure_contract(
                     agent=primary_launch["agent"],
                     model=primary_launch["model"],
                     reasoning_effort=primary_launch["reasoning_effort"],
+                    sandbox=contract["authorization"]["sandbox"],
+                )
+            elif contract["schema"] == SCHEMA_V3 and sandbox is None:
+                contract = new_contract_v3(
+                    normalized,
                     sandbox=contract["authorization"]["sandbox"],
                 )
             else:
@@ -1393,6 +1461,7 @@ def main(argv: list[str] | None = None) -> int:
         successor.add_argument("--predecessor-receipt", type=Path, required=True)
         successor.add_argument("--runway-mode", choices=sorted(SUCCESSOR_RUNWAY_MODES), default="inherit")
         successor.add_argument("--runway")
+        successor.add_argument("--sandbox")
 
     # The STATIC half of validate-codex-launch, split out so a caller can reject an invalid sandbox
     # WITHOUT first resolving a codex binary. Argument validity is a property of the arguments, not
@@ -1402,6 +1471,10 @@ def main(argv: list[str] | None = None) -> int:
     # gate, it never replaces one.
     codex_sandbox = subparsers.add_parser("validate-codex-sandbox")
     codex_sandbox.add_argument("--sandbox", required=True)
+
+    codex_bypass = subparsers.add_parser("validate-codex-bypass")
+    codex_bypass.add_argument("--binary", required=True)
+    codex_bypass.add_argument("--timeout-seconds", type=int, default=30)
 
     codex_launch = subparsers.add_parser("validate-codex-launch")
     codex_launch.add_argument("--binary", required=True)
@@ -1470,6 +1543,7 @@ def main(argv: list[str] | None = None) -> int:
                     runway_mode=args.runway_mode,
                     requested=args.runway,
                     expected_receipt_sha256=args.expected_receipt_sha256,
+                    sandbox=args.sandbox,
                 )
                 print("changed" if changed else "unchanged")
                 predecessor_head = ""
@@ -1478,6 +1552,7 @@ def main(argv: list[str] | None = None) -> int:
                     args.predecessor_receipt,
                     runway_mode=args.runway_mode,
                     requested=args.runway,
+                    sandbox=args.sandbox,
                 )
             print(lineage["slug"])
             print(lineage["branch"])
@@ -1485,12 +1560,19 @@ def main(argv: list[str] | None = None) -> int:
             print(contract["runway"]["requested"])
             if predecessor_head:
                 print(predecessor_head)
+                print(contract["schema"])
+                print(contract["authorization"]["sandbox"])
         elif args.command == "validate-codex-sandbox":
             # Raises ContractError on an unknown value; echo the accepted one, mirroring
             # validate-codex-launch printing its selected slug.
             print(_authorization_for_sandbox(args.sandbox)["sandbox"])
+        elif args.command == "validate-codex-bypass":
+            validate_codex_bypass(args.binary, timeout_seconds=args.timeout_seconds)
+            print("danger-full-access")
         elif args.command == "validate-codex-launch":
             _authorization_for_sandbox(args.sandbox)
+            if args.sandbox == "danger-full-access":
+                validate_codex_bypass(args.binary, timeout_seconds=args.timeout_seconds)
             selected = validate_codex_launch(
                 args.binary,
                 model=args.model,
