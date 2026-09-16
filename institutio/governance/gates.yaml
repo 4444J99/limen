@@ -1128,6 +1128,14 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
     note: "Format-check the same estate ruff-lint lints; ran unregistered in pr-gate until the scoped rewrite (issue #1048). Same #1658 version lock as ruff-lint; same 2026-08-06 apps/organs extension."
+  dependency-completion-integration:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_dependency_completion_integration.py -q"
+    paths: ["cli/src/limen/conduct/**", "cli/tests/test_dependency_completion_integration.py", "web/worker/src/conduct/dependency-completion.js", "institutio/github/dependency-completion.json"]
+    tier: cheap
+    timeout_seconds: 60
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: verify
+    note: "Bind the actual Worker hint store and reconciler to real Python keeper registration, reservation, executor attempt and receipt behavior. Worker-only changes must exercise this cross-language boundary. Uses isolated in-memory keeper and Worker storage, real bounded Node invocations and an isolated fixture assessor; no live service or credential. Proves restart/replay preservation and refusal to route into another human-protected session."
   pytest-cli:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto"
     paths: ["cli/**", "cli/tests/test_cloud_routine.py", "ianva/**", "his-hand-levers.json", "cloud-routines.json", "spec/contracts/cloud-routine-receipt-v1.schema.json", "scripts/cloud-routine-ingest.py", "scripts/check-cloud-routine-ingest.py", "docs/receipts/cloud-routine-findings-20260808.json", "docs/receipts/cloud-routine-lineage.json", "docs/receipts/irf-p0-owner-classification-20260808.json"]
@@ -1218,7 +1226,7 @@ gates:
     note: "Reject incomplete audit responses and retain independent compatibility evidence when advisories fail."
   worker-check:
     command: "bash -c 'cd web/worker && npm run check'"
-    paths: ["web/worker/**"]
+    paths: ["web/worker/**", "institutio/github/dependency-completion.json"]
     tier: heavy
     ci_job: "ci.yml:worker"
     owner: worker

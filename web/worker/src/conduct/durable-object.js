@@ -1,3 +1,4 @@
+import { DependencyCompletionError, submitCompletionHint, readCompletionHints, reconcileCompletionAssessment } from "./dependency-completion.js";
 import {
   authorizeConductRequest,
   internalConductPrincipal,
@@ -181,7 +182,7 @@ export class ConductKeeperDurableObject {
       return await this.route(request, auth.principal);
     } catch (err) {
       if (err instanceof ConductValidationError || err instanceof ConductError || err instanceof ConductProjectionError
-          || err instanceof InventoryAdmissionError) {
+          || err instanceof InventoryAdmissionError || err instanceof DependencyCompletionError) {
         return errorResponse(err.message, err.status || 500, this.env);
       }
       return errorResponse(err instanceof Error ? err.message : "conduct keeper error", 500, this.env);
@@ -190,6 +191,23 @@ export class ConductKeeperDurableObject {
 
   async route(request, principal) {
     const path = new URL(request.url).pathname;
+    if (path === "/api/conduct/dependencies/assessments" && request.method === "POST") {
+      requireRole(principal, "conductor");
+      const body = await parseBody(request, 4096);
+      if (Object.keys(body).length !== 2 || !Object.hasOwn(body, "key") || !Object.hasOwn(body, "run_id")) {
+        throw new DependencyCompletionError("dependency_assessment_invalid");
+      }
+      return json(await reconcileCompletionAssessment(this.ctx.storage, principal, body.key, body.run_id,
+        runId => this.service.call("graph", { run_id: runId })), 200, this.env);
+    }
+    if (path === "/api/conduct/dependencies/completions" && request.method === "POST") {
+      requireRole(principal, "dependency_observer");
+      const body = await parseBody(request, 4096);
+      return json(await submitCompletionHint(this.ctx.storage, principal, body), 200, this.env);
+    }
+    if (path === "/api/conduct/dependencies/completions" && request.method === "GET") {
+      return json(await readCompletionHints(this.ctx.storage, principal), 200, this.env);
+    }
     if (path === "/api/conduct/inventory/authority" && request.method === "GET") {
       requireRole(principal, "inventory_collector");
       return json(await this.service.call("inventory_authority", { principal }), 200, this.env);
