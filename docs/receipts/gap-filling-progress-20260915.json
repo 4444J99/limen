@@ -72,8 +72,8 @@
   "liveness_regressions_passed": 12,
   "continuation_cheap_gates_passed": 34,
   "decision_records": {
-    "selected": 29,
-    "requires_component_review": 68,
+    "selected": 32,
+    "requires_component_review": 65,
     "terminal_histories_retained": 10,
     "engineering_or_external_completion_claimed": false,
     "with_acceptance_predicate": 2,
@@ -227,5 +227,36 @@
     "registry_lifecycles_changed": false,
     "receipt": "docs/receipts/terminal-lever-audit-20260915.json",
     "owner_projection_debt": "Current dispositions added to issues #912/#1046/#1776; exact bodies and unchanged OPEN states read back."
+  },
+  "hook_component_review": {
+    "owner": "4444J99/limen#2625",
+    "records": [
+      "L-AGENT-BASH-PROMPT",
+      "L-LINT-HOOK",
+      "L-DIALOGS-HEAL"
+    ],
+    "hermetic_hook_wiring_tests_passed": 37,
+    "live_settings_or_valves_modified": false,
+    "runtime_adoption_claimed": false,
+    "findings": [
+      "Lint hook formats before advisory lint.",
+      "Dialog predicate uses fixed host identity; historical daemon activation recipe is not the current runtime contract."
+    ]
+  },
+  "autotype_scope_finding": {
+    "owner": "4444J99/limen#2625",
+    "source": "scripts/pr-lifecycle-autotype.py:owners",
+    "finding": "Unreadable or empty estate authority falls back to two owners; main may proceed with label effects under reduced scope.",
+    "acceptance": "Scope derivation failure produces an unmeasured receipt and nonzero exit before any GitHub lookup or mutation.",
+    "next_action": "Replace fallback with explicit scope failure and test unreadable and empty authority, including --apply no-effect cases.",
+    "status": "repaired_pending_landing",
+    "focused_tests_passed": 21
+  },
+  "decision_batch_verification": {
+    "scoped_gates_passed": 8,
+    "cli_passed": 7681,
+    "cli_skipped": 2,
+    "cli_duration_seconds": 253.62,
+    "subsequent_change": "Autotype scope failure shard: 21 tests and Ruff passed; unchanged CLI shards retained."
   }
 }

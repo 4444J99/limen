@@ -636,11 +636,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Keep the trusted-command hook source-owned in Domus, retain destructive-command prompts and built-in classifier defaults, and verify source/rendered wiring plus a newly started native session before claiming prompt relief.",
+        "rationale": "The existing effector validates template rendering and preserves the permission boundary. Hook installation alone does not establish runtime adoption.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-AGENT-BASH-PROMPT"
+          "his-hand-levers.json#L-AGENT-BASH-PROMPT",
+          "scripts/heal-hook-wiring.py",
+          "scripts/tests/heal-hook-wiring.test.sh",
+          "scripts/dialogs-silenced.sh"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -648,14 +651,17 @@
         ],
         "owner": "fleet-permission-prompt-fix; effector shipped 2026-07-31 as scripts/heal-hook-wiring.py",
         "acceptance": {
-          "condition": "the compound-cd prompt flood ends for every lane; permissions.ask regains its five-rule fail-safe backstop; the auto-mode classifier finally learns the trust boundary via autoMode.allow",
+          "condition": "Source and rendered trust-hook assertions agree, destructive operations retain their prompts, and a restarted native session demonstrates permitted command classes without unintended permission widening.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Domus source and rendered settings parity",
+          "Native-session restart and command-class observations"
+        ],
+        "remaining_human_action": "Only a currently enforced permission-policy change requires the authorized operator; do not route around a classifier rejection through another file or process.",
         "historical_gate_requires_verification": "the classifier denies an agent widening its own permission gate, wherever that file lives (rendered target AND cartridge source) — opens only from your side",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -826,11 +832,13 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Keep edited-Python feedback scoped to the named existing file and nonblocking. Disclose the existing automatic formatting before deployment; apply hook wiring through the owning Domus template and verify a native PostToolUse invocation.",
+        "rationale": "The shipped hook formats before linting, so the historical advisory-only description is incomplete. A passing hook exit means nonblocking execution, not a clean file or installed hook.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-LINT-HOOK"
+          "his-hand-levers.json#L-LINT-HOOK",
+          "scripts/hooks/lint-edited-file.sh",
+          "scripts/heal-hook-wiring.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -838,14 +846,18 @@
         ],
         "owner": "operating-charter build (PR #180, 463e28d)",
         "acceptance": {
-          "condition": "advisory ruff feedback on every edited Python file (never blocking)",
+          "condition": "A native Python edit produces scoped formatting and lint feedback without blocking; malformed/non-Python/missing-file events do not mutate files; source/rendered wiring agrees. Record findings separately from exit status.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Source-owned PostToolUse wiring",
+          "Formatter/linter availability",
+          "Native edit-event readback"
+        ],
+        "remaining_human_action": "Any enforced settings-policy approval remains with the authorized operator; no direct rendered-settings paste or self-bypass.",
         "historical_gate_requires_verification": "AI-edit of .claude/settings.json is classifier-denied — your paste only",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -922,11 +934,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Evaluate each dialog class separately against the current fixed DomusAgentHost identity. Keep detection visible and prepare only individually bounded repairs admitted by the current scheduled-process contract; replace historical daemon and vendor-bundle identity assumptions before activation.",
+        "rationale": "The current detector audits the fixed host. The historical four-valve recipe predates the bounded heartbeat and cannot establish either current adoption or absence of Gatekeeper prompts.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-DIALOGS-HEAL"
+          "his-hand-levers.json#L-DIALOGS-HEAL",
+          "scripts/dialogs-silenced.sh",
+          "docs/architecture/macos-tcc-gatekeeper-dialogs-solved.md",
+          "spec/scheduled-process-contracts.json"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -934,14 +949,18 @@
         ],
         "owner": "dialogs-silenced self-healing organ · R3 (sensors.yaml 0g8b; effectors heal-hook-drift.sh / heal-claude-cask.sh / heal-claude-lsregister.sh; PRs #1206 + #1212)",
         "acceptance": {
-          "condition": "the beat auto-cures a drifted PreToolUse trust hook (1b) and a duplicate Homebrew claude-code cask (4) the moment they recur, with no dialog, no click, and no chat task. For 4b it keeps the ClaudeCode.app LaunchServices registration at zero — which is worth having, but does NOT stop the 'damaged, move to Trash' alert: measurement on 2026-08-12 refuted registration as that alert's mechanism (see L-CLAUDE-GATEKEEPER-ALLOW).",
+          "condition": "Current fixed-host identity passes, each repair has a bounded owner receipt and verified class-specific result, and the resident one-shot runtime adopts the exact reviewed contract. Detection or armed flags alone are insufficient.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Per-effector compatibility with fixed-host identity",
+          "Bounded runtime ownership and admission",
+          "Post-repair class-specific observations"
+        ],
+        "remaining_human_action": "Retain only actual OS privilege or enforced policy grants; unattended host repair requires its reviewed bounded activation contract.",
         "historical_gate_requires_verification": "writing LIMEN_*=1 into the persistence env (~/.limen.env) is classifier-blocked for the agent (the self-arming boundary; see memory persistence-arming-env-is-classifier-gated) — the one-time paste is yours; every branch, sensor, verify, and merge around it is automated",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {

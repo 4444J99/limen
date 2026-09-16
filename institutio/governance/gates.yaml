@@ -371,6 +371,11 @@ gates:
     tier: cheap
     owner: ianva
     note: "Direct tunnel launch requires local unauthenticated rejection; a force flag cannot publish an open endpoint."
+  pr-autotype-scope-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_pr_lifecycle_autotype.py -q"
+    paths: ["scripts/pr-lifecycle-autotype.py", "cli/tests/test_pr_lifecycle_autotype.py"]
+    owner: governance
+    note: "Unreadable or empty estate authority is unmeasured and stops before GitHub reads or label mutations."
   his-hand-registry-test:
     command: "python3 scripts/check-his-hand.py --check && python3 scripts/lever-classify.py --check && bash scripts/run-pytest-hermetic.sh cli/tests/test_check_his_hand.py cli/tests/test_lever_classify.py -q"
     paths: ["his-hand-levers.json", "scripts/check-his-hand.py", "scripts/lever-classify.py", "scripts/lever-decision-report.py", "scripts/insight-route.py", "cli/src/limen/observatory/lever.py", "cli/tests/test_check_his_hand.py", "cli/tests/test_lever_classify.py"]
