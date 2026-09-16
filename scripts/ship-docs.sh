@@ -54,6 +54,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
+python3 "$root/scripts/dispatch-admission.py" --reserve-resource branch --resource-identity "$root:$br"
+python3 "$root/scripts/dispatch-admission.py" --reserve-resource worktree --resource-identity "$tmp"
 git -C "$root" worktree add --quiet -b "$br" "$tmp" origin/main
 # `worktree add` can exit 0 having checked out NOTHING, leaving an unborn HEAD — set -e cannot catch
 # a command that lies about succeeding. Everything downstream then works perfectly on the wrong base:

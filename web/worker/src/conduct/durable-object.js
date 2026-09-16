@@ -301,6 +301,15 @@ export class ConductKeeperDurableObject {
         run_id: decodeIdentifier(match[1], "root_run_id"),
       }), 200, this.env);
     }
+    if (path === "/api/conduct/execution/info" && request.method === "POST") {
+      const body = await parseBody(request);
+      return json(await this.service.call("execution_info", {work_key: bodyIdentifier(body, "work_key"), principal}), 200, this.env);
+    }
+    if (path === "/api/conduct/execution/resources" && request.method === "POST") {
+      const body = await parseBody(request);
+      return json(await this.service.call("reserve_growth", {work_key: bodyIdentifier(body, "work_key"),
+        action: body.action, identity_hash: body.identity_hash, principal}), 200, this.env);
+    }
     match = path.match(/^\/api\/conduct\/tasks\/([^/]+)\/run$/);
     if (match && request.method === "GET") {
       requireRole(principal, "observer", "conductor");

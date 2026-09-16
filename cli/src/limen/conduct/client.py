@@ -176,6 +176,16 @@ class HttpConductClient:
         parent = urllib.parse.quote(parent_run_id, safe="")
         return self._request("POST", f"/api/conduct/runs/{parent}/children", packet.model_dump(mode="json"))
 
+    def execution_info(self, work_key: str) -> dict[str, Any]:
+        return self._request("POST", "/api/conduct/execution/info", {"work_key": work_key})
+
+    def reserve_growth(self, work_key: str, action: str, identity_hash: str) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/api/conduct/execution/resources",
+            {"work_key": work_key, "action": action, "identity_hash": identity_hash},
+        )
+
     def graph(self, root_run_id: str) -> dict[str, Any]:
         root = urllib.parse.quote(root_run_id, safe="")
         return self._request("GET", f"/api/conduct/runs/{root}/graph")
@@ -261,6 +271,12 @@ class LocalConductClient:
 
     def capabilities(self) -> dict[str, Any]:
         return self.broker.capabilities()
+
+    def execution_info(self, work_key: str) -> dict[str, Any]:
+        return self.broker.execution_info(work_key)
+
+    def reserve_growth(self, work_key: str, action: str, identity_hash: str) -> dict[str, Any]:
+        return self.broker.reserve_growth(work_key, action, identity_hash)
 
     def register(self, session: ConductorSessionV1) -> dict[str, Any]:
         return self.broker.register(session)

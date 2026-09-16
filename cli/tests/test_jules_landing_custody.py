@@ -22,6 +22,11 @@ def test_land_one_retains_local_worktree_and_branch_after_pr(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
+    reservations = []
+    monkeypatch.setattr(
+        "limen.inventory_admission.reserve_growth",
+        lambda action, identity, **kw: reservations.append((action, identity)),
+    )
     module = load_jules_land()
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -107,6 +112,7 @@ def test_land_one_retains_local_worktree_and_branch_after_pr(
     )
 
     message = module.land_one(task, "123", True)
+    assert [r[0] for r in reservations] == ["branch", "worktree"]
 
     assert message.startswith("LANDED T1 -> https://github.com/organvm/example/pull/42")
     assert "local root retained" in message
@@ -407,6 +413,11 @@ def test_failed_jules_pull_is_a_blocker_without_partial_commit(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
+    reservations = []
+    monkeypatch.setattr(
+        "limen.inventory_admission.reserve_growth",
+        lambda action, identity, **kw: reservations.append((action, identity)),
+    )
     module = load_jules_land()
     repo = tmp_path / "repo"
     repo.mkdir()
@@ -447,6 +458,7 @@ def test_failed_jules_pull_is_a_blocker_without_partial_commit(
     )
 
     message = module.land_one(task, "123", True)
+    assert [r[0] for r in reservations] == ["branch", "worktree"]
 
     assert message.startswith("BLOCKED T-PULL-FAIL: Jules pull failed")
     assert ("add", "-A") not in git_calls

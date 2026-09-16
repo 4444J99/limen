@@ -308,7 +308,9 @@ def execution_policy(root=None) -> dict:
     import os
     from pathlib import Path
 
-    root = Path(root or os.environ.get("LIMEN_ROOT") or Path.home() / "Workspace" / "limen")
+    root = Path(
+        root or os.environ.get("LIMEN_LIVE_ROOT") or os.environ.get("LIMEN_ROOT") or Path.home() / "Workspace" / "limen"
+    )
     try:
         value = json.loads((root / "logs" / "autonomy-policy.json").read_text())
         return value if isinstance(value, dict) else {}
@@ -341,13 +343,31 @@ def reserve_growth(action: str, identity: str, *, work_key: str | None = None, r
     restarting a producer never resets its limit. This is runtime evidence under
     the existing autonomy policy, not another task registry.
     """
+    # Production producers share the authenticated keeper, including remote lanes.
+    # Explicit root is the isolated local fixture adapter; no production caller
+    # supplies it and absence of keeper credentials never falls back to local state.
+    if root is None:
+        import hashlib
+        import os
+        from limen.conduct.client import client_from_env, HttpConductClient
+
+        client = client_from_env()
+        if not isinstance(client, HttpConductClient):
+            raise InventoryAdmissionError("execution_remote_keeper_required")
+        key = work_key or os.environ.get("LIMEN_WORK_KEY")
+        if not key:
+            raise InventoryAdmissionError("execution_work_key_required")
+        client.reserve_growth(key, action, hashlib.sha256(identity.encode()).hexdigest())
+        return
     import fcntl
     import hashlib
     import json
     import os
     from pathlib import Path
 
-    root = Path(root or os.environ.get("LIMEN_ROOT") or Path.home() / "Workspace" / "limen")
+    root = Path(
+        root or os.environ.get("LIMEN_LIVE_ROOT") or os.environ.get("LIMEN_ROOT") or Path.home() / "Workspace" / "limen"
+    )
     priority = require_approved_priority(work_key or os.environ.get("LIMEN_WORK_KEY"), root=root)
     if action not in {"issue", "branch", "worktree"}:
         raise InventoryAdmissionError("execution_resource_unknown")
@@ -376,7 +396,9 @@ def reserve_growth(action: str, identity: str, *, work_key: str | None = None, r
         os.replace(temporary, path)
 
 
-def admit_execution(policy: dict | None, state: dict, packet: dict, now: datetime) -> dict | None:
+def admit_execution(
+    policy: dict | None, state: dict, packet: dict, now: datetime, *, waiting=False, retained=None, legacy=False
+) -> dict | None:
     """Reserve bounded outcome capacity in the broker's existing run ledger."""
     if policy is None:
         return None
@@ -387,7 +409,12 @@ def admit_execution(policy: dict | None, state: dict, packet: dict, now: datetim
             row
             for row in policy.get("approved_priorities", [])
             if (parent and row["outcome_id"] == inherited.get("outcome_id"))
-            or (not parent and packet["work_key"] in row.get("work_keys", []))
+            or (
+                not parent
+                and (
+                    packet["work_key"] in row.get("work_keys", []) or packet.get("task_id") in row.get("work_keys", [])
+                )
+            )
         ),
         None,
     )
@@ -404,7 +431,13 @@ def admit_execution(policy: dict | None, state: dict, packet: dict, now: datetim
     )
     runs = list(state["runs"].values())
     require(
-        sum(r["status"] in {"reserved", "running", "stop_requested"} for r in runs)
+        waiting
+        or sum(
+            execution_active(r, now)
+            or (not r.get("execution_admission") and r["status"] in {"reserved", "running", "stop_requested"})
+            for r in runs
+            if r["packet"].get("intent", {}).get("kind") != "fanout-root"
+        )
         < (1 if policy.get("mode") == "recovery" else 2),
         "execution_concurrency_exhausted",
     )
@@ -413,17 +446,23 @@ def admit_execution(policy: dict | None, state: dict, packet: dict, now: datetim
         sum(r["execution_admission"]["reserved_seconds"] for r in prior) + 1800 <= 7200,
         "execution_outcome_budget_exhausted",
     )
+    input_hash = (
+        packet.get("intent", {}).get("log", {}).get("execution_contract_hash") if legacy else packet["execution_hash"]
+    )
+    require(isinstance(input_hash, str) and bool(input_hash), "execution_input_fingerprint_required")
     if not parent:
         roots = [r for r in prior if not r.get("parent_run_id")]
         require(len(roots) < 2, "execution_corrective_retry_exhausted")
         require(
-            all(r["packet"]["execution_hash"] != packet["execution_hash"] for r in roots),
+            all(r["execution_admission"].get("input_hash", r["packet"]["execution_hash"]) != input_hash for r in roots),
             "execution_retry_inputs_unchanged",
         )
     require(packet["retry"]["max_attempts"] <= 1, "execution_retry_requires_changed_inputs")
     from datetime import timedelta
 
     deadline = min(datetime.fromisoformat(packet["deadline"].replace("Z", "+00:00")), now + timedelta(minutes=30))
+    if retained:
+        deadline = min(deadline, datetime.fromisoformat(retained["attempt_deadline"].replace("Z", "+00:00")))
     if parent:
         deadline = min(
             deadline,
@@ -437,4 +476,21 @@ def admit_execution(policy: dict | None, state: dict, packet: dict, now: datetim
         "reserved_seconds": 1800,
         "attempt_deadline": deadline.isoformat(),
         "verification_seconds": 600,
+        "input_hash": input_hash,
+        "legacy_active": legacy,
+        "resource_reservations": (retained or {}).get("resource_reservations", []),
     }
+
+
+def projection_execution_status(packet):
+    intent = packet.get("intent") or {}
+    if intent.get("kind") == "task.claim":
+        return "dispatched"
+    return intent.get("status") or (intent.get("patch") or {}).get("status") or (intent.get("task") or {}).get("status")
+
+
+def execution_active(run, now):
+    admission = run.get("execution_admission")
+    if not admission or datetime.fromisoformat(admission["attempt_deadline"].replace("Z", "+00:00")) <= now:
+        return False
+    return admission.get("legacy_active") is True or run["status"] in {"reserved", "running", "stop_requested"}

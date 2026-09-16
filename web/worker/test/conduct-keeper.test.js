@@ -212,10 +212,35 @@ function serviceWith(sessions, options = {}) {
     clock: options.clock || (() => NOW),
     projectTaskEvent: options.projectTaskEvent,
     capabilitySecret: options.capabilitySecret,
+    executionPolicy: options.executionPolicy,
   });
   return Promise.all(sessions.map((item) => service.call("register", { session: item })))
     .then(() => ({ service, store }));
 }
+
+test("execution resource reservations and verification deadline survive keeper restart", async () => {
+  let clock = NOW;
+  const executionPolicy = {mode: "dispatch", approved_priorities: [{
+    outcome_id: "recovery", enabled: true, work_keys: ["finite"], resource_limits: {issue: 1, branch: 1},
+  }]};
+  const {service, store} = await serviceWith([session("codex")], {executionPolicy, clock: () => clock});
+  await service.call("submit", {packet: await packet({workId: "finite", conductor: identity("codex"), maxAttempts: 1})});
+  const principal = {principal_id: "local:codex:cli", roles: ["conductor"]};
+  const payload = {work_key: "finite", principal, action: "issue", identity_hash: "a".repeat(64)};
+  await service.call("reserve_growth", payload);
+  const verification = {...payload, action: "verification"};
+  const receipt = await service.call("reserve_growth", verification);
+  clock = new Date(NOW.getTime() + 5 * 60000);
+  const restarted = new SerializedConductService(store, {executionPolicy, clock: () => clock});
+  assert.deepEqual(await restarted.call("reserve_growth", verification), receipt);
+  assert.equal(receipt.deadline, new Date(NOW.getTime() + 600000).toISOString());
+  await assert.rejects(restarted.call("reserve_growth", payload), /already_reserved/);
+  await assert.rejects(restarted.call("reserve_growth", {...payload, identity_hash: "b".repeat(64)}), /budget_exhausted/);
+  await assert.rejects(restarted.call("reserve_growth", {...payload, action: "worktree"}), /not_approved/);
+  await assert.rejects(restarted.call("execution_info", {...payload, principal: {principal_id: "other", roles: ["conductor"]}}), /principal_mismatch/);
+  clock = new Date(NOW.getTime() + 31 * 60000);
+  await assert.rejects(restarted.call("execution_info", payload), /active_reservation_required/);
+});
 
 async function leaseCapability(service, reserved, principal = null) {
   const claim = await service.call("claim", {

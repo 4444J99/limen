@@ -459,6 +459,10 @@ class PatchLandingMixin:
             if remote_branch.returncode != 2:
                 detail = (remote_branch.stderr or remote_branch.stdout).strip()
                 raise FanoutExecutionError(f"remote branch probe failed: {detail[-800:]}")
+            from limen.inventory_admission import reserve_growth
+
+            reserve_growth("branch", f"{repository}:{branch}", work_key=packet["work_key"])
+            reserve_growth("worktree", str(worktree), work_key=packet["work_key"])
             _checked(["git", "worktree", "add", "-b", branch, str(worktree), exact_base], cwd=clone, timeout=180)
             return self._land_new_result(
                 node,
@@ -589,6 +593,9 @@ class PatchLandingMixin:
             git_root = Path(
                 _checked(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], cwd=repository).strip()
             ).parent
+        from limen.inventory_admission import reserve_growth
+
+        reserve_growth("worktree", str(verification), work_key=packet["work_key"])
         _checked(["git", "worktree", "add", "--detach", str(verification), head], cwd=git_root)
         scope = worktree_scope(verification)
         with hold_lease(

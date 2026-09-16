@@ -854,6 +854,28 @@ def cmd_changed(
     total_timeout_seconds: float = 600,
 ) -> int:
     aggregate_deadline = time.monotonic() + min(total_timeout_seconds, 600)
+    work_key = os.environ.get("LIMEN_WORK_KEY")
+    if work_key:
+        # The keeper owns the window across child processes and restarts. Reading
+        # or rerunning verification never creates another ten-minute allowance.
+        sys.path.insert(0, str(ROOT / "cli" / "src"))
+        from limen.conduct.client import client_from_env
+        from datetime import datetime, timezone
+
+        try:
+            receipt = client_from_env().reserve_growth(
+                work_key, "verification", hashlib.sha256((work_key + ":verification").encode()).hexdigest()
+            )
+            remaining = (
+                datetime.fromisoformat(receipt["deadline"].replace("Z", "+00:00")) - datetime.now(timezone.utc)
+            ).total_seconds()
+            if remaining <= 0:
+                raise ValueError("verification budget exhausted")
+            aggregate_deadline = min(aggregate_deadline, time.monotonic() + remaining)
+        except Exception as exc:
+            print(f"verification admission denied: {type(exc).__name__}", file=sys.stderr)
+            return 75
+
     if integration:
         exact_base = integration_base(base)
         if not exact_base:
