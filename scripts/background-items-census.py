@@ -45,7 +45,6 @@ import json
 import os
 import plistlib
 import re
-import subprocess
 import sys
 from pathlib import Path
 
@@ -74,15 +73,28 @@ def load_registry(path):
 
 
 # ── injectable side-effect boundaries (monkeypatched in tests) ─────────────────────────────────
-def _sfltool_dumpbtm(timeout=30):
+def _sfltool_dumpbtm(timeout=15):
     """Raw `sfltool dumpbtm` text, or None when unavailable (non-darwin, missing, or refused)."""
     if not IS_DARWIN:
         return None
+    # Half the outer 30-second probe budget leaves room for cleanup and reporting.
+    # The common runner bounds output and reaps its own process group on failure.
+    cli_source = str(SCRIPT_ROOT / "cli" / "src")
+    if cli_source not in sys.path:
+        sys.path.insert(0, cli_source)
+    from limen.bounded_subprocess import BoundedSubprocessError, run_bounded_subprocess
+
     try:
-        proc = subprocess.run(["sfltool", "dumpbtm"], capture_output=True, text=True, timeout=timeout)
-    except (OSError, subprocess.SubprocessError):
+        proc = run_bounded_subprocess(
+            ["sfltool", "dumpbtm"],
+            cwd=SCRIPT_ROOT,
+            timeout_seconds=timeout,
+            stdout_ceiling=262144,
+            stderr_ceiling=16384,
+        )
+    except (OSError, BoundedSubprocessError):
         return None
-    return proc.stdout if proc.returncode == 0 and proc.stdout else None
+    return proc.stdout.decode("utf-8", errors="replace") if proc.returncode == 0 and proc.stdout else None
 
 
 def classify_label(label, registry):
@@ -123,12 +135,12 @@ def census_plists(directory, registry):
 
 
 def census_btm(dump_text, registry):
-    """Classify BTM identifiers from a dumpbtm capture. None/empty -> skipped."""
+    """Classify BTM identifiers from a dumpbtm capture. None/empty -> unmeasured."""
     if not dump_text:
-        return {"available": False, "unmatched": [], "total": 0}
+        return {"available": False, "status": "unmeasured", "unmatched": [], "total": None}
     identifiers = sorted({m for m in BTM_IDENTIFIER_RE.findall(dump_text) if "." in m})
     unmatched = [i for i in identifiers if classify_label(i, registry) is None]
-    return {"available": True, "unmatched": unmatched, "total": len(identifiers)}
+    return {"available": True, "status": "measured", "unmatched": unmatched, "total": len(identifiers)}
 
 
 def missing_estate(rows, registry):
@@ -183,7 +195,7 @@ def print_report(report):
         for ident in extra[:10]:
             print(f"  btm-extra   {ident}")
     else:
-        print("  btm         skipped (sfltool unavailable)")
+        print("  btm         unmeasured (sfltool unavailable or bounded capture failed)")
 
 
 def main():
