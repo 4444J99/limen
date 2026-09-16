@@ -206,3 +206,57 @@ def test_unreadable_required_check_list_is_explicitly_unmeasured(monkeypatch, tm
 
         monkeypatch.setattr(module, "gh", fake_gh)
         assert module.assess(("organvm/repo", 7)) == ("organvm/repo", 7, "REQUIRED-CHECKS-UNMEASURED")
+
+
+def test_no_required_cli_message_requires_both_policy_reads(monkeypatch, tmp_path):
+    module = _load(tmp_path)
+    calls = []
+
+    def fake_gh(args, **kwargs):
+        calls.append(args)
+        if args[:2] == ["pr", "checks"]:
+            return SimpleNamespace(returncode=1, stdout="", stderr="no required checks reported on the 'topic' branch")
+        if "/rules/" in args[1]:
+            return SimpleNamespace(returncode=0, stdout="[]")
+        return SimpleNamespace(returncode=0, stdout=json.dumps({"name": "release/v1", "protected": False}))
+
+    monkeypatch.setattr(module, "gh", fake_gh)
+    assert module._failing_required_checks("organvm/repo", 7, "release/v1") == ()
+    assert len(calls) == 3
+    assert all("release%2Fv1" in args[1] for args in calls[1:])
+
+
+def test_no_required_message_cannot_override_unknown_or_present_policy(monkeypatch, tmp_path):
+    module = _load(tmp_path)
+    for protected, rules, code in [
+        (True, [], 0),
+        (False, [{"type": "required_status_checks"}], 0),
+        (False, [], 1),
+        (None, [], 0),
+        (False, {}, 0),
+    ]:
+
+        def fake_gh(args, **kwargs):
+            if args[:2] == ["pr", "checks"]:
+                return SimpleNamespace(
+                    returncode=1, stdout="", stderr="no required checks reported on the 'topic' branch"
+                )
+            if "/rules/" in args[1]:
+                return SimpleNamespace(returncode=code, stdout=json.dumps(rules))
+            return SimpleNamespace(returncode=0, stdout=json.dumps({"name": "main", "protected": protected}))
+
+        monkeypatch.setattr(module, "gh", fake_gh)
+        assert module._failing_required_checks("organvm/repo", 7, "main") is None
+
+
+def test_authorization_error_does_not_probe_for_absence(monkeypatch, tmp_path):
+    module = _load(tmp_path)
+    calls = []
+
+    def fake_gh(args, **kwargs):
+        calls.append(args)
+        return SimpleNamespace(returncode=1, stdout="", stderr="HTTP 403: Resource not accessible")
+
+    monkeypatch.setattr(module, "gh", fake_gh)
+    assert module._failing_required_checks("organvm/repo", 7, "main") is None
+    assert len(calls) == 1

@@ -29,6 +29,7 @@ import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
+from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan, _notify
 import _notify  # noqa: E402
@@ -131,7 +132,25 @@ def lifecycle_disposition(labels) -> str | None:
     return next(iter(matches)) if len(matches) == 1 else None
 
 
-def _failing_required_checks(repo: str, num: int) -> tuple[str, ...] | None:
+def _no_required_policy(repo: str, branch: str | None) -> bool:
+    """Prove absence through both branch protection and effective rules."""
+    if not isinstance(branch, str) or not branch.strip():
+        return False
+    encoded = quote(branch, safe="")
+    try:
+        metadata = gh(["api", f"repos/{repo}/branches/{encoded}"], timeout=20)
+        rules = gh(["api", f"repos/{repo}/rules/branches/{encoded}"], timeout=20)
+        if metadata.returncode or rules.returncode:
+            return False
+        info = json.loads(metadata.stdout)
+        effective = json.loads(rules.stdout)
+        return (isinstance(info, dict) and info.get("name") == branch
+                and info.get("protected") is False and effective == [])
+    except (OSError, ValueError, TypeError, subprocess.TimeoutExpired):
+        return False
+
+
+def _failing_required_checks(repo: str, num: int, branch: str | None = None) -> tuple[str, ...] | None:
     result = gh(
         [
             "pr",
@@ -148,6 +167,10 @@ def _failing_required_checks(repo: str, num: int) -> tuple[str, ...] | None:
     try:
         rows = json.loads(result.stdout)
     except (TypeError, ValueError):
+        message = (getattr(result, "stderr", "") or result.stdout or "").strip()
+        if (result.returncode == 1 and message.startswith("no required checks reported on the ")
+                and _no_required_policy(repo, branch)):
+            return ()
         return None
     if not isinstance(rows, list):
         return None
@@ -347,7 +370,7 @@ def assess(rn):
             return (repo, num, "READY", head, "direct") if head else (repo, num, "ERR")
         states = [(c.get("conclusion") or c.get("state") or "") for c in (d.get("statusCheckRollup") or [])]
         if any(s in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED") for s in states):
-            failing_required = _failing_required_checks(repo, num)
+            failing_required = _failing_required_checks(repo, num, d.get("baseRefName"))
             if failing_required is None:
                 return (repo, num, "REQUIRED-CHECKS-UNMEASURED")
             if failing_required:
