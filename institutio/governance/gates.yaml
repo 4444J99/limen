@@ -402,6 +402,12 @@ gates:
     paths: ["cli/src/limen/stale_claims.py", "cli/src/limen/dispatch.py", "cli/src/limen/doctor.py", "cli/src/limen/conduct/client.py", "cli/src/limen/census.py", "cli/tests/test_stale_claims.py", "cli/tests/test_dispatch.py", "cli/tests/test_jules_remote.py", "cli/tests/test_jules_session_absence_probe.py"]
     ci_job: "pr-gate.yml:pr-gate"
     note: "Stale claim age is observation only: active, protected and unmeasured broker ownership cannot transition; actual executors retain provider-specific absence checks."
+  decorum-coverage-test:
+    owner: governance
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_decorum_coverage.py -q"
+    paths: ["scripts/decorum-keeper.py", "scripts/tests/test_decorum_coverage.py", "institutio/governance/decorum-surfaces.yaml"]
+    ci_job: "pr-gate.yml:pr-gate"
+    note: "Unmeasured departments and off-platform surfaces stay in coverage; absent findings cannot clear issues or recurrence state while evidence is missing."
   lane-liveness-test:
     command: "bash scripts/tests/lane-liveness.test.sh"
     paths: ["scripts/lane-liveness.py", "scripts/_board_custody.py", "cli/src/limen/private_board.py", "cli/src/limen/census.py", "cli/src/limen/models.py", "cli/src/limen/conduct/client.py", "cli/src/limen/observer.py", "spec/scheduled-process-contracts.json", "institutio/governance/heartbeat-ownership.json", "cli/src/limen/doctor.py", "cli/src/limen/cli.py", "cli/tests/test_lane_liveness.py", "scripts/tests/lane-liveness.test.sh", "institutio/governance/sensors.yaml"]

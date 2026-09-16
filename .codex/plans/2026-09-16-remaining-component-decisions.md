@@ -243,3 +243,29 @@ this unresolved policy/prompt-lineage conflict. Neither source alone is treated
 as permission for a visibility change in this implementation tranche. Owner:
 publication policy and L-PORTAL-PUBLISH-WAVE-1; next action is a scoped lineage
 review before any effect.
+
+## Off-platform identity review decisions
+
+Four capture records now distinguish read access from write authority. A missing
+write API or organ adapter does not require human transcription of an otherwise
+authorized readable source. LinkedIn, X, mail signatures and the canonical resume
+retain separate source/version evidence and private capture custody. Contribution
+graphs alone are insufficient evidence for employment or education claims.
+
+The current off-platform registry homes capture levers but the keeper does not
+implement their capture ingestion. That remains engineering work; these decisions
+do not claim capture or review completion. Current count: 64 selected, 33 requiring
+component review, 95 executable acceptance definitions missing.
+
+## DECORVM coverage truth
+
+The keeper previously returned pass when no blocking findings were present, even
+if departments were skipped, and omitted declared off-platform slots entirely.
+It now exposes an explicit scope denominator and unmeasured verdict, retains
+known failures alongside unknown coverage, and returns 77 for an unmeasured CLI
+result. Missing capture ingestion remains visible rather than presumed complete.
+
+Unmeasured sweeps cannot auto-close absent findings or mark recurrence records
+cleared. The public face and CLI distinguish incomplete coverage from green.
+Hermetic tests exercise these paths with temporary state and a mocked GitHub
+reader; no real messages, issues, captures or recurrence state were changed.
