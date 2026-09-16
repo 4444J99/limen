@@ -402,3 +402,21 @@ def test_the_live_board_still_loads_end_to_end() -> None:
     loaded = load_limen_file(board)
     assert loaded is not None
     assert getattr(loaded, "portal", None) is not None
+
+
+def test_renamed_operations_and_legacy_private_tasks_remain_protected() -> None:
+    assert P.is_partner_lane("organvm/hospes-operations-private", ROOT)
+    assert P.is_partner_lane("organvm/hospes", ROOT)
+    # The privacy quarantine does not redirect the current public repository.
+    assert P.canonical_slug("organvm/hospes", ROOT) == "organvm/hospes"
+
+
+@pytest.mark.parametrize("legacy", [None, "owner/old", [None], ["invalid"], [" owner/repo"]])
+def test_malformed_privacy_history_cannot_drop_protection(monkeypatch, tmp_path, legacy) -> None:
+    monkeypatch.setattr(
+        P,
+        "_load_yaml",
+        lambda _: {"people": [{"projects": [{"repo": "owner/current", "privacy_legacy_repos": legacy}]}]},
+    )
+    with pytest.raises(P.PartitionRegistryError, match="malformed privacy_legacy_repos"):
+        P._constellation(tmp_path)

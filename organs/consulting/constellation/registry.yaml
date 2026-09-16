@@ -136,7 +136,8 @@ people:
     funnel_instance_ref: null
     projects:
       - name: podcast-suite
-        repo: organvm/hospes
+        repo: organvm/hospes-operations-private
+        privacy_legacy_repos: [organvm/hospes]
         keywords: [hospes, podcast, guest ops, unlicensed therapy, guest pipeline]
         stage: mvp
         public_face_state: pending-split

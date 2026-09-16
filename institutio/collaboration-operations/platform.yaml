@@ -77,7 +77,7 @@ lanes:
   ari:
     owner: persona:ari
     project: project:podcast-suite
-    repository: organvm/hospes
+    repository: organvm/hospes-operations-private
     state: custody_transfer_pending
     platform_role: external_reference_source
     content_class: vault_private

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "owner": "Codex gap-filling continuation",
+  "observed_at": "2026-09-16",
+  "operations": {
+    "repository_id": 1298849497,
+    "coordinate": "organvm/hospes-operations-private",
+    "private": true,
+    "default_sha": "3a4d14eb668b96b8e279a44066a57b9c1998483e",
+    "pilot_issue": 9,
+    "pilot_issue_state": "open",
+    "historical_ask_ledger_exists": true,
+    "pilot_predicate_path_present": false,
+    "pilot_predicate_absence": "Explicitly explained by the owning registry: requires real receipt evidence, not synthetic fixture completion."
+  },
+  "public": {
+    "repository_id": 1352908786,
+    "coordinate": "organvm/hospes",
+    "private": false,
+    "default_sha": "3ea044cf521296fe70a608dc64d4d03c338479ea",
+    "issue_9_found": false,
+    "repair_pr": "https://github.com/organvm/hospes/pull/1"
+  },
+  "routing": "The reused coordinate is not an alias for private operations; resolve historical obligations through immutable repository identity. No broker task changed.",
+  "scope": "Metadata only; no private source bodies copied. Public software predicates do not prove private pilot outcomes or publication consent.",
+  "next_action": "Assess actual private receipt availability through the operations owner; create the issue predicate only against real receipts. Reconcile remaining coordinate consumers without rewriting historical task IDs.",
+  "local_remote_repair": {
+    "repository_id": 1298849497,
+    "old_coordinate": "organvm/hospes",
+    "new_coordinate": "organvm/hospes-operations-private",
+    "unchanged_head": "dba0a25a93ebb79aba24aae4c2cc808c5f82c9d2",
+    "ancestry_to_current_operations_default": true,
+    "clean_before_and_after": true,
+    "remote_readback_matches": true,
+    "branch_or_file_changes": false
+  },
+  "default_branch_verification": [
+    {
+      "head": "dfc744b0428308d8309f124b5ca1f462a934b2c1",
+      "run": "https://github.com/4444J99/limen/actions/runs/35045776180",
+      "whole_repo_step": "success"
+    },
+    {
+      "head": "fb33afc01807153bfdd4b2acb88d5c3ab63dc61e",
+      "run": "https://github.com/4444J99/limen/actions/runs/35047472056",
+      "whole_repo_step": "success"
+    }
+  ],
+  "public_integration": {
+    "pr": "https://github.com/organvm/hospes/pull/1",
+    "head": "5615b7737ff1c2ee572077a8e147fdeb80052cee",
+    "submission_count": 1,
+    "result": "DEFERRED",
+    "reason": "CI-PENDING",
+    "full_local_public_predicate": "PASS at code tree 1e6d1f8"
+  },
+  "validation": {
+    "code_head": "687d8bceb",
+    "cheap_gates_passed": 25,
+    "cli_tests_passed": 7724,
+    "cli_tests_skipped": 2,
+    "api_tests_passed": 52,
+    "scoped_exit_code": 0
+  }
+}
