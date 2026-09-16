@@ -307,3 +307,74 @@ def test_successful_refresh_rechecks_record_and_read_only_never_refreshes(tmp_pa
     assert calls == []
     assert module.main(["--apply"]) == 0
     assert len(calls) == 1
+
+
+def test_on_demand_gauge_needs_no_legacy_files(tmp_path, monkeypatch, capsys):
+    import limen.host_admission as admission
+
+    mod = _load_watchdog()
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setenv("LIMEN_VIGILIA", "0")
+    monkeypatch.setattr(mod.time, "time", lambda: 100.0)
+    for action in ("ok", "throttle", "shed"):
+        observation = dict(
+            observed_epoch=100.0,
+            backblaze_cpu_percent=0,
+            backblaze_rss_bytes=0,
+            swap_used_bytes=0,
+            memory_bytes=1,
+            disk_mib_per_second_samples=[0, 0],
+            vitals_action=action,
+            sensor_errors=[],
+        )
+        monkeypatch.setattr(admission, "collect_pressure", lambda: observation)
+        assert mod.main(["--on-demand", "--read-only"]) == 0
+        result = json.loads(capsys.readouterr().out)
+        assert result["measurement"] == "current"
+        assert result["admission"] == "not_evaluated"
+        assert result["pressure"]["vitals_action"] == action
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_on_demand_partial_or_malformed_gauge_is_unmeasured(monkeypatch, capsys):
+    import limen.host_admission as admission
+
+    mod = _load_watchdog()
+    monkeypatch.setattr(mod.time, "time", lambda: 100.0)
+    good = dict(
+        observed_epoch=100.0,
+        backblaze_cpu_percent=0,
+        backblaze_rss_bytes=0,
+        swap_used_bytes=0,
+        memory_bytes=1,
+        disk_mib_per_second_samples=[0, 0],
+        vitals_action="ok",
+        sensor_errors=[],
+    )
+    for patch in (
+        {"sensor_errors": ["secret-provider-text"]},
+        {"vitals_action": "unknown"},
+        {"memory_bytes": None},
+        {"observed_epoch": 99},
+        {"observed_epoch": 101},
+        {"backblaze_cpu_percent": True},
+        {"disk_mib_per_second_samples": [float("nan"), 0]},
+    ):
+        monkeypatch.setattr(admission, "collect_pressure", lambda: good | patch)
+        assert mod.main(["--on-demand", "--read-only"]) == 1
+        result = capsys.readouterr().out
+        assert json.loads(result)["measurement"] == "unmeasured"
+        assert "secret" not in result
+
+
+def test_on_demand_sensor_exception_is_redacted(monkeypatch, capsys):
+    import limen.host_admission as admission
+
+    mod = _load_watchdog()
+
+    def fail():
+        raise OSError("private details")
+
+    monkeypatch.setattr(admission, "collect_pressure", fail)
+    assert mod.main(["--on-demand", "--read-only"]) == 1
+    assert "private" not in capsys.readouterr().out
