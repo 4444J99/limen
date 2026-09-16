@@ -398,5 +398,18 @@
       "cli_skipped": 2,
       "duration_seconds": 210.8
     }
+  },
+  "consent_backup_tranche": {
+    "head": "5f2e98d02e3e7813a799174980d9418446e55ad8",
+    "selected": 76,
+    "remaining_component_review": 21,
+    "missing_acceptance_predicates": 95,
+    "cheap_gates_passed": 15,
+    "cli_passed": 7711,
+    "cli_skipped": 2,
+    "api_passed": 52,
+    "predicate_exit": 0,
+    "live_backup_check": "unknown; expected path absent; exit 77; no mutation",
+    "owner": ".codex/plans/2026-09-16-consent-and-backup-decisions.md"
   }
 }

@@ -22,3 +22,13 @@ changed. Exclusion of source work requires separate current custody proof.
 Next command: `bash scripts/verify-scoped.sh --base 9b16433e8`.
 Continue remaining component decisions and executable acceptance work from the
 published registry; preserve account/custody gates and broker-owned transitions.
+
+Verification at 5f2e98d02e3e7813a799174980d9418446e55ad8: all 15 cheap
+gates passed, followed by 7,711 CLI tests (two skipped) and 52 API tests.
+The initial formatting failure was corrected before this admitted batch.
+All 107 historical records compare equal outside implementation fields.
+
+Read-only owner follow-up found local precision mode configured for two weekly
+submissions while apply_engine defines three per local day. These limits may
+compose; enforcement and current remote policy still require reconciliation.
+No policy value was changed and no application cycle ran.
