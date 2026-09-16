@@ -11,3 +11,9 @@ Remaining implementation: conductor consumption must independently verify the cu
 A conductor may bind a run lookup hint to the stored completion tuple. The keeper reads its own graph, requires the deterministic work key, exact source binding, a single nondelegating read-only packet, and an accepted receipt for the current lease generation. Caller-supplied receipts are rejected by the route shape. Missing or stale receipt authority remains unmeasured; recorded assessment never becomes merge acceptance. Replays preserve the historical accepted observation and conflicting bindings fail closed.
 
 The actual source-bound assessor, packet submission/consumer and protected merge route remain unfinished; this reconciliation capability does not create or execute those components.
+
+## Authenticated consumer
+
+`limen conduct dependency-completions` reads hints. `limen conduct consume-dependency-completion --key KEY --packet REVIEWED_PACKET.json` validates the exact tuple/work key and nondelegating read-only scope, submits at most once through normal broker admission, then reconciles once. A prior run binding skips submission. Lost submit responses remain unmeasured; a later identical packet relies on the keeper work-key index rather than a local retry loop. Pending results exit 77. The consumer accepts no local broker fallback and no caller-supplied receipts.
+
+The reviewed source-bound packet producer and isolated assessor deployment remain to integrate. The shared assessor now exists in organvm/.github PR 26, but that open source head is not a deployed trust pin. No new run was submitted live and no intake was activated.
