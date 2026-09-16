@@ -390,10 +390,21 @@ def _fallback_source_paths(root: Path) -> list[Path]:
     deadline = time.monotonic() + SOURCE_FALLBACK_TIMEOUT_SECONDS
     candidates: list[Path] = []
     try:
-        for candidate in root.rglob("*"):
-            if len(candidates) >= SOURCE_FALLBACK_MAX_PATHS or time.monotonic() >= deadline:
+        for index, candidate in enumerate(root.rglob("*")):
+            if index >= SOURCE_FALLBACK_MAX_PATHS or time.monotonic() >= deadline:
                 raise RuntimeError("notification source scan exceeded fallback budget")
-            candidates.append(candidate)
+            if not candidate.is_file() or candidate.suffix not in DIRECT_SUFFIXES:
+                continue
+            # Installed source archives have no Git index. Apply the same content
+            # selection as the tracked fallback before parsing, while counting every
+            # visited path against the budget. Parsing unrelated source made a full
+            # runtime roster exceed the scheduled probe deadline and manufactured
+            # notification findings from unrelated shell quoting.
+            try:
+                if b"osascript" in candidate.read_bytes().lower():
+                    candidates.append(candidate)
+            except OSError:
+                candidates.append(candidate)
         return candidates
     except OSError as exc:
         raise RuntimeError(f"notification source scan unavailable: {exc}") from exc
