@@ -78,3 +78,19 @@ verify-whole.sh step plus web, Python, Worker and dependency-audit jobs. Compat
 was skipped and is not claimed as executed. This supersedes the earlier failing
 default result for code verification only; draft changes, runtime adoption and
 external outcomes remain separate obligations.
+
+## Consolidation and shared workflow continuation
+
+The e330b7081 consolidation run passed all 37 cheap gates. Heavy verification
+was refused by host admission (swap-fraction), exit 75; PR #2627 therefore
+remains draft and no completed verification is inferred. Owner: this PR; next
+command is verify-scoped.sh against 3edef1e77 after admitted capacity is available.
+
+Shared CLA template repair is published at organvm/.github#26, head
+63cc652d74392460479d3df4a52726b4a00cbe70. It gates the job to PR-related events
+and pins existing v2.6.1 to the upstream commit. YAML and structural policy
+preservation checks passed. A single merge-drain submission owns integration;
+consumer propagation and runner admission remain separate.
+
+Shared-template submission result: DEFERRED — ERR (exit 2). No merge receipt;
+repository integration remains the owner. Do not re-arm this unchanged head.

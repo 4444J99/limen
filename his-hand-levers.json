@@ -3376,7 +3376,7 @@
           "his-hand-levers.json#L-PR-AUTOTYPE-ARM",
           "scripts/pr-lifecycle-autotype.py",
           "cli/tests/test_pr_lifecycle_autotype.py",
-          "institutio/github/lifecycle.yaml"
+          "institutio/governance/lifecycle.yaml"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
