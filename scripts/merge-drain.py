@@ -349,7 +349,7 @@ def assess(rn):
         if any(s in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED") for s in states):
             failing_required = _failing_required_checks(repo, num)
             if failing_required is None:
-                return (repo, num, "ERR")
+                return (repo, num, "REQUIRED-CHECKS-UNMEASURED")
             if failing_required:
                 head = str(d.get("headRefOid") or "")
                 return (repo, num, "CI-RED", head, failing_required)
