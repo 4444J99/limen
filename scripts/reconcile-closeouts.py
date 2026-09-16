@@ -289,7 +289,7 @@ def _route_findings(claims: list[dict], findings: list[dict], apply: bool, route
 
 def _board_claims(since_hours: int, limit: int | None) -> list[dict]:
     """Closeout claims from the live board: each done task's done dispatch_log entries, within the
-    window and citing a PR (only PR-citing claims are cheap to reconcile against GitHub)."""
+    window. Claims without PRs remain visible as unreceipted evidence."""
     data = yaml.safe_load(board_path(ROOT / "tasks.yaml").read_text()) or {}
     now = datetime.now(timezone.utc)
     claims: list[dict] = []
@@ -303,8 +303,6 @@ def _board_claims(since_hours: int, limit: int | None) -> list[dict]:
             if str(e.get("status")) != "done":
                 continue
             text = f"{e.get('session_id', '')} {e.get('output', '')}"
-            if not (PR_RE.search(text) or HASH_RE.search(text)):
-                continue
             claims.append({"id": t.get("id"), "subject": t.get("title", ""), "text": text, "repo": t.get("repo", "")})
     if limit:
         claims = claims[:limit]
@@ -312,41 +310,37 @@ def _board_claims(since_hours: int, limit: int | None) -> list[dict]:
 
 
 def _session_claims(since_hours: int, limit: int | None) -> list[dict]:
-    """Closeout claims captured from ephemeral SESSION transcripts (`logs/session-claims.jsonl`,
-    written by `capture-session-claim.py` at SessionEnd). This is the complement of `_board_claims`:
-    the board tracks durable dispatch_log done-claims; this tracks the "Completed"-pane session
-    closeouts that were persisted nowhere reconcilable before. Only a `closed` claim that cites a
-    PR/#NNN is cheap to check against GitHub; the latest record per session wins."""
+    """Latest record per session owns closure state, including reopening records."""
     ledger = ROOT / "logs" / "session-claims.jsonl"
     if not ledger.exists():
         return []
     now = datetime.now(timezone.utc)
     latest: dict[str, dict] = {}
     for ln in ledger.read_text(errors="replace").splitlines():
-        ln = ln.strip()
-        if not ln:
+        if not ln.strip():
             continue
         try:
             rec = json.loads(ln)
-        except Exception:
+        except (ValueError, TypeError):
             continue
+        if not isinstance(rec, dict) or not isinstance(rec.get("id"), str) or not rec["id"]:
+            continue
+        latest[rec["id"]] = rec
+    selected = {}
+    for identity, rec in latest.items():
         if not rec.get("closed"):
             continue
         ts = _parse_ts(rec.get("ts"))
         if since_hours and ts and (now - ts).total_seconds() > since_hours * 3600:
             continue
-        receipts = rec.get("receipts") or []
-        blob = f"{rec.get('subject', '')} {rec.get('text', '')} " + " ".join(str(r) for r in receipts)
-        if not (PR_RE.search(blob) or HASH_RE.search(blob)):
-            continue
-        latest[rec.get("id")] = {
-            "id": rec.get("id"),
+        selected[identity] = {
+            "id": identity,
             "subject": rec.get("subject", ""),
             "text": rec.get("text", ""),
             "repo": rec.get("repo", ""),
-            "receipts": receipts,
+            "receipts": rec.get("receipts") or [],
         }
-    claims = list(latest.values())
+    claims = list(selected.values())
     if limit:
         claims = claims[:limit]
     return claims
