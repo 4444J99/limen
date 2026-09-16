@@ -1,4 +1,4 @@
-import { DependencyCompletionError, submitCompletionHint, readCompletionHints } from "./dependency-completion.js";
+import { DependencyCompletionError, submitCompletionHint, readCompletionHints, reconcileCompletionAssessment } from "./dependency-completion.js";
 import {
   authorizeConductRequest,
   internalConductPrincipal,
@@ -191,6 +191,15 @@ export class ConductKeeperDurableObject {
 
   async route(request, principal) {
     const path = new URL(request.url).pathname;
+    if (path === "/api/conduct/dependencies/assessments" && request.method === "POST") {
+      requireRole(principal, "conductor");
+      const body = await parseBody(request, 4096);
+      if (Object.keys(body).length !== 2 || !Object.hasOwn(body, "key") || !Object.hasOwn(body, "run_id")) {
+        throw new DependencyCompletionError("dependency_assessment_invalid");
+      }
+      return json(await reconcileCompletionAssessment(this.ctx.storage, principal, body.key, body.run_id,
+        runId => this.service.call("graph", { run_id: runId })), 200, this.env);
+    }
     if (path === "/api/conduct/dependencies/completions" && request.method === "POST") {
       requireRole(principal, "dependency_observer");
       const body = await parseBody(request, 4096);

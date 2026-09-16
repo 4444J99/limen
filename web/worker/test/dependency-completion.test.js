@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { submitCompletionHint, readCompletionHints } from "../src/conduct/dependency-completion.js";
+import { submitCompletionHint, readCompletionHints, completionWorkKey, reconcileCompletionAssessment } from "../src/conduct/dependency-completion.js";
 import { configuredConductPrincipals } from "../src/conduct/auth.js";
 import { ConductKeeperDurableObject } from "../src/conduct/durable-object.js";
 const policy = { schema: "limen.dependency_completion_policy.v1", installed: true,
@@ -84,4 +84,58 @@ test("transport authenticates and dedicated roles cannot mix; production policy 
   document.principals[0].roles.push("observer");
   assert.throws(() => configuredConductPrincipals({ ...env,
     LIMEN_CONDUCT_PRINCIPAL_REGISTRY: JSON.stringify(document) }), /invalid/);
+});
+function graphFor(hintRow) {
+  return { schema_version: "limen.conduct_graph.v1", root_run_id: "assessment-1", nodes: [{
+    run_id: "assessment-1", lease_id: "lease-1", lease: { generation: 1 }, status: "succeeded",
+    packet: { work_key: completionWorkKey(hintRow), effect: "read", predicate: "trusted-assessor",
+      authority: { may_delegate: false, external_effects: [], repositories: ["organvm/.github"] },
+      intent: { dependency_completion: { ...hint } }, execution: { observed_heads: { dependency_head: hint.head_sha } } },
+    receipts: [{ receipt_id: "receipt-1", run_id: "assessment-1", lease_id: "lease-1", lease_generation: 1,
+      mutation_authorized: true, accepted_at: "2026-09-16T00:00:00Z", outcome: "succeeded",
+      predicate: { command: "trusted-assessor", exit_code: 0 },
+      observed_heads_before: { dependency_head: hint.head_sha }, observed_heads_after: { dependency_head: hint.head_sha } }],
+  }] };
+}
+test("only a bound keeper receipt records assessment, never automatic acceptance", async () => {
+  const store = storage();
+  const row = await submitCompletionHint(store, principal, hint, policy);
+  const graph = graphFor(row);
+  const result = await reconcileCompletionAssessment(store, conductor, row.key, "assessment-1", async id => {
+    assert.equal(id, "assessment-1"); return graph;
+  }, policy);
+  assert.equal(result.status, "reported");
+  assert.equal(result.receipt_id, "receipt-1");
+  assert.equal(result.automatic_acceptance, false);
+  assert.deepEqual((await readCompletionHints(store, conductor, policy)).hints[0].broker_assessment, result);
+  assert.deepEqual(await reconcileCompletionAssessment(store, conductor, row.key, "assessment-1", async () => graph, policy), result);
+});
+test("stale, unauthorized, failed predicate and wrong-head receipts remain unmeasured", async () => {
+  for (const patch of [{ mutation_authorized: false }, { lease_generation: 2 },
+    { predicate: { command: "wrong", exit_code: 0 } }, { predicate: { command: "trusted-assessor", exit_code: 1 } },
+    { observed_heads_before: { dependency_head: "b".repeat(40) } }]) {
+    const store = storage();
+    const row = await submitCompletionHint(store, principal, hint, policy);
+    const graph = graphFor(row); Object.assign(graph.nodes[0].receipts[0], patch);
+    const result = await reconcileCompletionAssessment(store, conductor, row.key, "assessment-1", async () => graph, policy);
+    assert.equal(result.status, "unmeasured");
+    assert.equal(result.automatic_acceptance, false);
+  }
+});
+test("changed packet scope and duplicate receipts fail closed", async () => {
+  for (const mutate of [graph => { graph.nodes[0].packet.effect = "write"; },
+    graph => { graph.nodes[0].packet.work_key = "unrelated"; },
+    graph => { graph.nodes[0].packet.intent.dependency_completion.run_attempt = 2; },
+    graph => { graph.nodes[0].packet.authority.external_effects = ["send"]; },
+    graph => { graph.nodes[0].receipts.push({ ...graph.nodes[0].receipts[0] }); }]) {
+    const store = storage(); const row = await submitCompletionHint(store, principal, hint, policy);
+    const graph = graphFor(row); mutate(graph);
+    await assert.rejects(reconcileCompletionAssessment(store, conductor, row.key, "assessment-1", async () => graph, policy), /scope_mismatch|receipts_ambiguous/);
+    assert.equal((await readCompletionHints(store, conductor, policy)).hints[0].broker_assessment, undefined);
+  }
+});
+test("broker outages and unauthorized callers cannot file assessment", async () => {
+  const store = storage(); const row = await submitCompletionHint(store, principal, hint, policy);
+  await assert.rejects(reconcileCompletionAssessment(store, conductor, row.key, "assessment-1", async () => { throw Error("private diagnostic"); }, policy), /dependency_assessment_unmeasured/);
+  await assert.rejects(reconcileCompletionAssessment(store, principal, row.key, "assessment-1", async () => { throw Error("must not read"); }, policy), /unauthorized/);
 });
