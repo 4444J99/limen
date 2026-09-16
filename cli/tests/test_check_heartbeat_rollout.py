@@ -31,7 +31,7 @@ def test_active_proof_requires_consecutive_exact_sha_receipts(tmp_path: Path) ->
                 }
             )
         )
-    assert MODULE.active_errors(tmp_path, "merged-sha", 3) == []
+    assert MODULE.active_errors(tmp_path, "merged-sha", 3, now=2800) == []
 
 
 def test_active_proof_rejects_surviving_descendant(tmp_path: Path) -> None:
@@ -47,4 +47,26 @@ def test_active_proof_rejects_surviving_descendant(tmp_path: Path) -> None:
             }
         )
     )
-    assert MODULE.active_errors(tmp_path, "merged-sha", 1) == ["bad: surviving descendants are not zero"]
+    assert MODULE.active_errors(tmp_path, "merged-sha", 1, now=2) == ["bad: surviving descendants are not zero"]
+
+
+def test_old_fires_cannot_establish_active_runtime(tmp_path: Path) -> None:
+    receipt = {
+        "run_id": "old",
+        "observed_epoch": 1000,
+        "runtime_sha": "merged-sha",
+        "status": "idle",
+        "surviving_descendant_count": 0,
+        "disabled": False,
+    }
+    (tmp_path / "old.json").write_text(json.dumps(receipt))
+    assert MODULE.active_errors(tmp_path, "merged-sha", 1, now=1420) == []
+    assert "stale" in MODULE.active_errors(tmp_path, "merged-sha", 1, now=1421)[0]
+
+
+def test_bad_timestamps_fail_without_crashing_or_sorting_as_fresh(tmp_path: Path) -> None:
+    for epoch in (None, "new", True, float("nan"), float("inf"), 10**400, -1, 2001):
+        (tmp_path / "bad.json").write_text(json.dumps({"observed_epoch": epoch}))
+        errors = MODULE.active_errors(tmp_path, "merged-sha", 1, now=2000)
+        assert any("invalid or future" in error for error in errors)
+        assert any("recorded fires are 0" in error for error in errors)
