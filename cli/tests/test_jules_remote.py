@@ -32,6 +32,12 @@ from limen.models import (
 SID = "12345678901234567890"
 
 
+@pytest.fixture(autouse=True)
+def _terminal_broker_ownership(monkeypatch):
+    """These tests isolate provider routing after broker ownership is settled."""
+    monkeypatch.setattr(dispatch_module, "stale_claim_holds", lambda tasks, **_: {task.id: None for task in tasks})
+
+
 def _write_stale_board(path: Path, *, target_agent: str = "jules") -> None:
     stale = datetime(2026, 1, 1, tzinfo=timezone.utc)
     save_limen_file(

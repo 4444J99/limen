@@ -194,3 +194,24 @@ release rung search reaches the retired heartbeat loop rather than the current
 bounded heartbeat. Next implementation must preserve active/human-protected
 leases and use broker-authoritative transitions, with current runtime coverage.
 Do not revive the retired daemon or infer authorization from stale local state.
+
+## Broker ownership before stale release
+
+The legacy release command now obtains bounded read-only broker evidence before
+routing candidates. Active runs, healthy owners, human protection, unsettled
+leases and malformed/missing evidence hold the claim. A terminal, inactive,
+unprotected broker owner permits the existing provider-specific route, not a
+local transition. Actual executors resolve target_agent:any before Jules absence
+checks. Interrupted failed-to-open relisting retains those checks.
+
+Canonical pre-read failures and missing/malformed rows no longer fall back to a
+remote caller's local projection. All broker I/O precedes the queue lock; a claim
+that appears after the snapshot is held. The explicit local test adapter retains
+its own temporary projection contract. Writes still use broker compare-and-swap.
+
+The current heartbeat contract is read-only and already reaches lane-liveness
+observation. No release effector was added to it and no retired daemon was revived.
+The change belongs to the explicit release command; runtime installation and live
+release evidence remain distinct. Focused development probes passed 61 cases;
+consolidated verification follows this implementation batch. No live task was
+mutated.

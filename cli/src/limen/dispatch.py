@@ -56,8 +56,9 @@ from limen.models import (
     dispatch_session_id,
     has_jules_landing_hold,
 )
-from limen.conduct.client import client_from_env
+from limen.conduct.client import LocalConductClient, client_from_env
 from limen.conduct.broker import ConductConflict
+from limen.stale_claims import stale_claim_holds
 from limen.partition_lanes import heuristics_may_promote
 from limen.tabularius import (
     INTENT_UPSERT,
@@ -7083,15 +7084,58 @@ def release_stale_tasks(
     harvest_ready: list[str] = []
     recover_ready: list[str] = []
     candidate_rows: list[ReleaseStaleCandidate] = []
+    resolved_agents: dict[str, str] = {}
+    conduct_holds = stale_claim_holds(candidates, resolved_agents=resolved_agents)
+    routing_tasks = {
+        task.id: task.model_copy(update={"target_agent": resolved_agents.get(task.id, task.target_agent)})
+        for task in candidates
+    }
     # Remote I/O must never occupy the single-writer board lock. Probe from the caller's read-only
     # candidate snapshot first; the successful catalog remains valid for any freshly re-read Jules
     # candidate, while a candidate that appeared after this read fails closed if no probe was needed.
-    snapshot = _release_stale_snapshot(candidates, jules_snapshot)
+    snapshot = _release_stale_snapshot(
+        [routing_tasks[task.id] for task in candidates if conduct_holds.get(task.id, "conduct_unmeasured") is None],
+        jules_snapshot,
+    )
     if not dry_run:
         # APPLY re-selects and mutates on a FRESH board under the queue lock — persisting the
         # caller's snapshot would erase every write made since it was loaded (the dispatch
         # lost-update wipe). The fresh re-select also means we only reopen tasks that are STILL
         # stale at write time, not ones another process just progressed.
+        # The hot local projection can lag the keeper (nothing refreshes it in HTTP
+        # mode between publications), so a candidate's canonical status may already
+        # have moved. Pre-read canonical once and reconcile: a canonical `failed`
+        # candidate is an interrupted two-step release to resume at the relist
+        # step; any other divergence is skipped loudly rather than 409ing the rung.
+        canonical_rows: dict[str, dict[str, Any]] = {}
+        if candidates:
+            try:
+                client = client_from_env()
+                if isinstance(client, LocalConductClient):
+                    # The explicit local adapter owns its temporary projection;
+                    # this is never a fallback for an unavailable remote keeper.
+                    board_payload = client.broker.local_board_projection() or limen.model_dump(mode="json")
+                else:
+                    client.timeout = 3
+                    payload = client.private_board()
+                    board_payload = payload.get("board") if isinstance(payload.get("board"), dict) else payload
+                rows = board_payload.get("tasks")
+                if not isinstance(rows, list) or any(
+                    not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"] for row in rows
+                ):
+                    raise ValueError("canonical task rows malformed")
+                canonical_rows = {row["id"]: row for row in rows}
+                if len(canonical_rows) != len(rows):
+                    raise ValueError("duplicate canonical task identity")
+                for task in candidates:
+                    try:
+                        Task.model_validate(canonical_rows[task.id])
+                    except Exception:
+                        conduct_holds[task.id] = conduct_holds.get(task.id) or "conduct_canonical_unmeasured"
+            except Exception:
+                for task in candidates:
+                    conduct_holds[task.id] = conduct_holds.get(task.id) or "conduct_canonical_unmeasured"
+                print("── release-stale: canonical pre-read unavailable; holding affected claims")
         with _queue_lock(tasks_path) as got:
             if not got:
                 print("── release-stale: queue busy — skipped this round (self-corrects next beat)")
@@ -7111,30 +7155,45 @@ def release_stale_tasks(
                 }
             fresh = load_limen_file(tasks_path) if tasks_path.exists() else limen
             candidates = stale_tasks(fresh, hours=hours, agent=agent)
-            # The hot local projection can lag the keeper (nothing refreshes it in HTTP
-            # mode between publications), so a candidate's canonical status may already
-            # have moved. Pre-read canonical once and reconcile: a canonical `failed`
-            # candidate is an interrupted two-step release to resume at the relist
-            # step; any other divergence is skipped loudly rather than 409ing the rung.
-            canonical_rows: dict[str, dict[str, Any]] = {}
-            if candidates:
-                try:
-                    payload = client_from_env().private_board()
-                    board_payload = payload.get("board") if isinstance(payload.get("board"), dict) else payload
-                    canonical_rows = {
-                        str(row.get("id")): row
-                        for row in (board_payload.get("tasks") or [])
-                        if isinstance(row, dict) and row.get("id")
-                    }
-                except Exception as exc:
-                    print(f"── release-stale: canonical pre-read unavailable ({exc}); using the local projection")
             first_before = fresh.model_copy(deep=True)
             for task in candidates:
                 original_status = task.status
+                hold = conduct_holds.get(task.id, "conduct_unmeasured")
+                if hold:
+                    held.append(task.id)
+                    candidate_rows.append(
+                        {
+                            "id": task.id,
+                            "title": task.title,
+                            "repo": task.repo,
+                            "target_agent": task.target_agent,
+                            "status": original_status,
+                            "action": "hold",
+                            "remote_status": hold,
+                        }
+                    )
+                    print(f"  HOLD: {task.id} remote={hold} — {task.title}")
+                    continue
                 canonical = canonical_rows.get(task.id)
                 canonical_status = str(canonical.get("status") or "") if isinstance(canonical, dict) else ""
                 if canonical_status and canonical_status != task.status:
                     if canonical_status == "failed":
+                        action, remote_status = _release_stale_route(routing_tasks.get(task.id, task), snapshot)
+                        if action != "release":
+                            {"hold": held, "harvest": harvest_ready, "recover": recover_ready}[action].append(task.id)
+                            candidate_rows.append(
+                                {
+                                    "id": task.id,
+                                    "title": task.title,
+                                    "repo": task.repo,
+                                    "target_agent": task.target_agent,
+                                    "status": original_status,
+                                    "action": action,
+                                    "remote_status": remote_status,
+                                }
+                            )
+                            print(f"  {action.upper()}: {task.id} remote={remote_status} — relist not authorized")
+                            continue
                         # Phase 1 (in_progress -> failed) already landed on the keeper;
                         # substitute the canonical state on BOTH boards so the first
                         # sync sees no delta, then finish the release in the relist pass.
@@ -7213,7 +7272,7 @@ def release_stale_tasks(
                     )
                     print(f"  RESTORE done: {task.id} {original_status} {task.target_agent} — {task.title}")
                     continue
-                action, remote_status = _release_stale_route(task, snapshot)
+                action, remote_status = _release_stale_route(routing_tasks.get(task.id, task), snapshot)
                 candidate_rows.append(
                     {
                         "id": task.id,
@@ -7307,12 +7366,15 @@ def release_stale_tasks(
                 )
     else:
         for task in candidates:
-            if has_jules_landing_hold(task):
+            hold = conduct_holds.get(task.id, "conduct_unmeasured")
+            if hold:
+                action, remote_status = "hold", hold
+            elif has_jules_landing_hold(task):
                 action, remote_status = "hold", "jules_landing_held"
             elif _has_done_transition(task):
                 action, remote_status = "restore_done", "prior_done"
             else:
-                action, remote_status = _release_stale_route(task, snapshot)
+                action, remote_status = _release_stale_route(routing_tasks.get(task.id, task), snapshot)
             candidate_rows.append(
                 {
                     "id": task.id,
@@ -7345,6 +7407,8 @@ def release_stale_tasks(
         "held": held,
         "harvest_ready": harvest_ready,
         "recover_ready": recover_ready,
-        "remote_probe": _release_stale_probe_report(snapshot, candidates),
+        "remote_probe": _release_stale_probe_report(
+            snapshot, [routing_tasks.get(task.id, task) for task in candidates]
+        ),
         "candidates": candidate_rows,
     }
