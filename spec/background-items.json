@@ -54,7 +54,8 @@
     "com.electron.",
     "com.anthropic.",
     "com.tinyspeck.",
-    "org.mozilla."
+    "org.mozilla.",
+    "com.dropbox.DropboxUpdater."
   ],
   "_third_party_note": "Prefixes exempt under Rule 55a §4 / docs/standards/18 §4 (Apple system agents, vendor auto-updaters, Homebrew services). The standard's carve-out still applies: a misbehaving Homebrew service is treated as a Rule #55 violation and migrated to launchd-contract-wrap — the census only classifies; misbehavior belongs to launchctl status and the liveness organ."
 }
