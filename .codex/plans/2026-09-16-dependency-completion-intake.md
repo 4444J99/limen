@@ -17,3 +17,23 @@ The actual source-bound assessor, packet submission/consumer and protected merge
 `limen conduct dependency-completions` reads hints. `limen conduct consume-dependency-completion --key KEY --packet REVIEWED_PACKET.json` validates the exact tuple/work key and nondelegating read-only scope, submits at most once through normal broker admission, then reconciles once. A prior run binding skips submission. Lost submit responses remain unmeasured; a later identical packet relies on the keeper work-key index rather than a local retry loop. Pending results exit 77. The consumer accepts no local broker fallback and no caller-supplied receipts.
 
 The reviewed source-bound packet producer and isolated assessor deployment remain to integrate. The shared assessor now exists in organvm/.github PR 26, but that open source head is not a deployed trust pin. No new run was submitted live and no intake was activated.
+
+## Pinned assessor source and isolated execution
+
+The consumer now has a source-integrity and bounded execution library. A trusted
+deployment must supply an independently reviewed source commit, SHA-256, and
+explicit read credential. The library reads only the regular Git blob at that
+commit, disables local replacement refs, and checks its bounded bytes and digest.
+Working-tree changes are not execution inputs. Integrity is not review approval.
+
+Execution uses the captured bytes in a private temporary directory, Python isolated
+mode, an explicit minimal environment, and the existing bounded process-group
+runner (95 seconds, 64 KiB stdout, 16 KiB stderr). It never inherits conductor or
+ambient GitHub credentials. Results require exact repository/run/attempt/head
+binding; HOLD remains HOLD and REVIEW_READY never authorizes acceptance or merge.
+Temporary source cleanup, malformed pins/results, replacement refs, credential
+isolation, and runner failure redaction have focused coverage.
+
+The reviewed packet producer and deployment wiring remain implementation work.
+No credential was minted, assessor pin approved, policy enabled, or live assessment
+launched by this change. The full plan remains incomplete.
