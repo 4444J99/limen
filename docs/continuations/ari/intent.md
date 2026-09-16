@@ -24,7 +24,7 @@ Engagement: none on record · Funnel instance: none
 Harden the MVP toward live: close the gap between 'runs for me' and 'runs for ari' — deploy path, onboarding, and the first real-use feedback loop.
 
 Repos:
-- `organvm/hospes`
+- `organvm/hospes-operations-private`
 
 Keywords: hospes, podcast, guest ops, unlicensed therapy, guest pipeline · Corpus evidence:
 `python3 scripts/constellation-dossier.py --slug ari --project podcast-suite`
