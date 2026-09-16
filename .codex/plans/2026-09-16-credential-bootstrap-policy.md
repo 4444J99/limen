@@ -38,3 +38,19 @@ An independent relay administration read found repository ID 1350979676 with cur
 The earlier managed-integration restriction does not describe this credential. App
 registration, isolated deployment and protected canaries remain required; possession
 of administrator access is not activation evidence.
+
+## Additive keeper deployment prerequisite
+
+Cloudflare's current settings read exposes only names/types for secret bindings;
+it cannot prove that a local principal registry preserves every deployed binding.
+Add a conductor-only, non-cacheable principal-registry readback: redacted identities
+plus a stable SHA-256 fingerprint covering all validated credential/role bindings.
+The readback performs no keeper-state operation. It does not grant a write lease or
+make an eventual Cloudflare update atomic. Reconcile custody on mismatch, then use
+the owning deployment lane and verify all retained principals after installation.
+
+Three Worker security tests pass: exact role exclusion and no secret disclosure,
+fingerprint sensitivity/order stability, and malformed-registry refusal. The combined
+source passes all sixteen scoped cheap gates, including the two cross-language
+dependency integration tests. Host admission again refuses the unexecuted heavy
+CLI/API/Worker wave for swap-fraction. The endpoint is not deployed by this receipt.
