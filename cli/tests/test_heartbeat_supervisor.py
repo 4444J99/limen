@@ -414,3 +414,15 @@ def test_lane_liveness_is_scheduled_and_content_pinned():
     probes = {probe["name"]: probe for probe in contract["probes"]}
     assert probes["lane-liveness"]["timeout_seconds"] == 30
     assert "scripts/lane-liveness.py" in contract["runtime_artifacts"]
+
+
+def test_scheduled_pressure_probe_matches_current_observer():
+    from limen import observer
+
+    contract, _digest = heartbeat._load_contract(ROOT)
+    scheduled = next(p for p in contract["probes"] if p["name"] == "host-pressure-freshness")
+    _name, command, timeout = next(p for p in observer.HOST_PROBES if p[0] == scheduled["name"])
+    assert scheduled["command"][1:] == command[1:]
+    assert "--on-demand" in scheduled["command"]
+    assert "--read-only" in scheduled["command"]
+    assert scheduled["timeout_seconds"] == timeout == 15
