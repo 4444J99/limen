@@ -59,7 +59,8 @@
           "command": [
             "python",
             "scripts/host-pressure-stale.py",
-            "--read-only"
+            "--read-only",
+            "--on-demand"
           ],
           "cost": "cheap",
           "name": "host-pressure-freshness",
