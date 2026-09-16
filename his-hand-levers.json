@@ -2696,11 +2696,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Resolve the current LinkedIn source pointer, capture the headline and About through available authorized read access, and review a private source-bound copy against grounded identity claims.",
+        "rationale": "A missing write integration does not establish that public or authenticated read capture requires human transcription. Captured prose and permission to edit the profile are separate.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-DECORUM-LINKEDIN-HEADLINE"
+          "his-hand-levers.json#L-DECORUM-LINKEDIN-HEADLINE",
+          "institutio/governance/decorum-surfaces.yaml",
+          "scripts/check-decorum.py",
+          "scripts/decorum-keeper.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2708,14 +2711,20 @@
         ],
         "owner": "DECORVM off_platform slot linkedin_headline (institutio/governance/decorum-surfaces.yaml)",
         "acceptance": {
-          "condition": "DECORVM (the professionalization keeper) covers the LinkedIn headline/About as an off-platform surface — voice-judged for stale claims and brand-voice, closing an egg-face gap no organ can reach headlessly",
+          "condition": "The capture identifies the exact profile, observation time and source version; review distinguishes supported claims from uncertain ones, and any later profile edit has separate authorization and readback.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Canonical source pointer",
+          "Authorized read capability",
+          "Private capture custody and source lineage",
+          "Grounded identity evidence",
+          "Separate edit or publication authorization"
+        ],
+        "remaining_human_action": "Provide access or identify the canonical profile only if registered sources cannot resolve it; approve any proposed identity edit separately.",
         "historical_gate_requires_verification": "no LinkedIn write API without partner OAuth — the current headline/About text can only be captured by the account holder",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2736,11 +2745,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Resolve the current X profile source, capture its actual bio through authorized read access, and prepare a source-bound review without changing the account.",
+        "rationale": "Historical statements about paid write APIs are not evidence that reading the existing bio is impossible. Do not ask the user to repeat text already available from an authorized source.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-DECORUM-X-BIO"
+          "his-hand-levers.json#L-DECORUM-X-BIO",
+          "institutio/governance/decorum-surfaces.yaml",
+          "scripts/check-decorum.py",
+          "scripts/decorum-keeper.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2748,14 +2760,20 @@
         ],
         "owner": "DECORVM off_platform slot x_bio (institutio/governance/decorum-surfaces.yaml)",
         "acceptance": {
-          "condition": "DECORVM covers the X bio as an off-platform surface (voice + staleness), closing another human-facing egg-face gap",
+          "condition": "The current account and exact captured bio are identified with freshness evidence; review is grounded in actual identity records, and any authorized edit receives platform readback.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Canonical source pointer",
+          "Authorized read capability",
+          "Private capture custody and source lineage",
+          "Grounded identity evidence",
+          "Separate edit or publication authorization"
+        ],
+        "remaining_human_action": "Supply only genuinely missing source access or account identity; authorize an actual bio edit separately.",
         "historical_gate_requires_verification": "no free X write API — the current bio can only be captured by the account holder",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2776,11 +2794,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Resolve the active mail account and client signature source, inspect the configured signature through authorized local read access, and prepare a private review without sending mail.",
+        "rationale": "An unsupported organ adapter is an implementation gap, not proof that only human transcription can supply the signature. Multiple account/client signatures must remain distinct.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-DECORUM-EMAIL-SIGNATURE"
+          "his-hand-levers.json#L-DECORUM-EMAIL-SIGNATURE",
+          "institutio/governance/decorum-surfaces.yaml",
+          "scripts/check-decorum.py",
+          "scripts/decorum-keeper.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2788,14 +2809,20 @@
         ],
         "owner": "DECORVM off_platform slot email_signature (institutio/governance/decorum-surfaces.yaml)",
         "acceptance": {
-          "condition": "DECORVM covers the email signature as an off-platform surface (stale title/links + voice)",
+          "condition": "Each in-scope account has current configured-signature evidence, source lineage and grounded link/title review; unseen clients remain unmeasured and no test message is sent to establish capture.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Canonical source pointer",
+          "Authorized read capability",
+          "Private capture custody and source lineage",
+          "Grounded identity evidence",
+          "Separate edit or publication authorization"
+        ],
+        "remaining_human_action": "Provide only any genuinely inaccessible client or account access; approve a proposed identity-bearing signature change separately.",
         "historical_gate_requires_verification": "mail-client signature config is not organ-readable — the current block can only be captured by you",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
@@ -2816,11 +2843,14 @@
       "diagnosis_provenance": "unknown",
       "implementation": {
         "schema_version": 1,
-        "behavior": "Prepare and verify the existing owning component against this record's unlock condition before exercising its external effect.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "behavior": "Resolve the canonical resume through its owning private document registry, extract a source-bound review copy and compare claims with primary work and education evidence.",
+        "rationale": "Off-repository custody does not imply that the user must upload the document again. Contribution graphs alone cannot prove or disprove employment, education or professional role claims.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-DECORUM-RESUME-PDF"
+          "his-hand-levers.json#L-DECORUM-RESUME-PDF",
+          "institutio/governance/decorum-surfaces.yaml",
+          "scripts/check-decorum.py",
+          "scripts/decorum-keeper.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -2828,14 +2858,20 @@
         ],
         "owner": "DECORVM off_platform slot resume_pdf (institutio/governance/decorum-surfaces.yaml)",
         "acceptance": {
-          "condition": "DECORVM covers the public resume as an off-platform surface (stale dates + narrative-accuracy against the contribution mix)",
+          "condition": "The reviewed resume has a canonical-source/version receipt, extraction integrity and evidence-backed claim review; missing source support remains explicit, and no public upload or application submission is implied.",
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": null,
+        "dependencies": [
+          "Canonical source pointer",
+          "Authorized read capability",
+          "Private capture custody and source lineage",
+          "Grounded identity evidence",
+          "Separate edit or publication authorization"
+        ],
+        "remaining_human_action": "Identify or grant access to the canonical version only when authorized records cannot resolve it; approve any substantive identity change or external submission separately.",
         "historical_gate_requires_verification": "the canonical resume PDF lives off-repo — the current file/text can only be provided by you",
-        "decision_status": "requires_component_review"
+        "decision_status": "chosen_pending_evidence"
       }
     },
     {
