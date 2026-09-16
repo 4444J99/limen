@@ -1004,3 +1004,67 @@ def test_conversational_and_automatic_triggers_are_provider_neutral() -> None:
     assert should_evaluate_fanout("please fan out this request", reversible_leaf_count=0)
     assert should_evaluate_fanout("ordinary request", reversible_leaf_count=2)
     assert not should_evaluate_fanout("ordinary request", reversible_leaf_count=1)
+
+
+def test_landing_admission_precedes_creation_and_failed_payload_survives(monkeypatch, tmp_path):
+    from limen.fanout_executor import _landing_root, FanoutExecutionError
+    from limen.inventory_admission import InventoryAdmissionError
+
+    monkeypatch.setenv("LIMEN_WORKTREES", str(tmp_path / "runtime"))
+    packet = {"work_id": "bounded-landing", "work_key": "approved-outcome"}
+
+    def denied(*args, **kwargs):
+        raise InventoryAdmissionError("not-approved")
+
+    monkeypatch.setattr("limen.inventory_admission.reserve_growth", denied)
+    with pytest.raises(InventoryAdmissionError):
+        _landing_root(packet)
+    assert not (tmp_path / "runtime").exists()
+    calls = []
+    monkeypatch.setattr("limen.inventory_admission.reserve_growth", lambda *a, **k: calls.append((a, k)))
+    root = _landing_root(packet)
+    payload = root / "unfinished.txt"
+    payload.write_text("provider result not yet backed up")
+    with pytest.raises(FanoutExecutionError, match="custody recovery"):
+        _landing_root(packet)
+    assert payload.read_text() == "provider result not yet backed up"
+    assert len(calls) == 1
+    assert json.loads((root / "landing-custody.json").read_text())["state"] == "preserved-unfinished"
+
+
+def test_interrupted_landing_release_retains_receipt_and_reuses_root(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+    from limen.fanout_executor import _landing_root, _release_landing_copies
+
+    monkeypatch.setenv("LIMEN_WORKTREES", str(tmp_path / "runtime"))
+    reservations = []
+    monkeypatch.setattr("limen.inventory_admission.reserve_growth", lambda *a, **k: reservations.append(a))
+    packet = {
+        "work_id": "release-restart",
+        "work_key": "approved-outcome",
+        "execution": {"owner_repository": "owner/repo", "topic_branch": "topic"},
+    }
+    root = _landing_root(packet)
+    receipt = SimpleNamespace(
+        observed_heads_after={"owner/repo": "a" * 40},
+        receipt_id="exact-receipt",
+        model_dump=lambda **kw: {"receipt_id": "exact-receipt"},
+    )
+
+    def interrupted(*args, **kwargs):
+        raise OSError("interrupted cleanup")
+
+    monkeypatch.setattr("limen.worktree_abandonment.retire_released_worktree", interrupted)
+    with pytest.raises(OSError, match="interrupted cleanup"):
+        _release_landing_copies(root, packet, receipt)
+    assert json.loads((root / "landing-custody.json").read_text())["state"] == "release-pending"
+    assert _landing_root(packet) == root
+    monkeypatch.setattr(
+        "limen.worktree_abandonment.retire_released_worktree",
+        lambda *a, **k: {"state": "already-absent", "refs_deleted": 0},
+    )
+    _release_landing_copies(root, packet, receipt)
+    first = (root / "landing-custody.json").read_bytes()
+    _release_landing_copies(root, packet, receipt)
+    assert first == (root / "landing-custody.json").read_bytes()
+    assert len(reservations) == 1

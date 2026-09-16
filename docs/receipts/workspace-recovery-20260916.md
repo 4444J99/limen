@@ -39,7 +39,7 @@ The resumed implementation passed 70 Worker keeper/recovery tests and a combined
 
 1. Finish adversarial end-to-end producer coverage, including external chamber tooling and every remote provider launch/cancellation path; the repository scan is not proof of the entire estate. HTTP resource/revocation/restart, legacy/deferred restart and deadline-incapable provider scenarios now pass; broader estate producer coverage remains open.
 2. Retain cache reuse only with declared deterministic dependency closures; syntax checks and three declared command gates now reuse results. Retain relevant live integration/deployment predicates.
-3. Complete the full implicated fixture/deployment verification when host admission permits; the last blocker is `swap-fraction`. Release retirement now includes Jules landing and ship-docs; audit the remaining owning lifecycles and scratch-root configuration.
+3. Complete the full implicated fixture/deployment verification when host admission permits; the last blocker is `swap-fraction`. Release retirement now includes Jules landing, fanout landing and ship-docs; audit the remaining owning lifecycles and scratch-root configuration.
 4. Complete home/configured-root/administered-organization inventory and per-item dispositions. The resumed GitHub census completed 326 repositories (86 private), 10,459 branches, 1,968 check records, 2,136 issue records and 966 PR records with zero missing leaves. Local strict census still records 44 identity/custody exceptions, 98 failure records, and 81 linked copies before the final one-copy retirement; this uses a different denominator than broad discovery and is not a like-for-like reduction count. The JSON preserves separate census receipts. Preserve retained dirty/ignored/unique material through its existing custody owners before considering further retirement.
 5. Deploy the reviewed keeper policy and source changes through existing release rails and verify live denial and concurrency receipts. Apply the reviewed managed template through chezmoi. Local observe mode remains in effect; merging either PR must not resume unrestricted dispatch.
 
@@ -52,3 +52,11 @@ The native tool-cache owner produced a read-only plan for 27 paths; no cache rem
 
 Checkpoint is bounded by the requested attempt limit. Resume only this approved recovery outcome,
 retaining its cumulative allowance and these receipts; do not spawn another implementation campaign.
+
+
+Further custody audit: fanout landing no longer automatically deletes the provider-result
+clone when an exception unwinds. Its admitted private root preserves failed application
+contents; successful landings journal their exact receipt before cleanup and revalidate
+remote evidence when cleanup resumes. Supporting clones remain recovery anchors.
+Focused validation: 31 fanout scenarios passed; the changed module passed type checking.
+No additional physical removal or deployment occurred in this follow-up.

@@ -77,6 +77,14 @@
   },
   "discovered_checkout_paths_before": 311,
   "discovered_checkout_paths_remaining": 246,
+  "fanout_custody_followup": {
+    "deployed": false,
+    "failed_results_preserved": true,
+    "new_removals": 0,
+    "release_restart_receipt": "atomic",
+    "scenarios_passed": 31,
+    "typecheck": "passed"
+  },
   "inventory_excluded": [
     "Library",
     ".Trash",
