@@ -411,5 +411,22 @@
     "predicate_exit": 0,
     "live_backup_check": "unknown; expected path absent; exit 77; no mutation",
     "owner": ".codex/plans/2026-09-16-consent-and-backup-decisions.md"
+  },
+  "complete_decision_coverage": {
+    "head": "099cb0287e3def95a8dd87fcd8e7cb4088b3548b",
+    "nonterminal_decisions_selected": 97,
+    "terminal_histories_preserved": 10,
+    "requires_component_review": 0,
+    "missing_acceptance_predicates": 95,
+    "scope": "decision coverage only; implementation and outcomes remain incomplete",
+    "verification": {
+      "command": "bash scripts/verify-scoped.sh --base fb33afc01",
+      "exit_code": 0,
+      "cheap_gates_passed": 7,
+      "cli_passed": 7711,
+      "cli_skipped": 2,
+      "duration_seconds": 237.11
+    },
+    "owner": ".codex/plans/2026-09-16-final-component-decisions.md"
   }
 }
