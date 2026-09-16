@@ -69,7 +69,7 @@ HOST_PROBES = [
         [sys.executable, "scripts/background-items-census.py", "--check", "--no-receipt"],
         30,
     ),
-    ("sensor-canary", [sys.executable, "scripts/beat-sensors.py", "--canary"], 30),
+    ("sensor-canary", [sys.executable, "scripts/check-heartbeat-rollout.py", "--scheduled-probes"], 30),
     ("orphan-watcher", [sys.executable, "scripts/orphan-watchers.py", "--check"], 30),
     (
         "tcc-track-c",

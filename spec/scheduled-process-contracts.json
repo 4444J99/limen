@@ -92,8 +92,8 @@
           "cadence_seconds": 3600,
           "command": [
             "python",
-            "scripts/beat-sensors.py",
-            "--canary"
+            "scripts/check-heartbeat-rollout.py",
+            "--scheduled-probes"
           ],
           "cost": "cheap",
           "name": "sensor-canary",
