@@ -23,8 +23,15 @@
     "inventory_ceiling": 250,
     "freshness_seconds": 900
   },
-  "inventory_ingestion": "pending_running_collection",
-  "admission": "unverified",
+  "inventory_ingestion": {
+    "status": "accepted",
+    "repository_count": 326,
+    "leaf_count": 15469,
+    "observed_at": "2026-09-16T14:22:47.095333Z",
+    "exhaustive": true,
+    "acceptance_verification": "collect_and_publish_inventory validated keeper accepted status and matching observation timestamp"
+  },
+  "admission": "routine growth exceeds ceiling; live no-debit reservation refusal still needs verification",
   "default_ci": {
     "url": "https://github.com/4444J99/limen/actions/runs/35107147669",
     "status": "failure",
