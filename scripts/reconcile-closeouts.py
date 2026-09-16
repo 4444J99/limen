@@ -287,26 +287,49 @@ def _route_findings(claims: list[dict], findings: list[dict], apply: bool, route
     return routed
 
 
-def _board_claims(since_hours: int, limit: int | None) -> list[dict]:
-    """Closeout claims from the live board: each done task's done dispatch_log entries, within the
-    window. Claims without PRs remain visible as unreceipted evidence."""
-    data = yaml.safe_load(board_path(ROOT / "tasks.yaml").read_text()) or {}
+def _board_claims(since_hours: int, limit: int | None, *, source_errors: list[str] | None = None) -> list[dict]:
+    """Retain in-window done tasks, including those lacking done-event receipts."""
+    errors = source_errors if source_errors is not None else []
+    try:
+        data = yaml.safe_load(board_path(ROOT / "tasks.yaml").read_text())
+    except (OSError, UnicodeError, ValueError, yaml.YAMLError):
+        errors.append("board_source_unavailable")
+        return []
+    if not isinstance(data, dict) or not isinstance(data.get("tasks"), list):
+        errors.append("board_source_malformed")
+        return []
     now = datetime.now(timezone.utc)
     claims: list[dict] = []
-    for t in data.get("tasks", []):
-        if t.get("status") != "done":
+    for task in data["tasks"]:
+        if not isinstance(task, dict) or not isinstance(task.get("id"), str) or not task["id"]:
+            errors.append("board_task_malformed")
             continue
-        upd = _parse_ts(t.get("updated"))
-        if since_hours and upd and (now - upd).total_seconds() > since_hours * 3600:
+        if not isinstance(task.get("status"), str):
+            errors.append("board_task_malformed")
             continue
-        for e in t.get("dispatch_log") or []:
-            if str(e.get("status")) != "done":
-                continue
-            text = f"{e.get('session_id', '')} {e.get('output', '')}"
-            claims.append({"id": t.get("id"), "subject": t.get("title", ""), "text": text, "repo": t.get("repo", "")})
-    if limit:
-        claims = claims[:limit]
-    return claims
+        if task.get("status") != "done":
+            continue
+        updated = _parse_ts(task.get("updated"))
+        if since_hours and updated and (now - updated).total_seconds() > since_hours * 3600:
+            continue
+        events = task.get("dispatch_log", [])
+        if events is None:
+            events = []
+        if not isinstance(events, list):
+            errors.append("board_events_malformed")
+            events = []
+        done = []
+        for event in events:
+            if not isinstance(event, dict):
+                errors.append("board_event_malformed")
+            elif event.get("status") == "done":
+                done.append(event)
+        # A done task is itself a claim; absent evidence must not erase it.
+        for event in done or [{}]:
+            text = f"{event.get('session_id', '')} {event.get('output', '')}"
+            claims.append({"id": task["id"], "subject": task.get("title", ""),
+                           "text": text, "repo": task.get("repo", "")})
+    return claims[:limit] if limit else claims
 
 
 def _session_claims(since_hours: int, limit: int | None, *, source_errors: list[str] | None = None) -> list[dict]:
@@ -476,7 +499,7 @@ def main() -> int:
     elif args.check or args.apply:
         # both claim sources: durable board dispatch_log done-claims AND captured ephemeral session
         # closeouts (logs/session-claims.jsonl). Combined then capped so the GitHub probe stays bounded.
-        claims = _board_claims(args.since_hours, None) + _session_claims(args.since_hours, None, source_errors=source_errors)
+        claims = _board_claims(args.since_hours, None, source_errors=source_errors) + _session_claims(args.since_hours, None, source_errors=source_errors)
     else:
         ap.error("one of --doctor / --check / --apply / --fixture is required")
 
