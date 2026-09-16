@@ -312,7 +312,26 @@ def _predicate_timeout(packet: dict[str, Any]) -> int:
     remaining = int(
         (datetime.fromisoformat(packet["deadline"].replace("Z", "+00:00")) - datetime.now(timezone.utc)).total_seconds()
     )
-    return max(1, min(1800, remaining))
+    if remaining <= 0:
+        raise FanoutExecutionError("verification deadline exhausted")
+    return min(600, remaining)
+
+
+def _admit_predicate(packet: dict[str, Any]) -> dict[str, Any]:
+    """Reuse the keeper's verification window across retries and worker restarts."""
+    client = client_from_env()
+    if not isinstance(client, HttpConductClient):
+        raise FanoutExecutionError("verification requires the remote execution keeper")
+    work_key = packet["work_key"]
+    reservation = client.reserve_growth(
+        work_key, "verification", hashlib.sha256((work_key + ":verification").encode()).hexdigest()
+    )
+    deadlines = [
+        datetime.fromisoformat(value.replace("Z", "+00:00")) for value in (packet["deadline"], reservation["deadline"])
+    ]
+    bounded = {**packet, "deadline": min(deadlines).isoformat()}
+    _predicate_timeout(bounded)
+    return bounded
 
 
 def _predicate_environment(home: Path) -> dict[str, str]:
@@ -331,7 +350,9 @@ def _run_predicate(packet: dict[str, Any], worktree: Path) -> subprocess.Complet
     """Run provider-controlled predicates without network or ambient credentials."""
 
     from limen.host_admission import hold_lease
+    from limen.dispatch import _run_capture
 
+    packet = _admit_predicate(packet)
     with tempfile.TemporaryDirectory(prefix="limen-fanout-predicate-") as temporary:
         home = Path(temporary)
         git_common = Path(
@@ -405,14 +426,11 @@ def _run_predicate(packet: dict[str, Any], worktree: Path) -> subprocess.Complet
                 owner=f"fanout:{canonical_hash(packet['work_id'])[:24]}",
                 surface="fanout-predicate",
             ):
-                return subprocess.run(
+                return _run_capture(
                     command,
                     cwd=str(worktree),
                     env=_predicate_environment(home),
-                    text=True,
-                    capture_output=True,
                     timeout=_predicate_timeout(packet),
-                    check=False,
                 )
         except (OSError, subprocess.SubprocessError) as exc:
             raise FanoutExecutionError(f"predicate sandbox failed: {exc}") from exc
@@ -701,6 +719,7 @@ class PatchLandingMixin:
 
         from limen.host_admission import hold_lease, worktree_scope
 
+        packet = _admit_predicate(packet)
         verification = repository.parent / f"verify-{canonical_hash(head)[:16]}"
         git_root = repository
         if _run(["git", "rev-parse", "--is-bare-repository"], cwd=repository).stdout.strip() != "true":
