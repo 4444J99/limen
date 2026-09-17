@@ -63,15 +63,31 @@ Trusted preparation and publication run in separate jobs. No model API is used.
 Account credentials are not currently available for these new bindings. Local
 Docker is unavailable; container acceptance must therefore be hosted evidence.
 
-## Acceptance and remaining implementation work
+## Recovery and evidence contract
 
-Before enabling beyond a controlled canary, add artifact-bound verification
-receipts, executor-attempt accounting, crash-recovery tests around admission and
-dispatch, and terminal reconciliation for queued merges, expired leases and
-preparation/publication failures. Currently only verifier failures have an
-explicit failure callback; an ambiguous external effect remains uncompleted.
-These are engineering work, not human gates. Do not enable general execution on
-the strength of the offline tests alone.
+The exact canonical admission packet is durable before admission. An interrupted
+admission reuses that packet; an interrupted dispatch is observed, never repeated.
+One canonical executor attempt follows launching/running/terminal status with the
+actual GitHub run identity. A deadline-bounded keeper alarm reconciles missing
+callbacks, preparation/publication failures and queued merges without launching
+another workflow or resubmitting the merge. Expired or fenced authority cannot
+produce a new successful receipt. A canonical successful receipt whose local
+summary was interrupted is recovered from the saved terminal phase.
+
+Trusted host code produces a verification attestation outside the candidate
+mount. Its digest names an immutable GitHub artifact. The keeper checks artifact
+digest, expiry, run/controller identity and attestation fields, plus the real
+verifier job/step, before PR publication or successful reporting. This uses
+[GitHub artifact metadata](https://docs.github.com/en/rest/actions/artifacts).
+Candidate stdout is hashed, not published. Original-base ancestry and byte parity
+with the trusted test oracle are enforced. Repeated terminal callbacks return
+the prior result without creating a second receipt.
+
+Offline regression evidence is not hosted container acceptance. Do not enable
+general execution merely because the source tests pass; new profiles and private
+repositories remain separately reviewed grants.
+
+## Native acceptance
 
 Actual acceptance requires a ChatGPT.app chat to read the canary, submit a
 deliberately failing change, receive the failed executor receipt, submit a

@@ -73,6 +73,9 @@ def verify(context: dict, target: Path) -> dict:
         raise ValueError("wrong checkout")
     if checked(["git", "status", "--porcelain"], cwd=target).strip():
         raise ValueError("dirty candidate checkout")
+    for oracle in profile["oracle_paths"]:
+        if checked(["git", "show", f"{context['head']}:{oracle}"], cwd=target) != (ROOT / oracle).read_text():
+            raise ValueError("candidate changed trusted test oracle")
     checked(["docker", "pull", profile["image"]], timeout=90)
     # Read-only target, no checkout credentials, no Docker socket or controller mount.
     container_name = "limen-chat-" + context["head"][:16]
@@ -105,6 +108,12 @@ def verify(context: dict, target: Path) -> dict:
         "workflow_run_id": int(os.environ["GITHUB_RUN_ID"]), "run_attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
         "exit_code": 124 if timed_out else code, "output_sha256": hashlib.sha256(payload).hexdigest(),
         "inference_provider_runs": 0, "sandbox_image": profile["image"]}
+    # This file is outside the read-only candidate mount. Only trusted host code
+    # can create the attestation or Actions output; candidate output stays hashed.
+    Path("chat-verification.json").write_bytes(canonical(result))
+    with open(os.environ["GITHUB_OUTPUT"], "a") as output:
+        output.write("verification=" + canonical(result).decode() + "\n")
+        output.write("artifact_name=chat-verification-" + hashlib.sha256(canonical(result)).hexdigest() + "\n")
     if result["exit_code"] != 0:
         raise RuntimeError(f"isolated predicate failed (exit {result['exit_code']}, output sha256 {result['output_sha256']})")
     return result
@@ -123,11 +132,10 @@ def publish(context: dict) -> dict:
         "-f", f"head={repository.split('/')[0]}:{branch}", "-f", "state=all", "-f", "per_page=100"]))
     if len(pulls) > 1:
         raise ValueError("ambiguous PR identity")
-    if not pulls:
-        pr = api(f"/api/conduct/github/runs/{context['run_id']}/publish", {
-            "workflow_run_id": int(os.environ["GITHUB_RUN_ID"]), "run_attempt": int(os.environ["GITHUB_RUN_ATTEMPT"])})
-    else:
-        pr = pulls[0]
+    # Even an existing PR must pass the authenticated artifact fence before merge.
+    pr = api(f"/api/conduct/github/runs/{context['run_id']}/publish", {
+        "workflow_run_id": int(os.environ["GITHUB_RUN_ID"]), "run_attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
+        "verification": json.loads(os.environ["LIMEN_CHAT_VERIFICATION"])})
     if pr["head"]["sha"] != head or pr["head"]["repo"]["full_name"] != repository:
         raise ValueError("PR head differs")
     if context["landing"] == "merge" and not pr.get("merged_at"):
@@ -171,7 +179,7 @@ def main() -> int:
                 if current[field] != context[field]:
                     raise ValueError("execution context changed")
         result = publish(context)
-        print(json.dumps(api(route + "/complete", {**identity, **result})))
+        print(json.dumps(api(route + "/complete", {**identity, **result,"verification":json.loads(os.environ["LIMEN_CHAT_VERIFICATION"])})))
     return 0
 
 
