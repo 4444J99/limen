@@ -58,7 +58,8 @@ def test_admitted_receipt_identity(tmp_path, remote, lookup):
         [
             "bash",
             "-c",
-            'source "$1"; workstream_commit_admitted_receipt -qm receipt -- receipt.json',
+            'source "$1"; email="$(workstream_github_receipt_email)" && '
+            'workstream_commit_admitted_receipt "$email" -qm receipt -- receipt.json',
             "test",
             str(ROOT / "scripts/lib/workstream-capsule.sh"),
         ],

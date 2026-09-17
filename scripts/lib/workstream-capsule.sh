@@ -258,7 +258,7 @@ workstream_jules_publish_receipt() {
   local session_id="$2"
   local contract_helper="${LIMEN_CAPSULE_DIR:-}/workstream-contract.py"
   local timeout_seconds="${LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS:-120}"
-  local branch="" receipt_rel="" publish_commit=""
+  local branch="" receipt_rel="" publish_commit="" receipt_email=""
   local staged_paths="" current_subject="" changed_paths="" parent_subject="" clean_rc=0
 
   branch="$(git branch --show-current 2>/dev/null || true)"
@@ -285,7 +285,7 @@ workstream_jules_publish_receipt() {
       printf 'Jules session receipt publish found unrelated staged paths\n' >&2
       return 2
     fi
-    if ! git -c commit.gpgsign=false commit -qm \
+    if ! workstream_commit_admitted_receipt "$receipt_email" -qm \
       "chore: preserve Jules session $session_id receipt" -- "$receipt_rel"; then
       printf 'Jules session receipt could not be committed\n' >&2
       return 2
@@ -491,6 +491,10 @@ workstream_publish_admitted_receipt() {
       printf 'workstream launch no longer owns its remote receipt branch\n' >&2
       return 2
     fi
+  fi
+
+  if workstream_github_push_destination; then
+    receipt_email="$(workstream_github_receipt_email)" || return 2
   fi
 
   if ! git add -- "$receipt_rel"; then
