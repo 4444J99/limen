@@ -827,10 +827,8 @@ def test_visibility_drift_cites_ungated_public_candidate_instead_of_silence() ->
     assert not any("mirror-mirror" in c and "observed public" in c for c in cites)
 
 
-def test_visibility_drift_receipt_lens_clears_a_swept_public_candidate() -> None:
-    """A green+fresh sweep receipt legitimately OWNS the public posture, so the rung must fall
-    silent on that repo. Without the lens class G cites all 32 swept-clean publics on every run,
-    and a rung that always cites is a rung nobody reads."""
+def test_visibility_drift_receipt_lens_does_not_authorize_publication() -> None:
+    """A clean secret scan is evidence, not public-admission approval."""
     module = _load()
     estate = {
         "classes": {"operation_private": {"match": [], "visibility": "private"}},
@@ -848,7 +846,7 @@ def test_visibility_drift_receipt_lens_clears_a_swept_public_candidate() -> None
     fails, cites = module.visibility_drift(rows, estate, receipt_ok=lens)
 
     assert fails == []
-    assert not any("swept" in c and "unswept" not in c for c in cites), "a receipt-owned public must not be cited"
+    assert any("organvm/swept:" in c and "review required" in c for c in cites)
     assert any("unswept" in c and "no receipt" in c for c in cites)
 
     # Omitting the lens must stay the over-citing (safe) direction, not silently pass everything.
@@ -978,3 +976,16 @@ def test_owners_refuses_malformed_declared_scope() -> None:
     for declared in ("a-organvm", [None], ["org/*"]):
         with pytest.raises(ValueError):
             module.owners({"expected_orgs": {"list": declared}})
+
+
+def test_unknown_private_personal_repo_does_not_match_public_owner_glob() -> None:
+    module = _load()
+    estate = module.load_estate()
+    assert (
+        module.classify_repo(
+            "4444J99/unreviewed-private-fixture",
+            estate,
+            facts={"private": True, "archived": False, "fork": False},
+        )
+        == "private_unreviewed"
+    )

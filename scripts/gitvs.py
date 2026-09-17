@@ -1693,18 +1693,11 @@ def _sweep_receipt_lens():
 
 
 def visibility_drift(rows: list[dict], estate: dict, receipt_ok=None) -> tuple[list[str], list[str]]:
-    """Class G, pure: desired visibility − observed. ``publish_candidate`` is desired-public,
-    matching apply-visibility.py: its nominal operation-private class preserves the pre-publication
-    posture while a green history sweep gates the actual flip. A candidate still private is CITED
-    (homed with the publish-wave owner). ``any`` is exempt. Every other mismatch, including
-    desired-private observed-public, is drift.
+    """Report posture drift. A secret sweep does not grant publication approval.
 
-    ``receipt_ok(repo) -> (bool, why)`` is the optional live sweep-receipt lens. Omitted (the pure
-    fixture path) every already-public candidate is cited, because purity cannot tell an adjudicated
-    public from an un-adjudicated one. Supplied (the live doctor), a green+fresh receipt legitimately
-    OWNS the public posture and the repo is genuinely converged — so it is not cited at all. Without
-    that distinction the rung cites all 32 swept-clean publics forever, and a rung that always cites
-    is a rung nobody reads."""
+    Legacy candidates remain visible as review work even when their scan is green.
+    The optional receipt lens supplies safety evidence, not mutation authority.
+    """
     fails: list[str] = []
     cites: list[str] = []
     classes = estate.get("classes") or {}
@@ -1715,29 +1708,19 @@ def visibility_drift(rows: list[dict], estate: dict, receipt_ok=None) -> tuple[l
         desired = (classes.get(cls_name) or {}).get("visibility") if cls_name else None
         publish_candidate = bool((overrides.get(full) or {}).get("publish_candidate"))
         if publish_candidate:
-            desired = "public"
+            observed = "private" if row.get("private") else "public"
+            _, why = receipt_ok(full) if receipt_ok else (False, "no receipt lens")
+            cites.append(
+                f"[G visibility-drift] {full}: publish candidate observed {observed}; "
+                f"individual publication review required ({why}); secret sweep is not approval"
+            )
+            continue
         if desired not in ("public", "private"):
             continue  # 'any' is exempt; unclassed is rung J's finding
         observed = "private" if row.get("private") else "public"
         if desired == observed:
-            if publish_candidate and observed == "public":
-                # The old silent "converged" read let an un-gated public ride (micro-tato /
-                # mirror-mirror, 2026-07-30): candidacy is a GATED desire — public without a
-                # released wave receipt is a posture question, not a convergence.
-                ok, why = receipt_ok(full) if receipt_ok else (False, "no receipt lens")
-                if ok:
-                    continue  # the receipt owns the flip — genuinely converged
-                cites.append(
-                    f"[G visibility-drift] {full}: publish candidate observed public with no receipt "
-                    f"owning the flip ({why}) — publish-sweep.py adjudicates; RED demotes it"
-                )
             continue
-        if desired == "public" and publish_candidate:
-            cites.append(
-                f"[G visibility-drift] {full}: desired public, observed private — publish-wave pending (lever-gated)"
-            )
-        else:
-            fails.append(f"[G visibility-drift] {full}: class '{cls_name}' demands {desired}, observed {observed}")
+        fails.append(f"[G visibility-drift] {full}: class '{cls_name}' demands {desired}, observed {observed}")
     return fails, cites
 
 
