@@ -127,6 +127,25 @@ def test_registered_worktree_scan_fails_closed_on_unresolvable_path(
         abandonment._registered_worktree_paths(tmp_path)
 
 
+def test_detach_preserves_unrelated_prunable_registration(tmp_path: Path) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    stale = tmp_path / "stale"
+    preserved = tmp_path / "preserved-stale"
+    _git(repo, "worktree", "add", "-q", "-b", "work/stale", str(stale), "HEAD")
+    stale.rename(preserved)
+    result = abandonment.detach_registered_worktree(
+        repo,
+        target,
+        reason="test-clean-preserved",
+        receipt_root=tmp_path / "receipts",
+        owner_probe=lambda _: None,
+    )
+    assert result["state"] == "completed"
+    assert (preserved / "tracked.txt").read_text() == "tracked\n"
+    assert str(stale) in _git(repo, "worktree", "list", "--porcelain")
+    assert _git(repo, "show-ref", "--verify", "refs/heads/work/stale")
+
+
 def test_quarantine_atomically_preserves_bytes(tmp_path: Path) -> None:
     source = tmp_path / "creation-root" / "candidate"
     source.mkdir(parents=True)
