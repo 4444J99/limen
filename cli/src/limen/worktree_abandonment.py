@@ -257,6 +257,9 @@ def detach_registered_worktree(
             raise RuntimeError("worktree-status-unavailable")
         if status.stdout:
             raise RuntimeError("worktree-not-clean")
+        ignored = _run_git(target, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
+        if ignored.returncode != 0 or ignored.stdout:
+            raise RuntimeError("ignored-payload-custody-unproven")
         head = _run_git(target, "rev-parse", "HEAD")
         if head.returncode != 0 or not head.stdout.strip():
             raise RuntimeError("worktree-head-unavailable")
@@ -296,6 +299,56 @@ def detach_registered_worktree(
             code="detach-denied",
             detail=str(exc),
         )
+
+
+def retire_released_worktree(
+    superproject: Path,
+    target: Path,
+    *,
+    expected_head: str,
+    remote_ref: str,
+    receipt_root: Path,
+    owner_probe: OwnerProbe | None = None,
+) -> dict[str, Any]:
+    """Retire a released disposable copy; preserve every ref and uncertain payload.
+
+    The standing loss-free removal grant applies only after fresh remote proof.
+    Repeating release after a crash is harmless: absence is an explicit result,
+    and a surviving checkout is fully rechecked before the native detach.
+    """
+    if not target.exists() and not target.is_symlink():
+        return {"state": "already-absent", "refs_deleted": 0}
+    if not OBJECT_ID_RE.fullmatch(expected_head) or not remote_ref.startswith("refs/heads/"):
+        return {"state": "retained", "reason": "invalid-release-proof"}
+
+    def checked(*args: str) -> str:
+        result = _run_git(target, *args)
+        if result.returncode:
+            raise RuntimeError("release-proof-unavailable")
+        return result.stdout.strip()
+
+    try:
+        if checked("rev-parse", "HEAD") != expected_head:
+            raise RuntimeError("head-advanced")
+        if checked("status", "--porcelain=v1", "--untracked-files=all"):
+            raise RuntimeError("dirty")
+        if checked("ls-files", "--others", "--ignored", "--exclude-standard"):
+            raise RuntimeError("ignored-payload")
+        remote = checked("ls-remote", "--exit-code", "origin", remote_ref).split()
+        if len(remote) != 2 or remote[1] != remote_ref or remote[0] != expected_head:
+            raise RuntimeError("remote-tip-not-exact")
+        # Recheck after the network operation, immediately before the lifecycle.
+        if checked("rev-parse", "HEAD") != expected_head:
+            raise RuntimeError("head-advanced")
+        return detach_registered_worktree(
+            superproject,
+            target,
+            reason="clean+pushed+idle: released disposable checkout; remote exact tip; refs retained",
+            receipt_root=receipt_root,
+            owner_probe=owner_probe,
+        )
+    except (RuntimeError, OSError) as exc:
+        return {"state": "retained", "reason": str(exc), "refs_deleted": 0}
 
 
 def quarantine_path(

@@ -575,6 +575,12 @@ def apply_effector(reg: dict, verdict: dict, armed: bool) -> dict:
 
 
 def _gh(args: list[str], timeout: int = 45):
+    if "issue" in args and "create" in args:
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+        from limen.inventory_admission import reserve_growth
+        reserve_growth("issue", " ".join(args))
     """Shell to gh, returning stdout (str) or None on any failure — fail-open, never raises."""
     try:
         p = subprocess.run(["gh", *args], capture_output=True, text=True, timeout=timeout)

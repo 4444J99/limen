@@ -1202,6 +1202,8 @@ def test_pushed_registered_worktree_does_not_require_clone_ref_store_proof(
     )
 
     def fake_git(args, _cwd, timeout=30):
+        if args == ["ls-files", "--others", "--ignored", "--exclude-standard"]:
+            return subprocess.CompletedProcess(["git", *args], 0, "", "")
         if args == ["status", "--porcelain"]:
             return subprocess.CompletedProcess(["git", *args], 0, "", "")
         if args == ["rev-parse", "HEAD"]:

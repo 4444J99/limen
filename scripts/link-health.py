@@ -324,6 +324,11 @@ def heal(report: dict, apply: bool) -> list[dict]:
             res["status"] = f"error: base ref ({rerr.strip()[:100]})"
             continue
         base_sha = json.loads(rout)["object"]["sha"]
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+        from limen.inventory_admission import reserve_growth
+        reserve_growth("branch", f"{repo}:{branch}")
         ccode, _c, cerr = _gh(["api", "-X", "POST", f"repos/{repo}/git/refs",
                                "-f", f"ref=refs/heads/{branch}", "-f", f"sha={base_sha}"])
         if ccode != 0 and "already exists" not in cerr.lower():
