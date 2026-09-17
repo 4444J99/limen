@@ -396,6 +396,12 @@ gates:
     paths: ["scripts/merge-conduct-principal-registry.py", "scripts/tests/test_merge_conduct_principal_registry.py", "scripts/deploy-conduct-registry.sh", "scripts/check-conduct-registry-deployment.mjs", "scripts/tests/test-conduct-registry-deployment.mjs", "scripts/check-conduct-roles.mjs", "scripts/tests/test-conduct-roles.mjs", "web/worker/src/conduct/auth.js"]
     owner: dispatch
     note: "Legacy compatibility augmentation cannot widen a dedicated inventory collector or mutate caller state on failure."
+  chat-principal-provision-test:
+    command: "node --test scripts/tests/test-provision-chat-principals.mjs"
+    paths: ["scripts/provision-chat-principals.mjs", "scripts/tests/test-provision-chat-principals.mjs"]
+    tier: cheap
+    owner: dispatch
+    note: "Dedicated Chat authority is additive, preserves existing bearers, and refuses incompatible roles."
   pr-autotype-scope-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_pr_lifecycle_autotype.py -q"
     paths: ["scripts/pr-lifecycle-autotype.py", "cli/tests/test_pr_lifecycle_autotype.py"]
