@@ -1,6 +1,6 @@
 // Stateless Streamable HTTP transport; the authenticated conduct HTTP router remains
 // the only admission authority. No MCP session, credential cache, or task store is created.
-import { authorizeConductRequest } from "./auth.js";
+import { authorizeMcpRequest } from "./mcp-oauth.js";
 import { forwardConductRequest } from "./durable-object.js";
 
 const VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26"];
@@ -173,9 +173,11 @@ async function callTool(request, env, id, params) {
 
 export async function handleConductMcp(request, env) {
   // Authenticate every method, including initialize, tools/list, GET and OPTIONS.
-  const auth = await authorizeConductRequest(request, env);
+  const auth = await authorizeMcpRequest(request, env);
   if (!auth.ok) return response({ error: "Conduct authentication unavailable or rejected" }, auth.status,
-    auth.status === 401 ? { "www-authenticate": 'Bearer realm="limen-conduct"' } : {});
+    auth.challenge ? { "www-authenticate": auth.challenge }
+      : auth.status === 401 ? { "www-authenticate": 'Bearer realm="limen-conduct"' } : {});
+  request = auth.request;
   if (!originAllowed(request, env)) return response({ error: "Origin not allowed" }, 403);
   if (request.method !== "POST") return response({ error: "Only POST is supported; no SSE stream or session storage" }, 405, { allow: "POST" });
   const version = request.headers.get("mcp-protocol-version");
@@ -219,7 +221,9 @@ export async function handleConductMcp(request, env) {
   if (method === "ping") return result(id, {});
   if (method === "tools/list") {
     if (Object.keys(params).some((key) => key !== "_meta")) return rpcError(id, -32602, "Pagination is not supported");
-    return result(id, { tools: [...TOOLS.values()].map((entry) => entry.definition) });
+    return result(id, { tools: [...TOOLS.values()].map((entry) => ({ ...entry.definition,
+      ...(auth.scopes ? { securitySchemes: [{ type: "oauth2", scopes: auth.scopes }] } : {}),
+    })) });
   }
   if (method === "tools/call") return callTool(request, env, id, params);
   return rpcError(id, -32601, "Method not found");

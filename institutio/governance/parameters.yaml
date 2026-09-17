@@ -20,6 +20,12 @@
 schema_version: 0.1
 
 parameters:
+  LIMEN_CONDUCT_MCP_OAUTH:
+    default: ""
+    env: LIMEN_CONDUCT_MCP_OAUTH
+    self_update: none
+    owner: worker
+    note: "Private optional OAuth resource configuration for /mcp, owned by credential wall #320. Empty preserves legacy bearer-only operation. Explicit issuer/resource/JWKS/scope and subject/client bindings select existing principals without expanding roles; real values stay in the credential organ and Worker secret."
   LIMEN_ATTEMPT_DEADLINE:
     default: ""
     env: LIMEN_ATTEMPT_DEADLINE
