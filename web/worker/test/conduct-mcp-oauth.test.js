@@ -88,7 +88,7 @@ test("OAuth uses the exact native principal through the unchanged keeper; tokens
   assert.equal(JSON.stringify(body).includes(TOKEN), false);
   assert.equal(JSON.stringify(body).includes(bearer), false);
   const listed = await (await worker.fetch(request(bearer, { jsonrpc: "2.0", id: 2, method: "tools/list" }), env)).json();
-  assert.equal(listed.result.tools.length, 12);
+  assert.equal(listed.result.tools.length, 14);
   assert.ok(listed.result.tools.every(tool => tool.securitySchemes[0].type === "oauth2"));
   assert.equal(fetches.length, 1, "JWKS is cached across calls");
 });

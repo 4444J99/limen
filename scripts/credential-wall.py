@@ -146,6 +146,13 @@ CI_SECRETS: list[dict] = [
         "issue": "#320",
     },
     {
+        "name": "LIMEN_CHAT_GITHUB / LIMEN_CHAT_GITHUB_TOKEN / LIMEN_CHAT_EXECUTOR_TOKEN",
+        "home": "Credential organ; private Worker configuration and dedicated GitHub Actions secrets",
+        "used": "Disabled-by-default Chat-authored bounded GitHub execution; separate repository and executor authority",
+        "hand": "unconfigured; exact-head tests and governed source landing precede narrow credential installation; no reuse of projection or relay-owner token",
+        "issue": "#320",
+    },
+    {
         "name": "LIMEN_CONDUCT_MCP_OAUTH",
         "home": "Credential organ + private Cloudflare Worker secret; issuer/client/subject bindings must never enter source or prompts",
         "used": "Optional /mcp OAuth resource adapter; verified issuer, resource, scope and subject/client binding select an existing conduct principal",
