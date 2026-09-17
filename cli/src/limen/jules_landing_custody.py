@@ -22,20 +22,6 @@ from limen.worktree_roots import default_worktrees_root
 WT_ROOT = Path(os.environ.get("LIMEN_WORKTREES") or default_worktrees_root())
 JULES = os.environ.get("LIMEN_JULES_BIN", "jules")
 _TASK_ID_RE = re.compile(r"Complete task (\S+?):")
-_GENERATED_CLEAN_PATHS = (
-    "node_modules",
-    ".venv",
-    ".next",
-    "dist",
-    "build",
-    "coverage",
-    ".pytest_cache",
-    ".mypy_cache",
-    ".ruff_cache",
-    ".parcel-cache",
-    ".turbo",
-    "__pycache__",
-)
 
 
 class ClosedUnmergedPR(RuntimeError):
@@ -50,14 +36,24 @@ def landing_branch(task_id: str, session_id: str) -> str:
 
 
 def purge_generated_payloads(wt: Path) -> str:
-    """Remove only ignored generated payloads from a retained worktree."""
-    if not wt.exists():
-        return "missing"
-    clean = _git(["clean", "-Xdf", "--", *_GENERATED_CLEAN_PATHS], wt, timeout=180)
-    if clean.returncode != 0:
-        return f"failed:{(clean.stderr or clean.stdout).strip()[:160]}"
-    removed = sum(1 for line in (clean.stdout or "").splitlines() if line.strip().startswith("Removing "))
-    return f"removed:{removed}"
+    """Keep ignored payloads until their owning custody workflow proves recovery."""
+    return "retained-for-custody" if wt.exists() else "missing"
+
+
+def _release_note(repo_dir: Path, wt: Path, branch: str, expected_head: str) -> str:
+    from limen.worktree_abandonment import retire_released_worktree
+
+    root = Path(os.environ.get("LIMEN_LIVE_ROOT") or os.environ.get("LIMEN_ROOT") or Path.home() / "Workspace/limen")
+    receipt = retire_released_worktree(
+        repo_dir,
+        wt,
+        expected_head=expected_head,
+        remote_ref=f"refs/heads/{branch}",
+        receipt_root=root / "logs/worktree-abandonment",
+    )
+    if receipt["state"] in {"completed", "already-absent"}:
+        return f"local root retired: {wt}; branch retained: {branch}; release {receipt['state']}"
+    return f"{_retention_note(wt, branch)}; release {receipt.get('reason', 'retained')}"
 
 
 def load_orphan_adoptions(path: Path) -> frozenset[str]:
@@ -234,7 +230,15 @@ def _create_or_adopt_pr(
     except RuntimeError as exc:
         return f"FAIL {task.id}: existing PR lookup ({exc})"
     if existing_pr:
-        return f"LANDED {task.id} -> {existing_pr} ; adopted existing PR for {branch}"
+        wt = WT_ROOT / branch.replace("/", "_")
+        release = "local root already absent"
+        if wt.exists():
+            repo_dir = _resolve_repo_dir(task)
+            head = _git(["rev-parse", "HEAD"], wt)
+            release = _retention_note(wt, branch)
+            if repo_dir is not None and head.returncode == 0:
+                release = _release_note(repo_dir, wt, branch, head.stdout.strip())
+        return f"LANDED {task.id} -> {existing_pr} ; adopted existing PR for {branch}; {release}"
     pr = subprocess.run(
         [
             "gh",
@@ -337,6 +341,8 @@ def land_one(
             expected_head_oid=remote_fields[0],
         )
         generated_cleanup = purge_generated_payloads(wt)
+        if result.startswith("LANDED "):
+            retain = _release_note(repo_dir, wt, branch, remote_fields[0])
         return f"{result} ; generated cleanup {generated_cleanup}; {retain}"
     if remote_branch.returncode != 2:
         detail = (remote_branch.stderr or remote_branch.stdout or "git ls-remote failed").strip()[:160]
@@ -353,8 +359,15 @@ def land_one(
             repo_dir,
         )
         if local_branch.returncode == 0:
+            from limen.inventory_admission import reserve_growth
+
+            reserve_growth("worktree", str(wt), work_key=task.id)
             add = _git(["worktree", "add", str(wt), branch], repo_dir, timeout=120)
         elif local_branch.returncode == 1:
+            from limen.inventory_admission import reserve_growth
+
+            reserve_growth("branch", f"{repo_dir}:{branch}", work_key=task.id)
+            reserve_growth("worktree", str(wt), work_key=task.id)
             add = _git(
                 ["worktree", "add", "-b", branch, str(wt), f"origin/{base}"],
                 repo_dir,
@@ -467,6 +480,8 @@ def land_one(
         expected_head_oid=pushed_head.stdout.strip(),
     )
     generated_cleanup = purge_generated_payloads(wt)
+    if result.startswith("LANDED "):
+        retain = _release_note(repo_dir, wt, branch, pushed_head.stdout.strip())
     return f"{result} ; generated cleanup {generated_cleanup}; {retain}"
 
 
