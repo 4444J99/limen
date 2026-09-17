@@ -69,3 +69,13 @@ Next verification: `bash scripts/verify-scoped.sh --base origin/main --require-b
 No deployment, OAuth login, credential mint, Chat acceptance, schedule migration,
 or completion claim occurred. Credential account/install atoms belong to #320;
 runtime-denied desktop access requires actual native Chat evidence from the owner.
+
+Publication attempt: GitHub rejected `git push -u origin feat/chat-github-20260917`
+because the current OAuth credential lacks `workflow` scope. No remote branch or
+draft PR was created by that attempt. The implementation remains preserved in the
+local topic branch; #320 owns the external authorization gate and continuation.
+The account owner must authorize workflow-writing access before the same push can
+succeed. Do not switch credentials, widen grants, or disguise the workflow to
+evade the rejection. The documented account command is
+`gh auth refresh --hostname github.com --scopes workflow`; it is a human account
+action, not an automatically executed implementation step.
