@@ -172,11 +172,19 @@ def _registered_worktree_paths(superproject: Path) -> tuple[Path, ...]:
     if listed.returncode != 0:
         raise RuntimeError((listed.stderr or listed.stdout or "worktree-list-unavailable").strip())
     paths: list[Path] = []
-    for line in listed.stdout.splitlines():
+    for record in listed.stdout.split("\n\n"):
+        lines = record.splitlines()
+        line = next((value for value in lines if value.startswith("worktree ")), "")
         if not line.startswith("worktree "):
             continue
         try:
             paths.append(Path(line.removeprefix("worktree ")).resolve(strict=True))
+        except FileNotFoundError as exc:
+            if any(value.startswith("prunable ") for value in lines):
+                # An unrelated stale registration is not a live removal target.
+                # Preserve its metadata; do not prune or inspect its old contents.
+                continue
+            raise RuntimeError("registered-worktree-path-unavailable") from exc
         except OSError as exc:
             raise RuntimeError("registered-worktree-path-unavailable") from exc
     return tuple(paths)
