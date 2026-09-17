@@ -8,8 +8,9 @@ what any of them were. The answer (four legitimate LaunchAgents sharing one TCC-
 binary; macOS names a legacy BTM row by its executable BASENAME, not the plist Label, and files
 adhoc-signed binaries under a synthetic "Unknown Developer") had to be derived by hand with
 ``sfltool dumpbtm``. This organ makes that answer standing: a declared registry
-(``spec/background-items.json``) × the live LaunchAgents directory × (when available) the BTM
-database, classified every beat.
+(``spec/background-items.json``) × the live LaunchAgents directory, classified every beat.
+The BTM database is an intentional, interactive corroboration path only: unattended runs never
+invoke ``sfltool`` because that command may present an administrator dialog on current macOS.
 
 Classes (dialogs-silenced vocabulary — classify and name the owner, mutate nothing):
   ESTATE       label declared in the registry's ``estate_agents``
@@ -20,15 +21,16 @@ Classes (dialogs-silenced vocabulary — classify and name the owner, mutate not
 ``--check`` exits 1 iff any UNDECLARED plist exists in the LaunchAgents directory. Declared
 estate agents with no installed plist are reported (``missing_estate``) but do not gate — the
 liveness organ (scripts/launch-agent-liveness.py) owns aliveness; this organ owns declaration
-parity. BTM rows are corroboration only (``sfltool dumpbtm`` works unprivileged on this host,
-measured 2026-08-15): unmatched BTM identifiers are surfaced as advisory, never gate, because
-BTM also carries app/SMAppService registrations the plist directory does not own.
+parity. BTM rows are corroboration only: ``--inspect-btm`` explicitly requests a bounded
+``sfltool dumpbtm`` capture. Unmatched BTM identifiers are surfaced as advisory, never gate,
+because BTM also carries app/SMAppService registrations the plist directory does not own. Without
+that flag the report records BTM as unmeasured and never starts ``sfltool``.
 
 This organ NEVER writes a plist, toggles a row, or touches launchd state — Rule 55/55a's
 hard-block hook is the authority; classification and reporting only.
 
-Off-darwin (CI) the LaunchAgents directory is absent and sfltool does not exist: both fail OPEN
-(empty census, exit 0), same contract as launch-agent-liveness.
+Off-darwin (CI) the LaunchAgents directory is absent and an explicitly requested BTM inspection is
+unavailable: both fail OPEN (empty census, exit 0), same contract as launch-agent-liveness.
 
 PII-clean: labels, basenames, classes, counts, ISO times only — never argv tails, tokens, paths
 outside the estate.
@@ -36,6 +38,7 @@ outside the estate.
 Usage:
   python3 scripts/background-items-census.py            # report + receipt, exit 0
   python3 scripts/background-items-census.py --check    # gate mode: exit 1 on UNDECLARED
+  python3 scripts/background-items-census.py --inspect-btm  # intentional BTM corroboration
   python3 scripts/background-items-census.py --registry F   # override registry (tests)
 """
 
@@ -134,13 +137,25 @@ def census_plists(directory, registry):
     return rows
 
 
-def census_btm(dump_text, registry):
-    """Classify BTM identifiers from a dumpbtm capture. None/empty -> unmeasured."""
+def census_btm(dump_text, registry, *, unavailable_reason="unavailable_or_failed"):
+    """Classify BTM identifiers from a dumpbtm capture. None/empty -> explicit unmeasured."""
     if not dump_text:
-        return {"available": False, "status": "unmeasured", "unmatched": [], "total": None}
+        return {
+            "available": False,
+            "status": "unmeasured",
+            "reason": unavailable_reason,
+            "unmatched": [],
+            "total": None,
+        }
     identifiers = sorted({m for m in BTM_IDENTIFIER_RE.findall(dump_text) if "." in m})
     unmatched = [i for i in identifiers if classify_label(i, registry) is None]
-    return {"available": True, "status": "measured", "unmatched": unmatched, "total": len(identifiers)}
+    return {
+        "available": True,
+        "status": "measured",
+        "reason": None,
+        "unmatched": unmatched,
+        "total": len(identifiers),
+    }
 
 
 def missing_estate(rows, registry):
@@ -148,9 +163,13 @@ def missing_estate(rows, registry):
     return sorted(label for label in registry["estate"] if label not in installed)
 
 
-def build_report(registry):
+def build_report(registry, *, inspect_btm=False):
     rows = census_plists(LAUNCHAGENTS_DIR, registry)
-    btm = census_btm(_sfltool_dumpbtm(), registry)
+    btm = (
+        census_btm(_sfltool_dumpbtm(), registry)
+        if inspect_btm
+        else census_btm(None, registry, unavailable_reason="not_requested")
+    )
     undeclared = [r["label"] for r in rows if r["class"] == "undeclared"]
     return {
         "timestamp": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
@@ -194,6 +213,8 @@ def print_report(report):
         print(f"  btm         {report['btm']['total']} identifiers; {len(extra)} unmatched (advisory)")
         for ident in extra[:10]:
             print(f"  btm-extra   {ident}")
+    elif report["btm"].get("reason") == "not_requested":
+        print("  btm         unmeasured (intentional inspection not requested; use --inspect-btm)")
     else:
         print("  btm         unmeasured (sfltool unavailable or bounded capture failed)")
 
@@ -202,11 +223,16 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--check", action="store_true", help="exit 1 if any UNDECLARED plist exists")
     parser.add_argument("--no-receipt", action="store_true", help="report only; write no receipt")
+    parser.add_argument(
+        "--inspect-btm",
+        action="store_true",
+        help="intentionally run bounded sfltool BTM corroboration (never used by scheduled census)",
+    )
     parser.add_argument("--registry", default=str(DEFAULT_REGISTRY), help="registry override (tests)")
     args = parser.parse_args()
 
     registry = load_registry(args.registry)
-    report = build_report(registry)
+    report = build_report(registry, inspect_btm=args.inspect_btm)
     print_report(report)
     if not args.no_receipt:
         write_receipt(report)

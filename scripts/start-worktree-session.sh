@@ -19,10 +19,12 @@ Examples:
 canonical Limen census. Omitting --agent creates the capsule without launching; its kickstart uses
 the same live-derived Auto selection with a login-shell fallback.
 
---model, --reasoning-effort, and --sandbox form one explicit Codex launch profile. All three are
-required together. The exact model and effort must exist in the live local Codex catalog at render
-and launch time; no substitution is permitted. Omitting --agent records the Codex profile without
-launching immediately; an explicit lane whose registry profile uses the Codex adapter launches it.
+--sandbox alone forms a provider-neutral Codex authorization profile. `danger-full-access` requires
+--conduct, is validated against the live CLI, and launches with Codex's exact bypass-all flag only
+after human-protected registration. Adding --model and --reasoning-effort forms an explicit Codex
+model profile; all three values are then required, and the exact model and effort must exist in the
+live local catalog at render and launch time. Omitting --agent records either profile without
+launching immediately.
 
 --model supplied ALONE is a lane tier pin for a non-Codex lane: it is passed to the launched CLI as
 --model <value> and nothing else changes. It requires --agent, and the selected registry profile
@@ -49,7 +51,9 @@ first kickstart, survives successor sessions, and is never silently reset by a r
 --runway-mode inherit copies the predecessor's admitted start and deadline exactly and refuses
 --runway. --runway-mode renew requires an explicit --runway and creates a fresh unstarted contract.
 The predecessor checkout must be on its declared branch at the exact live origin branch head; that
-commit becomes the successor base. Both modes retain provider-neutral workspace-write authorization.
+commit becomes the successor base. Both modes retain provider-neutral workspace-write authorization
+unless --sandbox explicitly creates an authorization-only Codex successor; v3 successors preserve
+that explicit authorization across later successors.
 Only the predecessor slug, branch, and SHA-256 receipt digest enter the successor receipt; its local
 path is never recorded. Re-rendering must repeat the same predecessor and runway-mode arguments.
 
@@ -305,14 +309,19 @@ launch_profile_values=0
 [[ -n "$launch_model" ]] && launch_profile_values=$((launch_profile_values + 1))
 [[ -n "$launch_reasoning_effort" ]] && launch_profile_values=$((launch_profile_values + 1))
 [[ -n "$launch_sandbox" ]] && launch_profile_values=$((launch_profile_values + 1))
+codex_model_profile=0
 if [[ "$launch_profile_values" -eq 1 && -n "$launch_model" ]]; then
   # --model ALONE is a lane tier pin: it pins the launched lane's model without claiming the
   # Codex explicit launch profile. Move it out of launch_model so the v2 contract is not built.
   launch_lane_model="$launch_model"
   launch_model=""
   launch_profile_values=0
+elif [[ "$launch_profile_values" -eq 1 && -n "$launch_sandbox" ]]; then
+  : # Authorization-only Codex profile; provider/model remain dynamic.
+elif [[ "$launch_profile_values" -eq 3 ]]; then
+  codex_model_profile=1
 elif [[ "$launch_profile_values" -ne 0 && "$launch_profile_values" -ne 3 ]]; then
-  echo "--model alone pins a non-Codex lane's model; otherwise --model, --reasoning-effort, and --sandbox must be supplied together" >&2
+  echo "--sandbox may stand alone; --model alone pins a non-Codex lane; otherwise --model, --reasoning-effort, and --sandbox must be supplied together" >&2
   exit 2
 fi
 if [[ -n "$launch_lane_model" ]]; then
@@ -325,8 +334,8 @@ if [[ -n "$launch_lane_model" ]]; then
     exit 2
   fi
 fi
-if [[ "$launch_profile_values" -eq 3 && "$write_readme" -ne 1 ]]; then
-  echo "explicit model launch profiles cannot be combined with --no-readme" >&2
+if [[ "$launch_profile_values" -ne 0 && "$write_readme" -ne 1 ]]; then
+  echo "Codex authorization and model launch profiles cannot be combined with --no-readme" >&2
   exit 2
 fi
 case "$runway_mode" in
@@ -348,8 +357,8 @@ elif [[ "$runway_mode" == "renew" && "$runway_explicit" -ne 1 ]]; then
   echo "--runway-mode renew requires an explicit --runway" >&2
   exit 2
 fi
-if [[ -n "$predecessor_receipt" && ( "$launch_profile_values" -ne 0 || -n "$launch_lane_model" ) ]]; then
-  echo "a successor derives its launch contract from the predecessor; explicit model flags are not accepted" >&2
+if [[ -n "$predecessor_receipt" && ( "$codex_model_profile" -eq 1 || -n "$launch_lane_model" ) ]]; then
+  echo "a successor may override only its Codex sandbox; explicit model flags are not accepted" >&2
   exit 2
 fi
 if [[ -n "$predecessor_receipt" && "$write_readme" -ne 1 ]]; then
@@ -385,14 +394,44 @@ if [[ -n "$predecessor_receipt" ]]; then
   if [[ "$runway_mode" == "renew" ]]; then
     successor_metadata_args+=(--runway "$runway")
   fi
+  if [[ -n "$launch_sandbox" ]]; then
+    successor_metadata_args+=(--sandbox "$launch_sandbox")
+  fi
   if ! successor_metadata="$(python3 "$contract_helper" "${successor_metadata_args[@]}")"; then
     exit 2
   fi
   predecessor_head="$(printf '%s\n' "$successor_metadata" | sed -n '5p')"
+  successor_contract_schema="$(printf '%s\n' "$successor_metadata" | sed -n '6p')"
+  successor_contract_sandbox="$(printf '%s\n' "$successor_metadata" | sed -n '7p')"
   if [[ ! "$predecessor_head" =~ ^([0-9a-f]{40}|[0-9a-f]{64})$ ]]; then
     echo "predecessor receipt did not resolve an exact remotely custodied HEAD" >&2
     exit 2
   fi
+  case "$successor_contract_schema" in
+    limen.workstream.contract.v1)
+      [[ "$successor_contract_sandbox" == "workspace-write" ]] || {
+        echo "predecessor successor metadata has an invalid default authorization" >&2
+        exit 2
+      }
+      ;;
+    limen.workstream.contract.v3)
+      if [[ -z "$launch_sandbox" ]]; then
+        launch_sandbox="$successor_contract_sandbox"
+        launch_profile_values=1
+      elif [[ "$launch_sandbox" != "$successor_contract_sandbox" ]]; then
+        echo "predecessor successor metadata changed its requested authorization" >&2
+        exit 2
+      fi
+      ;;
+    *)
+      echo "predecessor successor metadata has an unsupported contract schema" >&2
+      exit 2
+      ;;
+  esac
+fi
+if [[ "$launch_sandbox" == "danger-full-access" && "$conduct" -ne 1 ]]; then
+  echo "danger-full-access requires --conduct so bypass-all is bound to a registered human-protected direct session" >&2
+  exit 2
 fi
 if [[ -n "$campaign_relay" ]]; then
   if [[ ! "$campaign_relay" =~ ^[0-9a-f]{64}$ \
@@ -478,7 +517,7 @@ from limen.workstream_provider import workstream_binary_candidates, workstream_l
 
 
 requested = sys.argv[1].strip().lower()
-require_codex_adapter = sys.argv[2] == "3"
+require_codex_adapter = sys.argv[2] != "0"
 if sys.argv[3] not in {"0", "1"}:
     raise SystemExit("invalid autonomous workstream selection mode")
 autonomous = sys.argv[3] == "1"
@@ -571,8 +610,8 @@ case "$agent_model_flag" in
     exit 2
     ;;
 esac
-if [[ "$launch_profile_values" -eq 3 && "$agent_launch_adapter" != "codex" ]]; then
-  echo "explicit model launch profiles require the Codex native lane" >&2
+if [[ "$launch_profile_values" -ne 0 && "$agent_launch_adapter" != "codex" ]]; then
+  echo "Codex authorization and model launch profiles require the Codex native lane" >&2
   exit 2
 fi
 if [[ -n "$launch_lane_model" ]]; then
@@ -589,7 +628,7 @@ if [[ -n "$launch_lane_model" ]]; then
     exit 2
   fi
 fi
-if [[ "$launch_profile_values" -eq 3 && -n "$launch_sandbox" ]]; then
+if [[ -n "$launch_sandbox" ]]; then
   # STATIC sandbox validation, ordered before EVERY binary probe for the same reason the lane tier
   # pin above is: an invalid --sandbox value is invalid regardless of what is installed, so CI (no
   # codex binary) must reach the same verdict as a workstation that has one. Ordered before the
@@ -604,16 +643,21 @@ if [[ "$launch_agent" -eq 1 ]] && ! workstream_native_binary "$agent" "$registry
   echo "native CLI not found for canonical lane $agent" >&2
   exit 127
 fi
-if [[ "$launch_profile_values" -eq 3 ]]; then
+if [[ "$codex_model_profile" -eq 1 || "$launch_sandbox" == "danger-full-access" ]]; then
   if ! codex_binary="$(workstream_native_binary "$agent" "$registry_binary")"; then
     echo "native CLI not found for canonical lane $agent" >&2
     exit 127
   fi
-  if ! python3 "$contract_helper" validate-codex-launch \
-    --binary "$codex_binary" \
-    --model "$launch_model" \
-    --reasoning-effort "$launch_reasoning_effort" \
-    --sandbox "$launch_sandbox" >/dev/null; then
+  if [[ "$codex_model_profile" -eq 1 ]]; then
+    if ! python3 "$contract_helper" validate-codex-launch \
+      --binary "$codex_binary" \
+      --model "$launch_model" \
+      --reasoning-effort "$launch_reasoning_effort" \
+      --sandbox "$launch_sandbox" >/dev/null; then
+      exit 2
+    fi
+  elif ! python3 "$contract_helper" validate-codex-bypass \
+    --binary "$codex_binary" >/dev/null; then
     exit 2
   fi
 fi

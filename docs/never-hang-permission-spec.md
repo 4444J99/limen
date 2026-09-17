@@ -97,9 +97,12 @@
 4. A runtime assertion rejects missing, duplicate, prompt-capable, or bypass modes before
    launch. The same contract is regression-tested through the actual `_agent_argv` seam,
    including model injection and the required mutation tools.
-5. Generated Codex workstreams launch with `--ask-for-approval never --sandbox workspace-write`;
-   `cli/tests/test_workstream_command.py` proves both interactive and autonomous kickstarts keep
-   reversible in-scope work no-modal without widening the sandbox or mutating home configuration.
+5. Generated Codex workstreams default to `--ask-for-approval never --sandbox workspace-write`.
+   A direct human-protected capsule with an explicit authorization-only `danger-full-access` profile
+   instead requires successful `--conduct` registration, then uses the one exact
+   `--dangerously-bypass-approvals-and-sandbox` flag after live preflight; v3 successors preserve
+   that choice without pinning a model. This never widens conducted packet launches or the
+   contract's retained high-risk gates.
 6. Dispatch adapters realize the same conducted-packet contract without pretending every CLI has
    Codex-shaped controls. Codex places `never` and `workspace-write` before `exec`. Agy uses
    sandboxed print mode with a finite print timeout and never uses its dangerous permission bypass.
