@@ -1,12 +1,13 @@
 // Deterministic GitHub execution. Source payloads never enter public conduct graphs.
 import { configuredConductPrincipals } from "./auth.js";
 import { ConductError } from "./keeper.js";
-import { canonicalHash, validateSession, validateWorkPacket, validateReceipt } from "./schemas.js";
+import { canonicalHash, validateSession, validateWorkPacket, validateReceipt, validateExecutorAttempt } from "./schemas.js";
 
 const SHA = /^[0-9a-f]{40}$/;
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,100}$/;
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const enc = new TextEncoder();
+const TERMINAL = new Set(["merged", "pr_created", "failed", "blocked", "expired", "cancelled"]);
 const pathUrl = path => path.split("/").map(encodeURIComponent).join("/");
 const fail = (code, status = 409) => { throw new ConductError(code, status); };
 const exactKeys = (value, keys) => value && typeof value === "object" && !Array.isArray(value)
@@ -142,13 +143,19 @@ export class ChatGithubController {
     const prior = await this.ctx.storage.get(key);
     if (prior) {
       if (prior.digest !== digest) fail("chat_request_reused");
+      if (!TERMINAL.has(prior.phase)) {
+        await this.ctx.storage.put("chat:active", key);
+        await this.ctx.storage.setAlarm(Date.now() + 1000);
+      }
       return this.summary(prior);
     }
     const activeKey = await this.ctx.storage.get("chat:active");
     const active = activeKey && await this.ctx.storage.get(activeKey);
-    if (active && !["merged", "pr_created", "failed", "blocked"].includes(active.phase)) fail("chat_executor_busy");
+    if (active && !TERMINAL.has(active.phase)) fail("chat_executor_busy");
     const repo = await this.github(`/repos/${input.repository}`);
     if (repo.private) fail("chat_private_runner_unverified", 403);
+    const ancestry=await this.github(`/repos/${input.repository}/compare/${input.base_sha}...${encodeURIComponent(repo.default_branch)}`);
+    if(!["ahead","identical"].includes(ancestry.status)) fail("chat_base_not_in_default_history");
     const control = await this.github(`/repos/${config.control_repository}/branches/main`);
     const workflow = await this.github(`/repos/${config.control_repository}/actions/workflows/${config.workflow_id}`);
     if (control.commit.sha !== config.control_sha || !control.protected || workflow.state !== "active"
@@ -207,19 +214,27 @@ export class ChatGithubController {
         await this.ctx.storage.put(`${key}:file:${index}:${offset / 12000}`, text.slice(offset, offset + 12000));
       }
     }
-    const admitted = await this.service.call("submit", { principal, packet });
-    if (admitted.status === "busy") return admitted;
     const record = { key, digest, principal_id: principal.principal_id, repository: input.repository, base_sha: input.base_sha,
       base_tree: base.tree.sha, branch, landing: input.landing, profile: input.verification_profile,
       control_sha: config.control_sha, control_repository: config.control_repository, workflow_id: config.workflow_id,
-      profile_digest: packet.execution.profile_digest, created_at: now.toISOString(), deadline, count: input.changes.length,
+      profile_digest: packet.execution.profile_digest, sandbox_image:profile.image, created_at: now.toISOString(), deadline, count: input.changes.length,
       modes: input.changes.map(change => treeByPath.get(change.path)?.mode || "100644"), entries: [],
-      run_id: admitted.run_id, lease: admitted.lease, phase: "prepared" };
+      packet, run_id: null, lease: null, phase: "admitting" };
     await this.ctx.storage.put(key, record);
-    await this.ctx.storage.put(`chat:run:${record.run_id}`, key);
     await this.ctx.storage.put("chat:active", key);
     await this.ctx.storage.setAlarm(Date.now() + 1000);
+    await this.admit(record, principal);
     return this.summary(record);
+  }
+
+  async admit(record, principal) {
+    // The identical packet survives a crash after canonical admission but before
+    // the local run index is saved. Canonical submit then returns its duplicate.
+    const admitted = await this.service.call("submit", { principal, packet: record.packet });
+    if (admitted.status === "busy") fail("chat_executor_busy");
+    record.run_id = admitted.run_id; record.lease = admitted.lease; record.phase = "prepared";
+    await this.ctx.storage.put(`chat:run:${record.run_id}`, record.key);
+    await this.ctx.storage.put(record.key, record);
   }
 
   summary(record) {
@@ -243,11 +258,22 @@ export class ChatGithubController {
     return graph.nodes.find(node => node.run_id === record.run_id);
   }
 
-  async activeLease(record, principal) {
+  async activeLease(record, principal, attemptStatus) {
     const node = await this.node(record);
+    if(node.status==="stop_requested" && !["blocked","failed"].includes(attemptStatus)) fail("chat_stop_requested");
+    if(attemptStatus === "running" && node.attempts?.some(attempt=>attempt.status==="succeeded")) attemptStatus="succeeded";
     const claim = await this.service.call("claim", { lease_id: node.lease.lease_id, generation: node.lease.generation, principal });
-    await this.service.call("heartbeat", { lease_id: node.lease.lease_id, generation: node.lease.generation,
-      capability_token: claim.capability_token, principal, observed_heads: {} });
+    const heartbeat=await this.service.call("heartbeat", { lease_id: node.lease.lease_id, generation: node.lease.generation,
+      capability_token: claim.capability_token, principal, observed_heads: {},
+      ...(attemptStatus ? {attempt: validateExecutorAttempt({
+        attempt_id: `chat-${record.digest}`, run_id:record.run_id,lease_id:node.lease.lease_id,
+        lease_generation:node.lease.generation,executor:node.lease.executor,adapter:"github-actions-chat",
+        status:attemptStatus,submitted_at:record.created_at,updated_at:new Date().toISOString(),
+        provider_run_id:record.workflow_run_id ? String(record.workflow_run_id) : null,
+        provider_run_url:record.workflow_run_id ? `https://github.com/${record.control_repository}/actions/runs/${record.workflow_run_id}` : null,
+        failure_class:["failed","blocked"].includes(attemptStatus)?"permanent":null,
+      })} : {}) });
+    if(heartbeat.status!=="active" || heartbeat.lease.lease_id!==node.lease.lease_id) fail("chat_lease_fenced");
     return { node, claim };
   }
 
@@ -255,9 +281,27 @@ export class ChatGithubController {
     const key = await this.ctx.storage.get("chat:active");
     if (!key) return;
     const record = await this.ctx.storage.get(key);
-    if (!record || !["prepared", "blobs", "commit", "ref", "dispatch"].includes(record.phase)) return;
+    if (!record || TERMINAL.has(record.phase)) return;
     try {
       const config = chatConfiguration(this.env);
+      // Re-arm before awaits: Cloudflare may interrupt at any external boundary.
+      await this.ctx.storage.setAlarm(Date.now() + 30000);
+      if (record.phase === "admitting") {
+        const principal = configuredConductPrincipals(this.env).find(entry=>entry.principal.principal_id===record.principal_id)?.principal;
+        if (!principal) fail("chat_principal_removed",403);
+        await this.admit(record,principal);
+      }
+      const node = await this.node(record);
+      if (["succeeded","failed","blocked","expired","cancelled","fenced"].includes(node.status)) {
+        record.phase = node.status === "succeeded" ? record.terminal_phase || "blocked" : node.status === "fenced" ? "blocked" : node.status;
+        await this.ctx.storage.put(key,record); return;
+      }
+      if (Date.now() >= Date.parse(record.deadline) - 15000) {
+        return await this.terminate(record,config.executor,"blocked","chat_original_deadline_exhausted");
+      }
+      if (["dispatched","dispatch_unobserved","running","queued"].includes(record.phase)) {
+        return await this.reconcile(record,config.executor);
+      }
       if (config.control_sha !== record.control_sha) fail("chat_control_changed");
       await this.activeLease(record, config.executor);
       if (["prepared", "blobs"].includes(record.phase)) {
@@ -287,6 +331,7 @@ export class ChatGithubController {
         if (control.commit.sha !== record.control_sha || !control.protected) fail("chat_control_changed");
         // The durable marker precedes the external write. An ambiguous response is never retried.
         record.phase = "dispatch_unobserved"; await this.ctx.storage.put(key, record);
+        await this.activeLease(record,config.executor,"launching");
         await this.github(`/repos/${record.control_repository}/actions/workflows/${record.workflow_id}/dispatches`, "POST", {
           ref: "main", inputs: { run_id: record.run_id, control_sha: record.control_sha },
         });
@@ -296,9 +341,46 @@ export class ChatGithubController {
       if (["blobs", "commit", "ref", "dispatch"].includes(record.phase)) await this.ctx.storage.setAlarm(Date.now() + 1000);
     } catch (error) {
       record.error = error instanceof ConductError ? error.message : "chat_external_outcome_unobserved";
-      if (record.phase !== "dispatch_unobserved") record.phase = "blocked";
+      if(Date.now() >= Date.parse(record.deadline)) record.phase="expired";
       await this.ctx.storage.put(key, record);
+      if (record.phase !== "dispatch_unobserved") {
+        try { await this.terminate(record,chatConfiguration(this.env).executor,"blocked",record.error); }
+        catch { /* Original alarm is still armed; canonical expiry remains authoritative. */ }
+      }
     }
+  }
+
+  async reconcile(record, principal) {
+    if (!record.workflow_run_id) {
+      const page = await this.github(`/repos/${record.control_repository}/actions/workflows/${record.workflow_id}/runs?event=workflow_dispatch&per_page=100`);
+      const runs = page.workflow_runs?.filter(run=>run.display_title===`chat:${record.run_id}`) || [];
+      if (runs.length > 1) return this.terminate(record,principal,"blocked","chat_dispatch_ambiguous");
+      if (!runs.length) return; // Bounded by the original deadline; never redispatch.
+      record.workflow_run_id = runs[0].id; await this.ctx.storage.put(record.key,record);
+    }
+    const identity = {workflow_run_id:record.workflow_run_id,run_attempt:1};
+    await this.executorContext(principal,record.run_id,identity);
+    if (record.pull_request && record.verification) {
+      return this.complete(principal,record.run_id,{...identity,pull_request:record.pull_request,verification:record.verification});
+    }
+    const run = await this.github(`/repos/${record.control_repository}/actions/runs/${record.workflow_run_id}`);
+    if (run.status === "completed") return this.terminate(record,principal,"failed","chat_workflow_ended_without_landing_receipt");
+  }
+
+  async terminate(record, principal, outcome, detail) {
+    if (!record.run_id) {
+      record.phase="blocked";record.error=detail;await this.ctx.storage.put(record.key,record);return this.summary(record);
+    }
+    const {node,claim}=await this.activeLease(record,principal,outcome==="cancelled"?"blocked":outcome);
+    const receipt=validateReceipt({receipt_id:`chat-${outcome}-${record.digest}`,run_id:record.run_id,
+      lease_id:node.lease.lease_id,lease_generation:node.lease.generation,executor:node.lease.executor,
+      predicate:{command:node.packet.predicate,exit_code:1,summary:detail},outcome,
+      provider_identity:"github_actions",provider_run_url:record.workflow_run_id?`https://github.com/${record.control_repository}/actions/runs/${record.workflow_run_id}`:null,
+      changed_paths:record.head?record.entries.map(entry=>entry.path):[],
+      observed_heads_before:{[record.repository]:record.base_sha},observed_heads_after:{[record.repository]:record.head||record.base_sha},
+      spend:{runs:record.workflow_run_id?1:0,inference_provider_runs:0}});
+    await this.service.call("report",{lease_id:node.lease.lease_id,generation:node.lease.generation,capability_token:claim.capability_token,principal,receipt});
+    record.phase=outcome;record.error=detail;await this.ctx.storage.put(record.key,record);return this.summary(record);
   }
 
   async executorContext(principal, runId, body) {
@@ -311,13 +393,14 @@ export class ChatGithubController {
     if (run.workflow_id !== record.workflow_id || run.head_sha !== record.control_sha || run.event !== "workflow_dispatch"
         || run.head_branch !== "main" || run.run_attempt !== 1 || run.display_title !== `chat:${record.run_id}`
         || (record.workflow_run_id && record.workflow_run_id !== run.id)) fail("chat_run_identity_mismatch");
-    const { node } = await this.activeLease(record, principal);
-    record.workflow_run_id = run.id; record.phase = "running";
+    record.workflow_run_id = run.id;
+    const { node } = await this.activeLease(record, principal,"running");
+    if(record.phase !== "queued") record.phase = "running";
     await this.ctx.storage.put(key, record);
     return { run_id: record.run_id, repository: record.repository, base_sha: record.base_sha, head: record.head,
       branch: record.branch, profile: record.profile, profile_digest: record.profile_digest, landing: record.landing,
       control_sha: record.control_sha, control_repository: record.control_repository, deadline: record.deadline,
-      digest: record.digest, packet: node.packet, lease: node.lease };
+      digest: record.digest, sandbox_image:record.sandbox_image,packet: node.packet, lease: node.lease };
   }
 
   async verifiedContext(principal, runId, body) {
@@ -326,6 +409,21 @@ export class ChatGithubController {
     const verifier = jobs.jobs?.find(job => job.name === "verify");
     if (!verifier || verifier.conclusion !== "success" || !(verifier.runner_id > 0)
         || !verifier.steps?.some(step => step.name === "Run isolated verification" && step.conclusion === "success")) fail("chat_verification_unproved");
+    const verification=body.verification;
+    if (!exactKeys(verification,["schema_version","run_id","head","profile_digest","control_sha","workflow_run_id","run_attempt","exit_code","output_sha256","inference_provider_runs","sandbox_image"])
+        || verification.schema_version!=="limen.chat_verification.v1" || verification.run_id!==runId
+        || verification.head!==context.head || verification.control_sha!==context.control_sha
+        || verification.profile_digest!==context.profile_digest || verification.workflow_run_id!==body.workflow_run_id
+        || verification.run_attempt!==1 || verification.exit_code!==0 || verification.inference_provider_runs!==0
+        || verification.sandbox_image!==context.sandbox_image
+        || !/^[0-9a-f]{64}$/.test(verification.output_sha256 || "")) fail("chat_artifact_identity_mismatch");
+    const digest=await canonicalHash(verification);
+    const artifacts=await this.github(`/repos/${context.control_repository}/actions/runs/${body.workflow_run_id}/artifacts?per_page=100`);
+    const matches=artifacts.artifacts?.filter(item=>item.name===`chat-verification-${digest}`) || [];
+    if(matches.length!==1 || matches[0].expired || !/^sha256:[0-9a-f]{64}$/.test(matches[0].digest || "")
+        || matches[0].size_in_bytes>131072 || matches[0].workflow_run?.id!==body.workflow_run_id
+        || matches[0].workflow_run?.head_sha!==context.control_sha) fail("chat_artifact_unproved");
+    context.verification_artifact={id:matches[0].id,digest:matches[0].digest,attestation_digest:digest};
     return context;
   }
 
@@ -345,6 +443,8 @@ export class ChatGithubController {
   }
 
   async complete(principal, runId, body) {
+    const replay=await this.terminalReplay(principal,runId,body);
+    if(replay) return replay;
     const context = await this.verifiedContext(principal, runId, body);
     const key = await this.ctx.storage.get(`chat:run:${runId}`), record = await this.ctx.storage.get(key);
     if (!Number.isSafeInteger(body.pull_request) || body.pull_request < 1) fail("chat_pr_required");
@@ -353,14 +453,19 @@ export class ChatGithubController {
     if (pr.head.sha !== context.head || pr.head.ref !== context.branch || pr.head.repo?.full_name !== context.repository
         || pr.base.repo?.full_name !== context.repository || pr.base.ref !== repository.default_branch) fail("chat_pr_head_mismatch");
     if (context.landing === "merge" && !pr.merged) {
-      record.phase = "queued"; await this.ctx.storage.put(key, record); return this.summary(record);
+      record.phase = "queued"; record.pull_request=body.pull_request;record.verification=body.verification;
+      await this.ctx.storage.put(key, record);
+      await this.ctx.storage.setAlarm(Date.now()+30000);
+      return this.summary(record);
     }
     if (pr.merged) {
       if (!SHA.test(pr.merge_commit_sha || "")) fail("chat_merge_unproved");
       const comparison = await this.github(`/repos/${context.repository}/compare/${pr.merge_commit_sha}...${encodeURIComponent(repository.default_branch)}`);
       if (!["ahead", "identical"].includes(comparison.status)) fail("chat_default_ancestry_unproved");
     }
-    const { node, claim } = await this.activeLease(record, principal);
+    record.terminal_phase=pr.merged?"merged":"pr_created";
+    await this.ctx.storage.put(key,record);
+    const { node, claim } = await this.activeLease(record, principal,"succeeded");
     const receipt = validateReceipt({ receipt_id: `chat-${record.digest}`, run_id: runId,
       lease_id: node.lease.lease_id, lease_generation: node.lease.generation, executor: node.lease.executor,
       predicate: { command: node.packet.predicate, exit_code: 0, summary: "Exact-head isolated GitHub Actions verification" },
@@ -369,8 +474,10 @@ export class ChatGithubController {
       changed_paths: record.entries.map(entry => entry.path), checks: [
         { name: "pull-request", status: "success", url: pr.html_url, head: context.head },
         { name: "exact-diff", status: "success", url: pr.html_url, head: record.digest },
+        { name: "verification-artifact",status:"success",url:`https://github.com/${context.control_repository}/actions/runs/${body.workflow_run_id}/artifacts/${context.verification_artifact.id}`,head:context.verification_artifact.digest },
+        { name: "verification-attestation",status:"success",head:context.verification_artifact.attestation_digest },
         ...(pr.merged ? [{ name: "merge", status: "success", url: pr.html_url, head: pr.merge_commit_sha }] : []),
-      ], spend: { inference_provider_runs: 0 },
+      ], spend: { runs:1,inference_provider_runs: 0 },
     });
     await this.service.call("report", { lease_id: node.lease.lease_id, generation: node.lease.generation,
       capability_token: claim.capability_token, principal, receipt });
@@ -379,21 +486,21 @@ export class ChatGithubController {
   }
 
   async failed(principal, runId, body) {
+    const replay=await this.terminalReplay(principal,runId,body);
+    if(replay) return replay;
     const context = await this.executorContext(principal, runId, body);
     const jobs = await this.github(`/repos/${context.control_repository}/actions/runs/${body.workflow_run_id}/attempts/1/jobs?per_page=100`);
-    const verifier = jobs.jobs?.find(job => job.name === "verify");
-    if (!verifier || !["failure", "cancelled", "timed_out"].includes(verifier.conclusion)) fail("chat_failure_unproved");
+    const failedJob = jobs.jobs?.find(job => ["prepare","verify","publish"].includes(job.name) && ["failure", "cancelled", "timed_out"].includes(job.conclusion));
+    if (!failedJob) fail("chat_failure_unproved");
     const key = await this.ctx.storage.get(`chat:run:${runId}`), record = await this.ctx.storage.get(key);
-    const { node, claim } = await this.activeLease(record, principal);
-    const receipt = validateReceipt({receipt_id:`chat-failed-${record.digest}`,run_id:runId,
-      lease_id:node.lease.lease_id,lease_generation:node.lease.generation,executor:node.lease.executor,
-      predicate:{command:node.packet.predicate,exit_code:1,summary:"GitHub verifier did not pass; no PR or merge"},
-      outcome:"failed",provider_identity:"github_actions",provider_run_url:`https://github.com/${context.control_repository}/actions/runs/${body.workflow_run_id}`,
-      changed_paths:record.entries.map(entry=>entry.path),observed_heads_before:{[context.repository]:context.base_sha},
-      observed_heads_after:{[context.repository]:context.head},spend:{runs:1,inference_provider_runs:0}});
-    await this.service.call("report",{lease_id:node.lease.lease_id,generation:node.lease.generation,
-      capability_token:claim.capability_token,principal,receipt});
-    record.phase="failed"; await this.ctx.storage.put(key,record);
+    return this.terminate(record,principal,"failed",`chat_${failedJob.name}_failed`);
+  }
+
+  async terminalReplay(principal,runId,body) {
+    if(principal.principal_id!==chatConfiguration(this.env).executor.principal_id) fail("chat_executor_required",403);
+    const key=await this.ctx.storage.get(`chat:run:${runId}`),record=key && await this.ctx.storage.get(key);
+    if(!record || !TERMINAL.has(record.phase)) return null;
+    if(record.workflow_run_id!==body.workflow_run_id || body.run_attempt!==1) fail("chat_run_identity_mismatch");
     return this.summary(record);
   }
 }

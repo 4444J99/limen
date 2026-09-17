@@ -20,6 +20,12 @@
 schema_version: 0.1
 
 parameters:
+  LIMEN_CHAT_VERIFICATION:
+    default: ""
+    env: LIMEN_CHAT_VERIFICATION
+    self_update: none
+    owner: worker
+    note: "Trusted host attestation bound to an immutable GitHub artifact; never candidate stdout."
   LIMEN_CHAT_CONTEXT:
     default: ""
     env: LIMEN_CHAT_CONTEXT
