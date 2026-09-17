@@ -1240,6 +1240,11 @@ gates:
     paths: ["scripts/npm-audit-gate.py", "scripts/tests/npm-audit-gate.test.py", ".github/workflows/ci.yml"]
     owner: dependencies
     note: "Reject incomplete audit responses and retain independent compatibility evidence when advisories fail."
+  chat-github-runner:
+    command: "python3 -B -m unittest discover -s scripts/tests -p 'test_chat_github_*.py'"
+    paths: ["scripts/chat-github-*.py", "scripts/tests/test_chat_github_*.py", ".github/workflows/limen-chat-patch.yml", "institutio/governance/chat-github-profiles.json"]
+    owner: worker
+    note: "Offline controller identity and bounded immutable canary profile checks; not hosted acceptance."
   worker-check:
     command: "bash -c 'cd web/worker && npm run check'"
     paths: ["web/worker/**", "institutio/github/dependency-completion.json"]
