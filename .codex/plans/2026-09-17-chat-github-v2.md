@@ -3,6 +3,9 @@
 Owner: PR #2679, direct human request to proceed through engineering, verification,
 governed merge and deployment. This revision preserves the original plan rather
 than overwriting it. Workflow-scope authorization was completed by the operator.
+Current architecture and activation contract:
+`docs/architecture/chat-github-execution.md` (rehomed from the candidate's loose
+docs root after the curated-surface gate rejected that placement).
 
 Correction carried forward: a published draft is preservation, not a stopping
 point. Finish reversible engineering and source/deployment work without another
