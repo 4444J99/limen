@@ -5,9 +5,7 @@
 # (class-G effector). The assertions that must never regress:
 #   1. a secret that exists ONLY IN HISTORY (deleted at HEAD) reds the sweep — a flip publishes history;
 #   2. a clean repo greens the sweep, and the receipt drives receipt_fresh_green;
-#   3. apply-visibility gates a publish on the REAL safety (per-repo lever RETIRED — build-in-public
-#      directive is the standing sanction): no receipt → held; green receipt but dark (no
-#      LIMEN_VISIBILITY_APPLY) → held; green receipt + armed → proceeds to the flip. Offline throughout.
+#   3. Legacy automatic flips are disabled in both directions, even with a green sweep and arming flags.
 set -uo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -90,19 +88,14 @@ JSON
 
 run_apply() { LIMEN_GITVS_ESTATE="$FIX" python3 "$APPLY" --apply --facts "$FACTS" 2>&1; }
 
-# 3a. no sweep receipt → held (lever RETIRED — the receipt is the gate, not a lever)
-rm -f "$ROOT/logs/publish-sweeps/test__clean.json"
-out="$(run_apply)"
-echo "$out" | grep -q "held  publish test/clean — sweep receipt: no receipt" && ok || bad "no-receipt must hold" "$out"
-
-# 3b. green receipt but DARK (no LIMEN_VISIBILITY_APPLY) → held
+# 3a-c. Missing receipt, green receipt, and all legacy flags must refuse.
+out="$(run_apply)"; rc=$?
+[ "$rc" -eq 2 ] && echo "$out" | grep -q "automatic visibility changes are disabled" && ok || bad "bare apply must refuse" "$out"
 python3 "$SWEEP" --repo test/clean --clone-from "$work/clean" >/dev/null 2>&1
-out="$(run_apply)"
-echo "$out" | grep -q "held  publish test/clean — dark" && ok || bad "dark gate must hold" "$out"
-
-# 3c. green receipt + ARMED (double-dark) → proceeds to the flip WITHOUT any lever (offline → skipped)
-out="$(LIMEN_VISIBILITY_APPLY=1 LIMEN_GITVS_ESTATE="$FIX" python3 "$APPLY" --apply --facts "$FACTS" 2>&1)"
-echo "$out" | grep -q "publish test/clean → public" && ok || bad "armed+green must proceed to flip (no lever)" "$out"
+out="$(run_apply)"; rc=$?
+[ "$rc" -eq 2 ] && echo "$out" | grep -q "automatic visibility changes are disabled" && ok || bad "green sweep must not authorize apply" "$out"
+out="$(LIMEN_VISIBILITY_APPLY=1 LIMEN_VISIBILITY_MAX=99 LIMEN_GITVS_ESTATE="$FIX" python3 "$APPLY" --apply --facts "$FACTS" 2>&1)"; rc=$?
+[ "$rc" -eq 2 ] && echo "$out" | grep -q "automatic visibility changes are disabled" && ok || bad "legacy arming must not authorize apply" "$out"
 rm -f "$ROOT/logs/publish-sweeps/test__clean.json" "$ROOT/logs/publish-sweeps/test__dirty.json"
 
 # ── 4. a LIVE-PUBLIC publish candidate resolves three ways, never by absence alone ──
@@ -141,16 +134,20 @@ fi
 LIMEN_GITVS_ESTATE="$CANDFIX" python3 "$APPLY" --check --facts "$CANDFACTS" >/dev/null 2>&1
 [ $? -eq 1 ] && ok || bad "--check must red on an un-adjudicated live-public candidate"
 
-# 4c. sweep RED on a live-public candidate → a real leak → demote on the auto-guard
+# 4c. A real leak remains visible for individual containment; no automatic flip.
 python3 "$SWEEP" --repo test/dirty --clone-from "$work/dirty" >/dev/null 2>&1
 out="$(LIMEN_GITVS_ESTATE="$CANDFIX" python3 "$APPLY" --facts "$DIRTYFACTS" 2>&1)"
 echo "$out" | grep -q "would demote test/dirty → private" && echo "$out" | grep -q "RED" \
   && ok || bad "a RED sweep on a live-public candidate must demote" "$out"
 
-# 4d. green+fresh receipt → genuinely converged, no action (the receipt owns the public posture)
+# 4d. A green secret sweep still requires an individual publication review.
 python3 "$SWEEP" --repo test/clean --clone-from "$work/clean" >/dev/null 2>&1
 out="$(LIMEN_GITVS_ESTATE="$CANDFIX" python3 "$APPLY" --facts "$CANDFACTS" 2>&1)"
-echo "$out" | grep -q "drift == ∅" && ok || bad "swept-green public candidate must be converged" "$out"
+echo "$out" | grep -q "publication review required" && ok || bad "green sweep must not establish public admission" "$out"
+
+# 4e. Even a real secret finding cannot trigger the old automatic demotion path.
+out="$(LIMEN_VISIBILITY_APPLY=1 LIMEN_GITVS_ESTATE="$CANDFIX" python3 "$APPLY" --apply --facts "$DIRTYFACTS" 2>&1)"; rc=$?
+[ "$rc" -eq 2 ] && echo "$out" | grep -q "automatic visibility changes are disabled" && ok || bad "automatic demotion must refuse" "$out"
 rm -f "$ROOT/logs/publish-sweeps/test__clean.json" "$ROOT/logs/publish-sweeps/test__dirty.json"
 
 echo
