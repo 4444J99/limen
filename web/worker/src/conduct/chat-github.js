@@ -452,8 +452,10 @@ export class ChatGithubController {
     const repository = await this.github(`/repos/${context.repository}`);
     if (pr.head.sha !== context.head || pr.head.ref !== context.branch || pr.head.repo?.full_name !== context.repository
         || pr.base.repo?.full_name !== context.repository || pr.base.ref !== repository.default_branch) fail("chat_pr_head_mismatch");
+    record.pull_request=body.pull_request;record.verification=body.verification;
+    await this.ctx.storage.put(key,record);
     if (context.landing === "merge" && !pr.merged) {
-      record.phase = "queued"; record.pull_request=body.pull_request;record.verification=body.verification;
+      record.phase = "queued";
       await this.ctx.storage.put(key, record);
       await this.ctx.storage.setAlarm(Date.now()+30000);
       return this.summary(record);

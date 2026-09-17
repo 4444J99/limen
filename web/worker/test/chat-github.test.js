@@ -197,3 +197,18 @@ test("crash after canonical admission reuses persisted packet without a second r
   const graph=await f.service.call("graph",{run_id:record.run_id});
   assert.equal(graph.nodes.length,1);
 });
+
+test("interruption before canonical success report recovers from saved exact evidence",async()=>{
+  const f=await ready(),call=f.service.call.bind(f.service);
+  let interrupted=false;
+  f.service.call=async(op,...args)=>{
+    if(op==="report" && !interrupted){interrupted=true;throw new Error("simulated report interruption");}
+    return call(op,...args);
+  };
+  await assert.rejects(f.controller.complete(f.executor,f.record.run_id,f.body),/simulated/);
+  await f.controller.alarm();
+  const result=await f.controller.complete(f.executor,f.record.run_id,f.body);
+  assert.equal(result.complete,true);
+  const graph=await f.service.call("graph",{run_id:f.record.run_id});
+  assert.equal(graph.nodes[0].receipts.length,1);
+});
