@@ -32,6 +32,7 @@ from limen.workstream_contract import (
     run_bounded,
     sync_identity,
     sync_receipt,
+    validate_codex_bypass,
     validate_codex_launch,
     validate_packet_contract,
 )
@@ -159,6 +160,28 @@ def test_explicit_codex_launch_contract_is_v2_and_retains_high_risk_gates(tmp_pa
         )
 
 
+def test_sandbox_only_codex_authorization_contract_is_provider_neutral_v3(tmp_path: Path) -> None:
+    path = tmp_path / "workstream.json"
+    contract, changed = configure_contract(path, "8h", sandbox="danger-full-access")
+
+    assert changed is True
+    assert contract["schema"] == "limen.workstream.contract.v3"
+    assert set(contract) == {"schema", "runway", "authorization", "conductor"}
+    assert contract["authorization"] == {
+        **AUTHORIZATION,
+        "sandbox": "danger-full-access",
+    }
+    assert contract["conductor"]["provider_and_model"] == "provider_neutral"
+    assert read_contract(path) == contract
+
+    unchanged, unchanged_flag = configure_contract(path, sandbox="danger-full-access")
+    assert unchanged_flag is False
+    assert unchanged == contract
+
+    with pytest.raises(ContractError, match="emit a successor"):
+        configure_contract(path, sandbox="workspace-write")
+
+
 def test_default_contract_remains_byte_compatible_v1(tmp_path: Path) -> None:
     path = tmp_path / "workstream.json"
     contract, _changed = configure_contract(path, "8h")
@@ -167,6 +190,68 @@ def test_default_contract_remains_byte_compatible_v1(tmp_path: Path) -> None:
     assert contract["schema"] == "limen.workstream.contract.v1"
     assert set(contract) == {"schema", "runway", "authorization", "conductor"}
     assert contract["authorization"]["sandbox"] == "workspace-write"
+    assert (
+        path.read_bytes()
+        == (
+            "{\n"
+            '  "authorization": {\n'
+            '    "approval_mode": "never",\n'
+            '    "mode": "full_non_destructive",\n'
+            '    "retained_gates": [\n'
+            '      "destructive",\n'
+            '      "credential",\n'
+            '      "paid_spend",\n'
+            '      "public_send",\n'
+            '      "runtime_or_host_mutation"\n'
+            "    ],\n"
+            '    "reversible_in_scope": "proceed_without_confirmation",\n'
+            '    "sandbox": "workspace-write"\n'
+            "  },\n"
+            '  "conductor": {\n'
+            '    "boundary_rule": "recheck_remaining_runway_before_each_packet",\n'
+            '    "expiry_rule": "stop_or_emit_successor_before_zero",\n'
+            '    "lane_selection": "derive_from_live_capabilities",\n'
+            '    "mode": "route_bounded_packets",\n'
+            '    "provider_and_model": "provider_neutral"\n'
+            "  },\n"
+            '  "runway": {\n'
+            '    "deadline_at": null,\n'
+            '    "deadline_epoch": null,\n'
+            '    "duration_seconds": 28800,\n'
+            '    "requested": "8h",\n'
+            '    "started_at": null,\n'
+            '    "started_epoch": null\n'
+            "  },\n"
+            '  "schema": "limen.workstream.contract.v1"\n'
+            "}\n"
+        ).encode()
+    )
+
+
+@pytest.mark.parametrize(
+    ("field", "invalid"),
+    [
+        ("approval_mode", "ask"),
+        ("mode", "unbounded"),
+        ("reversible_in_scope", "ask_first"),
+        ("retained_gates", ["destructive"]),
+        ("sandbox", "host-everything"),
+    ],
+)
+def test_v3_contract_rejects_malformed_authorization(
+    field: str,
+    invalid: object,
+) -> None:
+    contract = W.new_contract_v3("8h", sandbox="danger-full-access")
+    contract["authorization"][field] = invalid
+
+    with pytest.raises(ContractError, match="authorization|sandbox"):
+        W.validate_contract(contract)
+
+    extra_field = W.new_contract_v3("8h", sandbox="danger-full-access")
+    extra_field["authorization"]["unbounded"] = True
+    with pytest.raises(ContractError, match="authorization"):
+        W.validate_contract(extra_field)
 
 
 def test_live_codex_catalog_validation_uses_exact_dynamic_ids(tmp_path: Path) -> None:
@@ -210,6 +295,37 @@ def test_live_codex_catalog_validation_uses_exact_dynamic_ids(tmp_path: Path) ->
             reasoning_effort="ultra-fixture",
             sandbox="host-everything",
         )
+
+
+def test_codex_bypass_validation_requires_the_advertised_live_flag(tmp_path: Path) -> None:
+    advertised = tmp_path / "codex-with-bypass"
+    advertised.write_text(
+        "#!/usr/bin/env bash\nprintf '%s\\n' '--dangerously-bypass-approvals-and-sandbox'\n",
+        encoding="utf-8",
+    )
+    advertised.chmod(0o755)
+
+    assert validate_codex_bypass(str(advertised)) is None
+
+    missing = tmp_path / "codex-without-bypass"
+    missing.write_text(
+        "#!/usr/bin/env bash\nprintf '%s\\n' '--sandbox <MODE>'\n",
+        encoding="utf-8",
+    )
+    missing.chmod(0o755)
+
+    with pytest.raises(ContractError, match="does not advertise bypass-all permissions"):
+        validate_codex_bypass(str(missing))
+
+    misleading = tmp_path / "codex-with-lookalike-bypass"
+    misleading.write_text(
+        "#!/usr/bin/env bash\nprintf '%s\\n' '--dangerously-bypass-approvals-and-sandboxing'\n",
+        encoding="utf-8",
+    )
+    misleading.chmod(0o755)
+
+    with pytest.raises(ContractError, match="does not advertise bypass-all permissions"):
+        validate_codex_bypass(str(misleading))
 
 
 def test_admission_waits_on_the_stable_parent_lock_and_preserves_first_start(
@@ -279,7 +395,12 @@ def _git_fixture(*args: str, cwd: Path) -> str:
     return result.stdout.strip()
 
 
-def _committed_predecessor(tmp_path: Path, *, explicit_profile: bool = False) -> tuple[Path, bytes, dict[str, object]]:
+def _committed_predecessor(
+    tmp_path: Path,
+    *,
+    explicit_profile: bool = False,
+    authorization_sandbox: str | None = None,
+) -> tuple[Path, bytes, dict[str, object]]:
     repo = tmp_path / "predecessor-repo"
     repo.mkdir()
     _git_fixture("init", "-q", "-b", "work/predecessor", cwd=repo)
@@ -291,16 +412,18 @@ def _committed_predecessor(tmp_path: Path, *, explicit_profile: bool = False) ->
     _git_fixture("remote", "add", "origin", str(remote), cwd=repo)
     capsule = repo / ".limen-workstream"
     contract_path = capsule / "workstream.json"
-    launch = (
-        {
+    if explicit_profile:
+        assert authorization_sandbox is None
+        launch: dict[str, str] = {
             "agent": "codex",
             "model": "fixture-sol",
             "reasoning_effort": "high",
             "sandbox": "danger-full-access",
         }
-        if explicit_profile
-        else {}
-    )
+    elif authorization_sandbox is not None:
+        launch = {"sandbox": authorization_sandbox}
+    else:
+        launch = {}
     configure_contract(contract_path, "16d", **launch)
     admitted, _remaining = admit_contract(contract_path, now_epoch=1_754_000_000)
     modules = _receipt_modules(capsule)
@@ -354,6 +477,37 @@ def test_successor_inherits_exact_admitted_timing_and_records_only_path_free_lin
     serialized = successor_receipt.read_text(encoding="utf-8")
     assert value["predecessor"] == lineage
     assert str(predecessor) not in serialized
+    assert predecessor.read_bytes() == predecessor_bytes
+
+
+def test_v3_successor_inherits_or_explicitly_overrides_authorization_with_same_lineage(
+    tmp_path: Path,
+) -> None:
+    predecessor, predecessor_bytes, admitted = _committed_predecessor(
+        tmp_path,
+        authorization_sandbox="danger-full-access",
+    )
+    expected_lineage = {
+        "slug": "predecessor",
+        "branch": "work/predecessor",
+        "receipt_sha256": hashlib.sha256(predecessor_bytes).hexdigest(),
+    }
+
+    inherited, inherited_lineage = W.successor_contract(predecessor)
+    overridden, overridden_lineage = W.successor_contract(
+        predecessor,
+        sandbox="workspace-write",
+    )
+
+    assert admitted["schema"] == "limen.workstream.contract.v3"
+    assert inherited["schema"] == "limen.workstream.contract.v3"
+    assert inherited["runway"] == admitted["runway"]
+    assert inherited["authorization"] == admitted["authorization"]
+    assert inherited_lineage == expected_lineage
+    assert overridden["schema"] == "limen.workstream.contract.v3"
+    assert overridden["runway"] == admitted["runway"]
+    assert overridden["authorization"] == AUTHORIZATION
+    assert overridden_lineage == expected_lineage
     assert predecessor.read_bytes() == predecessor_bytes
 
 
