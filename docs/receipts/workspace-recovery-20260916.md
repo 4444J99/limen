@@ -1,6 +1,6 @@
 # Workspace recovery: bounded implementation checkpoint
 
-Status: partial; unfinished work remains unfinished. Owner: workspace-recovery-20260916.
+Status: partial; session stopped at user request. Current operational closeout: [session receipt](../continuations/workspace-recovery-20260916/session-closeout.json) and [continuation](../continuations/workspace-recovery-20260916/README.md). Historical checkpoints below are not the current merge/deployment state. Unfinished work remains unfinished. Owner: workspace-recovery-20260916.
 The accompanying JSON contains the exact retirement and restoration receipts.
 
 ## Applied and observed
