@@ -145,6 +145,13 @@ CI_SECRETS: list[dict] = [
         "hand": "gated — install after the remote endpoint is deployed; no paid seat or secret mint is automatic",
         "issue": "#320",
     },
+    {
+        "name": "LIMEN_CONDUCT_MCP_OAUTH",
+        "home": "Credential organ + private Cloudflare Worker secret; issuer/client/subject bindings must never enter source or prompts",
+        "used": "Optional /mcp OAuth resource adapter; verified issuer, resource, scope and subject/client binding select an existing conduct principal",
+        "hand": "unconfigured until a sanctioned OAuth issuer and explicit native-lane bindings are provisioned; deployment, ChatGPT linking and scheduled execution need independent live receipts",
+        "issue": "#320",
+    },
 ]
 
 _HEADER = """\
