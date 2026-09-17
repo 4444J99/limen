@@ -265,6 +265,13 @@ gates:
     scoped: false
     owner: representation
     note: "Representation Substrate records and opportunities stay schema-clean."
+  ucc-credential-delivery:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_ucc_local_delivery.py cli/tests/test_creds_hydrate.py -q"
+    paths: ["scripts/ucc-cloudflare-delivery.py", "scripts/creds-hydrate.py", "scripts/tests/test_ucc_local_delivery.py", "cli/tests/test_creds_hydrate.py"]
+    scoped: true
+    tier: cheap
+    owner: clavis
+    note: "Fixed UCC local custody and administrator delivery boundaries; hosted App requirements remain intact."
   representation-substrate-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_representation_substrate.py -q"
     paths: ["organs/representation/**", "cli/tests/test_representation_substrate.py"]
