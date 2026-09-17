@@ -20,6 +20,36 @@
 schema_version: 0.1
 
 parameters:
+  LIMEN_CHAT_CONTEXT:
+    default: ""
+    env: LIMEN_CHAT_CONTEXT
+    self_update: none
+    owner: worker
+    note: "Non-secret immutable execution context supplied by authenticated keeper to Actions."
+  LIMEN_CHAT_RUN_ID:
+    default: ""
+    env: LIMEN_CHAT_RUN_ID
+    self_update: none
+    owner: worker
+    note: "Canonical keeper run identity; not a provider run identity."
+  LIMEN_CHAT_EXECUTOR_TOKEN:
+    default: ""
+    env: LIMEN_CHAT_EXECUTOR_TOKEN
+    self_update: none
+    owner: worker
+    note: "Dedicated executor-only credential; private custody and installation owned by #320."
+  LIMEN_CHAT_GITHUB_TOKEN:
+    default: ""
+    env: LIMEN_CHAT_GITHUB_TOKEN
+    self_update: none
+    owner: worker
+    note: "Dedicated exact-repository GitHub credential; private custody owned by #320."
+  LIMEN_CHAT_GITHUB:
+    default: ""
+    env: LIMEN_CHAT_GITHUB
+    self_update: none
+    owner: worker
+    note: "Private disabled-by-default Chat execution configuration and grants; #320 owns installation."
   LIMEN_CONDUCT_MCP_OAUTH:
     default: ""
     env: LIMEN_CONDUCT_MCP_OAUTH
