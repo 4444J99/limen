@@ -1,4 +1,4 @@
-# Chat-authored GitHub execution
+# Chat-authored GitHub execution architecture
 
 Status: implementation candidate, disabled until explicit provisioning. This is
 not evidence that ChatGPT.app or scheduled Chat can execute repository work.
