@@ -22,6 +22,9 @@ the effector that owns the fix — never a bare red.
               Owner when red: owner-route-drain.
 
 Read-only over the board; the only write is its own debt snapshot.
+The UTC-day QUOTA clause is an internal throughput goal, not vendor admission.
+Vendor limits roll over 24 hours; local receipts do not prove account entitlement
+or remaining capacity, including launches made outside this broker.
 """
 
 from __future__ import annotations
