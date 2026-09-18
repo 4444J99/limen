@@ -390,9 +390,88 @@ def cmd_apply(policy: dict, cred_map: list[dict], apply: bool) -> int:
     return cmd_check(policy, cred_map)
 
 
+def cmd_reconcile_cloudflare(policy: dict, apply: bool) -> int:
+    """Recover the sanctioned cache into SA-readable custody, retaining source lineage."""
+    try:
+        _validate_mutation_policy(policy)
+        if policy["automation_vault"] != "Limen-Automation":
+            raise ValueError("unexpected vault")
+        spec = importlib.util.spec_from_file_location(
+            "ucc_delivery", HYDRATE_PATH.with_name("ucc-cloudflare-delivery.py")
+        )
+        delivery = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(delivery)
+        candidate = delivery.cached_candidate()
+        spec = importlib.util.spec_from_file_location("cloudflare_hydrate", HYDRATE_PATH)
+        hydrate = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(hydrate)
+        entry = next(
+            row
+            for row in hydrate.DEFAULT_MAP
+            if row.get("gh_secret") == {"repo": delivery.TARGET, "name": delivery.SECRET_NAME}
+        )
+        ok, _ = hydrate.verify_cloudflare_delivery(entry, candidate)
+        if not ok:
+            raise ValueError("candidate preflight rejected")
+        env = _owner_environment()
+        env["OP_SERVICE_ACCOUNT_TOKEN"] = _read_private(Path(policy["service_account"]["token_file"]).expanduser())
+        env["OP_BIOMETRIC_UNLOCK_ENABLED"] = "false"
+        vaults = json.loads(_op(["vault", "list", "--format", "json"], env))
+        matches = [row for row in vaults if row.get("name") == "Limen-Automation"]
+        if len(matches) != 1:
+            raise ValueError("ambiguous vault")
+        vault = matches[0]["id"]
+        title = "Cloudflare API Token"
+        items = json.loads(_op(["item", "list", "--vault", vault, "--format", "json"], env))
+        matches = [row for row in items if row.get("title") == title]
+        if len(matches) > 1:
+            raise ValueError("ambiguous item")
+        if not matches and not apply:
+            print("PASS: verified cached credential; canonical Cloudflare item requires creation; no mutation")
+            return 0
+        if not matches:
+            item = {
+                "title": title,
+                "category": "SECURE_NOTE",
+                "fields": [
+                    {"id": "credential", "label": "credential", "type": "CONCEALED", "value": candidate},
+                    {
+                        "id": "notesPlain",
+                        "type": "STRING",
+                        "purpose": "NOTES",
+                        "value": "CLAVIS recovery from sanctioned local cache; original source op://Personal/Cloudflare API Token/credential retained. "
+                        "Original item was not moved, deleted, or read during recovery. Cached value verified against the fixed UCC Cloudflare account and D1 API. "
+                        "Authority: UCC restoration / Limen #320.",
+                    },
+                ],
+            }
+            created = json.loads(
+                _op(["item", "create", "--vault", vault, "--format", "json", "-"], env, payload=json.dumps(item))
+            )
+            matches = [created]
+        item_id = matches[0].get("id")
+        if not isinstance(item_id, str) or not re.fullmatch(r"[a-z0-9]{26}", item_id):
+            raise ValueError("invalid item identity")
+        readback = _op(["read", f"op://{vault}/{item_id}/credential"], env).strip()
+        if readback != candidate:
+            raise ValueError("canonical credential differs; preserved unchanged")
+        # Re-list to refuse ambiguous concurrent creates; never overwrite an existing item.
+        items = json.loads(_op(["item", "list", "--vault", vault, "--format", "json"], env))
+        matches = [row for row in items if row.get("title") == title]
+        if len(matches) != 1 or matches[0].get("id") != item_id:
+            raise ValueError("canonical inventory differs")
+        print("PASS: canonical Cloudflare credential byte-verified in Limen-Automation; original source preserved")
+        return 0
+    except Exception:  # noqa: BLE001 - provider output and credential values remain private
+        print("FAIL: Cloudflare source reconciliation incomplete; existing source and cache preserved")
+        return 2
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="CLAVIS — credential provisioning (SA + the one vault it reads).")
-    ap.add_argument("command", choices=["check", "bootstrap", "apply"], nargs="?", default="check")
+    ap.add_argument(
+        "command", choices=["check", "bootstrap", "apply", "reconcile-cloudflare"], nargs="?", default="check"
+    )
     ap.add_argument(
         "--apply", action="store_true", help="execute mutations (default: dry-run). bootstrap needs owner op."
     )
@@ -402,6 +481,8 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, ValueError, TypeError, AttributeError):
         print("creds-provision: mutation requires a readable valid credential policy")
         return 2
+    if args.command == "reconcile-cloudflare":
+        return cmd_reconcile_cloudflare(policy, args.apply)
     cred_map = load_cred_map()
     if args.command == "check":
         return cmd_check(policy, cred_map)
