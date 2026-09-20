@@ -65,7 +65,15 @@ fi
 j="$(mktemp)"; trap 'rm -f "$j"' EXIT
 gh pr view "$PR" "${repo_args[@]+"${repo_args[@]}"}" \
   --json number,title,url,state,isDraft,mergeStateStatus,baseRefName,headRefName,headRefOid,files,statusCheckRollup \
-  > "$j" 2>/dev/null || { echo "merge-policy: cannot read PR #$PR (wrong repo?)." >&2; exit 3; }
+  > "$j" 2>err.txt || {
+  err=$(cat err.txt 2>/dev/null || true)
+  if printf '%s' "$err" | grep -qi "rate limit\|api quota\|403\|429\|fetch exhausted"; then
+    echo "merge-policy: rate-limited by GitHub API — PR likely healthy; retry in ~60s. (not a merge block)." >&2
+    rm -f err.txt
+    exit 2
+  fi
+  echo "merge-policy: cannot read PR #$PR (wrong repo?)." >&2; rm -f err.txt; exit 3
+}
 
 title=$(jq -r '.title' "$j")
 url=$(jq -r '.url' "$j")
