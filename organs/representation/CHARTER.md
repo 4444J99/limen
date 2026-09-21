@@ -7,6 +7,22 @@ office, portfolio studio, canon dossier desk, and public-presence authority
 apparatus. The substrate gives a creator institutional representation without
 taking over their voice or outward choices.
 
+## Institutional Weight, Workflows, and Inputs/Outputs
+
+The substrate converts idle fleet capacity into institutional weight (the VLTIMA thesis). Rather than Anthony operating as an unassisted creator scrambling for time, the representation organ acts as an autonomous virtual firm. Every beat, idle capacity is marshalled to scan markets, index public presence, prepare dossiers, and stage packets.
+
+Workflows and I/O:
+- **Scan & Index (Input/Processing):** Evidence Librarian and Opportunity Analyst jobs run autonomously to index inputs: local/remote repositories, public websites, and market opportunities.
+- **Stage & Package (Processing/Output Staging):** Packet Clerk and Presence Editor process the indices to draft outputs: submission packets, market-fit analyses, and public presence copy.
+- **Approval Gate:** The Privacy Sentinel and Authority Clerk validate all staged outputs against privacy bounds and canon requirements. Nothing is ever sent outward without explicit approval from the Subject.
+- **Outward Action (Final Output):** The `publication-send` surface executes real sends strictly upon approval.
+
+When a submission or packet is approved, the creator arrives at the negotiating table with the backing of a studio CRM, publication desk, and publicist—all driven by the standing fleet, multiplying one person's capacity to operate at institutional scale.
+
+## Ladder Admission & Derivation
+
+The representation organ predates its formal ladder entry, having been originally authored under the studio/authority program (with Christopher and ET4L as its first proofs). It was formally admitted to the `organ-ladder.json` census on 2026-07-24. Because workstream channels derive from pillars, an organ absent from the ladder has no lane. This admission establishes the `representation` workstream channel, formally opening the job-getting and professional-presence lane. The working name of the organ is pending an INDEX-NOMINVM pass.
+
 ## Roles
 
 | Role | Does | Gate |
