@@ -52,6 +52,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       LIMEN_PRGATE_SCOPED: "1"
+      # Emit the first assertion before the outer shared deadline can kill pytest.
+      # A passing run still executes the entire implicated suite; failures stay red.
+      PYTEST_ADDOPTS: "--exitfirst --tb=short"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -156,7 +159,7 @@ jobs:
           python scripts/check-root-manifest.py --surface docs
           python scripts/check-docs-exports.py
           python3 -B docs/positioning/foundry/psp-c11/test_technical_readiness.py && python3 -B scripts/tests/test_positioning_foundry_handoff.py && python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --json
-          python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --public-live --json
+          python3 -B docs/positioning/foundry/psp-c11/technical-readiness-audit.json --public-live --json
           bash scripts/run-pytest-hermetic.sh scripts/tests/test_positioning_research_adjudication.py -q
           python3 scripts/positioning-research-adjudication.py --verify-live
           python -m pytest web/api/tests cli/tests -q -n auto
