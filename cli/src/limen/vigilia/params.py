@@ -10,6 +10,8 @@ in-code default (the organ degrades, it never crashes the beat).
 from __future__ import annotations
 
 import importlib
+from copy import deepcopy
+from functools import lru_cache
 import os
 from pathlib import Path
 from typing import Any, Callable, Optional, TypeVar, Union, overload
@@ -48,16 +50,36 @@ def panel_path() -> Optional[Path]:
     return root.joinpath(*_PANEL_REL) if root else None
 
 
+def _version(path: Path) -> tuple[int, int, int, int, int]:
+    stat = path.stat()
+    return stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns
+
+
+@lru_cache(maxsize=8)
+def _cached_panel(path: Path, version: tuple[int, int, int, int, int]) -> dict[str, object]:
+    # Do not associate replacement/racing bytes with an earlier file identity.
+    if _version(path) != version:
+        raise OSError("parameter panel changed before read")
+    text = path.read_text()
+    if _version(path) != version:
+        raise OSError("parameter panel changed during read")
+    data = yaml_module.safe_load(text)
+    if not isinstance(data, dict):
+        return {}
+    parameters = data.get("parameters", {})
+    return parameters if isinstance(parameters, dict) else {}
+
+
 def _load_panel() -> dict[str, object]:
     path = panel_path()
-    if yaml_module is None or not path or not path.exists():
+    if yaml_module is None or path is None:
         return {}
     try:
-        data = yaml_module.safe_load(path.read_text())
-        if not isinstance(data, dict):
-            return {}
-        params = data.get("parameters", {})
-        return params if isinstance(params, dict) else {}
+        path = path.resolve()
+        # Every read re-stats the selected panel. Edits, atomic replacements,
+        # permissions and worktree changes invalidate the bounded parsed cache.
+        # Return a copy: callers must not mutate another reader's defaults.
+        return deepcopy(_cached_panel(path, _version(path)))
     except Exception:
         return {}
 
