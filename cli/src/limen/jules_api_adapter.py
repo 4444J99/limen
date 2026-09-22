@@ -3,6 +3,7 @@
 The broker still records/claims the attempt before launch. This module neither
 creates a second queue nor declares a provider hard deadline it cannot enforce.
 """
+
 from __future__ import annotations
 
 import os
@@ -11,9 +12,16 @@ from pathlib import Path
 from typing import Any
 
 from limen.fanout_executor import (
-    AmbiguousProviderLaunchError, CODE_RECEIPT_CAPABILITIES, FanoutExecutionError,
-    PatchLandingMixin, ProviderLaunch, ProviderState, _checked, _default_branch,
-    _provider_prompt, remote_branch_head,
+    AmbiguousProviderLaunchError,
+    CODE_RECEIPT_CAPABILITIES,
+    FanoutExecutionError,
+    PatchLandingMixin,
+    ProviderLaunch,
+    ProviderState,
+    _checked,
+    _default_branch,
+    _provider_prompt,
+    remote_branch_head,
 )
 from limen.jules_api import JulesApiClient, JulesApiError, JulesMutationUnknown, observe, session_identity, STATES
 
@@ -55,14 +63,19 @@ class JulesApiExecutionAdapter(PatchLandingMixin):
 
     def eligible(self, packet: dict[str, Any]) -> bool:
         # The entry-point discovery probe does not carry effect/capabilities.
-        return (self.client is not None and packet.get("effect", "write") == "write"
-                and packet.get("execution", {}).get("owner_repository") in self.sources)
+        return (
+            self.client is not None
+            and packet.get("effect", "write") == "write"
+            and packet.get("execution", {}).get("owner_repository") in self.sources
+        )
 
     @staticmethod
     def _launch_record(row: dict) -> ProviderLaunch:
         name = session_identity(row)
         url = row.get("url", "")
-        if not isinstance(url, str) or not re.fullmatch(r"https://jules\.google\.com/(?:session|task)/[A-Za-z0-9_-]+", url):
+        if not isinstance(url, str) or not re.fullmatch(
+            r"https://jules\.google\.com/(?:session|task)/[A-Za-z0-9_-]+", url
+        ):
             url = "https://jules.googleapis.com/v1alpha/" + name
         return ProviderLaunch(name.split("/")[1], url)
 
@@ -86,8 +99,9 @@ class JulesApiExecutionAdapter(PatchLandingMixin):
                 raise FanoutExecutionError("Jules source branch moved from the admitted exact base")
             source = self.sources[repository]
             prompt = _provider_prompt(packet, attempt_id)
-            row = self.client.create(source=source, branch=branch, prompt=prompt,
-                                     title=f"[limen-fanout:{attempt_id}]", auto_create_pr=False)
+            row = self.client.create(
+                source=source, branch=branch, prompt=prompt, title=f"[limen-fanout:{attempt_id}]", auto_create_pr=False
+            )
             # PatchLandingMixin, not Jules, owns exact-head PR creation here.
             return self._launch_record(row)
         except JulesMutationUnknown as exc:
@@ -133,7 +147,9 @@ class JulesApiExecutionAdapter(PatchLandingMixin):
             raise FanoutExecutionError("Jules API unavailable for landing")
         try:
             remote = _checked(["git", "remote", "get-url", "origin"], cwd=worktree).strip()
-            match = re.fullmatch(r"(?:https://github\.com/|git@github\.com:)([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?", remote)
+            match = re.fullmatch(
+                r"(?:https://github\.com/|git@github\.com:)([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+?)(?:\.git)?", remote
+            )
             source = self.sources.get(match.group(1)) if match else None
             if source is None:
                 raise FanoutExecutionError("Jules result repository is not an authorized source")
