@@ -1,7 +1,7 @@
 """Unit tests for the REST adapter; provider/network/landing operations are mocked."""
 
 import unittest
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -17,6 +17,7 @@ def client():
     value = MagicMock()
     value.sources.return_value = Catalog(({"name": SOURCE, "githubRepo": {"owner": "owner", "repo": "repo"}},), 1, "")
     value.sessions.return_value = Catalog((), 1, "")
+    value.timeout = 15.0
     value.create.return_value = {
         "name": "sessions/123456789012",
         "id": "123456789012",
@@ -44,6 +45,7 @@ class AdapterTests(unittest.TestCase):
 
     def test_no_fictional_hard_deadline(self):
         self.assertIs(JulesApiExecutionAdapter.enforces_deadline, False)
+        self.assertIs(JulesApiExecutionAdapter.fenced_async_submission, True)
 
     def test_source_discovery_without_cli(self):
         adapter = JulesApiExecutionAdapter(client())
@@ -80,6 +82,29 @@ class AdapterTests(unittest.TestCase):
         self.assertEqual(kwargs["branch"], "trunk")
         self.assertFalse(kwargs["auto_create_pr"])
         self.assertTrue(kwargs["prompt"].startswith("[limen-fanout:attempt-abc-1]\n"))
+
+    def test_submission_deadline_bounds_create_without_claiming_remote_cancellation(self):
+        remote = client()
+        value = packet()
+        value["submission_deadline"] = (datetime.now(timezone.utc) + timedelta(seconds=30)).isoformat()
+        adapter = JulesApiExecutionAdapter(remote)
+        with (
+            patch("limen.jules_api_adapter._default_branch", return_value="main"),
+            patch("limen.jules_api_adapter.remote_branch_head", return_value=HEAD),
+        ):
+            adapter.launch(value, "attempt-abc-1")
+        timeout = remote.create.call_args.kwargs["timeout"]
+        self.assertGreater(timeout, 0)
+        self.assertLessEqual(timeout, remote.timeout)
+
+    def test_expired_submission_deadline_stops_before_provider_reads(self):
+        remote = client()
+        value = packet()
+        value["submission_deadline"] = (datetime.now(timezone.utc) - timedelta(seconds=1)).isoformat()
+        with self.assertRaises(FanoutExecutionError):
+            JulesApiExecutionAdapter(remote).launch(value, "attempt-abc-1")
+        remote.sessions.assert_not_called()
+        remote.create.assert_not_called()
 
     def test_changed_source_head_stops_before_create(self):
         remote = client()

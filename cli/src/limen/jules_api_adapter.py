@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -39,6 +40,10 @@ class JulesApiExecutionAdapter(PatchLandingMixin):
     # The public API has no documented remote cancellation/deadline operation.
     # launch_ready_nodes MUST retain its hard-deadline admission rejection.
     enforces_deadline = False
+    # The REST API is asynchronous and has no documented remote cancellation.
+    # Limen may bound only submission, persist the accepted session identity, and
+    # fence late integration behind a separately admitted recovery pass.
+    fenced_async_submission = True
 
     def __init__(self, client: JulesApiClient | None, *, concurrency: int = 1):
         if type(concurrency) is not int or not 1 <= concurrency <= 15:
@@ -89,6 +94,15 @@ class JulesApiExecutionAdapter(PatchLandingMixin):
         if not re.fullmatch(r"(?:[a-f0-9]{40}|[a-f0-9]{64})", expected):
             raise FanoutExecutionError("Jules API requires an exact base")
         try:
+            submission_deadline = packet.get("submission_deadline")
+            parsed_deadline = None
+            if submission_deadline is not None:
+                try:
+                    parsed_deadline = datetime.fromisoformat(str(submission_deadline).replace("Z", "+00:00"))
+                except ValueError:
+                    raise FanoutExecutionError("invalid Jules submission deadline") from None
+                if parsed_deadline <= datetime.now(timezone.utc):
+                    raise FanoutExecutionError("Jules submission deadline exhausted before account observation")
             observed = observe(self.client.sessions())
             # These are conservative observed guards, NOT a vendor balance.
             # Shared reservations and all other callers remain broker-owned.
@@ -99,8 +113,19 @@ class JulesApiExecutionAdapter(PatchLandingMixin):
                 raise FanoutExecutionError("Jules source branch moved from the admitted exact base")
             source = self.sources[repository]
             prompt = _provider_prompt(packet, attempt_id)
+            create_timeout = None
+            if parsed_deadline is not None:
+                remaining = (parsed_deadline - datetime.now(timezone.utc)).total_seconds()
+                if remaining <= 0:
+                    raise FanoutExecutionError("Jules submission deadline exhausted before create")
+                create_timeout = min(float(self.client.timeout), remaining)
             row = self.client.create(
-                source=source, branch=branch, prompt=prompt, title=f"[limen-fanout:{attempt_id}]", auto_create_pr=False
+                source=source,
+                branch=branch,
+                prompt=prompt,
+                title=f"[limen-fanout:{attempt_id}]",
+                auto_create_pr=False,
+                timeout=create_timeout,
             )
             # PatchLandingMixin, not Jules, owns exact-head PR creation here.
             return self._launch_record(row)
