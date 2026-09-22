@@ -7,8 +7,15 @@ on:
       - 'cli/src/limen/jules_api_adapter.py'
       - 'cli/tests/test_jules_api.py'
       - 'cli/tests/test_jules_api_adapter.py'
+      - 'cli/tests/test_jules_api_workflow.py'
       - 'cli/pyproject.toml'
       - 'institutio/governance/parameters.yaml'
+      - '.github/workflows/jules-api-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'cli/src/limen/jules_api*.py'
+      - 'cli/tests/test_jules_api*.py'
       - '.github/workflows/jules-api-contract.yml'
   workflow_dispatch:
 
@@ -28,6 +35,19 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Preserve exact candidate source for activation diagnostics
+        if: github.event_name == 'pull_request' && github.event.pull_request.number == 2687
+        run: |
+          mkdir -p activation-diagnostics
+          git archive --format=tar HEAD -o activation-diagnostics/source.tar
+          git rev-parse HEAD > activation-diagnostics/source-commit.txt
+      - name: Upload exact candidate source
+        if: github.event_name == 'pull_request' && github.event.pull_request.number == 2687
+        uses: actions/upload-artifact@v4
+        with:
+          name: jules-activation-source-${{ github.run_id }}-${{ github.run_attempt }}
+          path: activation-diagnostics/
+          retention-days: 1
       - name: Offline REST contract
         env:
           PYTHONPATH: cli/src
@@ -55,12 +75,16 @@ jobs:
 
   account-readback:
     needs: contract
-    # Never supply the provider key to a fork or to the test/install step.
-    if: github.actor == '4444J99' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
+    # PRs are secret-free, including same-repository PRs. This is a post-landing
+    # activation proof, never a substitute for the offline contract above.
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -167,7 +191,7 @@ jobs:
           - source: base
             ref: 4d19db8eaeb689fec4f3b0e4d53f1d6e97b0edf4
           - source: api-head
-            ref: 59e6a1989e18c70993c9a8822e426ba30e99ee1c
+            ref: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
