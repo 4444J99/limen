@@ -874,7 +874,7 @@ def harvest(agent):
     "--sandbox",
     "launch_sandbox",
     default=None,
-    help="Codex sandbox for the explicit primary launch profile.",
+    help="Codex authorization profile; danger-full-access uses bypass-all and requires --conduct. May stand alone without pinning a model.",
 )
 @click.option(
     "--shell",

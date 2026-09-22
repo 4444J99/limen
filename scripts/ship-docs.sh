@@ -47,13 +47,22 @@ else
 fi
 mkdir -p "$wt_root"
 tmp="$wt_root/ship-docs-${slug}-$(date -u +%Y%m%d%H%M%S)-$$"
+pushed_head=""
 cleanup() {
+  if [ -n "$pushed_head" ]; then
+    python3 "$root/scripts/worktree-abandonment.py" --apply release \
+      --superproject "$root" --target "$tmp" --expected-head "$pushed_head" \
+      --remote-ref "refs/heads/$br" || echo "ship-docs: release needs reclaimer retry"
+    return
+  fi
   echo "ship-docs: retained local worktree $tmp"
   echo "ship-docs: retained local/remote branch $br"
   echo "ship-docs: cleanup delegated to docs/worktree-reclaim-acceptance.jsonl + reclaim-worktrees.py and docs/branch-reap-acceptance.jsonl + reap-branches.py"
 }
 trap cleanup EXIT
 
+python3 "$root/scripts/dispatch-admission.py" --reserve-resource branch --resource-identity "$root:$br"
+python3 "$root/scripts/dispatch-admission.py" --reserve-resource worktree --resource-identity "$tmp"
 git -C "$root" worktree add --quiet -b "$br" "$tmp" origin/main
 # `worktree add` can exit 0 having checked out NOTHING, leaving an unborn HEAD — set -e cannot catch
 # a command that lies about succeeding. Everything downstream then works perfectly on the wrong base:
@@ -74,6 +83,7 @@ if git -C "$tmp" diff --cached --quiet; then
 fi
 git -C "$tmp" commit --quiet -m "$msg"
 git -C "$tmp" push --quiet -u origin "$br"
+pushed_head="$(git -C "$tmp" rev-parse HEAD)"
 
 pr_url="$(cd "$tmp" && gh pr create --title "$msg" \
   --body "Shipped via \`scripts/ship-docs.sh\` — the PR-native path for the docs-append class (charter § Merge & Branch Protocol, \"No side doors\").")"

@@ -13,6 +13,32 @@ from limen.worktree_initialization import (
 )
 
 
+@pytest.fixture(autouse=True)
+def approved_creation(tmp_path, monkeypatch):
+    policy_root = tmp_path / "authority"
+    (policy_root / "logs").mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_ROOT", str(policy_root))
+    from functools import partial
+    import limen.inventory_admission as admission
+
+    monkeypatch.setattr(admission, "reserve_growth", partial(admission.reserve_growth, root=policy_root))
+    (policy_root / "logs/autonomy-policy.json").write_text(
+        json.dumps(
+            {
+                "mode": "dispatch",
+                "approved_priorities": [
+                    {
+                        "outcome_id": "fixture",
+                        "enabled": True,
+                        "work_keys": ["FIXTURE", "DIRTY", "MOVE-CRASH", "COLLISION", "BRANCH-COLLISION"],
+                        "resource_limits": {"branch": 2, "worktree": 2},
+                    }
+                ],
+            }
+        )
+    )
+
+
 def _repo(root: Path) -> Path:
     root.mkdir()
     subprocess.run(["git", "init", "-q", "-b", "main", str(root)], check=True)
@@ -153,3 +179,15 @@ def test_branch_collision_records_add_phase_without_deleting_existing_branch(tmp
     assert raised.value.receipt["phase"] == "add"
     assert raised.value.receipt["crash"]["code"] == "worktree-add-failed"
     assert _git(repo, "show-ref", "--verify", "refs/heads/work/existing").returncode == 0
+
+
+def test_unapproved_initialization_creates_no_branch_or_checkout(tmp_path: Path) -> None:
+    repo = _repo(tmp_path / "repo")
+    final = tmp_path / "unapproved-copy"
+    before = _git(repo, "worktree", "list", "--porcelain").stdout
+    with pytest.raises(WorktreeInitializationError, match="priority_not_approved"):
+        initialize_worktree(repo, final, branch="work/unapproved", checkout_ref="main", task_id="UNAPPROVED")
+    assert not final.exists()
+    assert not list(tmp_path.glob(".limen-init-*"))
+    assert _git(repo, "show-ref", "--verify", "refs/heads/work/unapproved").returncode != 0
+    assert _git(repo, "worktree", "list", "--porcelain").stdout == before

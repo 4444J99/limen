@@ -7,6 +7,7 @@ import pytest
 from limen.io import load_limen_file, save_limen_file
 from limen.models import DispatchLogEntry, canonical_dispatch_agent
 from limen.tabularius import apply_limen_file_sync
+from limen.execution_contract import execution_contract_hash
 from test_tabularius import _board, _task
 
 
@@ -22,12 +23,16 @@ def _reservation(tmp_path):
                 agent="untrusted-log-label",
                 session_id="selected-batch",
                 status="dispatched",
+                execution_contract_hash=execution_contract_hash(task),
             )
         )
     return path, board
 
 
-def test_mixed_provider_claims_use_explicit_selection_and_keep_dispatcher_correlation(tmp_path):
+def test_mixed_provider_claims_use_explicit_selection_and_keep_dispatcher_correlation(
+    tmp_path, approved_execution_policy
+):
+    approved_execution_policy("A", "B")
     path, desired = _reservation(tmp_path)
     result = apply_limen_file_sync(
         path,

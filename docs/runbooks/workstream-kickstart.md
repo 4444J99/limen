@@ -33,9 +33,11 @@ exactly; it refuses a new `--runway`. A deliberately distinct window uses
 checkout's committed `HEAD` bytes, that checkout must be on the receipt's declared branch, and its
 exact HEAD must be the live `origin` branch head. The successor worktree is based on that exact
 commit; an explicit `--from` is accepted only when it resolves to the same commit. Both successor
-modes use the provider-neutral `workspace-write` authorization contract; an old provider-specific
-launch profile is not inherited. The successor records only the predecessor slug, branch, and
-receipt SHA-256 digest—never a machine-local path—and never rewrites the predecessor.
+modes normally reset to the provider-neutral `workspace-write` authorization contract; an old
+provider-specific model profile is not inherited. An explicit `--sandbox` creates an
+authorization-only v3 successor, and later successors preserve that v3 authorization unless a new
+explicit sandbox replaces it. The successor records only the predecessor slug, branch, and receipt
+SHA-256 digest—never a machine-local path—and never rewrites the predecessor.
 
 Re-rendering an existing successor must repeat the same exact `--predecessor-receipt` and
 `--runway-mode` arguments (and the same `--runway` for a renewal). The receipt path is intentionally
@@ -67,11 +69,20 @@ state, remote branch drift, commit failure, or push failure denies provider laun
 already published exact head is byte-idempotent. Local-only repositories without an `origin` retain
 the legacy owner-native behavior; autonomous campaign repositories require the remote receipt.
 
-The contract also carries the no-modal authorization boundary. Codex starts with
-`--ask-for-approval never --sandbox workspace-write`: reversible work inside the packet proceeds
-without confirmation, while destructive, credential, paid-spend, public-send, and runtime/host
-mutations remain gated. The conductor derives healthy lanes live and routes independently bounded
-packets; the capsule never pins a future provider or model.
+The contract also carries the no-modal authorization boundary. Codex defaults to
+`--ask-for-approval never --sandbox workspace-write`. For a direct human-protected continuation,
+`--sandbox danger-full-access` may stand alone but requires `--conduct`: it keeps provider/model
+selection dynamic, records an authorization-only v3 contract, verifies live CLI support, registers
+the session as human-protected before admission, and launches with the single exact
+`--dangerously-bypass-approvals-and-sandbox` flag. That process-level bypass removes modal friction;
+destructive, credential, paid-spend, public-send, and runtime/host mutations remain gated by the
+workstream contract. Broker-dispatched packets remain workspace-write and never inherit this
+override.
+
+```bash
+scripts/start-worktree-session.sh --autonomous --conduct --sandbox danger-full-access \
+  --prompt-file /path/to/intent.md limen direct-successor
+```
 
 ```bash
 /Users/4jp/Workspace/limen/scripts/start-worktree-session.sh --shell --prompt "short objective and constraints" limen my-workstream

@@ -36,8 +36,8 @@ For dispatch-mode sessions:
    protection status.
 4. **Claim** through the Limen CLI/MCP compatibility tools or accept a broker-assigned
    `WorkPacketV1`; both paths reserve the same canonical lease and budget debit.
-5. **Verify** before reporting `done` — run the task predicate, or the repo predicate
-   (`scripts/verify-whole.sh`) when no narrower predicate is defined.
+5. **Verify** before reporting `done` — run the task predicate or implicated
+   `scripts/verify-scoped.sh` gates.
 6. **Close out** — report the lease receipt, harvest children, and release any reservation that
    never started through the broker.
 
@@ -298,6 +298,8 @@ failed, cause and remedy unverified. [Doctrine](docs/architecture/source-of-trut
 The laptop is a thin hot-cache control plane; external SSDs are durable custody, and personal data
 never moves without the two-copy/restore gate.
 Full doctrine: [`docs/architecture/run-and-gun-substrate.md`](docs/architecture/run-and-gun-substrate.md).
+
+[Finite-work limits and retirement](docs/architecture/finite-workspace-recovery.md) bind autonomy.
 
 ## Autonomy Continuation
 

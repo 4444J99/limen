@@ -935,6 +935,32 @@ def _lifecycle_repair_authorized(
     prior_status = str(task.get("status") or "")
     labels = {str(label) for label in patch.get("labels", task.get("labels") or [])}
 
+    if marker == "jules-landing-terminal":
+        keys = ("landing_session_id", "landing_branch", "landing_intent_token")
+        intent_matches = any(
+            entry.get("landing_event") == "intent"
+            and all(log.get(key) and entry.get(key) == log.get(key) for key in keys)
+            for entry in (task.get("dispatch_log") or [])
+        )
+        terminal_ok = next_status in {"failed", "failed_blocked"}
+        if next_status == "done":
+            landing_ref = re.fullmatch(
+                r"https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/pull/[1-9][0-9]*",
+                str(log.get("session_id") or ""),
+            )
+            terminal_ok = bool(
+                landing_ref
+                and landing_ref.group(1) == str(task.get("repo") or "")
+                and log.get("landing_outcome") == "pr"
+            )
+        return bool(
+            prior_status == "dispatched"
+            and log.get("landing_terminal") is True
+            and log.get("landing_event") == "terminal"
+            and log.get("agent") == "jules"
+            and terminal_ok
+            and intent_matches
+        )
     if marker == "prior-done":
         return bool(
             next_status == "done"

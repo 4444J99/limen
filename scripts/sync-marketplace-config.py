@@ -173,6 +173,11 @@ def _push_config(repo: str, path: str, content: str, app: str) -> str:
     head_sha = (sha.stdout or "").strip()
     if not head_sha:
         return f"{repo}: could not read {default} head"
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+    from limen.inventory_admission import reserve_growth
+    reserve_growth("branch", f"{repo}:{branch}")
     mk = _gh(
         ["api", "-X", "POST", f"/repos/{repo}/git/refs", "-f", f"ref=refs/heads/{branch}", "-f", f"sha={head_sha}"],
         timeout=20,

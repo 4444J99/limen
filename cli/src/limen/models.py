@@ -89,6 +89,7 @@ class DispatchLogEntry(BaseModel):
     lifecycle_repair: (
         Literal[
             "prior-done",
+            "jules-landing-terminal",
             "human-gate-reconcile",
             "fleet-debt-park",
             "pr-observed-terminal",

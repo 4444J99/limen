@@ -2606,6 +2606,13 @@ def test_isolated_agent_turns_stale_host_lifetime_fd_into_blocked_result(
     tmp_path: Path,
     monkeypatch,
 ):
+    from types import SimpleNamespace
+
+    monkeypatch.setattr(
+        D,
+        "client_from_env",
+        lambda: SimpleNamespace(execution_info=lambda key: {"attempt_deadline": "2099-01-01T00:00:00Z"}),
+    )
     task = Task(
         id="STALE-HOST-FD",
         title="stale host fd",

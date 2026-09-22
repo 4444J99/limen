@@ -384,7 +384,7 @@ out="$(python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-ba
          && pass legacy-grafts-rejected \
          || flunk legacy-grafts-rejected "missing neutral graft refusal: $out"; }
 
-# ── 5: deploy-trigger diff escalates to the whole matrix (seam) ────────────────
+# ── 5: deploy-trigger diff keeps implicated gates without whole-matrix escalation ────────────────
 sb="$(make_sandbox)"
 base_sha="$(git -C "$sb" rev-parse HEAD)"
 commit_touch "$sb" web/app/page.txt
@@ -392,9 +392,9 @@ printf '#!/usr/bin/env bash\ntouch "%s/whole-ran"\n' "$sb" >"$sb/whole-marker.sh
 out="$(LIMEN_VERIFY_WHOLE_CMD="$sb/whole-marker.sh" \
        python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
   || flunk deploy-escalation "escalated run exited non-zero: $out"
-[[ -f "$sb/whole-ran" ]] \
-  && pass deploy-escalation \
-  || flunk deploy-escalation "LIMEN_VERIFY_WHOLE_CMD marker never ran: $out"
+[[ ! -f "$sb/whole-ran" ]] \
+  && pass deploy-scoped \
+  || flunk deploy-scoped "whole-matrix escalation ran: $out"
 rm -f "$sb/whole-ran"
 out="$(LIMEN_VERIFY_WHOLE_CMD="$sb/whole-marker.sh" \
        python3 "$sb/scripts/verify.py" --changed --base "$base_sha" 2>&1)" \
@@ -471,7 +471,6 @@ out="$(LIMEN_VERIFY_WHOLE_CMD="$sb/whole-marker.sh" LIMEN_VERIFY_NO_DEPLOY_ESCAL
        python3 "$sb/scripts/verify.py" --changed --base "$base_sha" --require-base 2>&1)" \
   || flunk no-escalation-optout "suppressed run exited non-zero: $out"
 [[ ! -f "$sb/whole-ran" ]] \
-  && grep -q "escalation suppressed" <<<"$out" \
   && grep -q "website-sensitive" <<<"$out" \
   && pass no-escalation-optout \
   || flunk no-escalation-optout "whole matrix ran or suppression receipt missing: $out"

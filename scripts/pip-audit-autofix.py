@@ -380,6 +380,11 @@ def open_fix_pr(root: Path, plan: dict) -> int:
     def git(*args: str, cwd: Path = root) -> subprocess.CompletedProcess:
         return subprocess.run(["git", "-C", str(cwd), *args], check=True, capture_output=True, text=True)
 
+    import sys
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+    from limen.inventory_admission import reserve_growth
+    reserve_growth("branch", f"{root}:{branch}")
+    reserve_growth("worktree", str(tmp))
     git("fetch", "origin", "main", "--quiet")
     git("worktree", "add", "--quiet", "-b", branch, str(tmp), "origin/main")
     try:
