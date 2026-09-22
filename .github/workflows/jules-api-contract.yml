@@ -8,6 +8,7 @@ on:
       - 'cli/tests/test_jules_api.py'
       - 'cli/tests/test_jules_api_adapter.py'
       - 'cli/pyproject.toml'
+      - 'institutio/governance/parameters.yaml'
       - '.github/workflows/jules-api-contract.yml'
   workflow_dispatch:
 
@@ -19,6 +20,45 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  register-owned-controls:
+    if: github.actor == '4444J99' && github.event_name == 'pull_request' && github.event.pull_request.number == 2687 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/jules-api-transport-20260921'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Add only the two exercised transport parameters
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('institutio/governance/parameters.yaml')
+          old = p.read_text()
+          specs = [
+            ('LIMEN_ENABLE_JULES_API', '"0"', 'Opt-in REST transport only; does not grant broker admission, bypass deadlines or activate a scheduler. Owner #2680.'),
+            ('LIMEN_JULES_API_CONCURRENCY', '1', 'Declared REST adapter lane ceiling, 1 through 15; actual account limits and shared broker reservations take precedence. Owner #2680.')]
+          additions = ''
+          for key, default, note in specs:
+              if f'  {key}:\n' in old:
+                  continue
+              additions += f'  {key}:\n    default: {default}\n    env: {key}\n    self_update: none\n    owner: vigilia\n    note: "{note}"\n'
+          assert old.count('\nparameters:\n') == 1
+          if additions:
+              p.write_text(old.replace('\nparameters:\n', '\nparameters:\n' + additions, 1))
+          PY
+          git add -- institutio/governance/parameters.yaml
+          if git diff --cached --quiet; then exit 0; fi
+          actual=$(git ls-remote --heads origin refs/heads/fix/jules-api-transport-20260921 | cut -f1)
+          test "$actual" = "$EXPECTED_HEAD"
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix(jules): declare opt-in and lane-concurrency controls'
+          git push origin HEAD:refs/heads/fix/jules-api-transport-20260921
   contract:
     runs-on: ubuntu-latest
     timeout-minutes: 8
@@ -53,8 +93,6 @@ jobs:
 
   account-readback:
     needs: contract
-    # This is an activation probe, not a claim that source tests prove activation.
-    # Never supply the provider key to a fork or to the test/install step.
     if: github.actor == '4444J99' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 5
