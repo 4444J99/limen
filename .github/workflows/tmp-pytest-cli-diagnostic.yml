@@ -63,7 +63,7 @@ jobs:
           accel_path = Path('cli/tests/test_accelerator.py')
           text = accel_path.read_text()
           old = '''def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):\n'''
-          new = '''def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch, approved_execution_policy):\n    approved_execution_policy(*[f"REV{i}" for i in range(10)], *[f"COV{i}" for i in range(10)])\n'''
+          new = '''def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch, approved_execution_policy):\n    policy = approved_execution_policy(*[f"REV{i}" for i in range(10)], *[f"COV{i}" for i in range(10)])\n    for row in policy["approved_priorities"]:\n        row["resource_limits"]["worktree"] = 20\n    (Path(os.environ["LIMEN_LIVE_ROOT"]) / "logs" / "autonomy-policy.json").write_text(json.dumps(policy))\n'''
           if text.count(old) != 1:
               raise SystemExit('accelerator signature anchor mismatch')
           text = text.replace(old, new, 1)
