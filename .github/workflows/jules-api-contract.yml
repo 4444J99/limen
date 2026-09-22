@@ -19,38 +19,6 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  format-owned-repair:
-    if: github.actor == '4444J99' && github.event_name == 'pull_request' && github.event.pull_request.number == 2687 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'fix/jules-api-transport-20260921'
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Format exactly the four owned files; normal fast-forward push only
-        env:
-          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
-        run: |
-          pin=$(python - <<'PYCODE'
-          import tomllib
-          with open('cli/pyproject.toml', 'rb') as handle:
-              test = tomllib.load(handle)['project']['optional-dependencies']['test']
-          print(next(value for value in test if value.startswith('ruff==')))
-          PYCODE
-          )
-          python -m pip install --no-deps "$pin"
-          python -m ruff format cli/src/limen/jules_api.py cli/src/limen/jules_api_adapter.py cli/tests/test_jules_api.py cli/tests/test_jules_api_adapter.py
-          git add -- cli/src/limen/jules_api.py cli/src/limen/jules_api_adapter.py cli/tests/test_jules_api.py cli/tests/test_jules_api_adapter.py
-          if git diff --cached --quiet; then exit 0; fi
-          actual=$(git ls-remote --heads origin refs/heads/fix/jules-api-transport-20260921 | cut -f1)
-          test "$actual" = "$EXPECTED_HEAD"
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'style(jules): apply repository-pinned Ruff formatting'
-          git push origin HEAD:refs/heads/fix/jules-api-transport-20260921
   contract:
     runs-on: ubuntu-latest
     timeout-minutes: 8
@@ -65,12 +33,14 @@ jobs:
         run: |
           python -m unittest discover -s cli/tests -p test_jules_api.py -v
           python -m py_compile cli/src/limen/jules_api.py cli/src/limen/jules_api_adapter.py
-      - name: Verify installed entry point without arming a provider
+      - name: Verify installed framework and pinned source formatting
         env:
           LIMEN_ENABLE_JULES_API: '0'
           JULES_API_KEY: ''
         run: |
-          python -m pip install -e cli
+          python -m pip install -e 'cli[test]'
+          python -m ruff check cli/src/limen/jules_api.py cli/src/limen/jules_api_adapter.py cli/tests/test_jules_api.py cli/tests/test_jules_api_adapter.py
+          python -m ruff format --check cli/src/limen/jules_api.py cli/src/limen/jules_api_adapter.py cli/tests/test_jules_api.py cli/tests/test_jules_api_adapter.py
           python -m unittest discover -s cli/tests -p 'test_jules_api*.py' -v
           python - <<'PY'
           from importlib.metadata import entry_points
@@ -83,6 +53,8 @@ jobs:
 
   account-readback:
     needs: contract
+    # This is an activation probe, not a claim that source tests prove activation.
+    # Never supply the provider key to a fork or to the test/install step.
     if: github.actor == '4444J99' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 5
