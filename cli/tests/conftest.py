@@ -98,24 +98,29 @@ def _async_dispatch_explicit_admission_opt_out(request, monkeypatch):
 
     ``test_async_dispatch`` predates the execution-priority gate and deliberately sets
     ``LIMEN_DISPATCH_ADMISSION=0`` inside its per-test loader so those tests exercise
-    reservation/harvest mechanics instead of operator policy. The priority check now
-    runs before the general admission switch in production, so the old tests became
-    coupled to a policy fixture they do not own. Preserve production fail-closed
-    ordering and narrow the legacy opt-out to this test module only.
+    reservation/harvest mechanics instead of operator policy. Production now checks
+    priority before that general switch. Preserve that fail-closed production ordering
+    and patch only the exact admission seam imported by ``dispatch-async.py`` in this
+    legacy mechanics test module.
     """
     if Path(str(request.node.path)).name != "test_async_dispatch.py":
         return
 
-    import limen.inventory_admission as inventory_admission
+    import limen.dispatch as dispatch
 
-    real_require = inventory_admission.require_approved_priority
+    real_check = dispatch.dispatch_admission_check
 
-    def require_approved_priority(work_key, *args, **kwargs):
+    def dispatch_admission_check(*args, **kwargs):
         if os.environ.get("LIMEN_DISPATCH_ADMISSION") == "0":
-            return {"test_only_admission_opt_out": True, "work_key": work_key}
-        return real_require(work_key, *args, **kwargs)
+            return {
+                "allow": True,
+                "dispatch_allowed": True,
+                "state": "disabled",
+                "reason": "test_only_admission_opt_out",
+            }
+        return real_check(*args, **kwargs)
 
-    monkeypatch.setattr(inventory_admission, "require_approved_priority", require_approved_priority)
+    monkeypatch.setattr(dispatch, "dispatch_admission_check", dispatch_admission_check)
 
 
 @pytest.fixture(autouse=True)
