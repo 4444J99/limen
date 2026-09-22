@@ -4,6 +4,7 @@
 Vendor limits use a rolling 24-hour window, not a midnight reset. Local dispatch
 receipts measure only this broker's observed launches, never account entitlement
 or remaining vendor quota. The UTC-day target is an internal throughput goal.
+The rolling observation is evidence for admission, not independent launch authority.
 This sensor never mutates anything: the EFFECTORS are the existing beat
 rungs — drain.sh (jules-land) lands finished sessions, metabolize 4b dispatch fills
 the quota.
