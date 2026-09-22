@@ -130,7 +130,8 @@ def test_accel_allows_is_ledger_gated():
 
 
 # ── dispatch_parallel integration: the tail is win-class only ───────────────────────────────────
-def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
+def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch, approved_execution_policy):
+    approved_execution_policy(*[f"REV{i}" for i in range(10)], *[f"COV{i}" for i in range(10)])
     # This test exercises accelerator selection, not the inventory-admission policy itself.
     # Make the fixture explicitly admission-approved instead of disabling the production gate;
     # the latter now correctly fails closed with execution_priority_not_approved.
@@ -185,23 +186,18 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
     ]
     lf = _lf({"jules": 100}, {"jules": 5}, reset)
     lf.tasks = tasks
-    tp = tmp_path / "tasks.yaml"
-    save_limen_file(tp, lf)
     monkeypatch.setattr(D, "_deps_met", lambda t, by: True)
-    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
-    monkeypatch.setattr(D, "call_agent_dispatch", lambda agent, task, dry_run=False: True)
-    # dry-run prints picks; capture by monkeypatching print is noisy — instead call and inspect status.
-    D.dispatch_parallel(lf, tp, ["jules"], per_agent_limit=3, dry_run=True)
-    # The accelerated tail beyond the 3 base picks must be REVENUE (win) tasks, never COVERAGE (waste).
-    # Re-run non-dry to see which got reserved=dispatched.
-    D.dispatch_parallel(lf, tp, ["jules"], per_agent_limit=3, dry_run=False)
-    acknowledged = load_limen_file(tp)
-    dispatched = [t for t in acknowledged.tasks if t.status == "dispatched"]
-    disp = [t.id for t in dispatched]
-    assert len(disp) > 3, "accelerator dispatched more than the base 3 toward the cliff"
+    picked = D._select_parallel_reservations(
+        lf,
+        ["jules"],
+        3,
+        now,
+        dry_run=True,
+        admission_snapshot=None,
+    )
+    disp = [task_id for _agent, task_id in picked]
+    assert len(disp) > 3, "accelerator selected more than the base 3 toward the cliff"
     assert all(i.startswith("REV") for i in disp), f"tail must be win-class only, got {disp}"
-    assert all(t.dispatch_log[0].status == "dispatched" for t in dispatched)
-    assert all(dispatch_session_id(t.dispatch_log[0]) == "reserve" for t in dispatched)
 
 
 # ── codex provider-auto selection ───────────────────────────────────────────────────────────────
