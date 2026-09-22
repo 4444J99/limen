@@ -181,7 +181,9 @@ jobs:
           retention-days: 14
 
   cli-first-failure:
-    # Diagnostic comparison only: the complete required PR Gate is unchanged.
+    # Manual incident diagnostic only. The inherited first failure is already preserved
+    # on both the pinned base and API head; the complete required PR Gate remains unchanged.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     strategy:
