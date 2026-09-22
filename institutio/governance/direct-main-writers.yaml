@@ -10,6 +10,9 @@ remote_enforcement:
 # default-ref sink must be classified here. `scripts/direct-main-writer-audit.py`
 # fails when a sink appears, disappears, or changes count without review.
 surfaces:
+  .github/workflows/limen-chat-patch.yml:
+    disposition: read-only-exact-main-controller-candidate-topic-branch-pr-only
+    expected: {default_ref_literal: 1}
   scripts/_relay_merge.py:
     # Both literals are read-only main identity/settings probes. The sole write
     # is the exact-head pull-request merge API under separate remote protection.

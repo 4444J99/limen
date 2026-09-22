@@ -1,6 +1,6 @@
 // Stateless Streamable HTTP transport; the authenticated conduct HTTP router remains
 // the only admission authority. No MCP session, credential cache, or task store is created.
-import { authorizeConductRequest } from "./auth.js";
+import { authorizeMcpRequest } from "./mcp-oauth.js";
 import { forwardConductRequest } from "./durable-object.js";
 
 const VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26"];
@@ -14,18 +14,33 @@ const object = (properties = {}, required = Object.keys(properties)) => ({
   type: "object", properties, required, additionalProperties: false,
 });
 const encoded = (value) => encodeURIComponent(value);
+const CHAT_SHA = {type:"string",pattern:"^[0-9a-f]{40}$"};
+const CHAT_ID = {type:"string",pattern:"^[A-Za-z0-9][A-Za-z0-9._-]{0,100}$"};
+const CHAT_REPO = {type:"string",pattern:"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$"};
+const CHAT_QUERY = object({repository:CHAT_REPO,ref:{type:"string",description:"Exact commit SHA or the repository default branch."},
+  path:{type:"string",maxLength:512},pull_request:{type:"integer",minimum:1}},["repository"]);
+const CHAT_CHANGE = object({session_id:CHAT_ID,request_id:{...CHAT_ID,description:"Stable idempotency and approved execution-policy work key."},
+  repository:CHAT_REPO,base_sha:CHAT_SHA,intent:{type:"string",minLength:1,maxLength:1000},
+  verification_profile:CHAT_ID,landing:{type:"string",enum:["pr","merge"]},
+  changes:{type:"array",minItems:1,maxItems:64,items:object({path:{type:"string",maxLength:512},
+    expected_blob_sha:{anyOf:[CHAT_SHA,{type:"null"}],description:"Null creates a new file; otherwise exact current blob SHA."},
+    content:{type:["string","null"],description:"UTF-8 content, or null to delete. Aggregate maximum 256 KiB."}})}});
 
-function tool(name, description, properties, route, { required, readOnly = false } = {}) {
+function tool(name, description, properties, route, { required, readOnly = false, openWorld = false } = {}) {
   return {
     definition: {
       name, description, inputSchema: object(properties, required),
-      annotations: { readOnlyHint: readOnly, destructiveHint: !readOnly, openWorldHint: false },
+      annotations: { readOnlyHint: readOnly, destructiveHint: !readOnly, openWorldHint: openWorld },
     },
     route,
   };
 }
 
 const TOOLS = new Map([
+  tool("github_repository_context", "Read authorized exact-ref repository files or pull request evidence. Use returned blob SHAs when proposing changes.",
+    { query: CHAT_QUERY }, ({ query }) => ["POST", "/api/conduct/github/read", query], { readOnly: true, openWorld: true }),
+  tool("conduct_submit_changes", "Submit Chat-authored UTF-8 file changes pinned to base/blob SHAs for deterministic tests and governed PR/merge. No model is launched. Observe the returned run with conduct_graph and conduct_harvest; queued is not complete.",
+    { change: CHAT_CHANGE }, ({ change }) => ["POST", "/api/conduct/github/changes", change], { openWorld: true }),
   tool("conduct_capabilities", "Read live keeper capabilities and authenticated lane availability.", {},
     () => ["GET", "/api/conduct/capabilities"], { readOnly: true }),
   tool("conduct_register", "Register a native session; the keeper binds identity to the authenticated principal.", { session: OBJECT },
@@ -78,6 +93,15 @@ function isObject(value) {
 
 function validArguments(value, schema) {
   if (!isObject(value) || schema.required.some((key) => !Object.hasOwn(value, key))) return false;
+  // Do not rely on engine-specific JSON.stringify stack limits for admission.
+  const pending = [[value, 0]];
+  while (pending.length) {
+    const [entry, depth] = pending.pop();
+    if (depth > 64) return false;
+    if (entry && typeof entry === "object") {
+      for (const child of Object.values(entry)) pending.push([child, depth + 1]);
+    }
+  }
   return Object.entries(value).every(([key, item]) => {
     if (!Object.hasOwn(schema.properties, key)) return false;
     const rule = schema.properties[key];
@@ -173,9 +197,11 @@ async function callTool(request, env, id, params) {
 
 export async function handleConductMcp(request, env) {
   // Authenticate every method, including initialize, tools/list, GET and OPTIONS.
-  const auth = await authorizeConductRequest(request, env);
+  const auth = await authorizeMcpRequest(request, env);
   if (!auth.ok) return response({ error: "Conduct authentication unavailable or rejected" }, auth.status,
-    auth.status === 401 ? { "www-authenticate": 'Bearer realm="limen-conduct"' } : {});
+    auth.challenge ? { "www-authenticate": auth.challenge }
+      : auth.status === 401 ? { "www-authenticate": 'Bearer realm="limen-conduct"' } : {});
+  request = auth.request;
   if (!originAllowed(request, env)) return response({ error: "Origin not allowed" }, 403);
   if (request.method !== "POST") return response({ error: "Only POST is supported; no SSE stream or session storage" }, 405, { allow: "POST" });
   const version = request.headers.get("mcp-protocol-version");
@@ -219,7 +245,9 @@ export async function handleConductMcp(request, env) {
   if (method === "ping") return result(id, {});
   if (method === "tools/list") {
     if (Object.keys(params).some((key) => key !== "_meta")) return rpcError(id, -32602, "Pagination is not supported");
-    return result(id, { tools: [...TOOLS.values()].map((entry) => entry.definition) });
+    return result(id, { tools: [...TOOLS.values()].map((entry) => ({ ...entry.definition,
+      ...(auth.scopes ? { securitySchemes: [{ type: "oauth2", scopes: auth.scopes }] } : {}),
+    })) });
   }
   if (method === "tools/call") return callTool(request, env, id, params);
   return rpcError(id, -32601, "Method not found");
