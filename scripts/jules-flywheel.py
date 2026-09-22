@@ -53,6 +53,11 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _as_utc(stamp: datetime) -> datetime:
+    """Normalize historical naive timestamps and offset-aware receipts to UTC."""
+    return stamp.replace(tzinfo=timezone.utc) if stamp.tzinfo is None else stamp.astimezone(timezone.utc)
+
+
 def _env_int(name: str, default: int) -> int:
     try:
         return int(os.environ.get(name, "") or default)
@@ -68,7 +73,7 @@ def _env_float(name: str, default: float) -> float:
 
 
 def dispatched_today(board: object, today: date) -> int:
-    """Jules dispatch receipts stamped today (UTC) — the jules-quota used_today convention."""
+    """Jules dispatch receipts stamped today in UTC — the jules-quota used_today convention."""
     used = 0
     for task in getattr(board, "tasks", None) or []:
         for entry in task.dispatch_log or []:
@@ -77,7 +82,7 @@ def dispatched_today(board: object, today: date) -> int:
             if str(getattr(entry, "status", "") or "").lower() != "dispatched":
                 continue
             stamp = getattr(entry, "timestamp", None)
-            if isinstance(stamp, datetime) and stamp.date() == today:
+            if isinstance(stamp, datetime) and _as_utc(stamp).date() == today:
                 used += 1
     return used
 
