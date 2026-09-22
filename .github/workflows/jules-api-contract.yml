@@ -1,0 +1,76 @@
+name: Jules API contract
+
+on:
+  pull_request:
+    paths:
+      - 'cli/src/limen/jules_api.py'
+      - 'cli/src/limen/jules_api_adapter.py'
+      - 'cli/tests/test_jules_api.py'
+      - 'cli/tests/test_jules_api_adapter.py'
+      - 'cli/pyproject.toml'
+      - '.github/workflows/jules-api-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jules-api-contract-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Offline REST contract
+        env:
+          PYTHONPATH: cli/src
+        run: |
+          python -m unittest discover -s cli/tests -p test_jules_api.py -v
+          python -m py_compile cli/src/limen/jules_api.py cli/src/limen/jules_api_adapter.py
+      - name: Verify installed entry point without arming a provider
+        env:
+          LIMEN_ENABLE_JULES_API: '0'
+          JULES_API_KEY: ''
+        run: |
+          python -m pip install -e cli
+          python -m unittest discover -s cli/tests -p 'test_jules_api*.py' -v
+          python - <<'PY'
+          from importlib.metadata import entry_points
+          entries = [e for e in entry_points(group='limen.fanout_execution') if e.name == 'jules-api']
+          assert len(entries) == 1
+          adapter = entries[0].load()()
+          assert adapter.enforces_deadline is False
+          assert not adapter.eligible({'execution': {'owner_repository': '4444J99/limen'}})
+          PY
+
+  account-readback:
+    needs: contract
+    # The current owner explicitly authorized this internal-branch, read-only probe.
+    # Never supply the provider key to a fork or to the test/install step.
+    if: github.actor == '4444J99' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Observe actual Jules account (no task creation)
+        env:
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+          PYTHONPATH: cli/src
+        run: python -m limen.jules_api observe > jules-api-observation.json
+      - name: Preserve aggregate readback, including missing-key failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jules-api-observation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: jules-api-observation.json
+          if-no-files-found: warn
+          retention-days: 14
