@@ -33,6 +33,22 @@ jobs:
         run: |
           python -m unittest discover -s cli/tests -p test_jules_api.py -v
           python -m py_compile cli/src/limen/jules_api.py cli/src/limen/jules_api_adapter.py
+      - name: Prepare exact pinned formatter for repair evidence
+        run: |
+          pin=$(python - <<'PYCODE'
+          import tomllib
+          with open('cli/pyproject.toml', 'rb') as handle:
+              test = tomllib.load(handle)['project']['optional-dependencies']['test']
+          print(next(value for value in test if value.startswith('ruff==')))
+          PYCODE
+          )
+          python -m pip download --no-deps "$pin" -d formatter-evidence
+      - name: Preserve formatter package for the source repair
+        uses: actions/upload-artifact@v4
+        with:
+          name: jules-api-formatter-${{ github.run_id }}
+          path: formatter-evidence/
+          retention-days: 1
       - name: Verify installed entry point without arming a provider
         env:
           LIMEN_ENABLE_JULES_API: '0'
