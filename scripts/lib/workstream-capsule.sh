@@ -998,6 +998,7 @@ workstream_register_conduct_session() {
     fi
     return "$register_rc"
   fi
+  workstream_protected_registration=1
   export LIMEN_HUMAN_PROTECTED=1
   printf 'registered protected conduct session: %s (%s)\n' "$LIMEN_SESSION_ID" "$agent"
 }
@@ -1068,7 +1069,7 @@ workstream_launch_native_agent() {
   local launch_adapter="${11:-}"
   local model_flag="${12:-}"
   local -a lane_args=()
-  local binary capsule_prompt="" jules_repo="" intent_path=""
+  local binary capsule_prompt="" jules_repo="" intent_path="" effective_sandbox=""
   local contract_helper="" timeout_seconds=""
   local provider_instruction="This session is already admitted; read the modules and continue. Do not execute the operator launch command."
   local jules_output="" jules_rc=0 jules_session_id="" jules_session_url="" jules_receipt=""
@@ -1118,7 +1119,7 @@ workstream_launch_native_agent() {
     return 127
   fi
 
-  if [[ -n "$launch_model" || -n "$launch_reasoning_effort" || -n "$launch_sandbox" ]]; then
+  if [[ -n "$launch_model" || -n "$launch_reasoning_effort" ]]; then
     if [[ "$launch_adapter" != "codex" || -z "$launch_model" || -z "$launch_reasoning_effort" \
       || -z "$launch_sandbox" || ! -f "$launch_contract_helper" ]]; then
       printf 'invalid explicit native launch profile\n' >&2
@@ -1134,11 +1135,27 @@ workstream_launch_native_agent() {
     codex_args=(
       --model "$launch_model"
       --config "model_reasoning_effort=\"$launch_reasoning_effort\""
-      --ask-for-approval never
-      --sandbox "$launch_sandbox"
     )
+  elif [[ -n "$launch_sandbox" ]]; then
+    if [[ "$launch_adapter" != "codex" || ! -f "$launch_contract_helper" ]]; then
+      printf 'invalid Codex authorization-only launch profile\n' >&2
+      return 2
+    fi
+    if ! python3 "$launch_contract_helper" validate-codex-sandbox \
+      --sandbox "$launch_sandbox" >/dev/null; then
+      return 2
+    fi
+  fi
+
+  effective_sandbox="${launch_sandbox:-workspace-write}"
+  if [[ "$effective_sandbox" == "danger-full-access" ]]; then
+    if ! python3 "$launch_contract_helper" validate-codex-bypass \
+      --binary "$binary" >/dev/null; then
+      return 2
+    fi
+    codex_args+=(--dangerously-bypass-approvals-and-sandbox)
   else
-    codex_args=(--ask-for-approval never --sandbox workspace-write)
+    codex_args+=(--ask-for-approval never --sandbox "$effective_sandbox")
   fi
 
   # ── lane tier pin ────────────────────────────────────────────────────────────
@@ -1531,6 +1548,9 @@ render_workstream_capsule() {
     if [[ "$runway_mode" == "renew" ]]; then
       successor_metadata_args+=(--runway "$runway_requested")
     fi
+    if [[ -n "$launch_sandbox" ]]; then
+      successor_metadata_args+=(--sandbox "$launch_sandbox")
+    fi
     successor_metadata="$(
       python3 "$contract_source" "${successor_metadata_args[@]}" 9>&-
     )" || exit 1
@@ -1676,13 +1696,17 @@ PY
     exit 0
   fi
 
-  if [[ -n "$launch_model" ]]; then
-    contract_launch_args=(
-      --agent "$launch_adapter"
-      --model "$launch_model"
-      --reasoning-effort "$launch_reasoning_effort"
-      --sandbox "$launch_sandbox"
-    )
+  if [[ -n "$launch_sandbox" ]]; then
+    if [[ -n "$launch_model" ]]; then
+      contract_launch_args=(
+        --agent "$launch_adapter"
+        --model "$launch_model"
+        --reasoning-effort "$launch_reasoning_effort"
+        --sandbox "$launch_sandbox"
+      )
+    else
+      contract_launch_args=(--sandbox "$launch_sandbox")
+    fi
   fi
   # A successor performs its second, authoritative custody validation before any capsule module
   # is written. If the predecessor or origin changes after successor-metadata, configure-successor
@@ -1698,6 +1722,9 @@ PY
     )
     if [[ "$runway_mode" == "renew" ]]; then
       successor_configure_args+=(--runway "$runway_requested")
+    fi
+    if [[ -n "$launch_sandbox" ]]; then
+      successor_configure_args+=(--sandbox "$launch_sandbox")
     fi
     contract_action="$(
       python3 "$contract_source" "${successor_configure_args[@]}" 9>&- | sed -n '1p'
@@ -1927,6 +1954,7 @@ launch_sandbox=$q_launch_sandbox
 launch_lane_model=$q_launch_lane_model
 launch_adapter=$q_launch_adapter
 model_flag=$q_model_flag
+workstream_protected_registration=0
 if [[ -L "\$capsule_dir" || ! -d "\$capsule_dir" \
   || "\$(cd "\$capsule_dir" && pwd -P)" != "\$capsule_dir" ]]; then
   printf 'invalid capsule: private root is not the expected real directory\n' >&2
@@ -2095,6 +2123,29 @@ if (( preflight_timeout < 1 || preflight_timeout > 300 )); then
   printf 'capsule preflight timeout must be between 1 and 300 seconds\n' >&2
   exit 2
 fi
+if [[ "\$launch_adapter" == "codex" && "$autonomous" -eq 0 \
+  && ( ! -t 0 || ! -t 1 ) ]]; then
+  printf 'interactive Codex workstream launch requires a real terminal; emit an autonomous successor for non-terminal execution\n' >&2
+  exit 2
+fi
+if [[ "\$launch_adapter" == "codex" \
+  && ( -n "\$launch_model" || "\$launch_sandbox" == "danger-full-access" ) ]]; then
+  launch_preflight_binary="\$(workstream_native_binary "\$agent" "\$registry_binary" || true)"
+  if [[ -z "\$launch_preflight_binary" ]]; then
+    printf 'native CLI not found for canonical lane %s\n' "\$agent" >&2
+    exit 127
+  fi
+  if [[ -n "\$launch_model" ]]; then
+    python3 "\$contract_helper" validate-codex-launch \
+      --binary "\$launch_preflight_binary" \
+      --model "\$launch_model" \
+      --reasoning-effort "\$launch_reasoning_effort" \
+      --sandbox "\$launch_sandbox" >/dev/null
+  else
+    python3 "\$contract_helper" validate-codex-bypass \
+      --binary "\$launch_preflight_binary" >/dev/null
+  fi
+fi
 workstream_validate_launch_environment "\$preflight_timeout"
 if [[ "\$launch_adapter" == "jules" ]]; then
   bound_session_id=""
@@ -2174,6 +2225,11 @@ if [[ "\$conduct" -eq 1 ]]; then
   if [[ "\${LIMEN_WORKSTREAM_ALREADY_RUNNING:-}" == "1" ]]; then
     exit 0
   fi
+fi
+if [[ "\$launch_sandbox" == "danger-full-access" \
+  && "\$workstream_protected_registration" -ne 1 ]]; then
+  printf 'bypass-all launch requires a successful human-protected conduct registration\n' >&2
+  exit 2
 fi
 # Admit only after every launch-environment preflight and conduct registration has succeeded.
 refresh_workstream_runway

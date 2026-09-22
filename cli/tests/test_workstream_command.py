@@ -21,7 +21,7 @@ sys.path.insert(0, str(ROOT / "cli" / "src"))
 
 import limen.census as census  # noqa: E402
 from limen.cli import main  # noqa: E402
-from limen.workstream_contract import RECEIPT_MODULES, new_contract  # noqa: E402
+from limen.workstream_contract import RECEIPT_MODULES, new_contract, new_contract_v3  # noqa: E402
 
 
 ADMITTED_PROVIDER_INSTRUCTION = (
@@ -37,7 +37,11 @@ def _git(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
     return result
 
 
-def _write_committed_predecessor(repo: Path) -> tuple[Path, bytes, dict[str, object]]:
+def _write_committed_predecessor(
+    repo: Path,
+    *,
+    sandbox: str | None = None,
+) -> tuple[Path, bytes, dict[str, object]]:
     remote = repo.parent / "origin.git"
     remote.mkdir()
     _git("init", "--bare", "-q", cwd=remote)
@@ -45,7 +49,7 @@ def _write_committed_predecessor(repo: Path) -> tuple[Path, bytes, dict[str, obj
     _git("push", "-u", "origin", "main", cwd=repo)
     predecessor_worktree = repo.parent / "predecessor-worktree"
     _git("worktree", "add", "-b", "work/predecessor", str(predecessor_worktree), "main", cwd=repo)
-    contract = new_contract("16d")
+    contract = new_contract_v3("16d", sandbox=sandbox) if sandbox is not None else new_contract("16d")
     runway = contract["runway"]
     runway.update(
         {
@@ -224,6 +228,19 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
     fake_opencode = fake_bin / "opencode"
     fake_opencode.write_text("#!/usr/bin/env bash\nexit 0\n", encoding="utf-8")
     fake_opencode.chmod(0o755)
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text(
+        (
+            "#!/usr/bin/env bash\n"
+            'if [[ "${1:-}" == "--help" ]]; then\n'
+            "  printf '%s\\n' '--dangerously-bypass-approvals-and-sandbox'\n"
+            "  exit 0\n"
+            "fi\n"
+            "exit 0\n"
+        ),
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
     fake_jules = fake_bin / "jules"
     fake_jules.write_text('#!/usr/bin/env bash\n: > "$PROVIDER_MARKER"\n', encoding="utf-8")
     fake_jules.chmod(0o755)
@@ -332,6 +349,57 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
     assert _git("rev-parse", "HEAD", cwd=renewed_wt).stdout.strip() == predecessor_head
     assert predecessor.read_bytes() == predecessor_bytes
 
+    unprotected_permission = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--prompt",
+            "Preserve lineage while changing only the Codex permission boundary.",
+            "--predecessor-receipt",
+            str(predecessor),
+            "--sandbox",
+            "danger-full-access",
+            str(repo),
+            "Unprotected Permission Successor",
+        ],
+    )
+    assert unprotected_permission.exit_code == 2
+    assert "danger-full-access requires --conduct" in unprotected_permission.output
+    assert not (repo / ".worktrees" / "unprotected-permission-successor").exists()
+
+    permission_only = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--conduct",
+            "--prompt",
+            "Preserve lineage while changing only the Codex permission boundary.",
+            "--predecessor-receipt",
+            str(predecessor),
+            "--sandbox",
+            "danger-full-access",
+            str(repo),
+            "Permission Only Successor",
+        ],
+    )
+
+    assert permission_only.exit_code == 0, permission_only.output
+    permission_wt = repo / ".worktrees" / "permission-only-successor"
+    permission_contract = json.loads(
+        (permission_wt / ".limen-workstream" / "workstream.json").read_text(encoding="utf-8")
+    )
+    permission_receipt = json.loads(
+        (permission_wt / "docs" / "continuations" / "permission-only-successor" / "workstream.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert permission_contract["schema"] == "limen.workstream.contract.v3"
+    assert permission_contract["authorization"]["sandbox"] == "danger-full-access"
+    assert "primary_launch" not in permission_contract
+    assert permission_receipt["predecessor"] == expected_lineage
+    assert _git("rev-parse", "HEAD", cwd=permission_wt).stdout.strip() == predecessor_head
+    assert predecessor.read_bytes() == predecessor_bytes
+
     # A successor is deliberately based on the predecessor's exact branch head, which need not
     # be the repository's live default HEAD. Jules cannot consume that base. The generated
     # kickstart must reject it before admission mutates the fresh runway or receipt.
@@ -432,6 +500,53 @@ def test_workstream_command_creates_inherited_and_renewed_successors_without_mut
     )
     assert missing_predecessor.exit_code == 2
     assert "--runway-mode requires --predecessor-receipt" in missing_predecessor.output
+
+
+def test_inherited_bypass_profile_requires_human_protected_conduct(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+    predecessor, _predecessor_bytes, _predecessor_contract = _write_committed_predecessor(
+        repo,
+        sandbox="danger-full-access",
+    )
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text(
+        "#!/usr/bin/env bash\nprintf '%s\\n' '--dangerously-bypass-approvals-and-sandbox'\n",
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
+    monkeypatch.setenv("LIMEN_AGENT", "codex")
+    monkeypatch.setenv("PATH", f"{fake_bin}:{os.environ['PATH']}")
+
+    rejected = CliRunner().invoke(
+        main,
+        [
+            "workstream",
+            "--prompt",
+            "Inherited bypass still requires fresh protected registration.",
+            "--predecessor-receipt",
+            str(predecessor),
+            str(repo),
+            "Inherited Unprotected Bypass",
+        ],
+    )
+
+    assert rejected.exit_code == 2
+    assert "danger-full-access requires --conduct" in rejected.output
+    assert not (repo / ".worktrees" / "inherited-unprotected-bypass").exists()
 
 
 def test_successor_custody_failure_precedes_module_writes_and_allows_exact_retry(
@@ -1005,6 +1120,163 @@ def test_shell_launcher_hands_off_to_generated_kickstart_without_a_tty(tmp_path:
     assert "# Continuation capsule: agent-launch" in prompt_capture.read_text(encoding="utf-8")
 
 
+def test_sandbox_only_danger_profile_uses_exact_bypass_without_model_catalog(tmp_path: Path) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text(
+        (
+            "#!/usr/bin/env bash\n"
+            'if [[ "${1:-}" == "--help" ]]; then\n'
+            "  printf '%s\\n' '--dangerously-bypass-approvals-and-sandbox'\n"
+            "  exit 0\n"
+            "fi\n"
+            'if [[ "${1:-}" == "debug" && "${2:-}" == "models" ]]; then\n'
+            '  : > "$CATALOG_MARKER"\n'
+            "  exit 79\n"
+            "fi\n"
+            'for ((i = 1; i < $#; i++)); do printf "%s\\n" "${!i}"; done '
+            '> "$SESSION_ARGS_CAPTURE"\n'
+        ),
+        encoding="utf-8",
+    )
+    fake_codex.chmod(0o755)
+    conduct_capture = tmp_path / "conduct-register.txt"
+    fake_limen = fake_bin / "limen"
+    fake_limen.write_text(
+        '#!/usr/bin/env bash\nprintf "%s\\n" "$*" >> "$CONDUCT_CAPTURE"\n',
+        encoding="utf-8",
+    )
+    fake_limen.chmod(0o755)
+    args_capture = tmp_path / "args.txt"
+    catalog_marker = tmp_path / "catalog-queried"
+    env = {
+        **os.environ,
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "SESSION_ARGS_CAPTURE": str(args_capture),
+        "CATALOG_MARKER": str(catalog_marker),
+        "CONDUCT_CAPTURE": str(conduct_capture),
+        "LIMEN_CLI_BIN": str(fake_limen),
+        "LIMEN_CONDUCT_ENV_FILE": str(tmp_path / "missing-conduct-env"),
+        "LIMEN_CONDUCT_URL": "http://127.0.0.1:1",
+        "LIMEN_CONDUCT_TOKEN": "fixture-token",
+        "LIMEN_CONDUCT_KEEPALIVE_SECONDS": "1",
+        "LIMEN_CONDUCT_KEEPALIVE_RETRY_SECONDS": "1",
+        "LIMEN_CONDUCT_KEEPALIVE_POLL_SECONDS": "1",
+    }
+
+    launched = subprocess.run(
+        [
+            "bash",
+            str(ROOT / "scripts" / "start-worktree-session.sh"),
+            "--autonomous",
+            "--agent",
+            "codex",
+            "--conduct",
+            "--sandbox",
+            "danger-full-access",
+            "--prompt",
+            "Continue with the provider-selected model and bypass-all permissions.",
+            str(repo),
+            "Permission Only Launch",
+        ],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+
+    assert launched.returncode == 0, launched.stdout + launched.stderr
+    assert args_capture.read_text(encoding="utf-8").splitlines() == [
+        "--dangerously-bypass-approvals-and-sandbox",
+        "exec",
+    ]
+    assert any(
+        "conduct register" in line and "--human-protected" in line
+        for line in conduct_capture.read_text(encoding="utf-8").splitlines()
+    )
+    assert not catalog_marker.exists()
+    contract = json.loads(
+        (repo / ".worktrees" / "permission-only-launch" / ".limen-workstream" / "workstream.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert contract["schema"] == "limen.workstream.contract.v3"
+    assert contract["authorization"]["sandbox"] == "danger-full-access"
+    assert "primary_launch" not in contract
+
+
+def test_non_autonomous_non_tty_codex_fails_before_admission_or_mutation(tmp_path: Path) -> None:
+    repo = tmp_path / "demo-repo"
+    repo.mkdir()
+    _git("init", "-q", "-b", "main", cwd=repo)
+    _git("config", "user.email", "test@example.invalid", cwd=repo)
+    _git("config", "user.name", "Test User", cwd=repo)
+    (repo / "README.md").write_text("demo\n", encoding="utf-8")
+    _git("add", "README.md", cwd=repo)
+    _git("commit", "-qm", "init", cwd=repo)
+
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_codex = fake_bin / "codex"
+    fake_codex.write_text('#!/usr/bin/env bash\n: > "$PROVIDER_MARKER"\n', encoding="utf-8")
+    fake_codex.chmod(0o755)
+    provider_marker = tmp_path / "provider-started"
+    env = {
+        **os.environ,
+        "LIMEN_AGENT": "codex",
+        "PATH": f"{fake_bin}:{os.environ['PATH']}",
+        "PROVIDER_MARKER": str(provider_marker),
+    }
+    rendered = subprocess.run(
+        [
+            "bash",
+            str(ROOT / "scripts" / "start-worktree-session.sh"),
+            "--prompt",
+            "Require a terminal before admitting an interactive Codex session.",
+            str(repo),
+            "Interactive TTY Guard",
+        ],
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+    assert rendered.returncode == 0, rendered.stdout + rendered.stderr
+    wt = repo / ".worktrees" / "interactive-tty-guard"
+    contract = wt / ".limen-workstream" / "workstream.json"
+    receipt = wt / "docs" / "continuations" / "interactive-tty-guard" / "workstream.json"
+    protected = (contract, receipt)
+    original_bytes = {path: path.read_bytes() for path in protected}
+
+    rejected = subprocess.run(
+        ["bash", str(wt / ".limen-workstream" / "kickstart.sh")],
+        cwd=wt,
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=15,
+        check=False,
+    )
+
+    assert rejected.returncode == 2
+    assert "interactive Codex workstream launch requires a real terminal" in rejected.stderr
+    assert {path: path.read_bytes() for path in protected} == original_bytes
+    assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is None
+    assert not provider_marker.exists()
+
+
 def test_registry_provider_workstream_publishes_admitted_receipt_before_provider(tmp_path: Path) -> None:
     source_provider = next(provider for provider in census.VENDORS if provider.execution.workstream_adapter == "codex")
     provider = replace(
@@ -1361,6 +1633,7 @@ def test_fetch_and_status_fail_before_admission_without_mutating_contract_or_rec
         [
             "bash",
             str(ROOT / "scripts" / "start-worktree-session.sh"),
+            "--autonomous",
             "--prompt",
             "Preflights must finish before admission.",
             str(repo),
@@ -1512,6 +1785,10 @@ def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(t
     fake_codex.write_text(
         (
             "#!/usr/bin/env bash\n"
+            'if [[ "${1:-}" == "--help" ]]; then\n'
+            "  printf '%s\\n' '--dangerously-bypass-approvals-and-sandbox'\n"
+            "  exit 0\n"
+            "fi\n"
             'if [[ "${1:-}" == "debug" && "${2:-}" == "models" ]]; then\n'
             '  printf "catalog\\n" >> "$CATALOG_CAPTURE"\n'
             "  printf '%s\\n' "
@@ -1519,7 +1796,7 @@ def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(t
             '[{"effort":"high"},{"effort":"ultra-fixture"}]}]}\'\n'
             "  exit 0\n"
             "fi\n"
-            'printf "%s\\n" "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" '
+            'for ((i = 1; i < $#; i++)); do printf "%s\\n" "${!i}"; done '
             '> "$SESSION_ARGS_CAPTURE"\n'
             'last="${!#}"\n'
             'printf "%s" "$last" > "$SESSION_PROMPT_CAPTURE"\n'
@@ -1527,6 +1804,13 @@ def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(t
         encoding="utf-8",
     )
     fake_codex.chmod(0o755)
+    conduct_capture = tmp_path / "conduct-register.txt"
+    fake_limen = fake_bin / "limen"
+    fake_limen.write_text(
+        '#!/usr/bin/env bash\nprintf "%s\\n" "$*" >> "$CONDUCT_CAPTURE"\n',
+        encoding="utf-8",
+    )
+    fake_limen.chmod(0o755)
     args_capture = tmp_path / "args.txt"
     prompt_capture = tmp_path / "prompt.txt"
     catalog_capture = tmp_path / "catalog.txt"
@@ -1536,6 +1820,14 @@ def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(t
         "SESSION_ARGS_CAPTURE": str(args_capture),
         "SESSION_PROMPT_CAPTURE": str(prompt_capture),
         "CATALOG_CAPTURE": str(catalog_capture),
+        "CONDUCT_CAPTURE": str(conduct_capture),
+        "LIMEN_CLI_BIN": str(fake_limen),
+        "LIMEN_CONDUCT_ENV_FILE": str(tmp_path / "missing-conduct-env"),
+        "LIMEN_CONDUCT_URL": "http://127.0.0.1:1",
+        "LIMEN_CONDUCT_TOKEN": "fixture-token",
+        "LIMEN_CONDUCT_KEEPALIVE_SECONDS": "1",
+        "LIMEN_CONDUCT_KEEPALIVE_RETRY_SECONDS": "1",
+        "LIMEN_CONDUCT_KEEPALIVE_POLL_SECONDS": "1",
     }
     launched = subprocess.run(
         [
@@ -1544,6 +1836,7 @@ def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(t
             "--autonomous",
             "--agent",
             "codex",
+            "--conduct",
             "--model",
             "fixture-sol",
             "--reasoning-effort",
@@ -1563,16 +1856,18 @@ def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(t
     )
 
     assert launched.returncode == 0, launched.stdout + launched.stderr
-    assert catalog_capture.read_text(encoding="utf-8").splitlines() == ["catalog", "catalog"]
+    catalog_events = catalog_capture.read_text(encoding="utf-8").splitlines()
+    assert catalog_events and set(catalog_events) == {"catalog"}
+    assert any(
+        "conduct register" in line and "--human-protected" in line
+        for line in conduct_capture.read_text(encoding="utf-8").splitlines()
+    )
     assert args_capture.read_text(encoding="utf-8").splitlines() == [
         "--model",
         "fixture-sol",
         "--config",
         'model_reasoning_effort="ultra-fixture"',
-        "--ask-for-approval",
-        "never",
-        "--sandbox",
-        "danger-full-access",
+        "--dangerously-bypass-approvals-and-sandbox",
         "exec",
     ]
     assert "# Continuation capsule: explicit-agent-launch" in prompt_capture.read_text(encoding="utf-8")
@@ -1601,6 +1896,7 @@ def test_explicit_codex_profile_validates_live_catalog_and_launches_exact_argv(t
             [
                 "bash",
                 str(ROOT / "scripts" / "start-worktree-session.sh"),
+                "--conduct",
                 "--model",
                 model,
                 "--reasoning-effort",

@@ -26,9 +26,13 @@ A continuation capsule contains:
 The capsule is a conducted workstream, not an implicit one-packet handoff. Its conductor re-checks
 remaining runway at packet boundaries, derives healthy lanes from live capabilities, and routes
 independently bounded packets across agents without pinning a provider or model. Full approval is
-carried as a no-modal contract: in-scope reversible work proceeds without confirmation under the
-scoped sandbox; destructive, credential, paid-spend, public-send, and runtime/host mutations remain
-gated.
+carried as a no-modal contract: in-scope reversible work proceeds without confirmation. The default
+remains the scoped sandbox. A direct human-protected Codex capsule may instead carry an explicit
+authorization-only `danger-full-access` profile; that profile uses the native bypass-all transport
+only after successful `--conduct` registration as a human-protected session, and persists through
+its v3 successors without pinning a model. Process permission bypass removes modal friction, not the
+capsule's destructive, credential, paid-spend, public-send, or runtime/host gates. Broker-dispatched
+packets retain their narrower contract.
 
 The capsule defines how reality decides what happens next; it never predeclares the ending. At launch,
 derive the exact remote head and CI state, board/task contracts, handoff age, provider headroom, mounted

@@ -20,6 +20,78 @@
 schema_version: 0.1
 
 parameters:
+  LIMEN_CHAT_VERIFICATION:
+    default: ""
+    env: LIMEN_CHAT_VERIFICATION
+    self_update: none
+    owner: worker
+    note: "Trusted host attestation bound to an immutable GitHub artifact; never candidate stdout."
+  LIMEN_CHAT_CONTEXT:
+    default: ""
+    env: LIMEN_CHAT_CONTEXT
+    self_update: none
+    owner: worker
+    note: "Non-secret immutable execution context supplied by authenticated keeper to Actions."
+  LIMEN_CHAT_RUN_ID:
+    default: ""
+    env: LIMEN_CHAT_RUN_ID
+    self_update: none
+    owner: worker
+    note: "Canonical keeper run identity; not a provider run identity."
+  LIMEN_CHAT_EXECUTOR_TOKEN:
+    default: ""
+    env: LIMEN_CHAT_EXECUTOR_TOKEN
+    self_update: none
+    owner: worker
+    note: "Dedicated executor-only credential; private custody and installation owned by #320."
+  LIMEN_CHAT_GITHUB_TOKEN:
+    default: ""
+    env: LIMEN_CHAT_GITHUB_TOKEN
+    self_update: none
+    owner: worker
+    note: "Dedicated exact-repository GitHub credential; private custody owned by #320."
+  LIMEN_CHAT_GITHUB:
+    default: ""
+    env: LIMEN_CHAT_GITHUB
+    self_update: none
+    owner: worker
+    note: "Private disabled-by-default Chat execution configuration and grants; #320 owns installation."
+  LIMEN_CONDUCT_MCP_OAUTH:
+    default: ""
+    env: LIMEN_CONDUCT_MCP_OAUTH
+    self_update: none
+    owner: worker
+    note: "Private optional OAuth resource configuration for /mcp, owned by credential wall #320. Empty preserves legacy bearer-only operation. Explicit issuer/resource/JWKS/scope and subject/client bindings select existing principals without expanding roles; real values stay in the credential organ and Worker secret."
+  LIMEN_ATTEMPT_DEADLINE:
+    default: ""
+    env: LIMEN_ATTEMPT_DEADLINE
+    self_update: none
+    owner: vigilia
+    note: "Keeper-owned deadline passed to an admitted execution process; callers cannot extend it."
+  LIMEN_CHAMBER_WORKTREE_ROOT:
+    default: "~/Workspace/chamber_worktrees"
+    env: LIMEN_CHAMBER_WORKTREE_ROOT
+    self_update: none
+    owner: vigilia
+    note: "Existing chamber checkout lifecycle inventory root."
+  LIMEN_RECLAIM_CHAMBER_WT:
+    default: 1
+    env: LIMEN_RECLAIM_CHAMBER_WT
+    self_update: none
+    owner: vigilia
+    note: "Include chamber PR checkouts in the existing reclaimer inventory."
+  LIMEN_WORK_KEY:
+    default: ""
+    env: LIMEN_WORK_KEY
+    self_update: none
+    owner: vigilia
+    note: "Approved outcome work key for shared resource admission."
+  LIMEN_EXECUTION_POLICY:
+    default: "{}"
+    env: LIMEN_EXECUTION_POLICY
+    self_update: none
+    owner: vigilia
+    note: "Administrator-installed approved priorities for the conduct keeper; empty fails closed."
   LIMEN_MCP_POLICY:
     default: "~/.config/domus/mcp-policy.json"
     env: LIMEN_MCP_POLICY
@@ -4929,11 +5001,11 @@ parameters:
     note: "Beat gate for the launch-agent liveness predicate (scripts/launch-agent-liveness.py --check), sensor section 0g4 in sensors.yaml — run on its declared cadence in BOTH beat lanes (metabolize + the heartbeat scheduled derive lane, live-wired 2026-07-13). The invariant spec/critical-launch-agents.json names the launchd organs that MUST stay alive (the MONETA mint + its Cloudflare tunnel = the first-dollar revenue rail; creds-hydrate = the credential organ; ianva gateway = L-IANVA-LOCAL). A 2026-07-09 mass launchd-quiesce (fork-crash mitigation) disabled 11 agents and restored only the heartbeat, leaving the mint dark for days while armed-valve-audit saw it down every beat with no effector (the sensor-without-effector defect this closes). Read-only --check surfaces any down critical organ; the armed LIMEN_LAUNCHAGENT_HEAL effector restores it. macOS-only signal; fails OPEN off-darwin. Set 0 to silence."
 
   LIMEN_BACKGROUND_ITEMS_CHECK:
-    default: "1"               # ON — classify every LaunchAgent/BTM row against the declared estate each cadence
+    default: "1"               # ON — classify every LaunchAgent; BTM corroboration is intentional-only
     env: LIMEN_BACKGROUND_ITEMS_CHECK
     self_update: none
     owner: tabularius
-    note: "Beat gate for the background-items census (scripts/background-items-census.py --check), sensor section 0g4b in sensors.yaml. The declared registry spec/background-items.json owns which background items are expected (estate agents + Rule-55a third-party exemptions); an installed LaunchAgent matching neither is UNDECLARED drift and the check goes red-advisory. Founded 2026-08-15: the operator's Login Items pane showed 'DomusAgentHost ×4' + bare bash/python3/node/cloudflared rows and no estate surface could answer what they were — the diagnosis (BTM names legacy rows by executable basename, groups adhoc-signed binaries under 'Unknown Developer'; every row mapped to a legitimate owner) had to be hand-derived via sfltool dumpbtm, which works unprivileged. Read-only by contract — the Rule-55 plist hard-block hook is the authority; this sensor classifies and reports, never mutates. macOS-only signal; fails OPEN off-darwin. Set 0 to silence."
+    note: "Beat gate for the background-items census (scripts/background-items-census.py --check), sensor section 0g4b in sensors.yaml. The declared registry spec/background-items.json owns which background items are expected (estate agents + Rule-55a third-party exemptions); an installed LaunchAgent matching neither is UNDECLARED drift and the check goes red-advisory. Founded 2026-08-15: the operator's Login Items pane showed 'DomusAgentHost ×4' + bare bash/python3/node/cloudflared rows and no estate surface could answer what they were — the diagnosis (BTM names legacy rows by executable basename, groups adhoc-signed binaries under 'Unknown Developer'; every row mapped to a legitimate owner) was hand-derived via sfltool dumpbtm. Current macOS may present an administrator dialog, so unattended/default census runs never invoke sfltool: BTM is recorded unmeasured unless a human intentionally supplies --inspect-btm. LaunchAgent ownership classification remains read-only; the Rule-55 plist hard-block hook is the authority. macOS-only signal; fails OPEN off-darwin. Set 0 to silence."
 
   LIMEN_LAUNCHAGENT_HEAL:
     default: "0"               # OFF — the effector. The single durable grant to auto-restore down critical organs.
@@ -5100,7 +5172,7 @@ parameters:
     env: LIMEN_BACKGROUND_ITEMS_TIMEOUT
     self_update: none
     owner: tabularius
-    note: "Per-run timeout (seconds) resolved by the generic sensor runner for the background-items census (a plist glob + one sfltool dumpbtm; ~2 s measured live 2026-08-15). The runner kills the command group on overrun and the beat continues fail-open."
+    note: "Per-run timeout (seconds) resolved by the generic sensor runner for the background-items census (a plist glob; unattended/default runs never invoke modal-capable sfltool). The runner kills the command group on overrun and the beat continues fail-open. Intentional --inspect-btm requests retain their own bounded subprocess timeout."
 
   # --- foreign-litter sensor (0g9): other vendors' session state in the live checkout ---
   LIMEN_FOREIGN_LITTER:

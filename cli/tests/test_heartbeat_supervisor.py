@@ -58,6 +58,7 @@ def test_contract_is_a_one_shot_resource_contract():
     assert "cli/src/limen/notification_effect.py" in contract["runtime_artifacts"]
     commands = {probe["name"]: probe["command"] for probe in contract["probes"]}
     assert "--no-receipt" in commands["background-items-census"]
+    assert "--inspect-btm" not in commands["background-items-census"]
     assert "--no-receipt" in commands["live-checkout-currency"]
     assert "--no-write" in commands["cloud-storage-doctor"]
     assert "--no-write" in commands["tcc-track-c"]

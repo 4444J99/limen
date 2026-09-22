@@ -585,8 +585,8 @@ def _try_restore_dispatch(policy: dict[str, Any]) -> bool:
     prior_mode = str(policy.get("mode", "observe"))
     updated = dict(policy)
     updated.pop("maintenance_window", None)
-    updated["mode"] = "dispatch"
-    updated["dispatch_enabled"] = True
+    updated["mode"] = "dispatch" if policy.get("approved_priorities") else "observe"
+    updated["dispatch_enabled"] = updated["mode"] == "dispatch"
     updated["reason"] = (
         f"auto-restored {restored_at}: finite maintenance window (expired {window.get('expires_at')}) "
         "resumed via its declared predicate — receipt logs/autonomy-policy-restore.json"
@@ -637,8 +637,13 @@ def current_mode() -> str:
     if blocker is not None:
         _persist_maintenance_blocker(blocker)
         return "paused"
+    # Expiry and merged PRs cannot revive unrestricted backlog execution.
+    if policy.get("mode") == "dispatch" and not any(
+        isinstance(row, dict) and row.get("enabled") is True for row in policy.get("approved_priorities", [])
+    ):
+        return "observe"
     if _try_restore_dispatch(policy):
-        return "dispatch"
+        return str(load_policy().get("mode", "observe"))
     return str(policy.get("mode", "observe")).lower()
 
 
