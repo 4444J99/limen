@@ -10,6 +10,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from limen.execution_contract import execution_contract_hash
 from limen.io import load_limen_file, save_limen_file
 from limen.models import LimenFile, Task, dispatch_agent, dispatch_session_id
 from limen.tabularius import drain_once, tickets_root
@@ -403,12 +404,17 @@ def test_retry_identity_uses_first_honest_child_event_without_collision(tmp_path
     assert dispatch_session_id(child.dispatch_log[0]) == "first-invocation"
 
 
-def test_concurrent_claim_invalidates_parent_exact_state_and_verification(tmp_path: Path) -> None:
+def test_concurrent_claim_invalidates_parent_exact_state_and_verification(
+    tmp_path: Path, approved_execution_policy
+) -> None:
     compiler = _module()
     payload = _payload()
     task_id = "DISCOVER-organvm-arca"
+    approved_execution_policy(task_id)
     board = tmp_path / "tasks.yaml"
-    save_limen_file(board, _frozen_board_with_source_status(payload, task_id))
+    frozen = _frozen_board_with_source_status(payload, task_id)
+    save_limen_file(board, frozen)
+    contract_hash = execution_contract_hash(next(task for task in frozen.tasks if task.id == task_id))
     timestamp = compiler.parse_timestamp("2026-07-12T18:00:00Z")
     kwargs = {"timestamp": timestamp, "agent": "codex", "session_id": "concurrent-parent"}
     children = compiler.compile_child_tickets(payload, **kwargs)
@@ -432,7 +438,11 @@ def test_concurrent_claim_invalidates_parent_exact_state_and_verification(tmp_pa
             "horizon": "present",
             "value_case": "Concurrent claim underwritten for the ask-gate migration test.",
         },
-        log={"status": "dispatched", "output": "concurrent claim"},
+        log={
+            "status": "dispatched",
+            "output": "concurrent claim",
+            "execution_contract_hash": contract_hash,
+        },
     )
     compiler.submit_ticket(board, claim)
     compiler.submit_compiled_tickets(board, parents)
@@ -445,12 +455,17 @@ def test_concurrent_claim_invalidates_parent_exact_state_and_verification(tmp_pa
 
 
 @pytest.mark.parametrize("claim_status", ["dispatched", "in_progress"])
-def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path: Path, claim_status: str) -> None:
+def test_later_same_batch_claim_rejects_parent_archive_and_verification(
+    tmp_path: Path, claim_status: str, approved_execution_policy
+) -> None:
     compiler = _module()
     payload = _payload()
     task_id = "DISCOVER-organvm-arca"
+    approved_execution_policy(task_id)
     board = tmp_path / "tasks.yaml"
-    save_limen_file(board, _frozen_board_with_source_status(payload, task_id))
+    frozen = _frozen_board_with_source_status(payload, task_id)
+    save_limen_file(board, frozen)
+    contract_hash = execution_contract_hash(next(task for task in frozen.tasks if task.id == task_id))
     baseline = {task.id: task for task in load_limen_file(board).tasks}[task_id]
     archived_before = sum(entry.status == "archived" for entry in baseline.dispatch_log)
     timestamp = compiler.parse_timestamp("2026-07-12T18:00:00Z")
@@ -477,7 +492,11 @@ def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path
                 "horizon": "present",
                 "value_case": "Prior dispatched claim underwritten for the ask-gate migration test.",
             },
-            log={"status": "dispatched", "output": "prior valid claim"},
+            log={
+                "status": "dispatched",
+                "output": "prior valid claim",
+                "execution_contract_hash": contract_hash,
+            },
         )
         compiler.submit_ticket(board, prior_claim)
         prior_drain = drain_once(board)
@@ -499,7 +518,11 @@ def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path
             "horizon": "present",
             "value_case": "Later same-batch claim underwritten for the ask-gate migration test.",
         },
-        log={"status": claim_status, "output": "later same-batch claim"},
+        log={
+            "status": claim_status,
+            "output": "later same-batch claim",
+            "execution_contract_hash": contract_hash,
+        },
     )
     compiler.submit_ticket(board, later_claim)
     drained = drain_once(board)
