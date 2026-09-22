@@ -1,0 +1,27 @@
+name: Temporary pytest-cli diagnostic
+
+on:
+  push:
+    branches:
+      - fix/jules-rolling-observation-20260918
+
+permissions:
+  contents: read
+
+jobs:
+  first-failure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyyaml -r web/api/requirements.txt -e "cli[test]"
+      - name: Capture first pytest-cli failure under gate-equivalent xdist
+        run: |
+          scripts/run-pytest-hermetic.sh cli/tests -q -n auto --maxfail=1 --tb=short
