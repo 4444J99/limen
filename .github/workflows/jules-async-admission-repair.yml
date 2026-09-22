@@ -1,22 +1,19 @@
-name: Jules async admission repair (one-shot)
+name: Jules async admission repair one-shot
 
 on:
   push:
-    branches: [fix/jules-api-transport-20260921]
+    branches:
+      - fix/jules-api-transport-20260921
     paths:
-      - '.github/workflows/jules-async-admission-repair.yml'
+      - .github/workflows/jules-async-admission-repair.yml
 
 permissions:
   contents: write
 
-concurrency:
-  group: jules-async-admission-repair
-  cancel-in-progress: false
-
 jobs:
   repair:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
         with:
@@ -25,241 +22,11 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - name: Apply exact async-admission repair
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          def replace_once(path: str, old: str, new: str) -> None:
-              p = Path(path)
-              text = p.read_text()
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(f"{path}: expected one replacement target, found {count}")
-              p.write_text(text.replace(old, new, 1))
-
-          replace_once(
-              "cli/src/limen/fanout_executor.py",
-              '''            if node.get("execution_admission"):
-                if not getattr(adapter, "enforces_deadline", False):
-                    raise FanoutExecutionError(f"{adapter.name}: provider hard-deadline enforcement unavailable")
-                packet = {**packet, "deadline": node["execution_admission"]["attempt_deadline"]}
-                if datetime.fromisoformat(packet["deadline"].replace("Z", "+00:00")) <= datetime.now(timezone.utc):
-                    raise FanoutExecutionError("execution attempt deadline exhausted before provider launch")
-''',
-              '''            if node.get("execution_admission"):
-                admission_deadline = str(node["execution_admission"]["attempt_deadline"])
-                if datetime.fromisoformat(admission_deadline.replace("Z", "+00:00")) <= datetime.now(timezone.utc):
-                    raise FanoutExecutionError("execution attempt deadline exhausted before provider launch")
-                if getattr(adapter, "enforces_deadline", False):
-                    packet = {**packet, "deadline": admission_deadline}
-                elif getattr(adapter, "fenced_async_submission", False):
-                    # Async providers may outlive Limen's execution lease. Admission therefore
-                    # bounds the create call, while the exact provider identity remains owned
-                    # and late output requires a separately admitted recovery/integration pass.
-                    packet = {**packet, "submission_deadline": admission_deadline}
-                else:
-                    raise FanoutExecutionError(f"{adapter.name}: provider hard-deadline enforcement unavailable")
-''',
-          )
-          replace_once(
-              "cli/src/limen/fanout_executor.py",
-              '''        deadline = datetime.fromisoformat(str(packet["deadline"]).replace("Z", "+00:00"))
-''',
-              '''        deadline_values = [datetime.fromisoformat(str(packet["deadline"]).replace("Z", "+00:00"))]
-        execution_admission = node.get("execution_admission")
-        if isinstance(execution_admission, dict) and execution_admission.get("attempt_deadline"):
-            deadline_values.append(
-                datetime.fromisoformat(str(execution_admission["attempt_deadline"]).replace("Z", "+00:00"))
-            )
-        deadline = min(deadline_values)
-''',
-          )
-          replace_once(
-              "cli/src/limen/fanout_executor.py",
-              '''            else "campaign deadline reached without an exact provider receipt"
-''',
-              '''            else "execution boundary reached; provider identity retained for separately admitted recovery"
-''',
-          )
-
-          replace_once(
-              "cli/src/limen/jules_api.py",
-              '''    def create(self, *, source: str, branch: str, prompt: str, title: str, auto_create_pr: bool = False) -> dict:
-''',
-              '''    def create(
-        self,
-        *,
-        source: str,
-        branch: str,
-        prompt: str,
-        title: str,
-        auto_create_pr: bool = False,
-        timeout: float | None = None,
-    ) -> dict:
-''',
-          )
-          replace_once(
-              "cli/src/limen/jules_api.py",
-              '''        row = self._request("POST", "sessions", payload)
-''',
-              '''        row = self._request("POST", "sessions", payload, timeout=timeout)
-''',
-          )
-
-          replace_once(
-              "cli/src/limen/jules_api_adapter.py",
-              '''from pathlib import Path
-from typing import Any
-''',
-              '''from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any
-''',
-          )
-          replace_once(
-              "cli/src/limen/jules_api_adapter.py",
-              '''    enforces_deadline = False
-''',
-              '''    enforces_deadline = False
-    # The REST API is asynchronous and has no documented remote cancellation.
-    # Limen may bound only submission, persist the accepted session identity, and
-    # fence late integration behind a separately admitted recovery pass.
-    fenced_async_submission = True
-''',
-          )
-          replace_once(
-              "cli/src/limen/jules_api_adapter.py",
-              '''        try:
-            observed = observe(self.client.sessions())
-            # These are conservative observed guards, NOT a vendor balance.
-''',
-              '''        try:
-            submission_deadline = packet.get("submission_deadline")
-            parsed_deadline = None
-            if submission_deadline is not None:
-                try:
-                    parsed_deadline = datetime.fromisoformat(str(submission_deadline).replace("Z", "+00:00"))
-                except ValueError:
-                    raise FanoutExecutionError("invalid Jules submission deadline") from None
-                if parsed_deadline <= datetime.now(timezone.utc):
-                    raise FanoutExecutionError("Jules submission deadline exhausted before account observation")
-            observed = observe(self.client.sessions())
-            # These are conservative observed guards, NOT a vendor balance.
-''',
-          )
-          replace_once(
-              "cli/src/limen/jules_api_adapter.py",
-              '''            prompt = _provider_prompt(packet, attempt_id)
-            row = self.client.create(
-                source=source, branch=branch, prompt=prompt, title=f"[limen-fanout:{attempt_id}]", auto_create_pr=False
-            )
-''',
-              '''            prompt = _provider_prompt(packet, attempt_id)
-            create_timeout = None
-            if parsed_deadline is not None:
-                remaining = (parsed_deadline - datetime.now(timezone.utc)).total_seconds()
-                if remaining <= 0:
-                    raise FanoutExecutionError("Jules submission deadline exhausted before create")
-                create_timeout = min(float(self.client.timeout), remaining)
-            row = self.client.create(
-                source=source,
-                branch=branch,
-                prompt=prompt,
-                title=f"[limen-fanout:{attempt_id}]",
-                auto_create_pr=False,
-                timeout=create_timeout,
-            )
-''',
-          )
-
-          replace_once(
-              "cli/tests/test_jules_api_adapter.py",
-              '''from datetime import datetime, timezone
-''',
-              '''from datetime import datetime, timedelta, timezone
-''',
-          )
-          replace_once(
-              "cli/tests/test_jules_api_adapter.py",
-              '''    value.create.return_value = {
-''',
-              '''    value.timeout = 15.0
-    value.create.return_value = {
-''',
-          )
-          replace_once(
-              "cli/tests/test_jules_api_adapter.py",
-              '''    def test_no_fictional_hard_deadline(self):
-        self.assertIs(JulesApiExecutionAdapter.enforces_deadline, False)
-''',
-              '''    def test_no_fictional_hard_deadline(self):
-        self.assertIs(JulesApiExecutionAdapter.enforces_deadline, False)
-        self.assertIs(JulesApiExecutionAdapter.fenced_async_submission, True)
-''',
-          )
-          replace_once(
-              "cli/tests/test_jules_api_adapter.py",
-              '''    def test_changed_source_head_stops_before_create(self):
-''',
-              '''    def test_submission_deadline_bounds_create_without_claiming_remote_cancellation(self):
-        remote = client()
-        value = packet()
-        value["submission_deadline"] = (datetime.now(timezone.utc) + timedelta(seconds=30)).isoformat()
-        adapter = JulesApiExecutionAdapter(remote)
-        with (
-            patch("limen.jules_api_adapter._default_branch", return_value="main"),
-            patch("limen.jules_api_adapter.remote_branch_head", return_value=HEAD),
-        ):
-            adapter.launch(value, "attempt-abc-1")
-        timeout = remote.create.call_args.kwargs["timeout"]
-        self.assertGreater(timeout, 0)
-        self.assertLessEqual(timeout, remote.timeout)
-
-    def test_expired_submission_deadline_stops_before_provider_reads(self):
-        remote = client()
-        value = packet()
-        value["submission_deadline"] = (datetime.now(timezone.utc) - timedelta(seconds=1)).isoformat()
-        with self.assertRaises(FanoutExecutionError):
-            JulesApiExecutionAdapter(remote).launch(value, "attempt-abc-1")
-        remote.sessions.assert_not_called()
-        remote.create.assert_not_called()
-
-    def test_changed_source_head_stops_before_create(self):
-''',
-          )
-          replace_once(
-              "cli/tests/test_fanout.py",
-              '''def test_worker_restart_without_original_deadline_cannot_get_fresh_allowance(tmp_path, monkeypatch):
-''',
-              '''def test_admitted_outcome_allows_explicit_fenced_async_submission(
-    tmp_path, monkeypatch, approved_execution_policy
-):
-    approved_execution_policy("campaign/v1")
-    payload = manifest_payload()
-    payload["leaves"][0]["retry"]["max_attempts"] = 1
-    manifest = FanoutManifestV1.model_validate(payload)
-    keeper = LocalConductClient(tmp_path / "fenced-async.sqlite")
-    adapter = FakeExecutionAdapter()
-    adapter.enforces_deadline = False
-    adapter.fenced_async_submission = True
-    monkeypatch.setattr("limen.fanout_executor.remote_default_head", lambda repo: BASE)
-    started = start_manifest(manifest, client=keeper, allow_development_keeper=True, execution_adapters=(adapter,))
-    assert len(adapter.launches) == 1
-    graph = keeper.graph(started["root_run_id"])
-    leaf = next(node for node in graph["nodes"] if node["packet"]["work_id"] == "leaf-a")
-    assert leaf["attempts"][-1]["status"] == "submitted"
-    assert leaf["attempts"][-1]["provider_run_id"] == "provider-run-1"
-
-
-def test_worker_restart_without_original_deadline_cannot_get_fresh_allowance(tmp_path, monkeypatch):
-''',
-          )
-          PY
-      - name: Install test dependencies
-        run: |
-          python -m pip install pyyaml -r web/api/requirements.txt -e 'cli[test]'
-      - name: Format and verify focused contracts
+      - name: Apply repair
+        run: python scripts/jules-async-admission-repair.py
+      - name: Install dependencies
+        run: python -m pip install pyyaml -r web/api/requirements.txt -e 'cli[test]'
+      - name: Verify focused contracts
         run: |
           set -euo pipefail
           python -m ruff format cli/src/limen/fanout_executor.py cli/src/limen/jules_api.py cli/src/limen/jules_api_adapter.py cli/tests/test_fanout.py cli/tests/test_jules_api_adapter.py
@@ -269,13 +36,14 @@ def test_worker_restart_without_original_deadline_cannot_get_fresh_allowance(tmp
           bash scripts/run-pytest-hermetic.sh cli/tests/test_fanout.py -q --tb=short
           python scripts/check-params.py
           git diff --check
-      - name: Commit verified repair and remove one-shot workflow
+      - name: Commit verified branch repair
         run: |
           set -euo pipefail
           rm .github/workflows/jules-async-admission-repair.yml
+          rm scripts/jules-async-admission-repair.py
           git add -A
           git diff --cached --check
-          git config user.name '4444J99'
-          git config user.email '4444J99@users.noreply.github.com'
+          git config user.name 4444J99
+          git config user.email 4444J99@users.noreply.github.com
           git commit -m 'fix(jules): fence asynchronous provider submission'
           git push origin HEAD:fix/jules-api-transport-20260921
