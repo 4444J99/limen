@@ -52,6 +52,15 @@ def test_used_today_counts_only_jules_dispatch_receipts_today() -> None:
     assert module.used_today(board, date(2000, 1, 1)) == 0
 
 
+def test_used_today_normalizes_timezone_and_naive_utc() -> None:
+    module = load_jules_quota()
+    utc_day = date(2026, 9, 18)
+    offset_stamp = datetime(2026, 9, 17, 20, 30, tzinfo=timezone(timedelta(hours=-4)))
+    naive_utc_stamp = datetime(2026, 9, 18, 0, 30)
+    assert module.used_today(_board_with_dispatches(offset_stamp), utc_day) == 1
+    assert module.used_today(_board_with_dispatches(naive_utc_stamp), utc_day) == 1
+
+
 def test_rolling_window_crosses_midnight_and_excludes_boundaries() -> None:
     module = load_jules_quota()
     now = datetime(2026, 9, 18, 0, 30, tzinfo=timezone.utc)
