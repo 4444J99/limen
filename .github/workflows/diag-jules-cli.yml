@@ -1,0 +1,28 @@
+name: Jules CLI first-failure diagnostic
+
+on:
+  push:
+    branches:
+      - fix/jules-api-transport-clean-20260922
+
+permissions:
+  contents: read
+
+jobs:
+  first-failure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install CLI test dependencies
+        run: python -m pip install -e 'cli[test]'
+      - name: Reproduce PR-gate CLI test environment serially
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '0'
+        run: |
+          env -u ANTHROPIC_API_KEY -u OPENAI_API_KEY -u GEMINI_API_KEY -u EDITOR -u VISUAL \
+            python -m pytest -x -vv -n 0 cli/tests
