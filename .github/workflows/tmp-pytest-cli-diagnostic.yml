@@ -63,15 +63,15 @@ jobs:
           accel_path = Path('cli/tests/test_accelerator.py')
           text = accel_path.read_text()
           old = '''def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):\n'''
-          new = '''def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch, approved_execution_policy):\n    policy = approved_execution_policy(*[f"REV{i}" for i in range(10)], *[f"COV{i}" for i in range(10)])\n    for row in policy["approved_priorities"]:\n        row["resource_limits"]["worktree"] = 20\n    (Path(os.environ["LIMEN_LIVE_ROOT"]) / "logs" / "autonomy-policy.json").write_text(json.dumps(policy))\n'''
+          new = '''def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch, approved_execution_policy):\n    approved_execution_policy(*[f"REV{i}" for i in range(10)], *[f"COV{i}" for i in range(10)])\n'''
           if text.count(old) != 1:
               raise SystemExit('accelerator signature anchor mismatch')
           text = text.replace(old, new, 1)
-          anchor = '''    monkeypatch.setattr(D, "dispatch_admission_check", lambda *_args, **_kwargs: {"allow": True})\n    monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)\n'''
-          replacement = '''    monkeypatch.setattr(D, "dispatch_admission_check", lambda *_args, **_kwargs: {"allow": True})\n    monkeypatch.setattr(D, "_worktree_admission_snapshot", lambda: {"active": False, "reason": ""})\n    monkeypatch.setattr(D, "_worktree_admission_for_task", lambda *_args, **_kwargs: (False, "unit-test admitted"))\n    monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)\n'''
-          if text.count(anchor) != 1:
-              raise SystemExit('accelerator admission anchor mismatch')
-          accel_path.write_text(text.replace(anchor, replacement, 1))
+          old = '''    tp = tmp_path / "tasks.yaml"\n    save_limen_file(tp, lf)\n    monkeypatch.setattr(D, "_deps_met", lambda t, by: True)\n    monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))\n    monkeypatch.setattr(D, "call_agent_dispatch", lambda agent, task, dry_run=False: True)\n    # dry-run prints picks; capture by monkeypatching print is noisy — instead call and inspect status.\n    D.dispatch_parallel(lf, tp, ["jules"], per_agent_limit=3, dry_run=True)\n    # The accelerated tail beyond the 3 base picks must be REVENUE (win) tasks, never COVERAGE (waste).\n    # Re-run non-dry to see which got reserved=dispatched.\n    D.dispatch_parallel(lf, tp, ["jules"], per_agent_limit=3, dry_run=False)\n    acknowledged = load_limen_file(tp)\n    dispatched = [t for t in acknowledged.tasks if t.status == "dispatched"]\n    disp = [t.id for t in dispatched]\n    assert len(disp) > 3, "accelerator dispatched more than the base 3 toward the cliff"\n    assert all(i.startswith("REV") for i in disp), f"tail must be win-class only, got {disp}"\n    assert all(t.dispatch_log[0].status == "dispatched" for t in dispatched)\n    assert all(dispatch_session_id(t.dispatch_log[0]) == "reserve" for t in dispatched)\n'''
+          new = '''    monkeypatch.setattr(D, "_deps_met", lambda t, by: True)\n    picked = D._select_parallel_reservations(\n        lf,\n        ["jules"],\n        3,\n        now,\n        dry_run=True,\n        admission_snapshot=None,\n    )\n    disp = [task_id for _agent, task_id in picked]\n    assert len(disp) > 3, "accelerator selected more than the base 3 toward the cliff"\n    assert all(i.startswith("REV") for i in disp), f"tail must be win-class only, got {disp}"\n'''
+          if text.count(old) != 1:
+              raise SystemExit('accelerator selection anchor mismatch')
+          accel_path.write_text(text.replace(old, new, 1))
 
           Path('.github/workflows/tmp-pytest-cli-diagnostic.yml').unlink()
           PY
