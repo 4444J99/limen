@@ -34,8 +34,13 @@ TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 ADOPTIONS = Path(os.environ.get("LIMEN_JULES_ADOPTIONS", str(ROOT / "docs" / "jules-orphan-adoptions.jsonl")))
 
 
+def _as_utc(stamp: datetime) -> datetime:
+    """Normalize historical naive timestamps and offset-aware receipts to UTC."""
+    return stamp.replace(tzinfo=timezone.utc) if stamp.tzinfo is None else stamp.astimezone(timezone.utc)
+
+
 def used_today(board: object, today: date) -> int:
-    """Count Jules dispatch receipts stamped today (UTC) — the system's own launch count."""
+    """Count Jules dispatch receipts stamped today in UTC — the system's own launch count."""
     used = 0
     for task in getattr(board, "tasks", None) or []:
         for entry in task.dispatch_log or []:
@@ -44,7 +49,7 @@ def used_today(board: object, today: date) -> int:
             if str(getattr(entry, "status", "") or "").lower() != "dispatched":
                 continue
             stamp = getattr(entry, "timestamp", None)
-            when = stamp.date() if isinstance(stamp, datetime) else None
+            when = _as_utc(stamp).date() if isinstance(stamp, datetime) else None
             if when == today:
                 used += 1
     return used
@@ -56,7 +61,7 @@ def used_rolling_24h(board: object, now: datetime) -> int:
     Historical naive timestamps follow the board's UTC convention. Future stamps
     are excluded rather than spending capacity before a launch has occurred.
     """
-    now = now.replace(tzinfo=timezone.utc) if now.tzinfo is None else now.astimezone(timezone.utc)
+    now = _as_utc(now)
     cutoff = now - timedelta(hours=24)
     used = 0
     for task in getattr(board, "tasks", None) or []:
@@ -68,7 +73,7 @@ def used_rolling_24h(board: object, now: datetime) -> int:
             stamp = getattr(entry, "timestamp", None)
             if not isinstance(stamp, datetime):
                 continue
-            stamp = stamp.replace(tzinfo=timezone.utc) if stamp.tzinfo is None else stamp.astimezone(timezone.utc)
+            stamp = _as_utc(stamp)
             used += cutoff < stamp <= now
     return used
 
