@@ -1,7 +1,7 @@
 # Jules REST transport: implementation is not activation
 
 Coordination owner: 4444J99/limen#2680. Credential custody: #320.
-Source date: 2026-09-21. The user authorized repairing the Gemini/Jules pipeline using the direct API. This supersedes the earlier observation-only hold for this bounded implementation; it does not authorize parallel dispatchers, extra spending, credential disclosure, protection bypass, or cancellation/deletion of existing work.
+Source date: 2026-09-21. Activation repair checkpoint: 2026-09-22. The user authorized repairing the Gemini/Jules pipeline using the direct API. This supersedes the earlier observation-only hold for this bounded implementation; it does not authorize parallel dispatchers, extra spending, credential disclosure, protection bypass, or cancellation/deletion of existing work.
 
 ## What changed
 
@@ -13,7 +13,7 @@ The read-only `limen-jules-api observe` command emits aggregate JSON from real p
 
 ## Activation prerequisites that are still real
 
-1. Recover the existing Jules API key through the credential owner's managed secret storage. Bind it as `JULES_API_KEY` in the actual executor, never source, chat, a public receipt, or a shell command containing the literal key. A presence check in one Chat container does not prove absence from another runtime. The contract workflow tests an existing repository secret read-only; it does not create or replace that secret.
+1. Recover the existing Jules API key through the credential owner's managed secret storage. Bind it as `JULES_API_KEY` in the actual executor, never source, chat, a public receipt, or a shell command containing the literal key. A presence check in one Chat container does not prove absence from another runtime. The contract workflow tests the repository secret read-only only on an accepted default-branch push or manual default-branch run. PR jobs never receive the provider key, including same-repository PRs. A skipped PR readback is not an authenticated success.
 2. Inspect the existing broker and actual native schedules and account usage. Bind the existing executor principal via `LIMEN_CONDUCT_TOKEN_JULES`. The new REST transport is explicitly unarmed unless `LIMEN_ENABLE_JULES_API=1`. The first declared lane concurrency is one; `LIMEN_JULES_API_CONCURRENCY` accepts at most fifteen. These are configured ceilings, not measured entitlement or a global account lock.
 3. **Resolve the remote-deadline policy honestly.** Current `launch_ready_nodes` and `_journaled_agent_dispatch` reject remote providers when provider hard-deadline enforcement is required. The public API reference exposes no cancel or hard-deadline method. Accordingly this adapter declares `enforces_deadline=False`; no flag is forged and no existing guard is removed. Owner #2680 must implement/approve a keeper-side asynchronous policy that distinguishes a bounded submission and fenced integration deadline from provider compute cancellation. Required semantics: accepted remote work remains accounted for after lease expiry; no optimistic slot release; no publication from an expired/fenced lease; late output retained for a separately admitted recovery. `sendMessage("stop")` is not a cancellation guarantee.
 4. Reconcile all callers, including the existing CLI, GitHub label webhook and Gemini timers, before admitting new work. Preserve the seven requested dispatch opportunities and three discovery/reconciliation shifts, but route admission through one account-wide broker. Do not label an issue to start Jules AND create an API session for the same work. A fresh transport is not authorization to revive the old competing Chat filler.
@@ -29,10 +29,36 @@ The read-only `limen-jules-api observe` command emits aggregate JSON from real p
 - Session listing supports pageSize/pageToken, not a documented ordering/filter contract. Do not stop at the first old date. Pagination completion is not transactional snapshot isolation. Conflicting duplicates, page loops, unknown states, malformed/future timestamps or bounded-read failures do not establish free capacity.
 - The observed rolling-start count is NOT the vendor billing/entitlement ledger. `vendor_quota_remaining` stays null. The published Pro rule is 100 tasks per rolling 24 hours, at most 15 concurrent, not a midnight reset. Other account activity, deletions and unknown accepted submissions require broker reconciliation. The provider remains the ultimate quota authority.
 
-## Verification
+## Credential delivery without repeated secret handling
 
-Local command: `PYTHONPATH=cli/src python -m unittest discover -s cli/tests -p test_jules_api.py -v`.
-46 isolated REST contract tests passed in the Chat execution container. An additional 19 adapter unit tests passed with the existing fanout interfaces replaced by a test-only stand-in; that is not an import/integration test of the full framework. Both source modules compile. Repository CI runs all 65 tests against the actual installed framework and checks entry-point discovery. Those are source tests, not full-repository integration, actual provider acceptance, native schedule proof or activation evidence. The added workflow additionally checks the real installed entry point and attempts a no-dispatch authenticated account read using an already stored key. Its final result must be read back independently.
+`python -m limen.jules_credentials` produces a names-only plan from an existing enabled CLAVIS map entry for `JULES_API_KEY`. When no unique source is registered, it returns `credential_source_unresolved` without reading or writing a secret. It does not invent an `op://` item or infer that no key exists in the vault.
+
+On the existing credential runtime, `python -m limen.jules_credentials --apply` uses CLAVIS's promptless 1Password authorization, validates paginated Jules source/session reads, and streams the recovered value through `gh` stdin to the single declared `4444J99/limen` Actions secret `JULES_API_KEY`. An already-discovered reference may be supplied with `--source-ref`; that argument is a vault reference, never a literal key. No interactive unlock fallback, new vault, key minting, dispatcher, environment-file write, or activation flag is introduced. Failed provider validation prevents delivery.
+
+The result `delivered_pending_executor_readback` proves only the reported delivery and name-presence checks. GitHub does not expose stored secret values for comparison. The protected default-branch `account-readback` job must independently prove consumption. Production executor binding, a real accepted session, and accepted-target verification remain distinct requirements. Only if canonical-store discovery proves that no Jules-issued key exists does creating one in signed-in Jules Settings become a user-owned step. Do not rotate existing keys by assumption.
+
+## Verification and shared-gate repair
+
+The original 46 REST and 19 adapter tests have now passed on the actual installed Limen framework in hosted CI (run `35743307887`, contract job `106799001144`). The pinned independent witness contract also passed in that run. Those are source contracts, not authenticated provider acceptance.
+
+The same run's base-versus-head diagnostic established the identical first CLI failure on base `4d19db8eaeb689fec4f3b0e4d53f1d6e97b0edf4` and candidate `59e6a1989e18c70993c9a8822e426ba30e99ee1c`: `test_dispatch_parallel_accel_tail_is_win_class_only` attempted dispatch without the required approved priority. Both runs passed 146 tests before that failure. The repaired test explicitly declares test-only approval, exercises acceleration from one to two selections within the existing two-slot keeper ceiling, mocks the provider boundary rather than disabling production deadline enforcement, and adds a negative case proving unapproved work starts nothing.
+
+Repeated parsing of the large parameter registry was also observed inside dispatch on the timeout path. The accessor now reuses a bounded parsed cache, rechecks the selected file's identity/timestamps/size on every call, and preserves live environment overrides and independent mutable defaults. Regression tests cover edits with preserved mtime, atomic replacement, worktree changes, invalid/deleted files, racing reads and mutation isolation. No timeout is raised, test is skipped, or admission guard removed to obtain these results.
+
+Reproduce the focused repair suite against the actual installed framework:
+
+```sh
+python -m pip install -e 'cli[test]'
+bash scripts/run-pytest-hermetic.sh \
+  cli/tests/test_jules_api.py cli/tests/test_jules_api_adapter.py \
+  cli/tests/test_jules_api_credentials.py cli/tests/test_jules_api_workflow.py \
+  cli/tests/test_vigilia_params_cache.py cli/tests/test_vigilia.py \
+  cli/tests/test_accelerator.py -q --tb=short
+```
+
+The contract workflow executes the new security/credential regressions and focused shared-gate repairs as well. The full required PR Gate remains independent and must pass at the final head; focused tests do not waive broader failures. Historical first-failure diagnostics remain manual-only, preserving the concurrent incident-workflow change. Temporary source/dependency export instrumentation is retired after reproduction.
+
+The observed failed account-readback had an empty `JULES_API_KEY`, exited 2, and did not reach Jules. That establishes a missing binding in that job, not key absence elsewhere or provider rejection. Authenticated readback, uncancellable-provider admission/occupancy policy, schedule reconciliation, one-session accepted-target proof and throughput activation are still unproved. Do not report this PR or the 100-task pipeline as activated on source-test evidence alone.
 
 ## Primary references
 
