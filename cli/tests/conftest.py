@@ -96,15 +96,18 @@ def _stable_agent_host_fixture(tmp_path_factory) -> str:
 def _async_dispatch_explicit_admission_opt_out(request, monkeypatch):
     """Keep async machinery tests focused when they explicitly disable admission.
 
-    ``test_async_dispatch`` predates the execution-priority gate and deliberately sets
-    ``LIMEN_DISPATCH_ADMISSION=0`` inside its per-test loader so those tests exercise
-    reservation/harvest mechanics instead of operator policy. Production now checks
-    priority before that general switch. Preserve that fail-closed production ordering
-    and patch only the exact admission seam imported by ``dispatch-async.py`` in this
-    legacy mechanics test module.
+    ``test_async_dispatch`` predates the execution-priority and value-tier gates and
+    deliberately sets ``LIMEN_DISPATCH_ADMISSION=0`` inside its per-test loader so
+    those tests exercise reservation/harvest mechanics instead of operator policy.
+    Production now checks priority before that general switch and filters automatic
+    candidates through the value tier. Preserve those fail-closed production rules:
+    admit only this module's synthetic ``x/y`` repository and patch only the exact
+    admission seam imported by ``dispatch-async.py``.
     """
     if Path(str(request.node.path)).name != "test_async_dispatch.py":
         return
+
+    monkeypatch.setenv("LIMEN_VALUE_REPOS", "x/y")
 
     import limen.dispatch as dispatch
 
