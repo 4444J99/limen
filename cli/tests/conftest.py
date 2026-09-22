@@ -111,9 +111,10 @@ def _async_dispatch_explicit_admission_opt_out(request, monkeypatch):
     monkeypatch.setenv("LIMEN_VALUE_REPOS", "x/y")
 
     import limen.dispatch as dispatch
+    import limen.inventory_admission as inventory_admission
 
     real_check = dispatch.dispatch_admission_check
-    real_require_priority = dispatch.require_approved_priority
+    real_require_priority = inventory_admission.require_approved_priority
 
     def dispatch_admission_check(*args, **kwargs):
         if os.environ.get("LIMEN_DISPATCH_ADMISSION") == "0":
@@ -131,7 +132,7 @@ def _async_dispatch_explicit_admission_opt_out(request, monkeypatch):
         return real_require_priority(work_key, *args, **kwargs)
 
     monkeypatch.setattr(dispatch, "dispatch_admission_check", dispatch_admission_check)
-    monkeypatch.setattr(dispatch, "require_approved_priority", require_approved_priority)
+    monkeypatch.setattr(inventory_admission, "require_approved_priority", require_approved_priority)
 
 
 @pytest.fixture(autouse=True)
