@@ -27,8 +27,16 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pyyaml -r web/api/requirements.txt -e 'cli[test]'
       - name: Run isolated ask-gate migration failure
+        id: isolated
+        continue-on-error: true
         env:
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
         run: >-
           python -m pytest -q --tb=short
           cli/tests/test_apply_ask_gate_migration.py::test_concurrent_claim_invalidates_parent_exact_state_and_verification
+      - name: Expose only quarantined ticket identities and rejection reasons
+        if: steps.isolated.outcome == 'failure'
+        run: |
+          set -euo pipefail
+          find /tmp/pytest-of-runner -type f \( -path '*/rejected/*.json' -o -name '*.reason.txt' \) -print -exec sh -c 'case "$1" in *.reason.txt) cat "$1";; esac' _ {} \; | tail -n 80
+          exit 1
