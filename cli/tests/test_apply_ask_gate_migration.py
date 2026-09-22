@@ -403,10 +403,13 @@ def test_retry_identity_uses_first_honest_child_event_without_collision(tmp_path
     assert dispatch_session_id(child.dispatch_log[0]) == "first-invocation"
 
 
-def test_concurrent_claim_invalidates_parent_exact_state_and_verification(tmp_path: Path) -> None:
+def test_concurrent_claim_invalidates_parent_exact_state_and_verification(
+    tmp_path: Path, approved_execution_policy
+) -> None:
     compiler = _module()
     payload = _payload()
     task_id = "DISCOVER-organvm-arca"
+    approved_execution_policy(task_id)
     board = tmp_path / "tasks.yaml"
     save_limen_file(board, _frozen_board_with_source_status(payload, task_id))
     timestamp = compiler.parse_timestamp("2026-07-12T18:00:00Z")
@@ -445,10 +448,13 @@ def test_concurrent_claim_invalidates_parent_exact_state_and_verification(tmp_pa
 
 
 @pytest.mark.parametrize("claim_status", ["dispatched", "in_progress"])
-def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path: Path, claim_status: str) -> None:
+def test_later_same_batch_claim_rejects_parent_archive_and_verification(
+    tmp_path: Path, claim_status: str, approved_execution_policy
+) -> None:
     compiler = _module()
     payload = _payload()
     task_id = "DISCOVER-organvm-arca"
+    approved_execution_policy(task_id)
     board = tmp_path / "tasks.yaml"
     save_limen_file(board, _frozen_board_with_source_status(payload, task_id))
     baseline = {task.id: task for task in load_limen_file(board).tasks}[task_id]
