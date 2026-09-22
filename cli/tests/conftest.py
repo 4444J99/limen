@@ -93,6 +93,32 @@ def _stable_agent_host_fixture(tmp_path_factory) -> str:
 
 
 @pytest.fixture(autouse=True)
+def _async_dispatch_explicit_admission_opt_out(request, monkeypatch):
+    """Keep async machinery tests focused when they explicitly disable admission.
+
+    ``test_async_dispatch`` predates the execution-priority gate and deliberately sets
+    ``LIMEN_DISPATCH_ADMISSION=0`` inside its per-test loader so those tests exercise
+    reservation/harvest mechanics instead of operator policy. The priority check now
+    runs before the general admission switch in production, so the old tests became
+    coupled to a policy fixture they do not own. Preserve production fail-closed
+    ordering and narrow the legacy opt-out to this test module only.
+    """
+    if Path(str(request.node.path)).name != "test_async_dispatch.py":
+        return
+
+    import limen.inventory_admission as inventory_admission
+
+    real_require = inventory_admission.require_approved_priority
+
+    def require_approved_priority(work_key, *args, **kwargs):
+        if os.environ.get("LIMEN_DISPATCH_ADMISSION") == "0":
+            return {"test_only_admission_opt_out": True, "work_key": work_key}
+        return real_require(work_key, *args, **kwargs)
+
+    monkeypatch.setattr(inventory_admission, "require_approved_priority", require_approved_priority)
+
+
+@pytest.fixture(autouse=True)
 def _restore_os_environ(tmp_path, tmp_path_factory, _stable_agent_host_fixture, monkeypatch):
     """Give each test one isolated explicit keeper and restore its environment."""
     saved = dict(os.environ)
