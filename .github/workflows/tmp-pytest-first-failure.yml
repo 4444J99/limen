@@ -1,0 +1,32 @@
+name: Temporary pytest first-failure diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'cli/**'
+      - 'scripts/jules-quota.py'
+      - 'scripts/jules-flywheel.py'
+      - '.github/workflows/tmp-pytest-first-failure.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyyaml -r web/api/requirements.txt -e 'cli[test]'
+      - name: Run first failing CLI test serially
+        env:
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+        run: python -m pytest -q -x --tb=short cli/tests
