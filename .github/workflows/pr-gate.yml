@@ -52,9 +52,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       LIMEN_PRGATE_SCOPED: "1"
-      # Emit the first assertion before the outer shared deadline can kill pytest.
-      # A passing run still executes the entire implicated suite; failures stay red.
-      PYTEST_ADDOPTS: "--exitfirst --tb=short"
     steps:
       - uses: actions/checkout@v7
         with:

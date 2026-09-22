@@ -5,9 +5,14 @@ on:
     paths:
       - 'cli/src/limen/jules_api.py'
       - 'cli/src/limen/jules_api_adapter.py'
+      - 'cli/src/limen/jules_credentials.py'
+      - 'cli/src/limen/vigilia/params.py'
       - 'cli/tests/test_jules_api.py'
       - 'cli/tests/test_jules_api_adapter.py'
       - 'cli/tests/test_jules_api_workflow.py'
+      - 'cli/tests/test_jules_api_credentials.py'
+      - 'cli/tests/test_vigilia_params_cache.py'
+      - 'cli/tests/test_accelerator.py'
       - 'cli/pyproject.toml'
       - 'institutio/governance/parameters.yaml'
       - '.github/workflows/jules-api-contract.yml'
@@ -15,6 +20,7 @@ on:
     branches: [main]
     paths:
       - 'cli/src/limen/jules_api*.py'
+      - 'cli/src/limen/jules_credentials.py'
       - 'cli/tests/test_jules_api*.py'
       - '.github/workflows/jules-api-contract.yml'
   workflow_dispatch:
@@ -35,19 +41,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Preserve exact candidate source for activation diagnostics
-        if: github.event_name == 'pull_request' && github.event.pull_request.number == 2687
-        run: |
-          mkdir -p activation-diagnostics
-          git archive --format=tar HEAD -o activation-diagnostics/source.tar
-          git rev-parse HEAD > activation-diagnostics/source-commit.txt
-      - name: Upload exact candidate source
-        if: github.event_name == 'pull_request' && github.event.pull_request.number == 2687
-        uses: actions/upload-artifact@v4
-        with:
-          name: jules-activation-source-${{ github.run_id }}-${{ github.run_attempt }}
-          path: activation-diagnostics/
-          retention-days: 1
       - name: Offline REST contract
         env:
           PYTHONPATH: cli/src
@@ -61,9 +54,10 @@ jobs:
         run: |
           python -m pip install -e 'cli[test]'
           python scripts/check-params.py
-          python -m ruff check cli/src/limen/jules_api.py cli/src/limen/jules_api_adapter.py cli/tests/test_jules_api.py cli/tests/test_jules_api_adapter.py
-          python -m ruff format --check cli/src/limen/jules_api.py cli/src/limen/jules_api_adapter.py cli/tests/test_jules_api.py cli/tests/test_jules_api_adapter.py
+          python -m ruff check cli/src/limen/jules_api*.py cli/src/limen/jules_credentials.py cli/src/limen/vigilia/params.py cli/tests/test_jules_api*.py cli/tests/test_vigilia_params_cache.py cli/tests/test_accelerator.py
+          python -m ruff format --check cli/src/limen/jules_api*.py cli/src/limen/jules_credentials.py cli/src/limen/vigilia/params.py cli/tests/test_jules_api*.py cli/tests/test_vigilia_params_cache.py cli/tests/test_accelerator.py
           python -m unittest discover -s cli/tests -p 'test_jules_api*.py' -v
+          bash scripts/run-pytest-hermetic.sh cli/tests/test_accelerator.py cli/tests/test_vigilia_params_cache.py cli/tests/test_vigilia.py -q --tb=short
           python - <<'PY'
           from importlib.metadata import entry_points
           entries = [e for e in entry_points(group='limen.fanout_execution') if e.name == 'jules-api']
