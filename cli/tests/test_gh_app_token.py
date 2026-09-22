@@ -302,8 +302,17 @@ def test_repository_target_rejects_path_traversal_segments(tmp_path: Path) -> No
 
 @pytest.mark.parametrize(
     "permissions",
-    [None, [], "write", {}, {"administration": "read"}, {"administration": True},
-     {"administration": 1}, {"administration": "admin"}, {"contents": "write"}],
+    [
+        None,
+        [],
+        "write",
+        {},
+        {"administration": "read"},
+        {"administration": True},
+        {"administration": 1},
+        {"administration": "admin"},
+        {"contents": "write"},
+    ],
 )
 def test_operation_permission_denial_never_emits_a_token(tmp_path: Path, permissions: object) -> None:
     env, log = _app_environment(
@@ -328,7 +337,13 @@ def test_operation_permission_success_in_all_modes(
 ) -> None:
     env, log = _app_environment(tmp_path, MOCK_PERMISSIONS_JSON=json.dumps({"administration": granted}))
     result = _run(
-        env, "--repo", "acme/project", "--app-only", "--require-permission", f"administration={required}", *mode
+        env,
+        "--repo",
+        "acme/project",
+        "--app-only",
+        "--require-permission",
+        f"administration={required}",
+        *mode,
     )
     assert result.returncode == 0
     if mode:
@@ -340,7 +355,10 @@ def test_operation_permission_success_in_all_modes(
     assert '"permissions"' not in log.read_text()
 
 
-@pytest.mark.parametrize("argument", ["", "administration", "administration=admin", "=write", "a=write=read", "a-b=read", "A=read"])
+@pytest.mark.parametrize(
+    "argument",
+    ["", "administration", "administration=admin", "=write", "a=write=read", "a-b=read", "A=read"],
+)
 def test_invalid_operation_permission_is_rejected_before_network(tmp_path: Path, argument: str) -> None:
     env, log = _app_environment(tmp_path)
     result = _run(env, "--repo", "acme/project", "--app-only", "--require-permission", argument)
@@ -366,7 +384,10 @@ def test_operation_permission_requires_an_argument(tmp_path: Path) -> None:
     assert not log.exists()
 
 
-@pytest.mark.parametrize("secrets_grant,admin_grant,passed", [("write", "write", True), ("read", "write", False), ("write", "read", False)])
+@pytest.mark.parametrize(
+    "secrets_grant,admin_grant,passed",
+    [("write", "write", True), ("read", "write", False), ("write", "read", False)],
+)
 def test_operation_permissions_compose_with_legacy_secrets_assertion(
     tmp_path: Path, secrets_grant: str, admin_grant: str, passed: bool
 ) -> None:
@@ -374,8 +395,15 @@ def test_operation_permissions_compose_with_legacy_secrets_assertion(
         tmp_path, MOCK_PERMISSIONS_JSON=json.dumps({"secrets": secrets_grant, "administration": admin_grant})
     )
     result = _run(
-        env, "--repo", "acme/project", "--app-only", "--require-secrets-write",
-        "--require-permission", "administration=read", "--require-permission", "administration=write",
+        env,
+        "--repo",
+        "acme/project",
+        "--app-only",
+        "--require-secrets-write",
+        "--require-permission",
+        "administration=read",
+        "--require-permission",
+        "administration=write",
     )
     assert (result.returncode == 0) is passed
     assert result.stdout == ("app-token\n" if passed else "")
