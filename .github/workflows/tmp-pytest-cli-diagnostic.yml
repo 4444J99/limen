@@ -24,7 +24,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install pyyaml -r web/api/requirements.txt -e "cli[test]"
-      - name: Repair the three reproduced stale admission fixtures
+      - name: Repair reproduced stale admission fixtures
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -32,13 +32,18 @@ jobs:
           async_path = Path('cli/tests/test_async_dispatch.py')
           text = async_path.read_text()
           old = '''def test_inflight_markers_consume_per_lane_limit(tmp_path):\n    da = _load(tmp_path, n_open=0)\n'''
-          new = '''def test_inflight_markers_consume_per_lane_limit(tmp_path, monkeypatch, approved_execution_policy):\n    approved_execution_policy("C0", "C1", "C2", "A0", "A1", "A2")\n    da = _load(tmp_path, n_open=0)\n    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "1")\n    monkeypatch.setattr(da, "dispatch_admission_check", lambda *_args, **_kwargs: {"allow": True, "status": "approved"})\n    monkeypatch.setattr(da, "_worktree_admission_for_task", lambda *_args, **_kwargs: (False, "unit-test admitted"))\n'''
+          new = '''def test_inflight_markers_consume_per_lane_limit(tmp_path, monkeypatch, approved_execution_policy):\n    approved_execution_policy("C0", "C1", "C2", "A0", "A1", "A2")\n    da = _load(tmp_path, n_open=0)\n    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "1")\n    monkeypatch.setattr(da, "dispatch_admission_check", lambda *_args, **_kwargs: {"allow": True, "status": "approved"})\n    monkeypatch.setattr(da, "_worktree_admission_snapshot", lambda: {"active": False, "reason": ""})\n    monkeypatch.setattr(da, "_worktree_admission_for_task", lambda *_args, **_kwargs: (False, "unit-test admitted"))\n'''
           if text.count(old) != 1:
               raise SystemExit('async fixture anchor mismatch')
           async_path.write_text(text.replace(old, new, 1))
 
           main_path = Path('cli/tests/test_check_main_green.py')
           text = main_path.read_text()
+          import_anchor = '''from limen.io import load_limen_file, save_limen_file  # noqa: E402\n'''
+          import_replacement = '''from limen.io import load_limen_file, save_limen_file  # noqa: E402\nfrom limen.execution_contract import execution_contract_hash  # noqa: E402\n'''
+          if text.count(import_anchor) != 1:
+              raise SystemExit('main-green import anchor mismatch')
+          text = text.replace(import_anchor, import_replacement, 1)
           old = '''def test_recurrence_reopens_healed_task(tmp_path):\n    """If a prior red episode healed (task done) and trunk is red again, the SAME singleton reopens —\n'''
           new = '''def test_recurrence_reopens_healed_task(tmp_path, approved_execution_policy):\n    """If a prior red episode healed (task done) and trunk is red again, the SAME singleton reopens —\n'''
           if text.count(old) != 1:
@@ -48,12 +53,17 @@ jobs:
           replacement = '''    run(tmp_path, apply=True)\n    tasks_path = tmp_path / "tasks.yaml"\n    approved_execution_policy("HEAL-mainred-4444j99-limen")\n\n    # Simulate the heal landing through the keeper's legal lifecycle.\n'''
           if text.count(anchor) != 1:
               raise SystemExit('main-green policy anchor mismatch')
+          text = text.replace(anchor, replacement, 1)
+          anchor = '''        task = desired.tasks[0]\n        task.status = status\n        if status == "dispatched":\n            task.target_agent = "codex"\n        task.updated = dt.datetime.now(dt.timezone.utc)\n        task.dispatch_log.append(\n            DispatchLogEntry(\n                timestamp=task.updated,\n                agent="codex",\n                session_id=f"heal-{status}",\n                status=status,\n                output=f"simulated heal {status}",\n            )\n        )\n'''
+          replacement = '''        task = desired.tasks[0]\n        contract_hash = execution_contract_hash(task)\n        task.status = status\n        if status == "dispatched":\n            task.target_agent = "codex"\n        task.updated = dt.datetime.now(dt.timezone.utc)\n        task.dispatch_log.append(\n            DispatchLogEntry(\n                timestamp=task.updated,\n                agent="codex",\n                session_id=f"heal-{status}",\n                status=status,\n                execution_contract_hash=contract_hash if status == "dispatched" else None,\n                output=f"simulated heal {status}",\n            )\n        )\n'''
+          if text.count(anchor) != 1:
+              raise SystemExit('main-green transition anchor mismatch')
           main_path.write_text(text.replace(anchor, replacement, 1))
 
           accel_path = Path('cli/tests/test_accelerator.py')
           text = accel_path.read_text()
           anchor = '''    monkeypatch.setattr(D, "dispatch_admission_check", lambda *_args, **_kwargs: {"allow": True})\n    monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)\n'''
-          replacement = '''    monkeypatch.setattr(D, "dispatch_admission_check", lambda *_args, **_kwargs: {"allow": True})\n    monkeypatch.setattr(D, "_worktree_admission_for_task", lambda *_args, **_kwargs: (False, "unit-test admitted"))\n    monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)\n'''
+          replacement = '''    monkeypatch.setattr(D, "dispatch_admission_check", lambda *_args, **_kwargs: {"allow": True})\n    monkeypatch.setattr(D, "_worktree_admission_snapshot", lambda: {"active": False, "reason": ""})\n    monkeypatch.setattr(D, "_worktree_admission_for_task", lambda *_args, **_kwargs: (False, "unit-test admitted"))\n    monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)\n'''
           if text.count(anchor) != 1:
               raise SystemExit('accelerator admission anchor mismatch')
           accel_path.write_text(text.replace(anchor, replacement, 1))
