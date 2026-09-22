@@ -265,6 +265,13 @@ gates:
     scoped: false
     owner: representation
     note: "Representation Substrate records and opportunities stay schema-clean."
+  ucc-credential-delivery:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_ucc_local_delivery.py cli/tests/test_creds_hydrate.py -q"
+    paths: ["scripts/ucc-cloudflare-delivery.py", "scripts/creds-hydrate.py", "scripts/tests/test_ucc_local_delivery.py", "cli/tests/test_creds_hydrate.py"]
+    scoped: true
+    tier: cheap
+    owner: clavis
+    note: "Fixed UCC local custody and administrator delivery boundaries; hosted App requirements remain intact."
   representation-substrate-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_representation_substrate.py -q"
     paths: ["organs/representation/**", "cli/tests/test_representation_substrate.py"]
@@ -389,6 +396,12 @@ gates:
     paths: ["scripts/merge-conduct-principal-registry.py", "scripts/tests/test_merge_conduct_principal_registry.py", "scripts/deploy-conduct-registry.sh", "scripts/check-conduct-registry-deployment.mjs", "scripts/tests/test-conduct-registry-deployment.mjs", "scripts/check-conduct-roles.mjs", "scripts/tests/test-conduct-roles.mjs", "web/worker/src/conduct/auth.js"]
     owner: dispatch
     note: "Legacy compatibility augmentation cannot widen a dedicated inventory collector or mutate caller state on failure."
+  chat-principal-provision-test:
+    command: "node --test scripts/tests/test-provision-chat-principals.mjs"
+    paths: ["scripts/provision-chat-principals.mjs", "scripts/tests/test-provision-chat-principals.mjs"]
+    tier: cheap
+    owner: dispatch
+    note: "Dedicated Chat authority is additive, preserves existing bearers, and refuses incompatible roles."
   pr-autotype-scope-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_pr_lifecycle_autotype.py -q"
     paths: ["scripts/pr-lifecycle-autotype.py", "cli/tests/test_pr_lifecycle_autotype.py"]
@@ -1233,6 +1246,11 @@ gates:
     paths: ["scripts/npm-audit-gate.py", "scripts/tests/npm-audit-gate.test.py", ".github/workflows/ci.yml"]
     owner: dependencies
     note: "Reject incomplete audit responses and retain independent compatibility evidence when advisories fail."
+  chat-github-runner:
+    command: "python3 -B -m unittest discover -s scripts/tests -p 'test_chat_github_*.py'"
+    paths: ["scripts/chat-github-*.py", "scripts/tests/test_chat_github_*.py", ".github/workflows/limen-chat-patch.yml", "institutio/governance/chat-github-profiles.json"]
+    owner: worker
+    note: "Offline controller identity and bounded immutable canary profile checks; not hosted acceptance."
   worker-check:
     command: "bash -c 'cd web/worker && npm run check'"
     paths: ["web/worker/**", "institutio/github/dependency-completion.json"]

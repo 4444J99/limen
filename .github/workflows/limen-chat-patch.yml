@@ -1,0 +1,101 @@
+name: Limen Chat deterministic changes
+run-name: chat:${{ inputs.run_id }}
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        required: true
+        type: string
+      control_sha:
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: chat-change-${{ inputs.run_id }}
+  cancel-in-progress: false
+env:
+  LIMEN_CHAT_RUN_ID: ${{ inputs.run_id }}
+  LIMEN_CONDUCT_URL: https://limen-runtime.ivixivi.workers.dev
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/main' && github.sha == inputs.control_sha && github.run_attempt == 1
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      context: ${{ steps.context.outputs.context }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - id: context
+        run: python3 scripts/chat-github-runner.py context
+        env:
+          LIMEN_CHAT_EXECUTOR_TOKEN: ${{ secrets.LIMEN_CHAT_EXECUTOR_TOKEN }}
+  verify:
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      verification: ${{ steps.predicate.outputs.verification }}
+    env:
+      LIMEN_CHAT_CONTEXT: ${{ needs.prepare.outputs.context }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ github.sha }}
+          path: control
+          persist-credentials: false
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          repository: ${{ fromJSON(needs.prepare.outputs.context).repository }}
+          ref: ${{ fromJSON(needs.prepare.outputs.context).head }}
+          path: target
+          persist-credentials: false
+      - name: Run isolated verification
+        id: predicate
+        run: python3 control/scripts/chat-github-runner.py verify --target target
+      - name: Preserve verification attestation
+        if: always() && steps.predicate.outputs.artifact_name != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0 # v7
+        with:
+          name: ${{ steps.predicate.outputs.artifact_name }}
+          path: chat-verification.json
+          if-no-files-found: error
+          retention-days: 14
+  publish:
+    needs: [prepare, verify]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    env:
+      LIMEN_CHAT_CONTEXT: ${{ needs.prepare.outputs.context }}
+      LIMEN_CHAT_VERIFICATION: ${{ needs.verify.outputs.verification }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
+      - name: Install trusted controller dependencies
+        run: python3 -m pip install ./cli
+      - name: Publish through existing merge rail and read back
+        run: python3 scripts/chat-github-runner.py publish
+        env:
+          GH_TOKEN: ${{ secrets.LIMEN_CHAT_GITHUB_TOKEN }}
+          LIMEN_CHAT_EXECUTOR_TOKEN: ${{ secrets.LIMEN_CHAT_EXECUTOR_TOKEN }}
+  report-failure:
+    needs: [prepare, verify, publish]
+    if: always() && (needs.prepare.result == 'failure' || needs.verify.result == 'failure' || needs.publish.result == 'failure')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - run: python3 scripts/chat-github-runner.py failed
+        env:
+          LIMEN_CHAT_EXECUTOR_TOKEN: ${{ secrets.LIMEN_CHAT_EXECUTOR_TOKEN }}

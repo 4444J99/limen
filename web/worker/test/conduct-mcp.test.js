@@ -80,7 +80,7 @@ test("stateless initialize negotiates versions, notification is empty 202, GET i
 test("tools/list exposes a closed typed catalog including canonical executor claim", async () => {
   const { env, calls } = fixture();
   const payload = await (await worker.fetch(request(message("tools/list")), env)).json();
-  assert.equal(payload.result.tools.length, 12);
+  assert.equal(payload.result.tools.length, 14);
   const claim = payload.result.tools.find((tool) => tool.name === "conduct_claim");
   assert.deepEqual(claim.inputSchema.required, ["lease", "generation"]);
   assert.equal(claim.inputSchema.additionalProperties, false);

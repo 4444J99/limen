@@ -15,6 +15,7 @@ import {
   initializePrivateBoard,
 } from "./projection.js";
 import { loadPrivateBoard } from "./private-board.js";
+import { ChatGithubController } from "./chat-github.js";
 import { configuredInventoryAuthority, InventoryAdmissionError } from "./inventory-admission.js";
 import {
   ConductValidationError,
@@ -195,6 +196,24 @@ export class ConductKeeperDurableObject {
 
   async route(request, principal) {
     const path = new URL(request.url).pathname;
+    if (path.startsWith("/api/conduct/github/")) {
+      this.chatGithub ||= new ChatGithubController(this.ctx, this.env, this.service);
+      requireRole(principal, "observer", "conductor", "executor");
+      if (request.method !== "POST") return errorResponse("method not allowed", 405, this.env);
+      const body = await parseBody(request);
+      return this.chatGithub.serial(async () => {
+        if (path === "/api/conduct/github/read") return json(await this.chatGithub.read(principal, body), 200, this.env);
+        if (path === "/api/conduct/github/changes") return json(await this.chatGithub.submit(principal, body), 200, this.env);
+        const match = path.match(/^\/api\/conduct\/github\/runs\/([A-Za-z0-9-]+)\/(context|complete|failed|publish)$/);
+        if (!match) return errorResponse("not found", 404, this.env);
+        const result = match[2] === "context"
+          ? await this.chatGithub.executorContext(principal, match[1], body)
+          : match[2] === "publish" ? await this.chatGithub.publish(principal, match[1], body)
+          : match[2] === "failed" ? await this.chatGithub.failed(principal, match[1], body)
+          : await this.chatGithub.complete(principal, match[1], body);
+        return json(result, 200, this.env);
+      });
+    }
     if (path === "/api/conduct/principal-registry" && request.method === "GET") {
       requireRole(principal, "conductor");
       const response = json(await conductPrincipalRegistryReadback(this.env), 200, this.env);
@@ -387,6 +406,11 @@ export class ConductKeeperDurableObject {
       }), 200, this.env);
     }
     return errorResponse("not found", 404, this.env);
+  }
+
+  async alarm() {
+    this.chatGithub ||= new ChatGithubController(this.ctx, this.env, this.service);
+    return this.chatGithub.serial(() => this.chatGithub.alarm());
   }
 }
 

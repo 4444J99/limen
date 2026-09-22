@@ -1,7 +1,8 @@
 """Tests for scripts/background-items-census.py — declaration parity for the background-item estate.
 
 The LaunchAgents directory is redirected to tmp via env and the sfltool boundary is
-monkeypatched, so the tests never read the host's real launchd surface. The classes exercised:
+monkeypatched, so the tests never read the host's real launchd surface. Scheduled/default
+invocation is proven not to call sfltool; intentional ``--inspect-btm`` remains covered. The classes exercised:
 estate (with the rendered-basename pathology), third-party exemption, tombstone, UNDECLARED
 (the gating class), missing-estate reporting, and BTM corroboration parsing.
 """
@@ -108,7 +109,7 @@ def test_btm_corroboration_parses_and_flags_unmatched(tmp_path, monkeypatch, cap
     )
     m, agents, registry_path = load_module(tmp_path, monkeypatch, btm_text=dump)
     write_plist(agents, "com.limen.heartbeat", ["/x/DomusAgentHost", "run"])
-    assert run_main(m, registry_path, monkeypatch, "--check") == 0  # BTM never gates
+    assert run_main(m, registry_path, monkeypatch, "--check", "--inspect-btm") == 0  # BTM never gates
     out = capsys.readouterr().out
     assert "3 identifiers; 1 unmatched" in out
     assert "btm-extra   com.shadow.agent" in out
@@ -120,7 +121,34 @@ def test_missing_dir_and_no_sfltool_fail_open(tmp_path, monkeypatch, capsys):
     assert run_main(m, registry_path, monkeypatch, "--check") == 0
     out = capsys.readouterr().out
     assert "0 estate, 0 third-party, 0 tombstone, 0 UNDECLARED" in out
-    assert "btm         unmeasured" in out
+    assert "btm         unmeasured (intentional inspection not requested" in out
+
+
+def test_scheduled_invocation_never_calls_sfltool(tmp_path, monkeypatch, capsys):
+    m, agents, registry_path = load_module(tmp_path, monkeypatch)
+    write_plist(agents, "com.limen.heartbeat", ["/x/DomusAgentHost", "run"])
+
+    def unexpected_sfltool(*_args, **_kwargs):
+        raise AssertionError("scheduled census must never invoke sfltool")
+
+    m._sfltool_dumpbtm = unexpected_sfltool
+    assert run_main(m, registry_path, monkeypatch, "--check", "--no-receipt") == 0
+    out = capsys.readouterr().out
+    assert "btm         unmeasured (intentional inspection not requested" in out
+
+
+def test_intentional_btm_inspection_calls_bounded_capture(tmp_path, monkeypatch, capsys):
+    m, _agents, registry_path = load_module(tmp_path, monkeypatch)
+    calls = []
+
+    def inspect_btm(timeout=15):
+        calls.append(timeout)
+        return "  Identifier: 8.com.limen.heartbeat\n"
+
+    m._sfltool_dumpbtm = inspect_btm
+    assert run_main(m, registry_path, monkeypatch, "--inspect-btm", "--no-receipt") == 0
+    assert calls == [15]
+    assert "1 identifiers; 0 unmatched" in capsys.readouterr().out
 
 
 def test_receipt_written_pii_clean(tmp_path, monkeypatch):
@@ -129,6 +157,7 @@ def test_receipt_written_pii_clean(tmp_path, monkeypatch):
     assert run_main(m, registry_path, monkeypatch) == 0
     receipt = json.loads((tmp_path / "logs" / "background-items-census.json").read_text())
     assert receipt["counts"]["estate"] == 1
+    assert receipt["btm"]["reason"] == "not_requested"
     assert "sekrit" not in json.dumps(receipt)  # argv tails never reach the receipt
     assert receipt["rows"][0]["rendered_as"] == "node"
 

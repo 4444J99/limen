@@ -7,6 +7,7 @@ import {
 } from "./conduct/durable-object.js";
 import { internalConductPrincipal } from "./conduct/auth.js";
 import { handleConductMcp } from "./conduct/mcp.js";
+import { isMcpOAuthMetadataPath, mcpOAuthMetadata } from "./conduct/mcp-oauth.js";
 import { readInlineProjection } from "./conduct/projection.js";
 import { canonicalHash } from "./conduct/schemas.js";
 import { taskWorkLoanMissingFields, workLoanDenial } from "./conduct/work-loan.js";
@@ -893,6 +894,7 @@ async function route(request, env) {
   const path = url.pathname;
 
   if (path === "/mcp") return handleConductMcp(request, env);
+  if (isMcpOAuthMetadataPath(path)) return mcpOAuthMetadata(request, env);
   if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders(env) });
 
   if (path.startsWith("/api/conduct/")) return forwardConductRequest(request, env);
