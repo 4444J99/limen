@@ -1,4 +1,5 @@
 """Offline REST contract tests. No provider credentials or live sessions are used."""
+
 import io
 import json
 import unittest
@@ -7,8 +8,17 @@ from datetime import datetime, timezone
 from unittest.mock import patch
 
 from limen.jules_api import (
-    Catalog, JulesApiClient, JulesApiError, JulesMutationUnknown, _NoRedirect,
-    _transport, main, observe, session_identity, session_name, timestamp,
+    Catalog,
+    JulesApiClient,
+    JulesApiError,
+    JulesMutationUnknown,
+    _NoRedirect,
+    _transport,
+    main,
+    observe,
+    session_identity,
+    session_name,
+    timestamp,
 )
 
 NOW = datetime(2026, 9, 21, 20, 0, tzinfo=timezone.utc)
@@ -41,8 +51,10 @@ class ApiTests(unittest.TestCase):
                 JulesApiClient(key)
 
     def test_paginated_sessions_include_later_newer_rows(self):
-        wire = Wire({"sessions": [session(created="2020-01-01T00:00:00Z")], "nextPageToken": "cursor/with + chars"},
-                    {"sessions": [session("223456789012")]})
+        wire = Wire(
+            {"sessions": [session(created="2020-01-01T00:00:00Z")], "nextPageToken": "cursor/with + chars"},
+            {"sessions": [session("223456789012")]},
+        )
         got = JulesApiClient("synthetic-key", transport=wire).sessions()
         self.assertEqual(len(got.items), 2)
         self.assertEqual(got.pages, 2)
@@ -98,16 +110,22 @@ class ApiTests(unittest.TestCase):
 
     def test_cross_session_activity_refused(self):
         with self.assertRaisesRegex(JulesApiError, "invalid_activity_identity"):
-            JulesApiClient("key", transport=Wire({"activities": [{"name": "sessions/wrong/activities/1"}]})).activities("123456789012")
+            JulesApiClient("key", transport=Wire({"activities": [{"name": "sessions/wrong/activities/1"}]})).activities(
+                "123456789012"
+            )
 
     def test_activities_paginate(self):
         row = {"name": "sessions/123456789012/activities/x"}
-        result = JulesApiClient("key", transport=Wire({"nextPageToken": "x"}, {"activities": [row]})).activities("123456789012")
+        result = JulesApiClient("key", transport=Wire({"nextPageToken": "x"}, {"activities": [row]})).activities(
+            "123456789012"
+        )
         self.assertEqual(result.pages, 2)
 
     def test_create_records_real_id_and_no_auto_pr_by_default(self):
         wire = Wire(session())
-        result = JulesApiClient("key", transport=wire).create(source=SOURCE, branch="main", prompt="Fix verified issue", title="Scoped repair")
+        result = JulesApiClient("key", transport=wire).create(
+            source=SOURCE, branch="main", prompt="Fix verified issue", title="Scoped repair"
+        )
         self.assertEqual(result["id"], "123456789012")
         payload = wire.calls[0][3]
         self.assertFalse(payload["requirePlanApproval"])
@@ -116,7 +134,9 @@ class ApiTests(unittest.TestCase):
 
     def test_auto_pr_is_explicit(self):
         wire = Wire(session())
-        JulesApiClient("key", transport=wire).create(source=SOURCE, branch="main", prompt="x", title="y", auto_create_pr=True)
+        JulesApiClient("key", transport=wire).create(
+            source=SOURCE, branch="main", prompt="x", title="y", auto_create_pr=True
+        )
         self.assertEqual(wire.calls[0][3]["automationMode"], "AUTO_CREATE_PR")
 
     def test_create_missing_identity_is_indeterminate(self):
@@ -135,9 +155,11 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(len(wire.calls), 1)
 
     def test_find_attempt_uses_source_and_exact_first_line(self):
-        rows = [session(prompt="prefix [marker]", sourceContext={"source": SOURCE}),
-                session("223456789012", prompt="[marker]\nbody", sourceContext={"source": SOURCE}),
-                session("323456789012", prompt="[marker]\nbody", sourceContext={"source": "sources/github/other/repo"})]
+        rows = [
+            session(prompt="prefix [marker]", sourceContext={"source": SOURCE}),
+            session("223456789012", prompt="[marker]\nbody", sourceContext={"source": SOURCE}),
+            session("323456789012", prompt="[marker]\nbody", sourceContext={"source": "sources/github/other/repo"}),
+        ]
         got = JulesApiClient("key", transport=Wire({"sessions": rows})).find_attempt(marker="[marker]", source=SOURCE)
         self.assertEqual(got["id"], "223456789012")
 
@@ -157,15 +179,21 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(wire.calls[0][:2], ("POST", "sessions/123456789012:approvePlan"))
 
     def test_window_uses_utc_offsets_and_boundary(self):
-        rows = [session("1", created="2026-09-20T16:00:00-04:00"), session("2", created="2026-09-20T19:59:59Z"),
-                session("3", state="IN_PROGRESS", created="2026-09-21T19:59:59.123456789Z")]
+        rows = [
+            session("1", created="2026-09-20T16:00:00-04:00"),
+            session("2", created="2026-09-20T19:59:59Z"),
+            session("3", state="IN_PROGRESS", created="2026-09-21T19:59:59.123456789Z"),
+        ]
         got = observe(Catalog(tuple(rows), 1, NOW.isoformat()), NOW)
         self.assertEqual(got["observed_rolling_starts"], 2)
         self.assertEqual(got["nonterminal_sessions"], 1)
         self.assertIsNone(got["vendor_quota_remaining"])
 
     def test_waiting_and_paused_keep_occupancy(self):
-        rows = [session(str(i), state=s) for i, s in enumerate(["QUEUED", "PAUSED", "AWAITING_PLAN_APPROVAL", "AWAITING_USER_FEEDBACK"])]
+        rows = [
+            session(str(i), state=s)
+            for i, s in enumerate(["QUEUED", "PAUSED", "AWAITING_PLAN_APPROVAL", "AWAITING_USER_FEEDBACK"])
+        ]
         self.assertEqual(observe(Catalog(tuple(rows), 1, ""), NOW)["nonterminal_sessions"], 4)
 
     def test_unknown_state_is_not_free_capacity(self):
@@ -188,7 +216,11 @@ class ApiTests(unittest.TestCase):
 
     def test_http_error_redacts_body_and_key(self):
         key = "SYNTHETIC-SECRET-DO-NOT-PRINT"
-        for method, status, exception in [("GET", 401, JulesApiError), ("POST", 503, JulesMutationUnknown), ("POST", 429, JulesApiError)]:
+        for method, status, exception in [
+            ("GET", 401, JulesApiError),
+            ("POST", 503, JulesMutationUnknown),
+            ("POST", 429, JulesApiError),
+        ]:
             failure = urllib.error.HTTPError("https://evil.example/" + key, status, key, {}, io.BytesIO(key.encode()))
             with patch("urllib.request.build_opener") as opener:
                 opener.return_value.open.side_effect = failure
@@ -201,7 +233,9 @@ class ApiTests(unittest.TestCase):
 
     def test_duplicate_json_key_is_rejected(self):
         with patch("urllib.request.build_opener") as opener:
-            opener.return_value.open.return_value.__enter__.return_value.read.return_value = b'{"sessions":[],"sessions":[]}'
+            opener.return_value.open.return_value.__enter__.return_value.read.return_value = (
+                b'{"sessions":[],"sessions":[]}'
+            )
             with self.assertRaisesRegex(JulesApiError, "invalid_response"):
                 _transport("GET", "sessions", "key", None, 1, 1024)
 
@@ -212,7 +246,11 @@ class ApiTests(unittest.TestCase):
                 _transport("POST", "sessions", "key", {}, 1, 1024)
 
     def test_missing_key_cli_returns_unknown_counts_and_nonzero(self):
-        with patch.dict("os.environ", {}, clear=True), patch("sys.argv", ["limen-jules-api", "observe"]), patch("sys.stdout", new_callable=io.StringIO) as out:
+        with (
+            patch.dict("os.environ", {}, clear=True),
+            patch("sys.argv", ["limen-jules-api", "observe"]),
+            patch("sys.stdout", new_callable=io.StringIO) as out,
+        ):
             code = main()
         result = json.loads(out.getvalue())
         self.assertEqual(code, 2)
@@ -227,9 +265,14 @@ class ApiTests(unittest.TestCase):
 
 
 class ResultTests(unittest.TestCase):
-    def final(self, *, source=SOURCE, base="a" * 40, value="diff content", i="x", stamp="2026-09-21T17:00:00Z", completed=True):
-        result = {"name": "sessions/123456789012/activities/" + i, "createTime": stamp,
-                  "artifacts": [{"changeSet": {"source": source, "gitPatch": {"baseCommitId": base, "unidiffPatch": value}}}]}
+    def final(
+        self, *, source=SOURCE, base="a" * 40, value="diff content", i="x", stamp="2026-09-21T17:00:00Z", completed=True
+    ):
+        result = {
+            "name": "sessions/123456789012/activities/" + i,
+            "createTime": stamp,
+            "artifacts": [{"changeSet": {"source": source, "gitPatch": {"baseCommitId": base, "unidiffPatch": value}}}],
+        }
         if completed:
             result["sessionCompleted"] = {}
         return result
@@ -244,11 +287,15 @@ class ResultTests(unittest.TestCase):
 
     def test_older_progress_patch_not_final(self):
         with self.assertRaisesRegex(JulesApiError, "no_completed_patch"):
-            self.client([self.final(completed=False)]).completed_patch("123456789012", source=SOURCE, exact_base="a" * 40)
+            self.client([self.final(completed=False)]).completed_patch(
+                "123456789012", source=SOURCE, exact_base="a" * 40
+            )
 
     def test_cross_repository_patch_refused(self):
         with self.assertRaisesRegex(JulesApiError, "no_completed_patch"):
-            self.client([self.final(source="sources/github/other/repo")]).completed_patch("123456789012", source=SOURCE, exact_base="a" * 40)
+            self.client([self.final(source="sources/github/other/repo")]).completed_patch(
+                "123456789012", source=SOURCE, exact_base="a" * 40
+            )
 
     def test_stale_base_patch_refused(self):
         with self.assertRaisesRegex(JulesApiError, "no_completed_patch"):
@@ -264,7 +311,9 @@ class ResultTests(unittest.TestCase):
 
     def test_ambiguous_finals_refused(self):
         with self.assertRaisesRegex(JulesApiError, "ambiguous_completed_patch"):
-            self.client([self.final(), self.final(i="y", value="different")]).completed_patch("123456789012", source=SOURCE, exact_base="a" * 40)
+            self.client([self.final(), self.final(i="y", value="different")]).completed_patch(
+                "123456789012", source=SOURCE, exact_base="a" * 40
+            )
 
     def test_latest_final_selected_by_timestamp_not_page_order(self):
         rows = [self.final(i="later", stamp="2026-09-21T18:00:00Z", value="last"), self.final()]
@@ -272,7 +321,9 @@ class ResultTests(unittest.TestCase):
 
     def test_null_create_context_is_indeterminate(self):
         with self.assertRaises(JulesMutationUnknown):
-            JulesApiClient("key", transport=Wire(session(sourceContext=None))).create(source=SOURCE, branch="main", prompt="x", title="y")
+            JulesApiClient("key", transport=Wire(session(sourceContext=None))).create(
+                source=SOURCE, branch="main", prompt="x", title="y"
+            )
 
     def test_unknown_structured_state_is_refused(self):
         with self.assertRaises(JulesApiError):

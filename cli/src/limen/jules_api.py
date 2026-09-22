@@ -3,6 +3,7 @@
 Mutating methods are for already-admitted executors. A failed observation after a
 POST is indeterminate, never evidence that another session may safely be created.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,7 +20,9 @@ from typing import Any, Callable
 
 API = "https://jules.googleapis.com/v1alpha/"
 TERMINAL = frozenset({"COMPLETED", "FAILED"})
-STATES = TERMINAL | frozenset({"QUEUED", "PLANNING", "AWAITING_PLAN_APPROVAL", "AWAITING_USER_FEEDBACK", "IN_PROGRESS", "PAUSED"})
+STATES = TERMINAL | frozenset(
+    {"QUEUED", "PLANNING", "AWAITING_PLAN_APPROVAL", "AWAITING_USER_FEEDBACK", "IN_PROGRESS", "PAUSED"}
+)
 _RESOURCE = re.compile(r"sessions/[A-Za-z0-9_-]{1,128}\Z")
 _SOURCE = re.compile(r"sources/github/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+\Z")
 _STAMP = re.compile(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,9})?(?:Z|[+-]\d\d:\d\d)\Z")
@@ -54,9 +57,16 @@ def _strict_object(pairs):
 
 def _transport(method: str, path: str, key: str, payload: dict | None, timeout: float, ceiling: int) -> dict:
     body = None if payload is None else json.dumps(payload, allow_nan=False).encode("utf-8")
-    req = urllib.request.Request(API + path, data=body, method=method, headers={
-        "X-Goog-Api-Key": key, "Accept": "application/json", "Content-Type": "application/json",
-    })
+    req = urllib.request.Request(
+        API + path,
+        data=body,
+        method=method,
+        headers={
+            "X-Goog-Api-Key": key,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+    )
     try:
         with urllib.request.build_opener(_NoRedirect()).open(req, timeout=timeout) as response:
             raw = response.read(ceiling + 1)
@@ -115,11 +125,24 @@ class Catalog:
 
 
 class JulesApiClient:
-    def __init__(self, key: str, *, transport: Callable = _transport, timeout: float = 15,
-                 total_timeout: float = 90, max_pages: int = 100, max_bytes: int = 4 * 1024 * 1024):
+    def __init__(
+        self,
+        key: str,
+        *,
+        transport: Callable = _transport,
+        timeout: float = 15,
+        total_timeout: float = 90,
+        max_pages: int = 100,
+        max_bytes: int = 4 * 1024 * 1024,
+    ):
         if not isinstance(key, str) or not key.strip() or any(ord(c) < 33 or ord(c) > 126 for c in key):
             raise JulesApiError("jules_api_key_missing_or_invalid")
-        if not (0 < timeout <= 60 and 0 < total_timeout <= 600 and 1 <= max_pages <= 1000 and 1024 <= max_bytes <= 16 * 1024 * 1024):
+        if not (
+            0 < timeout <= 60
+            and 0 < total_timeout <= 600
+            and 1 <= max_pages <= 1000
+            and 1024 <= max_bytes <= 16 * 1024 * 1024
+        ):
             raise JulesApiError("invalid_transport_limits")
         self._key = key
         self._transport = transport
@@ -132,7 +155,10 @@ class JulesApiClient:
 
     def _request(self, method: str, path: str, payload: dict | None = None, *, timeout: float | None = None) -> dict:
         # Only closed resource paths constructed below reach this transport.
-        if not re.fullmatch(r"(?:sessions(?:/[A-Za-z0-9_-]+)?(?::(?:approvePlan|sendMessage)|/activities)?|sources(?:/github/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)?)(?:\?[^\r\n]*)?", path):
+        if not re.fullmatch(
+            r"(?:sessions(?:/[A-Za-z0-9_-]+)?(?::(?:approvePlan|sendMessage)|/activities)?|sources(?:/github/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)?)(?:\?[^\r\n]*)?",
+            path,
+        ):
             raise JulesApiError("invalid_resource_path")
         return self._transport(method, path, self._key, payload, timeout or self.timeout, self.max_bytes)
 
@@ -148,7 +174,9 @@ class JulesApiClient:
             query = {"pageSize": 100}
             if token:
                 query["pageToken"] = token
-            result = self._request("GET", path + "?" + urllib.parse.urlencode(query), timeout=min(self.timeout, remaining))
+            result = self._request(
+                "GET", path + "?" + urllib.parse.urlencode(query), timeout=min(self.timeout, remaining)
+            )
             batch = result.get(field, [])
             if not isinstance(batch, list) or any(not isinstance(row, dict) for row in batch):
                 raise JulesApiError("invalid_catalog")
@@ -160,7 +188,9 @@ class JulesApiClient:
                     session_identity(row)
                 elif field == "sources" and not _SOURCE.fullmatch(name):
                     raise JulesApiError("unsupported_source")
-                elif field == "activities" and not re.fullmatch(re.escape(path.removesuffix("/activities")) + r"/activities/[A-Za-z0-9_-]+", name):
+                elif field == "activities" and not re.fullmatch(
+                    re.escape(path.removesuffix("/activities")) + r"/activities/[A-Za-z0-9_-]+", name
+                ):
                     raise JulesApiError("invalid_activity_identity")
                 if name in rows and rows[name] != row:
                     raise JulesApiError("catalog_changed_during_pagination")
@@ -200,8 +230,12 @@ class JulesApiClient:
             raise JulesApiError("invalid_prompt")
         if not isinstance(title, str) or not title.strip() or len(title) > 256:
             raise JulesApiError("invalid_title")
-        payload = {"prompt": prompt, "title": title, "requirePlanApproval": False,
-                   "sourceContext": {"source": source, "githubRepoContext": {"startingBranch": branch}}}
+        payload = {
+            "prompt": prompt,
+            "title": title,
+            "requirePlanApproval": False,
+            "sourceContext": {"source": source, "githubRepoContext": {"startingBranch": branch}},
+        }
         if auto_create_pr:
             payload["automationMode"] = "AUTO_CREATE_PR"
         row = self._request("POST", "sessions", payload)
@@ -255,10 +289,13 @@ class JulesApiClient:
         return finals[-1][1]
 
     def find_attempt(self, *, marker: str, source: str) -> dict | None:
-        matches = [row for row in self.sessions().items
-                   if str(row.get("prompt", "")).splitlines()[:1] == [marker]
-                   and isinstance(row.get("sourceContext"), dict)
-                   and row["sourceContext"].get("source") == source]
+        matches = [
+            row
+            for row in self.sessions().items
+            if str(row.get("prompt", "")).splitlines()[:1] == [marker]
+            and isinstance(row.get("sourceContext"), dict)
+            and row["sourceContext"].get("source") == source
+        ]
         if len(matches) > 1:
             raise JulesMutationUnknown("duplicate_provider_attempts")
         return matches[0] if matches else None
@@ -285,12 +322,21 @@ def observe(catalog: Catalog, now: datetime | None = None) -> dict:
         nonterminal += state not in TERMINAL
         # Include the exact boundary conservatively (RFC3339 supports nanoseconds).
         launches += cutoff <= created <= now
-    return {"schema_version": "limen.jules_api_observation.v1", "status": "observed",
-            "observed_at": now.isoformat(), "window_start": cutoff.isoformat(),
-            "pagination_complete": True, "pages": catalog.pages, "sessions_observed": len(catalog.items),
-            "observed_rolling_starts": launches, "nonterminal_sessions": nonterminal, "states": counts,
-            "vendor_quota_remaining": None, "history_is_billing_ledger": False,
-            "provider_completed_is_merged": False}
+    return {
+        "schema_version": "limen.jules_api_observation.v1",
+        "status": "observed",
+        "observed_at": now.isoformat(),
+        "window_start": cutoff.isoformat(),
+        "pagination_complete": True,
+        "pages": catalog.pages,
+        "sessions_observed": len(catalog.items),
+        "observed_rolling_starts": launches,
+        "nonterminal_sessions": nonterminal,
+        "states": counts,
+        "vendor_quota_remaining": None,
+        "history_is_billing_ledger": False,
+        "provider_completed_is_merged": False,
+    }
 
 
 def main() -> int:
@@ -303,10 +349,19 @@ def main() -> int:
         result = observe(client.sessions())
         result["sources_observed"] = len(sources.items)
     except JulesApiError as exc:
-        print(json.dumps({"schema_version": "limen.jules_api_observation.v1", "status": "unavailable",
-                          "error_code": exc.code, "http_status": exc.status,
-                          "observed_rolling_starts": None, "nonterminal_sessions": None,
-                          "vendor_quota_remaining": None}))
+        print(
+            json.dumps(
+                {
+                    "schema_version": "limen.jules_api_observation.v1",
+                    "status": "unavailable",
+                    "error_code": exc.code,
+                    "http_status": exc.status,
+                    "observed_rolling_starts": None,
+                    "nonterminal_sessions": None,
+                    "vendor_quota_remaining": None,
+                }
+            )
+        )
         return 2
     print(json.dumps(result, sort_keys=True))
     return 0
