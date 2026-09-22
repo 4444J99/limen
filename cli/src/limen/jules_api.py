@@ -221,7 +221,16 @@ class JulesApiClient:
             raise JulesApiError("wrong_session_returned")
         return row
 
-    def create(self, *, source: str, branch: str, prompt: str, title: str, auto_create_pr: bool = False) -> dict:
+    def create(
+        self,
+        *,
+        source: str,
+        branch: str,
+        prompt: str,
+        title: str,
+        auto_create_pr: bool = False,
+        timeout: float | None = None,
+    ) -> dict:
         if not isinstance(source, str) or not _SOURCE.fullmatch(source):
             raise JulesApiError("invalid_source")
         if not isinstance(branch, str) or not branch or len(branch) > 1024 or any(ord(c) < 32 for c in branch):
@@ -238,7 +247,7 @@ class JulesApiClient:
         }
         if auto_create_pr:
             payload["automationMode"] = "AUTO_CREATE_PR"
-        row = self._request("POST", "sessions", payload)
+        row = self._request("POST", "sessions", payload, timeout=timeout)
         try:
             session_identity(row)
             if row.get("sourceContext", {}).get("source", source) != source:
