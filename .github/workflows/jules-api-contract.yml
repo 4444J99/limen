@@ -87,7 +87,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: organvm/ops-witness
-          ref: d4712e9c51d7c90d126d29f2d817c7426b5e6265
+          ref: 75af87fe7e47d76d005f985c19d5c20be09e6266
           path: witness
           sparse-checkout: |
             scripts/jules-orchestrator.mjs
@@ -115,8 +115,8 @@ jobs:
           import hashlib
           from pathlib import Path
           expected = {
-              'witness/scripts/jules-orchestrator.mjs': '0d35fb5a7ed0ebfe6a466687779dc44dcc3e58018a44d79ab2a646235b4c3735',
-              'witness/scripts/test-jules-api-witness.mjs': '8fc11f4d4dc78676512f9fc8da97aa9490d18aaae2204507ed13c5982378ff0f',
+              'witness/scripts/jules-orchestrator.mjs': '04ecb45ea69c8fc5bea3d97c85f033c42f6ef89fefe1f41c56245b673722cad1',
+              'witness/scripts/test-jules-api-witness.mjs': '1b3847d1ab08174d82712e7c4934a82ebe31f7a4c91e9a1387c68fdbcbd8b30d',
               'observer/cli/src/limen/jules_api.py': 'd067f2dbe4c2c6d3bef1c1fb07614124e441a8d615313fb9687045bb007bea2d',
           }
           for path, digest in expected.items():
@@ -153,5 +153,45 @@ jobs:
           path: |
             witness-contract.tap
             witness-no-key.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  cli-first-failure:
+    # Diagnostic comparison only: the complete required PR Gate is unchanged.
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - source: base
+            ref: 4d19db8eaeb689fec4f3b0e4d53f1d6e97b0edf4
+          - source: api-head
+            ref: 59e6a1989e18c70993c9a8822e426ba30e99ee1c
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Match PR Gate Python dependency environment
+        run: python -m pip install pyyaml -r web/api/requirements.txt -e 'cli[test]'
+      - name: Capture first real CLI failure without waiving the full gate
+        env:
+          JULES_API_KEY: ''
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD > diagnostic-source.txt
+          timeout 180s bash scripts/run-pytest-hermetic.sh cli/tests -x -vv --tb=short 2>&1 | tee cli-first-failure.log
+      - name: Preserve diagnostic source and failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-first-failure-${{ matrix.source }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            diagnostic-source.txt
+            cli-first-failure.log
           if-no-files-found: warn
           retention-days: 14
