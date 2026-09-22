@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import subprocess
 from pathlib import Path
@@ -47,7 +48,11 @@ case " $* " in
         ;;
       *'{"repository_ids":[125]}'*)
         [ "${MOCK_FINAL_TOKEN_FAILURE:-0}" = "0" ] || exit 22
-        printf '{"token":"app-token","permissions":{"secrets":"%s"}}' "${MOCK_SECRETS_PERMISSION:-}"
+        if [ "${MOCK_PERMISSIONS_JSON+x}" = "x" ]; then
+          printf '{"token":"app-token","permissions":%s}' "$MOCK_PERMISSIONS_JSON"
+        else
+          printf '{"token":"app-token","permissions":{"secrets":"%s"}}' "${MOCK_SECRETS_PERMISSION:-}"
+        fi
         ;;
       *) exit 25 ;;
     esac
@@ -292,4 +297,106 @@ def test_repository_target_rejects_path_traversal_segments(tmp_path: Path) -> No
     assert result.returncode == 1
     assert result.stdout == ""
     assert "exact target required" in result.stderr
+    assert not log.exists()
+
+
+@pytest.mark.parametrize(
+    "permissions",
+    [None, [], "write", {}, {"administration": "read"}, {"administration": True},
+     {"administration": 1}, {"administration": "admin"}, {"contents": "write"}],
+)
+def test_operation_permission_denial_never_emits_a_token(tmp_path: Path, permissions: object) -> None:
+    env, log = _app_environment(
+        tmp_path, MOCK_PERMISSIONS_JSON=json.dumps(permissions), GITHUB_TOKEN="must-not-fallback"
+    )
+    result = _run(env, "--repo", "acme/project", "--app-only", "--require-permission", "administration=write")
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "required operation permission" in result.stderr
+    assert "app-token" not in result.stderr.replace("gh-app-token", "helper")
+    assert "bootstrap-token" not in result.stderr
+    calls = log.read_text()
+    assert '{"repository_ids":[125]}' in calls
+    assert '"permissions"' not in calls
+    assert "must-not-fallback" not in result.stdout + result.stderr + calls
+
+
+@pytest.mark.parametrize("required,granted", [("read", "read"), ("read", "write"), ("write", "write")])
+@pytest.mark.parametrize("mode", [(), ("--verify-app",), ("--which",)])
+def test_operation_permission_success_in_all_modes(
+    tmp_path: Path, required: str, granted: str, mode: tuple[str, ...]
+) -> None:
+    env, log = _app_environment(tmp_path, MOCK_PERMISSIONS_JSON=json.dumps({"administration": granted}))
+    result = _run(
+        env, "--repo", "acme/project", "--app-only", "--require-permission", f"administration={required}", *mode
+    )
+    assert result.returncode == 0
+    if mode:
+        assert "app-token" not in result.stdout
+        assert "bootstrap-token" not in result.stdout
+        assert result.stdout.startswith("app ")
+    else:
+        assert result.stdout == "app-token\n"
+    assert '"permissions"' not in log.read_text()
+
+
+@pytest.mark.parametrize("argument", ["", "administration", "administration=admin", "=write", "a=write=read", "a-b=read", "A=read"])
+def test_invalid_operation_permission_is_rejected_before_network(tmp_path: Path, argument: str) -> None:
+    env, log = _app_environment(tmp_path)
+    result = _run(env, "--repo", "acme/project", "--app-only", "--require-permission", argument)
+    assert result.returncode == 2
+    assert "requires NAME=read or NAME=write" in result.stderr
+    assert result.stdout == ""
+    assert not log.exists()
+
+
+def test_operation_permission_requires_app_only_before_network(tmp_path: Path) -> None:
+    env, log = _app_environment(tmp_path)
+    result = _run(env, "--repo", "acme/project", "--require-permission", "administration=write")
+    assert result.returncode == 2
+    assert "--require-permission requires --app-only" in result.stderr
+    assert not log.exists()
+
+
+def test_operation_permission_requires_an_argument(tmp_path: Path) -> None:
+    env, log = _app_environment(tmp_path)
+    result = _run(env, "--repo", "acme/project", "--app-only", "--require-permission")
+    assert result.returncode == 2
+    assert "requires NAME=read or NAME=write" in result.stderr
+    assert not log.exists()
+
+
+@pytest.mark.parametrize("secrets_grant,admin_grant,passed", [("write", "write", True), ("read", "write", False), ("write", "read", False)])
+def test_operation_permissions_compose_with_legacy_secrets_assertion(
+    tmp_path: Path, secrets_grant: str, admin_grant: str, passed: bool
+) -> None:
+    env, log = _app_environment(
+        tmp_path, MOCK_PERMISSIONS_JSON=json.dumps({"secrets": secrets_grant, "administration": admin_grant})
+    )
+    result = _run(
+        env, "--repo", "acme/project", "--app-only", "--require-secrets-write",
+        "--require-permission", "administration=read", "--require-permission", "administration=write",
+    )
+    assert (result.returncode == 0) is passed
+    assert result.stdout == ("app-token\n" if passed else "")
+    assert '"permissions"' not in log.read_text()
+
+
+def test_malformed_operation_permission_response_is_refused(tmp_path: Path) -> None:
+    env, _log = _app_environment(tmp_path, MOCK_PERMISSIONS_JSON="{malformed", GITHUB_TOKEN="must-not-fallback")
+    result = _run(env, "--repo", "acme/project", "--app-only", "--require-permission", "administration=write")
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "required operation permission" in result.stderr
+    assert "must-not-fallback" not in result.stderr
+
+
+def test_operation_requirement_cannot_use_fallback_credentials(tmp_path: Path) -> None:
+    env, log = _app_environment(tmp_path, GITHUB_TOKEN="must-not-fallback")
+    env.pop("GITHUB_APP_ID")
+    env.pop("GITHUB_APP_PRIVATE_KEY")
+    result = _run(env, "--repo", "acme/project", "--app-only", "--require-permission", "administration=write")
+    assert result.returncode == 1
+    assert result.stdout == ""
+    assert "App-only mode requires" in result.stderr
     assert not log.exists()
