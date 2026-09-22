@@ -77,3 +77,81 @@ jobs:
           path: jules-api-observation.json
           if-no-files-found: warn
           retention-days: 14
+
+  witness-contract:
+    # Source verification on the working personal runner is not provider activation
+    # or a replacement for any independently required ops-witness check.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: organvm/ops-witness
+          ref: d4712e9c51d7c90d126d29f2d817c7426b5e6265
+          path: witness
+          sparse-checkout: |
+            scripts/jules-orchestrator.mjs
+            scripts/test-jules-api-witness.mjs
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: 4444J99/limen
+          ref: ec33e5bc4d5d097cac6569516f24ccabee78891a
+          path: observer
+          sparse-checkout: cli/src/limen/jules_api.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify exact witness bytes and run regression contract
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          expected = {
+              'witness/scripts/jules-orchestrator.mjs': '0d35fb5a7ed0ebfe6a466687779dc44dcc3e58018a44d79ab2a646235b4c3735',
+              'witness/scripts/test-jules-api-witness.mjs': '8fc11f4d4dc78676512f9fc8da97aa9490d18aaae2204507ed13c5982378ff0f',
+              'observer/cli/src/limen/jules_api.py': 'd067f2dbe4c2c6d3bef1c1fb07614124e441a8d615313fb9687045bb007bea2d',
+          }
+          for path, digest in expected.items():
+              actual = hashlib.sha256(Path(path).read_bytes()).hexdigest()
+              assert actual == digest, f'source mismatch: {path}'
+          PY
+          node --test witness/scripts/test-jules-api-witness.mjs | tee witness-contract.tap
+      - name: Prove unavailable credentials remain unknown without provider writes
+        env:
+          JULES_API_KEY: ''
+          LIMEN_JULES_API_CLIENT: ${{ github.workspace }}/observer/cli/src/limen/jules_api.py
+        run: |
+          set -euo pipefail
+          status=0
+          node witness/scripts/jules-orchestrator.mjs > witness-no-key.json || status=$?
+          test "$status" -eq 2
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          row = json.loads(Path('witness-no-key.json').read_text())
+          assert row['status'] == 'unavailable'
+          assert row['error_code'] == 'jules_api_key_missing_or_invalid'
+          assert row['observed_rolling_starts'] is None
+          assert row['nonterminal_sessions'] is None
+          assert row['vendor_quota_remaining'] is None
+          assert row['witness_receipt']['provider_mutations'] == 0
+          assert row['witness_receipt']['merges_performed'] == 0
+          PY
+      - name: Preserve exact-source contract evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jules-witness-contract-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            witness-contract.tap
+            witness-no-key.json
+          if-no-files-found: warn
+          retention-days: 14
