@@ -75,6 +75,25 @@ def _gh_count(monkeypatch, mod, count):
     monkeypatch.setattr(mod.subprocess, "run", fake_run)
 
 
+def test_dispatched_today_normalizes_timezone_and_naive_utc(monkeypatch, tmp_path):
+    mod = _load(monkeypatch, tmp_path, _board([]))
+    utc_day = dt.date(2026, 9, 18)
+    offset = DispatchLogEntry(
+        timestamp=dt.datetime(2026, 9, 17, 20, 30, tzinfo=dt.timezone(dt.timedelta(hours=-4))),
+        agent="jules",
+        session_id="offset",
+        status="dispatched",
+    )
+    naive = DispatchLogEntry(
+        timestamp=dt.datetime(2026, 9, 18, 0, 30),
+        agent="jules",
+        session_id="naive",
+        status="dispatched",
+    )
+    assert mod.dispatched_today(_board([offset]), utc_day) == 1
+    assert mod.dispatched_today(_board([naive]), utc_day) == 1
+
+
 def test_healthy_flywheel_exits_zero(monkeypatch, tmp_path, capsys):
     entries = [_entry("dispatched", hours_ago=float(i % 20) + 1, session_id=f"s{i}") for i in range(80)]
     entries += [_entry("done", hours_ago=2.0, session_id=f"d{i}") for i in range(30)]
