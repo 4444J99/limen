@@ -171,7 +171,7 @@ class JulesApiClient:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise JulesApiError("pagination_deadline_exceeded")
-            query = {"pageSize": 100}
+            query: dict[str, int | str] = {"pageSize": 100}
             if token:
                 query["pageToken"] = token
             result = self._request(
