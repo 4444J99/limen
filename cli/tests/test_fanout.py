@@ -797,6 +797,24 @@ def test_admitted_outcome_refuses_unbounded_provider_before_external_launch(
     assert "hard-deadline enforcement unavailable" in leaf["attempts"][-1]["detail"]
 
 
+def test_admitted_outcome_allows_explicit_fenced_async_submission(tmp_path, monkeypatch, approved_execution_policy):
+    approved_execution_policy("campaign/v1")
+    payload = manifest_payload()
+    payload["leaves"][0]["retry"]["max_attempts"] = 1
+    manifest = FanoutManifestV1.model_validate(payload)
+    keeper = LocalConductClient(tmp_path / "fenced-async.sqlite")
+    adapter = FakeExecutionAdapter()
+    adapter.enforces_deadline = False
+    adapter.fenced_async_submission = True
+    monkeypatch.setattr("limen.fanout_executor.remote_default_head", lambda repo: BASE)
+    started = start_manifest(manifest, client=keeper, allow_development_keeper=True, execution_adapters=(adapter,))
+    assert len(adapter.launches) == 1
+    graph = keeper.graph(started["root_run_id"])
+    leaf = next(node for node in graph["nodes"] if node["packet"]["work_id"] == "leaf-a")
+    assert leaf["attempts"][-1]["status"] == "submitted"
+    assert leaf["attempts"][-1]["provider_run_id"] == "provider-run-1"
+
+
 def test_worker_restart_without_original_deadline_cannot_get_fresh_allowance(tmp_path, monkeypatch):
     import limen.fanout_executor as executor
 

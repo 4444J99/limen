@@ -1415,11 +1415,18 @@ def launch_ready_nodes(
             continue
         try:
             if node.get("execution_admission"):
-                if not getattr(adapter, "enforces_deadline", False):
-                    raise FanoutExecutionError(f"{adapter.name}: provider hard-deadline enforcement unavailable")
-                packet = {**packet, "deadline": node["execution_admission"]["attempt_deadline"]}
-                if datetime.fromisoformat(packet["deadline"].replace("Z", "+00:00")) <= datetime.now(timezone.utc):
+                admission_deadline = str(node["execution_admission"]["attempt_deadline"])
+                if datetime.fromisoformat(admission_deadline.replace("Z", "+00:00")) <= datetime.now(timezone.utc):
                     raise FanoutExecutionError("execution attempt deadline exhausted before provider launch")
+                if getattr(adapter, "enforces_deadline", False):
+                    packet = {**packet, "deadline": admission_deadline}
+                elif getattr(adapter, "fenced_async_submission", False):
+                    # Async providers may outlive Limen's execution lease. Admission therefore
+                    # bounds the create call, while the exact provider identity remains owned
+                    # and late output requires a separately admitted recovery/integration pass.
+                    packet = {**packet, "submission_deadline": admission_deadline}
+                else:
+                    raise FanoutExecutionError(f"{adapter.name}: provider hard-deadline enforcement unavailable")
             if adapter.local_heavy:
                 from limen.host_admission import hold_lease
 
@@ -1550,7 +1557,13 @@ def settle_exhausted_attempts(
         if lane is None or node.get("status") not in {"reserved", "running"} or node.get("receipts") or not attempts:
             continue
         current = attempts[-1]
-        deadline = datetime.fromisoformat(str(packet["deadline"]).replace("Z", "+00:00"))
+        deadline_values = [datetime.fromisoformat(str(packet["deadline"]).replace("Z", "+00:00"))]
+        execution_admission = node.get("execution_admission")
+        if isinstance(execution_admission, dict) and execution_admission.get("attempt_deadline"):
+            deadline_values.append(
+                datetime.fromisoformat(str(execution_admission["attempt_deadline"]).replace("Z", "+00:00"))
+            )
+        deadline = min(deadline_values)
         terminal_failure = current.status in {"failed", "blocked"}
         exhausted = terminal_failure and (
             len(attempts) >= int(packet["retry"]["max_attempts"])
@@ -1567,7 +1580,7 @@ def settle_exhausted_attempts(
         summary = (
             "finite provider attempt limit exhausted"
             if exhausted
-            else "campaign deadline reached without an exact provider receipt"
+            else "execution boundary reached; provider identity retained for separately admitted recovery"
         )
         deadline_boundary = deadline_imminent and not exhausted
         summary, campaign = _campaign_receipt(
