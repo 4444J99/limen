@@ -336,16 +336,6 @@ def require_approved_priority(work_key: str | None, *, root=None) -> dict:
     return priority
 
 
-def require_worktree_storage(identity: str) -> None:
-    """Preflight local headroom before reserving any paired branch growth."""
-    from limen.storage_headroom import StorageAdmissionError, require_storage_headroom
-
-    try:
-        require_storage_headroom(identity)
-    except StorageAdmissionError as exc:
-        raise InventoryAdmissionError(str(exc)) from None
-
-
 def reserve_growth(action: str, identity: str, *, work_key: str | None = None, root=None) -> None:
     """One shared durable allowance across issue/branch/worktree producers.
 
@@ -355,8 +345,13 @@ def reserve_growth(action: str, identity: str, *, work_key: str | None = None, r
     """
     if action not in {"issue", "branch", "worktree"}:
         raise InventoryAdmissionError("execution_resource_unknown")
-    if action == "worktree":
-        require_worktree_storage(identity)
+    if action == "worktree" and root is None:
+        from limen.storage_headroom import StorageAdmissionError, require_storage_headroom
+
+        try:
+            require_storage_headroom(identity)
+        except StorageAdmissionError as exc:
+            raise InventoryAdmissionError(str(exc)) from None
     # Production producers share the authenticated keeper, including remote lanes.
     # Explicit root is the isolated local fixture adapter; no production caller
     # supplies it and absence of keeper credentials never falls back to local state.

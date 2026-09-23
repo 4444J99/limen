@@ -590,11 +590,9 @@ class PatchLandingMixin:
             detail = (remote_branch.stderr or remote_branch.stdout).strip()
             raise FanoutExecutionError(f"remote branch probe failed: {detail[-800:]}")
         from limen.inventory_admission import reserve_growth
-        from limen.inventory_admission import require_worktree_storage
 
-        require_worktree_storage(str(worktree))
-        reserve_growth("branch", f"{repository}:{branch}", work_key=packet["work_key"])
         reserve_growth("worktree", str(worktree), work_key=packet["work_key"])
+        reserve_growth("branch", f"{repository}:{branch}", work_key=packet["work_key"])
         _checked(["git", "worktree", "add", "-b", branch, str(worktree), exact_base], cwd=clone, timeout=180)
         receipt = self._land_new_result(
             node,
