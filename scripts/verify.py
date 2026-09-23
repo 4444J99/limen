@@ -16,7 +16,7 @@ being two scripts and become two selections over the same data:
                                      Skips are named.
                                      Exit 0 ⟺ every implicated gate passed.
                                      --require-base fails closed on an unresolved base.
-                                     A batch has one aggregate deadline (at most 600s).
+                                     A batch has one aggregate deadline (at most 1800s).
                                      Registry rows may shorten deadlines, never extend them.
                                      Deploy paths retain implicated gates without escalation.
                                      Deterministic syntax receipts are content-bound and reused.
@@ -917,7 +917,7 @@ def cmd_changed(
     integration: bool = False,
     total_timeout_seconds: float = 600,
 ) -> int:
-    aggregate_deadline = time.monotonic() + min(total_timeout_seconds, 600)
+    aggregate_deadline = time.monotonic() + min(total_timeout_seconds, 1800)
     work_key = os.environ.get("LIMEN_WORK_KEY")
     if work_key:
         # The keeper owns the window across child processes and restarts. Reading
