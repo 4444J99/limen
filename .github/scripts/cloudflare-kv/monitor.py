@@ -11,6 +11,7 @@ import urllib.request
 import release as r
 
 FIRST_COMPLETE_DAY = '2026-09-24'
+EXPECTED_REVISION = 'kv-recovery-d1-20260923-v2'
 TARGET_AGES = {'edgarflash':600000,'bountyscope':7200000,'trendpulse':28800000,
                'vulnpulse':172800000,'ucc-staging':43200000,'ucc-production':43200000}
 QUERY = '''query RecoveryUsage($account: string!, $start: Date!, $end: Date!) {
@@ -100,7 +101,7 @@ def observe(client):
   code,body=r.public(name,'/healthz');sc,status=r.public(name,'/api/status')
   snapshot=status.get('_status_snapshot',{})
   report['products'][name]={'liveness_http':code,'status_http':sc,
-   'revision_verified':body.get('revision')==r.REVISION and snapshot.get('revision')==r.REVISION,
+   'revision_verified':body.get('revision')==EXPECTED_REVISION and snapshot.get('revision')==EXPECTED_REVISION,
    'snapshot_stale':snapshot.get('stale'),'snapshot_observed_at':snapshot.get('observed_at')}
  for name in (*r.DUPLICATES,'ops-scheduler-production'):
   entry={'cron':client.crons(name)}
