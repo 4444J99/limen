@@ -176,7 +176,9 @@ def _registered_worktree_paths(superproject: Path) -> tuple[Path, ...]:
         if not line.startswith("worktree "):
             continue
         try:
-            paths.append(Path(line.removeprefix("worktree ")).resolve(strict=True))
+            # A stale, already-missing registration elsewhere in the repository
+            # must not block retirement of this independently revalidated target.
+            paths.append(Path(line.removeprefix("worktree ")).resolve(strict=False))
         except OSError as exc:
             raise RuntimeError("registered-worktree-path-unavailable") from exc
     return tuple(paths)
