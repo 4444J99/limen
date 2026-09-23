@@ -71,5 +71,37 @@ class ObserverTests(unittest.TestCase):
         self.assertEqual(report['mutations'],0)
         self.assertEqual(len(report['workers']),3)
 
+    def test_malformed_nested_rows_are_sanitized(self):
+        for rows in [[None], [1], [{'dimensions':None}], [{'dimensions':{}, 'sum':[]}]]:
+            with self.assertRaises(m.SafeError):
+                m.summarize_operations(rows, {}, '2026-09-23')
+        for value in [None, [], 7]:
+            with self.assertRaises(m.SafeError):
+                m.object_value(value)
+        for value in [None, {}, [None]]:
+            with self.assertRaises(m.SafeError):
+                m.object_rows(value)
+
+    def test_dates_do_not_echo_arbitrary_provider_text(self):
+        self.assertEqual(m.safe_date('2026-09-23T18:00:00Z'),'2026-09-23T18:00:00Z')
+        with self.assertRaisesRegex(m.SafeError,'^provider_date_invalid$'):
+            m.safe_date('private-secret')
+
+    def test_exact_query_payload_custom_cloudflare_scalar(self):
+        response=io.BytesIO(b'{"data":{}}')
+        with patch.object(m.OPENER,'open',return_value=response) as call:
+            m.Client('test-token').call('/graphql',{'query':m.QUERY,'variables':{'account':'a'*32}})
+        sent=json.loads(call.call_args.args[0].data)
+        self.assertEqual(sent['query'],m.QUERY)
+        self.assertIn('$account: string!',sent['query'])
+
+    def test_main_sanitizes_unexpected_exception(self):
+        with patch.object(m,'observe',side_effect=TypeError('private-secret')):
+            with patch.dict(m.os.environ,{'CLOUDFLARE_API_TOKEN':'test-only'},clear=True):
+                with patch('sys.stdout',new_callable=io.StringIO) as output:
+                    self.assertEqual(m.main(),1)
+                self.assertNotIn('private-secret',output.getvalue())
+                self.assertEqual(json.loads(output.getvalue())['error'],'unexpected_failure')
+
 if __name__ == '__main__':
     unittest.main()
