@@ -100,11 +100,7 @@ def require_storage_headroom(target: str | Path) -> None:
     try:
         state_root.mkdir(mode=0o700, parents=True, exist_ok=True)
         state_stat = state_root.stat()
-        if (
-            state_root.is_symlink()
-            or state_stat.st_uid != os.getuid()
-            or state_stat.st_mode & 0o077
-        ):
+        if state_root.is_symlink() or state_stat.st_uid != os.getuid() or state_stat.st_mode & 0o077:
             raise StorageAdmissionError("storage-admission-state-invalid")
         lock_path = state_root / "storage-headroom.lock"
         state_path = state_root / "storage-headroom.json"
