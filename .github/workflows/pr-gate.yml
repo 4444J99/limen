@@ -50,8 +50,10 @@ concurrency:
 jobs:
   pr-gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     env:
       LIMEN_PRGATE_SCOPED: "1"
+      LIMEN_VERIFY_GATE_TIMEOUT_SECONDS: "1500"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -81,6 +83,7 @@ jobs:
         run: |
           python scripts/verify.py --changed \
             --base "origin/${GITHUB_BASE_REF:-main}" \
+            --total-timeout-seconds 1700 \
             --skip-ci-covered pr-gate.yml:pr-gate
 
       # ci.yml (which `npm ci`s the node projects) does NOT run on merge_group, and the
@@ -120,6 +123,7 @@ jobs:
             exit 2
           fi
           python scripts/verify.py --changed --integration \
+            --total-timeout-seconds 1700 \
             --base "$MERGE_GROUP_BASE_SHA"
 
       - name: Verify manual run (scoped)
@@ -130,6 +134,7 @@ jobs:
         run: |
           python scripts/verify.py --changed \
             --base "origin/${GITHUB_BASE_REF:-main}" \
+            --total-timeout-seconds 1700 \
             --skip-ci-covered pr-gate.yml:pr-gate
 
       - name: Full literal matrix (LIMEN_PRGATE_SCOPED=0 escape hatch)
