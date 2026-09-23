@@ -1,3 +1,4 @@
+import datetime as dt
 import unittest
 import monitor as m
 
@@ -25,3 +26,29 @@ class MonitorTests(unittest.TestCase):
   self.assertEqual(m.classify(False,[{'observed_20_percent_headroom':True}]),'ACTION_REQUIRED')
  def test_completed_runtime_and_window_have_explicit_success(self):
   self.assertEqual(m.classify(True,[{'observed_20_percent_headroom':True}]),'VERIFIED_WINDOW')
+
+ def test_missing_completed_day_is_explicit_and_actionable(self):
+  days=m.build_days([],{},dt.date(2026,9,25))
+  self.assertEqual([d['date'] for d in days],['2026-09-24'])
+  self.assertEqual(days[0]['coverage'],'unobserved')
+  self.assertFalse(days[0]['observed_20_percent_headroom'])
+  self.assertEqual(m.classify(True,days),'ACTION_REQUIRED')
+
+ def test_missing_delete_dimension_cannot_verify_headroom(self):
+  kv=[{'date':'2026-09-24','coverage':'complete',
+       'account_operations':{'read':1,'write':1,'list':1},
+       'target_namespace_operations':{}}]
+  d1={'2026-09-24':{'rowsRead':1,'rowsWritten':1}}
+  day=m.build_days(kv,d1,dt.date(2026,9,25))[0]
+  self.assertFalse(day['observed_20_percent_headroom'])
+  self.assertEqual(day['unobserved_kv_dimensions'],['delete'])
+
+ def test_shared_namespace_attribution_is_preserved(self):
+  owners={}
+  m.record_owner(owners,'ns-1','worker-a')
+  m.record_owner(owners,'ns-1','worker-a')
+  self.assertEqual(owners['ns-1'],'worker-a')
+  m.record_owner(owners,'ns-1','worker-b')
+  self.assertEqual(owners['ns-1'],'shared_namespace')
+  m.record_owner(owners,'ns-1','worker-c')
+  self.assertEqual(owners['ns-1'],'shared_namespace')
