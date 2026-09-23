@@ -48,11 +48,18 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
-      - name: Read existing failed-invocation telemetry without replaying work
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'kv-telemetry-probe')
+      - name: Retrieve the exact existing failure privately without another replay
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'kv-private-diagnosis')
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: python3 .github/scripts/cloudflare-kv/telemetry_probe.py
+        run: python3 .github/scripts/cloudflare-kv/private_diagnosis.py
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'kv-private-diagnosis')
+        with:
+          name: kv-private-diagnosis
+          path: ${{ runner.temp }}/kv-private-diagnosis.cms
+          if-no-files-found: error
+          retention-days: 1
       - name: Verify real job completion, runtime revision and KV/D1 headroom
         if: always()
         env:
