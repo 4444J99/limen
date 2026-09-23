@@ -1,4 +1,4 @@
-name: Cloudflare KV recovery
+name: Cloudflare KV recovery witness
 
 on:
   push:
@@ -10,6 +10,8 @@ on:
     paths:
       - '.github/workflows/cloudflare-kv-preflight.yml'
       - '.github/scripts/cloudflare-kv/**'
+  schedule:
+    - cron: '17 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -31,28 +33,29 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify scoped release and storage contracts
+      - name: Verify storage and witness contracts
         run: |
           python3 -m unittest discover -s .github/scripts/cloudflare-kv -p 'test_*.py' -v
           node --test .github/scripts/cloudflare-kv/test_recovery.mjs
 
-  recover:
+  observe:
     needs: validate
     if: github.repository == '4444J99/limen' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
-      - name: Deploy exact live-source repair and consolidate duplicate triggers
+      - name: Verify real job completion, runtime revision and KV/D1 headroom
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          KV_RECOVERY_APPLY: approved-20260923
-        run: python3 .github/scripts/cloudflare-kv/release.py
-      - name: Read back live topology and account operation observations
+        run: python3 .github/scripts/cloudflare-kv/monitor.py
+      - uses: actions/upload-artifact@v4
         if: always()
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: python3 .github/scripts/cloudflare-kv/inventory.py
+        with:
+          name: kv-recovery-witness
+          path: ${{ runner.temp }}/kv-recovery-witness.json
+          if-no-files-found: error
+          retention-days: 7
