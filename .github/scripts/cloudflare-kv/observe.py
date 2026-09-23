@@ -17,6 +17,8 @@ TARGETS = {
     'trendpulse': '3044be554f6d4b1b6e11764b74774054ba18e6e9',
     'vulnpulse': '60248144112ab0d7f54d2cfbc32d89239e825ab8',
 }
+# Cloudflare's Analytics schema uses its custom lowercase `string` scalar.
+# https://developers.cloudflare.com/stream/getting-analytics/fetching-bulk-analytics/
 OPERATIONS = frozenset(('read', 'write', 'delete', 'list'))
 QUERY = '''query KvIncident($account: string!, $start: Date!, $end: Date!) {
  viewer { accounts(filter: {accountTag: $account}) {
@@ -44,6 +46,26 @@ def decode_response(response, limit=2_000_000):
         return json.loads(raw)
     except (ValueError, UnicodeError):
         raise SafeError('invalid_json') from None
+
+def object_value(value):
+    if not isinstance(value, dict):
+        raise SafeError('provider_object_invalid')
+    return value
+
+
+def object_rows(value):
+    if not isinstance(value, list) or any(not isinstance(row, dict) for row in value):
+        raise SafeError('provider_rows_invalid')
+    return value
+
+
+def safe_date(value):
+    if value is None:
+        return None
+    if not isinstance(value, str) or not re.fullmatch(r'[0-9TZ:+.\-]{10,40}', value):
+        raise SafeError('provider_date_invalid')
+    return value
+
 
 class Client:
     def __init__(self, token):
@@ -87,13 +109,16 @@ class Client:
         accounts = response.get('result')
         if not isinstance(accounts, list) or len(accounts) > 50:
             raise SafeError('accounts_invalid')
-        info = response.get('result_info', {})
-        if info.get('total_pages', 1) > 1:
+        info = object_value(response.get('result_info', {}))
+        pages = info.get('total_pages', 1)
+        if not isinstance(pages, int):
+            raise SafeError('account_pagination_invalid')
+        if pages > 1:
             raise SafeError('account_discovery_incomplete')
         candidates = []
-        for account in accounts:
+        for account in object_rows(accounts):
             aid = account.get('id', '')
-            if not re.fullmatch(r'[a-f0-9]{32}', aid):
+            if not isinstance(aid, str) or not re.fullmatch(r'[a-f0-9]{32}', aid):
                 raise SafeError('account_id_invalid')
             try:
                 value = self.result(f'/accounts/{aid}/workers/subdomain')
@@ -111,16 +136,19 @@ def summarize_operations(rows, owners, today):
         raise SafeError('analytics_missing_or_truncated')
     totals = defaultdict(lambda: defaultdict(float))
     products = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
-    for row in rows:
-        dims = row.get('dimensions', {})
+    for row in object_rows(rows):
+        dims = object_value(row.get('dimensions'))
         operation = dims.get('actionType')
         day = dims.get('date', '')
-        count = row.get('sum', {}).get('requests')
-        if operation not in OPERATIONS or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', day):
+        count = object_value(row.get('sum')).get('requests')
+        if not isinstance(operation, str) or operation not in OPERATIONS or not isinstance(day, str) or not re.fullmatch(r'\d{4}-\d{2}-\d{2}', day):
             raise SafeError('analytics_dimension_invalid')
         if isinstance(count, bool) or not isinstance(count, (float, int)) or not math.isfinite(count) or count < 0:
             raise SafeError('analytics_count_invalid')
-        owner = owners.get(dims.get('namespaceId'), 'other_namespaces')
+        namespace = dims.get('namespaceId')
+        if not isinstance(namespace, str):
+            raise SafeError('analytics_namespace_invalid')
+        owner = owners.get(namespace, 'other_namespaces')
         totals[day][operation] += count
         products[day][owner][operation] += count
     return {
@@ -174,24 +202,34 @@ def observe(client):
         base = f'/accounts/{account}/workers/scripts/{name}'
         worker = {'source_commit': sha}
         try:
-            settings = client.result(base + '/settings')
-            bindings = settings.get('bindings', [])
-            worker['binding_types'] = sorted({b['type'] for b in bindings if isinstance(b, dict) and isinstance(b.get('type'), str)})
+            settings = object_value(client.result(base + '/settings'))
+            bindings = object_rows(settings.get('bindings'))
+            types = [b.get('type') for b in bindings]
+            allowed_types = {'ai', 'assets', 'kv_namespace', 'plain_text', 'secret_text', 'service',
+                             'durable_object_namespace', 'd1', 'r2_bucket', 'queue', 'analytics_engine'}
+            if any(not isinstance(t, str) for t in types):
+                raise SafeError('binding_type_invalid')
+            worker['binding_types'] = sorted({t if t in allowed_types else 'other_binding' for t in types})
             worker['bindings_count'] = len(bindings)
-            worker['compatibility_date'] = settings.get('compatibility_date')
+            worker['compatibility_date'] = safe_date(settings.get('compatibility_date'))
             for binding in bindings:
                 if binding.get('type') == 'kv_namespace':
                     ns = binding.get('namespace_id')
+                    if not isinstance(ns, str):
+                        raise SafeError('binding_namespace_invalid')
                     if ns in owners and owners[ns] != name:
                         owners[ns] = 'shared_target_namespace'
                     elif ns:
                         owners[ns] = name
-            schedules = client.result(base + '/schedules')
-            worker['cron'] = [s['cron'] for s in schedules.get('schedules', [])]
+            schedules = object_value(client.result(base + '/schedules'))
+            cron = [s.get('cron') for s in object_rows(schedules.get('schedules'))]
+            if any(not isinstance(c, str) or not re.fullmatch(r'[0-9A-Z*?,/ #\-]{5,100}', c) for c in cron):
+                raise SafeError('schedule_invalid')
+            worker['cron'] = cron
             deployment = client.result(base + '/deployments')
-            deployments = deployment.get('deployments', []) if isinstance(deployment, dict) else deployment
+            deployments = object_rows(deployment.get('deployments') if isinstance(deployment, dict) else deployment)
             worker['deployment_count_returned'] = len(deployments)
-            worker['latest_deployed_at'] = deployments[0].get('created_on') if deployments else None
+            worker['latest_deployed_at'] = safe_date(deployments[0].get('created_on')) if deployments else None
             worker['liveness'] = public_probe(name, '/healthz')
             worker['status'] = public_probe(name, '/api/status')
         except SafeError as error:
@@ -201,7 +239,9 @@ def observe(client):
     try:
         result = client.call('/graphql', {'query': QUERY, 'variables': {
             'account': account, 'start': (now.date() - dt.timedelta(days=1)).isoformat(), 'end': today}})
-        accounts = result.get('data', {}).get('viewer', {}).get('accounts')
+        data = object_value(object_value(result).get('data'))
+        viewer = object_value(data.get('viewer'))
+        accounts = object_rows(viewer.get('accounts'))
         if not isinstance(accounts, list) or len(accounts) != 1:
             raise SafeError('analytics_account_missing')
         report['usage'] = summarize_operations(accounts[0].get('kvOperationsAdaptiveGroups'), owners, today)
@@ -215,6 +255,9 @@ def main():
         report = observe(Client(os.environ.get('CLOUDFLARE_API_TOKEN', '').strip()))
     except SafeError as error:
         report = {'mode': 'read_only', 'error': str(error), 'mutations': 0}
+    except Exception:
+        # Last-resort privacy boundary: never print exception text or raw data.
+        report = {'mode': 'read_only', 'error': 'unexpected_failure', 'mutations': 0}
     text = json.dumps(report, sort_keys=True, indent=2)
     print(text)
     if os.environ.get('GITHUB_STEP_SUMMARY'):
