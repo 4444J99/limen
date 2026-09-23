@@ -136,8 +136,13 @@ class ReleaseClient(inv.InventoryClient):
  def upload(self,name,settings,files,revision):
   kind,data=multipart(preserved_metadata(settings,self.db,revision),files)
   return self.request(self.root+name+'?bindings_inherit=strict','PUT',data,kind)
- def pause(self,name):
+ def pause(self,name,expected):
   if name not in DUPLICATES:raise inv.o.SafeError('canonical_scheduler_pause_refused')
+  # Compare immediately before the mutation, not only at release start. An
+  # already paused trigger is idempotent. Cloudflare offers no schedule CAS.
+  current=self.crons(name)
+  if current != expected:raise inv.o.SafeError('duplicate_schedule_prewrite_drift')
+  if not current:return
   self.request(self.root+name+'/schedules','PUT',b'[]')
   if self.crons(name): raise inv.o.SafeError('duplicate_schedule_readback_failed')
 
@@ -167,8 +172,10 @@ def recover(client,revision):
    originals[name]={'already_deployed':False,'settings':client.settings(name),'files':parts}
   if name in PRODUCTS and client.crons(name): raise inv.o.SafeError('product_cron_drift')
  if client.crons('ops-scheduler-production')!=['* * * * *']:raise inv.o.SafeError('canonical_schedule_drift')
+ duplicate_crons={}
  for name in DUPLICATES:
-  if client.crons(name) not in ([],['* * * * *']):raise inv.o.SafeError('duplicate_schedule_drift')
+  duplicate_crons[name]=client.crons(name)
+  if duplicate_crons[name] not in ([],['* * * * *']):raise inv.o.SafeError('duplicate_schedule_drift')
  bindings=originals['ops-scheduler-production']['settings']['bindings']
  databases=[b for b in bindings if b['name']=='SCHED_DB' and b['type']=='d1']
  if len(databases)!=1:raise inv.o.SafeError('existing_database_missing')
@@ -241,7 +248,7 @@ def recover(client,revision):
   time.sleep(20)
  else:raise inv.o.SafeError('repaired_job_acknowledgement_missing')
  for name in DUPLICATES:
-  client.pause(name)
+  client.pause(name,duplicate_crons[name])
   report['cron_cutover'][name]='paused_duplicate_trigger_worker_preserved'
  report['cron_cutover']['ops-scheduler-production']='unchanged_minute_cron_all_six_jobs_preserved'
  report['observed_at']=time.strftime('%Y-%m-%dT%H:%M:%SZ',time.gmtime())
