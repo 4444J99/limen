@@ -1,0 +1,47 @@
+name: Cloudflare KV incident preflight
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cloudflare-kv-preflight.yml'
+      - '.github/scripts/cloudflare-kv/**'
+  pull_request:
+    paths:
+      - '.github/workflows/cloudflare-kv-preflight.yml'
+      - '.github/scripts/cloudflare-kv/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cloudflare-kv-preflight-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify read-only allowlist and redaction
+        run: python3 -m unittest discover -s .github/scripts/cloudflare-kv -p 'test_*.py' -v
+
+  observe:
+    needs: validate
+    if: github.repository == '4444J99/limen' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Read approved Workers and aggregate KV usage
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python3 .github/scripts/cloudflare-kv/observe.py
