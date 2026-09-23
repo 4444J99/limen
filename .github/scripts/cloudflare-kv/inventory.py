@@ -20,7 +20,7 @@ FEATURES = ('WorkerEntrypoint', 'SchedulerEntrypoint', 'runScheduled', 'runCron'
 
 class InventoryClient(o.Client):
     def raw(self, path):
-        if not re.fullmatch(r'/accounts/[a-f0-9]{32}/workers/scripts(?:/[A-Za-z0-9_-]{1,100}/(?:settings|schedules|content))?', path):
+        if not re.fullmatch(r'/accounts/[a-f0-9]{32}/workers/scripts(?:/[A-Za-z0-9_-]{1,100}/(?:settings|schedules|content/v2))?', path):
             raise o.SafeError('inventory_endpoint_refused')
         request = urllib.request.Request(o.API + path, headers={
             'Authorization': 'Bearer ' + self.token, 'User-Agent':'organvm-kv-incident/1'})
@@ -109,7 +109,7 @@ def collect(client):
                 raise o.SafeError('inventory_cron_invalid')
             result['cron'] = cron
             if name in o.TARGETS or cron:
-                result['source'] = source_summary(*client.raw(root + '/' + name + '/content'))
+                result['source'] = source_summary(*client.raw(root + '/' + name + '/content/v2'))
         except o.SafeError as error:
             result['error'] = str(error)
         return result, namespaces
