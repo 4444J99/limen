@@ -36,7 +36,7 @@ jobs:
       - name: Verify storage, auth, atomic claims and witness contracts
         run: |
           python3 -m unittest discover -s .github/scripts/cloudflare-kv -p 'test_*.py' -v
-          node --test .github/scripts/cloudflare-kv/test_recovery.mjs .github/scripts/cloudflare-kv/test_finishline.mjs .github/scripts/cloudflare-kv/test_subscriber_cache.mjs
+          node --test .github/scripts/cloudflare-kv/test_recovery.mjs .github/scripts/cloudflare-kv/test_finishline.mjs .github/scripts/cloudflare-kv/test_subscriber_cache.mjs .github/scripts/cloudflare-kv/test_diagnosis.mjs
 
   observe:
     needs: validate
@@ -48,17 +48,12 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
-      - name: Bound subscriber listings and execute the remaining failed job
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'kv-budget-apply')
+      - name: Persist a sanitized diagnosis from the actual failed job
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'kv-diagnostic-apply')
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          KV_BUDGET_APPLY: approved-20260923
-        run: python3 .github/scripts/cloudflare-kv/budget_recovery.py
-      - name: Identify the failed job database contract without reading business rows
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'kv-schema-probe')
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: python3 .github/scripts/cloudflare-kv/schema_probe.py
+          KV_DIAGNOSTIC_APPLY: approved-20260923
+        run: python3 .github/scripts/cloudflare-kv/diagnostic_replay.py
       - name: Verify real job completion, runtime revision and KV/D1 headroom
         if: always()
         env:
