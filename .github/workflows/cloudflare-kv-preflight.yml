@@ -41,7 +41,7 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
-      - name: Read approved Workers and aggregate KV usage
+      - name: Attribute remaining KV consumers and existing dispatch topology
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: python3 .github/scripts/cloudflare-kv/observe.py
+        run: python3 .github/scripts/cloudflare-kv/inventory.py
