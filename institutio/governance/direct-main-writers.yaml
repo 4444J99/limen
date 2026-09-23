@@ -12,7 +12,7 @@ remote_enforcement:
 surfaces:
   .github/workflows/cloudflare-kv-preflight.yml:
     # The literal is a read-only source-identity guard. No Git write exists.
-    disposition: read-only-exact-main-cloudflare-observation-no-git-write
+    disposition: exact-main-scoped-cloudflare-release-no-git-write
     expected: {default_ref_literal: 1}
   .github/workflows/limen-chat-patch.yml:
     disposition: read-only-exact-main-controller-candidate-topic-branch-pr-only
@@ -85,7 +85,7 @@ surfaces:
     expected: {default_ref_literal: 2}
   scripts/continuation-beat.py:
     disposition: main-to-preservation-pr-topic-branches-explicit
-    expected: {git_push: 2}
+    expected: {git_push: 2, push_literal: 1}
   scripts/dialogs-silenced.sh:
     # All matches are the literal TEXT of the force-push `permissions.ask` rules this sensor
     # asserts (1a's surgical-estate check and 1c's ask-list check both name them). No git.
