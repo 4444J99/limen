@@ -37,6 +37,35 @@ def project_state(state, now):
  return out
 
 
+def record_owner(owners, namespace_id, name):
+ current=owners.get(namespace_id)
+ if current is None:
+  owners[namespace_id]=name
+ elif current != name:
+  owners[namespace_id]='shared_namespace'
+
+
+def build_days(kv_days, d1, today):
+ by_date={row['date']:row for row in kv_days}
+ previous=today-dt.timedelta(days=1)
+ expected={previous.isoformat()} if previous>=dt.date.fromisoformat(FIRST_COMPLETE_DAY) else set()
+ days=[]
+ for date in sorted(set(by_date)|expected):
+  row=by_date.get(date,{})
+  ops=row.get('account_operations',{})
+  storage=d1.get(date)
+  complete=date<today.isoformat() and date>=FIRST_COMPLETE_DAY
+  required={'read','write','list','delete'}
+  within=(complete and required.issubset(ops) and storage is not None
+    and ops['read']<=80000 and ops['write']<=800 and ops['list']<=800
+    and ops['delete']<=800 and storage['rowsRead']<=4000000 and storage['rowsWritten']<=80000)
+  days.append({'date':date,'coverage':row.get('coverage','unobserved'),'kv':ops,'d1':storage,
+               'namespace_operations':row.get('target_namespace_operations',{}),
+               'completed_post_rollout_window':complete,'observed_20_percent_headroom':bool(within),
+               'unobserved_kv_dimensions':sorted(required-ops.keys())})
+ return days
+
+
 def usage(client, owners):
  now=dt.datetime.now(dt.timezone.utc)
  params={'query':QUERY,'variables':{'account':client.aid,
@@ -57,18 +86,8 @@ def usage(client, owners):
   if any(isinstance(values.get(k),bool) or not isinstance(values.get(k),(int,float)) or not math.isfinite(values[k]) or values[k]<0 for k in ('rowsRead','rowsWritten')):
    raise r.inv.o.SafeError('d1_usage_invalid')
   d1[date]={k:values[k] for k in ('rowsRead','rowsWritten')}
- days=[]
- for row in kv['days']:
-  date=row['date'];ops=row['account_operations'];storage=d1.get(date)
-  complete=date<now.date().isoformat() and date>=FIRST_COMPLETE_DAY
-  within=(complete and all(k in ops for k in ('read','write','list')) and storage is not None
-    and ops['read']<=80000 and ops['write']<=800 and ops['list']<=800
-    and ops.get('delete',0)<=800 and storage['rowsRead']<=4000000 and storage['rowsWritten']<=80000)
-  days.append({'date':date,'coverage':row['coverage'],'kv':ops,'d1':storage,
-               'namespace_operations':row['target_namespace_operations'],
-               'completed_post_rollout_window':complete,'observed_20_percent_headroom':bool(within),
-               'unobserved_kv_dimensions':sorted({'read','write','list','delete'}-ops.keys())})
- return {'days':days,'qualification':'adaptive analytics, not exact billing or proof of successful operations; absent operation dimensions remain unobserved'}
+ return {'days':build_days(kv['days'],d1,now.date()),
+         'qualification':'adaptive analytics, not exact billing or proof of successful operations; absent operation dimensions remain unobserved'}
 
 
 def observe(client):
@@ -77,7 +96,7 @@ def observe(client):
  owners={}
  for name in r.PRODUCTS:
   for binding in client.settings(name)['bindings']:
-   if binding['type']=='kv_namespace':owners[binding['namespace_id']]=name
+   if binding['type']=='kv_namespace':record_owner(owners,binding['namespace_id'],name)
   code,body=r.public(name,'/healthz');sc,status=r.public(name,'/api/status')
   snapshot=status.get('_status_snapshot',{})
   report['products'][name]={'liveness_http':code,'status_http':sc,
@@ -87,7 +106,7 @@ def observe(client):
   entry={'cron':client.crons(name)}
   settings=client.settings(name)
   for binding in settings['bindings']:
-   if binding['type']=='kv_namespace':owners[binding['namespace_id']]=name
+   if binding['type']=='kv_namespace':record_owner(owners,binding['namespace_id'],name)
   databases=[b for b in settings['bindings'] if b['type']=='d1' and b['name']=='SCHED_DB']
   if databases:
    client.db=databases[0]['database_id']
