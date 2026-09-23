@@ -29,7 +29,9 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
       - name: Verify read-only allowlist and redaction
-        run: python3 -m unittest discover -s .github/scripts/cloudflare-kv -p 'test_*.py' -v
+        run: |
+          python3 -m unittest discover -s .github/scripts/cloudflare-kv -p 'test_*.py' -v
+          openssl x509 -in .github/scripts/cloudflare-kv/diagnostic-cert.pem -noout -checkend 0
 
   observe:
     needs: validate
@@ -45,3 +47,13 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: python3 .github/scripts/cloudflare-kv/inventory.py
+      - name: Encrypt scoped live source for incident reconciliation
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python3 .github/scripts/cloudflare-kv/capture.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kv-live-source-encrypted
+          path: ${{ runner.temp }}/kv-live-source.cms
+          if-no-files-found: error
+          retention-days: 1
