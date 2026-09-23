@@ -1,4 +1,4 @@
-name: Cloudflare KV incident preflight
+name: Cloudflare KV recovery
 
 on:
   push:
@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: cloudflare-kv-preflight-${{ github.ref }}
+  group: cloudflare-kv-incident-release
   cancel-in-progress: false
 
 jobs:
@@ -28,32 +28,31 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
-      - name: Verify read-only allowlist and redaction
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify scoped release and storage contracts
         run: |
           python3 -m unittest discover -s .github/scripts/cloudflare-kv -p 'test_*.py' -v
-          openssl x509 -in .github/scripts/cloudflare-kv/diagnostic-cert.pem -noout -checkend 0
+          node --test .github/scripts/cloudflare-kv/test_recovery.mjs
 
-  observe:
+  recover:
     needs: validate
     if: github.repository == '4444J99/limen' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
-      - name: Attribute remaining KV consumers and existing dispatch topology
+      - name: Deploy exact live-source repair and consolidate duplicate triggers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          KV_RECOVERY_APPLY: approved-20260923
+        run: python3 .github/scripts/cloudflare-kv/release.py
+      - name: Read back live topology and account operation observations
+        if: always()
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: python3 .github/scripts/cloudflare-kv/inventory.py
-      - name: Encrypt scoped live source for incident reconciliation
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: python3 .github/scripts/cloudflare-kv/capture.py
-      - uses: actions/upload-artifact@v4
-        with:
-          name: kv-live-source-encrypted
-          path: ${{ runner.temp }}/kv-live-source.cms
-          if-no-files-found: error
-          retention-days: 1
