@@ -1,5 +1,6 @@
+import { subscriberCache } from './subscriber-cache.mjs';
 /** Incident repair over the preserved live Worker, not a stale source replacement. */
-export const REVISION = 'kv-recovery-d1-20260923-v1';
+export const REVISION = 'kv-recovery-d1-20260923-v2';
 const PERIOD = { edgarflash: 3600000, trendpulse: 14400000, vulnpulse: 86400000 };
 const STATE_KEYS = new Set(['last_seen_filings', 'feed:recent']);
 const SELECT = 'SELECT payload, updated_at FROM cf_kv_recovery WHERE product = ? AND key = ?';
@@ -27,7 +28,7 @@ export function recoveryEnv(env, product) {
       await write(env.INCIDENT_DB, product, key, value);
     },
   };
-  return new Proxy(env, { get(target, key) { return key === 'EF_STATE' ? state : Reflect.get(target, key); } });
+  return new Proxy(env, { get(target, key) { return key === 'EF_STATE' ? state : key === 'EF_SUBS' ? subscriberCache(env.INCIDENT_DB, env.EF_SUBS) : Reflect.get(target, key); } });
 }
 
 export function recoverWorker(original, product) {
@@ -37,7 +38,7 @@ export function recoverWorker(original, product) {
     // Atomic claim: concurrent scheduler retries cannot multiply status scans.
     const claim = await env.INCIDENT_DB.prepare(
       "UPDATE cf_kv_recovery SET next_refresh=? WHERE product=? AND key='status' AND next_refresh<=? RETURNING key"
-    ).bind(now + PERIOD[product], product, now).first();
+    ).bind((Math.floor(now / PERIOD[product]) + 1) * PERIOD[product], product, now).first();
     if (!claim) return;
     const response = await original.fetch(new Request('https://internal/api/status'), recoveryEnv(env, product), ctx);
     if (!response.ok) throw new Error('recovery_status_sample_failed');
