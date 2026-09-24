@@ -1,0 +1,13 @@
+{
+  "schema_version": "limen.public_observation_withdrawals.v1",
+  "source_identity_sha256": "9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca",
+  "withdrawals": [
+    {
+      "candidate_id_sha256": "875ff4b00faecccdb65d1e0374e9cb359da22959ab7cb90c52deda050dbc07d2",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-09-24T16:36:00Z",
+      "snapshot_row_sha256": "bb56d163aa03e633ceb45261852099b30ab377014cf0bf0e2960c137a29bbceb"
+    }
+  ]
+}

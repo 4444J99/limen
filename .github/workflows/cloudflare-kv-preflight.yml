@@ -33,10 +33,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify storage, auth, atomic claims and witness contracts
+      - name: Verify storage, auth, actual invocation bounds and witness contracts
         run: |
           python3 -m unittest discover -s .github/scripts/cloudflare-kv -p 'test_*.py' -v
-          node --test .github/scripts/cloudflare-kv/test_recovery.mjs .github/scripts/cloudflare-kv/test_finishline.mjs .github/scripts/cloudflare-kv/test_subscriber_cache.mjs .github/scripts/cloudflare-kv/test_diagnosis.mjs
+          node --test .github/scripts/cloudflare-kv/test_*.mjs
 
   observe:
     needs: validate
@@ -48,18 +48,17 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
-      - name: Retrieve the exact existing failure privately without another replay
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'kv-private-diagnosis')
+      - name: Bound real D1 work and establish one continuing queue owner
+        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'kv-invocation-apply')
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: python3 .github/scripts/cloudflare-kv/private_diagnosis.py
-      - uses: actions/upload-artifact@v4
-        if: github.event_name == 'push' && contains(github.event.head_commit.message, 'kv-private-diagnosis')
-        with:
-          name: kv-private-diagnosis
-          path: ${{ runner.temp }}/kv-private-diagnosis.cms
-          if-no-files-found: error
-          retention-days: 1
+          KV_INVOCATION_APPLY: approved-20260923
+        run: python3 .github/scripts/cloudflare-kv/invocation_recovery.py
+      - name: Inspect the actual UCC scheduler ingress contract
+        if: github.event_name == 'push'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python3 .github/scripts/cloudflare-kv/ingress_status.py
       - name: Verify real job completion, runtime revision and KV/D1 headroom
         if: always()
         env:

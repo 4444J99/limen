@@ -61,7 +61,8 @@ def run_full_mesh_canary(**kwargs):
 
 @pytest.fixture(autouse=True)
 def _repo_owned_receipt_paths(monkeypatch, tmp_path: Path) -> None:
-    """Keep unit receipts isolated while preserving the production Git target shape."""
+    """Keep unit receipts and runtime locks isolated from other runs and users."""
+    monkeypatch.setenv(canary_module._LOCK_ROOT_ENV, str(tmp_path / "canary-runtime-locks"))
 
     def resolve(path: Path) -> tuple[Path, str]:
         canonical = path.expanduser().resolve(strict=False)
