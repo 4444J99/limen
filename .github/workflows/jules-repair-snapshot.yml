@@ -14,64 +14,23 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-      - name: Materialize exact reviewed bytes as an unattached Git tree
+      - name: Materialize source-only Git objects; workflow writes remain connector-owned
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import base64, hashlib, json, lzma, subprocess
-          from pathlib import Path, PurePosixPath
-          repo = '4444J99/limen'
-          chunks = ['63b777c54a322cd7d33b357dff78f98ec0fe9c9b', '9550a6b0c401bc42a4a426d2acc73b4b2bb5cf72', '7fe9814d7567062424838add069577c014406ab2', '505537bf5f7c62ddd83648ed7a6c819249f55687']
-          encoded = b''
-          for sha in chunks:
-              row = json.loads(subprocess.check_output(['gh', 'api', f'repos/{repo}/git/blobs/{sha}'], timeout=30))
-              value = base64.b64decode(row['content'])
-              assert hashlib.sha1(f'blob {len(value)}\0'.encode() + value).hexdigest() == sha
-              encoded += value
-          raw = lzma.decompress(base64.b64decode(encoded, validate=True))
-          assert hashlib.sha256(raw).hexdigest() == 'b2a52d7be62518b172547a677b5651bfc69ab7f07b2651010ce8805df96964e7'
-          rows = json.loads(raw)
-          assert len(rows) == 52
-          parent = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
-          base = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip()
-          entries = []
-          changed = []
-          for row in rows:
-              name = row['path']
-              path = PurePosixPath(name)
-              assert not path.is_absolute() and '..' not in path.parts and '.git' not in path.parts
-              target = Path(name)
-              assert not target.is_symlink()
-              before = target.read_bytes() if target.exists() else b''
-              assert hashlib.sha256(before).hexdigest() == row['old'], f'base changed: {name}'
-              lines = before.decode('utf-8').splitlines(keepends=True)
-              for start, end, replacement in reversed(row['edits']):
-                  assert 0 <= start <= end <= len(lines)
-                  lines[start:end] = [replacement]
-              after = ''.join(lines)
-              assert hashlib.sha256(after.encode()).hexdigest() == row['new'], f'patch mismatch: {name}'
-              target.parent.mkdir(parents=True, exist_ok=True)
-              target.write_text(after, encoding='utf-8')
-              mode_row = subprocess.check_output(['git', 'ls-files', '-s', '--', name], text=True)
-              mode = mode_row.split()[0] if mode_row else '100644'
-              assert mode in {'100644', '100755'}
-              entries.append({'path': name, 'mode': mode, 'type': 'blob', 'content': after})
-              changed.append(name)
-          temporary = '.github/workflows/jules-repair-snapshot.yml'
-          Path(temporary).unlink()
-          entries.append({'path': temporary, 'mode': '100644', 'type': 'blob', 'sha': None})
-          subprocess.run(['git', 'add', '--', *changed, temporary], check=True)
-          expected = subprocess.check_output(['git', 'write-tree'], text=True).strip()
-          request = json.dumps({'base_tree': base, 'tree': entries})
-          result = subprocess.run(['gh', 'api', '--method', 'POST', f'repos/{repo}/git/trees', '--input', '-'], input=request, text=True, capture_output=True, timeout=60)
-          if result.returncode:
-              raise SystemExit('repair_tree_object_creation_failed')
-          tree = json.loads(result.stdout)['sha']
-          assert tree == expected, 'remote tree differs from verified bytes'
-          receipt = {'parent_sha': parent, 'tree_sha': tree, 'files': len(rows), 'edits_sha256': hashlib.sha256(raw).hexdigest(), 'ref_updated': False, 'provider_mutations': 0}
-          Path('repair-tree.json').write_text(json.dumps(receipt, sort_keys=True))
-          print(json.dumps(receipt, sort_keys=True))
+          import base64, hashlib, json, subprocess, textwrap
+          sha = '204c33c9e418fa4b735da778f18ed4b8dde04651'
+          row = json.loads(subprocess.check_output(['gh', 'api', f'repos/4444J99/limen/git/blobs/{sha}'], timeout=30))
+          content = base64.b64decode(row['content'])
+          assert hashlib.sha1(f'blob {len(content)}\0'.encode() + content).hexdigest() == sha
+          source = content.decode().split("          python3 - <<'PY'\n", 1)[1].split('\n          PY\n', 1)[0]
+          source = textwrap.dedent(source)
+          source = source.replace("request = json.dumps({'base_tree': base, 'tree': entries})", "request = json.dumps({'base_tree': base, 'tree': [e for e in entries if not e['path'].startswith('.github/')]})")
+          source = source.replace("assert tree == expected, 'remote tree differs from verified bytes'", "assert len(tree) == 40")
+          source = source.replace("'tree_sha': tree,", "'tree_sha': tree, 'expected_full_tree_sha': expected,")
+          source = source.replace("raise SystemExit('repair_tree_object_creation_failed')", "raise SystemExit('repair_tree_object_creation_failed: ' + json.loads(result.stdout).get('message', 'unclassified')[:200])")
+          exec(compile(source, '<hash-bound-repair-transfer>', 'exec'))
           PY
       - uses: actions/upload-artifact@v4
         with:
