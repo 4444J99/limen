@@ -44,7 +44,7 @@ chooses the smallest sound rail for each repository.
 ```bash
 # Registry-declared single-owner fast lane
 scripts/verify-scoped.sh
- gh pr merge <PR> --repo OWNER/NAME --squash --match-head-commit <SHA>
+gh pr merge <PR> --repo OWNER/NAME --squash --match-head-commit <SHA>
 
 # Shared-writer rail
 scripts/merge-policy.sh <PR> --expected-head <SHA>
@@ -57,17 +57,18 @@ live GitHub state after applying it.
 
 ## Cross-repository operations boundary
 
-An operations repository is an adapter, not a second authority. More repositories add
-participants to the existing protocol; they do not add independent quota allocators, work
-queues, or completion vocabularies.
+Runtime operations and engineering work have distinct admission domains. More repositories
+join those existing domains; they do not create a second authority for the same job. The
+[ops operations charter](https://github.com/4444J99/ops/blob/main/OPERATIONS.md) owns the
+runtime-job boundary. This section owns the engineering-work boundary.
 
 | Surface | Owns | Must not become |
 |---|---|---|
-| Limen conduct / TABVLARIVS | Admission, resource leases, fencing generations, authority attenuation, and lifecycle transitions | A product implementation or a second copy of a product backlog |
-| `4444J99/ops` | The existing GitHub schedule carrier and its own reports/bookends | A second Jules dispatcher or an estate-wide lease database |
+| Limen conduct / TABVLARIVS | Engineering-work admission, resource leases, fencing generations, authority attenuation, and lifecycle transitions | A competing permanent runtime scheduler/deployer or product backlog |
+| `4444J99/ops` | Shared runtime scheduling/admission, runtime-job leases and budget allocation under its operations charter; the GitHub carrier and its own reports/bookends | A second engineering-work keeper, independent Jules dispatcher, or writer of product business data |
 | `4444J99/ops-witness` | Read-only reconciliation and evidence validation | A launcher, merger, quota allocator, or completion-state writer |
 | `4444J99/organvm-ci-relay` | Authenticated transport and the existing verification/integration trust boundary | A task selector or independent repair scheduler |
-| Participating repository | Its authored implementation, tests, acceptance predicate, and isolated PR | The owner of another repository's product state |
+| Participating repository / product operator | Its implementation, tests, acceptance predicate, isolated PR, product runtime and effects, and normal release path | The owner of another repository's product state or a second fleet scheduler |
 
 For the Chat-native Jules service, the existing Steward owns new starts; Intake supplies
 bounded work and Landing owns delivery verification/integration. These are operation roles,
