@@ -10,6 +10,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from limen.execution_contract import execution_contract_hash
 from limen.io import load_limen_file, save_limen_file
 from limen.models import LimenFile, Task, dispatch_agent, dispatch_session_id
 from limen.tabularius import drain_once, tickets_root
@@ -403,7 +404,10 @@ def test_retry_identity_uses_first_honest_child_event_without_collision(tmp_path
     assert dispatch_session_id(child.dispatch_log[0]) == "first-invocation"
 
 
-def test_concurrent_claim_invalidates_parent_exact_state_and_verification(tmp_path: Path) -> None:
+def test_concurrent_claim_invalidates_parent_exact_state_and_verification(
+    tmp_path: Path, approved_execution_policy
+) -> None:
+    approved_execution_policy("DISCOVER-organvm-arca")
     compiler = _module()
     payload = _payload()
     task_id = "DISCOVER-organvm-arca"
@@ -434,6 +438,9 @@ def test_concurrent_claim_invalidates_parent_exact_state_and_verification(tmp_pa
         },
         log={"status": "dispatched", "output": "concurrent claim"},
     )
+    claim.log["execution_contract_hash"] = execution_contract_hash(
+        next(task for task in load_limen_file(board).tasks if task.id == task_id).model_copy(update=claim.patch)
+    )
     compiler.submit_ticket(board, claim)
     compiler.submit_compiled_tickets(board, parents)
     drained = drain_once(board)
@@ -445,7 +452,10 @@ def test_concurrent_claim_invalidates_parent_exact_state_and_verification(tmp_pa
 
 
 @pytest.mark.parametrize("claim_status", ["dispatched", "in_progress"])
-def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path: Path, claim_status: str) -> None:
+def test_later_same_batch_claim_rejects_parent_archive_and_verification(
+    tmp_path: Path, approved_execution_policy, claim_status: str
+) -> None:
+    approved_execution_policy("DISCOVER-organvm-arca")
     compiler = _module()
     payload = _payload()
     task_id = "DISCOVER-organvm-arca"
@@ -479,6 +489,11 @@ def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path
             },
             log={"status": "dispatched", "output": "prior valid claim"},
         )
+        prior_claim.log["execution_contract_hash"] = execution_contract_hash(
+            next(task for task in load_limen_file(board).tasks if task.id == task_id).model_copy(
+                update=prior_claim.patch
+            )
+        )
         compiler.submit_ticket(board, prior_claim)
         prior_drain = drain_once(board)
         assert (prior_drain.applied, prior_drain.rejected) == (1, 0)
@@ -500,6 +515,9 @@ def test_later_same_batch_claim_rejects_parent_archive_and_verification(tmp_path
             "value_case": "Later same-batch claim underwritten for the ask-gate migration test.",
         },
         log={"status": claim_status, "output": "later same-batch claim"},
+    )
+    later_claim.log["execution_contract_hash"] = execution_contract_hash(
+        next(task for task in load_limen_file(board).tasks if task.id == task_id).model_copy(update=later_claim.patch)
     )
     compiler.submit_ticket(board, later_claim)
     drained = drain_once(board)

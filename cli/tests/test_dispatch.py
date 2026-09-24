@@ -144,7 +144,19 @@ def _hermetic_dispatch_env(tmp_path: Path, monkeypatch) -> None:
         monkeypatch.delenv(var, raising=False)
 
 
-def write_board(path: Path, tasks: list[dict]) -> None:
+def write_board(path: Path, tasks: list[dict], *, approved: bool = True) -> None:
+    # Selection fixtures start with explicitly approved synthetic work. Policy
+    # rejection is tested separately; do not revive the old production bypass.
+    if approved:
+        root = Path(os.environ["LIMEN_ROOT"])
+        (root / "logs").mkdir(parents=True, exist_ok=True)
+        policy = {
+            "mode": "dispatch",
+            "approved_priorities": [
+                {"outcome_id": task["id"], "enabled": True, "work_keys": [task["id"]]} for task in tasks
+            ],
+        }
+        (root / "logs/autonomy-policy.json").write_text(json.dumps(policy))
     path.write_text(
         yaml.safe_dump(
             {
@@ -352,6 +364,16 @@ def test_dispatch_admission_pause_marker_blocks_even_when_general_gate_is_disabl
     logs.mkdir(parents=True)
     tasks = root / "tasks.yaml"
     tasks.write_text("version: '1.0'\ntasks: []\n", encoding="utf-8")
+    (logs / "autonomy-policy.json").write_text(
+        json.dumps(
+            {
+                "mode": "dispatch",
+                "approved_priorities": [
+                    {"outcome_id": "pause-fixture", "enabled": True, "work_keys": ["pause-fixture"]}
+                ],
+            }
+        )
+    )
     (logs / "AUTONOMY_PAUSED").write_text(
         "integration drain\nreason: preserve current workers\n",
         encoding="utf-8",
@@ -380,6 +402,13 @@ def _blocked_admission(*_args, **_kwargs):
 
 
 def test_serial_dispatch_admission_blocks_before_worker_and_budget(tmp_path: Path, monkeypatch, capsys) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -410,6 +439,13 @@ def test_serial_dispatch_admission_blocks_before_worker_and_budget(tmp_path: Pat
 
 
 def test_parallel_dispatch_admission_blocks_before_reservation(tmp_path: Path, monkeypatch, capsys) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -944,7 +980,8 @@ def test_dispatch_parallel_skips_needs_human_label(tmp_path: Path, capsys, monke
     assert "HUMAN-GATE" not in output
 
 
-def test_parallel_selection_normalizes_only_selected_legacy_task(monkeypatch) -> None:
+def test_parallel_selection_normalizes_only_selected_legacy_task(monkeypatch, approved_execution_policy) -> None:
+    approved_execution_policy("SELECTED")
     monkeypatch.setenv("LIMEN_VALUE_GATE", "0")
     board = LimenFile.model_validate(
         {
@@ -995,7 +1032,10 @@ def test_parallel_selection_normalizes_only_selected_legacy_task(monkeypatch) ->
     assert unselected.status == "open"
 
 
-def test_parallel_selection_fails_closed_when_legacy_owner_cannot_be_derived(monkeypatch, capsys) -> None:
+def test_parallel_selection_fails_closed_when_legacy_owner_cannot_be_derived(
+    monkeypatch, capsys, approved_execution_policy
+) -> None:
+    approved_execution_policy("NO-OWNER")
     monkeypatch.setenv("LIMEN_VALUE_GATE", "0")
     board = LimenFile.model_validate(
         {
@@ -1269,6 +1309,13 @@ def test_dispatch_parallel_reloads_under_queue_lock_before_reserve_write(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -1338,6 +1385,13 @@ def test_dispatch_parallel_does_not_dispatch_stale_open_task(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -1395,6 +1449,13 @@ def test_serial_dispatch_claims_canonical_budget_before_provider_launch(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -1465,6 +1526,13 @@ def test_serial_dispatch_does_not_launch_provider_when_canonical_claim_fails(
     monkeypatch,
     capsys,
 ) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -1519,6 +1587,13 @@ def test_serial_dispatch_continues_after_task_scoped_claim_rejection(
     capsys,
     remote_conflict,
 ) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     tasks_path = tmp_path / "tasks.yaml"
     tasks = [
         {
@@ -1592,6 +1667,13 @@ def test_dispatch_serial_commit_survives_concurrent_board_write(
     rewrite is deliberately not copied into that claim.  The result uses the keeper-returned claim
     as its CAS base and leaves any genuine canonical conflict for the keeper to reject.
     """
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
@@ -1784,7 +1866,13 @@ def test_adapter_admission_rejections_are_explicitly_prelaunch(monkeypatch, case
         (D._workstream_successor_result("provider ran, then retry was refused"), 1),
     ],
 )
-def test_work_loan_refunds_only_explicitly_prelaunch_result(monkeypatch, result, runs):
+def test_work_loan_refunds_only_explicitly_prelaunch_result(monkeypatch, result, runs, approved_execution_policy):
+    approved_execution_policy("USAGE")
+    monkeypatch.setattr(
+        D,
+        "client_from_env",
+        lambda: SimpleNamespace(execution_info=lambda key: {"attempt_deadline": "2099-01-01T00:00:00Z"}),
+    )
     task = Task(id="USAGE", title="account attempt", target_agent="codex", created=date(2026, 8, 30))
     actual = []
     store = SimpleNamespace(
@@ -2016,7 +2104,7 @@ def test_prelaunch_workstream_rejection_holds_successor_and_refunds_claim() -> N
     assert entry.execution_reservation_id == "d" * 64
 
 
-def test_postlaunch_reroute_records_execution_and_preserves_claim_debit(monkeypatch) -> None:
+def test_postlaunch_throttle_checkpoints_and_preserves_claim_debit(monkeypatch) -> None:
     now = datetime(2026, 8, 30, 12, tzinfo=timezone.utc)
     task = Task(
         id="SERIAL-REROUTE",
@@ -2046,9 +2134,9 @@ def test_postlaunch_reroute_records_execution_and_preserves_claim_debit(monkeypa
     D._apply_result(task, "codex", D._RATELIMIT, now, track, charge_budget=False)
 
     entry = task.dispatch_log[-1]
-    assert task.status == "open"
-    assert entry.route_to == "opencode"
-    assert entry.lifecycle_repair == "provider-reroute"
+    assert task.status == "failed"
+    assert entry.route_to is None
+    assert entry.lifecycle_repair == "provider-terminal"
     assert entry.execution_started is True
     assert entry.execution_reservation_id == "e" * 64
     assert track.spent == 1
@@ -2059,6 +2147,18 @@ def test_serial_provider_exception_commits_terminal_receipt(
     monkeypatch,
     capsys,
 ) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
+
+    def journal_failure(*_args, **_kwargs):
+        raise D._ProviderDispatchError("RuntimeError")
+
+    monkeypatch.setattr(D, "_journaled_agent_dispatch", journal_failure)
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -2114,6 +2214,13 @@ def test_serial_prelaunch_refund_restores_batch_remainder(
     monkeypatch,
     capsys,
 ) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     tasks_path = tmp_path / "tasks.yaml"
     tasks = [
         {
@@ -2337,7 +2444,12 @@ def test_jules_success_without_session_id_is_failure(monkeypatch, capsys) -> Non
     assert "no session id" in capsys.readouterr().out
 
 
-def test_run_isolated_agent_retries_transient_claude_auth_blip(tmp_path: Path, monkeypatch) -> None:
+def test_run_isolated_agent_checkpoints_auth_failure_without_unadmitted_retry(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(
+        D,
+        "client_from_env",
+        lambda: SimpleNamespace(execution_info=lambda key: {"attempt_deadline": "2099-01-01T00:00:00Z"}),
+    )
     calls: list[dict] = []
 
     def fake_run_capture(cmd, cwd=None, timeout=600, env=None):
@@ -2350,8 +2462,10 @@ def test_run_isolated_agent_retries_transient_claude_auth_blip(tmp_path: Path, m
     monkeypatch.setattr(D, "_stable_agent_host_command", lambda command, env: command)
     task = Task(id="AUTH-BLIP", title="retry", target_agent="claude", created=date(2026, 6, 27))
 
-    assert D._run_isolated_agent("claude", task, tmp_path, ["claude"], 3) is True
-    assert len(calls) == 2
+    result = D._run_isolated_agent("claude", task, tmp_path, ["claude"], 3)
+    assert result is not True
+    assert len(calls) == 1
+    assert calls[0]["timeout"] <= 3
 
 
 def test_stable_agent_host_wraps_macos_provider_with_arbitrary_binary_path(
@@ -2991,7 +3105,7 @@ def test_cleanup_isolated_worktree_retains_clean_noop_branch_for_reclaim(tmp_pat
     D._cleanup_isolated_worktree(repo, wt, branch, "main", pushed=False)
 
     assert wt.exists()
-    assert not (wt / "node_modules").exists()
+    assert (wt / "node_modules" / "dep.txt").read_text() == "generated\n"
     assert branch in _git_ok(repo, "branch", "--list", branch)
 
 
@@ -3030,7 +3144,7 @@ def test_cleanup_isolated_worktree_preserves_dirty_failed_work(tmp_path: Path) -
 
     assert wt.exists()
     assert (wt / "local.txt").exists()
-    assert not (wt / "node_modules").exists()
+    assert (wt / "node_modules" / "dep.txt").read_text() == "generated\n"
     assert branch in _git_ok(repo, "branch", "--list", branch)
 
 
@@ -3067,7 +3181,7 @@ def test_noop_result_stays_recoverable_not_cancelled() -> None:
     assert task.dispatch_log[-1].status == "failed"
 
 
-def test_rate_limit_and_timeout_events_are_canonical_routes(monkeypatch) -> None:
+def test_rate_limit_and_timeout_require_separately_admitted_recovery(monkeypatch) -> None:
     import datetime
 
     now = datetime.datetime.now(datetime.timezone.utc)
@@ -3080,11 +3194,11 @@ def test_rate_limit_and_timeout_events_are_canonical_routes(monkeypatch) -> None
         created=date(2026, 7, 10),
     )
     D._apply_result(rate_limited, "codex", D._RATELIMIT, now, BudgetTrack(date="2026-07-10"))
-    assert rate_limited.status == "open"
+    assert rate_limited.status == "failed"
     assert rate_limited.target_agent == "codex"
-    assert rate_limited.dispatch_log[-1].status == "open"
-    assert rate_limited.dispatch_log[-1].route_to == "opencode"
-    assert D._effective_target_agent(rate_limited) == "opencode"
+    assert rate_limited.dispatch_log[-1].status == "failed"
+    assert rate_limited.dispatch_log[-1].route_to is None
+    assert D._effective_target_agent(rate_limited) == "codex"
 
     timed_out = Task(
         id="TIME",
@@ -3094,12 +3208,12 @@ def test_rate_limit_and_timeout_events_are_canonical_routes(monkeypatch) -> None
         created=date(2026, 7, 10),
     )
     D._apply_result(timed_out, "codex", D._TIMEOUT, now, BudgetTrack(date="2026-07-10"))
-    assert timed_out.status == "open"
+    assert timed_out.status == "failed"
     assert timed_out.target_agent == "codex"
-    assert timed_out.dispatch_log[-1].status == "open"
-    assert timed_out.dispatch_log[-1].route_to == "jules"
-    assert D._effective_target_agent(timed_out) == "jules"
-    assert D.agent_can_run_task("codex", timed_out) is False
+    assert timed_out.dispatch_log[-1].status == "failed"
+    assert timed_out.dispatch_log[-1].route_to is None
+    assert D._effective_target_agent(timed_out) == "codex"
+    assert D._dispatchable(timed_out) is False  # Eligibility alone is not execution authority.
 
 
 def test_warp_auto_dispatch_sends_dynamic_profile_without_model_override(monkeypatch) -> None:
@@ -3321,7 +3435,8 @@ def test_pr_open_receipt_blocks_duplicate_dispatch_and_noop_demotion() -> None:
     assert task.dispatch_log[-1].session_id == "result-lifecycle-guard"
 
 
-def test_dispatchable_requires_explicit_work_loan_underwriting() -> None:
+def test_dispatchable_requires_explicit_work_loan_underwriting(approved_execution_policy) -> None:
+    approved_execution_policy("WORK-LOAN-DISPATCH")
     task = Task(
         id="WORK-LOAN-DISPATCH",
         title="Dispatch only underwritten work",
@@ -3787,6 +3902,13 @@ def test_parallel_result_commit_fences_changed_workstream_contract(
     monkeypatch,
     capsys,
 ) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     tasks_path = tmp_path / "tasks.yaml"
     now_epoch = int(datetime.now(timezone.utc).timestamp())
     contract_a = packet_contract("2d", now_epoch=now_epoch)
@@ -3849,6 +3971,13 @@ def test_parallel_result_commit_fences_newer_claim_and_cleans_receipts(
     monkeypatch,
     capsys,
 ) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     tasks_path = tmp_path / "tasks.yaml"
     task_id = "PARALLEL-NEWER-CLAIM"
     write_board(
@@ -3929,6 +4058,13 @@ def test_parallel_result_commit_lock_busy_cleans_owned_receipts(
     monkeypatch,
     capsys,
 ) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     tasks_path = tmp_path / "tasks.yaml"
     task_id = "PARALLEL-LOCK-BUSY"
     write_board(
@@ -4245,6 +4381,13 @@ def test_validated_remote_workstream_contract_drift_requires_successor(monkeypat
 
 
 def test_dispatch_parallel_records_blocked_without_counting_failure(tmp_path: Path, monkeypatch, capsys) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     tasks_path = tmp_path / "tasks.yaml"
     write_board(
         tasks_path,
@@ -4837,6 +4980,7 @@ def test_release_stale_restores_prior_done_instead_of_reopening(tmp_path: Path, 
 
 
 def test_dispatch_limit_and_per_agent_budget(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.setattr(D, "_journaled_agent_dispatch", lambda *_args, **_kwargs: True)
     tasks_path = tmp_path / "tasks.yaml"
     dispatch_bin = tmp_path / "agent-dispatch"
     dispatch_bin.write_text("#!/bin/sh\nexit 0\n")
@@ -5486,7 +5630,10 @@ def test_clone_cache_keys_are_flat_and_collision_safe() -> None:
     assert first != second
 
 
-def test_parallel_multi_lane_reserves_shared_checkout_room_only_when_selected(monkeypatch) -> None:
+def test_parallel_multi_lane_reserves_shared_checkout_room_only_when_selected(
+    monkeypatch, approved_execution_policy
+) -> None:
+    approved_execution_policy("FIRST-SMALL", "SECOND-OVER-ROOM")
     monkeypatch.setenv("LIMEN_VALUE_GATE", "0")
     board = LimenFile.model_validate(
         {
@@ -6193,6 +6340,13 @@ def _resource_blocked_snapshot() -> "D.WorktreeAdmissionSnapshot":
 
 
 def test_explicit_task_dispatch_still_obeys_admission(tmp_path: Path, capsys, monkeypatch) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "1")
     monkeypatch.setattr(D, "_worktree_admission_snapshot", _resource_blocked_snapshot)
     monkeypatch.setattr(
@@ -6229,6 +6383,13 @@ def test_explicit_task_dispatch_still_obeys_admission(tmp_path: Path, capsys, mo
 
 
 def test_explicit_task_reserves_its_dynamic_checkout_estimate(tmp_path: Path, capsys, monkeypatch) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     snapshot = D.WorktreeAdmissionSnapshot(
         active=True,
         block_new_local=False,
@@ -6278,6 +6439,13 @@ def test_explicit_task_reserves_its_dynamic_checkout_estimate(tmp_path: Path, ca
 
 
 def test_serial_live_dispatch_obeys_machine_local_slot_ceiling(tmp_path: Path, capsys, monkeypatch) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     monkeypatch.setenv("LIMEN_ASYNC_MAX", "1")
     holder = _wtask(repo="someorg/holder")
@@ -6317,6 +6485,13 @@ def test_serial_live_dispatch_obeys_machine_local_slot_ceiling(tmp_path: Path, c
 
 
 def test_explicit_local_task_with_unknown_checkout_estimate_is_denied(tmp_path: Path, capsys, monkeypatch) -> None:
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     snapshot = D.WorktreeAdmissionSnapshot(
         active=True,
         block_new_local=False,
@@ -6406,7 +6581,13 @@ def test_explicit_task_operator_override_gate_off(tmp_path: Path, capsys, monkey
 
 
 @pytest.mark.parametrize("successor", [False, True])
-def test_actual_journal_failure_preserves_proven_prelaunch(monkeypatch, capsys, successor):
+def test_actual_journal_failure_preserves_proven_prelaunch(monkeypatch, capsys, successor, approved_execution_policy):
+    approved_execution_policy("JOURNAL-PRELAUNCH")
+    monkeypatch.setattr(
+        D,
+        "client_from_env",
+        lambda: SimpleNamespace(execution_info=lambda key: {"attempt_deadline": "2099-01-01T00:00:00Z"}),
+    )
     task = Task(id="JOURNAL-PRELAUNCH", title="account no launch", target_agent="codex", created=date(2026, 8, 30))
     result = (
         D._prelaunch_workstream_successor_result("expired")
@@ -6428,6 +6609,13 @@ def test_actual_journal_failure_preserves_proven_prelaunch(monkeypatch, capsys, 
 
 @pytest.mark.parametrize("budget", [1, 2])
 def test_serial_durable_deferral_continues_without_unacknowledged_refund(tmp_path, monkeypatch, capsys, budget):
+    # This test supplies synthetic canonical projection receipts, so its
+    # provider boundary is the journalled executor, not a real keeper session.
+    monkeypatch.setattr(
+        D,
+        "_journaled_agent_dispatch",
+        lambda agent, task, dry_run, *_args, **_kwargs: D.call_agent_dispatch(agent, task, dry_run=dry_run),
+    )
     path = tmp_path / "tasks.yaml"
     rows = [
         {

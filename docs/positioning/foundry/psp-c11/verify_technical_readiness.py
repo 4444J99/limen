@@ -252,9 +252,7 @@ GOVERNED_TRANSFER_BLOCKERS = {
     "no_observed_pilot",
 }
 PRIVATE_CLEARANCE_BLOCKER_CODE = "restricted_private_evidence"
-GOVERNED_CLEARANCE_BLOCKER_CODES = set(DIMENSION_BLOCKER_CODES.values()) | {
-    PRIVATE_CLEARANCE_BLOCKER_CODE
-}
+GOVERNED_CLEARANCE_BLOCKER_CODES = set(DIMENSION_BLOCKER_CODES.values()) | {PRIVATE_CLEARANCE_BLOCKER_CODE}
 
 
 class AuditError(RuntimeError):
@@ -328,11 +326,7 @@ class LiveCollection:
         keys = list(dict.fromkeys(tuple(request) for request in requests))
         if not keys:
             return {}
-        values = {
-            key: copy.deepcopy(self._json_cache[key])
-            for key in keys
-            if cache and key in self._json_cache
-        }
+        values = {key: copy.deepcopy(self._json_cache[key]) for key in keys if cache and key in self._json_cache}
         missing = [key for key in keys if key not in values]
         remaining = self._deadline - self._clock()
         if self.calls + len(missing) > self._call_limit or remaining <= 0:
@@ -372,12 +366,8 @@ def live_collection_call_limit(audit: dict[str, Any] | None) -> int:
     candidates = audit.get("candidates")
     if not isinstance(candidates, list):
         raise AuditError("live evidence call budget candidate denominator is invalid")
-    public_rows = [
-        row for row in candidates if isinstance(row, dict) and row.get("visibility") == "public"
-    ]
-    private_rows = [
-        row for row in candidates if isinstance(row, dict) and row.get("visibility") == "private"
-    ]
+    public_rows = [row for row in candidates if isinstance(row, dict) and row.get("visibility") == "public"]
+    private_rows = [row for row in candidates if isinstance(row, dict) and row.get("visibility") == "private"]
     if (
         len(candidates) != SOURCE_LOCK["candidate_count"]
         or len(public_rows) != SOURCE_LOCK["visibility"]["public"]
@@ -561,10 +551,7 @@ def _actions_artifact_request(repository: str, run_id: str, page: int) -> list[s
     return [
         "gh",
         "api",
-        (
-            f"repos/{repository}/actions/runs/{run_id}/artifacts"
-            f"?per_page={ACTIONS_ARTIFACT_PAGE_SIZE}&page={page}"
-        ),
+        (f"repos/{repository}/actions/runs/{run_id}/artifacts?per_page={ACTIONS_ARTIFACT_PAGE_SIZE}&page={page}"),
     ]
 
 
@@ -598,11 +585,7 @@ def _consume_actions_artifact_page(
         raise AuditError("Actions evidence artifact listing is incomplete")
     for artifact in page_artifacts:
         artifact_id = artifact.get("id") if isinstance(artifact, dict) else None
-        if (
-            not _is_nonnegative_int(artifact_id)
-            or artifact_id < 1
-            or artifact_id in state["artifact_ids"]
-        ):
+        if not _is_nonnegative_int(artifact_id) or artifact_id < 1 or artifact_id in state["artifact_ids"]:
             raise AuditError("Actions evidence artifact listing is incomplete")
         state["artifact_ids"].add(artifact_id)
         name = artifact.get("name")
@@ -622,10 +605,7 @@ def _scan_actions_artifacts(
     listings = sorted(pending.items())
     for offset in range(0, len(listings), ACTIONS_ARTIFACT_SCAN_GROUP_SIZE):
         group = listings[offset : offset + ACTIONS_ARTIFACT_SCAN_GROUP_SIZE]
-        first_requests = [
-            _actions_artifact_request(repository, run_id, 1)
-            for (repository, run_id), _ in group
-        ]
+        first_requests = [_actions_artifact_request(repository, run_id, 1) for (repository, run_id), _ in group]
         first_responses = collection.run_json_batch(first_requests, cache=False)
         states: dict[tuple[str, str], dict[str, Any]] = {}
         page_requests: list[tuple[list[str], tuple[str, str], int]] = []
@@ -650,9 +630,7 @@ def _scan_actions_artifacts(
                 for page in range(2, page_count + 1)
             )
         for page_offset in range(0, len(page_requests), ACTIONS_ARTIFACT_RESPONSE_BATCH_SIZE):
-            page_group = page_requests[
-                page_offset : page_offset + ACTIONS_ARTIFACT_RESPONSE_BATCH_SIZE
-            ]
+            page_group = page_requests[page_offset : page_offset + ACTIONS_ARTIFACT_RESPONSE_BATCH_SIZE]
             requests = [request for request, _, _ in page_group]
             responses = collection.run_json_batch(requests, cache=False)
             for request, listing, page in page_group:
@@ -709,7 +687,9 @@ def _production_artifact_errors(
     artifacts = value.get("artifacts")
     if not isinstance(artifacts, list) or len(artifacts) > ACTIONS_ARTIFACT_MATCH_LIMIT:
         return [f"{label} Actions evidence artifact listing is incomplete"]
-    matches = [artifact for artifact in artifacts if isinstance(artifact, dict) and artifact.get("name") == expected_name]
+    matches = [
+        artifact for artifact in artifacts if isinstance(artifact, dict) and artifact.get("name") == expected_name
+    ]
     if len(matches) != 1 or len(matches) != len(artifacts):
         return [f"{label} must resolve exactly one attempt-bound Actions evidence artifact"]
     artifact = matches[0]
@@ -792,11 +772,7 @@ def readiness_hard_floors(contract: dict[str, Any]) -> set[str]:
 
 
 def readiness_transfer_threshold(contract: dict[str, Any]) -> int:
-    value = (
-        contract.get("economics_and_kill_rules", {})
-        .get("transfer_floor", {})
-        .get("technical_readiness_minimum")
-    )
+    value = contract.get("economics_and_kill_rules", {}).get("transfer_floor", {}).get("technical_readiness_minimum")
     if not _is_nonnegative_int(value) or value > 100:
         raise AuditError("technical readiness transfer threshold is invalid")
     return value
@@ -972,6 +948,62 @@ def _graphql_heads(
     return heads
 
 
+PUBLIC_OBSERVATION_WITHDRAWALS = Path(__file__).with_name("public-observation-withdrawals.json")
+
+
+def public_observation_withdrawals(audit: dict[str, Any]) -> set[str]:
+    """Retain withdrawn historical rows without asserting private evidence is public.
+
+    This is a reviewed custody disposition, not an automatic 404 exemption. The
+    immutable candidate denominator stays intact. A withdrawal binds the entire
+    already-published blocked row; it cannot clear a blocker or enable a transfer.
+    """
+    manifest = load_json(PUBLIC_OBSERVATION_WITHDRAWALS)
+    if (
+        set(manifest) != {"schema_version", "source_identity_sha256", "withdrawals"}
+        or manifest.get("schema_version") != "limen.public_observation_withdrawals.v1"
+        or manifest.get("source_identity_sha256") != SOURCE_LOCK["candidate_identity_sha256"]
+        or not isinstance(manifest.get("withdrawals"), list)
+    ):
+        raise AuditError("public observation withdrawal manifest is invalid")
+    candidates = {
+        _sha256_text(row["candidate_id"]): row
+        for row in audit.get("candidates", [])
+        if isinstance(row, dict) and isinstance(row.get("candidate_id"), str)
+    }
+    withdrawn: set[str] = set()
+    for receipt in manifest["withdrawals"]:
+        if not isinstance(receipt, dict) or set(receipt) != {
+            "candidate_id_sha256",
+            "snapshot_row_sha256",
+            "disposition",
+            "reason",
+            "recorded_at",
+        }:
+            raise AuditError("public observation withdrawal receipt is invalid")
+        row = candidates.get(receipt.get("candidate_id_sha256"))
+        recorded = _parse_timestamp(receipt.get("recorded_at"))
+        if (
+            row is None
+            or row.get("visibility") != "public"
+            or row.get("transfer_eligible") is not False
+            or row.get("readiness_score") != 0
+            or any(
+                row.get(dimension, {}).get("state") != "blocked_unverified" for dimension in DIMENSION_RECEIPT_TOKENS
+            )
+            or receipt.get("snapshot_row_sha256")
+            != _sha256_text(json.dumps(row, sort_keys=True, separators=(",", ":")))
+            or receipt.get("disposition") != "withdrawn_from_public_verification"
+            or receipt.get("reason") != "owner_restricted_visibility"
+            or recorded is None
+            or recorded > dt.datetime.now(dt.UTC)
+            or row.get("repository") in withdrawn
+        ):
+            raise AuditError("public observation withdrawal binding drifted")
+        withdrawn.add(row["repository"])
+    return withdrawn
+
+
 def collect_public_head_observations(
     audit: dict[str, Any],
     collection: LiveCollection | None = None,
@@ -988,9 +1020,14 @@ def collect_public_head_observations(
     if (
         len(rows) != SOURCE_LOCK["visibility"]["public"]
         or len(repositories) != len(set(repositories))
-        or any(not _is_nonblank_text(repository) or not isinstance(head, str) or not SHA40.fullmatch(head) for repository, head in rows)
+        or any(
+            not _is_nonblank_text(repository) or not isinstance(head, str) or not SHA40.fullmatch(head)
+            for repository, head in rows
+        )
     ):
         raise AuditError("accepted public candidate head observation set drifted")
+    withdrawn = public_observation_withdrawals(audit)
+    rows = [(repository, head) for repository, head in rows if repository not in withdrawn]
     selections: list[str] = []
     for index, (repository, head) in enumerate(rows):
         owner, name = repository.split("/", 1)
@@ -1047,10 +1084,9 @@ def verify_w01_live_receipt(collection: LiveCollection | None = None) -> None:
         collection=collection,
     )
     body = comment.get("body")
-    if (
-        _normalize_limen_url(comment.get("html_url")) != _normalize_limen_url(SOURCE_LOCK["w01_receipt"])
-        or not isinstance(body, str)
-    ):
+    if _normalize_limen_url(comment.get("html_url")) != _normalize_limen_url(
+        SOURCE_LOCK["w01_receipt"]
+    ) or not isinstance(body, str):
         raise AuditError("accepted W01 marked receipt resolution drifted")
     match = re.search(
         r"<!--\s*positioning-receipt:PSP-P13-W01\s*-->\s*```json\s*(\{.*?\})\s*```",
@@ -1285,9 +1321,7 @@ def _fetch_repository_blob(
             return cached
     args = ["gh", "api", f"repos/{repository}/contents/{quote(path, safe='/')}?ref={quote(commit, safe='')}"]
     response = (
-        collection.run_json_batch([args], cache=False)[tuple(args)]
-        if collection is not None
-        else _run_json(args)
+        collection.run_json_batch([args], cache=False)[tuple(args)] if collection is not None else _run_json(args)
     )
     size = response.get("size")
     if (
@@ -1335,11 +1369,7 @@ def _fetch_repository_blobs_batch(
     collection: LiveCollection,
 ) -> dict[tuple[str, str, str], bytes]:
     unique = list(dict.fromkeys(locations))
-    resolved = {
-        location: cached
-        for location in unique
-        if (cached := collection.get_blob(location)) is not None
-    }
+    resolved = {location: cached for location in unique if (cached := collection.get_blob(location)) is not None}
     requests: dict[tuple[str, str, str], list[str]] = {}
     for repository, commit, path in unique:
         if (repository, commit, path) in resolved:
@@ -1414,9 +1444,7 @@ def _fetch_repository_blobs_batch(
             blob = fallback_responses[tuple(args)]
             if blob.get("sha") != blob_sha or blob.get("encoding") != "base64" or blob.get("size") != size:
                 raise AuditError("live technical evidence blob fallback binding drift")
-            decoded = _decode_github_base64(
-                blob.get("content"), GITHUB_BLOB_MAX_BYTES, "live technical evidence blob"
-            )
+            decoded = _decode_github_base64(blob.get("content"), GITHUB_BLOB_MAX_BYTES, "live technical evidence blob")
             git_digest = hashlib.sha1(f"blob {len(decoded)}\0".encode("ascii") + decoded).hexdigest()
             if len(decoded) != size or git_digest != blob_sha:
                 raise AuditError("live technical evidence blob fallback digest drift")
@@ -1566,9 +1594,7 @@ def _prefetch_live_evidence(audit: dict[str, Any], collection: LiveCollection) -
     receipt_blobs = _fetch_repository_blobs_batch(receipt_locations, collection)
     payload_locations: list[tuple[str, str, str]] = []
     provenance_requests: list[list[str]] = []
-    artifact_scan_inputs: list[
-        tuple[str, str, str, int, tuple[str, str, str] | None, tuple[str, str, str]]
-    ] = []
+    artifact_scan_inputs: list[tuple[str, str, str, int, tuple[str, str, str] | None, tuple[str, str, str]]] = []
     for row, dimension, _, location in technical_plans:
         receipt = _parse_live_json_blob(receipt_blobs[location], "live technical evidence receipt")
         output_location = (location[0], location[1], receipt.get("output_path"))
@@ -1576,11 +1602,7 @@ def _prefetch_live_evidence(audit: dict[str, Any], collection: LiveCollection) -
         payload_locations.extend([output_location, artifact_location])
         run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
         run_attempt = receipt.get("run_attempt")
-        if (
-            run_id is None
-            or not _is_nonnegative_int(run_attempt)
-            or run_attempt < 1
-        ):
+        if run_id is None or not _is_nonnegative_int(run_attempt) or run_attempt < 1:
             raise AuditError("live technical evidence provenance URL is invalid")
         provenance_requests.append(
             [
@@ -1605,11 +1627,7 @@ def _prefetch_live_evidence(audit: dict[str, Any], collection: LiveCollection) -
         payload_locations.append(artifact_location)
         run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
         run_attempt = receipt.get("run_attempt")
-        if (
-            run_id is None
-            or not _is_nonnegative_int(run_attempt)
-            or run_attempt < 1
-        ):
+        if run_id is None or not _is_nonnegative_int(run_attempt) or run_attempt < 1:
             raise AuditError("live maintenance funding provenance URL is invalid")
         provenance_requests.append(
             [
@@ -1638,9 +1656,7 @@ def _prefetch_live_evidence(audit: dict[str, Any], collection: LiveCollection) -
                 _production_artifact_name(
                     dimension,
                     run_attempt,
-                    hashlib.sha256(payload_blobs[output_location]).hexdigest()
-                    if output_location is not None
-                    else None,
+                    hashlib.sha256(payload_blobs[output_location]).hexdigest() if output_location is not None else None,
                     hashlib.sha256(payload_blobs[artifact_location]).hexdigest(),
                 ),
             )
@@ -1704,11 +1720,7 @@ def collect_live_evidence_receipts(
             artifact_sha256 = hashlib.sha256(artifact).hexdigest()
             run_id = _actions_run_id(receipt.get("provenance_url"), str(row.get("repository") or ""))
             run_attempt = receipt.get("run_attempt")
-            if (
-                run_id is None
-                or not _is_nonnegative_int(run_attempt)
-                or run_attempt < 1
-            ):
+            if run_id is None or not _is_nonnegative_int(run_attempt) or run_attempt < 1:
                 raise AuditError("live technical evidence provenance URL is invalid")
             provenance = _run_json(
                 [
@@ -1791,11 +1803,7 @@ def collect_live_evidence_receipts(
                     str(row.get("repository") or ""),
                 )
                 funding_run_attempt = funding_receipt.get("run_attempt")
-                if (
-                    funding_run_id is None
-                    or not _is_nonnegative_int(funding_run_attempt)
-                    or funding_run_attempt < 1
-                ):
+                if funding_run_id is None or not _is_nonnegative_int(funding_run_attempt) or funding_run_attempt < 1:
                     raise AuditError("live maintenance funding provenance URL is invalid")
                 funding_provenance = _run_json(
                     [
@@ -2009,7 +2017,10 @@ def _evidence_receipt_errors(
         errors.append(f"{label} live receipt repository or tested_commit drift")
     receipt_repository = resolved_evidence.get("receipt_repository")
     receipt_commit = resolved_evidence.get("receipt_commit")
-    allowed_receipt_repositories = {repository.casefold(), *(value.casefold() for value in TRUSTED_RECEIPT_REPOSITORIES)}
+    allowed_receipt_repositories = {
+        repository.casefold(),
+        *(value.casefold() for value in TRUSTED_RECEIPT_REPOSITORIES),
+    }
     if (
         not isinstance(receipt_repository, str)
         or receipt_repository.casefold() not in allowed_receipt_repositories
@@ -2043,12 +2054,7 @@ def _evidence_receipt_errors(
     predicate_path = receipt.get("predicate_path")
     started: dt.datetime | None = None
     completed: dt.datetime | None = None
-    if (
-        not isinstance(provenance, dict)
-        or run_id is None
-        or not _is_nonnegative_int(run_attempt)
-        or run_attempt < 1
-    ):
+    if not isinstance(provenance, dict) or run_id is None or not _is_nonnegative_int(run_attempt) or run_attempt < 1:
         errors.append(f"{label} live receipt must resolve trusted execution provenance")
     else:
         conclusion = provenance.get("conclusion")
@@ -2061,15 +2067,23 @@ def _evidence_receipt_errors(
             or (state == "verified_fail" and conclusion not in EXECUTED_FAILURE_CONCLUSIONS)
         ):
             errors.append(f"{label} live receipt trusted result semantics drift")
-        if provenance.get("path") != predicate_path or not _is_nonblank_text(predicate_path) or not any(
-            token in str(predicate_path).casefold() for token in DIMENSION_RECEIPT_TOKENS[dimension]
+        if (
+            provenance.get("path") != predicate_path
+            or not _is_nonblank_text(predicate_path)
+            or not any(token in str(predicate_path).casefold() for token in DIMENSION_RECEIPT_TOKENS[dimension])
         ):
             errors.append(f"{label} live receipt predicate provenance drift")
         observed = _parse_timestamp(receipt.get("observed_at"))
         completed = _parse_timestamp(provenance.get("updated_at"))
         started = _parse_timestamp(provenance.get("run_started_at") or provenance.get("created_at"))
         now = dt.datetime.now(dt.UTC)
-        if observed is None or completed is None or started is None or observed != completed or not started <= completed <= now:
+        if (
+            observed is None
+            or completed is None
+            or started is None
+            or observed != completed
+            or not started <= completed <= now
+        ):
             errors.append(f"{label} live receipt chronology drift")
     errors.extend(
         _production_artifact_errors(
@@ -2153,10 +2167,14 @@ def _maintenance_funding_errors(
     artifact = resolved_funding.get("artifact")
     artifact_sha256 = resolved_funding.get("artifact_sha256")
     receipt_sha256 = resolved_funding.get("receipt_sha256")
-    technical_digests = {
-        technical_evidence.get("output_sha256"),
-        technical_evidence.get("artifact_sha256"),
-    } if isinstance(technical_evidence, dict) else set()
+    technical_digests = (
+        {
+            technical_evidence.get("output_sha256"),
+            technical_evidence.get("artifact_sha256"),
+        }
+        if isinstance(technical_evidence, dict)
+        else set()
+    )
     if (
         not _safe_relative_path(artifact_path)
         or receipt.get("artifact_sha256") != artifact_sha256
@@ -2190,12 +2208,7 @@ def _maintenance_funding_errors(
     predicate_path = receipt.get("predicate_path")
     started: dt.datetime | None = None
     completed: dt.datetime | None = None
-    if (
-        not isinstance(provenance, dict)
-        or run_id is None
-        or not _is_nonnegative_int(run_attempt)
-        or run_attempt < 1
-    ):
+    if not isinstance(provenance, dict) or run_id is None or not _is_nonnegative_int(run_attempt) or run_attempt < 1:
         errors.append(f"{label} must resolve trusted execution provenance")
     else:
         if (
@@ -2218,7 +2231,13 @@ def _maintenance_funding_errors(
         completed = _parse_timestamp(provenance.get("updated_at"))
         started = _parse_timestamp(provenance.get("run_started_at") or provenance.get("created_at"))
         now = dt.datetime.now(dt.UTC)
-        if observed is None or completed is None or started is None or observed != completed or not started <= completed <= now:
+        if (
+            observed is None
+            or completed is None
+            or started is None
+            or observed != completed
+            or not started <= completed <= now
+        ):
             errors.append(f"{label} chronology drift")
     errors.extend(
         _production_artifact_errors(
@@ -2387,8 +2406,7 @@ def _public_candidate_errors(
             valid_estimate = _is_finite_number(estimate) and 0 < float(estimate) <= maintenance_maximum
             response_window = maintenance.get("response_window_hours")
             valid_response = (
-                _is_finite_number(response_window)
-                and 0 < float(response_window) <= maintenance_response_maximum
+                _is_finite_number(response_window) and 0 < float(response_window) <= maintenance_response_maximum
             )
             valid_pass = _is_nonblank_text(maintenance.get("owner")) and valid_estimate and valid_response
             if not valid_pass:
@@ -2401,10 +2419,9 @@ def _public_candidate_errors(
                 errors.append(f"{label}.maintenance pass cannot retain a blocker")
                 valid_pass = False
             funding_evidence_url = maintenance.get("funding_evidence_url")
-            funded_maintenance = (
-                funding_evidence_url != maintenance.get("evidence_url")
-                and _url_proves_maintenance_funding(funding_evidence_url, head, repository)
-            )
+            funded_maintenance = funding_evidence_url != maintenance.get(
+                "evidence_url"
+            ) and _url_proves_maintenance_funding(funding_evidence_url, head, repository)
             if not funded_maintenance:
                 errors.append(f"{label}.maintenance pass requires distinct immutable funded-maintenance evidence")
             if live_receipts is not None:
@@ -2658,6 +2675,11 @@ def validate_audit(
         return errors + ["audit and accepted snapshot candidates must be lists"]
     if len(candidates) != len(expected_candidates):
         errors.append("audit candidate count drift")
+    try:
+        withdrawn = public_observation_withdrawals(audit)
+    except (AuditError, OSError, ValueError, TypeError):
+        errors.append("public observation withdrawal validation failed closed")
+        withdrawn = set()
     expected_ids = [row.get("candidate_id") if isinstance(row, dict) else None for row in expected_candidates]
     observed_ids = [row.get("candidate_id") if isinstance(row, dict) else None for row in candidates]
     observed_ids_are_text = all(isinstance(candidate_id, str) for candidate_id in observed_ids)
@@ -2691,7 +2713,10 @@ def validate_audit(
             )
             if live_heads is not None:
                 repository = expected.get("repository")
-                if live_heads.get(repository) != row.get("observed_head"):
+                if repository in withdrawn:
+                    if repository in live_heads:
+                        errors.append("withdrawn candidate cannot claim public live verification")
+                elif live_heads.get(repository) != row.get("observed_head"):
                     errors.append(f"candidate {expected.get('candidate_id')} observed_head drifted live")
         elif expected.get("visibility") == "private":
             errors.extend(_private_candidate_errors(row, expected, private_clearance_receipts))
@@ -2731,12 +2756,8 @@ def required_blocker_errors(
     )
     if row is None:
         return ["--require-cleared candidate is not in the accepted denominator"]
-    if (
-        row.get("visibility") == "private"
-        and code != PRIVATE_CLEARANCE_BLOCKER_CODE
-    ) or (
-        row.get("visibility") == "public"
-        and code == PRIVATE_CLEARANCE_BLOCKER_CODE
+    if (row.get("visibility") == "private" and code != PRIVATE_CLEARANCE_BLOCKER_CODE) or (
+        row.get("visibility") == "public" and code == PRIVATE_CLEARANCE_BLOCKER_CODE
     ):
         return ["--require-cleared blocker code is invalid for candidate visibility"]
     blockers: list[Any] = []
@@ -2882,6 +2903,12 @@ def main() -> int:
             )
         )
         payload = _result(audit_path, errors, audit)
+        if args.public_live and not errors:
+            payload["public_head_verification"] = {
+                "historical_public_candidates": SOURCE_LOCK["visibility"]["public"],
+                "verified_immutable_heads": len(heads or {}),
+                "withdrawn_unverified": len(public_observation_withdrawals(audit)),
+            }
         print(
             json.dumps(payload, sort_keys=True)
             if args.json

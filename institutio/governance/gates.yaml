@@ -657,6 +657,7 @@ gates:
       - "docs/positioning/foundry/psp-c11/foundry-preflight-contract.json"
       - "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
       - "docs/positioning/foundry/psp-c11/technical-readiness-audit.json"
+      - "docs/positioning/foundry/psp-c11/public-observation-withdrawals.json"
       - "docs/positioning/foundry/psp-c11/test_technical_readiness.py"
       - "docs/positioning/foundry/psp-c11/verify_technical_readiness.py"
       - "institutio/positioning/program.yaml"
@@ -675,6 +676,7 @@ gates:
       - "docs/positioning/foundry/psp-c11/foundry-preflight-contract.json"
       - "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
       - "docs/positioning/foundry/psp-c11/technical-readiness-audit.json"
+      - "docs/positioning/foundry/psp-c11/public-observation-withdrawals.json"
       - "docs/positioning/foundry/psp-c11/verify_technical_readiness.py"
       - "institutio/governance/gates.yaml"
       - "institutio/positioning/github-map.json"
@@ -682,13 +684,14 @@ gates:
       - "scripts/positioning-program.py"
     timeout_seconds: 300
     owner: positioning-program
-    note: "PSP-P13-W03 scoped public-evidence validation uses bounded concurrent immutable-blob, attempt-provenance, and compact fully paginated digest-bound Actions-artifact scans plus one batched repository-bound immutable commit observation for every accepted public candidate, including blocked rows, under one 270-second deadline and a 64 MiB aggregate decoded-blob ceiling; artifact pages bypass the long-lived JSON cache and only completeness counts plus bounded exact matches survive, artifact identities use only attempt-available output/artifact digests, and mutable branch drift, private-inclusive census, and private custody remain outside ordinary PR acceptance."
+    note: "PSP-P13-W03 scoped public-evidence validation uses bounded concurrent immutable-blob, attempt-provenance, and compact fully paginated digest-bound Actions-artifact scans plus one batched repository-bound immutable commit observation for every non-withdrawn accepted public candidate, including blocked rows; reviewed full-row-bound custody withdrawals remain blocked and explicitly unverified, under one 270-second deadline and a 64 MiB aggregate decoded-blob ceiling; artifact pages bypass the long-lived JSON cache and only completeness counts plus bounded exact matches survive, artifact identities use only attempt-available output/artifact digests, and mutable branch drift, private-inclusive census, and private custody remain outside ordinary PR acceptance."
   positioning-foundry-technical-readiness-live:
     command: "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --json"
     paths:
       - "docs/positioning/foundry/psp-c11/foundry-preflight-contract.json"
       - "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
       - "docs/positioning/foundry/psp-c11/technical-readiness-audit.json"
+      - "docs/positioning/foundry/psp-c11/public-observation-withdrawals.json"
       - "docs/positioning/foundry/psp-c11/verify_technical_readiness.py"
       - "institutio/governance/gates.yaml"
       - "institutio/positioning/github-map.json"
@@ -1159,7 +1162,7 @@ gates:
     owner: verify
     note: "Bind the actual Worker hint store and reconciler to real Python keeper registration, reservation, executor attempt and receipt behavior. Worker-only changes must exercise this cross-language boundary. Uses isolated in-memory keeper and Worker storage, real bounded Node invocations and an isolated fixture assessor; no live service or credential. Proves restart/replay preservation and refusal to route into another human-protected session."
   pytest-cli:
-    command: "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto --maxfail=20 --tb=short"
     paths: ["cli/**", "cli/tests/test_cloud_routine.py", "ianva/**", "his-hand-levers.json", "cloud-routines.json", "spec/contracts/cloud-routine-receipt-v1.schema.json", "scripts/cloud-routine-ingest.py", "scripts/check-cloud-routine-ingest.py", "docs/receipts/cloud-routine-findings-20260808.json", "docs/receipts/cloud-routine-lineage.json", "docs/receipts/irf-p0-owner-classification-20260808.json"]
     tier: heavy
     serialize: true

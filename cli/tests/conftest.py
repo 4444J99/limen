@@ -142,3 +142,100 @@ def _restore_os_environ(tmp_path, tmp_path_factory, _stable_agent_host_fixture, 
                 pass
         os.environ.clear()
         os.environ.update(saved)
+
+
+@pytest.fixture
+def admitted_local_execution(monkeypatch, approved_execution_policy):
+    """Opt-in provider-unit boundary: named approval plus a finite lease readback.
+
+    These tests replace the provider itself and start below keeper submission.
+    Unnamed work remains refused; real keeper admission/expiry has separate tests.
+    Other client operations still reach the isolated test keeper.
+    """
+    from datetime import datetime, timedelta, timezone
+
+    def admit(module, *keys):
+        policy = approved_execution_policy(*keys)
+        # Dispatch preflight reads the explicitly selected checkout root as well.
+        root = Path(os.environ["LIMEN_ROOT"]) if os.environ.get("LIMEN_ROOT") else None
+        if root is not None:
+            (root / "logs").mkdir(parents=True, exist_ok=True)
+            (root / "logs/autonomy-policy.json").write_text(json.dumps(policy))
+        original = module.client_from_env
+        deadline = (datetime.now(timezone.utc) + timedelta(minutes=2)).isoformat()
+
+        class Client:
+            def __init__(self):
+                self.client = original()
+
+            def __getattr__(self, name):
+                return getattr(self.client, name)
+
+            def execution_info(self, key):
+                if key not in keys:
+                    raise AssertionError("unnamed fixture work has no execution lease")
+                return {"attempt_deadline": deadline}
+
+        monkeypatch.setattr(module, "client_from_env", Client)
+
+    return admit
+
+
+@pytest.fixture
+def isolated_workstream_growth(tmp_path, monkeypatch):
+    """Use the explicit local growth adapter for synthetic shell-launcher tests.
+
+    Only the three reserve_growth call sites in a temporary launcher copy change.
+    The real durable allowance, duplicate fence and all launcher behavior still
+    run. No production script is modified, and no broker/provider credential is
+    introduced. Authenticated HTTP admission has separate keeper contracts.
+    """
+    import hashlib
+    import subprocess
+
+    authority = tmp_path / "launcher-growth-authority"
+    (authority / "logs").mkdir(parents=True)
+    (authority / "logs/autonomy-policy.json").write_text(
+        json.dumps(
+            {
+                "mode": "dispatch",
+                "approved_priorities": [
+                    {
+                        "outcome_id": "synthetic-shell-launch",
+                        "enabled": True,
+                        "work_keys": ["synthetic-shell-launch"],
+                        "resource_limits": {"branch": 16, "worktree": 16, "issue": 0},
+                    }
+                ],
+            }
+        )
+    )
+    copies = {}
+    original_popen = subprocess.Popen
+
+    def isolated_popen(args, *positional, **kwargs):
+        if isinstance(args, (list, tuple)) and args:
+            launch_index = 1 if Path(str(args[0])).name == "bash" and len(args) > 1 else 0
+            source = Path(str(args[launch_index]))
+            if source.name == "start-worktree-session.sh" and source.is_file():
+                resolved = source.resolve()
+                if resolved not in copies:
+                    home = tmp_path / ("launcher-" + hashlib.sha256(str(resolved).encode()).hexdigest()[:12])
+                    (home / "scripts").mkdir(parents=True)
+                    (home / "scripts/lib").symlink_to(resolved.parent / "lib", target_is_directory=True)
+                    for directory in ("cli", "spec"):
+                        (home / directory).symlink_to(resolved.parent.parent / directory, target_is_directory=True)
+                    text = resolved.read_text()
+                    for action, index in (("branch", 1), ("worktree", 1), ("worktree", 2)):
+                        before = f'reserve_growth("{action}", sys.argv[{index}])'
+                        after = f'reserve_growth("{action}", sys.argv[{index}], root={json.dumps(str(authority))}, work_key="synthetic-shell-launch")'
+                        assert text.count(before) == 1, "growth fixture drift must fail, not waive admission"
+                        text = text.replace(before, after)
+                    target = home / "scripts/start-worktree-session.sh"
+                    target.write_text(text)
+                    target.chmod(0o755)
+                    copies[resolved] = target
+                args = [*args[:launch_index], str(copies[resolved]), *args[launch_index + 1 :]]
+        return original_popen(args, *positional, **kwargs)
+
+    monkeypatch.setattr(subprocess, "Popen", isolated_popen)
