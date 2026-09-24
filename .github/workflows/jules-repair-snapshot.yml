@@ -4,30 +4,42 @@ on:
     paths: ['.github/workflows/jules-repair-snapshot.yml']
 permissions:
   contents: read
+  actions: read
+  issues: read
 jobs:
-  snapshot:
+  public-gate-repair:
     if: github.event.pull_request.number == 2687
     runs-on: ubuntu-latest
-    timeout-minutes: 7
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-python@v5
         with:
-          node-version: '22'
-      - name: Preserve reachable history and locked worker dependencies
+          python-version: '3.12'
+      - name: Apply exact reviewed repair bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p snapshot
-          git bundle create snapshot/history.bundle HEAD refs/remotes/origin/main
-          npm ci --ignore-scripts --prefix web/worker
-          tar -czf snapshot/worker-deps.tar.gz -C web/worker node_modules
-          git rev-parse HEAD > snapshot/commit.txt
-          sha256sum snapshot/history.bundle snapshot/worker-deps.tar.gz > snapshot/SHA256SUMS
-      - uses: actions/upload-artifact@v4
-        with:
-          name: jules-repair-history-${{ github.run_id }}
-          path: snapshot/
-          retention-days: 3
+          set -euo pipefail
+          gh api repos/4444J99/limen/git/blobs/586d4b2ff532d1eab1c7f8a2f5e6db5a0df02742 > patch-blob.json
+          python - <<'PY'
+          import base64, gzip, hashlib, json
+          from pathlib import Path
+          row=json.loads(Path('patch-blob.json').read_text())
+          patch=gzip.decompress(base64.b64decode(row['content']))
+          assert hashlib.sha256(patch).hexdigest() == 'cd7a849fb21695c0523c0c131c8591aff82af3ea0502bb252c29e590ed3cdcbd'
+          Path('repair.patch').write_bytes(patch)
+          PY
+          git apply --check repair.patch
+          git apply repair.patch
+      - run: python -m pip install -e 'cli[test]'
+      - name: Verify explicit withdrawal regressions
+        run: python -m pytest docs/positioning/foundry/psp-c11/test_technical_readiness.py -q --tb=short
+      - name: Execute real public-evidence gate without private credentials
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --public-live --json
