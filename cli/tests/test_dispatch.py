@@ -5561,10 +5561,9 @@ def test_missing_checkout_is_measured_reserved_hydrated_then_isolated(tmp_path: 
     workdir = tmp_path / "workspace"
     isolation_root = tmp_path / "worktrees"
     task = _wtask(repo="not-present/example")
-    clone_calls: list[list[str]] = []
     plumbing_calls: list[list[str]] = []
-    initialized: list[Path] = []
     born: list[Path] = []
+    released: list[str] = []
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path / "limen"))
     monkeypatch.setenv("LIMEN_WORKDIR", str(workdir))
     clone_cache = tmp_path / ".worktrees-repo-cache"
@@ -5578,24 +5577,26 @@ def test_missing_checkout_is_measured_reserved_hydrated_then_isolated(tmp_path: 
     monkeypatch.setattr(D, "_isolation_root", lambda: isolation_root)
     monkeypatch.setattr(D.secrets, "token_hex", lambda _n: "abcd1234")
 
-    def fake_capture(cmd, **_kwargs):
-        clone_calls.append(cmd)
-        dest = Path(cmd[-1])
-        (dest / ".git").mkdir(parents=True)
-        return subprocess.CompletedProcess(cmd, 0, "", "")
-
     def fake_plumbing(args, _repo, timeout=120):
         plumbing_calls.append(args)
-        if args[:2] == ["worktree", "add"]:
-            Path(args[4]).mkdir(parents=True)
         return subprocess.CompletedProcess(args, 0, "", "")
 
-    monkeypatch.setattr(D, "_run_capture", fake_capture)
     monkeypatch.setattr(D, "_git_plumbing", fake_plumbing)
+    store = clone_cache / "github-77123"
+    managed_worktree = isolation_root / "repo-77123-managed"
+    managed_worktree.mkdir(parents=True)
+    monkeypatch.setattr(D, "_github_repository_id", lambda _repo: 77123)
     monkeypatch.setattr(
         D,
-        "initialize_worktree",
-        lambda _repo, wt, **_kwargs: (wt.mkdir(parents=True), initialized.append(wt)),
+        "_clone_repo",
+        lambda _task: {
+            "repository_id": "77123",
+            "lease_id": "77123-testlease",
+            "store": str(store),
+            "worktree": str(managed_worktree),
+            "branch": "limen/session-77123",
+            "head": "base-head",
+        },
     )
     monkeypatch.setattr(D, "_record_worktree_birth", lambda _task, wt, *_a, **_k: born.append(wt))
     monkeypatch.setattr(
@@ -5606,6 +5607,9 @@ def test_missing_checkout_is_measured_reserved_hydrated_then_isolated(tmp_path: 
     monkeypatch.setattr(D, "_run_isolated_agent", lambda *_a, **_k: True)
     monkeypatch.setattr(D, "_commit_isolated_changes", lambda *_a, **_k: D._NOOP)
     monkeypatch.setattr(D, "_cleanup_isolated_worktree", lambda *_a, **_k: None)
+    from limen import repo_lifecycle
+
+    monkeypatch.setattr(repo_lifecycle, "release", lambda lease_id: released.append(lease_id))
 
     snapshot = D.WorktreeAdmissionSnapshot(
         active=True,
@@ -5629,11 +5633,10 @@ def test_missing_checkout_is_measured_reserved_hydrated_then_isolated(tmp_path: 
 
     try:
         assert D._isolated_local_run("codex", task, dry_run=False) == D._NOOP
-        expected_clone = clone_cache / D._clone_cache_key(task.repo)
-        assert clone_calls == [["gh", "repo", "clone", "not-present/example", str(expected_clone)]]
-        assert not any(call[:2] == ["worktree", "add"] for call in plumbing_calls)
-        assert initialized == [isolation_root / "wt-classify-abcd1234"]
-        assert born == [isolation_root / "wt-classify-abcd1234"]
+        assert plumbing_calls == [["fetch", "origin", "main"]]
+        assert born == [managed_worktree]
+        assert released == ["77123-testlease"]
+        assert managed_worktree.is_dir()
         payload = json.loads(D._admission_lease_path(task.id).read_text())
         assert payload["phase"] == "worktree-born"
         assert payload["reserved_gib"] == 0.0
@@ -5648,7 +5651,7 @@ def test_allocation_estimate_is_positive_for_empty_zero_and_tiny_trees() -> None
     assert D._tracked_tree_allocation_bytes([("src/tiny", "blob", 1)], block) == 5 * block
 
 
-def test_clone_cache_stays_on_worktree_device_not_workdir_device(tmp_path: Path, monkeypatch) -> None:
+def test_clone_repo_acquires_immutable_identity_lease_on_worktree_device(tmp_path: Path, monkeypatch) -> None:
     scratch = tmp_path / "scratch"
     worktrees = scratch / "worktrees"
     internal = tmp_path / "internal" / "Workspace"
@@ -5658,22 +5661,85 @@ def test_clone_cache_stays_on_worktree_device_not_workdir_device(tmp_path: Path,
     monkeypatch.setenv("LIMEN_WORKDIR", str(internal))
 
     monkeypatch.setattr(D, "dispatch_clone_cache_root", lambda: scratch / ".worktrees-repo-cache")
-    clone_calls: list[list[str]] = []
+    ensure_calls: list[tuple[int, str, str]] = []
+    monkeypatch.setattr(D, "_github_repository_id", lambda _repo: 77123)
+    monkeypatch.setattr(D, "_same_repo_pr_head_for_task", lambda _task: None)
+    monkeypatch.setattr(D, "session_id", lambda: "test-session")
 
-    def fake_capture(cmd, **_kwargs):
-        clone_calls.append(cmd)
-        (Path(cmd[-1]) / ".git").mkdir(parents=True)
-        return subprocess.CompletedProcess(cmd, 0, "", "")
+    def fake_ensure(repo_id, revision, session_key):
+        ensure_calls.append((repo_id, revision, session_key))
+        return {
+            "repository_id": str(repo_id),
+            "lease_id": "77123-lease",
+            "store": str(scratch / ".worktrees-repo-cache" / "github-77123"),
+            "worktree": str(worktrees / "managed-checkout"),
+            "branch": "limen/session-77123",
+            "head": "a" * 40,
+        }
 
-    monkeypatch.setattr(D, "_run_capture", fake_capture)
-    monkeypatch.setattr(D, "_github_slug_from_local_repo", lambda path: "not-present/example")
+    from limen import repo_lifecycle
+
+    monkeypatch.setattr(repo_lifecycle, "ensure", fake_ensure)
     task = _wtask(repo="not-present/example")
     repo = D._clone_repo(task)
+    repeated = D._clone_repo(task)
 
-    expected = scratch / ".worktrees-repo-cache" / D._clone_cache_key(task.repo)
-    assert repo == expected
-    assert clone_calls == [["gh", "repo", "clone", task.repo, str(expected)]]
-    assert not str(repo).startswith(str(internal))
+    assert repo["store"] == str(scratch / ".worktrees-repo-cache" / "github-77123")
+    assert repo["worktree"] == str(worktrees / "managed-checkout")
+    assert repeated == repo
+    assert ensure_calls == [
+        (77123, "HEAD", "test-session:WT-CLASSIFY"),
+        (77123, "HEAD", "test-session:WT-CLASSIFY"),
+    ]
+    assert not repo["store"].startswith(str(internal))
+
+
+def test_isolated_dispatch_uses_and_releases_managed_checkout(tmp_path: Path, monkeypatch) -> None:
+    store = tmp_path / "store"
+    worktree = tmp_path / "managed-worktree"
+    worktree.mkdir()
+    lease = {
+        "repository_id": "77123",
+        "lease_id": "77123-lease",
+        "store": str(store),
+        "worktree": str(worktree),
+        "branch": "limen/session-77123",
+        "head": "a" * 40,
+    }
+    lifecycle: list[str] = []
+    monkeypatch.setattr(D, "_resolve_agent_binary", lambda agent: agent)
+    monkeypatch.setattr(D, "_resolve_repo_dir", lambda _task: None)
+    monkeypatch.setattr(D, "_repo_unavailable_reason", lambda _repo: None)
+    monkeypatch.setattr(D, "_clone_repo", lambda _task: lease)
+    monkeypatch.setattr(D, "_default_branch", lambda _repo: "main")
+    monkeypatch.setattr(D, "_same_repo_pr_head_for_task", lambda _task: None)
+    monkeypatch.setattr(D, "_git_plumbing", lambda *_a, **_kw: subprocess.CompletedProcess([], 0, "", ""))
+
+    def fake_git(args, _cwd, timeout=120):
+        if args in (["rev-parse", "HEAD"], ["rev-parse", "--verify", "origin/main"]):
+            return subprocess.CompletedProcess(args, 0, "base-head\n", "")
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(D, "_git", fake_git)
+    monkeypatch.setattr(D, "_run_isolated_agent", lambda _agent, _task, cwd, *_a, **_kw: cwd == worktree)
+    monkeypatch.setattr(D, "_commit_isolated_changes", lambda *_a: True)
+    monkeypatch.setattr(D, "_push_isolated_branch", lambda _task, cwd, _branch: cwd == worktree)
+    monkeypatch.setattr(D, "_create_isolated_pr", lambda *_a: "https://github.com/owner/project/pull/1")
+    monkeypatch.setattr(D, "_record_worktree_birth", lambda *_a, **_kw: None)
+    monkeypatch.setattr(D, "_mark_machine_admission_born", lambda _task_id: None)
+    monkeypatch.setattr(D, "_cleanup_isolated_worktree", lambda *_a, **_kw: lifecycle.append("cleanup"))
+    monkeypatch.setattr(D, "_isolation_root", lambda: tmp_path / "worktrees")
+
+    from limen import repo_lifecycle
+
+    monkeypatch.setattr(repo_lifecycle, "release", lambda lease_id: lifecycle.append(f"release:{lease_id}"))
+    task = _wtask(repo="owner/project")
+
+    result = D._isolated_local_run("claude", task, dry_run=False, base_agent_args=[])
+
+    assert result == "https://github.com/owner/project/pull/1"
+    assert lifecycle == ["release:77123-lease"]
+    assert worktree.is_dir()
 
 
 def test_clone_cache_fails_closed_when_parent_is_a_different_device(tmp_path: Path, monkeypatch) -> None:
