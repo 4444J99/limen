@@ -11,7 +11,7 @@ class InvocationTests(unittest.TestCase):
  def test_unknown_source_cannot_be_uploaded_as_repaired(self):
   with self.assertRaises(m.r.inv.o.SafeError):m.transform(b'unknown code')
  def test_scoped_endpoints_exclude_other_workers_and_data_deletion(self):
-  client=object.__new__(m.Client);client.root='/fixed/';client.token='fixture'
+  client=object.__new__(m.Client);client.root='/fixed/';client.token='fixture'  # allow-secret: test client object, not credential material
   with self.assertRaises(m.r.inv.o.SafeError):client.send('/fixed/other','PUT',b'')
   with self.assertRaises(m.r.inv.o.SafeError):client.send('/fixed/'+m.UCC+'/schedules','DELETE',b'')
  def test_metadata_uses_inheritance_and_only_changes_the_proven_target(self):

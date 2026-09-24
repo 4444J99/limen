@@ -1579,7 +1579,7 @@ def _jules_occupancy_fixture(*, accepted=True):
     )
     reserved = broker.submit(work, now=NOW)
     lease = reserved["lease"]
-    token = capability(broker, reserved)
+    token = capability(broker, reserved)  # allow-secret: runtime test capability, no embedded value
     attempt = ExecutorAttemptV1(
         attempt_id="jules-owned-attempt",
         run_id=reserved["run_id"],

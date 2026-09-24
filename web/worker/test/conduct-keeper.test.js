@@ -4172,7 +4172,7 @@ for (const accepted of [false, true]) {
     }))};
     const {service} = await serviceWith([executor], {executionPolicy, clock: () => clock});
     const reserved = await service.call("submit", {packet: await packet({workId: "jules-owned", conductor: executor.identity, maxAttempts: 1})});
-    const token = await leaseCapability(service, reserved);
+    const token = await leaseCapability(service, reserved);  // allow-secret: ephemeral test lease capability, not credential material
     const attempt = validateExecutorAttempt({attempt_id: "jules-owned-attempt", run_id: reserved.run_id,
       lease_id: reserved.lease.lease_id, lease_generation: reserved.lease.generation, executor: executor.identity,
       adapter: "jules-api", status: accepted ? "submitted" : "launching", provider_state: accepted ? "nonterminal" : "unknown",
