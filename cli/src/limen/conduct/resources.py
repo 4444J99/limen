@@ -19,7 +19,7 @@ _REPO_KIND_RE = re.compile(
     r"^(?P<kind>branch|base|repo-common-dir|agy-scratch|repo)/"
     r"(?P<owner>[^/]+)/(?P<repo>[^/]+)(?:/(?P<rest>.*))?$"
 )
-_PATH_RE = re.compile(r"^path/(?P<owner>[^/]+)/(?P<repo>[^/]+)/(?P<base>[^/]+)/(?P<prefix>.*)$")
+_PATH_RE = re.compile(r"^path/(?P<owner>[^/]+)/(?P<repo>[^/]+)/(?P<base>[^/]+)(?:/(?P<prefix>.*))?$")
 
 
 @dataclass(frozen=True)
@@ -46,7 +46,7 @@ def normalize_key(key: str) -> str:
     if key.startswith("path/"):
         match = _PATH_RE.fullmatch(key)
         if match:
-            prefix = posixpath.normpath("/" + match.group("prefix")).lstrip("/")
+            prefix = posixpath.normpath("/" + (match.group("prefix") or "")).lstrip("/")
             return (
                 f"path/{match.group('owner').lower()}/{match.group('repo').lower()}/{match.group('base')}/{prefix}"
             ).rstrip("/")
@@ -82,7 +82,7 @@ def parse_resource(key: str) -> Resource:
             "path",
             repo=repo,
             identity=(repo, path_match.group("base")),
-            prefix=str(PurePosixPath("/" + path_match.group("prefix"))),
+            prefix=str(PurePosixPath("/" + (path_match.group("prefix") or ""))),
         )
     repo_match = _REPO_KIND_RE.fullmatch(key)
     if repo_match:
