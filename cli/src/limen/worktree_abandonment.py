@@ -694,18 +694,29 @@ def purge_remote_proven_path(
 
     if not OBJECT_ID_RE.fullmatch(head):
         raise ValueError("remote-purge-head-invalid")
-    if not remote_refs or any(
-        not value.startswith("refs/remotes/") or "\n" in value or "\r" in value for value in remote_refs
-    ):
+
+    def advertised_ref(value: object) -> bool:
+        return (
+            isinstance(value, str)
+            and value.startswith(("refs/heads/", "refs/tags/", "refs/pull/"))
+            and not any(char.isspace() or ord(char) < 32 for char in value)
+            and not value.endswith("/")
+        )
+
+    if not remote_refs or not all(advertised_ref(value) for value in remote_refs):
         raise ValueError("remote-purge-refs-invalid")
     if not local_ref_proof or any(
         not isinstance(value.get("local_ref"), str)
         or not isinstance(value.get("object"), str)
         or not isinstance(value.get("remote_refs"), list)
         or not value["remote_refs"]
+        or not all(advertised_ref(ref) for ref in value["remote_refs"])
+        or not OBJECT_ID_RE.fullmatch(value["object"])
         for value in local_ref_proof
     ):
         raise ValueError("remote-purge-local-ref-proof-invalid")
+    if content_probe is None:
+        raise ValueError("remote-purge-fresh-content-probe-required")
     return _purge_proven_path(
         source,
         expected,
