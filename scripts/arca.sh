@@ -57,6 +57,7 @@ set -euo pipefail
 WORKSPACE="${ARCA_WORKSPACE:-$HOME/Workspace}"
 VAULT_REPO="${ARCA_REPO:-organvm/arca}"
 VAULT_DIR="${ARCA_VAULT_DIR:-$HOME/.arca-vault}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KEY_SERVICE="${ARCA_KEY_SERVICE:-limen-arca-vault}"
 MAX_MB="${ARCA_MAX_MB:-512}"
 CHUNK_MB="${ARCA_CHUNK_MB:-90}"   # per-blob ceiling; GitHub hard-rejects files >100MB
@@ -83,6 +84,13 @@ arca.sh — encrypted private-estate vault. A VERB IS REQUIRED.
   arca.sh status                  manifest vs local: what's covered, what's stale
   arca.sh seal <src> <out.enc>    one-off envelope: tar+encrypt, roundtrip verified
   arca.sh unseal <in.enc> <dest>  decrypt a one-off envelope into <dest>
+  arca.sh assets --repo <owner/repo> --catalog <catalog.enc> --object <ciphertext> [--object ...] [--apply]
+                                  store opaque ciphertext as neutral, verified release assets
+  arca.sh objects <src> <out> [--previous <catalog.gpg>]
+                                  create independently encrypted file objects + encrypted catalog
+  arca.sh objects <destination> --restore-catalog <catalog.gpg> --objects-root <object-store>
+  arca.sh objects restore <catalog.gpg> <object-store> <new-destination>
+                                  verify and atomically restore one complete tree
 
 Config (env): ARCA_WORKSPACE, ARCA_REPO, ARCA_VAULT_DIR, ARCA_KEY_SERVICE, ARCA_MAX_MB,
 ARCA_CHUNK_MB, ARCA_CLONE_URL_BASE. Generations: the manifest owns the CURRENT generation
@@ -567,6 +575,37 @@ cmd_unseal() {
   log "unsealed $(basename "$in") → $dest"
 }
 
+cmd_assets() {
+  local -a args=()
+  local repo_set=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --repo|--catalog|--object)
+        [ $# -ge 2 ] || die "$1 requires a path"
+        args+=("$1" "$2")
+        [ "$1" != "--repo" ] || repo_set=1
+        shift 2 ;;
+      --apply)
+        args+=(--apply); shift ;;
+      *) die "unknown assets option '$1'" ;;
+    esac
+  done
+  [ "$repo_set" = "1" ] || die "assets requires explicit --repo so the outbound receipt is bound to the target"
+  python3 "$SCRIPT_DIR/arca-release-assets.py" "${args[@]}"
+}
+
+cmd_objects() {
+  if [ "${1:-}" = "restore" ]; then
+    shift
+    [ "$#" -eq 3 ] || die "objects restore requires <catalog.gpg> <object-store> <new-destination>"
+    local catalog="$1" object_root="$2" destination="$3"
+    python3 "$SCRIPT_DIR/arca-file-objects.py" "$destination" --restore-catalog "$catalog" --objects-root "$object_root"
+    return
+  fi
+  [ "$#" -ge 2 ] || die "objects requires <source-directory> <output-directory>"
+  python3 "$SCRIPT_DIR/arca-file-objects.py" "$@"
+}
+
 case "$CMD" in
   backup)  cmd_backup ;;
   rotate)  shift; cmd_rotate "$@" ;;
@@ -574,5 +613,7 @@ case "$CMD" in
   status)  shift; cmd_status "$@" ;;
   seal)    shift; cmd_seal "$@" ;;
   unseal)  shift; cmd_unseal "$@" ;;
-  *) die "unknown verb '$CMD' (backup|rotate|restore|status|seal|unseal)" ;;
+  assets)  shift; cmd_assets "$@" ;;
+  objects) shift; cmd_objects "$@" ;;
+  *) die "unknown verb '$CMD' (backup|rotate|restore|status|seal|unseal|assets|objects)" ;;
 esac

@@ -31,8 +31,12 @@ class RepositoryLifecycleError(RuntimeError):
 def _git(path: Path, *args: str, timeout: int = 30) -> str:
     try:
         result = subprocess.run(
-            ["git", "-C", str(path), *args], capture_output=True, text=True,
-            timeout=timeout, check=False, stdin=subprocess.DEVNULL,
+            ["git", "-C", str(path), *args],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+            stdin=subprocess.DEVNULL,
         )
     except (OSError, subprocess.SubprocessError) as exc:
         raise RepositoryLifecycleError("Git inspection failed; residency retained") from exc
@@ -41,10 +45,18 @@ def _git(path: Path, *args: str, timeout: int = 30) -> str:
     return result.stdout.strip()
 
 
+def _common_git_dir(path: Path) -> Path:
+    return Path(_git(path, "rev-parse", "--path-format=absolute", "--git-common-dir")).resolve()
+
+
 def _gh(*args: str, timeout: int = 15) -> str:
     result = subprocess.run(
-        ["gh", "api", *args], capture_output=True, text=True, timeout=timeout,
-        check=False, stdin=subprocess.DEVNULL,
+        ["gh", "api", *args],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        check=False,
+        stdin=subprocess.DEVNULL,
     )
     if result.returncode:
         raise RepositoryLifecycleError("authenticated GitHub identity lookup failed")
@@ -115,6 +127,9 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
     lease_file = leases / f"{lease_id}.json"
     lock = state / "acquire.lock"
     with _locked(lock):
+        root = effective_worktree_root().expanduser()
+        worktree = root / f"repo-{stable_id}-{_digest(session_id)[:16]}"
+        branch = f"limen/session-{stable_id}-{_digest(session_id)[:12]}"
         if store.exists():
             origin = _git(store, "remote", "get-url", "origin")
             from limen.dispatch import _github_repositories_match, _github_slug_from_remote
@@ -123,56 +138,83 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
                 raise RepositoryLifecycleError("canonical store origin does not match immutable repository identity")
         else:
             try:
-                result = subprocess.run(
-                    ["gh", "repo", "clone", coordinate, str(store)], capture_output=True,
-                    text=True, timeout=600, check=False, stdin=subprocess.DEVNULL,
-                )
+                # gh starts Git and its transport as children. Reuse dispatch's
+                # process-group timeout so a child holding the output pipe cannot
+                # outlive the acquisition deadline.
+                from limen.dispatch import _run_capture
+
+                result = _run_capture(["gh", "repo", "clone", coordinate, str(store)], timeout=600)
             except (OSError, subprocess.SubprocessError) as exc:
                 raise RepositoryLifecycleError("repository acquisition failed; no lease was issued") from exc
             if result.returncode:
                 raise RepositoryLifecycleError("repository acquisition failed; no lease was issued")
         if lease_file.exists():
             record = json.loads(lease_file.read_text(encoding="utf-8"))
-            worktree = Path(str(record.get("worktree", "")))
             if (
                 record.get("repository_id") != stable_id
                 or record.get("session_digest") != _digest(session_id)
                 or record.get("revision") != revision
+                or record.get("store") != str(store)
+                or record.get("worktree") != str(worktree)
+                or record.get("branch") != branch
+                or worktree.is_symlink()
+                or worktree.parent.resolve() != root.resolve()
                 or not worktree.is_dir()
             ):
                 raise RepositoryLifecycleError("existing lease is inconsistent; residency retained")
+            if _common_git_dir(worktree) != _common_git_dir(store):
+                raise RepositoryLifecycleError("existing checkout does not belong to its canonical store; retained")
             if record.get("state") != "active":
                 raise RepositoryLifecycleError("session lease was released; reacquisition requires a new session ID")
             head = _git(worktree, "rev-parse", "HEAD")
-            return {"repository_id": str(stable_id), "lease_id": lease_id, "worktree": str(worktree), "head": head}
+            return {
+                "repository_id": str(stable_id),
+                "lease_id": lease_id,
+                "store": str(store),
+                "worktree": str(worktree),
+                "branch": str(record.get("branch", "")),
+                "head": head,
+            }
         try:
-            revision_result = subprocess.run(
-                ["git", "-C", str(store), "fetch", "origin", revision], capture_output=True,
-                text=True, timeout=300, check=False, stdin=subprocess.DEVNULL,
+            from limen.dispatch import _run_capture
+
+            revision_result = _run_capture(
+                ["git", "-C", str(store), "fetch", "origin", revision],
+                timeout=300,
             )
         except (OSError, subprocess.SubprocessError) as exc:
             raise RepositoryLifecycleError("requested revision fetch was interrupted; residency retained") from exc
         if revision_result.returncode:
             raise RepositoryLifecycleError("requested revision could not be fetched; residency retained")
         target = _git(store, "rev-parse", "--verify", "FETCH_HEAD^{commit}")
-        root = effective_worktree_root().expanduser()
         root.mkdir(parents=True, exist_ok=True)
-        worktree = root / f"repo-{stable_id}-{_digest(session_id)[:16]}"
-        branch = f"limen/session-{stable_id}-{_digest(session_id)[:12]}"
         try:
             initialized = initialize_worktree(store, worktree, branch=branch, checkout_ref=target, task_id=lease_id)
         except WorktreeInitializationError as exc:
             raise RepositoryLifecycleError(f"worktree initialization retained at {exc.journal_path}") from exc
-        record: dict[str, object] = {
-            "schema": "limen.repository_lease.v1", "lease_id": lease_id,
-            "repository_id": stable_id, "coordinate": coordinate,
-            "session_digest": _digest(session_id), "revision": revision,
-            "head": initialized.expected_head, "branch": branch,
-            "store": str(store), "worktree": str(worktree),
-            "state": "active", "created_at": datetime.now(UTC).isoformat(),
+        new_record: dict[str, object] = {
+            "schema": "limen.repository_lease.v1",
+            "lease_id": lease_id,
+            "repository_id": stable_id,
+            "coordinate": coordinate,
+            "session_digest": _digest(session_id),
+            "revision": revision,
+            "head": initialized.expected_head,
+            "branch": branch,
+            "store": str(store),
+            "worktree": str(worktree),
+            "state": "active",
+            "created_at": datetime.now(UTC).isoformat(),
         }
-        _atomic_json(lease_file, record)
-        return {"repository_id": str(stable_id), "lease_id": lease_id, "worktree": str(worktree), "head": initialized.expected_head}
+        _atomic_json(lease_file, new_record)
+        return {
+            "repository_id": str(stable_id),
+            "lease_id": lease_id,
+            "store": str(store),
+            "worktree": str(worktree),
+            "branch": branch,
+            "head": initialized.expected_head,
+        }
 
 
 def release(lease_id: str) -> dict[str, str]:
@@ -194,12 +236,31 @@ def release(lease_id: str) -> dict[str, str]:
             raise RepositoryLifecycleError("lease identity mismatch; checkout retained")
         worktree = Path(str(record["worktree"]))
         root = effective_worktree_root().expanduser()
-        if worktree.parent.resolve() != root.resolve():
+        store = cache / f"github-{stable_id}"
+        expected_worktree = root / f"repo-{stable_id}-{lease_id.split('-', 1)[1][:16]}"
+        if (
+            record.get("store") != str(store)
+            or record.get("worktree") != str(expected_worktree)
+            or worktree != expected_worktree
+            or worktree.is_symlink()
+            or worktree.parent.resolve() != root.resolve()
+        ):
             raise RepositoryLifecycleError("lease path is outside managed worktree root; checkout retained")
+        if record.get("state") != "active":
+            return {"lease_id": lease_id, "state": str(record.get("state")), "worktree": str(worktree)}
+        try:
+            if _common_git_dir(worktree) != _common_git_dir(store):
+                raise RepositoryLifecycleError("lease checkout does not belong to canonical store; retained")
+        except RepositoryLifecycleError as exc:
+            raise RepositoryLifecycleError("lease Git identity unavailable; checkout retained") from exc
         try:
             status = subprocess.run(
                 ["git", "-C", str(worktree), "status", "--porcelain=v1", "--untracked-files=all"],
-                capture_output=True, text=True, timeout=30, check=False, stdin=subprocess.DEVNULL,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+                stdin=subprocess.DEVNULL,
             )
         except (OSError, subprocess.SubprocessError):
             status = None

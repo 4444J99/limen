@@ -115,3 +115,19 @@ effectors:
     reason: >-
       A public comment needs proof the existing thread was actually fetched — so a reply never
       repeats, contradicts, or ignores what is already there.
+
+  arca.release-assets:
+    title: "ARCA encrypted release-asset publication — prove target identity and privacy"
+    match:
+      - '\barca\.sh\s+assets\b'
+      - '\barca-release-assets\.py\b'
+      - '\barca-preserve-git-ciphertext\.py\b'
+    target:
+      kind: github_repository
+      pattern: '--repo\s+([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)'
+    predicate: "python3 scripts/preflight-arca-release-assets.py {target}"
+    max_age_seconds: 300
+    reason: >-
+      ARCA release assets are outward custody writes. Confirm the exact immutable GitHub
+      repository identity and private visibility immediately before creating or uploading
+      encrypted assets; a public or renamed target stays closed.

@@ -109,6 +109,7 @@ GH_WRITE_VERBS: frozenset[tuple[str, str]] = frozenset(
         ("repo", "archive"),
         ("repo", "rename"),
         ("release", "create"),
+        ("release", "upload"),
         ("release", "edit"),
         ("release", "delete"),
         ("secret", "set"),

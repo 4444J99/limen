@@ -4517,52 +4517,36 @@ def _local_admission_requirement_gib(task: Task) -> float | None:
     return _remote_hydration_requirement_gib(task)
 
 
-def _clone_repo(task: Task) -> Path | None:
-    """Clone task.repo locally when no checkout exists yet, so local lanes can
-    work it instead of bleeding to the scarce cloud lane.
+def _clone_repo(task: Task) -> Path | dict[str, str] | None:
+    """Acquire an isolated, leased checkout when discovery finds no local copy.
 
-    Post-consolidation many repos (org scaffolding: --superproject, .github.io,
-    org-dotgithub, _agent, …) live in the `organvm` org but were never cloned —
-    _resolve_repo_dir correctly returns None for them. We clone on demand into a same-device cache
-    beside ``effective_worktree_root`` using gh's auth (handles private repos), then
-    the next _resolve_repo_dir finds it. Serialized on the git-plumbing lock so
-    two same-repo dispatches don't race the same clone. Returns the dir or None.
+    Explicit local paths keep caller-authorized semantics. Remote acquisitions go through
+    the immutable-ID residency boundary; the lease carries both canonical store and checkout.
     """
     if _path_like_repo(task.repo):
         return _resolve_repo_dir(task)
     if not task.repo or "/" not in task.repo:
         return None
-    cache = _clone_cache_root()
-    if cache is None:
-        print(f"  clone {task.repo} blocked: effective worktree filesystem cache is unavailable")
+    if _clone_cache_root() is None:
+        print(f"  acquire {task.repo} blocked: effective worktree filesystem cache is unavailable")
         return None
-    dest = cache / _clone_cache_key(task.repo)
-    with _GIT_PLUMBING_LOCK:
-        if (dest / ".git").exists():  # a concurrent dispatch already cloned it
-            origin = _github_slug_from_local_repo(dest)
-            return dest if _github_repositories_match(origin, task.repo) else None
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            # _run_capture (process-group SIGKILL), NOT plain subprocess.run: a `gh repo clone`
-            # whose git / git-remote-https grandchild hangs holding the stdout pipe makes
-            # subprocess.run's post-timeout communicate() block FOREVER (the exact bug _run_capture
-            # was built for). And this runs under _GIT_PLUMBING_LOCK, so ONE hung clone freezes
-            # every clone-needing worker → the ThreadPoolExecutor never drains → dispatch-parallel
-            # wedges past the lane timeout and the daemon stalls (observed: ~30-min hang). The
-            # group-kill reaps the grandchildren so the clone is genuinely bounded → cascades clean.
-            _run_capture(
-                ["gh", "repo", "clone", task.repo, str(dest)],
-                timeout=600,
-            )
-        except Exception:
-            print(f"  clone {task.repo} errored: repository clone unavailable")
-            return None
-    origin = _github_slug_from_local_repo(dest) if (dest / ".git").exists() else None
-    if _github_repositories_match(origin, task.repo):
-        print(f"  cloned {task.repo} → {dest}")
-        return dest
-    print(f"  clone {task.repo} failed: repository clone unavailable")
-    return None
+    repository_id = _github_repository_id(task.repo)
+    if repository_id is None:
+        print(f"  acquire {task.repo} blocked: immutable GitHub identity unavailable")
+        return None
+    pr_head = _same_repo_pr_head_for_task(task)
+    revision = pr_head["head_ref"] if pr_head else "HEAD"
+    # Stable within one dispatch session so duplicate delivery is idempotent.
+    session_key = f"{session_id()}:{task.id}"
+    try:
+        from limen.repo_lifecycle import RepositoryLifecycleError, ensure
+
+        lease = ensure(repository_id, revision, session_key)
+    except (RepositoryLifecycleError, OSError, subprocess.SubprocessError) as exc:
+        print(f"  acquire {task.repo} retained: repository residency unavailable ({type(exc).__name__})")
+        return None
+    print(f"  acquired {task.repo} → {lease['worktree']} (lease {lease['lease_id']})")
+    return lease
 
 
 # ── Isolation: every local agent works like Jules — in its own throwaway git
@@ -5295,13 +5279,19 @@ def _isolated_local_run(
 ) -> bool | str | PlanHandoffResult:
     binary = _resolve_agent_binary(agent)
     repo_dir = _resolve_repo_dir(task)
+    managed_lease: dict[str, str] | None = None
     if repo_dir is None and not dry_run:
         blocked = _repo_unavailable_reason(task.repo)
         if blocked:
             reason = "repository unavailable"
             print(f"  BLOCKED {task.id}: {reason}")
             return _prelaunch_blocked_result(reason)
-        repo_dir = _clone_repo(task)  # post-move: clone on demand so local lanes can work it
+        acquired = _clone_repo(task)
+        if isinstance(acquired, dict):
+            managed_lease = acquired
+            repo_dir = Path(acquired["store"])
+        else:
+            repo_dir = acquired
     if repo_dir is None:
         msg = f"no local checkout of {task.repo or '(no repo)'}"
         if dry_run:
@@ -5327,6 +5317,9 @@ def _isolated_local_run(
     branch = f"limen/{slug}-{suffix}"
     isolation_root = _isolation_root()
     wt = isolation_root / (re.sub(r"[^a-zA-Z0-9._-]+", "-", task.id.lower()) + "-" + suffix)
+    if managed_lease is not None:
+        wt = Path(managed_lease["worktree"])
+        branch = managed_lease["branch"]
     base_agent_args = list(base_agent_args) if base_agent_args is not None else _agent_argv(agent, task)
     prompt = _build_prompt(task)
     if os.environ.get("LIMEN_ISOLATION_PROMPT_GUARD", "1") == "1":
@@ -5358,7 +5351,32 @@ def _isolated_local_run(
     # same-repo dispatches don't collide on index.lock (the slow run is unlocked).
     initialization_error = "worktree initialization was not attempted"
     initialized = False
-    for attempt in range(6):
+    if managed_lease is not None:
+        with _GIT_PLUMBING_LOCK:
+            fetch_result = (
+                _git_plumbing(["fetch", "origin", fetch_refspec], repo_dir, timeout=300) if fetch_refspec else None
+            )
+        actual_head = _git(["rev-parse", "HEAD"], wt)
+        expected_head = _git(["rev-parse", "--verify", checkout_ref], repo_dir)
+        if (
+            fetch_result is None
+            or fetch_result.returncode != 0
+            or actual_head.returncode != 0
+            or expected_head.returncode != 0
+            or actual_head.stdout.strip() != expected_head.stdout.strip()
+        ):
+            from limen.repo_lifecycle import release
+
+            try:
+                release(managed_lease["lease_id"])
+            except Exception as exc:
+                print(
+                    f"  retained residency lease {managed_lease['lease_id']}: release investigation failed ({type(exc).__name__})"
+                )
+            print(f"  BLOCKED {task.id}: managed checkout revision changed or could not be verified")
+            return _prelaunch_blocked_result("managed checkout revision is not current")
+        initialized = True
+    for attempt in range(0 if managed_lease is not None else 6):
         if attempt:
             suffix = secrets.token_hex(4)
             branch = f"limen/{slug}-{suffix}"
@@ -5396,6 +5414,15 @@ def _isolated_local_run(
             continue
         break
     if not initialized:
+        if managed_lease is not None:
+            from limen.repo_lifecycle import release
+
+            try:
+                release(managed_lease["lease_id"])
+            except Exception as exc:
+                print(
+                    f"  retained residency lease {managed_lease['lease_id']}: release investigation failed ({type(exc).__name__})"
+                )
         reason = "transactional worktree initialization unavailable"
         print(f"  BLOCKED {task.id}: {reason}")
         return _prelaunch_blocked_result(reason)
@@ -5478,8 +5505,20 @@ def _isolated_local_run(
         # leave the user's checkout pristine: drop the worktree, and the local
         # branch too once its commits are safely on the remote, or when the attempt
         # produced no local work. Keep dirty/ahead failed worktrees for preservation.
-        with _GIT_PLUMBING_LOCK:
-            _cleanup_isolated_worktree(repo_dir, wt, branch, checkout_ref, pushed=pushed, task=task)
+        if managed_lease is not None:
+            from limen.repo_lifecycle import release
+
+            try:
+                release(managed_lease["lease_id"])
+            except Exception as exc:
+                print(
+                    f"  retained residency lease {managed_lease['lease_id']}: release investigation failed ({type(exc).__name__})"
+                )
+        if managed_lease is None:
+            with _GIT_PLUMBING_LOCK:
+                _cleanup_isolated_worktree(repo_dir, wt, branch, checkout_ref, pushed=pushed, task=task)
+        else:
+            print(f"  retained managed checkout pending custody investigation: {wt}")
 
 
 def _call_local_agent(agent: str, task: Task, dry_run: bool) -> bool | str | PlanHandoffResult:

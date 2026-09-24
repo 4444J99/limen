@@ -529,7 +529,7 @@ gates:
     note: "Hand-rolled PR poll-loop deny matrix (G6, 2026-08-06): the charter's `for … gh pr … sleep … done` ban made mechanical — deny requires loop+gh-probe+sleep co-occurring in ONE command string; the sanctioned waiter, bounded retries, build sleeps, and multi-PR iteration all pass (the negative cases are the deliverable). Wired into .claude/settings.json AND .codex/hooks.json — covenant, not Claude rule. Escape hatch LIMEN_ALLOW_PR_POLL."
   outbound-preflight-test:
     command: "bash scripts/tests/outbound-preflight-guard.test.sh && bash scripts/tests/preflight-thread-state.test.sh"
-    paths: ["scripts/hooks/outbound-preflight-guard.py", "scripts/preflight-receipt.py", "scripts/preflight-sent-state.py", "scripts/preflight-thread-state.py", "scripts/tests/outbound-preflight-guard.test.sh", "scripts/tests/preflight-thread-state.test.sh", "institutio/governance/outbound-effectors.yaml"]
+    paths: ["scripts/hooks/outbound-preflight-guard.py", "scripts/preflight-receipt.py", "scripts/preflight-sent-state.py", "scripts/preflight-thread-state.py", "scripts/preflight-arca-release-assets.py", "scripts/tests/outbound-preflight-guard.test.sh", "scripts/tests/preflight-thread-state.test.sh", "institutio/governance/outbound-effectors.yaml"]
     scoped: false
     owner: lifecycle
     note: "Outward-action deny matrix (hermetic fixture): no send/comment without a fresh, target-bound proof-of-observation receipt. Negative cases are the deliverable — a guard with only happy-path tests is the 'HARD BLOCK' hook that blocks nothing. Landed after the 2026-07-31 duplicate-recruiter-reply escape, instance 33 of the act-on-an-artifact class. Second rung added 2026-07-31: the github.comment predicate's own exit contract, where the load-bearing row is that SKIP (77) still DENIES — a predicate that returns 0 when it could not look is the advisory hook all over again. This row was `scoped: false` with no ci_job and named by verify-whole.sh nowhere, so it ran NOWHERE from the day it landed until check-runner-coverage class F found it hours later; the wiring and the predicate that forbids its recurrence landed together."
@@ -976,6 +976,12 @@ gates:
     ci_job: "pr-gate.yml:pr-gate"
     owner: governance
     note: "CORPORA registry drift: where the conversation corpora live is declared data (corpora.yaml), the fourth axis beside GATES + PARAMETERS + SENSORS. Asserts schema, that every store root exists, that every corpus directory on disk has a row (the check that catches an undeclared corpus every declared-ids-only consumer silently drops), that nothing outside scripts/corpus_resolve.py hardcodes a corpus root (ratcheted via a literal-keyed baseline), and re-derives freshness from the store's own federation summary. Two consumers each carried their own wrong copy of these paths and the dossier tool reported an empty corpus while 371 MB sat on disk — nothing was checking."
+  corpus-runtime-resolution:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_corpus_resolve.py -q"
+    paths: ["scripts/corpus_resolve.py", "scripts/tests/test_corpus_resolve.py"]
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: governance
+    note: "The configured CCE store must remain authoritative when empty or unavailable; legacy populated roots cannot silently substitute for it. Tests precedence and rejects relative or repository-root configuration."
   check-convergence:
     command: "python3 scripts/check-convergence.py"
     paths: ["institutio/governance/convergence.yaml", "scripts/check-convergence.py", "docs/convergence/**"]
@@ -1113,6 +1119,21 @@ gates:
     paths: ["scripts/arca.sh", "scripts/arca-freshness.py", "scripts/tests/arca-generation.test.sh", "scripts/check-arca-escrow.py", "scripts/tests/test-arca-escrow.py"]
     owner: continuity
     note: "Hermetic generation-rotation fixtures for ARCA (POTESTAS 0.3, #2089): a seed backup commits ciphertext and pushes to a depth-1 private clone; a re-run makes no commit; a changed store re-seals; an oversized pack auto-cuts generation -g2 as an orphan ROOT commit that is pushed to a fresh repo, with the old generation recorded as archived and the manifest re-pointed; `rotate` on a vault-less env seeds a fresh generation and archives the env repo; status distinguishes current/never-sealed/changed; chunked ciphertext reassembles and restores byte-identical; the freshness sensor follows the manifest's `_generation.repo`. Uses local file:// bare remotes and shimmed gh/security, so it never touches the real Keychain or the real arca repos."
+  arca-release-assets-test:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_arca_release_assets.py -q"
+    paths: ["scripts/arca-release-assets.py", "scripts/tests/test_arca_release_assets.py"]
+    owner: continuity
+    note: "Encrypted large-object release assets use neutral digest names, private-repository checks, resumable uploads, per-asset limits, and exact readback verification without placing payloads in Git commits."
+  arca-file-objects-test:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_arca_file_objects.py -q"
+    paths: ["scripts/arca-file-objects.py", "scripts/tests/test_arca_file_objects.py", "scripts/private-vault.py"]
+    owner: continuity
+    note: "ARCA stores independent encrypted file objects, splits oversized ciphertext into bounded assets, reuses unchanged ciphertext through an encrypted catalog, and verifies atomic restore including paths, symlinks, and modes."
+  arca-legacy-ciphertext-test:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_arca_preserve_git_ciphertext.py -q"
+    paths: ["scripts/arca-preserve-git-ciphertext.py", "scripts/arca-release-assets.py", "scripts/private-vault.py", "scripts/tests/test_arca_preserve_git_ciphertext.py"]
+    owner: continuity
+    note: "Legacy ciphertext publication requires a clean exact source and complete blob coverage. This predicate does not claim full original Git-history reconstruction or independent-key recovery."
   sync-marketplace-config-test:
     command: "bash scripts/tests/sync-marketplace-config.test.sh"
     paths: ["scripts/sync-marketplace-config.py", "scripts/tests/sync-marketplace-config.test.sh", "institutio/github/estate.yaml"]

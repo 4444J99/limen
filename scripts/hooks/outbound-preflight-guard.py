@@ -57,6 +57,9 @@ _PREFILTER = (
     "send_message",
     "gh pr comment",
     "gh issue comment",
+    "arca.sh assets",
+    "arca-release-assets.py",
+    "arca-preserve-git-ciphertext.py",
     "osascript",
 )
 

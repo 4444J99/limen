@@ -26,6 +26,7 @@ def _source_repo(root: Path) -> Path:
     _run("git", "-C", str(work), "branch", "-M", "main")
     _run("git", "-C", str(work), "remote", "add", "origin", str(root / "remote.git"))
     _run("git", "-C", str(work), "push", "-u", "origin", "main")
+    _run("git", "--git-dir", str(root / "remote.git"), "symbolic-ref", "HEAD", "refs/heads/main")
     return root / "remote.git"
 
 
@@ -39,40 +40,57 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
 
     monkeypatch.setattr(dispatch, "_github_repositories_match", lambda _left, _right: True)
     monkeypatch.setattr(dispatch, "_github_slug_from_remote", lambda _remote: "owner/project")
-    real_run = subprocess.run
+    real_capture = dispatch._run_capture
 
-    def fake_run(args, **kwargs):
+    def fake_capture(args, **kwargs):
         if args[:3] == ["gh", "repo", "clone"]:
-            return real_run(["git", "clone", "--bare", str(remote), args[4]], **kwargs)
-        return real_run(args, **kwargs)
+            return subprocess.run(
+                ["git", "clone", "--bare", str(remote), args[4]],
+                capture_output=True,
+                text=True,
+                timeout=kwargs.get("timeout"),
+                check=False,
+            )
+        return real_capture(args, **kwargs)
 
-    monkeypatch.setattr(lifecycle.subprocess, "run", fake_run)
+    monkeypatch.setattr(dispatch, "_run_capture", fake_capture)
     monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(worktrees))
 
     def initialize(store, final_path, *, branch, checkout_ref, task_id):
         _run("git", "-C", str(store), "worktree", "add", "-b", branch, str(final_path), checkout_ref)
-        return WorktreeInitialization(final_path, final_path, branch, checkout_ref, _run("git", "-C", str(final_path), "rev-parse", "HEAD"), final_path / "receipt.json", {})
+        return WorktreeInitialization(
+            final_path,
+            final_path,
+            branch,
+            checkout_ref,
+            _run("git", "-C", str(final_path), "rev-parse", "HEAD"),
+            final_path / "receipt.json",
+            {},
+        )
 
     monkeypatch.setattr(lifecycle, "initialize_worktree", initialize)
     first = lifecycle.ensure("77123", "main", "session/one")
     second = lifecycle.ensure(77123, "main", "session/one")
     concurrent_session = lifecycle.ensure(77123, "main", "session/two")
+    default_head = lifecycle.ensure(77123, "HEAD", "session/head")
     assert first == second
     assert concurrent_session["lease_id"] != first["lease_id"]
     assert concurrent_session["worktree"] != first["worktree"]
     assert Path(first["worktree"]).resolve() != Path(concurrent_session["worktree"]).resolve()
     assert Path(first["worktree"]).is_dir()
+    assert default_head["head"] == first["head"]
     clean_release = lifecycle.release(first["lease_id"])
     assert clean_release["state"] == "released-awaiting-custody-investigation"
+    assert lifecycle.release(first["lease_id"]) == clean_release
     assert Path(first["worktree"]).is_dir()
     assert Path(concurrent_session["worktree"]).is_dir()
 
-    dirty = Path(first["worktree"]) / "local.txt"
+    dirty = Path(concurrent_session["worktree"]) / "local.txt"
     dirty.write_text("unpreserved payload\n")
-    dirty_release = lifecycle.release(first["lease_id"])
+    dirty_release = lifecycle.release(concurrent_session["lease_id"])
     assert dirty_release["state"] == "retained-dirty-or-unavailable"
     assert dirty.exists()
-    lease = cache / ".limen-residency" / "77123" / "leases" / f"{first['lease_id']}.json"
+    lease = cache / ".limen-residency" / "77123" / "leases" / f"{concurrent_session['lease_id']}.json"
     assert json.loads(lease.read_text())["state"] == "retained-dirty-or-unavailable"
 
 

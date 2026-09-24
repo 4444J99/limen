@@ -66,7 +66,7 @@ def test_active_process_excludes_cache_from_candidate_manifest(monkeypatch, tmp_
         monkeypatch,
         mod,
         tmp_path,
-        processes=[{"pid": 44, "command": "node server.js", "cwd": str(tmp_path)}],
+        processes=[{"pid": 44, "command": "node server.js", "cwd": str(tmp_path), "references": [str(cache / "blob")]}],
     )
 
     checked = mod.check_payload()
@@ -149,3 +149,79 @@ def test_unchanged_second_check_after_apply_is_zero_candidate_fixed_point(monkey
 
     assert second["candidate_count"] == 0
     assert second["plan_sha256"] == third["plan_sha256"]
+
+
+def test_command_substring_alone_is_not_a_cache_reference(monkeypatch, tmp_path):
+    mod = _load("reclaim_tool_caches_command_uut")
+    cache = tmp_path / ".cache" / "npm"
+    cache.mkdir(parents=True)
+    _configure(
+        monkeypatch, mod, tmp_path, processes=[{"pid": 55, "command": "node unrelated.js", "cwd": str(tmp_path)}]
+    )
+    assert mod.check_payload()["candidate_count"] == 1
+
+
+def test_application_stores_remain_visible_but_ineligible(monkeypatch, tmp_path):
+    mod = _load("reclaim_tool_caches_owner_uut")
+    monkeypatch.setattr(mod, "HOME", tmp_path)
+    monkeypatch.setattr(mod, "process_snapshot", lambda: ([], ""))
+    protected = [spec for spec in mod.CACHE_SPECS if spec.lifecycle_owner]
+    assert len(protected) >= 3
+    for spec in protected:
+        mod.expand(spec.label).mkdir(parents=True)
+    checked = mod.check_payload()
+    assert checked["candidate_count"] == 0
+    for row in checked["rows"]:
+        if row["exists"]:
+            assert row["classification"] == "owner-policy-required"
+            assert row["lifecycle_owner"]
+
+
+def test_process_opened_after_plan_prevents_retirement(monkeypatch, tmp_path):
+    mod = _load("reclaim_tool_caches_late_owner_uut")
+    cache = tmp_path / ".cache" / "npm"
+    cache.mkdir(parents=True)
+    _configure(monkeypatch, mod, tmp_path)
+    checked = mod.check_payload()
+    snapshots = iter([([], ""), ([{"pid": 56, "references": [str(cache / "executable")]}], "")])
+    monkeypatch.setattr(mod, "process_snapshot", lambda: next(snapshots))
+    with pytest.raises(ValueError, match="process references"):
+        mod.apply_plan(checked["plan_sha256"])
+    assert cache.exists()
+
+
+def test_lsof_parser_tracks_executable_and_open_files(monkeypatch, tmp_path):
+    import subprocess
+
+    mod = _load("reclaim_tool_caches_lsof_uut")
+    cache = tmp_path / ".cache" / "npm"
+    responses = iter(
+        [
+            subprocess.CompletedProcess([], 0, "42 unrelated\n", ""),
+            subprocess.CompletedProcess([], 0, f"p42\nfcwd\nn{tmp_path}\nftxt\nn{cache}/tool\nf7\nn{cache}/data\n", ""),
+        ]
+    )
+    monkeypatch.setattr(mod.subprocess, "run", lambda *args, **kwargs: next(responses))
+    rows, error = mod.process_snapshot()
+    assert not error
+    assert rows[0]["references"] == [str(tmp_path), str(cache / "tool"), str(cache / "data")]
+    assert mod.active_owners(mod.CacheSpec("~/.cache/npm", ()), cache, rows) == [42]
+
+
+@pytest.mark.parametrize("bare", [False, True])
+def test_git_state_nested_in_cache_requires_custody(monkeypatch, tmp_path, bare):
+    mod = _load("reclaim_tool_caches_git_uut")
+    cache = tmp_path / ".cache" / "npm"
+    nested = cache / "source"
+    nested.mkdir(parents=True)
+    if bare:
+        (nested / "HEAD").write_text("ref: refs/heads/main\n")
+        (nested / "objects").mkdir()
+        (nested / "refs").mkdir()
+    else:
+        (nested / ".git").write_text("gitdir: elsewhere\n")
+    _configure(monkeypatch, mod, tmp_path)
+    checked = mod.check_payload()
+    assert checked["candidate_count"] == 0
+    assert checked["rows"][0]["classification"] == "repository-custody-required"
+    assert nested.exists()

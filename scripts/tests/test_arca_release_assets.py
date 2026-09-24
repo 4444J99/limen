@@ -1,0 +1,236 @@
+from __future__ import annotations
+
+import importlib.util
+import subprocess
+from pathlib import Path
+
+import pytest
+
+MODULE_PATH = Path(__file__).parents[1] / "arca-release-assets.py"
+SPEC = importlib.util.spec_from_file_location("arca_release_assets", MODULE_PATH)
+assert SPEC and SPEC.loader
+assets = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(assets)
+PREFLIGHT_SPEC = importlib.util.spec_from_file_location(
+    "preflight_arca_release_assets", MODULE_PATH.parent / "preflight-arca-release-assets.py"
+)
+assert PREFLIGHT_SPEC and PREFLIGHT_SPEC.loader
+preflight = importlib.util.module_from_spec(PREFLIGHT_SPEC)
+PREFLIGHT_SPEC.loader.exec_module(preflight)
+
+
+def _ciphertexts(tmp_path: Path) -> tuple[Path, list[Path]]:
+    catalog = tmp_path / "private-names.catalog.enc"
+    catalog.write_bytes(b"Salted__opaque encrypted catalog")
+    payload = tmp_path / "sensitive-source.tar.enc.part.aa"
+    payload.write_bytes(b"opaque encrypted payload")
+    return catalog, [payload]
+
+
+def test_plan_is_neutral_and_has_no_remote_effects(tmp_path: Path, monkeypatch) -> None:
+    catalog, objects = _ciphertexts(tmp_path)
+    monkeypatch.setattr(assets, "_run", lambda *_a, **_k: pytest.fail("dry run called GitHub"))
+    result = assets.publish("owner/private-vault", catalog, objects, apply=False)
+    assert result["state"] == "planned"
+    assert result["asset_count"] == 2
+    assert "sensitive-source" not in str(result)
+    assert "private-names" not in str(result)
+
+
+def test_publish_resumes_by_digest_and_verifies_every_readback(tmp_path: Path, monkeypatch) -> None:
+    catalog, objects = _ciphertexts(tmp_path)
+    remote: dict[str, bytes] = {}
+    calls: list[list[str]] = []
+    authorized: list[str] = []
+
+    def fake_run(args: list[str], **_kwargs) -> subprocess.CompletedProcess[str]:
+        calls.append(args)
+        if args[:2] == ["gh", "api"]:
+            return subprocess.CompletedProcess(args, 0, "[]\n", "")
+        if args[1:3] == ["release", "create"]:
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[:2] == ["gh", "api"]:
+            return subprocess.CompletedProcess(args, 0, "[]\n", "")
+        if args[1:3] == ["release", "view"]:
+            names = "\n".join(remote)
+            return subprocess.CompletedProcess(args, 0, names, "")
+        if args[1:3] == ["release", "upload"]:
+            path = args[4]
+            name = Path(path).name
+            remote[name] = Path(path).read_bytes()
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[1:3] == ["release", "download"]:
+            name = args[args.index("--pattern") + 1]
+            destination = Path(args[args.index("--dir") + 1]) / name
+            destination.write_bytes(remote[name])
+            return subprocess.CompletedProcess(args, 0, "", "")
+        raise AssertionError(args)
+
+    monkeypatch.setattr(assets, "_run", fake_run)
+    monkeypatch.setattr(assets, "_release_exists", lambda _repo, _tag: bool(remote))
+    monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (77123, "owner/private-vault", "main"))
+    monkeypatch.setattr(assets, "_authorize_write", lambda repo: authorized.append(repo))
+    result = assets.publish("owner/private-vault", catalog, objects, apply=True)
+    assert result["state"] == "verified"
+    assert result["asset_count"] == 2
+    assert len(remote) == 2
+    assert authorized == ["owner/private-vault"] * 3
+    assert all(name.startswith(("catalog-", "object-")) for name in remote)
+    assert "sensitive-source" not in " ".join(" ".join(call) for call in calls)
+    upload_count = sum(call[1:3] == ["release", "upload"] for call in calls)
+    resumed = assets.publish("owner/private-vault", catalog, objects, apply=True)
+    assert resumed["state"] == "verified"
+    assert sum(call[1:3] == ["release", "upload"] for call in calls) == upload_count
+
+
+def test_interrupted_batch_resumes_without_replacing_verified_assets(tmp_path: Path, monkeypatch) -> None:
+    catalog, objects = _ciphertexts(tmp_path)
+    remote: dict[str, bytes] = {}
+    fail_payload_once = True
+
+    def fake_run(args: list[str], **_kwargs) -> subprocess.CompletedProcess[str]:
+        nonlocal fail_payload_once
+        if args[:2] == ["gh", "api"]:
+            return subprocess.CompletedProcess(args, 0, "[]\n", "")
+        if args[1:3] == ["release", "create"]:
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[1:3] == ["release", "view"]:
+            return subprocess.CompletedProcess(args, 0, "\n".join(remote), "")
+        if args[1:3] == ["release", "upload"]:
+            path = args[4]
+            name = Path(path).name
+            if name.startswith("object-") and fail_payload_once:
+                fail_payload_once = False
+                raise assets.AssetError("injected upload interruption; source ciphertext retained")
+            remote[name] = Path(path).read_bytes()
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[1:3] == ["release", "download"]:
+            name = args[args.index("--pattern") + 1]
+            Path(args[args.index("--dir") + 1], name).write_bytes(remote[name])
+            return subprocess.CompletedProcess(args, 0, "", "")
+        raise AssertionError(args)
+
+    monkeypatch.setattr(assets, "_run", fake_run)
+    monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (77123, "owner/private-vault", "main"))
+    monkeypatch.setattr(assets, "_release_exists", lambda _repo, _tag: bool(remote))
+    monkeypatch.setattr(assets, "_authorize_write", lambda _repo: None)
+    with pytest.raises(assets.AssetError, match="source ciphertext retained"):
+        assets.publish("owner/private-vault", catalog, objects, apply=True)
+    assert len(remote) == 1  # catalog readback succeeded; payload was never changed or lost
+    assert objects[0].exists()
+
+    result = assets.publish("owner/private-vault", catalog, objects, apply=True)
+    assert result["state"] == "verified"
+    assert len(remote) == 2
+
+
+def test_unchanged_objects_are_reused_from_earlier_release(tmp_path: Path, monkeypatch) -> None:
+    catalog, objects = _ciphertexts(tmp_path)
+    files, _tag, _size = assets._preflight(catalog, objects)
+    old_tag = "arca-objects-" + "a" * 32
+    prior = {files[1][1]: objects[0].read_bytes()}
+    current: dict[str, bytes] = {}
+    uploaded: list[str] = []
+
+    def fake_run(args: list[str], **_kwargs) -> subprocess.CompletedProcess[str]:
+        if args[1:3] == ["release", "create"]:
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[1:3] == ["release", "view"]:
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[1:3] == ["release", "upload"]:
+            path = args[4]
+            name = Path(path).name
+            current[name] = Path(path).read_bytes()
+            uploaded.append(name)
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[1:3] == ["release", "download"]:
+            tag = args[3]
+            name = args[args.index("--pattern") + 1]
+            source = prior[name] if tag == old_tag else current[name]
+            Path(args[args.index("--dir") + 1], name).write_bytes(source)
+            return subprocess.CompletedProcess(args, 0, "", "")
+        raise AssertionError(args)
+
+    monkeypatch.setattr(assets, "_run", fake_run)
+    monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (77123, "owner/private-vault", "main"))
+    monkeypatch.setattr(assets, "_release_exists", lambda _repo, _tag: False)
+    monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {files[1][1]: old_tag})
+    monkeypatch.setattr(assets, "_authorize_write", lambda _repo: None)
+    result = assets.publish("owner/private-vault", catalog, objects, apply=True)
+    assert result["state"] == "verified"
+    assert uploaded == [files[0][1]]  # only the new encrypted catalog; the old object was read back in place
+
+
+def test_wrong_readback_digest_fails_without_mutating_source(tmp_path: Path, monkeypatch) -> None:
+    catalog, objects = _ciphertexts(tmp_path)
+    source_bytes = objects[0].read_bytes()
+
+    def fake_run(args: list[str], **_kwargs) -> subprocess.CompletedProcess[str]:
+        if args[:2] == ["gh", "api"]:
+            return subprocess.CompletedProcess(args, 0, "[]\n", "")
+        if args[1:3] == ["release", "download"]:
+            name = args[args.index("--pattern") + 1]
+            Path(args[args.index("--dir") + 1], name).write_bytes(b"wrong bytes")
+            return subprocess.CompletedProcess(args, 0, "", "")
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(assets, "_run", fake_run)
+    monkeypatch.setattr(assets, "_release_exists", lambda _repo, _tag: True)
+    monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (77123, "owner/private-vault", "main"))
+    monkeypatch.setattr(assets, "_authorize_write", lambda _repo: None)
+    with pytest.raises(assets.AssetError, match="readback digest mismatch"):
+        assets.publish("owner/private-vault", catalog, objects, apply=True)
+    assert objects[0].read_bytes() == source_bytes
+
+
+def test_rejects_plaintext_named_source_and_assets_over_limit(tmp_path: Path, monkeypatch) -> None:
+    catalog, objects = _ciphertexts(tmp_path)
+    plain = tmp_path / "payload.json"
+    plain.write_text("not encrypted")
+    with pytest.raises(assets.AssetError, match="identify encrypted"):
+        assets.publish("owner/private-vault", catalog, [plain], apply=False)
+
+    monkeypatch.setattr(assets, "MAX_ASSET_BYTES", 10)
+    with pytest.raises(assets.AssetError, match="under-2-GiB"):
+        assets.publish("owner/private-vault", catalog, objects, apply=False)
+
+    monkeypatch.setattr(assets, "MAX_ASSET_BYTES", 2 * 1024**3 - 1)
+    with pytest.raises(assets.AssetError, match="changed after encrypted catalog"):
+        assets.publish(
+            "owner/private-vault",
+            catalog,
+            objects,
+            apply=False,
+            expected_digests={objects[0]: "0" * 64},
+        )
+
+
+def test_repository_alias_must_resolve_to_one_private_immutable_identity(monkeypatch) -> None:
+    responses = iter(
+        [
+            '{"id":77123,"full_name":"old-owner/vault","private":true,"default_branch":"main"}',
+            '{"id":77123,"full_name":"new-owner/vault","private":true,"default_branch":"main"}',
+        ]
+    )
+    monkeypatch.setattr(
+        assets,
+        "_run",
+        lambda *_a, **_k: subprocess.CompletedProcess([], 0, next(responses), ""),
+    )
+    with pytest.raises(assets.AssetError, match="identity changed"):
+        assets._canonical_repository("old-owner/vault")
+
+
+def test_preflight_resolves_renamed_repository_by_stable_id(monkeypatch) -> None:
+    responses = iter(
+        [
+            '{"id":77123,"full_name":"new-owner/vault","private":true,"default_branch":"main"}',
+            '{"id":77123,"full_name":"new-owner/vault","private":true,"default_branch":"main"}',
+        ]
+    )
+    monkeypatch.setattr(
+        preflight.subprocess,
+        "run",
+        lambda *_a, **_k: subprocess.CompletedProcess([], 0, next(responses), ""),
+    )
+    assert preflight.inspect_repository("old-owner/vault") == (77123, "new-owner/vault", "main")
