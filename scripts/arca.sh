@@ -60,6 +60,7 @@ VAULT_DIR="${ARCA_VAULT_DIR:-$HOME/.arca-vault}"
 KEY_SERVICE="${ARCA_KEY_SERVICE:-limen-arca-vault}"
 MAX_MB="${ARCA_MAX_MB:-512}"
 CHUNK_MB="${ARCA_CHUNK_MB:-90}"   # per-blob ceiling; GitHub hard-rejects files >100MB
+MAX_COMMIT_MB="${ARCA_MAX_COMMIT_MB:-128}" # bounded Git update; large estates must ship incrementally
 CLONE_URL_BASE="${ARCA_CLONE_URL_BASE:-https://github.com}"  # test hook: hermetic file:// remotes
 # A VERB IS REQUIRED. This used to default to `backup`, which meant typing `arca.sh` to see what it
 # does silently STARTED A BACKUP — sweeping every ~/Workspace/_*-private store, encrypting, and
@@ -130,6 +131,57 @@ store_hash() {
 
 file_bytes() { # file_bytes <file> — portable byte count (wc -c works on BSD and GNU; stat -f%z is BSD-only)
   wc -c < "$1" | tr -d ' '
+}
+
+vault_pending_bytes() { # unique blobs reachable from HEAD but not the known remote main
+  local remote_ref="refs/remotes/origin/main"
+  git -C "$VAULT_DIR" show-ref --verify --quiet "$remote_ref" || { printf '0\n'; return 0; }
+  git -C "$VAULT_DIR" rev-list --objects "${remote_ref}..HEAD" \
+    | awk '{print $1}' \
+    | git -C "$VAULT_DIR" cat-file --batch-check='%(objecttype) %(objectsize)' \
+    | awk '$1 == "blob" { total += $2 } END { printf "%.0f\n", total }'
+}
+
+staged_blob_bytes() { # sum staged blobs before a commit can make an oversized push
+  python3 - "$VAULT_DIR" <<'PY'
+import subprocess, sys
+root = sys.argv[1]
+entries = subprocess.check_output(["git", "-C", root, "ls-files", "-s", "-z"])
+total = 0
+seen = set()
+for raw in filter(None, entries.split(b"\0")):
+    metadata, _path = raw.split(b"\t", 1)
+    _mode, oid, stage = metadata.split()
+    if stage != b"0" or oid in seen:
+        continue
+    seen.add(oid)
+    total += int(subprocess.check_output(
+        ["git", "-C", root, "cat-file", "-s", oid.decode("ascii")], text=True
+    ).strip())
+print(total)
+PY
+}
+
+commit_push_batch() {
+  local label="$1" pending staged limit
+  limit=$(( MAX_COMMIT_MB * 1024 * 1024 ))
+  pending=$(vault_pending_bytes) || die "cannot measure unpushed Git objects; ciphertext retained"
+  if [ "$pending" -gt "$limit" ]; then
+    die "refusing oversized pending Git history (${pending} bytes > ${limit}); ciphertext retained for object-store custody"
+  fi
+  git -C "$VAULT_DIR" add -A -- '*.tar.enc*' manifest.json
+  staged=$(staged_blob_bytes) || die "cannot measure staged ciphertext; nothing pushed"
+  if [ "$staged" -gt "$limit" ]; then
+    git -C "$VAULT_DIR" reset -q -- '*.tar.enc*' manifest.json
+    die "refusing oversized Git update (${staged} bytes > ${limit}); local ciphertext retained, coverage incomplete"
+  fi
+  git -C "$VAULT_DIR" diff --cached --quiet && return 0
+  git -C "$VAULT_DIR" commit -q -m "arca: seal $label $(date -u '+%F %TZ')" \
+    || die "cannot commit bounded ciphertext batch; local files retained"
+  git -C "$VAULT_DIR" push -q origin main \
+    || die "bounded ciphertext commit is local-only; custody remains incomplete"
+  changed=0
+  log "vault pushed bounded batch → $VAULT_REPO"
 }
 
 manifest_get() { # manifest_get <name> <field>
@@ -296,6 +348,9 @@ cut_generation() { # cut_generation [next-repo] — archive the current generati
     # re-seals every store into the fresh tree. The shallow marker is dropped too — it names a
     # commit that stops existing, and the new generation is a full root, not a shallow cut.
     git -C "$VAULT_DIR" remote set-url origin "$CLONE_URL_BASE/$next_repo.git"
+    # The new generation is an independent root. Do not treat the archived remote's
+    # tracking ref as custody evidence or as the baseline for bounded pushes.
+    git -C "$VAULT_DIR" update-ref -d refs/remotes/origin/main 2>/dev/null || true
     git -C "$VAULT_DIR" checkout -q --orphan "arca-gen$(( cur_gen + 1 ))"
     git -C "$VAULT_DIR" rm -rf --cached -q . 2>/dev/null || true
     git -C "$VAULT_DIR" branch -q -D main 2>/dev/null || true
@@ -316,6 +371,13 @@ cut_generation() { # cut_generation [next-repo] — archive the current generati
 cmd_backup() {
   ensure_vault
   local key="" changed=0 force=0 pack_mb
+  [[ "$MAX_COMMIT_MB" =~ ^[1-9][0-9]*$ ]] && [ "$MAX_COMMIT_MB" -le 128 ] \
+    || die "ARCA_MAX_COMMIT_MB must be an integer from 1 through 128"
+  local pending_bytes limit_bytes
+  pending_bytes=$(vault_pending_bytes) || die "cannot measure pending Git history; ciphertext retained"
+  limit_bytes=$(( MAX_COMMIT_MB * 1024 * 1024 ))
+  [ "$pending_bytes" -le "$limit_bytes" ] \
+    || die "refusing oversized pending Git history (${pending_bytes} bytes > ${limit_bytes}); ciphertext retained for object-store custody"
   # Generation rotation (the root-cause fix, #2089): once the current generation's pack
   # crosses ARCA_MAX_MB, cut the next generation instead of growing one history forever.
   pack_mb=$(vault_pack_mb 2>/dev/null || echo 0)
@@ -327,25 +389,24 @@ cmd_backup() {
   for s in "$WORKSPACE"/_*-private; do
     [ -d "$s" ] || continue
     seal_store "$(basename "$s")" "$force"
+    if [ "$changed" = "1" ]; then
+      commit_push_batch "$(basename "$s")"
+    fi
   done
   # -A stages deletions too (monolith→parts transitions and vice versa); the vault is a
   # machine-owned ciphertext repo, so the pathspec keeps this surgical anyway. A rotation
   # commits the generation metadata even if every store was already current.
   if [ "$changed" = "1" ] || [ "$force" = "1" ]; then
-    git -C "$VAULT_DIR" add -A -- '*.tar.enc*' manifest.json
-    git -C "$VAULT_DIR" commit -q -m "arca: seal $(date -u '+%F %TZ')"
-    # A fresh clone of an empty repo has no upstream yet (and a freshly cut generation
-    # points at a brand-new repo) — `push -u` establishes it and is a no-op on the
-    # already-tracking case. Every commit THIS run is pushed: unpushed retries from a
-    # previous run are covered by the origin/main branch below.
-    git -C "$VAULT_DIR" push -q -u origin main || die "push failed — ciphertext committed locally, will retry next beat"
-    log "vault pushed → $VAULT_REPO"
+    commit_push_batch "generation"
   elif [ -n "$(git -C "$VAULT_DIR" log --oneline 'origin/main..HEAD' 2>/dev/null || true)" ]; then
     # Push whatever is unpushed — a seal a previous run committed but failed to push (the
     # "retry next beat" promise lives here, not in the failure message). origin/main, not
     # @{u}: after a failed `push -u` the upstream is never recorded, but the remote ref is.
     log "retrying unpushed seal commit(s) from a previous run"
-    git -C "$VAULT_DIR" push -q origin main || die "push failed — ciphertext committed locally, will retry next beat"
+    pending_bytes=$(vault_pending_bytes) || die "cannot measure pending Git history; ciphertext retained"
+    [ "$pending_bytes" -le "$limit_bytes" ] \
+      || die "refusing oversized pending Git history (${pending_bytes} bytes > ${limit_bytes}); ciphertext retained for object-store custody"
+    git -C "$VAULT_DIR" push -q origin main || die "bounded seal commit remains local-only; custody incomplete"
     log "vault pushed → $VAULT_REPO"
   elif [ "$changed" = "0" ]; then
     log "everything current — nothing to seal"
@@ -427,8 +488,16 @@ cmd_status() { # cmd_status [--json] [--strict] — COVERAGE: does the vault hol
   # Under --json that would prepend prose to the payload and make it unparseable — a
   # machine-readable interface has to keep stdout pure, so its chatter goes to stderr instead.
   if [ "$as_json" = "1" ]; then ensure_vault 1>&2; else ensure_vault; fi
-  local name h old when state stale=0 first=1
-  if [ "$as_json" = "1" ]; then printf '{"schema":"limen.arca_coverage.v1","stores":['; fi
+  local name h old when state stale=0 first=1 vault_pending=0 vault_status vault_head remote_head
+  vault_status=$(git -C "$VAULT_DIR" status --porcelain=v1 --untracked-files=all 2>/dev/null || echo unavailable)
+  remote_head=$(git -C "$VAULT_DIR" rev-parse --verify refs/remotes/origin/main 2>/dev/null || true)
+  vault_head=$(git -C "$VAULT_DIR" rev-parse --verify HEAD 2>/dev/null || true)
+  if [ -n "$vault_status" ] || [ -z "$remote_head" ] || [ "$vault_head" != "$remote_head" ]; then
+    vault_pending=1
+    stale=1
+  fi
+  if [ "$as_json" = "1" ]; then printf '{"schema":"limen.arca_coverage.v1","vault_state":"%s","stores":[' \
+    "$([ "$vault_pending" = "0" ] && printf 'remote_current' || printf 'local_or_unpushed')"; fi
   for s in "$WORKSPACE"/_*-private; do
     [ -d "$s" ] || continue
     name=$(basename "$s"); h=$(store_hash "$s"); old=$(manifest_get "$name" hash); when=$(manifest_get "$name" updated)
@@ -449,6 +518,7 @@ cmd_status() { # cmd_status [--json] [--strict] — COVERAGE: does the vault hol
       esac
     fi
   done
+  [ "$vault_pending" = "0" ] || { [ "$as_json" = "1" ] || echo "  ✗ vault has local or unpushed changes — remote custody incomplete"; }
   if [ "$as_json" = "1" ]; then
     local ok_json=true
     if [ "$stale" = "1" ]; then ok_json=false; fi
