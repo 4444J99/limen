@@ -62,6 +62,11 @@ PR #2709 is at `10ee31bdc27fec7d32af9e28fc2eddf0ee641c1f`. Its CI build jobs pas
 - Audited the largest remaining Library caches. Chrome is running, Playwright MCP is running, and Codex has three open files under its cache. CloudKit/iCloud and updater payloads remain in use or are not safely disposable. No additional cache directory met the stale, regenerable, inactive criteria, so none was removed.
 - Current Data-volume capacity remains 41 GiB available. PR #2709 is open and non-draft at `95bbc444b15c32c5e85466b3406d1334d29cca97`, matching the pushed recovery branch; its required `pr-gate` failed closed at `positioning-foundry-technical-readiness-public-live` because live GitHub observation failed. This gate has not been retried because its relevant inputs have not changed.
 
+## Follow-up tranche — idle Codex runtime cache
+
+- The managed `scripts/reclaim-tool-caches.py` plan identified one inactive, allowlisted cache, `~/.cache/codex-runtimes` (1,638,064 KiB; 31,676 entries). Its candidate identity was revalidated and applied under plan SHA `b96827d21cf0b8072a659060aa98b3f8dae3550f01392364660018b055eaab48`. The tool recorded one removal and a fresh residual scan found zero eligible cache candidates; its own log records the apply receipt.
+- The volume reported 39 GiB available immediately afterward, down from the preceding 41 GiB reading. Therefore the apparent 1.6 GiB cache reduction did not produce measured free-space recovery; no net capacity gain is claimed. Other large caches were classified active and preserved.
+
 ## Latest capacity checkpoint — 2026-09-24
 
 - Final exact-head check: local recovery branch equals `origin/fix/storage-headroom-20260923` at `ded70359ab56990a6bccf91829ecad9db3a39e9a`; checkout clean.
