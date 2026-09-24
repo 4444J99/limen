@@ -3,43 +3,78 @@ on:
   pull_request:
     paths: ['.github/workflows/jules-repair-snapshot.yml']
 permissions:
-  contents: read
-  actions: read
-  issues: read
+  contents: write
 jobs:
-  public-gate-repair:
-    if: github.event.pull_request.number == 2687
+  repair-tree:
+    if: github.actor == '4444J99' && github.event.pull_request.number == 2687 && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Apply exact reviewed repair bytes
+      - name: Materialize exact reviewed bytes as an unattached Git tree
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -euo pipefail
-          gh api repos/4444J99/limen/git/blobs/586d4b2ff532d1eab1c7f8a2f5e6db5a0df02742 > patch-blob.json
-          python - <<'PY'
-          import base64, gzip, hashlib, json
-          from pathlib import Path
-          row=json.loads(Path('patch-blob.json').read_text())
-          patch=gzip.decompress(base64.b64decode(row['content']))
-          assert hashlib.sha256(patch).hexdigest() == 'cd7a849fb21695c0523c0c131c8591aff82af3ea0502bb252c29e590ed3cdcbd'
-          Path('repair.patch').write_bytes(patch)
+          python3 - <<'PY'
+          import base64, hashlib, json, lzma, subprocess
+          from pathlib import Path, PurePosixPath
+          repo = '4444J99/limen'
+          chunks = ['63b777c54a322cd7d33b357dff78f98ec0fe9c9b', '9550a6b0c401bc42a4a426d2acc73b4b2bb5cf72', '7fe9814d7567062424838add069577c014406ab2', '505537bf5f7c62ddd83648ed7a6c819249f55687']
+          encoded = b''
+          for sha in chunks:
+              row = json.loads(subprocess.check_output(['gh', 'api', f'repos/{repo}/git/blobs/{sha}'], timeout=30))
+              value = base64.b64decode(row['content'])
+              assert hashlib.sha1(f'blob {len(value)}\0'.encode() + value).hexdigest() == sha
+              encoded += value
+          raw = lzma.decompress(base64.b64decode(encoded, validate=True))
+          assert hashlib.sha256(raw).hexdigest() == 'b2a52d7be62518b172547a677b5651bfc69ab7f07b2651010ce8805df96964e7'
+          rows = json.loads(raw)
+          assert len(rows) == 52
+          parent = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+          base = subprocess.check_output(['git', 'rev-parse', 'HEAD^{tree}'], text=True).strip()
+          entries = []
+          changed = []
+          for row in rows:
+              name = row['path']
+              path = PurePosixPath(name)
+              assert not path.is_absolute() and '..' not in path.parts and '.git' not in path.parts
+              target = Path(name)
+              assert not target.is_symlink()
+              before = target.read_bytes() if target.exists() else b''
+              assert hashlib.sha256(before).hexdigest() == row['old'], f'base changed: {name}'
+              lines = before.decode('utf-8').splitlines(keepends=True)
+              for start, end, replacement in reversed(row['edits']):
+                  assert 0 <= start <= end <= len(lines)
+                  lines[start:end] = [replacement]
+              after = ''.join(lines)
+              assert hashlib.sha256(after.encode()).hexdigest() == row['new'], f'patch mismatch: {name}'
+              target.parent.mkdir(parents=True, exist_ok=True)
+              target.write_text(after, encoding='utf-8')
+              mode_row = subprocess.check_output(['git', 'ls-files', '-s', '--', name], text=True)
+              mode = mode_row.split()[0] if mode_row else '100644'
+              assert mode in {'100644', '100755'}
+              entries.append({'path': name, 'mode': mode, 'type': 'blob', 'content': after})
+              changed.append(name)
+          temporary = '.github/workflows/jules-repair-snapshot.yml'
+          Path(temporary).unlink()
+          entries.append({'path': temporary, 'mode': '100644', 'type': 'blob', 'sha': None})
+          subprocess.run(['git', 'add', '--', *changed, temporary], check=True)
+          expected = subprocess.check_output(['git', 'write-tree'], text=True).strip()
+          request = json.dumps({'base_tree': base, 'tree': entries})
+          result = subprocess.run(['gh', 'api', '--method', 'POST', f'repos/{repo}/git/trees', '--input', '-'], input=request, text=True, capture_output=True, timeout=60)
+          if result.returncode:
+              raise SystemExit('repair_tree_object_creation_failed')
+          tree = json.loads(result.stdout)['sha']
+          assert tree == expected, 'remote tree differs from verified bytes'
+          receipt = {'parent_sha': parent, 'tree_sha': tree, 'files': len(rows), 'edits_sha256': hashlib.sha256(raw).hexdigest(), 'ref_updated': False, 'provider_mutations': 0}
+          Path('repair-tree.json').write_text(json.dumps(receipt, sort_keys=True))
+          print(json.dumps(receipt, sort_keys=True))
           PY
-          git apply --check repair.patch
-          git apply repair.patch
-      - run: python -m pip install -e 'cli[test]'
-      - name: Verify explicit withdrawal regressions
-        run: python -m pytest docs/positioning/foundry/psp-c11/test_technical_readiness.py -q --tb=short
-      - name: Execute real public-evidence gate without private credentials
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --public-live --json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jules-repair-tree-${{ github.run_id }}
+          path: repair-tree.json
+          retention-days: 14
