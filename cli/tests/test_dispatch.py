@@ -2414,6 +2414,65 @@ def test_path_like_repo_resolves_to_local_checkout(tmp_path: Path) -> None:
     assert D._clone_repo(task) == repo
 
 
+@pytest.mark.parametrize("relative", ["owner/project", "project", "other/project"])
+@pytest.mark.parametrize("origin", [None, "other/project", "owner/project-extra"])
+def test_repo_discovery_rejects_wrong_or_unknown_origin(tmp_path, monkeypatch, relative, origin):
+    candidate = tmp_path / relative
+    (candidate / ".git").mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_WORKDIR", str(tmp_path))
+    monkeypatch.setattr(D, "_clone_cache_root", lambda: None)
+    monkeypatch.setattr(D, "_github_slug_from_local_repo", lambda path: origin)
+    task = Task(id="IDENTITY", title="identity", repo="owner/project", target_agent="codex", created=date(2026, 7, 7))
+    assert D._resolve_repo_dir(task) is None
+
+
+def test_renamed_repository_matches_by_live_immutable_id(tmp_path, monkeypatch):
+    old = tmp_path / "previous-name"
+    (old / ".git").mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_WORKDIR", str(tmp_path))
+    monkeypatch.setattr(D, "_clone_cache_root", lambda: None)
+    monkeypatch.setattr(D, "_registered_github_coordinates", lambda _coordinate: ("prior-owner/previous-name",))
+    monkeypatch.setattr(D, "_github_slug_from_local_repo", lambda _path: "prior-owner/previous-name")
+    monkeypatch.setattr(
+        D,
+        "_github_repository_id",
+        lambda slug: 12345 if slug in {"prior-owner/previous-name", "current-owner/current-name"} else None,
+    )
+    task = Task(
+        id="RENAMED-IDENTITY",
+        title="renamed repository",
+        repo="current-owner/current-name",
+        target_agent="codex",
+        created=date(2026, 7, 7),
+    )
+    assert D._resolve_repo_dir(task) == old
+
+
+def test_repository_identity_lookup_fails_closed_offline(monkeypatch):
+    monkeypatch.setattr(
+        D.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(args, 1, "", "offline"),
+    )
+    D._GITHUB_REPOSITORY_ID_CACHE.clear()
+    assert D._github_repository_id("owner/repository") is None
+    assert not D._github_repositories_match("old/repository", "new/repository")
+
+
+def test_repo_discovery_selects_exact_remote_among_conflicting_copies(tmp_path, monkeypatch):
+    wrong = tmp_path / "owner/project"
+    right = tmp_path / "renamed-local/project"
+    for candidate in (wrong, right):
+        (candidate / ".git").mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_WORKDIR", str(tmp_path))
+    monkeypatch.setattr(D, "_clone_cache_root", lambda: None)
+    monkeypatch.setattr(
+        D, "_github_slug_from_local_repo", lambda path: "OWNER/PROJECT" if path == right else "other/project"
+    )
+    task = Task(id="IDENTITY", title="identity", repo="owner/project", target_agent="codex", created=date(2026, 7, 7))
+    assert D._resolve_repo_dir(task) == right
+
+
 def test_jules_path_repo_derives_remote_slug(tmp_path: Path, monkeypatch) -> None:
     repo = tmp_path / "checkout"
     (repo / ".git").mkdir(parents=True)
@@ -5510,6 +5569,7 @@ def test_missing_checkout_is_measured_reserved_hydrated_then_isolated(tmp_path: 
     monkeypatch.setenv("LIMEN_WORKDIR", str(workdir))
     clone_cache = tmp_path / ".worktrees-repo-cache"
     monkeypatch.setattr(D, "_clone_cache_root", lambda: clone_cache)
+    monkeypatch.setattr(D, "_github_slug_from_local_repo", lambda path: "not-present/example")
     monkeypatch.setattr(D, "_remote_hydration_requirement_gib", lambda _task: 0.5)
     monkeypatch.setattr(D, "_repo_unavailable_reason", lambda _repo: None)
     monkeypatch.setattr(D, "_resolve_agent_binary", lambda agent: agent)
@@ -5606,6 +5666,7 @@ def test_clone_cache_stays_on_worktree_device_not_workdir_device(tmp_path: Path,
         return subprocess.CompletedProcess(cmd, 0, "", "")
 
     monkeypatch.setattr(D, "_run_capture", fake_capture)
+    monkeypatch.setattr(D, "_github_slug_from_local_repo", lambda path: "not-present/example")
     task = _wtask(repo="not-present/example")
     repo = D._clone_repo(task)
 
@@ -6700,3 +6761,18 @@ def test_release_stale_default_surfaces_scoped_past_deadline_claim(tmp_path):
     assert report["candidates"][0]["id"] == "GH-organvm-hospes-9"
     assert report["candidates"][0]["action"] in {"release", "hold", "harvest", "recover"}
     assert tasks_path.read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    "remote", ["https://evilgithub.com/owner/project", "https://elsewhere/owner/project", "file:///owner/project"]
+)
+def test_github_identity_parser_rejects_other_hosts(remote):
+    assert D._github_slug_from_remote(remote) is None
+
+
+@pytest.mark.parametrize(
+    "remote",
+    ["https://github.com/owner/project.git", "git@github.com:owner/project.git", "ssh://git@github.com/owner/project"],
+)
+def test_github_identity_parser_accepts_exact_host(remote):
+    assert D._github_slug_from_remote(remote) == "owner/project"

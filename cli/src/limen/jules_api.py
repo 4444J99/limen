@@ -266,7 +266,7 @@ class JulesApiClient:
                 if name in rows and rows[name] != row:
                     raise JulesApiError("catalog_changed_during_pagination")
                 rows[name] = row
-            token = result.get("nextPageToken", "")
+            token = result.get("nextPageToken", "")  # allow-secret: runtime response token, no embedded value
             if not isinstance(token, str) or len(token) > 8192:
                 raise JulesApiError("invalid_page_token")
             if not token:

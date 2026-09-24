@@ -343,6 +343,15 @@ def reserve_growth(action: str, identity: str, *, work_key: str | None = None, r
     restarting a producer never resets its limit. This is runtime evidence under
     the existing autonomy policy, not another task registry.
     """
+    if action not in {"issue", "branch", "worktree"}:
+        raise InventoryAdmissionError("execution_resource_unknown")
+    if action == "worktree" and root is None:
+        from limen.storage_headroom import StorageAdmissionError, require_storage_headroom
+
+        try:
+            require_storage_headroom(identity)
+        except StorageAdmissionError as exc:
+            raise InventoryAdmissionError(str(exc)) from None
     # Production producers share the authenticated keeper, including remote lanes.
     # Explicit root is the isolated local fixture adapter; no production caller
     # supplies it and absence of keeper credentials never falls back to local state.
@@ -369,8 +378,6 @@ def reserve_growth(action: str, identity: str, *, work_key: str | None = None, r
         root or os.environ.get("LIMEN_LIVE_ROOT") or os.environ.get("LIMEN_ROOT") or Path.home() / "Workspace" / "limen"
     )
     priority = require_approved_priority(work_key or os.environ.get("LIMEN_WORK_KEY"), root=root)
-    if action not in {"issue", "branch", "worktree"}:
-        raise InventoryAdmissionError("execution_resource_unknown")
     limit = priority.get("resource_limits", {}).get(action, 0)
     if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1:
         raise InventoryAdmissionError("execution_resource_not_approved")

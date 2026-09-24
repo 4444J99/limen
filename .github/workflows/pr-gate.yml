@@ -50,9 +50,10 @@ concurrency:
 jobs:
   pr-gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     env:
       LIMEN_PRGATE_SCOPED: "1"
+      LIMEN_VERIFY_GATE_TIMEOUT_SECONDS: "1500"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -84,7 +85,7 @@ jobs:
           LIMEN_VERIFY_NO_DEPLOY_ESCALATION: "1"
         run: |
           python scripts/verify.py --changed \
-            --gate-timeout-seconds 1500 --total-timeout-seconds 1800 \
+            --gate-timeout-seconds 1500 --total-timeout-seconds 1700 \
             --base "origin/${GITHUB_BASE_REF:-main}" \
             --skip-ci-covered pr-gate.yml:pr-gate
 
@@ -125,7 +126,7 @@ jobs:
             exit 2
           fi
           python scripts/verify.py --changed --integration \
-            --gate-timeout-seconds 1500 --total-timeout-seconds 1800 \
+            --gate-timeout-seconds 1500 --total-timeout-seconds 1700 \
             --base "$MERGE_GROUP_BASE_SHA"
 
       - name: Verify manual run (scoped)
@@ -135,7 +136,7 @@ jobs:
           LIMEN_VERIFY_NO_LOCK: "1"
         run: |
           python scripts/verify.py --changed \
-            --gate-timeout-seconds 1500 --total-timeout-seconds 1800 \
+            --gate-timeout-seconds 1500 --total-timeout-seconds 1700 \
             --base "origin/${GITHUB_BASE_REF:-main}" \
             --skip-ci-covered pr-gate.yml:pr-gate
 

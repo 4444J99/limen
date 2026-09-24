@@ -596,8 +596,8 @@ class PatchLandingMixin:
             raise FanoutExecutionError(f"remote branch probe failed: {detail[-800:]}")
         from limen.inventory_admission import reserve_growth
 
-        reserve_growth("branch", f"{repository}:{branch}", work_key=packet["work_key"])
         reserve_growth("worktree", str(worktree), work_key=packet["work_key"])
+        reserve_growth("branch", f"{repository}:{branch}", work_key=packet["work_key"])
         _checked(["git", "worktree", "add", "-b", branch, str(worktree), exact_base], cwd=clone, timeout=180)
         receipt = self._land_new_result(
             node,
