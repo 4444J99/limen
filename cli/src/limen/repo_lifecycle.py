@@ -21,7 +21,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from limen.worktree_initialization import WorktreeInitializationError, initialize_worktree
-from limen.worktree_roots import dispatch_clone_cache_root
+from limen.worktree_roots import dispatch_clone_cache_root, effective_worktree_root
 
 
 class RepositoryLifecycleError(RuntimeError):
@@ -155,7 +155,7 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
         if revision_result.returncode:
             raise RepositoryLifecycleError("requested revision could not be fetched; residency retained")
         target = _git(store, "rev-parse", "--verify", "FETCH_HEAD^{commit}")
-        root = Path(os.environ.get("LIMEN_WORKTREE_ROOT", str(Path.home() / "Workspace" / ".limen-worktrees"))).expanduser()
+        root = effective_worktree_root().expanduser()
         root.mkdir(parents=True, exist_ok=True)
         worktree = root / f"repo-{stable_id}-{_digest(session_id)[:16]}"
         branch = f"limen/session-{stable_id}-{_digest(session_id)[:12]}"
@@ -193,7 +193,7 @@ def release(lease_id: str) -> dict[str, str]:
         if record.get("lease_id") != lease_id or record.get("repository_id") != stable_id:
             raise RepositoryLifecycleError("lease identity mismatch; checkout retained")
         worktree = Path(str(record["worktree"]))
-        root = Path(os.environ.get("LIMEN_WORKTREE_ROOT", str(Path.home() / "Workspace" / ".limen-worktrees"))).expanduser()
+        root = effective_worktree_root().expanduser()
         if worktree.parent.resolve() != root.resolve():
             raise RepositoryLifecycleError("lease path is outside managed worktree root; checkout retained")
         try:
