@@ -48,7 +48,18 @@ from limen.remote_predicate import (  # noqa: E402
 import limen.dispatch as dispatch_module  # noqa: E402
 
 
-def _load(tmp_path, n_open=6, agent="codex"):
+def _approve_fixture_tasks(root, keys):
+    """Authorize only named synthetic inputs; leave production admission intact."""
+    policy = {
+        "mode": "dispatch",
+        "approved_priorities": [{"outcome_id": key, "enabled": True, "work_keys": [key]} for key in keys],
+    }
+    path = root / "logs/autonomy-policy.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(policy))
+
+
+def _load(tmp_path, n_open=6, agent="codex", *, approved=True):
     """Point the engine at an isolated tasks.yaml + build n open tasks, then import it fresh so its
     module-level ROOT/TASKS/RUNS pick up this env."""
     os.environ["LIMEN_ROOT"] = str(tmp_path)
@@ -83,6 +94,19 @@ def _load(tmp_path, n_open=6, agent="codex"):
     # Unit tests isolate resource admission from the host. Dedicated pressure
     # tests replace this deterministic empty-graph requirement explicitly.
     da.current_required_free_gib = lambda: 0.0
+    if approved:
+        # Selection fixtures explicitly authorize their synthetic board, rather
+        # than relying on the retired LIMEN_DISPATCH_ADMISSION=0 priority bypass.
+        # Keep the real admission check and keeper; policy-denial tests opt out.
+        _approve_fixture_tasks(tmp_path, [task.id for task in lf.tasks])
+        real_admission = da.dispatch_admission_check
+
+        def fixture_admission(tasks_path, **kwargs):
+            keys = [task.id for task in load_limen_file(tasks_path).tasks]
+            _approve_fixture_tasks(tmp_path, keys)
+            return real_admission(tasks_path, **kwargs)
+
+        da.dispatch_admission_check = fixture_admission
     da.RUNS.mkdir(parents=True, exist_ok=True)
     return da
 
@@ -1609,6 +1633,7 @@ def test_async_normalizes_only_selected_legacy_task(tmp_path):
         ),
     ]
 
+    _approve_fixture_tasks(tmp_path, ["SELECTED"])
     picked, _reset_changed = da._pick_reservations(
         lf,
         ["codex"],
@@ -1656,6 +1681,7 @@ def test_async_skips_unowned_legacy_candidate_and_continues(tmp_path, capsys):
         ),
     ]
 
+    _approve_fixture_tasks(tmp_path, ["OWNED"])
     picked, _reset_changed = da._pick_reservations(
         lf,
         ["codex"],
@@ -3944,6 +3970,10 @@ def test_reservation_nonce_fences_reopened_task_from_stale_worker(tmp_path, monk
     assert _board(tmp_path)[task_id].status == "open"
     assert not marker_a.exists()
 
+    # Re-admission requires changed evidence, not a retry of identical input.
+    repaired = load_limen_file(tmp_path / "tasks.yaml")
+    repaired.tasks[0].context = "Recovered stale worker; revised synthetic repair input."
+    da.apply_limen_file_sync(tmp_path / "tasks.yaml", repaired, agent="codex", session_id="fixture-recovery")
     assert da.reserve_and_launch([agent], 1, 1, False, task_id=task_id) == [(agent, task_id)]
     task_b = _board(tmp_path)[task_id]
     reservation_b = dispatch_session_id(task_b.dispatch_log[-1])
@@ -4002,7 +4032,7 @@ def test_reservation_nonce_fences_reopened_task_from_stale_worker(tmp_path, monk
 
     stale_recovery = da.recover_exact_task(
         task_id,
-        contract_hash,
+        execution_contract_hash(task_b),
         reservation_id=reservation_a,
         dry_run=False,
     )
@@ -4017,3 +4047,11 @@ def test_reservation_nonce_fences_reopened_task_from_stale_worker(tmp_path, monk
     assert killed == []
     assert marker_b.read_bytes() == marker_b_bytes
     assert (tmp_path / "tasks.yaml").read_bytes() == board_b_bytes
+
+
+def test_unapproved_async_board_remains_blocked(tmp_path, monkeypatch):
+    da = _load(tmp_path, n_open=1, approved=False)
+    monkeypatch.setattr(da.subprocess, "Popen", lambda *a, **kw: pytest.fail("unapproved provider launch"))
+    assert da.reserve_and_launch(["codex"], 1, 1, True) == []
+    assert da.reserve_and_launch(["codex"], 1, 1, False) == []
+    assert _board(tmp_path)["T0"].status == "open"

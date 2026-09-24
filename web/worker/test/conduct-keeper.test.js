@@ -4162,3 +4162,45 @@ test("an expected_absent create against an existing task is refused with 409, no
   // still have mutated production state before the caller got to tolerate it.
   assert.deepEqual(board, before);
 });
+
+for (const accepted of [false, true]) {
+  test(`Jules ${accepted ? "accepted" : "unknown"} occupancy survives expiration without renewing authority`, async () => {
+    let clock = NOW;
+    const executor = session("jules", {concurrency: 2});
+    const executionPolicy = {mode: "dispatch", approved_priorities: ["jules-owned", "new-work"].map(key => ({
+      outcome_id: key, enabled: true, work_keys: [key], deadline_policy: "fenced_async",
+    }))};
+    const {service} = await serviceWith([executor], {executionPolicy, clock: () => clock});
+    const reserved = await service.call("submit", {packet: await packet({workId: "jules-owned", conductor: executor.identity, maxAttempts: 1})});
+    const token = await leaseCapability(service, reserved);  // allow-secret: ephemeral test lease capability, not credential material
+    const attempt = validateExecutorAttempt({attempt_id: "jules-owned-attempt", run_id: reserved.run_id,
+      lease_id: reserved.lease.lease_id, lease_generation: reserved.lease.generation, executor: executor.identity,
+      adapter: "jules-api", status: accepted ? "submitted" : "launching", provider_state: accepted ? "nonterminal" : "unknown",
+      provider_run_id: accepted ? "provider-owned-session" : null, submitted_at: NOW.toISOString(), updated_at: NOW.toISOString()}, NOW);
+    const heartbeat = row => service.call("heartbeat", {lease_id: reserved.lease.lease_id, capability_token: token,
+      generation: reserved.lease.generation, observed_heads: {pr: "abc123"}, attempt: row});
+    await heartbeat(attempt);
+    clock = new Date(NOW.getTime() + 31 * 60000);
+    const claim = await service.call("claim", {lease_id: reserved.lease.lease_id, generation: reserved.lease.generation});
+    assert.equal(claim.observation_only, true);
+    const before = (await service.call("graph", {run_id: reserved.run_id})).nodes[0];
+    assert.equal((await heartbeat({...attempt, updated_at: clock.toISOString()})).status, "observation_only");
+    const after = (await service.call("graph", {run_id: reserved.run_id})).nodes[0];
+    assert.deepEqual(after.lease, before.lease);
+    assert.equal(after.status, "expired");
+    assert.deepEqual(after.receipts, before.receipts);
+    await assert.rejects(service.call("execution_info", {work_key: "jules-owned", principal: {principal_id: "local:jules:cli", roles: ["conductor"]}}), /active_reservation_required/);
+    await assert.rejects(heartbeat({...attempt, attempt_id: "not-the-owned-attempt"}), /not active/);
+    await service.call("register", {session: session("jules", {heartbeatAt: clock, concurrency: 2})});
+    const next = await service.call("submit", {packet: await packet({workId: "new-work", conductor: executor.identity,
+      maxAttempts: 1, deadline: new Date(clock.getTime() + 60 * 60000)})});
+    assert.equal(next.status, "busy");
+    const done = {...attempt, provider_run_id: "provider-owned-session", provider_state: "terminal", status: "succeeded", updated_at: clock.toISOString()};
+    await heartbeat(done);
+    const settled = (await service.call("graph", {run_id: reserved.run_id})).nodes[0];
+    assert.equal(settled.status, "expired");
+    assert.deepEqual(settled.lease, before.lease);
+    await assert.rejects(heartbeat({...done, provider_state: "nonterminal"}), /regressed/);
+    await assert.rejects(service.call("execution_info", {work_key: "jules-owned", principal: {principal_id: "local:jules:cli", roles: ["conductor"]}}), /active_reservation_required/);
+  });
+}

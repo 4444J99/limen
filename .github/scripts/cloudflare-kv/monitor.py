@@ -9,6 +9,7 @@ import sys
 import time
 import urllib.request
 import release as r
+from quota_status import annotate, safe_failure
 
 FIRST_COMPLETE_DAY = '2026-09-24'
 EXPECTED_REVISION = 'kv-recovery-d1-20260923-v2'
@@ -32,7 +33,7 @@ def project_state(state, now):
   completed=value.get('lastCompletedAt',0)
   age=now-completed if isinstance(completed,(float,int)) and completed else None
   status=value.get('lastStatus')
-  out[name]={'last_status':status if status in ('success','failure','timeout','skipped') else 'unknown',
+  out[name]={**safe_failure(value), 'last_status':status if status in ('success','failure','timeout','skipped') else 'unknown',
              'last_completion_age_seconds':round(age/1000) if age is not None else None,
              'healthy':status=='success' and age is not None and 0<=age<=limit}
  return out
@@ -124,7 +125,7 @@ def observe(client):
  report['complete_window_ok']=window_ok
  completed=[d for d in report['usage']['days'] if d['completed_post_rollout_window']]
  report['state']=classify(report['runtime_ok'],completed)
- return report
+ return annotate(report)
 
 
 def classify(runtime_ok, completed):
