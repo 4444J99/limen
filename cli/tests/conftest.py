@@ -214,9 +214,10 @@ def isolated_workstream_growth(tmp_path, monkeypatch):
     original_popen = subprocess.Popen
 
     def isolated_popen(args, *positional, **kwargs):
-        if isinstance(args, (list, tuple)) and len(args) > 1:
-            source = Path(str(args[1]))
-            if Path(str(args[0])).name == "bash" and source.name == "start-worktree-session.sh" and source.is_file():
+        if isinstance(args, (list, tuple)) and args:
+            launch_index = 1 if Path(str(args[0])).name == "bash" and len(args) > 1 else 0
+            source = Path(str(args[launch_index]))
+            if source.name == "start-worktree-session.sh" and source.is_file():
                 resolved = source.resolve()
                 if resolved not in copies:
                     home = tmp_path / ("launcher-" + hashlib.sha256(str(resolved).encode()).hexdigest()[:12])
@@ -234,7 +235,7 @@ def isolated_workstream_growth(tmp_path, monkeypatch):
                     target.write_text(text)
                     target.chmod(0o755)
                     copies[resolved] = target
-                args = [args[0], str(copies[resolved]), *args[2:]]
+                args = [*args[:launch_index], str(copies[resolved]), *args[launch_index + 1 :]]
         return original_popen(args, *positional, **kwargs)
 
     monkeypatch.setattr(subprocess, "Popen", isolated_popen)
