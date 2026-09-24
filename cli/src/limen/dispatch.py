@@ -4110,7 +4110,9 @@ def _is_auth_blip(text: str) -> bool:
     return bool(_AUTH_BLIP_PATTERNS.search(text or "")) and not _is_rate_limited(text)
 
 
-_GITHUB_REMOTE_RE = re.compile(r"(?:github\.com[:/])([^/\s]+)/([^/\s]+?)(?:\.git)?$")
+_GITHUB_REMOTE_RE = re.compile(
+    r"^(?:https?://github\.com/|git@github\.com:|ssh://git@github\.com/)([^/\s]+)/([^/\s]+?)(?:\.git)?$"
+)
 
 
 def _path_like_repo(repo: str | None) -> bool:
@@ -4165,48 +4167,36 @@ def _remote_repo_arg(task: Task) -> str | None:
 
 
 def _resolve_repo_dir(task: Task) -> Path | None:
-    """Find a local git checkout of task.repo (owner/name) across known roots.
+    """Find a checkout only when its origin exactly matches the requested slug.
 
-    Falls back to matching by repo name under any org dir (the local checkout's
-    org can differ from the GitHub remote org, e.g. local organvm/ vs remote
-    a-organvm/), disambiguating by the git remote when multiple names collide.
+    Directory names are discovery hints, never repository identity. Explicit local
+    paths retain their separate caller-authorized semantics.
     """
     if not task.repo:
         return None
     local_path = _local_repo_path(task.repo)
     if local_path is not None:
         return local_path
-    org, _, name = task.repo.partition("/")
+    if _path_like_repo(task.repo):
+        return None
+    org, separator, name = task.repo.partition("/")
+    if not separator or not org or not name or "/" in name:
+        return None
     ws = Path(os.environ.get("LIMEN_WORKDIR", Path.home() / "Workspace"))
     cart = Path.home() / "Workspace" / ".home-cartridge" / "Code"
     cache = _clone_cache_root()
-    cache_candidates = (cache / _clone_cache_key(task.repo),) if cache is not None else ()
-    for cand in (
-        *cache_candidates,
-        ws / task.repo,
-        ws / org / name,
-        ws / name,
-        cart / org / name,
-        cart / name,
-    ):
-        if (cand / ".git").exists():
-            return cand
-    matches = [p for root in (ws, cart) for p in root.glob(f"*/{name}") if (p / ".git").exists()]
-    if len(matches) == 1:
-        return matches[0]
-    for p in matches:  # disambiguate by remote when name collides across orgs
-        try:
-            r = subprocess.run(
-                ["git", "-C", str(p), "remote", "get-url", "origin"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-            if r.returncode == 0 and task.repo.lower() in r.stdout.lower():
-                return p
-        except Exception:
-            pass
-    return matches[0] if matches else None
+    candidates = [cache / _clone_cache_key(task.repo)] if cache is not None else []
+    candidates.extend((ws / task.repo, ws / name, cart / org / name, cart / name))
+    candidates.extend(p for root in (ws, cart) for p in root.glob(f"*/{name}"))
+    seen: set[Path] = set()
+    for candidate in candidates:
+        if candidate in seen or not (candidate / ".git").exists():
+            continue
+        seen.add(candidate)
+        remote = _github_slug_from_local_repo(candidate)
+        if remote is not None and remote.casefold() == task.repo.casefold():
+            return candidate
+    return None
 
 
 def _existing_ancestor(path: Path) -> Path | None:
@@ -4444,7 +4434,8 @@ def _clone_repo(task: Task) -> Path | None:
     dest = cache / _clone_cache_key(task.repo)
     with _GIT_PLUMBING_LOCK:
         if (dest / ".git").exists():  # a concurrent dispatch already cloned it
-            return dest
+            origin = _github_slug_from_local_repo(dest)
+            return dest if origin and origin.casefold() == task.repo.casefold() else None
         dest.parent.mkdir(parents=True, exist_ok=True)
         try:
             # _run_capture (process-group SIGKILL), NOT plain subprocess.run: a `gh repo clone`
@@ -4461,7 +4452,8 @@ def _clone_repo(task: Task) -> Path | None:
         except Exception:
             print(f"  clone {task.repo} errored: repository clone unavailable")
             return None
-    if (dest / ".git").exists():
+    origin = _github_slug_from_local_repo(dest) if (dest / ".git").exists() else None
+    if origin and origin.casefold() == task.repo.casefold():
         print(f"  cloned {task.repo} → {dest}")
         return dest
     print(f"  clone {task.repo} failed: repository clone unavailable")
