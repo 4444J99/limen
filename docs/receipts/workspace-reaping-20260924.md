@@ -56,6 +56,12 @@ PR #2709 is at `10ee31bdc27fec7d32af9e28fc2eddf0ee641c1f`. Its CI build jobs pas
 - `mise prune --tools` removed only unused Node 24.18.0; `mise ls --prunable` is now empty. Installed 24.21.0 and the versions required by trusted workspace configs remain.
 - The latest Data-volume reading fell to 42 GiB available while the local Time Machine snapshots remained retained. No physical-space recovery is claimed from directory-size reductions; APFS snapshot retention and concurrent disk activity remain the observed constraints.
 
+## Follow-up tranche — snapshot and application-cache audit
+
+- Traced the earlier “keep the two internal snapshots” decision to the local snapshot set shown at 2026-09-23 23:30 UTC: `com.apple.TimeMachine.2026-09-23-172930.local` (dataless) and `com.apple.TimeMachine.2026-09-23-182954.local`. macOS has since thinned both automatically; neither was manually deleted. The 15 snapshots present on 2026-09-24 are later Time Machine snapshots, and all remain untouched under the user's retention choice.
+- Audited the largest remaining Library caches. Chrome is running, Playwright MCP is running, and Codex has three open files under its cache. CloudKit/iCloud and updater payloads remain in use or are not safely disposable. No additional cache directory met the stale, regenerable, inactive criteria, so none was removed.
+- Current Data-volume capacity remains 41 GiB available. PR #2709 is open and non-draft at `95bbc444b15c32c5e85466b3406d1334d29cca97`, matching the pushed recovery branch; its required `pr-gate` failed closed at `positioning-foundry-technical-readiness-public-live` because live GitHub observation failed. This gate has not been retried because its relevant inputs have not changed.
+
 ## Latest capacity checkpoint — 2026-09-24
 
 - Final exact-head check: local recovery branch equals `origin/fix/storage-headroom-20260923` at `ded70359ab56990a6bccf91829ecad9db3a39e9a`; checkout clean.
