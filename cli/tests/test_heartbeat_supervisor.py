@@ -1,12 +1,11 @@
+import hashlib
 import json
 from pathlib import Path
 
 import pytest
-
 from limen import heartbeat
 from limen.bounded_subprocess import BoundedCompletedProcess, BoundedSubprocessError
 from limen.notification_effect import DeliveryReceipt
-
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -62,6 +61,38 @@ def test_contract_is_a_one_shot_resource_contract():
     assert "--no-receipt" in commands["live-checkout-currency"]
     assert "--no-write" in commands["cloud-storage-doctor"]
     assert "--no-write" in commands["tcc-track-c"]
+
+
+def test_audit_rotation_preserves_full_prior_stream_within_contract_bound(tmp_path):
+    root = tmp_path / "heartbeat"
+    root.mkdir()
+    audit = root / "audit.jsonl"
+    prior = b"p" * (heartbeat.MAX_AUDIT_STREAM_BYTES - 2)
+    audit.write_bytes(prior)
+    receipt = {"run_id": "new", "status": "passed"}
+
+    heartbeat._append_audit(root, receipt)
+
+    digest = hashlib.sha256(prior).hexdigest()
+    archived = root / "history" / f"audit.jsonl-{digest}"
+    assert archived.read_bytes() == prior
+    assert audit.read_bytes() == (
+        json.dumps(receipt, sort_keys=True, separators=(",", ":")) + "\n"
+    ).encode()
+    assert audit.stat().st_size <= heartbeat.MAX_AUDIT_STREAM_BYTES
+
+
+def test_oversized_audit_record_is_preserved_and_active_stream_stays_bounded(tmp_path):
+    root = tmp_path / "heartbeat"
+    root.mkdir()
+    receipt = {"run_id": "large", "payload": "x" * heartbeat.MAX_AUDIT_STREAM_BYTES}
+    encoded = (json.dumps(receipt, sort_keys=True, separators=(",", ":")) + "\n").encode()
+
+    heartbeat._append_audit(root, receipt)
+
+    digest = hashlib.sha256(encoded).hexdigest()
+    assert (root / "history" / f"audit.jsonl-{digest}").read_bytes() == encoded
+    assert (root / "audit.jsonl").read_bytes() == b""
 
 
 def test_runtime_identity_uses_reviewed_digest_for_every_probe(monkeypatch):
