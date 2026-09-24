@@ -10,6 +10,7 @@ in-code default (the organ degrades, it never crashes the beat).
 from __future__ import annotations
 
 import importlib
+from collections.abc import Mapping, Iterator
 from copy import deepcopy
 from functools import lru_cache
 import os
@@ -70,7 +71,23 @@ def _cached_panel(path: Path, version: tuple[int, int, int, int, int]) -> dict[s
     return parameters if isinstance(parameters, dict) else {}
 
 
-def _load_panel() -> dict[str, object]:
+class _PanelView(Mapping[str, object]):
+    """Copy only the selected entry; never expose the cached mutable registry."""
+
+    def __init__(self, panel: dict[str, object]):
+        self.__panel = panel
+
+    def __getitem__(self, key: str) -> object:
+        return deepcopy(self.__panel[key])
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.__panel)
+
+    def __len__(self) -> int:
+        return len(self.__panel)
+
+
+def _load_panel() -> Mapping[str, object]:
     path = panel_path()
     if yaml_module is None or path is None:
         return {}
@@ -78,8 +95,9 @@ def _load_panel() -> dict[str, object]:
         path = path.resolve()
         # Every read re-stats the selected panel. Edits, atomic replacements,
         # permissions and worktree changes invalidate the bounded parsed cache.
-        # Return a copy: callers must not mutate another reader's defaults.
-        return deepcopy(_cached_panel(path, _version(path)))
+        # Copy on access: fetching one parameter must not copy the entire
+        # 1,000-entry panel. Callers still cannot change cached defaults.
+        return _PanelView(_cached_panel(path, _version(path)))
     except Exception:
         return {}
 

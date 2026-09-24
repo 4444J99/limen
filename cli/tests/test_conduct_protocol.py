@@ -1562,3 +1562,157 @@ def test_cancel_is_reserved_only_and_request_stop_is_cooperative() -> None:
     assert broker.request_stop(running["run_id"], codex.session_id, now=NOW)["cooperative"] is True
     with pytest.raises(ConductConflict, match="reserved"):
         broker.cancel(running["run_id"], codex.session_id, now=NOW)
+
+
+def _jules_occupancy_fixture(*, accepted=True):
+    executor = session("jules", concurrency=2)
+    broker = broker_with(executor)
+    broker.execution_policy = {
+        "mode": "dispatch",
+        "approved_priorities": [
+            {"outcome_id": key, "enabled": True, "work_keys": [key], "deadline_policy": "fenced_async"}
+            for key in ("jules-owned", "new-work")
+        ],
+    }
+    work = packet(work_id="jules-owned", conductor=executor.identity).model_copy(
+        update={"retry": RetryPolicyV1(max_attempts=1)}
+    )
+    reserved = broker.submit(work, now=NOW)
+    lease = reserved["lease"]
+    token = capability(broker, reserved)
+    attempt = ExecutorAttemptV1(
+        attempt_id="jules-owned-attempt",
+        run_id=reserved["run_id"],
+        lease_id=lease["lease_id"],
+        lease_generation=lease["generation"],
+        executor=executor.identity,
+        adapter="jules-api",
+        status="submitted" if accepted else "launching",
+        provider_run_id="session-real-identity" if accepted else None,
+        provider_state="nonterminal" if accepted else "unknown",
+        submitted_at=NOW,
+        updated_at=NOW,
+    )
+    broker.heartbeat(
+        lease["lease_id"],
+        token,
+        generation=lease["generation"],
+        observed_heads={"pr": "abc123"},
+        attempt=attempt,
+        now=NOW,
+    )
+    return broker, executor, reserved, token, attempt
+
+
+@pytest.mark.parametrize("accepted", [False, True])
+def test_jules_expiry_retains_occupancy_but_never_mutation_authority(accepted):
+    from limen.inventory_admission import execution_active, execution_occupied
+
+    broker, executor, reserved, token, attempt = _jules_occupancy_fixture(accepted=accepted)
+    late = NOW + timedelta(minutes=31)
+    claim = broker.claim(attempt.lease_id, attempt.lease_generation, now=late)
+    assert claim["observation_only"] is True
+    before = copy.deepcopy(broker.graph(reserved["run_id"])["nodes"][0])
+    assert not execution_active(before, late)
+    assert execution_occupied(before, late)
+    result = broker.heartbeat(
+        attempt.lease_id,
+        token,
+        generation=attempt.lease_generation,
+        attempt=attempt.model_copy(update={"updated_at": late}),
+        now=late,
+    )
+    assert result["status"] == "observation_only"
+    after = broker.graph(reserved["run_id"])["nodes"][0]
+    assert after["lease"] == before["lease"]
+    assert after["status"] == before["status"] == "expired"
+    assert after.get("receipts") == before.get("receipts")
+    with pytest.raises(ConductConflict, match="active_reservation_required"):
+        broker.execution_info("jules-owned", now=late)
+    with broker.store.transaction() as state:
+        assert broker._active_load(state, late)[executor.session_id] == 1
+    # A second writer must not collide with the provider that outlived its lease.
+    broker.register(executor.model_copy(update={"heartbeat_at": late}), now=late)
+    new = packet(work_id="new-work", conductor=executor.identity).model_copy(
+        update={"retry": RetryPolicyV1(max_attempts=1), "deadline": late + timedelta(hours=1)}
+    )
+    conflict = broker.submit(new, now=late)
+    assert conflict["status"] == "busy"
+
+
+def test_jules_terminal_late_observation_releases_capacity_not_authority():
+    from limen.inventory_admission import execution_occupied
+
+    broker, executor, reserved, token, attempt = _jules_occupancy_fixture()
+    late = NOW + timedelta(minutes=31)
+    broker.claim(attempt.lease_id, attempt.lease_generation, now=late)
+    before = copy.deepcopy(broker.graph(reserved["run_id"])["nodes"][0])
+    completed = attempt.model_copy(update={"status": "succeeded", "provider_state": "terminal", "updated_at": late})
+    broker.heartbeat(attempt.lease_id, token, generation=attempt.lease_generation, attempt=completed, now=late)
+    after = broker.graph(reserved["run_id"])["nodes"][0]
+    assert not execution_occupied(after, late)
+    assert after["lease"] == before["lease"]
+    assert after["status"] == "expired"
+    assert after["attempts"][0]["provider_run_id"] == "session-real-identity"
+    with pytest.raises(ConductConflict, match="active_reservation_required"):
+        broker.execution_info("jules-owned", now=late)
+    with pytest.raises(ConductConflict, match="regressed"):
+        broker.heartbeat(attempt.lease_id, token, generation=attempt.lease_generation, attempt=attempt, now=late)
+
+
+def test_jules_late_observation_cannot_forge_or_create_attempts():
+    broker, _, reserved, token, attempt = _jules_occupancy_fixture()
+    late = NOW + timedelta(minutes=31)
+    broker.claim(attempt.lease_id, attempt.lease_generation, now=late)
+    for bad_token, generation, change in (
+        ("wrong-token", attempt.lease_generation, {}),
+        (token, attempt.lease_generation + 1, {}),
+        (token, attempt.lease_generation, {"attempt_id": "new-attempt"}),
+        (token, attempt.lease_generation, {"provider_run_id": "someone-else"}),
+    ):
+        with pytest.raises(ConductConflict):
+            broker.heartbeat(
+                attempt.lease_id, bad_token, generation=generation, attempt=attempt.model_copy(update=change), now=late
+            )
+    assert len(broker.graph(reserved["run_id"])["nodes"][0]["attempts"]) == 1
+
+
+def test_jules_local_failed_unknown_attempt_cannot_be_retried():
+    broker, _, reserved, token, attempt = _jules_occupancy_fixture(accepted=False)
+    failed = attempt.model_copy(update={"status": "failed", "failure_class": "transient"})
+    broker.heartbeat(
+        attempt.lease_id,
+        token,
+        generation=attempt.lease_generation,
+        attempt=failed,
+        observed_heads={"pr": "abc123"},
+        now=NOW,
+    )
+    with broker.store.transaction() as state:
+        run = state["runs"][reserved["run_id"]]
+        run["packet"]["retry"]["max_attempts"] = 2  # Allowance alone must not permit the duplicate.
+    with pytest.raises(ConductConflict, match="still live"):
+        broker.heartbeat(
+            attempt.lease_id,
+            token,
+            generation=attempt.lease_generation,
+            attempt=attempt.model_copy(update={"attempt_id": "duplicate-attempt"}),
+            observed_heads={"pr": "abc123"},
+            now=NOW,
+        )
+
+
+def test_provider_terminal_and_not_started_require_consistent_identity():
+    from pydantic import ValidationError
+
+    broker, _, _, token, attempt = _jules_occupancy_fixture(accepted=False)
+    for changes in ({"provider_state": "terminal"}, {"provider_state": "not_started", "provider_run_id": "accepted"}):
+        with pytest.raises(ValidationError):
+            broker.heartbeat(
+                attempt.lease_id,
+                token,
+                generation=attempt.lease_generation,
+                attempt=attempt.model_copy(update=changes),
+                observed_heads={"pr": "abc123"},
+                now=NOW,
+            )

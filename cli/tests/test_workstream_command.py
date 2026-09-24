@@ -14,6 +14,8 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+
+pytestmark = pytest.mark.usefixtures("isolated_workstream_growth")
 from click.testing import CliRunner
 
 ROOT = Path(__file__).resolve().parents[2]

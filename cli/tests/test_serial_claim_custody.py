@@ -181,3 +181,9 @@ def test_claim_directory_sync_failure_blocks_submission_or_handoff(tmp_path, mon
         assert archived.read_bytes() == pending[0].read_bytes()
         with pytest.raises(RuntimeError, match="terminal ticket custody"):
             _reserve(path, board)
+
+
+@pytest.fixture(autouse=True)
+def _approved_claim_priority(approved_execution_policy):
+    """Only the named synthetic claim is approved; real keeper custody still runs."""
+    approved_execution_policy("ACK-CUSTODY")

@@ -13,7 +13,7 @@ from limen.jules_api import (
     JulesApiError,
     JulesMutationUnknown,
     _NoRedirect,
-    _transport,
+    _http_transport as _transport,
     main,
     observe,
     session_identity,
