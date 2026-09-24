@@ -1,5 +1,8 @@
 """Read-only, value-free verification of the deployed UCC scheduling contract."""
 import hashlib
+import re
+import urllib.error
+import urllib.request
 from email import policy
 from email.parser import BytesParser
 from pathlib import Path
@@ -7,7 +10,15 @@ from pathlib import Path
 UCC = 'ucc-mca-edge-staging'
 SCHEDULER = 'ops-scheduler-production'
 ENTRYPOINT = 'KvIncidentScheduledIngress'
-MODULES = frozenset(('index.js', 'finishline.mjs', 'diagnosis.mjs', 'bounded-jobs.mjs'))
+MODULES = frozenset(('index.js', 'runtime.js', 'finishline.mjs', 'diagnosis.mjs', 'bounded-jobs.mjs'))
+MAIN_MODULES = frozenset(('index.js', 'runtime.js'))
+
+
+def main_module(files):
+    names = MAIN_MODULES.intersection(files)
+    if len(names) != 1:
+        raise ValueError('runtime_main_ambiguous_or_missing')
+    return next(iter(names))
 
 
 def unpack(kind, raw):
@@ -23,8 +34,7 @@ def unpack(kind, raw):
         if name not in MODULES or name in result:
             raise ValueError('unrecognized_runtime_module')
         result[name] = part.get_payload(decode=True) or b''
-    if 'index.js' not in result:
-        raise ValueError('runtime_main_missing')
+    main_module(result)
     return result
 
 
@@ -32,10 +42,12 @@ def describe(worker, settings, files, expected_helper):
     bindings = settings.get('bindings')
     if not isinstance(bindings, list) or any(not isinstance(b, dict) for b in bindings):
         raise ValueError('invalid_bindings')
-    body = files['index.js'].decode('utf-8')
+    filename = main_module(files)
+    body = files[filename].decode('utf-8')
     helper = 'bounded-jobs.mjs' if worker == UCC else 'finishline.mjs'
     result = {
-        'main_module_sha256': hashlib.sha256(files['index.js']).hexdigest(),
+        'main_module': filename,
+        'main_module_sha256': hashlib.sha256(files[filename]).hexdigest(),
         'helper_present': helper in files,
         'helper_matches_accepted_source': files.get(helper) == expected_helper,
         'scheduler_secret_binding_present': any(b.get('name') == 'SCHEDULER_SECRET'
@@ -44,6 +56,12 @@ def describe(worker, settings, files, expected_helper):
     if worker == UCC:
         result['named_ingress_declared'] = ENTRYPOINT in body
         result['budget_wrapper_imported'] = './bounded-jobs.mjs' in body
+        result['canonical_bundle_markers_present'] = all(marker in body for marker in (
+            ENTRYPOINT, 'prds-scheduler-contract-v1', 'invocation_database_budget_exhausted'))
+        revisions = [b.get('text') for b in bindings
+                     if b.get('name') == 'DEPLOYMENT_SHA' and b.get('type') == 'plain_text']
+        result['deployment_revision'] = (revisions[0] if len(revisions) == 1
+            and isinstance(revisions[0], str) and re.fullmatch(r'[a-f0-9]{40}', revisions[0]) else None)
     else:
         matches = [b for b in bindings if b.get('name') == 'UCC_STAGING']
         binding = matches[0] if len(matches) == 1 else {}
@@ -54,6 +72,22 @@ def describe(worker, settings, files, expected_helper):
     return result
 
 
+def health_proof(expected_revision):
+    import observe
+    request = urllib.request.Request('https://ucc-mca-edge-staging.ivixivi.workers.dev/health',
+                                     headers={'User-Agent': 'organvm-kv-incident/1'})
+    try:
+        with observe.OPENER.open(request, timeout=15) as response:
+            status = response.status
+            body = observe.decode_response(response, 65536)
+        revision = body.get('revision') if isinstance(body, dict) else None
+        valid = isinstance(revision, str) and re.fullmatch(r'[a-f0-9]{40}', revision) is not None
+        return {'http': status, 'revision': revision if valid else None,
+                'matches_deployed_revision': bool(valid and expected_revision and revision == expected_revision)}
+    except Exception:
+        return {'state': 'health_revision_unobserved'}
+
+
 def inspect(client):
     folder = Path(__file__).parent
     result = {}
@@ -61,6 +95,8 @@ def inspect(client):
         try:
             files = unpack(*client.raw(client.root + name + '/content/v2'))
             result[name] = describe(name, client.settings(name), files, (folder / helper).read_bytes())
+            if name == UCC:
+                result[name]['health'] = health_proof(result[name]['deployment_revision'])
         except Exception:
             # Provider messages and configuration values are never echoed.
             result[name] = {'state': 'runtime_contract_unobserved'}
