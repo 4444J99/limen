@@ -4,25 +4,37 @@ on:
     paths: ['.github/workflows/jules-repair-snapshot.yml']
 permissions:
   contents: read
+  actions: read
+  issues: read
 jobs:
-  snapshot:
+  diagnostic:
     if: github.event.pull_request.number == 2687
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-      - name: Capture tracked source only
-        run: |
-          mkdir -p snapshot
-          git archive --format=tar HEAD -o snapshot/source.tar
-          git rev-parse HEAD > snapshot/commit.txt
-          git rev-parse HEAD^{tree} > snapshot/tree.txt
-          sha256sum snapshot/source.tar > snapshot/SHA256SUMS
-      - uses: actions/upload-artifact@v4
+      - uses: actions/setup-python@v5
         with:
-          name: jules-repair-source-${{ github.run_id }}
-          path: snapshot/
-          retention-days: 3
+          python-version: '3.12'
+      - run: python -m pip install -e 'cli[test]'
+      - name: Classify failing public evidence calls
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import hashlib, json, re, runpy, subprocess, sys
+          original = subprocess.run
+          def classified(args, *a, **kw):
+              result = original(args, *a, **kw)
+              if result.returncode:
+                  text = (result.stderr or '') + (result.stdout or '')
+                  codes = sorted(set(re.findall(r'\b(?:HTTP [1-5][0-9]{2}|NOT_FOUND|FORBIDDEN|UNAUTHORIZED|RATE_LIMITED|Resource not accessible by integration)\b', text)))
+                  print(json.dumps({'failed_command': args[:3] if args[:2] == ['gh', 'api'] and args[2] == 'graphql' else args[:1], 'request_sha256': hashlib.sha256(json.dumps(args).encode()).hexdigest(), 'exit_code': result.returncode, 'classifications': codes}), file=sys.stderr)
+              return result
+          subprocess.run = classified
+          sys.argv = ['verify_technical_readiness.py', '--audit', 'docs/positioning/foundry/psp-c11/technical-readiness-audit.json', '--public-live', '--json']
+          runpy.run_path('docs/positioning/foundry/psp-c11/verify_technical_readiness.py', run_name='__main__')
+          PY
