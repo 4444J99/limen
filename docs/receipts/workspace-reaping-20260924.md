@@ -33,3 +33,17 @@ PR #2709 is at `10ee31bdc27fec7d32af9e28fc2eddf0ee641c1f`. Its CI build jobs pas
 - Cleared the Go build cache (about 457 MiB before cleanup) with `go clean -cache`; no Go build process was running.
 - Removed six stale `node-gyp` header-cache versions (about 345 MiB): 22.23.2, 24.18.0, 26.6.0, 26.7.0, 26.8.1, and 26.8.2. Kept caches for the installed Node 26.9.0 and 24.21.0 runtimes.
 - These were regenerable local build caches, not repository source or Git history. Active npm and uv caches were preserved because live processes use them. The 200 GiB storage target remains unmet.
+
+## Follow-up tranche — package and analyzer stores
+
+- Removed 1.313 GiB of ignored analyzer/bytecode/Turbo caches from non-PRDS, non-private repository roots. The exact scanned manifest SHA was `5f99cb76b217e6eb33f8b85b461a64f5534694b210d488a62e9a943d0896ac85`; all 1,032 candidates remained ignored at removal. A fresh worktree reclaimer scan after this pass still found zero eligible worktrees.
+- `pnpm store prune` removed 570 unreferenced packages (23,036 files); pnpm reported no running process before pruning.
+- The unused `~/.npm/_cacache` was confirmed to have no open files and cleared (about 4.3 GiB). The active npm cache at `~/.cache/npm` was preserved.
+- Removed 14 stale `npx` package cache roots (about 1.25 GiB), preserving both roots identified in active process command lines.
+- The read-only APFS snapshot inventory now shows 14 purgeable Time Machine snapshots; the oldest is identified by `diskutil` as limiting the APFS container minimum. All snapshots remain retained under the user's instruction. The Data volume still reports 48 GiB available, so the 200 GiB target remains unmet despite the reductions in apparent cache size.
+
+## Follow-up tranche — remaining local storage
+
+- The post-cache worktree reclaimer again reported zero eligible candidates. The volume-level clone/worktree and branch passes likewise produced no further safe source-tree removals.
+- A home-directory census found the largest remaining stores are Library app state/history and personal data: Claude Application Support (13.5 GiB), Messages attachments (8.8 GiB), Voice Memos recordings (3.5 GiB), Freeform boards (2.3 GiB), Notes accounts (2.2 GiB), Photos, and iCloud Drive. These were preserved. No Docker/Podman/Colima data store was found at standard locations; Homebrew reported no orphan formulae.
+- The read-only APFS inventory found 14 purgeable Time Machine snapshots; the oldest is explicitly reported as limiting the APFS container minimum. No snapshots were removed. The Data volume reported 44 GiB available on the latest check (earlier in the same pass it reported 48 GiB); no net free-space gain is claimed from apparent cache deletions. Snapshot retention and concurrent disk activity remain consistent with that result.
