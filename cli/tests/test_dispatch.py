@@ -2426,6 +2426,39 @@ def test_repo_discovery_rejects_wrong_or_unknown_origin(tmp_path, monkeypatch, r
     assert D._resolve_repo_dir(task) is None
 
 
+def test_renamed_repository_matches_by_live_immutable_id(tmp_path, monkeypatch):
+    old = tmp_path / "previous-name"
+    (old / ".git").mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_WORKDIR", str(tmp_path))
+    monkeypatch.setattr(D, "_clone_cache_root", lambda: None)
+    monkeypatch.setattr(D, "_registered_github_coordinates", lambda _coordinate: ("prior-owner/previous-name",))
+    monkeypatch.setattr(D, "_github_slug_from_local_repo", lambda _path: "prior-owner/previous-name")
+    monkeypatch.setattr(
+        D,
+        "_github_repository_id",
+        lambda slug: 12345 if slug in {"prior-owner/previous-name", "current-owner/current-name"} else None,
+    )
+    task = Task(
+        id="RENAMED-IDENTITY",
+        title="renamed repository",
+        repo="current-owner/current-name",
+        target_agent="codex",
+        created=date(2026, 7, 7),
+    )
+    assert D._resolve_repo_dir(task) == old
+
+
+def test_repository_identity_lookup_fails_closed_offline(monkeypatch):
+    monkeypatch.setattr(
+        D.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(args, 1, "", "offline"),
+    )
+    D._GITHUB_REPOSITORY_ID_CACHE.clear()
+    assert D._github_repository_id("owner/repository") is None
+    assert not D._github_repositories_match("old/repository", "new/repository")
+
+
 def test_repo_discovery_selects_exact_remote_among_conflicting_copies(tmp_path, monkeypatch):
     wrong = tmp_path / "owner/project"
     right = tmp_path / "renamed-local/project"

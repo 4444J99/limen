@@ -4153,6 +4153,99 @@ def _github_slug_from_local_repo(path: Path) -> str | None:
     return _github_slug_from_remote(result.stdout)
 
 
+_GITHUB_REPOSITORY_ID_LOCK = threading.Lock()
+_GITHUB_REPOSITORY_ID_CACHE: dict[str, int] = {}
+
+
+def _github_repository_id(coordinate: str | None) -> int | None:
+    """Resolve the immutable repository ID through GitHub's authenticated API."""
+    slug = _github_slug_from_remote(coordinate) or _github_repo_identity(coordinate)
+    if slug is None:
+        return None
+    key = slug.casefold()
+    with _GITHUB_REPOSITORY_ID_LOCK:
+        cached = _GITHUB_REPOSITORY_ID_CACHE.get(key)
+        if cached is not None:
+            return cached
+        try:
+            result = subprocess.run(
+                ["gh", "api", f"repos/{slug}", "--jq", ".id"],
+                capture_output=True,
+                text=True,
+                timeout=12,
+                check=False,
+                stdin=subprocess.DEVNULL,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+        if result.returncode != 0:
+            return None
+        try:
+            repository_id = int(result.stdout.strip())
+        except (TypeError, ValueError):
+            return None
+        if repository_id <= 0:
+            return None
+        _GITHUB_REPOSITORY_ID_CACHE[key] = repository_id
+        return repository_id
+
+
+def _registered_github_coordinates(coordinate: str) -> tuple[str, ...]:
+    """Return the PORTVS identity registry coordinates for a known repository."""
+    roots = [
+        Path(value).expanduser() for value in (os.environ.get("LIMEN_LIVE_ROOT"), os.environ.get("LIMEN_ROOT")) if value
+    ]
+    roots.append(Path(__file__).resolve().parents[3])
+    registry_path = next(
+        (
+            root / "institutio/github/repository-identity.json"
+            for root in roots
+            if (root / "institutio/github/repository-identity.json").is_file()
+        ),
+        None,
+    )
+    if registry_path is None:
+        return ()
+    try:
+        payload = json.loads(registry_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ()
+    if not isinstance(payload, dict) or payload.get("schema_version") != "limen.repository_identity_registry.v1":
+        return ()
+    repositories = payload.get("repositories")
+    if not isinstance(repositories, list):
+        return ()
+    wanted = _github_repo_identity(coordinate)
+    if wanted is None:
+        return ()
+    for identity in repositories:
+        if not isinstance(identity, dict) or identity.get("schema_version") != "limen.repository_identity.v1":
+            continue
+        canonical = identity.get("canonical_coordinate")
+        aliases = identity.get("historical_aliases")
+        if not isinstance(canonical, str) or not isinstance(aliases, list):
+            continue
+        coordinates = (canonical, *[alias for alias in aliases if isinstance(alias, str)])
+        if any(_github_repo_identity(value) == wanted for value in coordinates):
+            return tuple(coordinates)
+    return ()
+
+
+def _github_repositories_match(left: str | None, right: str | None) -> bool:
+    """Match coordinates by live immutable ID when their names or owners changed."""
+    left_slug = _github_slug_from_remote(left) or _github_repo_identity(left or "")
+    right_slug = _github_slug_from_remote(right) or _github_repo_identity(right or "")
+    if left_slug is None or right_slug is None:
+        return False
+    if left_slug.casefold() == right_slug.casefold():
+        return True
+    if LIMEN_REPOSITORY_IDENTITY.accepts(left_slug) and LIMEN_REPOSITORY_IDENTITY.accepts(right_slug):
+        return True
+    left_id = _github_repository_id(left_slug)
+    right_id = _github_repository_id(right_slug)
+    return left_id is not None and left_id == right_id
+
+
 def _remote_repo_arg(task: Task) -> str | None:
     """Return a GitHub owner/repo slug for remote service lanes.
 
@@ -4187,6 +4280,18 @@ def _resolve_repo_dir(task: Task) -> Path | None:
     cache = _clone_cache_root()
     candidates = [cache / _clone_cache_key(task.repo)] if cache is not None else []
     candidates.extend((ws / task.repo, ws / name, cart / org / name, cart / name))
+    for coordinate in _registered_github_coordinates(task.repo):
+        alias_org, _, alias_name = coordinate.partition("/")
+        candidates.extend(
+            (
+                ws / coordinate,
+                ws / alias_name,
+                cart / alias_org / alias_name,
+                cart / alias_name,
+            )
+        )
+        if cache is not None:
+            candidates.append(cache / _clone_cache_key(coordinate))
     candidates.extend(p for root in (ws, cart) for p in root.glob(f"*/{name}"))
     seen: set[Path] = set()
     for candidate in candidates:
@@ -4194,7 +4299,7 @@ def _resolve_repo_dir(task: Task) -> Path | None:
             continue
         seen.add(candidate)
         remote = _github_slug_from_local_repo(candidate)
-        if remote is not None and remote.casefold() == task.repo.casefold():
+        if _github_repositories_match(remote, task.repo):
             return candidate
     return None
 
@@ -4435,7 +4540,7 @@ def _clone_repo(task: Task) -> Path | None:
     with _GIT_PLUMBING_LOCK:
         if (dest / ".git").exists():  # a concurrent dispatch already cloned it
             origin = _github_slug_from_local_repo(dest)
-            return dest if origin and origin.casefold() == task.repo.casefold() else None
+            return dest if _github_repositories_match(origin, task.repo) else None
         dest.parent.mkdir(parents=True, exist_ok=True)
         try:
             # _run_capture (process-group SIGKILL), NOT plain subprocess.run: a `gh repo clone`
@@ -4453,7 +4558,7 @@ def _clone_repo(task: Task) -> Path | None:
             print(f"  clone {task.repo} errored: repository clone unavailable")
             return None
     origin = _github_slug_from_local_repo(dest) if (dest / ".git").exists() else None
-    if origin and origin.casefold() == task.repo.casefold():
+    if _github_repositories_match(origin, task.repo):
         print(f"  cloned {task.repo} → {dest}")
         return dest
     print(f"  clone {task.repo} failed: repository clone unavailable")
