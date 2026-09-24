@@ -55,3 +55,10 @@ PR #2709 is at `10ee31bdc27fec7d32af9e28fc2eddf0ee641c1f`. Its CI build jobs pas
 - Removed a stale Homebrew Warp cask staging bundle last modified in August (926,303,535 apparent bytes) after confirming it had no open files and the installed Warp application ran from `/Applications/Warp.app`.
 - `mise prune --tools` removed only unused Node 24.18.0; `mise ls --prunable` is now empty. Installed 24.21.0 and the versions required by trusted workspace configs remain.
 - The latest Data-volume reading fell to 42 GiB available while the local Time Machine snapshots remained retained. No physical-space recovery is claimed from directory-size reductions; APFS snapshot retention and concurrent disk activity remain the observed constraints.
+
+## Latest capacity checkpoint — 2026-09-24
+
+- Final exact-head check: local recovery branch equals `origin/fix/storage-headroom-20260923` at `ded70359ab56990a6bccf91829ecad9db3a39e9a`; checkout clean.
+- Current volume reading: 41 GiB available. `diskutil apfs listSnapshots` reports 15 purgeable local Time Machine snapshots, with the oldest explicitly limiting the APFS container minimum. All remain retained.
+- The workspace worktree reclaimer found zero eligible checkouts after generated-cache cleanup. Pressure-mode clone inventory found only two candidate mirrors, both in `prds-work`, which remains out of scope. The online branch sweep removed one additional merged ref and retained any branch lacking fresh proof.
+- Further capacity recovery now requires a changed preservation boundary: the filesystem snapshots or the large personal, private, and active application stores. They remain untouched under the recorded user choices and custody constraints.
