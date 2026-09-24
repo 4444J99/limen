@@ -146,18 +146,25 @@ staged_blob_bytes() { # sum staged blobs before a commit can make an oversized p
   python3 - "$VAULT_DIR" <<'PY'
 import subprocess, sys
 root = sys.argv[1]
-entries = subprocess.check_output(["git", "-C", root, "ls-files", "-s", "-z"])
+paths = subprocess.check_output(
+    ["git", "-C", root, "diff", "--cached", "--name-only", "-z"]
+)
 total = 0
 seen = set()
-for raw in filter(None, entries.split(b"\0")):
-    metadata, _path = raw.split(b"\t", 1)
-    _mode, oid, stage = metadata.split()
-    if stage != b"0" or oid in seen:
-        continue
-    seen.add(oid)
-    total += int(subprocess.check_output(
-        ["git", "-C", root, "cat-file", "-s", oid.decode("ascii")], text=True
-    ).strip())
+for raw in filter(None, paths.split(b"\0")):
+    path = raw.decode("utf-8", "surrogateescape")
+    entries = subprocess.check_output(
+        ["git", "-C", root, "ls-files", "-s", "-z", "--", f":(literal){path}"]
+    )
+    for entry in filter(None, entries.split(b"\0")):
+        metadata, _indexed_path = entry.split(b"\t", 1)
+        _mode, oid, stage = metadata.split()
+        if stage != b"0" or oid in seen:
+            continue
+        seen.add(oid)
+        total += int(subprocess.check_output(
+            ["git", "-C", root, "cat-file", "-s", oid.decode("ascii")], text=True
+        ).strip())
 print(total)
 PY
 }
