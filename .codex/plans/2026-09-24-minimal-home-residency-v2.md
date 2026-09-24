@@ -210,3 +210,12 @@ Continuation retains the same original outcome and cumulative budget. Resolve th
 verification tail through bounded profiling and durable shard evidence, then continue the
 resumable full classification/shared evidence lifecycle work. Do not restart bulk ARCA uploads
 or retire private originals in lieu of the missing independent-key and replica restore proofs.
+
+Publication/readback: Limen implementation commit
+`2df974022bd3fd6f6009dcd01c52e3912accd93f` is preserved on the existing PR #2718;
+exact remote branch and PR head matched. The PR is explicitly draft because full CLI
+verification remains incomplete. Both implementation worktrees were clean after publication.
+The read-only application-owner canary inspected six declared surfaces: two existing
+surfaces were retained as owner-policy-required, four were absent, no candidate was
+eligible, and the actual process sensor reported no error. No deletion was attempted.
+The final sampled free capacity was 11.51 GiB; this does not satisfy capacity acceptance.
