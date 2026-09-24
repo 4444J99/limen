@@ -93,6 +93,49 @@ def _stable_agent_host_fixture(tmp_path_factory) -> str:
 
 
 @pytest.fixture(autouse=True)
+def _async_dispatch_explicit_admission_opt_out(request, monkeypatch):
+    """Keep async machinery tests focused when they explicitly disable admission.
+
+    ``test_async_dispatch`` predates the execution-priority and value-tier gates and
+    deliberately sets ``LIMEN_DISPATCH_ADMISSION=0`` inside its per-test loader so
+    those tests exercise reservation/harvest mechanics instead of operator policy.
+    Production now checks priority inside ``_dispatchable`` before the general switch
+    and filters automatic candidates through the value tier. Preserve those fail-closed
+    production rules: admit only this module's synthetic ``x/y`` repository and stub
+    only its synthetic task-priority check plus the exact admission seam imported by
+    ``dispatch-async.py``.
+    """
+    if Path(str(request.node.path)).name != "test_async_dispatch.py":
+        return
+
+    monkeypatch.setenv("LIMEN_VALUE_REPOS", "x/y")
+
+    import limen.dispatch as dispatch
+    import limen.inventory_admission as inventory_admission
+
+    real_check = dispatch.dispatch_admission_check
+    real_require_priority = inventory_admission.require_approved_priority
+
+    def dispatch_admission_check(*args, **kwargs):
+        if os.environ.get("LIMEN_DISPATCH_ADMISSION") == "0":
+            return {
+                "allow": True,
+                "dispatch_allowed": True,
+                "state": "disabled",
+                "reason": "test_only_admission_opt_out",
+            }
+        return real_check(*args, **kwargs)
+
+    def require_approved_priority(work_key, *args, **kwargs):
+        if os.environ.get("LIMEN_DISPATCH_ADMISSION") == "0" and str(work_key).startswith("T"):
+            return {"test_only_admission_opt_out": True, "work_key": str(work_key)}
+        return real_require_priority(work_key, *args, **kwargs)
+
+    monkeypatch.setattr(dispatch, "dispatch_admission_check", dispatch_admission_check)
+    monkeypatch.setattr(inventory_admission, "require_approved_priority", require_approved_priority)
+
+
+@pytest.fixture(autouse=True)
 def _restore_os_environ(tmp_path, tmp_path_factory, _stable_agent_host_fixture, monkeypatch):
     """Give each test one isolated explicit keeper and restore its environment."""
     saved = dict(os.environ)

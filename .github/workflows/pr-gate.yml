@@ -52,6 +52,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       LIMEN_PRGATE_SCOPED: "1"
+      # verify.py's default per-gate ceiling is 300s, while the registry gives
+      # serialized pytest-cli 1500s. Keep the workflow-level authority within
+      # the verifier's 600s aggregate ceiling so the heavy gate can finish
+      # instead of being deterministically killed at the default 300s.
+      LIMEN_VERIFY_GATE_TIMEOUT_SECONDS: "600"
     steps:
       - uses: actions/checkout@v7
         with:
