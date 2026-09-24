@@ -10,22 +10,6 @@ empty-branch-is-a-todo), so they are **kept, never auto-deleted** — this is th
 location instead of hanging invisibly.
 Resolve each: open a PR and land it, or delete the branch by hand if the intention is abandoned.
 
-## Decided — closed PR, work preserved (4) — reapable, awaiting acceptance
+## Live-work branches (0)
 
-A human CLOSED these PRs unmerged and the local tip is still that PR's exact head, so
-GitHub preserves the commit at `refs/pull/N/head` — `git fetch origin pull/N/head`
-recovers it. Deleting the local ref loses nothing. These are NOT unfulfilled intentions:
-the intention was already decided against. They are reap candidates gated on
-`docs/branch-reap-acceptance.jsonl`, not on anyone re-deciding them.
-
-- `feat/mcp-estate-contract-20260908` — PR #2567 `refs/pull/2567/head` @ `9e4daacf8128b6a38b30191cf42cc185fb3f4987`; local tip matches exact pull head — 9e4daacf8 docs: hand off full MCP estate completion scope
-- `feat/mcp-healing-delivery-20260908` — PR #2577 `refs/pull/2577/head` @ `5ea335bfd3262a2fcf43825d7e527494ccf4e8d9`; local tip matches exact pull head — 5ea335bfd fix(mcp): classify native plugin capabilities separately
-- `fix/keeper-publication-recovery-20260908` — PR #2569 `refs/pull/2569/head` @ `27c0d3d3a573f4a6fbdf689123aa4db02b8a1814`; local tip matches exact pull head — 27c0d3d3a feat: expose bounded authenticated keeper session audit evidence
-- `work/git-finishline-20260908` — PR #2573 `refs/pull/2573/head` @ `de70f51959613a3dab5d8887a49fab9eef642687`; local tip matches exact pull head — de70f5195 docs: retain partial audit and broker release receipts
-
-## Live-work branches (3) — decide each
-
-- `work/git-finishline-handoff-20260908` — aac08eaa6 docs: home verified custody and continuation receipts
-- `work/recovery-green-20260908` — eef3466ee wip: preserve recovery corrections and verification handoff
-- `work/recovery-intent-completion-20260908` — de70f5195 docs: retain partial audit and broker release receipts
-
+None — every local branch is landed (reaped), in-flight (open PR), or a trunk.
