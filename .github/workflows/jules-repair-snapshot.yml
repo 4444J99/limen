@@ -4,10 +4,8 @@ on:
     paths: ['.github/workflows/jules-repair-snapshot.yml']
 permissions:
   contents: read
-  actions: read
-  issues: read
 jobs:
-  diagnostic:
+  snapshot:
     if: github.event.pull_request.number == 2687
     runs-on: ubuntu-latest
     timeout-minutes: 7
@@ -15,35 +13,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: '3.12'
-      - run: python -m pip install -e 'cli[test]'
-      - name: Resolve public candidate failure without raw error bodies
-        env:
-          GH_TOKEN: ${{ github.token }}
+          node-version: '22'
+      - name: Preserve reachable history and locked worker dependencies
         run: |
-          python - <<'PY'
-          import json, runpy, subprocess
-          module=runpy.run_path('docs/positioning/foundry/psp-c11/verify_technical_readiness.py')
-          audit=module['load_json'](module['ROOT']/'docs/positioning/foundry/psp-c11/technical-readiness-audit.json')
-          rows=sorted((r['repository'],r['observed_head']) for r in audit['candidates'] if r['visibility']=='public')
-          selections=[]
-          for i,(repository,head) in enumerate(rows):
-              owner,name=repository.split('/')
-              selections.append(f'r{i}:repository(owner:{json.dumps(owner)},name:{json.dumps(name)})'+'{isPrivate object(expression:'+json.dumps(head)+'){... on Commit{oid}}}}')
-          proc=subprocess.run(['gh','api','graphql','-f','query=query{'+''.join(selections)+'}'],capture_output=True,text=True,timeout=60)
-          value=json.loads(proc.stdout)
-          data=value.get('data') or {}
-          failures=[]
-          for i,(repository,head) in enumerate(rows):
-              row=data.get('r'+str(i))
-              if row is None or row.get('isPrivate') is not False or (row.get('object') or {}).get('oid')!=head:
-                  metadata=subprocess.run(['gh','api','repos/'+repository],capture_output=True,text=True,timeout=30)
-                  try: observed=json.loads(metadata.stdout)
-                  except ValueError: observed={}
-                  failures.append({'accepted_public_reference':repository,'graphql_present':row is not None,'rest_exit':metadata.returncode,'public':observed.get('private') is False,'canonical_public_reference':observed.get('full_name') if observed.get('private') is False else None,'repository_id':observed.get('id') if observed.get('private') is False else None})
-          print(json.dumps({'failures':failures,'candidate_count':len(rows),'error_types':sorted(set(e.get('type','unknown') for e in value.get('errors',[])))},sort_keys=True))
-          raise SystemExit(bool(failures))
-          PY
+          mkdir -p snapshot
+          git bundle create snapshot/history.bundle HEAD refs/remotes/origin/main
+          npm ci --ignore-scripts --prefix web/worker
+          tar -czf snapshot/worker-deps.tar.gz -C web/worker node_modules
+          git rev-parse HEAD > snapshot/commit.txt
+          sha256sum snapshot/history.bundle snapshot/worker-deps.tar.gz > snapshot/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jules-repair-history-${{ github.run_id }}
+          path: snapshot/
+          retention-days: 3
