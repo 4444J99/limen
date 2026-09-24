@@ -19,3 +19,11 @@ Branch and worktree cleanup had been left to separate manual passes, while new l
 The Data volume still reported 50 GiB available after deleting the generated files. The two internal APFS snapshots remain as directed and are retaining blocks. Private documents, agent session histories, application containers, unknown ignored payloads, and work with unpushed commits were preserved. The cleanup therefore did not reach the 200 GiB target.
 
 PR #2709 is at `10ee31bdc27fec7d32af9e28fc2eddf0ee641c1f`. Its CI build jobs passed, but the required `pr-gate` failed on the unrelated `positioning-foundry-technical-readiness-public-live` check with `live GitHub observation failed closed`. The change remains unmerged and the Limen runtime has not deployed it.
+
+## Follow-up tranche — 2026-09-24
+
+- A nested-root census found 76 Git admin roots. PRDS paths and roots inside private/custody estates were excluded from mutation.
+- The GitHub-backed landed-ref reaper completed 41 public-root passes before a later slow query was interrupted. It removed 49 local refs, each proven landed on the remote default branch or covered by a merged PR and the standing landed-ref grant. It deleted no remote branches. A second, ancestry-only pass covered all 61 eligible public roots and removed no additional refs; local-only, open, advanced, and otherwise unproven refs were retained.
+- A fresh Limen worktree check scanned 77 roots and found zero eligible worktrees. A fresh clone-reaper check found zero eligible clones and kept 80 paths for active-process, core, dirty/untracked, recent, linked-worktree, submodule, ignored-data, or unpushed-object reasons.
+- Homebrew's own `cleanup --prune=all` removed about 3.9 GiB of regenerable downloads and formula cache. This was non-Git cache data. The Data volume then reported 48 GiB available; it did not show a net increase, consistent with the retained APFS snapshots pinning blocks and concurrent disk activity. The snapshots remain unchanged.
+- No private documents, agent session history, application-container content, or PRDS checkout was removed. The 200 GiB target remains unmet; no further source or worktree candidate passed the existing custody/parity predicates in this tranche.
