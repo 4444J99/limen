@@ -40,3 +40,14 @@ Observed: dispatcher selected basename candidates without verifying origin and f
 ### Verification
 
 Static scoped batch passed all 13 gates. Final dispatch shard: 353 passed. Final abandonment/Jules shards: 37 passed. Broader scoped Python verification outcome is recorded below when available. Full residency, encrypted custody, home classification, CCE authorization, hook canaries and storage recovery remain incomplete; none is inferred from these focused repairs.
+
+
+### Attempt checkpoint
+
+Limen code commit: `91aabc423` on PR https://github.com/4444J99/limen/pull/2709. Domus code commit: `32602908129de15a061c4dffe8c9a4b687b3e1d0`, pushed and published as https://github.com/4444J99/domus-genoma/pull/393. Its one allowed merge-drain submission returned `DEFERRED — LIFECYCLE-UNKNOWN`; no second submission or polling performed.
+
+Broad scoped command: `bash scripts/verify-scoped.sh --base 652f6220fcfac1dbcab4a4242061f913a9cfbe04 --total-timeout-seconds 490 --gate-timeout-seconds 460 --jobs 2`. All 13 cheap gates passed. `pytest-cli` reached 99% with no printed failure before its 460.09-second hard timeout; overall command exited 1. This is incomplete verification, not a pass. Subsequent API verification wave did not run. A prior formatting failure was corrected once. Final narrow shards separately passed (353 dispatch, 37 abandonment/Jules); Domus 49 passed. No full-suite retry is authorized merely to reset the finite verification allowance.
+
+Disposition: both working copies retained as control/recovery infrastructure with pushed source custody. No branch, clone, worktree, private original, application store, cache or snapshot was retired in this attempt. No immutable runtime installation, activation, rollback proof or natural scheduled-success receipt. The known loaded heartbeat still references missing files; source guard is published, not deployed.
+
+Continuation is owned by this ledger and the two PRs. Observe the current exact-head PR #2709 result once on a subsequent authorized attempt; if passing, use the registry-declared exact-head merge rail, then `domus-limen-runtime plan-heartbeat --sha <merged-sha>` and its digest-bound activation command. Preserve Domus #393 deferred status until its owning lifecycle rail resolves it. Do not infer merge from this publication or start another CI waiter. After installation, require natural scheduled execution and rollback receipts. Then implement immutable repository-ID resolution and the lease-based ensure/release interface, route existing producers, and proceed through the remaining acceptance ledger. Private custody and CCE work must keep the user's encrypted-original/independent-key restoration gate; drive-dependent capture waits for attachment while independent engineering may continue within the original cumulative allowance.
