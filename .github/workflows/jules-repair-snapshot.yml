@@ -1,0 +1,28 @@
+name: Jules repair snapshot
+on:
+  pull_request:
+    paths: ['.github/workflows/jules-repair-snapshot.yml']
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    if: github.event.pull_request.number == 2687
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Capture tracked source only
+        run: |
+          mkdir -p snapshot
+          git archive --format=tar HEAD -o snapshot/source.tar
+          git rev-parse HEAD > snapshot/commit.txt
+          git rev-parse HEAD^{tree} > snapshot/tree.txt
+          sha256sum snapshot/source.tar > snapshot/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: jules-repair-source-${{ github.run_id }}
+          path: snapshot/
+          retention-days: 3
