@@ -343,7 +343,9 @@ def gh_head_states() -> tuple[dict[str, float | None], dict[str, str], dict[str,
                 "--limit",
                 str(pr_limit),
             ],
-            cwd=str(LIMEN_ROOT),
+            # PR state belongs to the branch target. LIMEN_ROOT may only be the control/receipt
+            # repository when this reaper operates on another checkout.
+            cwd=str(repository_root()),
             capture_output=True,
             text=True,
             timeout=60,
