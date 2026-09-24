@@ -308,6 +308,26 @@ else
   echo "  MISMATCH (case12h --json stdout polluted by log lines)"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1))
 fi
 
+# ── Case 13: oversized Git updates stay local and coverage is explicitly incomplete ──
+mkdir -p "$work/ws/_oversized-private"
+dd if=/dev/urandom of="$work/ws/_oversized-private/payload.bin" bs=1M count=2 2>/dev/null
+remote_before_guard="$(git --git-dir="$work/gh/organvm/arca-g2.git" rev-parse main)"
+run_expect 1 "refusing oversized Git update" "case13 bounded commit" \
+  env ARCA_MAX_COMMIT_MB=1 "$ARCA" backup
+remote_after_guard="$(git --git-dir="$work/gh/organvm/arca-g2.git" rev-parse main)"
+[ "$remote_before_guard" = "$remote_after_guard" ] \
+  || { echo "  MISMATCH (case13 oversized data reached remote)"; fail=$((fail+1)); }
+[ -f "$work/vault/_oversized-private.tar.enc" ] \
+  || { echo "  MISMATCH (case13 local ciphertext was not retained)"; fail=$((fail+1)); }
+out="$(env ARCA_WORKSPACE="$work/ws" ARCA_VAULT_DIR="$work/vault" ARCA_REPO=organvm/arca-g2 \
+  "$ARCA" status --json 2>/dev/null)"
+if printf '%s\n' "$out" | grep -q '"vault_state":"local_or_unpushed"' \
+   && printf '%s\n' "$out" | grep -q '"ok":false'; then
+  pass=$((pass+1))
+else
+  echo "  MISMATCH (case13 custody gap not visible in status)"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1))
+fi
+
 echo
 if [ "$fail" -eq 0 ]; then
   echo "arca-generation.test.sh: PASS ($pass checks)"
