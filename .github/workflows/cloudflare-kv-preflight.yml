@@ -54,6 +54,11 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           KV_INVOCATION_APPLY: approved-20260923
         run: python3 .github/scripts/cloudflare-kv/invocation_recovery.py
+      - name: Inspect the actual UCC scheduler ingress contract
+        if: github.event_name == 'push'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python3 .github/scripts/cloudflare-kv/ingress_status.py
       - name: Verify real job completion, runtime revision and KV/D1 headroom
         if: always()
         env:
