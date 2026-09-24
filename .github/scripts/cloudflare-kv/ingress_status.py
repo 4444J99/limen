@@ -94,9 +94,13 @@ def inspect(client):
     for name, helper in ((UCC, 'bounded-jobs.mjs'), (SCHEDULER, 'bounded_finishline.mjs')):
         try:
             files = unpack(*client.raw(client.root + name + '/content/v2'))
-            result[name] = describe(name, client.settings(name), files, (folder / helper).read_bytes())
+            settings = client.settings(name)
+            result[name] = describe(name, settings, files, (folder / helper).read_bytes())
             if name == UCC:
                 result[name]['health'] = health_proof(result[name]['deployment_revision'])
+            else:
+                from execution_status import inspect as inspect_execution
+                result[name]['execution'] = inspect_execution(client, files, settings)
         except Exception:
             # Provider messages and configuration values are never echoed.
             result[name] = {'state': 'runtime_contract_unobserved'}
