@@ -147,7 +147,7 @@ def _wire_main() -> int:
             raise ValueError
         method, path, key, payload, timeout, ceiling = json.loads(raw)
         value = _http_transport(method, path, key, payload, timeout, ceiling)
-        row = {"result": value}
+        row: dict[str, Any] = {"result": value}
     except JulesApiError as exc:
         row = {
             "error_code": exc.code,

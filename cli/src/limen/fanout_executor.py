@@ -1551,7 +1551,10 @@ def refresh_provider_attempts(
             )
         executor_client = _client_for_existing_session(client, str(node["executor_session_id"]), adapter)
         claim = executor_client.claim(attempt.lease_id, attempt.lease_generation)
-        state = adapter.probe(attempt.provider_run_id)
+        provider_run_id = attempt.provider_run_id
+        if not provider_run_id:
+            raise FanoutExecutionError("provider recovery returned no accepted identity")
+        state = adapter.probe(provider_run_id)
         updated = attempt.model_copy(
             update={
                 "status": attempt.status if attempt.status in {"failed", "blocked"} else state.status,

@@ -6,6 +6,7 @@ import os
 import pty
 import shlex
 import shutil
+import signal
 import stat
 import subprocess
 import sys
@@ -3034,14 +3035,18 @@ def test_concurrent_capsule_render_keeps_partial_kickstart_unlaunchable(tmp_path
         str(repo),
         "Race Capsule",
     ]
-    rendering = subprocess.Popen(command, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    rendering = subprocess.Popen(
+        command, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True
+    )
     render_stdout = ""
     render_stderr = ""
     try:
         deadline = time.monotonic() + 5
         while not sync_entered.exists() and rendering.poll() is None and time.monotonic() < deadline:
             time.sleep(0.01)
-        assert sync_entered.exists(), rendering.stderr.read() if rendering.stderr else ""
+        assert sync_entered.exists(), (
+            "bounded fixture rendezvous was not reached; release the child before collecting output"
+        )
 
         wt = repo / ".worktrees" / "race-capsule"
         capsule = wt / ".limen-workstream"
@@ -3086,8 +3091,8 @@ def test_concurrent_capsule_render_keeps_partial_kickstart_unlaunchable(tmp_path
         try:
             render_stdout, render_stderr = rendering.communicate(timeout=10)
         except subprocess.TimeoutExpired:
-            rendering.kill()
-            render_stdout, render_stderr = rendering.communicate()
+            os.killpg(rendering.pid, signal.SIGKILL)
+            render_stdout, render_stderr = rendering.communicate(timeout=2)
 
     assert rendering.returncode == 0, render_stdout + render_stderr
     wt = repo / ".worktrees" / "race-capsule"
@@ -3119,6 +3124,7 @@ def test_concurrent_capsule_render_keeps_partial_kickstart_unlaunchable(tmp_path
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        start_new_session=True,
     )
     launch_stdout = ""
     launch_stderr = ""
@@ -3126,7 +3132,9 @@ def test_concurrent_capsule_render_keeps_partial_kickstart_unlaunchable(tmp_path
         deadline = time.monotonic() + 5
         while not admit_entered.exists() and launching.poll() is None and time.monotonic() < deadline:
             time.sleep(0.01)
-        assert admit_entered.exists(), launching.stderr.read() if launching.stderr else ""
+        assert admit_entered.exists(), (
+            "bounded fixture rendezvous was not reached; release the child before collecting output"
+        )
         assert (capsule / ".capsule.lock").is_file()
 
         render_during_launch = subprocess.run(
@@ -3151,8 +3159,8 @@ def test_concurrent_capsule_render_keeps_partial_kickstart_unlaunchable(tmp_path
         try:
             launch_stdout, launch_stderr = launching.communicate(timeout=10)
         except subprocess.TimeoutExpired:
-            launching.kill()
-            launch_stdout, launch_stderr = launching.communicate()
+            os.killpg(launching.pid, signal.SIGKILL)
+            launch_stdout, launch_stderr = launching.communicate(timeout=2)
 
     assert launching.returncode == 0, launch_stdout + launch_stderr
     assert launched_capture.exists()
