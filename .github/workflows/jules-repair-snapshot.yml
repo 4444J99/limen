@@ -20,21 +20,30 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m pip install -e 'cli[test]'
-      - name: Classify failing public evidence calls
+      - name: Resolve public candidate failure without raw error bodies
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python - <<'PY'
-          import hashlib, json, re, runpy, subprocess, sys
-          original = subprocess.run
-          def classified(args, *a, **kw):
-              result = original(args, *a, **kw)
-              if result.returncode:
-                  text = (result.stderr or '') + (result.stdout or '')
-                  codes = sorted(set(re.findall(r'\b(?:HTTP [1-5][0-9]{2}|NOT_FOUND|FORBIDDEN|UNAUTHORIZED|RATE_LIMITED|Resource not accessible by integration)\b', text)))
-                  print(json.dumps({'failed_command': args[:3] if args[:2] == ['gh', 'api'] and args[2] == 'graphql' else args[:1], 'request_sha256': hashlib.sha256(json.dumps(args).encode()).hexdigest(), 'exit_code': result.returncode, 'classifications': codes}), file=sys.stderr)
-              return result
-          subprocess.run = classified
-          sys.argv = ['verify_technical_readiness.py', '--audit', 'docs/positioning/foundry/psp-c11/technical-readiness-audit.json', '--public-live', '--json']
-          runpy.run_path('docs/positioning/foundry/psp-c11/verify_technical_readiness.py', run_name='__main__')
+          import json, runpy, subprocess
+          module=runpy.run_path('docs/positioning/foundry/psp-c11/verify_technical_readiness.py')
+          audit=module['load_json'](module['ROOT']/'docs/positioning/foundry/psp-c11/technical-readiness-audit.json')
+          rows=sorted((r['repository'],r['observed_head']) for r in audit['candidates'] if r['visibility']=='public')
+          selections=[]
+          for i,(repository,head) in enumerate(rows):
+              owner,name=repository.split('/')
+              selections.append(f'r{i}:repository(owner:{json.dumps(owner)},name:{json.dumps(name)})'+'{isPrivate object(expression:'+json.dumps(head)+'){... on Commit{oid}}}}')
+          proc=subprocess.run(['gh','api','graphql','-f','query=query{'+''.join(selections)+'}'],capture_output=True,text=True,timeout=60)
+          value=json.loads(proc.stdout)
+          data=value.get('data') or {}
+          failures=[]
+          for i,(repository,head) in enumerate(rows):
+              row=data.get('r'+str(i))
+              if row is None or row.get('isPrivate') is not False or (row.get('object') or {}).get('oid')!=head:
+                  metadata=subprocess.run(['gh','api','repos/'+repository],capture_output=True,text=True,timeout=30)
+                  try: observed=json.loads(metadata.stdout)
+                  except ValueError: observed={}
+                  failures.append({'accepted_public_reference':repository,'graphql_present':row is not None,'rest_exit':metadata.returncode,'public':observed.get('private') is False,'canonical_public_reference':observed.get('full_name') if observed.get('private') is False else None,'repository_id':observed.get('id') if observed.get('private') is False else None})
+          print(json.dumps({'failures':failures,'candidate_count':len(rows),'error_types':sorted(set(e.get('type','unknown') for e in value.get('errors',[])))},sort_keys=True))
+          raise SystemExit(bool(failures))
           PY
