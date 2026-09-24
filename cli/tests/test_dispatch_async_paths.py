@@ -78,7 +78,7 @@ def _task(task_id: str, agent: str) -> Task:
     )
 
 
-def test_async_reservation_uses_live_usage_not_stale_board_caps(monkeypatch, tmp_path):
+def test_async_reservation_uses_live_usage_not_stale_board_caps(monkeypatch, tmp_path, approved_execution_policy):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     # This test owns provider usage arithmetic; dedicated admission tests own host-custody probes.
     monkeypatch.setenv("LIMEN_DISK_PRESSURE_VALUE_ONLY", "0")
@@ -106,6 +106,7 @@ def test_async_reservation_uses_live_usage_not_stale_board_caps(monkeypatch, tmp
         ],
     )
 
+    approved_execution_policy(*(task.id for task in board.tasks))
     picked, _reset_changed = dispatch_async._pick_reservations(
         board,
         ["jules", "opencode", "agy"],

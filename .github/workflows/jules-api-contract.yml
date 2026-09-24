@@ -11,6 +11,8 @@ on:
       - 'cli/tests/test_jules_api_adapter.py'
       - 'cli/tests/test_jules_api_workflow.py'
       - 'cli/tests/test_jules_api_credentials.py'
+      - 'cli/tests/test_jules_api_wall_deadline.py'
+      - 'cli/src/limen/bounded_subprocess.py'
       - 'cli/tests/test_vigilia_params_cache.py'
       - 'cli/tests/test_accelerator.py'
       - 'cli/pyproject.toml'
@@ -57,7 +59,7 @@ jobs:
           python -m ruff check cli/src/limen/jules_api*.py cli/src/limen/jules_credentials.py cli/src/limen/vigilia/params.py cli/tests/test_jules_api*.py cli/tests/test_vigilia_params_cache.py cli/tests/test_accelerator.py
           python -m ruff format --check cli/src/limen/jules_api*.py cli/src/limen/jules_credentials.py cli/src/limen/vigilia/params.py cli/tests/test_jules_api*.py cli/tests/test_vigilia_params_cache.py cli/tests/test_accelerator.py
           python -m unittest discover -s cli/tests -p 'test_jules_api*.py' -v
-          bash scripts/run-pytest-hermetic.sh cli/tests/test_accelerator.py cli/tests/test_vigilia_params_cache.py cli/tests/test_vigilia.py -q --tb=short
+          bash scripts/run-pytest-hermetic.sh cli/tests/test_accelerator.py cli/tests/test_vigilia_params_cache.py cli/tests/test_vigilia.py cli/tests/test_jules_api_wall_deadline.py -q --tb=short
           python - <<'PY'
           from importlib.metadata import entry_points
           entries = [e for e in entry_points(group='limen.fanout_execution') if e.name == 'jules-api']

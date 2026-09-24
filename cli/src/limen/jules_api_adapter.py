@@ -17,6 +17,7 @@ from limen.fanout_executor import (
     CODE_RECEIPT_CAPABILITIES,
     FanoutExecutionError,
     PatchLandingMixin,
+    PrelaunchFanoutExecutionError,
     ProviderLaunch,
     ProviderState,
     _checked,
@@ -86,13 +87,14 @@ class JulesApiExecutionAdapter(PatchLandingMixin):
 
     def launch(self, packet: dict[str, Any], attempt_id: str) -> ProviderLaunch:
         if not self.eligible(packet) or self.client is None:
-            raise FanoutExecutionError("Jules API source is unavailable")
+            raise PrelaunchFanoutExecutionError("Jules API source is unavailable")
         if not re.fullmatch(r"[A-Za-z0-9_-]{1,128}", attempt_id):
-            raise FanoutExecutionError("invalid Jules attempt identity")
+            raise PrelaunchFanoutExecutionError("invalid Jules attempt identity")
         repository = packet["execution"]["owner_repository"]
         expected = packet["execution"]["exact_base"]
         if not re.fullmatch(r"(?:[a-f0-9]{40}|[a-f0-9]{64})", expected):
-            raise FanoutExecutionError("Jules API requires an exact base")
+            raise PrelaunchFanoutExecutionError("Jules API requires an exact base")
+        submitting = False
         try:
             submission_deadline = packet.get("submission_deadline")
             parsed_deadline = None
@@ -100,25 +102,30 @@ class JulesApiExecutionAdapter(PatchLandingMixin):
                 try:
                     parsed_deadline = datetime.fromisoformat(str(submission_deadline).replace("Z", "+00:00"))
                 except ValueError:
-                    raise FanoutExecutionError("invalid Jules submission deadline") from None
+                    raise PrelaunchFanoutExecutionError("invalid Jules submission deadline") from None
+                if parsed_deadline.tzinfo is None:
+                    raise PrelaunchFanoutExecutionError("invalid Jules submission deadline")
                 if parsed_deadline <= datetime.now(timezone.utc):
-                    raise FanoutExecutionError("Jules submission deadline exhausted before account observation")
+                    raise PrelaunchFanoutExecutionError(
+                        "Jules submission deadline exhausted before account observation"
+                    )
             observed = observe(self.client.sessions())
             # These are conservative observed guards, NOT a vendor balance.
             # Shared reservations and all other callers remain broker-owned.
             if observed["observed_rolling_starts"] >= 100 or observed["nonterminal_sessions"] >= 15:
-                raise FanoutExecutionError("Jules account observation has no safe launch headroom")
+                raise PrelaunchFanoutExecutionError("Jules account observation has no safe launch headroom")
             branch = _default_branch(repository)
             if remote_branch_head(repository, branch) != expected:
-                raise FanoutExecutionError("Jules source branch moved from the admitted exact base")
+                raise PrelaunchFanoutExecutionError("Jules source branch moved from the admitted exact base")
             source = self.sources[repository]
             prompt = _provider_prompt(packet, attempt_id)
             create_timeout = None
             if parsed_deadline is not None:
                 remaining = (parsed_deadline - datetime.now(timezone.utc)).total_seconds()
                 if remaining <= 0:
-                    raise FanoutExecutionError("Jules submission deadline exhausted before create")
+                    raise PrelaunchFanoutExecutionError("Jules submission deadline exhausted before create")
                 create_timeout = min(float(self.client.timeout), remaining)
+            submitting = True
             row = self.client.create(
                 source=source,
                 branch=branch,
@@ -132,7 +139,15 @@ class JulesApiExecutionAdapter(PatchLandingMixin):
         except JulesMutationUnknown as exc:
             raise AmbiguousProviderLaunchError(exc.code) from None
         except JulesApiError as exc:
-            raise FanoutExecutionError(exc.code) from None
+            if not submitting or (
+                exc.code == "provider_rejected" and exc.status in {400, 401, 403, 404, 409, 422, 429}
+            ):
+                raise PrelaunchFanoutExecutionError(exc.code) from None
+            raise AmbiguousProviderLaunchError("Jules acceptance requires reconciliation") from None
+        except Exception:
+            if submitting:
+                raise AmbiguousProviderLaunchError("Jules acceptance requires reconciliation") from None
+            raise
 
     def recover(self, packet: dict[str, Any], attempt_id: str) -> ProviderLaunch | None:
         if self.client is None:
@@ -157,15 +172,17 @@ class JulesApiExecutionAdapter(PatchLandingMixin):
             return ProviderState("submitted", "Jules observation unavailable: " + exc.code)
         state = row.get("state", "STATE_UNSPECIFIED")
         if state == "COMPLETED":
-            return ProviderState("succeeded", "Provider completed; exact-head landing still required")
+            return ProviderState(
+                "succeeded", "Provider completed; exact-head landing still required", provider_state="terminal"
+            )
         if state == "FAILED":
-            return ProviderState("failed", "Jules FAILED; preserve evidence and owned work", "permanent")
+            return ProviderState("failed", "Jules FAILED; preserve evidence and owned work", "permanent", "terminal")
         # Waiting/paused is not a terminal failure: preserve the same session so
         # bounded sendMessage/approvePlan can resume it instead of duplicating it.
         if not isinstance(state, str) or state not in STATES:
             return ProviderState("submitted", "Jules state unrecognized; ownership retained")
         status = "running" if state in {"IN_PROGRESS", "PLANNING"} else "submitted"
-        return ProviderState(status, "Jules state: " + state)
+        return ProviderState(status, "Jules state: " + state, provider_state="nonterminal")
 
     def apply_result(self, provider_run_id: str, worktree: Path) -> None:
         if self.client is None:

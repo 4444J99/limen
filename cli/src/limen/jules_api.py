@@ -10,6 +10,8 @@ import argparse
 import json
 import os
 import re
+import sys
+from pathlib import Path
 import time
 import urllib.error
 import urllib.parse
@@ -55,7 +57,7 @@ def _strict_object(pairs):
     return result
 
 
-def _transport(method: str, path: str, key: str, payload: dict | None, timeout: float, ceiling: int) -> dict:
+def _http_transport(method: str, path: str, key: str, payload: dict | None, timeout: float, ceiling: int) -> dict:
     body = None if payload is None else json.dumps(payload, allow_nan=False).encode("utf-8")
     req = urllib.request.Request(
         API + path,
@@ -88,6 +90,75 @@ def _transport(method: str, path: str, key: str, payload: dict | None, timeout: 
         cls = JulesApiError if method == "GET" else JulesMutationUnknown
         raise cls("invalid_response") from None
     return value
+
+
+def _transport(method: str, path: str, key: str, payload: dict | None, timeout: float, ceiling: int) -> dict:
+    # Socket timeouts are idle-read limits, not total deadlines. Isolate the
+    # complete DNS/TLS/HTTP/read operation in a killed-and-reaped child. A timed
+    # out POST remains indeterminate; killing this client cannot cancel Jules.
+    from limen.bounded_subprocess import BoundedSubprocessError, run_bounded_subprocess
+
+    request = json.dumps([method, path, key, payload, timeout, ceiling], allow_nan=False, ensure_ascii=False).encode()
+    try:
+        result = run_bounded_subprocess(
+            [sys.executable, "-I", str(Path(__file__).resolve()), "_wire"],
+            cwd=Path(__file__).resolve().parent,
+            timeout_seconds=timeout,
+            stdout_ceiling=ceiling * 2 + 4096,
+            stderr_ceiling=4096,
+            # The provider key exists only in private stdin, never argv, env,
+            # inherited broker credentials, disk files, or diagnostic output.
+            env={"PATH": os.defpath},
+            input_bytes=request,
+        )
+    except BoundedSubprocessError:
+        cls = JulesApiError if method == "GET" else JulesMutationUnknown
+        raise cls("transport_unavailable" if method == "GET" else "mutation_outcome_unknown") from None
+    try:
+        row = json.loads(result.stdout, object_pairs_hook=_strict_object)
+        if result.returncode != 0 or not isinstance(row, dict):
+            raise ValueError
+        if "result" in row and isinstance(row["result"], dict):
+            return row["result"]
+        code = row.get("error_code")
+        status = row.get("http_status")
+        if code not in {
+            "provider_rejected",
+            "mutation_outcome_unknown",
+            "transport_unavailable",
+            "response_limit_exceeded",
+            "invalid_response",
+        }:
+            raise ValueError
+        if status is not None and (type(status) is not int or not 100 <= status <= 599):
+            raise ValueError
+    except (ValueError, TypeError, UnicodeError):
+        cls = JulesApiError if method == "GET" else JulesMutationUnknown
+        raise cls("invalid_response") from None
+    cls = JulesMutationUnknown if row.get("mutation_unknown") is True else JulesApiError
+    raise cls(code, status)
+
+
+def _wire_main() -> int:
+    # Private fixed-origin subprocess entry point; no CLI mutation interface.
+    try:
+        raw = sys.stdin.buffer.read(2 * 1024 * 1024 + 1)
+        if len(raw) > 2 * 1024 * 1024:
+            raise ValueError
+        method, path, key, payload, timeout, ceiling = json.loads(raw)
+        value = _http_transport(method, path, key, payload, timeout, ceiling)
+        row = {"result": value}
+    except JulesApiError as exc:
+        row = {
+            "error_code": exc.code,
+            "http_status": exc.status,
+            "mutation_unknown": isinstance(exc, JulesMutationUnknown),
+        }
+    except Exception:
+        # Never print private stdin, a traceback, URL, provider body, or key.
+        row = {"error_code": "invalid_response", "http_status": None, "mutation_unknown": True}
+    print(json.dumps(row, ensure_ascii=False))
+    return 0
 
 
 def timestamp(value: Any) -> datetime:
@@ -377,4 +448,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(_wire_main() if sys.argv[1:] == ["_wire"] else main())

@@ -68,3 +68,46 @@ The observed failed account-readback had an empty `JULES_API_KEY`, exited 2, and
 - https://developers.google.com/jules/api/reference/rest/v1alpha/sessions/list
 - https://developers.google.com/jules/api/reference/rest/v1alpha/sessions.activities
 - https://jules.google/docs/usage-limits/
+
+## September 24 execution-policy repair
+
+The API lane now requires an explicitly approved `deadline_policy: fenced_async`
+priority in the same keeper admission that owns the packet. A provider capability
+flag alone cannot authorize it. Ordinary hard-deadline providers and the legacy
+CLI dispatch path retain their existing restrictions.
+
+Both the Python and Worker keepers distinguish **execution authority** from
+**provider occupancy**. A Jules attempt with accepted nonterminal or indeterminate
+provider state retains its resource claims and capacity after its local lease
+expires or a local failure receipt is recorded. The owning executor may then
+claim an observation-only capability to update that exact attempt; it cannot
+renew execution authority, change provider identity, open a replacement attempt,
+or publish a result. Terminal provider evidence releases occupancy, not the
+expired authority. Late output still requires a separately admitted recovery.
+
+The REST client bounds the entire DNS/TLS/request/body operation in a process
+with finite wall-clock and output ceilings. The provider key travels only over
+private standard input. Timeout kills and reaps the client process but leaves a
+mutating request indeterminate; it does not claim to cancel provider computation.
+
+A native worker wake is now `submission_pending`, never a counted launch.
+`targeted_launch_count` counts accepted provider identities, not preflight
+failures or attempts. A read-only fanout coordination root receives no executor
+capability and does not consume a worker slot; its actual child executions do.
+
+The required CI verifier explicitly budgets up to 1,500 seconds for a gate and
+1,800 seconds for the whole batch, under a 35-minute workflow-job ceiling. The
+previous implicit 300-second gate cap overrode the CLI registry's existing
+1,500-second declaration. The default local batch remains 600 seconds, and an
+existing keeper-owned verification deadline always takes precedence. No test,
+provider lease, quota boundary, or publication guard is waived.
+
+The public-evidence audit retains a hash-bound, all-blocked historical candidate
+that is no longer available for public verification as `withdrawn_unverified`.
+It is not silently removed or passed, and the public runner receives no private
+repository credential. The owning manifest records the explicit withdrawal;
+malformed, unbound or promoted withdrawals fail verification.
+
+Authenticated credential consumption, source/account reconciliation and a real
+accepted repair remain live acceptance facts. Source regression tests cannot
+supply those facts, and this documentation does not assert production activation.

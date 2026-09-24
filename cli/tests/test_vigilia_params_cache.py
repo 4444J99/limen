@@ -110,3 +110,17 @@ def test_cache_is_bounded_and_missing_yaml_fails_open(panel, monkeypatch):
     write_panel(panel, 1)
     monkeypatch.setattr(params, "yaml_module", None)
     assert params.get("VALUE", 9) == 9
+
+
+def test_single_lookup_does_not_copy_unrelated_registry_entries(panel, monkeypatch):
+    write_panel(panel, 1)
+    calls = []
+    original = params.deepcopy
+
+    def copied(value):
+        calls.append(value)
+        return original(value)
+
+    monkeypatch.setattr(params, "deepcopy", copied)
+    assert params.get("VALUE") == 1
+    assert calls == [{"default": 1, "env": "PANEL_VALUE"}]

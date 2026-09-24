@@ -153,8 +153,11 @@ def test_builder_task_rejects_a_stale_task_contract() -> None:
         builder_task_from_receipt(changed, receipt, builder="codex")
 
 
-def test_plan_only_agent_output_becomes_receipt_only_when_worktree_is_clean(tmp_path: Path, monkeypatch) -> None:
+def test_plan_only_agent_output_becomes_receipt_only_when_worktree_is_clean(
+    tmp_path: Path, monkeypatch, admitted_local_execution
+) -> None:
     task = _task()
+    admitted_local_execution(D, task.id)
     monkeypatch.setattr(
         D,
         "_run_capture",
@@ -172,8 +175,9 @@ def test_plan_only_agent_output_becomes_receipt_only_when_worktree_is_clean(tmp_
     assert result.receipt["plan"].startswith("1. Inspect.")
 
 
-def test_plan_only_agent_mutation_blocks_the_handoff(tmp_path: Path, monkeypatch) -> None:
+def test_plan_only_agent_mutation_blocks_the_handoff(tmp_path: Path, monkeypatch, admitted_local_execution) -> None:
     task = _task()
+    admitted_local_execution(D, task.id)
     monkeypatch.setattr(
         D,
         "_run_capture",

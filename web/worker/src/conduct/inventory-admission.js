@@ -250,6 +250,16 @@ export function executionActive(run, now) {
   return admission.legacy_active === true || ["reserved", "running", "stop_requested"].includes(run.status);
 }
 
+export function pendingRemoteAttempts(run) {
+  return (run?.attempts || []).filter((attempt) => attempt.adapter === "jules-api"
+    && !["not_started", "terminal"].includes(attempt.provider_state || "unknown"));
+}
+
+// Capacity is not authority: expired leases remain unable to execute or publish.
+export function executionOccupied(run, now) {
+  return executionActive(run, now) || pendingRemoteAttempts(run).length > 0;
+}
+
 export function executionPriority(policy, packet, parent = null) {
   requireFact(policy && typeof policy === "object", "execution_policy_unavailable");
   const priorities = Array.isArray(policy.approved_priorities) ? policy.approved_priorities : [];
@@ -268,7 +278,7 @@ export function executionAdmission(policy, state, packet, now, {waiting = false,
   const priority = executionPriority(policy, packet, parent);
   const runs = Object.values(state.runs);
   if (!waiting) {
-    const active = runs.filter((run) => run.packet.intent?.kind !== "fanout-root" && (executionActive(run, now)
+    const active = runs.filter((run) => run.packet.intent?.kind !== "fanout-root" && (executionOccupied(run, now)
       || (!run.execution_admission && ["reserved", "running", "stop_requested"].includes(run.status))));
     requireFact(active.length < (policy.mode === "recovery" ? 1 : 2), "execution_concurrency_exhausted");
   }
@@ -288,7 +298,10 @@ export function executionAdmission(policy, state, packet, now, {waiting = false,
     retained ? Date.parse(retained.attempt_deadline) : Infinity,
     parent ? Date.parse(parent.execution_admission?.attempt_deadline || parent.packet.deadline) : Infinity);
   requireFact(deadline > now.getTime(), "execution_attempt_exhausted");
-  return { outcome_id: priority.outcome_id, reserved_seconds: 1800, input_hash: inputHash,
+  const deadlinePolicy = priority.deadline_policy || "hard_deadline";
+  requireFact(["hard_deadline", "fenced_async"].includes(deadlinePolicy), "execution_deadline_policy_invalid");
+  if (parent?.execution_admission) requireFact(deadlinePolicy === (parent.execution_admission.deadline_policy || "hard_deadline"), "execution_deadline_policy_changed");
+  return { deadline_policy: deadlinePolicy, outcome_id: priority.outcome_id, reserved_seconds: 1800, input_hash: inputHash,
     attempt_deadline: new Date(deadline).toISOString(), verification_seconds: 600,
     legacy_active: legacy, resource_reservations: retained?.resource_reservations || [] };
 }

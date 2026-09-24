@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -798,12 +799,16 @@ def test_admitted_outcome_refuses_unbounded_provider_before_external_launch(
 
 
 def test_admitted_outcome_allows_explicit_fenced_async_submission(tmp_path, monkeypatch, approved_execution_policy):
-    approved_execution_policy("campaign/v1")
+    policy = approved_execution_policy("campaign/v1")
+    policy["approved_priorities"][0]["deadline_policy"] = "fenced_async"
+    policy_path = Path(os.environ["LIMEN_LIVE_ROOT"]) / "logs/autonomy-policy.json"
+    policy_path.write_text(json.dumps(policy))
     payload = manifest_payload()
     payload["leaves"][0]["retry"]["max_attempts"] = 1
     manifest = FanoutManifestV1.model_validate(payload)
     keeper = LocalConductClient(tmp_path / "fenced-async.sqlite")
     adapter = FakeExecutionAdapter()
+    adapter.name = "jules-api"
     adapter.enforces_deadline = False
     adapter.fenced_async_submission = True
     monkeypatch.setattr("limen.fanout_executor.remote_default_head", lambda repo: BASE)
