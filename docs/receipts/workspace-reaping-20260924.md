@@ -27,3 +27,9 @@ PR #2709 is at `10ee31bdc27fec7d32af9e28fc2eddf0ee641c1f`. Its CI build jobs pas
 - A fresh Limen worktree check scanned 77 roots and found zero eligible worktrees. A fresh clone-reaper check found zero eligible clones and kept 80 paths for active-process, core, dirty/untracked, recent, linked-worktree, submodule, ignored-data, or unpushed-object reasons.
 - Homebrew's own `cleanup --prune=all` removed about 3.9 GiB of regenerable downloads and formula cache. This was non-Git cache data. The Data volume then reported 48 GiB available; it did not show a net increase, consistent with the retained APFS snapshots pinning blocks and concurrent disk activity. The snapshots remain unchanged.
 - No private documents, agent session history, application-container content, or PRDS checkout was removed. The 200 GiB target remains unmet; no further source or worktree candidate passed the existing custody/parity predicates in this tranche.
+
+## Follow-up tranche — inactive build caches
+
+- Cleared the Go build cache (about 457 MiB before cleanup) with `go clean -cache`; no Go build process was running.
+- Removed six stale `node-gyp` header-cache versions (about 345 MiB): 22.23.2, 24.18.0, 26.6.0, 26.7.0, 26.8.1, and 26.8.2. Kept caches for the installed Node 26.9.0 and 24.21.0 runtimes.
+- These were regenerable local build caches, not repository source or Git history. Active npm and uv caches were preserved because live processes use them. The 200 GiB storage target remains unmet.
