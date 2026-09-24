@@ -124,6 +124,19 @@ Missing keys/drives block dependent private migrations only. Continue independen
 engineering. Use existing admitted workspaces and bounded scratch; preserve 50/200 GiB
 admission hysteresis. No alternate roots to evade admission.
 
+### Tranche B checkpoint, 2026-09-24
+
+`scripts/home-workspace-inventory.py` now provides a read-only, resumable home-root
+frontier, including the Workspace subtree, hidden directories, nested Git stores,
+linked worktrees, bare Git candidates, copied-source candidates and symlink aliases.
+It records filesystem identities, mount boundaries and unmeasured paths in a private
+0600 state file. A bounded live pass observed 41,262 directories, left 110,816 queued,
+and recorded 1 unmeasured area; it is **incomplete** and grants no deletion authority.
+Two focused restart/classification tests pass. Continue the frontier and reconcile
+candidate identities with PORTVS/Domus owners and fresh custody evidence before any
+retirement. Internal free space sampled at approximately 15 GiB; the 200 GiB outcome
+remains unmet.
+
 ## Acceptance and reporting
 
 Do not repeat subjective implementation percentages. Report original outcomes passed
