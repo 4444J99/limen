@@ -147,8 +147,40 @@ def test_large_encrypted_file_is_split_and_reassembled_for_restore(tmp_path: Pat
     result = arca.build(source, output)
     catalog = json.loads((output / "catalog.gpg").read_bytes()[4:])
     entry = next(row for row in catalog["entries"] if row["path"] == "large.bin")
-    assert result["new_objects"] == 4
-    assert len(entry["objects"]) == 4
+    assert result["new_objects"] == 3
+    assert len(entry["objects"]) == 3
+    assert entry["encryption"] == "per-part"
+    assert [
+        (output / "objects" / f"{part['object_id']}.gpg").read_bytes()
+        for part in entry["objects"]
+    ] == [b"ENC\0abcde", b"ENC\0fghij", b"ENC\0klmno"]
     restored = tmp_path / "restored"
     arca.restore(output / "catalog.gpg", output, restored)
     assert (restored / "large.bin").read_bytes() == b"abcdefghijklmno"
+
+
+def test_legacy_split_ciphertext_still_restores(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_crypto(monkeypatch)
+    payload = b"legacy payload"
+    cipher = b"ENC\0" + payload
+    objects = tmp_path / "objects"
+    (objects / "objects").mkdir(parents=True)
+    parts = []
+    for index, block in enumerate((cipher[:6], cipher[6:])):
+        object_id = f"{index:048x}"
+        (objects / "objects" / f"{object_id}.gpg").write_bytes(block)
+        parts.append({"object_id": object_id, "ciphertext_sha256": arca.hashlib.sha256(block).hexdigest()})
+    catalog = {
+        "schema": "arca-file-catalog-v2",
+        "root_mode": 0o700,
+        "entries": [{
+            "path": "legacy.bin", "type": "file", "mode": 0o600,
+            "sha256": arca.hashlib.sha256(payload).hexdigest(),
+            "ciphertext_sha256": arca.hashlib.sha256(cipher).hexdigest(),
+            "objects": parts,
+        }],
+    }
+    (objects / "catalog.gpg").write_bytes(b"ENC\0" + json.dumps(catalog).encode())
+    destination = tmp_path / "restored"
+    arca.restore(objects / "catalog.gpg", objects, destination)
+    assert (destination / "legacy.bin").read_bytes() == payload

@@ -250,6 +250,19 @@ removed: distinct expanded state lacks custody and a native cold-start
 reconstruction receipt, and snapshots may retain physical blocks regardless. The
 adapter compares digests locally and emits only equality and aggregate byte counts.
 
+### ARCA bounded-object checkpoint, 2026-09-25
+
+`arca-file-objects.py` now builds catalog v3 by encrypting each plaintext part
+independently, with a default and maximum 32 MiB part size. It no longer creates
+a whole-file ciphertext temporary or reads 1 GiB chunks. Restore validates each
+ciphertext part and plaintext part before appending into the atomic restore tree;
+legacy v1/v2 split-ciphertext catalogs remain readable. Seven focused tests and
+Ruff pass, including a v2 reconstruction case. This is source engineering only:
+the live ARCA private Releases still lack payload objects, independent-key
+restoration and HORREVM replication remain unproven, and no private original may
+be retired. Interrupted partial-object cleanup, bounded capture scheduling and
+the 1,000-asset release ceiling still need operational proof.
+
 ## Acceptance and reporting
 
 Do not repeat subjective implementation percentages. Report original outcomes passed

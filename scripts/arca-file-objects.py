@@ -28,7 +28,7 @@ if SPEC is None or SPEC.loader is None:
     raise RuntimeError("private-vault encryption module unavailable")
 PRIVATE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PRIVATE)
-OBJECT_PART_BYTES = int(os.environ.get("ARCA_OBJECT_PART_BYTES", str(1024**3)))
+OBJECT_PART_BYTES = int(os.environ.get("ARCA_OBJECT_PART_BYTES", str(32 * 1024**2)))
 
 
 class ObjectError(RuntimeError):
@@ -78,14 +78,14 @@ def _decrypt_catalog(path: Path, destination: Path) -> dict[str, object]:
         value = json.loads(destination.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ObjectError("previous encrypted catalog is unreadable; no objects changed") from exc
-    if not isinstance(value, dict) or value.get("schema") not in {"arca-file-catalog-v1", "arca-file-catalog-v2"} or not isinstance(value.get("entries"), list):
+    if not isinstance(value, dict) or value.get("schema") not in {"arca-file-catalog-v1", "arca-file-catalog-v2", "arca-file-catalog-v3"} or not isinstance(value.get("entries"), list):
         raise ObjectError("previous catalog schema is invalid; no objects changed")
     return value
 
 
 def build(source: Path, out: Path, *, previous: Path | None = None) -> dict[str, object]:
-    if OBJECT_PART_BYTES <= 0 or OBJECT_PART_BYTES >= 2 * 1024**3:
-        raise ObjectError("ARCA_OBJECT_PART_BYTES must be positive and below GitHub's 2-GiB asset limit")
+    if OBJECT_PART_BYTES <= 0 or OBJECT_PART_BYTES > 32 * 1024**2:
+        raise ObjectError("ARCA_OBJECT_PART_BYTES must be positive and at most 32 MiB")
     if source.is_symlink() or not source.is_dir():
         raise ObjectError("source must be a real directory")
     out.mkdir(mode=0o700, parents=True, exist_ok=True)
@@ -120,6 +120,8 @@ def build(source: Path, out: Path, *, previous: Path | None = None) -> dict[str,
                 ):
                     entry["objects"] = old_parts
                     entry["ciphertext_sha256"] = old.get("ciphertext_sha256")
+                    if old.get("encryption") == "per-part":
+                        entry["encryption"] = "per-part"
                     if len(old_parts) == 1:
                         entry["object_id"] = old_parts[0]["object_id"]
                     for candidate, part in zip(candidates, old_parts, strict=True):
@@ -130,29 +132,38 @@ def build(source: Path, out: Path, *, previous: Path | None = None) -> dict[str,
                     reused = True
                     reused_count += 1
             if not reused:
-                with tempfile.TemporaryDirectory(prefix="arca-encrypted-file-") as temporary_dir:
-                    encrypted = Path(temporary_dir) / "cipher.gpg"
-                    PRIVATE._encrypt_file(source / str(row["path"]), encrypted)
-                    if not encrypted.is_file() or encrypted.stat().st_size == 0:
-                        raise ObjectError("encryption produced an empty object; catalog was not published")
-                    if digest_file(source / str(row["path"])) != row["sha256"]:
-                        raise ObjectError("source changed during encryption; catalog was not published")
-                    parts: list[dict[str, object]] = []
-                    cipher_digest = hashlib.sha256()
-                    with encrypted.open("rb") as stream:
-                        while block := stream.read(OBJECT_PART_BYTES):
-                            cipher_digest.update(block)
+                parts: list[dict[str, object]] = []
+                cipher_digest = hashlib.sha256()
+                with (source / str(row["path"])).open("rb") as source_stream:
+                    while True:
+                        block = source_stream.read(OBJECT_PART_BYTES)
+                        if not block and parts:
+                            break
+                        with tempfile.TemporaryDirectory(prefix="arca-part-", dir=out) as temporary_dir:
+                            plain_part = Path(temporary_dir) / "plain"
+                            plain_part.write_bytes(block)
                             object_id = secrets.token_hex(24)
                             target = out / "objects" / f"{object_id}.gpg"
                             target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
                             partial = target.with_name(f".{target.name}.partial")
-                            partial.write_bytes(block)
+                            PRIVATE._encrypt_file(plain_part, partial)
+                            if not partial.is_file() or partial.stat().st_size == 0:
+                                raise ObjectError("encryption produced an empty object; catalog was not published")
                             if partial.stat().st_size >= 2 * 1024**3:
                                 partial.unlink(missing_ok=True)
                                 raise ObjectError("encrypted object part exceeds GitHub's per-asset limit")
+                            cipher_sha = digest_file(partial)
+                            with partial.open("rb") as cipher_stream:
+                                for cipher_block in iter(lambda: cipher_stream.read(4 * 1024**2), b""):
+                                    cipher_digest.update(cipher_block)
                             staged.append((partial, target))
-                            parts.append({"object_id": object_id, "ciphertext_sha256": hashlib.sha256(block).hexdigest(), "ciphertext_bytes": len(block)})
+                            parts.append({"object_id": object_id, "ciphertext_sha256": cipher_sha, "ciphertext_bytes": partial.stat().st_size, "plaintext_sha256": hashlib.sha256(block).hexdigest()})
+                        if not block:
+                            break
+                if digest_file(source / str(row["path"])) != row["sha256"]:
+                    raise ObjectError("source changed during encryption; catalog was not published")
                 entry["objects"] = parts
+                entry["encryption"] = "per-part"
                 if len(parts) == 1:
                     entry["object_id"] = parts[0]["object_id"]
                 entry["ciphertext_sha256"] = cipher_digest.hexdigest()
@@ -166,7 +177,7 @@ def build(source: Path, out: Path, *, previous: Path | None = None) -> dict[str,
         if target.exists():
             raise ObjectError("random object identifier collision; catalog was not published")
         os.replace(temporary, target)
-    catalog = {"schema": "arca-file-catalog-v2", "root_mode": stat.S_IMODE(source.stat().st_mode), "entries": entries}
+    catalog = {"schema": "arca-file-catalog-v3", "root_mode": stat.S_IMODE(source.stat().st_mode), "entries": entries}
     catalog_path = out / "catalog.gpg"
     if old_catalog == catalog:
         if previous is not None and previous.resolve() != catalog_path.resolve():
@@ -228,22 +239,38 @@ def restore(catalog_path: Path, objects_root: Path, destination: Path) -> dict[s
                 if not isinstance(parts, list) or not parts:
                     object_id = row.get("object_id")
                     parts = [{"object_id": object_id, "ciphertext_sha256": row.get("ciphertext_sha256")}]
-                with (base / "cipher.gpg").open("wb") as combined:
-                    for part in parts:
-                        if not isinstance(part, dict):
-                            raise ObjectError("catalog contains an invalid object part")
-                        object_id = part.get("object_id")
-                        if not isinstance(object_id, str) or not re.fullmatch(r"[0-9a-f]{48}", object_id):
-                            raise ObjectError("catalog contains an invalid object identifier")
-                        cipher = objects_root / "objects" / f"{object_id}.gpg"
-                        if cipher.is_symlink() or not cipher.is_file() or digest_file(cipher) != part.get("ciphertext_sha256"):
-                            raise ObjectError("encrypted object is missing or failed integrity verification")
-                        with cipher.open("rb") as fragment:
-                            shutil.copyfileobj(fragment, combined, length=1024 * 1024)
-                combined_cipher = base / "cipher.gpg"
-                if digest_file(combined_cipher) != row.get("ciphertext_sha256"):
-                    raise ObjectError("reassembled ciphertext failed integrity verification")
-                PRIVATE._decrypt_file(combined_cipher, target)
+                checked_parts: list[tuple[Path, dict[str, object]]] = []
+                for part in parts:
+                    if not isinstance(part, dict):
+                        raise ObjectError("catalog contains an invalid object part")
+                    object_id = part.get("object_id")
+                    if not isinstance(object_id, str) or not re.fullmatch(r"[0-9a-f]{48}", object_id):
+                        raise ObjectError("catalog contains an invalid object identifier")
+                    cipher = objects_root / "objects" / f"{object_id}.gpg"
+                    if cipher.is_symlink() or not cipher.is_file() or digest_file(cipher) != part.get("ciphertext_sha256"):
+                        raise ObjectError("encrypted object is missing or failed integrity verification")
+                    checked_parts.append((cipher, part))
+                if row.get("encryption") == "per-part":
+                    with target.open("wb") as restored:
+                        for cipher, part in checked_parts:
+                            plain_part = base / "part.plain"
+                            PRIVATE._decrypt_file(cipher, plain_part)
+                            if digest_file(plain_part) != part.get("plaintext_sha256"):
+                                raise ObjectError("decrypted part failed integrity verification")
+                            with plain_part.open("rb") as fragment:
+                                shutil.copyfileobj(fragment, restored, length=4 * 1024**2)
+                            plain_part.unlink()
+                elif row.get("encryption") is None:
+                    with (base / "cipher.gpg").open("wb") as combined:
+                        for cipher, _part in checked_parts:
+                            with cipher.open("rb") as fragment:
+                                shutil.copyfileobj(fragment, combined, length=4 * 1024**2)
+                    combined_cipher = base / "cipher.gpg"
+                    if digest_file(combined_cipher) != row.get("ciphertext_sha256"):
+                        raise ObjectError("reassembled ciphertext failed integrity verification")
+                    PRIVATE._decrypt_file(combined_cipher, target)
+                else:
+                    raise ObjectError("catalog contains an unsupported encryption mode")
                 if digest_file(target) != row.get("sha256"):
                     raise ObjectError("decrypted object failed plaintext integrity verification")
                 os.chmod(target, int(row.get("mode", 0o600)))
