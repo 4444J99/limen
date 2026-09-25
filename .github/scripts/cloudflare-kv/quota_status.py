@@ -22,6 +22,13 @@ def safe_failure(value):
         return {'failure_code': None, 'failure_category': None}
     code = value.get('lastFailureCode')
     detail = value.get('lastFailureDetail')
+    # A running invocation with no recorded failure is not an unclassified
+    # failure. This only projects diagnostics: execution_health still requires
+    # a recent real completion AND an exact unexpired lease to report health.
+    if (value.get('lastStatus') == 'running'
+        and type(value.get('consecutiveFailures')) is int
+        and value['consecutiveFailures'] == 0 and code in (None, '') and detail is None):
+        return {'failure_code': None, 'failure_category': None}
     category = detail.get('category') if isinstance(detail, dict) else None
     return {'failure_code': code if isinstance(code, str) and code in FAILURE_CODES else 'unclassified_failure',
             'failure_category': category if isinstance(category, str) and category in DIAGNOSES else 'unclassified'}
