@@ -31,8 +31,12 @@ class RepositoryLifecycleError(RuntimeError):
 def _git(path: Path, *args: str, timeout: int = 30) -> str:
     try:
         result = subprocess.run(
-            ["git", "-C", str(path), *args], capture_output=True, text=True,
-            timeout=timeout, check=False, stdin=subprocess.DEVNULL,
+            ["git", "-C", str(path), *args],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+            stdin=subprocess.DEVNULL,
         )
     except (OSError, subprocess.SubprocessError) as exc:
         raise RepositoryLifecycleError("Git inspection failed; residency retained") from exc
@@ -43,8 +47,12 @@ def _git(path: Path, *args: str, timeout: int = 30) -> str:
 
 def _gh(*args: str, timeout: int = 15) -> str:
     result = subprocess.run(
-        ["gh", "api", *args], capture_output=True, text=True, timeout=timeout,
-        check=False, stdin=subprocess.DEVNULL,
+        ["gh", "api", *args],
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        check=False,
+        stdin=subprocess.DEVNULL,
     )
     if result.returncode:
         raise RepositoryLifecycleError("authenticated GitHub identity lookup failed")
@@ -124,8 +132,12 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
         else:
             try:
                 result = subprocess.run(
-                    ["gh", "repo", "clone", coordinate, str(store)], capture_output=True,
-                    text=True, timeout=600, check=False, stdin=subprocess.DEVNULL,
+                    ["gh", "repo", "clone", coordinate, str(store)],
+                    capture_output=True,
+                    text=True,
+                    timeout=600,
+                    check=False,
+                    stdin=subprocess.DEVNULL,
                 )
             except (OSError, subprocess.SubprocessError) as exc:
                 raise RepositoryLifecycleError("repository acquisition failed; no lease was issued") from exc
@@ -147,8 +159,12 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
             return {"repository_id": str(stable_id), "lease_id": lease_id, "worktree": str(worktree), "head": head}
         try:
             revision_result = subprocess.run(
-                ["git", "-C", str(store), "fetch", "origin", revision], capture_output=True,
-                text=True, timeout=300, check=False, stdin=subprocess.DEVNULL,
+                ["git", "-C", str(store), "fetch", "origin", revision],
+                capture_output=True,
+                text=True,
+                timeout=300,
+                check=False,
+                stdin=subprocess.DEVNULL,
             )
         except (OSError, subprocess.SubprocessError) as exc:
             raise RepositoryLifecycleError("requested revision fetch was interrupted; residency retained") from exc
@@ -164,15 +180,26 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
         except WorktreeInitializationError as exc:
             raise RepositoryLifecycleError(f"worktree initialization retained at {exc.journal_path}") from exc
         record: dict[str, object] = {
-            "schema": "limen.repository_lease.v1", "lease_id": lease_id,
-            "repository_id": stable_id, "coordinate": coordinate,
-            "session_digest": _digest(session_id), "revision": revision,
-            "head": initialized.expected_head, "branch": branch,
-            "store": str(store), "worktree": str(worktree),
-            "state": "active", "created_at": datetime.now(UTC).isoformat(),
+            "schema": "limen.repository_lease.v1",
+            "lease_id": lease_id,
+            "repository_id": stable_id,
+            "coordinate": coordinate,
+            "session_digest": _digest(session_id),
+            "revision": revision,
+            "head": initialized.expected_head,
+            "branch": branch,
+            "store": str(store),
+            "worktree": str(worktree),
+            "state": "active",
+            "created_at": datetime.now(UTC).isoformat(),
         }
         _atomic_json(lease_file, record)
-        return {"repository_id": str(stable_id), "lease_id": lease_id, "worktree": str(worktree), "head": initialized.expected_head}
+        return {
+            "repository_id": str(stable_id),
+            "lease_id": lease_id,
+            "worktree": str(worktree),
+            "head": initialized.expected_head,
+        }
 
 
 def release(lease_id: str) -> dict[str, str]:
@@ -199,7 +226,11 @@ def release(lease_id: str) -> dict[str, str]:
         try:
             status = subprocess.run(
                 ["git", "-C", str(worktree), "status", "--porcelain=v1", "--untracked-files=all"],
-                capture_output=True, text=True, timeout=30, check=False, stdin=subprocess.DEVNULL,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+                stdin=subprocess.DEVNULL,
             )
         except (OSError, subprocess.SubprocessError):
             status = None
