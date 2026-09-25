@@ -768,3 +768,23 @@ open and clean at its already-submitted head; all observed checks are green,
 but its exact-head merge rail previously returned `DEFERRED — CI-PENDING` and
 has not returned a merge receipt. Do not promote either source PR to installed
 or merged status without the respective receipt.
+
+### CCE catalog and refresh wiring, 2026-09-25
+
+PORTVS registered `organvm-i-theoria/conversation-corpus-engine` as a
+remote-default repository under immutable GitHub ID `1188128304`, retaining
+the old path only as a discovery alias. Seventy PORTVS bootstrap tests passed;
+its read-only plan took no clone action because the host's control-root
+migration remains gated. PR #13 merged through Limen's exact-head rail at
+`c4e8023c95fd3409f94f10d6a8a600c116203e79`.
+
+Domus PR #395 now replaces the vanished-path silent-success CCE refresh
+wrapper with Limen `repo ensure`/`repo release` around the scheduled script.
+Two local lease/admission tests pass, as do syntax and commit hooks. The PR is
+open at `e8ae60a62fc2555c37f04285d97d381c46fc6307`; the source is not
+installed, and Limen #2718 remains draft/uninstalled. The repair therefore
+does not yet establish working CCE search or a natural scheduled refresh
+receipt. The separate source-root theme PR #394 remains open; its earlier
+exact-head submission was deferred and has not been retried. Current actual
+Data-volume free space is 22,038,536 KiB (~21.0 GiB); no physical recovery
+is claimed from these source changes.
