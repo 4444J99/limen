@@ -205,7 +205,7 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
             initialized = initialize_worktree(store, worktree, branch=branch, checkout_ref=target, task_id=lease_id)
         except WorktreeInitializationError as exc:
             raise RepositoryLifecycleError(f"worktree initialization retained at {exc.journal_path}") from exc
-        new_record: dict[str, object] = {
+        lease_record: dict[str, object] = {
             "schema": "limen.repository_lease.v1",
             "lease_id": lease_id,
             "repository_id": stable_id,
@@ -219,7 +219,7 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
             "state": "active",
             "created_at": datetime.now(UTC).isoformat(),
         }
-        _atomic_json(lease_file, new_record)
+        _atomic_json(lease_file, lease_record)
         return {
             "repository_id": str(stable_id),
             "lease_id": lease_id,
@@ -325,15 +325,18 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
         if not records:
             return {"repository_id": str(stable_id), "state": "retained-no-lease-evidence"}
         allowed_states = {
-            "active", "released-awaiting-custody-investigation",
-            "retained-dirty-or-unavailable", "retired-checkout-store-retained",
+            "active",
+            "released-awaiting-custody-investigation",
+            "retained-dirty-or-unavailable",
+            "retired-checkout-store-retained",
         }
         if any(record.get("state") not in allowed_states for _path, record in records):
             return {"repository_id": str(stable_id), "state": "retained-inconsistent-lease"}
         if any(record.get("state") == "active" for _path, record in records):
             return {"repository_id": str(stable_id), "state": "retained-active-lease"}
         released = [
-            (path, record) for path, record in records
+            (path, record)
+            for path, record in records
             if record.get("state") == "released-awaiting-custody-investigation"
         ]
         if not released:
@@ -346,7 +349,11 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
         remote_refs: dict[str, list[str]] = {}
         for line in advertised.splitlines():
             parts = line.split()
-            if len(parts) == 2 and re.fullmatch(r"[0-9a-f]{40}(?:[0-9a-f]{24})?", parts[0]) and parts[1].startswith("refs/heads/"):
+            if (
+                len(parts) == 2
+                and re.fullmatch(r"[0-9a-f]{40}(?:[0-9a-f]{24})?", parts[0])
+                and parts[1].startswith("refs/heads/")
+            ):
                 remote_refs.setdefault(parts[0], []).append(parts[1])
         from limen.worktree_abandonment import WorktreeAbandonmentError, retire_released_worktree
 
@@ -357,8 +364,11 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
             checkout = Path(str(record.get("worktree", "")))
             head = str(record.get("released_head", ""))
             if (
-                checkout != expected or checkout.is_symlink() or not checkout.is_dir()
-                or record.get("store") != str(store) or checkout.parent.resolve() != root
+                checkout != expected
+                or checkout.is_symlink()
+                or not checkout.is_dir()
+                or record.get("store") != str(store)
+                or checkout.parent.resolve() != root
                 or head not in remote_refs
             ):
                 retained += 1
@@ -372,7 +382,9 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
                 continue
             try:
                 result = retire_released_worktree(
-                    store, checkout, expected_head=head,
+                    store,
+                    checkout,
+                    expected_head=head,
                     remote_ref=min(remote_refs[head]),
                     receipt_root=state / "retirement-receipts",
                     owner_probe=owner_probe,
@@ -420,12 +432,14 @@ def reconcile_pending(*, max_repositories: int = 1) -> dict[str, object]:
         except (OSError, ValueError, TypeError, json.JSONDecodeError):
             cursor = 0
         ordered = [value for value in ids if value > cursor] + [value for value in ids if value <= cursor]
-        results: list[dict[str, object]] = []
+        results: list[dict[str, str]] = []
         for repository_id in ordered[:max_repositories]:
             try:
                 result = reconcile(repository_id)
             except RepositoryLifecycleError:
                 result = {"repository_id": str(repository_id), "state": "retained-investigation-error"}
             results.append(result)
-            _atomic_json(cursor_file, {"schema": "limen.repository_reconcile_cursor.v1", "last_repository_id": repository_id})
+            _atomic_json(
+                cursor_file, {"schema": "limen.repository_reconcile_cursor.v1", "last_repository_id": repository_id}
+            )
         return {"state": "reconciled-bounded", "results": results}
