@@ -174,3 +174,19 @@ the approximately 200 GiB outcome remain open.
 - Data-volume free space sampled 28,424,112 KiB before this npm-cache removal
   and 28,413,368 KiB after (-10,744 KiB). Concurrent writes/APFS effects mean
   no physical recovery is attributed to the 17.7 MB cache deletion.
+
+### Final idle tool-cache pass, 2026-09-25
+
+- The later exact-plan check found 43,040 KiB across only the npm and
+  Homebrew cache allowlist entries. Applied that unchanged plan through the
+  tool's expected-plan-hash gate; the subsequent fresh check found zero
+  eligible tool-cache candidates. Active UV, Playwright, and capabilities
+  caches, repository-custody-blocked pre-commit stores, and Domus/Codex-owned
+  paths remained excluded.
+- The generated-cache checker found one 88,018,944-byte `node_modules` tree
+  under protected `prds-work/prds-engine`; retained it. No protected project
+  environment was removed.
+- Data-volume free space changed from 27,640,772 KiB at the tool-cache check
+  to 27,625,604 KiB afterward (-15,168 KiB). This is a net observation, not
+  attributed reclaim; the 43,040 KiB apparent cache retirement is directory
+  accounting only. The 50 GiB admission threshold remains unmet.
