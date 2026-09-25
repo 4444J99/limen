@@ -185,6 +185,13 @@ than reclaimed. Apply reports measured free-space change separately from
 apparent file sizes; APFS sharing and concurrent writes can make these differ.
 All 65 focused reaper tests passed, including a failed-removal receipt case.
 
+ARCA's live private Releases were rechecked: each contains only one small encrypted
+catalog asset and no encrypted payload object, so registered private custody is
+still incomplete. The release publisher now uploads and verifies object assets
+before publishing the encrypted catalog as a batch commit marker; eight focused
+publisher tests pass. No bulk upload, source retirement, or restoration claim
+follows from this ordering fix. HORREVM cold storage is not attached.
+
 ## Acceptance and reporting
 
 Do not repeat subjective implementation percentages. Report original outcomes passed
