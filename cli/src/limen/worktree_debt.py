@@ -346,8 +346,11 @@ def _classify(
         return f"active(<{min_age_h:g}h)"
     if _git(["status", "--porcelain"], path).stdout.strip():
         return "dirty"
-    if not (path / ".git").is_file() and not _all_local_refs_remote(path):
+    is_worktree = (path / ".git").is_file()
+    if not is_worktree and not _all_local_refs_remote(path):
         return "unpreserved-local-refs"
+    if not is_worktree:
+        return "standalone-clone-requires-clone-custody-classifier"
     if _is_remote_merged(path, preservation_receipts):
         return "receipt-remote-merged+clean+idle"
     head = _git(["rev-parse", "HEAD"], path).stdout.strip()

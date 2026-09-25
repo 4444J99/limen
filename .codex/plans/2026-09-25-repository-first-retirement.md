@@ -91,3 +91,27 @@ The repository-first milestone remains partial: real checkout retirement is
 complete for this cohort, while most standalone repositories require their
 specific preservation step. Full private recovery, automatic residency and
 the approximately 200 GiB outcome remain open.
+
+## Continuation checkpoint, 2026-09-25
+
+- A fresh Limen worktree-reclaimer check examined 52 targets and proposed only
+  the two clean UCC support worktrees already retained for protected PRDS work.
+  They remain retained under that protection decision; no formal lease/pin
+  evidence is asserted, and no reclaimer mutation was applied.
+- The clone-specific reaper found zero eligible clones in the 75-copy Workspace
+  scope. A bounded home-root dry run (`/Users/4jp`, depth 3) found zero eligible
+  clones among 26 examined. These are scoped checks, not proof that hidden or
+  deeper application stores have a completed owner policy.
+- Cross-checking exposed a classifier mismatch: the linked-worktree reclaimer
+  could propose removing standalone clones with only local-ref proof, while the
+  clone owner must also account for reflogs, nested stores and fresh remote
+  reconciliation. The general reclaimer now leaves ordinary standalone clones
+  to that owner-specific classifier; only exact restored-custody receipts may
+  authorize a clone through the recovery path. The three Limen candidates were
+  not deleted.
+- Focused lifecycle/debt/candidate tests pass: 125. Both reaper passes were
+  dry-run only. No branch, private original, snapshot, or UCC lane was removed.
+- Available Data-volume space at the latest measurement was approximately
+  27.5 GiB; the ~200 GiB outcome remains unmet. Full home/Workspace coverage is
+  still incomplete, including the recorded cloud-trash timeout and application
+  stores requiring explicit owners.

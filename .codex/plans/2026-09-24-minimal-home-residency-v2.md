@@ -1065,3 +1065,12 @@ It records 30 actual linked-checkout removals, 19 additive preservation branches
 private metadata custody, current space measurements and explicit retained
 candidates. This is a partial physical-residency result; all five original
 outcome predicates remain unchanged.
+
+The next bounded pass found no newly authorized removals: 52 linked-reclaimer
+targets yielded only two deliberately retained UCC/PRDS support lanes; the
+Workspace clone reaper and depth-three home-root clone check each yielded zero
+eligible clones. A refs-only standalone-clone proposal from the linked reclaimer
+was closed by routing ordinary clone retirement to the clone-specific custody
+classifier. Focused lifecycle, debt and candidate tests pass (125). Both roots
+and deeper application-owned stores remain incompletely classified; no capacity
+or original completion criterion is claimed.
