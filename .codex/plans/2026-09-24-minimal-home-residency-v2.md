@@ -240,14 +240,15 @@ The approximately 200 GiB capacity criterion is still unmet, and future candidat
 receipts must distinguish apparent bytes from measured free-space change.
 
 Domus PR #393 now owns a narrow Claude VM lifecycle adapter and manifest policy
-at `22523105`. The live compressed base decoded successfully to 10,737,418,240
+at `6ead1eb3`. The live compressed base decoded successfully to 10,737,418,240
 bytes, but its SHA-256 differs from the expanded `rootfs.img` of the same logical
 size. The expanded image occupies 10,619,207,680 allocated bytes and is
 `retained-divergent-expanded-image`; the separate `sessiondata.img` remains
 protected. Thirty-seven targeted Domus tests, focused Ruff, JSON validation,
 pre-commit hooks and live read-only digest verification passed. No VM image was
 removed: distinct expanded state lacks custody and a native cold-start
-reconstruction receipt, and snapshots may retain physical blocks regardless.
+reconstruction receipt, and snapshots may retain physical blocks regardless. The
+adapter compares digests locally and emits only equality and aggregate byte counts.
 
 ## Acceptance and reporting
 
