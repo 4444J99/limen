@@ -226,6 +226,54 @@ def preserve(root: Path, remote: str, *, output: Path, apply: bool = False) -> d
     return result
 
 
+def resume_existing(
+    root: Path, remote: str, *, catalog: Path, expected_head: str,
+    expected_catalog_sha256: str, expected_files: int, expected_bytes: int,
+    apply: bool = False,
+) -> dict[str, object]:
+    """Resume a fixed encrypted catalog without generating a new release tag."""
+    root = root.resolve()
+    if not re.fullmatch(r"[0-9a-f]{40,64}", expected_head):
+        raise PreserveError("expected source commit is invalid")
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_catalog_sha256):
+        raise PreserveError("expected encrypted catalog digest is invalid")
+    if expected_files <= 0 or expected_bytes <= 0:
+        raise PreserveError("expected ciphertext extent is invalid")
+    if _git(root, "status", "--porcelain=v1", "--untracked-files=all").strip():
+        raise PreserveError("ARCA checkout is dirty; source retained")
+    if _git(root, "rev-parse", "HEAD").decode().strip() != expected_head:
+        raise PreserveError("ARCA source commit changed; source retained")
+    if _sha256(catalog)[0] != expected_catalog_sha256:
+        raise PreserveError("encrypted catalog changed; source retained")
+    names = _git(
+        root, "diff", "--name-only", "--diff-filter=AMR", "-z",
+        "refs/remotes/origin/main", "HEAD",
+    ).split(b"\0")
+    paths: list[Path] = []
+    expected: dict[Path, str] = {}
+    total = 0
+    for raw in filter(None, names):
+        rel = raw.decode("utf-8", "surrogateescape")
+        if rel == "manifest.json":
+            continue
+        if not (rel.endswith(".tar.enc") or re.search(r"\.tar\.enc\.part\.[a-z]+$", rel)):
+            raise PreserveError("source delta contains unsupported material")
+        path = root / rel
+        info = path.lstat()
+        if not stat.S_ISREG(info.st_mode) or path.is_symlink():
+            raise PreserveError("ciphertext source is not a regular file")
+        oid = _git(root, "rev-parse", f"HEAD:{rel}").decode().strip()
+        if _git(root, "hash-object", "--no-filters", "--", rel).decode().strip() != oid:
+            raise PreserveError("ciphertext differs from committed source")
+        digest, size = _sha256(path)
+        paths.append(path)
+        expected[path] = digest
+        total += size
+    if len(paths) != expected_files or total != expected_bytes:
+        raise PreserveError("ciphertext extent differs from fixed catalog receipt")
+    return PUBLISHER.publish(remote, catalog, paths, apply=apply, expected_digests=expected)
+
+
 def reconstruct(catalog_path: Path, assets: Path, base_repo: str, destination: Path) -> dict[str, object]:
     """Restore the original Git object IDs into an isolated new bare repository."""
     if destination.exists() or destination.is_symlink():
@@ -314,6 +362,11 @@ def main() -> int:
     parser.add_argument("--repo", help="private GitHub owner/repository")
     parser.add_argument("--catalog-output", type=Path, help="local encrypted catalog destination")
     parser.add_argument("--apply", action="store_true", help="publish ciphertext assets and verify remote readback")
+    parser.add_argument("--resume-existing-catalog", action="store_true", help="reuse a fixed encrypted catalog")
+    parser.add_argument("--expected-head")
+    parser.add_argument("--expected-catalog-sha256")
+    parser.add_argument("--expected-files", type=int)
+    parser.add_argument("--expected-bytes", type=int)
     parser.add_argument("--reconstruct-catalog", type=Path)
     parser.add_argument("--assets", type=Path)
     parser.add_argument("--base-repo")
@@ -323,13 +376,32 @@ def main() -> int:
         if args.reconstruct_catalog:
             if (
                 args.checkout or args.repo or args.catalog_output or args.apply
+                or args.resume_existing_catalog or args.expected_head
+                or args.expected_catalog_sha256 or args.expected_files or args.expected_bytes
                 or not args.assets or not args.base_repo or not args.destination
             ):
                 raise PreserveError("reconstruction requires catalog, assets, base repo and destination only")
             result = reconstruct(args.reconstruct_catalog, args.assets, args.base_repo, args.destination)
+        elif args.resume_existing_catalog:
+            if (
+                not args.checkout or not args.repo or not args.catalog_output
+                or not args.expected_head or not args.expected_catalog_sha256
+                or args.expected_files is None or args.expected_bytes is None
+                or args.assets or args.base_repo or args.destination
+            ):
+                raise PreserveError("resume requires checkout, repository, catalog and fixed source receipt")
+            result = resume_existing(
+                args.checkout, args.repo, catalog=args.catalog_output,
+                expected_head=args.expected_head,
+                expected_catalog_sha256=args.expected_catalog_sha256,
+                expected_files=args.expected_files, expected_bytes=args.expected_bytes,
+                apply=args.apply,
+            )
         else:
             if (
                 not args.checkout or not args.repo or not args.catalog_output
+                or args.expected_head or args.expected_catalog_sha256
+                or args.expected_files is not None or args.expected_bytes is not None
                 or args.assets or args.base_repo or args.destination
             ):
                 raise PreserveError("preservation requires checkout, repo and catalog output only")
