@@ -56,14 +56,25 @@ def _run(args: list[str], *, timeout: int = 900) -> subprocess.CompletedProcess[
     except (OSError, subprocess.SubprocessError) as exc:
         raise AssetError(f"GitHub asset operation failed ({type(exc).__name__})") from exc
     if result.returncode:
-        detail = re.search(
-            r"HTTP [0-9]{3}|rate limit|already exists|Validation Failed|timeout|connection reset",
-            result.stderr,
-            re.IGNORECASE,
-        )
-        reason = detail.group(0) if detail else f"exit {result.returncode}"
+        reason = _safe_failure_reason(result.stderr, result.returncode)
         raise AssetError(f"GitHub asset operation failed ({reason}); source ciphertext retained")
     return result
+
+
+def _safe_failure_reason(stderr: str, exit_code: int) -> str:
+    """Classify a provider failure without exposing source paths or response bodies."""
+    if re.search(r"secondary rate limit|abuse detection", stderr, re.IGNORECASE):
+        return "secondary rate limit"
+    if re.search(r"primary rate limit|API rate limit exceeded", stderr, re.IGNORECASE):
+        return "primary rate limit"
+    if re.search(r"resource not accessible|insufficient permission", stderr, re.IGNORECASE):
+        return "permission denied"
+    detail = re.search(
+        r"HTTP [0-9]{3}|already exists|Validation Failed|timeout|connection reset",
+        stderr,
+        re.IGNORECASE,
+    )
+    return detail.group(0) if detail else f"exit {exit_code}"
 
 
 def _canonical_repository(repo: str) -> tuple[int, str, str]:

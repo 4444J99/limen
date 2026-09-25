@@ -434,6 +434,8 @@ def test_failed_github_command_reports_neutral_error_category(monkeypatch) -> No
     with pytest.raises(assets.AssetError, match=r"HTTP 422\); source ciphertext retained") as error:
         assets._run(["gh", "release", "upload", "tag", "opaque.enc"])
     assert "/Users/name" not in str(error.value)
+    assert assets._safe_failure_reason("HTTP 403: You have exceeded a secondary rate limit", 1) == "secondary rate limit"
+    assert assets._safe_failure_reason("HTTP 403: Resource not accessible by integration", 1) == "permission denied"
 
 
 def test_upload_batch_size_is_bounded_before_remote_effects(tmp_path: Path, monkeypatch) -> None:
