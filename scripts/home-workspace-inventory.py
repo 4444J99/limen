@@ -48,6 +48,7 @@ def initial(roots: list[Path]) -> dict:
         "seen_directories": [],
         "objects": [],
         "unmeasured": [],
+        "resolved_changes": [],
         "complete": False,
     }
 
@@ -59,6 +60,7 @@ def _record(state: dict, path: str, kind: str, key: str, **extra: object) -> Non
 def advance(state: dict, *, max_directories: int, max_seconds: float) -> dict:
     if state.get("schema") != SCHEMA or not isinstance(state.get("frontier"), list):
         raise ValueError("invalid inventory state")
+    state.setdefault("resolved_changes", [])
     deadline = time.monotonic() + max_seconds
     seen = set(state["seen_directories"])
     frontier = deque(state["frontier"])
@@ -88,10 +90,11 @@ def advance(state: dict, *, max_directories: int, max_seconds: float) -> dict:
             names = {entry.name for entry in entries}
             if ".git" in names:
                 marker = next(entry for entry in entries if entry.name == ".git")
-                marker_kind = "linked_worktree" if marker.is_file(follow_symlinks=False) else "git_checkout"
+                marker_kind = "git_file_checkout_candidate" if marker.is_file(follow_symlinks=False) else "git_checkout"
                 _record(state, path, marker_kind, key)
             elif {"HEAD", "objects", "refs"}.issubset(names):
-                _record(state, path, "bare_git_candidate", key)
+                kind = "checkout_git_store" if Path(path).name == ".git" else "bare_git_candidate"
+                _record(state, path, kind, key)
             elif names & SOURCE_MARKERS:
                 _record(state, path, "copied_source_candidate", key, markers=sorted(names & SOURCE_MARKERS))
             for entry in entries:
@@ -112,6 +115,13 @@ def advance(state: dict, *, max_directories: int, max_seconds: float) -> dict:
             state["unmeasured"].append({"path": path, "error": type(exc).__name__})
     state["seen_directories"] = sorted(seen)
     state["frontier"] = list(frontier)
+    still_unmeasured = []
+    for item in state["unmeasured"]:
+        if item["error"] == "FileNotFoundError" and not os.path.lexists(item["path"]):
+            state["resolved_changes"].append({**item, "resolution": "vanished_during_scan"})
+        else:
+            still_unmeasured.append(item)
+    state["unmeasured"] = still_unmeasured
     state["complete"] = not state["frontier"] and not state["unmeasured"]
     return state
 
@@ -132,10 +142,16 @@ def main() -> int:
             parser.error("state roots differ from requested roots")
     else:
         state = initial(roots)
+    for row in state["objects"]:
+        if row["kind"] == "bare_git_candidate" and Path(row["path"]).name == ".git":
+            row["kind"] = "checkout_git_store"
+        elif row["kind"] == "linked_worktree":
+            row["kind"] = "git_file_checkout_candidate"
     advance(state, max_directories=args.max_directories, max_seconds=args.max_seconds)
     save(args.state, state)
     print(json.dumps({"complete": state["complete"], "frontier": len(state["frontier"]),
-                      "objects": len(state["objects"]), "unmeasured": len(state["unmeasured"])}))
+                      "objects": len(state["objects"]), "unmeasured": len(state["unmeasured"]),
+                      "resolved_changes": len(state["resolved_changes"])}))
     return 0
 
 

@@ -35,6 +35,7 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
     cache = tmp_path / "cache"
     worktrees = tmp_path / "worktrees"
     monkeypatch.setattr(lifecycle, "_repository", lambda _repo_id: (77123, "owner/project"))
+    monkeypatch.setattr(lifecycle, "_verify_store_origin", lambda _store, _stable_id: None)
     monkeypatch.setattr(lifecycle, "dispatch_clone_cache_root", lambda: cache)
     from limen import dispatch
 
@@ -101,3 +102,19 @@ def test_ensure_rejects_non_immutable_repository_identifiers():
         assert "immutable positive GitHub" in str(exc)
     else:
         raise AssertionError("coordinate accepted in place of immutable repository ID")
+
+
+def test_store_origin_requires_live_immutable_identity(tmp_path, monkeypatch):
+    from limen import dispatch
+
+    monkeypatch.setattr(lifecycle, "_git", lambda _store, *_args: "https://github.com/old/name.git")
+    monkeypatch.setattr(dispatch, "_github_slug_from_remote", lambda _remote: "old/name")
+    monkeypatch.setattr(lifecycle, "_gh", lambda *_args: '{"id": 77124}')
+    try:
+        lifecycle._verify_store_origin(tmp_path, 77123)
+    except lifecycle.RepositoryLifecycleError as exc:
+        assert "immutable identity mismatch" in str(exc)
+    else:
+        raise AssertionError("mismatched store origin accepted")
+    monkeypatch.setattr(lifecycle, "_gh", lambda *_args: '{"id": 77123}')
+    lifecycle._verify_store_origin(tmp_path, 77123)

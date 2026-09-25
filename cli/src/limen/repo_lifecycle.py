@@ -80,6 +80,22 @@ def _repository(repository_id: int | str) -> tuple[int, str]:
     return stable_id, coordinate
 
 
+def _verify_store_origin(store: Path, stable_id: int) -> None:
+    """Never adopt a store on coordinate or registry-alias resemblance alone."""
+    from limen.dispatch import _github_slug_from_remote
+
+    origin = _git(store, "remote", "get-url", "origin")
+    slug = _github_slug_from_remote(origin)
+    if slug is None:
+        raise RepositoryLifecycleError("canonical store origin is not a GitHub repository")
+    try:
+        observed = int(json.loads(_gh(f"repos/{slug}"))["id"])
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise RepositoryLifecycleError("canonical store origin identity is unavailable; retained") from exc
+    if observed != stable_id:
+        raise RepositoryLifecycleError("canonical store origin immutable identity mismatch; retained")
+
+
 def _atomic_json(path: Path, value: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
@@ -131,11 +147,7 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
         worktree = root / f"repo-{stable_id}-{_digest(session_id)[:16]}"
         branch = f"limen/session-{stable_id}-{_digest(session_id)[:12]}"
         if store.exists():
-            origin = _git(store, "remote", "get-url", "origin")
-            from limen.dispatch import _github_repositories_match, _github_slug_from_remote
-
-            if not _github_repositories_match(_github_slug_from_remote(origin), coordinate):
-                raise RepositoryLifecycleError("canonical store origin does not match immutable repository identity")
+            _verify_store_origin(store, stable_id)
         else:
             try:
                 # gh starts Git and its transport as children. Reuse dispatch's
@@ -148,6 +160,7 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
                 raise RepositoryLifecycleError("repository acquisition failed; no lease was issued") from exc
             if result.returncode:
                 raise RepositoryLifecycleError("repository acquisition failed; no lease was issued")
+            _verify_store_origin(store, stable_id)
         if lease_file.exists():
             record = json.loads(lease_file.read_text(encoding="utf-8"))
             if (
