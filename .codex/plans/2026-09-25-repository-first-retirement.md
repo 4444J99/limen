@@ -120,3 +120,57 @@ the approximately 200 GiB outcome remain open.
   27.5 GiB; the ~200 GiB outcome remains unmet. Full home/Workspace coverage is
   still incomplete, including the recorded cloud-trash timeout and application
   stores requiring explicit owners.
+
+### Cache-owner follow-through, 2026-09-25
+
+- Re-ran the allowlisted owner-aware cache classifier at 16:05Z. It found
+  three candidates totaling 572,928 KiB, but retained UV (11.1 GiB), Playwright
+  (1.6 GiB), and capabilities cache (208.2 MiB) due to live process references;
+  pre-commit remained blocked on repository custody. Owner-managed runtime and
+  Codex recovery stores were not considered eligible.
+- Used Homebrew's own `cleanup --dry-run --prune=all` before mutation. It
+  proposed 524.2 MB of obsolete downloads/API metadata and stale logs; the
+  operation completed and Homebrew reported that amount freed. Installed
+  `codex`, VS Code, Kimi, UV, and Node remained available (Homebrew versions
+  and the `codex`, `code`, and `kimi` executables verified).
+- Immediate Data-volume free-space measurement moved from 28,458,220 KiB to
+  28,478,412 KiB (+19.7 MiB). This is a measured net change, not an attribution
+  of the full apparent reclaim; APFS sharing and other concurrent activity
+  remain. The post-Homebrew cleanup check initially reported 59.8 MiB across
+  three eligible candidates.
+- Candidate-level repository checks did not authorize pruning the four
+  standalone clones inspected: their consumers, local-only history, or dirty
+  and ignored generated state remain unresolved. This reinforces that the
+  repository-first retirement milestone remains partial, not remote-only.
+
+### Deeper hydration-cache retirement, 2026-09-25
+
+- Expanded the clone-reaper dry-run from its default depth-three boundary to
+  depth six. It found seven additional candidates under a collaboration
+  hydration cache (0.57 GiB apparent), all classified as clean pushed mirrors.
+- Confirmed the hydration owner reconstructs these repository sources on
+  demand with a shallow `gh repo clone` when no normal local checkout exists;
+  the adjacent vault, receipts, and encrypted-object state were not targeted.
+- The immediate apply rechecked all candidates. Six remained eligible and
+  were reaped (about 0.56 GiB apparent); the seventh changed classification
+  and was retained. A subsequent depth-six dry-run found zero eligible clones.
+- The clone reaper observed approximately zero net GiB free-space change; the
+  separate Data-volume sample moved from 28,449,892 KiB to 28,424,112 KiB
+  (-25,780 KiB). Concurrent writes/APFS mean this is not a reclaim estimate.
+  Disk remains below the 50 GiB admission threshold. No private vault data,
+  branches, or remote repositories were removed.
+
+### Remaining npm cache, 2026-09-25
+
+- The owner-aware check had correctly identified a separate idle cache at
+  `~/.cache/npm`; the standard npm cache command did not target it. Verified
+  that exact cache through `npm --cache <path> cache verify` (154 entries,
+  17,581,523 bytes), then cleared it using the same explicit cache argument
+  and verified zero entries remained.
+- A fresh allowlist check now reports 42.0 MiB total across three candidates;
+  UV, Playwright, and capabilities remain active-process blocked, and
+  pre-commit remains blocked on Git custody. Homebrew's current dry-run had no
+  further cleanup output.
+- Data-volume free space sampled 28,424,112 KiB before this npm-cache removal
+  and 28,413,368 KiB after (-10,744 KiB). Concurrent writes/APFS effects mean
+  no physical recovery is attributed to the 17.7 MB cache deletion.
