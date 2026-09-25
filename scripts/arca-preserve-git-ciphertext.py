@@ -69,6 +69,30 @@ def _sha256(path: Path) -> tuple[str, int]:
     return digest.hexdigest(), size
 
 
+def _git_object_oid(kind: str, payload: bytes, object_format: str) -> str:
+    if object_format not in {"sha1", "sha256"}:
+        raise PreserveError("unsupported Git object format; source retained")
+    digest = hashlib.new(object_format)
+    digest.update(f"{kind} {len(payload)}\0".encode("ascii"))
+    digest.update(payload)
+    return digest.hexdigest()
+
+
+def _write_object(repo: Path, kind: str, source: Path | bytes) -> str:
+    command = ["git", "-C", str(repo), "hash-object", "-w", "-t", kind, "--stdin"]
+    try:
+        if isinstance(source, Path):
+            with source.open("rb") as stream:
+                result = subprocess.run(command, stdin=stream, capture_output=True, check=False, timeout=900)
+        else:
+            result = subprocess.run(command, input=source, capture_output=True, check=False, timeout=120)
+    except (OSError, subprocess.SubprocessError) as exc:
+        raise PreserveError("isolated Git object reconstruction failed") from exc
+    if result.returncode:
+        raise PreserveError("isolated Git object reconstruction failed")
+    return result.stdout.decode("ascii").strip()
+
+
 def preserve(root: Path, remote: str, *, output: Path, apply: bool = False) -> dict[str, object]:
     root = root.resolve()
     if not (root / ".git").exists():
@@ -93,11 +117,37 @@ def preserve(root: Path, remote: str, *, output: Path, apply: bool = False) -> d
     )
     if check.returncode:
         raise PreserveError("cannot classify unpublished Git objects")
-    new_blobs = {oid for oid, row in zip(object_ids, check.stdout.decode().splitlines(), strict=True) if row.startswith("blob ")}
+    object_format = _git(root, "rev-parse", "--show-object-format").decode().strip()
+    if object_format not in {"sha1", "sha256"}:
+        raise PreserveError("unsupported Git object format; source retained")
+    new_blobs: set[str] = set()
+    metadata_objects: list[dict[str, object]] = []
+    metadata_bytes = 0
+    for oid, row in zip(object_ids, check.stdout.decode().splitlines(), strict=True):
+        kind, separator, size_text = row.partition(" ")
+        if not separator or kind not in {"blob", "commit", "tree", "tag"} or not size_text.isdecimal():
+            raise PreserveError("unclassified unpublished Git object; source retained")
+        if kind == "blob":
+            new_blobs.add(oid)
+            continue
+        size = int(size_text)
+        metadata_bytes += size
+        if metadata_bytes > 16 * 1024 * 1024:
+            raise PreserveError("Git metadata closure exceeds encrypted catalog bound")
+        payload = _git(root, "cat-file", kind, oid)
+        if len(payload) != size or _git_object_oid(kind, payload, object_format) != oid:
+            raise PreserveError("Git metadata object failed exact identity verification")
+        metadata_objects.append({
+            "oid": oid,
+            "type": kind,
+            "bytes": size,
+            "raw_b64": base64.b64encode(payload).decode("ascii"),
+        })
 
     entries: list[dict[str, object]] = []
     paths: list[Path] = []
     embedded_manifest: str | None = None
+    embedded_manifest_oid: str | None = None
     rows = _git(root, "ls-tree", "-r", "-z", "HEAD").split(b"\0")
     matched: set[str] = set()
     for row in filter(None, rows):
@@ -121,6 +171,7 @@ def preserve(root: Path, remote: str, *, output: Path, apply: bool = False) -> d
             if embedded_manifest is not None or size > 1024 * 1024:
                 raise PreserveError("legacy manifest is duplicated or exceeds the bounded catalog metadata limit")
             embedded_manifest = base64.b64encode(path.read_bytes()).decode("ascii")
+            embedded_manifest_oid = oid
             matched.add(oid)
             continue
         if not (rel.endswith(".tar.enc") or re.search(r"\.tar\.enc\.part\.[a-z]+$", rel)):
@@ -135,16 +186,23 @@ def preserve(root: Path, remote: str, *, output: Path, apply: bool = False) -> d
         "schema": "arca-legacy-ciphertext-catalog-v1",
         "source_commit": head,
         "source_base": base,
+        "git_object_format": object_format,
+        "git_metadata_objects": metadata_objects,
+        "git_closure_scope": "origin-main-excluded-to-head",
         "entries": entries,
     }
     if embedded_manifest is not None:
         catalog["legacy_manifest_json_b64"] = embedded_manifest
+        catalog["legacy_manifest_git_blob"] = embedded_manifest_oid
     output = output.expanduser().resolve()
     output.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="arca-cipher-catalog-") as temp:
         os.chmod(temp, 0o700)
         plaintext = Path(temp) / "catalog.json"
-        plaintext.write_text(json.dumps(catalog, ensure_ascii=True, sort_keys=True, separators=(",", ":")), encoding="utf-8")
+        plaintext.write_text(
+            json.dumps(catalog, ensure_ascii=True, sort_keys=True, separators=(",", ":")),
+            encoding="utf-8",
+        )
         os.chmod(plaintext, 0o600)
         partial = output.with_name(f".{output.name}.partial")
         PRIVATE._encrypt_file(plaintext, partial)
@@ -154,11 +212,10 @@ def preserve(root: Path, remote: str, *, output: Path, apply: bool = False) -> d
         os.replace(partial, output)
     result: dict[str, object] = {
         "state": "catalog-ready",
-        "commit": head,
+        "git_identity_verified": True,
         "files": len(paths),
         "bytes": sum(int(entry["bytes"]) for entry in entries),
         "catalog_sha256": _sha256(output)[0],
-        "catalog_path": str(output),
     }
     if apply:
         expected = {root / str(entry["path"]): str(entry["sha256"]) for entry in entries}
@@ -169,15 +226,115 @@ def preserve(root: Path, remote: str, *, output: Path, apply: bool = False) -> d
     return result
 
 
+def reconstruct(catalog_path: Path, assets: Path, base_repo: str, destination: Path) -> dict[str, object]:
+    """Restore the original Git object IDs into an isolated new bare repository."""
+    if destination.exists() or destination.is_symlink():
+        raise PreserveError("reconstruction destination already exists")
+    destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="arca-git-reconstruct-", dir=destination.parent) as temporary:
+        staging = Path(temporary) / "repository.git"
+        plaintext = Path(temporary) / "catalog.json"
+        PRIVATE._decrypt_file(catalog_path, plaintext)
+        try:
+            catalog = json.loads(plaintext.read_text(encoding="utf-8"))
+            head = str(catalog["source_commit"])
+            base = str(catalog["source_base"])
+            object_format = str(catalog["git_object_format"])
+            rows = catalog["entries"]
+            metadata = catalog["git_metadata_objects"]
+        except (OSError, UnicodeError, ValueError, KeyError, TypeError) as exc:
+            raise PreserveError("encrypted Git reconstruction catalog is invalid") from exc
+        if (
+            catalog.get("schema") != "arca-legacy-ciphertext-catalog-v1"
+            or object_format not in {"sha1", "sha256"}
+            or not isinstance(rows, list) or not isinstance(metadata, list)
+            or not re.fullmatch(r"[0-9a-f]{40}" if object_format == "sha1" else r"[0-9a-f]{64}", head)
+            or not re.fullmatch(r"[0-9a-f]{40}" if object_format == "sha1" else r"[0-9a-f]{64}", base)
+        ):
+            raise PreserveError("encrypted Git reconstruction catalog has invalid identity")
+        init = subprocess.run(
+            ["git", "init", "--bare", f"--object-format={object_format}", str(staging)],
+            capture_output=True, check=False, timeout=30,
+        )
+        if init.returncode:
+            raise PreserveError("isolated bare repository could not be initialized")
+        fetch = subprocess.run(
+            ["git", "-C", str(staging), "fetch", "--no-tags", base_repo,
+             "+refs/heads/main:refs/remotes/base/main"],
+            capture_output=True, check=False, timeout=900,
+        )
+        if fetch.returncode:
+            raise PreserveError("exact base commit is unavailable; reconstruction retained")
+        _git(staging, "cat-file", "-e", f"{base}^{{commit}}")
+        for row in rows:
+            if not isinstance(row, dict):
+                raise PreserveError("encrypted catalog contains an invalid blob entry")
+            rel = row.get("path")
+            digest = row.get("sha256")
+            oid = row.get("git_blob")
+            if (
+                not isinstance(rel, str) or not isinstance(digest, str)
+                or not re.fullmatch(r"[0-9a-f]{64}", digest)
+                or not isinstance(oid, str)
+                or not re.fullmatch(r"[0-9a-f]{40}" if object_format == "sha1" else r"[0-9a-f]{64}", oid)
+            ):
+                raise PreserveError("encrypted catalog contains an invalid blob identity")
+            asset = assets / f"object-{digest}.enc"
+            if asset.is_symlink() or not asset.is_file() or _sha256(asset) != (digest, row.get("bytes")):
+                raise PreserveError("ciphertext asset is unavailable or differs from catalog")
+            if _write_object(staging, "blob", asset) != oid:
+                raise PreserveError("ciphertext Git blob ID differs from original")
+        if "legacy_manifest_json_b64" in catalog:
+            try:
+                manifest = base64.b64decode(catalog["legacy_manifest_json_b64"], validate=True)
+            except (ValueError, TypeError) as exc:
+                raise PreserveError("embedded legacy manifest is invalid") from exc
+            if _write_object(staging, "blob", manifest) != catalog.get("legacy_manifest_git_blob"):
+                raise PreserveError("embedded legacy manifest Git blob ID differs")
+        for row in metadata:
+            if not isinstance(row, dict) or row.get("type") not in {"commit", "tree", "tag"}:
+                raise PreserveError("encrypted catalog contains invalid Git metadata")
+            try:
+                payload = base64.b64decode(row["raw_b64"], validate=True)
+            except (KeyError, ValueError, TypeError) as exc:
+                raise PreserveError("encrypted Git metadata bytes are invalid") from exc
+            if len(payload) != row.get("bytes") or _write_object(staging, row["type"], payload) != row.get("oid"):
+                raise PreserveError("Git metadata failed exact object-ID reconstruction")
+        _git(staging, "update-ref", "refs/heads/recovered", head)
+        _git(staging, "fsck", "--strict", "--full", "--no-reflogs", "--no-dangling")
+        if _git(staging, "rev-parse", "refs/heads/recovered").decode().strip() != head:
+            raise PreserveError("isolated reconstructed HEAD differs from source")
+        os.replace(staging, destination)
+    return {"state": "reconstructed", "git_identity_verified": True}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("checkout", type=Path)
-    parser.add_argument("--repo", required=True, help="private GitHub owner/repository")
-    parser.add_argument("--catalog-output", type=Path, required=True, help="local encrypted catalog destination")
+    parser.add_argument("checkout", type=Path, nargs="?")
+    parser.add_argument("--repo", help="private GitHub owner/repository")
+    parser.add_argument("--catalog-output", type=Path, help="local encrypted catalog destination")
     parser.add_argument("--apply", action="store_true", help="publish ciphertext assets and verify remote readback")
+    parser.add_argument("--reconstruct-catalog", type=Path)
+    parser.add_argument("--assets", type=Path)
+    parser.add_argument("--base-repo")
+    parser.add_argument("--destination", type=Path)
     args = parser.parse_args()
     try:
-        print(json.dumps(preserve(args.checkout, args.repo, output=args.catalog_output, apply=args.apply), sort_keys=True))
+        if args.reconstruct_catalog:
+            if (
+                args.checkout or args.repo or args.catalog_output or args.apply
+                or not args.assets or not args.base_repo or not args.destination
+            ):
+                raise PreserveError("reconstruction requires catalog, assets, base repo and destination only")
+            result = reconstruct(args.reconstruct_catalog, args.assets, args.base_repo, args.destination)
+        else:
+            if (
+                not args.checkout or not args.repo or not args.catalog_output
+                or args.assets or args.base_repo or args.destination
+            ):
+                raise PreserveError("preservation requires checkout, repo and catalog output only")
+            result = preserve(args.checkout, args.repo, output=args.catalog_output, apply=args.apply)
+        print(json.dumps(result, sort_keys=True))
     except (PreserveError, PRIVATE.VaultError, PUBLISHER.AssetError, OSError) as exc:
         print(f"arca-preserve-git-ciphertext: {exc}", file=sys.stderr)
         return 1
