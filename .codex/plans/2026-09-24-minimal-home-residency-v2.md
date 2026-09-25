@@ -482,3 +482,26 @@ space was 25,524,248 KiB (about 24.34 GiB), still far below 200 GiB.
 The cumulative agent execution has passed the global finite-work recovery
 allowance of 120 minutes. Stop automatic heavy recovery work at this
 checkpoint under `/Users/4jp/AGENTS.md`; retain the full goal as incomplete.
+
+### Resumed deployment and key-recovery checkpoint, 2026-09-25
+
+The user explicitly resumed autonomous tranches. The fixed ARCA Release still
+lists 60 uploaded digest-bearing assets, including one encrypted catalog and
+the exact planned byte total. The vault checkout is clean; internal free space
+at restart was 25,125,420 KiB. The synthetic real-key `private-vault.py
+recovery-check --apply` failed again: GPG lists a recipient-matching secret
+subkey, but its agent cannot supply the decryption key in this noninteractive
+session. A secret-subkey export diagnostic returned `Inappropriate ioctl for
+device`, consistent with an unavailable interactive unlock. This is not an
+independent restoration receipt; no source retirement follows.
+
+Limen PR #2718 was conflicting and its Python CI failed on formatter drift.
+Fetched main at `b0ca0d678`, merged it into the existing recovery branch,
+preserved the process-group clone/fetch timeout, incorporated main's lease
+record typing fix, and corrected the remaining typed reconcile result list.
+Ruff lint/format, mypy across 190 modules, and 383 focused lifecycle,
+dispatch and heartbeat tests passed locally. Merge commit `53d234adc` was
+pushed; the PR is now mergeable and its new hosted checks were queued at the
+first observation. It remains draft and unmerged pending hosted evidence and
+the wider unfinished lifecycle acceptance. Domus #393 and PORTVS #12 remain
+open at their prior exact heads; no unchanged-head merge retry was attempted.
