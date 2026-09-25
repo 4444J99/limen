@@ -191,6 +191,10 @@ still incomplete. The release publisher now uploads and verifies object assets
 before publishing the encrypted catalog as a batch commit marker; eight focused
 publisher tests pass. No bulk upload, source retirement, or restoration claim
 follows from this ordering fix. HORREVM cold storage is not attached.
+The normal GPG listing advertises the pinned key, but the real
+`private-vault.py recovery-check --apply` still failed to decrypt with
+`No secret key`. Listing metadata is not a recovery receipt. Independent-key
+restoration remains unproven, and no private original may be retired.
 
 ## Acceptance and reporting
 
