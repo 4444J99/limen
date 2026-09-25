@@ -10,6 +10,7 @@ import time
 import urllib.request
 import release as r
 from quota_status import annotate, safe_failure
+from execution_health import health, read_receipts
 
 FIRST_COMPLETE_DAY = '2026-09-24'
 EXPECTED_REVISION = 'kv-recovery-d1-20260923-v2'
@@ -26,16 +27,12 @@ QUERY = '''query RecoveryUsage($account: string!, $start: Date!, $end: Date!) {
  } }
 }'''
 
-def project_state(state, now):
+def project_state(state, now, receipts=None):
  out={}
  for name,limit in TARGET_AGES.items():
   value=state.get('targetStates',{}).get(name,{})
-  completed=value.get('lastCompletedAt',0)
-  age=now-completed if isinstance(completed,(float,int)) and completed else None
-  status=value.get('lastStatus')
-  out[name]={**safe_failure(value), 'last_status':status if status in ('success','failure','timeout','skipped') else 'unknown',
-             'last_completion_age_seconds':round(age/1000) if age is not None else None,
-             'healthy':status=='success' and age is not None and 0<=age<=limit}
+  receipt=(receipts or {}).get(value.get('lastRunId'))
+  out[name]={**safe_failure(value), **health(name,value,now,limit,receipt)}
  return out
 
 
@@ -113,7 +110,11 @@ def observe(client):
   if databases:
    client.db=databases[0]['database_id']
    rows=client.sql(r.STATE,('scheduler:state',))
-   entry['jobs']=project_state(json.loads(rows[0]['payload']) if rows else {},time.time()*1000)
+   state=json.loads(rows[0]['payload']) if rows else {}
+   # A busy worker is not a failed worker. Require both an actual recent
+   # completion and the exact still-live lease; never call the new run done.
+   receipts=read_receipts(client,state,TARGET_AGES) if name=='ops-scheduler-production' else {}
+   entry['jobs']=project_state(state,time.time()*1000,receipts)
   report['schedulers'][name]=entry
  report['usage']=usage(client, owners)
  products_ok=all(v['liveness_http']==200 and v['status_http']==200 and v['revision_verified'] and v['snapshot_stale'] is False for v in report['products'].values())
