@@ -210,3 +210,21 @@ the approximately 200 GiB outcome remain open.
 - Data-volume free space measured 27,593,692 KiB after these read-only checks.
   Concurrent use continues to dominate small apparent candidate totals; no
   additional storage reclaim is attributed.
+
+### Ciphertext-only second-device replica, 2026-09-25
+
+- HORREVM's cloud rail remains parked on its explicit egress-consent gate. The
+  existing private-vault verifier passed for four encrypted objects and its
+  neutral, public-safe manifest. A fresh GitHub API read of live `main` showed
+  the exact same five Git blob IDs and sizes as the current local tree.
+- Made an additive copy of only those four ciphertext objects and the neutral
+  manifest onto a separately attached physical storage device. The volume is
+  APFS and unencrypted; the replica directory is mode 700 and each copied file
+  mode 600. No plaintext, source filenames, or sensitive path index was copied.
+- Flushed before publishing the staged directory, then compared the completed
+  destination tree byte-for-byte with the verified local vault (`diff -qr`,
+  exit 0). The complete replica is 35,382 bytes across five files. This proves
+  an independent physical ciphertext copy for this vault cohort only; it does
+  not prove key recovery, decryption/restoration, coverage of other private
+  domains, or authorization to retire any source. The unencrypted volume must
+  never receive plaintext or sensitive names/indexes.
