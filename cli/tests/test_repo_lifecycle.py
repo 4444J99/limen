@@ -4,6 +4,7 @@ import json
 import subprocess
 from pathlib import Path
 
+import pytest
 from limen import repo_lifecycle as lifecycle
 from limen.worktree_initialization import WorktreeInitialization
 
@@ -62,6 +63,7 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
     monkeypatch.setattr(lifecycle, "_repository", lambda _repo_id: (77123, "owner/project"))
     monkeypatch.setattr(lifecycle, "_verify_store_origin", lambda _store, _stable_id: None)
     monkeypatch.setattr(lifecycle, "dispatch_clone_cache_root", lambda: cache)
+    monkeypatch.setattr(lifecycle, "take_admission_snapshot", lambda _root: {"active": True, "block_new_local": False})
     from limen import dispatch
 
     monkeypatch.setattr(dispatch, "_github_repositories_match", lambda _left, _right: True)
@@ -97,6 +99,13 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
     monkeypatch.setattr(lifecycle, "initialize_worktree", initialize)
     first = lifecycle.ensure("77123", "main", "session/one")
     second = lifecycle.ensure(77123, "main", "session/one")
+    monkeypatch.setattr(
+        lifecycle,
+        "take_admission_snapshot",
+        lambda _root: {"active": True, "block_new_local": True, "reason": "free space below floor"},
+    )
+    assert lifecycle.ensure(77123, "main", "session/one") == first
+    monkeypatch.setattr(lifecycle, "take_admission_snapshot", lambda _root: {"active": True, "block_new_local": False})
     concurrent_session = lifecycle.ensure(77123, "main", "session/two")
     default_head = lifecycle.ensure(77123, "HEAD", "session/head")
     assert first == second
@@ -130,6 +139,21 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
     assert Path(concurrent_session["worktree"]).is_dir()
     assert Path(first["store"]).is_dir()
     assert lifecycle.reconcile(77123, owner_probe=lambda _path: None)["state"] == "retained-no-eligible-checkout"
+
+
+def test_new_residency_denied_before_clone_under_disk_pressure(tmp_path, monkeypatch):
+    cache = tmp_path / "cache"
+    monkeypatch.setattr(lifecycle, "_repository", lambda _repo_id: (77123, "owner/project"))
+    monkeypatch.setattr(lifecycle, "dispatch_clone_cache_root", lambda: cache)
+    monkeypatch.setattr(
+        lifecycle,
+        "take_admission_snapshot",
+        lambda _root: {"active": True, "block_new_local": True, "reason": "free space below floor"},
+    )
+    with pytest.raises(lifecycle.RepositoryLifecycleError, match="free space below floor"):
+        lifecycle.ensure(77123, "main", "new-session")
+    assert not (cache / "github-77123").exists()
+    assert not list((cache / ".limen-residency" / "77123" / "leases").glob("*.json"))
 
 
 def test_ensure_rejects_non_immutable_repository_identifiers():

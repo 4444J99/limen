@@ -20,6 +20,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 
+from limen.worktree_debt import take_admission_snapshot
 from limen.worktree_initialization import WorktreeInitializationError, initialize_worktree
 from limen.worktree_roots import dispatch_clone_cache_root, effective_worktree_root
 
@@ -146,22 +147,8 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
         root = effective_worktree_root().expanduser()
         worktree = root / f"repo-{stable_id}-{_digest(session_id)[:16]}"
         branch = f"limen/session-{stable_id}-{_digest(session_id)[:12]}"
-        if store.exists():
-            _verify_store_origin(store, stable_id)
-        else:
-            try:
-                # gh starts Git and its transport as children. Reuse dispatch's
-                # process-group timeout so a child holding the output pipe cannot
-                # outlive the acquisition deadline.
-                from limen.dispatch import _run_capture
-
-                result = _run_capture(["gh", "repo", "clone", coordinate, str(store)], timeout=600)
-            except (OSError, subprocess.SubprocessError) as exc:
-                raise RepositoryLifecycleError("repository acquisition failed; no lease was issued") from exc
-            if result.returncode:
-                raise RepositoryLifecycleError("repository acquisition failed; no lease was issued")
-            _verify_store_origin(store, stable_id)
         if lease_file.exists():
+            _verify_store_origin(store, stable_id)
             record = json.loads(lease_file.read_text(encoding="utf-8"))
             if (
                 record.get("repository_id") != stable_id
@@ -188,6 +175,30 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
                 "branch": str(record.get("branch", "")),
                 "head": head,
             }
+        # Existing leases may still be opened under pressure; a new checkout
+        # must use the same live disk and reaper gate as dispatch.
+        try:
+            limen_root = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[3])
+            admission = take_admission_snapshot(limen_root)
+        except Exception as exc:
+            raise RepositoryLifecycleError("repository admission unavailable; no lease was issued") from exc
+        if admission.get("active") and admission.get("block_new_local"):
+            raise RepositoryLifecycleError(str(admission.get("reason") or "new local repository residency denied"))
+        if store.exists():
+            _verify_store_origin(store, stable_id)
+        else:
+            try:
+                # gh starts Git and its transport as children. Reuse dispatch's
+                # process-group timeout so a child holding the output pipe cannot
+                # outlive the acquisition deadline.
+                from limen.dispatch import _run_capture
+
+                result = _run_capture(["gh", "repo", "clone", coordinate, str(store)], timeout=600)
+            except (OSError, subprocess.SubprocessError) as exc:
+                raise RepositoryLifecycleError("repository acquisition failed; no lease was issued") from exc
+            if result.returncode:
+                raise RepositoryLifecycleError("repository acquisition failed; no lease was issued")
+            _verify_store_origin(store, stable_id)
         try:
             from limen.dispatch import _run_capture
 
