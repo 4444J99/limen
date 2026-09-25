@@ -731,3 +731,29 @@ presence is not generic cache. `~/Library/Caches` totals 14,445,792 KiB;
 CloudKit alone uses 5,147,864 KiB and remains application-owned. The
 separately measured `~/.cache/uv` remains active and retained. These figures
 locate the deficit but do not add to an APFS-free-space recovery claim.
+
+### Active SQLite capture canary, 2026-09-25
+
+Limen now has a bounded, no-overwrite SQLite online-backup adapter for active
+application databases. It requires a private real output directory, captures
+through SQLite's backup API, seals the output into DELETE journal mode, checks
+integrity and source-path identity, fsyncs, and publishes the snapshot by an
+atomic no-replace hard link. A timeout or interruption retains the private
+partial and never emits a completed snapshot. Three focused tests cover WAL
+content, private mode/no overwrite, invalid source/partial, and deadline
+retention; Ruff lint/format pass.
+
+The first live small Codex `goals_1.sqlite` canary exposed a real sidecar bug:
+the read-only integrity connection left zero-byte WAL and SHM companion files
+beside the snapshot. That local-only capture was not published. The adapter
+now seals the journal and uses an immutable integrity reader, refusing to
+publish if sidecars remain. A second live canary yielded one 49,152-byte
+integrity-checked snapshot and no sidecars. ARCA encrypted it as one object
+plus an encrypted catalog; the private Release publisher fully read back both
+assets (`state=verified`, 8,524 ciphertext bytes) on tag
+`arca-objects-b05cc60b39c5b885817dcea36109b0a2`. An independent GitHub
+listing confirms both uploaded digest-bearing assets. The original Codex
+database, both private local canary directories, and all larger databases
+remain retained. This proves consistent encrypted remote capture for one
+small active SQLite source, not independent-key restoration or estate-wide
+database coverage.
