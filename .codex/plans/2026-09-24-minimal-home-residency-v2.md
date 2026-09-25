@@ -540,3 +540,22 @@ The store is not deleted. A focused test proves this retained state; seven
 repository-lifecycle tests, mypy and Ruff pass. The required next step is a
 shared metadata-preservation classifier with remote encrypted readback and
 restoration evidence, followed by a locked final-store deletion edge.
+
+### Owner-manifest merge receipts, 2026-09-25
+
+Domus #393 was submitted once through the exact-head merge rail at
+`3ad8eef85220f644a5e6728ba04b748a6000e1b3`; GitHub confirms `MERGED`
+at `633a298f1b49676be03ff1a30bad60f4a7898e1b`. PORTVS #12 was
+submitted once at `5e79f13d218bdf23dc708801f7481d71a2cae7b5`;
+GitHub confirms `MERGED` at `a749437e62802f6ab553e93c8f68e475476bd5e2`.
+These receipts deliver the owner manifests and Domus source adapters, not
+installed host configuration or completed migration. Domus's current source
+checkout has unrelated `.serena/project.yml` drift, so installation must use
+the merged source without overwriting that local state. PORTVS's checked-out
+source remains on its feature branch; synchronize the manifest consumer from
+the verified merged main without moving an active runtime.
+
+Limen #2718 remains draft and open at `a76733824a32d78252cdad8997b8ecfb44cba9b8`.
+Its latest hosted Python, contract, worker and web checks passed; PR Gate and
+Semgrep were still running at observation. No installed Limen runtime or
+natural scheduled receipt is inferred from source CI.
