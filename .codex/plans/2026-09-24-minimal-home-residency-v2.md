@@ -559,3 +559,17 @@ Limen #2718 remains draft and open at `a76733824a32d78252cdad8997b8ecfb44cba9b8`
 Its latest hosted Python, contract, worker and web checks passed; PR Gate and
 Semgrep were still running at observation. No installed Limen runtime or
 natural scheduled receipt is inferred from source CI.
+
+The merged Domus source was applied through chezmoi only to three named host
+targets: `~/.config/domus/home-surface.yaml`,
+`~/.local/bin/domus-limen-runtime`, and
+`~/.local/bin/domus-claude-vm-lifecycle`. A post-apply scoped chezmoi diff is
+empty and both installed commands answer `--help`. The default Domus chezmoi
+source checkout is on an older `master` with unrelated `.serena/project.yml`
+drift; it was not reset or broadly applied. The scoped source was the clean
+merged PR head. The new read-only VM classifier measured 10,619,207,680
+allocated bytes for Claude's expanded image and 1,227,485,184 bytes for its
+compressed base. Full base comparison reported equal logical size but unequal
+content (`retained-divergent-expanded-image`); retirement authorization is
+false and session data remains protected. This image contributes no verified
+recoverable bytes yet.
