@@ -76,9 +76,7 @@ def test_audit_rotation_preserves_full_prior_stream_within_contract_bound(tmp_pa
     digest = hashlib.sha256(prior).hexdigest()
     archived = root / "history" / f"audit.jsonl-{digest}"
     assert archived.read_bytes() == prior
-    assert audit.read_bytes() == (
-        json.dumps(receipt, sort_keys=True, separators=(",", ":")) + "\n"
-    ).encode()
+    assert audit.read_bytes() == (json.dumps(receipt, sort_keys=True, separators=(",", ":")) + "\n").encode()
     assert audit.stat().st_size <= heartbeat.MAX_AUDIT_STREAM_BYTES
 
 
