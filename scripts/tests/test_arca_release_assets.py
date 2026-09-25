@@ -94,6 +94,7 @@ def test_small_objects_share_one_upload_and_catalog_waits_for_readback(tmp_path:
     remote: dict[str, bytes] = {}
     uploads: list[list[str]] = []
     readbacks: list[str] = []
+    download_calls: list[list[str]] = []
     authorized: list[str] = []
 
     def fake_run(args: list[str], **_kwargs) -> subprocess.CompletedProcess[str]:
@@ -110,9 +111,12 @@ def test_small_objects_share_one_upload_and_catalog_waits_for_readback(tmp_path:
                 remote[Path(path).name] = Path(path).read_bytes()
             return subprocess.CompletedProcess(args, 0, "", "")
         if args[1:3] == ["release", "download"]:
-            name = args[args.index("--pattern") + 1]
-            readbacks.append(name)
-            Path(args[args.index("--dir") + 1], name).write_bytes(remote[name])
+            download_calls.append(args)
+            for position, value in enumerate(args):
+                if value == "--pattern":
+                    name = args[position + 1]
+                    readbacks.append(name)
+                    Path(args[args.index("--dir") + 1], name).write_bytes(remote[name])
             return subprocess.CompletedProcess(args, 0, "", "")
         raise AssertionError(args)
 
@@ -123,6 +127,7 @@ def test_small_objects_share_one_upload_and_catalog_waits_for_readback(tmp_path:
     monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {})
     assert assets.publish("owner/private-vault", catalog, objects, apply=True)["state"] == "verified"
     assert list(map(len, uploads)) == [len(objects), 1]
+    assert len(download_calls) == 2  # one object batch, then the catalog marker
     assert len(authorized) == 3  # release creation, object batch, catalog marker
 
 
@@ -152,8 +157,10 @@ def test_partial_multi_object_upload_resumes_without_publishing_catalog(tmp_path
                 remote[Path(path).name] = Path(path).read_bytes()
             return subprocess.CompletedProcess(args, 0, "", "")
         if args[1:3] == ["release", "download"]:
-            name = args[args.index("--pattern") + 1]
-            Path(args[args.index("--dir") + 1], name).write_bytes(remote[name])
+            for position, value in enumerate(args):
+                if value == "--pattern":
+                    name = args[position + 1]
+                    Path(args[args.index("--dir") + 1], name).write_bytes(remote[name])
             return subprocess.CompletedProcess(args, 0, "", "")
         raise AssertionError(args)
 
