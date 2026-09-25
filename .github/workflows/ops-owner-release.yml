@@ -9,13 +9,12 @@ on:
 permissions:
   contents: read
 
-# The called immutable owner performs fresh preflight before any mutation.
-# Dormant source is preserved; only verified duplicate authority is removed.
+# Owner preflight preserves product authorization and dormant source custody.
 jobs:
   owner:
-    uses: 4444J99/ops/.github/workflows/cloudflare-owner-release.yml@ec94e3523403aff0058896419b917e0eee1830de
+    uses: 4444J99/ops/.github/workflows/cloudflare-owner-release.yml@76f10d2e870cc2c1620f934673598c60e5ebd1c2
     with:
-      source_sha: ec94e3523403aff0058896419b917e0eee1830de
-      apply_source: ec94e3523403aff0058896419b917e0eee1830de
+      source_sha: 76f10d2e870cc2c1620f934673598c60e5ebd1c2
+      apply_source: 76f10d2e870cc2c1620f934673598c60e5ebd1c2
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
