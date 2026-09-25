@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
+import json
 import subprocess
 from pathlib import Path
 
@@ -159,6 +161,49 @@ def test_unchanged_objects_are_reused_from_earlier_release(tmp_path: Path, monke
     result = assets.publish("owner/private-vault", catalog, objects, apply=True)
     assert result["state"] == "verified"
     assert uploaded == [files[1][1]]  # only the new encrypted catalog; the old object was read back in place
+
+
+def test_existing_asset_requires_uploaded_server_digest_and_size(tmp_path: Path, monkeypatch) -> None:
+    catalog, objects = _ciphertexts(tmp_path)
+    files, _tag, _size = assets._preflight(catalog, objects)
+    object_name = files[0][1]
+    remote = {object_name: objects[0].read_bytes()}
+    downloads: list[str] = []
+
+    def fake_run(args: list[str], **_kwargs) -> subprocess.CompletedProcess[str]:
+        if args[:2] == ["gh", "api"] and "/releases/tags/" in args[2]:
+            rows = [{"name": name, "digest": "sha256:" + hashlib.sha256(value).hexdigest(),
+                     "size": len(value), "state": "uploaded"} for name, value in remote.items()]
+            return subprocess.CompletedProcess(args, 0, json.dumps({"assets": rows}), "")
+        if args[:2] == ["gh", "api"]:
+            return subprocess.CompletedProcess(args, 0, "[]", "")
+        if args[1:3] == ["release", "view"]:
+            return subprocess.CompletedProcess(args, 0, "\n".join(remote), "")
+        if args[1:3] == ["release", "upload"]:
+            path = Path(args[4])
+            remote[path.name] = path.read_bytes()
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[1:3] == ["release", "download"]:
+            name = args[args.index("--pattern") + 1]
+            downloads.append(name)
+            Path(args[args.index("--dir") + 1], name).write_bytes(remote[name])
+            return subprocess.CompletedProcess(args, 0, "", "")
+        raise AssertionError(args)
+
+    monkeypatch.setattr(assets, "_run", fake_run)
+    monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (77123, "owner/private-vault", "main"))
+    monkeypatch.setattr(assets, "_release_exists", lambda _repo, _tag: True)
+    monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {})
+    monkeypatch.setattr(assets, "_authorize_write", lambda _repo: None)
+    result = assets.publish("owner/private-vault", catalog, objects, apply=True,
+                            verify_existing_by_server_digest=True)
+    assert result["state"] == "verified"
+    assert downloads == [files[1][1]]  # new catalog still receives full readback
+
+    remote[object_name] = b"corrupt"
+    with pytest.raises(assets.AssetError, match="no matching server digest"):
+        assets.publish("owner/private-vault", catalog, objects, apply=True,
+                       verify_existing_by_server_digest=True)
 
 
 def test_wrong_readback_digest_fails_without_mutating_source(tmp_path: Path, monkeypatch) -> None:

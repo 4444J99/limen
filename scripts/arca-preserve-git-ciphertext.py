@@ -229,7 +229,8 @@ def preserve(root: Path, remote: str, *, output: Path, apply: bool = False) -> d
 def resume_existing(
     root: Path, remote: str, *, catalog: Path, expected_head: str,
     expected_catalog_sha256: str, expected_files: int, expected_bytes: int,
-    apply: bool = False,
+    apply: bool = False, verify_existing_by_server_digest: bool = False,
+    batch_deadline_seconds: int = PUBLISHER.BATCH_DEADLINE_SECONDS,
 ) -> dict[str, object]:
     """Resume a fixed encrypted catalog without generating a new release tag."""
     root = root.resolve()
@@ -271,7 +272,11 @@ def resume_existing(
         total += size
     if len(paths) != expected_files or total != expected_bytes:
         raise PreserveError("ciphertext extent differs from fixed catalog receipt")
-    return PUBLISHER.publish(remote, catalog, paths, apply=apply, expected_digests=expected)
+    return PUBLISHER.publish(
+        remote, catalog, paths, apply=apply, expected_digests=expected,
+        verify_existing_by_server_digest=verify_existing_by_server_digest,
+        batch_deadline_seconds=batch_deadline_seconds,
+    )
 
 
 def reconstruct(catalog_path: Path, assets: Path, base_repo: str, destination: Path) -> dict[str, object]:
@@ -367,6 +372,8 @@ def main() -> int:
     parser.add_argument("--expected-catalog-sha256")
     parser.add_argument("--expected-files", type=int)
     parser.add_argument("--expected-bytes", type=int)
+    parser.add_argument("--verify-existing-by-server-digest", action="store_true")
+    parser.add_argument("--batch-deadline-seconds", type=int, default=PUBLISHER.BATCH_DEADLINE_SECONDS)
     parser.add_argument("--reconstruct-catalog", type=Path)
     parser.add_argument("--assets", type=Path)
     parser.add_argument("--base-repo")
@@ -378,6 +385,8 @@ def main() -> int:
                 args.checkout or args.repo or args.catalog_output or args.apply
                 or args.resume_existing_catalog or args.expected_head
                 or args.expected_catalog_sha256 or args.expected_files or args.expected_bytes
+                or args.verify_existing_by_server_digest
+                or args.batch_deadline_seconds != PUBLISHER.BATCH_DEADLINE_SECONDS
                 or not args.assets or not args.base_repo or not args.destination
             ):
                 raise PreserveError("reconstruction requires catalog, assets, base repo and destination only")
@@ -396,12 +405,16 @@ def main() -> int:
                 expected_catalog_sha256=args.expected_catalog_sha256,
                 expected_files=args.expected_files, expected_bytes=args.expected_bytes,
                 apply=args.apply,
+                verify_existing_by_server_digest=args.verify_existing_by_server_digest,
+                batch_deadline_seconds=args.batch_deadline_seconds,
             )
         else:
             if (
                 not args.checkout or not args.repo or not args.catalog_output
                 or args.expected_head or args.expected_catalog_sha256
                 or args.expected_files is not None or args.expected_bytes is not None
+                or args.verify_existing_by_server_digest
+                or args.batch_deadline_seconds != PUBLISHER.BATCH_DEADLINE_SECONDS
                 or args.assets or args.base_repo or args.destination
             ):
                 raise PreserveError("preservation requires checkout, repo and catalog output only")
