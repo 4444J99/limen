@@ -52,3 +52,18 @@ class MonitorTests(unittest.TestCase):
   self.assertEqual(owners['ns-1'],'shared_namespace')
   m.record_owner(owners,'ns-1','worker-c')
   self.assertEqual(owners['ns-1'],'shared_namespace')
+
+ def test_real_running_projection_requires_recent_success_and_matching_live_lease(self):
+  from test_execution_health import VALUE,RECEIPT,NOW,RID
+  state={'targetStates':{'edgarflash':VALUE}}
+  before=m.project_state(state,NOW)['edgarflash']
+  self.assertFalse(before['healthy']);self.assertEqual(before['last_status'],'running')
+  after=m.project_state(state,NOW,{RID:RECEIPT})['edgarflash']
+  self.assertTrue(after['healthy']);self.assertEqual(after['last_status'],'running')
+  self.assertTrue(after['active_lease_verified'])
+
+ def test_running_projection_never_erases_failure_or_marks_pending_business_complete(self):
+  from test_execution_health import VALUE,RECEIPT,NOW,RID
+  state={'targetStates':{'edgarflash':{**VALUE,'consecutiveFailures':1,'lastFailureCode':'timeout'}}}
+  result=m.project_state(state,NOW,{RID:RECEIPT})['edgarflash']
+  self.assertFalse(result['healthy']);self.assertEqual(result['last_status'],'running')
