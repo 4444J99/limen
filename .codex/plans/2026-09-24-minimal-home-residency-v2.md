@@ -674,3 +674,16 @@ returned `DEFERRED — CI-PENDING`. No unchanged-head retry or merge claim
 follows. The default Domus checkout's `.serena/project.yml` drift remains
 untouched, and sourceDir migration waits for this PR's merge receipt plus a
 fresh active-consumer/custody check.
+
+Read-only host verification finds immutable Limen runtime
+`9be6f0d76d6623ec37ecb56510ec2ed77debae11` installed and selected.
+The installed Domus verifier returns `verified=true`, `status=passed`, matching
+runtime/launcher/interpreter digests, no surviving child process, heartbeat
+label present and watchdog absent. Launchd reports 84 invocations and last
+exit code zero for the selected runtime. This supports current installed-job
+health; it does not demonstrate the still-draft #2718 source has been
+installed, nor by itself prove the required natural execution receipt for
+that future runtime. The Data volume currently lists 12 purgeable local Time
+Machine snapshots. They remain protected under the plan, and their apparent
+retention is not credited as recoverable free space. Current actual free
+space is 23,728,532 KiB, well below the 200 GiB target.
