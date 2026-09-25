@@ -15,9 +15,11 @@ import re
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 MAX_ASSET_BYTES = 2 * 1024**3 - 1  # GitHub requires each release asset to be under 2 GiB.
+BATCH_DEADLINE_SECONDS = 25 * 60
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 OPENPGP_ARMOR = b"-----BEGIN PGP MESSAGE-----"
 
@@ -167,10 +169,18 @@ def publish(
             "bytes": total,
         }
 
+    deadline = time.monotonic() + BATCH_DEADLINE_SECONDS
+
+    def remaining_timeout(limit: int = 900) -> int:
+        remaining = deadline - time.monotonic()
+        if remaining <= 1:
+            raise AssetError("batch deadline reached; local source and verified remote assets retained for resume")
+        return min(limit, max(1, int(remaining)))
+
     existing = (
         _run(
             ["gh", "release", "view", tag, "--repo", canonical, "--json", "assets", "--jq", ".assets[].name"],
-            timeout=30,
+            timeout=remaining_timeout(30),
         )
         if _release_exists(canonical, tag)
         else None
@@ -193,13 +203,13 @@ def publish(
                 "--target",
                 default_branch,
             ],
-            timeout=120,
+            timeout=remaining_timeout(120),
         )
 
     prior_assets = _existing_assets(canonical)
     with tempfile.TemporaryDirectory(prefix="arca-release-readback-") as directory:
         readback = Path(directory)
-        for source, asset_name, expected_digest, _size in assets:
+        for index, (source, asset_name, expected_digest, _size) in enumerate(assets, start=1):
             source_tag = tag if asset_name in names else prior_assets.get(asset_name)
             if source_tag is None:
                 if _digest(source)[0] != expected_digest:
@@ -207,7 +217,7 @@ def publish(
                 upload_path = readback / asset_name
                 upload_path.symlink_to(source.resolve())
                 _authorize_write(canonical)
-                _run(["gh", "release", "upload", tag, str(upload_path), "--repo", canonical])
+                _run(["gh", "release", "upload", tag, str(upload_path), "--repo", canonical], timeout=remaining_timeout())
                 upload_path.unlink()
                 source_tag = tag
             _run(
@@ -222,12 +232,14 @@ def publish(
                     asset_name,
                     "--dir",
                     str(readback),
-                ]
+                ],
+                timeout=remaining_timeout(),
             )
             downloaded = readback / asset_name
             if not downloaded.is_file() or _digest(downloaded)[0] != expected_digest:
                 raise AssetError("release readback digest mismatch; local source retained")
             downloaded.unlink()
+            print(f"ARCA asset verified {index}/{len(assets)}", file=sys.stderr, flush=True)
     return {
         "state": "verified",
         "repository_id": stable_id,
