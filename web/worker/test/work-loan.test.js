@@ -200,3 +200,17 @@ test("portable schema enforces bounded collateral and external deadline semantic
     /packet schema rejected/,
   );
 });
+
+test("shared placeholder check rejects placeholders and stays linear", () => {
+  assert.equal(executablePredicate("pytest <target>"), false);
+  assert.equal(executablePredicate("pytest TODO"), false);
+  assert.equal(durableReceiptTarget("git:o/r:tasks.yaml#tbd"), false);
+  assert.equal(durableReceiptTarget("git:o/r:tasks.yaml#WORKER-1"), true);
+  const elapsedMs = (fn) => {
+    const start = Date.now();
+    fn();
+    return Date.now() - start;
+  };
+  assert.ok(elapsedMs(() => executablePredicate('"' + "\\".repeat(50000))) < 2000);
+  assert.ok(elapsedMs(() => durableReceiptTarget("<".repeat(50000))) < 2000);
+});
