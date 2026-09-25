@@ -932,3 +932,15 @@ test cases, Ruff, and the
 outbound preflight guard passed. This reduces per-object authorization and
 upload overhead for small-file cohorts; it does not establish whole-estate
 custody, independent-key restoration, or the 200 GiB free-space target.
+
+### PR gate merge-tree repair, 2026-09-25
+
+Draft PR #2718's hosted `pr-gate` failed one of 8,173 CLI tests: the live
+effector scanner found 23 entries while the branch baseline retained 25. The
+two stale entries named in-process POST and PUT in `consolidate-github.py`.
+That file had changed on `main` after this branch diverged and had no
+branch-local edits. The branch now carries the exact `origin/main` version of
+that file and a baseline with only the two no-longer-live entries removed.
+The focused effector suite passed 44 tests and `check-effectors.py` reports
+23 baselined findings with no new finding. A fresh hosted merge-tree result
+is still required; no merge or installation is claimed.
