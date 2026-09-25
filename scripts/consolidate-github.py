@@ -195,9 +195,34 @@ def write_receipt(path, data):
             os.unlink(temp)
 
 
+def claim_receipt_path(args):
+    """Fail closed before any checkpoint: never overwrite prior evidence by accident.
+
+    Returns the prior receipt when --resume is given, or None for a fresh path.
+    """
+    if args.receipt is None:
+        return None
+    path = Path(args.receipt)
+    if path.is_symlink():
+        raise ConsolidationError("Receipt path must not be a symbolic link")
+    if not path.exists():
+        return None
+    if not args.resume:
+        raise ConsolidationError(
+            "Receipt path already exists. Use a fresh --receipt path, or pass --resume "
+            "to continue the previous run while preserving its audit evidence.")
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError) as exc:
+        raise ConsolidationError("Existing receipt is unreadable; refusing to resume or overwrite") from exc
+    if (not isinstance(value, dict) or value.get("schema") != RECEIPT_SCHEMA
+            or value.get("target") != TARGET or not isinstance(value.get("results"), list)):
+        raise ConsolidationError("Existing receipt is foreign or malformed; refusing to resume or overwrite")
+    return value
+
+
 def read_repository(repo_id):
     return snapshot(gh_json(["api", f"/repositories/{repo_id}"]))
-
 
 def verify_state(before, after, owner):
     for field in ("id", "name", "visibility", "archived", "default_branch", "has_pages"):
@@ -260,14 +285,26 @@ def main(argv=None):
     parser.add_argument("--allow-partial", action="store_true", help="Apply eligible rows while retaining explicit holds")
     parser.add_argument("--preflight", type=Path)
     parser.add_argument("--receipt", type=Path, help="Private, non-published JSON receipt; mandatory for apply")
+    parser.add_argument("--resume", action="store_true",
+                        help="Continue a previous run from an existing receipt, preserving its audit evidence")
     args = parser.parse_args(argv)
     if args.apply and (args.preflight is None or args.receipt is None):
         parser.error("--apply requires --preflight and --receipt; authorization alone is not a preservation audit")
     if args.preflight and args.receipt and args.preflight.resolve() == args.receipt.resolve():
         parser.error("preflight and receipt must be different files")
+    try:
+        prior = claim_receipt_path(args)
+    except ConsolidationError as exc:
+        print(f"Consolidation refused: {exc}", file=sys.stderr)
+        return 1
     receipt = {"schema": RECEIPT_SCHEMA, "target": TARGET, "mode": "apply" if args.apply else "dry-run",
                "observed_at": datetime.now(timezone.utc).isoformat(), "inventory_pages_complete": False, "visibility_coverage": "credential_visible_only",
                "plan": [], "results": [], "organization_retirement": "not_attempted"}
+    if prior is not None:
+        # Resume: keep the earlier waves' audit evidence; the new run appends to it.
+        receipt.update(resumed_from=prior.get("observed_at"),
+                       prior_inventory_pages_complete=prior.get("inventory_pages_complete", False),
+                       results=prior.get("results", []))
 
     def checkpoint():
         if args.receipt:
@@ -282,7 +319,14 @@ def main(argv=None):
             if args.apply and not preflight_matches(row, preflight.get(row["id"])):
                 row["holds"].append("preservation-preflight-required")
         held = sum(bool(r["holds"]) for r in plan)
+        owners = {r["owner"] for r in source}
+        name_counts = Counter(r["name"].casefold() for r in plan)
+        collision_groups = sum(1 for count in name_counts.values() if count > 1)
         checkpoint()
+        # Machine-readable counts for scripts/consolidation-gates.py::build_snapshot,
+        # which opens the irreversible apply gate on exactly these fields.
+        print(f"  {len(plan)} repos across {len(owners)} owners")
+        print(f"  name collisions (must rename before transfer): {collision_groups}")
         print(f"Destination {TARGET}: {len(plan)} source repositories; {held} held. Details stay in the private receipt.")
         if not args.apply:
             print("DRY-RUN: no transfers, topic changes, or organization changes performed.")
