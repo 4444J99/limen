@@ -631,3 +631,30 @@ def test_pristine_recheck_detects_ignored_payload_and_path_swap(tmp_path):
     (clone / ".git" / "info" / "exclude").write_text("private-payload\n")
     (clone / "private-payload").write_text("unique private material\n")
     assert reap._pristine_now(clone, (observed.st_dev, observed.st_ino)) is False
+
+
+def test_failed_removal_is_not_counted_as_reclaimed(tmp_path, monkeypatch, capsys):
+    clone = tmp_path / "clone"
+    clone.mkdir()
+    (clone / ".git").mkdir()
+    monkeypatch.setattr(sys, "argv", ["reap-clones.py", "--apply", "--max", "1"])
+    monkeypatch.setattr(reap, "WORKSPACE", tmp_path)
+    monkeypatch.setattr(reap, "LIMEN_ROOT", tmp_path / "limen")
+    monkeypatch.setattr(reap, "LOG", tmp_path / "reap.jsonl")
+    monkeypatch.setattr(reap, "active_process_cwds", dict)
+    monkeypatch.setattr(reap, "active_task_slugs", lambda _path: set())
+    monkeypatch.setattr(reap, "discover_clones", lambda _workspace, _depth: [clone])
+    monkeypatch.setattr(reap, "classify", lambda *_args: reap.Verdict(True, "pushed-mirror"))
+    monkeypatch.setattr(reap, "confirm_recloneable", lambda _repo: True)
+    monkeypatch.setattr(reap, "_pristine_now", lambda _repo, _identity: True)
+    monkeypatch.setattr(reap, "clone_reap_accepted", lambda *_args: (True, "accepted"))
+    monkeypatch.setattr(reap, "origin_slug", lambda _repo: "owner/clone")
+
+    def fail_remove(_path):
+        raise PermissionError("still in use")
+
+    monkeypatch.setattr(reap.shutil, "rmtree", fail_remove)
+    assert reap.main() == 0
+    assert "reaped 0 clone(s)" in capsys.readouterr().out
+    assert clone.exists()
+    assert __import__("json").loads(reap.LOG.read_text())["state"] == "remove-incomplete"

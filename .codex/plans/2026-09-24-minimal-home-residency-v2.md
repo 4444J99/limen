@@ -179,6 +179,12 @@ reaper still needs shared evidence classification, full local Git metadata custo
 and integration with the lease-release worker before it can establish the complete
 repository loop or justify broad source retirement.
 
+The removal edge now rejects symlinked `.git` stores, rechecks status with an
+explicit Git exit code, and records partial/failed `rmtree` as incomplete rather
+than reclaimed. Apply reports measured free-space change separately from
+apparent file sizes; APFS sharing and concurrent writes can make these differ.
+All 65 focused reaper tests passed, including a failed-removal receipt case.
+
 ## Acceptance and reporting
 
 Do not repeat subjective implementation percentages. Report original outcomes passed

@@ -290,11 +290,20 @@ def _pristine_now(repo: Path, expected_identity: tuple[int, int] | None = None) 
         return False
     if not stat.S_ISDIR(observed.st_mode) or repo.is_symlink():
         return False
+    if (repo / ".git").is_symlink() or not (repo / ".git").is_dir():
+        return False
     if expected_identity is not None and (observed.st_dev, observed.st_ino) != expected_identity:
         return False
     if _nested_context_reason(repo) or not _ignored_is_all_regenerable(repo):
         return False
-    if _run(["git", "-C", str(repo), "status", "--porcelain"]):
+    try:
+        status = subprocess.run(
+            ["git", "-C", str(repo), "status", "--porcelain=v1", "--untracked-files=all", "-z"],
+            capture_output=True, timeout=30, check=False, env=_GIT_ENV, stdin=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    if status.returncode != 0 or status.stdout:
         return False
     if _run(["git", "-C", str(repo), "stash", "list"]):
         return False
@@ -337,7 +346,7 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
         return Verdict(False, "excluded-root")
     # STANDALONE clone only: a registered worktree has a .git FILE, not a directory — leave those to
     # reclaim-worktrees.py (removing one with rmtree would corrupt the parent's worktree registry).
-    if not (repo / ".git").is_dir():
+    if (repo / ".git").is_symlink() or not (repo / ".git").is_dir():
         return Verdict(False, "not-a-clone")
     if repo.name in CORE or origin_slug(repo).split("/")[-1] in CORE:
         return Verdict(False, "core")
@@ -518,7 +527,7 @@ def main() -> int:
     free_gib = disk_free_gib(WORKSPACE)
     # Pressure waives only the idle age, never a preservation predicate. Percent
     # remains display-only; the live envelope is the sole storage authority.
-    # Unknown telemetry cannot establish pressure: preserve the idle-age gate.
+    # Pressure labels the report; it does not waive any custody predicate.
     pressure = (
         args.pressure
         if args.pressure is not None
@@ -536,7 +545,8 @@ def main() -> int:
     )
 
     reaped = kept = 0
-    freed = 0
+    apparent_bytes = 0
+    free_before = disk_free_gib(WORKSPACE)
     kept_reasons: dict[str, int] = {}
     clone_reap_acceptance = load_clone_reap_acceptance()
     LOG.parent.mkdir(parents=True, exist_ok=True)
@@ -580,21 +590,45 @@ def main() -> int:
                     kept += 1
                     kept_reasons["raced-or-unproven"] = kept_reasons.get("raced-or-unproven", 0) + 1
                     continue
-            print(f"  {'REAP' if args.apply else 'WOULD reap'}: {repo}  ({slug}, {sz / 1e9:.2f} GB, {v.reason})")
             if args.apply:
-                shutil.rmtree(repo, ignore_errors=True)
+                try:
+                    shutil.rmtree(repo)
+                except OSError as exc:
+                    kept += 1
+                    kept_reasons["remove-incomplete"] = kept_reasons.get("remove-incomplete", 0) + 1
+                    if logf:
+                        logf.write(json.dumps({"repo": str(repo), "slug": slug, "state": "remove-incomplete", "error": type(exc).__name__}) + "\n")
+                        logf.flush()
+                    print(f"  INCOMPLETE/INVESTIGATE: {repo} (removal failed: {type(exc).__name__})")
+                    continue
+                if repo.exists() or repo.is_symlink():
+                    kept += 1
+                    kept_reasons["remove-incomplete"] = kept_reasons.get("remove-incomplete", 0) + 1
+                    if logf:
+                        logf.write(json.dumps({"repo": str(repo), "slug": slug, "state": "remove-incomplete", "error": "path-still-present"}) + "\n")
+                        logf.flush()
+                    print(f"  INCOMPLETE/INVESTIGATE: {repo} (path still present)")
+                    continue
                 if logf:
-                    logf.write(json.dumps({"repo": str(repo), "slug": slug, "bytes": sz, "reason": v.reason}) + "\n")
+                    logf.write(json.dumps({"repo": str(repo), "slug": slug, "apparent_bytes": sz, "reason": v.reason, "state": "removed"}) + "\n")
+                    logf.flush()
+            print(f"  {'REAPED' if args.apply else 'WOULD reap'}: {repo}  ({slug}, {sz / 1e9:.2f} GB apparent, {v.reason})")
             reaped += 1
-            freed += sz
+            apparent_bytes += sz
     finally:
         if logf:
             logf.close()
 
     kr = ", ".join(f"{k}={n}" for k, n in sorted(kept_reasons.items())) or "none"
+    free_after = disk_free_gib(WORKSPACE)
+    observed_delta = (
+        f"{free_after - free_before:+.2f} GiB observed free-space change"
+        if args.apply and free_before is not None and free_after is not None
+        else "free-space change unmeasured"
+    )
     print(
         f"[reap-clones] {'reaped' if args.apply else 'would reap'} {reaped} clone(s), "
-        f"{freed / 1e9:.2f} GB; kept {kept} ({kr})."
+        f"{apparent_bytes / 1e9:.2f} GB apparent; {observed_delta}; kept {kept} ({kr})."
     )
     return 0
 
