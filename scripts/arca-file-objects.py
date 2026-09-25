@@ -9,6 +9,9 @@ recipient; unchanged files reuse ciphertext referenced by the previous encrypted
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
+import ctypes
 import fcntl
 import hashlib
 import importlib.util
@@ -30,6 +33,7 @@ if SPEC is None or SPEC.loader is None:
 PRIVATE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PRIVATE)
 OBJECT_PART_BYTES = int(os.environ.get("ARCA_OBJECT_PART_BYTES", str(32 * 1024**2)))
+MAX_XATTR_BYTES = 8 * 1024**2
 
 
 class ObjectError(RuntimeError):
@@ -44,6 +48,101 @@ def digest_file(path: Path) -> str:
     return value.hexdigest()
 
 
+def _native_xattr_names(path: Path) -> list[str]:
+    if sys.platform != "darwin":
+        return os.listxattr(path, follow_symlinks=False)
+    library = ctypes.CDLL(None, use_errno=True)
+    call = library.listxattr
+    call.argtypes = [ctypes.c_char_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int]
+    call.restype = ctypes.c_ssize_t
+    encoded = os.fsencode(path)
+    size = call(encoded, None, 0, 0x0001)
+    if size < 0 or size > MAX_XATTR_BYTES:
+        raise OSError(ctypes.get_errno(), "extended metadata names unavailable")
+    if size == 0:
+        return []
+    buffer = ctypes.create_string_buffer(size)
+    if call(encoded, buffer, size, 0x0001) != size:
+        raise OSError(ctypes.get_errno(), "extended metadata names changed")
+    raw = buffer.raw
+    if not raw.endswith(b"\x00"):
+        raise OSError("extended metadata names malformed")
+    return [name.decode("utf-8") for name in raw[:-1].split(b"\x00")]
+
+
+def _native_getxattr(path: Path, name: str) -> bytes:
+    if sys.platform != "darwin":
+        return os.getxattr(path, name, follow_symlinks=False)
+    library = ctypes.CDLL(None, use_errno=True)
+    call = library.getxattr
+    call.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_uint32, ctypes.c_int]
+    call.restype = ctypes.c_ssize_t
+    encoded = os.fsencode(path)
+    key = name.encode("utf-8")
+    size = call(encoded, key, None, 0, 0, 0x0001)
+    if size < 0 or size > MAX_XATTR_BYTES:
+        raise OSError(ctypes.get_errno(), "extended metadata value unavailable")
+    buffer = ctypes.create_string_buffer(max(1, size))
+    if call(encoded, key, buffer, size, 0, 0x0001) != size:
+        raise OSError(ctypes.get_errno(), "extended metadata value changed")
+    return buffer.raw[:size]
+
+
+def _native_setxattr(path: Path, name: str, value: bytes) -> None:
+    if sys.platform != "darwin":
+        os.setxattr(path, name, value, follow_symlinks=False)
+        return
+    library = ctypes.CDLL(None, use_errno=True)
+    call = library.setxattr
+    call.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_uint32, ctypes.c_int]
+    call.restype = ctypes.c_int
+    buffer = ctypes.create_string_buffer(value, max(1, len(value)))
+    if call(os.fsencode(path), name.encode("utf-8"), buffer, len(value), 0, 0x0001) != 0:
+        raise OSError(ctypes.get_errno(), "extended metadata restoration failed")
+
+
+def _xattrs(path: Path) -> list[dict[str, str]]:
+    """Keep native extended metadata inside the encrypted catalog."""
+    try:
+        names = sorted(_native_xattr_names(path))
+        result = []
+        total = 0
+        for name in names:
+            value = _native_getxattr(path, name)
+            total += len(value)
+            if total > MAX_XATTR_BYTES:
+                raise ObjectError("extended metadata exceeds the bounded catalog limit")
+            result.append({"name": name, "value_b64": base64.b64encode(value).decode("ascii")})
+        return result
+    except (OSError, UnicodeError, AttributeError) as exc:
+        raise ObjectError("extended metadata unavailable; source retained") from exc
+
+
+def _apply_xattrs(path: Path, raw: object) -> None:
+    if not isinstance(raw, list):
+        raise ObjectError("encrypted catalog lacks extended metadata")
+    total = 0
+    seen: set[str] = set()
+    for row in raw:
+        if not isinstance(row, dict) or not isinstance(row.get("name"), str) or not isinstance(row.get("value_b64"), str):
+            raise ObjectError("encrypted catalog has invalid extended metadata")
+        name = row["name"]
+        if not name or name in seen or "\x00" in name:
+            raise ObjectError("encrypted catalog has duplicate or invalid extended metadata")
+        seen.add(name)
+        try:
+            value = base64.b64decode(row["value_b64"], validate=True)
+        except (ValueError, binascii.Error) as exc:
+            raise ObjectError("encrypted catalog has invalid extended metadata") from exc
+        total += len(value)
+        if total > MAX_XATTR_BYTES:
+            raise ObjectError("extended metadata exceeds the bounded catalog limit")
+        try:
+            _native_setxattr(path, name, value)
+        except (OSError, AttributeError) as exc:
+            raise ObjectError("extended metadata restoration failed; destination unpublished") from exc
+
+
 def inventory(root: Path) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     for base, dirs, files in os.walk(root, topdown=True, followlinks=False):
@@ -54,10 +153,10 @@ def inventory(root: Path) -> list[dict[str, object]]:
             rel = path.relative_to(root).as_posix()
             info = path.lstat()
             if stat.S_ISLNK(info.st_mode):
-                rows.append({"path": rel, "type": "symlink", "target": os.readlink(path), "mode": stat.S_IMODE(info.st_mode)})
+                rows.append({"path": rel, "type": "symlink", "target": os.readlink(path), "mode": stat.S_IMODE(info.st_mode), "xattrs": _xattrs(path)})
             else:
                 kept.append(name)
-                rows.append({"path": rel, "type": "directory", "mode": stat.S_IMODE(info.st_mode)})
+                rows.append({"path": rel, "type": "directory", "mode": stat.S_IMODE(info.st_mode), "xattrs": _xattrs(path)})
         dirs[:] = kept
         for name in sorted(files):
             path = base_path / name
@@ -65,9 +164,9 @@ def inventory(root: Path) -> list[dict[str, object]]:
             info = path.lstat()
             mode = stat.S_IMODE(info.st_mode)
             if stat.S_ISLNK(info.st_mode):
-                rows.append({"path": rel, "type": "symlink", "target": os.readlink(path), "mode": mode})
+                rows.append({"path": rel, "type": "symlink", "target": os.readlink(path), "mode": mode, "xattrs": _xattrs(path)})
             elif stat.S_ISREG(info.st_mode):
-                rows.append({"path": rel, "type": "file", "mode": mode, "sha256": digest_file(path)})
+                rows.append({"path": rel, "type": "file", "mode": mode, "sha256": digest_file(path), "xattrs": _xattrs(path)})
             else:
                 raise ObjectError(f"unsupported filesystem object at {rel!r}; source retained")
     return sorted(rows, key=lambda row: str(row["path"]))
@@ -79,7 +178,7 @@ def _decrypt_catalog(path: Path, destination: Path) -> dict[str, object]:
         value = json.loads(destination.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ObjectError("previous encrypted catalog is unreadable; no objects changed") from exc
-    if not isinstance(value, dict) or value.get("schema") not in {"arca-file-catalog-v1", "arca-file-catalog-v2", "arca-file-catalog-v3"} or not isinstance(value.get("entries"), list):
+    if not isinstance(value, dict) or value.get("schema") not in {"arca-file-catalog-v1", "arca-file-catalog-v2", "arca-file-catalog-v3", "arca-file-catalog-v4"} or not isinstance(value.get("entries"), list):
         raise ObjectError("previous catalog schema is invalid; no objects changed")
     return value
 
@@ -124,6 +223,7 @@ def _build_locked(
     if out.resolve() == source.resolve() or source.resolve() in out.resolve().parents:
         raise ObjectError("object output must be outside the source tree")
     current = inventory(source)
+    root_xattrs = _xattrs(source)
     old_by_path: dict[str, dict[str, object]] = {}
     old_root: Path | None = None
     old_catalog: dict[str, object] | None = None
@@ -202,13 +302,24 @@ def _build_locked(
         else:
             entries.append(entry)
 
+    if inventory(source) != current or _xattrs(source) != root_xattrs:
+        raise ObjectError("source or extended metadata changed during capture; catalog was not published")
     # Publish objects first. The encrypted catalog is the commit point and cannot reference
     # incomplete writes. Existing random object names are never overwritten.
     for temporary, target in staged:
         if target.exists():
             raise ObjectError("random object identifier collision; catalog was not published")
         os.replace(temporary, target)
-    catalog = {"schema": "arca-file-catalog-v3", "root_mode": stat.S_IMODE(source.stat().st_mode), "entries": entries}
+    catalog = {
+        "schema": "arca-file-catalog-v4",
+        "root_mode": stat.S_IMODE(source.stat().st_mode),
+        "root_xattrs": root_xattrs,
+        "metadata_coverage": {
+            "captured": ["content", "mode", "symlink_target", "xattrs"],
+            "unverified": ["acl", "ownership", "timestamps"],
+        },
+        "entries": entries,
+    }
     catalog_path = out / "catalog.gpg"
     if old_catalog == catalog:
         if previous is not None and previous.resolve() != catalog_path.resolve():
@@ -227,7 +338,7 @@ def _build_locked(
                 raise ObjectError("catalog encryption failed; catalog was not published")
             os.replace(temp_cipher, catalog_path)
         state = "ready"
-    return {"state": state, "files": sum(row["type"] == "file" for row in entries), "new_objects": len(staged), "reused_objects": reused_count, "catalog": str(catalog_path)}
+    return {"state": state, "coverage": "incomplete-native-metadata", "files": sum(row["type"] == "file" for row in entries), "new_objects": len(staged), "reused_objects": reused_count, "catalog": str(catalog_path)}
 
 
 def restore(catalog_path: Path, objects_root: Path, destination: Path) -> dict[str, object]:
@@ -239,6 +350,7 @@ def restore(catalog_path: Path, objects_root: Path, destination: Path) -> dict[s
         base = Path(temporary)
         catalog_file = base / "catalog.json"
         catalog = _decrypt_catalog(catalog_path, catalog_file)
+        has_xattrs = catalog["schema"] == "arca-file-catalog-v4"
         entries = catalog["entries"]
         by_path: dict[str, dict[str, object]] = {}
         for raw in entries:
@@ -305,6 +417,8 @@ def restore(catalog_path: Path, objects_root: Path, destination: Path) -> dict[s
                 if digest_file(target) != row.get("sha256"):
                     raise ObjectError("decrypted object failed plaintext integrity verification")
                 os.chmod(target, int(row.get("mode", 0o600)))
+                if has_xattrs:
+                    _apply_xattrs(target, row.get("xattrs"))
             elif row.get("type") != "symlink":
                 raise ObjectError("catalog contains an unsupported filesystem object")
         for name, row in by_path.items():
@@ -315,12 +429,22 @@ def restore(catalog_path: Path, objects_root: Path, destination: Path) -> dict[s
                 if not isinstance(link_target, str):
                     raise ObjectError("catalog contains an invalid symlink target")
                 os.symlink(link_target, target)
+                if has_xattrs:
+                    _apply_xattrs(target, row.get("xattrs"))
         for name, row in by_path.items():
             if row.get("type") == "directory":
                 os.chmod(staging / name, int(row.get("mode", 0o700)))
+                if has_xattrs:
+                    _apply_xattrs(staging / name, row.get("xattrs"))
         os.chmod(staging, int(catalog.get("root_mode", 0o700)))
+        if has_xattrs:
+            _apply_xattrs(staging, catalog.get("root_xattrs"))
         os.replace(staging, destination)
-    return {"state": "restored", "files": sum(row.get("type") == "file" for row in entries)}
+    return {
+        "state": "restored",
+        "coverage": "incomplete-native-metadata" if has_xattrs else "legacy-unverified-metadata",
+        "files": sum(row.get("type") == "file" for row in entries),
+    }
 
 
 def main() -> int:
