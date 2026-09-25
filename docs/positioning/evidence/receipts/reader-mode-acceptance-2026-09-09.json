@@ -1,0 +1,77 @@
+{
+  "receipt_type": "reader-mode-pilot-source-acceptance",
+  "recorded_at": "2026-09-09T12:44:34.610310+00:00",
+  "repository": "4444J99/limen",
+  "owner_pr": 2553,
+  "original_head": "46abf4d0ae7ef8e767dae0598e5a089597af370d",
+  "integrated_base": "1a5c4cae6676b1b63cc3c4ff09c8ba305632c5d0",
+  "verified_candidate_tree": "fbe99e2b348866a86e1e3bf26744c079e6622915",
+  "repairs": [
+    "Reconcile the reader-mode branch with the inspected main without hand-editing generated context.",
+    "Refresh dated HTTP and repository-license observations, retaining historical receipts.",
+    "Bind declared ACTIVE implementation and public deployment to their verified canonical-repository facts."
+  ],
+  "verification": {
+    "engine_commit": "afab6a0ca4328f5862e0aff1f39176e9fcad1cb7",
+    "command": "organvm docs validate project-record.yml --root . --actual-repository 4444J99/limen --require-git-tracked-evidence",
+    "result": "PASS",
+    "scoped_command": "bash scripts/verify-scoped.sh --base 1a5c4cae6676b1b63cc3c4ff09c8ba305632c5d0 --require-base --jobs 2 --gate-timeout-seconds 180 --gate-output-bytes 100000",
+    "scoped_gates_passed": [
+      "syntax-changed",
+      "diff-hygiene",
+      "flagship-evidence-test",
+      "check-root-manifest",
+      "check-docs-manifest",
+      "check-docs-exports",
+      "check-note-links"
+    ],
+    "flagship_tests_passed": 42,
+    "new_observations": "Both public endpoints returned HTTP200/status ok; public task projection remains dated2026-08-20. GitHub reports license null and the inspected root tree has no license path."
+  },
+  "dependency_gate": {
+    "schema_17": "merged2c2b7c8b0e841a4abde82230be88524d43f9b3c2",
+    "engine_175": "source verified at afab6a0; shared-writer authenticated merge-drain and executed hosted/admitted integration remain unestablished",
+    "editorial_12": "56f9a2d complete126tests and6publication/7reader templates pass; regenerate context only after actual Engine merge; draft"
+  },
+  "metadata_gate": {
+    "status": "blocked-supported-mutation-capability-unavailable",
+    "observed": {
+      "id": 1255213941,
+      "full_name": "4444J99/limen",
+      "html_url": "https://github.com/4444J99/limen",
+      "description": "Self-healing agent fleet \u2014 autonomic organs for health, credentials, state sync, failure escalation. Zero ops work; runs on heartbeat.",
+      "homepage": "https://github.com/organvm",
+      "topics": [
+        "agent-orchestration",
+        "agent-reliability",
+        "autonomous-systems",
+        "fleet-management",
+        "heartbeat-driven",
+        "infrastructure-automation",
+        "organ-architecture",
+        "self-healing",
+        "zero-ops"
+      ],
+      "license": null,
+      "default_branch": "main",
+      "archived": false
+    },
+    "required": {
+      "description": "Limen coordinates work across AI coding agents so each task has one owner, a bounded budget, explicit permissions, and inspectable completion evidence.",
+      "homepage": "https://limen-dashboard.pages.dev/",
+      "topics": [
+        "agent-orchestration",
+        "agent-reliability",
+        "autonomous-systems",
+        "fleet-management",
+        "heartbeat-driven",
+        "infrastructure-automation",
+        "organ-architecture",
+        "self-healing"
+      ]
+    },
+    "owner": "Existing Limen2553; repository administrator or an authorized metadata-capable API surface",
+    "next_action": "Apply the three required About settings, read them back, then reevaluate the existing dependency-and-metadata merge predicate."
+  },
+  "boundary": "The original draft/dependency/metadata merge conditions remain. Source and dated HTTP verification do not establish authenticated private operations, autonomous monitoring, a reliability window, adoption, or completed reader-mode activation."
+}
