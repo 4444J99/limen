@@ -944,3 +944,21 @@ that file and a baseline with only the two no-longer-live entries removed.
 The focused effector suite passed 44 tests and `check-effectors.py` reports
 23 baselined findings with no new finding. A fresh hosted merge-tree result
 is still required; no merge or installation is claimed.
+
+### Copied-source encrypted remote custody, 2026-09-25
+
+The prior HTTP 403 did not recur after external time advanced; its cause is
+unproven, so no rate-limit diagnosis is claimed. The publisher now classifies
+provider failures without exposing response bodies or source paths. The
+2,062-file local capture resumed from 1,512 existing objects and completed
+remote readback of every encrypted object plus the final catalog. Independent
+private GitHub API listings show shard counts of 1,000, 1,000, and 62 objects,
+then one catalog asset, totaling 7,711,545 ciphertext bytes. The catalog's
+remote uploaded-state SHA-256 matches the local ciphertext exactly. Neutral
+final tag: `arca-objects-989085af4e956a7c8fb08095669b720f`.
+
+This is complete encrypted remote custody for the captured point-in-time tree.
+The source and local encrypted capture remain because independent-key restore,
+an independent cold replica, and source-currentness/ownership review remain
+unverified. Internal Data-volume free space after publication is 21,846,640
+KiB (~20.8 GiB), not the 200 GiB target.
