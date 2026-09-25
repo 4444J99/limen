@@ -573,3 +573,17 @@ compressed base. Full base comparison reported equal logical size but unequal
 content (`retained-divergent-expanded-image`); retirement authorization is
 false and session data remains protected. This image contributes no verified
 recoverable bytes yet.
+
+### Managed acquisition admission, 2026-09-25
+
+The `repo.ensure` entry point previously checked identity and serialized
+acquisition but could create a new canonical clone below the existing worktree
+free-space floor. It now consults Limen's live worktree admission snapshot
+under the per-repository acquisition lock before a new store or checkout is
+created. The snapshot resolves Limen's runtime root independently of caller
+cwd. An unavailable snapshot fails closed. An existing active lease is still
+opened idempotently under pressure after its canonical-store origin and
+worktree identity are verified. Focused lifecycle tests (8), Ruff lint/format,
+and mypy pass. This is admission protection, not a complete capacity
+reservation: the canonical store and checkout need separate storage-domain
+accounting when they reside on different volumes.
