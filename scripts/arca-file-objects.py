@@ -9,6 +9,7 @@ recipient; unchanged files reuse ciphertext referenced by the previous encrypted
 from __future__ import annotations
 
 import argparse
+import fcntl
 import hashlib
 import importlib.util
 import json
@@ -84,6 +85,37 @@ def _decrypt_catalog(path: Path, destination: Path) -> dict[str, object]:
 
 
 def build(source: Path, out: Path, *, previous: Path | None = None) -> dict[str, object]:
+    """Serialize one output capture and retain crash debris for investigation."""
+    if out.is_symlink():
+        raise ObjectError("object output cannot be a symlink")
+    out.mkdir(mode=0o700, parents=True, exist_ok=True)
+    lock_fd = os.open(out / ".capture.lock", os.O_RDWR | os.O_CREAT, 0o600)
+    with os.fdopen(lock_fd, "w") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX)
+        object_dir = out / "objects"
+        if object_dir.is_symlink():
+            raise ObjectError("object directory cannot be a symlink")
+        if (out / ".catalog.gpg.partial").exists() or (
+            object_dir.is_dir() and any(object_dir.glob(".*.partial"))
+        ):
+            raise ObjectError("incomplete prior capture requires investigation; catalog retained")
+        staged: list[tuple[Path, Path]] = []
+        try:
+            return _build_locked(source, out, previous=previous, staged=staged)
+        except BaseException:
+            for partial, _target in staged:
+                partial.unlink(missing_ok=True)
+            (out / ".catalog.gpg.partial").unlink(missing_ok=True)
+            raise
+
+
+def _build_locked(
+    source: Path,
+    out: Path,
+    *,
+    previous: Path | None,
+    staged: list[tuple[Path, Path]],
+) -> dict[str, object]:
     if OBJECT_PART_BYTES <= 0 or OBJECT_PART_BYTES > 32 * 1024**2:
         raise ObjectError("ARCA_OBJECT_PART_BYTES must be positive and at most 32 MiB")
     if source.is_symlink() or not source.is_dir():
@@ -102,7 +134,6 @@ def build(source: Path, out: Path, *, previous: Path | None = None) -> dict[str,
         old_root = previous.parent
 
     entries: list[dict[str, object]] = []
-    staged: list[tuple[Path, Path]] = []
     reused_count = 0
     for row in current:
         entry = dict(row)
@@ -146,6 +177,7 @@ def build(source: Path, out: Path, *, previous: Path | None = None) -> dict[str,
                             target = out / "objects" / f"{object_id}.gpg"
                             target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
                             partial = target.with_name(f".{target.name}.partial")
+                            staged.append((partial, target))
                             PRIVATE._encrypt_file(plain_part, partial)
                             if not partial.is_file() or partial.stat().st_size == 0:
                                 raise ObjectError("encryption produced an empty object; catalog was not published")
@@ -156,7 +188,6 @@ def build(source: Path, out: Path, *, previous: Path | None = None) -> dict[str,
                             with partial.open("rb") as cipher_stream:
                                 for cipher_block in iter(lambda: cipher_stream.read(4 * 1024**2), b""):
                                     cipher_digest.update(cipher_block)
-                            staged.append((partial, target))
                             parts.append({"object_id": object_id, "ciphertext_sha256": cipher_sha, "ciphertext_bytes": partial.stat().st_size, "plaintext_sha256": hashlib.sha256(block).hexdigest()})
                         if not block:
                             break
