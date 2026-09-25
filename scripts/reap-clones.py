@@ -297,8 +297,35 @@ def _has_local_only_objects(repo: Path) -> bool:
     return unique is None or bool(unique.strip())
 
 
+def _has_unreachable_objects(repo: Path) -> bool:
+    """Fail closed for objects unreachable from ordinary refs, including reflog-only data.
+
+    A fetch --prune can make a stale remote-tracking tip's unique history
+    unreachable. A local-only blob or commit can also survive without a ref,
+    stash, or a provable remote ref. Neither case is proved disposable by
+    ordinary ref reachability.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo), "fsck", "--full", "--no-reflogs", "--unreachable"],
+            capture_output=True,
+            text=True,
+            timeout=90,
+            check=False,
+            env=_GIT_ENV,
+            stdin=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return True
+    if result.returncode != 0:
+        return True
+    return any(
+        line.startswith(("unreachable ", "dangling ")) for line in (result.stdout + "\n" + result.stderr).splitlines()
+    )
+
+
 def _pristine_now(repo: Path, expected_identity: tuple[int, int] | None = None) -> bool:
-    """Last-millisecond TOCTOU belt: re-sample the cheapest data guards immediately before rmtree."""
+    """Last-millisecond TOCTOU belt: re-sample data guards immediately before rmtree."""
     try:
         observed = repo.lstat()
     except OSError:
@@ -327,6 +354,8 @@ def _pristine_now(repo: Path, expected_identity: tuple[int, int] | None = None) 
     if _run(["git", "-C", str(repo), "stash", "list"]):
         return False
     if _has_local_only_objects(repo):
+        return False
+    if _has_unreachable_objects(repo):
         return False
     return True
 
@@ -399,6 +428,8 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
     # commits live outside refs/heads and are invisible to --branches — but they are un-mirrored work.
     if _has_local_only_objects(repo):
         return Verdict(False, "unpushed-objects")
+    if _has_unreachable_objects(repo):
+        return Verdict(False, "unreachable-objects")
     # HEAD itself must be reachable from origin, not an unrelated remote namespace.
     if not _run(
         ["git", "-C", str(repo), "for-each-ref", "--contains", "HEAD", "--format=%(refname)", "refs/remotes/origin"]
@@ -469,9 +500,11 @@ def confirm_recloneable(repo: Path) -> bool:
         return False
     if fetch.returncode != 0:
         return False  # could not verify against the live remote → fail-safe keep
-    # Authoritative proof: after the refresh, nothing reachable from any local ref/reflog/stash is
-    # missing from the remote. Catches force-push orphans, ahead-of-origin HEADs, and deleted branches.
-    return not _has_local_only_objects(repo)
+    # Authoritative proof: after refresh, no local ref/reflog/stash is missing
+    # from the remote, and pruning did not strand otherwise-unreferenced objects.
+    # Catches force-push orphans, ahead-of-origin HEADs, deleted branches, and
+    # old history held only by stale remote-tracking refs.
+    return not _has_local_only_objects(repo) and not _has_unreachable_objects(repo)
 
 
 def active_task_slugs(tasks_path: Path) -> set[str]:
