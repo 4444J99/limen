@@ -7,7 +7,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from limen import worktree_abandonment as abandonment
 from limen.action_admission import classify_bash
 
@@ -105,6 +104,36 @@ def test_detach_preserves_ignored_payload_without_restoration_proof(tmp_path: Pa
             repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
         )
     assert payload.read_bytes() == b"unfinished ignored content"
+
+
+def test_detach_retains_gitlink_without_submodule_custody(tmp_path: Path) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    head = _git(repo, "rev-parse", "HEAD")
+    _git(repo, "update-index", "--add", "--cacheinfo", f"160000,{head},nested")
+    _git(repo, "commit", "-qm", "record gitlink")
+    _git(target, "merge", "--ff-only", "main")
+    with pytest.raises(abandonment.WorktreeAbandonmentError, match="submodule-custody-unproven"):
+        abandonment.detach_registered_worktree(
+            repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+        )
+    assert target.exists()
+
+
+def test_detach_retains_lfs_pointer_without_object_custody(tmp_path: Path, monkeypatch) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    original = abandonment._run_git
+
+    def reported_lfs(path: Path, *args: str, **kwargs):
+        if args == ("lfs", "ls-files", "--name-only"):
+            return subprocess.CompletedProcess([], 0, "large.bin\n", "")
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(abandonment, "_run_git", reported_lfs)
+    with pytest.raises(abandonment.WorktreeAbandonmentError, match="lfs-custody-unproven"):
+        abandonment.detach_registered_worktree(
+            repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+        )
+    assert target.exists()
 
 
 def test_registered_worktree_scan_retains_missing_registration(

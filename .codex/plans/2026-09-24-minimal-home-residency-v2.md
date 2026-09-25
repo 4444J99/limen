@@ -163,6 +163,12 @@ their compatibility links. No roots were moved. One exact-head merge-drain
 submission returned `DEFERRED — LIFECYCLE-UNKNOWN`; do not retry without changed
 relevant input. The PR is open, not merged or deployed.
 
+The existing worktree abandonment detach path now retains Gitlink/submodule and
+LFS-tracked checkouts until separate custody is demonstrated. Missing Git/LFS
+inventory also retains the checkout. All 29 abandonment tests passed, including
+new submodule and LFS retention cases. This is a safety gate, not final-release
+retirement or canonical-store reconstruction.
+
 ## Acceptance and reporting
 
 Do not repeat subjective implementation percentages. Report original outcomes passed
