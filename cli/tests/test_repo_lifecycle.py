@@ -37,12 +37,16 @@ def test_final_released_store_explicitly_retained_without_metadata_custody(tmp_p
     leases = cache / ".limen-residency" / "77123" / "leases"
     leases.mkdir(parents=True)
     lease_id = "77123-" + "a" * 32
-    (leases / f"{lease_id}.json").write_text(json.dumps({
-        "repository_id": 77123,
-        "lease_id": lease_id,
-        "state": "retired-checkout-store-retained",
-        "store": str(store),
-    }))
+    (leases / f"{lease_id}.json").write_text(
+        json.dumps(
+            {
+                "repository_id": 77123,
+                "lease_id": lease_id,
+                "state": "retired-checkout-store-retained",
+                "store": str(store),
+            }
+        )
+    )
     monkeypatch.setattr(lifecycle, "_repository", lambda _repo_id: (77123, "owner/project"))
     monkeypatch.setattr(lifecycle, "_verify_store_origin", lambda _store, _id: None)
     monkeypatch.setattr(lifecycle, "dispatch_clone_cache_root", lambda: cache)
