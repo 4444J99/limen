@@ -1004,6 +1004,19 @@ host admission remains below 50 GiB. The CCE caller/destination authorization,
 encrypted registry mapping, derived index, provenance, and positive/negative
 native search canaries are still required before any private result is emitted.
 
+### LFS admission safety, 2026-09-25
+
+The remote checkout estimator previously treated an LFS pointer's small Git
+blob size as the materialized checkout size. It now reads tracked
+`.gitattributes` blobs from the requested GitHub tree, validates their
+encoding and size, and returns unknown capacity if an LFS filter is present
+or the attributes cannot be verified. Ordinary non-LFS attributes remain
+admissible. This is a fail-closed interim guard; measuring LFS object sizes
+and proving their custody before checkout retirement remain open. Six focused
+admission tests and mypy on `dispatch.py` pass. Broad Ruff on the existing
+large dispatch/test files reports pre-existing findings and is not a green
+gate for this head.
+
 A live read-only hydration canary resolved private repository ID
 `1332536900` and catalog digest
 `989085af4e956a7c8fb08095669b720fab1b638c5cbba694acdb78e191b00b36`.
