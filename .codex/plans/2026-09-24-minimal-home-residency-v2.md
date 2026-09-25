@@ -130,14 +130,22 @@ admission hysteresis. No alternate roots to evade admission.
 frontier, including the Workspace subtree, hidden directories, nested Git stores,
 linked worktrees, bare Git candidates, copied-source candidates and symlink aliases.
 It records filesystem identities, mount boundaries and unmeasured paths in a private
-0600 state file. Bounded live passes observed 365,115 distinct directories, left
-44,233 queued, and recorded 2 unmeasured areas; the scan is **incomplete** and grants
-no deletion authority. Its resumable private checkpoint is at
+0600 state file. Bounded live passes observed 634,030 distinct directories and
+exhausted the traversal frontier. One vanished temporary path is recorded as a
+resolved source change; one cloud-storage area timed out and remains unmeasured.
+The scan is **incomplete** and grants no deletion authority. Checkout `.git`
+stores are now distinguished from independent bare repositories. Its resumable
+private checkpoint is at
 `/Users/4jp/Workspace/limen/.limen-private/home-workspace-inventory-v1.json`.
-Two focused restart/classification tests pass. Continue the frontier and reconcile
+Focused restart/classification tests pass. Reconcile the remaining cloud timeout and
 candidate identities with PORTVS/Domus owners and fresh custody evidence before any
 retirement. Internal free space sampled at approximately 15 GiB; the 200 GiB outcome
 remains unmet.
+
+The repository acquisition path now checks every existing or newly cloned store's
+origin against the requested live immutable GitHub repository ID. Coordinate/alias
+similarity cannot issue a lease. Focused lifecycle and inventory checks pass (6 tests).
+Final-release preservation, retirement, and reconstruction remain unimplemented.
 
 ## Acceptance and reporting
 

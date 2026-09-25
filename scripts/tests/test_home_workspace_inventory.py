@@ -39,8 +39,22 @@ def test_bare_and_copied_source_are_candidates(tmp_path: Path) -> None:
     source = tmp_path / "copy"
     source.mkdir()
     (source / "pyproject.toml").write_text("[project]\nname='x'\n")
+    linked = tmp_path / "linked"
+    linked.mkdir()
+    (linked / ".git").write_text("gitdir: ../store/worktrees/linked\n")
     state = inventory.initial([tmp_path])
     inventory.advance(state, max_directories=100, max_seconds=10)
     kinds = {row["kind"] for row in state["objects"]}
     assert "bare_git_candidate" in kinds
     assert "copied_source_candidate" in kinds
+    assert "git_file_checkout_candidate" in kinds
+
+
+def test_vanished_temporary_path_is_recorded_not_unmeasured(tmp_path: Path) -> None:
+    state = inventory.initial([tmp_path])
+    missing = tmp_path / "vanished"
+    state["unmeasured"].append({"path": str(missing), "error": "FileNotFoundError"})
+    inventory.advance(state, max_directories=10, max_seconds=10)
+    assert state["complete"]
+    assert state["unmeasured"] == []
+    assert state["resolved_changes"][0]["resolution"] == "vanished_during_scan"
