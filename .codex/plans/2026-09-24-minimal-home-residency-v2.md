@@ -827,6 +827,9 @@ home-guard suite passed 37 tests. The policy does not classify every home or
 Workspace object and grants no retirement authority; each candidate still
 needs fresh native owner, process, exact-ref and payload custody evidence.
 The PR is source-only and has not been deployed.
+Its exact head is `f88a195b954e17d71842f8f41a4f5e63587c3d4f`; one
+merge-rail submission returned `DEFERRED — CI-PENDING`. No unchanged-head
+retry or merge claim follows.
 
 ### Bounded cache retirement, 2026-09-25
 
