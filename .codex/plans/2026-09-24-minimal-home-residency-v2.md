@@ -817,6 +817,17 @@ was created because current host free space remains below admission. The draft
 runtime is not installed; LFS acquisition sizing and final canonical-store
 metadata custody still require engineering and acceptance proof.
 
+### Application Git-store owner policies, 2026-09-25
+
+Domus PR #396 adds retain-and-investigate lifecycle rows for the observed
+OpenCode recovery snapshot roots, pre-commit fixture cache, two parent-owned
+submodule stores, and local test remote. A private inventory-to-policy prefix
+check matched all 23 remaining non-Codex bare Git candidates (23/23), and the
+home-guard suite passed 37 tests. The policy does not classify every home or
+Workspace object and grants no retirement authority; each candidate still
+needs fresh native owner, process, exact-ref and payload custody evidence.
+The PR is source-only and has not been deployed.
+
 ### Bounded cache retirement, 2026-09-25
 
 The current cache classifier produced exact plan
