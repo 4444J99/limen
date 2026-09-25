@@ -87,6 +87,36 @@ def test_hydration_rejects_incomplete_marker_and_unverified_bytes(tmp_path: Path
         assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [payload_digest], destination)
 
 
+def test_hydration_limits_are_checked_before_download(tmp_path: Path, monkeypatch) -> None:
+    destination = tmp_path / "private"
+    destination.mkdir(mode=0o700)
+    catalog_digest = "a" * 64
+    object_digest = "b" * 64
+    tag = f"arca-objects-{catalog_digest[:32]}"
+    monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (123, "owner/private-vault", "main"))
+    monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {
+        f"catalog-{catalog_digest}.enc": tag,
+        f"object-{object_digest}.enc": f"{tag}-part-0001",
+    })
+    monkeypatch.setattr(assets, "_release_asset_digests", lambda _repo, release: {
+        (f"catalog-{catalog_digest}.enc" if release == tag else f"object-{object_digest}.enc"):
+        (catalog_digest if release == tag else object_digest, 100)
+    })
+    monkeypatch.setattr(assets, "_run", lambda *_args, **_kwargs: pytest.fail("download started"))
+    monkeypatch.setattr(assets, "MAX_HYDRATE_OBJECTS", 0)
+    with pytest.raises(assets.AssetError, match="object limit"):
+        assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [object_digest], destination)
+    monkeypatch.setattr(assets, "MAX_HYDRATE_OBJECTS", 16)
+    monkeypatch.setattr(assets, "MAX_HYDRATE_RELEASES", 1)
+    with pytest.raises(assets.AssetError, match="release limit"):
+        assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [object_digest], destination)
+    monkeypatch.setattr(assets, "MAX_HYDRATE_RELEASES", 4)
+    monkeypatch.setattr(assets, "MAX_HYDRATE_BYTES", 150)
+    with pytest.raises(assets.AssetError, match="byte limit"):
+        assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [object_digest], destination)
+    assert not list(destination.iterdir())
+
+
 def test_plan_is_neutral_and_has_no_remote_effects(tmp_path: Path, monkeypatch) -> None:
     catalog, objects = _ciphertexts(tmp_path)
     monkeypatch.setattr(assets, "_run", lambda *_a, **_k: pytest.fail("dry run called GitHub"))
