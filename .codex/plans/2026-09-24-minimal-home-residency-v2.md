@@ -817,6 +817,14 @@ was created because current host free space remains below admission. The draft
 runtime is not installed; LFS acquisition sizing and final canonical-store
 metadata custody still require engineering and acceptance proof.
 
+The hosted Python check on the first reservation head failed mypy because
+the direct path passed a lightweight coordinate holder to a Task-typed
+estimator. The estimator now accepts the repository coordinate explicitly,
+and dispatch retains a Task wrapper. The exact hosted type-check command
+`python3 -m mypy src/limen/` passes locally for all 190 source files; 15
+focused lifecycle/dispatcher tests pass after the correction. Hosted CI on
+the corrected head remains a separate receipt.
+
 ### Application Git-store owner policies, 2026-09-25
 
 Domus PR #396 adds retain-and-investigate lifecycle rows for the observed

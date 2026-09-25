@@ -20,7 +20,6 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from types import SimpleNamespace
 
 from limen.worktree_debt import IMPACT_DEBT_CREATING, admission_blocks, take_admission_snapshot
 from limen.worktree_initialization import WorktreeInitializationError, initialize_worktree
@@ -136,7 +135,7 @@ def _capacity_admission(
     from limen.dispatch import (
         _admission_lease_path,
         _machine_admission_lock,
-        _remote_hydration_requirement_gib,
+        _remote_hydration_requirement_for_repo_gib,
         _snapshot_with_machine_reservations,
     )
 
@@ -172,7 +171,7 @@ def _capacity_admission(
             snapshot, _slots = _snapshot_with_machine_reservations(fresh)
             estimate = None
             if snapshot.get("active") and not snapshot.get("block_new_local"):
-                estimate = _remote_hydration_requirement_gib(SimpleNamespace(repo=coordinate), tree_ref=revision)
+                estimate = _remote_hydration_requirement_for_repo_gib(coordinate, tree_ref=revision)
             blocked, reason = admission_blocks(IMPACT_DEBT_CREATING, snapshot, estimate)
             if blocked:
                 raise RepositoryLifecycleError(reason)
