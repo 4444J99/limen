@@ -281,7 +281,116 @@ def release(lease_id: str) -> dict[str, str]:
             state_name = "retained-dirty-or-unavailable"
         else:
             state_name = "released-awaiting-custody-investigation"
+        try:
+            record["released_head"] = _git(worktree, "rev-parse", "HEAD")
+        except RepositoryLifecycleError:
+            state_name = "retained-dirty-or-unavailable"
         record["state"] = state_name
         record["released_at"] = datetime.now(UTC).isoformat()
         _atomic_json(path, record)
         return {"lease_id": lease_id, "state": state_name, "worktree": str(worktree)}
+
+
+def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
+    """Background pass: retire exact-tip released checkouts, retain the Git store.
+
+    A lease expiry or a clean status is never deletion authority. The existing
+    abandonment lifecycle performs fresh payload, process and remote checks.
+    """
+    stable_id, _coordinate = _repository(repository_id)
+    cache = dispatch_clone_cache_root()
+    if cache is None:
+        raise RepositoryLifecycleError("managed repository cache is unavailable")
+    store = cache / f"github-{stable_id}"
+    state = cache / ".limen-residency" / str(stable_id)
+    leases_dir = state / "leases"
+    with _locked(state / "acquire.lock"):
+        if not store.is_dir() or store.is_symlink() or not leases_dir.is_dir():
+            return {"repository_id": str(stable_id), "state": "retained-unmeasured-store"}
+        try:
+            _verify_store_origin(store, stable_id)
+        except RepositoryLifecycleError:
+            return {"repository_id": str(stable_id), "state": "retained-origin-identity-unavailable"}
+        records: list[tuple[Path, dict[str, object]]] = []
+        for path in sorted(leases_dir.glob("*.json")):
+            if path.is_symlink():
+                return {"repository_id": str(stable_id), "state": "retained-inconsistent-lease"}
+            try:
+                record = json.loads(path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                return {"repository_id": str(stable_id), "state": "retained-unreadable-lease"}
+            if record.get("repository_id") != stable_id or record.get("lease_id") != path.stem:
+                return {"repository_id": str(stable_id), "state": "retained-inconsistent-lease"}
+            records.append((path, record))
+        if not records:
+            return {"repository_id": str(stable_id), "state": "retained-no-lease-evidence"}
+        allowed_states = {
+            "active", "released-awaiting-custody-investigation",
+            "retained-dirty-or-unavailable", "retired-checkout-store-retained",
+        }
+        if any(record.get("state") not in allowed_states for _path, record in records):
+            return {"repository_id": str(stable_id), "state": "retained-inconsistent-lease"}
+        if any(record.get("state") == "active" for _path, record in records):
+            return {"repository_id": str(stable_id), "state": "retained-active-lease"}
+        released = [
+            (path, record) for path, record in records
+            if record.get("state") == "released-awaiting-custody-investigation"
+        ]
+        if not released:
+            return {"repository_id": str(stable_id), "state": "retained-no-eligible-checkout"}
+        root = effective_worktree_root().expanduser().resolve()
+        try:
+            advertised = _git(store, "ls-remote", "--heads", "origin", timeout=30)
+        except RepositoryLifecycleError:
+            return {"repository_id": str(stable_id), "state": "retained-remote-unavailable"}
+        remote_refs: dict[str, list[str]] = {}
+        for line in advertised.splitlines():
+            parts = line.split()
+            if len(parts) == 2 and re.fullmatch(r"[0-9a-f]{40}(?:[0-9a-f]{24})?", parts[0]) and parts[1].startswith("refs/heads/"):
+                remote_refs.setdefault(parts[0], []).append(parts[1])
+        from limen.worktree_abandonment import WorktreeAbandonmentError, retire_released_worktree
+
+        retired = retained = 0
+        for path, record in released:
+            lease_id = str(record["lease_id"])
+            expected = root / f"repo-{stable_id}-{lease_id.split('-', 1)[1][:16]}"
+            checkout = Path(str(record.get("worktree", "")))
+            head = str(record.get("released_head", ""))
+            if (
+                checkout != expected or checkout.is_symlink() or not checkout.is_dir()
+                or record.get("store") != str(store) or checkout.parent.resolve() != root
+                or head not in remote_refs
+            ):
+                retained += 1
+                continue
+            try:
+                if _common_git_dir(checkout) != _common_git_dir(store):
+                    retained += 1
+                    continue
+            except RepositoryLifecycleError:
+                retained += 1
+                continue
+            try:
+                result = retire_released_worktree(
+                    store, checkout, expected_head=head,
+                    remote_ref=min(remote_refs[head]),
+                    receipt_root=state / "retirement-receipts",
+                    owner_probe=owner_probe,
+                )
+            except WorktreeAbandonmentError:
+                retained += 1
+                continue
+            if result.get("state") != "completed":
+                retained += 1
+                continue
+            record["state"] = "retired-checkout-store-retained"
+            record["retired_at"] = datetime.now(UTC).isoformat()
+            record["retirement_receipt"] = result.get("receipt_path")
+            _atomic_json(path, record)
+            retired += 1
+        return {
+            "repository_id": str(stable_id),
+            "state": "store-retained",
+            "retired_checkouts": str(retired),
+            "retained_checkouts": str(retained),
+        }
