@@ -757,3 +757,14 @@ database, both private local canary directories, and all larger databases
 remain retained. This proves consistent encrypted remote capture for one
 small active SQLite source, not independent-key restoration or estate-wide
 database coverage.
+
+Tranche close measurement: Data-volume free space is 22,260,588 KiB
+(approximately 21.2 GiB), lower than the prior sample. The cause of the
+concurrent change is unmeasured; neither the small canary nor apparent cache
+sizes are claimed as net recovery. Limen #2718 remains draft/open at
+`9fc22675029c73e60737cdb03992f5b214bca7cc`, with no observed failed
+hosted checks and Python/PR Gate/Semgrep still pending. Domus #394 remains
+open and clean at its already-submitted head; all observed checks are green,
+but its exact-head merge rail previously returned `DEFERRED — CI-PENDING` and
+has not returned a merge receipt. Do not promote either source PR to installed
+or merged status without the respective receipt.
