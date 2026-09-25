@@ -792,6 +792,11 @@ exact-head submission was deferred and has not been retried. Current actual
 Data-volume free space is 22,038,536 KiB (~21.0 GiB); no physical recovery
 is claimed from these source changes.
 
+Subsequent GitHub observation shows every named #395 hosted check successful,
+including Python tests, shell formatting, CI, secret scanning and Semgrep.
+It remains open at the same head; the single deferred merge submission is
+not a merge receipt. #394 likewise remains open with named checks green.
+
 ### Bounded cache retirement, 2026-09-25
 
 The current cache classifier produced exact plan
