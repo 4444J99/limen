@@ -73,3 +73,37 @@ def test_codex_empty_git_shell_is_distinct_from_populated_store(tmp_path: Path) 
     kinds = {row["path"]: row["kind"] for row in state["objects"]}
     assert kinds[str(empty)] == "codex_empty_git_shell_candidate"
     assert kinds[str(populated)] == "bare_git_candidate"
+
+
+def test_source_context_distinguishes_dependencies_and_repository_internals(tmp_path: Path) -> None:
+    checkout = tmp_path / "repo"
+    (checkout / ".git").mkdir(parents=True)
+    internal = checkout / "pkg"
+    internal.mkdir()
+    (internal / "pyproject.toml").write_text("[project]\n")
+    dependency = tmp_path / "node_modules" / "library"
+    dependency.mkdir(parents=True)
+    (dependency / "package.json").write_text("{}\n")
+    copy = tmp_path / "copy"
+    copy.mkdir()
+    (copy / "package.json").write_text("{}\n")
+    application = tmp_path / "Library" / "Application Support" / "plugin"
+    application.mkdir(parents=True)
+    (application / "package.json").write_text("{}\n")
+    cache = tmp_path / ".cache" / "source"
+    cache.mkdir(parents=True)
+    (cache / "pyproject.toml").write_text("[project]\n")
+    go_module = tmp_path / "go" / "pkg" / "mod" / "example"
+    go_module.mkdir(parents=True)
+    (go_module / "go.mod").write_text("module example\n")
+
+    state = inventory.initial([tmp_path])
+    inventory.advance(state, max_directories=100, max_seconds=10)
+    rows = {row["path"]: row for row in state["objects"]}
+    assert rows[str(internal)]["kind"] == "repository_internal_source"
+    assert rows[str(internal)]["parent_checkout_identity"] == rows[str(checkout)]["fs_identity"]
+    assert rows[str(dependency)]["kind"] == "dependency_source_candidate"
+    assert rows[str(copy)]["kind"] == "copied_source_candidate"
+    assert rows[str(application)]["kind"] == "application_source_candidate"
+    assert rows[str(cache)]["kind"] == "cache_source_candidate"
+    assert rows[str(go_module)]["kind"] == "dependency_source_candidate"
