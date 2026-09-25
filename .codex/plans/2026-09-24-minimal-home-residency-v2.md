@@ -147,6 +147,22 @@ origin against the requested live immutable GitHub repository ID. Coordinate/ali
 similarity cannot issue a lease. Focused lifecycle and inventory checks pass (6 tests).
 Final-release preservation, retirement, and reconstruction remain unimplemented.
 
+### PORTVS catalog checkpoint, 2026-09-24
+
+PORTVS PR #12 (`feat/remote-default-residency-20260924`, head
+`5e79f13d218bdf23dc708801f7481d71a2cae7b5`) declares five authored
+repositories `remote-default` and the three control repositories `control-pin`.
+All eight rows have live immutable GitHub IDs and current `4444J99` coordinates;
+Domus's default-branch metadata is corrected to `main`. PORTVS bootstrap accepts
+an absent remote-default checkout without cloning, and reports an absent control
+pin for Limen-managed acquisition. Legacy `laptop` clone behavior is still present
+for older manifests and must migrate before all producers satisfy the one-interface
+rule. All 69 bootstrap tests plus the new immutable-ID case passed. The live
+read-only plan had zero actions and six blockers for the three control roots and
+their compatibility links. No roots were moved. One exact-head merge-drain
+submission returned `DEFERRED — LIFECYCLE-UNKNOWN`; do not retry without changed
+relevant input. The PR is open, not merged or deployed.
+
 ## Acceptance and reporting
 
 Do not repeat subjective implementation percentages. Report original outcomes passed
