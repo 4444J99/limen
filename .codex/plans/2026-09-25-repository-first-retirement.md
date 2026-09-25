@@ -190,3 +190,23 @@ the approximately 200 GiB outcome remain open.
   to 27,625,604 KiB afterward (-15,168 KiB). This is a net observation, not
   attributed reclaim; the 43,040 KiB apparent cache retirement is directory
   accounting only. The 50 GiB admission threshold remains unmet.
+
+### Deep root reconciliation, 2026-09-25
+
+- A fresh depth-six Workspace dry run proposed one 0.01 GiB collaboration
+  hydration clone. Its owner reconstructs repository sources from GitHub on
+  demand. The apply-time recheck saw a live SSH process with its current
+  directory inside that clone and reaped nothing. The candidate remains
+  protected until that process exits and a new live check confirms eligibility.
+- The matching depth-six home-root dry run exposed seven installed-plugin and
+  marketplace source clones totaling 0.23 GiB apparent. Native Copilot
+  marketplace and installed-plugin state confirms that the largest is an
+  application-owned source, not an idle generic cache. No owner-specific
+  eviction/reconstruction transaction is yet proven, so all seven remain.
+  Other home clones remain individually blocked by active tasks/processes,
+  dirty or ignored state, linked worktrees, submodules, local-only objects,
+  or metadata-custody requirements; this is not a claim that every retained
+  clone has completed per-path adjudication.
+- Data-volume free space measured 27,593,692 KiB after these read-only checks.
+  Concurrent use continues to dominate small apparent candidate totals; no
+  additional storage reclaim is attributed.
