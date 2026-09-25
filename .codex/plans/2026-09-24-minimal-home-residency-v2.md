@@ -430,3 +430,31 @@ Next custody attempt resumes the same fixed tag and rechecks every present
 asset by download, including the unverified 25th; upload remaining objects
 and publish the encrypted catalog last. Independent-key restoration, second
 replica, full Git ref/stash closure and CCE authorization remain open.
+
+### ARCA digest-assisted continuation, 2026-09-25
+
+The publisher now supports an explicit resume mode that checks GitHub's live
+`uploaded` asset state, SHA-256 digest and size against the local ciphertext
+for assets already on the fixed Release. New uploads still receive full
+download/readback and SHA-256 verification. Missing or mismatched remote
+metadata fails closed. Thirteen focused ARCA tests and Ruff passed. Source
+commit `69df8451e` is pushed on draft Limen PR #2718.
+
+A 10-minute continuation validated the existing 25 assets against server
+digests and fully read back new assets through 38/60. Its deadline expired;
+a fresh GitHub listing showed 38 objects and no catalog. A subsequent
+six-minute continuation validated the existing 38 and fully read back new
+assets through 46/60. Its deadline expired during the next object; a fresh
+listing showed 47 objects and no catalog. Asset 47 is present but unverified
+by the completed publisher flow. Neither batch published the encrypted
+catalog. The fixed local source and catalog remain authoritative; no private
+original was retired. The latest actual internal free space was 26,155,680
+KiB (about 24.94 GiB), below the 200 GiB target.
+
+The next bounded custody run must verify asset 47 and the remaining objects,
+then publish the encrypted catalog last. This work is approaching the existing
+120-agent-minute cumulative Limen execution allowance; the full original
+outcome remains incomplete and requires an execution-budget decision before
+additional heavy runs. Independent-key recovery, a second replica, complete
+source closure, authorized private retrieval, full root classification and
+physical capacity recovery are still unproved.
