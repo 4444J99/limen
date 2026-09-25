@@ -1,0 +1,22 @@
+name: Ops-owned scheduler release carrier
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/ops-owner-release.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# No second implementation or deploy identity: call the immutable owner's
+# release workflow using this existing credential carrier. The called workflow
+# takes this repository's incident concurrency group and performs live preflight.
+jobs:
+  owner:
+    uses: 4444J99/ops/.github/workflows/cloudflare-owner-release.yml@383b4c1ac96f353890bb7e9cba2ed06d6c49b495
+    with:
+      source_sha: 383b4c1ac96f353890bb7e9cba2ed06d6c49b495
+      apply_source: ''
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
