@@ -340,6 +340,8 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
             if record.get("state") == "released-awaiting-custody-investigation"
         ]
         if not released:
+            if all(record.get("state") == "retired-checkout-store-retained" for _path, record in records):
+                return {"repository_id": str(stable_id), "state": "retained-store-metadata-custody-unproven"}
             return {"repository_id": str(stable_id), "state": "retained-no-eligible-checkout"}
         root = effective_worktree_root().expanduser().resolve()
         try:
@@ -400,9 +402,12 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
             record["retirement_receipt"] = result.get("receipt_path")
             _atomic_json(path, record)
             retired += 1
+        all_checkouts_retired = all(
+            record.get("state") == "retired-checkout-store-retained" for _path, record in records
+        )
         return {
             "repository_id": str(stable_id),
-            "state": "store-retained",
+            "state": "retained-store-metadata-custody-unproven" if all_checkouts_retired else "store-retained",
             "retired_checkouts": str(retired),
             "retained_checkouts": str(retained),
         }

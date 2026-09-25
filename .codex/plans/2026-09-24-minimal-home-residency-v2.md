@@ -527,3 +527,16 @@ only two regenerable caches totaling 355,496 KiB apparent; it retained all
 active and owner-specific stores. Actual APFS free space rose from 25,125,420
 to 25,180,896 KiB, a measured 55,476 KiB gain, so apparent bytes are not
 credited as physical recovery. Twelve focused cache tests and Ruff passed.
+
+The final-lease store path was audited against the existing clone reaper before
+adding deletion. Its remote-object, ignored-payload, process and nested-store
+checks do not yet preserve every local Git metadata byte (for example custom
+repository configuration). A proposed managed-store deletion path was tested
+in isolation, then withdrawn before publication because it did not satisfy
+the plan's exact metadata-custody condition. Reconciliation now reports
+`retained-store-metadata-custody-unproven` when every checkout is retired,
+instead of presenting the canonical store as an unexplained permanent cache.
+The store is not deleted. A focused test proves this retained state; seven
+repository-lifecycle tests, mypy and Ruff pass. The required next step is a
+shared metadata-preservation classifier with remote encrypted readback and
+restoration evidence, followed by a locked final-store deletion edge.
