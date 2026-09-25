@@ -55,7 +55,13 @@ def _run(args: list[str], *, timeout: int = 900) -> subprocess.CompletedProcess[
     except (OSError, subprocess.SubprocessError) as exc:
         raise AssetError(f"GitHub asset operation failed ({type(exc).__name__})") from exc
     if result.returncode:
-        raise AssetError("GitHub asset operation failed; source ciphertext retained")
+        detail = re.search(
+            r"HTTP [0-9]{3}|rate limit|already exists|Validation Failed|timeout|connection reset",
+            result.stderr,
+            re.IGNORECASE,
+        )
+        reason = detail.group(0) if detail else f"exit {result.returncode}"
+        raise AssetError(f"GitHub asset operation failed ({reason}); source ciphertext retained")
     return result
 
 
@@ -379,9 +385,18 @@ def _existing_assets(repo: str) -> dict[str, str]:
     result: dict[str, str] = {}
     for row in rows:
         tag, separator, name = row.partition("\t")
-        if separator and re.fullmatch(r"arca-objects-[a-f0-9]{32}", tag):
+        if separator and re.fullmatch(r"arca-objects-[a-f0-9]{32}(?:-part-[0-9]{4})?", tag):
             result.setdefault(name, tag)
     return result
+
+
+def _objects_from_dir(directory: Path) -> list[Path]:
+    if directory.is_symlink() or not directory.is_dir():
+        raise AssetError("object directory must be a real directory")
+    objects = sorted(directory.glob("*.gpg"))
+    if not objects:
+        raise AssetError("object directory has no encrypted objects")
+    return objects
 
 
 def main() -> int:
@@ -389,14 +404,22 @@ def main() -> int:
     parser.add_argument("--repo", required=True)
     parser.add_argument("--catalog", type=Path, required=True, help="already encrypted catalog")
     parser.add_argument(
-        "--object", type=Path, action="append", required=True, help="encrypted payload object; repeatable"
+        "--object", type=Path, action="append", default=[], help="encrypted payload object; repeatable"
     )
+    parser.add_argument("--objects-dir", type=Path, help="directory of encrypted .gpg objects")
+    parser.add_argument("--batch-deadline-seconds", type=int, default=BATCH_DEADLINE_SECONDS)
+    parser.add_argument("--verify-existing-by-server-digest", action="store_true")
     parser.add_argument(
         "--apply", action="store_true", help="create/reuse a private release and upload/read back assets"
     )
     args = parser.parse_args()
     try:
-        result = publish(args.repo, args.catalog, args.object, apply=args.apply)
+        if bool(args.object) == bool(args.objects_dir):
+            raise AssetError("provide exactly one of --object or --objects-dir")
+        objects = _objects_from_dir(args.objects_dir) if args.objects_dir else args.object
+        result = publish(args.repo, args.catalog, objects, apply=args.apply,
+                         batch_deadline_seconds=args.batch_deadline_seconds,
+                         verify_existing_by_server_digest=args.verify_existing_by_server_digest)
     except AssetError as exc:
         print(f"arca-release-assets: {exc}", file=sys.stderr)
         return 1
