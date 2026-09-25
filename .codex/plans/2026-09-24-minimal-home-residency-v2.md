@@ -402,3 +402,31 @@ The read-only application-owner canary inspected six declared surfaces: two exis
 surfaces were retained as owner-policy-required, four were absent, no candidate was
 eligible, and the actual process sensor reported no error. No deletion was attempted.
 The final sampled free capacity was 11.51 GiB; this does not satisfy capacity acceptance.
+
+### ARCA fixed-catalog Release attempt, 2026-09-25
+
+The Release publisher now has a 25-minute apply deadline and neutral per-asset
+readback progress. A fixed-catalog resume command requires the exact source
+HEAD, encrypted catalog SHA-256, ciphertext file count and byte total; it
+refuses dirty or changed source files. Twelve focused ARCA tests, Ruff and diff
+hygiene passed. Limen source commit `c4ecab47b` is pushed on draft PR #2718.
+
+One bounded live apply used the pre-existing 8,505-byte encrypted catalog at
+SHA-256 `b41047e0aa7d17ccc1f818c0d0698416b8c3ef106323658c9d59e192a4485549`
+and source HEAD `22142cd82297cc90c0f15737134043db668e337b`.
+The source preflight checked 59 committed ciphertext files totaling
+5,389,255,296 bytes. GitHub private repository identity `1332536900` and the
+release write preflight passed. Twenty-four assets uploaded and passed full
+SHA-256 remote download/readback. The 25-minute deadline expired during
+readback of the next object; a fresh GitHub listing showed 25 object assets
+and zero catalog assets on the fixed release tag. The 25th object remains
+unverified. The batch is incomplete, with no source retirement or custody
+completion claim. A dry run of the committed resume command passed and returned
+the same tag, 60 planned assets and 5,389,263,801 planned bytes. The local
+encrypted catalog and source remain retained. Actual internal free space was
+26,477,548 KiB (about 25.25 GiB), well below the 200 GiB target.
+
+Next custody attempt resumes the same fixed tag and rechecks every present
+asset by download, including the unverified 25th; upload remaining objects
+and publish the encrypted catalog last. Independent-key restoration, second
+replica, full Git ref/stash closure and CCE authorization remain open.
