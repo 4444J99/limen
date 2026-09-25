@@ -720,3 +720,14 @@ silently skips refresh. The remote repository resolves by immutable GitHub ID
 `1188128304`, but new local acquisition is denied by current host admission.
 This is an explicit unavailable retrieval state, not an authorized CCE search
 receipt.
+
+Further bounded Limen ownership measurement locates 15,137,856 KiB in its
+agent runtime: Codex 9,631,992 KiB, OpenCode 3,505,432 KiB, and Claude
+2,000,352 KiB. Codex includes 6,194,512 KiB of sessions plus live root-level
+SQLite application state, including approximately 1.64 GB allocated to thread
+history and 654 MB to logs. These databases require consistent backup/export
+adapters and verified encrypted custody before any local retirement; their
+presence is not generic cache. `~/Library/Caches` totals 14,445,792 KiB;
+CloudKit alone uses 5,147,864 KiB and remains application-owned. The
+separately measured `~/.cache/uv` remains active and retained. These figures
+locate the deficit but do not add to an APFS-free-space recovery claim.
