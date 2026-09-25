@@ -374,8 +374,9 @@ def release(lease_id: str) -> dict[str, str]:
 def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
     """Background pass: retire exact-tip released checkouts, retain the Git store.
 
-    A lease expiry or a clean status is never deletion authority. The existing
-    abandonment lifecycle performs fresh payload, process and remote checks.
+    A lease expiry or a clean status is never deletion authority. Previously
+    dirty releases are retried only through the same abandonment lifecycle,
+    which performs fresh HEAD, payload, process and remote checks.
     """
     stable_id, _coordinate = _repository(repository_id)
     cache = dispatch_clone_cache_root()
@@ -417,7 +418,10 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
         released = [
             (path, record)
             for path, record in records
-            if record.get("state") == "released-awaiting-custody-investigation"
+            if record.get("state") in {
+                "released-awaiting-custody-investigation",
+                "retained-dirty-or-unavailable",
+            }
         ]
         if not released:
             if all(record.get("state") == "retired-checkout-store-retained" for _path, record in records):

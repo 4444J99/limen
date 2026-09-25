@@ -998,6 +998,17 @@ before transitioning that lease to review; an expired lease or a clean status
 alone cannot authorize deletion. The final canonical store still has no
 metadata/object-custody proof and remains retained after checkout retirement.
 
+Resolution: the reconciler now includes retained dirty/unavailable releases in
+its bounded review, without changing their lease state unless the existing
+abandonment lifecycle completes. That lifecycle rechecks exact remote tip and
+HEAD, clean status, ignored payloads, nested LFS/submodule custody, process
+ownership and registered worktree identity before non-forced detach. A synthetic
+owner-preserved dirty payload stayed resident while dirty; after its bytes
+were copied to a separate test custody path and the checkout was cleaned,
+the next pass retired that checkout while retaining the canonical store. Ten
+focused lifecycle tests and mypy passed. This does not prove real private
+payload custody or canonical-store retirement.
+
 ### Selective ciphertext hydration foundation, 2026-09-25
 
 Limen's ARCA Release adapter now has an internal `hydrate_ciphertext`

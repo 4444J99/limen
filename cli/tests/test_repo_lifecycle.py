@@ -150,7 +150,21 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
     assert not Path(default_head["worktree"]).exists()
     assert Path(concurrent_session["worktree"]).is_dir()
     assert Path(first["store"]).is_dir()
-    assert lifecycle.reconcile(77123, owner_probe=lambda _path: None)["state"] == "retained-no-eligible-checkout"
+    still_dirty = lifecycle.reconcile(77123, owner_probe=lambda _path: None)
+    assert still_dirty["state"] == "store-retained"
+    assert still_dirty["retained_checkouts"] == "1"
+    assert dirty.exists()
+    # After its owner preserves the payload and cleans the checkout, the same
+    # released lease can pass fresh remote/HEAD/process/payload review.
+    preserved = tmp_path / "owner-preserved-payload"
+    preserved.write_bytes(dirty.read_bytes())
+    assert preserved.read_bytes() == dirty.read_bytes()
+    dirty.unlink()
+    clean_later = lifecycle.reconcile(77123, owner_probe=lambda _path: None)
+    assert clean_later["retired_checkouts"] == "1"
+    assert clean_later["state"] == "retained-store-metadata-custody-unproven"
+    assert not Path(concurrent_session["worktree"]).exists()
+    assert Path(first["store"]).is_dir()
 
 
 def test_new_residency_denied_before_clone_under_disk_pressure(tmp_path, monkeypatch):
