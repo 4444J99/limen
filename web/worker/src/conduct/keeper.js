@@ -1,5 +1,5 @@
 import { ChunkedDurableStateStore } from "./durable-store.js";
-import { acceptInventoryObservation, requireInventoryCollector } from "./inventory-admission.js";
+import { acceptInventoryObservation, requireInventoryCollector, executionAdmission, executionActive, pendingRemoteAttempts, executionPriority, projectionExecutionStatus } from "./inventory-admission.js";
 import notificationRegistry from "../../../../institutio/governance/notification-events.limen.json" with { type: "json" };
 import { sessionAudit } from "./session-audit.js";
 import { conflictingKeys, parseResource, sortedClaims } from "./resources.js";
@@ -252,6 +252,7 @@ export class ConductKernel {
       runtimeIdentity = null,
       notificationAssignments = notificationRegistry,
       inventoryAuthority = null,
+      executionPolicy = undefined,
     } = {},
   ) {
     this.state = validateLoadedState(input);
@@ -264,6 +265,7 @@ export class ConductKernel {
     this.runtimeIdentity = runtimeIdentity;
     this.notificationAssignments = clone(notificationAssignments);
     this.inventoryAuthority = inventoryAuthority;
+    this.executionPolicy = executionPolicy;
     this.projectionEvents = [];
     this.mutated = false;
   }
@@ -285,6 +287,8 @@ export class ConductKernel {
       case "capabilities": return this.capabilities(payload.principal);
       case "session_audit": return sessionAudit(this.state, payload.session_id);
       case "task_run": return this.taskRun(payload.task_id);
+      case "execution_info": return this.executionInfo(payload.work_key, payload.principal);
+      case "reserve_growth": return this.reserveGrowth(payload.work_key, payload.action, payload.identity_hash, payload.principal);
       case "submit": return this.submit(payload.packet, payload.principal);
       case "submit_graph": return this.submitGraph(payload.packets, payload.principal);
       case "split": return this.split(payload.parent_run_id, payload.packet, payload.principal);
@@ -557,7 +561,50 @@ export class ConductKernel {
     };
   }
 
-  async submit(packet, requestedPrincipal = null) {
+  executionRun(workKey, principal) {
+    this.requireRole(principal, "conductor", "executor", "compatibility");
+    const candidates = Object.values(this.state.runs).filter((run) =>
+      (run.packet.work_key === workKey || run.packet.task_id === workKey) && executionActive(run, this.now));
+    if (candidates.length !== 1) throw new ConductError("execution_active_reservation_required");
+    const run = candidates[0];
+    if (![run.conductor_principal_id, this.state.session_principals[run.executor_session_id]].includes(principal.principal_id)) {
+      throw new ConductError("execution_reservation_principal_mismatch", 403);
+    }
+    executionPriority(this.executionPolicy, run.packet, run.parent_run_id && this.state.runs[run.parent_run_id]);
+    return run;
+  }
+
+  executionInfo(workKey, principal) {
+    const run = this.executionRun(workKey, principal);
+    return {run_id: run.run_id, work_key: run.packet.work_key, ...clone(run.execution_admission)};
+  }
+
+  reserveGrowth(workKey, action, identityHash, principal) {
+    const run = this.executionRun(workKey, principal);
+    if (!["issue", "branch", "worktree", "verification"].includes(action) || !/^[0-9a-f]{64}$/.test(identityHash || "")) {
+      throw new ConductError("execution_resource_invalid", 422);
+    }
+    const priority = executionPriority(this.executionPolicy, run.packet,
+      run.parent_run_id && this.state.runs[run.parent_run_id]);
+    const allowance = action === "verification" ? 1 : priority.resource_limits?.[action];
+    if (!Number.isSafeInteger(allowance) || allowance < 1) throw new ConductError("execution_resource_not_approved");
+    const scope = Object.values(this.state.runs).filter((r) => action === "verification"
+      ? r.run_id === run.run_id : r.execution_admission?.outcome_id === priority.outcome_id);
+    const reservations = scope.flatMap((r) => r.execution_admission?.resource_reservations || []).filter((r) => r.action === action);
+    const duplicate = reservations.find((r) => r.identity_hash === identityHash);
+    if (duplicate && action === "verification") return clone(duplicate);
+    if (duplicate) throw new ConductError("execution_resource_already_reserved");
+    if (reservations.length >= allowance) throw new ConductError("execution_resource_budget_exhausted");
+    const receipt = {action, identity_hash: identityHash, reserved_at: this.timestamp};
+    if (action === "verification") receipt.deadline = new Date(Math.min(this.now.getTime() + 600000,
+      Date.parse(run.execution_admission.attempt_deadline))).toISOString();
+    run.execution_admission.resource_reservations ||= [];
+    run.execution_admission.resource_reservations.push(receipt);
+    this.recordEvent("execution.resource_reserved", {run_id:run.run_id, action, identity_hash: identityHash});
+    return clone(receipt);
+  }
+
+  async submit(packet, requestedPrincipal = null, retainedAdmission = null) {
     const { principal, enforced } = this.principalForIdentity(packet.conductor, requestedPrincipal);
     this.requireRole(principal, "conductor", "compatibility");
     requireWorkLoan(packet);
@@ -626,6 +673,12 @@ export class ConductKernel {
       return this.submitResult(run, true);
     }
     const parent = this.validateLineage(packet, enforced ? principal.principal_id : null);
+    const legacy = isTaskCompatibilityPacket(packet);
+    const startsExecution = ["dispatched", "in_progress"].includes(projectionExecutionStatus(packet));
+    const continuation = legacy && projectionExecutionStatus(packet) === "in_progress" && this.executionPolicy !== undefined;
+    if (continuation) this.executionRun(packet.task_id, principal);
+    const admission = legacy && (!startsExecution || continuation) ? null
+      : executionAdmission(this.executionPolicy, this.state, packet, this.now, {legacy, retained: retainedAdmission});
     const executor = this.selectExecutor(packet);
     if (packet.effect === "write" && (executor.capabilities || []).includes("local-worktree") && !packet.storage_envelope_claims.length) {
       throw new ConductError("selected local-worktree executor requires storage_envelope_claims");
@@ -633,7 +686,8 @@ export class ConductKernel {
     const claims = this.effectiveClaims(packet);
     const conflicts = [];
     for (const lease of Object.values(this.state.leases)) {
-      if (!ACTIVE_LEASE_STATES.has(lease.state)) continue;
+      if (!ACTIVE_LEASE_STATES.has(lease.state)
+          && !pendingRemoteAttempts(this.state.runs[lease.run_id] || {}).some((row) => row.lease_id === lease.lease_id)) continue;
       const keys = conflictingKeys(claims, lease.resources);
       if (keys.length) conflicts.push({ lease_id: lease.lease_id, run_id: lease.run_id, keys });
     }
@@ -698,6 +752,7 @@ export class ConductKernel {
     }
     const hardDeadline = new Date(Math.min(
       asDate(packet.deadline).getTime(),
+      admission ? asDate(admission.attempt_deadline).getTime() : Infinity,
       this.now.getTime() + this.leaseTtlMs,
     ));
     const lease = {
@@ -721,6 +776,7 @@ export class ConductKernel {
       root_run_id: rootRunId,
       parent_run_id: packet.parent_run_id,
       packet: clone(packet),
+      execution_admission: admission,
       conductor_session_id: packet.conductor.session_id,
       conductor_principal_id: principal.principal_id,
       executor_session_id: executor.session_id,
@@ -751,6 +807,13 @@ export class ConductKernel {
     });
     if (run.compatibility_projection) {
       this.taskPacketEvent(run, lease);
+      if (!startsExecution && projectionExecutionStatus(packet)) {
+        for (const prior of Object.values(this.state.runs)) {
+          if (prior.packet.task_id === packet.task_id && prior.execution_admission?.legacy_active) {
+            prior.execution_admission.legacy_active = false;
+          }
+        }
+      }
       run.status = "succeeded";
       run.updated_at = this.timestamp;
       lease.state = "released";
@@ -870,6 +933,7 @@ export class ConductKernel {
       };
     }
     const parent = this.validateLineage(packet, principal.principal_id);
+    const admission = executionAdmission(this.executionPolicy, this.state, packet, this.now, {waiting: true});
     const dependencyRunIds = dependencies.map((workId) => {
       const runId = this.state.work_index[workId];
       if (!runId) throw new ConductError(`fanout dependency is not registered: ${workId}`);
@@ -889,6 +953,7 @@ export class ConductKernel {
       root_run_id: parent.root_run_id,
       parent_run_id: packet.parent_run_id,
       packet: clone(packet),
+      execution_admission: admission,
       conductor_session_id: packet.conductor.session_id,
       conductor_principal_id: principal.principal_id,
       executor_session_id: null,
@@ -965,11 +1030,12 @@ export class ConductKernel {
     if (enforced && lease.executor_principal_id !== principal.principal_id) {
       throw new ConductError("lease belongs to another executor principal", 403);
     }
-    if (!ACTIVE_LEASE_STATES.has(lease.state)) {
-      throw new ConductError(`lease is not active: ${lease.state}`);
-    }
     const run = this.state.runs[lease.run_id];
     if (!run) throw new ConductError(`lease points to missing run: ${lease.run_id}`, 500);
+    const observationOnly = !ACTIVE_LEASE_STATES.has(lease.state);
+    if (observationOnly && !this.remoteObservationOwned(run, lease)) {
+      throw new ConductError(`lease is not active: ${lease.state}`);
+    }
     requireWorkLoan(run.packet);
     const principalId = lease.executor_principal_id || principal.principal_id;
     const token = await capabilityToken(
@@ -993,7 +1059,15 @@ export class ConductKernel {
       run_id: lease.run_id,
       generation: lease.generation,
       capability_token: token,
+      observation_only: observationOnly,
     };
+  }
+
+  remoteObservationOwned(run, lease, attemptId = null) {
+    return (run.attempts || []).some((row) => row.adapter === "jules-api"
+      && row.lease_id === lease.lease_id && row.lease_generation === lease.generation
+      && (row.provider_state || "unknown") !== "not_started"
+      && (attemptId === null || row.attempt_id === attemptId));
   }
 
   async heartbeat(
@@ -1010,8 +1084,17 @@ export class ConductKernel {
       capabilityToken,
       generation,
       principal,
+      attempt !== null,
     );
-    if (!ACTIVE_LEASE_STATES.has(lease.state)) throw new ConductError(`lease is not active: ${lease.state}`);
+    if (!ACTIVE_LEASE_STATES.has(lease.state)) {
+      const run = this.state.runs[lease.run_id];
+      if (!attempt || !this.remoteObservationOwned(run, lease, attempt.attempt_id)) {
+        throw new ConductError(`lease is not active: ${lease.state}`);
+      }
+      this.recordAttempt(run, lease, attempt);
+      this.recordEvent("provider.observed_after_fence", {lease_id: leaseId, run_id: lease.run_id});
+      return {status: "observation_only", lease: this.publicLease(lease), attempt_created: false};
+    }
     for (const [resource, expected] of Object.entries(lease.observed_heads || {})) {
       const actual = observedHeads[resource];
       if (actual === undefined || actual !== expected) {
@@ -1057,6 +1140,7 @@ export class ConductKernel {
     lease.heartbeat_at = this.timestamp;
     lease.hard_deadline = new Date(Math.min(
       asDate(run.packet.deadline).getTime(),
+      run.execution_admission ? asDate(run.execution_admission.attempt_deadline).getTime() : Infinity,
       this.now.getTime() + this.leaseTtlMs,
     )).toISOString();
     lease.state = "active";
@@ -1108,7 +1192,7 @@ export class ConductKernel {
       if (run.attempts.length >= run.packet.spend.limit) {
         throw new ConductError("executor spend limit exhausted");
       }
-      if (run.attempts.some((row) => !["failed", "blocked"].includes(row.status))) {
+      if (pendingRemoteAttempts(run).length || run.attempts.some((row) => !["failed", "blocked"].includes(row.status))) {
         throw new ConductError("a prior executor attempt is still live");
       }
       run.attempts.push(clone(attempt));
@@ -1131,6 +1215,14 @@ export class ConductKernel {
         throw new ConductError("executor provider receipt identity changed");
       }
     }
+    const before = prior.provider_state || "unknown";
+    const after = attempt.provider_state || "unknown";
+    if ((["terminal", "not_started"].includes(before) && after !== before)
+        || (before === "nonterminal" && after === "not_started")
+        || (after === "terminal" && !attempt.provider_run_id)
+        || (after === "not_started" && attempt.provider_run_id)) {
+      throw new ConductError("executor provider occupancy evidence regressed");
+    }
     const transitions = {
       launching: new Set(["launching", "submitted", "running", "succeeded", "failed", "blocked"]),
       submitted: new Set(["submitted", "running", "succeeded", "failed", "blocked"]),
@@ -1140,6 +1232,7 @@ export class ConductKernel {
       failed: new Set(["failed"]),
       blocked: new Set(["blocked"]),
     };
+    if (attempt.adapter === "jules-api") transitions.running.add("submitted");
     if (!transitions[prior.status]?.has(attempt.status)) {
       throw new ConductError("executor attempt status regressed");
     }
@@ -1148,7 +1241,7 @@ export class ConductKernel {
   }
 
   async rerouteAfterAttempt(run, lease, attempt) {
-    if (!["failed", "blocked"].includes(attempt.status)) return null;
+    if (!["failed", "blocked"].includes(attempt.status) || pendingRemoteAttempts(run).length) return null;
     const attempts = run.attempts || [];
     if (
       attempts.length >= run.packet.retry.max_attempts
@@ -1202,6 +1295,7 @@ export class ConductKernel {
       heartbeat_at: this.timestamp,
       hard_deadline: new Date(Math.min(
         asDate(run.packet.deadline).getTime(),
+      run.execution_admission ? asDate(run.execution_admission.attempt_deadline).getTime() : Infinity,
         this.now.getTime() + this.leaseTtlMs,
       )).toISOString(),
       state: "reserved",
@@ -1351,6 +1445,14 @@ export class ConductKernel {
         .filter((run) => run.root_run_id === rootRunId && run.status === "waiting")
         .map((run) => clone(run));
       for (const waitingRun of waiting) {
+        if (waitingRun.execution_admission && Date.parse(waitingRun.execution_admission.attempt_deadline) <= this.now.getTime()) {
+          const current = this.state.runs[waitingRun.run_id];
+          current.status = "expired";
+          current.updated_at = this.timestamp;
+          this.recordEvent("fanout.run_budget_expired", {run_id: current.run_id});
+          progress = true;
+          continue;
+        }
         const dependencyStates = (waitingRun.dependency_run_ids || [])
           .map((runId) => this.state.runs[runId].status);
         if (dependencyStates.some((status) =>
@@ -1387,7 +1489,7 @@ export class ConductKernel {
           roles: ["conductor"],
         };
         try {
-          const promoted = await this.submit(packet, principal);
+          const promoted = await this.submit(packet, principal, waitingRun.execution_admission);
           if (promoted.status === "busy") {
             this.state = original;
             continue;
@@ -1809,10 +1911,15 @@ export class ConductKernel {
 
   activeLoad() {
     const load = {};
+    const counted = new Set();
     for (const lease of Object.values(this.state.leases)) {
-      if (!ACTIVE_LEASE_STATES.has(lease.state) || asDate(lease.hard_deadline) <= this.now) continue;
       const run = this.state.runs[lease.run_id];
-      if (run) load[run.executor_session_id] = (load[run.executor_session_id] || 0) + 1;
+      if (!run || counted.has(run.run_id)) continue;
+      const occupied = ACTIVE_LEASE_STATES.has(lease.state) && asDate(lease.hard_deadline) > this.now
+        || pendingRemoteAttempts(run).some((row) => row.lease_id === lease.lease_id);
+      if (!occupied) continue;
+      counted.add(run.run_id);
+      load[run.executor_session_id] = (load[run.executor_session_id] || 0) + 1;
     }
     return load;
   }
@@ -1943,6 +2050,7 @@ export class SerializedConductService {
       runtimeIdentity = null,
       notificationAssignments = notificationRegistry,
       inventoryAuthority = null,
+      executionPolicy = undefined,
     } = {},
   ) {
     this.store = store;
@@ -1957,6 +2065,7 @@ export class SerializedConductService {
       runtimeIdentity,
       notificationAssignments,
       inventoryAuthority,
+      executionPolicy,
     };
     this.tail = Promise.resolve();
   }

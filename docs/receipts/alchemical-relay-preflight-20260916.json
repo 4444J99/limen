@@ -1,0 +1,35 @@
+{
+  "schema_version": "limen.relay_execution_preflight.v1",
+  "status": "prepared_not_executed",
+  "target": {
+    "repository": "organvm/alchemical-synthesizer",
+    "repository_id": 1157553907,
+    "visibility": "public",
+    "default_sha": "8de2bd7bdbc075a8971e5de224bed5d020b0d8f4"
+  },
+  "relay": {
+    "repository": "4444J99/organvm-ci-relay",
+    "repository_id": 1350979676,
+    "default_sha": "b53a47f93ef861044eb5a3b888a4fc72801dc4cf",
+    "workflow": "relay-process-environment.yml",
+    "profile": "alchemical-smoke-release-node22-v1",
+    "python": "3.11.16",
+    "node": "22.23.2"
+  },
+  "inputs": {
+    "target": "organvm/alchemical-synthesizer",
+    "sha": "8de2bd7bdbc075a8971e5de224bed5d020b0d8f4",
+    "profile": "alchemical-smoke-release-node22-v1",
+    "lead_provider": "codex"
+  },
+  "profile_predicates": [
+    "strict smoke summary: zero failed and zero skipped",
+    "release tar.gz and zip present",
+    "SHA256SUMS verification",
+    "tar and unzip structural validation"
+  ],
+  "run_id": null,
+  "execution_receipt": null,
+  "authority": "Existing six-target scope only; broker reservation and live admission required before workflow launch.",
+  "acceptance_boundary": "A diagnostic run does not establish protected relay merge enforcement or estate-wide health."
+}

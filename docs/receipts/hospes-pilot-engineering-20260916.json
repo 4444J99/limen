@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "owner": "L-HOSPES-PILOT-RECEIPTS",
+  "observed_at": "2026-09-16",
+  "source": {
+    "repository_id": 1298849497,
+    "default_sha": "3a4d14eb668b96b8e279a44066a57b9c1998483e",
+    "local_tree_matches_fetched_default": true
+  },
+  "engineering_verification": {
+    "command": "python3 -m pytest tests/test_receipts.py tests/test_pilot_service.py tests/test_pilot_service_errors.py tests/test_pilot_models_validation.py -q",
+    "exit_code": 0,
+    "tests_passed": 73,
+    "scope": [
+      "typed private-safe receipt validation",
+      "required route, booking, consent, brief and preflight evidence",
+      "idempotent receipt recording",
+      "technical rehearsal does not advance guest recording completion",
+      "guest recording precedes media ingestion",
+      "tenant and role boundaries",
+      "future receipt rejection",
+      "pilot decisions and malformed input"
+    ],
+    "uses_synthetic_fixtures": true
+  },
+  "external_acceptance": {
+    "status": "unmeasured",
+    "owner_repository_id": 1298849497,
+    "issue": 9,
+    "actual_participant_receipts_inspected": false,
+    "publication_or_correspondence_performed": false,
+    "next_action": "The private operations owner must validate actual authorized participant and recording receipts against the existing lifecycle. Synthetic fixtures cannot discharge issue 9."
+  },
+  "lifecycle_changes": false
+}

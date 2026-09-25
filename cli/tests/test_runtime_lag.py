@@ -102,6 +102,16 @@ def test_runs_clean_as_a_subprocess(lag) -> None:
     """The beat invokes it as a command; --json must stay machine-readable whatever the host
     state, including the exit-1 STALE path this repo's own host is currently in."""
     out = subprocess.run(["python3", str(SCRIPT), "--json"], cwd=ROOT, capture_output=True, text=True, check=False)
-    assert out.returncode in (0, 1), out.stderr
+    assert out.returncode in (0, 1, 77), out.stderr
     payload = json.loads(out.stdout)
     assert "installed" in payload
+
+
+def test_unmeasurable_runtime_has_distinct_exit_status(lag, monkeypatch, capsys):
+    import sys
+
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT), "--json"])
+    monkeypatch.setattr(lag, "read_receipt", lambda: {"sha": "c" * 40})
+    monkeypatch.setattr(lag, "measure", lambda receipt: {"sha": receipt["sha"], "unmeasurable": "source unavailable"})
+    assert lag.main() == 77
+    assert json.loads(capsys.readouterr().out)["unmeasurable"] == "source unavailable"

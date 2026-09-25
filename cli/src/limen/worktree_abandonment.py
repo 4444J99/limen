@@ -176,7 +176,9 @@ def _registered_worktree_paths(superproject: Path) -> tuple[Path, ...]:
         if not line.startswith("worktree "):
             continue
         try:
-            paths.append(Path(line.removeprefix("worktree ")).resolve(strict=True))
+            # A stale, already-missing registration elsewhere in the repository
+            # must not block retirement of this independently revalidated target.
+            paths.append(Path(line.removeprefix("worktree ")).resolve(strict=False))
         except OSError as exc:
             raise RuntimeError("registered-worktree-path-unavailable") from exc
     return tuple(paths)
@@ -257,6 +259,9 @@ def detach_registered_worktree(
             raise RuntimeError("worktree-status-unavailable")
         if status.stdout:
             raise RuntimeError("worktree-not-clean")
+        ignored = _run_git(target, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
+        if ignored.returncode != 0 or ignored.stdout:
+            raise RuntimeError("ignored-payload-custody-unproven")
         head = _run_git(target, "rev-parse", "HEAD")
         if head.returncode != 0 or not head.stdout.strip():
             raise RuntimeError("worktree-head-unavailable")
@@ -296,6 +301,56 @@ def detach_registered_worktree(
             code="detach-denied",
             detail=str(exc),
         )
+
+
+def retire_released_worktree(
+    superproject: Path,
+    target: Path,
+    *,
+    expected_head: str,
+    remote_ref: str,
+    receipt_root: Path,
+    owner_probe: OwnerProbe | None = None,
+) -> dict[str, Any]:
+    """Retire a released disposable copy; preserve every ref and uncertain payload.
+
+    The standing loss-free removal grant applies only after fresh remote proof.
+    Repeating release after a crash is harmless: absence is an explicit result,
+    and a surviving checkout is fully rechecked before the native detach.
+    """
+    if not target.exists() and not target.is_symlink():
+        return {"state": "already-absent", "refs_deleted": 0}
+    if not OBJECT_ID_RE.fullmatch(expected_head) or not remote_ref.startswith("refs/heads/"):
+        return {"state": "retained", "reason": "invalid-release-proof"}
+
+    def checked(*args: str) -> str:
+        result = _run_git(target, *args)
+        if result.returncode:
+            raise RuntimeError("release-proof-unavailable")
+        return result.stdout.strip()
+
+    try:
+        if checked("rev-parse", "HEAD") != expected_head:
+            raise RuntimeError("head-advanced")
+        if checked("status", "--porcelain=v1", "--untracked-files=all"):
+            raise RuntimeError("dirty")
+        if checked("ls-files", "--others", "--ignored", "--exclude-standard"):
+            raise RuntimeError("ignored-payload")
+        remote = checked("ls-remote", "--exit-code", "origin", remote_ref).split()
+        if len(remote) != 2 or remote[1] != remote_ref or remote[0] != expected_head:
+            raise RuntimeError("remote-tip-not-exact")
+        # Recheck after the network operation, immediately before the lifecycle.
+        if checked("rev-parse", "HEAD") != expected_head:
+            raise RuntimeError("head-advanced")
+        return detach_registered_worktree(
+            superproject,
+            target,
+            reason="clean+pushed+idle: released disposable checkout; remote exact tip; refs retained",
+            receipt_root=receipt_root,
+            owner_probe=owner_probe,
+        )
+    except (RuntimeError, OSError) as exc:
+        return {"state": "retained", "reason": str(exc), "refs_deleted": 0}
 
 
 def quarantine_path(
@@ -639,18 +694,29 @@ def purge_remote_proven_path(
 
     if not OBJECT_ID_RE.fullmatch(head):
         raise ValueError("remote-purge-head-invalid")
-    if not remote_refs or any(
-        not value.startswith("refs/remotes/") or "\n" in value or "\r" in value for value in remote_refs
-    ):
+
+    def advertised_ref(value: object) -> bool:
+        return (
+            isinstance(value, str)
+            and value.startswith(("refs/heads/", "refs/tags/", "refs/pull/"))
+            and not any(char.isspace() or ord(char) < 32 for char in value)
+            and not value.endswith("/")
+        )
+
+    if not remote_refs or not all(advertised_ref(value) for value in remote_refs):
         raise ValueError("remote-purge-refs-invalid")
     if not local_ref_proof or any(
         not isinstance(value.get("local_ref"), str)
         or not isinstance(value.get("object"), str)
         or not isinstance(value.get("remote_refs"), list)
         or not value["remote_refs"]
+        or not all(advertised_ref(ref) for ref in value["remote_refs"])
+        or not OBJECT_ID_RE.fullmatch(value["object"])
         for value in local_ref_proof
     ):
         raise ValueError("remote-purge-local-ref-proof-invalid")
+    if content_probe is None:
+        raise ValueError("remote-purge-fresh-content-probe-required")
     return _purge_proven_path(
         source,
         expected,

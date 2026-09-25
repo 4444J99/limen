@@ -13,6 +13,8 @@
 # principal codex-direct-legacy, so no live lane loses auth when the new registry lands. The legacy
 # owner bearer is also the deliberately narrow compatibility principal: it may bootstrap the private
 # canonical board and project task transitions, but it is not an executor credential.
+# Additive live guard refuses stale caches, removals, rotations and role changes.
+# Run under the owning deployment lane: the readback is not a configuration CAS.
 # Idempotent: re-running puts the same merged document. Secrets are read from env and piped
 # to wrangler; nothing is printed or written to disk.
 set -euo pipefail
@@ -25,6 +27,8 @@ set +a
 
 merged=$(python3 scripts/merge-conduct-principal-registry.py)
 [ -n "$merged" ] || { echo "deploy-conduct-registry: FAILED to build merged registry" >&2; exit 1; }
+
+LIMEN_CONDUCT_PRINCIPAL_REGISTRY="$merged" node scripts/check-conduct-registry-deployment.mjs
 
 printf '%s' "$merged" | npx --prefix web/worker wrangler secret put LIMEN_CONDUCT_PRINCIPAL_REGISTRY --config web/worker/wrangler.toml
 echo "deploy-conduct-registry: secret deployed (additive; legacy bearer retained)"

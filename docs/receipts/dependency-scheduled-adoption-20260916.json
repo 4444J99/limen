@@ -1,0 +1,40 @@
+{
+  "schema": "limen.scheduled_adoption_observation.v1",
+  "recorded_at": "2026-09-16T12:43:45.233730+00:00",
+  "predicate": "python3 scripts/check-heartbeat-rollout.py --require-active --expected-sha 3c1313aab9e03706d776bf8cbcc390883acddc68",
+  "exit_code": 0,
+  "result": "heartbeat-rollout: PASS \u2014 44 rungs, active proof satisfied",
+  "fires": [
+    {
+      "run_id": "57fdedce344a4fb6a41446a94c3ac84e",
+      "observed_at": "2026-09-16T12:30:50Z",
+      "observed_epoch": 1789561850.09289,
+      "runtime_sha": "3c1313aab9e03706d776bf8cbcc390883acddc68",
+      "runtime_digest": "57ae548c103f0387b9042ffdee161a5bc4c6939fcad1005fd6de96a0f0628860",
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "disabled": false
+    },
+    {
+      "run_id": "f724b26e31a644568d5f33c06f45c1a8",
+      "observed_at": "2026-09-16T12:35:52Z",
+      "observed_epoch": 1789562152.192086,
+      "runtime_sha": "3c1313aab9e03706d776bf8cbcc390883acddc68",
+      "runtime_digest": "57ae548c103f0387b9042ffdee161a5bc4c6939fcad1005fd6de96a0f0628860",
+      "status": "idle",
+      "surviving_descendant_count": 0,
+      "disabled": false
+    },
+    {
+      "run_id": "3309e7c1060747d29ab5505e4c34d2e2",
+      "observed_at": "2026-09-16T12:40:53Z",
+      "observed_epoch": 1789562453.19808,
+      "runtime_sha": "3c1313aab9e03706d776bf8cbcc390883acddc68",
+      "runtime_digest": "57ae548c103f0387b9042ffdee161a5bc4c6939fcad1005fd6de96a0f0628860",
+      "status": "idle",
+      "surviving_descendant_count": 0,
+      "disabled": false
+    }
+  ],
+  "scope": "Current installed source scheduled adoption only; findings, disabled dependency policy and estate acceptance remain separate."
+}

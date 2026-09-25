@@ -119,6 +119,10 @@ class HttpConductClient:
     def capabilities(self) -> dict[str, Any]:
         return self._request("GET", "/api/conduct/capabilities")
 
+    def principal_registry(self) -> dict[str, Any]:
+        """Read redacted identities and the complete binding fingerprint as a conductor."""
+        return self._request("GET", "/api/conduct/principal-registry")
+
     def inventory_authority(self) -> dict[str, Any]:
         """Read the administrator-installed contract using a collector principal."""
         return self._request("GET", "/api/conduct/inventory/authority")
@@ -126,6 +130,18 @@ class HttpConductClient:
     def publish_inventory_observation(self, observation: dict[str, Any]) -> dict[str, Any]:
         """Submit fresh remote census facts; the keeper owns acceptance and custody."""
         return self._request("POST", "/api/conduct/inventory/observations", {"observation": observation})
+
+    def dependency_completion_hints(self) -> dict[str, Any]:
+        """Read the keeper-owned bounded hint list with a conductor credential."""
+        return self._request("GET", "/api/conduct/dependencies/completions")
+
+    def publish_dependency_completion_hint(self, hint: dict[str, Any]) -> dict[str, Any]:
+        """Submit a hint using the dedicated principal; this authorizes no work."""
+        return self._request("POST", "/api/conduct/dependencies/completions", hint)
+
+    def reconcile_dependency_assessment(self, key: str, run_id: str) -> dict[str, Any]:
+        """The keeper reads its own graph; callers cannot supply receipts."""
+        return self._request("POST", "/api/conduct/dependencies/assessments", {"key": key, "run_id": run_id})
 
     def private_board(self) -> dict[str, Any]:
         """Read the authenticated full board from private keeper custody."""
@@ -159,6 +175,16 @@ class HttpConductClient:
     def split(self, parent_run_id: str, packet: WorkPacketV1) -> dict[str, Any]:
         parent = urllib.parse.quote(parent_run_id, safe="")
         return self._request("POST", f"/api/conduct/runs/{parent}/children", packet.model_dump(mode="json"))
+
+    def execution_info(self, work_key: str) -> dict[str, Any]:
+        return self._request("POST", "/api/conduct/execution/info", {"work_key": work_key})
+
+    def reserve_growth(self, work_key: str, action: str, identity_hash: str) -> dict[str, Any]:
+        return self._request(
+            "POST",
+            "/api/conduct/execution/resources",
+            {"work_key": work_key, "action": action, "identity_hash": identity_hash},
+        )
 
     def graph(self, root_run_id: str) -> dict[str, Any]:
         root = urllib.parse.quote(root_run_id, safe="")
@@ -239,10 +265,18 @@ class LocalConductClient:
     def __init__(self, path: Path | str):
         self.path = Path(path).expanduser().resolve()
         self.store = SQLiteStateStore(self.path)
-        self.broker = ConductBroker(self.store)
+        from limen.inventory_admission import execution_policy
+
+        self.broker = ConductBroker(self.store, execution_policy=execution_policy())
 
     def capabilities(self) -> dict[str, Any]:
         return self.broker.capabilities()
+
+    def execution_info(self, work_key: str) -> dict[str, Any]:
+        return self.broker.execution_info(work_key)
+
+    def reserve_growth(self, work_key: str, action: str, identity_hash: str) -> dict[str, Any]:
+        return self.broker.reserve_growth(work_key, action, identity_hash)
 
     def register(self, session: ConductorSessionV1) -> dict[str, Any]:
         return self.broker.register(session)

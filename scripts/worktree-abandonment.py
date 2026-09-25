@@ -21,6 +21,7 @@ from limen.worktree_abandonment import (  # noqa: E402
     detach_registered_worktree,
     quarantine_path,
     remove_stable_zero_byte_lock,
+    retire_released_worktree,
 )
 
 
@@ -43,6 +44,12 @@ def _parser() -> argparse.ArgumentParser:
     detach.add_argument("--superproject", type=Path, required=True)
     detach.add_argument("--target", type=Path, required=True)
     detach.add_argument("--reason", required=True)
+
+    release = subparsers.add_parser("release")
+    release.add_argument("--superproject", type=Path, required=True)
+    release.add_argument("--target", type=Path, required=True)
+    release.add_argument("--expected-head", required=True)
+    release.add_argument("--remote-ref", required=True)
 
     quarantine = subparsers.add_parser("quarantine")
     quarantine.add_argument("--source", type=Path, required=True)
@@ -71,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "stable-lock":
             payload["identity"] = asdict(capture_lock_identity(args.path))
         else:
-            payload["target"] = str(args.target if args.command == "detach" else args.source)
+            payload["target"] = str(args.target if args.command in {"detach", "release"} else args.source)
         print(json.dumps(payload, indent=2, sort_keys=True))
         return 0
     try:
@@ -80,6 +87,14 @@ def main(argv: list[str] | None = None) -> int:
                 args.superproject,
                 args.target,
                 reason=args.reason,
+                receipt_root=args.receipt_root,
+            )
+        elif args.command == "release":
+            result = retire_released_worktree(
+                args.superproject,
+                args.target,
+                expected_head=args.expected_head,
+                remote_ref=args.remote_ref,
                 receipt_root=args.receipt_root,
             )
         elif args.command == "quarantine":

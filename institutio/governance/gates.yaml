@@ -181,6 +181,9 @@ gates:
     owner: verify
     note: "Whitespace/conflict-marker hygiene; closes every run, scoped and whole."
   python-typecheck:
+    cache:
+      mode: content
+      inputs: ["cli/**", "mcp/**", "ianva/**", "web/api/**", "pyproject.toml", "mypy.ini", ".mypy.ini", "setup.cfg", "requirements*.txt", "uv.lock"]
     command: "bash -c 'cd cli && python3 -m mypy src/limen/ && cd \"$OLDPWD\" && python3 -m mypy --ignore-missing-imports mcp/src/limen_mcp/ ianva/src/ianva/'"
     paths: ["cli/src/limen/**", "mcp/src/limen_mcp/**", "ianva/src/ianva/**", "web/api/**", "cli/pyproject.toml", "mcp/pyproject.toml", "ianva/pyproject.toml"]
     ci_job: "ci.yml:python"
@@ -262,6 +265,13 @@ gates:
     scoped: false
     owner: representation
     note: "Representation Substrate records and opportunities stay schema-clean."
+  ucc-credential-delivery:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_ucc_local_delivery.py cli/tests/test_creds_hydrate.py -q"
+    paths: ["scripts/ucc-cloudflare-delivery.py", "scripts/creds-hydrate.py", "scripts/tests/test_ucc_local_delivery.py", "cli/tests/test_creds_hydrate.py"]
+    scoped: true
+    tier: cheap
+    owner: clavis
+    note: "Fixed UCC local custody and administrator delivery boundaries; hosted App requirements remain intact."
   representation-substrate-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_representation_substrate.py -q"
     paths: ["organs/representation/**", "cli/tests/test_representation_substrate.py"]
@@ -382,10 +392,16 @@ gates:
     owner: governance
     note: "PR references establish neither executable acceptance nor missing-resource proof after a failed read."
   conduct-principal-merge-test:
-    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_merge_conduct_principal_registry.py -q"
-    paths: ["scripts/merge-conduct-principal-registry.py", "scripts/tests/test_merge_conduct_principal_registry.py", "scripts/deploy-conduct-registry.sh"]
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_merge_conduct_principal_registry.py -q && node --test scripts/tests/test-conduct-registry-deployment.mjs scripts/tests/test-conduct-roles.mjs"
+    paths: ["scripts/merge-conduct-principal-registry.py", "scripts/tests/test_merge_conduct_principal_registry.py", "scripts/deploy-conduct-registry.sh", "scripts/check-conduct-registry-deployment.mjs", "scripts/tests/test-conduct-registry-deployment.mjs", "scripts/check-conduct-roles.mjs", "scripts/tests/test-conduct-roles.mjs", "web/worker/src/conduct/auth.js"]
     owner: dispatch
     note: "Legacy compatibility augmentation cannot widen a dedicated inventory collector or mutate caller state on failure."
+  chat-principal-provision-test:
+    command: "node --test scripts/tests/test-provision-chat-principals.mjs"
+    paths: ["scripts/provision-chat-principals.mjs", "scripts/tests/test-provision-chat-principals.mjs"]
+    tier: cheap
+    owner: dispatch
+    note: "Dedicated Chat authority is additive, preserves existing bearers, and refuses incompatible roles."
   pr-autotype-scope-test:
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_pr_lifecycle_autotype.py -q"
     paths: ["scripts/pr-lifecycle-autotype.py", "cli/tests/test_pr_lifecycle_autotype.py"]
@@ -396,6 +412,11 @@ gates:
     paths: ["his-hand-levers.json", "scripts/check-his-hand.py", "scripts/lever-classify.py", "scripts/lever-decision-report.py", "scripts/insight-route.py", "cli/src/limen/observatory/lever.py", "cli/tests/test_check_his_hand.py", "cli/tests/test_lever_classify.py"]
     owner: observe
     note: "The his-hand registry must be structurally readable: unique IDs, enum statuses, required intent fields, and parseable non-future diagnosis timestamps. Diagnosis age is derived at read time. The classifier remains the implementation decision: open levers are either irreducible sovereignty or explicit design debt; no mass closure or deletion is implied."
+  board-publication-acceptance-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_board_publication_live.py -q"
+    paths: ["scripts/check-board-publication-live.py", "scripts/validate-task-board.py", "cli/tests/test_board_publication_live.py", "web/worker/src/conduct/private-board.js", "cli/src/limen/conduct/client.py"]
+    owner: governance
+    note: "Read-only current-default aggregate/private-count acceptance rejects source movement, malformed custody, and leaked task material without publishing private values. Live reads remain explicit and are not run by CI."
   stale-claim-ownership-test:
     owner: runtime
     command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_stale_claims.py cli/tests/test_dispatch.py cli/tests/test_jules_remote.py cli/tests/test_jules_session_absence_probe.py -q -k 'stale or absence'"
@@ -636,6 +657,7 @@ gates:
       - "docs/positioning/foundry/psp-c11/foundry-preflight-contract.json"
       - "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
       - "docs/positioning/foundry/psp-c11/technical-readiness-audit.json"
+      - "docs/positioning/foundry/psp-c11/public-observation-withdrawals.json"
       - "docs/positioning/foundry/psp-c11/test_technical_readiness.py"
       - "docs/positioning/foundry/psp-c11/verify_technical_readiness.py"
       - "institutio/positioning/program.yaml"
@@ -654,6 +676,7 @@ gates:
       - "docs/positioning/foundry/psp-c11/foundry-preflight-contract.json"
       - "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
       - "docs/positioning/foundry/psp-c11/technical-readiness-audit.json"
+      - "docs/positioning/foundry/psp-c11/public-observation-withdrawals.json"
       - "docs/positioning/foundry/psp-c11/verify_technical_readiness.py"
       - "institutio/governance/gates.yaml"
       - "institutio/positioning/github-map.json"
@@ -661,13 +684,14 @@ gates:
       - "scripts/positioning-program.py"
     timeout_seconds: 300
     owner: positioning-program
-    note: "PSP-P13-W03 scoped public-evidence validation uses bounded concurrent immutable-blob, attempt-provenance, and compact fully paginated digest-bound Actions-artifact scans plus one batched repository-bound immutable commit observation for every accepted public candidate, including blocked rows, under one 270-second deadline and a 64 MiB aggregate decoded-blob ceiling; artifact pages bypass the long-lived JSON cache and only completeness counts plus bounded exact matches survive, artifact identities use only attempt-available output/artifact digests, and mutable branch drift, private-inclusive census, and private custody remain outside ordinary PR acceptance."
+    note: "PSP-P13-W03 scoped public-evidence validation uses bounded concurrent immutable-blob, attempt-provenance, and compact fully paginated digest-bound Actions-artifact scans plus one batched repository-bound immutable commit observation for every non-withdrawn accepted public candidate, including blocked rows; reviewed full-row-bound custody withdrawals remain blocked and explicitly unverified, under one 270-second deadline and a 64 MiB aggregate decoded-blob ceiling; artifact pages bypass the long-lived JSON cache and only completeness counts plus bounded exact matches survive, artifact identities use only attempt-available output/artifact digests, and mutable branch drift, private-inclusive census, and private custody remain outside ordinary PR acceptance."
   positioning-foundry-technical-readiness-live:
     command: "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --json"
     paths:
       - "docs/positioning/foundry/psp-c11/foundry-preflight-contract.json"
       - "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
       - "docs/positioning/foundry/psp-c11/technical-readiness-audit.json"
+      - "docs/positioning/foundry/psp-c11/public-observation-withdrawals.json"
       - "docs/positioning/foundry/psp-c11/verify_technical_readiness.py"
       - "institutio/governance/gates.yaml"
       - "institutio/positioning/github-map.json"
@@ -1085,8 +1109,8 @@ gates:
     owner: gitvs
     note: "Parity + drift fixtures for the GITVS predicate: an unwired active resource type, a bad required_check, and a missing effector script must each red the doctor; a clean estate must pass."
   arca-generation-test:
-    command: "bash scripts/tests/arca-generation.test.sh"
-    paths: ["scripts/arca.sh", "scripts/arca-freshness.py", "scripts/tests/arca-generation.test.sh"]
+    command: "bash scripts/tests/arca-generation.test.sh && python3 scripts/tests/test-arca-escrow.py"
+    paths: ["scripts/arca.sh", "scripts/arca-freshness.py", "scripts/tests/arca-generation.test.sh", "scripts/check-arca-escrow.py", "scripts/tests/test-arca-escrow.py"]
     owner: continuity
     note: "Hermetic generation-rotation fixtures for ARCA (POTESTAS 0.3, #2089): a seed backup commits ciphertext and pushes to a depth-1 private clone; a re-run makes no commit; a changed store re-seals; an oversized pack auto-cuts generation -g2 as an orphan ROOT commit that is pushed to a fresh repo, with the old generation recorded as archived and the manifest re-pointed; `rotate` on a vault-less env seeds a fresh generation and archives the env repo; status distinguishes current/never-sealed/changed; chunked ciphertext reassembles and restores byte-identical; the freshness sensor follows the manifest's `_generation.repo`. Uses local file:// bare remotes and shimmed gh/security, so it never touches the real Keychain or the real arca repos."
   sync-marketplace-config-test:
@@ -1112,19 +1136,33 @@ gates:
 
   # ── python estate ───────────────────────────────────────────────────────────
   ruff-lint:
+    cache:
+      mode: content
+      inputs: ["cli/**", "web/api/**", "mcp/**", "ianva/**", "apps/**", "organs/**", ".ruff.toml", "ruff.toml", "pyproject.toml", ".gitignore", "scripts/check-ruff-pin.py"]
     command: "python3 scripts/check-ruff-pin.py && python3 -m ruff check cli/src cli/tests web/api mcp ianva apps organs"
     paths: ["cli/**", "web/api/**", "mcp/**", "ianva/**", "apps/*.py", "apps/**/*.py", "organs/*.py", "organs/**/*.py"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
     note: "Lint the whole Python estate whenever any Python surface changes. apps/ and organs/ joined 2026-08-06 (35 .py files sat outside both ruff gates — a documented component was unlinted); their paths are *.py-scoped so an organs/apps docs change never pays for a lint run, with the direct-child glob listed explicitly (the ** dialect matches only NESTED files). Version-locked to the ONE ruff pin in cli/pyproject.toml (issue #1658) — a mismatched host ruff fails loud instead of red-noising 1,300 findings."
   ruff-format:
+    cache:
+      mode: content
+      inputs: ["cli/**", "web/api/**", "mcp/**", "ianva/**", "apps/**", "organs/**", ".ruff.toml", "ruff.toml", "pyproject.toml", ".gitignore", "scripts/check-ruff-pin.py"]
     command: "python3 scripts/check-ruff-pin.py && python3 -m ruff format --check cli/src cli/tests web/api mcp ianva apps organs"
     paths: ["cli/**", "web/api/**", "mcp/**", "ianva/**", "apps/*.py", "apps/**/*.py", "organs/*.py", "organs/**/*.py"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: verify
     note: "Format-check the same estate ruff-lint lints; ran unregistered in pr-gate until the scoped rewrite (issue #1048). Same #1658 version lock as ruff-lint; same 2026-08-06 apps/organs extension."
+  dependency-completion-integration:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_dependency_completion_integration.py -q"
+    paths: ["cli/src/limen/conduct/**", "cli/tests/test_dependency_completion_integration.py", "web/worker/src/conduct/dependency-completion.js", "institutio/github/dependency-completion.json"]
+    tier: cheap
+    timeout_seconds: 60
+    ci_job: "pr-gate.yml:pr-gate"
+    owner: verify
+    note: "Bind the actual Worker hint store and reconciler to real Python keeper registration, reservation, executor attempt and receipt behavior. Worker-only changes must exercise this cross-language boundary. Uses isolated in-memory keeper and Worker storage, real bounded Node invocations and an isolated fixture assessor; no live service or credential. Proves restart/replay preservation and refusal to route into another human-protected session."
   pytest-cli:
-    command: "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto --maxfail=20 --tb=short"
     paths: ["cli/**", "cli/tests/test_cloud_routine.py", "ianva/**", "his-hand-levers.json", "cloud-routines.json", "spec/contracts/cloud-routine-receipt-v1.schema.json", "scripts/cloud-routine-ingest.py", "scripts/check-cloud-routine-ingest.py", "docs/receipts/cloud-routine-findings-20260808.json", "docs/receipts/cloud-routine-lineage.json", "docs/receipts/irf-p0-owner-classification-20260808.json"]
     tier: heavy
     serialize: true
@@ -1211,9 +1249,14 @@ gates:
     paths: ["scripts/npm-audit-gate.py", "scripts/tests/npm-audit-gate.test.py", ".github/workflows/ci.yml"]
     owner: dependencies
     note: "Reject incomplete audit responses and retain independent compatibility evidence when advisories fail."
+  chat-github-runner:
+    command: "python3 -B -m unittest discover -s scripts/tests -p 'test_chat_github_*.py'"
+    paths: ["scripts/chat-github-*.py", "scripts/tests/test_chat_github_*.py", ".github/workflows/limen-chat-patch.yml", "institutio/governance/chat-github-profiles.json"]
+    owner: worker
+    note: "Offline controller identity and bounded immutable canary profile checks; not hosted acceptance."
   worker-check:
     command: "bash -c 'cd web/worker && npm run check'"
-    paths: ["web/worker/**"]
+    paths: ["web/worker/**", "institutio/github/dependency-completion.json"]
     tier: heavy
     ci_job: "ci.yml:worker"
     owner: worker

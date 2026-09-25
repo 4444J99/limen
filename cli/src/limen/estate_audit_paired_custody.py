@@ -605,7 +605,7 @@ def _terminate_process_group(process: subprocess.Popen[bytes], *, mode: str) -> 
     except ProcessLookupError:
         pass
     except OSError as exc:
-        raise PairedCustodyError(f"single-rail-{mode}-termination-failed") from exc
+        raise PairedCustodyError(f"single-rail-{mode}-termination-failed", reasons=("term-signal-refused",)) from exc
 
     if not _wait_for_process_group_exit(
         process,
@@ -617,18 +617,20 @@ def _terminate_process_group(process: subprocess.Popen[bytes], *, mode: str) -> 
         except ProcessLookupError:
             pass
         except OSError as exc:
-            raise PairedCustodyError(f"single-rail-{mode}-termination-failed") from exc
+            raise PairedCustodyError(
+                f"single-rail-{mode}-termination-failed", reasons=("kill-signal-refused",)
+            ) from exc
 
     try:
         process.wait(timeout=PROCESS_GROUP_KILL_SECONDS)
     except subprocess.TimeoutExpired as exc:
-        raise PairedCustodyError(f"single-rail-{mode}-termination-failed") from exc
+        raise PairedCustodyError(f"single-rail-{mode}-termination-failed", reasons=("leader-not-reaped",)) from exc
     if not _wait_for_process_group_exit(
         process,
         process_group,
         deadline=time.monotonic() + PROCESS_GROUP_KILL_SECONDS,
     ):
-        raise PairedCustodyError(f"single-rail-{mode}-termination-failed")
+        raise PairedCustodyError(f"single-rail-{mode}-termination-failed", reasons=("process-group-still-present",))
 
 
 def invoke_single_rail(script: Path, request: RailRequest) -> dict[str, Any]:

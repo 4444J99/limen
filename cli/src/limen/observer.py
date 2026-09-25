@@ -69,7 +69,7 @@ HOST_PROBES = [
         [sys.executable, "scripts/background-items-census.py", "--check", "--no-receipt"],
         30,
     ),
-    ("sensor-canary", [sys.executable, "scripts/beat-sensors.py", "--canary"], 30),
+    ("sensor-canary", [sys.executable, "scripts/check-heartbeat-rollout.py", "--scheduled-probes"], 30),
     ("orphan-watcher", [sys.executable, "scripts/orphan-watchers.py", "--check"], 30),
     (
         "tcc-track-c",
@@ -91,7 +91,7 @@ HOST_PROBES = [
     ("hot-cache", ["bash", "scripts/verify-hot-cache.sh"], 30),
     ("residue-census", [sys.executable, "scripts/residue-census.py", "--check"], 60),
     ("notify-gate", [sys.executable, "scripts/check-notify-gate.py"], 30),
-    ("host-pressure-freshness", [sys.executable, "scripts/host-pressure-stale.py", "--read-only"], 15),
+    ("host-pressure-freshness", [sys.executable, "scripts/host-pressure-stale.py", "--read-only", "--on-demand"], 15),
     ("notification-registry-parity", [sys.executable, "scripts/check-notification-registry.py"], 20),
 ]
 

@@ -1070,6 +1070,9 @@ def classify(
             is_wt = (d / ".git").is_file()
             return ("remove-worktree" if is_wt else "remove-clone"), CUSTODY_RESTORED_REASON
         return "skip", "dirty"
+    ignored = git(["ls-files", "--others", "--ignored", "--exclude-standard"], d)
+    if ignored.returncode != 0 or ignored.stdout.strip():
+        return "skip", "ignored-payload-custody-unproven"
     is_wt = (d / ".git").is_file()  # gitdir-pointer ⇒ registered worktree
     if source == "workspace-checkout" and is_wt:
         return "skip", "workspace-checkout-source-contract-violation"

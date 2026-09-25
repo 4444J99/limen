@@ -114,7 +114,7 @@ CI_SECRETS: list[dict] = [
         "name": "OP_SERVICE_ACCOUNT_TOKEN",
         "home": "file `~/.config/op/service-account-token` (1Password service account) + `~/.zshenv` export",
         "used": "`creds-hydrate.py` headless `op read` + `--sweep-all` (fleet); `~/.zshenv` exports it so every shell's `op` is promptless too (no Touch-ID anywhere)",
-        "hand": "INSTALLED ✓ — op is promptless forever (fleet + every shell), verified via `op whoami`. Scope residual: the saved SA token carries zero vault grants, so op *re-reads* return nothing — the fleet runs off the already-valid `~/.limen.env` (see `creds-hydrate.py --verify`). For op itself to re-read/rotate secrets (true full sweep), grant the SA read access to the vault(s) holding them in the 1Password console (service accounts read shared vaults; personal-vault items may need moving into one). Non-blocking.",
+        "hand": "Bootstrap readback 2026-09-16: canonical token custody verified in Limen-Automation, exact one-vault scope verified, local installation verified, previous token preserved. Existing source items have not been migrated; per-secret hydration and old-account retirement remain separate obligations. Owner-session bootstrap may require device authentication; installed service-account reads are headless.",
         "issue": "#288",
     },
     {
@@ -123,6 +123,13 @@ CI_SECRETS: list[dict] = [
         "used": "authenticated peer-conductor endpoint; one principal-bound credential per native lane plus a keeper-only HMAC capability secret",
         "hand": "gated — mint/install only after principal binding and executor-only lease delivery are exact-head green",
         "issue": "#320",
+    },
+    {
+        "name": "LIMEN_INVENTORY_COLLECTOR_TOKEN",
+        "home": "op://Limen-Automation/limen-inventory-collector/password; canonical item creation and secret readback verified 2026-09-16; keeper installation remains unverified",
+        "used": "scripts/github-estate-census.py authenticated inventory authority read and private observation ingestion",
+        "hand": "gated — provision a dedicated inventory_collector-only principal; never reuse or widen LIMEN_CONDUCT_TOKEN; activation requires fresh ingestion and live reservation receipts",
+        "issue": "#269 / #1995 / #320",
     },
     {
         "name": "LIMEN_GITHUB_TOKEN",
@@ -136,6 +143,20 @@ CI_SECRETS: list[dict] = [
         "home": "organization Agents secret backed by the Copilot principal entry in the credential organ",
         "used": "organization-level `limen-conductor` custom-agent authenticated remote MCP header",
         "hand": "gated — install after the remote endpoint is deployed; no paid seat or secret mint is automatic",
+        "issue": "#320",
+    },
+    {
+        "name": "LIMEN_CHAT_GITHUB / LIMEN_CHAT_GITHUB_TOKEN / LIMEN_CHAT_EXECUTOR_TOKEN",
+        "home": "Credential organ; private Worker configuration and dedicated GitHub Actions secrets",
+        "used": "Disabled-by-default Chat-authored bounded GitHub execution; separate repository and executor authority",
+        "hand": "unconfigured; exact-head tests and governed source landing precede narrow credential installation; no reuse of projection or relay-owner token",
+        "issue": "#320",
+    },
+    {
+        "name": "LIMEN_CONDUCT_MCP_OAUTH",
+        "home": "Credential organ + private Cloudflare Worker secret; issuer/client/subject bindings must never enter source or prompts",
+        "used": "Optional /mcp OAuth resource adapter; verified issuer, resource, scope and subject/client binding select an existing conduct principal",
+        "hand": "unconfigured until a sanctioned OAuth issuer and explicit native-lane bindings are provisioned; deployment, ChatGPT linking and scheduled execution need independent live receipts",
         "issue": "#320",
     },
 ]

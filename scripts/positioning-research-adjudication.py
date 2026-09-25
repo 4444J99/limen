@@ -305,18 +305,18 @@ EXPECTED_PUBLIC_SOURCES: dict[str, dict[str, object]] = {
         "url": "https://github.com/organvm/limen/blob/d8b44e60e404b044436addf8108732cc28c06371/docs/positioning/evidence/flagship-evidence.yaml",
     },
     "LAVREA_METHODOLOGY": {
-        "repository": "organvm/laurea",
+        "repository": "4444J99/laurea",
         "path": "METHODOLOGY.md",
         "head": "02e360c9828336ac95ce8223c65d127ffea27661",
         "blob": "b671568236f386041a416d28964b50820249ac2a",
-        "url": "https://github.com/organvm/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/METHODOLOGY.md",
+        "url": "https://github.com/4444J99/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/METHODOLOGY.md",
     },
     "LAVREA_BASELINES": {
-        "repository": "organvm/laurea",
+        "repository": "4444J99/laurea",
         "path": "src/laurea/baselines.py",
         "head": "02e360c9828336ac95ce8223c65d127ffea27661",
         "blob": "c66c496a9b0c647876bbe09a5d10dde80708c689",
-        "url": "https://github.com/organvm/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/src/laurea/baselines.py",
+        "url": "https://github.com/4444J99/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/src/laurea/baselines.py",
     },
     "GITHUB_CONTRIBUTIONS": {
         "url": "https://docs.github.com/en/account-and-profile/reference/profile-contributions-reference"
@@ -2030,6 +2030,7 @@ def validate_live_profile_observations(
             f"live profile manifest contributions must still support the published {PROFILE_RENDERED_CONTRIBUTIONS:,} count"
         )
 
+    run_error_start = len(errors)
     runs_payload = fetch_observation("scheduled profile workflow history", PROFILE_RUNS_API_URL)
     if not isinstance(runs_payload, dict):
         errors.append("live scheduled workflow response must be a mapping")
@@ -2082,6 +2083,22 @@ def validate_live_profile_observations(
         observed_now - timedelta(hours=48) <= latest_created_at <= observed_now + timedelta(minutes=5)
     ):
         errors.append("latest successful scheduled profile run must be within 48 hours")
+
+    if len(errors) > run_error_start:
+        # Only parsed public identities and dates: no response bodies or credential-relative data.
+        observed_runs = [
+            {"id": run["id"], "created_at": created_at.isoformat()}
+            for created_at, run in latest_eight
+            if isinstance(run.get("id"), int) and not isinstance(run["id"], bool)
+        ]
+        errors.append(
+            "live profile schedule observation: "
+            + json.dumps(
+                {"observed_at": observed_now.isoformat(), "latest_runs": observed_runs},
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+        )
 
     current_commit = fetch_observation("profile main head", PROFILE_MAIN_COMMIT_API_URL)
     if not isinstance(current_commit, dict):
