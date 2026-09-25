@@ -118,3 +118,34 @@ by this continuation, and concurrent free-space movement is not attributed to
 the small encrypted capture. Next action: after native unlock, restore this exact
 catalog into the existing private custody owner, verify all source bytes and Git
 objects, and retain the clone until the complete applicable retirement gate passes.
+
+### Source parity completed independently of native unlock
+
+The subsequent exact Git graph check found that most previously unreachable
+commits already had live GitHub ancestry. Two commits needed durable branch
+anchors, and a third was retained only by a pull-request ref. Inspected the
+changes (CI and dependency lockfile only) and passed redacted secret scans,
+including merge-parent diffs. Pushed three additive `preserve/recovery-*`
+branches. A detached tree outside every commit graph was preserved unchanged
+under a `preserve/tree-*` tag. Its child objects already belonged to the examined
+commit graphs. No synthetic commit, default-branch update, force push, pruning
+or branch deletion was performed.
+
+Fresh remote readback matched all four exact object IDs. Enumerated all locally
+present objects with `git cat-file --batch-all-objects`, intersected current live
+branch/tag tips with locally available objects, and traversed their closure with
+`git rev-list --objects --no-object-names`. Repeated the remote advertisement and
+local object enumeration to reject drift. Result: **640 local objects, 244 live
+anchors, zero objects outside the verified remote graph**, with both observations
+stable. The first all-object pass exposed the PR-only commit; the final pass
+succeeded after its additive preservation branch was published. Git identifies
+this as a promisor repository: the result covers all *locally present* objects,
+not missing promisor content or a newly reconstructed full clone.
+
+The exact object-set digest and counts are in `git-store-custody-receipt.json`.
+The encrypted provenance resolves the candidate's repository and source path.
+The encrypted Git-store snapshot remains a pre-publication point-in-time copy;
+the new remote preservation refs do not turn it into a later metadata snapshot.
+This is one verified source-parity cohort, not whole-estate parity, a cloud coding
+run, or authority to remove the clone's administrative/private state. Retention
+and independent restoration requirements remain unchanged.

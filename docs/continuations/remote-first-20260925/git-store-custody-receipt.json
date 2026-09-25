@@ -19,6 +19,18 @@
     "remote_verification": "full-readback-verified"
   },
   "unreachable_objects_in_captured_store": {"commit": 59, "tree": 117, "blob": 11},
+  "subsequent_git_source_parity": {
+    "local_objects": 640,
+    "object_inventory_sha256": "b2515c0a8742ea7cc04b5c21297c551f826b095fac722ca1ead93d2af7cf5259",
+    "live_remote_anchors_present_locally": 244,
+    "missing_from_verified_remote_graph": 0,
+    "selected_remote_refs_stable_across_check": true,
+    "local_object_inventory_stable_across_check": true,
+    "new_preservation_branches": 3,
+    "new_tree_tags": 1,
+    "default_branch_changed": false,
+    "scope": "all locally present Git objects, not a full clone or administrative-state restore"
+  },
   "restoration_verified": false,
   "independent_key_recovery_verified": false,
   "independent_replica_verified": false,
