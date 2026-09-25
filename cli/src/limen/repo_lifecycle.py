@@ -418,7 +418,8 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
         released = [
             (path, record)
             for path, record in records
-            if record.get("state") in {
+            if record.get("state")
+            in {
                 "released-awaiting-custody-investigation",
                 "retained-dirty-or-unavailable",
             }
