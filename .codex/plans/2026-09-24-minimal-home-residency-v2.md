@@ -896,3 +896,15 @@ or continuing coverage of mutable databases. Both native databases and the
 owner-private local captures remain. The capture/upload work consumed local
 space: current Data-volume free space is 19,073,576 KiB (~18.2 GiB), further
 from the 200 GiB target. No private original or capture has been retired.
+
+### Bounded small-object publication, 2026-09-25
+
+The ARCA Release publisher now groups up to 16 new encrypted objects and
+128 MiB per authorized `gh release upload` call. It still checks source digests
+before upload, reads every uploaded object back independently, and publishes
+the encrypted catalog only after object verification. Existing digest-addressed
+assets remain reusable; interrupted uploads retain the local ciphertext and
+resume from the remote asset list. Eleven focused publisher tests, Ruff, and the
+outbound preflight guard passed. This reduces per-object authorization and
+upload overhead for small-file cohorts; it does not establish whole-estate
+custody, independent-key restoration, or the 200 GiB free-space target.
