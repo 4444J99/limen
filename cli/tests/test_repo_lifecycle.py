@@ -51,7 +51,15 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
 
     def initialize(store, final_path, *, branch, checkout_ref, task_id):
         _run("git", "-C", str(store), "worktree", "add", "-b", branch, str(final_path), checkout_ref)
-        return WorktreeInitialization(final_path, final_path, branch, checkout_ref, _run("git", "-C", str(final_path), "rev-parse", "HEAD"), final_path / "receipt.json", {})
+        return WorktreeInitialization(
+            final_path,
+            final_path,
+            branch,
+            checkout_ref,
+            _run("git", "-C", str(final_path), "rev-parse", "HEAD"),
+            final_path / "receipt.json",
+            {},
+        )
 
     monkeypatch.setattr(lifecycle, "initialize_worktree", initialize)
     first = lifecycle.ensure("77123", "main", "session/one")
