@@ -436,6 +436,14 @@ def test_failed_github_command_reports_neutral_error_category(monkeypatch) -> No
     assert "/Users/name" not in str(error.value)
 
 
+def test_upload_batch_size_is_bounded_before_remote_effects(tmp_path: Path, monkeypatch) -> None:
+    catalog, objects = _ciphertexts(tmp_path)
+    monkeypatch.setattr(assets, "MAX_UPLOAD_FILES", 0)
+    monkeypatch.setattr(assets, "_run", lambda *_a, **_k: pytest.fail("invalid batch contacted GitHub"))
+    with pytest.raises(assets.AssetError, match="between 1 and 16"):
+        assets.publish("owner/private-vault", catalog, objects, apply=True)
+
+
 def test_repository_alias_must_resolve_to_one_private_immutable_identity(monkeypatch) -> None:
     responses = iter(
         [
