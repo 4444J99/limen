@@ -9,12 +9,12 @@ on:
 permissions:
   contents: read
 
-# Owner preflight preserves product authorization and dormant source custody.
+# Readback only. The runtime remains on its already verified release; this
+# carrier never resets an uncertain run or redeploys from a diagnostics change.
 jobs:
   owner:
-    uses: 4444J99/ops/.github/workflows/cloudflare-owner-release.yml@6886db7a7f6d4f84aff0375847fdb200155bcb90
+    uses: 4444J99/ops/.github/workflows/cloudflare-owner-release.yml@ff3c2dd09294493a59b5fc5c60b146e2367a25a0
     with:
-      source_sha: 6886db7a7f6d4f84aff0375847fdb200155bcb90
-      apply_source: 6886db7a7f6d4f84aff0375847fdb200155bcb90
+      source_sha: ff3c2dd09294493a59b5fc5c60b146e2367a25a0
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
