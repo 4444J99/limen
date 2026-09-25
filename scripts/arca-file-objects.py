@@ -124,7 +124,11 @@ def _apply_xattrs(path: Path, raw: object) -> None:
     total = 0
     seen: set[str] = set()
     for row in raw:
-        if not isinstance(row, dict) or not isinstance(row.get("name"), str) or not isinstance(row.get("value_b64"), str):
+        if (
+            not isinstance(row, dict)
+            or not isinstance(row.get("name"), str)
+            or not isinstance(row.get("value_b64"), str)
+        ):
             raise ObjectError("encrypted catalog has invalid extended metadata")
         name = row["name"]
         if not name or name in seen or "\x00" in name:
@@ -144,8 +148,13 @@ def _apply_xattrs(path: Path, raw: object) -> None:
 
 
 def inventory(root: Path) -> list[dict[str, object]]:
+    def unreadable(_error: OSError) -> None:
+        # os.walk otherwise silently omits unreadable/disappearing directories,
+        # making an incomplete capture indistinguishable from an empty source.
+        raise ObjectError("source traversal incomplete; source retained") from _error
+
     rows: list[dict[str, object]] = []
-    for base, dirs, files in os.walk(root, topdown=True, followlinks=False):
+    for base, dirs, files in os.walk(root, topdown=True, followlinks=False, onerror=unreadable):
         base_path = Path(base)
         kept: list[str] = []
         for name in sorted(dirs):
@@ -153,10 +162,20 @@ def inventory(root: Path) -> list[dict[str, object]]:
             rel = path.relative_to(root).as_posix()
             info = path.lstat()
             if stat.S_ISLNK(info.st_mode):
-                rows.append({"path": rel, "type": "symlink", "target": os.readlink(path), "mode": stat.S_IMODE(info.st_mode), "xattrs": _xattrs(path)})
+                rows.append(
+                    {
+                        "path": rel,
+                        "type": "symlink",
+                        "target": os.readlink(path),
+                        "mode": stat.S_IMODE(info.st_mode),
+                        "xattrs": _xattrs(path),
+                    }
+                )
             else:
                 kept.append(name)
-                rows.append({"path": rel, "type": "directory", "mode": stat.S_IMODE(info.st_mode), "xattrs": _xattrs(path)})
+                rows.append(
+                    {"path": rel, "type": "directory", "mode": stat.S_IMODE(info.st_mode), "xattrs": _xattrs(path)}
+                )
         dirs[:] = kept
         for name in sorted(files):
             path = base_path / name
@@ -164,9 +183,13 @@ def inventory(root: Path) -> list[dict[str, object]]:
             info = path.lstat()
             mode = stat.S_IMODE(info.st_mode)
             if stat.S_ISLNK(info.st_mode):
-                rows.append({"path": rel, "type": "symlink", "target": os.readlink(path), "mode": mode, "xattrs": _xattrs(path)})
+                rows.append(
+                    {"path": rel, "type": "symlink", "target": os.readlink(path), "mode": mode, "xattrs": _xattrs(path)}
+                )
             elif stat.S_ISREG(info.st_mode):
-                rows.append({"path": rel, "type": "file", "mode": mode, "sha256": digest_file(path), "xattrs": _xattrs(path)})
+                rows.append(
+                    {"path": rel, "type": "file", "mode": mode, "sha256": digest_file(path), "xattrs": _xattrs(path)}
+                )
             else:
                 raise ObjectError(f"unsupported filesystem object at {rel!r}; source retained")
     return sorted(rows, key=lambda row: str(row["path"]))
@@ -178,7 +201,12 @@ def _decrypt_catalog(path: Path, destination: Path) -> dict[str, object]:
         value = json.loads(destination.read_text(encoding="utf-8"))
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise ObjectError("previous encrypted catalog is unreadable; no objects changed") from exc
-    if not isinstance(value, dict) or value.get("schema") not in {"arca-file-catalog-v1", "arca-file-catalog-v2", "arca-file-catalog-v3", "arca-file-catalog-v4"} or not isinstance(value.get("entries"), list):
+    if (
+        not isinstance(value, dict)
+        or value.get("schema")
+        not in {"arca-file-catalog-v1", "arca-file-catalog-v2", "arca-file-catalog-v3", "arca-file-catalog-v4"}
+        or not isinstance(value.get("entries"), list)
+    ):
         raise ObjectError("previous catalog schema is invalid; no objects changed")
     return value
 
@@ -194,9 +222,7 @@ def build(source: Path, out: Path, *, previous: Path | None = None) -> dict[str,
         object_dir = out / "objects"
         if object_dir.is_symlink():
             raise ObjectError("object directory cannot be a symlink")
-        if (out / ".catalog.gpg.partial").exists() or (
-            object_dir.is_dir() and any(object_dir.glob(".*.partial"))
-        ):
+        if (out / ".catalog.gpg.partial").exists() or (object_dir.is_dir() and any(object_dir.glob(".*.partial"))):
             raise ObjectError("incomplete prior capture requires investigation; catalog retained")
         staged: list[tuple[Path, Path]] = []
         try:
@@ -230,7 +256,9 @@ def _build_locked(
     if previous is not None:
         with tempfile.TemporaryDirectory(prefix="arca-catalog-") as temporary:
             old_catalog = _decrypt_catalog(previous, Path(temporary) / "catalog.json")
-        old_by_path = {str(row["path"]): row for row in old_catalog["entries"] if isinstance(row, dict) and "path" in row}
+        old_by_path = {
+            str(row["path"]): row for row in old_catalog["entries"] if isinstance(row, dict) and "path" in row
+        }
         old_root = previous.parent
 
     entries: list[dict[str, object]] = []
@@ -240,14 +268,30 @@ def _build_locked(
         if row["type"] == "file":
             old = old_by_path.get(str(row["path"]))
             reused = False
-            if old and old.get("type") == "file" and old.get("sha256") == row.get("sha256") and old.get("mode") == row.get("mode") and old_root:
+            if (
+                old
+                and old.get("type") == "file"
+                and old.get("sha256") == row.get("sha256")
+                and old.get("mode") == row.get("mode")
+                and old_root
+            ):
                 old_parts = old.get("objects")
                 if not isinstance(old_parts, list):
-                    old_parts = [{"object_id": old.get("object_id"), "ciphertext_sha256": old.get("ciphertext_sha256") }]
-                candidates = [old_root / "objects" / f"{part.get('object_id')}.gpg" for part in old_parts if isinstance(part, dict)]
-                if len(candidates) == len(old_parts) and candidates and all(
-                    candidate.is_file() and not candidate.is_symlink() and digest_file(candidate) == part.get("ciphertext_sha256")
-                    for candidate, part in zip(candidates, old_parts, strict=True)
+                    old_parts = [{"object_id": old.get("object_id"), "ciphertext_sha256": old.get("ciphertext_sha256")}]
+                candidates = [
+                    old_root / "objects" / f"{part.get('object_id')}.gpg"
+                    for part in old_parts
+                    if isinstance(part, dict)
+                ]
+                if (
+                    len(candidates) == len(old_parts)
+                    and candidates
+                    and all(
+                        candidate.is_file()
+                        and not candidate.is_symlink()
+                        and digest_file(candidate) == part.get("ciphertext_sha256")
+                        for candidate, part in zip(candidates, old_parts, strict=True)
+                    )
                 ):
                     entry["objects"] = old_parts
                     entry["ciphertext_sha256"] = old.get("ciphertext_sha256")
@@ -288,7 +332,14 @@ def _build_locked(
                             with partial.open("rb") as cipher_stream:
                                 for cipher_block in iter(lambda: cipher_stream.read(4 * 1024**2), b""):
                                     cipher_digest.update(cipher_block)
-                            parts.append({"object_id": object_id, "ciphertext_sha256": cipher_sha, "ciphertext_bytes": partial.stat().st_size, "plaintext_sha256": hashlib.sha256(block).hexdigest()})
+                            parts.append(
+                                {
+                                    "object_id": object_id,
+                                    "ciphertext_sha256": cipher_sha,
+                                    "ciphertext_bytes": partial.stat().st_size,
+                                    "plaintext_sha256": hashlib.sha256(block).hexdigest(),
+                                }
+                            )
                         if not block:
                             break
                 if digest_file(source / str(row["path"])) != row["sha256"]:
@@ -330,7 +381,9 @@ def _build_locked(
     else:
         with tempfile.TemporaryDirectory(prefix="arca-catalog-build-") as temporary:
             plaintext = Path(temporary) / "catalog.json"
-            plaintext.write_text(json.dumps(catalog, ensure_ascii=False, sort_keys=True, separators=(",", ":")), encoding="utf-8")
+            plaintext.write_text(
+                json.dumps(catalog, ensure_ascii=False, sort_keys=True, separators=(",", ":")), encoding="utf-8"
+            )
             os.chmod(plaintext, 0o600)
             temp_cipher = out / ".catalog.gpg.partial"
             PRIVATE._encrypt_file(plaintext, temp_cipher)
@@ -338,7 +391,14 @@ def _build_locked(
                 raise ObjectError("catalog encryption failed; catalog was not published")
             os.replace(temp_cipher, catalog_path)
         state = "ready"
-    return {"state": state, "coverage": "incomplete-native-metadata", "files": sum(row["type"] == "file" for row in entries), "new_objects": len(staged), "reused_objects": reused_count, "catalog": str(catalog_path)}
+    return {
+        "state": state,
+        "coverage": "incomplete-native-metadata",
+        "files": sum(row["type"] == "file" for row in entries),
+        "new_objects": len(staged),
+        "reused_objects": reused_count,
+        "catalog": str(catalog_path),
+    }
 
 
 def restore(catalog_path: Path, objects_root: Path, destination: Path) -> dict[str, object]:
@@ -357,7 +417,12 @@ def restore(catalog_path: Path, objects_root: Path, destination: Path) -> dict[s
             if not isinstance(raw, dict) or not isinstance(raw.get("path"), str):
                 raise ObjectError("catalog contains an invalid entry")
             rel = Path(str(raw["path"]))
-            if rel.is_absolute() or not rel.parts or any(part in ("", ".", "..") for part in rel.parts) or "\\" in str(raw["path"]):
+            if (
+                rel.is_absolute()
+                or not rel.parts
+                or any(part in ("", ".", "..") for part in rel.parts)
+                or "\\" in str(raw["path"])
+            ):
                 raise ObjectError("catalog contains an unsafe relative path")
             normalized = rel.as_posix()
             if normalized in by_path:
@@ -390,7 +455,11 @@ def restore(catalog_path: Path, objects_root: Path, destination: Path) -> dict[s
                     if not isinstance(object_id, str) or not re.fullmatch(r"[0-9a-f]{48}", object_id):
                         raise ObjectError("catalog contains an invalid object identifier")
                     cipher = objects_root / "objects" / f"{object_id}.gpg"
-                    if cipher.is_symlink() or not cipher.is_file() or digest_file(cipher) != part.get("ciphertext_sha256"):
+                    if (
+                        cipher.is_symlink()
+                        or not cipher.is_file()
+                        or digest_file(cipher) != part.get("ciphertext_sha256")
+                    ):
                         raise ObjectError("encrypted object is missing or failed integrity verification")
                     checked_parts.append((cipher, part))
                 if row.get("encryption") == "per-part":
