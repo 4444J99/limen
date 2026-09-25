@@ -179,7 +179,7 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
             initialized = initialize_worktree(store, worktree, branch=branch, checkout_ref=target, task_id=lease_id)
         except WorktreeInitializationError as exc:
             raise RepositoryLifecycleError(f"worktree initialization retained at {exc.journal_path}") from exc
-        record: dict[str, object] = {
+        lease_record: dict[str, object] = {
             "schema": "limen.repository_lease.v1",
             "lease_id": lease_id,
             "repository_id": stable_id,
@@ -193,7 +193,7 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
             "state": "active",
             "created_at": datetime.now(UTC).isoformat(),
         }
-        _atomic_json(lease_file, record)
+        _atomic_json(lease_file, lease_record)
         return {
             "repository_id": str(stable_id),
             "lease_id": lease_id,
