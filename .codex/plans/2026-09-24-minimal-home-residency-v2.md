@@ -905,11 +905,13 @@ before upload, downloads each bounded batch in one call, checks each object
 digest independently, and publishes
 the encrypted catalog only after object verification. Existing digest-addressed
 assets remain reusable; interrupted uploads retain the local ciphertext and
-resume from the remote asset list. The publisher now rejects cohorts above
-GitHub's 1,000-asset per-release limit before any remote mutation; the observed
-2,062-file copied source tree therefore requires bounded multi-release
-sharding or individually scoped custody cohorts before full capture.
-Twelve focused publisher tests, Ruff, and the
+resume from the remote asset list. Cohorts above GitHub's 1,000-asset
+per-release limit now use deterministic object-shard releases of at most
+1,000 assets each. The final release contains only the encrypted catalog and
+is created after every object shard passes readback. The observed 2,062-file
+copied source tree is therefore structurally publishable, but has not yet
+been captured, independently restored, or retired. Fourteen focused publisher
+test cases, Ruff, and the
 outbound preflight guard passed. This reduces per-object authorization and
 upload overhead for small-file cohorts; it does not establish whole-estate
 custody, independent-key restoration, or the 200 GiB free-space target.

@@ -17,6 +17,7 @@ import sys
 import tempfile
 import time
 from pathlib import Path
+from typing import Callable
 
 MAX_ASSET_BYTES = 2 * 1024**3 - 1  # GitHub requires each release asset to be under 2 GiB.
 MAX_RELEASE_ASSETS = 1000
@@ -146,8 +147,6 @@ def _preflight(
         assets.append((path, name, digest, size))
         total += size
     catalog_digest = assets[0][2]
-    if len(assets) > MAX_RELEASE_ASSETS:
-        raise AssetError("encrypted cohort exceeds one release's asset count; split into bounded cohorts before publication")
     # The encrypted catalog is the commit marker. Publish it only after every
     # ciphertext object has uploaded and passed remote readback.
     return [*assets[1:], assets[0]], f"arca-objects-{catalog_digest[:32]}", total
@@ -169,12 +168,22 @@ def publish(
         raise AssetError("batch deadline must be between 60 and 1500 seconds")
     stable_id, canonical, default_branch = _canonical_repository(repo) if apply else (None, repo, "main")
     assets, tag, total = _preflight(catalog, objects, expected_digests)
+    object_assets = assets[:-1]
+    groups = (
+        [(tag, assets)]
+        if len(assets) <= MAX_RELEASE_ASSETS else
+        [
+            (f"{tag}-part-{index // MAX_RELEASE_ASSETS + 1:04d}", object_assets[index:index + MAX_RELEASE_ASSETS])
+            for index in range(0, len(object_assets), MAX_RELEASE_ASSETS)
+        ] + [(tag, [assets[-1]])]
+    )
     if not apply:
         return {
             "state": "planned",
             "repo": canonical,
             "tag": tag,
             "asset_count": len(assets),
+            "release_count": len(groups),
             "bytes": total,
         }
 
@@ -186,6 +195,31 @@ def publish(
             raise AssetError("batch deadline reached; local source and verified remote assets retained for resume")
         return min(limit, max(1, int(remaining)))
 
+    prior_assets = _existing_assets(canonical)
+    for group_tag, group_assets in groups:
+        _publish_group(canonical, default_branch, group_tag, group_assets, prior_assets,
+                       remaining_timeout, verify_existing_by_server_digest)
+        for _source, name, _digest_value, _size in group_assets:
+            prior_assets.setdefault(name, group_tag)
+    return {
+        "state": "verified",
+        "repository_id": stable_id,
+        "tag": tag,
+        "asset_count": len(assets),
+        "release_count": len(groups),
+        "bytes": total,
+    }
+
+
+def _publish_group(
+    canonical: str,
+    default_branch: str,
+    tag: str,
+    assets: list[tuple[Path, str, str, int]],
+    prior_assets: dict[str, str],
+    remaining_timeout: Callable[..., int],
+    verify_existing_by_server_digest: bool,
+) -> None:
     existing = (
         _run(
             ["gh", "release", "view", tag, "--repo", canonical, "--json", "assets", "--jq", ".assets[].name"],
@@ -219,7 +253,6 @@ def publish(
             timeout=remaining_timeout(120),
         )
 
-    prior_assets = _existing_assets(canonical)
     with tempfile.TemporaryDirectory(prefix="arca-release-readback-") as directory:
         readback = Path(directory)
         verified_in_batch: set[str] = set()
@@ -238,7 +271,8 @@ def publish(
                 # enough for the deadline and never include the catalog marker.
                 pending: list[tuple[Path, str, str]] = []
                 pending_bytes = 0
-                for next_source, next_name, next_digest, next_size in assets[index - 1:-1]:
+                remaining_objects = assets[index - 1:-1] if assets[-1][1].startswith("catalog-") else assets[index - 1:]
+                for next_source, next_name, next_digest, next_size in remaining_objects:
                     if next_name in names or next_name in prior_assets:
                         break
                     if pending and (len(pending) >= MAX_UPLOAD_FILES or pending_bytes + next_size > MAX_UPLOAD_BYTES):
@@ -294,13 +328,6 @@ def publish(
                 raise AssetError("release readback digest mismatch; local source retained")
             downloaded.unlink()
             print(f"ARCA asset verified {index}/{len(assets)}", file=sys.stderr, flush=True)
-    return {
-        "state": "verified",
-        "repository_id": stable_id,
-        "tag": tag,
-        "asset_count": len(assets),
-        "bytes": total,
-    }
 
 
 def _release_exists(repo: str, tag: str) -> bool:
