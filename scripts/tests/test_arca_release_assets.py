@@ -85,8 +85,12 @@ def test_publish_resumes_by_digest_and_verifies_every_readback(tmp_path: Path, m
     assert sum(call[1:3] == ["release", "upload"] for call in calls) == upload_count
 
 
-def test_small_objects_share_one_upload_and_catalog_waits_for_readback(tmp_path: Path, monkeypatch) -> None:
+@pytest.mark.parametrize("release_limit,expected_groups", [(1000, [4, 1]), (2, [2, 2, 1])])
+def test_small_objects_share_uploads_and_catalog_waits_for_readback(
+    tmp_path: Path, monkeypatch, release_limit: int, expected_groups: list[int]
+) -> None:
     catalog, objects = _ciphertexts(tmp_path)
+    monkeypatch.setattr(assets, "MAX_RELEASE_ASSETS", release_limit)
     for index in range(3):
         path = tmp_path / f"private-{index}.enc"
         path.write_bytes(f"opaque encrypted payload {index}".encode())
@@ -126,9 +130,9 @@ def test_small_objects_share_one_upload_and_catalog_waits_for_readback(tmp_path:
     monkeypatch.setattr(assets, "_authorize_write", lambda repo: authorized.append(repo))
     monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {})
     assert assets.publish("owner/private-vault", catalog, objects, apply=True)["state"] == "verified"
-    assert list(map(len, uploads)) == [len(objects), 1]
-    assert len(download_calls) == 2  # one object batch, then the catalog marker
-    assert len(authorized) == 3  # release creation, object batch, catalog marker
+    assert list(map(len, uploads)) == expected_groups
+    assert len(download_calls) == len(expected_groups)
+    assert len(authorized) == (3 if release_limit == 1000 else 6)
 
 
 def test_partial_multi_object_upload_resumes_without_publishing_catalog(tmp_path: Path, monkeypatch) -> None:
@@ -174,6 +178,55 @@ def test_partial_multi_object_upload_resumes_without_publishing_catalog(tmp_path
     assert len(remote) == 1 and all(name.startswith("object-") for name in remote)
     assert assets.publish("owner/private-vault", catalog, objects, apply=True)["state"] == "verified"
     assert len(remote) == 3
+
+
+def test_shard_failure_keeps_final_catalog_absent_and_resumes(tmp_path: Path, monkeypatch) -> None:
+    catalog, objects = _ciphertexts(tmp_path)
+    extra = tmp_path / "extra.enc"
+    extra.write_bytes(b"second encrypted payload")
+    objects.append(extra)
+    monkeypatch.setattr(assets, "MAX_RELEASE_ASSETS", 1)
+    target_tag = assets._preflight(catalog, objects)[1]
+    remote: dict[str, dict[str, bytes]] = {}
+    fail_second_shard = True
+
+    def fake_run(args: list[str], **_kwargs) -> subprocess.CompletedProcess[str]:
+        nonlocal fail_second_shard
+        if args[1:3] == ["release", "create"]:
+            remote[args[3]] = {}
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[1:3] == ["release", "view"]:
+            return subprocess.CompletedProcess(args, 0, "\n".join(remote[args[3]]), "")
+        if args[1:3] == ["release", "upload"]:
+            tag = args[3]
+            if tag.endswith("part-0002") and fail_second_shard:
+                fail_second_shard = False
+                raise assets.AssetError("second shard interrupted")
+            for path in args[4:args.index("--repo")]:
+                remote[tag][Path(path).name] = Path(path).read_bytes()
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[1:3] == ["release", "download"]:
+            tag = args[3]
+            for position, value in enumerate(args):
+                if value == "--pattern":
+                    name = args[position + 1]
+                    Path(args[args.index("--dir") + 1], name).write_bytes(remote[tag][name])
+            return subprocess.CompletedProcess(args, 0, "", "")
+        raise AssertionError(args)
+
+    monkeypatch.setattr(assets, "_run", fake_run)
+    monkeypatch.setattr(assets, "_release_exists", lambda _repo, tag: tag in remote)
+    monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (77123, "owner/private-vault", "main"))
+    monkeypatch.setattr(assets, "_authorize_write", lambda _repo: None)
+    monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {
+        name: tag for tag, files in remote.items() for name in files
+    })
+    with pytest.raises(assets.AssetError, match="second shard interrupted"):
+        assets.publish("owner/private-vault", catalog, objects, apply=True)
+    assert target_tag not in remote
+    assert len(remote[f"{target_tag}-part-0001"]) == 1
+    assert assets.publish("owner/private-vault", catalog, objects, apply=True)["state"] == "verified"
+    assert len(remote[target_tag]) == 1
 
 
 def test_interrupted_batch_resumes_without_replacing_verified_assets(tmp_path: Path, monkeypatch) -> None:
@@ -341,14 +394,14 @@ def test_rejects_plaintext_named_source_and_assets_over_limit(tmp_path: Path, mo
         )
 
 
-def test_rejects_cohort_above_release_asset_limit_before_remote_effects(tmp_path: Path, monkeypatch) -> None:
+def test_plans_shards_above_release_asset_limit_before_remote_effects(tmp_path: Path, monkeypatch) -> None:
     catalog, objects = _ciphertexts(tmp_path)
     extra = tmp_path / "extra.enc"
     extra.write_bytes(b"opaque encrypted extra")
     monkeypatch.setattr(assets, "MAX_RELEASE_ASSETS", 2)
     monkeypatch.setattr(assets, "_run", lambda *_a, **_k: pytest.fail("oversized cohort contacted GitHub"))
-    with pytest.raises(assets.AssetError, match="asset count"):
-        assets.publish("owner/private-vault", catalog, [*objects, extra], apply=False)
+    result = assets.publish("owner/private-vault", catalog, [*objects, extra], apply=False)
+    assert result["release_count"] == 2
 
 
 def test_repository_alias_must_resolve_to_one_private_immutable_identity(monkeypatch) -> None:
