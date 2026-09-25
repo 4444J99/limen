@@ -294,3 +294,34 @@ the approximately 200 GiB outcome remain open.
   checks. This remains below the 50 GiB admission threshold; the 200 GiB
   completion target is unmet. Directory cleanup is not being represented as
   physical recovery.
+
+### Owner-scoped home and runtime pass, 2026-09-25
+
+- Reused the existing 54,580-object private home/Workspace inventory rather
+  than starting another root census. Its traversal frontier is empty, but one
+  cloud-backed area is still unmeasured, so coverage is not complete.
+- The deeper Workspace Git checkouts not covered by the depth-seven reaper
+  pass are confined to Domus/Limen-owned locations. Of 37 under OpenCode's
+  runtime data owner, all current filesystem identities still match inventory;
+  all have valid HEADs, refs, and remotes, 36 are clean, and one has dirty or
+  untracked state. A fresh open-file probe found one live OpenCode process with
+  six references under that owner root. All are retained as application
+  recovery state. Two Domus UV archive checkouts also match inventory identity;
+  no direct open-file references were observed, but no per-object reconstruction
+  receipt authorizes their retirement.
+- The 37 Neovim plugin directories exactly match Domus's 37 active lockfile
+  entries. All four installed tmux plugin directories are explicitly named in
+  the active Domus configuration. These owner-managed sources have no stale
+  checkout identified by those owner manifests, so none was removed.
+- The fresh tool-cache plan identified four allowlisted, inactive, regenerable
+  cache roots. Applied only that exact plan hash after its full identity check
+  and immediately repeated process-reference checks: four roots removed,
+  675,196 KiB apparent (659.4 MiB), and zero eligible residual candidates.
+  The cache tool's receipt contains exact paths; it remains local/ignored,
+  owner-readable only (mode 0600), with FileVault enabled. No sensitive paths
+  were copied into this public plan.
+- A fresh Data-volume `df` sample after the apply reported 26,717,136 KiB
+  available (about 25.48 GiB). The prior sample was about 21 GiB, but concurrent
+  writes and APFS mean the difference is not attributed to cache removal.
+  Free space is still below the 50 GiB admission threshold and far below the
+  approximately 200 GiB completion criterion.
