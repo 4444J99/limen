@@ -29,6 +29,64 @@ def _ciphertexts(tmp_path: Path) -> tuple[Path, list[Path]]:
     return catalog, [payload]
 
 
+def test_hydration_fetches_only_verified_ciphertext(tmp_path: Path, monkeypatch) -> None:
+    catalog = b"opaque catalog ciphertext"
+    payload = b"opaque object ciphertext"
+    catalog_digest = hashlib.sha256(catalog).hexdigest()
+    payload_digest = hashlib.sha256(payload).hexdigest()
+    tag = f"arca-objects-{catalog_digest[:32]}"
+    names = {f"catalog-{catalog_digest}.enc": catalog, f"object-{payload_digest}.enc": payload}
+    destination = tmp_path / "private"
+    destination.mkdir(mode=0o700)
+    monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (123, "owner/private-vault", "main"))
+    monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {name: tag for name in names})
+    monkeypatch.setattr(
+        assets, "_release_asset_digests",
+        lambda _repo, _tag: {name: (hashlib.sha256(data).hexdigest(), len(data)) for name, data in names.items()},
+    )
+
+    def download(args: list[str], **_kwargs) -> subprocess.CompletedProcess[str]:
+        name = args[args.index("--pattern") + 1]
+        Path(args[args.index("--dir") + 1], name).write_bytes(names[name])
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(assets, "_run", download)
+    result = assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [payload_digest], destination)
+    assert result["state"] == "verified" and result["asset_count"] == 2
+    assert sorted(path.read_bytes() for path in destination.glob("*.enc")) == sorted(names.values())
+    assert assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [payload_digest], destination) == result
+    with pytest.raises(assets.AssetError, match="identity"):
+        assets.hydrate_ciphertext("owner/private-vault", 124, catalog_digest, [payload_digest], destination)
+    with pytest.raises(assets.AssetError, match="identifiers"):
+        assets.hydrate_ciphertext("owner/private-vault", 123, "../escape", [payload_digest], destination)
+    (destination / f"object-{payload_digest}.enc").write_bytes(b"changed")
+    with pytest.raises(assets.AssetError, match="differs"):
+        assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [payload_digest], destination)
+
+
+def test_hydration_rejects_incomplete_marker_and_unverified_bytes(tmp_path: Path, monkeypatch) -> None:
+    catalog_digest = hashlib.sha256(b"catalog").hexdigest()
+    payload_digest = hashlib.sha256(b"payload").hexdigest()
+    tag = f"arca-objects-{catalog_digest[:32]}"
+    catalog_name = f"catalog-{catalog_digest}.enc"
+    object_name = f"object-{payload_digest}.enc"
+    destination = tmp_path / "private"
+    destination.mkdir(mode=0o700)
+    monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (123, "owner/private-vault", "main"))
+    monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {object_name: tag})
+    with pytest.raises(assets.AssetError, match="catalog marker"):
+        assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [payload_digest], destination)
+    monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {catalog_name: tag, object_name: tag})
+    monkeypatch.setattr(assets, "_release_asset_digests", lambda _repo, _tag: {
+        catalog_name: (catalog_digest, 7), object_name: ("0" * 64, 7)
+    })
+    with pytest.raises(assets.AssetError, match="digest"):
+        assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [payload_digest], destination)
+    destination.chmod(0o755)
+    with pytest.raises(assets.AssetError, match="private directory"):
+        assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [payload_digest], destination)
+
+
 def test_plan_is_neutral_and_has_no_remote_effects(tmp_path: Path, monkeypatch) -> None:
     catalog, objects = _ciphertexts(tmp_path)
     monkeypatch.setattr(assets, "_run", lambda *_a, **_k: pytest.fail("dry run called GitHub"))

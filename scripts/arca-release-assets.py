@@ -17,8 +17,8 @@ import subprocess
 import sys
 import tempfile
 import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 MAX_ASSET_BYTES = 2 * 1024**3 - 1  # GitHub requires each release asset to be under 2 GiB.
 MAX_RELEASE_ASSETS = 1000
@@ -402,6 +402,65 @@ def _existing_assets(repo: str) -> dict[str, str]:
         if separator and re.fullmatch(r"arca-objects-[a-f0-9]{32}(?:-part-[0-9]{4})?", tag):
             result.setdefault(name, tag)
     return result
+
+
+def hydrate_ciphertext(
+    repo: str,
+    repository_id: int,
+    catalog_sha256: str,
+    object_sha256s: list[str],
+    destination: Path,
+) -> dict[str, object]:
+    """Fetch only named ciphertext into an existing private directory.
+
+    This is a byte transport primitive, not a private retrieval authorization
+    boundary. Callers must authorize the catalog/object IDs and destination
+    before invoking it; this function never decrypts or emits private names.
+    """
+    if not re.fullmatch(r"[0-9a-f]{64}", catalog_sha256) or any(
+        not re.fullmatch(r"[0-9a-f]{64}", digest) for digest in object_sha256s
+    ):
+        raise AssetError("ciphertext identifiers must be SHA-256 digests")
+    if destination.is_symlink() or not destination.is_dir() or destination.stat().st_mode & 0o077:
+        raise AssetError("destination must be an existing private directory")
+    live_id, canonical, _branch = _canonical_repository(repo)
+    if live_id != repository_id:
+        raise AssetError("repository identity differs from custody receipt")
+    final_tag = f"arca-objects-{catalog_sha256[:32]}"
+    names = [f"catalog-{catalog_sha256}.enc", *[f"object-{digest}.enc" for digest in dict.fromkeys(object_sha256s)]]
+    locations = _existing_assets(canonical)
+    if locations.get(names[0]) != final_tag:
+        raise AssetError("completed encrypted catalog marker is unavailable")
+    verified_tags: dict[str, dict[str, tuple[str, int]]] = {}
+    for name in names:
+        tag = locations.get(name)
+        if not tag:
+            raise AssetError("registered ciphertext object is unavailable")
+        if tag not in verified_tags:
+            verified_tags[tag] = _release_asset_digests(canonical, tag)
+        digest = name.split("-", 1)[1].removesuffix(".enc")
+        metadata = verified_tags[tag].get(name)
+        if metadata is None or metadata[0] != digest or metadata[1] <= 0:
+            raise AssetError("remote ciphertext digest or size is unverified")
+
+    with tempfile.TemporaryDirectory(prefix=".arca-hydrate-", dir=destination) as temporary:
+        staging = Path(temporary)
+        for name in names:
+            target = destination / name
+            if target.exists() or target.is_symlink():
+                if target.is_symlink() or not target.is_file() or _digest(target) != verified_tags[locations[name]][name]:
+                    raise AssetError("existing ciphertext differs from verified remote object")
+                continue
+            _run(
+                ["gh", "release", "download", locations[name], "--repo", canonical,
+                 "--pattern", name, "--dir", str(staging)],
+                timeout=900,
+            )
+            staged = staging / name
+            if staged.is_symlink() or not staged.is_file() or _digest(staged) != verified_tags[locations[name]][name]:
+                raise AssetError("ciphertext hydration readback mismatch")
+            os.link(staged, target, follow_symlinks=False)
+    return {"state": "verified", "repository_id": live_id, "asset_count": len(names), "catalog_sha256": catalog_sha256}
 
 
 def _objects_from_dir(directory: Path) -> list[Path]:
