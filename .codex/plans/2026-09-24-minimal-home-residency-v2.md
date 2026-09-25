@@ -984,3 +984,30 @@ tranche. The 200 GiB target remains unmet; the measured deficit is roughly
 180 GiB, with physical attribution limited by APFS sharing and snapshot
 accounting. Next eligible recovery requires owner-specific reconstruction and
 custody evidence, not size-based deletion.
+
+### Selective ciphertext hydration foundation, 2026-09-25
+
+Limen's ARCA Release adapter now has an internal `hydrate_ciphertext`
+primitive. It accepts a verified private repository ID, a completed encrypted
+catalog digest, selected object ciphertext digests, and an existing private
+destination. It resolves the current repository identity, checks the final
+catalog marker, requires uploaded-state remote SHA-256 and size for each
+asset, fetches only the requested ciphertext, verifies downloaded bytes, and
+never overwrites differing local bytes. It neither decrypts nor emits private
+names or paths. Nineteen focused Release-adapter tests and Ruff check passed.
+The files had pre-existing Ruff-format differences; broad formatting was not
+applied to this scoped change.
+
+This is byte transport, not authorized CCE retrieval. The current installed
+`cce` package remains unavailable, its registered source is remote-only, and
+host admission remains below 50 GiB. The CCE caller/destination authorization,
+encrypted registry mapping, derived index, provenance, and positive/negative
+native search canaries are still required before any private result is emitted.
+
+A live read-only hydration canary resolved private repository ID
+`1332536900` and catalog digest
+`989085af4e956a7c8fb08095669b720fab1b638c5cbba694acdb78e191b00b36`.
+It fetched the completed encrypted catalog and one selected encrypted object
+into a new owner-private directory, verified remote metadata and downloaded
+bytes, and returned `state=verified`, `asset_count=2`. No decryption, source
+retirement, or native CCE search occurred.
