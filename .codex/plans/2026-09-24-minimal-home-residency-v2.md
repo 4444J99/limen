@@ -196,6 +196,18 @@ The normal GPG listing advertises the pinned key, but the real
 `No secret key`. Listing metadata is not a recovery receipt. Independent-key
 restoration remains unproven, and no private original may be retired.
 
+Limen now exposes `repo reconcile REPO_ID` as a bounded background custody pass.
+Release records the checkout's exact HEAD; reconcile serializes on the repository
+lock, retains all checkouts while any owner lease is active, checks the store's live
+immutable GitHub ID, and detaches only clean released worktrees whose HEAD matches
+a freshly advertised origin branch through the existing abandonment receipt rail.
+Dirty work and the canonical object store remain resident. Unknown lease states,
+offline identity, missing checkouts and failed detach retain explicit states.
+A controlled local test exercised two sessions, final release, exact-tip checkout
+retirement, dirty retention and idempotent replay; 33 focused lifecycle and
+abandonment tests plus Ruff passed. This is checkout retirement only: scheduling,
+canonical-store custody/retirement and a real GitHub reacquisition canary remain.
+
 ## Acceptance and reporting
 
 Do not repeat subjective implementation percentages. Report original outcomes passed

@@ -153,6 +153,18 @@ def repo_release(lease_id: str) -> None:
         raise click.ClickException(str(exc)) from exc
 
 
+@repo_group.command("reconcile")
+@click.argument("repo_id")
+def repo_reconcile(repo_id: str) -> None:
+    """Background custody pass for released repository checkouts."""
+    from limen.repo_lifecycle import RepositoryLifecycleError, reconcile
+
+    try:
+        click.echo(json.dumps(reconcile(repo_id), sort_keys=True))
+    except RepositoryLifecycleError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+
 main.add_command(repo_group)
 
 

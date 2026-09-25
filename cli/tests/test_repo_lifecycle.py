@@ -82,9 +82,12 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
     assert default_head["head"] == first["head"]
     clean_release = lifecycle.release(first["lease_id"])
     assert clean_release["state"] == "released-awaiting-custody-investigation"
+    first_lease = cache / ".limen-residency" / "77123" / "leases" / f"{first['lease_id']}.json"
+    assert json.loads(first_lease.read_text())["released_head"] == first["head"]
     assert lifecycle.release(first["lease_id"]) == clean_release
     assert Path(first["worktree"]).is_dir()
     assert Path(concurrent_session["worktree"]).is_dir()
+    assert lifecycle.reconcile(77123, owner_probe=lambda _path: None)["state"] == "retained-active-lease"
 
     dirty = Path(concurrent_session["worktree"]) / "local.txt"
     dirty.write_text("unpreserved payload\n")
@@ -93,6 +96,15 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
     assert dirty.exists()
     lease = cache / ".limen-residency" / "77123" / "leases" / f"{concurrent_session['lease_id']}.json"
     assert json.loads(lease.read_text())["state"] == "retained-dirty-or-unavailable"
+    assert lifecycle.release(default_head["lease_id"])["state"] == "released-awaiting-custody-investigation"
+    reconciled = lifecycle.reconcile(77123, owner_probe=lambda _path: None)
+    assert reconciled["retired_checkouts"] == "2"
+    assert reconciled["state"] == "store-retained"
+    assert not Path(first["worktree"]).exists()
+    assert not Path(default_head["worktree"]).exists()
+    assert Path(concurrent_session["worktree"]).is_dir()
+    assert Path(first["store"]).is_dir()
+    assert lifecycle.reconcile(77123, owner_probe=lambda _path: None)["state"] == "retained-no-eligible-checkout"
 
 
 def test_ensure_rejects_non_immutable_repository_identifiers():
@@ -118,3 +130,23 @@ def test_store_origin_requires_live_immutable_identity(tmp_path, monkeypatch):
         raise AssertionError("mismatched store origin accepted")
     monkeypatch.setattr(lifecycle, "_gh", lambda *_args: '{"id": 77123}')
     lifecycle._verify_store_origin(tmp_path, 77123)
+
+
+def test_reconcile_retains_unknown_lease_state(tmp_path, monkeypatch):
+    cache = tmp_path / "cache"
+    (cache / "github-77123").mkdir(parents=True)
+    leases = cache / ".limen-residency" / "77123" / "leases"
+    leases.mkdir(parents=True)
+    (leases / "77123-deadbeef.json").write_text(
+        json.dumps({"repository_id": 77123, "lease_id": "77123-deadbeef", "state": "unexpected"})
+    )
+    monkeypatch.setattr(lifecycle, "_repository", lambda _repo_id: (77123, "owner/project"))
+    monkeypatch.setattr(lifecycle, "dispatch_clone_cache_root", lambda: cache)
+    monkeypatch.setattr(lifecycle, "_verify_store_origin", lambda _store, _stable_id: None)
+    assert lifecycle.reconcile(77123)["state"] == "retained-inconsistent-lease"
+
+    def offline(_store, _stable_id):
+        raise lifecycle.RepositoryLifecycleError("offline")
+
+    monkeypatch.setattr(lifecycle, "_verify_store_origin", offline)
+    assert lifecycle.reconcile(77123)["state"] == "retained-origin-identity-unavailable"
