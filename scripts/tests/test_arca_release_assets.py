@@ -116,7 +116,7 @@ def test_interrupted_batch_resumes_without_replacing_verified_assets(tmp_path: P
     monkeypatch.setattr(assets, "_authorize_write", lambda _repo: None)
     with pytest.raises(assets.AssetError, match="source ciphertext retained"):
         assets.publish("owner/private-vault", catalog, objects, apply=True)
-    assert len(remote) == 1  # catalog readback succeeded; payload was never changed or lost
+    assert remote == {}  # no catalog is visible before the first payload readback
     assert objects[0].exists()
 
     result = assets.publish("owner/private-vault", catalog, objects, apply=True)
@@ -128,7 +128,7 @@ def test_unchanged_objects_are_reused_from_earlier_release(tmp_path: Path, monke
     catalog, objects = _ciphertexts(tmp_path)
     files, _tag, _size = assets._preflight(catalog, objects)
     old_tag = "arca-objects-" + "a" * 32
-    prior = {files[1][1]: objects[0].read_bytes()}
+    prior = {files[0][1]: objects[0].read_bytes()}
     current: dict[str, bytes] = {}
     uploaded: list[str] = []
 
@@ -154,11 +154,11 @@ def test_unchanged_objects_are_reused_from_earlier_release(tmp_path: Path, monke
     monkeypatch.setattr(assets, "_run", fake_run)
     monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (77123, "owner/private-vault", "main"))
     monkeypatch.setattr(assets, "_release_exists", lambda _repo, _tag: False)
-    monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {files[1][1]: old_tag})
+    monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {files[0][1]: old_tag})
     monkeypatch.setattr(assets, "_authorize_write", lambda _repo: None)
     result = assets.publish("owner/private-vault", catalog, objects, apply=True)
     assert result["state"] == "verified"
-    assert uploaded == [files[0][1]]  # only the new encrypted catalog; the old object was read back in place
+    assert uploaded == [files[1][1]]  # only the new encrypted catalog; the old object was read back in place
 
 
 def test_wrong_readback_digest_fails_without_mutating_source(tmp_path: Path, monkeypatch) -> None:

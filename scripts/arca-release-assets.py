@@ -141,7 +141,9 @@ def _preflight(
         assets.append((path, name, digest, size))
         total += size
     catalog_digest = assets[0][2]
-    return assets, f"arca-objects-{catalog_digest[:32]}", total
+    # The encrypted catalog is the commit marker. Publish it only after every
+    # ciphertext object has uploaded and passed remote readback.
+    return [*assets[1:], assets[0]], f"arca-objects-{catalog_digest[:32]}", total
 
 
 def publish(
