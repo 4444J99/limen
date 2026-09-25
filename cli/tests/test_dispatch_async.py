@@ -241,7 +241,9 @@ def test_harvest_archives_malformed_result_receipt_before_unlink(board):
     assert got["T1"].status == "dispatched"
 
 
-def test_async_reservation_value_gate_withholds_generic_non_value_work(tmp_path, monkeypatch):
+def test_async_reservation_value_gate_withholds_generic_non_value_work(
+    approved_execution_policy, tmp_path, monkeypatch
+):
     # Disable the independent dispatch and local-worktree admission gates so this value-routing test
     # is hermetic. Their host probes are covered by dedicated suites and would mask the behavior this
     # test actually asserts. Every other test in this file gets the overrides via the `board` fixture;
@@ -298,6 +300,9 @@ def test_async_reservation_value_gate_withholds_generic_non_value_work(tmp_path,
     monkeypatch.setenv("LIMEN_VALUE_REPOS", "organvm/value-repo")
     monkeypatch.setenv("LIMEN_VALUE_REPOS_FILE", str(tmp_path / "missing-value-repos.json"))
 
+    policy = approved_execution_policy(*(task.id for task in lf.tasks))
+    (tmp_path / "logs").mkdir(exist_ok=True)
+    (tmp_path / "logs/autonomy-policy.json").write_text(json.dumps(policy))
     picked = dispatch_async.reserve_and_launch(["codex"], per_agent=5, cap=5, dry=True)
 
     assert picked == [("codex", "VALUE-WORK")]
