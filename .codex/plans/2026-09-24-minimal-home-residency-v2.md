@@ -458,3 +458,27 @@ outcome remains incomplete and requires an execution-budget decision before
 additional heavy runs. Independent-key recovery, a second replica, complete
 source closure, authorized private retrieval, full root classification and
 physical capacity recovery are still unproved.
+
+### Complete fixed ARCA Release batch, 2026-09-25
+
+A further fixed-catalog, ten-minute continuation checked the 47 existing
+objects against GitHub's live uploaded-state SHA-256 and size, then uploaded
+and fully downloaded/read back the remaining 12 ciphertext objects. The
+encrypted catalog uploaded last and passed full readback. The publisher
+returned `state=verified`, 60 assets and 5,389,263,801 bytes for immutable
+private repository ID `1332536900` and tag
+`arca-objects-b41047e0aa7d17ccc1f818c0d0698416`.
+
+An independent live GitHub API listing then confirmed 60 uploaded assets,
+one encrypted catalog, SHA-256 digests on all assets, and the exact planned
+byte total. The local ARCA checkout remained clean at original HEAD
+`22142cd82297cc90c0f15737134043db668e337b`. This proves one complete
+encrypted remote Release batch for this fixed legacy snapshot; it does not
+prove independent-key decryption/restoration, second-replica custody, all
+local refs/stashes, additive branch reconciliation, or coverage of other
+private domains. No local private original was retired. Actual internal free
+space was 25,524,248 KiB (about 24.34 GiB), still far below 200 GiB.
+
+The cumulative agent execution has passed the global finite-work recovery
+allowance of 120 minutes. Stop automatic heavy recovery work at this
+checkpoint under `/Users/4jp/AGENTS.md`; retain the full goal as incomplete.
