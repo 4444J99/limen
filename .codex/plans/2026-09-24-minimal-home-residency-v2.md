@@ -281,6 +281,29 @@ and stale-partial refusal. This is fail-closed interruption handling, not yet
 durable same-snapshot resume. Bounded capture scheduling and the 1,000-asset
 release ceiling still need operational proof.
 
+### Legacy ARCA Git reconstruction checkpoint, 2026-09-25
+
+The legacy ciphertext helper now stores exact raw commit/tree/tag objects from
+the unpublished `origin/main..HEAD` range inside its encrypted catalog, verifying
+each Git object ID before encryption. It records the embedded legacy manifest's
+blob ID. An isolated reconstruction command fetches the catalog's exact base,
+writes verified ciphertext blobs and raw Git metadata into a new bare repository,
+requires `git fsck --strict` and exact recovered HEAD, then publishes the new
+destination atomically. Four focused tests and Ruff pass, including a real-Git
+divergence whose reconstructed commit ID matches the source and a malformed
+asset-digest rejection. This reconstruction still depends on the exact base
+remaining available from the supplied repository and covers this HEAD range,
+not all local refs, stashes or historical metadata; full independent closure is
+not yet proven.
+
+The live ARCA source was clean, and its `origin/main` matched the freshly
+advertised remote tip; GitHub immutable repository ID `1332536900` resolved to
+the expected private owner. A local-only dry run produced an 8,505-byte,
+mode-0600 encrypted catalog covering 59 ciphertext files and 5,389,255,296
+bytes, with 60 planned Release assets including the catalog. The source vault
+remained clean. No payload asset was uploaded and no remote readback, independent
+key restoration, branch reconciliation or source retirement is claimed.
+
 ## Acceptance and reporting
 
 Do not repeat subjective implementation percentages. Report original outcomes passed

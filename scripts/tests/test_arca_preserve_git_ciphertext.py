@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import importlib.util
 import base64
+import importlib.util
 import json
 import subprocess
 from pathlib import Path
@@ -39,7 +39,9 @@ def local_divergence(tmp_path: Path) -> Path:
     return root
 
 
-def test_catalog_covers_local_only_ciphertext_and_publishes_neutral_receipt(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_catalog_covers_local_only_ciphertext_and_publishes_neutral_receipt(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     root = local_divergence(tmp_path)
 
     def encrypt(source: Path, destination: Path) -> None:
@@ -62,9 +64,22 @@ def test_catalog_covers_local_only_ciphertext_and_publishes_neutral_receipt(tmp_
     assert catalog.stat().st_mode & 0o777 == 0o600
     assert "one.tar.enc" not in str(result)
     assert "two.tar.enc" not in str(result)
+    private_catalog = json.loads(catalog.read_bytes()[len(b"\xc1\x01\x00ENCRYPTED-CATALOG"):])
+    assert private_catalog["git_closure_scope"] == "origin-main-excluded-to-head"
+    metadata = private_catalog["git_metadata_objects"]
+    assert {row["type"] for row in metadata} >= {"commit", "tree"}
+    assert all(
+        preserve._git_object_oid(
+            row["type"], base64.b64decode(row["raw_b64"]),
+            private_catalog["git_object_format"],
+        ) == row["oid"]
+        for row in metadata
+    )
 
 
-def test_plaintext_manifest_is_embedded_only_inside_the_encrypted_catalog(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_plaintext_manifest_is_embedded_only_inside_the_encrypted_catalog(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
     root = local_divergence(tmp_path)
     secret_name = "private-store-name"
     (root / "manifest.json").write_text('{"private_store":"' + secret_name + '"}', encoding="utf-8")
@@ -76,7 +91,10 @@ def test_plaintext_manifest_is_embedded_only_inside_the_encrypted_catalog(tmp_pa
 
     published: list[Path] = []
     monkeypatch.setattr(preserve.PRIVATE, "_encrypt_file", encrypt)
-    monkeypatch.setattr(preserve.PUBLISHER, "publish", lambda _repo, catalog, objects, **_k: published.extend(objects) or {"state": "planned"})
+    monkeypatch.setattr(
+        preserve.PUBLISHER, "publish",
+        lambda _repo, catalog, objects, **_k: published.extend(objects) or {"state": "planned"},
+    )
     catalog = tmp_path / "private" / "catalog.gpg"
     result = preserve.preserve(root, "owner/private-arca", output=catalog)
     assert result["files"] == 2
@@ -93,6 +111,49 @@ def test_unexpected_plaintext_blob_blocks_partial_preservation(tmp_path: Path, m
     git(root, "add", "notes.md")
     git(root, "commit", "-m", "notes")
     monkeypatch.setattr(preserve.PRIVATE, "_encrypt_file", lambda *_: None)
-    monkeypatch.setattr(preserve.PUBLISHER, "publish", lambda *_a, **_k: pytest.fail("must not publish partial custody"))
+    monkeypatch.setattr(
+        preserve.PUBLISHER, "publish",
+        lambda *_a, **_k: pytest.fail("must not publish partial custody"),
+    )
     with pytest.raises(preserve.PreserveError, match="unsupported non-ciphertext"):
         preserve.preserve(root, "owner/private-arca", output=tmp_path / "private" / "catalog.gpg")
+
+
+def test_isolated_reconstruction_matches_exact_original_commit(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    root = local_divergence(tmp_path)
+    prefix = b"\xc1\x01\x00ENCRYPTED-CATALOG"
+
+    def encrypt(source: Path, destination: Path) -> None:
+        destination.write_bytes(prefix + source.read_bytes())
+
+    def decrypt(source: Path, destination: Path) -> None:
+        ciphertext = source.read_bytes()
+        assert ciphertext.startswith(prefix)
+        destination.write_bytes(ciphertext[len(prefix):])
+
+    monkeypatch.setattr(preserve.PRIVATE, "_encrypt_file", encrypt)
+    monkeypatch.setattr(preserve.PRIVATE, "_decrypt_file", decrypt)
+    monkeypatch.setattr(preserve.PUBLISHER, "publish", lambda *_a, **_k: {"state": "planned"})
+    catalog = tmp_path / "private" / "catalog.gpg"
+    preserve.preserve(root, "owner/private-arca", output=catalog)
+    private = json.loads(catalog.read_bytes()[len(prefix):])
+    assets = tmp_path / "assets"
+    assets.mkdir()
+    for row in private["entries"]:
+        (assets / f"object-{row['sha256']}.enc").write_bytes((root / row["path"]).read_bytes())
+    reconstructed = tmp_path / "reconstructed.git"
+    receipt = preserve.reconstruct(catalog, assets, str(tmp_path / "origin.git"), reconstructed)
+    original_head = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True).strip()
+    recovered_head = subprocess.check_output(
+        ["git", "-C", str(reconstructed), "rev-parse", "refs/heads/recovered"],
+        text=True,
+    ).strip()
+    assert receipt["state"] == "reconstructed"
+    assert original_head == recovered_head == private["source_commit"]
+    private["entries"][0]["sha256"] = "../untrusted"
+    bad_catalog = tmp_path / "bad-catalog.gpg"
+    bad_catalog.write_bytes(prefix + json.dumps(private).encode())
+    bad_destination = tmp_path / "bad-reconstruction.git"
+    with pytest.raises(preserve.PreserveError, match="invalid blob identity"):
+        preserve.reconstruct(bad_catalog, assets, str(tmp_path / "origin.git"), bad_destination)
+    assert not bad_destination.exists()
