@@ -1055,3 +1055,13 @@ deadline with shorter download calls. It rejects an over-limit request
 before downloading any asset. Twenty focused Release-adapter tests and Ruff
 check pass. These are transport bounds, not caller authorization or proof of
 native CCE retrieval.
+
+### Repository-first priority correction, 2026-09-25
+
+The user explicitly prioritized clearing inactive repository copies before
+completing the full custody/retrieval/automation platform. The bounded execution
+record is [repository-first retirement](2026-09-25-repository-first-retirement.md).
+It records 30 actual linked-checkout removals, 19 additive preservation branches,
+private metadata custody, current space measurements and explicit retained
+candidates. This is a partial physical-residency result; all five original
+outcome predicates remain unchanged.

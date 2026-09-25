@@ -1077,6 +1077,8 @@ def classify(
     if source == "workspace-checkout" and is_wt:
         return "skip", "workspace-checkout-source-contract-violation"
     if not is_wt:
+        if (d / ".git" / "retired-worktree-admin").exists():
+            return "skip", "retired-worktree-metadata-custody-unproven"
         try:
             if registered_sibling_worktrees(d):
                 return "skip", "registered-worktree-owner"

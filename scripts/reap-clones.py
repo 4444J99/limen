@@ -76,9 +76,11 @@ LOG = LIMEN_ROOT / "logs" / "reap-clones.jsonl"
 CLONE_REAP_ACCEPTANCE = LIMEN_ROOT / "docs" / "clone-reap-acceptance.jsonl"
 CLONE_REAP_ACCEPTANCE_DOC = LIMEN_ROOT / "docs" / "clone-reap-acceptance.md"
 
-# CORE repos the operator lives in / the conductor needs local — never reaped even if pushed-clean.
-DEFAULT_CORE = "limen session-meta sovereign-systems--elevate-align portfolio portvs universal-mail--automation"
-CORE = set(os.environ.get("LIMEN_REAP_CORE", DEFAULT_CORE).split())
+# PORTVS's three control pins plus the operator-protected PRDS workstream.
+# Other authored repositories are remote-default, subject to all custody/owner
+# checks below. Explicit host pins are additive; they cannot unpin controls.
+DEFAULT_CORE = "limen domus-genoma portvs public-record-data-scrapper prds-ops prds-engine prds-admin clavis"
+CORE = set(DEFAULT_CORE.split()) | set(os.environ.get("LIMEN_REAP_CORE", "").split())
 
 # Paths that are somebody else's lifecycle (worktree reaper, cartridge co-tenant, throwaway roots).
 EXCLUDE_MARKERS = (".claude/worktrees", ".limen-worktrees", ".home-cartridge", ".worktrees", "/node_modules/")
@@ -219,7 +221,11 @@ def _ignored_is_all_regenerable(repo: Path) -> bool:
     try:
         result = subprocess.run(
             ["git", "-C", str(repo), "ls-files", "--others", "--ignored", "--exclude-standard", "-z"],
-            capture_output=True, timeout=30, check=False, env=_GIT_ENV, stdin=subprocess.DEVNULL,
+            capture_output=True,
+            timeout=30,
+            check=False,
+            env=_GIT_ENV,
+            stdin=subprocess.DEVNULL,
         )
     except (OSError, subprocess.SubprocessError):
         return False
@@ -235,6 +241,9 @@ def _nested_context_reason(repo: Path) -> str | None:
     """
     gitdir = repo / ".git"
     try:
+        retired_metadata = gitdir / "retired-worktree-admin"
+        if retired_metadata.exists():
+            return "retired-worktree-metadata-custody-unproven"
         wt = gitdir / "worktrees"
         if wt.is_dir() and any(wt.iterdir()):
             return "has-linked-worktrees"
@@ -259,11 +268,17 @@ def _has_local_only_objects(repo: Path) -> bool:
     surfaces them even when remote-tracking refs are stale. (Category C — stale/force-rewound remotes
     that make refs/heads commits *look* pushed — is caught by the belt's post-`fetch --prune` re-run.)
     """
+
     def checked(*args: str) -> str | None:
         try:
             result = subprocess.run(
-                ["git", "-C", str(repo), *args], capture_output=True, text=True,
-                timeout=30, check=False, env=_GIT_ENV, stdin=subprocess.DEVNULL,
+                ["git", "-C", str(repo), *args],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+                env=_GIT_ENV,
+                stdin=subprocess.DEVNULL,
             )
         except (OSError, subprocess.SubprocessError):
             return None
@@ -299,7 +314,11 @@ def _pristine_now(repo: Path, expected_identity: tuple[int, int] | None = None) 
     try:
         status = subprocess.run(
             ["git", "-C", str(repo), "status", "--porcelain=v1", "--untracked-files=all", "-z"],
-            capture_output=True, timeout=30, check=False, env=_GIT_ENV, stdin=subprocess.DEVNULL,
+            capture_output=True,
+            timeout=30,
+            check=False,
+            env=_GIT_ENV,
+            stdin=subprocess.DEVNULL,
         )
     except (OSError, subprocess.SubprocessError):
         return False
@@ -339,6 +358,9 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
     sp = str(rp)
     if rp == LIMEN_ROOT or LIMEN_ROOT == rp:
         return Verdict(False, "live-root")
+    prds_root = (WORKSPACE / "prds-work").resolve()
+    if rp == prds_root or prds_root in rp.parents:
+        return Verdict(False, "protected-prds-root")
     owner_pid = active_process_owner(repo)
     if owner_pid is not None:
         return Verdict(False, f"active-process-cwd:{owner_pid}")
@@ -378,7 +400,9 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
     if _has_local_only_objects(repo):
         return Verdict(False, "unpushed-objects")
     # HEAD itself must be reachable from origin, not an unrelated remote namespace.
-    if not _run(["git", "-C", str(repo), "for-each-ref", "--contains", "HEAD", "--format=%(refname)", "refs/remotes/origin"]):
+    if not _run(
+        ["git", "-C", str(repo), "for-each-ref", "--contains", "HEAD", "--format=%(refname)", "refs/remotes/origin"]
+    ):
         return Verdict(False, "head-not-on-remote")
 
     # No canonical home = we could not re-clone it. Never reap a clone with no origin.
@@ -597,7 +621,17 @@ def main() -> int:
                     kept += 1
                     kept_reasons["remove-incomplete"] = kept_reasons.get("remove-incomplete", 0) + 1
                     if logf:
-                        logf.write(json.dumps({"repo": str(repo), "slug": slug, "state": "remove-incomplete", "error": type(exc).__name__}) + "\n")
+                        logf.write(
+                            json.dumps(
+                                {
+                                    "repo": str(repo),
+                                    "slug": slug,
+                                    "state": "remove-incomplete",
+                                    "error": type(exc).__name__,
+                                }
+                            )
+                            + "\n"
+                        )
                         logf.flush()
                     print(f"  INCOMPLETE/INVESTIGATE: {repo} (removal failed: {type(exc).__name__})")
                     continue
@@ -605,14 +639,37 @@ def main() -> int:
                     kept += 1
                     kept_reasons["remove-incomplete"] = kept_reasons.get("remove-incomplete", 0) + 1
                     if logf:
-                        logf.write(json.dumps({"repo": str(repo), "slug": slug, "state": "remove-incomplete", "error": "path-still-present"}) + "\n")
+                        logf.write(
+                            json.dumps(
+                                {
+                                    "repo": str(repo),
+                                    "slug": slug,
+                                    "state": "remove-incomplete",
+                                    "error": "path-still-present",
+                                }
+                            )
+                            + "\n"
+                        )
                         logf.flush()
                     print(f"  INCOMPLETE/INVESTIGATE: {repo} (path still present)")
                     continue
                 if logf:
-                    logf.write(json.dumps({"repo": str(repo), "slug": slug, "apparent_bytes": sz, "reason": v.reason, "state": "removed"}) + "\n")
+                    logf.write(
+                        json.dumps(
+                            {
+                                "repo": str(repo),
+                                "slug": slug,
+                                "apparent_bytes": sz,
+                                "reason": v.reason,
+                                "state": "removed",
+                            }
+                        )
+                        + "\n"
+                    )
                     logf.flush()
-            print(f"  {'REAPED' if args.apply else 'WOULD reap'}: {repo}  ({slug}, {sz / 1e9:.2f} GB apparent, {v.reason})")
+            print(
+                f"  {'REAPED' if args.apply else 'WOULD reap'}: {repo}  ({slug}, {sz / 1e9:.2f} GB apparent, {v.reason})"
+            )
             reaped += 1
             apparent_bytes += sz
     finally:

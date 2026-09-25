@@ -185,12 +185,35 @@ def _registered_worktree_paths(superproject: Path) -> tuple[Path, ...]:
 
 
 def _nested_payload_custody_reason(target: Path) -> str | None:
-    """Retain Gitlinks and LFS pointers until their separate custody is proven."""
+    """Retain populated Gitlinks and LFS payloads; empty Gitlinks hold no bytes.
+
+    This check is for linked-checkout retirement: the common repository and its
+    module object stores remain resident. An absent/empty uninitialized Gitlink
+    has only its tracked pointer, already covered by the parent commit's custody.
+    Never follow a symlink to decide that a nested checkout is empty.
+    """
     tracked = _run_git(target, "ls-files", "--stage", "-z")
     if tracked.returncode != 0:
         return "tracked-file-inventory-unavailable"
-    if any(entry.startswith("160000 ") for entry in tracked.stdout.split("\x00") if entry):
-        return "submodule-custody-unproven"
+    for entry in tracked.stdout.split("\x00"):
+        if not entry.startswith("160000 "):
+            continue
+        fields = entry.split("\t", 1)
+        if len(fields) != 2:
+            return "submodule-custody-unproven"
+        relative = Path(fields[1])
+        if relative.is_absolute() or not relative.parts or ".." in relative.parts:
+            return "submodule-custody-unproven"
+        nested = target
+        try:
+            for part in relative.parts:
+                nested = nested / part
+                if nested.is_symlink():
+                    return "submodule-custody-unproven"
+            if nested.exists() and (not nested.is_dir() or any(nested.iterdir())):
+                return "submodule-custody-unproven"
+        except OSError:
+            return "submodule-custody-unproven"
     lfs = _run_git(target, "lfs", "ls-files", "--name-only")
     if lfs.returncode != 0:
         return "lfs-inventory-unavailable"
@@ -290,6 +313,8 @@ def detach_registered_worktree(
             result={"head": head.stdout.strip(), "registered": True, "clean": True},
         )
         phase = "detach"
+        if nested_reason := _nested_payload_custody_reason(target):
+            raise RuntimeError(nested_reason)
         receipt = _write_state(receipt_path, receipt, state="applying", phase=phase)
         detached = _run_git(superproject, "worktree", "remove", str(target))
         if detached.returncode != 0:

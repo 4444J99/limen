@@ -201,6 +201,36 @@ def test_core_repo_is_kept(tmp_path, monkeypatch):
     assert v.reason == "core"
 
 
+@pytest.mark.parametrize(
+    "name", ["domus-genoma", "portvs", "public-record-data-scrapper", "prds-engine", "prds-admin", "clavis"]
+)
+def test_control_and_prds_default_pins_survive_pressure(tmp_path, name):
+    clone = _init_origin_and_clone(tmp_path, name)
+    verdict = _verdict(clone, age_days=99, pressure=True)
+    assert not verdict.reap
+    assert verdict.reason == "core"
+
+
+def test_new_component_under_protected_prds_root_is_retained(tmp_path, monkeypatch):
+    prds = tmp_path / "prds-work"
+    prds.mkdir()
+    clone = _init_origin_and_clone(prds, "new-component")
+    monkeypatch.setattr(reap, "WORKSPACE", tmp_path)
+    verdict = _verdict(clone, age_days=99, pressure=True)
+    assert not verdict.reap
+    assert verdict.reason == "protected-prds-root"
+
+
+def test_retired_worktree_metadata_keeps_its_parent_clone(tmp_path):
+    clone = _init_origin_and_clone(tmp_path, "metadata-owner")
+    custody = clone / ".git" / "retired-worktree-admin"
+    custody.mkdir()
+    (custody / "preserved.tar").write_bytes(b"preserved worktree administration")
+    verdict = _verdict(clone, age_days=99, pressure=True)
+    assert not verdict.reap
+    assert verdict.reason == "retired-worktree-metadata-custody-unproven"
+
+
 def test_live_root_is_kept(tmp_path, monkeypatch):
     clone = _init_origin_and_clone(tmp_path, "liveroot")
     monkeypatch.setattr(reap, "LIMEN_ROOT", clone.resolve())
