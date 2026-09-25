@@ -76,7 +76,7 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
     from limen import dispatch
 
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
-    monkeypatch.setattr(dispatch, "_remote_hydration_requirement_gib", lambda _task, **_kwargs: 0.001)
+    monkeypatch.setattr(dispatch, "_remote_hydration_requirement_for_repo_gib", lambda _repo, **_kwargs: 0.001)
     monkeypatch.setattr(dispatch, "_github_repositories_match", lambda _left, _right: True)
     monkeypatch.setattr(dispatch, "_github_slug_from_remote", lambda _remote: "owner/project")
     real_capture = dispatch._run_capture
@@ -190,7 +190,7 @@ def test_direct_acquisition_reserves_room_across_sessions(tmp_path, monkeypatch)
         seen_revisions.append(tree_ref)
         return 0.5
 
-    monkeypatch.setattr(dispatch, "_remote_hydration_requirement_gib", estimate)
+    monkeypatch.setattr(dispatch, "_remote_hydration_requirement_for_repo_gib", estimate)
     with lifecycle._capacity_admission(77123, "owner/project", "feature/ref", "one", None):
         first = dispatch._admission_lease_path(f"repo.ensure:77123:{lifecycle._digest('one')}")
         assert json.loads(first.read_text())["reserved_gib"] == 0.5

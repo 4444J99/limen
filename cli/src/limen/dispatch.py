@@ -4442,6 +4442,10 @@ def _tracked_head_checkout_gib(task: Task) -> float | None:
 
 
 def _remote_hydration_requirement_gib(task: Task, *, tree_ref: str | None = None) -> float | None:
+    return _remote_hydration_requirement_for_repo_gib(task.repo, tree_ref=tree_ref)
+
+
+def _remote_hydration_requirement_for_repo_gib(repo: str | None, *, tree_ref: str | None = None) -> float | None:
     """Measure a missing clone from live GitHub repository and tracked-tree metadata.
 
     GitHub's repository ``size`` is the current repository storage in KiB. The recursive default
@@ -4450,13 +4454,13 @@ def _remote_hydration_requirement_gib(task: Task, *, tree_ref: str | None = None
     rounded using that filesystem's live allocation unit; truncated trees, an unsafe cache root, or
     missing/malformed live metadata fail closed.
     """
-    if _path_like_repo(task.repo) or not task.repo or task.repo.count("/") != 1:
+    if _path_like_repo(repo) or not repo or repo.count("/") != 1:
         return None
     cache = _clone_cache_root()
     block = _filesystem_block_size(effective_worktree_root())
     if cache is None or block is None or _filesystem_device(cache) != _filesystem_device(effective_worktree_root()):
         return None
-    slug = task.repo.strip().removesuffix(".git")
+    slug = repo.strip().removesuffix(".git")
     try:
         repo_result = _run_capture(["gh", "api", f"repos/{slug}"], timeout=30)
         if repo_result.returncode != 0:
@@ -4472,7 +4476,7 @@ def _remote_hydration_requirement_gib(task: Task, *, tree_ref: str | None = None
             or float(repo_kib) < 0
         ):
             return None
-        requested_tree = default_branch if tree_ref in {None, "HEAD"} else tree_ref
+        requested_tree = default_branch if tree_ref is None or tree_ref == "HEAD" else tree_ref
         tree_result = _run_capture(
             ["gh", "api", f"repos/{slug}/git/trees/{quote(requested_tree, safe='')}?recursive=1"],
             timeout=60,
