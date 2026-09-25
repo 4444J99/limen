@@ -19,6 +19,7 @@ import time
 from pathlib import Path
 
 MAX_ASSET_BYTES = 2 * 1024**3 - 1  # GitHub requires each release asset to be under 2 GiB.
+MAX_RELEASE_ASSETS = 1000
 BATCH_DEADLINE_SECONDS = 25 * 60
 MAX_UPLOAD_FILES = 16
 MAX_UPLOAD_BYTES = 128 * 1024**2
@@ -145,6 +146,8 @@ def _preflight(
         assets.append((path, name, digest, size))
         total += size
     catalog_digest = assets[0][2]
+    if len(assets) > MAX_RELEASE_ASSETS:
+        raise AssetError("encrypted cohort exceeds one release's asset count; split into bounded cohorts before publication")
     # The encrypted catalog is the commit marker. Publish it only after every
     # ciphertext object has uploaded and passed remote readback.
     return [*assets[1:], assets[0]], f"arca-objects-{catalog_digest[:32]}", total
