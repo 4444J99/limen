@@ -184,6 +184,21 @@ def _registered_worktree_paths(superproject: Path) -> tuple[Path, ...]:
     return tuple(paths)
 
 
+def _nested_payload_custody_reason(target: Path) -> str | None:
+    """Retain Gitlinks and LFS pointers until their separate custody is proven."""
+    tracked = _run_git(target, "ls-files", "--stage", "-z")
+    if tracked.returncode != 0:
+        return "tracked-file-inventory-unavailable"
+    if any(entry.startswith("160000 ") for entry in tracked.stdout.split("\x00") if entry):
+        return "submodule-custody-unproven"
+    lfs = _run_git(target, "lfs", "ls-files", "--name-only")
+    if lfs.returncode != 0:
+        return "lfs-inventory-unavailable"
+    if lfs.stdout.strip():
+        return "lfs-custody-unproven"
+    return None
+
+
 def _default_cwd_owner_probe(target: Path) -> int | None:
     """Return an owning cwd PID, -1 when the unprivileged probe is unavailable."""
 
@@ -262,6 +277,8 @@ def detach_registered_worktree(
         ignored = _run_git(target, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
         if ignored.returncode != 0 or ignored.stdout:
             raise RuntimeError("ignored-payload-custody-unproven")
+        if nested_reason := _nested_payload_custody_reason(target):
+            raise RuntimeError(nested_reason)
         head = _run_git(target, "rev-parse", "HEAD")
         if head.returncode != 0 or not head.stdout.strip():
             raise RuntimeError("worktree-head-unavailable")
