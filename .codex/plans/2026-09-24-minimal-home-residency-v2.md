@@ -256,6 +256,10 @@ suite passed 19/19, the local full BATS suite passed 349/349, 37 targeted Python
 tests passed, and CI's E/F/W Ruff selection passed locally. The new remote CI run
 was queued at last observation. One exact-head merge-drain submission returned
 `DEFERRED — LIFECYCLE-UNKNOWN`; no merge or installed-runtime claim follows.
+Subsequent independent `df -k` measured 30,117,868 KiB (28.72 GiB) available,
+while APFS listed 10 local Time Machine snapshots rather than 16. Snapshot aging
+is observed, not an agent retirement action or an attributable cache result. The
+host remains below the 50 GiB new-worktree admission floor and the 200 GiB target.
 
 ### ARCA bounded-object checkpoint, 2026-09-25
 
