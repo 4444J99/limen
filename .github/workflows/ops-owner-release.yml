@@ -24,7 +24,5 @@ jobs:
     uses: 4444J99/ops/.github/workflows/cloudflare-owner-release.yml@f11b3cc5b7dc642e58a5c3f77d57df5040f7e1c3
     with:
       source_sha: f11b3cc5b7dc642e58a5c3f77d57df5040f7e1c3
-      # Opt in only on this marked accepted-main repair; inspections never write.
-      resolve_cancelled_run: ${{ github.event_name == 'push' && contains(github.event.head_commit.message, 'ops-resolve-cancelled-20260925') && 'edgarflash:production:1790332980000:scheduled' || '' }}
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
