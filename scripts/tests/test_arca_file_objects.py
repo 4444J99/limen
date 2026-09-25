@@ -184,3 +184,38 @@ def test_legacy_split_ciphertext_still_restores(tmp_path: Path, monkeypatch: pyt
     destination = tmp_path / "restored"
     arca.restore(objects / "catalog.gpg", objects, destination)
     assert (destination / "legacy.bin").read_bytes() == payload
+
+
+def test_failed_object_encryption_cleans_own_partial_and_keeps_catalog(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_crypto(monkeypatch)
+    source = tmp_path / "private"
+    source.mkdir()
+    (source / "file").write_bytes(b"payload")
+    output = tmp_path / "objects-store"
+    output.mkdir()
+    (output / "catalog.gpg").write_bytes(b"prior ciphertext")
+
+    def fail_after_partial(_source: Path, target: Path) -> None:
+        target.write_bytes(b"partial ciphertext")
+        raise arca.ObjectError("interrupted encryption")
+
+    monkeypatch.setattr(arca.PRIVATE, "_encrypt_file", fail_after_partial)
+    with pytest.raises(arca.ObjectError, match="interrupted encryption"):
+        arca.build(source, output)
+    assert (output / "catalog.gpg").read_bytes() == b"prior ciphertext"
+    assert list((output / "objects").glob(".*.partial")) == []
+
+
+def test_stale_partial_blocks_new_capture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_crypto(monkeypatch)
+    source = tmp_path / "private"
+    source.mkdir()
+    (source / "file").write_bytes(b"payload")
+    output = tmp_path / "objects-store"
+    (output / "objects").mkdir(parents=True)
+    stale = output / "objects" / ".unknown.gpg.partial"
+    stale.write_bytes(b"unclassified ciphertext")
+    with pytest.raises(arca.ObjectError, match="incomplete prior capture"):
+        arca.build(source, output)
+    assert stale.read_bytes() == b"unclassified ciphertext"
+    assert not (output / "catalog.gpg").exists()

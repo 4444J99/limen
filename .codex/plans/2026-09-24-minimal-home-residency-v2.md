@@ -260,8 +260,15 @@ legacy v1/v2 split-ciphertext catalogs remain readable. Seven focused tests and
 Ruff pass, including a v2 reconstruction case. This is source engineering only:
 the live ARCA private Releases still lack payload objects, independent-key
 restoration and HORREVM replication remain unproven, and no private original may
-be retired. Interrupted partial-object cleanup, bounded capture scheduling and
-the 1,000-asset release ceiling still need operational proof.
+be retired. The builder now serializes captures per output root and refuses
+stale hidden partial objects or a partial catalog left by a process crash.
+On an ordinary exception it removes only partial files created by that
+invocation, leaving the prior catalog untouched; committed orphan ciphertext
+remains for custody investigation. A symlinked object directory is rejected.
+Nine focused tests and Ruff pass, including interrupted-encryption cleanup
+and stale-partial refusal. This is fail-closed interruption handling, not yet
+durable same-snapshot resume. Bounded capture scheduling and the 1,000-asset
+release ceiling still need operational proof.
 
 ## Acceptance and reporting
 
