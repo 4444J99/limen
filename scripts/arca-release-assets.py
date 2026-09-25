@@ -155,9 +155,13 @@ def publish(
     *,
     apply: bool,
     expected_digests: dict[Path, str] | None = None,
+    verify_existing_by_server_digest: bool = False,
+    batch_deadline_seconds: int = BATCH_DEADLINE_SECONDS,
 ) -> dict[str, object]:
     if not REPO_RE.fullmatch(repo):
         raise AssetError("repository must be owner/name")
+    if not 60 <= batch_deadline_seconds <= BATCH_DEADLINE_SECONDS:
+        raise AssetError("batch deadline must be between 60 and 1500 seconds")
     stable_id, canonical, default_branch = _canonical_repository(repo) if apply else (None, repo, "main")
     assets, tag, total = _preflight(catalog, objects, expected_digests)
     if not apply:
@@ -169,7 +173,7 @@ def publish(
             "bytes": total,
         }
 
-    deadline = time.monotonic() + BATCH_DEADLINE_SECONDS
+    deadline = time.monotonic() + batch_deadline_seconds
 
     def remaining_timeout(limit: int = 900) -> int:
         remaining = deadline - time.monotonic()
@@ -186,6 +190,10 @@ def publish(
         else None
     )
     names = set(existing.stdout.splitlines()) if existing else set()
+    remote_digests = (
+        _release_asset_digests(canonical, tag)
+        if names and verify_existing_by_server_digest else {}
+    )
     if existing is None:
         _authorize_write(canonical)
         _run(
@@ -211,6 +219,12 @@ def publish(
         readback = Path(directory)
         for index, (source, asset_name, expected_digest, _size) in enumerate(assets, start=1):
             source_tag = tag if asset_name in names else prior_assets.get(asset_name)
+            if source_tag == tag and verify_existing_by_server_digest:
+                remote = remote_digests.get(asset_name)
+                if remote != (expected_digest, _size):
+                    raise AssetError("existing release asset has no matching server digest and size")
+                print(f"ARCA asset verified {index}/{len(assets)} (server digest)", file=sys.stderr, flush=True)
+                continue
             if source_tag is None:
                 if _digest(source)[0] != expected_digest:
                     raise AssetError("asset source changed before upload; no mismatched bytes sent")
@@ -255,6 +269,31 @@ def _release_exists(repo: str, tag: str) -> bool:
         timeout=60,
     ).stdout.splitlines()
     return tag in tags
+
+
+def _release_asset_digests(repo: str, tag: str) -> dict[str, tuple[str, int]]:
+    """Require GitHub's uploaded-state SHA-256 and size for existing assets."""
+    try:
+        data = json.loads(_run(["gh", "api", f"repos/{repo}/releases/tags/{tag}"], timeout=30).stdout)
+        rows = data["assets"]
+        if not isinstance(rows, list):
+            raise TypeError("assets are not a list")
+        result: dict[str, tuple[str, int]] = {}
+        for row in rows:
+            name = row["name"]
+            digest = row["digest"]
+            size = row["size"]
+            if (
+                not isinstance(name, str) or name in result
+                or row["state"] != "uploaded" or not isinstance(digest, str)
+                or not re.fullmatch(r"sha256:[0-9a-f]{64}", digest)
+                or not isinstance(size, int) or size < 0
+            ):
+                raise ValueError("existing asset metadata is incomplete")
+            result[name] = (digest.removeprefix("sha256:"), size)
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise AssetError("cannot verify existing release asset digests") from exc
+    return result
 
 
 def _existing_assets(repo: str) -> dict[str, str]:
