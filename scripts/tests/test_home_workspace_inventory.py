@@ -5,7 +5,6 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 
-
 SCRIPT = Path(__file__).resolve().parents[1] / "home-workspace-inventory.py"
 SPEC = importlib.util.spec_from_file_location("home_workspace_inventory", SCRIPT)
 assert SPEC and SPEC.loader
@@ -58,3 +57,19 @@ def test_vanished_temporary_path_is_recorded_not_unmeasured(tmp_path: Path) -> N
     assert state["complete"]
     assert state["unmeasured"] == []
     assert state["resolved_changes"][0]["resolution"] == "vanished_during_scan"
+
+
+def test_codex_empty_git_shell_is_distinct_from_populated_store(tmp_path: Path) -> None:
+    temporary = tmp_path / ".local" / "share" / "codex" / ".tmp"
+    empty = temporary / "git-empty"
+    populated = temporary / "git-populated"
+    for path in (empty, populated):
+        (path / "objects").mkdir(parents=True)
+        (path / "refs").mkdir()
+        (path / "HEAD").write_text("ref: refs/heads/main\n")
+    (populated / "refs" / "heads").mkdir()
+    state = inventory.initial([tmp_path])
+    inventory.advance(state, max_directories=100, max_seconds=10)
+    kinds = {row["path"]: row["kind"] for row in state["objects"]}
+    assert kinds[str(empty)] == "codex_empty_git_shell_candidate"
+    assert kinds[str(populated)] == "bare_git_candidate"

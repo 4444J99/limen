@@ -602,3 +602,13 @@ found exactly one regular `HEAD` file per directory, no config or index, and
 initialization shells, not demonstrated repository custody or meaningful
 storage recovery. The count and shape are inventory evidence only; process
 reference and current-state checks would still precede any retirement.
+
+The inventory classifier now records this exact three-entry shell shape as
+`codex_empty_git_shell_candidate` only under a Codex `.tmp` owner root. It
+checks regular `HEAD`, empty `objects` and `refs`, and rejects populated stores;
+the class itself grants no deletion authority. Resuming the private inventory
+reclassified all 2,431 current shells, leaving 23 other bare Git candidates.
+The root traversal has no frontier, but one cloud `TimeoutError` remains
+unmeasured, so `complete=false`. Four inventory tests and Ruff pass. The
+private 30 MB path-bearing state still needs encrypted remote custody; its
+aggregate counts alone are safe for this public execution record.
