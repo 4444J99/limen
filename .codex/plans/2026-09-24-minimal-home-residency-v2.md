@@ -585,8 +585,10 @@ cwd. An unavailable snapshot fails closed. An existing active lease is still
 opened idempotently under pressure after its canonical-store origin and
 worktree identity are verified. Focused lifecycle tests (8), Ruff lint/format,
 and mypy pass. This is admission protection, not a complete capacity
-reservation: the canonical store and checkout need separate storage-domain
-accounting when they reside on different volumes.
+reservation: direct callers still need a measured byte claim and shared
+machine reservation for the clone plus checkout. The existing cache-root
+resolver already requires the canonical store and worktree to share one
+filesystem; an unsafe different-volume cache fails closed.
 
 The live admission snapshot after this change returned `block_new_local=true`,
 22.82 GiB free, and an unavailable resource graph, so no new checkout was
