@@ -223,6 +223,22 @@ to the existing `beat_run` wrapper so timeouts and other child failures enter th
 heartbeat rung ledger with their actual exit codes, rather than being masked by
 a `tail` pipeline. This wrapper change still needs its own published receipt.
 
+### Physical-capacity checkpoint, 2026-09-25
+
+The owner-aware cache reclaimer checked 27 paths and produced nine unreferenced,
+regenerable candidates totaling 7,619,404 KiB apparent allocation under plan
+`e4c274c005a025ad74c014e3e77735ab45a05c03b2eb5c54894757b90497216b`.
+Its exact-plan apply removed all nine after fresh identity and process-reference
+checks; the apply receipt reports zero residual candidates. Six other paths were
+blocked by active processes or owner policy. No private, worktree, application
+recovery Git, installed-runtime, or plugin source was included.
+
+Fresh `df -k /Users/4jp/Workspace` reports 12,751,568 KiB available (12.16 GiB),
+so the apparent cache deletion did not achieve physical headroom. APFS currently
+reports 16 local Time Machine snapshots on the Data volume; these remain protected.
+The approximately 200 GiB capacity criterion is still unmet, and future candidate
+receipts must distinguish apparent bytes from measured free-space change.
+
 ## Acceptance and reporting
 
 Do not repeat subjective implementation percentages. Report original outcomes passed
