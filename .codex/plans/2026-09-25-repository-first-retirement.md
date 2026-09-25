@@ -241,3 +241,24 @@ the approximately 200 GiB outcome remain open.
   Pinned Ruff 0.15.8 lint and format checks passed for the changed test.
   This is local contract evidence, not a live-GitHub concurrent canary or
   proof that final-release canonical stores are retired.
+
+### Orphan-object guard and candidate preservation, 2026-09-25
+
+- A clean public-repository hydration clone contained one local dependency
+  commit. Gitleaks scanned that exact commit (one commit, 371 changed bytes)
+  with no findings. Pushed it additively to a new `preserve/local-only-*`
+  branch, without moving `main`; a fresh GitHub ref readback returned the exact
+  commit `849ca7ad1d83ccc9698e54a212dba5bf050f67d3`.
+- Before considering clone retirement, a deeper read-only object audit found
+  three stale remote-tracking refs, two commits reachable only through those
+  stale refs, and 187 objects unreachable from current refs (including 59
+  commits and 11 blobs). The clone remains retained. No fetch-prune or delete
+  was run on it, and no storage reclaim is claimed.
+- Fixed the clone reaper's evidence classifier to reject unreachable/dangling
+  objects during reporting, after live fetch/prune, and at the final mutation
+  edge. Added regressions for a ref-less blob and a deleted remote branch whose
+  only local reference is stale tracking state. This prevents fetch-prune from
+  converting recoverable history into unexamined garbage.
+- `python3 -m pytest -q cli/tests/test_reap_clones.py`: 75 passed. Pinned Ruff
+  0.15.8 lint and format checks passed. The full 75-test suite passed again
+  after formatting.

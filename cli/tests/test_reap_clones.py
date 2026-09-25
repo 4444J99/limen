@@ -165,6 +165,19 @@ def test_untracked_file_is_never_reaped(tmp_path):
     assert v.reason == "dirty-or-untracked"
 
 
+def test_unreachable_git_object_is_never_reaped(tmp_path):
+    """A written blob with no worktree file/ref is still unique local data."""
+    clone = _init_origin_and_clone(tmp_path, "orphanobject")
+    payload = clone / "orphan.bin"
+    payload.write_bytes(b"local object without a tree or ref\n")
+    _out(clone, "hash-object", "-w", str(payload))
+    payload.unlink()
+    verdict = _verdict(clone, age_days=99, pressure=True)
+    assert not verdict.reap
+    assert verdict.reason == "unreachable-objects"
+    assert reap._pristine_now(clone) is False
+
+
 def test_dirty_tracked_edit_is_never_reaped(tmp_path):
     clone = _init_origin_and_clone(tmp_path, "dirty")
     (clone / "README.md").write_text("edited, uncommitted\n")
@@ -641,6 +654,31 @@ def test_belt_refuses_deleted_branch_with_stale_tracking_ref(tmp_path):
     # classify is stale-permissive here (the tracking ref still advertises D) — the belt is what saves it
     assert _verdict(clone, age_days=99, pressure=True).reap is True
     assert reap.confirm_recloneable(clone) is False
+
+
+def test_belt_refuses_unique_history_only_in_stale_remote_tracking_ref(tmp_path):
+    """Pruning a remote-only tracking ref must not turn its unique commit into disposable garbage."""
+    clone = _init_origin_and_clone(tmp_path, "staleremoteonly")
+    _git(clone, "checkout", "-q", "-b", "feature")
+    (clone / "feature.txt").write_text("feature history held only by remote-tracking ref\n")
+    _git(clone, "add", "-A")
+    _git(clone, "commit", "-qm", "feature history")
+    feature = _out(clone, "rev-parse", "HEAD")
+    _git(clone, "push", "-q", "-u", "origin", "feature")
+    _git(clone, "checkout", "-q", "main")
+    _git(clone, "branch", "-D", "feature")
+    _git(clone, "reflog", "expire", "--expire=now", "--all")
+    subprocess.run(
+        ["git", "--git-dir", str(tmp_path / "staleremoteonly.git"), "update-ref", "-d", "refs/heads/feature"],
+        check=True,
+        capture_output=True,
+    )
+
+    assert _out(clone, "rev-parse", "refs/remotes/origin/feature") == feature
+    assert _verdict(clone, age_days=99, pressure=True).reap is True
+    assert reap.confirm_recloneable(clone) is False
+    assert _out(clone, "cat-file", "-e", f"{feature}^{{commit}}") == ""
+    assert f"unreachable commit {feature}" in _out(clone, "fsck", "--no-reflogs", "--unreachable")
 
 
 # --- Category D: TOCTOU — work landing between the check and the delete -------------------------------
