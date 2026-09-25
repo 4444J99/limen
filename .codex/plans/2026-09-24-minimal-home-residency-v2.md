@@ -215,6 +215,14 @@ this change. This is source-level scheduling and checkout retirement only:
 installed-runtime execution, canonical-store custody/retirement and a real GitHub
 reacquisition canary remain.
 
+After PR #2709 merged, PR #2718 conflicted with main only in the earlier plan
+record. The plan text was preserved and main merged at `0713f370f`; 35 focused
+lifecycle/abandonment tests and heartbeat syntax passed again, and GitHub now
+reports the draft PR mergeable. The new reconciliation call subsequently moved
+to the existing `beat_run` wrapper so timeouts and other child failures enter the
+heartbeat rung ledger with their actual exit codes, rather than being masked by
+a `tail` pipeline. This wrapper change still needs its own published receipt.
+
 ## Acceptance and reporting
 
 Do not repeat subjective implementation percentages. Report original outcomes passed
