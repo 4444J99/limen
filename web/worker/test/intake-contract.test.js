@@ -156,3 +156,39 @@ test("GitHub-backed Worker mutations fail closed at the missing conduct keeper w
   }
   assert.deepEqual(calls.map((call) => call.method), ["GET", "GET", "GET", "GET", "GET"]);
 });
+
+test("predicate tokenizer keeps quoted, escaped and unterminated quoting intact", () => {
+  assert.equal(isExecutablePredicate('pytest -q "web/api/tests/test_main.py"'), true);
+  assert.equal(isExecutablePredicate("pytest -q 'web/api/tests/test_main.py'"), true);
+  assert.equal(isExecutablePredicate('pytest "a\\"b" -q'), true);
+  // An unterminated quote ends the current word; scanning resumes after it.
+  assert.equal(isExecutablePredicate('pytest "abc'), true);
+  assert.equal(isExecutablePredicate("pytest 'abc"), true);
+  // A backslash outside quotes separates words, like whitespace does.
+  assert.equal(isExecutablePredicate("pytest\\-q"), true);
+  assert.equal(isExecutablePredicate("pytest\\"), true);
+});
+
+test("placeholder detection keeps exact angle-bracket and word semantics", () => {
+  assert.equal(isExecutablePredicate("pytest <target>"), false);
+  assert.equal(isExecutablePredicate("pytest tbd"), false);
+  assert.equal(isExecutablePredicate("pytest replace_me"), false);
+  // "<>" was never a placeholder (needs one non-">" char); "<<>" was one.
+  assert.equal(isExecutablePredicate("pytest <>"), true);
+  assert.equal(isExecutablePredicate("pytest <<>"), false);
+  assert.equal(isDurableReceiptTarget("<https://github.com/o/r/issues/1>"), false);
+  assert.equal(isDurableReceiptTarget("https://github.com/o/r/issues/1"), true);
+});
+
+test("adversarial tokenizer and placeholder inputs stay linear (ReDoS guard)", () => {
+  const elapsedMs = (fn) => {
+    const start = Date.now();
+    fn();
+    return Date.now() - start;
+  };
+  // Old shellWords regex blew up exponentially here (CodeQL js/redos).
+  assert.ok(elapsedMs(() => isExecutablePredicate('"' + "\\".repeat(50000))) < 2000);
+  // Old "<[^>]+>" backtracked quadratically here (CodeQL js/polynomial-redos).
+  assert.ok(elapsedMs(() => isDurableReceiptTarget("<".repeat(50000))) < 2000);
+  assert.ok(elapsedMs(() => isDurableReceiptTarget("<".repeat(49999) + ">")) < 2000);
+});
