@@ -909,8 +909,20 @@ resume from the remote asset list. Cohorts above GitHub's 1,000-asset
 per-release limit now use deterministic object-shard releases of at most
 1,000 assets each. The final release contains only the encrypted catalog and
 is created after every object shard passes readback. The observed 2,062-file
-copied source tree is therefore structurally publishable, but has not yet
-been captured, independently restored, or retired. Fourteen focused publisher
+copied source tree is therefore structurally publishable. It was captured
+locally as 2,062 independently encrypted objects plus one encrypted catalog;
+remote publication, independent restoration, and retirement remain pending.
+The publisher accepts an object directory to avoid oversized command lines,
+and its cross-release reuse index includes shard tags. The first live publish
+verified shard one (1,000 objects) and 512 objects in shard two, then a GitHub
+upload command failed. A digest-assisted resume confirmed all 1,512 existing
+assets but failed at the same next upload. GitHub's reported core rate budget
+was 5,000 and the release was not immutable; the precise upload rejection was
+not exposed by the former generic error. The publisher now reports only a
+bounded, neutral error category for the next investigation. Shard three and
+the final catalog release do not exist, so this copied source tree does **not**
+have complete remote custody. The source and all local ciphertext remain.
+Sixteen focused publisher
 test cases, Ruff, and the
 outbound preflight guard passed. This reduces per-object authorization and
 upload overhead for small-file cohorts; it does not establish whole-estate

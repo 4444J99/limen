@@ -404,6 +404,38 @@ def test_plans_shards_above_release_asset_limit_before_remote_effects(tmp_path: 
     assert result["release_count"] == 2
 
 
+def test_object_directory_and_prior_shard_assets_are_discoverable(tmp_path: Path, monkeypatch) -> None:
+    directory = tmp_path / "objects"
+    directory.mkdir()
+    second = directory / "b.gpg"
+    first = directory / "a.gpg"
+    second.write_bytes(b"cipher B")
+    first.write_bytes(b"cipher A")
+    assert assets._objects_from_dir(directory) == [first, second]
+    alias = tmp_path / "alias"
+    alias.symlink_to(directory, target_is_directory=True)
+    with pytest.raises(assets.AssetError, match="real directory"):
+        assets._objects_from_dir(alias)
+
+    shard = "arca-objects-" + "a" * 32 + "-part-0001"
+    base = "arca-objects-" + "b" * 32
+    response = f"{shard}\tobject-one.enc\n{base}\tobject-two.enc\nnot-arca\tobject-three.enc\n"
+    monkeypatch.setattr(assets, "_run", lambda *_a, **_k: subprocess.CompletedProcess([], 0, response, ""))
+    assert assets._existing_assets("owner/private-vault") == {
+        "object-one.enc": shard, "object-two.enc": base
+    }
+
+
+def test_failed_github_command_reports_neutral_error_category(monkeypatch) -> None:
+    def fail(*_args, **_kwargs) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess([], 1, "", "private path: /Users/name/file; HTTP 422 Validation Failed")
+
+    monkeypatch.setattr(assets.subprocess, "run", fail)
+    with pytest.raises(assets.AssetError, match=r"HTTP 422\); source ciphertext retained") as error:
+        assets._run(["gh", "release", "upload", "tag", "opaque.enc"])
+    assert "/Users/name" not in str(error.value)
+
+
 def test_repository_alias_must_resolve_to_one_private_immutable_identity(monkeypatch) -> None:
     responses = iter(
         [
