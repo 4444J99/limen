@@ -5529,6 +5529,9 @@ def test_missing_checkout_requirement_uses_live_remote_repository_and_tree_bytes
         ["gh", "api", "repos/not-present/example"],
         ["gh", "api", "repos/not-present/example/git/trees/trunk?recursive=1"],
     ]
+    calls.clear()
+    assert D._remote_hydration_requirement_gib(task, tree_ref="feature/revision") == expected
+    assert calls[-1] == ["gh", "api", "repos/not-present/example/git/trees/feature%2Frevision?recursive=1"]
 
 
 @pytest.mark.parametrize(
@@ -5536,6 +5539,7 @@ def test_missing_checkout_requirement_uses_live_remote_repository_and_tree_bytes
     [
         {"truncated": True, "tree": []},
         {"truncated": False, "tree": [{"type": "blob", "path": "bad"}]},
+        {"truncated": False, "tree": [{"type": "commit", "path": "vendor/lib", "sha": "a" * 40}]},
     ],
 )
 def test_missing_checkout_requirement_fails_closed_on_inexact_remote_tree(monkeypatch, tree_payload) -> None:
@@ -5661,13 +5665,13 @@ def test_clone_repo_acquires_immutable_identity_lease_on_worktree_device(tmp_pat
     monkeypatch.setenv("LIMEN_WORKDIR", str(internal))
 
     monkeypatch.setattr(D, "dispatch_clone_cache_root", lambda: scratch / ".worktrees-repo-cache")
-    ensure_calls: list[tuple[int, str, str]] = []
+    ensure_calls: list[tuple[int, str, str, str]] = []
     monkeypatch.setattr(D, "_github_repository_id", lambda _repo: 77123)
     monkeypatch.setattr(D, "_same_repo_pr_head_for_task", lambda _task: None)
     monkeypatch.setattr(D, "session_id", lambda: "test-session")
 
-    def fake_ensure(repo_id, revision, session_key):
-        ensure_calls.append((repo_id, revision, session_key))
+    def fake_ensure(repo_id, revision, session_key, *, admission_task_id):
+        ensure_calls.append((repo_id, revision, session_key, admission_task_id))
         return {
             "repository_id": str(repo_id),
             "lease_id": "77123-lease",
@@ -5688,8 +5692,8 @@ def test_clone_repo_acquires_immutable_identity_lease_on_worktree_device(tmp_pat
     assert repo["worktree"] == str(worktrees / "managed-checkout")
     assert repeated == repo
     assert ensure_calls == [
-        (77123, "HEAD", "test-session:WT-CLASSIFY"),
-        (77123, "HEAD", "test-session:WT-CLASSIFY"),
+        (77123, "HEAD", "test-session:WT-CLASSIFY", "WT-CLASSIFY"),
+        (77123, "HEAD", "test-session:WT-CLASSIFY", "WT-CLASSIFY"),
     ]
     assert not repo["store"].startswith(str(internal))
 

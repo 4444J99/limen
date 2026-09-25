@@ -797,6 +797,26 @@ including Python tests, shell formatting, CI, secret scanning and Semgrep.
 It remains open at the same head; the single deferred merge submission is
 not a merge receipt. #394 likewise remains open with named checks green.
 
+### Shared acquisition capacity reservation, 2026-09-25
+
+The draft Limen `repo.ensure` source now reserves measured checkout room under
+the same machine admission lock and durable lease registry used by dispatch.
+Dispatch hands its already-selected lease to `ensure`; the latter verifies its
+current process, state, shape and a fresh host admission snapshot without
+double-counting it. Direct callers reserve their own disk promise until the
+bare canonical store, requested revision and isolated worktree are materialized
+or the attempt fails. A confirmed dead process is handled by the existing
+admission-lease reaper. The live GitHub tree estimate now uses the requested
+revision, and gitlinks fail closed because their nested bytes are not measured.
+New canonical stores use a bare clone, avoiding a redundant default checkout.
+
+The full repository lifecycle and dispatcher tests passed (366 cases); focused
+tests for concurrent room promises, inherited-lease validation, requested-ref
+measurement and submodule denial passed after the final edit. No live checkout
+was created because current host free space remains below admission. The draft
+runtime is not installed; LFS acquisition sizing and final canonical-store
+metadata custody still require engineering and acceptance proof.
+
 ### Bounded cache retirement, 2026-09-25
 
 The current cache classifier produced exact plan
