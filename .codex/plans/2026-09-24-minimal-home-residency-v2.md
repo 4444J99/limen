@@ -804,3 +804,24 @@ worktrees, and recovery stores stayed excluded. Data-volume `df` free space
 was 22,013,264 KiB immediately before and 22,009,092 KiB afterward, so
 this is **not** counted as physical recovery. The concurrent difference is
 unattributed; APFS snapshots/sharing and other writers remain possible.
+
+### Active AI database encrypted cohorts, 2026-09-25
+
+Two additional live Codex SQLite databases were captured with the consistent
+online-backup adapter. Cohort A is 648,474,624 snapshot bytes; its encrypted
+catalog and 20 ciphertext objects (121,697,407 bytes in total) passed complete
+private GitHub Release readback at neutral tag
+`arca-objects-91dcf395651ab93e28542af05eb0d406`. Cohort B is
+1,641,095,168 snapshot bytes; its encrypted catalog and 49 ciphertext objects
+(503,227,751 bytes in total) passed complete readback at neutral tag
+`arca-objects-789f8f978a33394d9c9c7e246dbde720`. Independent `gh api`
+listings confirmed exactly 21 and 50 remote assets and the corresponding
+ciphertext byte totals. The repository is private; its releases are published
+inside that private repository. Names and source paths remain in encrypted
+catalogs, not public asset names.
+
+These are point-in-time encrypted remote captures, not independent-key restore
+or continuing coverage of mutable databases. Both native databases and the
+owner-private local captures remain. The capture/upload work consumed local
+space: current Data-volume free space is 19,073,576 KiB (~18.2 GiB), further
+from the 200 GiB target. No private original or capture has been retired.
