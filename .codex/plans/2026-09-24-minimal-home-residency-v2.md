@@ -256,6 +256,9 @@ suite passed 19/19, the local full BATS suite passed 349/349, 37 targeted Python
 tests passed, and CI's E/F/W Ruff selection passed locally. The new remote CI run
 was queued at last observation. One exact-head merge-drain submission returned
 `DEFERRED — LIFECYCLE-UNKNOWN`; no merge or installed-runtime claim follows.
+The exact Domus PR head later reported all GitHub checks successful, including
+Build/Test/Lint, BATS, Python, secret scanning and Semgrep. It remains open; the
+unchanged head is not resubmitted after the one-shot deferred rail receipt.
 Subsequent independent `df -k` measured 30,117,868 KiB (28.72 GiB) available,
 while APFS listed 10 local Time Machine snapshots rather than 16. Snapshot aging
 is observed, not an agent retirement action or an attributable cache result. The
