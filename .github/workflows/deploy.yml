@@ -17,6 +17,9 @@ on:
 
 jobs:
   precheck:
+    permissions:
+      contents: read
+      actions: read
     # Cron thrift: an unchanged hour must not pay a cold build+deploy. The
     # fingerprint covers both build inputs (web/app tree, tasks.yaml blob) plus
     # the UTC date, so API-derived surface data (pr-status) still refreshes at
@@ -54,6 +57,9 @@ jobs:
           fi
 
   deploy:
+    permissions:
+      contents: read
+      actions: write
     needs: precheck
     if: needs.precheck.outputs.should_deploy == 'true'
     runs-on: ubuntu-latest
