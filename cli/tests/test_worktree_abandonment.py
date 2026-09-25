@@ -112,11 +112,60 @@ def test_detach_retains_gitlink_without_submodule_custody(tmp_path: Path) -> Non
     _git(repo, "update-index", "--add", "--cacheinfo", f"160000,{head},nested")
     _git(repo, "commit", "-qm", "record gitlink")
     _git(target, "merge", "--ff-only", "main")
+    (target / "nested").mkdir(exist_ok=True)
+    (target / "nested" / "private.txt").write_text("unique nested payload")
     with pytest.raises(abandonment.WorktreeAbandonmentError, match="submodule-custody-unproven"):
         abandonment.detach_registered_worktree(
             repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
         )
     assert target.exists()
+    assert (target / "nested" / "private.txt").read_text() == "unique nested payload"
+
+
+def test_detach_allows_empty_gitlink_and_preserves_parent_ref(tmp_path: Path) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    head = _git(repo, "rev-parse", "HEAD")
+    _git(repo, "update-index", "--add", "--cacheinfo", f"160000,{head},nested")
+    _git(repo, "commit", "-qm", "record gitlink")
+    _git(target, "merge", "--ff-only", "main")
+    nested = target / "nested"
+    nested.mkdir(exist_ok=True)
+    expected = _git(target, "rev-parse", "HEAD")
+    result = abandonment.detach_registered_worktree(
+        repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+    )
+    assert result["state"] == "completed"
+    assert not target.exists()
+    assert _git(repo, "rev-parse", "refs/heads/work/test") == expected
+
+
+def test_absent_gitlink_still_requires_clean_worktree(tmp_path: Path) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    head = _git(repo, "rev-parse", "HEAD")
+    _git(repo, "update-index", "--add", "--cacheinfo", f"160000,{head},nested")
+    _git(repo, "commit", "-qm", "record gitlink")
+    _git(target, "merge", "--ff-only", "main")
+    (target / "nested").rmdir()
+    with pytest.raises(abandonment.WorktreeAbandonmentError, match="worktree-not-clean"):
+        abandonment.detach_registered_worktree(
+            repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+        )
+    assert target.exists()
+
+
+def test_nested_gitlink_probe_rejects_symlinked_parent(tmp_path: Path, monkeypatch) -> None:
+    target = tmp_path / "checkout"
+    target.mkdir()
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    (elsewhere / "nested").mkdir()
+    (target / "alias").symlink_to(elsewhere, target_is_directory=True)
+    monkeypatch.setattr(
+        abandonment,
+        "_run_git",
+        lambda *_args: subprocess.CompletedProcess([], 0, f"160000 {'a' * 40} 0\talias/nested\x00", ""),
+    )
+    assert abandonment._nested_payload_custody_reason(target) == "submodule-custody-unproven"
 
 
 def test_detach_retains_lfs_pointer_without_object_custody(tmp_path: Path, monkeypatch) -> None:
