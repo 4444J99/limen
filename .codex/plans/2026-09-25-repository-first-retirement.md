@@ -267,3 +267,30 @@ the approximately 200 GiB outcome remain open.
   for unreachable-object evidence. A subsequent liveness probe found a live
   SSH process with its cwd inside one of those repositories, adding an active
   owner gate. No copy was removed and no storage reclaim is attributed.
+
+### Bounded continuation, 2026-09-25
+
+- Re-ran the Workspace clone reaper after the liveness changes. The depth-six
+  apply pass performed fresh checks and reaped zero of 144 candidates. A
+  depth-seven dry run discovered eight more paths (152 total); none was
+  eligible. Current blockers include live process references, active tasks,
+  protected roots, dirty/ignored data, linked worktrees, missing administrative
+  metadata custody, and unique/unreachable Git objects. No uncertain copy was
+  modified.
+- The home-root depth-three dry run remained at zero eligible among 26
+  candidates. The broader depth-six home-root attempt exceeded the interactive
+  execution bound without a result and was not treated as a completed scan.
+  The existing resumable whole-home inventory remains the bounded source of
+  deeper candidate identities; it has no traversal frontier but remains
+  incomplete because one cloud-backed area was unmeasured.
+- A read-only summary of that private inventory distinguishes 254 Git
+  checkouts and 241 Git stores from application/dependency source, plus 23
+  non-checkout bare-store candidates. It also records 2,431 Codex temporary
+  empty Git initialization shells (one `HEAD` file each; 51,051 aggregate
+  bytes in the earlier owner-scoped shape check). These are not repositories
+  with remote content and offer negligible storage recovery; no shell or
+  application-owned store was removed in this pass.
+- Available Data-volume space was approximately 21 GiB at the fresh reaper
+  checks. This remains below the 50 GiB admission threshold; the 200 GiB
+  completion target is unmet. Directory cleanup is not being represented as
+  physical recovery.
