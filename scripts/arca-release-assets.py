@@ -219,7 +219,10 @@ def publish(
     prior_assets = _existing_assets(canonical)
     with tempfile.TemporaryDirectory(prefix="arca-release-readback-") as directory:
         readback = Path(directory)
+        verified_in_batch: set[str] = set()
         for index, (source, asset_name, expected_digest, _size) in enumerate(assets, start=1):
+            if asset_name in verified_in_batch:
+                continue
             source_tag = tag if asset_name in names else prior_assets.get(asset_name)
             if source_tag == tag and verify_existing_by_server_digest:
                 remote = remote_digests.get(asset_name)
@@ -255,7 +258,19 @@ def publish(
                 for upload_path in upload_paths:
                     upload_path.unlink()
                     names.add(upload_path.name)
-                source_tag = tag
+                download_args = ["gh", "release", "download", tag, "--repo", canonical]
+                for _pending_source, pending_name, _pending_digest in pending:
+                    download_args.extend(["--pattern", pending_name])
+                download_args.extend(["--dir", str(readback)])
+                _run(download_args, timeout=remaining_timeout())
+                for _pending_source, pending_name, pending_digest in pending:
+                    downloaded = readback / pending_name
+                    if not downloaded.is_file() or _digest(downloaded)[0] != pending_digest:
+                        raise AssetError("release readback digest mismatch; local source retained")
+                    downloaded.unlink()
+                    verified_in_batch.add(pending_name)
+                print(f"ARCA assets verified {len(verified_in_batch)}/{len(assets)} (batched readback)", file=sys.stderr, flush=True)
+                continue
             _run(
                 [
                     "gh",
