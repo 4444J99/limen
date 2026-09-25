@@ -13,8 +13,8 @@ permissions:
 # carrier never resets an uncertain run or redeploys from a diagnostics change.
 jobs:
   owner:
-    uses: 4444J99/ops/.github/workflows/cloudflare-owner-release.yml@ff3c2dd09294493a59b5fc5c60b146e2367a25a0
+    uses: 4444J99/ops/.github/workflows/cloudflare-owner-release.yml@062c6adefa5936662f75ea10e1bee060dde70ae1
     with:
-      source_sha: ff3c2dd09294493a59b5fc5c60b146e2367a25a0
+      source_sha: 062c6adefa5936662f75ea10e1bee060dde70ae1
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
