@@ -149,3 +149,75 @@ the new remote preservation refs do not turn it into a later metadata snapshot.
 This is one verified source-parity cohort, not whole-estate parity, a cloud coding
 run, or authority to remove the clone's administrative/private state. Retention
 and independent restoration requirements remain unchanged.
+
+## Continued implementation: isolated release and metadata-safe detach
+
+Owner: E4, https://github.com/4444J99/limen/issues/2741. Source commit:
+`d86d57237433ebe3151b0ec2cc8ec9a8113f7f4f` on the existing recovery PR #2718.
+This is implementation in the existing lifecycle, not a new cleanup framework.
+
+- Released eligible worktrees can now retire while sibling session leases stay
+  active. Active lease records and checkouts are not modified, and their shared
+  canonical store remains retained. Invalid lease shapes and states fail closed.
+- Native detach previously removed the worktree's administrative directory.
+  The lifecycle now inventories that directory, verifies a replica, and moves
+  the original into the retained common store before Git removes the replica.
+  Original file/directory identities, including native attributes held by those
+  identities, remain local; this is containment, not encrypted remote custody.
+  Reflog old/new object IDs and worktree-local refs receive additive local
+  preservation refs, so ordinary Git garbage collection cannot silently strand
+  their unique history after the worktree registration disappears.
+- Inventory is bounded and rejects locks, symlinks, special entries and
+  in-progress Git operations. Hidden tracked edits, ignored payloads, HEAD,
+  owner state and metadata are rechecked before the non-forced detach.
+- A write-ahead receipt permits recovery from the original/replica rename gap
+  only with matching path, store, inode and inventory evidence and an idle
+  owner. A completed detach followed by an interrupted lease checkpoint is
+  recovered from that lease's exact completed receipt. Missing directories,
+  stale receipts or changed retained metadata alone cannot establish completion.
+  Recovered checkpoint counts are separate from newly retired checkout counts.
+
+### Verification and deployment boundary
+
+Final focused command:
+`python3 -m pytest cli/tests/test_repo_lifecycle.py cli/tests/test_worktree_abandonment.py cli/tests/test_reap_clones.py -q`
+passed **137 tests**. It exercises real Git operations in isolated test fixtures,
+including active siblings, unique reflog/ref history, failed/corrupt copies,
+source drift, interrupted rename and lease writes, late ignored payloads,
+hidden tracked edits, malformed leases and parent-store retention.
+
+Scoped verification against `abdb7d71a79dd80e46d6d7e8576e892cc43d859e`
+passed **10 of 11** gates, including syntax, type checking, formatting, test
+hygiene and effector ownership. The full result remains **failed** because
+repository-wide Ruff lint reports inherited findings and exceeds its bounded
+output allowance. Comparing the four changed files against the exact base with
+Ruff JSON found **zero new findings**; the abandonment module has the same four
+pre-existing broad-exception findings at both revisions. No lint rule, capability
+or hook was disabled. E4 owns integration acceptance, including this red gate;
+the next predicate is the same scoped command after its actual findings change.
+
+A live, read-only probe of the configured managed cache found no residency
+registry and zero repository records. This is not coverage of all resident
+repositories and does not prove the installed producers use the new lifecycle.
+No installed runtime was changed and no user checkout was retired in this
+attempt. The source checkout remains active and retained. Secret scanning and
+the effective Git LFS pre-push hook remain enabled.
+
+### Program acceptance checkpoint
+
+The denominator is the five original end-state criteria, not commits or tests:
+
+| Required end state | Verified complete | Current evidence boundary |
+| --- | --- | --- |
+| Both roots fully classified | No | Prior census still has unmeasured coverage |
+| Every resident authored repo leased or pinned | No | Complete producer/resident reconciliation unverified |
+| Ordinary cycles return residency to baseline | No | Source tests pass; installed end-to-end cycle unverified |
+| Registered private material has custody and authorized retrieval | No | Partial ciphertext custody is not restoration or retrieval proof |
+| Approximately 200 GiB actual internal free space | No | Latest sample: 25,781,552 KiB, approximately 24.59 GiB |
+
+Thus **0/5 end-state criteria are verified complete**; implementation effort
+has no measured percentage. The latest free-space sample is an observation,
+not reclaim attributable to this attempt. Local metadata containment earns no
+reclaimed-storage credit. No private original, protected PRDS checkout, internal
+snapshot, canonical store or user branch was deleted. E4's remaining installed
+cycle and final-store custody gates remain open in the existing program.
