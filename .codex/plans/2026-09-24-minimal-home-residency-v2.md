@@ -689,3 +689,34 @@ that future runtime. The Data volume currently lists 12 purgeable local Time
 Machine snapshots. They remain protected under the plan, and their apparent
 retention is not credited as recoverable free space. Current actual free
 space is 23,728,532 KiB, well below the 200 GiB target.
+
+### Allocated-space owner census, 2026-09-25
+
+A bounded same-filesystem `du` pass, excluding CloudStorage traversal, measured
+220,415,164 KiB under home and 65,544,716 KiB under Workspace. Major home
+areas are Library 88,968,768 KiB, `.cache` 18,878,024 KiB, Pictures
+14,194,564 KiB, `.arca-vault` 11,968,156 KiB, and `.local` 9,008,872 KiB.
+Within Library, Application Support uses 18,975,368 KiB, Caches 14,445,792
+KiB, Containers 13,108,232 KiB, Group Containers 11,795,964 KiB, Messages
+10,637,572 KiB, and Mobile Documents 9,291,336 KiB. Within Workspace,
+Limen uses 32,138,232 KiB. These are allocated directory measurements,
+not independent reclaim estimates; APFS sharing and protected snapshots can
+prevent apparent deletion from raising `df` free space.
+
+The current cache reclaimer found only 436,048 KiB of policy-eligible caches.
+The large 11,398,160 KiB `uv` cache is actively referenced by eight observed
+processes and remains retained. The 1,638,064 KiB Codex runtime cache is
+Domus-owned installed infrastructure, not generic cache. No large cache
+cleanup was attempted. The verified cold-storage drive is not attached;
+`/Volumes` shows only internal and local-snapshot mounts. Drive-dependent
+replication and retirement wait for attachment while source engineering
+continues.
+
+CCE's configured corpus doorway still reaches the original private corpus,
+but the installed `/opt/homebrew/bin/cce` entry point fails before search
+because its Python package is absent. Domus's `cce-refresh` wrapper still
+points to a vanished `~/Code/organvm/conversation-corpus-engine` checkout and
+silently skips refresh. The remote repository resolves by immutable GitHub ID
+`1188128304`, but new local acquisition is denied by current host admission.
+This is an explicit unavailable retrieval state, not an authorized CCE search
+receipt.
