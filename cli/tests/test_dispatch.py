@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import base64
 import importlib.util
 import json
 import os
@@ -5532,6 +5533,32 @@ def test_missing_checkout_requirement_uses_live_remote_repository_and_tree_bytes
     calls.clear()
     assert D._remote_hydration_requirement_gib(task, tree_ref="feature/revision") == expected
     assert calls[-1] == ["gh", "api", "repos/not-present/example/git/trees/feature%2Frevision?recursive=1"]
+
+
+@pytest.mark.parametrize("attributes,admitted", [(b"*.txt text\n", True), (b"*.bin filter=lfs diff=lfs\n", False)])
+def test_remote_checkout_estimate_rejects_lfs_attributes(monkeypatch, attributes: bytes, admitted: bool) -> None:
+    sha = "a" * 40
+
+    def fake_capture(cmd, **_kwargs):
+        endpoint = cmd[-1]
+        if endpoint == "repos/not-present/example":
+            payload = {"default_branch": "main", "size": 2048}
+        elif "/git/trees/" in endpoint:
+            payload = {"truncated": False, "tree": [
+                {"type": "blob", "path": ".gitattributes", "size": len(attributes), "sha": sha},
+                {"type": "blob", "path": "data.bin", "size": 200},
+            ]}
+        else:
+            assert endpoint.endswith(f"/git/blobs/{sha}")
+            payload = {"encoding": "base64", "content": base64.b64encode(attributes).decode()}
+        return subprocess.CompletedProcess(cmd, 0, json.dumps(payload), "")
+
+    monkeypatch.setattr(D, "_clone_cache_root", lambda: Path("/scratch/.worktrees-repo-cache"))
+    monkeypatch.setattr(D, "_filesystem_block_size", lambda _path: 4096)
+    monkeypatch.setattr(D, "_filesystem_device", lambda _path: 2)
+    monkeypatch.setattr(D, "_run_capture", fake_capture)
+    estimate = D._remote_hydration_requirement_for_repo_gib("not-present/example")
+    assert (estimate is not None) is admitted
 
 
 @pytest.mark.parametrize(

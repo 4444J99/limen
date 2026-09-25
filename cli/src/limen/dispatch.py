@@ -1,3 +1,5 @@
+import base64
+import binascii
 import json
 import hashlib
 import math
@@ -4505,6 +4507,25 @@ def _remote_hydration_requirement_for_repo_gib(repo: str | None, *, tree_ref: st
         size = entry.get("size")
         if kind != "blob" or isinstance(size, bool) or not isinstance(size, int) or size < 0:
             return None
+        if Path(path).name == ".gitattributes":
+            # A Git tree reports the pointer blob's bytes, not the smudged LFS
+            # object's size. Until LFS batch sizing is available, decline a
+            # checkout whose tracked attributes can request LFS hydration.
+            blob_sha = entry.get("sha")
+            if not isinstance(blob_sha, str) or not re.fullmatch(r"[0-9a-f]{40}", blob_sha) or size > 1024**2:
+                return None
+            try:
+                blob_result = _run_capture(["gh", "api", f"repos/{slug}/git/blobs/{blob_sha}"], timeout=30)
+                if blob_result.returncode != 0:
+                    return None
+                blob = json.loads(blob_result.stdout)
+                if blob.get("encoding") != "base64" or not isinstance(blob.get("content"), str):
+                    return None
+                attributes = base64.b64decode("".join(blob["content"].split()), validate=True)
+            except (OSError, ValueError, TypeError, binascii.Error, json.JSONDecodeError):
+                return None
+            if len(attributes) != size or b"filter=lfs" in attributes:
+                return None
         entries.append((path, kind, size))
     checkout_bytes = _tracked_tree_allocation_bytes(entries, block)
     if checkout_bytes is None:
