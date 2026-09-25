@@ -791,3 +791,16 @@ receipt. The separate source-root theme PR #394 remains open; its earlier
 exact-head submission was deferred and has not been retried. Current actual
 Data-volume free space is 22,038,536 KiB (~21.0 GiB); no physical recovery
 is claimed from these source changes.
+
+### Bounded cache retirement, 2026-09-25
+
+The current cache classifier produced exact plan
+`2b8b6e1af5af10d15dcbdf7b6415c6be9071231f02159b6cb3c17645c47ccf91`
+with four inactive policy-eligible tool caches. Applying that unchanged plan
+removed `~/.cache/npm`, `~/.npm/_cacache`, Homebrew cache, and node-gyp
+cache (436,048 KiB apparent allocation); the recheck found zero residual
+candidates. Agent state, installed runtimes, live caches, private records,
+worktrees, and recovery stores stayed excluded. Data-volume `df` free space
+was 22,013,264 KiB immediately before and 22,009,092 KiB afterward, so
+this is **not** counted as physical recovery. The concurrent difference is
+unattributed; APFS snapshots/sharing and other writers remain possible.
