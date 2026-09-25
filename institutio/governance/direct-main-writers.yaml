@@ -74,6 +74,11 @@ surfaces:
     # remote aborts in ensure_vault before any push. #2089.
     disposition: external-encrypted-vault-upstream
     expected: {git_push: 3}
+  scripts/arca-preserve-git-ciphertext.py:
+    # The literal is the source refspec for a read-only base fetch into an
+    # isolated reconstruction repository. The helper performs no Git push.
+    disposition: read-only-private-vault-base-fetch-for-isolated-reconstruction
+    expected: {default_ref_literal: 1}
   scripts/capture.sh:
     disposition: main-to-stable-custody-ref-topic-branches-explicit
     expected: {git_push: 3}

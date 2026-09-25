@@ -37,7 +37,7 @@ class CacheSpec:
 
 
 CACHE_SPECS = (
-    CacheSpec("~/.cache/codex-runtimes", ()),
+    CacheSpec("~/.cache/codex-runtimes", ("codex",), "Domus installed runtime lifecycle"),
     CacheSpec("~/.cache/npm", ("npm", "npx", "node")),
     CacheSpec("~/.cache/organvm/capabilities", ("capabilities/conductor", "capabilities/voice-scorer")),
     CacheSpec("~/.cache/pnpm", ("pnpm", "node")),

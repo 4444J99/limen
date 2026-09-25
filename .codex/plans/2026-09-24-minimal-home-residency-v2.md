@@ -505,3 +505,25 @@ pushed; the PR is now mergeable and its new hosted checks were queued at the
 first observation. It remains draft and unmerged pending hosted evidence and
 the wider unfinished lifecycle acceptance. Domus #393 and PORTVS #12 remain
 open at their prior exact heads; no unchanged-head merge retry was attempted.
+
+### CI and installed-cache correction, 2026-09-25
+
+The new hosted PR head exposed two further exact gates. Python CI rejected an
+undeclared `LIMEN_REPO_RECONCILE_TIMEOUT` and the now-orphaned
+`LIMEN_REAP_VERIFY_REMOTE` declaration. The parameter registry now declares
+the bounded heartbeat timeout and removes the obsolete bypass knob; fresh
+remote verification remains mandatory. PR Gate rejected the read-only
+`refs/heads/main` fetch literal in the ARCA reconstruction helper as an
+unclassified direct-main seam. The writer registry now classifies its exact
+single read-only refspec. Local `check-params.py` and
+`direct-main-writer-audit.py` both pass.
+
+A current tool-cache census initially listed `~/.cache/codex-runtimes` as a
+generic 1.6 GiB deletion candidate. That path contains the installed Codex
+primary runtime, so the cache policy now assigns Domus installed-runtime
+ownership and retains it. The first exact-plan apply failed closed on drift
+before deletion. A subsequent fresh plan, with the runtime excluded, removed
+only two regenerable caches totaling 355,496 KiB apparent; it retained all
+active and owner-specific stores. Actual APFS free space rose from 25,125,420
+to 25,180,896 KiB, a measured 55,476 KiB gain, so apparent bytes are not
+credited as physical recovery. Twelve focused cache tests and Ruff passed.

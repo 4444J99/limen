@@ -1380,6 +1380,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Seconds budget for the beat-wired clone-reap voice (scripts/reap-clones.py) before the hygiene voice times it out. Bounded + fail-open like the sibling reclaim timeouts."
+  LIMEN_REPO_RECONCILE_TIMEOUT:
+    default: "90"
+    env: LIMEN_REPO_RECONCILE_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Seconds budget for one bounded released-repository custody reconciliation on a heartbeat hygiene tick. Timeout retains uncertain residency."
   LIMEN_DISK_PRESSURE_PATH:
     default: "$LIMEN_ROOT"
     env: LIMEN_DISK_PRESSURE_PATH
@@ -4697,12 +4703,6 @@ parameters:
     self_update: none
     owner: gitvs
     note: "Max repos scripts/sync-marketplace-config.py pushes a config PR to per run; the rest are taken next run (a bounded rotating fan-out, not a 301-repo stampede)."
-  LIMEN_REAP_VERIFY_REMOTE:
-    default: "1"
-    env: LIMEN_REAP_VERIFY_REMOTE
-    self_update: none
-    owner: limen-daemon
-    note: "ON — before deleting a reap candidate, git ls-remote confirms origin STILL holds HEAD (guards the deleted/renamed-origin case where the local clone is the only copy). Fail-safe: unreachable/offline → skip, never reap. Set 0 to trust local remote-tracking refs without the network round-trip."
   LIMEN_RECLAIM_APPLY:
     default: "1"               # ON — default beat removes only clean+content-preserved+idle roots
     env: LIMEN_RECLAIM_APPLY
