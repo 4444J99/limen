@@ -637,3 +637,40 @@ Git. Sensitive paths, names, and indexes remain inside the encrypted catalog.
 The plaintext state and linked fixed snapshot remain retained because the
 independent-key restoration gate is still unavailable; this receipt proves one
 encrypted remote copy, not complete private-data coverage or recoverability.
+
+### Fish host parity and remaining migration gates, 2026-09-25
+
+The running fish configuration still exported `WORKSPACE_ROOT` as Domus's
+`projects` directory despite the merged Domus source declaring `~/Workspace`.
+A scoped chezmoi render from merged Domus #393 used an explicit override for
+chezmoi's active source directory, keeping `DOMUS_ROOT` on the existing
+checkout rather than the temporary PR worktree. The only applied target was
+`~/.config/fish/conf.d/15-env.fish`. Post-apply scoped diff is empty; native
+fish now resolves `WORKSPACE_ROOT=~/Workspace` and the three control roots to
+their declared current paths. Five repository-root shell tests pass. The
+default Domus chezmoi source checkout remains on divergent `master` with
+unrelated local drift, so a broad future apply could regress this installed
+fish surface. Source-root reconciliation needs unique-commit/dirty-state
+custody and an active-consumer drain before changing chezmoi's sourceDir.
+
+PORTVS's merged bootstrap, run in read-only plan mode against the literal
+Workspace root, reports no safe additive actions. The Domus and PORTVS
+canonical paths are absent while legacy sources remain active; the Limen
+canonical path is an existing non-repository directory containing logs. Its
+compatibility links remain blocked by those canonical states. No control
+repository was moved or cloned below the live admission floor. GPG's current
+agent lists the recipient-matching secret subkey, but noninteractive loopback
+decryption of the encrypted inventory catalog fails with `No passphrase given`.
+This confirms that independent restoration still requires a sanctioned key
+unlock path; no private original is retired.
+
+The divergent Domus `master` source has exactly one commit absent from merged
+`main`, adding six OpenCode theme JSON files; `master` matches its remote. The
+existing merged Domus worktree was reused (no new checkout) to cherry-pick
+that exact commit onto current main as `aba45318eb2951e04e1284b8fcc1cfa94c2fbf35`.
+All six JSON files parse and diff hygiene passes. PR #394 is open, mergeable,
+and labeled `lifecycle:delivery`; its one exact-head merge-rail submission
+returned `DEFERRED — CI-PENDING`. No unchanged-head retry or merge claim
+follows. The default Domus checkout's `.serena/project.yml` drift remains
+untouched, and sourceDir migration waits for this PR's merge receipt plus a
+fresh active-consumer/custody check.
