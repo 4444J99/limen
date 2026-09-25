@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 
@@ -63,15 +64,26 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
     monkeypatch.setattr(lifecycle, "_repository", lambda _repo_id: (77123, "owner/project"))
     monkeypatch.setattr(lifecycle, "_verify_store_origin", lambda _store, _stable_id: None)
     monkeypatch.setattr(lifecycle, "dispatch_clone_cache_root", lambda: cache)
-    monkeypatch.setattr(lifecycle, "take_admission_snapshot", lambda _root: {"active": True, "block_new_local": False})
+    admitted = {
+        "active": True,
+        "block_new_local": False,
+        "room_gib": 1.0,
+        "free_gib": 51.0,
+        "floor_gib": 50.0,
+        "reserved_gib": 0.0,
+    }
+    monkeypatch.setattr(lifecycle, "take_admission_snapshot", lambda _root: admitted.copy())
     from limen import dispatch
 
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setattr(dispatch, "_remote_hydration_requirement_gib", lambda _task, **_kwargs: 0.001)
     monkeypatch.setattr(dispatch, "_github_repositories_match", lambda _left, _right: True)
     monkeypatch.setattr(dispatch, "_github_slug_from_remote", lambda _remote: "owner/project")
     real_capture = dispatch._run_capture
 
     def fake_capture(args, **kwargs):
         if args[:3] == ["gh", "repo", "clone"]:
+            assert args[5:] == ["--no-upstream", "--", "--bare"]
             return subprocess.run(
                 ["git", "clone", "--bare", str(remote), args[4]],
                 capture_output=True,
@@ -105,7 +117,7 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
         lambda _root: {"active": True, "block_new_local": True, "reason": "free space below floor"},
     )
     assert lifecycle.ensure(77123, "main", "session/one") == first
-    monkeypatch.setattr(lifecycle, "take_admission_snapshot", lambda _root: {"active": True, "block_new_local": False})
+    monkeypatch.setattr(lifecycle, "take_admission_snapshot", lambda _root: admitted.copy())
     concurrent_session = lifecycle.ensure(77123, "main", "session/two")
     default_head = lifecycle.ensure(77123, "HEAD", "session/head")
     assert first == second
@@ -154,6 +166,77 @@ def test_new_residency_denied_before_clone_under_disk_pressure(tmp_path, monkeyp
         lifecycle.ensure(77123, "main", "new-session")
     assert not (cache / "github-77123").exists()
     assert not list((cache / ".limen-residency" / "77123" / "leases").glob("*.json"))
+
+
+def test_direct_acquisition_reserves_room_across_sessions(tmp_path, monkeypatch):
+    from limen import dispatch
+
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setattr(
+        lifecycle,
+        "take_admission_snapshot",
+        lambda _root: {
+            "active": True,
+            "block_new_local": False,
+            "room_gib": 0.6,
+            "free_gib": 50.6,
+            "floor_gib": 50.0,
+            "reserved_gib": 0.0,
+        },
+    )
+    seen_revisions = []
+
+    def estimate(_task, *, tree_ref):
+        seen_revisions.append(tree_ref)
+        return 0.5
+
+    monkeypatch.setattr(dispatch, "_remote_hydration_requirement_gib", estimate)
+    with lifecycle._capacity_admission(77123, "owner/project", "feature/ref", "one", None):
+        first = dispatch._admission_lease_path(f"repo.ensure:77123:{lifecycle._digest('one')}")
+        assert json.loads(first.read_text())["reserved_gib"] == 0.5
+        with (
+            pytest.raises(lifecycle.RepositoryLifecycleError, match="only 0.100 GiB remains"),
+            lifecycle._capacity_admission(77123, "owner/project", "feature/ref", "two", None),
+        ):
+            pass
+    assert seen_revisions == ["feature/ref", "feature/ref"]
+    assert not first.exists()
+
+
+def test_dispatch_handoff_requires_live_selected_lease(tmp_path, monkeypatch):
+    from limen import dispatch
+
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setattr(lifecycle, "take_admission_snapshot", lambda _root: {"active": True, "block_new_local": False})
+    path = dispatch._admission_lease_path("task-1")
+    with (
+        pytest.raises(lifecycle.RepositoryLifecycleError, match="unavailable"),
+        lifecycle._capacity_admission(77123, "owner/project", "main", "session", "task-1"),
+    ):
+        pass
+    lifecycle._atomic_json(
+        path,
+        {
+            "schema": "limen.dispatch_admission_lease.v1",
+            "pid": os.getpid(),
+            "task_id": "task-1",
+            "phase": "selected",
+            "reserved_gib": 0.5,
+        },
+    )
+    with lifecycle._capacity_admission(77123, "owner/project", "main", "session", "task-1"):
+        assert path.exists()
+    assert path.exists()  # Dispatch still owns this reservation.
+    monkeypatch.setattr(
+        lifecycle,
+        "take_admission_snapshot",
+        lambda _root: {"active": True, "block_new_local": True, "reason": "live disk floor crossed"},
+    )
+    with (
+        pytest.raises(lifecycle.RepositoryLifecycleError, match="live disk floor crossed"),
+        lifecycle._capacity_admission(77123, "owner/project", "main", "session", "task-1"),
+    ):
+        pass
 
 
 def test_ensure_rejects_non_immutable_repository_identifiers():

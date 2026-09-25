@@ -11,6 +11,7 @@ from __future__ import annotations
 import fcntl
 import hashlib
 import json
+import math
 import os
 import re
 import subprocess
@@ -19,8 +20,9 @@ from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
-from limen.worktree_debt import take_admission_snapshot
+from limen.worktree_debt import IMPACT_DEBT_CREATING, admission_blocks, take_admission_snapshot
 from limen.worktree_initialization import WorktreeInitializationError, initialize_worktree
 from limen.worktree_roots import dispatch_clone_cache_root, effective_worktree_root
 
@@ -126,7 +128,78 @@ def _digest(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
-def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str, str]:
+@contextmanager
+def _capacity_admission(
+    stable_id: int, coordinate: str, revision: str, session_id: str, admission_task_id: str | None
+) -> Iterator[None]:
+    """Reserve live checkout room across direct callers and dispatch processes."""
+    from limen.dispatch import (
+        _admission_lease_path,
+        _machine_admission_lock,
+        _remote_hydration_requirement_gib,
+        _snapshot_with_machine_reservations,
+    )
+
+    direct_task_id = f"repo.ensure:{stable_id}:{_digest(session_id)}"
+    owned_path: Path | None = None
+    with _machine_admission_lock():
+        limen_root = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[3])
+        try:
+            fresh = take_admission_snapshot(limen_root)
+        except Exception as exc:
+            raise RepositoryLifecycleError("repository admission unavailable; no lease was issued") from exc
+        if fresh.get("active") and fresh.get("block_new_local"):
+            raise RepositoryLifecycleError(str(fresh.get("reason") or "new local repository residency denied"))
+        if admission_task_id is not None:
+            # Dispatch already measured and reserved this task. A missing or
+            # transferred lease is not a grant to create a second checkout.
+            try:
+                inherited = json.loads(_admission_lease_path(admission_task_id).read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                raise RepositoryLifecycleError("dispatch admission lease unavailable") from exc
+            if (
+                inherited.get("task_id") != admission_task_id
+                or inherited.get("pid") != os.getpid()
+                or inherited.get("schema") != "limen.dispatch_admission_lease.v1"
+                or inherited.get("phase") != "selected"
+                or isinstance(inherited.get("reserved_gib"), bool)
+                or not isinstance(inherited.get("reserved_gib"), int | float)
+                or not math.isfinite(inherited["reserved_gib"])
+                or inherited["reserved_gib"] < 0
+            ):
+                raise RepositoryLifecycleError("dispatch admission lease is inconsistent")
+        else:
+            snapshot, _slots = _snapshot_with_machine_reservations(fresh)
+            estimate = None
+            if snapshot.get("active") and not snapshot.get("block_new_local"):
+                estimate = _remote_hydration_requirement_gib(SimpleNamespace(repo=coordinate), tree_ref=revision)
+            blocked, reason = admission_blocks(IMPACT_DEBT_CREATING, snapshot, estimate)
+            if blocked:
+                raise RepositoryLifecycleError(reason)
+            owned_path = _admission_lease_path(direct_task_id)
+            _atomic_json(
+                owned_path,
+                {
+                    "schema": "limen.dispatch_admission_lease.v1",
+                    "pid": os.getpid(),
+                    "task_id": direct_task_id,
+                    "agent": "repo.ensure",
+                    "reserved_gib": estimate or 0.0,
+                    "phase": "selected",
+                    "created_at": datetime.now(UTC).isoformat(),
+                },
+            )
+    try:
+        yield
+    finally:
+        if owned_path is not None:
+            with _machine_admission_lock():
+                owned_path.unlink(missing_ok=True)
+
+
+def ensure(
+    repository_id: int | str, revision: str, session_id: str, *, admission_task_id: str | None = None
+) -> dict[str, str]:
     """Acquire an isolated checkout for a session; repeated calls are idempotent."""
     if not session_id.strip() or "\x00" in session_id:
         raise RepositoryLifecycleError("session_id must be nonblank")
@@ -175,70 +248,67 @@ def ensure(repository_id: int | str, revision: str, session_id: str) -> dict[str
                 "branch": str(record.get("branch", "")),
                 "head": head,
             }
-        # Existing leases may still be opened under pressure; a new checkout
-        # must use the same live disk and reaper gate as dispatch.
-        try:
-            limen_root = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[3])
-            admission = take_admission_snapshot(limen_root)
-        except Exception as exc:
-            raise RepositoryLifecycleError("repository admission unavailable; no lease was issued") from exc
-        if admission.get("active") and admission.get("block_new_local"):
-            raise RepositoryLifecycleError(str(admission.get("reason") or "new local repository residency denied"))
-        if store.exists():
-            _verify_store_origin(store, stable_id)
-        else:
+        # An existing lease can be reopened under pressure. A new checkout
+        # must reserve room on the worktree device before Git writes anything.
+        with _capacity_admission(stable_id, coordinate, revision, session_id, admission_task_id):
+            if store.exists():
+                _verify_store_origin(store, stable_id)
+            else:
+                try:
+                    # gh starts Git and its transport as children. Reuse dispatch's
+                    # process-group timeout so a child holding the output pipe cannot
+                    # outlive the acquisition deadline.
+                    from limen.dispatch import _run_capture
+
+                    result = _run_capture(
+                        ["gh", "repo", "clone", coordinate, str(store), "--no-upstream", "--", "--bare"],
+                        timeout=600,
+                    )
+                except (OSError, subprocess.SubprocessError) as exc:
+                    raise RepositoryLifecycleError("repository acquisition failed; no lease was issued") from exc
+                if result.returncode:
+                    raise RepositoryLifecycleError("repository acquisition failed; no lease was issued")
+                _verify_store_origin(store, stable_id)
             try:
-                # gh starts Git and its transport as children. Reuse dispatch's
-                # process-group timeout so a child holding the output pipe cannot
-                # outlive the acquisition deadline.
                 from limen.dispatch import _run_capture
 
-                result = _run_capture(["gh", "repo", "clone", coordinate, str(store)], timeout=600)
+                revision_result = _run_capture(
+                    ["git", "-C", str(store), "fetch", "origin", revision],
+                    timeout=300,
+                )
             except (OSError, subprocess.SubprocessError) as exc:
-                raise RepositoryLifecycleError("repository acquisition failed; no lease was issued") from exc
-            if result.returncode:
-                raise RepositoryLifecycleError("repository acquisition failed; no lease was issued")
-            _verify_store_origin(store, stable_id)
-        try:
-            from limen.dispatch import _run_capture
-
-            revision_result = _run_capture(
-                ["git", "-C", str(store), "fetch", "origin", revision],
-                timeout=300,
-            )
-        except (OSError, subprocess.SubprocessError) as exc:
-            raise RepositoryLifecycleError("requested revision fetch was interrupted; residency retained") from exc
-        if revision_result.returncode:
-            raise RepositoryLifecycleError("requested revision could not be fetched; residency retained")
-        target = _git(store, "rev-parse", "--verify", "FETCH_HEAD^{commit}")
-        root.mkdir(parents=True, exist_ok=True)
-        try:
-            initialized = initialize_worktree(store, worktree, branch=branch, checkout_ref=target, task_id=lease_id)
-        except WorktreeInitializationError as exc:
-            raise RepositoryLifecycleError(f"worktree initialization retained at {exc.journal_path}") from exc
-        lease_record: dict[str, object] = {
-            "schema": "limen.repository_lease.v1",
-            "lease_id": lease_id,
-            "repository_id": stable_id,
-            "coordinate": coordinate,
-            "session_digest": _digest(session_id),
-            "revision": revision,
-            "head": initialized.expected_head,
-            "branch": branch,
-            "store": str(store),
-            "worktree": str(worktree),
-            "state": "active",
-            "created_at": datetime.now(UTC).isoformat(),
-        }
-        _atomic_json(lease_file, lease_record)
-        return {
-            "repository_id": str(stable_id),
-            "lease_id": lease_id,
-            "store": str(store),
-            "worktree": str(worktree),
-            "branch": branch,
-            "head": initialized.expected_head,
-        }
+                raise RepositoryLifecycleError("requested revision fetch was interrupted; residency retained") from exc
+            if revision_result.returncode:
+                raise RepositoryLifecycleError("requested revision could not be fetched; residency retained")
+            target = _git(store, "rev-parse", "--verify", "FETCH_HEAD^{commit}")
+            root.mkdir(parents=True, exist_ok=True)
+            try:
+                initialized = initialize_worktree(store, worktree, branch=branch, checkout_ref=target, task_id=lease_id)
+            except WorktreeInitializationError as exc:
+                raise RepositoryLifecycleError(f"worktree initialization retained at {exc.journal_path}") from exc
+            lease_record: dict[str, object] = {
+                "schema": "limen.repository_lease.v1",
+                "lease_id": lease_id,
+                "repository_id": stable_id,
+                "coordinate": coordinate,
+                "session_digest": _digest(session_id),
+                "revision": revision,
+                "head": initialized.expected_head,
+                "branch": branch,
+                "store": str(store),
+                "worktree": str(worktree),
+                "state": "active",
+                "created_at": datetime.now(UTC).isoformat(),
+            }
+            _atomic_json(lease_file, lease_record)
+            return {
+                "repository_id": str(stable_id),
+                "lease_id": lease_id,
+                "store": str(store),
+                "worktree": str(worktree),
+                "branch": branch,
+                "head": initialized.expected_head,
+            }
 
 
 def release(lease_id: str) -> dict[str, str]:

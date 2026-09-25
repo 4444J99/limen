@@ -1430,7 +1430,7 @@ def _worktree_admission_snapshot() -> WorktreeAdmissionSnapshot:
 
 
 def _admission_runtime_dir() -> Path:
-    return Path(os.environ.get("LIMEN_ROOT", ".")) / "logs" / "dispatch-admission"
+    return Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[3]) / "logs" / "dispatch-admission"
 
 
 @contextmanager
@@ -1499,7 +1499,7 @@ def _active_admission_leases() -> list[dict[str, Any]]:
 def _running_local_marker_state() -> tuple[int, float]:
     total = 0
     reserved_gib = 0.0
-    run_dir = Path(os.environ.get("LIMEN_ROOT", ".")) / "logs" / "async-runs"
+    run_dir = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[3]) / "logs" / "async-runs"
     for marker in run_dir.glob("*.running"):
         stem = marker.name[: -len(".running")]
         stem_agent = stem.rsplit("__", 1)[-1] if "__" in stem else ""
@@ -1627,7 +1627,7 @@ def _mark_machine_admission_born(task_id: str) -> None:
         # Async selection has already transferred slot authority to its running marker. The marker
         # also carries pending checkout GiB until this exact birth point; once the filesystem
         # reflects the worktree, keep the marker slot but zero its disk promise.
-        run_dir = Path(os.environ.get("LIMEN_ROOT", ".")) / "logs" / "async-runs"
+        run_dir = Path(os.environ.get("LIMEN_ROOT") or Path(__file__).resolve().parents[3]) / "logs" / "async-runs"
         for marker in run_dir.glob("*.running"):
             try:
                 marker_payload = json.loads(marker.read_text(encoding="utf-8"))
@@ -4441,7 +4441,7 @@ def _tracked_head_checkout_gib(task: Task) -> float | None:
     return allocated / (1024**3) if allocated is not None else None
 
 
-def _remote_hydration_requirement_gib(task: Task) -> float | None:
+def _remote_hydration_requirement_gib(task: Task, *, tree_ref: str | None = None) -> float | None:
     """Measure a missing clone from live GitHub repository and tracked-tree metadata.
 
     GitHub's repository ``size`` is the current repository storage in KiB. The recursive default
@@ -4472,8 +4472,9 @@ def _remote_hydration_requirement_gib(task: Task) -> float | None:
             or float(repo_kib) < 0
         ):
             return None
+        requested_tree = default_branch if tree_ref in {None, "HEAD"} else tree_ref
         tree_result = _run_capture(
-            ["gh", "api", f"repos/{slug}/git/trees/{quote(default_branch, safe='')}?recursive=1"],
+            ["gh", "api", f"repos/{slug}/git/trees/{quote(requested_tree, safe='')}?recursive=1"],
             timeout=60,
         )
         if tree_result.returncode != 0:
@@ -4494,8 +4495,9 @@ def _remote_hydration_requirement_gib(task: Task) -> float | None:
         if kind == "tree":
             continue
         if kind == "commit":
-            entries.append((path, kind, None))
-            continue
+            # A gitlink's nested checkout is not included in the superproject
+            # tree size. Admit it only after a separate custody/size adapter.
+            return None
         size = entry.get("size")
         if kind != "blob" or isinstance(size, bool) or not isinstance(size, int) or size < 0:
             return None
@@ -4503,8 +4505,8 @@ def _remote_hydration_requirement_gib(task: Task) -> float | None:
     checkout_bytes = _tracked_tree_allocation_bytes(entries, block)
     if checkout_bytes is None:
         return None
-    # Repository storage plus one allocation unit per tracked object/path and the clone root/.git
-    # structure. This is a block-derived structural estimate, not a fixed byte allowance.
+    # Repository storage plus one allocation unit per tracked object/path and the bare
+    # store structure. The only checkout is the session worktree.
     repository_bytes = _round_allocation(math.ceil(float(repo_kib) * 1024), block)
     repository_bytes += block * (len(entries) + 2)
     return (repository_bytes + checkout_bytes) / (1024**3)
@@ -4541,7 +4543,7 @@ def _clone_repo(task: Task) -> Path | dict[str, str] | None:
     try:
         from limen.repo_lifecycle import RepositoryLifecycleError, ensure
 
-        lease = ensure(repository_id, revision, session_key)
+        lease = ensure(repository_id, revision, session_key, admission_task_id=task.id)
     except (RepositoryLifecycleError, OSError, subprocess.SubprocessError) as exc:
         print(f"  acquire {task.repo} retained: repository residency unavailable ({type(exc).__name__})")
         return None
