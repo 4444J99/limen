@@ -612,3 +612,12 @@ The root traversal has no frontier, but one cloud `TimeoutError` remains
 unmeasured, so `complete=false`. Four inventory tests and Ruff pass. The
 private 30 MB path-bearing state still needs encrypted remote custody; its
 aggregate counts alone are safe for this public execution record.
+
+The remaining 23 Git-store candidates now have a read-only owner grouping:
+16 OpenCode recovery snapshots (49,612 KiB apparent), three nested submodule
+stores (3,076 KiB), three pre-commit fixtures/cache stores (468 KiB), and one
+local test remote (264 KiB). The OpenCode stores expose no remote, refs, or
+valid HEAD through Git; the submodule and pre-commit stores contain live refs
+and remotes. These findings explain the candidate count but do not prove
+process ownership, reconstruction, or retirement eligibility. No member was
+removed.
