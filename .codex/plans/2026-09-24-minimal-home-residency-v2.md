@@ -985,6 +985,19 @@ tranche. The 200 GiB target remains unmet; the measured deficit is roughly
 accounting. Next eligible recovery requires owner-specific reconstruction and
 custody evidence, not size-based deletion.
 
+### Released-dirty lease reconciliation finding, 2026-09-25
+
+Source audit of `repo_lifecycle.release` and `reconcile` found a lifecycle
+stall: release records a dirty or unavailable checkout as
+`retained-dirty-or-unavailable`, but the bounded background reconciler only
+processes `released-awaiting-custody-investigation`. A later owner-preserved,
+clean checkout therefore cannot automatically re-enter retirement review.
+The next correction must revalidate actual worktree identity, exact HEAD,
+status including ignored payloads, process ownership and live remote custody
+before transitioning that lease to review; an expired lease or a clean status
+alone cannot authorize deletion. The final canonical store still has no
+metadata/object-custody proof and remains retained after checkout retirement.
+
 ### Selective ciphertext hydration foundation, 2026-09-25
 
 Limen's ARCA Release adapter now has an internal `hydrate_ciphertext`
