@@ -130,7 +130,8 @@ def test_accel_allows_is_ledger_gated():
 
 
 # ── dispatch_parallel integration: the tail is win-class only ───────────────────────────────────
-def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
+@pytest.mark.parametrize("approved", [False, True])
+def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch, approved_execution_policy, approved):
     monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "0")
     monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)
     monkeypatch.delenv("LIMEN_ACCEL", raising=False)
@@ -159,7 +160,9 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
             predicate="python3 -m pytest -q",
             receipt_target=f"github:x/y:pull-request:REV{i}",
         )
-        for i in range(10)
+        # Two approved remote tasks fit the keeper's current concurrency bound.
+        # Base=1 still proves that only a ledger-won task may enter the tail.
+        for i in range(2)
     ] + [
         Task(
             id=f"COV{i}",
@@ -179,22 +182,39 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch):
         )
         for i in range(10)
     ]
+    if approved:
+        policy = approved_execution_policy(*(task.id for task in tasks))
+        (tmp_path / "logs" / "autonomy-policy.json").write_text(json.dumps(policy))
     lf = _lf({"jules": 100}, {"jules": 5}, reset)
     lf.tasks = tasks
     tp = tmp_path / "tasks.yaml"
     save_limen_file(tp, lf)
     monkeypatch.setattr(D, "_deps_met", lambda t, by: True)
     monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
-    monkeypatch.setattr(D, "call_agent_dispatch", lambda agent, task, dry_run=False: True)
+    # The provider is synthetic; real selection, admission and keeper writes run.
+    # Deadline enforcement has its own tests and is not disabled in production.
+    launches = []
+
+    def launch(agent, task, *_args, **_kwargs):
+        launches.append(task.id)
+        return True
+
+    monkeypatch.setattr(D, "_journaled_agent_dispatch", launch)
     # dry-run prints picks; capture by monkeypatching print is noisy — instead call and inspect status.
-    D.dispatch_parallel(lf, tp, ["jules"], per_agent_limit=3, dry_run=True)
-    # The accelerated tail beyond the 3 base picks must be REVENUE (win) tasks, never COVERAGE (waste).
+    D.dispatch_parallel(lf, tp, ["jules"], per_agent_limit=1, dry_run=True)
+    # The accelerated tail beyond one base pick must be REVENUE, never COVERAGE.
     # Re-run non-dry to see which got reserved=dispatched.
-    D.dispatch_parallel(lf, tp, ["jules"], per_agent_limit=3, dry_run=False)
+    D.dispatch_parallel(lf, tp, ["jules"], per_agent_limit=1, dry_run=False)
     acknowledged = load_limen_file(tp)
     dispatched = [t for t in acknowledged.tasks if t.status == "dispatched"]
     disp = [t.id for t in dispatched]
-    assert len(disp) > 3, "accelerator dispatched more than the base 3 toward the cliff"
+    if not approved:
+        assert not disp
+        assert not launches
+        assert all(task.status == "open" for task in acknowledged.tasks)
+        return
+    assert len(disp) == 2, "accelerator exceeds base=1 without exceeding the keeper's concurrency=2"
+    assert sorted(launches) == sorted(disp)
     assert all(i.startswith("REV") for i in disp), f"tail must be win-class only, got {disp}"
     assert all(t.dispatch_log[0].status == "dispatched" for t in dispatched)
     assert all(dispatch_session_id(t.dispatch_log[0]) == "reserve" for t in dispatched)

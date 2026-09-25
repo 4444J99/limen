@@ -53,3 +53,66 @@ scripts/merge-drain.py --repo OWNER/NAME --pr <PR> --expected-head <SHA>
 
 `scripts/setup-rulesets.py` derives the rail from `institutio/github/estate.yaml` and verifies the
 live GitHub state after applying it.
+
+
+## Cross-repository operations boundary
+
+Runtime operations and engineering work have distinct admission domains. More repositories
+join those existing domains; they do not create a second authority for the same job. The
+[ops operations charter](https://github.com/4444J99/ops/blob/main/OPERATIONS.md) owns the
+runtime-job boundary. This section owns the engineering-work boundary.
+
+| Surface | Owns | Must not become |
+|---|---|---|
+| Limen conduct / TABVLARIVS | Engineering-work admission, resource leases, fencing generations, authority attenuation, and lifecycle transitions | A competing permanent runtime scheduler/deployer or product backlog |
+| `4444J99/ops` | Shared runtime scheduling/admission, runtime-job leases and budget allocation under its operations charter; the GitHub carrier and its own reports/bookends | A second engineering-work keeper, independent Jules dispatcher, or writer of product business data |
+| `4444J99/ops-witness` | Read-only reconciliation and evidence validation | A launcher, merger, quota allocator, or completion-state writer |
+| `4444J99/organvm-ci-relay` | Authenticated transport and the existing verification/integration trust boundary | A task selector or independent repair scheduler |
+| Participating repository / product operator | Its implementation, tests, acceptance predicate, isolated PR, product runtime and effects, and normal release path | The owner of another repository's product state or a second fleet scheduler |
+
+For the Chat-native Jules service, the existing Steward owns new starts; Intake supplies
+bounded work and Landing owns delivery verification/integration. These are operation roles,
+not extra repositories. Foreground and specialist work must reconcile the same active attempt
+before correcting, replacing, or integrating it. A role name, issue comment, or library receipt
+is not an atomic lock and does not establish that every caller uses the keeper.
+
+### Minimum contract for another participant
+
+1. Resolve the authoritative numeric repository ID and its current canonical coordinate before
+   admission. Preserve the ID as provenance and the canonical coordinate in the existing
+   `AuthorityEnvelopeV1` and resource keys. The path parser does not discover transfers or resolve
+   historical aliases; an unresolved identity is not a new, independent resource.
+2. Reuse `WorkPacketV1`: one stable work key for the acceptance intention, the observed base/head,
+   explicit allowed paths and effects, the real executor identity, and the existing bounded
+   deadline/spend/retry envelopes. A changed SHA or a retry is not a new intention.
+3. Acquire only the resources the operation consumes. Shared reads may coexist. A write conflicts
+   with an overlapping read or write on the same repository and base; sibling prefixes do not.
+   A whole-root claim is a typed path claim, including its normalized slashless form. A broad
+   authority envelope is permission, not by itself an exclusive repository lease.
+4. Treat the base segment as part of the isolation domain, not proof of semantic independence.
+   Separate branch claims do not prove that two changes to a shared API, migration, generated
+   registry, lockfile, or release contract can safely land independently. Declare the shared
+   integration resource and use the existing exact-head integration rail.
+5. Keep execution occupancy, branch ownership, and landing work in progress separate. A provider's
+   positive terminal receipt frees its execution slot, not an unmerged branch or its acceptance
+   obligation. Unknown creation results retain their reservation; a timeout is not cancellation.
+   Exact-head output acceptance must reject stale generations through the existing keeper.
+
+A GitHub Actions concurrency group coordinates runs within its repository, not the provider
+account across repositories. It cannot enforce the account-wide Jules ceiling. Local workflow
+persistence serialization, keeper resource leases, and provider capacity accounting solve
+separate conflicts and must remain separate.
+
+### Executable boundary regression
+
+`spec/contracts/conduct/resource-overlap-vectors.json` is test data, not another admission
+implementation. Both `cli/tests/test_conduct_resource_boundaries.py` and
+`web/worker/test/conduct-resource-boundaries.test.js` consume it. The Python tests additionally
+exercise real keeper refusal of root claims outside path authority and root-read versus
+child-write contention. The thousand-repository fixture proves namespace isolation only;
+it is not a thousand-task execution or a production load/concurrency claim.
+
+This contract and its regression do not certify current account coverage, deployed keeper
+adoption, credentials, 100 accepted starts per day, or an account-wide maximum of 15 executions.
+Those remain the existing `4444J99/limen#2680` acceptance predicates, with credential custody in
+`#320`. No new service, timer, queue, production deployment, or permission is created here.

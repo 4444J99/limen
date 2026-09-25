@@ -206,7 +206,7 @@ def test_live_fanout_reserves_root_planner_and_executor_before_exposing_child_en
         "LIMEN_EXECUTION_HASH": executor_packet.execution_hash,
         "LIMEN_LEASE_TOKEN": "token-3",
     }
-    assert snapshot["conduct"]["root_runtime_env"]["LIMEN_LEASE_TOKEN"] == "token-1"
+    assert "LIMEN_LEASE_TOKEN" not in snapshot["conduct"]["root_runtime_env"]
     assert "capability_token" not in snapshot["conduct"]["root"]
     rendered = mod.render_markdown(
         {
@@ -258,8 +258,9 @@ def test_unavailable_broker_fails_before_submit_and_leaves_packets_unleased() ->
     assert snapshot == proposed
 
 
-def test_real_local_broker_accepts_the_reserved_three_level_graph(tmp_path: Path) -> None:
+def test_real_local_broker_accepts_the_reserved_three_level_graph(tmp_path: Path, approved_execution_policy) -> None:
     mod = _load()
+    approved_execution_policy("current-session-fanout/" + "a" * 24 + "/root")
     client = LocalConductClient(tmp_path / "conduct.sqlite3")
     for agent, capabilities, concurrency in (
         ("codex", frozenset({"conduct", "execute"}), 4),
@@ -283,9 +284,12 @@ def test_real_local_broker_accepts_the_reserved_three_level_graph(tmp_path: Path
     snapshot = _snapshot()
     result = mod.reserve_fanout(snapshot, client)
     graph = client.graph(str(result["root"]["root_run_id"]))
-
     assert result["status"] == "reserved"
     assert len(graph["nodes"]) == 3
     assert {node["packet"]["depth"] for node in graph["nodes"]} == {0, 1, 2}
+    root = next(node for node in graph["nodes"] if node["packet"]["depth"] == 0)
+    assert root["packet"]["intent"]["kind"] == "fanout-root"
+    assert root["packet"]["effect"] == "read"
+    assert root["packet"]["required_capabilities"] == ["conduct"]
     assert snapshot["planner_packets"][0]["runtime_env"]["LIMEN_LEASE_GENERATION"]
     assert snapshot["executor_packets"][0]["runtime_env"]["LIMEN_EXECUTION_HASH"]

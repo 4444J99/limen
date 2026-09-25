@@ -343,6 +343,15 @@ def reserve_growth(action: str, identity: str, *, work_key: str | None = None, r
     restarting a producer never resets its limit. This is runtime evidence under
     the existing autonomy policy, not another task registry.
     """
+    if action not in {"issue", "branch", "worktree"}:
+        raise InventoryAdmissionError("execution_resource_unknown")
+    if action == "worktree" and root is None:
+        from limen.storage_headroom import StorageAdmissionError, require_storage_headroom
+
+        try:
+            require_storage_headroom(identity)
+        except StorageAdmissionError as exc:
+            raise InventoryAdmissionError(str(exc)) from None
     # Production producers share the authenticated keeper, including remote lanes.
     # Explicit root is the isolated local fixture adapter; no production caller
     # supplies it and absence of keeper credentials never falls back to local state.
@@ -369,8 +378,6 @@ def reserve_growth(action: str, identity: str, *, work_key: str | None = None, r
         root or os.environ.get("LIMEN_LIVE_ROOT") or os.environ.get("LIMEN_ROOT") or Path.home() / "Workspace" / "limen"
     )
     priority = require_approved_priority(work_key or os.environ.get("LIMEN_WORK_KEY"), root=root)
-    if action not in {"issue", "branch", "worktree"}:
-        raise InventoryAdmissionError("execution_resource_unknown")
     limit = priority.get("resource_limits", {}).get(action, 0)
     if not isinstance(limit, int) or isinstance(limit, bool) or limit < 1:
         raise InventoryAdmissionError("execution_resource_not_approved")
@@ -433,7 +440,7 @@ def admit_execution(
     require(
         waiting
         or sum(
-            execution_active(r, now)
+            execution_occupied(r, now)
             or (not r.get("execution_admission") and r["status"] in {"reserved", "running", "stop_requested"})
             for r in runs
             if r["packet"].get("intent", {}).get("kind") != "fanout-root"
@@ -471,7 +478,14 @@ def admit_execution(
             ),
         )
     require(deadline > now, "execution_attempt_exhausted")
+    deadline_policy = priority.get("deadline_policy", "hard_deadline")
+    require(deadline_policy in {"hard_deadline", "fenced_async"}, "execution_deadline_policy_invalid")
+    if inherited:
+        require(
+            deadline_policy == inherited.get("deadline_policy", "hard_deadline"), "execution_deadline_policy_changed"
+        )
     return {
+        "deadline_policy": deadline_policy,
         "outcome_id": priority["outcome_id"],
         "reserved_seconds": 1800,
         "attempt_deadline": deadline.isoformat(),
@@ -494,3 +508,22 @@ def execution_active(run, now):
     if not admission or datetime.fromisoformat(admission["attempt_deadline"].replace("Z", "+00:00")) <= now:
         return False
     return admission.get("legacy_active") is True or run["status"] in {"reserved", "running", "stop_requested"}
+
+
+def pending_remote_attempts(run):
+    """An expired local lease is not proof that uncancellable Jules work stopped.
+
+    Old records without provider_state remain unknown; only explicit terminal
+    observation or a definite pre-submission refusal releases remote occupancy.
+    """
+    return [
+        attempt
+        for attempt in run.get("attempts", [])
+        if attempt.get("adapter") == "jules-api"
+        and attempt.get("provider_state", "unknown") not in {"not_started", "terminal"}
+    ]
+
+
+def execution_occupied(run, now):
+    """Capacity accounting only. Never use this as permission to execute or land."""
+    return execution_active(run, now) or bool(pending_remote_attempts(run))

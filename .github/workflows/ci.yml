@@ -47,6 +47,9 @@ concurrency:
 
 jobs:
   python:
+    permissions:
+      contents: read
+      actions: write
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
@@ -132,6 +135,9 @@ jobs:
         run: scripts/probe-local-runtime.sh
 
   verify:
+    permissions:
+      contents: read
+      actions: write
     # Post-merge whole-proof (feeds check-main-green's exact-head predicate) and
     # manual escape — NOT a PR gate: on the PR event every proof it would rerun
     # already ran in its owning job (docs/plans/ci-bounded-shards.md: the
@@ -178,6 +184,8 @@ jobs:
           LIMEN_VERIFY_LIVE: "0"
 
   compat:
+    permissions:
+      contents: read
     # Nightly floor/prod compile check: 3.11 is the published requires-python
     # floor (cli/pyproject.toml), 3.14 matches web/api/Dockerfile's runtime
     # image. The suite itself runs on 3.12 in pr-gate and `verify`; the former
@@ -200,6 +208,9 @@ jobs:
   # Audits report independently: an advisory cannot erase compatibility evidence.
   # The post-merge aggregate still requires both audit and compatibility success.
   npm-audit:
+    permissions:
+      contents: read
+      actions: write
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     strategy:
@@ -219,6 +230,9 @@ jobs:
         run: python3 scripts/npm-audit-gate.py "${{ matrix.package-directory }}"
 
   worker:
+    permissions:
+      contents: read
+      actions: write
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:
@@ -242,6 +256,9 @@ jobs:
         run: scripts/probe-local-worker.sh
 
   web:
+    permissions:
+      contents: read
+      actions: write
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest
     steps:

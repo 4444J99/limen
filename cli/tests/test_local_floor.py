@@ -127,8 +127,9 @@ def test_slow_label_still_escapes_to_jules(monkeypatch, tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_ollama_stdout_lands_as_report_artifact(monkeypatch, tmp_path):
+def test_ollama_stdout_lands_as_report_artifact(monkeypatch, tmp_path, admitted_local_execution):
     task = Task(id="t-floor-2", title="sweep", type="scan", created="2026-07-09T00:00:00Z", target_agent="ollama")
+    admitted_local_execution(dispatch, task.id)
 
     class FakeRun:
         returncode = 0
@@ -148,8 +149,9 @@ def test_ollama_stdout_lands_as_report_artifact(monkeypatch, tmp_path):
     assert report.exists() and "3 links checked" in report.read_text()
 
 
-def test_non_ollama_agent_writes_no_report(monkeypatch, tmp_path):
+def test_non_ollama_agent_writes_no_report(monkeypatch, tmp_path, admitted_local_execution):
     task = Task(id="t-floor-3", title="sweep", type="scan", created="2026-07-09T00:00:00Z", target_agent="codex")
+    admitted_local_execution(dispatch, task.id)
 
     class FakeRun:
         returncode = 0
