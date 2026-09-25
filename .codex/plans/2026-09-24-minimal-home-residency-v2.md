@@ -1071,6 +1071,9 @@ targets yielded only two deliberately retained UCC/PRDS support lanes; the
 Workspace clone reaper and depth-three home-root clone check each yielded zero
 eligible clones. A refs-only standalone-clone proposal from the linked reclaimer
 was closed by routing ordinary clone retirement to the clone-specific custody
-classifier. Focused lifecycle, debt and candidate tests pass (125). Both roots
+classifier. The strict lifecycle debt report also had two evidence gaps
+(ignored payloads and stale remote-tracking refs); these are corrected, and it
+now agrees with the reclaimer on the same two candidates. Focused lifecycle,
+debt and candidate tests pass (126). Both roots
 and deeper application-owned stores remain incompletely classified; no capacity
 or original completion criterion is claimed.

@@ -109,7 +109,12 @@ the approximately 200 GiB outcome remain open.
   to that owner-specific classifier; only exact restored-custody receipts may
   authorize a clone through the recovery path. The three Limen candidates were
   not deleted.
-- Focused lifecycle/debt/candidate tests pass: 125. Both reaper passes were
+- The debt reporter initially overstated this set as 19 reapable. It did not
+  reject 16 ignored-payload worktrees and trusted one stale remote-tracking tip.
+  Reporting now uses the live `ls-remote` advertisement for reachability and
+  rejects ignored payloads; strict debt inventory and the reclaimer now agree
+  on exactly the same two UCC/PRDS candidates.
+- Focused lifecycle/debt/candidate tests pass: 126. Both reaper passes were
   dry-run only. No branch, private original, snapshot, or UCC lane was removed.
 - Available Data-volume space at the latest measurement was approximately
   27.5 GiB; the ~200 GiB outcome remains unmet. Full home/Workspace coverage is
