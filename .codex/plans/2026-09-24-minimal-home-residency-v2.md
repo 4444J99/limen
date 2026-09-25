@@ -621,3 +621,19 @@ valid HEAD through Git; the submodule and pre-commit stores contain live refs
 and remotes. These findings explain the candidate count but do not prove
 process ownership, reconstruction, or retirement eligibility. No member was
 removed.
+
+### Encrypted inventory snapshot custody, 2026-09-25
+
+The current private inventory state (30,590,791 plaintext bytes) was captured
+with ARCA's per-file encrypted-object pipeline. A hard link in an owner-private
+capture directory fixes the source inode without duplicating plaintext blocks;
+source digest validation passed during encryption. The private ARCA repository
+`1332536900` received one opaque ciphertext object and one encrypted catalog
+on tag `arca-objects-9bac65aa7962314a2d81b27e84dc398e`. The publisher
+returned `state=verified`, two assets, and 2,611,964 ciphertext bytes after
+full remote readback. An independent GitHub API listing confirms both uploaded
+assets with SHA-256 digests and the exact byte total. No large object entered
+Git. Sensitive paths, names, and indexes remain inside the encrypted catalog.
+The plaintext state and linked fixed snapshot remain retained because the
+independent-key restoration gate is still unavailable; this receipt proves one
+encrypted remote copy, not complete private-data coverage or recoverability.
