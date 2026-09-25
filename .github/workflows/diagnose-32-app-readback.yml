@@ -16,9 +16,12 @@ jobs:
           persist-credentials: false
       - name: Probe accepted App-only helper and bounded repository reads
         env:
-          GITHUB_APP_ID: ${{ secrets.GITHUB_APP_ID }}
-          GITHUB_APP_PRIVATE_KEY: ${{ secrets.GITHUB_APP_PRIVATE_KEY }}
-          GITHUB_APP_INSTALLATION_ID: ${{ secrets.GITHUB_APP_INSTALLATION_ID }}
+          # New declared runner aliases, not a claim that these sinks are provisioned.
+          # GitHub Actions secret names cannot start with the reserved GITHUB_ prefix.
+          # Keep the accepted helper's environment interface unchanged.
+          GITHUB_APP_ID: ${{ secrets.LIMEN_GITHUB_APP_ID }}
+          GITHUB_APP_PRIVATE_KEY: ${{ secrets.LIMEN_GITHUB_APP_PRIVATE_KEY }}
+          GITHUB_APP_INSTALLATION_ID: ${{ secrets.LIMEN_GITHUB_APP_INSTALLATION_ID }}
         shell: bash
         run: |
           set -euo pipefail
@@ -44,6 +47,11 @@ jobs:
               'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
               'repository': repo,
               'repository_id': repository_id,
+              'binding_contract': {
+                  'GITHUB_APP_ID': 'LIMEN_GITHUB_APP_ID',
+                  'GITHUB_APP_PRIVATE_KEY': 'LIMEN_GITHUB_APP_PRIVATE_KEY',
+                  'GITHUB_APP_INSTALLATION_ID': 'LIMEN_GITHUB_APP_INSTALLATION_ID',
+              },
               'status': 'blocked',
               'reason': 'not_completed',
               'repository_mutations': 0,
@@ -85,7 +93,7 @@ jobs:
               if head != source or digest != '444558ffc988e26e4ec15a907d32df40e48671d7':
                   receipt['reason'] = 'accepted_source_identity_mismatch'
               elif not os.environ.get('GITHUB_APP_ID') or not os.environ.get('GITHUB_APP_PRIVATE_KEY'):
-                  receipt['reason'] = 'app_inputs_not_bound_to_this_runner'
+                  receipt['reason'] = 'declared_app_aliases_not_bound_to_this_runner'
               else:
                   env = dict(os.environ)
                   env.pop('GH_TOKEN', None)
