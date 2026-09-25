@@ -962,3 +962,25 @@ The source and local encrypted capture remain because independent-key restore,
 an independent cold replica, and source-currentness/ownership review remain
 unverified. Internal Data-volume free space after publication is 21,846,640
 KiB (~20.8 GiB), not the 200 GiB target.
+
+### Physical storage attribution and cache-owner check, 2026-09-25
+
+The latest read-only Data-volume measurement showed 21,271,404 KiB
+(~20.3 GiB) available. APFS reported 21 local Time Machine snapshots;
+they remain protected. Snapshot listings do not provide attributable physical
+sizes, so no apparent directory total is treated as reclaimable capacity.
+Read-only allocated-size measurements were ~212.8 GiB under home, including
+~65.3 GiB under Workspace and ~84.7 GiB under Library. The home cache tree
+was ~17.9 GiB and Library/Caches ~13.6 GiB, but these include active tools,
+application state, and protected private material.
+
+The owner-aware cache classifier checked 27 allowlisted paths using current
+process/file references. It found two tiny eligible npm caches totaling only
+284 KiB. Seven entries were blocked; notably the ~11.1 GiB uv cache and
+~1.64 GiB Playwright browser cache had active process references. The
+~1.56 GiB Codex runtime cache is excluded under Domus's installed-runtime
+policy. No cache, snapshot, private store, or repository was retired in this
+tranche. The 200 GiB target remains unmet; the measured deficit is roughly
+180 GiB, with physical attribution limited by APFS sharing and snapshot
+accounting. Next eligible recovery requires owner-specific reconstruction and
+custody evidence, not size-based deletion.
