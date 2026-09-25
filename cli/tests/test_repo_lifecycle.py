@@ -150,3 +150,41 @@ def test_reconcile_retains_unknown_lease_state(tmp_path, monkeypatch):
 
     monkeypatch.setattr(lifecycle, "_verify_store_origin", offline)
     assert lifecycle.reconcile(77123)["state"] == "retained-origin-identity-unavailable"
+
+
+def test_reconcile_pending_round_robins_and_skips_symlink(tmp_path, monkeypatch):
+    cache = tmp_path / "cache"
+    registry = cache / ".limen-residency"
+    (registry / "10").mkdir(parents=True)
+    (registry / "20").mkdir()
+    (registry / "30").symlink_to(registry / "20", target_is_directory=True)
+    monkeypatch.setattr(lifecycle, "dispatch_clone_cache_root", lambda: cache)
+    seen = []
+
+    def fake_reconcile(repository_id):
+        seen.append(repository_id)
+        return {"repository_id": str(repository_id), "state": "retained-test"}
+
+    monkeypatch.setattr(lifecycle, "reconcile", fake_reconcile)
+    assert lifecycle.reconcile_pending()["state"] == "reconciled-bounded"
+    lifecycle.reconcile_pending()
+    lifecycle.reconcile_pending()
+    assert seen == [10, 20, 10]
+    cursor = json.loads((registry / "reconcile-cursor.json").read_text())
+    assert cursor["last_repository_id"] == 10
+
+
+def test_reconcile_pending_retains_error_and_advances_cursor(tmp_path, monkeypatch):
+    cache = tmp_path / "cache"
+    registry = cache / ".limen-residency"
+    (registry / "10").mkdir(parents=True)
+    (registry / "20").mkdir()
+    monkeypatch.setattr(lifecycle, "dispatch_clone_cache_root", lambda: cache)
+
+    def unavailable(_repository_id):
+        raise lifecycle.RepositoryLifecycleError("remote offline")
+
+    monkeypatch.setattr(lifecycle, "reconcile", unavailable)
+    first = lifecycle.reconcile_pending()["results"][0]
+    assert first == {"repository_id": "10", "state": "retained-investigation-error"}
+    assert lifecycle.reconcile_pending()["results"][0]["repository_id"] == "20"

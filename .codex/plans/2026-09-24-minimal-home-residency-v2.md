@@ -204,9 +204,16 @@ a freshly advertised origin branch through the existing abandonment receipt rail
 Dirty work and the canonical object store remain resident. Unknown lease states,
 offline identity, missing checkouts and failed detach retain explicit states.
 A controlled local test exercised two sessions, final release, exact-tip checkout
-retirement, dirty retention and idempotent replay; 33 focused lifecycle and
-abandonment tests plus Ruff passed. This is checkout retirement only: scheduling,
-canonical-store custody/retirement and a real GitHub reacquisition canary remain.
+retirement, dirty retention and idempotent replay. `repo reconcile-pending` now
+walks the managed lease registry with a durable round-robin cursor, one repository
+per existing heartbeat hygiene tick, and a 90-second child deadline. Symlinked
+registry entries are ignored; an unavailable repository is reported retained and
+the cursor advances. Thirty-five focused lifecycle and abandonment tests, focused
+Ruff, CLI help, and heartbeat shell syntax passed. Whole-file Ruff on `cli.py`
+still reports five pre-existing `subprocess.run` check-argument findings outside
+this change. This is source-level scheduling and checkout retirement only:
+installed-runtime execution, canonical-store custody/retirement and a real GitHub
+reacquisition canary remain.
 
 ## Acceptance and reporting
 
