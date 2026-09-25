@@ -249,6 +249,13 @@ pre-commit hooks and live read-only digest verification passed. No VM image was
 removed: distinct expanded state lacks custody and a native cold-start
 reconstruction receipt, and snapshots may retain physical blocks regardless. The
 adapter compares digests locally and emits only equality and aggregate byte counts.
+Domus PR #393 later failed CI at `6ead1eb3`: its new script had four E501 lines,
+and four notification BATS cases depended on wall-clock quiet hours. Head
+`3ad8eef8` fixes the lines and pins the fixture clock. The targeted notification
+suite passed 19/19, the local full BATS suite passed 349/349, 37 targeted Python
+tests passed, and CI's E/F/W Ruff selection passed locally. The new remote CI run
+was queued at last observation. One exact-head merge-drain submission returned
+`DEFERRED — LIFECYCLE-UNKNOWN`; no merge or installed-runtime claim follows.
 
 ### ARCA bounded-object checkpoint, 2026-09-25
 
