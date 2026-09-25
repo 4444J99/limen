@@ -780,8 +780,11 @@ migration remains gated. PR #13 merged through Limen's exact-head rail at
 
 Domus PR #395 now replaces the vanished-path silent-success CCE refresh
 wrapper with Limen `repo ensure`/`repo release` around the scheduled script.
-Two local lease/admission tests pass, as do syntax and commit hooks. The PR is
-open at `e8ae60a62fc2555c37f04285d97d381c46fc6307`; the source is not
+Two local lease/admission tests pass, as do syntax and commit hooks. Hosted
+Shell Formatting failed on a here-string spacing difference; `shfmt -i 2 -ci`
+corrected it, the two tests reran green, and the fix was pushed. The PR is
+open at `37bf9cbdfc8533efc646f5a9b83275a487f9d634`; its one exact-head
+merge-rail submission returned `DEFERRED — CI-PENDING`, with no retry. The source is not
 installed, and Limen #2718 remains draft/uninstalled. The repair therefore
 does not yet establish working CCE search or a natural scheduled refresh
 receipt. The separate source-root theme PR #394 remains open; its earlier
