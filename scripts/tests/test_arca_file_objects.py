@@ -122,6 +122,47 @@ def test_restore_reconstructs_files_symlinks_and_modes_atomically(tmp_path: Path
         arca.restore(output / "catalog.gpg", output, restored)
 
 
+def test_extended_metadata_is_encrypted_and_restored(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_crypto(monkeypatch)
+    source = tmp_path / "private"
+    source.mkdir(mode=0o700)
+    file = source / "record"
+    file.write_bytes(b"private payload")
+    arca._native_setxattr(source, "com.example.arca-root-test", b"root metadata")
+    arca._native_setxattr(file, "com.example.arca-file-test", b"file metadata\x00value")
+    output = tmp_path / "objects-store"
+    captured = arca.build(source, output)
+    assert captured["coverage"] == "incomplete-native-metadata"
+    catalog = json.loads((output / "catalog.gpg").read_bytes()[4:])
+    assert catalog["schema"] == "arca-file-catalog-v4"
+    assert catalog["metadata_coverage"]["unverified"] == ["acl", "ownership", "timestamps"]
+    assert catalog["root_xattrs"]
+    assert next(row for row in catalog["entries"] if row["path"] == "record")["xattrs"]
+    restored = tmp_path / "restored"
+    restored_result = arca.restore(output / "catalog.gpg", output, restored)
+    assert restored_result["coverage"] == "incomplete-native-metadata"
+    assert arca._native_getxattr(restored, "com.example.arca-root-test") == b"root metadata"
+    assert arca._native_getxattr(restored / "record", "com.example.arca-file-test") == b"file metadata\x00value"
+
+
+def test_failed_extended_metadata_restore_does_not_publish_tree(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_crypto(monkeypatch)
+    source = tmp_path / "private"
+    source.mkdir()
+    (source / "record").write_bytes(b"payload")
+    output = tmp_path / "objects-store"
+    arca.build(source, output)
+    catalog = json.loads((output / "catalog.gpg").read_bytes()[4:])
+    next(row for row in catalog["entries"] if row["path"] == "record")["xattrs"] = [{
+        "name": "com.example.arca-invalid-test", "value_b64": "not-base64!"
+    }]
+    (output / "catalog.gpg").write_bytes(b"ENC\0" + json.dumps(catalog).encode())
+    destination = tmp_path / "restored"
+    with pytest.raises(arca.ObjectError, match="invalid extended metadata"):
+        arca.restore(output / "catalog.gpg", output, destination)
+    assert not destination.exists()
+
+
 def test_restore_rejects_unsafe_catalog_paths_before_publishing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     fake_crypto(monkeypatch)
     source = tmp_path / "private"

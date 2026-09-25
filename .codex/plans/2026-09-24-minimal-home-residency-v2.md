@@ -1077,3 +1077,17 @@ now agrees with the reclaimer on the same two candidates. Focused lifecycle,
 debt and candidate tests pass (126). Both roots
 and deeper application-owned stores remain incompletely classified; no capacity
 or original completion criterion is claimed.
+
+### ARCA native extended metadata, 2026-09-25
+
+The per-file encrypted-object catalog now has a v4 format that records native
+extended attributes for files, directories, symlinks, and the root. On macOS,
+the adapter uses Darwin's no-follow xattr calls because this Python runtime
+does not expose the `os` xattr helpers. Capture re-inventories the source before
+publishing the encrypted catalog; restore validates and applies xattrs inside
+the unpublished staging tree. A real binary-xattr round trip and a malformed
+metadata failure that leaves no destination are among 11 passing focused
+tests; Ruff passes. Older v1-v3 catalogs remain readable. The catalog and
+results explicitly mark native metadata coverage incomplete because ACLs,
+ownership, and timestamps are unverified. Existing remote v3 captures are
+not retroactively upgraded or retirement-authorizing.
