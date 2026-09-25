@@ -57,6 +57,34 @@ def test_check_apply_removes_only_exact_allowlisted_plan(monkeypatch, tmp_path):
     assert (excluded / "snapshot").exists()
 
 
+def test_receipt_log_is_owner_only_for_new_and_existing_file(monkeypatch, tmp_path):
+    mod = _load("reclaim_tool_caches_private_log_uut")
+    log = tmp_path / "reclaim.jsonl"
+    monkeypatch.setattr(mod, "LOG_PATH", log)
+
+    mod.write_log({"path": "/private/cache"})
+    assert log.stat().st_mode & 0o777 == 0o600
+
+    log.chmod(0o644)
+    mod.write_log({"path": "/private/cache"})
+    assert log.stat().st_mode & 0o777 == 0o600
+    assert len(log.read_text(encoding="utf-8").splitlines()) == 2
+
+
+def test_receipt_log_refuses_symlink_target(monkeypatch, tmp_path):
+    mod = _load("reclaim_tool_caches_symlink_log_uut")
+    target = tmp_path / "target.jsonl"
+    target.write_text("preserve\n", encoding="utf-8")
+    log = tmp_path / "reclaim.jsonl"
+    log.symlink_to(target)
+    monkeypatch.setattr(mod, "LOG_PATH", log)
+
+    with pytest.raises(OSError):
+        mod.write_log({"sensitive": "record"})
+
+    assert target.read_text(encoding="utf-8") == "preserve\n"
+
+
 def test_active_process_excludes_cache_from_candidate_manifest(monkeypatch, tmp_path):
     mod = _load("reclaim_tool_caches_active_uut")
     cache = tmp_path / ".cache" / "npm"
