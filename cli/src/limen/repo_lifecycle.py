@@ -400,7 +400,12 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
                 record = json.loads(path.read_text(encoding="utf-8"))
             except (OSError, json.JSONDecodeError):
                 return {"repository_id": str(stable_id), "state": "retained-unreadable-lease"}
-            if record.get("repository_id") != stable_id or record.get("lease_id") != path.stem:
+            if (
+                not isinstance(record, dict)
+                or record.get("repository_id") != stable_id
+                or record.get("lease_id") != path.stem
+                or not re.fullmatch(rf"{stable_id}-[a-f0-9]{{32}}", path.stem)
+            ):
                 return {"repository_id": str(stable_id), "state": "retained-inconsistent-lease"}
             records.append((path, record))
         if not records:
@@ -411,10 +416,12 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
             "retained-dirty-or-unavailable",
             "retired-checkout-store-retained",
         }
-        if any(record.get("state") not in allowed_states for _path, record in records):
+        if any(
+            not isinstance(record.get("state"), str) or record.get("state") not in allowed_states
+            for _path, record in records
+        ):
             return {"repository_id": str(stable_id), "state": "retained-inconsistent-lease"}
-        if any(record.get("state") == "active" for _path, record in records):
-            return {"repository_id": str(stable_id), "state": "retained-active-lease"}
+        active = sum(record.get("state") == "active" for _path, record in records)
         released = [
             (path, record)
             for path, record in records
@@ -425,6 +432,8 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
             }
         ]
         if not released:
+            if active:
+                return {"repository_id": str(stable_id), "state": "retained-active-lease"}
             if all(record.get("state") == "retired-checkout-store-retained" for _path, record in records):
                 return {"repository_id": str(stable_id), "state": "retained-store-metadata-custody-unproven"}
             return {"repository_id": str(stable_id), "state": "retained-no-eligible-checkout"}
@@ -442,9 +451,15 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
                 and parts[1].startswith("refs/heads/")
             ):
                 remote_refs.setdefault(parts[0], []).append(parts[1])
-        from limen.worktree_abandonment import WorktreeAbandonmentError, retire_released_worktree
+        from limen.worktree_abandonment import (
+            WorktreeAbandonmentError,
+            completed_worktree_retirement,
+            recover_worktree_registration,
+            retire_released_worktree,
+        )
 
-        retired = retained = 0
+        retired = retained = recovered = 0
+        active_paths = {str(record.get("worktree", "")) for _path, record in records if record.get("state") == "active"}
         for path, record in released:
             lease_id = str(record["lease_id"])
             expected = root / f"repo-{stable_id}-{lease_id.split('-', 1)[1][:16]}"
@@ -453,27 +468,52 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
             if (
                 checkout != expected
                 or checkout.is_symlink()
-                or not checkout.is_dir()
                 or record.get("store") != str(store)
                 or checkout.parent.resolve() != root
                 or head not in remote_refs
+                or str(checkout) in active_paths
             ):
                 retained += 1
                 continue
-            try:
-                if _common_git_dir(checkout) != _common_git_dir(store):
-                    retained += 1
-                    continue
-            except RepositoryLifecycleError:
+            receipt_root = state / "retirement-receipts" / lease_id
+            if record.get("retirement_receipt_root") not in (None, str(receipt_root)):
                 retained += 1
                 continue
             try:
+                if not checkout.exists():
+                    result = (
+                        completed_worktree_retirement(store, checkout, head, receipt_root)
+                        if record.get("retirement_receipt_root") == str(receipt_root)
+                        else None
+                    )
+                    if result is None:
+                        retained += 1
+                        continue
+                    record["state"] = "retired-checkout-store-retained"
+                    record["retired_at"] = result["updated_at"]
+                    record["retirement_receipt"] = result["receipt_path"]
+                    _atomic_json(path, record)
+                    recovered += 1
+                    continue
+                if not checkout.is_dir():
+                    retained += 1
+                    continue
+                recover_worktree_registration(store, checkout, receipt_root, owner_probe=owner_probe)
+                if _common_git_dir(checkout) != _common_git_dir(store):
+                    retained += 1
+                    continue
+            except (RuntimeError, OSError):
+                retained += 1
+                continue
+            try:
+                record["retirement_receipt_root"] = str(receipt_root)
+                _atomic_json(path, record)
                 result = retire_released_worktree(
                     store,
                     checkout,
                     expected_head=head,
                     remote_ref=min(remote_refs[head]),
-                    receipt_root=state / "retirement-receipts",
+                    receipt_root=receipt_root,
                     owner_probe=owner_probe,
                 )
             except WorktreeAbandonmentError:
@@ -492,9 +532,17 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
         )
         return {
             "repository_id": str(stable_id),
-            "state": "retained-store-metadata-custody-unproven" if all_checkouts_retired else "store-retained",
+            "state": (
+                "retained-store-metadata-custody-unproven"
+                if all_checkouts_retired
+                else "retained-active-lease"
+                if active
+                else "store-retained"
+            ),
             "retired_checkouts": str(retired),
             "retained_checkouts": str(retained),
+            "active_checkouts": str(active),
+            "recovered_checkouts": str(recovered),
         }
 
 

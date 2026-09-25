@@ -136,6 +136,30 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
     assert lifecycle.release(first["lease_id"]) == clean_release
     assert Path(first["worktree"]).is_dir()
     assert Path(concurrent_session["worktree"]).is_dir()
+    active_lease = cache / ".limen-residency" / "77123" / "leases" / f"{concurrent_session['lease_id']}.json"
+    active_bytes = active_lease.read_bytes()
+    atomic_json = lifecycle._atomic_json
+
+    def checkpoint_interrupted(path, record):
+        if path == first_lease and record.get("state") == "retired-checkout-store-retained":
+            raise OSError("simulated lease checkpoint interruption")
+        atomic_json(path, record)
+
+    with monkeypatch.context() as patch:
+        patch.setattr(lifecycle, "_atomic_json", checkpoint_interrupted)
+        with pytest.raises(OSError, match="checkpoint interruption"):
+            lifecycle.reconcile(77123, owner_probe=lambda _path: None)
+    assert not Path(first["worktree"]).exists()
+    assert json.loads(first_lease.read_text())["state"] == "released-awaiting-custody-investigation"
+    isolated = lifecycle.reconcile(77123, owner_probe=lambda _path: None)
+    assert isolated["state"] == "retained-active-lease"
+    assert isolated["retired_checkouts"] == "0"
+    assert isolated["recovered_checkouts"] == "1"
+    assert isolated["active_checkouts"] == "2"
+    assert not Path(first["worktree"]).exists()
+    assert active_lease.read_bytes() == active_bytes
+    assert _run("git", "-C", concurrent_session["worktree"], "rev-parse", "HEAD") == concurrent_session["head"]
+    assert Path(default_head["worktree"]).is_dir()
     assert lifecycle.reconcile(77123, owner_probe=lambda _path: None)["state"] == "retained-active-lease"
 
     dirty = Path(concurrent_session["worktree"]) / "local.txt"
@@ -147,7 +171,7 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
     assert json.loads(lease.read_text())["state"] == "retained-dirty-or-unavailable"
     assert lifecycle.release(default_head["lease_id"])["state"] == "released-awaiting-custody-investigation"
     reconciled = lifecycle.reconcile(77123, owner_probe=lambda _path: None)
-    assert reconciled["retired_checkouts"] == "2"
+    assert reconciled["retired_checkouts"] == "1"
     assert reconciled["state"] == "store-retained"
     assert not Path(first["worktree"]).exists()
     assert not Path(default_head["worktree"]).exists()
@@ -380,6 +404,27 @@ def test_reconcile_retains_unknown_lease_state(tmp_path, monkeypatch):
 
     monkeypatch.setattr(lifecycle, "_verify_store_origin", offline)
     assert lifecycle.reconcile(77123)["state"] == "retained-origin-identity-unavailable"
+
+
+@pytest.mark.parametrize("payload", [[], None, "invalid", {"state": []}])
+def test_reconcile_retains_malformed_lease_without_mutation(tmp_path, monkeypatch, payload):
+    cache = tmp_path / "cache"
+    store = cache / "github-77123"
+    store.mkdir(parents=True)
+    leases = cache / ".limen-residency" / "77123" / "leases"
+    leases.mkdir(parents=True)
+    lease_id = "77123-" + "b" * 32
+    if isinstance(payload, dict):
+        payload.update(repository_id=77123, lease_id=lease_id)
+    path = leases / f"{lease_id}.json"
+    path.write_text(json.dumps(payload))
+    before = path.read_bytes()
+    monkeypatch.setattr(lifecycle, "_repository", lambda _: (77123, "owner/project"))
+    monkeypatch.setattr(lifecycle, "dispatch_clone_cache_root", lambda: cache)
+    monkeypatch.setattr(lifecycle, "_verify_store_origin", lambda *_: None)
+    assert lifecycle.reconcile(77123)["state"] == "retained-inconsistent-lease"
+    assert path.read_bytes() == before
+    assert store.exists()
 
 
 def test_reconcile_pending_round_robins_and_skips_symlink(tmp_path, monkeypatch):
