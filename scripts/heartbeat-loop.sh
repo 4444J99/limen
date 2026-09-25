@@ -1081,6 +1081,9 @@ while true; do
   # + idle age; intensity follows the live envelope. Disarm --apply with LIMEN_REAP_CLONES_APPLY=0.
   REAP_CLONES_ARG=""; [ "${LIMEN_REAP_CLONES_APPLY:-1}" = "1" ] && REAP_CLONES_ARG="--apply"
   [ "$VITALS_PRESSURE" != "1" ] && due_voice hygiene "$HYG_CAD" && timeout "${LIMEN_REAP_CLONES_TIMEOUT:-300}" python3 "$LIMEN_ROOT/scripts/reap-clones.py" $REAP_CLONES_ARG 2>&1 | tail -3 || true
+  # One released repository per hygiene tick. The lease registry cursor survives restarts;
+  # each checkout still passes fresh identity, custody, and owner checks before retirement.
+  [ "$VITALS_PRESSURE" != "1" ] && due_voice hygiene "$HYG_CAD" && timeout "${LIMEN_REPO_RECONCILE_TIMEOUT:-90}" env PYTHONPATH="$LIMEN_ROOT/cli/src" python3 -m limen repo reconcile-pending --max 1 2>&1 | tail -3 || true
   due_voice hygiene "$HYG_CAD" && beat_run heal-claude-update-marker bash "$LIMEN_ROOT/scripts/heal-claude-update-marker.sh" || true
   # heal-claude-lsregister.sh / heal-hook-drift.sh / heal-claude-cask.sh are NO LONGER hand-wired here:
   # they run as the registry-derived `dialogs-silenced` sensor (institutio/governance/sensors.yaml 0g8b)

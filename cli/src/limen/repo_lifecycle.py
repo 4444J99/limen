@@ -394,3 +394,38 @@ def reconcile(repository_id: int | str, *, owner_probe=None) -> dict[str, str]:
             "retired_checkouts": str(retired),
             "retained_checkouts": str(retained),
         }
+
+
+def reconcile_pending(*, max_repositories: int = 1) -> dict[str, object]:
+    """Round-robin bounded consumer over the managed lease registry."""
+    if not 1 <= max_repositories <= 10:
+        raise RepositoryLifecycleError("max_repositories must be between 1 and 10")
+    cache = dispatch_clone_cache_root()
+    if cache is None:
+        raise RepositoryLifecycleError("managed repository cache is unavailable")
+    registry = cache / ".limen-residency"
+    if not registry.is_dir():
+        return {"state": "no-managed-leases", "results": []}
+    ids = sorted(
+        int(path.name)
+        for path in registry.iterdir()
+        if not path.is_symlink() and path.is_dir() and path.name.isdecimal() and int(path.name) > 0
+    )
+    if not ids:
+        return {"state": "no-managed-leases", "results": []}
+    cursor_file = registry / "reconcile-cursor.json"
+    with _locked(registry / "reconcile.lock"):
+        try:
+            cursor = int(json.loads(cursor_file.read_text(encoding="utf-8")).get("last_repository_id", 0))
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            cursor = 0
+        ordered = [value for value in ids if value > cursor] + [value for value in ids if value <= cursor]
+        results: list[dict[str, object]] = []
+        for repository_id in ordered[:max_repositories]:
+            try:
+                result = reconcile(repository_id)
+            except RepositoryLifecycleError:
+                result = {"repository_id": str(repository_id), "state": "retained-investigation-error"}
+            results.append(result)
+            _atomic_json(cursor_file, {"schema": "limen.repository_reconcile_cursor.v1", "last_repository_id": repository_id})
+        return {"state": "reconciled-bounded", "results": results}
