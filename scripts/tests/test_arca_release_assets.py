@@ -341,6 +341,16 @@ def test_rejects_plaintext_named_source_and_assets_over_limit(tmp_path: Path, mo
         )
 
 
+def test_rejects_cohort_above_release_asset_limit_before_remote_effects(tmp_path: Path, monkeypatch) -> None:
+    catalog, objects = _ciphertexts(tmp_path)
+    extra = tmp_path / "extra.enc"
+    extra.write_bytes(b"opaque encrypted extra")
+    monkeypatch.setattr(assets, "MAX_RELEASE_ASSETS", 2)
+    monkeypatch.setattr(assets, "_run", lambda *_a, **_k: pytest.fail("oversized cohort contacted GitHub"))
+    with pytest.raises(assets.AssetError, match="asset count"):
+        assets.publish("owner/private-vault", catalog, [*objects, extra], apply=False)
+
+
 def test_repository_alias_must_resolve_to_one_private_immutable_identity(monkeypatch) -> None:
     responses = iter(
         [
