@@ -1,0 +1,135 @@
+name: Exact-repository App readback for 32
+on:
+  push:
+    branches: [probe/32-app-readback-20260924]
+    paths: [.github/workflows/diagnose-32-app-readback.yml]
+permissions:
+  contents: read
+jobs:
+  app-readback:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: 0a209dc827a0f535fc4de7946bb9b2fd12269806
+          persist-credentials: false
+      - name: Probe accepted App-only helper and bounded repository reads
+        env:
+          GITHUB_APP_ID: ${{ secrets.GITHUB_APP_ID }}
+          GITHUB_APP_PRIVATE_KEY: ${{ secrets.GITHUB_APP_PRIVATE_KEY }}
+          GITHUB_APP_INSTALLATION_ID: ${{ secrets.GITHUB_APP_INSTALLATION_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import subprocess
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+
+          source = '0a209dc827a0f535fc4de7946bb9b2fd12269806'
+          repo = '4444J99/limen'
+          repository_id = 1255213941
+          out = Path(os.environ['RUNNER_TEMP']) / 'github-app-readback'
+          out.mkdir()
+          receipt = {
+              'schema': 'limen.github_app_readback.v1',
+              'source_sha': source,
+              'workflow_sha': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'repository': repo,
+              'repository_id': repository_id,
+              'status': 'blocked',
+              'reason': 'not_completed',
+              'repository_mutations': 0,
+              'administration_write_verified': False,
+              'native_mcp_verified': False,
+              'secret_values_published': False,
+              'probes': {},
+          }
+          class NoRedirect(urllib.request.HTTPRedirectHandler):
+              def redirect_request(self, req, fp, code, msg, headers, newurl):
+                  return None
+          opener = urllib.request.build_opener(NoRedirect())
+          def get(path, token):
+              request = urllib.request.Request(
+                  'https://api.github.com' + path,
+                  headers={
+                      'Authorization': 'Bearer ' + token,
+                      'Accept': 'application/vnd.github+json',
+                      'User-Agent': 'limen-exact-repository-readback',
+                      'X-GitHub-Api-Version': '2022-11-28',
+                  },
+              )
+              try:
+                  with opener.open(request, timeout=20) as response:
+                      raw = response.read(1024 * 1024 + 1)
+                      if len(raw) > 1024 * 1024:
+                          return response.status, None
+                      return response.status, json.loads(raw)
+              except urllib.error.HTTPError as exc:
+                  status = exc.code
+                  exc.close()
+                  return status, None
+              except (OSError, ValueError):
+                  return None, None
+          try:
+              head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+              helper = Path('scripts/gh-app-token.sh').read_bytes()
+              digest = hashlib.sha1(b'blob ' + str(len(helper)).encode() + b'\0' + helper).hexdigest()
+              if head != source or digest != '444558ffc988e26e4ec15a907d32df40e48671d7':
+                  receipt['reason'] = 'accepted_source_identity_mismatch'
+              elif not os.environ.get('GITHUB_APP_ID') or not os.environ.get('GITHUB_APP_PRIVATE_KEY'):
+                  receipt['reason'] = 'app_inputs_not_bound_to_this_runner'
+              else:
+                  env = dict(os.environ)
+                  env.pop('GH_TOKEN', None)
+                  env.pop('GITHUB_TOKEN', None)
+                  result = subprocess.run(
+                      ['bash', 'scripts/gh-app-token.sh', '--repo', repo, '--app-only'],
+                      env=env, capture_output=True, text=True, timeout=120,
+                      stdin=subprocess.DEVNULL, check=False,
+                  )
+                  token = result.stdout.strip() if result.returncode == 0 else ''
+                  if not token or len(token) > 4096 or any(c.isspace() for c in token):
+                      receipt['reason'] = 'app_only_mint_not_verified'
+                  else:
+                      status, metadata = get('/repos/' + repo, token)
+                      receipt['probes']['repository_identity'] = {'http_status': status}
+                      if not isinstance(metadata, dict) or metadata.get('id') != repository_id or metadata.get('full_name', '').lower() != repo.lower():
+                          receipt['reason'] = 'repository_identity_not_verified'
+                      elif metadata.get('default_branch') != 'main':
+                          receipt['reason'] = 'default_branch_identity_changed'
+                      else:
+                          receipt['probes']['repository_identity']['verified'] = True
+                          status, protection = get('/repos/' + repo + '/branches/main/protection', token)
+                          receipt['probes']['branch_protection'] = {
+                              'http_status': status,
+                              'verified': status == 200 and isinstance(protection, dict),
+                          }
+                          if status == 200 and isinstance(protection, dict):
+                              receipt['status'] = 'passed'
+                              receipt['reason'] = 'exact_repository_administration_read_verified'
+                          else:
+                              receipt['reason'] = 'branch_protection_read_not_verified'
+          except subprocess.TimeoutExpired:
+              receipt['reason'] = 'bounded_app_probe_timeout'
+          except Exception:
+              receipt['reason'] = 'probe_failed_without_public_exception_detail'
+          (out / 'receipt.json').write_text(json.dumps(receipt, indent=2) + '\n')
+          print(json.dumps(receipt, sort_keys=True))
+          raise SystemExit(0 if receipt['status'] == 'passed' else 2)
+          PY
+      - name: Preserve redacted readback
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: github-app-readback-32
+          path: ${{ runner.temp }}/github-app-readback/receipt.json
+          if-no-files-found: error
+          retention-days: 3
