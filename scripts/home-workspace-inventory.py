@@ -17,6 +17,15 @@ from pathlib import Path
 
 SCHEMA = "limen.home_workspace_inventory.v1"
 SOURCE_MARKERS = {"package.json", "pyproject.toml", "Cargo.toml", "go.mod", "Makefile"}
+DEPENDENCY_COMPONENTS = {"node_modules", "site-packages", "dist-packages", ".venv", ".tox", "vendor"}
+SOURCE_KINDS = {
+    "copied_source_candidate",
+    "repository_internal_source",
+    "dependency_source_candidate",
+    "application_source_candidate",
+    "cache_source_candidate",
+}
+APPLICATION_ROOTS = {"Library", ".local", ".config", ".claude", ".copilot", ".antigravity-ide", ".vscode-insiders"}
 
 
 def identity(info: os.stat_result) -> str:
@@ -79,6 +88,49 @@ def empty_codex_git_shell(path: Path) -> bool:
     except OSError:
         return False
     return True
+
+
+def classify_source_context(state: dict) -> None:
+    """Separate package internals from source copies without skipping traversal."""
+    checkouts = {
+        row["path"]: row["fs_identity"]
+        for row in state["objects"]
+        if row["kind"] in {"git_checkout", "git_file_checkout_candidate"}
+    }
+    for row in state["objects"]:
+        if row["kind"] not in SOURCE_KINDS:
+            continue
+        path = Path(row["path"])
+        relative_parts: tuple[str, ...] = ()
+        for root in state["roots"]:
+            try:
+                relative_parts = path.relative_to(root).parts
+                break
+            except ValueError:
+                continue
+        dependency_root = relative_parts[:3] == ("go", "pkg", "mod") or relative_parts[:2] == (
+            ".cargo",
+            "registry",
+        )
+        if DEPENDENCY_COMPONENTS.intersection(path.parts) or dependency_root or relative_parts[:1] == (".npm",):
+            row["kind"] = "dependency_source_candidate"
+            row.pop("parent_checkout_identity", None)
+            continue
+        parent = path.parent
+        while parent != parent.parent:
+            if parent_identity := checkouts.get(str(parent)):
+                row["kind"] = "repository_internal_source"
+                row["parent_checkout_identity"] = parent_identity
+                break
+            parent = parent.parent
+        else:
+            if relative_parts[:1] == (".cache",):
+                row["kind"] = "cache_source_candidate"
+            elif relative_parts and relative_parts[0] in APPLICATION_ROOTS:
+                row["kind"] = "application_source_candidate"
+            else:
+                row["kind"] = "copied_source_candidate"
+            row.pop("parent_checkout_identity", None)
 
 
 def advance(state: dict, *, max_directories: int, max_seconds: float) -> dict:
@@ -144,6 +196,7 @@ def advance(state: dict, *, max_directories: int, max_seconds: float) -> dict:
             state["unmeasured"].append({"path": path, "error": type(exc).__name__})
     state["seen_directories"] = sorted(seen)
     state["frontier"] = list(frontier)
+    classify_source_context(state)
     still_unmeasured = []
     for item in state["unmeasured"]:
         if item["error"] == "FileNotFoundError" and not os.path.lexists(item["path"]):

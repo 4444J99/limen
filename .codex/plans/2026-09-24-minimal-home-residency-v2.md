@@ -839,6 +839,30 @@ Its exact head is `f88a195b954e17d71842f8f41a4f5e63587c3d4f`; one
 merge-rail submission returned `DEFERRED — CI-PENDING`. No unchanged-head
 retry or merge claim follows.
 
+### Source-context inventory refinement, 2026-09-25
+
+The read-only home/Workspace inventory now distinguishes marker-bearing
+source directories nested in Git checkouts, dependency caches, application
+state and caches from independent copied-source candidates. Resuming the
+private state with no new traversal changed the 16,257 ambiguous source
+markers into 13,278 dependency, 1,646 repository-internal, 1,258 application,
+61 cache and 14 copied-source candidates. Five focused tests and Ruff pass.
+This is contextual classification, not exact owner/custody proof or retirement
+authority. The scan still has no frontier and one cloud-trash TimeoutError;
+`complete=false` remains correct.
+
+One roughly 32 MiB copied public-repository tree has no Git metadata. A
+bounded live remote-tree comparison found 66 exact path/blob pairs, 513 local
+paths absent remotely and 72 content mismatches after excluding generated
+dependency/build directories. It is retained as unique local work pending
+candidate-specific preservation; remote repository existence is not custody
+for those unmatched files. The path-bearing current inventory snapshot is
+encrypted in one object plus catalog and was verified by private Release
+readback at neutral tag `arca-objects-7c001c63a86cf4b490c3962e3da4f217`
+(two assets, 2,617,319 ciphertext bytes). The local inventory and source copy
+remain. An earlier intermediate classification snapshot is separately retained
+at tag `arca-objects-637ca60b28571111d8eb2a7269b9fc57`.
+
 ### Bounded cache retirement, 2026-09-25
 
 The current cache classifier produced exact plan
