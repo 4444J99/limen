@@ -3,7 +3,10 @@
 The runtime Worker exposes `/mcp` as a stateless JSON-response Streamable HTTP
 adapter over its existing `/api/conduct/*` routes. It does not create another
 keeper, queue, credential registry, session database, or task projection writer.
-Every operation uses the caller's existing principal-bound Authorization header.
+Managed-bearer operations use the caller's existing principal-bound Authorization
+header. An optional OAuth resource boundary authenticates `/mcp` access tokens
+and maps them to one explicitly provisioned native principal before entering the
+same canonical bearer-authenticated path.
 The canonical HTTP router still decides roles, identity, schema validity,
 authority, claims, budget, lease generation, receipts, and protected-session rules.
 
@@ -64,7 +67,8 @@ arbitrary HTTP, compatibility-owner, inventory-write, or private-board tools.
 | MCP URL | The actual deployed Worker origin plus `/mcp` |
 | Server principal registry | Existing `LIMEN_CONDUCT_PRINCIPAL_REGISTRY` Worker secret; owner #320 |
 | Keeper | Existing `CONDUCT_KEEPER` binding and `LIMEN_CONDUCT_KEEPER_NAME` |
-| Client authentication | Existing lane-specific bearer, hydrated by the credential organ into the managed connector's Authorization header |
+| Client authentication | Existing lane-specific bearer, or the optional OAuth resource configuration below |
+| Optional OAuth configuration | `LIMEN_CONDUCT_MCP_OAUTH`, a Worker secret under the existing credential owner; absent means disabled |
 | Deployment credential | Existing repository-secret cache `CLOUDFLARE_API_TOKEN` |
 | Optional Origin allowlist | `LIMEN_MCP_ALLOWED_ORIGINS`; exact origins only |
 | Deployment workflow | `deploy-worker.yml`, `ref=main`, input `expected_sha` equal to the captured accepted-main SHA |
@@ -75,13 +79,90 @@ the MCP URL in a client that supports a managed bearer header, such as the
 existing Ianva/Copilot configuration shape. Keep all values in the credential
 organ and managed connector settings, never in the repository or a prompt.
 
-This adapter does not implement OAuth authorization-server discovery, dynamic
-client registration, or a login flow. A client that requires OAuth cannot use
-this bearer-only endpoint directly: its sanctioned OAuth/managed-credential
-gateway must map the authenticated native lane to the existing conduct principal.
-Do not advertise this URL as an OAuth server or remove authentication to connect it.
-Source deployment and client installation must be independently verified; neither
-can be inferred from a successful GitHub connector call or a saved permission setting.
+The Worker is an OAuth **resource server**, never an authorization server. It does
+not implement login, consent, client registration, token issuance, or refresh.
+Ianva holds upstream OAuth grants as a client and does not supply this missing
+authorization-server function. Source deployment and client installation must be
+independently verified; neither can be inferred from a successful GitHub connector
+call or a saved permission setting.
+
+### Optional OAuth connection for ChatGPT
+
+The opt-in boundary follows the official
+[OpenAI authentication contract](https://developers.openai.com/plugins/build/auth)
+and [MCP authorization specification](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization).
+Provision an established OAuth issuer with authorization-code + S256 PKCE,
+discovery metadata, resource indicators, and a supported ChatGPT client
+registration method. Register the exact redirect URI shown by the connection UI.
+No deployed issuer, user grant, or client registration is assumed by this source.
+
+The issuer must mint signed JWT **access tokens** with `typ: at+jwt`, `alg: RS256`
+or `ES256`, exact `iss`, audience `https://<canonical-worker-origin>/mcp`, required
+`exp` and `sub`, and a space-separated `scope` claim. `nbf`, when present, is
+enforced. The configured `client_id` or `azp` claim must identify the authenticated
+OAuth client. An ID token, GitHub installation token, or a token for another
+resource is not accepted. This strict access-token profile is a provisioning
+requirement, not a claim that any arbitrary OAuth provider works unchanged.
+
+Example configuration shape (all identifiers below are synthetic):
+
+```json
+{
+  "schema_version": "limen.conduct_mcp_oauth.v1",
+  "resource": "https://limen.example/mcp",
+  "issuer": "https://identity.example",
+  "jwks_uri": "https://identity.example/.well-known/jwks.json",
+  "scopes": ["limen:conduct"],
+  "client_id_claim": "client_id",
+  "bindings": [
+    {
+      "subject": "issuer-owned-user-id",
+      "client_id": "registered-chatgpt-client-id",
+      "principal_id": "existing-chat-principal"
+    }
+  ]
+}
+```
+
+Store this JSON only through the existing credential-management/deployment path
+as `LIMEN_CONDUCT_MCP_OAUTH`. It contains private user and principal bindings.
+The referenced principal must already exist in `LIMEN_CONDUCT_PRINCIPAL_REGISTRY`
+with its real native agent and surface. This adapter never creates principals,
+assigns roles, infers Chat/Work/Codex identity from `clientInfo`, or substitutes
+Codex for Chat. Only observer, conductor, and executor roles may be mapped;
+compatibility-owner and collector principals cannot be exposed through OAuth.
+An OAuth client ID alone does not establish the actual execution experience or
+usage allowance; the execution receipt must independently identify those facts.
+
+With valid configuration, public `GET /.well-known/oauth-protected-resource/mcp`
+and `GET /.well-known/oauth-protected-resource` return only the canonical resource,
+issuer, scopes, and header bearer method. Requests to another origin return 404.
+Unauthenticated `/mcp` responses advertise the canonical metadata URL in
+`WWW-Authenticate`. Unknown or invalid tokens return 401, insufficient scopes 403,
+and invalid configuration or an unavailable JWKS verifier 503. Existing valid
+managed-bearer clients remain usable even when optional OAuth configuration or the
+issuer is unavailable. OAuth tokens never authenticate `/api/conduct/*` directly.
+
+The resource boundary verifies issuer, audience, algorithm, signature, token
+class, validity period, subject, client, and scopes before replacing the header
+in memory with that exact existing principal's bearer. The original canonical
+router and keeper reauthenticate it and retain role, session, lease, and protected
+human-session checks. Neither credential is returned in metadata, tool responses,
+or errors. No OAuth token is passed to another resource server.
+
+JWKS requests use only the fixed configured HTTPS URL, forbid redirects, have a
+five-second deadline including the body, and accept at most 128 KiB. JOSE caches
+keys for at most five minutes and applies a thirty-second unknown-key refresh
+cooldown. Tokens cannot supply `jku` or `x5u` destinations. Access-token expiry
+still applies on every request. Removing a binding or disabling this optional
+configuration stops OAuth admission; issuer key removal may take up to the cache
+window to take effect. User consent, refresh/revocation behavior, and key rotation
+remain the issuer's responsibility.
+
+Installing this source is **not** an activated Chat connection. Activation still
+requires a provisioned issuer and binding, exact-head Worker deployment, an
+actual ChatGPT connection, and accepted live execution receipts. A source test
+executed from Work proves none of those additional states.
 
 ## Operational acceptance
 
@@ -100,7 +181,16 @@ After deployment and connection, use the actual exposed tool surface:
    retain both trigger/run identities and the same handoff lineage. A direct-session
    canary is not proof that a scheduled trigger or unattended continuation ran.
 
-Local source verification is `node --test test/conduct-mcp.test.js`, followed by
+For the optional OAuth path, additionally verify public metadata and 401 discovery,
+complete authorization in the actual Chat interface, and prove the bound native
+principal reaches the same keeper. Wrong-user, wrong-client, expired, wrong-audience,
+and ID tokens must not cause keeper access. Confirm direct `/api/conduct` calls
+with the OAuth token remain rejected. Finally, execute one bounded authorized
+code change through verification, PR, exact-head merge, and readback while
+recording the actual executor and allowance owner. The broker handshake alone
+does not prove engineering completion or Chat-first usage savings.
+
+Local source verification is `node --test test/conduct-mcp.test.js test/conduct-mcp-oauth.test.js`, followed by
 `npm run check` from `web/worker`. Tests use explicitly synthetic credentials and
 the real canonical HTTP/keeper validation path; they are not live authorization,
 deployment, or unattended-execution evidence.

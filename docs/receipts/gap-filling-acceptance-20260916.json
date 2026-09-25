@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-09-16T15:46:24.972931+00:00",
+  "scope": "Acceptance reconciliation for the full supplied gap-filling plan; not an estate completion estimate.",
+  "owner": "Codex / gap-filling implementation contract",
+  "status": "in_progress",
+  "source_default": "b643260b2075e1aa8045a80ff284dfbfa82e3397",
+  "lever_counts": {
+    "total": 107,
+    "nonterminal": 97,
+    "terminal": 10,
+    "selected": 97,
+    "with_acceptance_predicate": 4
+  },
+  "open_delivery": [
+    {
+      "repository": "organvm/.github",
+      "pr": 26,
+      "head": "f58f585d3ea71f666744fda6b32eb345a29707fe",
+      "draft": true,
+      "state": "OPEN",
+      "readback": "GitHub PR API at 2026-09-16T10:25Z",
+      "submission_repeated": false
+    },
+    {
+      "repository": "organvm/laurea",
+      "pr": 10,
+      "head": "aacd88367ebb5b4784793d08a6970169b6c33236",
+      "draft": false,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    },
+    {
+      "repository": "organvm-iv-taxis/schema-definitions",
+      "pr": 19,
+      "head": "06326aa548f6c4fc9dd01bead88a5f5132b6445e",
+      "draft": false,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    },
+    {
+      "repository": "organvm/organvm-corpvs-testamentvm",
+      "pr": 553,
+      "head": "2b40a63543cf7bf957e7cd278a72e9d97e0443c8",
+      "draft": true,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    },
+    {
+      "repository": "organvm/editorial-standards",
+      "pr": 12,
+      "head": "b08f55d687e02e503c81406c03500dffa0999b89",
+      "draft": true,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    },
+    {
+      "repository": "organvm/alchemical-synthesizer",
+      "pr": 47,
+      "head": "6ebca82635ca37d2e6fd9d4d7d125a6e16dfea0a",
+      "draft": false,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    },
+    {
+      "repository": "organvm/learning-resources",
+      "pr": 11,
+      "head": "9aafd48524d34269233bea0dad8d1f794a4eede9",
+      "draft": false,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    },
+    {
+      "repository": "4444J99/organvm-ci-relay",
+      "pr": 30,
+      "head": "5a6f0927b1d082c374cc6031ea3b6e9faede6a0b",
+      "draft": false,
+      "state": "OPEN",
+      "readback": "GitHub PR API",
+      "submission_repeated": false
+    }
+  ],
+  "requirements": [
+    {
+      "id": "control_plane_source",
+      "state": "source_landed",
+      "evidence": [
+        "https://github.com/4444J99/limen/pull/2623",
+        "https://github.com/4444J99/limen/pull/2648"
+      ],
+      "limit": "Runtime and default CI are separate; the exact verified 2648 source had 7760 CLI passes, 2 skips, 52 API passes."
+    },
+    {
+      "id": "default_ci",
+      "state": "latest_in_progress_prior_defaults_verified",
+      "evidence": [
+        "https://github.com/4444J99/limen/actions/runs/35116867759",
+        "https://github.com/4444J99/limen/actions/runs/35114037192",
+        "https://github.com/4444J99/limen/actions/runs/35111500785"
+      ],
+      "limit": "Latest b643260 default CI remains in progress. Earlier exact defaults 1769d30 and 9c55dd6 passed executed CI; neither is proof of the latest default result."
+    },
+    {
+      "id": "resident_adoption",
+      "state": "scheduled_proof_observed_for_pinned_source",
+      "evidence": [
+        "docs/receipts/dependency-runtime-adoption-20260916.json",
+        "docs/receipts/dependency-scheduled-adoption-20260916.json"
+      ],
+      "limit": "Recorded three naturally spaced scheduled fires and rollout predicate pass for pinned 3c1313aab. This does not establish adoption of later source commits or current finding health."
+    },
+    {
+      "id": "all_lever_acceptance",
+      "state": "incomplete",
+      "evidence": [
+        "his-hand-levers.json"
+      ],
+      "limit": "Chosen decisions are not executed acceptance. Missing predicates remain visible; terminal histories stay terminal."
+    },
+    {
+      "id": "collector_activation",
+      "state": "authority_and_ingestion_verified_growth_denied",
+      "owner": "4444J99/limen#269; #1995; credential Wall #320",
+      "limit": "Dedicated collector authority and full 326-repository ingestion were accepted. Eleven installed principals passed 33 live role probes. Growth canary refused at inventory_growth_ceiling without task or budget change. 250-item ceiling and 900-second freshness remain; the historic ingestion receipt does not stay fresh indefinitely.",
+      "evidence": [
+        "docs/receipts/collector-authority-installation-20260916.json",
+        "https://github.com/4444J99/limen/pull/2656",
+        "https://github.com/4444J99/limen/pull/2660"
+      ]
+    },
+    {
+      "id": "relay_trust_and_governor",
+      "state": "unaccepted",
+      "owner": "4444J99/organvm-ci-relay#30; #3",
+      "limit": "Independent trust promotion, isolated governor and both server controls precede protected canaries. No seventh target."
+    },
+    {
+      "id": "six_target_receipts",
+      "state": "four_current_passes_two_executed_failures",
+      "evidence": [
+        "https://github.com/4444J99/organvm-ci-relay/pull/30"
+      ],
+      "limit": "Six stable default refs reconciled against checksum-verified ledger c78d0d7f34a491b825364a997d953a1e907406e4. Process, Engine, Danse and Laurea have matching success; Laurea reuses its exact regression matrix. Learning-resources and alchemical retain error receipts. No seventh target; protected governor acceptance remains separate."
+    },
+    {
+      "id": "shared_workflow_delivery",
+      "state": "engineering_incomplete",
+      "owner": "organvm/.github#26",
+      "next_action": "After collector admission, isolated grants and independent source review, deploy the staged completion producer and native assessor wake route. Prove server-side merge fencing and protected canaries before replacing the existing direct workflow merge step.",
+      "limit": "Limen #2651 landed the disabled broker intake, compiler, executor and cross-language receipt pipeline. Shared PR #26 has 42 passing tests and a staged completion template outside active workflows. Neither source receipt activates automatic merges."
+    },
+    {
+      "id": "security_and_products",
+      "state": "integration_incomplete",
+      "owner": "organvm/alchemical-synthesizer#47; organvm/learning-resources#11",
+      "limit": "Local validation and open PRs do not establish default security or deployed behavior. Preserve prior one-shot submissions and admission findings."
+    },
+    {
+      "id": "reader_mode",
+      "state": "upstream_acceptance_pending",
+      "owner": "schema-definitions#19 -> organvm-corpvs-testamentvm#553 -> editorial-standards#12",
+      "limit": "No generated context or About mutation before accepted prerequisites."
+    },
+    {
+      "id": "laurea_evidence_model",
+      "state": "integration_incomplete",
+      "owner": "organvm/laurea#10",
+      "limit": "The source preparation remains open; executed admission, deployment and external outcomes are separate."
+    },
+    {
+      "id": "hospes_pilot",
+      "state": "engineering_verified_external_unmeasured",
+      "evidence": [
+        "docs/receipts/hospes-pilot-engineering-20260916.json"
+      ],
+      "limit": "73 synthetic tests establish validation and sequencing, not participant consent or actual pilot recordings."
+    },
+    {
+      "id": "preservation_and_dispositions",
+      "state": "bounded_arca_recovery_verified_estate_incomplete",
+      "owner": "Existing private custody and estate registry owners",
+      "limit": "Canonical escrow recovered one committed archive without Keychain or plaintext extraction. Its ciphertext and per-archive manifest record match stable remote default. Full estate restoration, fresh-device recovery and broader preservation/disposition obligations remain unverified.",
+      "evidence": [
+        "https://github.com/4444J99/limen/pull/2658",
+        "https://github.com/4444J99/limen/issues/719"
+      ]
+    }
+  ],
+  "observation_scope": "Requirement rows updated from their named current or immutable receipts. Open-delivery entries other than the two revised heads retain earlier snapshots; no fresh read of every PR is claimed. All 97 implementation decisions remain distinct from executed acceptance; no permanent lever or task state changed."
+}

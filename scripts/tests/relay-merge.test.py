@@ -26,6 +26,7 @@ def readbacks():
         "required_linear_history",
         "allow_force_pushes",
         "allow_deletions",
+        "lock_branch",
     ):
         protection[key] = {"enabled": protection[key]}
     ruleset = config["update_ruleset"]
@@ -105,6 +106,18 @@ class Transactions(unittest.TestCase):
         posted = next(e[2] for e in self.api.events if e[1] == "POST")
         self.assertEqual(posted["head_sha"], M)
         self.assertNotEqual(posted["head_sha"], H)
+
+    def test_locked_or_unknown_branch_never_reaches_evaluation(self):
+        for lock in ({"enabled": True}, {}, {"enabled": "false"}, None):
+            with self.subTest(lock=lock):
+                self.api = FakeGitHub()
+                self.api.protection["lock_branch"] = lock
+                evaluated = []
+                with self.assertRaises((relay.Hold, KeyError, TypeError)):
+                    self.run_transaction(lambda candidate: evaluated.append(candidate) or "e" * 64)
+                self.assertEqual(evaluated, [])
+                self.assertEqual(self.api.merges(), [])
+                self.assertFalse(any(event[1] == "POST" for event in self.api.events))
 
     def test_cleanup_failure_does_not_erase_confirmed_merge_receipt(self):
         self.api.fail_cleanup = True

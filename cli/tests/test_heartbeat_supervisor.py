@@ -1,12 +1,11 @@
+import hashlib
 import json
 from pathlib import Path
 
 import pytest
-
 from limen import heartbeat
 from limen.bounded_subprocess import BoundedCompletedProcess, BoundedSubprocessError
 from limen.notification_effect import DeliveryReceipt
-
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -58,9 +57,40 @@ def test_contract_is_a_one_shot_resource_contract():
     assert "cli/src/limen/notification_effect.py" in contract["runtime_artifacts"]
     commands = {probe["name"]: probe["command"] for probe in contract["probes"]}
     assert "--no-receipt" in commands["background-items-census"]
+    assert "--inspect-btm" not in commands["background-items-census"]
     assert "--no-receipt" in commands["live-checkout-currency"]
     assert "--no-write" in commands["cloud-storage-doctor"]
     assert "--no-write" in commands["tcc-track-c"]
+
+
+def test_audit_rotation_preserves_full_prior_stream_within_contract_bound(tmp_path):
+    root = tmp_path / "heartbeat"
+    root.mkdir()
+    audit = root / "audit.jsonl"
+    prior = b"p" * (heartbeat.MAX_AUDIT_STREAM_BYTES - 2)
+    audit.write_bytes(prior)
+    receipt = {"run_id": "new", "status": "passed"}
+
+    heartbeat._append_audit(root, receipt)
+
+    digest = hashlib.sha256(prior).hexdigest()
+    archived = root / "history" / f"audit.jsonl-{digest}"
+    assert archived.read_bytes() == prior
+    assert audit.read_bytes() == (json.dumps(receipt, sort_keys=True, separators=(",", ":")) + "\n").encode()
+    assert audit.stat().st_size <= heartbeat.MAX_AUDIT_STREAM_BYTES
+
+
+def test_oversized_audit_record_is_preserved_and_active_stream_stays_bounded(tmp_path):
+    root = tmp_path / "heartbeat"
+    root.mkdir()
+    receipt = {"run_id": "large", "payload": "x" * heartbeat.MAX_AUDIT_STREAM_BYTES}
+    encoded = (json.dumps(receipt, sort_keys=True, separators=(",", ":")) + "\n").encode()
+
+    heartbeat._append_audit(root, receipt)
+
+    digest = hashlib.sha256(encoded).hexdigest()
+    assert (root / "history" / f"audit.jsonl-{digest}").read_bytes() == encoded
+    assert (root / "audit.jsonl").read_bytes() == b""
 
 
 def test_runtime_identity_uses_reviewed_digest_for_every_probe(monkeypatch):
@@ -414,3 +444,15 @@ def test_lane_liveness_is_scheduled_and_content_pinned():
     probes = {probe["name"]: probe for probe in contract["probes"]}
     assert probes["lane-liveness"]["timeout_seconds"] == 30
     assert "scripts/lane-liveness.py" in contract["runtime_artifacts"]
+
+
+def test_scheduled_pressure_probe_matches_current_observer():
+    from limen import observer
+
+    contract, _digest = heartbeat._load_contract(ROOT)
+    scheduled = next(p for p in contract["probes"] if p["name"] == "host-pressure-freshness")
+    _name, command, timeout = next(p for p in observer.HOST_PROBES if p[0] == scheduled["name"])
+    assert scheduled["command"][1:] == command[1:]
+    assert "--on-demand" in scheduled["command"]
+    assert "--read-only" in scheduled["command"]
+    assert scheduled["timeout_seconds"] == timeout == 15

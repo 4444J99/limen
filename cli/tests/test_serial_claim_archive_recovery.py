@@ -124,7 +124,12 @@ def test_interrupted_handoff_refunds_or_defers_exact_prelaunch_result(tmp_path, 
     save_limen_file(path, board)
     with pytest.raises(RuntimeError, match="terminal ticket custody"):
         _reserve(path, board, NOW + timedelta(minutes=1))
-    save_limen_file(path, settled)
+    # A corrected input is required even after a definite no-launch refund.
+    # Persist that recovery evidence through the keeper, not only its projection.
+    corrected = settled.model_copy(deep=True)
+    corrected.tasks[0].context = "Recovered durable handoff after the injected storage interruption."
+    tabularius.apply_limen_file_sync(path, corrected, agent="codex", session_id="repair-handoff", before=settled)
+    settled = dispatch.load_limen_file(path)
     again = _reserve(path, settled, NOW + timedelta(minutes=2))
     assert again[1].status == "dispatched"
     assert again[3] != claim.log["session_id"]
@@ -234,3 +239,9 @@ def test_unacknowledged_prelaunch_release_custody_keeps_claim_debited(tmp_path, 
     if custody_failure == "sync":
         [pending] = list((root / "inbox").glob("*.json"))
         assert tabularius.Ticket.model_validate_json(pending.read_bytes()).log["execution_started"] is False
+
+
+@pytest.fixture(autouse=True)
+def _approved_claim_priority(approved_execution_policy):
+    """Only the named synthetic claim is approved; real keeper custody still runs."""
+    approved_execution_policy("ACK-CUSTODY")

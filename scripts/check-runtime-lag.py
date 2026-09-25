@@ -28,7 +28,7 @@ repoints a symlink underneath a daemon that executes from it every 300s. limen's
 here ends at sensing, so this names the owner and the exact command and stops.
 
 Exit 0 ⟺ no install on this host (dev box / CI / container), or the install is within bound,
-         or the lag could not be measured (said out loud, never silently).
+Exit 77 ⟺ an installed runtime could not be measured.
 Exit 1 ⟺ the running runtime is further behind the default branch than the declared bound.
 """
 
@@ -152,7 +152,7 @@ def main() -> int:
             # Reported, never passed silently: "I checked and it is current" and "I could not
             # check" are otherwise identical in this output.
             print(f"runtime-lag: UNVERIFIED — {m['unmeasurable']} ({age_text})")
-        return 0
+        return 77
 
     if not m.get("is_ancestor"):
         if not args.json:

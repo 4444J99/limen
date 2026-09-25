@@ -31,6 +31,7 @@ from limen.conduct.models import (
 )
 from limen.conduct.resources import conflicting_keys, parse_resource, sorted_claims
 from limen.conduct.store import MemoryStateStore, StateStore
+from limen.inventory_admission import pending_remote_attempts
 from limen.work_loan import packet_is_non_capacity_projection, packet_work_loan_missing, work_loan_denial
 
 
@@ -219,8 +220,10 @@ class ConductBroker:
         capability_secret: str | bytes | None = None,
         runtime_identity: dict[str, str] | None = None,
         notification_registry_path: Path | str | None = None,
+        execution_policy: dict | None = None,
     ):
         self.store = store
+        self.execution_policy = execution_policy
         self.session_ttl = session_ttl
         self.adoption_after = adoption_after
         self.lease_ttl = lease_ttl
@@ -340,12 +343,107 @@ class ConductBroker:
                 "sessions": sessions,
             }
 
+    def _execution_run(self, state, work_key, principal, now):
+        from limen.inventory_admission import execution_active
+
+        if principal is not None:
+            self._require_role(principal, "conductor", "executor", "compatibility")
+        candidates = [
+            r
+            for r in state["runs"].values()
+            if work_key in {r["packet"]["work_key"], r["packet"].get("task_id")} and execution_active(r, now)
+        ]
+        if len(candidates) != 1:
+            raise ConductConflict("execution_active_reservation_required")
+        run = candidates[0]
+        if principal is not None and principal.principal_id not in {
+            run["conductor_principal_id"],
+            state["session_principals"].get(run["executor_session_id"]),
+        }:
+            raise ConductConflict("execution_reservation_principal_mismatch")
+        policy = self.execution_policy or {}
+        priority = next(
+            (
+                p
+                for p in policy.get("approved_priorities", [])
+                if p.get("outcome_id") == run["execution_admission"]["outcome_id"] and p.get("enabled") is True
+            ),
+            None,
+        )
+        if priority is None or not (
+            policy.get("mode") == "dispatch" or policy.get("mode") == "recovery" and priority.get("recovery") is True
+        ):
+            raise ConductConflict("execution_priority_not_approved")
+        return run
+
+    def execution_info(self, work_key, *, principal=None, now=None):
+        with self.store.transaction() as state:
+            run = self._execution_run(state, work_key, principal, now or utc_now())
+            return {
+                "run_id": run["run_id"],
+                "work_key": run["packet"]["work_key"],
+                **copy.deepcopy(run["execution_admission"]),
+            }
+
+    def reserve_growth(self, work_key, action, identity_hash, *, principal=None, now=None):
+        now = now or utc_now()
+        with self.store.transaction() as state:
+            run = self._execution_run(state, work_key, principal, now)
+            if (
+                action not in {"issue", "branch", "worktree", "verification"}
+                or len(identity_hash) != 64
+                or any(c not in "0123456789abcdef" for c in identity_hash)
+            ):
+                raise ConductConflict("execution_resource_invalid")
+            priority = next(
+                p
+                for p in self.execution_policy["approved_priorities"]
+                if p["outcome_id"] == run["execution_admission"]["outcome_id"]
+            )
+            allowance = 1 if action == "verification" else priority.get("resource_limits", {}).get(action)
+            if type(allowance) is not int or allowance < 1:
+                raise ConductConflict("execution_resource_not_approved")
+            scope = [
+                r
+                for r in state["runs"].values()
+                if (
+                    r["run_id"] == run["run_id"]
+                    if action == "verification"
+                    else (r.get("execution_admission") or {}).get("outcome_id") == priority["outcome_id"]
+                )
+            ]
+            reservations = [
+                item
+                for r in scope
+                for item in r["execution_admission"].get("resource_reservations", [])
+                if item["action"] == action
+            ]
+            duplicate = next((r for r in reservations if r["identity_hash"] == identity_hash), None)
+            if duplicate and action == "verification":
+                return copy.deepcopy(duplicate)
+            if duplicate:
+                raise ConductConflict("execution_resource_already_reserved")
+            if len(reservations) >= allowance:
+                raise ConductConflict("execution_resource_budget_exhausted")
+            receipt = {"action": action, "identity_hash": identity_hash, "reserved_at": now.isoformat()}
+            if action == "verification":
+                receipt["deadline"] = min(
+                    now + timedelta(minutes=10),
+                    datetime.fromisoformat(run["execution_admission"]["attempt_deadline"].replace("Z", "+00:00")),
+                ).isoformat()
+            run["execution_admission"].setdefault("resource_reservations", []).append(receipt)
+            _event(
+                state, "execution.resource_reserved", run_id=run["run_id"], action=action, identity_hash=identity_hash
+            )
+            return copy.deepcopy(receipt)
+
     def submit(
         self,
         packet: WorkPacketV1,
         *,
         principal: ConductPrincipalV1 | None = None,
         now: datetime | None = None,
+        retained_admission: dict | None = None,
         project_task_event: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         now = now or utc_now()
@@ -416,6 +514,27 @@ class ConductBroker:
                 packet,
                 principal_id=principal.principal_id if principal_enforced else None,
             )
+            from limen.inventory_admission import admit_execution, InventoryAdmissionError, projection_execution_status
+
+            try:
+                legacy = _is_task_compatibility_packet(packet)
+                starts_execution = projection_execution_status(_dump(packet)) in {"dispatched", "in_progress"}
+                continuation = (
+                    legacy
+                    and projection_execution_status(_dump(packet)) == "in_progress"
+                    and self.execution_policy is not None
+                )
+                if continuation:
+                    self._execution_run(state, packet.task_id, principal, now)
+                admission = (
+                    None
+                    if legacy and (not starts_execution or continuation)
+                    else admit_execution(
+                        self.execution_policy, state, _dump(packet), now, legacy=legacy, retained=retained_admission
+                    )
+                )
+            except InventoryAdmissionError as exc:
+                raise ConductConflict(str(exc)) from exc
             executor = self._select_executor(state, packet, now)
             if (
                 packet.effect == "write"
@@ -427,7 +546,10 @@ class ConductBroker:
             conflicts: list[dict[str, Any]] = []
             for lease_raw in state["leases"].values():
                 lease = LeaseV1.model_validate(lease_raw)
-                if lease.state not in {"reserved", "active"}:
+                if lease.state not in {"reserved", "active"} and not any(
+                    row.get("lease_id") == lease.lease_id
+                    for row in pending_remote_attempts(state["runs"].get(lease.run_id, {}))
+                ):
                     continue
                 pairs = conflicting_keys(claims, lease.resources)
                 if pairs:
@@ -486,6 +608,8 @@ class ConductBroker:
                 if key and value
             }
             hard_deadline = min(packet.deadline, now + self.lease_ttl)
+            if admission:
+                hard_deadline = min(hard_deadline, datetime.fromisoformat(admission["attempt_deadline"]))
             lease = LeaseV1(
                 lease_id=lease_id,
                 run_id=run_id,
@@ -505,6 +629,7 @@ class ConductBroker:
                 "root_run_id": root_run_id,
                 "parent_run_id": packet.parent_run_id,
                 "packet": _dump(packet),
+                "execution_admission": admission,
                 "conductor_session_id": packet.conductor.session_id,
                 "conductor_principal_id": principal.principal_id,
                 "executor_session_id": executor.session_id,
@@ -535,6 +660,10 @@ class ConductBroker:
                 generation=generation,
             )
             if run["compatibility_projection"]:
+                if not starts_execution and projection_execution_status(_dump(packet)):
+                    for prior in state["runs"].values():
+                        if prior["packet"].get("task_id") == packet.task_id and prior.get("execution_admission"):
+                            prior["execution_admission"]["legacy_active"] = False
                 if project_task_event is None:
                     raise ConductConflict("task compatibility submission requires the keeper projection handler")
                 projection_event: dict[str, Any] = {
@@ -611,6 +740,7 @@ class ConductBroker:
                 session_ttl=self.session_ttl,
                 adoption_after=self.adoption_after,
                 lease_ttl=self.lease_ttl,
+                execution_policy=self.execution_policy,
                 capability_secret=self.capability_secret,
             )
             results = []
@@ -705,6 +835,12 @@ class ConductBroker:
                     }
                 return self._submit_result(state, run, duplicate=True)
             parent = self._validate_lineage(state, packet, principal_id=principal.principal_id)
+            from limen.inventory_admission import admit_execution, InventoryAdmissionError
+
+            try:
+                admission = admit_execution(self.execution_policy, state, _dump(packet), now, waiting=True)
+            except InventoryAdmissionError as exc:
+                raise ConductConflict(str(exc)) from exc
             if parent is None:
                 raise ConductConflict("dependent fanout node requires a parent run")
             dependency_runs = []
@@ -722,6 +858,7 @@ class ConductBroker:
                 "root_run_id": parent["root_run_id"],
                 "parent_run_id": packet.parent_run_id,
                 "packet": _dump(packet),
+                "execution_admission": admission,
                 "conductor_session_id": packet.conductor.session_id,
                 "conductor_principal_id": principal.principal_id,
                 "executor_session_id": None,
@@ -910,11 +1047,12 @@ class ConductBroker:
                 raise ConductConflict("lease generation does not match the claim")
             if enforced and lease.executor_principal_id != resolved.principal_id:
                 raise ConductConflict("lease belongs to another executor principal")
-            if lease.state not in {"reserved", "active"}:
-                raise ConductConflict(f"lease is not active: {lease.state}")
             run = state["runs"].get(lease.run_id)
             if not run:
                 raise ConductError(f"lease points to missing run: {lease.run_id}")
+            observation_only = lease.state not in {"reserved", "active"}
+            if observation_only and not self._remote_observation_owned(run, lease):
+                raise ConductConflict(f"lease is not active: {lease.state}")
             _require_work_loan(WorkPacketV1.model_validate(run["packet"]))
             principal_id = lease.executor_principal_id or resolved.principal_id
             token = self._capability_token(lease.lease_id, lease.generation, principal_id)
@@ -934,7 +1072,19 @@ class ConductBroker:
                 "run_id": lease.run_id,
                 "generation": lease.generation,
                 "capability_token": token,
+                "observation_only": observation_only,
             }
+
+    @staticmethod
+    def _remote_observation_owned(run: dict, lease: LeaseV1, attempt_id: str | None = None) -> bool:
+        return any(
+            row.get("adapter") == "jules-api"
+            and row.get("lease_id") == lease.lease_id
+            and row.get("lease_generation") == lease.generation
+            and row.get("provider_state", "unknown") != "not_started"
+            and (attempt_id is None or row.get("attempt_id") == attempt_id)
+            for row in run.get("attempts", [])
+        )
 
     def heartbeat(
         self,
@@ -956,9 +1106,17 @@ class ConductBroker:
                 capability_token,
                 generation=generation,
                 principal=principal,
+                allow_terminal=attempt is not None,
             )
             if lease.state not in {"reserved", "active"}:
-                raise ConductConflict(f"lease is not active: {lease.state}")
+                run = state["runs"][lease.run_id]
+                if attempt is None or not self._remote_observation_owned(run, lease, attempt.attempt_id):
+                    raise ConductConflict(f"lease is not active: {lease.state}")
+                # An authenticated late observation can settle existing provider
+                # occupancy, never create an attempt or renew mutation authority.
+                self._record_attempt(run, lease, attempt)
+                _event(state, "provider.observed_after_fence", lease_id=lease_id, run_id=lease.run_id)
+                return {"status": "observation_only", "lease": self._public_lease(lease), "attempt_created": False}
             for resource, expected in lease.observed_heads.items():
                 actual = (observed_heads or {}).get(resource)
                 if actual is None:
@@ -982,7 +1140,13 @@ class ConductBroker:
             lease = lease.model_copy(
                 update={
                     "heartbeat_at": now,
-                    "hard_deadline": min(packet.deadline, now + self.lease_ttl),
+                    "hard_deadline": min(
+                        packet.deadline,
+                        now + self.lease_ttl,
+                        datetime.fromisoformat(
+                            (run.get("execution_admission") or {}).get("attempt_deadline", packet.deadline.isoformat())
+                        ),
+                    ),
                     "state": "active",
                 }
             )
@@ -1018,6 +1182,9 @@ class ConductBroker:
 
     @staticmethod
     def _record_attempt(run: dict[str, Any], lease: LeaseV1, attempt: ExecutorAttemptV1) -> bool:
+        # model_copy is intentionally non-validating; enforce the wire invariants
+        # again at the authoritative write boundary, including local clients.
+        attempt = ExecutorAttemptV1.model_validate(attempt.model_dump(mode="json"))
         if (
             attempt.run_id != run["run_id"]
             or attempt.lease_id != lease.lease_id
@@ -1034,7 +1201,7 @@ class ConductBroker:
                 raise ConductConflict("executor attempt limit exhausted")
             if len(attempts) >= packet.spend.limit:
                 raise ConductConflict("executor spend limit exhausted")
-            if any(row.get("status") not in {"failed", "blocked"} for row in attempts):
+            if pending_remote_attempts(run) or any(row.get("status") not in {"failed", "blocked"} for row in attempts):
                 raise ConductConflict("a prior executor attempt is still live")
             attempts.append(encoded)
             return True
@@ -1051,6 +1218,18 @@ class ConductBroker:
         for field in ("provider_run_id", "provider_run_url"):
             if prior.get(field) and encoded.get(field) != prior.get(field):
                 raise ConductConflict("executor provider receipt identity changed")
+        provider_before = prior.get("provider_state", "unknown")
+        if (
+            provider_before in {"terminal", "not_started"}
+            and attempt.provider_state != provider_before
+            or provider_before == "nonterminal"
+            and attempt.provider_state == "not_started"
+            or attempt.provider_state == "terminal"
+            and not attempt.provider_run_id
+            or attempt.provider_state == "not_started"
+            and attempt.provider_run_id
+        ):
+            raise ConductConflict("executor provider occupancy evidence regressed")
         transitions = {
             "launching": {"launching", "submitted", "running", "succeeded", "failed", "blocked"},
             "submitted": {"submitted", "running", "succeeded", "failed", "blocked"},
@@ -1061,6 +1240,10 @@ class ConductBroker:
             "failed": {"failed"},
             "blocked": {"blocked"},
         }
+        if attempt.adapter == "jules-api":
+            # A provider may pause after running; that is still occupied, not a
+            # new launch. Local failure receipts never get rewritten by a probe.
+            transitions["running"].add("submitted")
         if encoded["status"] not in transitions.get(str(prior.get("status")), set()):
             raise ConductConflict("executor attempt status regressed")
         prior.update(encoded)
@@ -1075,7 +1258,7 @@ class ConductBroker:
         *,
         now: datetime,
     ) -> LeaseV1 | None:
-        if attempt.status not in {"failed", "blocked"}:
+        if attempt.status not in {"failed", "blocked"} or pending_remote_attempts(run):
             return None
         packet = WorkPacketV1.model_validate(run["packet"])
         attempts = run.get("attempts", [])
@@ -1123,7 +1306,13 @@ class ConductBroker:
             capability_token_hash=self._token_hash(token),
             acquired_at=now,
             heartbeat_at=now,
-            hard_deadline=min(packet.deadline, now + self.lease_ttl),
+            hard_deadline=min(
+                packet.deadline,
+                now + self.lease_ttl,
+                datetime.fromisoformat(
+                    (run.get("execution_admission") or {}).get("attempt_deadline", packet.deadline.isoformat())
+                ),
+            ),
         )
         state["leases"][lease.lease_id] = _dump(lease.model_copy(update={"state": "released", "heartbeat_at": now}))
         state["leases"][lease_id] = _dump(replacement)
@@ -1262,6 +1451,14 @@ class ConductBroker:
                 if run["root_run_id"] == root_run_id and run["status"] == "waiting"
             ]
             for waiting_run in waiting:
+                admission = waiting_run.get("execution_admission")
+                if admission and datetime.fromisoformat(admission["attempt_deadline"].replace("Z", "+00:00")) <= now:
+                    current = state["runs"][waiting_run["run_id"]]
+                    current["status"] = "expired"
+                    current["updated_at"] = now.isoformat()
+                    _event(state, "fanout.run_budget_expired", run_id=current["run_id"])
+                    progress = True
+                    continue
                 dependency_states = [
                     state["runs"][run_id]["status"] for run_id in waiting_run.get("dependency_run_ids", [])
                 ]
@@ -1307,10 +1504,13 @@ class ConductBroker:
                     session_ttl=self.session_ttl,
                     adoption_after=self.adoption_after,
                     lease_ttl=self.lease_ttl,
+                    execution_policy=self.execution_policy,
                     capability_secret=self.capability_secret,
                 )
                 try:
-                    promoted = staged.submit(packet, principal=principal, now=now)
+                    promoted = staged.submit(
+                        packet, principal=principal, now=now, retained_admission=waiting_run.get("execution_admission")
+                    )
                 except ConductError:
                     continue
                 if promoted["status"] == "busy":
@@ -1764,13 +1964,22 @@ class ConductBroker:
 
     def _active_load(self, state: dict[str, Any], now: datetime) -> dict[str, int]:
         load: dict[str, int] = {}
+        counted: set[str] = set()
         for raw in state["leases"].values():
             lease = LeaseV1.model_validate(raw)
-            if lease.state in {"reserved", "active"} and lease.hard_deadline > now:
-                run = state["runs"].get(lease.run_id)
-                if run:
-                    session_id = run["executor_session_id"]
-                    load[session_id] = load.get(session_id, 0) + 1
+            run = state["runs"].get(lease.run_id)
+            if (
+                run
+                and lease.run_id not in counted
+                and (
+                    lease.state in {"reserved", "active"}
+                    and lease.hard_deadline > now
+                    or any(row.get("lease_id") == lease.lease_id for row in pending_remote_attempts(run))
+                )
+            ):
+                counted.add(lease.run_id)
+                session_id = run["executor_session_id"]
+                load[session_id] = load.get(session_id, 0) + 1
         return load
 
     def _expire_leases(self, state: dict[str, Any], now: datetime) -> None:

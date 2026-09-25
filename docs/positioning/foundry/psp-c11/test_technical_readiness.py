@@ -219,8 +219,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                     "created_at": "2026-08-14T23:59:30Z",
                     "updated_at": "2026-08-14T23:59:40Z",
                     "archive_download_url": (
-                        f"https://api.github.com/repos/{receipt['repository']}"
-                        f"/actions/artifacts/{artifact_id}/zip"
+                        f"https://api.github.com/repos/{receipt['repository']}/actions/artifacts/{artifact_id}/zip"
                     ),
                     "workflow_run": {
                         "id": int(receipt["provenance_url"].rsplit("/", 1)[-1]),
@@ -380,9 +379,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             lambda value: value.__setitem__("operator_score", self.operator_score(value)),
         ):
             changed_snapshot = copy.deepcopy(self.snapshot)
-            row = next(
-                candidate for candidate in changed_snapshot["candidates"] if candidate["visibility"] == "public"
-            )
+            row = next(candidate for candidate in changed_snapshot["candidates"] if candidate["visibility"] == "public")
             mutate(row)
             self.assertNotEqual(expected_digest, MODULE.candidate_projection_digest(changed_snapshot))
 
@@ -448,6 +445,8 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         heads = {
             row["repository"]: row["observed_head"] for row in self.audit["candidates"] if row["visibility"] == "public"
         }
+        for repository in MODULE.public_observation_withdrawals(self.audit):
+            heads.pop(repository, None)
         first_repository = self.public_row()["repository"]
         heads[first_repository] = "0" * 40
         errors = MODULE.validate_audit(
@@ -458,7 +457,12 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         )
         self.assertTrue(any("observed_head drifted live" in error for error in errors))
         public_rows = sorted(
-            (row for row in self.audit["candidates"] if row["visibility"] == "public"),
+            (
+                row
+                for row in self.audit["candidates"]
+                if row["visibility"] == "public"
+                and row["repository"] not in MODULE.public_observation_withdrawals(self.audit)
+            ),
             key=lambda value: value["repository"],
         )
         response = {
@@ -469,7 +473,10 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         }
         collection = MODULE.LiveCollection(call_limit=1)
         with mock.patch.object(MODULE, "_run_json", return_value=response):
-            self.assertEqual(heads | {first_repository: self.public_row()["observed_head"]}, MODULE.collect_public_head_observations(self.audit, collection))
+            self.assertEqual(
+                heads | {first_repository: self.public_row()["observed_head"]},
+                MODULE.collect_public_head_observations(self.audit, collection),
+            )
         response["data"]["r0"]["object"]["oid"] = "0" * 40
         with (
             mock.patch.object(MODULE, "_run_json", return_value=response),
@@ -477,11 +484,53 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         ):
             MODULE.collect_public_head_observations(self.audit)
 
+    def test_withdrawals_preserve_denominator_and_never_verify_private_heads(self) -> None:
+        withdrawn = MODULE.public_observation_withdrawals(self.audit)
+        self.assertEqual(len(withdrawn), 1)
+        self.assertEqual(len(self.audit["candidates"]), 62)
+        heads = {
+            row["repository"]: row["observed_head"]
+            for row in self.audit["candidates"]
+            if row["visibility"] == "public" and row["repository"] not in withdrawn
+        }
+        self.assertEqual(len(heads), 53)
+        self.assertEqual(MODULE.validate_audit(self.audit, self.snapshot, self.contract, live_heads=heads), [])
+        repository = next(iter(withdrawn))
+        heads[repository] = next(
+            row["observed_head"] for row in self.audit["candidates"] if row.get("repository") == repository
+        )
+        errors = MODULE.validate_audit(self.audit, self.snapshot, self.contract, live_heads=heads)
+        self.assertIn("withdrawn candidate cannot claim public live verification", errors)
+
+    def test_withdrawal_cannot_clear_evidence_or_be_extended_by_missing_api_data(self) -> None:
+        repository = next(iter(MODULE.public_observation_withdrawals(self.audit)))
+        row = next(row for row in self.audit["candidates"] if row.get("repository") == repository)
+        for field, value in (
+            ("transfer_eligible", True),
+            ("readiness_score", 1),
+            ("observed_head", "0" * 40),
+            ("build", {"state": "verified_pass"}),
+        ):
+            changed = copy.deepcopy(self.audit)
+            target = next(r for r in changed["candidates"] if r.get("repository") == repository)
+            target[field] = value
+            with self.assertRaises(MODULE.AuditError):
+                MODULE.public_observation_withdrawals(changed)
+        manifest = MODULE.load_json(MODULE.PUBLIC_OBSERVATION_WITHDRAWALS)
+        for receipt in (dict(manifest["withdrawals"][0]), {"candidate_id_sha256": "0" * 64}):
+            changed = copy.deepcopy(manifest)
+            changed["withdrawals"].append(receipt)
+            with mock.patch.object(MODULE, "load_json", return_value=changed), self.assertRaises(MODULE.AuditError):
+                MODULE.public_observation_withdrawals(self.audit)
+        self.assertFalse(row["transfer_eligible"])
+
     def test_verified_results_require_immutable_receipt_evidence(self) -> None:
         changed = copy.deepcopy(self.audit)
         row = self.public_row(changed)
         row["build"] = {"state": "verified_pass", "evidence_url": "https://github.com/example/repo/actions/runs/1"}
-        self.assertTrue(any("dimension-specific immutable technical receipt" in error for error in self.errors(changed)))
+        self.assertTrue(
+            any("dimension-specific immutable technical receipt" in error for error in self.errors(changed))
+        )
         row["build"]["evidence_url"] = f"https://example.invalid/default_branch/{row['observed_head']}"
         self.assertTrue(any("metadata as technical proof" in error for error in self.errors(changed)))
 
@@ -542,15 +591,16 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         output = b"build:pass:output\n"
         artifact = b"build:pass:artifact\n"
         resolved = self.resolved_evidence(receipt)
-        with mock.patch.object(MODULE, "_prefetch_live_evidence"), mock.patch.object(
-            MODULE, "_fetch_exact_head_blob", return_value=json.dumps(receipt).encode("utf-8")
-        ), mock.patch.object(
-            MODULE, "_fetch_repository_blob", side_effect=[output, artifact]
-        ), mock.patch.object(
-            MODULE,
-            "_run_json",
-            side_effect=[resolved["provenance"], resolved["production_artifact"]],
-        ) as run:
+        with (
+            mock.patch.object(MODULE, "_prefetch_live_evidence"),
+            mock.patch.object(MODULE, "_fetch_exact_head_blob", return_value=json.dumps(receipt).encode("utf-8")),
+            mock.patch.object(MODULE, "_fetch_repository_blob", side_effect=[output, artifact]),
+            mock.patch.object(
+                MODULE,
+                "_run_json",
+                side_effect=[resolved["provenance"], resolved["production_artifact"]],
+            ) as run,
+        ):
             receipts = MODULE.collect_live_evidence_receipts(changed)
         self.assertEqual(resolved, receipts[(row["candidate_id"], "build")])
         self.assertEqual(
@@ -969,9 +1019,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             ): self.funding_artifact(row),
         }
         collection = mock.Mock()
-        collection.run_json_batch.side_effect = lambda requests: {
-            tuple(request): {} for request in requests
-        }
+        collection.run_json_batch.side_effect = lambda requests: {tuple(request): {} for request in requests}
         with (
             mock.patch.object(
                 MODULE,
@@ -1077,9 +1125,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             mock.patch.object(
                 MODULE.subprocess,
                 "run",
-                side_effect=[
-                    mock.Mock(returncode=0, stdout=json.dumps(page)) for page in duplicate_pages
-                ],
+                side_effect=[mock.Mock(returncode=0, stdout=json.dumps(page)) for page in duplicate_pages],
             ),
             self.assertRaisesRegex(MODULE.AuditError, "listing is incomplete"),
         ):
@@ -1109,9 +1155,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
 
     def test_large_repository_blob_uses_exact_bounded_git_blob_fallback(self) -> None:
         content = b"x" * (MODULE.GITHUB_CONTENTS_INLINE_MAX_BYTES + 1)
-        blob_sha = MODULE.hashlib.sha1(
-            f"blob {len(content)}\0".encode("ascii") + content
-        ).hexdigest()
+        blob_sha = MODULE.hashlib.sha1(f"blob {len(content)}\0".encode("ascii") + content).hexdigest()
         contents = {
             "type": "file",
             "size": len(content),
@@ -1176,9 +1220,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             return {
                 "type": "file",
                 "size": len(value),
-                "sha": MODULE.hashlib.sha1(
-                    f"blob {len(value)}\0".encode("ascii") + value
-                ).hexdigest(),
+                "sha": MODULE.hashlib.sha1(f"blob {len(value)}\0".encode("ascii") + value).hexdigest(),
                 "encoding": "none",
                 "content": "",
             }
@@ -1210,7 +1252,11 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             self.production_artifact(later_receipt)["artifacts"][0]["name"],
         )
         self.assertNotEqual(row["observed_head"], "f" * 40)
-        self.assertTrue(MODULE._url_proves_dimension(self.receipt_url(row, "deploy"), row["observed_head"], row["repository"], "deploy"))
+        self.assertTrue(
+            MODULE._url_proves_dimension(
+                self.receipt_url(row, "deploy"), row["observed_head"], row["repository"], "deploy"
+            )
+        )
         resolved = self.resolved_evidence(receipt)
         self.assertEqual(
             [],
@@ -1311,15 +1357,11 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
 
     def test_readiness_model_requires_unique_dimensions_and_exactly_100_points(self) -> None:
         duplicate = copy.deepcopy(self.contract)
-        duplicate["readiness_model"]["dimensions"].append(
-            copy.deepcopy(duplicate["readiness_model"]["dimensions"][0])
-        )
+        duplicate["readiness_model"]["dimensions"].append(copy.deepcopy(duplicate["readiness_model"]["dimensions"][0]))
         with self.assertRaisesRegex(MODULE.AuditError, "duplicate dimensions"):
             MODULE.readiness_weights(duplicate)
         underweight = copy.deepcopy(self.contract)
-        next(
-            row for row in underweight["readiness_model"]["dimensions"] if row["id"] == "deploy_runtime"
-        )["weight"] = 0
+        next(row for row in underweight["readiness_model"]["dimensions"] if row["id"] == "deploy_runtime")["weight"] = 0
         with self.assertRaisesRegex(MODULE.AuditError, "dimension set or build/test allocation drifted"):
             MODULE.readiness_weights(underweight)
 
@@ -1386,9 +1428,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
 
         row["transfer_eligible"] = True
         changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
-        self.assertTrue(
-            any("every governed nontechnical floor" in error for error in self.errors(changed))
-        )
+        self.assertTrue(any("every governed nontechnical floor" in error for error in self.errors(changed)))
         row["transfer_eligible"] = False
         row["maintenance"]["funding_evidence_url"] = row["maintenance"]["evidence_url"]
         changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
@@ -1467,8 +1507,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         self.assertFalse(MODULE.governed_transfer_floors_pass(tampered, self.contract))
         mutable_url = copy.deepcopy(candidate)
         mutable_url["operator_score"]["receipt_url"] = (
-            f"https://github.com/{candidate['repository']}/blob/main/"
-            "docs/receipts/operator/operator-score-receipt.json"
+            f"https://github.com/{candidate['repository']}/blob/main/docs/receipts/operator/operator-score-receipt.json"
         )
         self.assertFalse(MODULE.governed_transfer_floors_pass(mutable_url, self.contract))
         for blocker in MODULE.GOVERNED_TRANSFER_BLOCKERS:
@@ -1509,7 +1548,12 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         row["deploy"]["state"] = "verified_pass"
         row["readiness_score"] = 100
         errors = self.errors(changed)
-        self.assertTrue(any("candidate" in error and "deploy" in error and "immutable technical receipt" in error for error in errors))
+        self.assertTrue(
+            any(
+                "candidate" in error and "deploy" in error and "immutable technical receipt" in error
+                for error in errors
+            )
+        )
         self.assertTrue(any("readiness_score drift" in error for error in errors))
 
     def test_joint_build_test_dimension_scores_only_when_both_pass(self) -> None:
@@ -1541,9 +1585,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 "evidence_url": self.receipt_url(row, "security"),
             }
             row["readiness_score"] = 15
-            row["blockers"] = [
-                blocker for blocker in row["blockers"] if blocker["code"] != "security_evidence_missing"
-            ]
+            row["blockers"] = [blocker for blocker in row["blockers"] if blocker["code"] != "security_evidence_missing"]
             changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
             errors = self.errors(changed)
             self.assertTrue(any("verified_pass requires a low or moderate class" in error for error in errors))
@@ -1581,9 +1623,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             "blocker": None,
         }
         row["readiness_score"] = 5
-        row["blockers"] = [
-            blocker for blocker in row["blockers"] if blocker["code"] != "maintenance_evidence_missing"
-        ]
+        row["blockers"] = [blocker for blocker in row["blockers"] if blocker["code"] != "maintenance_evidence_missing"]
         changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
         errors = self.errors(changed)
         self.assertTrue(any("estimate exceeds the contract maximum" in error for error in errors))
@@ -1873,7 +1913,9 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 private_clearance_receipts={candidate_id: digest},
             ),
         )
-        self.assertEqual([], MODULE.validate_audit(changed, self.snapshot, self.contract, private_clearance_receipts=None))
+        self.assertEqual(
+            [], MODULE.validate_audit(changed, self.snapshot, self.contract, private_clearance_receipts=None)
+        )
         changed = copy.deepcopy(changed)
         row = self.private_row(changed)
         row["readiness_status"] = "cleared"
@@ -1917,26 +1959,34 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             path_leak.write_text("safe body", encoding="utf-8")
             content_leak = package / "safe.md"
             content_leak.write_text(
-                "git clone https://github.com/OwNeR/SeCrEtRePo.git\n"
-                "git clone git@github.com:OwNeR/SeCrEtRePo.git\n",
+                "git clone https://github.com/OwNeR/SeCrEtRePo.git\ngit clone git@github.com:OwNeR/SeCrEtRePo.git\n",
                 encoding="utf-8",
             )
             tracked_file = package / "tracked.md"
             tracked_file.write_text("owner/secretrepo", encoding="utf-8")
             undecodable = package / "binary.dat"
             undecodable.write_bytes(b"\xff\xfeowner/secretrepo")
-            with mock.patch.object(MODULE, "PACKAGE", package), mock.patch.object(MODULE, "ROOT", package), mock.patch.object(
-                MODULE.subprocess,
-                "run",
-                return_value=mock.Mock(returncode=0, stdout="safe.md\ntracked.md\n"),
+            with (
+                mock.patch.object(MODULE, "PACKAGE", package),
+                mock.patch.object(MODULE, "ROOT", package),
+                mock.patch.object(
+                    MODULE.subprocess,
+                    "run",
+                    return_value=mock.Mock(returncode=0, stdout="safe.md\ntracked.md\n"),
+                ),
             ):
                 leaks = MODULE._private_identity_leaks({"owner/SecretRepo"}, {"SecretRepo"})
             self.assertEqual(["safe.md", "tracked.md"], leaks)
-            with mock.patch.object(MODULE, "PACKAGE", package), mock.patch.object(MODULE, "ROOT", package), mock.patch.object(
-                MODULE.subprocess,
-                "run",
-                return_value=mock.Mock(returncode=0, stdout="binary.dat\n"),
-            ), self.assertRaisesRegex(MODULE.AuditError, "not valid UTF-8"):
+            with (
+                mock.patch.object(MODULE, "PACKAGE", package),
+                mock.patch.object(MODULE, "ROOT", package),
+                mock.patch.object(
+                    MODULE.subprocess,
+                    "run",
+                    return_value=mock.Mock(returncode=0, stdout="binary.dat\n"),
+                ),
+                self.assertRaisesRegex(MODULE.AuditError, "not valid UTF-8"),
+            ):
                 MODULE._private_identity_leaks({"owner/SecretRepo"}, {"SecretRepo"})
 
     def test_generic_private_bare_name_in_prose_is_not_an_identity_leak(self) -> None:
@@ -1944,10 +1994,14 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             package = Path(directory)
             tracked = package / "tracked.md"
             tracked.write_text("The public status remains restricted.\n", encoding="utf-8")
-            with mock.patch.object(MODULE, "PACKAGE", package), mock.patch.object(MODULE, "ROOT", package), mock.patch.object(
-                MODULE.subprocess,
-                "run",
-                return_value=mock.Mock(returncode=0, stdout="tracked.md\n"),
+            with (
+                mock.patch.object(MODULE, "PACKAGE", package),
+                mock.patch.object(MODULE, "ROOT", package),
+                mock.patch.object(
+                    MODULE.subprocess,
+                    "run",
+                    return_value=mock.Mock(returncode=0, stdout="tracked.md\n"),
+                ),
             ):
                 leaks = MODULE._private_identity_leaks({"owner/status"}, {"status"})
             self.assertEqual([], leaks)
@@ -2025,6 +2079,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             row["repository"]: row["observed_head"]
             for row in self.audit["candidates"]
             if row["visibility"] == "public"
+            and row["repository"] not in MODULE.public_observation_withdrawals(self.audit)
         }
         with (
             mock.patch.object(sys, "argv", argv),

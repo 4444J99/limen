@@ -10,8 +10,8 @@ from pathlib import Path
 import click
 import yaml
 
-from limen.conduct.client import BrokerQuotaExhausted, client_from_env
 from limen.conduct.cli import conduct_group
+from limen.conduct.client import BrokerQuotaExhausted, client_from_env
 from limen.dispatch import dispatch_tasks, release_stale_tasks
 from limen.doctor import (
     print_qa_report,
@@ -24,6 +24,7 @@ from limen.fanout_cli import fanout_group
 from limen.harvest import harvest_results
 from limen.host_admission import AdmissionController, AdmissionStateError, process_identity, worktree_scope
 from limen.io import load_limen_file, load_limen_text, save_derived_limen_projection
+from limen.opencode_smoke import run_opencode_smoke
 from limen.private_board import (
     PrivateCustodyUnavailable,
     default_private_custody_path,
@@ -31,7 +32,6 @@ from limen.private_board import (
     path_is_public_aggregate,
     private_board_path,
 )
-from limen.opencode_smoke import run_opencode_smoke
 from limen.progress import (
     UniverseProgressError,
     build_progress_snapshot,
@@ -120,6 +120,40 @@ def main():
 
 main.add_command(conduct_group)
 main.add_command(fanout_group)
+
+
+@click.group("repo")
+def repo_group() -> None:
+    """Acquire and release session-scoped repository residency."""
+
+
+@repo_group.command("ensure")
+@click.argument("repo_id")
+@click.argument("revision")
+@click.argument("session_id")
+def repo_ensure(repo_id: str, revision: str, session_id: str) -> None:
+    """Acquire one isolated working directory by immutable GitHub repository ID."""
+    from limen.repo_lifecycle import RepositoryLifecycleError, ensure
+
+    try:
+        click.echo(json.dumps(ensure(repo_id, revision, session_id), sort_keys=True))
+    except RepositoryLifecycleError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+
+@repo_group.command("release")
+@click.argument("lease_id")
+def repo_release(lease_id: str) -> None:
+    """Release into custody investigation; uncertain work remains resident."""
+    from limen.repo_lifecycle import RepositoryLifecycleError, release
+
+    try:
+        click.echo(json.dumps(release(lease_id), sort_keys=True))
+    except RepositoryLifecycleError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+
+main.add_command(repo_group)
 
 
 @main.command("observe")
@@ -874,7 +908,7 @@ def harvest(agent):
     "--sandbox",
     "launch_sandbox",
     default=None,
-    help="Codex sandbox for the explicit primary launch profile.",
+    help="Codex authorization profile; danger-full-access uses bypass-all and requires --conduct. May stand alone without pinning a model.",
 )
 @click.option(
     "--shell",

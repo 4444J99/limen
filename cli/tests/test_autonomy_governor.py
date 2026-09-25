@@ -32,7 +32,15 @@ def test_dispatch_ok_requires_dispatch_mode_and_flag(tmp_path):
     assert proc.returncode == 2
     assert "autonomy mode is observe" in proc.stdout
 
-    (logs / "autonomy-policy.json").write_text(json.dumps({"mode": "dispatch", "dispatch_enabled": False}))
+    (logs / "autonomy-policy.json").write_text(
+        json.dumps(
+            {
+                "approved_priorities": [{"enabled": True, "outcome_id": "fixture", "work_keys": ["fixture"]}],
+                "mode": "dispatch",
+                "dispatch_enabled": False,
+            }
+        )
+    )
     proc = run_governor(tmp_path, "dispatch-ok")
     assert proc.returncode == 2
     assert "dispatch_enabled is false" in proc.stdout
@@ -41,7 +49,15 @@ def test_dispatch_ok_requires_dispatch_mode_and_flag(tmp_path):
 def test_dispatch_ok_blocks_when_primary_paid_lanes_are_dead(tmp_path):
     logs = tmp_path / "logs"
     logs.mkdir()
-    (logs / "autonomy-policy.json").write_text(json.dumps({"mode": "dispatch", "dispatch_enabled": True}))
+    (logs / "autonomy-policy.json").write_text(
+        json.dumps(
+            {
+                "approved_priorities": [{"enabled": True, "outcome_id": "fixture", "work_keys": ["fixture"]}],
+                "mode": "dispatch",
+                "dispatch_enabled": True,
+            }
+        )
+    )
     (logs / "usage.json").write_text(
         json.dumps(
             {
@@ -62,7 +78,15 @@ def test_dispatch_ok_blocks_when_primary_paid_lanes_are_dead(tmp_path):
 def test_dispatch_ok_allows_dispatch_mode_with_headroom(tmp_path):
     logs = tmp_path / "logs"
     logs.mkdir()
-    (logs / "autonomy-policy.json").write_text(json.dumps({"mode": "dispatch", "dispatch_enabled": True}))
+    (logs / "autonomy-policy.json").write_text(
+        json.dumps(
+            {
+                "approved_priorities": [{"enabled": True, "outcome_id": "fixture", "work_keys": ["fixture"]}],
+                "mode": "dispatch",
+                "dispatch_enabled": True,
+            }
+        )
+    )
     (logs / "usage.json").write_text(json.dumps({"vendors": {"codex": {"health": "ok"}, "claude": {"health": "ok"}}}))
     proc = run_governor(tmp_path, "dispatch-ok")
     assert proc.returncode == 0
@@ -96,7 +120,15 @@ def run_governor_with_gh(tmp_path, gh_body, *args):
 def test_marker_pr_line_autoclears_when_that_pr_merged(tmp_path):
     logs = tmp_path / "logs"
     logs.mkdir()
-    (logs / "autonomy-policy.json").write_text(json.dumps({"mode": "dispatch", "dispatch_enabled": True}))
+    (logs / "autonomy-policy.json").write_text(
+        json.dumps(
+            {
+                "approved_priorities": [{"enabled": True, "outcome_id": "fixture", "work_keys": ["fixture"]}],
+                "mode": "dispatch",
+                "dispatch_enabled": True,
+            }
+        )
+    )
     (logs / "AUTONOMY_PAUSED").write_text("reason: safety gate\nowner: manual/hand-written-label-20260714\npr: 1036\n")
     # fake gh: `pr view 1036 --json state` -> MERGED; the owner --head search would find nothing
     body = 'if [ "$1" = "pr" ] && [ "$2" = "view" ]; then echo \'{"state":"MERGED"}\'; else echo "[]"; fi'
@@ -110,7 +142,15 @@ def test_marker_hand_written_owner_alone_stays_paused(tmp_path):
     # autoclear must stay fail-closed.
     logs = tmp_path / "logs"
     logs.mkdir()
-    (logs / "autonomy-policy.json").write_text(json.dumps({"mode": "dispatch", "dispatch_enabled": True}))
+    (logs / "autonomy-policy.json").write_text(
+        json.dumps(
+            {
+                "approved_priorities": [{"enabled": True, "outcome_id": "fixture", "work_keys": ["fixture"]}],
+                "mode": "dispatch",
+                "dispatch_enabled": True,
+            }
+        )
+    )
     (logs / "AUTONOMY_PAUSED").write_text("reason: safety gate\nowner: manual/hand-written-label-20260714\n")
     body = 'echo "[]"'
     proc = run_governor_with_gh(tmp_path, body, "mode")
@@ -121,7 +161,15 @@ def test_marker_hand_written_owner_alone_stays_paused(tmp_path):
 def test_marker_pr_line_unmerged_stays_paused(tmp_path):
     logs = tmp_path / "logs"
     logs.mkdir()
-    (logs / "autonomy-policy.json").write_text(json.dumps({"mode": "dispatch", "dispatch_enabled": True}))
+    (logs / "autonomy-policy.json").write_text(
+        json.dumps(
+            {
+                "approved_priorities": [{"enabled": True, "outcome_id": "fixture", "work_keys": ["fixture"]}],
+                "mode": "dispatch",
+                "dispatch_enabled": True,
+            }
+        )
+    )
     (logs / "AUTONOMY_PAUSED").write_text("reason: safety gate\npr: 1036\n")
     body = 'if [ "$1" = "pr" ] && [ "$2" = "view" ]; then echo \'{"state":"OPEN"}\'; else echo "[]"; fi'
     proc = run_governor_with_gh(tmp_path, body, "mode")
@@ -182,7 +230,15 @@ def run_governor_completion(tmp_path, gh_body, policy_body, *args, extra_env=Non
 def _seed_pause(tmp_path, marker_text):
     logs = tmp_path / "logs"
     logs.mkdir(exist_ok=True)
-    (logs / "autonomy-policy.json").write_text(json.dumps({"mode": "dispatch", "dispatch_enabled": True}))
+    (logs / "autonomy-policy.json").write_text(
+        json.dumps(
+            {
+                "approved_priorities": [{"enabled": True, "outcome_id": "fixture", "work_keys": ["fixture"]}],
+                "mode": "dispatch",
+                "dispatch_enabled": True,
+            }
+        )
+    )
     (logs / "AUTONOMY_PAUSED").write_text(marker_text)
     return logs
 
@@ -356,6 +412,7 @@ def _expired_window(tmp_path, predicate, expires="2026-07-22T03:14:24Z"):
         json.dumps(
             {
                 "mode": "observe",
+                "approved_priorities": [{"enabled": True, "outcome_id": "fixture", "work_keys": ["fixture"]}],
                 "dispatch_enabled": False,
                 "maintenance_window": {
                     "started_at": "2026-07-21T23:14:24Z",
@@ -508,3 +565,19 @@ def test_acting_subcommand_reflects_blocker_presence(tmp_path):
     blocked = run_governor(tmp_path, "acting")
     assert blocked.returncode == 1
     assert "expired-unrunnable-predicate" in blocked.stdout
+
+
+def test_dispatch_without_approved_priorities_stays_observe(tmp_path):
+    logs = tmp_path / "logs"
+    logs.mkdir()
+    (logs / "autonomy-policy.json").write_text(json.dumps({"mode": "dispatch", "dispatch_enabled": True}))
+    assert run_governor(tmp_path, "mode").stdout.strip() == "observe"
+
+
+def test_expired_window_cannot_restore_unrestricted_dispatch(tmp_path):
+    logs = _expired_window(tmp_path, ["true"])
+    policy_path = logs / "autonomy-policy.json"
+    policy = json.loads(policy_path.read_text())
+    policy.pop("approved_priorities")
+    policy_path.write_text(json.dumps(policy))
+    assert run_governor(tmp_path, "mode").stdout.strip() == "observe"

@@ -1,0 +1,75 @@
+# Workspace reaping receipt — 2026-09-24
+
+Scope: workspace repos outside `public-record-data-scrapper` and `prds-work`. PRDS was excluded from all generated-state, clone, branch, and worktree cleanup passes.
+
+## Completed
+
+- Reaped 68 local branch refs across the targeted public repositories: 61 refs were revalidated against their repository's current default branch or merged PR state; seven closed-but-unmerged refs were removed only after live GitHub state showed each local tip exactly matching its retained pull-request head. The final three exact-head acceptances were peer-audited PR #952 (`95a9034dcf91c72dd955cf13a245f6ec0ad4aaf2`), Limen PR #2597 (`12975f73f0ea2ba04ae71f998123e4f9ad0f26df`), and Limen PR #2608 (`f8f31158fbc859cd8c22b113d927e92800379d5c`). No remote branch was deleted.
+- Reclaimed seven worktrees across the workspace after fresh clean/idle and remote custody checks: four in the first exact-manifest batch, then Limen `engine-accepted-20260915` (clean and merged), `levers-triage` (clean and pushed), and `registry-gap-filling-20260915` (clean and pushed). The last three were applied against manifest SHA `42bdac7c7bb7d17e814b7248f2410cbc53df0ecfd6b232fd89b607ef1dcfb456`.
+- Removed two clean, remote-backed mirror clones in the earlier exact clone-reaper pass.
+- Removed 827.9 MiB of ignored, regenerable build and cache directories from 37 non-PRDS repository roots. The pass skipped one live-process root and 24 roots containing private or agent-runtime custody. These generated files were local cache data, not Git history or source files.
+- Re-ran the Limen reclaimer after generated-state cleanup. It found three eligible worktrees and removed all three; 77 other roots remained protected by dirty state, unpushed commits, recent activity, active processes, or ignored-payload custody uncertainty.
+
+## Recurrence finding
+
+Branch and worktree cleanup had been left to separate manual passes, while new lanes continued to create full working trees and preserve generated build state. The landed-ref reaper and exact-manifest worktree reclaimer remove only backed, inactive work. PR #2709 adds a persistent low-storage latch to Limen's worktree admission so a drop below 50 GiB closes new worktree creation until free space reaches 200 GiB again.
+
+## Remaining state
+
+The Data volume still reported 50 GiB available after deleting the generated files. The two internal APFS snapshots remain as directed and are retaining blocks. Private documents, agent session histories, application containers, unknown ignored payloads, and work with unpushed commits were preserved. The cleanup therefore did not reach the 200 GiB target.
+
+PR #2709 is at `10ee31bdc27fec7d32af9e28fc2eddf0ee641c1f`. Its CI build jobs passed, but the required `pr-gate` failed on the unrelated `positioning-foundry-technical-readiness-public-live` check with `live GitHub observation failed closed`. The change remains unmerged and the Limen runtime has not deployed it.
+
+## Follow-up tranche — 2026-09-24
+
+- A nested-root census found 76 Git admin roots. PRDS paths and roots inside private/custody estates were excluded from mutation.
+- The GitHub-backed landed-ref reaper completed 41 public-root passes before a later slow query was interrupted. It removed 49 local refs, each proven landed on the remote default branch or covered by a merged PR and the standing landed-ref grant. It deleted no remote branches. A second, ancestry-only pass covered all 61 eligible public roots and removed no additional refs; local-only, open, advanced, and otherwise unproven refs were retained.
+- A fresh Limen worktree check scanned 77 roots and found zero eligible worktrees. A fresh clone-reaper check found zero eligible clones and kept 80 paths for active-process, core, dirty/untracked, recent, linked-worktree, submodule, ignored-data, or unpushed-object reasons.
+- Homebrew's own `cleanup --prune=all` removed about 3.9 GiB of regenerable downloads and formula cache. This was non-Git cache data. The Data volume then reported 48 GiB available; it did not show a net increase, consistent with the retained APFS snapshots pinning blocks and concurrent disk activity. The snapshots remain unchanged.
+- No private documents, agent session history, application-container content, or PRDS checkout was removed. The 200 GiB target remains unmet; no further source or worktree candidate passed the existing custody/parity predicates in this tranche.
+
+## Follow-up tranche — inactive build caches
+
+- Cleared the Go build cache (about 457 MiB before cleanup) with `go clean -cache`; no Go build process was running.
+- Removed six stale `node-gyp` header-cache versions (about 345 MiB): 22.23.2, 24.18.0, 26.6.0, 26.7.0, 26.8.1, and 26.8.2. Kept caches for the installed Node 26.9.0 and 24.21.0 runtimes.
+- These were regenerable local build caches, not repository source or Git history. Active npm and uv caches were preserved because live processes use them. The 200 GiB storage target remains unmet.
+
+## Follow-up tranche — package and analyzer stores
+
+- Removed 1.313 GiB of ignored analyzer/bytecode/Turbo caches from non-PRDS, non-private repository roots. The exact scanned manifest SHA was `5f99cb76b217e6eb33f8b85b461a64f5534694b210d488a62e9a943d0896ac85`; all 1,032 candidates remained ignored at removal. A fresh worktree reclaimer scan after this pass still found zero eligible worktrees.
+- `pnpm store prune` removed 570 unreferenced packages (23,036 files); pnpm reported no running process before pruning.
+- The unused `~/.npm/_cacache` was confirmed to have no open files and cleared (about 4.3 GiB). The active npm cache at `~/.cache/npm` was preserved.
+- Removed 14 stale `npx` package cache roots (about 1.25 GiB), preserving both roots identified in active process command lines.
+- The read-only APFS snapshot inventory now shows 14 purgeable Time Machine snapshots; the oldest is identified by `diskutil` as limiting the APFS container minimum. All snapshots remain retained under the user's instruction. The Data volume still reports 48 GiB available, so the 200 GiB target remains unmet despite the reductions in apparent cache size.
+
+## Follow-up tranche — remaining local storage
+
+- The post-cache worktree reclaimer again reported zero eligible candidates. The volume-level clone/worktree and branch passes likewise produced no further safe source-tree removals.
+- A home-directory census found the largest remaining stores are Library app state/history and personal data: Claude Application Support (13.5 GiB), Messages attachments (8.8 GiB), Voice Memos recordings (3.5 GiB), Freeform boards (2.3 GiB), Notes accounts (2.2 GiB), Photos, and iCloud Drive. These were preserved. No Docker/Podman/Colima data store was found at standard locations; Homebrew reported no orphan formulae.
+- The read-only APFS inventory found 14 purgeable Time Machine snapshots; the oldest is explicitly reported as limiting the APFS container minimum. No snapshots were removed. The Data volume reported 44 GiB available on the latest check (earlier in the same pass it reported 48 GiB); no net free-space gain is claimed from apparent cache deletions. Snapshot retention and concurrent disk activity remain consistent with that result.
+
+## Follow-up tranche — nested refs and stale staging
+
+- Completed an online branch sweep across 56 eligible public Git admin roots. One further local ref, `fix/registry-stable-id-reconciliation`, was removed after the reaper confirmed its PR was merged and accepted under the existing landed-ref grant. No remote branch was deleted. The slow issue-backlog mirror timed out before proof and was left intact; a conservative ancestry-only pass had already completed earlier.
+- Pressure-mode clone census found two otherwise-removable pure mirrors, both under `prds-work`; they were left untouched. The Limen reclaimer continues to report zero eligible worktrees.
+- Removed a stale Homebrew Warp cask staging bundle last modified in August (926,303,535 apparent bytes) after confirming it had no open files and the installed Warp application ran from `/Applications/Warp.app`.
+- `mise prune --tools` removed only unused Node 24.18.0; `mise ls --prunable` is now empty. Installed 24.21.0 and the versions required by trusted workspace configs remain.
+- The latest Data-volume reading fell to 42 GiB available while the local Time Machine snapshots remained retained. No physical-space recovery is claimed from directory-size reductions; APFS snapshot retention and concurrent disk activity remain the observed constraints.
+
+## Follow-up tranche — snapshot and application-cache audit
+
+- Traced the earlier “keep the two internal snapshots” decision to the local snapshot set shown at 2026-09-23 23:30 UTC: `com.apple.TimeMachine.2026-09-23-172930.local` (dataless) and `com.apple.TimeMachine.2026-09-23-182954.local`. macOS has since thinned both automatically; neither was manually deleted. The 15 snapshots present on 2026-09-24 are later Time Machine snapshots, and all remain untouched under the user's retention choice.
+- Audited the largest remaining Library caches. Chrome is running, Playwright MCP is running, and Codex has three open files under its cache. CloudKit/iCloud and updater payloads remain in use or are not safely disposable. No additional cache directory met the stale, regenerable, inactive criteria, so none was removed.
+- Current Data-volume capacity remains 41 GiB available. PR #2709 is open and non-draft at `95bbc444b15c32c5e85466b3406d1334d29cca97`, matching the pushed recovery branch; its required `pr-gate` failed closed at `positioning-foundry-technical-readiness-public-live` because live GitHub observation failed. This gate has not been retried because its relevant inputs have not changed.
+
+## Follow-up tranche — idle Codex runtime cache
+
+- The managed `scripts/reclaim-tool-caches.py` plan identified one inactive, allowlisted cache, `~/.cache/codex-runtimes` (1,638,064 KiB; 31,676 entries). Its candidate identity was revalidated and applied under plan SHA `b96827d21cf0b8072a659060aa98b3f8dae3550f01392364660018b055eaab48`. The tool recorded one removal and a fresh residual scan found zero eligible cache candidates; its own log records the apply receipt.
+- The volume reported 39 GiB available immediately afterward, down from the preceding 41 GiB reading. Therefore the apparent 1.6 GiB cache reduction did not produce measured free-space recovery; no net capacity gain is claimed. Other large caches were classified active and preserved.
+
+## Latest capacity checkpoint — 2026-09-24
+
+- Final exact-head check: local recovery branch equals `origin/fix/storage-headroom-20260923` at `ded70359ab56990a6bccf91829ecad9db3a39e9a`; checkout clean.
+- Current volume reading: 41 GiB available. `diskutil apfs listSnapshots` reports 15 purgeable local Time Machine snapshots, with the oldest explicitly limiting the APFS container minimum. All remain retained.
+- The workspace worktree reclaimer found zero eligible checkouts after generated-cache cleanup. Pressure-mode clone inventory found only two candidate mirrors, both in `prds-work`, which remains out of scope. The online branch sweep removed one additional merged ref and retained any branch lacking fresh proof.
+- Further capacity recovery now requires a changed preservation boundary: the filesystem snapshots or the large personal, private, and active application stores. They remain untouched under the recorded user choices and custody constraints.

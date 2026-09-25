@@ -139,20 +139,115 @@ def request_review(repo, number, head, gh):
         return "exception", ["review-transport-unavailable"]
 
 
+def inspect_completion(repo, run_id, gh):
+    """Resolve a completed-run hint through authenticated reads; no effects.
+
+    Repeated hints deliberately re-read current evidence. This adapter issues no
+    review request, lease or merge, so replay cannot duplicate an external effect.
+    The existing trust consumer retains policy and artifact authority.
+    """
+    failure = {"route": "exception", "reasons": ["completion-evidence-unavailable"], "automatic_acceptance": False}
+    if not isinstance(repo, str) or not pilot(repo) or type(run_id) is not int or run_id <= 0:
+        return {**failure, "reasons": ["completion-scope-unconfigured"]}
+    if repo.casefold() == "4444j99/portfolio":
+        repo = "organvm-vii-kerygma/portfolio"
+    repo = next(name for name in PILOT_REPOSITORIES if name.casefold() == repo.casefold())
+    prefix = f"repos/{repo}"
+
+    def read(path):
+        response = gh(["api", path], timeout=20)
+        if response.returncode or len(response.stdout) > 2_000_000:
+            raise ValueError("completion-read-unavailable")
+        value = json.loads(response.stdout)
+        if not isinstance(value, dict):
+            raise ValueError("completion-shape")
+        return value
+
+    try:
+        repository = read(prefix)
+        identity = repository.get("id")
+        if type(identity) is not int or identity <= 0 or repository.get("full_name", "").casefold() != repo.casefold():
+            return failure
+        path = prefix + f"/actions/runs/{run_id}"
+        run = read(path)
+        refs = run.get("pull_requests")
+        head = run.get("head_sha")
+        if (
+            run.get("id") != run_id
+            or run.get("event") != "pull_request"
+            or run.get("status") != "completed"
+            or run.get("conclusion") != "success"
+            or run.get("repository", {}).get("id") != identity
+            or run.get("head_repository", {}).get("id") != identity
+            or type(run.get("run_attempt")) is not int
+            or run["run_attempt"] < 1
+            or not isinstance(head, str)
+            or not re.fullmatch(r"[0-9a-f]{40}", head)
+            or not isinstance(refs, list)
+            or len(refs) != 1
+        ):
+            return failure
+        number = refs[0].get("number")
+        if type(number) is not int or number <= 0 or refs[0].get("head", {}).get("sha") != head:
+            return failure
+        pr = read(prefix + f"/pulls/{number}")
+        if (
+            pr.get("number") != number
+            or pr.get("state") != "open"
+            or pr.get("draft") is not False
+            or pr.get("head", {}).get("sha") != head
+            or pr.get("base", {}).get("repo", {}).get("id") != identity
+            or pr.get("base", {}).get("ref") != repository.get("default_branch")
+            or pr.get("base", {}).get("sha") != refs[0].get("base", {}).get("sha")
+        ):
+            return failure
+        evidence = inspect(repo, number, head, gh)
+        # The ordinary consumer checks newest runs, trusted policy and artifacts.
+        # A completion hint cannot override a newer attempt or a changed PR.
+        after = read(path)
+        current = read(prefix + f"/pulls/{number}")
+        if any(
+            after.get(key) != run.get(key) for key in ("id", "run_attempt", "head_sha", "status", "conclusion")
+        ) or any(current.get(key) != pr.get(key) for key in ("number", "state", "draft", "head", "base")):
+            return {**failure, "reasons": ["completion-generation-moved"]}
+        return {
+            **evidence,
+            "completion_hint": {
+                "repository_id": identity,
+                "run_id": run_id,
+                "run_attempt": run["run_attempt"],
+                "pr": number,
+                "head_sha": head,
+            },
+            "automatic_acceptance": False,
+        }
+    except Exception:  # noqa: BLE001 - redact provider and subprocess diagnostics
+        return failure
+
+
 def main():
     import argparse
     import subprocess
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", required=True)
-    parser.add_argument("--pr", required=True, type=int)
-    parser.add_argument("--expected-head", required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--pr", type=int)
+    mode.add_argument("--completed-run", type=int)
+    parser.add_argument("--expected-head")
     args = parser.parse_args()
 
     def gh(arguments, timeout=60, binary=False):
         return subprocess.run(["gh", *arguments], capture_output=True, text=not binary, timeout=timeout, check=False)
 
-    result = inspect(args.repo, args.pr, args.expected_head, gh)
+    if args.completed_run is not None:
+        if args.expected_head:
+            parser.error("--completed-run derives its head from authenticated evidence")
+        result = inspect_completion(args.repo, args.completed_run, gh)
+    else:
+        if not args.expected_head:
+            parser.error("--pr requires --expected-head")
+        result = inspect(args.repo, args.pr, args.expected_head, gh)
     print(json.dumps(result, sort_keys=True))
     return 0 if result.get("route") == "not-dependency" else 2
 

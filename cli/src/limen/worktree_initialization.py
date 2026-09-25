@@ -212,6 +212,10 @@ def initialize_worktree(
         receipt = _write_state(journal, receipt, state="staging", phase=phase)
         if phase_hook:
             phase_hook(phase, staging)
+        from limen.inventory_admission import reserve_growth
+
+        reserve_growth("worktree", str(final_path), work_key=task_id)
+        reserve_growth("branch", branch, work_key=task_id)
         added = _run_git(repo, "worktree", "add", "-b", branch, str(staging), checkout_ref)
         if added.returncode != 0:
             raise RuntimeError(f"worktree-add-failed: {(added.stderr or added.stdout).strip()[:300]}")

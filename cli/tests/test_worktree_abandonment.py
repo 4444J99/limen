@@ -95,7 +95,19 @@ def test_detach_denies_dirty_root_without_cleanup(tmp_path: Path) -> None:
     assert (target / "untracked.txt").read_text(encoding="utf-8") == "keep me\n"
 
 
-def test_registered_worktree_scan_fails_closed_on_unresolvable_path(
+def test_detach_preserves_ignored_payload_without_restoration_proof(tmp_path: Path) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    (repo / ".git/info/exclude").write_text("private-payload\n")
+    payload = target / "private-payload"
+    payload.write_bytes(b"unfinished ignored content")
+    with pytest.raises(abandonment.WorktreeAbandonmentError, match="ignored-payload-custody-unproven"):
+        abandonment.detach_registered_worktree(
+            repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+        )
+    assert payload.read_bytes() == b"unfinished ignored content"
+
+
+def test_registered_worktree_scan_retains_missing_registration(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -111,6 +123,20 @@ def test_registered_worktree_scan_fails_closed_on_unresolvable_path(
         ),
     )
 
+    assert abandonment._registered_worktree_paths(tmp_path) == (missing,)
+
+
+def test_registered_worktree_scan_fails_closed_on_resolution_error(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        abandonment,
+        "_run_git",
+        lambda *args, **kwargs: subprocess.CompletedProcess([], 0, f"worktree {tmp_path}\n", ""),
+    )
+
+    def unavailable(self, **kwargs):
+        raise OSError("unavailable")
+
+    monkeypatch.setattr(Path, "resolve", unavailable)
     with pytest.raises(RuntimeError, match="registered-worktree-path-unavailable"):
         abandonment._registered_worktree_paths(tmp_path)
 
@@ -316,7 +342,7 @@ def test_remote_purge_requires_exact_remote_head_proof(tmp_path: Path) -> None:
         identity,
         reason="clean+pushed+idle",
         head="a" * 40,
-        remote_refs=("refs/remotes/origin/work/example",),
+        remote_refs=("refs/heads/work/example",),
         local_ref_proof=(
             {
                 "local_ref": "refs/heads/work/example",
@@ -327,11 +353,37 @@ def test_remote_purge_requires_exact_remote_head_proof(tmp_path: Path) -> None:
         ),
         receipt_root=tmp_path / "receipts",
         owner_probe=lambda _path: None,
+        content_probe=lambda _path: None,
     )
 
     assert result["result"]["proof"]["kind"] == "remote-all-local-refs"
     assert result["result"]["purged"] is True
     assert not source.exists()
+
+
+@pytest.mark.parametrize("remote_ref", ["refs/remotes/origin/main", "refs/heads/main\n", "refs/heads/"])
+def test_remote_purge_rejects_tracking_or_malformed_refs(tmp_path, remote_ref):
+    source = tmp_path / "preserved"
+    source.mkdir()
+    raw = source.stat()
+    identity = abandonment.CustodyPathIdentity(
+        path=str(source),
+        path_sha256=hashlib.sha256(str(source).encode()).hexdigest(),
+        device=raw.st_dev,
+        inode=raw.st_ino,
+        mtime_ns=raw.st_mtime_ns,
+    )
+    with pytest.raises(ValueError, match="remote-purge-refs-invalid"):
+        abandonment.purge_remote_proven_path(
+            source,
+            identity,
+            reason="clean+pushed+idle",
+            head="a" * 40,
+            remote_refs=(remote_ref,),
+            local_ref_proof=(),
+            receipt_root=tmp_path / "receipts",
+        )
+    assert source.exists()
 
 
 def test_custody_purge_rehashes_after_root_prepare_before_isolation(
@@ -470,3 +522,27 @@ def test_abandonment_sources_contain_no_raw_cleanup_primitive() -> None:
     for forbidden in ("shutil.rmtree", '["clean"', '"--force", str(d)'):
         assert forbidden not in module_text
         assert forbidden not in reaper_text
+
+
+def test_remote_purge_requires_fresh_content_revalidation(tmp_path):
+    source = tmp_path / "retained"
+    source.mkdir()
+    raw = source.stat()
+    identity = abandonment.CustodyPathIdentity(
+        path=str(source),
+        path_sha256=hashlib.sha256(str(source).encode()).hexdigest(),
+        device=raw.st_dev,
+        inode=raw.st_ino,
+        mtime_ns=raw.st_mtime_ns,
+    )
+    with pytest.raises(ValueError, match="remote-purge-fresh-content-probe-required"):
+        abandonment.purge_remote_proven_path(
+            source,
+            identity,
+            reason="clean+pushed+idle",
+            head="a" * 40,
+            remote_refs=("refs/heads/main",),
+            local_ref_proof=({"local_ref": "refs/heads/main", "object": "a" * 40, "remote_refs": ["refs/heads/main"]},),
+            receipt_root=tmp_path / "receipts",
+        )
+    assert source.exists()

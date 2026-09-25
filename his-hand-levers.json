@@ -60,11 +60,14 @@
       "implementation": {
         "schema_version": 1,
         "behavior": "Verify encrypted archive restoration using an independently recoverable key held in the credential organ; never expose the key in logs, Git or chat.",
-        "rationale": "Separate reversible engineering from the specific OS or custody authority; preserve automatic updates, source custody and evidence-backed acceptance.",
+        "rationale": "Canonical escrow readback and bounded committed-archive recovery passed without consulting the Mac Keychain. Preserve historical instructions and permanent lifecycle state; full restoration and fresh-device recovery are separate unverified outcomes.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
           "his-hand-levers.json#L-ARCA-KEY-ESCROW",
-          "scripts/arca.sh"
+          "scripts/arca.sh",
+          "https://github.com/4444J99/limen/pull/2658",
+          "https://github.com/4444J99/limen/issues/719",
+          "scripts/check-arca-escrow.py"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -73,11 +76,21 @@
         "owner": "ARCA build 2026-07-08",
         "acceptance": {
           "condition": "Restore a bounded archive with the escrowed key independently of the current Mac Keychain.",
-          "predicate": null,
-          "status": "not_currently_verified"
+          "predicate": "python3 scripts/check-arca-escrow.py",
+          "status": "observed_pass_requires_live_recheck",
+          "last_observation": {
+            "date": "2026-09-16",
+            "result": "pass",
+            "scope": "one-bounded-committed-archive",
+            "ciphertext_bytes": 4128,
+            "regular_files": 1,
+            "plaintext_bytes": 1759,
+            "receipt": "https://github.com/4444J99/limen/pull/2658",
+            "source_commit": "1769d30ee072bbebe87110ef257e25864ad8cc8b"
+          }
         },
         "dependencies": [],
-        "remaining_human_action": "Authorize and complete escrow in an off-machine credential custody home if no verified independent copy exists.",
+        "remaining_human_action": null,
         "historical_gate_requires_verification": null,
         "decision_status": "chosen_pending_evidence"
       }
@@ -3590,14 +3603,19 @@
       "implementation": {
         "schema_version": 1,
         "behavior": "Prepare principal changes from the credential-owned registry, preserve existing valid native principals and keep inventory_collector isolated; verify each intended role against the deployed broker after an authorized secret update.",
-        "rationale": "The merged helper now rejects collector-role mixing. A helper test or Worker code deployment does not establish that required credentials and role assignments are provisioned.",
+        "rationale": "Live readback and all eleven role probes established the installed assignments. The deployment guard prevents stale credential caches from silently deleting or changing existing principals. Repeatable role acceptance still needs its owning executable predicate; registry deployment does not prove historical task discharge.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
           "his-hand-levers.json#L-CONDUCT-REGISTRY-DEPLOY",
           "scripts/deploy-conduct-registry.sh",
           "scripts/merge-conduct-principal-registry.py",
           "web/worker/src/conduct/auth.js",
-          "https://github.com/4444J99/limen/pull/2626"
+          "https://github.com/4444J99/limen/pull/2626",
+          "https://github.com/4444J99/limen/pull/2657",
+          "docs/receipts/collector-authority-installation-20260916.json",
+          "scripts/check-conduct-registry-deployment.mjs",
+          "scripts/check-conduct-roles.mjs",
+          "https://github.com/4444J99/limen/pull/2660"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -3606,16 +3624,27 @@
         "owner": "GITVS-UNCAPPED-PR-DEBT-0715 estate drain (docs/plans/2026-08-07-pr-debt-estate-drain.md, issue #1950) — discharge chain composed and predicate exit 0 verified; broker rejected the relay because the live Worker's LIMEN_CONDUCT_PRINCIPAL_REGISTRY secret predates the per-agent bearer rotation in ~/.limen.env (claude-direct 401s), and the auto-mode classifier correctly blocks agent sessions from writing production secrets",
         "acceptance": {
           "condition": "Each required native principal authenticates with intended roles; collector access remains exclusive, other roles are rejected for inventory ingestion, and existing valid lanes retain access.",
-          "predicate": null,
-          "status": "not_currently_verified"
+          "predicate": "node scripts/check-conduct-roles.mjs",
+          "status": "observed_pass_requires_live_recheck",
+          "last_observation": {
+            "date": "2026-09-16",
+            "result": "pass",
+            "principals": 11,
+            "collectors": 1,
+            "probes": 33,
+            "receipt": "https://github.com/4444J99/limen/pull/2660",
+            "source_commit": "b643260b2075e1aa8045a80ff284dfbfa82e3397",
+            "scope": "complete-installed-registry-role-probes"
+          }
         },
         "dependencies": [
           "Credential-owned principal registry",
           "Authorized production secret deployment",
-          "Per-role authenticated readback"
+          "Per-role authenticated readback",
+          "Complete credential-organ registry and LIMEN_CONDUCT_URL supplied privately to the predicate; an incomplete local cache cannot satisfy installed-registry parity."
         ],
-        "remaining_human_action": "Supply or authorize the exact missing production principal credential and assignment through the credential owner; never widen an ordinary bearer into collector authority.",
-        "historical_gate_requires_verification": "production secret write on the live Worker — classifier-blocked for agent sessions; the script reads bearers from ~/.limen.env and pipes to wrangler, printing nothing",
+        "remaining_human_action": null,
+        "historical_gate_requires_verification": "Historical production-auth refusal superseded by the September 16 installed-registry and per-principal role receipts; task discharge remains broker-owned and independently verified.",
         "decision_status": "chosen_pending_evidence"
       }
     },
@@ -4311,7 +4340,10 @@
         "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-BOARD-PARTITION-DECISION"
+          "his-hand-levers.json#L-BOARD-PARTITION-DECISION",
+          "docs/receipts/board-publication-acceptance-20260916.json",
+          "docs/receipts/keeper-publication-live-20260916.json",
+          ".codex/plans/2026-09-16-board-partition-acceptance.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -4319,8 +4351,8 @@
         ],
         "owner": "board-partition plan (limen #2069) + HOSPES full completion campaign (limen #2401)",
         "acceptance": {
-          "condition": "PR #2001 publication (public tasks.yaml stops carrying full task rows); local dispatch already sees the full board through hydrated custody",
-          "predicate": null,
+          "condition": "The current default tasks.yaml is counts-only and exactly matches the stable authenticated private-board snapshot; the expected deployed keeper SHA has default-branch ancestry. Keeper publication history and resident adoption retain their separate receipts.",
+          "predicate": "python3 scripts/check-board-publication-live.py --expected-runtime-sha 16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
           "status": "not_currently_verified"
         },
         "dependencies": [],
@@ -4988,10 +5020,12 @@
       "implementation": {
         "schema_version": 1,
         "behavior": "Use the selected synchronous governor with isolated credentials and independent server-side protection; prove protected canaries.",
-        "rationale": "Apply the accepted gap-filling plan; keep implementation evidence separate from consent and lifecycle state.",
+        "rationale": "User authorization and administrator capability are established. Dedicated App 4966337 is installed on the relay only as installation 162216891, with signing-key custody outside fleet hydration. The remaining work is engineering and acceptance; registration alone does not prove activation.",
         "evidence_refs": [
           ".codex/plans/2026-09-15-gap-filling-implementation.md",
-          "his-hand-levers.json#L-RELAY-GOVERNOR-ADMIN-ACTIVATION"
+          "his-hand-levers.json#L-RELAY-GOVERNOR-ADMIN-ACTIVATION",
+          "https://github.com/4444J99/organvm-ci-relay/pull/30",
+          "docs/architecture/personal-relay-merge.md"
         ],
         "doctrine_refs": [
           "AGENTS.md#engineering-ownership",
@@ -5003,8 +5037,13 @@
           "predicate": null,
           "status": "not_currently_verified"
         },
-        "dependencies": [],
-        "remaining_human_action": "Dedicated App installation and repository administration capability.",
+        "dependencies": [
+          "Independent exact-revision trust-root promotion",
+          "Isolated trusted governor deployment and separate read-only evaluator credential",
+          "Both server-side protections with live readback",
+          "Positive and adversarial protected canary receipts"
+        ],
+        "remaining_human_action": null,
         "historical_gate_requires_verification": null,
         "decision_status": "chosen_pending_evidence"
       }

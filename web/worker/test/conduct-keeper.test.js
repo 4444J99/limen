@@ -212,10 +212,35 @@ function serviceWith(sessions, options = {}) {
     clock: options.clock || (() => NOW),
     projectTaskEvent: options.projectTaskEvent,
     capabilitySecret: options.capabilitySecret,
+    executionPolicy: options.executionPolicy,
   });
   return Promise.all(sessions.map((item) => service.call("register", { session: item })))
     .then(() => ({ service, store }));
 }
+
+test("execution resource reservations and verification deadline survive keeper restart", async () => {
+  let clock = NOW;
+  const executionPolicy = {mode: "dispatch", approved_priorities: [{
+    outcome_id: "recovery", enabled: true, work_keys: ["finite"], resource_limits: {issue: 1, branch: 1},
+  }]};
+  const {service, store} = await serviceWith([session("codex")], {executionPolicy, clock: () => clock});
+  await service.call("submit", {packet: await packet({workId: "finite", conductor: identity("codex"), maxAttempts: 1})});
+  const principal = {principal_id: "local:codex:cli", roles: ["conductor"]};
+  const payload = {work_key: "finite", principal, action: "issue", identity_hash: "a".repeat(64)};
+  await service.call("reserve_growth", payload);
+  const verification = {...payload, action: "verification"};
+  const receipt = await service.call("reserve_growth", verification);
+  clock = new Date(NOW.getTime() + 5 * 60000);
+  const restarted = new SerializedConductService(store, {executionPolicy, clock: () => clock});
+  assert.deepEqual(await restarted.call("reserve_growth", verification), receipt);
+  assert.equal(receipt.deadline, new Date(NOW.getTime() + 600000).toISOString());
+  await assert.rejects(restarted.call("reserve_growth", payload), /already_reserved/);
+  await assert.rejects(restarted.call("reserve_growth", {...payload, identity_hash: "b".repeat(64)}), /budget_exhausted/);
+  await assert.rejects(restarted.call("reserve_growth", {...payload, action: "worktree"}), /not_approved/);
+  await assert.rejects(restarted.call("execution_info", {...payload, principal: {principal_id: "other", roles: ["conductor"]}}), /principal_mismatch/);
+  clock = new Date(NOW.getTime() + 31 * 60000);
+  await assert.rejects(restarted.call("execution_info", payload), /active_reservation_required/);
+});
 
 async function leaseCapability(service, reserved, principal = null) {
   const claim = await service.call("claim", {
@@ -3338,6 +3363,23 @@ test("exceptional task transitions require exact structured evidence", () => {
   const apply = (baseTask, repairEvent) =>
     applyTaskPacketProjectionEvent({ tasks: [baseTask] }, repairEvent).task;
 
+  const landingIntent = { landing_event: "intent", landing_session_id: "123",
+    landing_branch: "topic", landing_intent_token: "recorded-intent" };
+  const landing = event("dispatched", "done", {
+    ...landingIntent, landing_event: "terminal", landing_terminal: true,
+    landing_outcome: "pr", lifecycle_repair: "jules-landing-terminal", agent: "jules",
+    session_id: "https://github.com/organvm/limen/pull/42",
+  });
+  const priorLanding = task({ status: "dispatched", dispatch_log: [landingIntent] });
+  assert.equal(apply(priorLanding, landing).status, "done");
+  assert.throws(() => apply(task({ status: "dispatched" }), landing), /cannot transition/);
+  const wrongIntent = structuredClone(landing);
+  wrongIntent.intent.log.landing_intent_token = "different-intent";
+  assert.throws(() => apply(priorLanding, wrongIntent), /cannot transition/);
+  const wrongRepository = structuredClone(landing);
+  wrongRepository.intent.log.session_id = "https://github.com/other/repo/pull/42";
+  assert.throws(() => apply(priorLanding, wrongRepository), /cannot transition/);
+
   const human = event(
     "open",
     "needs_human",
@@ -4010,6 +4052,7 @@ test("Durable Object HTTP routes match the authenticated client surface and surv
   const storage = new FakeStorage();
   const bearer = "http-conduct-secret-at-least-24-characters";
   const env = {
+    LIMEN_EXECUTION_POLICY: JSON.stringify({mode: "dispatch", approved_priorities: [{outcome_id: "http", enabled: true, work_keys: ["http-work"], resource_limits: {branch: 1}}]}),
     LIMEN_CONDUCT_PRINCIPAL_REGISTRY: principalRegistry({
       principal_id: "codex-http",
       agent: "codex",
@@ -4033,17 +4076,37 @@ test("Durable Object HTTP routes match the authenticated client surface and surv
   assert.equal((await first.fetch(request("/api/conduct/sessions", "POST", codex))).status, 200);
   const work = await packet({
     workId: "http-work",
+    maxAttempts: 1,
     conductor: codex.identity,
     deadline: new Date(liveNow.getTime() + 60 * 60 * 1000),
   });
   const reservedResponse = await first.fetch(request("/api/conduct/runs", "POST", work));
   assert.equal(reservedResponse.status, 200);
   const reserved = await reservedResponse.json();
+  const unapproved = await packet({workId: "unapproved-http", conductor: codex.identity, maxAttempts: 1,
+    deadline: new Date(liveNow.getTime() + 60 * 60 * 1000)});
+  const rejected = await first.fetch(request("/api/conduct/runs", "POST", unapproved));
+  assert.equal(rejected.status, 409);
+  assert.match((await rejected.json()).detail, /priority_not_approved/);
+  const resource = {work_key: "http-work", action: "branch", identity_hash: "a".repeat(64)};
+  const charged = await first.fetch(request("/api/conduct/execution/resources", "POST", resource));
+  assert.equal(charged.status, 200);
   const restarted = new ConductKeeperDurableObject({ storage }, env);
   const graphResponse = await restarted.fetch(request(`/api/conduct/runs/${reserved.run_id}/graph`));
   assert.equal(graphResponse.status, 200);
   const graph = await graphResponse.json();
   assert.equal(graph.nodes[0].lease_id, reserved.lease.lease_id);
+  const info = await restarted.fetch(request("/api/conduct/execution/info", "POST", {work_key: "http-work"}));
+  assert.equal(info.status, 200);
+  const limits = await info.json();
+  assert.ok(Date.parse(limits.attempt_deadline) <= liveNow.getTime() + 1800000 + 1000);
+  const duplicateResource = await restarted.fetch(request("/api/conduct/execution/resources", "POST", resource));
+  assert.equal(duplicateResource.status, 409);
+  const excess = await restarted.fetch(request("/api/conduct/execution/resources", "POST", {...resource, identity_hash: "b".repeat(64)}));
+  assert.equal(excess.status, 409);
+  const contained = new ConductKeeperDurableObject({storage}, {...env, LIMEN_EXECUTION_POLICY: "{}"});
+  const removedAuthority = await contained.fetch(request("/api/conduct/execution/info", "POST", {work_key: "http-work"}));
+  assert.equal(removedAuthority.status, 409);
 });
 
 // The already-homed answer is a STATUS CODE, and this keeper is the one that has to say it.
@@ -4099,3 +4162,45 @@ test("an expected_absent create against an existing task is refused with 409, no
   // still have mutated production state before the caller got to tolerate it.
   assert.deepEqual(board, before);
 });
+
+for (const accepted of [false, true]) {
+  test(`Jules ${accepted ? "accepted" : "unknown"} occupancy survives expiration without renewing authority`, async () => {
+    let clock = NOW;
+    const executor = session("jules", {concurrency: 2});
+    const executionPolicy = {mode: "dispatch", approved_priorities: ["jules-owned", "new-work"].map(key => ({
+      outcome_id: key, enabled: true, work_keys: [key], deadline_policy: "fenced_async",
+    }))};
+    const {service} = await serviceWith([executor], {executionPolicy, clock: () => clock});
+    const reserved = await service.call("submit", {packet: await packet({workId: "jules-owned", conductor: executor.identity, maxAttempts: 1})});
+    const token = await leaseCapability(service, reserved);  // allow-secret: ephemeral test lease capability, not credential material
+    const attempt = validateExecutorAttempt({attempt_id: "jules-owned-attempt", run_id: reserved.run_id,
+      lease_id: reserved.lease.lease_id, lease_generation: reserved.lease.generation, executor: executor.identity,
+      adapter: "jules-api", status: accepted ? "submitted" : "launching", provider_state: accepted ? "nonterminal" : "unknown",
+      provider_run_id: accepted ? "provider-owned-session" : null, submitted_at: NOW.toISOString(), updated_at: NOW.toISOString()}, NOW);
+    const heartbeat = row => service.call("heartbeat", {lease_id: reserved.lease.lease_id, capability_token: token,
+      generation: reserved.lease.generation, observed_heads: {pr: "abc123"}, attempt: row});
+    await heartbeat(attempt);
+    clock = new Date(NOW.getTime() + 31 * 60000);
+    const claim = await service.call("claim", {lease_id: reserved.lease.lease_id, generation: reserved.lease.generation});
+    assert.equal(claim.observation_only, true);
+    const before = (await service.call("graph", {run_id: reserved.run_id})).nodes[0];
+    assert.equal((await heartbeat({...attempt, updated_at: clock.toISOString()})).status, "observation_only");
+    const after = (await service.call("graph", {run_id: reserved.run_id})).nodes[0];
+    assert.deepEqual(after.lease, before.lease);
+    assert.equal(after.status, "expired");
+    assert.deepEqual(after.receipts, before.receipts);
+    await assert.rejects(service.call("execution_info", {work_key: "jules-owned", principal: {principal_id: "local:jules:cli", roles: ["conductor"]}}), /active_reservation_required/);
+    await assert.rejects(heartbeat({...attempt, attempt_id: "not-the-owned-attempt"}), /not active/);
+    await service.call("register", {session: session("jules", {heartbeatAt: clock, concurrency: 2})});
+    const next = await service.call("submit", {packet: await packet({workId: "new-work", conductor: executor.identity,
+      maxAttempts: 1, deadline: new Date(clock.getTime() + 60 * 60000)})});
+    assert.equal(next.status, "busy");
+    const done = {...attempt, provider_run_id: "provider-owned-session", provider_state: "terminal", status: "succeeded", updated_at: clock.toISOString()};
+    await heartbeat(done);
+    const settled = (await service.call("graph", {run_id: reserved.run_id})).nodes[0];
+    assert.equal(settled.status, "expired");
+    assert.deepEqual(settled.lease, before.lease);
+    await assert.rejects(heartbeat({...done, provider_state: "nonterminal"}), /regressed/);
+    await assert.rejects(service.call("execution_info", {work_key: "jules-owned", principal: {principal_id: "local:jules:cli", roles: ["conductor"]}}), /active_reservation_required/);
+  });
+}

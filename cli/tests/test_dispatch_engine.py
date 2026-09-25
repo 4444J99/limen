@@ -234,7 +234,8 @@ def test_reset_budget_only_resets_stale_windows(tmp_path, monkeypatch):
     assert track.spent == 20  # = sum(per_agent)
 
 
-def test_heal_dispatch_funnel_transitions(tmp_path):
+def test_heal_dispatch_funnel_transitions(tmp_path, approved_execution_policy):
+    approved_execution_policy("M", "C", "N", "O")
     """The reconcile funnel: PR_MERGED + PR_OPEN → done (leave the loop, no dup re-dispatch);
     PR_CLOSED + DISPATCHED_NO_PR → open (re-dispatch). Guards the self-clearing queue."""
     import datetime
@@ -245,6 +246,8 @@ def test_heal_dispatch_funnel_transitions(tmp_path):
     from limen.io import load_limen_file, save_limen_file
     from limen.models import Budget, BudgetTrack, DispatchLogEntry, LimenFile, Portal, Task
     from limen.tabularius import apply_limen_file_sync
+    from limen.execution_contract import execution_contract_hash
+    from limen.conduct.client import client_from_env
 
     today = datetime.date.today()
     tasks = [
@@ -269,7 +272,9 @@ def test_heal_dispatch_funnel_transitions(tmp_path):
     save_limen_file(tmp_path / "tasks.yaml", lf)
     # Recovery requires a genuine canonical claim and its debit. An active row
     # without keeper-owned history remains insufficient refund authority.
-    for task in lf.tasks:
+    for task_id in ("M", "C", "N", "O"):
+        lf = load_limen_file(tmp_path / "tasks.yaml")
+        task = next(t for t in lf.tasks if t.id == task_id)
         task.status = "dispatched"
         task.dispatch_log.append(
             DispatchLogEntry(
@@ -277,10 +282,17 @@ def test_heal_dispatch_funnel_transitions(tmp_path):
                 agent="codex",
                 session_id="heal-fixture-reservation",
                 status="dispatched",
+                execution_contract_hash=execution_contract_hash(task),
             )
         )
-    claimed = apply_limen_file_sync(tmp_path / "tasks.yaml", lf, agent="codex", session_id="reserve")
-    assert claimed.applied == 4
+        claimed = apply_limen_file_sync(tmp_path / "tasks.yaml", lf, agent="codex", session_id="reserve")
+        assert claimed.applied == 1
+        # This healer fixture represents expired historical attempts, not four
+        # simultaneous admitted implementations under the new two-task ceiling.
+        with client_from_env().store.transaction() as state:
+            for run in state["runs"].values():
+                if run.get("execution_admission"):
+                    run["execution_admission"]["attempt_deadline"] = "2020-01-01T00:00:00+00:00"
     assert load_limen_file(tmp_path / "tasks.yaml").portal.budget.track.spent == 4
     (tmp_path / "logs").mkdir()
     (tmp_path / "logs" / "dispatch-verify.json").write_text(

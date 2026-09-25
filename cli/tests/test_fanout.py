@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import subprocess
 from copy import deepcopy
 from datetime import datetime, timedelta, timezone
@@ -534,6 +535,7 @@ class FakeKeeper:
 
 
 class FakeExecutionAdapter:
+    enforces_deadline = True  # synchronous fixture; no external job outlives launch
     name = "fake-remote"
     transport = "remote-fake"
     local_heavy = False
@@ -598,8 +600,11 @@ def test_start_uses_atomic_keeper_and_launches_every_ready_leaf(
 def test_keeper_serializes_overlapping_dependencies_and_settles_campaign(
     tmp_path: Path,
     monkeypatch,
+    approved_execution_policy,
 ) -> None:
+    approved_execution_policy("campaign/v1")
     payload = manifest_payload()
+    payload["leaves"][0]["retry"]["max_attempts"] = 1
     payload["campaign"] = campaign_context()
     payload["leaves"][0]["campaign"] = campaign_context()
     second = deepcopy(payload["leaves"][0])
@@ -725,8 +730,11 @@ def test_keeper_serializes_overlapping_dependencies_and_settles_campaign(
 def test_start_launches_disjoint_remote_leaves_while_dependency_waits(
     tmp_path: Path,
     monkeypatch,
+    approved_execution_policy,
 ) -> None:
+    approved_execution_policy("campaign/v1")
     payload = manifest_payload()
+    payload["leaves"][0]["retry"]["max_attempts"] = 1
     disjoint = deepcopy(payload["leaves"][0])
     disjoint.update(
         {
@@ -769,6 +777,56 @@ def test_start_launches_disjoint_remote_leaves_while_dependency_waits(
         "leaf-c": "waiting",
     }
     assert {work_id for work_id, _ in adapter.launches} == {"leaf-a", "leaf-b"}
+
+
+def test_admitted_outcome_refuses_unbounded_provider_before_external_launch(
+    tmp_path, monkeypatch, approved_execution_policy
+):
+    approved_execution_policy("campaign/v1")
+    payload = manifest_payload()
+    payload["leaves"][0]["retry"]["max_attempts"] = 1
+    manifest = FanoutManifestV1.model_validate(payload)
+    keeper = LocalConductClient(tmp_path / "bounded.sqlite")
+    adapter = FakeExecutionAdapter()
+    adapter.enforces_deadline = False
+    monkeypatch.setattr("limen.fanout_executor.remote_default_head", lambda repo: BASE)
+    started = start_manifest(manifest, client=keeper, allow_development_keeper=True, execution_adapters=(adapter,))
+    assert adapter.launches == []
+    graph = keeper.graph(started["root_run_id"])
+    leaf = next(node for node in graph["nodes"] if node["packet"]["work_id"] == "leaf-a")
+    assert leaf["attempts"][-1]["status"] == "failed"
+    assert "hard-deadline enforcement unavailable" in leaf["attempts"][-1]["detail"]
+
+
+def test_admitted_outcome_allows_explicit_fenced_async_submission(tmp_path, monkeypatch, approved_execution_policy):
+    policy = approved_execution_policy("campaign/v1")
+    policy["approved_priorities"][0]["deadline_policy"] = "fenced_async"
+    policy_path = Path(os.environ["LIMEN_LIVE_ROOT"]) / "logs/autonomy-policy.json"
+    policy_path.write_text(json.dumps(policy))
+    payload = manifest_payload()
+    payload["leaves"][0]["retry"]["max_attempts"] = 1
+    manifest = FanoutManifestV1.model_validate(payload)
+    keeper = LocalConductClient(tmp_path / "fenced-async.sqlite")
+    adapter = FakeExecutionAdapter()
+    adapter.name = "jules-api"
+    adapter.enforces_deadline = False
+    adapter.fenced_async_submission = True
+    monkeypatch.setattr("limen.fanout_executor.remote_default_head", lambda repo: BASE)
+    started = start_manifest(manifest, client=keeper, allow_development_keeper=True, execution_adapters=(adapter,))
+    assert len(adapter.launches) == 1
+    graph = keeper.graph(started["root_run_id"])
+    leaf = next(node for node in graph["nodes"] if node["packet"]["work_id"] == "leaf-a")
+    assert leaf["attempts"][-1]["status"] == "submitted"
+    assert leaf["attempts"][-1]["provider_run_id"] == "provider-run-1"
+
+
+def test_worker_restart_without_original_deadline_cannot_get_fresh_allowance(tmp_path, monkeypatch):
+    import limen.fanout_executor as executor
+
+    monkeypatch.setattr(executor.tempfile, "gettempdir", lambda: str(tmp_path))
+    monkeypatch.delenv("LIMEN_FANOUT_WORKER_DEADLINE", raising=False)
+    monkeypatch.setattr(executor, "client_from_env", lambda: pytest.fail("must not connect without deadline"))
+    assert executor.run_executor_worker("root", "session", "fixture") == 2
 
 
 def terminal_harvest() -> dict:
@@ -969,3 +1027,92 @@ def test_conversational_and_automatic_triggers_are_provider_neutral() -> None:
     assert should_evaluate_fanout("please fan out this request", reversible_leaf_count=0)
     assert should_evaluate_fanout("ordinary request", reversible_leaf_count=2)
     assert not should_evaluate_fanout("ordinary request", reversible_leaf_count=1)
+
+
+def test_landing_admission_precedes_creation_and_failed_payload_survives(monkeypatch, tmp_path):
+    from limen.fanout_executor import _landing_root, FanoutExecutionError
+    from limen.inventory_admission import InventoryAdmissionError
+
+    monkeypatch.setenv("LIMEN_WORKTREES", str(tmp_path / "runtime"))
+    packet = {"work_id": "bounded-landing", "work_key": "approved-outcome"}
+
+    def denied(*args, **kwargs):
+        raise InventoryAdmissionError("not-approved")
+
+    monkeypatch.setattr("limen.inventory_admission.reserve_growth", denied)
+    with pytest.raises(InventoryAdmissionError):
+        _landing_root(packet)
+    assert not (tmp_path / "runtime").exists()
+    calls = []
+    monkeypatch.setattr("limen.inventory_admission.reserve_growth", lambda *a, **k: calls.append((a, k)))
+    root = _landing_root(packet)
+    payload = root / "unfinished.txt"
+    payload.write_text("provider result not yet backed up")
+    with pytest.raises(FanoutExecutionError, match="custody recovery"):
+        _landing_root(packet)
+    assert payload.read_text() == "provider result not yet backed up"
+    assert len(calls) == 1
+    assert json.loads((root / "landing-custody.json").read_text())["state"] == "preserved-unfinished"
+
+
+def test_interrupted_landing_release_retains_receipt_and_reuses_root(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+    from limen.fanout_executor import _landing_root, _release_landing_copies
+
+    monkeypatch.setenv("LIMEN_WORKTREES", str(tmp_path / "runtime"))
+    reservations = []
+    monkeypatch.setattr("limen.inventory_admission.reserve_growth", lambda *a, **k: reservations.append(a))
+    packet = {
+        "work_id": "release-restart",
+        "work_key": "approved-outcome",
+        "execution": {"owner_repository": "owner/repo", "topic_branch": "topic"},
+    }
+    root = _landing_root(packet)
+    receipt = SimpleNamespace(
+        observed_heads_after={"owner/repo": "a" * 40},
+        receipt_id="exact-receipt",
+        model_dump=lambda **kw: {"receipt_id": "exact-receipt"},
+    )
+
+    def interrupted(*args, **kwargs):
+        raise OSError("interrupted cleanup")
+
+    monkeypatch.setattr("limen.worktree_abandonment.retire_released_worktree", interrupted)
+    with pytest.raises(OSError, match="interrupted cleanup"):
+        _release_landing_copies(root, packet, receipt)
+    assert json.loads((root / "landing-custody.json").read_text())["state"] == "release-pending"
+    assert _landing_root(packet) == root
+    monkeypatch.setattr(
+        "limen.worktree_abandonment.retire_released_worktree",
+        lambda *a, **k: {"state": "already-absent", "refs_deleted": 0},
+    )
+    _release_landing_copies(root, packet, receipt)
+    first = (root / "landing-custody.json").read_bytes()
+    _release_landing_copies(root, packet, receipt)
+    assert first == (root / "landing-custody.json").read_bytes()
+    assert len(reservations) == 1
+
+
+def test_fanout_predicate_uses_original_keeper_window_on_restart(monkeypatch):
+    import limen.fanout_executor as executor
+    from limen.conduct.client import HttpConductClient
+
+    deadline = (datetime.now(timezone.utc) + timedelta(seconds=30)).isoformat()
+    client = object.__new__(HttpConductClient)
+    calls = []
+
+    def reserve(*args):
+        calls.append(args)
+        return {"deadline": deadline}
+
+    client.reserve_growth = reserve
+    monkeypatch.setattr(executor, "client_from_env", lambda: client)
+    packet = {"work_key": "approved", "deadline": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()}
+    first = executor._admit_predicate(packet)
+    restarted = executor._admit_predicate(packet)
+    assert first["deadline"] == restarted["deadline"] == deadline
+    assert executor._predicate_timeout(restarted) <= 30
+    assert calls[0] == calls[1]
+    client.reserve_growth = lambda *args: {"deadline": (datetime.now(timezone.utc) - timedelta(seconds=1)).isoformat()}
+    with pytest.raises(executor.FanoutExecutionError, match="deadline exhausted"):
+        executor._admit_predicate(packet)

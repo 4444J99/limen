@@ -1,5 +1,7 @@
+import { DependencyCompletionError, submitCompletionHint, readCompletionHints, reconcileCompletionAssessment } from "./dependency-completion.js";
 import {
   authorizeConductRequest,
+  conductPrincipalRegistryReadback,
   internalConductPrincipal,
 } from "./auth.js";
 import {
@@ -13,6 +15,7 @@ import {
   initializePrivateBoard,
 } from "./projection.js";
 import { loadPrivateBoard } from "./private-board.js";
+import { ChatGithubController } from "./chat-github.js";
 import { configuredInventoryAuthority, InventoryAdmissionError } from "./inventory-admission.js";
 import {
   ConductValidationError,
@@ -156,11 +159,14 @@ export class ConductKeeperDurableObject {
     this.env = env;
     let inventoryAuthority = null;
     try { inventoryAuthority = configuredInventoryAuthority(env); } catch { /* Disabled until installed. */ }
+    let executionPolicy = {};
+    try { executionPolicy = JSON.parse(env.LIMEN_EXECUTION_POLICY || "{}"); } catch { /* Fail closed. */ }
     this.service = new SerializedConductService(
       new DurableConductStore(ctx.storage),
       {
         projectTaskEvent: (event, inventory) => commitTaskCompatibilityEvent(env, event, { storage: ctx.storage, ...inventory }),
         inventoryAuthority,
+        executionPolicy,
         sessionTtlMs: duration(env, "LIMEN_CONDUCT_SESSION_TTL_SECONDS", 5 * 60 * 1000),
         adoptionAfterMs: duration(env, "LIMEN_CONDUCT_ADOPTION_AFTER_SECONDS", 10 * 60 * 1000),
         leaseTtlMs: duration(env, "LIMEN_CONDUCT_LEASE_TTL_SECONDS", 15 * 60 * 1000),
@@ -181,7 +187,7 @@ export class ConductKeeperDurableObject {
       return await this.route(request, auth.principal);
     } catch (err) {
       if (err instanceof ConductValidationError || err instanceof ConductError || err instanceof ConductProjectionError
-          || err instanceof InventoryAdmissionError) {
+          || err instanceof InventoryAdmissionError || err instanceof DependencyCompletionError) {
         return errorResponse(err.message, err.status || 500, this.env);
       }
       return errorResponse(err instanceof Error ? err.message : "conduct keeper error", 500, this.env);
@@ -190,6 +196,47 @@ export class ConductKeeperDurableObject {
 
   async route(request, principal) {
     const path = new URL(request.url).pathname;
+    if (path.startsWith("/api/conduct/github/")) {
+      this.chatGithub ||= new ChatGithubController(this.ctx, this.env, this.service);
+      requireRole(principal, "observer", "conductor", "executor");
+      if (request.method !== "POST") return errorResponse("method not allowed", 405, this.env);
+      const body = await parseBody(request);
+      return this.chatGithub.serial(async () => {
+        if (path === "/api/conduct/github/read") return json(await this.chatGithub.read(principal, body), 200, this.env);
+        if (path === "/api/conduct/github/changes") return json(await this.chatGithub.submit(principal, body), 200, this.env);
+        const match = path.match(/^\/api\/conduct\/github\/runs\/([A-Za-z0-9-]+)\/(context|complete|failed|publish)$/);
+        if (!match) return errorResponse("not found", 404, this.env);
+        const result = match[2] === "context"
+          ? await this.chatGithub.executorContext(principal, match[1], body)
+          : match[2] === "publish" ? await this.chatGithub.publish(principal, match[1], body)
+          : match[2] === "failed" ? await this.chatGithub.failed(principal, match[1], body)
+          : await this.chatGithub.complete(principal, match[1], body);
+        return json(result, 200, this.env);
+      });
+    }
+    if (path === "/api/conduct/principal-registry" && request.method === "GET") {
+      requireRole(principal, "conductor");
+      const response = json(await conductPrincipalRegistryReadback(this.env), 200, this.env);
+      response.headers.set("cache-control", "no-store");
+      return response;
+    }
+    if (path === "/api/conduct/dependencies/assessments" && request.method === "POST") {
+      requireRole(principal, "conductor");
+      const body = await parseBody(request, 4096);
+      if (Object.keys(body).length !== 2 || !Object.hasOwn(body, "key") || !Object.hasOwn(body, "run_id")) {
+        throw new DependencyCompletionError("dependency_assessment_invalid");
+      }
+      return json(await reconcileCompletionAssessment(this.ctx.storage, principal, body.key, body.run_id,
+        runId => this.service.call("graph", { run_id: runId })), 200, this.env);
+    }
+    if (path === "/api/conduct/dependencies/completions" && request.method === "POST") {
+      requireRole(principal, "dependency_observer");
+      const body = await parseBody(request, 4096);
+      return json(await submitCompletionHint(this.ctx.storage, principal, body), 200, this.env);
+    }
+    if (path === "/api/conduct/dependencies/completions" && request.method === "GET") {
+      return json(await readCompletionHints(this.ctx.storage, principal), 200, this.env);
+    }
     if (path === "/api/conduct/inventory/authority" && request.method === "GET") {
       requireRole(principal, "inventory_collector");
       return json(await this.service.call("inventory_authority", { principal }), 200, this.env);
@@ -273,6 +320,15 @@ export class ConductKeeperDurableObject {
         run_id: decodeIdentifier(match[1], "root_run_id"),
       }), 200, this.env);
     }
+    if (path === "/api/conduct/execution/info" && request.method === "POST") {
+      const body = await parseBody(request);
+      return json(await this.service.call("execution_info", {work_key: bodyIdentifier(body, "work_key"), principal}), 200, this.env);
+    }
+    if (path === "/api/conduct/execution/resources" && request.method === "POST") {
+      const body = await parseBody(request);
+      return json(await this.service.call("reserve_growth", {work_key: bodyIdentifier(body, "work_key"),
+        action: body.action, identity_hash: body.identity_hash, principal}), 200, this.env);
+    }
     match = path.match(/^\/api\/conduct\/tasks\/([^/]+)\/run$/);
     if (match && request.method === "GET") {
       requireRole(principal, "observer", "conductor");
@@ -350,6 +406,11 @@ export class ConductKeeperDurableObject {
       }), 200, this.env);
     }
     return errorResponse("not found", 404, this.env);
+  }
+
+  async alarm() {
+    this.chatGithub ||= new ChatGithubController(this.ctx, this.env, this.service);
+    return this.chatGithub.serial(() => this.chatGithub.alarm());
   }
 }
 

@@ -19,7 +19,8 @@ from limen.conduct.canary_executor import (
     read_native_canary_request,
 )
 from limen.conduct.campaign_relay import CampaignRelayError
-from limen.conduct.client import client_from_env
+from limen.conduct.client import HttpConductClient, client_from_env
+from limen.conduct.dependency_completion import consume_completion
 from limen.conduct.liveness import foreign_worktree_occupant
 from limen.conduct.models import AgentIdentityV1, ConductorSessionV1, RunReceiptV1, WorkPacketV1
 from limen.conduct.supervisor import RESULT_SCHEMA, CampaignSupervisorError, run_campaign
@@ -310,6 +311,139 @@ def _dead_owner_to_supersede(detail: str, session: ConductorSessionV1) -> str | 
 @click.option("--packet", "packet_file", required=True, type=click.Path(path_type=Path, exists=True))
 def submit(packet_file: Path) -> None:
     _emit(client_from_env().submit(WorkPacketV1.model_validate(_read_json(packet_file))))
+
+
+@conduct_group.command("compile-dependency-assessment")
+@click.option("--hint", "hint_file", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--contract", "contract_file", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--source-repository", required=True, type=click.Path(path_type=Path, exists=True, file_okay=False))
+def compile_dependency_assessment(hint_file: Path, contract_file: Path, source_repository: Path) -> None:
+    """Print a source-bound packet; do not submit, reserve, or execute it."""
+    from datetime import datetime
+
+    from limen.conduct.assessment_packet import compile_assessment_packet
+    from limen.conduct.assessor_source import capture_assessor
+    from limen.work_loan import WorkLoanV1
+
+    contract = _read_json(contract_file)
+    expected = {
+        "identity",
+        "executor_session_id",
+        "deadline",
+        "predicate",
+        "receipt_target",
+        "work_loan",
+        "source_commit",
+        "script_sha256",
+    }
+    try:
+        if set(contract) != expected:
+            raise ValueError("unexpected contract fields")
+        source = capture_assessor(source_repository, contract["source_commit"], contract["script_sha256"])
+        packet = compile_assessment_packet(
+            _read_json(hint_file),
+            source=source,
+            identity=AgentIdentityV1.model_validate(contract["identity"]),
+            executor_session_id=contract["executor_session_id"],
+            deadline=datetime.fromisoformat(contract["deadline"].replace("Z", "+00:00")),
+            predicate=contract["predicate"],
+            receipt_target=contract["receipt_target"],
+            work_loan=WorkLoanV1.model_validate(contract["work_loan"]),
+        )
+    except (ValueError, TypeError, KeyError, AttributeError):
+        raise click.ClickException("assessment deployment contract is incomplete or invalid") from None
+    _emit(packet.model_dump(mode="json"))
+
+
+@conduct_group.command("execute-dependency-assessment")
+@click.option("--run-id", required=True)
+@click.option("--contract", "contract_file", required=True, type=click.Path(path_type=Path, exists=True))
+@click.option("--source-repository", required=True, type=click.Path(path_type=Path, exists=True, file_okay=False))
+def execute_dependency_assessment(run_id: str, contract_file: Path, source_repository: Path) -> None:
+    """Execute one keeper-reserved assessment using explicit deployment authority."""
+    from limen.conduct.assessment_executor import execute_assessment_run
+    from limen.conduct.assessment_transport import AssessmentHttpClient
+    from limen.conduct.assessor_source import capture_assessor
+
+    contract = _read_json(contract_file)
+    expected = {
+        "executor",
+        "source_commit",
+        "script_sha256",
+        "repository",
+        "repository_id",
+        "predicate",
+        "broker_url",
+        "executor_credential_env",
+        "read_credential_env",
+    }
+    reserved = {
+        "GH_TOKEN",
+        "GITHUB_TOKEN",
+        "LIMEN_CONDUCT_TOKEN",
+        "LIMEN_RELAY_GOVERNOR_TOKEN",
+        "LIMEN_RELAY_READ_TOKEN",
+    }
+    try:
+        if set(contract) != expected:
+            raise ValueError
+        references = [contract["executor_credential_env"], contract["read_credential_env"]]
+        if len(set(references)) != 2 or any(
+            not isinstance(ref, str) or not re.fullmatch(r"[A-Z][A-Z0-9_]{0,127}", ref) or ref in reserved
+            for ref in references
+        ):
+            raise ValueError
+        executor_token, read_token = [os.environ.get(ref, "") for ref in references]
+        if not executor_token or not read_token or executor_token == read_token:
+            raise ValueError
+        source = capture_assessor(source_repository, contract["source_commit"], contract["script_sha256"])
+        client = AssessmentHttpClient(contract["broker_url"], executor_token)
+        result = execute_assessment_run(
+            client,
+            run_id,
+            source=source,
+            credential=read_token,
+            repository=contract["repository"],
+            repository_id=contract["repository_id"],
+            executor=AgentIdentityV1.model_validate(contract["executor"]),
+            predicate=contract["predicate"],
+        )
+    except (ValueError, TypeError, KeyError, AttributeError, OSError, RuntimeError):
+        raise click.ClickException("assessment callback is unmeasured; no automatic retry") from None
+    _emit(result)
+    if result["outcome"] != "succeeded":
+        raise click.exceptions.Exit(77)
+
+
+def _dependency_client() -> HttpConductClient:
+    from limen.conduct.assessment_transport import AssessmentHttpClient
+
+    configured = client_from_env()
+    if not isinstance(configured, HttpConductClient):
+        raise click.ClickException("dependency completion requires the authenticated remote keeper")
+    return AssessmentHttpClient(configured.endpoint, configured.token)
+
+
+@conduct_group.command("dependency-completions")
+def dependency_completions() -> None:
+    """Read completion hints from the authenticated keeper."""
+    client = _dependency_client()
+    _emit(client.dependency_completion_hints())
+
+
+@conduct_group.command("consume-dependency-completion")
+@click.option("--key", required=True)
+@click.option("--packet", "packet_file", required=True, type=click.Path(path_type=Path, exists=True))
+def consume_dependency_completion(key: str, packet_file: Path) -> None:
+    """Submit one reviewed assessment packet and reconcile once; never wait."""
+    client = _dependency_client()
+    result = consume_completion(client, key, WorkPacketV1.model_validate(_read_json(packet_file)))
+    _emit(result)
+    assessment = result.get("assessment", {})
+    if result["state"] != "assessment_observed" or assessment.get("status") != "reported":
+        raise click.exceptions.Exit(77)
+    if assessment.get("outcome") != "succeeded":
+        raise click.exceptions.Exit(1)
 
 
 @conduct_group.command("split")

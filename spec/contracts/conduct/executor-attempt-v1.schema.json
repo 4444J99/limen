@@ -124,6 +124,17 @@
       "default": null,
       "title": "Provider Run Url"
     },
+    "provider_state": {
+      "default": "unknown",
+      "enum": [
+        "unknown",
+        "not_started",
+        "nonterminal",
+        "terminal"
+      ],
+      "title": "Provider State",
+      "type": "string"
+    },
     "run_id": {
       "title": "Run Id",
       "type": "string"

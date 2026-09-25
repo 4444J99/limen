@@ -50,8 +50,10 @@ concurrency:
 jobs:
   pr-gate:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     env:
       LIMEN_PRGATE_SCOPED: "1"
+      LIMEN_VERIFY_GATE_TIMEOUT_SECONDS: "1500"
     steps:
       - uses: actions/checkout@v7
         with:
@@ -69,6 +71,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pyyaml -r web/api/requirements.txt -e "cli[test]"  # ruff pin rides cli[test] (#1658)
 
+      # The CLI suite now contains about 8,000 tests. Its declared 1,500s
+      # budget previously lost to the implicit 300s per-gate / 600s batch caps.
+      # These finite CI budgets do not extend any keeper/provider lease.
       - name: Verify implicated PR gates (scoped, CI mirrors deferred)
         if: env.LIMEN_PRGATE_SCOPED != '0' && github.event_name == 'pull_request'
         env:
@@ -80,6 +85,7 @@ jobs:
           LIMEN_VERIFY_NO_DEPLOY_ESCALATION: "1"
         run: |
           python scripts/verify.py --changed \
+            --gate-timeout-seconds 1500 --total-timeout-seconds 1700 \
             --base "origin/${GITHUB_BASE_REF:-main}" \
             --skip-ci-covered pr-gate.yml:pr-gate
 
@@ -120,6 +126,7 @@ jobs:
             exit 2
           fi
           python scripts/verify.py --changed --integration \
+            --gate-timeout-seconds 1500 --total-timeout-seconds 1700 \
             --base "$MERGE_GROUP_BASE_SHA"
 
       - name: Verify manual run (scoped)
@@ -129,6 +136,7 @@ jobs:
           LIMEN_VERIFY_NO_LOCK: "1"
         run: |
           python scripts/verify.py --changed \
+            --gate-timeout-seconds 1500 --total-timeout-seconds 1700 \
             --base "origin/${GITHUB_BASE_REF:-main}" \
             --skip-ci-covered pr-gate.yml:pr-gate
 

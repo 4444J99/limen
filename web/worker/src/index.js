@@ -7,9 +7,10 @@ import {
 } from "./conduct/durable-object.js";
 import { internalConductPrincipal } from "./conduct/auth.js";
 import { handleConductMcp } from "./conduct/mcp.js";
+import { isMcpOAuthMetadataPath, mcpOAuthMetadata } from "./conduct/mcp-oauth.js";
 import { readInlineProjection } from "./conduct/projection.js";
 import { canonicalHash } from "./conduct/schemas.js";
-import { taskWorkLoanMissingFields, workLoanDenial } from "./conduct/work-loan.js";
+import { hasPlaceholder, taskWorkLoanMissingFields, workLoanDenial } from "./conduct/work-loan.js";
 
 const GITHUB_API = "https://api.github.com";
 const VERIFY_STATUSES = new Set(["done", "needs_human", "failed", "failed_blocked"]);
@@ -20,7 +21,6 @@ const VALID_DISPATCH_AGENTS = new Set([...VALID_AGENTS].filter((agent) => agent 
 const TASK_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;
 const SAFE_TEXT_RE = /^[^\x00-\x08\x0b\x0c\x0e-\x1f\x7f]*$/;
 const REPO_RE = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
-const PLACEHOLDER_RE = /<[^>]+>|\b(?:tbd|todo|fixme|replace[-_ ]me)\b/i;
 const ACTIVE_STATUSES = new Set(["open", "dispatched", "in_progress"]);
 const EXECUTABLES = new Set([
   "[", "bash", "bundle", "cargo", "curl", "gh", "git", "go", "just", "limen", "make", "node", "nox", "npm",
@@ -56,13 +56,87 @@ function boundednessFinding(task) {
 }
 
 function shellWords(command) {
-  return command.match(/(?:[^\s"'\\]+|"(?:\\.|[^"])*"|'[^']*')+/g) || [];
+  // Linear-time shell-ish word splitter. This replaces the previous
+  // /(?:[^\s"'\\]+|"(?:\\.|[^"])*"|'[^']*')+/g match, which CodeQL flagged as
+  // exponential ReDoS (js/redos): inside a double-quoted section the inner
+  // (?:\\.|[^"])* alternation can tokenize a backslash run two different ways
+  // (as an escape pair or as a lone backslash), so an unterminated quote
+  // followed by many backslashes exploded combinatorially.
+  //
+  // The scanner below reproduces the old match semantics exactly, including
+  // the regex's backtracking preference (escape pair preferred, greedy):
+  // runs of bare characters, "..." sections honouring backslash escapes, and
+  // '...' sections concatenate into one word; a backslash outside quotes
+  // matched no token branch in the old regex, so it separated words exactly
+  // like whitespace did; an unterminated quote ended the current word with
+  // the /g scan resuming after the quote character.
+  const n = command.length;
+  const isLineTerminator = (ch) => ch === "\n" || ch === "\r" || ch === "\u2028" || ch === "\u2029";
+  // closeAt[j]: for a double-quoted section whose content starts at j, the
+  // index of its closing quote, or -1. Computed once, right to left. Each
+  // entry mirrors the old inner-star backtracking order: at a backslash
+  // prefer the escape pair, then the lone backslash, then (only for '"')
+  // close here.
+  const closeAt = new Array(n + 1).fill(-1);
+  for (let j = n - 1; j >= 0; j--) {
+    const c = command[j];
+    if (c === "\\" && j + 1 < n && !isLineTerminator(command[j + 1])) {
+      if (closeAt[j + 2] !== -1) {
+        closeAt[j] = closeAt[j + 2];
+        continue;
+      }
+    }
+    if (c !== '"') {
+      if (closeAt[j + 1] !== -1) closeAt[j] = closeAt[j + 1];
+    } else {
+      closeAt[j] = j;
+    }
+  }
+  const words = [];
+  let word = "";
+  let i = 0;
+  const pushWord = () => {
+    if (word) {
+      words.push(word);
+      word = "";
+    }
+  };
+  while (i < n) {
+    const ch = command[i];
+    if (ch === '"') {
+      const k = closeAt[i + 1];
+      if (k === -1) {
+        pushWord();
+        i += 1;
+        continue;
+      }
+      word += command.slice(i, k + 1);
+      i = k + 1;
+    } else if (ch === "'") {
+      const k = command.indexOf("'", i + 1);
+      if (k === -1) {
+        pushWord();
+        i += 1;
+        continue;
+      }
+      word += command.slice(i, k + 1);
+      i = k + 1;
+    } else if (ch === "\\" || /\s/.test(ch)) {
+      pushWord();
+      i += 1;
+    } else {
+      word += ch;
+      i += 1;
+    }
+  }
+  pushWord();
+  return words;
 }
 
 function isExecutablePredicate(value) {
   if (typeof value !== "string") return false;
   const command = value.trim();
-  if (!command || /[\r\n]/.test(command) || PLACEHOLDER_RE.test(command)) return false;
+  if (!command || /[\r\n]/.test(command) || hasPlaceholder(command)) return false;
   const words = shellWords(command);
   let index = 0;
   while (index < words.length) {
@@ -81,7 +155,7 @@ function isExecutablePredicate(value) {
 function isDurableReceiptTarget(value) {
   if (typeof value !== "string") return false;
   const target = value.trim();
-  if (!target || PLACEHOLDER_RE.test(target)) return false;
+  if (!target || hasPlaceholder(target)) return false;
   if (/^github:[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+:(?:pull-request|issue):[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(target)) return true;
   const gitTarget = target.match(/^git:[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+:([^\s#]+)(?:#[^\s]+)?$/);
   if (gitTarget) {
@@ -893,6 +967,7 @@ async function route(request, env) {
   const path = url.pathname;
 
   if (path === "/mcp") return handleConductMcp(request, env);
+  if (isMcpOAuthMetadataPath(path)) return mcpOAuthMetadata(request, env);
   if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders(env) });
 
   if (path.startsWith("/api/conduct/")) return forwardConductRequest(request, env);

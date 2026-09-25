@@ -6,6 +6,8 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import math
+import time
 from pathlib import Path
 import sys
 from typing import Any
@@ -92,14 +94,19 @@ def registry_errors() -> list[str]:
     return errors
 
 
-def active_errors(receipts_dir: Path, expected_sha: str, min_fires: int) -> list[str]:
+def active_errors(receipts_dir: Path, expected_sha: str, min_fires: int, *, now: float | None = None) -> list[str]:
     errors: list[str] = []
     receipts: list[dict[str, Any]] = []
+    now = time.time() if now is None else now
     for path in sorted(receipts_dir.glob("*.json")):
         try:
             payload = _load_json(path)
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             errors.append(f"{path.name}: unreadable receipt: {exc}")
+            continue
+        epoch = payload.get("observed_epoch")
+        if type(epoch) not in (int, float) or not 0 < epoch <= now or not math.isfinite(epoch):
+            errors.append(f"{path.name}: invalid or future receipt timestamp")
             continue
         receipts.append(payload)
     receipts.sort(key=lambda row: (float(row.get("observed_epoch", 0)), str(row.get("run_id", ""))))
@@ -107,7 +114,11 @@ def active_errors(receipts_dir: Path, expected_sha: str, min_fires: int) -> list
     if len(selected) < min_fires:
         errors.append(f"recorded fires are {len(selected)}, expected at least {min_fires}")
         return errors
-    interval = _load_json(CONTRACTS)["processes"]["com.limen.heartbeat"]["launchd"]["start_interval_seconds"]
+    contract = _load_json(CONTRACTS)["processes"]["com.limen.heartbeat"]
+    interval = contract["launchd"]["start_interval_seconds"]
+    maximum_age = interval + contract["limits"]["wall_seconds_per_tick"]
+    if now - selected[-1]["observed_epoch"] > maximum_age:
+        errors.append(f"latest receipt is stale: age exceeds {maximum_age}s")
     for receipt in selected:
         run_id = receipt.get("run_id", "unknown")
         if receipt.get("runtime_sha") != expected_sha:
@@ -128,10 +139,69 @@ def active_errors(receipts_dir: Path, expected_sha: str, min_fires: int) -> list
     return errors
 
 
+def scheduled_probe_report(receipts_dir: Path, expected_sha: str, *, now: float | None = None) -> dict[str, Any]:
+    """Measure scheduled execution from current-runtime receipts, never retired voice stamps."""
+    now = time.time() if now is None else now
+    contract = _load_json(CONTRACTS)["processes"]["com.limen.heartbeat"]
+    probes = {probe["name"]: probe for probe in contract["probes"]}
+    latest: dict[str, dict[str, Any]] = {}
+    malformed = 0
+    for path in receipts_dir.glob("*.json"):
+        try:
+            row = _load_json(path)
+        except (OSError, ValueError):
+            malformed += 1
+            continue
+        epoch = row.get("observed_epoch")
+        if type(epoch) not in (int, float) or not 0 < epoch <= now or not math.isfinite(epoch):
+            malformed += 1
+            continue
+        name = row.get("probe")
+        if row.get("runtime_sha") != expected_sha or not isinstance(name, str) or name not in probes:
+            continue
+        previous = latest.get(name)
+        if previous is None or epoch > previous["observed_epoch"]:
+            latest[name] = row
+        elif epoch == previous["observed_epoch"] and row != previous:
+            malformed += 1
+    counts = {"observed": 0, "finding": 0, "missing": 0, "stale": 0, "unmeasured": 0}
+    # One probe runs per fire. Allow one complete rotation after each declared cadence.
+    rotation = len(probes) * contract["launchd"]["start_interval_seconds"]
+    for name, probe in probes.items():
+        row = latest.get(name)
+        if row is None:
+            counts["missing"] += 1
+        elif now - row["observed_epoch"] > probe["cadence_seconds"] + rotation:
+            counts["stale"] += 1
+        elif (
+            row.get("schema") != "limen.heartbeat_private_receipt.v1"
+            or row.get("status") not in {"passed", "finding"}
+            or type(row.get("returncode")) is not int
+            or row["returncode"] < 0
+            or (row["status"] == "passed") != (row["returncode"] == 0)
+            or type(row.get("surviving_descendant_count")) is not int
+            or row["surviving_descendant_count"] != 0
+            or row.get("disabled") is not False
+        ):
+            counts["unmeasured"] += 1
+        else:
+            counts["observed"] += 1
+            counts["finding"] += int(row["status"] == "finding")
+    return {
+        "scope": "scheduled_probe_execution",
+        "scheduled_total": len(probes),
+        "other_owners": "unmeasured_by_this_probe",
+        "malformed_receipts": malformed,
+        **counts,
+        "execution_complete": counts["observed"] == len(probes) and malformed == 0,
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--registry-only", action="store_true")
     parser.add_argument("--require-active", action="store_true")
+    parser.add_argument("--scheduled-probes", action="store_true")
     parser.add_argument("--expected-sha")
     parser.add_argument("--min-fires", type=int, default=3)
     parser.add_argument(
@@ -140,14 +210,32 @@ def main() -> int:
         default=Path.home() / ".local" / "share" / "limen" / "heartbeat" / "receipts",
     )
     args = parser.parse_args()
-    if args.registry_only and args.require_active:
-        parser.error("--registry-only and --require-active are mutually exclusive")
+    if sum((args.registry_only, args.require_active, args.scheduled_probes)) > 1:
+        parser.error("select only one verification mode")
     if args.require_active and not args.expected_sha:
         parser.error("--require-active needs --expected-sha")
     if args.min_fires < 1:
         parser.error("--min-fires must be positive")
 
     errors = registry_errors()
+    if args.scheduled_probes and not errors:
+        expected_sha = args.expected_sha
+        if not expected_sha:
+            try:
+                expected_sha = _load_json(ROOT.parent / "receipt.json")["sha"]
+            except (OSError, ValueError, KeyError):
+                print("heartbeat-rollout: UNMEASURED — installed runtime identity unavailable")
+                return 1
+        if (
+            not isinstance(expected_sha, str)
+            or len(expected_sha) != 40
+            or any(char not in "0123456789abcdef" for char in expected_sha)
+        ):
+            print("heartbeat-rollout: UNMEASURED — invalid runtime identity")
+            return 1
+        report = scheduled_probe_report(args.receipts_dir.expanduser(), expected_sha)
+        print(json.dumps(report, sort_keys=True))
+        return 0 if report["execution_complete"] else 1
     if args.require_active:
         errors.extend(active_errors(args.receipts_dir.expanduser(), args.expected_sha, args.min_fires))
     if errors:

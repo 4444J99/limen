@@ -1,6 +1,6 @@
 const encoder = new TextEncoder();
 const IDENTIFIER_RE = /^[A-Za-z0-9][A-Za-z0-9._:/@+-]{0,255}$/;
-const ROLES = new Set(["observer", "conductor", "executor", "compatibility", "inventory_collector"]);
+const ROLES = new Set(["observer", "conductor", "executor", "compatibility", "inventory_collector", "dependency_observer"]);
 
 function invalidRegistry(detail = "conduct principal registry is invalid") {
   return { ok: false, status: 503, detail };
@@ -42,7 +42,7 @@ export function configuredConductPrincipals(env) {
       || !Array.isArray(roles)
       || !roles.length
       || roles.some((role) => !ROLES.has(role))
-      || (roles.includes("inventory_collector") && roles.length !== 1)
+      || ((roles.includes("inventory_collector") || roles.includes("dependency_observer")) && roles.length !== 1)
       || typeof bearer !== "string"
       || bearer.length < 24
       || bearer.length > 4096
@@ -70,6 +70,22 @@ export function configuredConductPrincipals(env) {
 async function digest(value) {
   const raw = await crypto.subtle.digest("SHA-256", encoder.encode(value));
   return new Uint8Array(raw);
+}
+
+export async function conductPrincipalRegistryReadback(env) {
+  const entries = configuredConductPrincipals(env).sort((left, right) => {
+    const a = left.principal.principal_id;
+    const b = right.principal.principal_id;
+    return a < b ? -1 : a > b ? 1 : 0;
+  });
+  // Include every accepted bearer binding, but return neither bearers nor per-token hashes.
+  // Stable principal and role ordering makes whitespace/order-only source edits equivalent.
+  const bytes = await digest(JSON.stringify(entries));
+  return {
+    schema_version: "limen.conduct_principal_registry_readback.v1",
+    configuration_fingerprint: [...bytes].map(byte => byte.toString(16).padStart(2, "0")).join(""),
+    principals: entries.map(entry => entry.principal),
+  };
 }
 
 function equalBytes(left, right) {

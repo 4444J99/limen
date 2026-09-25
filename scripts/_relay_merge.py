@@ -81,6 +81,7 @@ def configuration(governor_app):
             "required_linear_history": True,
             "allow_force_pushes": False,
             "allow_deletions": False,
+            "lock_branch": False,
         },
         "update_ruleset": {
             "name": "Relay main updates through governor",
@@ -136,7 +137,7 @@ def verify_controls(protection, ruleset, governor_app):
     )
     for field in ("enforce_admins", "required_conversation_resolution", "required_linear_history"):
         require(protection[field]["enabled"] is True, f"{field} required")
-    for field in ("allow_force_pushes", "allow_deletions"):
+    for field in ("allow_force_pushes", "allow_deletions", "lock_branch"):
         require(protection[field]["enabled"] is False, f"{field} forbidden")
     review = protection["required_pull_request_reviews"]
     require(

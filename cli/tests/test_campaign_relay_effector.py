@@ -35,6 +35,9 @@ from limen.workstream_contract import RECEIPT_MODULES, new_contract
 
 ROOT = Path(__file__).resolve().parents[2]
 
+# Relay protocol fixtures own a finite local growth grant, not a live remote keeper.
+pytestmark = pytest.mark.usefixtures("isolated_workstream_growth")
+
 
 def _spawn_fixture_relay_process(
     command: list[str],

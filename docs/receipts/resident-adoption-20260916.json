@@ -1,0 +1,68 @@
+{
+  "schema_version": "limen.resident_adoption_observation.v1",
+  "observed_at": "2026-09-16T04:03:06.721991+00:00",
+  "runtime_sha": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+  "predicate": {
+    "command": "python3 scripts/check-heartbeat-rollout.py --require-active --expected-sha 16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+    "exit_code": 0,
+    "rung_count": 44
+  },
+  "receipts": [
+    {
+      "run_id": "ed1d2313f9d64a129ba604f1427b46f9",
+      "observed_epoch": 1789530631.4126358,
+      "runtime_sha": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+      "status": "idle",
+      "surviving_descendant_count": 0,
+      "disabled": false,
+      "notification_event_attempted_count": 0,
+      "notification_event_accepted_count": 0
+    },
+    {
+      "run_id": "ebaba4ad43944a37b615bdf0a5dcb778",
+      "observed_epoch": 1789530932.5642612,
+      "runtime_sha": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+      "status": "idle",
+      "surviving_descendant_count": 0,
+      "disabled": false,
+      "notification_event_attempted_count": 0,
+      "notification_event_accepted_count": 0
+    },
+    {
+      "run_id": "cac57fe3494546b7967621ae35278130",
+      "observed_epoch": 1789531233.4367402,
+      "runtime_sha": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+      "status": "finding",
+      "surviving_descendant_count": 0,
+      "disabled": false,
+      "notification_event_attempted_count": 0,
+      "notification_event_accepted_count": 0
+    }
+  ],
+  "latest_receipt_age_seconds": 153.285,
+  "launchd": {
+    "label": "com.limen.heartbeat",
+    "loaded": true,
+    "state": "not running",
+    "last_exit_code": 0,
+    "observed_runs": 51,
+    "start_interval_seconds": 300,
+    "keep_alive": false,
+    "run_at_load": false,
+    "mode": "heartbeat --once"
+  },
+  "default_verification": {
+    "sha": "9d991eba512b196ef70eef56049d15aaa8efb428",
+    "run_id": 35051063333,
+    "job_id": 104651677317,
+    "step": "Run whole-repo verification (verify-whole.sh)",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "scope_limits": [
+    "Finding receipts do not prove all observed lanes healthy.",
+    "The receipt establishes adoption of 16fd02e1, not later source commits.",
+    "Keeper publication remains explicit maintenance; no mutation was added to heartbeat.",
+    "The latest code default CI remained in progress at the one-shot observation; no wait or rerun was performed."
+  ]
+}

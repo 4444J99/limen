@@ -57,7 +57,7 @@ from limen.models import (
     has_jules_landing_hold,
 )
 from limen.conduct.client import LocalConductClient, client_from_env
-from limen.conduct.broker import ConductConflict
+from limen.conduct.broker import ConductConflict, ConductError
 from limen.stale_claims import stale_claim_holds
 from limen.partition_lanes import heuristics_may_promote
 from limen.tabularius import (
@@ -799,6 +799,34 @@ def dispatch_admission_check(
         "next_command": "",
         "sources": [],
     }
+    from limen.inventory_admission import InventoryAdmissionError, require_approved_priority
+
+    try:
+        if task_id:
+            require_approved_priority(task_id, root=root)
+        else:
+            from limen.inventory_admission import execution_policy
+
+            policy = execution_policy(root)
+            keys = [
+                key
+                for row in policy.get("approved_priorities", [])
+                if row.get("enabled") is True
+                for key in row.get("work_keys", [])
+            ]
+            if not keys:
+                raise InventoryAdmissionError("execution_priority_not_approved")
+            require_approved_priority(keys[0], root=root)
+    except InventoryAdmissionError as exc:
+        result.update(
+            allow=False,
+            dispatch_allowed=False,
+            status="blocked",
+            exit_code=10,
+            reason=str(exc),
+            sources=["approved-priorities"],
+        )
+        return result
     pause_marker = root / "logs" / "AUTONOMY_PAUSED"
     if pause_marker.exists() and os.environ.get("LIMEN_FORCE_AUTONOMY") != "1":
         try:
@@ -1006,6 +1034,12 @@ def _restore_done_status(
 def _dispatchable(task: Task) -> bool:
     """Open, live-ready machine work only. Human-gated or done work is never reserved."""
     if task.status != "open":
+        return False
+    from limen.inventory_admission import require_approved_priority, InventoryAdmissionError
+
+    try:
+        require_approved_priority(task.id)
+    except InventoryAdmissionError:
         return False
     if has_jules_landing_hold(task):
         return False
@@ -1786,6 +1820,19 @@ def _journaled_agent_dispatch(
 
     if dry_run:
         return call_agent_dispatch(agent, task, dry_run=True)
+    from limen.inventory_admission import require_approved_priority
+
+    try:
+        require_approved_priority(task.id)
+        limits = client_from_env().execution_info(task.id)
+        if datetime.fromisoformat(limits["attempt_deadline"].replace("Z", "+00:00")) <= datetime.now(timezone.utc):
+            return _prelaunch_blocked_result("execution_attempt_exhausted")
+        if canonical_agent(agent) not in _LOCAL_AGENTS:
+            return _prelaunch_blocked_result(
+                f"execution hard deadline unavailable for autonomous {agent}; provider retained for observation and recovery"
+            )
+    except Exception as exc:
+        return _prelaunch_blocked_result(f"execution admission denied: {type(exc).__name__}")
     store = default_work_loan_journal_store() if journal_root is None else default_work_loan_journal_store(journal_root)
     try:
         store.record_reservation(task, agent=canonical_agent(agent), reservation_id=reservation_id)
@@ -4063,7 +4110,9 @@ def _is_auth_blip(text: str) -> bool:
     return bool(_AUTH_BLIP_PATTERNS.search(text or "")) and not _is_rate_limited(text)
 
 
-_GITHUB_REMOTE_RE = re.compile(r"(?:github\.com[:/])([^/\s]+)/([^/\s]+?)(?:\.git)?$")
+_GITHUB_REMOTE_RE = re.compile(
+    r"^(?:https?://github\.com/|git@github\.com:|ssh://git@github\.com/)([^/\s]+)/([^/\s]+?)(?:\.git)?$"
+)
 
 
 def _path_like_repo(repo: str | None) -> bool:
@@ -4104,6 +4153,99 @@ def _github_slug_from_local_repo(path: Path) -> str | None:
     return _github_slug_from_remote(result.stdout)
 
 
+_GITHUB_REPOSITORY_ID_LOCK = threading.Lock()
+_GITHUB_REPOSITORY_ID_CACHE: dict[str, int] = {}
+
+
+def _github_repository_id(coordinate: str | None) -> int | None:
+    """Resolve the immutable repository ID through GitHub's authenticated API."""
+    slug = _github_slug_from_remote(coordinate) or _github_repo_identity(coordinate)
+    if slug is None:
+        return None
+    key = slug.casefold()
+    with _GITHUB_REPOSITORY_ID_LOCK:
+        cached = _GITHUB_REPOSITORY_ID_CACHE.get(key)
+        if cached is not None:
+            return cached
+        try:
+            result = subprocess.run(
+                ["gh", "api", f"repos/{slug}", "--jq", ".id"],
+                capture_output=True,
+                text=True,
+                timeout=12,
+                check=False,
+                stdin=subprocess.DEVNULL,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+        if result.returncode != 0:
+            return None
+        try:
+            repository_id = int(result.stdout.strip())
+        except (TypeError, ValueError):
+            return None
+        if repository_id <= 0:
+            return None
+        _GITHUB_REPOSITORY_ID_CACHE[key] = repository_id
+        return repository_id
+
+
+def _registered_github_coordinates(coordinate: str) -> tuple[str, ...]:
+    """Return the PORTVS identity registry coordinates for a known repository."""
+    roots = [
+        Path(value).expanduser() for value in (os.environ.get("LIMEN_LIVE_ROOT"), os.environ.get("LIMEN_ROOT")) if value
+    ]
+    roots.append(Path(__file__).resolve().parents[3])
+    registry_path = next(
+        (
+            root / "institutio/github/repository-identity.json"
+            for root in roots
+            if (root / "institutio/github/repository-identity.json").is_file()
+        ),
+        None,
+    )
+    if registry_path is None:
+        return ()
+    try:
+        payload = json.loads(registry_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ()
+    if not isinstance(payload, dict) or payload.get("schema_version") != "limen.repository_identity_registry.v1":
+        return ()
+    repositories = payload.get("repositories")
+    if not isinstance(repositories, list):
+        return ()
+    wanted = _github_repo_identity(coordinate)
+    if wanted is None:
+        return ()
+    for identity in repositories:
+        if not isinstance(identity, dict) or identity.get("schema_version") != "limen.repository_identity.v1":
+            continue
+        canonical = identity.get("canonical_coordinate")
+        aliases = identity.get("historical_aliases")
+        if not isinstance(canonical, str) or not isinstance(aliases, list):
+            continue
+        coordinates = (canonical, *[alias for alias in aliases if isinstance(alias, str)])
+        if any(_github_repo_identity(value) == wanted for value in coordinates):
+            return tuple(coordinates)
+    return ()
+
+
+def _github_repositories_match(left: str | None, right: str | None) -> bool:
+    """Match coordinates by live immutable ID when their names or owners changed."""
+    left_slug = _github_slug_from_remote(left) or _github_repo_identity(left or "")
+    right_slug = _github_slug_from_remote(right) or _github_repo_identity(right or "")
+    if left_slug is None or right_slug is None:
+        return False
+    if left_slug.casefold() == right_slug.casefold():
+        return True
+    if LIMEN_REPOSITORY_IDENTITY.accepts(left_slug) and LIMEN_REPOSITORY_IDENTITY.accepts(right_slug):
+        return True
+    left_id = _github_repository_id(left_slug)
+    right_id = _github_repository_id(right_slug)
+    return left_id is not None and left_id == right_id
+
+
 def _remote_repo_arg(task: Task) -> str | None:
     """Return a GitHub owner/repo slug for remote service lanes.
 
@@ -4118,48 +4260,48 @@ def _remote_repo_arg(task: Task) -> str | None:
 
 
 def _resolve_repo_dir(task: Task) -> Path | None:
-    """Find a local git checkout of task.repo (owner/name) across known roots.
+    """Find a checkout only when its origin exactly matches the requested slug.
 
-    Falls back to matching by repo name under any org dir (the local checkout's
-    org can differ from the GitHub remote org, e.g. local organvm/ vs remote
-    a-organvm/), disambiguating by the git remote when multiple names collide.
+    Directory names are discovery hints, never repository identity. Explicit local
+    paths retain their separate caller-authorized semantics.
     """
     if not task.repo:
         return None
     local_path = _local_repo_path(task.repo)
     if local_path is not None:
         return local_path
-    org, _, name = task.repo.partition("/")
+    if _path_like_repo(task.repo):
+        return None
+    org, separator, name = task.repo.partition("/")
+    if not separator or not org or not name or "/" in name:
+        return None
     ws = Path(os.environ.get("LIMEN_WORKDIR", Path.home() / "Workspace"))
     cart = Path.home() / "Workspace" / ".home-cartridge" / "Code"
     cache = _clone_cache_root()
-    cache_candidates = (cache / _clone_cache_key(task.repo),) if cache is not None else ()
-    for cand in (
-        *cache_candidates,
-        ws / task.repo,
-        ws / org / name,
-        ws / name,
-        cart / org / name,
-        cart / name,
-    ):
-        if (cand / ".git").exists():
-            return cand
-    matches = [p for root in (ws, cart) for p in root.glob(f"*/{name}") if (p / ".git").exists()]
-    if len(matches) == 1:
-        return matches[0]
-    for p in matches:  # disambiguate by remote when name collides across orgs
-        try:
-            r = subprocess.run(
-                ["git", "-C", str(p), "remote", "get-url", "origin"],
-                capture_output=True,
-                text=True,
-                timeout=10,
+    candidates = [cache / _clone_cache_key(task.repo)] if cache is not None else []
+    candidates.extend((ws / task.repo, ws / name, cart / org / name, cart / name))
+    for coordinate in _registered_github_coordinates(task.repo):
+        alias_org, _, alias_name = coordinate.partition("/")
+        candidates.extend(
+            (
+                ws / coordinate,
+                ws / alias_name,
+                cart / alias_org / alias_name,
+                cart / alias_name,
             )
-            if r.returncode == 0 and task.repo.lower() in r.stdout.lower():
-                return p
-        except Exception:
-            pass
-    return matches[0] if matches else None
+        )
+        if cache is not None:
+            candidates.append(cache / _clone_cache_key(coordinate))
+    candidates.extend(p for root in (ws, cart) for p in root.glob(f"*/{name}"))
+    seen: set[Path] = set()
+    for candidate in candidates:
+        if candidate in seen or not (candidate / ".git").exists():
+            continue
+        seen.add(candidate)
+        remote = _github_slug_from_local_repo(candidate)
+        if _github_repositories_match(remote, task.repo):
+            return candidate
+    return None
 
 
 def _existing_ancestor(path: Path) -> Path | None:
@@ -4397,7 +4539,8 @@ def _clone_repo(task: Task) -> Path | None:
     dest = cache / _clone_cache_key(task.repo)
     with _GIT_PLUMBING_LOCK:
         if (dest / ".git").exists():  # a concurrent dispatch already cloned it
-            return dest
+            origin = _github_slug_from_local_repo(dest)
+            return dest if _github_repositories_match(origin, task.repo) else None
         dest.parent.mkdir(parents=True, exist_ok=True)
         try:
             # _run_capture (process-group SIGKILL), NOT plain subprocess.run: a `gh repo clone`
@@ -4414,7 +4557,8 @@ def _clone_repo(task: Task) -> Path | None:
         except Exception:
             print(f"  clone {task.repo} errored: repository clone unavailable")
             return None
-    if (dest / ".git").exists():
+    origin = _github_slug_from_local_repo(dest) if (dest / ".git").exists() else None
+    if _github_repositories_match(origin, task.repo):
         print(f"  cloned {task.repo} → {dest}")
         return dest
     print(f"  clone {task.repo} failed: repository clone unavailable")
@@ -4666,6 +4810,8 @@ def _bridge_agy_scratch(task: Task, wt: Path) -> None:
 
 def _lane_run_env(agent: str, wt: Path | None = None, task: Task | None = None) -> dict[str, str]:
     run_env = os.environ.copy()
+    if task is not None:
+        run_env["LIMEN_WORK_KEY"] = task.id
     if wt is not None:
         live_root = os.environ.get("LIMEN_ROOT", str(Path.home() / "Workspace" / "limen"))
         run_env["LIMEN_LIVE_ROOT"] = live_root
@@ -4736,12 +4882,21 @@ def _run_isolated_agent(
     retry_count: int = 0,
 ) -> bool | str | PlanHandoffResult:
     try:
+        limits = client_from_env().execution_info(task.id)
+        deadline = datetime.fromisoformat(limits["attempt_deadline"].replace("Z", "+00:00"))
+        remaining = (deadline - datetime.now(timezone.utc)).total_seconds()
+        if remaining <= 0:
+            return _blocked_result("execution_attempt_exhausted")
+        lane_timeout = min(lane_timeout, max(1, int(remaining)), 1800)
         run_env = _lane_run_env(agent, wt, task)
+        run_env["LIMEN_ATTEMPT_DEADLINE"] = limits["attempt_deadline"]
         if agent == "opencode":
             run_env["LIMEN_OPENCODE_CLOCK"] = "1"
             run_env["LIMEN_TASK_ID"] = task.id
         _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
         supervised_cmd = _stable_agent_host_command(agent_cmd, run_env)
+    except (ConductError, KeyError, ValueError):
+        return _prelaunch_blocked_result("execution reservation unavailable or expired")
     except StableAgentHostError:
         reason = "stable agent host unavailable"
         print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
@@ -4752,7 +4907,7 @@ def _run_isolated_agent(
         print(f"  BLOCKED {task.id}: {reason}; refusing provider launch so the lane can successor-route")
         return _workstream_successor_result(reason) if retry_count else _prelaunch_workstream_successor_result(reason)
     started_at = datetime.now(timezone.utc)
-    max_retries = provider_health_policy().same_model_retries if agent == "opencode" else retry_count
+    max_retries = retry_count  # correction needs a new keeper admission with changed inputs
     while True:
         try:
             run = _run_capture(
@@ -4761,31 +4916,6 @@ def _run_isolated_agent(
                 timeout=lane_timeout,
                 env=run_env,
             )
-            # SELF-HEAL the credential-refresh race (#48786): if claude lost the token rotation,
-            # a fresh process re-reads the now-rotated token. ONE retry only.
-            if agent == "claude" and run.returncode != 0 and _is_auth_blip((run.stderr or "") + (run.stdout or "")):
-                print(f"  AUTH-BLIP {task.id}: claude credential-refresh race — re-reading token, one retry")
-                try:
-                    run_env = _lane_run_env(agent, wt, task)
-                    _assert_final_workstream_launch(agent, task, agent_cmd[1:-1], run_env, wt)
-                    supervised_cmd = _stable_agent_host_command(
-                        agent_cmd,
-                        run_env,
-                    )
-                except StableAgentHostError:
-                    reason = "stable agent host unavailable"
-                    print(f"  BLOCKED {task.id}: {reason}; refusing an unstable auth-retry TCC principal")
-                    return _blocked_result(reason)
-                except WorkstreamLaunchContractError:
-                    reason = "workstream launch contract unavailable"
-                    print(f"  BLOCKED {task.id}: {reason}; refusing auth retry so the lane can successor-route")
-                    return _workstream_successor_result(reason)
-                run = _run_capture(
-                    supervised_cmd,
-                    cwd=str(wt),
-                    timeout=lane_timeout,
-                    env=run_env,
-                )
         except StableAgentHostError:
             reason = "stable agent host unavailable"
             print(f"  BLOCKED {task.id}: {reason}; refusing an unstable TCC principal")
@@ -4802,7 +4932,7 @@ def _run_isolated_agent(
                     retry_count += 1
                     print(f"  RETRY {task.id}: OpenCode timeout; same runtime model attempt {retry_count + 1}")
                     continue
-            print(f"  TIMEOUT {task.id} after {lane_timeout}s — too big for sync local → routing to jules (async)")
+            print(f"  TIMEOUT {task.id} after {lane_timeout}s — checkpointing without automatic continuation")
             return _TIMEOUT
         if agent == "opencode" and run.returncode != 0:
             terminal = classify_provider_terminal(
@@ -5028,12 +5158,7 @@ def _cleanup_isolated_worktree(
     pushed: bool,
     task: Task | None = None,
 ) -> None:
-    """Classify isolated worktrees for later receipt-backed cleanup.
-
-    This function intentionally does not remove roots or branch refs. Local deletion requires the
-    shared archive/redaction acceptance ledgers consumed by reclaim-worktrees.py and
-    reap-branches.py.
-    """
+    """Retire released exact-tip copies; retain all uncertain work and branch refs."""
     if not wt.exists():
         if pushed:
             print(
@@ -5044,11 +5169,38 @@ def _cleanup_isolated_worktree(
         return
 
     reason = "" if pushed else _unpreserved_work_reason(wt, base_ref)
-    generated_cleanup = _purge_generated_payloads(wt)
+    generated_cleanup = "retained-for-custody"
     if reason:
         print(f"  preserved isolated worktree {wt} for bridge ({reason}; branch {branch})")
         _record_worktree_lifecycle(task, wt, branch, "preserved", reason, generated_cleanup, pushed)
         return
+
+    if pushed:
+        from limen.worktree_abandonment import retire_released_worktree
+
+        head = _git(["rev-parse", "HEAD"], wt)
+        root = Path(
+            os.environ.get("LIMEN_LIVE_ROOT") or os.environ.get("LIMEN_ROOT") or Path.home() / "Workspace/limen"
+        )
+        released = retire_released_worktree(
+            repo_dir,
+            wt,
+            expected_head=head.stdout.strip(),
+            remote_ref=f"refs/heads/{branch}",
+            receipt_root=root / "logs/worktree-abandonment",
+        )
+        _record_worktree_lifecycle(
+            task,
+            wt,
+            branch,
+            released["state"],
+            released.get("reason", "exact-tip-retirement"),
+            generated_cleanup,
+            pushed,
+        )
+        if released["state"] in {"completed", "already-absent"}:
+            print(f"  retired released checkout {wt}; branch {branch} retained remotely")
+            return
 
     print(
         f"  retained isolated worktree {wt} ({'pushed' if pushed else 'clean-noop'}; branch {branch}); "
@@ -6221,35 +6373,12 @@ def _apply_result(
         task.status = "failed"
         if "noop" not in task.labels:
             task.labels.append("noop")
-    elif result == _RATELIMIT:
-        nxt = _cascade_or_requeue(agent)
-        entry.status = "open"
-        entry.route_to = nxt
-        entry.output = f"rate limited on {agent}; reopened to live fleet route"
-        task.status = "open"
-    elif result == _TIMEOUT:
-        if _control_host_task(task):
-            # A remote clone cannot execute a control-host mutation.  The old unconditional
-            # timeout->Jules fallback sent disk cleanup off-box, where it waited for feedback,
-            # was healed open, and then permanently blocked the correct local lane because its
-            # history contained a local timeout.  Fail this bounded unit and require a successor
-            # instead of manufacturing an impossible route.
-            entry.status = "failed"
-            entry.output = (
-                f"timeout on {agent}; control-host work cannot route off-machine; "
-                "a smaller bounded successor packet is required"
-            )
-            task.status = "failed"
-            if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in task.labels:
-                task.labels.append(WORKSTREAM_SUCCESSOR_REQUIRED_LABEL)
-        else:
-            # too big for a sync local lane → hand to jules (async, no wall-clock cap)
-            entry.status = "open"
-            entry.route_to = "jules"
-            entry.output = f"timeout on {agent}; reopened to asynchronous lane"
-            task.status = "open"
-            if "slow" not in task.labels:
-                task.labels.append("slow")
+    elif result in {_RATELIMIT, _TIMEOUT}:
+        entry.status = "failed"
+        task.status = "failed"
+        entry.output = "bounded attempt checkpointed; no automatic reroute or budget reset"
+        if WORKSTREAM_SUCCESSOR_REQUIRED_LABEL not in task.labels:
+            task.labels.append(WORKSTREAM_SUCCESSOR_REQUIRED_LABEL)
     elif _is_workstream_successor_result(result):
         entry.status = "failed"
         entry.output = f"successor workstream required: {_workstream_successor_reason(result)}"

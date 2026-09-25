@@ -53,6 +53,12 @@ CAP_DEFAULT = 8
 
 
 def sh(args: list[str], check: bool = True) -> str:
+    if "issue" in args and "create" in args:
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli" / "src"))
+        from limen.inventory_admission import reserve_growth
+        reserve_growth("issue", " ".join(args))
     r = subprocess.run(args, capture_output=True, text=True, cwd=ROOT)
     if check and r.returncode != 0:
         sys.stderr.write(f"$ {' '.join(args)}\n{r.stdout}{r.stderr}\n")

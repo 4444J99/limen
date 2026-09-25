@@ -152,6 +152,8 @@ cmd_new() {
   [ -e "$p" ] && die "cell '$slug' already exists at $p"
   echo "cell: fetching origin (branch from origin/main — never local HEAD)…" >&2
   git -C "$LIMEN_ROOT" fetch origin --quiet || die "fetch failed"
+  python3 "$LIMEN_ROOT/scripts/dispatch-admission.py" --reserve-resource worktree --resource-identity "$p"
+  python3 "$LIMEN_ROOT/scripts/dispatch-admission.py" --reserve-resource branch --resource-identity "$LIMEN_ROOT:$b"
   git -C "$LIMEN_ROOT" worktree add "$p" -b "$b" origin/main >/dev/null \
     || die "worktree add failed (branch $b may already exist — try a new slug)"
   echo "cell '$slug' ready on $b (off origin/main)" >&2

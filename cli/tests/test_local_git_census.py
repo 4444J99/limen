@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -8,6 +9,21 @@ from limen.local_git_census import collect_local_git_census
 
 
 NOW = datetime(2026, 8, 27, 12, tzinfo=UTC)
+
+
+def test_inventory_failure_retains_private_detail_only_in_private_receipt(tmp_path: Path) -> None:
+    missing = tmp_path / "personal-project-name"
+    private, tracked = collect_local_git_census(
+        tmp_path,
+        checkout_roots=(missing,),
+        observed_at=NOW,
+        require_protection_registry=False,
+        require_local_root_policy_registry=False,
+    )
+    assert str(missing) in json.dumps(private)
+    assert str(tmp_path) not in json.dumps(tracked)
+    assert "personal-project-name" not in json.dumps(tracked)
+    assert any(row.get("detail_sha256") for row in tracked["failures"])
 
 
 def _git(path: Path, *args: str) -> None:
