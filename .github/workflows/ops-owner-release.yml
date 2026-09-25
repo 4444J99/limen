@@ -10,12 +10,12 @@ permissions:
   contents: read
 
 # The called immutable owner performs fresh preflight before any mutation.
-# Its shared carrier lock excludes the previous incident writer.
+# Dormant source is preserved; only verified duplicate authority is removed.
 jobs:
   owner:
-    uses: 4444J99/ops/.github/workflows/cloudflare-owner-release.yml@c0c017733bc638071c5bf17805c8a7660c3f9b34
+    uses: 4444J99/ops/.github/workflows/cloudflare-owner-release.yml@ec94e3523403aff0058896419b917e0eee1830de
     with:
-      source_sha: c0c017733bc638071c5bf17805c8a7660c3f9b34
-      apply_source: c0c017733bc638071c5bf17805c8a7660c3f9b34
+      source_sha: ec94e3523403aff0058896419b917e0eee1830de
+      apply_source: ec94e3523403aff0058896419b917e0eee1830de
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
