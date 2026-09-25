@@ -262,3 +262,8 @@ the approximately 200 GiB outcome remain open.
 - `python3 -m pytest -q cli/tests/test_reap_clones.py`: 75 passed. Pinned Ruff
   0.15.8 lint and format checks passed. The full 75-test suite passed again
   after formatting.
+- A fresh depth-six Workspace dry run with the new classifier examined 144
+  candidates and found zero eligible copies; two were retained specifically
+  for unreachable-object evidence. A subsequent liveness probe found a live
+  SSH process with its cwd inside one of those repositories, adding an active
+  owner gate. No copy was removed and no storage reclaim is attributed.
