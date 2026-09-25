@@ -3,6 +3,9 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -165,6 +168,87 @@ def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path,
     assert clean_later["state"] == "retained-store-metadata-custody-unproven"
     assert not Path(concurrent_session["worktree"]).exists()
     assert Path(first["store"]).is_dir()
+
+
+def test_concurrent_ensure_shares_one_store_and_one_session_checkout(tmp_path, monkeypatch):
+    remote = _source_repo(tmp_path)
+    cache = tmp_path / "cache"
+    worktrees = tmp_path / "worktrees"
+    monkeypatch.setattr(lifecycle, "_repository", lambda _repo_id: (77123, "owner/project"))
+    monkeypatch.setattr(lifecycle, "_verify_store_origin", lambda _store, _stable_id: None)
+    monkeypatch.setattr(lifecycle, "dispatch_clone_cache_root", lambda: cache)
+    monkeypatch.setattr(
+        lifecycle,
+        "take_admission_snapshot",
+        lambda _root: {
+            "active": True,
+            "block_new_local": False,
+            "room_gib": 1.0,
+            "free_gib": 51.0,
+            "floor_gib": 50.0,
+            "reserved_gib": 0.0,
+        },
+    )
+    from limen import dispatch
+
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    monkeypatch.setattr(dispatch, "_remote_hydration_requirement_for_repo_gib", lambda _repo, **_kwargs: 0.001)
+    real_capture = dispatch._run_capture
+    clone_calls = 0
+    clone_calls_lock = threading.Lock()
+
+    def fake_capture(args, **kwargs):
+        nonlocal clone_calls
+        if args[:3] == ["gh", "repo", "clone"]:
+            with clone_calls_lock:
+                clone_calls += 1
+            # Make the clone transaction long enough that the second caller
+            # would race the same store if acquisition serialization regressed.
+            time.sleep(0.05)
+            return subprocess.run(
+                ["git", "clone", "--bare", str(remote), args[4]],
+                capture_output=True,
+                text=True,
+                timeout=kwargs.get("timeout"),
+                check=False,
+            )
+        return real_capture(args, **kwargs)
+
+    monkeypatch.setattr(dispatch, "_run_capture", fake_capture)
+    monkeypatch.setenv("LIMEN_WORKTREE_ROOT", str(worktrees))
+
+    def initialize(store, final_path, *, branch, checkout_ref, task_id):
+        _run("git", "-C", str(store), "worktree", "add", "-b", branch, str(final_path), checkout_ref)
+        return WorktreeInitialization(
+            final_path,
+            final_path,
+            branch,
+            checkout_ref,
+            _run("git", "-C", str(final_path), "rev-parse", "HEAD"),
+            final_path / "receipt.json",
+            {},
+        )
+
+    monkeypatch.setattr(lifecycle, "initialize_worktree", initialize)
+    barrier = threading.Barrier(2)
+
+    def acquire(session_id):
+        barrier.wait(timeout=5)
+        return lifecycle.ensure(77123, "main", session_id)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        first, second = list(pool.map(acquire, ("concurrent/session-one", "concurrent/session-two")))
+
+    assert first["store"] == second["store"]
+    assert first["worktree"] != second["worktree"]
+    assert clone_calls == 1
+    assert Path(first["store"]).is_dir()
+    assert Path(first["worktree"]).is_dir()
+    assert Path(second["worktree"]).is_dir()
+    assert lifecycle.ensure(77123, "main", "concurrent/session-one") == first
+    assert len(list((cache / ".limen-residency" / "77123" / "leases").glob("*.json"))) == 2
+    worktree_paths = _run("git", "-C", first["store"], "worktree", "list", "--porcelain").splitlines()
+    assert sum(line.startswith("worktree ") for line in worktree_paths) == 3
 
 
 def test_new_residency_denied_before_clone_under_disk_pressure(tmp_path, monkeypatch):

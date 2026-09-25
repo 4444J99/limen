@@ -228,3 +228,16 @@ the approximately 200 GiB outcome remain open.
   not prove key recovery, decryption/restoration, coverage of other private
   domains, or authorization to retire any source. The unencrypted volume must
   never receive plaintext or sensitive names/indexes.
+
+### Concurrent residency acceptance, 2026-09-25
+
+- Added a race test for two different session IDs entering `repo.ensure` at
+  once against one temporary remote. It verifies one canonical bare store,
+  two distinct isolated worktrees and lease records, then repeats one session
+  to verify idempotency. This exercises the real filesystem lock and Git
+  worktree plumbing; only the GitHub clone transport is replaced by a local
+  test fixture.
+- `python3 -m pytest -q cli/tests/test_repo_lifecycle.py`: 11 passed.
+  Pinned Ruff 0.15.8 lint and format checks passed for the changed test.
+  This is local contract evidence, not a live-GitHub concurrent canary or
+  proof that final-release canonical stores are retired.
