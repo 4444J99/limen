@@ -169,6 +169,16 @@ inventory also retains the checkout. All 29 abandonment tests passed, including
 new submodule and LFS retention cases. This is a safety gate, not final-release
 retirement or canonical-store reconstruction.
 
+The clone reaper now removes directory mtime from retirement authority, rejects
+basename-only acceptance matches, cannot disable live origin verification via
+`LIMEN_REAP_VERIFY_REMOTE=0`, and subtracts only `origin` refs when checking unique
+objects. Ignored content of any name retains the clone pending owner-specific
+custody/reconstruction proof. Apply rechecks live origin, payloads and filesystem
+identity immediately before removal. All 64 focused real-Git tests passed. The
+reaper still needs shared evidence classification, full local Git metadata custody,
+and integration with the lease-release worker before it can establish the complete
+repository loop or justify broad source retirement.
+
 ## Acceptance and reporting
 
 Do not repeat subjective implementation percentages. Report original outcomes passed
