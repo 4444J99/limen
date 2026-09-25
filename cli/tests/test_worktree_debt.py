@@ -27,7 +27,7 @@ def test_reachable_from_remote_accepts_only_fresh_remote_tracking_refs(tmp_path:
             return subprocess.CompletedProcess(
                 ["git", *args],
                 0,
-            "current-main\trefs/heads/main\ncurrent-feature\trefs/heads/feature\n",
+                "current-main\trefs/heads/main\ncurrent-feature\trefs/heads/feature\n",
                 "",
             )
         if args == [
@@ -48,12 +48,15 @@ def test_reachable_from_remote_accepts_only_fresh_remote_tracking_refs(tmp_path:
     monkeypatch.setattr(wd, "_git", fake_git)
 
     assert wd._reachable_from_remote(tmp_path, "abc-head") is True
-    assert calls == [["ls-remote", "--refs", "origin"], [
-        "for-each-ref",
-        "--contains=abc-head",
-        "--format=%(refname)%00%(objectname)",
-        "refs/remotes/origin",
-    ]]
+    assert calls == [
+        ["ls-remote", "--refs", "origin"],
+        [
+            "for-each-ref",
+            "--contains=abc-head",
+            "--format=%(refname)%00%(objectname)",
+            "refs/remotes/origin",
+        ],
+    ]
 
 
 def test_reachable_from_remote_rejects_a_stale_tracking_tip(tmp_path: Path, monkeypatch):
@@ -66,9 +69,7 @@ def test_reachable_from_remote_rejects_a_stale_tracking_tip(tmp_path: Path, monk
             "--format=%(refname)%00%(objectname)",
             "refs/remotes/origin",
         ]:
-            return subprocess.CompletedProcess(
-                ["git", *args], 0, "refs/remotes/origin/main\0old-stale-tip\n", ""
-            )
+            return subprocess.CompletedProcess(["git", *args], 0, "refs/remotes/origin/main\0old-stale-tip\n", "")
         raise AssertionError(f"unexpected git call: {args}")
 
     monkeypatch.setattr(wd, "_git", fake_git)

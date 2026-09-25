@@ -5544,10 +5544,13 @@ def test_remote_checkout_estimate_rejects_lfs_attributes(monkeypatch, attributes
         if endpoint == "repos/not-present/example":
             payload = {"default_branch": "main", "size": 2048}
         elif "/git/trees/" in endpoint:
-            payload = {"truncated": False, "tree": [
-                {"type": "blob", "path": ".gitattributes", "size": len(attributes), "sha": sha},
-                {"type": "blob", "path": "data.bin", "size": 200},
-            ]}
+            payload = {
+                "truncated": False,
+                "tree": [
+                    {"type": "blob", "path": ".gitattributes", "size": len(attributes), "sha": sha},
+                    {"type": "blob", "path": "data.bin", "size": 200},
+                ],
+            }
         else:
             assert endpoint.endswith(f"/git/blobs/{sha}")
             payload = {"encoding": "base64", "content": base64.b64encode(attributes).decode()}
