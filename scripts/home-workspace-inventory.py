@@ -57,6 +57,30 @@ def _record(state: dict, path: str, kind: str, key: str, **extra: object) -> Non
     state["objects"].append({"path": path, "kind": kind, "fs_identity": key, **extra})
 
 
+def empty_codex_git_shell(path: Path) -> bool:
+    """Recognize an unpopulated Codex temp Git shell, never deletion authority."""
+    if path.parent.name != ".tmp" or path.parent.parent.name != "codex":
+        return False
+    try:
+        if not stat.S_ISDIR(os.lstat(path).st_mode):
+            return False
+        with os.scandir(path) as stream:
+            entries = {entry.name: entry for entry in stream}
+        if set(entries) != {"HEAD", "objects", "refs"}:
+            return False
+        if not stat.S_ISREG(entries["HEAD"].stat(follow_symlinks=False).st_mode):
+            return False
+        for name in ("objects", "refs"):
+            if not stat.S_ISDIR(entries[name].stat(follow_symlinks=False).st_mode):
+                return False
+            with os.scandir(entries[name].path) as stream:
+                if next(stream, None) is not None:
+                    return False
+    except OSError:
+        return False
+    return True
+
+
 def advance(state: dict, *, max_directories: int, max_seconds: float) -> dict:
     if state.get("schema") != SCHEMA or not isinstance(state.get("frontier"), list):
         raise ValueError("invalid inventory state")
@@ -93,7 +117,12 @@ def advance(state: dict, *, max_directories: int, max_seconds: float) -> dict:
                 marker_kind = "git_file_checkout_candidate" if marker.is_file(follow_symlinks=False) else "git_checkout"
                 _record(state, path, marker_kind, key)
             elif {"HEAD", "objects", "refs"}.issubset(names):
-                kind = "checkout_git_store" if Path(path).name == ".git" else "bare_git_candidate"
+                if Path(path).name == ".git":
+                    kind = "checkout_git_store"
+                elif empty_codex_git_shell(Path(path)):
+                    kind = "codex_empty_git_shell_candidate"
+                else:
+                    kind = "bare_git_candidate"
                 _record(state, path, kind, key)
             elif names & SOURCE_MARKERS:
                 _record(state, path, "copied_source_candidate", key, markers=sorted(names & SOURCE_MARKERS))
@@ -145,13 +174,23 @@ def main() -> int:
     for row in state["objects"]:
         if row["kind"] == "bare_git_candidate" and Path(row["path"]).name == ".git":
             row["kind"] = "checkout_git_store"
+        elif row["kind"] == "bare_git_candidate" and empty_codex_git_shell(Path(row["path"])):
+            row["kind"] = "codex_empty_git_shell_candidate"
         elif row["kind"] == "linked_worktree":
             row["kind"] = "git_file_checkout_candidate"
     advance(state, max_directories=args.max_directories, max_seconds=args.max_seconds)
     save(args.state, state)
-    print(json.dumps({"complete": state["complete"], "frontier": len(state["frontier"]),
-                      "objects": len(state["objects"]), "unmeasured": len(state["unmeasured"]),
-                      "resolved_changes": len(state["resolved_changes"])}))
+    print(
+        json.dumps(
+            {
+                "complete": state["complete"],
+                "frontier": len(state["frontier"]),
+                "objects": len(state["objects"]),
+                "unmeasured": len(state["unmeasured"]),
+                "resolved_changes": len(state["resolved_changes"]),
+            }
+        )
+    )
     return 0
 
 
