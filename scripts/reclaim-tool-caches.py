@@ -411,8 +411,20 @@ def apply_plan(expected_plan_sha: str) -> dict[str, Any]:
 
 def write_log(payload: dict[str, Any]) -> None:
     LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with LOG_PATH.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(payload, sort_keys=True) + "\n")
+    descriptor = os.open(
+        LOG_PATH,
+        os.O_WRONLY | os.O_APPEND | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0),
+        0o600,
+    )
+    try:
+        os.fchmod(descriptor, 0o600)
+        handle = os.fdopen(descriptor, "a", encoding="utf-8")
+        descriptor = -1
+        with handle:
+            handle.write(json.dumps(payload, sort_keys=True) + "\n")
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
 
 
 def _print_human(payload: dict[str, Any]) -> None:

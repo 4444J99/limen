@@ -325,3 +325,15 @@ the approximately 200 GiB outcome remain open.
   writes and APFS mean the difference is not attributed to cache removal.
   Free space is still below the 50 GiB admission threshold and far below the
   approximately 200 GiB completion criterion.
+- Owner-specific plugin checks found the Copilot CLI currently lists two
+  bundled marketplaces and 21 installed plugins. Its eight cached repository
+  candidates, Cursor's four plugin-source candidates, and other active plugin
+  stores remain under their application owners; no safe owner eviction receipt
+  was demonstrated. No marketplace/plugin clone was removed.
+- Hardened the cache receipt writer that stores exact local candidate paths:
+  new and existing log files are forced to mode 0600, symlink targets are
+  refused, and an OS-level no-follow open closes the leaf-path swap. The
+  existing ignored receipt was tightened to 0600; FileVault is enabled.
+  `python3 -m pytest -q cli/tests/test_reclaim_tool_caches.py`: 14 passed.
+  Ruff lint/format passed with local Ruff 0.16.9, and the repository Ruff-pin
+  consistency check passed. No hosted checks or deployment were awaited.
