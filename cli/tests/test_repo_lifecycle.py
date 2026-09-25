@@ -30,6 +30,27 @@ def _source_repo(root: Path) -> Path:
     return root / "remote.git"
 
 
+def test_final_released_store_explicitly_retained_without_metadata_custody(tmp_path, monkeypatch):
+    cache = tmp_path / "cache"
+    store = cache / "github-77123"
+    store.mkdir(parents=True)
+    leases = cache / ".limen-residency" / "77123" / "leases"
+    leases.mkdir(parents=True)
+    lease_id = "77123-" + "a" * 32
+    (leases / f"{lease_id}.json").write_text(json.dumps({
+        "repository_id": 77123,
+        "lease_id": lease_id,
+        "state": "retired-checkout-store-retained",
+        "store": str(store),
+    }))
+    monkeypatch.setattr(lifecycle, "_repository", lambda _repo_id: (77123, "owner/project"))
+    monkeypatch.setattr(lifecycle, "_verify_store_origin", lambda _store, _id: None)
+    monkeypatch.setattr(lifecycle, "dispatch_clone_cache_root", lambda: cache)
+    result = lifecycle.reconcile(77123)
+    assert result["state"] == "retained-store-metadata-custody-unproven"
+    assert store.is_dir()
+
+
 def test_ensure_is_idempotent_for_session_and_release_retains_checkout(tmp_path, monkeypatch):
     remote = _source_repo(tmp_path)
     cache = tmp_path / "cache"
