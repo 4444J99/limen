@@ -85,6 +85,90 @@ def test_publish_resumes_by_digest_and_verifies_every_readback(tmp_path: Path, m
     assert sum(call[1:3] == ["release", "upload"] for call in calls) == upload_count
 
 
+def test_small_objects_share_one_upload_and_catalog_waits_for_readback(tmp_path: Path, monkeypatch) -> None:
+    catalog, objects = _ciphertexts(tmp_path)
+    for index in range(3):
+        path = tmp_path / f"private-{index}.enc"
+        path.write_bytes(f"opaque encrypted payload {index}".encode())
+        objects.append(path)
+    remote: dict[str, bytes] = {}
+    uploads: list[list[str]] = []
+    readbacks: list[str] = []
+    authorized: list[str] = []
+
+    def fake_run(args: list[str], **_kwargs) -> subprocess.CompletedProcess[str]:
+        if args[:2] == ["gh", "api"]:
+            return subprocess.CompletedProcess(args, 0, "[]", "")
+        if args[1:3] == ["release", "create"]:
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[1:3] == ["release", "upload"]:
+            paths = args[4:args.index("--repo")]
+            uploads.append([Path(path).name for path in paths])
+            if any(Path(path).name.startswith("catalog-") for path in paths):
+                assert len(readbacks) == len(objects)
+            for path in paths:
+                remote[Path(path).name] = Path(path).read_bytes()
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[1:3] == ["release", "download"]:
+            name = args[args.index("--pattern") + 1]
+            readbacks.append(name)
+            Path(args[args.index("--dir") + 1], name).write_bytes(remote[name])
+            return subprocess.CompletedProcess(args, 0, "", "")
+        raise AssertionError(args)
+
+    monkeypatch.setattr(assets, "_run", fake_run)
+    monkeypatch.setattr(assets, "_release_exists", lambda _repo, _tag: False)
+    monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (77123, "owner/private-vault", "main"))
+    monkeypatch.setattr(assets, "_authorize_write", lambda repo: authorized.append(repo))
+    monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {})
+    assert assets.publish("owner/private-vault", catalog, objects, apply=True)["state"] == "verified"
+    assert list(map(len, uploads)) == [len(objects), 1]
+    assert len(authorized) == 3  # release creation, object batch, catalog marker
+
+
+def test_partial_multi_object_upload_resumes_without_publishing_catalog(tmp_path: Path, monkeypatch) -> None:
+    catalog, objects = _ciphertexts(tmp_path)
+    extra = tmp_path / "extra.enc"
+    extra.write_bytes(b"second encrypted payload")
+    objects.append(extra)
+    remote: dict[str, bytes] = {}
+    interrupt = True
+
+    def fake_run(args: list[str], **_kwargs) -> subprocess.CompletedProcess[str]:
+        nonlocal interrupt
+        if args[:2] == ["gh", "api"]:
+            return subprocess.CompletedProcess(args, 0, "[]", "")
+        if args[1:3] == ["release", "create"]:
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[1:3] == ["release", "view"]:
+            return subprocess.CompletedProcess(args, 0, "\n".join(remote), "")
+        if args[1:3] == ["release", "upload"]:
+            paths = args[4:args.index("--repo")]
+            if interrupt:
+                remote[Path(paths[0]).name] = Path(paths[0]).read_bytes()
+                interrupt = False
+                raise assets.AssetError("interrupted upload")
+            for path in paths:
+                remote[Path(path).name] = Path(path).read_bytes()
+            return subprocess.CompletedProcess(args, 0, "", "")
+        if args[1:3] == ["release", "download"]:
+            name = args[args.index("--pattern") + 1]
+            Path(args[args.index("--dir") + 1], name).write_bytes(remote[name])
+            return subprocess.CompletedProcess(args, 0, "", "")
+        raise AssertionError(args)
+
+    monkeypatch.setattr(assets, "_run", fake_run)
+    monkeypatch.setattr(assets, "_release_exists", lambda _repo, _tag: bool(remote))
+    monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (77123, "owner/private-vault", "main"))
+    monkeypatch.setattr(assets, "_authorize_write", lambda _repo: None)
+    monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {})
+    with pytest.raises(assets.AssetError, match="interrupted upload"):
+        assets.publish("owner/private-vault", catalog, objects, apply=True)
+    assert len(remote) == 1 and all(name.startswith("object-") for name in remote)
+    assert assets.publish("owner/private-vault", catalog, objects, apply=True)["state"] == "verified"
+    assert len(remote) == 3
+
+
 def test_interrupted_batch_resumes_without_replacing_verified_assets(tmp_path: Path, monkeypatch) -> None:
     catalog, objects = _ciphertexts(tmp_path)
     remote: dict[str, bytes] = {}

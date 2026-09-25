@@ -20,6 +20,8 @@ from pathlib import Path
 
 MAX_ASSET_BYTES = 2 * 1024**3 - 1  # GitHub requires each release asset to be under 2 GiB.
 BATCH_DEADLINE_SECONDS = 25 * 60
+MAX_UPLOAD_FILES = 16
+MAX_UPLOAD_BYTES = 128 * 1024**2
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 OPENPGP_ARMOR = b"-----BEGIN PGP MESSAGE-----"
 
@@ -226,13 +228,33 @@ def publish(
                 print(f"ARCA asset verified {index}/{len(assets)} (server digest)", file=sys.stderr, flush=True)
                 continue
             if source_tag is None:
-                if _digest(source)[0] != expected_digest:
-                    raise AssetError("asset source changed before upload; no mismatched bytes sent")
-                upload_path = readback / asset_name
-                upload_path.symlink_to(source.resolve())
+                # One gh invocation is one authorized mutation. Keep batches small
+                # enough for the deadline and never include the catalog marker.
+                pending: list[tuple[Path, str, str]] = []
+                pending_bytes = 0
+                for next_source, next_name, next_digest, next_size in assets[index - 1:-1]:
+                    if next_name in names or next_name in prior_assets:
+                        break
+                    if pending and (len(pending) >= MAX_UPLOAD_FILES or pending_bytes + next_size > MAX_UPLOAD_BYTES):
+                        break
+                    if _digest(next_source) != (next_digest, next_size):
+                        raise AssetError("asset source changed before upload; no mismatched bytes sent")
+                    pending.append((next_source, next_name, next_digest))
+                    pending_bytes += next_size
+                if not pending:
+                    pending = [(source, asset_name, expected_digest)]
+                    if _digest(source) != (expected_digest, _size):
+                        raise AssetError("asset source changed before upload; no mismatched bytes sent")
+                upload_paths: list[Path] = []
+                for pending_source, pending_name, _ in pending:
+                    upload_path = readback / pending_name
+                    upload_path.symlink_to(pending_source.resolve())
+                    upload_paths.append(upload_path)
                 _authorize_write(canonical)
-                _run(["gh", "release", "upload", tag, str(upload_path), "--repo", canonical], timeout=remaining_timeout())
-                upload_path.unlink()
+                _run(["gh", "release", "upload", tag, *map(str, upload_paths), "--repo", canonical], timeout=remaining_timeout())
+                for upload_path in upload_paths:
+                    upload_path.unlink()
+                    names.add(upload_path.name)
                 source_tag = tag
             _run(
                 [
