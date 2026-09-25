@@ -1048,3 +1048,10 @@ It fetched the completed encrypted catalog and one selected encrypted object
 into a new owner-private directory, verified remote metadata and downloaded
 bytes, and returned `state=verified`, `asset_count=2`. No decryption, source
 retirement, or native CCE search occurred.
+
+The selective transport now caps one call at 16 encrypted objects, four
+Release locations, 128 MiB verified ciphertext, and a five-minute overall
+deadline with shorter download calls. It rejects an over-limit request
+before downloading any asset. Twenty focused Release-adapter tests and Ruff
+check pass. These are transport bounds, not caller authorization or proof of
+native CCE retrieval.

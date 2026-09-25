@@ -25,6 +25,10 @@ MAX_RELEASE_ASSETS = 1000
 BATCH_DEADLINE_SECONDS = 25 * 60
 MAX_UPLOAD_FILES = int(os.environ.get("ARCA_MAX_UPLOAD_FILES", "16"))
 MAX_UPLOAD_BYTES = 128 * 1024**2
+MAX_HYDRATE_OBJECTS = 16
+MAX_HYDRATE_RELEASES = 4
+MAX_HYDRATE_BYTES = 128 * 1024**2
+HYDRATE_DEADLINE_SECONDS = 5 * 60
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 OPENPGP_ARMOR = b"-----BEGIN PGP MESSAGE-----"
 
@@ -421,8 +425,11 @@ def hydrate_ciphertext(
         not re.fullmatch(r"[0-9a-f]{64}", digest) for digest in object_sha256s
     ):
         raise AssetError("ciphertext identifiers must be SHA-256 digests")
+    if len(object_sha256s) > MAX_HYDRATE_OBJECTS:
+        raise AssetError("ciphertext hydration exceeds the selective object limit")
     if destination.is_symlink() or not destination.is_dir() or destination.stat().st_mode & 0o077:
         raise AssetError("destination must be an existing private directory")
+    deadline = time.monotonic() + HYDRATE_DEADLINE_SECONDS
     live_id, canonical, _branch = _canonical_repository(repo)
     if live_id != repository_id:
         raise AssetError("repository identity differs from custody receipt")
@@ -431,8 +438,13 @@ def hydrate_ciphertext(
     locations = _existing_assets(canonical)
     if locations.get(names[0]) != final_tag:
         raise AssetError("completed encrypted catalog marker is unavailable")
+    if len({tag for name in names if (tag := locations.get(name)) is not None}) > MAX_HYDRATE_RELEASES:
+        raise AssetError("ciphertext hydration exceeds the selective release limit")
     verified_tags: dict[str, dict[str, tuple[str, int]]] = {}
+    total_bytes = 0
     for name in names:
+        if time.monotonic() >= deadline:
+            raise AssetError("ciphertext hydration deadline reached")
         tag = locations.get(name)
         if not tag:
             raise AssetError("registered ciphertext object is unavailable")
@@ -442,10 +454,16 @@ def hydrate_ciphertext(
         metadata = verified_tags[tag].get(name)
         if metadata is None or metadata[0] != digest or metadata[1] <= 0:
             raise AssetError("remote ciphertext digest or size is unverified")
+        total_bytes += metadata[1]
+        if total_bytes > MAX_HYDRATE_BYTES:
+            raise AssetError("ciphertext hydration exceeds the selective byte limit")
 
     with tempfile.TemporaryDirectory(prefix=".arca-hydrate-", dir=destination) as temporary:
         staging = Path(temporary)
         for name in names:
+            remaining = deadline - time.monotonic()
+            if remaining <= 1:
+                raise AssetError("ciphertext hydration deadline reached")
             target = destination / name
             if target.exists() or target.is_symlink():
                 if target.is_symlink() or not target.is_file() or _digest(target) != verified_tags[locations[name]][name]:
@@ -454,7 +472,7 @@ def hydrate_ciphertext(
             _run(
                 ["gh", "release", "download", locations[name], "--repo", canonical,
                  "--pattern", name, "--dir", str(staging)],
-                timeout=900,
+                timeout=min(120, max(1, int(remaining))),
             )
             staged = staging / name
             if staged.is_symlink() or not staged.is_file() or _digest(staged) != verified_tags[locations[name]][name]:
