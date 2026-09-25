@@ -587,3 +587,18 @@ worktree identity are verified. Focused lifecycle tests (8), Ruff lint/format,
 and mypy pass. This is admission protection, not a complete capacity
 reservation: the canonical store and checkout need separate storage-domain
 accounting when they reside on different volumes.
+
+The live admission snapshot after this change returned `block_new_local=true`,
+22.82 GiB free, and an unavailable resource graph, so no new checkout was
+attempted. The actual APFS free-space reading was 23,898,764 KiB at tranche
+start; the 200 GiB completion criterion remains unmet.
+
+The private home/Workspace inventory has 2,431 `bare_git_candidate` paths
+under the two Codex-owned `.tmp` roots, far more than the earlier 320 observed
+in one root. A bounded first-100 Git inspection found no refs, remotes,
+resolvable HEADs, or pack files. A read-only full-cohort filesystem shape pass
+found exactly one regular `HEAD` file per directory, no config or index, and
+51,051 total file bytes across all 2,431 shells. These are Git-shaped empty
+initialization shells, not demonstrated repository custody or meaningful
+storage recovery. The count and shape are inventory evidence only; process
+reference and current-state checks would still precede any retirement.
