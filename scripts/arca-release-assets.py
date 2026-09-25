@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import subprocess
 import sys
@@ -22,7 +23,7 @@ from typing import Callable
 MAX_ASSET_BYTES = 2 * 1024**3 - 1  # GitHub requires each release asset to be under 2 GiB.
 MAX_RELEASE_ASSETS = 1000
 BATCH_DEADLINE_SECONDS = 25 * 60
-MAX_UPLOAD_FILES = 16
+MAX_UPLOAD_FILES = int(os.environ.get("ARCA_MAX_UPLOAD_FILES", "16"))
 MAX_UPLOAD_BYTES = 128 * 1024**2
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 OPENPGP_ARMOR = b"-----BEGIN PGP MESSAGE-----"
@@ -172,6 +173,8 @@ def publish(
         raise AssetError("repository must be owner/name")
     if not 60 <= batch_deadline_seconds <= BATCH_DEADLINE_SECONDS:
         raise AssetError("batch deadline must be between 60 and 1500 seconds")
+    if not 1 <= MAX_UPLOAD_FILES <= 16:
+        raise AssetError("ARCA_MAX_UPLOAD_FILES must be between 1 and 16")
     stable_id, canonical, default_branch = _canonical_repository(repo) if apply else (None, repo, "main")
     assets, tag, total = _preflight(catalog, objects, expected_digests)
     object_assets = assets[:-1]

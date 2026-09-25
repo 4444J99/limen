@@ -919,10 +919,15 @@ upload command failed. A digest-assisted resume confirmed all 1,512 existing
 assets but failed at the same next upload. GitHub's reported core rate budget
 was 5,000 and the release was not immutable; the precise upload rejection was
 not exposed by the former generic error. The publisher now reports only a
-bounded, neutral error category for the next investigation. Shard three and
+bounded, neutral error category. A corrective retry with one object per upload,
+after digest-checking all 1,512 existing objects, returned **HTTP 403** on the
+same next object. That is a remote mutation denial, not evidence that the
+16-object batch is too large. Do not retry unchanged inputs; investigate the
+GitHub response and account/repository upload policy before resuming.
+Shard three and
 the final catalog release do not exist, so this copied source tree does **not**
 have complete remote custody. The source and all local ciphertext remain.
-Sixteen focused publisher
+Seventeen focused publisher
 test cases, Ruff, and the
 outbound preflight guard passed. This reduces per-object authorization and
 upload overhead for small-file cohorts; it does not establish whole-estate
