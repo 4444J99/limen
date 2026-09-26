@@ -4544,7 +4544,7 @@ def _local_admission_requirement_gib(task: Task) -> float | None:
     return _remote_hydration_requirement_gib(task)
 
 
-def _clone_repo(task: Task) -> Path | dict[str, str] | None:
+def _clone_repo(task: Task, *, attempt_id: str | None = None) -> Path | dict[str, str] | None:
     """Acquire an isolated, leased checkout when discovery finds no local copy.
 
     Explicit local paths keep caller-authorized semantics. Remote acquisitions go through
@@ -4563,8 +4563,10 @@ def _clone_repo(task: Task) -> Path | dict[str, str] | None:
         return None
     pr_head = _same_repo_pr_head_for_task(task)
     revision = pr_head["head_ref"] if pr_head else "HEAD"
-    # Stable within one dispatch session so duplicate delivery is idempotent.
+    # Stable within one attempt, but retries must not reuse a released lease.
     session_key = f"{session_id()}:{task.id}"
+    if attempt_id is not None:
+        session_key = f"{session_key}:{attempt_id}"
     try:
         from limen.repo_lifecycle import RepositoryLifecycleError, ensure
 
@@ -5313,7 +5315,7 @@ def _isolated_local_run(
             reason = "repository unavailable"
             print(f"  BLOCKED {task.id}: {reason}")
             return _prelaunch_blocked_result(reason)
-        acquired = _clone_repo(task)
+        acquired = _clone_repo(task, attempt_id=secrets.token_hex(16))
         if isinstance(acquired, dict):
             managed_lease = acquired
             repo_dir = Path(acquired["store"])

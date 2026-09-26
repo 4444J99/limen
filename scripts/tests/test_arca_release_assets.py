@@ -29,6 +29,14 @@ def _ciphertexts(tmp_path: Path) -> tuple[Path, list[Path]]:
     return catalog, [payload]
 
 
+@pytest.fixture(autouse=True)
+def verified_encryption_boundary(monkeypatch):
+    # This module tests transport failure/recovery with opaque byte fixtures.
+    # Native encryption rejection and pinned-GPG integration are independently
+    # exercised without this fixture in test_arca_publication_encryption.py.
+    monkeypatch.setattr(assets, "_verify_encryption", lambda _assets: None)
+
+
 def test_hydration_fetches_only_verified_ciphertext(tmp_path: Path, monkeypatch) -> None:
     catalog = b"opaque catalog ciphertext"
     payload = b"opaque object ciphertext"
@@ -41,7 +49,8 @@ def test_hydration_fetches_only_verified_ciphertext(tmp_path: Path, monkeypatch)
     monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (123, "owner/private-vault", "main"))
     monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {name: tag for name in names})
     monkeypatch.setattr(
-        assets, "_release_asset_digests",
+        assets,
+        "_release_asset_digests",
         lambda _repo, _tag: {name: (hashlib.sha256(data).hexdigest(), len(data)) for name, data in names.items()},
     )
 
@@ -54,7 +63,9 @@ def test_hydration_fetches_only_verified_ciphertext(tmp_path: Path, monkeypatch)
     result = assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [payload_digest], destination)
     assert result["state"] == "verified" and result["asset_count"] == 2
     assert sorted(path.read_bytes() for path in destination.glob("*.enc")) == sorted(names.values())
-    assert assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [payload_digest], destination) == result
+    assert (
+        assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [payload_digest], destination) == result
+    )
     with pytest.raises(assets.AssetError, match="identity"):
         assets.hydrate_ciphertext("owner/private-vault", 124, catalog_digest, [payload_digest], destination)
     with pytest.raises(assets.AssetError, match="identifiers"):
@@ -77,9 +88,11 @@ def test_hydration_rejects_incomplete_marker_and_unverified_bytes(tmp_path: Path
     with pytest.raises(assets.AssetError, match="catalog marker"):
         assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [payload_digest], destination)
     monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {catalog_name: tag, object_name: tag})
-    monkeypatch.setattr(assets, "_release_asset_digests", lambda _repo, _tag: {
-        catalog_name: (catalog_digest, 7), object_name: ("0" * 64, 7)
-    })
+    monkeypatch.setattr(
+        assets,
+        "_release_asset_digests",
+        lambda _repo, _tag: {catalog_name: (catalog_digest, 7), object_name: ("0" * 64, 7)},
+    )
     with pytest.raises(assets.AssetError, match="digest"):
         assets.hydrate_ciphertext("owner/private-vault", 123, catalog_digest, [payload_digest], destination)
     destination.chmod(0o755)
@@ -94,14 +107,24 @@ def test_hydration_limits_are_checked_before_download(tmp_path: Path, monkeypatc
     object_digest = "b" * 64
     tag = f"arca-objects-{catalog_digest[:32]}"
     monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (123, "owner/private-vault", "main"))
-    monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {
-        f"catalog-{catalog_digest}.enc": tag,
-        f"object-{object_digest}.enc": f"{tag}-part-0001",
-    })
-    monkeypatch.setattr(assets, "_release_asset_digests", lambda _repo, release: {
-        (f"catalog-{catalog_digest}.enc" if release == tag else f"object-{object_digest}.enc"):
-        (catalog_digest if release == tag else object_digest, 100)
-    })
+    monkeypatch.setattr(
+        assets,
+        "_existing_assets",
+        lambda _repo: {
+            f"catalog-{catalog_digest}.enc": tag,
+            f"object-{object_digest}.enc": f"{tag}-part-0001",
+        },
+    )
+    monkeypatch.setattr(
+        assets,
+        "_release_asset_digests",
+        lambda _repo, release: {
+            (f"catalog-{catalog_digest}.enc" if release == tag else f"object-{object_digest}.enc"): (
+                catalog_digest if release == tag else object_digest,
+                100,
+            )
+        },
+    )
     monkeypatch.setattr(assets, "_run", lambda *_args, **_kwargs: pytest.fail("download started"))
     monkeypatch.setattr(assets, "MAX_HYDRATE_OBJECTS", 0)
     with pytest.raises(assets.AssetError, match="object limit"):
@@ -127,8 +150,10 @@ def test_plan_is_neutral_and_has_no_remote_effects(tmp_path: Path, monkeypatch) 
     assert "private-names" not in str(result)
 
 
-def test_publish_resumes_by_digest_and_verifies_every_readback(tmp_path: Path, monkeypatch) -> None:
+@pytest.mark.parametrize("replace_source", [False, True])
+def test_publish_resumes_by_digest_and_verifies_every_readback(tmp_path: Path, monkeypatch, replace_source) -> None:
     catalog, objects = _ciphertexts(tmp_path)
+    original = objects[0].read_bytes()
     remote: dict[str, bytes] = {}
     calls: list[list[str]] = []
     authorized: list[str] = []
@@ -159,15 +184,24 @@ def test_publish_resumes_by_digest_and_verifies_every_readback(tmp_path: Path, m
     monkeypatch.setattr(assets, "_run", fake_run)
     monkeypatch.setattr(assets, "_release_exists", lambda _repo, _tag: bool(remote))
     monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (77123, "owner/private-vault", "main"))
-    monkeypatch.setattr(assets, "_authorize_write", lambda repo: authorized.append(repo))
+
+    def authorize(repo):
+        authorized.append(repo)
+        if replace_source and len(authorized) == 2:
+            objects[0].write_bytes(b"private replacement after verification")
+
+    monkeypatch.setattr(assets, "_authorize_write", authorize)
     result = assets.publish("owner/private-vault", catalog, objects, apply=True)
     assert result["state"] == "verified"
     assert result["asset_count"] == 2
     assert len(remote) == 2
     assert authorized == ["owner/private-vault"] * 3
     assert all(name.startswith(("catalog-", "object-")) for name in remote)
+    assert original in remote.values()
+    assert b"private replacement after verification" not in remote.values()
     assert "sensitive-source" not in " ".join(" ".join(call) for call in calls)
     upload_count = sum(call[1:3] == ["release", "upload"] for call in calls)
+    objects[0].write_bytes(original)
     resumed = assets.publish("owner/private-vault", catalog, objects, apply=True)
     assert resumed["state"] == "verified"
     assert sum(call[1:3] == ["release", "upload"] for call in calls) == upload_count
@@ -195,7 +229,7 @@ def test_small_objects_share_uploads_and_catalog_waits_for_readback(
         if args[1:3] == ["release", "create"]:
             return subprocess.CompletedProcess(args, 0, "", "")
         if args[1:3] == ["release", "upload"]:
-            paths = args[4:args.index("--repo")]
+            paths = args[4 : args.index("--repo")]
             uploads.append([Path(path).name for path in paths])
             if any(Path(path).name.startswith("catalog-") for path in paths):
                 assert len(readbacks) == len(objects)
@@ -240,7 +274,7 @@ def test_partial_multi_object_upload_resumes_without_publishing_catalog(tmp_path
         if args[1:3] == ["release", "view"]:
             return subprocess.CompletedProcess(args, 0, "\n".join(remote), "")
         if args[1:3] == ["release", "upload"]:
-            paths = args[4:args.index("--repo")]
+            paths = args[4 : args.index("--repo")]
             if interrupt:
                 remote[Path(paths[0]).name] = Path(paths[0]).read_bytes()
                 interrupt = False
@@ -290,7 +324,7 @@ def test_shard_failure_keeps_final_catalog_absent_and_resumes(tmp_path: Path, mo
             if tag.endswith("part-0002") and fail_second_shard:
                 fail_second_shard = False
                 raise assets.AssetError("second shard interrupted")
-            for path in args[4:args.index("--repo")]:
+            for path in args[4 : args.index("--repo")]:
                 remote[tag][Path(path).name] = Path(path).read_bytes()
             return subprocess.CompletedProcess(args, 0, "", "")
         if args[1:3] == ["release", "download"]:
@@ -306,9 +340,9 @@ def test_shard_failure_keeps_final_catalog_absent_and_resumes(tmp_path: Path, mo
     monkeypatch.setattr(assets, "_release_exists", lambda _repo, tag: tag in remote)
     monkeypatch.setattr(assets, "_canonical_repository", lambda _repo: (77123, "owner/private-vault", "main"))
     monkeypatch.setattr(assets, "_authorize_write", lambda _repo: None)
-    monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {
-        name: tag for tag, files in remote.items() for name in files
-    })
+    monkeypatch.setattr(
+        assets, "_existing_assets", lambda _repo: {name: tag for tag, files in remote.items() for name in files}
+    )
     with pytest.raises(assets.AssetError, match="second shard interrupted"):
         assets.publish("owner/private-vault", catalog, objects, apply=True)
     assert target_tag not in remote
@@ -404,8 +438,15 @@ def test_existing_asset_requires_uploaded_server_digest_and_size(tmp_path: Path,
 
     def fake_run(args: list[str], **_kwargs) -> subprocess.CompletedProcess[str]:
         if args[:2] == ["gh", "api"] and "/releases/tags/" in args[2]:
-            rows = [{"name": name, "digest": "sha256:" + hashlib.sha256(value).hexdigest(),
-                     "size": len(value), "state": "uploaded"} for name, value in remote.items()]
+            rows = [
+                {
+                    "name": name,
+                    "digest": "sha256:" + hashlib.sha256(value).hexdigest(),
+                    "size": len(value),
+                    "state": "uploaded",
+                }
+                for name, value in remote.items()
+            ]
             return subprocess.CompletedProcess(args, 0, json.dumps({"assets": rows}), "")
         if args[:2] == ["gh", "api"]:
             return subprocess.CompletedProcess(args, 0, "[]", "")
@@ -427,15 +468,13 @@ def test_existing_asset_requires_uploaded_server_digest_and_size(tmp_path: Path,
     monkeypatch.setattr(assets, "_release_exists", lambda _repo, _tag: True)
     monkeypatch.setattr(assets, "_existing_assets", lambda _repo: {})
     monkeypatch.setattr(assets, "_authorize_write", lambda _repo: None)
-    result = assets.publish("owner/private-vault", catalog, objects, apply=True,
-                            verify_existing_by_server_digest=True)
+    result = assets.publish("owner/private-vault", catalog, objects, apply=True, verify_existing_by_server_digest=True)
     assert result["state"] == "verified"
     assert downloads == [files[1][1]]  # new catalog still receives full readback
 
     remote[object_name] = b"corrupt"
     with pytest.raises(assets.AssetError, match="no matching server digest"):
-        assets.publish("owner/private-vault", catalog, objects, apply=True,
-                       verify_existing_by_server_digest=True)
+        assets.publish("owner/private-vault", catalog, objects, apply=True, verify_existing_by_server_digest=True)
 
 
 def test_wrong_readback_digest_fails_without_mutating_source(tmp_path: Path, monkeypatch) -> None:
@@ -509,9 +548,7 @@ def test_object_directory_and_prior_shard_assets_are_discoverable(tmp_path: Path
     base = "arca-objects-" + "b" * 32
     response = f"{shard}\tobject-one.enc\n{base}\tobject-two.enc\nnot-arca\tobject-three.enc\n"
     monkeypatch.setattr(assets, "_run", lambda *_a, **_k: subprocess.CompletedProcess([], 0, response, ""))
-    assert assets._existing_assets("owner/private-vault") == {
-        "object-one.enc": shard, "object-two.enc": base
-    }
+    assert assets._existing_assets("owner/private-vault") == {"object-one.enc": shard, "object-two.enc": base}
 
 
 def test_failed_github_command_reports_neutral_error_category(monkeypatch) -> None:
@@ -522,7 +559,9 @@ def test_failed_github_command_reports_neutral_error_category(monkeypatch) -> No
     with pytest.raises(assets.AssetError, match=r"HTTP 422\); source ciphertext retained") as error:
         assets._run(["gh", "release", "upload", "tag", "opaque.enc"])
     assert "/Users/name" not in str(error.value)
-    assert assets._safe_failure_reason("HTTP 403: You have exceeded a secondary rate limit", 1) == "secondary rate limit"
+    assert (
+        assets._safe_failure_reason("HTTP 403: You have exceeded a secondary rate limit", 1) == "secondary rate limit"
+    )
     assert assets._safe_failure_reason("HTTP 403: Resource not accessible by integration", 1) == "permission denied"
 
 

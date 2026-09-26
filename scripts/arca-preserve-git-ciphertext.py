@@ -137,12 +137,14 @@ def preserve(root: Path, remote: str, *, output: Path, apply: bool = False) -> d
         payload = _git(root, "cat-file", kind, oid)
         if len(payload) != size or _git_object_oid(kind, payload, object_format) != oid:
             raise PreserveError("Git metadata object failed exact identity verification")
-        metadata_objects.append({
-            "oid": oid,
-            "type": kind,
-            "bytes": size,
-            "raw_b64": base64.b64encode(payload).decode("ascii"),
-        })
+        metadata_objects.append(
+            {
+                "oid": oid,
+                "type": kind,
+                "bytes": size,
+                "raw_b64": base64.b64encode(payload).decode("ascii"),
+            }
+        )
 
     entries: list[dict[str, object]] = []
     paths: list[Path] = []
@@ -182,6 +184,29 @@ def preserve(root: Path, remote: str, *, output: Path, apply: bool = False) -> d
     if matched != new_blobs or not entries:
         raise PreserveError("not every unpublished blob is represented by an encrypted payload path")
     entries.sort(key=lambda entry: str(entry["path"]))
+    # Wrap every legacy byte stream, including split AES segments, in the same
+    # independently inspectable pinned-recipient envelope as native file objects.
+    # The inner Git identity is retained; reconstruction removes only this layer.
+    output = output.expanduser().resolve()
+    if output.exists() or output.is_symlink():
+        raise PreserveError("catalog already exists; retain it for explicit resume")
+    output.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    transport = output.parent / f"{output.name}.objects"
+    if transport.is_symlink() or transport.exists():
+        raise PreserveError("transport capture already exists; retain it for explicit resume")
+    transport.mkdir(mode=0o700)
+    wrapped_paths: list[Path] = []
+    for index, entry in enumerate(entries):
+        source = root / str(entry["path"])
+        target = transport / f"{index:08d}.gpg"
+        PRIVATE._encrypt_file(source, target)
+        os.chmod(target, 0o600)
+        if _sha256(source) != (entry["sha256"], entry["bytes"]):
+            raise PreserveError("source changed during envelope creation; capture retained")
+        digest, size = _sha256(target)
+        entry["transport"] = {"encryption": "openpgp", "sha256": digest, "bytes": size}
+        wrapped_paths.append(target)
+    paths = wrapped_paths
     catalog = {
         "schema": "arca-legacy-ciphertext-catalog-v1",
         "source_commit": head,
@@ -194,8 +219,6 @@ def preserve(root: Path, remote: str, *, output: Path, apply: bool = False) -> d
     if embedded_manifest is not None:
         catalog["legacy_manifest_json_b64"] = embedded_manifest
         catalog["legacy_manifest_git_blob"] = embedded_manifest_oid
-    output = output.expanduser().resolve()
-    output.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="arca-cipher-catalog-") as temp:
         os.chmod(temp, 0o700)
         plaintext = Path(temp) / "catalog.json"
@@ -218,18 +241,25 @@ def preserve(root: Path, remote: str, *, output: Path, apply: bool = False) -> d
         "catalog_sha256": _sha256(output)[0],
     }
     if apply:
-        expected = {root / str(entry["path"]): str(entry["sha256"]) for entry in entries}
+        expected = {path: str(entry["transport"]["sha256"]) for path, entry in zip(paths, entries, strict=True)}
         result["publication"] = PUBLISHER.publish(remote, output, paths, apply=True, expected_digests=expected)
     else:
-        expected = {root / str(entry["path"]): str(entry["sha256"]) for entry in entries}
+        expected = {path: str(entry["transport"]["sha256"]) for path, entry in zip(paths, entries, strict=True)}
         result["publication"] = PUBLISHER.publish(remote, output, paths, apply=False, expected_digests=expected)
     return result
 
 
 def resume_existing(
-    root: Path, remote: str, *, catalog: Path, expected_head: str,
-    expected_catalog_sha256: str, expected_files: int, expected_bytes: int,
-    apply: bool = False, verify_existing_by_server_digest: bool = False,
+    root: Path,
+    remote: str,
+    *,
+    catalog: Path,
+    expected_head: str,
+    expected_catalog_sha256: str,
+    expected_files: int,
+    expected_bytes: int,
+    apply: bool = False,
+    verify_existing_by_server_digest: bool = False,
     batch_deadline_seconds: int = PUBLISHER.BATCH_DEADLINE_SECONDS,
 ) -> dict[str, object]:
     """Resume a fixed encrypted catalog without generating a new release tag."""
@@ -247,8 +277,13 @@ def resume_existing(
     if _sha256(catalog)[0] != expected_catalog_sha256:
         raise PreserveError("encrypted catalog changed; source retained")
     names = _git(
-        root, "diff", "--name-only", "--diff-filter=AMR", "-z",
-        "refs/remotes/origin/main", "HEAD",
+        root,
+        "diff",
+        "--name-only",
+        "--diff-filter=AMR",
+        "-z",
+        "refs/remotes/origin/main",
+        "HEAD",
     ).split(b"\0")
     paths: list[Path] = []
     expected: dict[Path, str] = {}
@@ -272,8 +307,45 @@ def resume_existing(
         total += size
     if len(paths) != expected_files or total != expected_bytes:
         raise PreserveError("ciphertext extent differs from fixed catalog receipt")
+    transport = catalog.parent / f"{catalog.name}.objects"
+    if transport.exists() or transport.is_symlink():
+        if transport.is_symlink() or not transport.is_dir():
+            raise PreserveError("transport capture is unsafe")
+        with tempfile.TemporaryDirectory(prefix="arca-resume-catalog-") as temp:
+            plaintext = Path(temp) / "catalog.json"
+            PRIVATE._decrypt_file(catalog, plaintext)
+            try:
+                captured = json.loads(plaintext.read_text())
+                rows = captured["entries"]
+                if captured["source_commit"] != expected_head or len(rows) != len(paths):
+                    raise ValueError("identity mismatch")
+                wrapped: list[Path] = []
+                wrapped_digests: dict[Path, str] = {}
+                for index, row in enumerate(rows):
+                    source = root / row["path"]
+                    if source not in expected or expected[source] != row["sha256"]:
+                        raise ValueError("source mismatch")
+                    envelope = row["transport"]
+                    target = transport / f"{index:08d}.gpg"
+                    if (
+                        envelope["encryption"] != "openpgp"
+                        or target.is_symlink()
+                        or _sha256(target) != (envelope["sha256"], envelope["bytes"])
+                    ):
+                        raise ValueError("envelope mismatch")
+                    wrapped.append(target)
+                    wrapped_digests[target] = envelope["sha256"]
+                if len({row["path"] for row in rows}) != len(paths):
+                    raise ValueError("duplicate source")
+            except (OSError, ValueError, TypeError, KeyError) as exc:
+                raise PreserveError("transport capture differs from the encrypted catalog") from exc
+        paths, expected = wrapped, wrapped_digests
     return PUBLISHER.publish(
-        remote, catalog, paths, apply=apply, expected_digests=expected,
+        remote,
+        catalog,
+        paths,
+        apply=apply,
+        expected_digests=expected,
         verify_existing_by_server_digest=verify_existing_by_server_digest,
         batch_deadline_seconds=batch_deadline_seconds,
     )
@@ -300,21 +372,25 @@ def reconstruct(catalog_path: Path, assets: Path, base_repo: str, destination: P
         if (
             catalog.get("schema") != "arca-legacy-ciphertext-catalog-v1"
             or object_format not in {"sha1", "sha256"}
-            or not isinstance(rows, list) or not isinstance(metadata, list)
+            or not isinstance(rows, list)
+            or not isinstance(metadata, list)
             or not re.fullmatch(r"[0-9a-f]{40}" if object_format == "sha1" else r"[0-9a-f]{64}", head)
             or not re.fullmatch(r"[0-9a-f]{40}" if object_format == "sha1" else r"[0-9a-f]{64}", base)
         ):
             raise PreserveError("encrypted Git reconstruction catalog has invalid identity")
         init = subprocess.run(
             ["git", "init", "--bare", f"--object-format={object_format}", str(staging)],
-            capture_output=True, check=False, timeout=30,
+            capture_output=True,
+            check=False,
+            timeout=30,
         )
         if init.returncode:
             raise PreserveError("isolated bare repository could not be initialized")
         fetch = subprocess.run(
-            ["git", "-C", str(staging), "fetch", "--no-tags", base_repo,
-             "+refs/heads/main:refs/remotes/base/main"],
-            capture_output=True, check=False, timeout=900,
+            ["git", "-C", str(staging), "fetch", "--no-tags", base_repo, "+refs/heads/main:refs/remotes/base/main"],
+            capture_output=True,
+            check=False,
+            timeout=900,
         )
         if fetch.returncode:
             raise PreserveError("exact base commit is unavailable; reconstruction retained")
@@ -326,15 +402,35 @@ def reconstruct(catalog_path: Path, assets: Path, base_repo: str, destination: P
             digest = row.get("sha256")
             oid = row.get("git_blob")
             if (
-                not isinstance(rel, str) or not isinstance(digest, str)
+                not isinstance(rel, str)
+                or not isinstance(digest, str)
                 or not re.fullmatch(r"[0-9a-f]{64}", digest)
                 or not isinstance(oid, str)
                 or not re.fullmatch(r"[0-9a-f]{40}" if object_format == "sha1" else r"[0-9a-f]{64}", oid)
             ):
                 raise PreserveError("encrypted catalog contains an invalid blob identity")
-            asset = assets / f"object-{digest}.enc"
-            if asset.is_symlink() or not asset.is_file() or _sha256(asset) != (digest, row.get("bytes")):
+            transport = row.get("transport")
+            asset_digest, asset_bytes = digest, row.get("bytes")
+            if transport is not None:
+                if (
+                    not isinstance(transport, dict)
+                    or transport.get("encryption") != "openpgp"
+                    or not isinstance(transport.get("sha256"), str)
+                    or not re.fullmatch(r"[0-9a-f]{64}", transport["sha256"])
+                    or not isinstance(transport.get("bytes"), int)
+                    or transport["bytes"] <= 0
+                ):
+                    raise PreserveError("encrypted catalog contains invalid transport envelope")
+                asset_digest, asset_bytes = transport["sha256"], transport["bytes"]
+            asset = assets / f"object-{asset_digest}.enc"
+            if asset.is_symlink() or not asset.is_file() or _sha256(asset) != (asset_digest, asset_bytes):
                 raise PreserveError("ciphertext asset is unavailable or differs from catalog")
+            if transport is not None:
+                inner = Path(temporary) / "inner-ciphertext"
+                PRIVATE._decrypt_file(asset, inner)
+                if _sha256(inner) != (digest, row.get("bytes")):
+                    raise PreserveError("unwrapped ciphertext differs from original Git bytes")
+                asset = inner
             if _write_object(staging, "blob", asset) != oid:
                 raise PreserveError("ciphertext Git blob ID differs from original")
         if "legacy_manifest_json_b64" in catalog:
@@ -382,40 +478,63 @@ def main() -> int:
     try:
         if args.reconstruct_catalog:
             if (
-                args.checkout or args.repo or args.catalog_output or args.apply
-                or args.resume_existing_catalog or args.expected_head
-                or args.expected_catalog_sha256 or args.expected_files or args.expected_bytes
+                args.checkout
+                or args.repo
+                or args.catalog_output
+                or args.apply
+                or args.resume_existing_catalog
+                or args.expected_head
+                or args.expected_catalog_sha256
+                or args.expected_files
+                or args.expected_bytes
                 or args.verify_existing_by_server_digest
                 or args.batch_deadline_seconds != PUBLISHER.BATCH_DEADLINE_SECONDS
-                or not args.assets or not args.base_repo or not args.destination
+                or not args.assets
+                or not args.base_repo
+                or not args.destination
             ):
                 raise PreserveError("reconstruction requires catalog, assets, base repo and destination only")
             result = reconstruct(args.reconstruct_catalog, args.assets, args.base_repo, args.destination)
         elif args.resume_existing_catalog:
             if (
-                not args.checkout or not args.repo or not args.catalog_output
-                or not args.expected_head or not args.expected_catalog_sha256
-                or args.expected_files is None or args.expected_bytes is None
-                or args.assets or args.base_repo or args.destination
+                not args.checkout
+                or not args.repo
+                or not args.catalog_output
+                or not args.expected_head
+                or not args.expected_catalog_sha256
+                or args.expected_files is None
+                or args.expected_bytes is None
+                or args.assets
+                or args.base_repo
+                or args.destination
             ):
                 raise PreserveError("resume requires checkout, repository, catalog and fixed source receipt")
             result = resume_existing(
-                args.checkout, args.repo, catalog=args.catalog_output,
+                args.checkout,
+                args.repo,
+                catalog=args.catalog_output,
                 expected_head=args.expected_head,
                 expected_catalog_sha256=args.expected_catalog_sha256,
-                expected_files=args.expected_files, expected_bytes=args.expected_bytes,
+                expected_files=args.expected_files,
+                expected_bytes=args.expected_bytes,
                 apply=args.apply,
                 verify_existing_by_server_digest=args.verify_existing_by_server_digest,
                 batch_deadline_seconds=args.batch_deadline_seconds,
             )
         else:
             if (
-                not args.checkout or not args.repo or not args.catalog_output
-                or args.expected_head or args.expected_catalog_sha256
-                or args.expected_files is not None or args.expected_bytes is not None
+                not args.checkout
+                or not args.repo
+                or not args.catalog_output
+                or args.expected_head
+                or args.expected_catalog_sha256
+                or args.expected_files is not None
+                or args.expected_bytes is not None
                 or args.verify_existing_by_server_digest
                 or args.batch_deadline_seconds != PUBLISHER.BATCH_DEADLINE_SECONDS
-                or args.assets or args.base_repo or args.destination
+                or args.assets
+                or args.base_repo
+                or args.destination
             ):
                 raise PreserveError("preservation requires checkout, repo and catalog output only")
             result = preserve(args.checkout, args.repo, output=args.catalog_output, apply=args.apply)
