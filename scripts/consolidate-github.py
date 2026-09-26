@@ -30,6 +30,10 @@ OWNERS = (
 PREFLIGHT_SCHEMA = "limen.github_consolidation_preflight.v1"
 RECEIPT_SCHEMA = "limen.github_consolidation_receipt.v1"
 MAX_PAGES = 1000
+# Keep executable-bearing command prefixes visible to the effector audit.
+# gh_json supplies the executable; callers pass the remaining argv unchanged.
+TRANSFER_COMMAND = ["gh", "api", "-X", "POST"]
+TOPICS_COMMAND = ["gh", "api", "-X", "PUT"]
 
 
 class ConsolidationError(RuntimeError):
@@ -218,7 +222,7 @@ def transfer(row, result, checkpoint, attempts=10, delay=1):
     result.update(status="submission_pending", before=before)
     checkpoint()
     endpoint = f"/repos/{quote(before['owner'], safe='')}/{quote(before['name'], safe='')}/transfer"
-    gh_json(["api", "-X", "POST", endpoint, "-f", f"new_owner={TARGET}"])
+    gh_json([*TRANSFER_COMMAND[1:], endpoint, "-f", f"new_owner={TARGET}"])
     result["status"] = "accepted_unverified"
     checkpoint()
     after = None
@@ -241,7 +245,7 @@ def transfer(row, result, checkpoint, attempts=10, delay=1):
             raise ConsolidationError("Archived repository lost topics; no automatic unarchive")
     else:
         topics = desired_topics(before, after)
-        payload = ["api", "-X", "PUT", f"/repos/{TARGET}/{quote(before['name'], safe='')}/topics"]
+        payload = [*TOPICS_COMMAND[1:], f"/repos/{TARGET}/{quote(before['name'], safe='')}/topics"]
         for topic in topics:
             payload.extend(["-f", f"names[]={topic}"])
         gh_json(payload)
