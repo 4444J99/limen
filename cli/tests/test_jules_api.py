@@ -68,6 +68,21 @@ class ApiTests(unittest.TestCase):
     def test_empty_catalog(self):
         self.assertEqual(JulesApiClient("key", transport=Wire({})).sessions().items, ())
 
+    def test_observation_projection_preserves_complete_pagination(self):
+        wire = Wire({"sessions": [session()], "nextPageToken": "next"}, {"sessions": [session("223456789012")]})
+        result = JulesApiClient("key", transport=wire).sessions(observation_only=True)
+        self.assertEqual(observe(result, NOW)["sessions_observed"], 2)
+        for call in wire.calls:
+            query = urllib.parse.parse_qs(urllib.parse.urlsplit(call[1]).query)
+            self.assertEqual(query["fields"], ["sessions(name,id,state,createTime),nextPageToken"])
+        self.assertIn("pageToken=next", wire.calls[1][1])
+
+    def test_default_session_catalog_preserves_recovery_fields(self):
+        row = session(prompt="recovery marker", sourceContext={"source": SOURCE})
+        wire = Wire({"sessions": [row]})
+        self.assertEqual(JulesApiClient("key", transport=wire).sessions().items, (row,))
+        self.assertNotIn("fields=", wire.calls[0][1])
+
     def test_oversized_page_reduces_size_without_losing_cursor_or_rows(self):
         wire = Wire(
             {"sessions": [session()], "nextPageToken": "next"},
@@ -188,8 +203,11 @@ class ApiTests(unittest.TestCase):
             session("223456789012", prompt="[marker]\nbody", sourceContext={"source": SOURCE}),
             session("323456789012", prompt="[marker]\nbody", sourceContext={"source": "sources/github/other/repo"}),
         ]
-        got = JulesApiClient("key", transport=Wire({"sessions": rows})).find_attempt(marker="[marker]", source=SOURCE)
+        wire = Wire({"sessions": rows})
+        got = JulesApiClient("key", transport=wire).find_attempt(marker="[marker]", source=SOURCE)
         self.assertEqual(got["id"], "223456789012")
+        query = urllib.parse.parse_qs(urllib.parse.urlsplit(wire.calls[0][1]).query)
+        self.assertEqual(query["fields"], ["sessions(name,id,prompt,sourceContext,url),nextPageToken"])
 
     def test_find_attempt_duplicate_refuses_to_pick_one(self):
         rows = [session(i, prompt="[marker]", sourceContext={"source": SOURCE}) for i in ["1", "2"]]
