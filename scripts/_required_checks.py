@@ -22,12 +22,8 @@ import json
 from urllib.parse import quote
 
 # Required-check states, as reported by `gh pr checks --required` (bucket/state, lowercase).
-FAIL_STATES = frozenset(
-    {"fail", "failure", "error", "cancel", "cancelled", "timed_out", "action_required"}
-)
-PENDING_STATES = frozenset(
-    {"pending", "in_progress", "queued", "expected", "waiting", "requested"}
-)
+FAIL_STATES = frozenset({"fail", "failure", "error", "cancel", "cancelled", "timed_out", "action_required"})
+PENDING_STATES = frozenset({"pending", "in_progress", "queued", "expected", "waiting", "requested"})
 KNOWN_STATES = frozenset(
     {
         "pass",
@@ -41,9 +37,7 @@ KNOWN_STATES = frozenset(
 )
 
 # statusCheckRollup literals (uppercase conclusion/state) for the same two classes.
-ROLLUP_FAIL_STATES = frozenset(
-    {"FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED"}
-)
+ROLLUP_FAIL_STATES = frozenset({"FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED"})
 ROLLUP_PENDING_STATES = frozenset({"PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", ""})
 
 # Ruleset types that protect a branch WITHOUT requiring any CI context. Unknown rule
@@ -78,41 +72,24 @@ def no_required_policy(gh, repo: str, branch: str | None) -> bool:
             return False
         info = json.loads(metadata.stdout)
         effective = json.loads(rules.stdout)
-        if (
-            not isinstance(info, dict)
-            or info.get("name") != branch
-            or type(info.get("protected")) is not bool
-        ):
+        if not isinstance(info, dict) or info.get("name") != branch or type(info.get("protected")) is not bool:
             return False
         if not isinstance(effective, list):
             return False
         # A PR-only ruleset protects the branch without requiring a CI context.
         # Unknown rule types remain unmeasured, not proof of absent checks.
-        if any(
-            not isinstance(rule, dict) or rule.get("type") not in _NON_CHECK_RULES
-            for rule in effective
-        ):
+        if any(not isinstance(rule, dict) or rule.get("type") not in _NON_CHECK_RULES for rule in effective):
             return False
         if info["protected"] is False:
             return True
         protection = info.get("protection")
-        required = (
-            protection.get("required_status_checks")
-            if isinstance(protection, dict)
-            else None
-        )
-        return (
-            isinstance(required, dict)
-            and required.get("contexts") == []
-            and required.get("checks") == []
-        )
+        required = protection.get("required_status_checks") if isinstance(protection, dict) else None
+        return isinstance(required, dict) and required.get("contexts") == [] and required.get("checks") == []
     except (OSError, ValueError, TypeError):
         return False
 
 
-def required_checks_in_states(
-    gh, repo: str, num: int, branch: str | None, states
-) -> tuple | None:
+def required_checks_in_states(gh, repo: str, num: int, branch: str | None, states) -> tuple | None:
     """Required checks of PR ``num`` currently in ``states``; None when unmeasured."""
     result = gh(
         [
@@ -150,24 +127,16 @@ def required_checks_in_states(
         return None
     wanted = {str(s).lower() for s in states}
     return tuple(
-        sorted(
-            str(row["name"])
-            for row in rows
-            if str(row.get("bucket") or row.get("state") or "").lower() in wanted
-        )
+        sorted(str(row["name"]) for row in rows if str(row.get("bucket") or row.get("state") or "").lower() in wanted)
     )
 
 
-def failing_required_checks(
-    gh, repo: str, num: int, branch: str | None = None
-) -> tuple | None:
+def failing_required_checks(gh, repo: str, num: int, branch: str | None = None) -> tuple | None:
     """Required checks of PR ``num`` currently failing; None when unmeasured."""
     return required_checks_in_states(gh, repo, num, branch, FAIL_STATES)
 
 
-def pending_required_checks(
-    gh, repo: str, num: int, branch: str | None = None
-) -> tuple | None:
+def pending_required_checks(gh, repo: str, num: int, branch: str | None = None) -> tuple | None:
     """Required checks of PR ``num`` currently pending; None when unmeasured."""
     return required_checks_in_states(gh, repo, num, branch, PENDING_STATES)
 
