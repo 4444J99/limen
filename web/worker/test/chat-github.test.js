@@ -58,6 +58,27 @@ test("GitHub transport does not bind native fetch to the controller", async () =
   };
   assert.deepEqual(await f.controller.github("/repos/4444J99/limen"), { id: 1255213941 });
 });
+test("omitted read ref resolves the default branch once and pins file reads", async () => {
+  const f = await fixture();
+  const urls = [];
+  f.controller.request = async (url, options) => {
+    assert.equal(options.method, "GET");
+    urls.push(url);
+    const path = new URL(url).pathname;
+    if (path.endsWith("/repos/4444J99/limen")) return Response.json({ private: false, default_branch: "trunk" });
+    if (path.endsWith("/commits/trunk")) return Response.json({ sha, commit: { tree: { sha } } });
+    assert.equal(new URL(url).searchParams.get("ref"), sha);
+    return Response.json({ type: "file", encoding: "base64", size: 5, sha, content: btoa("hello") });
+  };
+  const query = { repository: "4444J99/limen", path: "scripts/chat-github-canary.py" };
+  assert.deepEqual(await f.controller.read(f.principal, query), {
+    repository: query.repository, commit: sha, path: query.path, blob_sha: sha, content: "hello",
+  });
+  assert.equal(urls.length, 3);
+  for (const ref of [null, "", "feature/unapproved", 42]) {
+    await assert.rejects(f.controller.read(f.principal, { ...query, ref }), /chat_exact_ref_required/);
+  }
+});
 test("GitHub redirects fail closed using the Workers-supported manual mode", async () => {
   const f = await fixture();
   let requests = 0;
