@@ -68,6 +68,34 @@ class ApiTests(unittest.TestCase):
     def test_empty_catalog(self):
         self.assertEqual(JulesApiClient("key", transport=Wire({})).sessions().items, ())
 
+    def test_oversized_page_reduces_size_without_losing_cursor_or_rows(self):
+        wire = Wire(
+            {"sessions": [session()], "nextPageToken": "next"},
+            JulesApiError("response_limit_exceeded"),
+            {"sessions": [session("223456789012")], "nextPageToken": "last"},
+            {"sessions": [session("323456789012")]},
+        )
+        result = JulesApiClient("key", transport=wire).sessions()
+        self.assertEqual(len(result.items), 3)
+        self.assertEqual(result.pages, 3)
+        self.assertIn("pageSize=100&pageToken=next", wire.calls[1][1])
+        self.assertIn("pageSize=50&pageToken=next", wire.calls[2][1])
+        self.assertIn("pageSize=50&pageToken=last", wire.calls[3][1])
+        self.assertEqual({call[5] for call in wire.calls}, {4 * 1024 * 1024})
+
+    def test_single_oversized_record_fails_after_finite_reductions(self):
+        wire = Wire(*(JulesApiError("response_limit_exceeded") for _ in range(7)))
+        with self.assertRaisesRegex(JulesApiError, "response_limit_exceeded"):
+            JulesApiClient("key", transport=wire).sessions()
+        self.assertEqual(len(wire.calls), 7)
+        self.assertIn("pageSize=1", wire.calls[-1][1])
+
+    def test_provider_rejection_is_not_retried(self):
+        wire = Wire(JulesApiError("provider_rejected", 403))
+        with self.assertRaisesRegex(JulesApiError, "provider_rejected"):
+            JulesApiClient("key", transport=wire).sessions()
+        self.assertEqual(len(wire.calls), 1)
+
     def test_repeated_cursor_is_error(self):
         with self.assertRaisesRegex(JulesApiError, "repeated_page_token"):
             JulesApiClient("key", transport=Wire({"nextPageToken": "x"}, {"nextPageToken": "x"})).sessions()
