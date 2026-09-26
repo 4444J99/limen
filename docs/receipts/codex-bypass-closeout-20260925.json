@@ -1,0 +1,92 @@
+{
+  "schema": "limen.codex_bypass_closeout.v1",
+  "observed_at": "2026-09-26T02:13:37Z",
+  "scope": "Closeout readback for the direct Codex continuation bypass-all repair; not an estate-completion receipt.",
+  "source_delivery": {
+    "repository": "4444J99/limen",
+    "owner_issue": {
+      "number": 2664,
+      "state": "open",
+      "url": "https://github.com/4444J99/limen/issues/2664"
+    },
+    "pull_request": {
+      "number": 2669,
+      "state": "closed",
+      "merged": true,
+      "head": "3acb243a349f4366a8b56b26d77e2bf958b34a4a",
+      "merge_commit": "0e46d42e5b876fc988b3cbf3b18425a601cfa2a0",
+      "merged_at": "2026-09-17T01:13:49Z"
+    },
+    "default_head_at_readback": "f93f3dd9076992ce6d38f4d697a5f7176b776013",
+    "merge_commit_is_ancestor_of_default": true
+  },
+  "task_predicates": [
+    {
+      "command": "PYTHONPATH=cli/src python3 -m limen.workstream_contract validate-codex-bypass --binary /opt/homebrew/bin/codex",
+      "exit_code": 0,
+      "result": "danger-full-access"
+    },
+    {
+      "command": "git merge-base --is-ancestor 0e46d42e5b876fc988b3cbf3b18425a601cfa2a0 origin/main",
+      "exit_code": 0,
+      "result": "the merged bypass repair remains in the observed default generation"
+    }
+  ],
+  "closure_predicates": {
+    "credential_wall": {
+      "command": "python3 scripts/credential-wall.py --check",
+      "exit_code": 0,
+      "result": "all 31 secret atoms registered"
+    },
+    "no_tasks_on_me": {
+      "command": "bash scripts/no-tasks-on-me.sh",
+      "exit_code": 1,
+      "result": "10 landed branches remain under an existing authorized branch-reap ledger",
+      "classification": "inherited estate cleanup, not Codex bypass task-owned",
+      "owner": "docs/branch-reap-acceptance.jsonl",
+      "next_command": "scripts/reap-branches.py --apply"
+    },
+    "idempotent_fixed_point": false
+  },
+  "current_default_test_drift": {
+    "full_shard": "79 passed, 21 failed",
+    "focused_bypass_shard": "9 passed, 2 failed",
+    "finding": "The positive launcher fixtures reach later finite-workspace admission and fail with execution_work_key_required; pure contract validation, exact-flag validation, and protected-conduct rejection pass.",
+    "introduced_after_delivery": "6374d2304 / pull request 2673",
+    "classification": "fixture integration debt, not an observed bypass-contract regression",
+    "durable_owner": "this receipt and issue 2664",
+    "next_predicate": "Run the positive launcher fixtures with a keeper-backed approved execution work key without weakening inventory admission."
+  },
+  "continuation_capsule": {
+    "current_launchable_successor_found": false,
+    "prior_capsules": "remote durable but admitted, stopped, and expired",
+    "creation_attempt": {
+      "launcher": "scripts/start-worktree-session.sh",
+      "base": "origin/main",
+      "provider_launched": false,
+      "exit_code": 1,
+      "result": "limen.inventory_admission.InventoryAdmissionError: execution_work_key_required"
+    },
+    "policy_readback": {
+      "mode": "observe",
+      "dispatch_enabled": false,
+      "approved_priorities": [],
+      "owner": "logs/autonomy-policy.json"
+    },
+    "blocker": "A fresh branch and worktree require a broker-approved growth identity; none is currently authorized. The older launcher is not a permitted policy bypass.",
+    "durable_owner": "this receipt and issue 2664",
+    "next_command_after_approval": "LIMEN_WORK_KEY=<broker-approved-work-key> scripts/start-worktree-session.sh --autonomous --conduct --sandbox danger-full-access --runway 90m --from origin/main --prompt '<bounded issue 2664 continuation>' limen spine-closeout-20260925-bypass-relay"
+  },
+  "preservation": [
+    "Do not modify root docs/branch-hygiene.md or docs/jules-orphan-adoptions.jsonl.",
+    "Do not clean, switch, reset, or reap the bypass-successor worktree containing untracked session-ses_f400.md.",
+    "No provider was launched and no destructive cleanup was performed."
+  ],
+  "claims_not_made": [
+    "current continuation capsule is launchable",
+    "current-default launcher shard is green",
+    "global branch cleanup is complete",
+    "idempotent closeout fixed point",
+    "estate green"
+  ]
+}
