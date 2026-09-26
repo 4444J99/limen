@@ -120,8 +120,8 @@ def test_reclaim_applies_remote_preserved_contract_inside_antigravity_scratch(
 
     action, reason = reclaim.classify(root, time.time(), 0)
 
-    assert action == "remove-clone"
-    assert reason == "clean+pushed+idle"
+    assert action == "skip"
+    assert reason == "standalone-clone-requires-clone-custody-classifier"
 
 
 def test_reclaim_keeps_non_git_antigravity_system_generated_root(
@@ -1171,7 +1171,7 @@ def test_reclaim_reaps_pushed_unmerged_when_pushed_ok(tmp_path: Path, monkeypatc
         estate_custody_paths=frozenset({repo.resolve()}),
     )
 
-    assert action == "remove-clone"  # real git init ⇒ .git is a dir ⇒ not a registered worktree
+    assert action == "remove-clone"  # explicit restored-custody proof is a separate owner path
     assert reason == "clean+pushed+idle"
 
     ok, grant = reclaim.reclaim_accepted(repo, action, reason, [])

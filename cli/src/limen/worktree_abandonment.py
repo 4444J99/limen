@@ -7,8 +7,10 @@ import json
 import os
 import re
 import secrets
+import shutil
 import stat
 import subprocess
+import time
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -70,6 +72,7 @@ def _run_git(repo: Path, *args: str, timeout: int = 120) -> subprocess.Completed
             timeout=timeout,
             check=False,
             stdin=subprocess.DEVNULL,
+            env={**os.environ, "GIT_OPTIONAL_LOCKS": "0", "GIT_TERMINAL_PROMPT": "0"},
         )
     except (OSError, subprocess.SubprocessError) as exc:
         return subprocess.CompletedProcess(["git", "-C", str(repo), *args], 1, "", str(exc))
@@ -184,6 +187,44 @@ def _registered_worktree_paths(superproject: Path) -> tuple[Path, ...]:
     return tuple(paths)
 
 
+def _nested_payload_custody_reason(target: Path) -> str | None:
+    """Retain populated Gitlinks and LFS payloads; empty Gitlinks hold no bytes.
+
+    This check is for linked-checkout retirement: the common repository and its
+    module object stores remain resident. An absent/empty uninitialized Gitlink
+    has only its tracked pointer, already covered by the parent commit's custody.
+    Never follow a symlink to decide that a nested checkout is empty.
+    """
+    tracked = _run_git(target, "ls-files", "--stage", "-z")
+    if tracked.returncode != 0:
+        return "tracked-file-inventory-unavailable"
+    for entry in tracked.stdout.split("\x00"):
+        if not entry.startswith("160000 "):
+            continue
+        fields = entry.split("\t", 1)
+        if len(fields) != 2:
+            return "submodule-custody-unproven"
+        relative = Path(fields[1])
+        if relative.is_absolute() or not relative.parts or ".." in relative.parts:
+            return "submodule-custody-unproven"
+        nested = target
+        try:
+            for part in relative.parts:
+                nested = nested / part
+                if nested.is_symlink():
+                    return "submodule-custody-unproven"
+            if nested.exists() and (not nested.is_dir() or any(nested.iterdir())):
+                return "submodule-custody-unproven"
+        except OSError:
+            return "submodule-custody-unproven"
+    lfs = _run_git(target, "lfs", "ls-files", "--name-only")
+    if lfs.returncode != 0:
+        return "lfs-inventory-unavailable"
+    if lfs.stdout.strip():
+        return "lfs-custody-unproven"
+    return None
+
+
 def _default_cwd_owner_probe(target: Path) -> int | None:
     """Return an owning cwd PID, -1 when the unprivileged probe is unavailable."""
 
@@ -221,6 +262,298 @@ def _default_cwd_owner_probe(target: Path) -> int | None:
     return None
 
 
+def _admin_inventory(root: Path) -> dict[str, tuple[str, int, int]]:
+    """Bounded byte/mode/time evidence; never follow links or silently omit entries."""
+    inventory: dict[str, tuple[str, int, int]] = {}
+    deadline = time.monotonic() + 30
+    total = 0
+
+    def visit(directory: Path) -> None:
+        nonlocal total
+        for path in sorted(directory.iterdir()):
+            before = path.lstat()
+            if len(inventory) >= 4096 or time.monotonic() >= deadline:
+                raise RuntimeError("worktree-admin-inventory-limit")
+            relative = str(path.relative_to(root))
+            if relative in {
+                "MERGE_HEAD",
+                "MERGE_AUTOSTASH",
+                "CHERRY_PICK_HEAD",
+                "REVERT_HEAD",
+                "REBASE_HEAD",
+                "rebase-merge",
+                "rebase-apply",
+                "sequencer",
+                "BISECT_LOG",
+                "BISECT_START",
+            }:
+                raise RuntimeError("worktree-operation-in-progress")
+            mode = stat.S_IMODE(before.st_mode)
+            if stat.S_ISDIR(before.st_mode):
+                inventory[relative] = ("directory", mode, before.st_mtime_ns)
+                visit(path)
+            elif stat.S_ISREG(before.st_mode):
+                if path.name.endswith(".lock") or path.name == "locked":
+                    raise RuntimeError("worktree-admin-locked")
+                total += before.st_size
+                if total > 256 * 1024 * 1024:
+                    raise RuntimeError("worktree-admin-inventory-limit")
+                with path.open("rb") as handle:
+                    digest = hashlib.file_digest(handle, "sha256").hexdigest()
+                    after = os.fstat(handle.fileno())
+                current = path.lstat()
+                attributes = ("st_dev", "st_ino", "st_size", "st_mtime_ns", "st_ctime_ns", "st_mode")
+                identity = tuple(getattr(before, key) for key in attributes)
+                if any(tuple(getattr(value, key) for key in attributes) != identity for value in (after, current)):
+                    raise RuntimeError("worktree-admin-changed")
+                inventory[relative] = (digest, mode, before.st_mtime_ns)
+            else:
+                raise RuntimeError("worktree-admin-unsupported-entry")
+
+    if root.is_symlink() or not root.is_dir():
+        raise RuntimeError("worktree-admin-unavailable")
+    visit(root)
+    return inventory
+
+
+def _anchor_admin_objects(superproject: Path, admin: Path, receipt_id: str) -> int:
+    """Keep per-worktree refs and both sides of reflogs reachable after detach."""
+    objects: set[str] = set()
+    for relative in _admin_inventory(admin):
+        path = admin / relative
+        parts = Path(relative).parts
+        if not path.is_file():
+            continue
+        is_log = parts[0] == "logs"
+        is_ref = parts[0] == "refs" or path.name in {"HEAD", "ORIG_HEAD", "FETCH_HEAD", "AUTO_MERGE"}
+        if not (is_log or is_ref):
+            continue
+        for line in path.read_text(encoding="utf-8").splitlines():
+            tokens = line.split()
+            if not tokens or (is_ref and tokens[0] == "ref:"):
+                continue
+            ids = tokens[:2] if is_log else tokens[:1]
+            if is_log and len(ids) != 2:
+                raise RuntimeError("worktree-admin-invalid-reflog")
+            for oid in ids:
+                if not OBJECT_ID_RE.fullmatch(oid):
+                    raise RuntimeError("worktree-admin-invalid-object")
+                if set(oid) != {"0"}:
+                    objects.add(oid)
+    if objects:
+        commands = (
+            "start\n"
+            + "".join(f"create refs/limen/retired-worktrees/{receipt_id}/{oid} {oid}\n" for oid in sorted(objects))
+            + "prepare\ncommit\n"
+        )
+        result = subprocess.run(
+            ["git", "-C", str(superproject), "update-ref", "--stdin"],
+            input=commands,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        if result.returncode:
+            raise RuntimeError("worktree-admin-object-anchor-failed")
+    return len(objects)
+
+
+def _preserve_worktree_admin(
+    superproject: Path, target: Path, receipt_path: Path, receipt: dict[str, Any]
+) -> dict[str, Any]:
+    """Retain the ORIGINAL admin directory; Git removes only a verified replica.
+
+    Rename on the same filesystem retains native ACLs, xattrs and inode metadata.
+    This is local containment, not remote custody or permission to remove the store.
+    The write-ahead receipt identifies both locations even across a process crash.
+    """
+    common_result = _run_git(superproject, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    admin_result = _run_git(target, "rev-parse", "--absolute-git-dir")
+    if common_result.returncode or admin_result.returncode:
+        raise RuntimeError("worktree-admin-location-unavailable")
+    common = Path(common_result.stdout.strip()).resolve(strict=True)
+    admin = Path(admin_result.stdout.strip())
+    if admin.is_symlink() or admin.parent.is_symlink() or admin.parent != common / "worktrees":
+        raise RuntimeError("worktree-admin-outside-common-store")
+    before = _admin_inventory(admin)
+    original_identity = admin.stat()
+    archive_root = common / "retired-worktree-admin"
+    if archive_root.is_symlink():
+        raise RuntimeError("worktree-admin-archive-symlink")
+    archive_root.mkdir(mode=0o700, exist_ok=True)
+    archive = archive_root / receipt_path.stem
+    archive.mkdir(mode=0o700)
+    original = archive / "original"
+    replica = archive / "replica"
+    evidence = {
+        "original_location": str(admin),
+        "retained_original": str(original),
+        "replica_location": str(replica),
+        "inventory_sha256": hashlib.sha256(json.dumps(before, sort_keys=True).encode()).hexdigest(),
+        "entries": len(before),
+        "device": original_identity.st_dev,
+        "inode": original_identity.st_ino,
+        "custody": "local-original-retained-store-must-remain",
+    }
+    receipt = _write_state(
+        receipt_path,
+        receipt,
+        state="verified",
+        phase="preserve-admin-copy",
+        result={**dict(receipt.get("result") or {}), "admin_preservation": evidence},
+    )
+    shutil.copytree(admin, replica, symlinks=True)
+    if _admin_inventory(replica) != before or _admin_inventory(admin) != before:
+        raise RuntimeError("worktree-admin-copy-mismatch")
+    evidence["anchored_objects"] = _anchor_admin_objects(superproject, admin, receipt_path.stem)
+    if _admin_inventory(admin) != before:
+        raise RuntimeError("worktree-admin-changed-before-preservation")
+    receipt = _write_state(receipt_path, receipt, state="applying", phase="preserve-admin-swap")
+    admin.rename(original)
+    try:
+        replica.rename(admin)
+    except BaseException:
+        # Restore the original registration if the second rename fails. A hard
+        # process crash instead leaves the write-ahead receipt and original intact.
+        if not admin.exists() and not admin.is_symlink():
+            original.rename(admin)
+        raise
+    if _admin_inventory(original) != before or _admin_inventory(admin) != before:
+        raise RuntimeError("worktree-admin-changed-after-preservation")
+    return _write_state(receipt_path, receipt, state="verified", phase="admin-preserved")
+
+
+def recover_worktree_registration(
+    superproject: Path, target: Path, receipt_root: Path, *, owner_probe: OwnerProbe | None = None
+) -> None:
+    """Repair only the recorded rename gap; absence alone grants no recovery action."""
+    pointer = target / ".git"
+    if pointer.is_symlink() or not pointer.is_file():
+        raise RuntimeError("worktree-admin-pointer-unavailable")
+    gitfile = pointer.read_text(encoding="utf-8").strip()
+    if not gitfile.startswith("gitdir: "):
+        raise RuntimeError("worktree-admin-pointer-invalid")
+    admin = Path(gitfile.removeprefix("gitdir: "))
+    if not admin.is_absolute():
+        admin = target / admin
+    if admin.exists() or admin.is_symlink():
+        return
+    if (owner_probe or _default_cwd_owner_probe)(target) is not None:
+        raise RuntimeError("worktree-admin-recovery-owner-active-or-unavailable")
+    common_result = _run_git(superproject, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    if common_result.returncode:
+        raise RuntimeError("worktree-admin-common-store-unavailable")
+    common = Path(common_result.stdout.strip()).resolve(strict=True)
+    if admin.parent != common / "worktrees" or admin.parent.is_symlink():
+        raise RuntimeError("worktree-admin-recovery-path-mismatch")
+    candidates = []
+    for number, path in enumerate(receipt_root.glob("*.json")):
+        if number >= 512:
+            raise RuntimeError("worktree-admin-recovery-receipt-limit")
+        if path.is_symlink():
+            continue
+        try:
+            saved = json.loads(path.read_text(encoding="utf-8"))
+            result = saved.get("result") or {}
+            evidence = result.get("admin_preservation") or {}
+            original = common / "retired-worktree-admin" / path.stem / "original"
+            if (
+                saved.get("schema") != WORKTREE_ABANDONMENT_SCHEMA
+                or saved.get("action") != "detach-worktree"
+                or saved.get("state") not in {"applying", "crashed"}
+                or saved.get("target") != str(target)
+                or result.get("superproject") != str(superproject)
+                or evidence.get("original_location") != str(admin)
+                or evidence.get("retained_original") != str(original)
+            ):
+                continue
+            if any(part.is_symlink() for part in (original, original.parent, original.parent.parent)):
+                raise RuntimeError("worktree-admin-recovery-symlink")
+            observed = original.stat()
+            inventory = _admin_inventory(original)
+            if (observed.st_dev, observed.st_ino) != (evidence.get("device"), evidence.get("inode")) or hashlib.sha256(
+                json.dumps(inventory, sort_keys=True).encode()
+            ).hexdigest() != evidence.get("inventory_sha256"):
+                raise RuntimeError("worktree-admin-recovery-evidence-mismatch")
+            candidates.append((path, saved, original))
+        except (OSError, ValueError, AttributeError):
+            continue
+    if len(candidates) != 1:
+        raise RuntimeError("worktree-admin-recovery-unproven")
+    path, saved, original = candidates[0]
+    original.rename(admin)
+    _write_state(
+        path,
+        saved,
+        state="crashed",
+        phase="preserved-original-restored",
+        result={**saved["result"], "recovery": "registration-restored-original-retained"},
+    )
+
+
+def _require_clean_checkout(target: Path) -> None:
+    status = _run_git(target, "status", "--porcelain=v1", "-z", "--untracked-files=all")
+    if status.returncode:
+        raise RuntimeError("worktree-status-unavailable")
+    if status.stdout:
+        raise RuntimeError("worktree-not-clean")
+    flags = _run_git(target, "ls-files", "-v", "-z")
+    if flags.returncode or any(line[:1].islower() or line.startswith("S ") for line in flags.stdout.split("\x00")):
+        raise RuntimeError("worktree-hidden-modifications")
+    ignored = _run_git(target, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
+    if ignored.returncode or ignored.stdout:
+        raise RuntimeError("ignored-payload-custody-unproven")
+    if nested_reason := _nested_payload_custody_reason(target):
+        raise RuntimeError(nested_reason)
+
+
+def completed_worktree_retirement(
+    superproject: Path, target: Path, expected_head: str, receipt_root: Path
+) -> dict[str, Any] | None:
+    """Read back an exact completed attempt after a lease-checkpoint interruption."""
+    if target.exists() or target.is_symlink() or target in _registered_worktree_paths(superproject):
+        return None
+    common_result = _run_git(superproject, "rev-parse", "--path-format=absolute", "--git-common-dir")
+    if common_result.returncode:
+        return None
+    common = Path(common_result.stdout.strip()).resolve(strict=True)
+    for number, path in enumerate(receipt_root.glob("*.json")):
+        if number >= 512:
+            return None
+        if path.is_symlink():
+            continue
+        try:
+            saved = json.loads(path.read_text(encoding="utf-8"))
+            result = saved.get("result") or {}
+            evidence = result.get("admin_preservation") or {}
+            original = common / "retired-worktree-admin" / path.stem / "original"
+            if (
+                saved.get("schema") != WORKTREE_ABANDONMENT_SCHEMA
+                or saved.get("action") != "detach-worktree"
+                or saved.get("state") != "completed"
+                or saved.get("target") != str(target)
+                or result.get("superproject") != str(superproject.resolve(strict=True))
+                or result.get("head") != expected_head
+                or result.get("detached") is not True
+                or evidence.get("retained_original") != str(original)
+                or any(part.is_symlink() for part in (original, original.parent, original.parent.parent))
+            ):
+                continue
+            observed = original.stat()
+            if (observed.st_dev, observed.st_ino) != (evidence.get("device"), evidence.get("inode")):
+                continue
+            inventory = _admin_inventory(original)
+            if hashlib.sha256(json.dumps(inventory, sort_keys=True).encode()).hexdigest() != evidence.get(
+                "inventory_sha256"
+            ):
+                continue
+            return {**saved, "receipt_path": str(path)}
+        except (OSError, ValueError, AttributeError, RuntimeError):
+            continue
+    return None
+
+
 def detach_registered_worktree(
     superproject: Path,
     target: Path,
@@ -247,21 +580,15 @@ def detach_registered_worktree(
         gitfile_stat = gitfile.lstat()
         if not stat.S_ISREG(gitfile_stat.st_mode) or gitfile.is_symlink():
             raise RuntimeError("target-is-not-linked-worktree")
-        registered = _registered_worktree_paths(superproject)
-        if target not in registered:
-            raise RuntimeError("target-not-registered")
         owner = (owner_probe or _default_cwd_owner_probe)(target)
         if owner is not None:
             code = "owner-probe-unavailable" if owner == -1 else f"active-process-cwd:{owner}"
             raise RuntimeError(code)
-        status = _run_git(target, "status", "--porcelain=v1", "-z", "--untracked-files=all")
-        if status.returncode != 0:
-            raise RuntimeError("worktree-status-unavailable")
-        if status.stdout:
-            raise RuntimeError("worktree-not-clean")
-        ignored = _run_git(target, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
-        if ignored.returncode != 0 or ignored.stdout:
-            raise RuntimeError("ignored-payload-custody-unproven")
+        recover_worktree_registration(superproject, target, receipt_root, owner_probe=owner_probe)
+        registered = _registered_worktree_paths(superproject)
+        if target not in registered:
+            raise RuntimeError("target-not-registered")
+        _require_clean_checkout(target)
         head = _run_git(target, "rev-parse", "HEAD")
         if head.returncode != 0 or not head.stdout.strip():
             raise RuntimeError("worktree-head-unavailable")
@@ -270,9 +597,24 @@ def detach_registered_worktree(
             receipt,
             state="verified",
             phase="verify",
-            result={"head": head.stdout.strip(), "registered": True, "clean": True},
+            result={"head": head.stdout.strip(), "registered": True, "clean": True, "superproject": str(superproject)},
         )
         phase = "detach"
+        if nested_reason := _nested_payload_custody_reason(target):
+            raise RuntimeError(nested_reason)
+        receipt = _preserve_worktree_admin(superproject, target, receipt_path, receipt)
+        owner = (owner_probe or _default_cwd_owner_probe)(target)
+        if owner is not None:
+            raise RuntimeError("owner-changed-before-detach")
+        fresh_head = _run_git(target, "rev-parse", "HEAD")
+        if fresh_head.returncode or fresh_head.stdout.strip() != head.stdout.strip():
+            raise RuntimeError("head-changed-before-detach")
+        _require_clean_checkout(target)
+        evidence = receipt["result"]["admin_preservation"]
+        if _admin_inventory(Path(evidence["original_location"])) != _admin_inventory(
+            Path(evidence["retained_original"])
+        ):
+            raise RuntimeError("worktree-admin-changed-before-detach")
         receipt = _write_state(receipt_path, receipt, state="applying", phase=phase)
         detached = _run_git(superproject, "worktree", "remove", str(target))
         if detached.returncode != 0:
@@ -294,6 +636,14 @@ def detach_registered_worktree(
     except WorktreeAbandonmentError:
         raise
     except Exception as exc:
+        # A helper may have advanced the write-ahead receipt before failing.
+        # Do not overwrite its preservation locations with the older snapshot.
+        try:
+            saved = json.loads(receipt_path.read_text(encoding="utf-8"))
+            if saved.get("schema") == receipt["schema"] and saved.get("target") == receipt["target"]:
+                receipt = saved
+        except (OSError, ValueError, AttributeError):
+            pass
         _raise_crash(
             receipt_path,
             receipt,
@@ -876,10 +1226,12 @@ __all__ = [
     "LockIdentity",
     "WorktreeAbandonmentError",
     "capture_lock_identity",
+    "completed_worktree_retirement",
     "detach_registered_worktree",
     "purge_custody_proven_contents",
     "purge_custody_proven_path",
     "purge_remote_proven_path",
     "quarantine_path",
+    "recover_worktree_registration",
     "remove_stable_zero_byte_lock",
 ]

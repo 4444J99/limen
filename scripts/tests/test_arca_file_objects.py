@@ -1,0 +1,322 @@
+from __future__ import annotations
+
+import importlib.util
+import json
+import os
+import stat
+import sys
+from pathlib import Path
+
+import pytest
+
+MODULE_PATH = Path(__file__).resolve().parents[1] / "arca-file-objects.py"
+SPEC = importlib.util.spec_from_file_location("arca_file_objects", MODULE_PATH)
+assert SPEC is not None and SPEC.loader is not None
+arca = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(arca)
+
+
+def fake_crypto(monkeypatch: pytest.MonkeyPatch) -> None:
+    def encrypt(source: Path, target: Path) -> None:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        payload = source.read_bytes()
+        target.write_bytes(b"ENC\0" + payload)
+
+    def decrypt(source: Path, target: Path) -> None:
+        payload = source.read_bytes()
+        if not payload.startswith(b"ENC\0"):
+            raise arca.ObjectError("test catalog unavailable")
+        target.write_bytes(payload[4:])
+
+    monkeypatch.setattr(arca.PRIVATE, "_encrypt_file", encrypt)
+    monkeypatch.setattr(arca.PRIVATE, "_decrypt_file", decrypt)
+
+
+def test_independent_objects_and_incremental_reuse(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_crypto(monkeypatch)
+    source = tmp_path / "private"
+    source.mkdir()
+    (source / "a.txt").write_text("same", encoding="utf-8")
+    (source / "b.txt").write_text("change", encoding="utf-8")
+    first = tmp_path / "first"
+    result = arca.build(source, first)
+    assert result["new_objects"] == 2
+    assert result["reused_objects"] == 0
+
+    (source / "b.txt").write_text("changed", encoding="utf-8")
+    second = tmp_path / "second"
+    result = arca.build(source, second, previous=first / "catalog.gpg")
+    assert result["new_objects"] == 1
+    assert result["reused_objects"] == 1
+    old = json.loads((first / "catalog.gpg").read_bytes()[4:])
+    new = json.loads((second / "catalog.gpg").read_bytes()[4:])
+    old_entries = {row["path"]: row for row in old["entries"]}
+    new_entries = {row["path"]: row for row in new["entries"]}
+    assert old_entries["a.txt"]["object_id"] == new_entries["a.txt"]["object_id"]
+    assert old_entries["b.txt"]["object_id"] != new_entries["b.txt"]["object_id"]
+    assert (second / "objects" / f"{old_entries['a.txt']['object_id']}.gpg").read_bytes() == b"ENC\0same"
+    third = tmp_path / "third"
+    result = arca.build(source, third, previous=second / "catalog.gpg")
+    assert result["state"] == "unchanged"
+    assert result["new_objects"] == 0
+    assert result["reused_objects"] == 2
+    assert (third / "catalog.gpg").read_bytes() == (second / "catalog.gpg").read_bytes()
+
+
+def test_inventory_preserves_symlinks_and_modes_without_following_them(tmp_path: Path) -> None:
+    root = tmp_path / "tree"
+    root.mkdir()
+    external = tmp_path / "outside"
+    external.mkdir()
+    (external / "secret").write_text("external", encoding="utf-8")
+    (root / "link").symlink_to(external, target_is_directory=True)
+    executable = root / "run"
+    executable.write_text("#!/bin/sh\n", encoding="utf-8")
+    executable.chmod(0o700)
+    rows = arca.inventory(root)
+    assert {str(row["path"]) for row in rows} == {"link", "run"}
+    assert next(row for row in rows if row["path"] == "link")["target"] == str(external)
+    assert next(row for row in rows if row["path"] == "run")["mode"] == 0o700
+
+
+def test_failed_catalog_encryption_does_not_replace_catalog(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_crypto(monkeypatch)
+    source = tmp_path / "private"
+    source.mkdir()
+    (source / "a").write_text("payload", encoding="utf-8")
+    output = tmp_path / "out"
+    output.mkdir()
+    catalog = output / "catalog.gpg"
+    catalog.write_bytes(b"previous catalog")
+    real_encrypt = arca.PRIVATE._encrypt_file
+
+    def fail_catalog(source_path: Path, target: Path) -> None:
+        if source_path.name == "catalog.json":
+            raise arca.ObjectError("interrupted")
+        real_encrypt(source_path, target)
+
+    monkeypatch.setattr(arca.PRIVATE, "_encrypt_file", fail_catalog)
+    with pytest.raises(arca.ObjectError, match="interrupted"):
+        arca.build(source, output)
+    assert catalog.read_bytes() == b"previous catalog"
+    assert list((output / "objects").glob("*.gpg"))
+
+
+@pytest.mark.parametrize("error_type", [PermissionError, FileNotFoundError, OSError])
+@pytest.mark.parametrize("fail_scan", [1, 2])
+def test_incomplete_traversal_never_publishes_catalog(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error_type: type[OSError], fail_scan: int
+) -> None:
+    fake_crypto(monkeypatch)
+    source = tmp_path / "private"
+    source.mkdir()
+    (source / "record").write_bytes(b"preserve me")
+    output = tmp_path / "objects-store"
+    output.mkdir()
+    catalog = output / "catalog.gpg"
+    catalog.write_bytes(b"previous catalog")
+    original_walk = arca.os.walk
+    scans = 0
+
+    def failing_walk(root, **kwargs):
+        nonlocal scans
+        scans += 1
+        if scans == fail_scan:
+            # Reproduce os.walk's default silent omission when no onerror exists.
+            callback = kwargs.get("onerror")
+            if callback:
+                callback(error_type("sensitive source path"))
+            return
+        yield from original_walk(root, **kwargs)
+
+    monkeypatch.setattr(arca.os, "walk", failing_walk)
+    with pytest.raises(arca.ObjectError, match="source traversal incomplete") as caught:
+        arca.build(source, output)
+    assert "sensitive source path" not in str(caught.value)
+    assert catalog.read_bytes() == b"previous catalog"
+    assert (source / "record").read_bytes() == b"preserve me"
+    assert not list(output.rglob("*.partial"))
+    assert not list((output / "objects").glob("*.gpg"))
+
+
+def test_restore_reconstructs_files_symlinks_and_modes_atomically(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fake_crypto(monkeypatch)
+    source = tmp_path / "private"
+    source.mkdir(mode=0o700)
+    (source / "nested").mkdir()
+    file = source / "nested" / "run"
+    file.write_text("payload", encoding="utf-8")
+    file.chmod(0o700)
+    (source / "alias").symlink_to("nested/run")
+    output = tmp_path / "objects-store"
+    arca.build(source, output)
+    restored = tmp_path / "restored"
+    result = arca.restore(output / "catalog.gpg", output, restored)
+    assert result["files"] == 1
+    assert (restored / "nested" / "run").read_text(encoding="utf-8") == "payload"
+    assert stat.S_IMODE((restored / "nested" / "run").stat().st_mode) == 0o700
+    assert os.readlink(restored / "alias") == "nested/run"
+    with pytest.raises(arca.ObjectError, match="already exists"):
+        arca.restore(output / "catalog.gpg", output, restored)
+
+
+def test_extended_metadata_is_encrypted_and_restored(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_crypto(monkeypatch)
+    source = tmp_path / "private"
+    source.mkdir(mode=0o700)
+    file = source / "record"
+    file.write_bytes(b"private payload")
+    # Linux requires a user namespace for unprivileged xattrs. Preserve the
+    # same native round trip on both platforms; do not skip metadata coverage.
+    prefix = "user." if sys.platform == "linux" else ""
+    root_attribute = f"{prefix}com.example.arca-root-test"
+    file_attribute = f"{prefix}com.example.arca-file-test"
+    arca._native_setxattr(source, root_attribute, b"root metadata")
+    arca._native_setxattr(file, file_attribute, b"file metadata\x00value")
+    output = tmp_path / "objects-store"
+    captured = arca.build(source, output)
+    assert captured["coverage"] == "incomplete-native-metadata"
+    catalog = json.loads((output / "catalog.gpg").read_bytes()[4:])
+    assert catalog["schema"] == "arca-file-catalog-v4"
+    assert catalog["metadata_coverage"]["unverified"] == ["acl", "ownership", "timestamps"]
+    assert catalog["root_xattrs"]
+    assert next(row for row in catalog["entries"] if row["path"] == "record")["xattrs"]
+    restored = tmp_path / "restored"
+    restored_result = arca.restore(output / "catalog.gpg", output, restored)
+    assert restored_result["coverage"] == "incomplete-native-metadata"
+    assert arca._native_getxattr(restored, root_attribute) == b"root metadata"
+    assert arca._native_getxattr(restored / "record", file_attribute) == b"file metadata\x00value"
+
+
+def test_failed_extended_metadata_restore_does_not_publish_tree(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fake_crypto(monkeypatch)
+    source = tmp_path / "private"
+    source.mkdir()
+    (source / "record").write_bytes(b"payload")
+    output = tmp_path / "objects-store"
+    arca.build(source, output)
+    catalog = json.loads((output / "catalog.gpg").read_bytes()[4:])
+    next(row for row in catalog["entries"] if row["path"] == "record")["xattrs"] = [
+        {"name": "com.example.arca-invalid-test", "value_b64": "not-base64!"}
+    ]
+    (output / "catalog.gpg").write_bytes(b"ENC\0" + json.dumps(catalog).encode())
+    destination = tmp_path / "restored"
+    with pytest.raises(arca.ObjectError, match="invalid extended metadata"):
+        arca.restore(output / "catalog.gpg", output, destination)
+    assert not destination.exists()
+
+
+def test_restore_rejects_unsafe_catalog_paths_before_publishing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fake_crypto(monkeypatch)
+    source = tmp_path / "private"
+    source.mkdir()
+    (source / "safe").write_text("payload", encoding="utf-8")
+    output = tmp_path / "objects-store"
+    arca.build(source, output)
+    catalog = output / "catalog.gpg"
+    catalog.write_bytes(
+        b'ENC\0{"schema":"arca-file-catalog-v1","entries":[{"path":"../escape","type":"directory","mode":448}]}'
+    )
+    destination = tmp_path / "restored"
+    with pytest.raises(arca.ObjectError, match="unsafe relative path"):
+        arca.restore(catalog, output, destination)
+    assert not destination.exists()
+
+
+def test_large_encrypted_file_is_split_and_reassembled_for_restore(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fake_crypto(monkeypatch)
+    monkeypatch.setattr(arca, "OBJECT_PART_BYTES", 5)
+    source = tmp_path / "private"
+    source.mkdir()
+    (source / "large.bin").write_bytes(b"abcdefghijklmno")
+    output = tmp_path / "objects-store"
+    result = arca.build(source, output)
+    catalog = json.loads((output / "catalog.gpg").read_bytes()[4:])
+    entry = next(row for row in catalog["entries"] if row["path"] == "large.bin")
+    assert result["new_objects"] == 3
+    assert len(entry["objects"]) == 3
+    assert entry["encryption"] == "per-part"
+    assert [(output / "objects" / f"{part['object_id']}.gpg").read_bytes() for part in entry["objects"]] == [
+        b"ENC\0abcde",
+        b"ENC\0fghij",
+        b"ENC\0klmno",
+    ]
+    restored = tmp_path / "restored"
+    arca.restore(output / "catalog.gpg", output, restored)
+    assert (restored / "large.bin").read_bytes() == b"abcdefghijklmno"
+
+
+def test_legacy_split_ciphertext_still_restores(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_crypto(monkeypatch)
+    payload = b"legacy payload"
+    cipher = b"ENC\0" + payload
+    objects = tmp_path / "objects"
+    (objects / "objects").mkdir(parents=True)
+    parts = []
+    for index, block in enumerate((cipher[:6], cipher[6:])):
+        object_id = f"{index:048x}"
+        (objects / "objects" / f"{object_id}.gpg").write_bytes(block)
+        parts.append({"object_id": object_id, "ciphertext_sha256": arca.hashlib.sha256(block).hexdigest()})
+    catalog = {
+        "schema": "arca-file-catalog-v2",
+        "root_mode": 0o700,
+        "entries": [
+            {
+                "path": "legacy.bin",
+                "type": "file",
+                "mode": 0o600,
+                "sha256": arca.hashlib.sha256(payload).hexdigest(),
+                "ciphertext_sha256": arca.hashlib.sha256(cipher).hexdigest(),
+                "objects": parts,
+            }
+        ],
+    }
+    (objects / "catalog.gpg").write_bytes(b"ENC\0" + json.dumps(catalog).encode())
+    destination = tmp_path / "restored"
+    arca.restore(objects / "catalog.gpg", objects, destination)
+    assert (destination / "legacy.bin").read_bytes() == payload
+
+
+def test_failed_object_encryption_cleans_own_partial_and_keeps_catalog(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fake_crypto(monkeypatch)
+    source = tmp_path / "private"
+    source.mkdir()
+    (source / "file").write_bytes(b"payload")
+    output = tmp_path / "objects-store"
+    output.mkdir()
+    (output / "catalog.gpg").write_bytes(b"prior ciphertext")
+
+    def fail_after_partial(_source: Path, target: Path) -> None:
+        target.write_bytes(b"partial ciphertext")
+        raise arca.ObjectError("interrupted encryption")
+
+    monkeypatch.setattr(arca.PRIVATE, "_encrypt_file", fail_after_partial)
+    with pytest.raises(arca.ObjectError, match="interrupted encryption"):
+        arca.build(source, output)
+    assert (output / "catalog.gpg").read_bytes() == b"prior ciphertext"
+    assert list((output / "objects").glob(".*.partial")) == []
+
+
+def test_stale_partial_blocks_new_capture(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    fake_crypto(monkeypatch)
+    source = tmp_path / "private"
+    source.mkdir()
+    (source / "file").write_bytes(b"payload")
+    output = tmp_path / "objects-store"
+    (output / "objects").mkdir(parents=True)
+    stale = output / "objects" / ".unknown.gpg.partial"
+    stale.write_bytes(b"unclassified ciphertext")
+    with pytest.raises(arca.ObjectError, match="incomplete prior capture"):
+        arca.build(source, output)
+    assert stale.read_bytes() == b"unclassified ciphertext"
+    assert not (output / "catalog.gpg").exists()

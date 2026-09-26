@@ -14,6 +14,7 @@ from limen.worktree_roots import effective_worktree_root, iter_worktree_targets
 
 DEBT_REASONS = {
     "dirty",
+    "ignored-payload-custody-unproven",
     "not-a-git-dir",
     "not-merged-to-default",
     "unpushed-commits",
@@ -95,17 +96,48 @@ def _remote_default_ref(cwd: Path) -> str | None:
 
 
 def _reachable_from_remote(cwd: Path, head: str) -> bool:
-    refs = _git(["for-each-ref", f"--contains={head}", "--format=%(refname)", "refs/remotes"], cwd)
-    if refs.returncode != 0:
-        return False
-    if refs.stdout.strip():
-        return True
     advertised = _git(["ls-remote", "--refs", "origin"], cwd, timeout=120)
     if advertised.returncode != 0:
         return False
+    current_refs: dict[str, str] = {}
     for line in advertised.stdout.splitlines():
-        remote_object = line.split("\t", 1)[0]
-        if remote_object == head or _git(["merge-base", "--is-ancestor", head, remote_object], cwd).returncode == 0:
+        try:
+            object_id, remote_ref = line.split("\t", 1)
+        except ValueError:
+            return False
+        if object_id and remote_ref.startswith("refs/"):
+            current_refs[remote_ref] = object_id
+    if not current_refs:
+        return False
+    if head in current_refs.values():
+        return True
+
+    # Cached remote-tracking refs are useful for ancestry only when their object IDs
+    # still match the live advertisement. A stale ref must never authorize retirement.
+    containing = _git(
+        [
+            "for-each-ref",
+            f"--contains={head}",
+            "--format=%(refname)%00%(objectname)",
+            "refs/remotes/origin",
+        ],
+        cwd,
+        timeout=60,
+    )
+    if containing.returncode != 0:
+        return False
+    prefix = "refs/remotes/origin/"
+    for line in containing.stdout.splitlines():
+        parts = line.split("\0")
+        if len(parts) != 2:
+            return False
+        local_ref, object_id = parts
+        if not local_ref.startswith(prefix):
+            continue
+        suffix = local_ref[len(prefix) :]
+        if suffix == "HEAD":
+            continue
+        if current_refs.get(f"refs/heads/{suffix}") == object_id:
             return True
     return False
 
@@ -346,8 +378,14 @@ def _classify(
         return f"active(<{min_age_h:g}h)"
     if _git(["status", "--porcelain"], path).stdout.strip():
         return "dirty"
-    if not (path / ".git").is_file() and not _all_local_refs_remote(path):
+    ignored = _git(["ls-files", "--others", "--ignored", "--exclude-standard"], path)
+    if ignored.returncode != 0 or ignored.stdout.strip():
+        return "ignored-payload-custody-unproven"
+    is_worktree = (path / ".git").is_file()
+    if not is_worktree and not _all_local_refs_remote(path):
         return "unpreserved-local-refs"
+    if not is_worktree:
+        return "standalone-clone-requires-clone-custody-classifier"
     if _is_remote_merged(path, preservation_receipts):
         return "receipt-remote-merged+clean+idle"
     head = _git(["rev-parse", "HEAD"], path).stdout.strip()

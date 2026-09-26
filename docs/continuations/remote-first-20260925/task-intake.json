@@ -1,0 +1,23 @@
+{
+  "id": "REMOTE-FIRST-20260925",
+  "title": "Publish remote-first program ownership and its eight-epic execution index",
+  "description": "Direct user approval: enact https://github.com/4444J99/limen/issues/2739 and its eight epics. Remote source custody/cloud handoffs precede independently verified retirement. This is the program owner record, not permission to dispatch the unrestricted backlog. First bounded leaf is #2745; preserve protected PRDS, private originals, snapshots and active owners.",
+  "repo": "4444J99/limen",
+  "status": "open",
+  "priority": "high",
+  "target_agent": "codex",
+  "budget_cost": 1,
+  "source_origin": "human_prompt",
+  "time_horizon": "present",
+  "value_case": "Remove laptop-only access as a dependency for useful cloud work while preventing irreversible loss and recurring local sprawl.",
+  "owner_surface": "https://github.com/4444J99/limen/issues/2739",
+  "predicate": "gh api repos/4444J99/limen/issues/2739/sub_issues --jq 'length == 8'",
+  "receipt_target": "https://github.com/4444J99/limen/issues/2739",
+  "labels": [
+    "plan",
+    "remote-first",
+    "human-approved"
+  ],
+  "created": "2026-09-25",
+  "external_deadline": false
+}

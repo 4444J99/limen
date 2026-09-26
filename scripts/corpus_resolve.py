@@ -14,9 +14,10 @@ two ways, which is what a duplicated capability buys you:
      `conversation-corpus-check` while the repository is called
      `conversation-corpus-engine`.
 
-Both resolvers below take an ordered candidate list and return the first one that
-actually holds something, so a stale convention can never silently outrank a
-populated store. Import this module; do not re-derive these paths.
+An explicit runtime store is authoritative, even when empty or unavailable.
+Without one, discovery uses the registry and then legacy locations. Import this
+module; do not re-derive these paths or silently substitute an old populated store
+for an unavailable configured one.
 
 2026-07-31 — the same defect recurred, by a third route, and two fail-opens hid it:
 
@@ -123,15 +124,34 @@ def live_root() -> Path:
     return Path(result.stdout.strip()).parent
 
 
-def corpus_home_candidates() -> list[Path]:
-    """Ordered places the per-corpus directories may live, most-specific first."""
-    candidates: list[Path] = []
+def configured_corpus_home() -> Path | None:
+    """Resolve trusted runtime configuration, without probing another store.
 
-    env = os.environ.get("LIMEN_CORPUS_ROOT") or os.environ.get("CCE_SOURCE_DROP_ROOT")
-    if env:
-        env_path = Path(env).expanduser()
-        # CCE_SOURCE_DROP_ROOT names the drop dir; its PARENT holds the corpora.
-        candidates.append(env_path.parent if env_path.name == "source-drop" else env_path)
+    LIMEN_CORPUS_ROOT is the explicit per-consumer override. Otherwise use the
+    shared Domus CCE_CORPUS_STORE_ROOT contract. CCE_SOURCE_DROP_ROOT is retained
+    only for clients that have not migrated to the store-root contract.
+    """
+    for variable in ("LIMEN_CORPUS_ROOT", "CCE_CORPUS_STORE_ROOT", "CCE_SOURCE_DROP_ROOT"):
+        value = os.environ.get(variable, "").strip()
+        if not value:
+            continue
+        path = Path(value).expanduser()
+        if not path.is_absolute():
+            raise ValueError(f"{variable} must name an absolute corpus location")
+        if variable == "CCE_SOURCE_DROP_ROOT" and path.name == "source-drop":
+            path = path.parent
+        if _is_repo_checkout(path):
+            raise ValueError(f"{variable} names a repository checkout, not a corpus store")
+        return path
+    return None
+
+
+def corpus_home_candidates() -> list[Path]:
+    """Configured store alone, or registry/legacy discovery when unconfigured."""
+    configured = configured_corpus_home()
+    if configured is not None:
+        return [configured]
+    candidates: list[Path] = []
 
     # Registry-declared store roots outrank the conventions below them: relocating
     # a store is a `corpora.yaml` edit, not a code change.
@@ -146,7 +166,7 @@ def corpus_home_candidates() -> list[Path]:
 
 
 def corpus_home() -> Path:
-    """First candidate that actually contains corpus directories.
+    """Configured store, or first discovered store containing corpus directories.
 
     Never returns the repo checkout. The old fallback took the last candidate's
     PARENT — `<repo>/source-drop`.parent is the repo root, the exact defect this
@@ -158,12 +178,16 @@ def corpus_home() -> Path:
     does not exist, so every sweep below stays empty while callers still have a
     concrete location to name in the error.
     """
-    for candidate in corpus_home_candidates():
+    configured = configured_corpus_home()
+    if configured is not None:
+        return configured
+    candidates = corpus_home_candidates()
+    for candidate in candidates:
         if _is_repo_checkout(candidate):
             continue
         if candidate.is_dir() and any(p.is_dir() for p in candidate.iterdir()):
             return candidate
-    return corpus_home_candidates()[-1]
+    return candidates[-1]
 
 
 def cce_src_roots() -> list[Path]:

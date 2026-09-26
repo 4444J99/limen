@@ -153,6 +153,30 @@ def repo_release(lease_id: str) -> None:
         raise click.ClickException(str(exc)) from exc
 
 
+@repo_group.command("reconcile")
+@click.argument("repo_id")
+def repo_reconcile(repo_id: str) -> None:
+    """Background custody pass for released repository checkouts."""
+    from limen.repo_lifecycle import RepositoryLifecycleError, reconcile
+
+    try:
+        click.echo(json.dumps(reconcile(repo_id), sort_keys=True))
+    except RepositoryLifecycleError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+
+@repo_group.command("reconcile-pending")
+@click.option("--max", "max_repositories", type=click.IntRange(1, 10), default=1, show_default=True)
+def repo_reconcile_pending(max_repositories: int) -> None:
+    """Run a bounded background custody pass over managed repositories."""
+    from limen.repo_lifecycle import RepositoryLifecycleError, reconcile_pending
+
+    try:
+        click.echo(json.dumps(reconcile_pending(max_repositories=max_repositories), sort_keys=True))
+    except RepositoryLifecycleError as exc:
+        raise click.ClickException(str(exc)) from exc
+
+
 main.add_command(repo_group)
 
 

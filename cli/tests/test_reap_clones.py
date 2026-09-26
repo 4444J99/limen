@@ -3,7 +3,7 @@
 The organ deletes clones autonomically, so a wrong 'reap' verdict destroys work. These tests build
 real git repos (a bare 'origin' + clones) and assert the gate reaps ONLY a pure pushed mirror and
 KEEPS every clone with unpushed commits, untracked/dirty files, an active task, core status, no
-origin, or (absent disk pressure) a fresh mtime. This is the executable predicate for the organ.
+origin. Directory mtime cannot authorize or block retirement. This is the executable predicate.
 """
 
 from __future__ import annotations
@@ -75,11 +75,11 @@ def test_pure_pushed_mirror_is_reaped_when_idle(tmp_path):
     assert v.reason == "pushed-mirror"
 
 
-def test_fresh_mirror_is_kept_without_pressure(tmp_path):
+def test_fresh_mtime_does_not_change_custody_classification(tmp_path):
     clone = _init_origin_and_clone(tmp_path, "fresh")
     v = _verdict(clone, age_days=0)  # just touched
-    assert v.reap is False
-    assert v.reason == "fresh"
+    assert v.reap is True
+    assert v.reason == "pushed-mirror"
 
 
 def test_fresh_mirror_is_reaped_under_pressure(tmp_path):
@@ -138,14 +138,10 @@ def test_main_pressure_requires_evidence_or_override(
     assert reap.main() == 0
     output = capsys.readouterr().out
     assert f"pressure={'ON' if expected_pressure else 'off'}" in output
-    assert f"idle-gate={'waived' if expected_pressure else '2d'}" in output
-    if expected_pressure or age_days >= 2:
-        assert "would reap 1 clone(s)" in output
-        reason = "pushed-mirror-under-pressure" if expected_pressure else "pushed-mirror"
-        assert f", {reason})" in output
-    else:
-        assert "would reap 0 clone(s)" in output
-        assert "kept 1 (fresh=1)" in output
+    assert "mtime-authority=disabled" in output
+    assert "would reap 1 clone(s)" in output
+    reason = "pushed-mirror-under-pressure" if expected_pressure else "pushed-mirror"
+    assert f", {reason})" in output
     assert clone.is_dir()
     assert not reap.LOG.exists()
 
@@ -167,6 +163,19 @@ def test_untracked_file_is_never_reaped(tmp_path):
     v = _verdict(clone, age_days=99, pressure=True)
     assert v.reap is False
     assert v.reason == "dirty-or-untracked"
+
+
+def test_unreachable_git_object_is_never_reaped(tmp_path):
+    """A written blob with no worktree file/ref is still unique local data."""
+    clone = _init_origin_and_clone(tmp_path, "orphanobject")
+    payload = clone / "orphan.bin"
+    payload.write_bytes(b"local object without a tree or ref\n")
+    _out(clone, "hash-object", "-w", str(payload))
+    payload.unlink()
+    verdict = _verdict(clone, age_days=99, pressure=True)
+    assert not verdict.reap
+    assert verdict.reason == "unreachable-objects"
+    assert reap._pristine_now(clone) is False
 
 
 def test_dirty_tracked_edit_is_never_reaped(tmp_path):
@@ -203,6 +212,36 @@ def test_core_repo_is_kept(tmp_path, monkeypatch):
     v = _verdict(clone, age_days=99, pressure=True)
     assert v.reap is False
     assert v.reason == "core"
+
+
+@pytest.mark.parametrize(
+    "name", ["domus-genoma", "portvs", "public-record-data-scrapper", "prds-engine", "prds-admin", "clavis"]
+)
+def test_control_and_prds_default_pins_survive_pressure(tmp_path, name):
+    clone = _init_origin_and_clone(tmp_path, name)
+    verdict = _verdict(clone, age_days=99, pressure=True)
+    assert not verdict.reap
+    assert verdict.reason == "core"
+
+
+def test_new_component_under_protected_prds_root_is_retained(tmp_path, monkeypatch):
+    prds = tmp_path / "prds-work"
+    prds.mkdir()
+    clone = _init_origin_and_clone(prds, "new-component")
+    monkeypatch.setattr(reap, "WORKSPACE", tmp_path)
+    verdict = _verdict(clone, age_days=99, pressure=True)
+    assert not verdict.reap
+    assert verdict.reason == "protected-prds-root"
+
+
+def test_retired_worktree_metadata_keeps_its_parent_clone(tmp_path):
+    clone = _init_origin_and_clone(tmp_path, "metadata-owner")
+    custody = clone / ".git" / "retired-worktree-admin"
+    custody.mkdir()
+    (custody / "preserved.tar").write_bytes(b"preserved worktree administration")
+    verdict = _verdict(clone, age_days=99, pressure=True)
+    assert not verdict.reap
+    assert verdict.reason == "retired-worktree-metadata-custody-unproven"
 
 
 def test_live_root_is_kept(tmp_path, monkeypatch):
@@ -310,6 +349,7 @@ def test_clone_reap_acceptance_matches_remote_mirror(tmp_path, monkeypatch):
             "accepted_at": "2026-07-06T06:00:00Z",
             "root": "acceptedmirror",
             "slug": slug,
+            "path": str(clone.resolve()),
             "accepted": True,
             "reason": "pushed-mirror",
             "archive_status": "not_required_clean_remote_mirror",
@@ -325,6 +365,26 @@ def test_clone_reap_acceptance_matches_remote_mirror(tmp_path, monkeypatch):
     assert reason == "clone-reap-accepted"
 
 
+def test_clone_reap_rejects_basename_only_acceptance(tmp_path, monkeypatch):
+    monkeypatch.setattr(reap, "CLONE_REAP_STANDING", False)
+    clone = _init_origin_and_clone(tmp_path, "same-name")
+    slug = reap.origin_slug(clone)
+    event = {
+        "accepted_at": "2026-07-06T06:00:00Z",
+        "root": clone.name,
+        "slug": slug,
+        "accepted": True,
+        "reason": "pushed-mirror",
+        "archive_status": "not_required_clean_remote_mirror",
+        "archive_proof": "live remote proof",
+        "redaction_review": "not_required_remote_only",
+        "redaction_proof": "clean clone",
+    }
+    assert reap.clone_reap_accepted(clone, slug, "pushed-mirror", [event])[0] is False
+    event["path"] = str((tmp_path / "elsewhere" / clone.name).resolve())
+    assert reap.clone_reap_accepted(clone, slug, "pushed-mirror", [event])[0] is False
+
+
 def test_clone_reap_acceptance_requires_archive_and_redaction_proofs(tmp_path, monkeypatch):
     monkeypatch.setattr(reap, "CLONE_REAP_STANDING", False)
     clone = _init_origin_and_clone(tmp_path, "proofrequired")
@@ -333,6 +393,7 @@ def test_clone_reap_acceptance_requires_archive_and_redaction_proofs(tmp_path, m
         "accepted_at": "2026-07-06T06:00:00Z",
         "root": "proofrequired",
         "slug": slug,
+        "path": str(clone.resolve()),
         "accepted": True,
         "reason": "pushed-mirror",
         "archive_status": "not_required_clean_remote_mirror",
@@ -364,6 +425,20 @@ def test_confirm_recloneable_false_when_our_branch_deleted_on_origin(tmp_path):
     assert reap.confirm_recloneable(clone) is False
 
 
+def test_unrelated_remote_cannot_prove_origin_custody(tmp_path):
+    clone = _init_origin_and_clone(tmp_path, "otherremote")
+    backup = tmp_path / "backup.git"
+    subprocess.run(["git", "init", "--bare", str(backup)], check=True, capture_output=True)
+    _git(clone, "remote", "add", "backup", str(backup))
+    _git(clone, "checkout", "-q", "-b", "sidework")
+    (clone / "local.txt").write_text("unique\n")
+    _git(clone, "add", "local.txt")
+    _git(clone, "commit", "-qm", "unique")
+    _git(clone, "push", "-q", "backup", "sidework")
+    assert reap._has_local_only_objects(clone) is True
+    assert reap.confirm_recloneable(clone) is False
+
+
 def test_confirm_recloneable_false_when_origin_deleted(tmp_path):
     """Origin gone from GitHub → local clone is the only copy → NEVER reap (fail-safe)."""
     clone = _init_origin_and_clone(tmp_path, "goneorigin")
@@ -372,12 +447,12 @@ def test_confirm_recloneable_false_when_origin_deleted(tmp_path):
     assert reap.confirm_recloneable(clone) is False
 
 
-def test_confirm_recloneable_opt_out(tmp_path, monkeypatch):
+def test_confirm_recloneable_cannot_opt_out_of_live_remote(tmp_path, monkeypatch):
     clone = _init_origin_and_clone(tmp_path, "trustlocal")
     shutil = __import__("shutil")
     shutil.rmtree(tmp_path / "trustlocal.git")  # unreachable, but opt-out trusts local refs
     monkeypatch.setenv("LIMEN_REAP_VERIFY_REMOTE", "0")
-    assert reap.confirm_recloneable(clone) is True
+    assert reap.confirm_recloneable(clone) is False
 
 
 def test_excluded_worktree_root_is_kept(tmp_path, monkeypatch):
@@ -459,8 +534,8 @@ def test_gitignored_data_is_never_reaped(tmp_path):
     assert v.reason == "ignored-data"
 
 
-def test_regenerable_ignored_files_still_reap(tmp_path):
-    """The organ must NOT over-suppress: node_modules/__pycache__ are provably regenerable → still reap."""
+def test_generated_named_ignored_files_still_require_custody(tmp_path):
+    """Directory names cannot prove that modified dependency or bytecode payloads are reproducible."""
     clone = _init_origin_and_clone(tmp_path, "regenignored")
     (clone / ".gitignore").write_text("node_modules/\n__pycache__/\n")
     _git(clone, "add", ".gitignore")
@@ -471,8 +546,8 @@ def test_regenerable_ignored_files_still_reap(tmp_path):
     (clone / "__pycache__").mkdir()
     (clone / "__pycache__" / "m.pyc").write_text("bytecode\n")
     v = _verdict(clone, age_days=10)
-    assert v.reap is True
-    assert v.reason == "pushed-mirror"
+    assert v.reap is False
+    assert v.reason == "ignored-data"
 
 
 def test_skip_worktree_hidden_edit_is_never_reaped(tmp_path):
@@ -581,6 +656,31 @@ def test_belt_refuses_deleted_branch_with_stale_tracking_ref(tmp_path):
     assert reap.confirm_recloneable(clone) is False
 
 
+def test_belt_refuses_unique_history_only_in_stale_remote_tracking_ref(tmp_path):
+    """Pruning a remote-only tracking ref must not turn its unique commit into disposable garbage."""
+    clone = _init_origin_and_clone(tmp_path, "staleremoteonly")
+    _git(clone, "checkout", "-q", "-b", "feature")
+    (clone / "feature.txt").write_text("feature history held only by remote-tracking ref\n")
+    _git(clone, "add", "-A")
+    _git(clone, "commit", "-qm", "feature history")
+    feature = _out(clone, "rev-parse", "HEAD")
+    _git(clone, "push", "-q", "-u", "origin", "feature")
+    _git(clone, "checkout", "-q", "main")
+    _git(clone, "branch", "-D", "feature")
+    _git(clone, "reflog", "expire", "--expire=now", "--all")
+    subprocess.run(
+        ["git", "--git-dir", str(tmp_path / "staleremoteonly.git"), "update-ref", "-d", "refs/heads/feature"],
+        check=True,
+        capture_output=True,
+    )
+
+    assert _out(clone, "rev-parse", "refs/remotes/origin/feature") == feature
+    assert _verdict(clone, age_days=99, pressure=True).reap is True
+    assert reap.confirm_recloneable(clone) is False
+    assert _out(clone, "cat-file", "-e", f"{feature}^{{commit}}") == ""
+    assert f"unreachable commit {feature}" in _out(clone, "fsck", "--no-reflogs", "--unreachable")
+
+
 # --- Category D: TOCTOU — work landing between the check and the delete -------------------------------
 def test_pristine_recheck_detects_raced_write(tmp_path):
     """The last-instant belt re-samples porcelain + stash immediately before rmtree fires."""
@@ -589,3 +689,40 @@ def test_pristine_recheck_detects_raced_write(tmp_path):
     (clone / "src").mkdir()
     (clone / "src" / "creds-2026-07-01.json").write_text('{"api_key": "sk-irreplaceable"}\n')
     assert reap._pristine_now(clone) is False
+
+
+def test_pristine_recheck_detects_ignored_payload_and_path_swap(tmp_path):
+    clone = _init_origin_and_clone(tmp_path, "ignoredrace")
+    observed = clone.stat()
+    assert reap._pristine_now(clone, (observed.st_dev, observed.st_ino)) is True
+    assert reap._pristine_now(clone, (observed.st_dev, observed.st_ino + 1)) is False
+    (clone / ".git" / "info" / "exclude").write_text("private-payload\n")
+    (clone / "private-payload").write_text("unique private material\n")
+    assert reap._pristine_now(clone, (observed.st_dev, observed.st_ino)) is False
+
+
+def test_failed_removal_is_not_counted_as_reclaimed(tmp_path, monkeypatch, capsys):
+    clone = tmp_path / "clone"
+    clone.mkdir()
+    (clone / ".git").mkdir()
+    monkeypatch.setattr(sys, "argv", ["reap-clones.py", "--apply", "--max", "1"])
+    monkeypatch.setattr(reap, "WORKSPACE", tmp_path)
+    monkeypatch.setattr(reap, "LIMEN_ROOT", tmp_path / "limen")
+    monkeypatch.setattr(reap, "LOG", tmp_path / "reap.jsonl")
+    monkeypatch.setattr(reap, "active_process_cwds", dict)
+    monkeypatch.setattr(reap, "active_task_slugs", lambda _path: set())
+    monkeypatch.setattr(reap, "discover_clones", lambda _workspace, _depth: [clone])
+    monkeypatch.setattr(reap, "classify", lambda *_args: reap.Verdict(True, "pushed-mirror"))
+    monkeypatch.setattr(reap, "confirm_recloneable", lambda _repo: True)
+    monkeypatch.setattr(reap, "_pristine_now", lambda _repo, _identity: True)
+    monkeypatch.setattr(reap, "clone_reap_accepted", lambda *_args: (True, "accepted"))
+    monkeypatch.setattr(reap, "origin_slug", lambda _repo: "owner/clone")
+
+    def fail_remove(_path):
+        raise PermissionError("still in use")
+
+    monkeypatch.setattr(reap.shutil, "rmtree", fail_remove)
+    assert reap.main() == 0
+    assert "reaped 0 clone(s)" in capsys.readouterr().out
+    assert clone.exists()
+    assert __import__("json").loads(reap.LOG.read_text())["state"] == "remove-incomplete"

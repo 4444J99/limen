@@ -308,6 +308,96 @@ else
   echo "  MISMATCH (case12h --json stdout polluted by log lines)"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1))
 fi
 
+# ── Case 13: oversized Git updates stay local and coverage is explicitly incomplete ──
+mkdir -p "$work/ws/_oversized-private"
+dd if=/dev/urandom of="$work/ws/_oversized-private/payload.bin" bs=1M count=2 2>/dev/null
+remote_before_guard="$(git --git-dir="$work/gh/organvm/arca-g2.git" rev-parse main)"
+run_expect 1 "refusing oversized Git update" "case13 bounded commit" \
+  env ARCA_MAX_COMMIT_MB=1 "$ARCA" backup
+remote_after_guard="$(git --git-dir="$work/gh/organvm/arca-g2.git" rev-parse main)"
+[ "$remote_before_guard" = "$remote_after_guard" ] \
+  || { echo "  MISMATCH (case13 oversized data reached remote)"; fail=$((fail+1)); }
+[ -f "$work/vault/_oversized-private.tar.enc" ] \
+  || { echo "  MISMATCH (case13 local ciphertext was not retained)"; fail=$((fail+1)); }
+out="$(env ARCA_WORKSPACE="$work/ws" ARCA_VAULT_DIR="$work/vault" ARCA_REPO=organvm/arca-g2 \
+  "$ARCA" status --json 2>/dev/null)"
+if printf '%s\n' "$out" | grep -q '"vault_state":"local_or_unpushed"' \
+   && printf '%s\n' "$out" | grep -q '"ok":false'; then
+  pass=$((pass+1))
+else
+  echo "  MISMATCH (case13 custody gap not visible in status)"; printf '%s\n' "$out" | sed 's/^/    /'; fail=$((fail+1))
+fi
+
+run_expect 1 "refusing oversized Git update" "case13 refused store remains retryable" \
+  env ARCA_MAX_COMMIT_MB=1 "$ARCA" backup
+
+# Rotation validates before mutation and scopes batches even with inherited ciphertext.
+run_expect 1 "ARCA_MAX_COMMIT_MB must" "case14 rotate validates cap" \
+  env ARCA_MAX_COMMIT_MB=0 ARCA_VAULT_DIR="$work/invalid-vault" "$ARCA" rotate
+[ ! -e "$work/invalid-vault" ] || { echo "  MISMATCH (case14 invalid rotation mutated vault)"; fail=$((fail+1)); }
+dd if=/dev/urandom of="$work/vault2/_inherited-private.tar.enc" bs=1M count=2 2>/dev/null
+git -C "$work/vault2" add _inherited-private.tar.enc
+git -C "$work/vault2" commit -qm 'fixture: inherited ciphertext'
+git -C "$work/vault2" push -q origin main
+run_expect 0 "vault pushed" "case15 rotate scopes inherited payloads" \
+  env ARCA_WORKSPACE="$work/ws2" ARCA_VAULT_DIR="$work/vault2" ARCA_MAX_COMMIT_MB=1 "$ARCA" rotate
+if git -C "$work/vault2" ls-files --error-unmatch _inherited-private.tar.enc >/dev/null 2>&1; then
+  echo "  MISMATCH (case15 unrelated payload staged)"; fail=$((fail+1))
+else pass=$((pass+1)); fi
+mv "$work/vault2/_inherited-private.tar.enc" "$work/inherited-ciphertext-retained"
+run_expect 0 '"vault_state":"remote_current"' "case15 clean live custody" \
+  env ARCA_WORKSPACE="$work/ws2" ARCA_VAULT_DIR="$work/vault2" "$ARCA" status --json --strict
+
+# A deleted remote branch must not be masked by the local remote-tracking ref.
+remote_tip=$(git --git-dir="$work/gh/organvm/arcaseed-g3.git" rev-parse main)
+git --git-dir="$work/gh/organvm/arcaseed-g3.git" update-ref -d refs/heads/main
+run_expect 1 '"vault_state":"local_or_unpushed"' "case16 live remote disappearance" \
+  env ARCA_WORKSPACE="$work/ws2" ARCA_VAULT_DIR="$work/vault2" "$ARCA" status --json --strict
+run_expect 1 'custody is local, unpushed, or unverified' "case16 sensor consumes custody" \
+  env ARCA_WORKSPACE="$work/ws2" python3 "$ROOT/scripts/arca-freshness.py" --vault-dir "$work/vault2" --json
+git --git-dir="$work/gh/organvm/arcaseed-g3.git" update-ref refs/heads/main "$remote_tip"
+
+# A failed first push has HEAD but no origin/main: the unchanged next backup retries it.
+mkdir -p "$work/ws3/_retry-private"
+printf 'retry\n' > "$work/ws3/_retry-private/item"
+gh repo create organvm/retry-g2 --private
+git --git-dir="$work/gh/organvm/retry-g2.git" config core.hooksPath "$work/gh/organvm/retry-g2.git/hooks"
+printf '#!/bin/sh\nexit 1\n' > "$work/gh/organvm/retry-g2.git/hooks/pre-receive"
+chmod +x "$work/gh/organvm/retry-g2.git/hooks/pre-receive"
+run_expect 1 "local-only" "case17 first push rejected" \
+  env ARCA_WORKSPACE="$work/ws3" ARCA_VAULT_DIR="$work/vault3" "$ARCA" rotate organvm/retry-g2
+chmod -x "$work/gh/organvm/retry-g2.git/hooks/pre-receive"
+run_expect 0 "retrying unpushed" "case17 missing tracking ref retry" \
+  env ARCA_WORKSPACE="$work/ws3" ARCA_VAULT_DIR="$work/vault3" "$ARCA" backup
+run_expect 0 "nothing to seal" "case17 successful retry is idempotent" \
+  env ARCA_WORKSPACE="$work/ws3" ARCA_VAULT_DIR="$work/vault3" "$ARCA" backup
+
+# Two individually bounded versions still exceed the complete pending push budget.
+chmod +x "$work/gh/organvm/retry-g2.git/hooks/pre-receive"
+dd if=/dev/urandom of="$work/ws3/_retry-private/item" bs=1024 count=768 2>/dev/null
+run_expect 1 "local-only" "case18 pending version" \
+  env ARCA_WORKSPACE="$work/ws3" ARCA_VAULT_DIR="$work/vault3" ARCA_MAX_COMMIT_MB=1 "$ARCA" backup
+dd if=/dev/urandom of="$work/ws3/_retry-private/item" bs=1024 count=768 2>/dev/null
+run_expect 1 "refusing oversized Git update" "case18 pending and staged union" \
+  env ARCA_WORKSPACE="$work/ws3" ARCA_VAULT_DIR="$work/vault3" ARCA_MAX_COMMIT_MB=1 "$ARCA" backup
+
+# Rejection before the first commit must not leave a manifest that suppresses retry.
+mkdir -p "$work/ws4/_large-private"
+dd if=/dev/urandom of="$work/ws4/_large-private/item" bs=1M count=2 2>/dev/null
+run_expect 1 "refusing oversized Git update" "case19 unborn rotation cap" \
+  env ARCA_WORKSPACE="$work/ws4" ARCA_VAULT_DIR="$work/vault4" ARCA_MAX_COMMIT_MB=1 "$ARCA" rotate organvm/large-g2
+run_expect 1 "refusing oversized Git update" "case19 unborn rejection retries" \
+  env ARCA_WORKSPACE="$work/ws4" ARCA_VAULT_DIR="$work/vault4" ARCA_MAX_COMMIT_MB=1 "$ARCA" backup
+run_expect 1 "unpublished changes" "case20 rotation protects local-only state" \
+  env ARCA_WORKSPACE="$work/ws4" ARCA_VAULT_DIR="$work/vault4" "$ARCA" rotate organvm/large-g3
+
+# A matching source hash is insufficient when the corresponding local payload is dirty.
+printf 'interrupted payload\n' > "$work/vault2/_collab-private.tar.enc"
+run_expect 0 "sealed _collab-private" "case21 dirty payload resealed" \
+  env ARCA_WORKSPACE="$work/ws2" ARCA_VAULT_DIR="$work/vault2" "$ARCA" backup
+run_expect 0 '"vault_state":"remote_current"' "case21 repaired payload has live custody" \
+  env ARCA_WORKSPACE="$work/ws2" ARCA_VAULT_DIR="$work/vault2" "$ARCA" status --json --strict
+
 echo
 if [ "$fail" -eq 0 ]; then
   echo "arca-generation.test.sh: PASS ($pass checks)"

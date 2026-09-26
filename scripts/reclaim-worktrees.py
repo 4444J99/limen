@@ -1074,9 +1074,15 @@ def classify(
     if ignored.returncode != 0 or ignored.stdout.strip():
         return "skip", "ignored-payload-custody-unproven"
     is_wt = (d / ".git").is_file()  # gitdir-pointer ⇒ registered worktree
+    try:
+        custody_restored = not is_wt and d.resolve() in (estate_custody_paths or set())
+    except OSError:
+        custody_restored = False
     if source == "workspace-checkout" and is_wt:
         return "skip", "workspace-checkout-source-contract-violation"
     if not is_wt:
+        if (d / ".git" / "retired-worktree-admin").exists():
+            return "skip", "retired-worktree-metadata-custody-unproven"
         try:
             if registered_sibling_worktrees(d):
                 return "skip", "registered-worktree-owner"
@@ -1085,6 +1091,8 @@ def classify(
     if receipt_remote_merged(d, preservation_receipts):
         if not is_wt and all_local_refs_remote_proof(d) is None:
             return "skip", "unpreserved-local-refs"
+        if not is_wt and not custody_restored:
+            return "skip", "standalone-clone-requires-clone-custody-classifier"
         return ("remove-worktree" if is_wt else "remove-clone"), "receipt-remote-merged+clean+idle"
     head = git(["rev-parse", "HEAD"], d).stdout.strip()
     patch_equivalent = patch_equivalent_to_default(d)
@@ -1100,10 +1108,17 @@ def classify(
             # A standalone clone purge deletes that ref store, so only the clone needs all-ref proof.
             if not is_wt and all_local_refs_remote_proof(d) is None:
                 return "skip", "unpreserved-local-refs"
+            if not is_wt and not custody_restored:
+                # Whole-clone retirement has additional owner-specific obligations (reflogs,
+                # stashes, hidden refs, nested stores, and fresh remote reconciliation). Keep it
+                # on the dedicated clone-reaper path instead of treating a HEAD/ref proof as enough.
+                return "skip", "standalone-clone-requires-clone-custody-classifier"
             return ("remove-worktree" if is_wt else "remove-clone"), "clean+pushed+idle"
         return "skip", "not-merged-to-default"
     if not is_wt and all_local_refs_remote_proof(d) is None:
         return "skip", "unpreserved-local-refs"
+    if not is_wt and not custody_restored:
+        return "skip", "standalone-clone-requires-clone-custody-classifier"
     return ("remove-worktree" if is_wt else "remove-clone"), "clean+merged+idle"
 
 

@@ -7,7 +7,6 @@ import subprocess
 from pathlib import Path
 
 import pytest
-
 from limen import worktree_abandonment as abandonment
 from limen.action_admission import classify_bash
 
@@ -56,6 +55,185 @@ def test_detach_registered_worktree_is_non_forced_and_receipted(tmp_path: Path) 
     assert _git(repo, "show-ref", "--verify", "refs/heads/work/test")
     receipt = json.loads(Path(result["receipt_path"]).read_text(encoding="utf-8"))
     assert receipt["state"] == "completed"
+    expected_head = result["result"]["head"]
+    assert (
+        abandonment.completed_worktree_retirement(repo, target, expected_head, receipts)["receipt_path"]
+        == result["receipt_path"]
+    )
+    assert abandonment.completed_worktree_retirement(repo, target, "f" * 40, receipts) is None
+    retained = Path(result["result"]["admin_preservation"]["retained_original"])
+    (retained / "new-evidence").write_text("changed since receipt")
+    assert abandonment.completed_worktree_retirement(repo, target, expected_head, receipts) is None
+
+
+def test_detach_retains_original_admin_inode_and_anchors_unique_reflog(tmp_path: Path) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    base = _git(target, "rev-parse", "HEAD")
+    (target / "tracked.txt").write_text("unique historical work\n")
+    _git(target, "commit", "-qam", "unique worktree history")
+    unique = _git(target, "rev-parse", "HEAD")
+    _git(target, "reset", "--hard", base)
+    _git(target, "update-ref", "refs/worktree/keep", unique)
+    admin = Path(_git(target, "rev-parse", "--absolute-git-dir"))
+    identity = admin.stat().st_ino
+    log = (admin / "logs/HEAD").read_bytes()
+    metadata = admin / "private-owner-record"
+    metadata.write_bytes(b"local administrative evidence\n")
+    metadata.chmod(0o600)
+    metadata_identity = metadata.stat()
+    result = abandonment.detach_registered_worktree(
+        repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+    )
+    evidence = result["result"]["admin_preservation"]
+    original = Path(evidence["retained_original"])
+    assert original.stat().st_ino == identity
+    assert (original / "logs/HEAD").read_bytes() == log
+    assert (original / "private-owner-record").stat().st_ino == metadata_identity.st_ino
+    assert (original / "private-owner-record").stat().st_mtime_ns == metadata_identity.st_mtime_ns
+    assert (original / "private-owner-record").stat().st_mode == metadata_identity.st_mode
+    assert not target.exists()
+    assert not admin.exists()
+    assert evidence["anchored_objects"] >= 2
+    assert evidence["custody"] == "local-original-retained-store-must-remain"
+    # Even after native reflogs expire, the original history remains reachable.
+    _git(repo, "reflog", "expire", "--expire=now", "--all")
+    reachable = _git(repo, "rev-list", "--all").splitlines()
+    assert unique in reachable
+    assert _git(repo, "show", f"{unique}:tracked.txt") == "unique historical work"
+
+
+@pytest.mark.parametrize("entry", ["index.lock", "locked", "symlink", "MERGE_HEAD", "rebase-merge"])
+def test_detach_rejects_locked_or_linked_admin(tmp_path: Path, entry: str) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    admin = Path(_git(target, "rev-parse", "--absolute-git-dir"))
+    if entry == "symlink":
+        (admin / entry).symlink_to(admin / "HEAD")
+    else:
+        (admin / entry).write_text("retain")
+    with pytest.raises(abandonment.WorktreeAbandonmentError):
+        abandonment.detach_registered_worktree(
+            repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+        )
+    assert target.exists()
+    assert admin.exists()
+
+
+@pytest.mark.parametrize("failure", ["corrupt-copy", "source-change", "copy-error", "swap-error"])
+def test_admin_preservation_failure_retains_checkout_and_original(tmp_path: Path, monkeypatch, failure: str) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    admin = Path(_git(target, "rev-parse", "--absolute-git-dir"))
+    before = admin.stat().st_ino
+    copytree = abandonment.shutil.copytree
+    rename = Path.rename
+
+    def copy(source, destination, *args, **kwargs):
+        if Path(source) == admin:
+            if failure == "copy-error":
+                raise OSError("simulated copy failure")
+            result = copytree(source, destination, *args, **kwargs)
+            if failure == "corrupt-copy":
+                (Path(destination) / "HEAD").write_text("corruption")
+            elif failure == "source-change":
+                (admin / "new-evidence").write_text("keep")
+            return result
+        return copytree(source, destination, *args, **kwargs)
+
+    def move(self, destination):
+        if failure == "swap-error" and self.name == "replica":
+            raise OSError("simulated swap failure")
+        return rename(self, destination)
+
+    monkeypatch.setattr(abandonment.shutil, "copytree", copy)
+    monkeypatch.setattr(Path, "rename", move)
+    with pytest.raises(abandonment.WorktreeAbandonmentError) as caught:
+        abandonment.detach_registered_worktree(
+            repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+        )
+    assert target.exists()
+    assert admin.stat().st_ino == before
+    assert _git(target, "rev-parse", "HEAD") == _git(repo, "rev-parse", "HEAD")
+    assert "admin_preservation" in caught.value.receipt["result"]
+
+
+@pytest.mark.parametrize("changed", [False, True])
+def test_recover_interrupted_admin_rename_requires_exact_original(tmp_path: Path, monkeypatch, changed: bool) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    admin = Path(_git(target, "rev-parse", "--absolute-git-dir"))
+    before = admin.stat().st_ino
+    receipts = tmp_path / "receipts"
+    rename = Path.rename
+
+    def interrupted(self, destination):
+        result = rename(self, destination)
+        if self == admin:
+            raise SystemExit("simulated hard interruption after original rename")
+        return result
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "rename", interrupted)
+        with pytest.raises(SystemExit):
+            abandonment.detach_registered_worktree(
+                repo, target, reason="released", receipt_root=receipts, owner_probe=lambda _: None
+            )
+    assert target.exists()
+    assert not admin.exists()
+    receipt = json.loads(next(receipts.glob("*.json")).read_text())
+    original = Path(receipt["result"]["admin_preservation"]["retained_original"])
+    assert original.stat().st_ino == before
+    if changed:
+        (original / "new-private-evidence").write_text("retain this change")
+        with pytest.raises(RuntimeError, match="recovery-evidence-mismatch"):
+            abandonment.recover_worktree_registration(
+                repo.resolve(), target.resolve(), receipts, owner_probe=lambda _: None
+            )
+        assert original.exists()
+        assert not admin.exists()
+    else:
+        with pytest.raises(RuntimeError, match="owner-active-or-unavailable"):
+            abandonment.recover_worktree_registration(
+                repo.resolve(), target.resolve(), receipts, owner_probe=lambda _: 1234
+            )
+        assert original.exists()
+        abandonment.recover_worktree_registration(
+            repo.resolve(), target.resolve(), receipts, owner_probe=lambda _: None
+        )
+        assert admin.stat().st_ino == before
+        assert _git(target, "rev-parse", "HEAD") == _git(repo, "rev-parse", "HEAD")
+        result = abandonment.detach_registered_worktree(
+            repo, target, reason="released", receipt_root=receipts, owner_probe=lambda _: None
+        )
+        assert result["state"] == "completed"
+
+
+def test_detach_rechecks_ignored_payload_created_during_preservation(tmp_path: Path, monkeypatch) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    (repo / ".git/info/exclude").write_text("private-late\n")
+    preserve = abandonment._preserve_worktree_admin
+
+    def changed(*args, **kwargs):
+        result = preserve(*args, **kwargs)
+        (target / "private-late").write_text("late payload")
+        return result
+
+    monkeypatch.setattr(abandonment, "_preserve_worktree_admin", changed)
+    with pytest.raises(abandonment.WorktreeAbandonmentError, match="ignored-payload-custody-unproven"):
+        abandonment.detach_registered_worktree(
+            repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+        )
+    assert (target / "private-late").read_text() == "late payload"
+    assert _git(target, "rev-parse", "HEAD") == _git(repo, "rev-parse", "HEAD")
+
+
+@pytest.mark.parametrize("flag", ["--skip-worktree", "--assume-unchanged"])
+def test_detach_retains_hidden_tracked_edits(tmp_path: Path, flag: str) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    _git(target, "update-index", flag, "tracked.txt")
+    (target / "tracked.txt").write_text("hidden private edit")
+    with pytest.raises(abandonment.WorktreeAbandonmentError, match="hidden-modifications"):
+        abandonment.detach_registered_worktree(
+            repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+        )
+    assert (target / "tracked.txt").read_text() == "hidden private edit"
 
 
 @pytest.mark.parametrize("owner", [4242, -1])
@@ -105,6 +283,85 @@ def test_detach_preserves_ignored_payload_without_restoration_proof(tmp_path: Pa
             repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
         )
     assert payload.read_bytes() == b"unfinished ignored content"
+
+
+def test_detach_retains_gitlink_without_submodule_custody(tmp_path: Path) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    head = _git(repo, "rev-parse", "HEAD")
+    _git(repo, "update-index", "--add", "--cacheinfo", f"160000,{head},nested")
+    _git(repo, "commit", "-qm", "record gitlink")
+    _git(target, "merge", "--ff-only", "main")
+    (target / "nested").mkdir(exist_ok=True)
+    (target / "nested" / "private.txt").write_text("unique nested payload")
+    with pytest.raises(abandonment.WorktreeAbandonmentError, match="submodule-custody-unproven"):
+        abandonment.detach_registered_worktree(
+            repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+        )
+    assert target.exists()
+    assert (target / "nested" / "private.txt").read_text() == "unique nested payload"
+
+
+def test_detach_allows_empty_gitlink_and_preserves_parent_ref(tmp_path: Path) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    head = _git(repo, "rev-parse", "HEAD")
+    _git(repo, "update-index", "--add", "--cacheinfo", f"160000,{head},nested")
+    _git(repo, "commit", "-qm", "record gitlink")
+    _git(target, "merge", "--ff-only", "main")
+    nested = target / "nested"
+    nested.mkdir(exist_ok=True)
+    expected = _git(target, "rev-parse", "HEAD")
+    result = abandonment.detach_registered_worktree(
+        repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+    )
+    assert result["state"] == "completed"
+    assert not target.exists()
+    assert _git(repo, "rev-parse", "refs/heads/work/test") == expected
+
+
+def test_absent_gitlink_still_requires_clean_worktree(tmp_path: Path) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    head = _git(repo, "rev-parse", "HEAD")
+    _git(repo, "update-index", "--add", "--cacheinfo", f"160000,{head},nested")
+    _git(repo, "commit", "-qm", "record gitlink")
+    _git(target, "merge", "--ff-only", "main")
+    (target / "nested").rmdir()
+    with pytest.raises(abandonment.WorktreeAbandonmentError, match="worktree-not-clean"):
+        abandonment.detach_registered_worktree(
+            repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+        )
+    assert target.exists()
+
+
+def test_nested_gitlink_probe_rejects_symlinked_parent(tmp_path: Path, monkeypatch) -> None:
+    target = tmp_path / "checkout"
+    target.mkdir()
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    (elsewhere / "nested").mkdir()
+    (target / "alias").symlink_to(elsewhere, target_is_directory=True)
+    monkeypatch.setattr(
+        abandonment,
+        "_run_git",
+        lambda *_args: subprocess.CompletedProcess([], 0, f"160000 {'a' * 40} 0\talias/nested\x00", ""),
+    )
+    assert abandonment._nested_payload_custody_reason(target) == "submodule-custody-unproven"
+
+
+def test_detach_retains_lfs_pointer_without_object_custody(tmp_path: Path, monkeypatch) -> None:
+    repo, target = _repo_with_worktree(tmp_path)
+    original = abandonment._run_git
+
+    def reported_lfs(path: Path, *args: str, **kwargs):
+        if args == ("lfs", "ls-files", "--name-only"):
+            return subprocess.CompletedProcess([], 0, "large.bin\n", "")
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(abandonment, "_run_git", reported_lfs)
+    with pytest.raises(abandonment.WorktreeAbandonmentError, match="lfs-custody-unproven"):
+        abandonment.detach_registered_worktree(
+            repo, target, reason="released", receipt_root=tmp_path / "receipts", owner_probe=lambda _: None
+        )
+    assert target.exists()
 
 
 def test_registered_worktree_scan_retains_missing_registration(

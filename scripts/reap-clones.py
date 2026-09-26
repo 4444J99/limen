@@ -15,14 +15,13 @@ earlier denylist-shaped gate — stash, reflog orphans, local tags, git-notes, g
 force-push/ahead-of-origin, submodules, LFS, linked worktrees, TOCTOU — all now guarded below):
 
   • clean working tree AND no untracked files (`git status --porcelain` is EMPTY), AND
-  • no un-mirrored gitignored data — every ignored entry is a provably-regenerable dep/build/cache dir
-    (a `.env`, local `*.db`, or data/ dir → KEEP), AND
+  • no ignored payload of any name without a separate custody/reconstruction receipt, AND
   • NO local-only objects: nothing reachable from any local ref (heads/tags/notes/stash) OR the reflog
     is missing from a remote (catches stash WIP, local tags, notes, hard-reset reflog orphans), AND
   • no skip-worktree / assume-unchanged bit hiding a tracked-file edit, AND
   • not a submodule / LFS / linked-worktree parent (nested contexts outside the parent ref graph), AND
   • HEAD reachable from an origin ref, no active limen task, not CORE / live-root / worktree-root, AND
-  • idle >= min-age — UNLESS the live resource envelope is negative, which waives the age gate, AND
+  • no process or task owner; directory mtime is never retirement authority, AND
   • the NETWORK BELT confirms against a fresh `git fetch --prune` that no local object is un-mirrored
     (catches stale/force-rewound remotes that make refs/heads commits merely LOOK pushed), re-checked
     a final time (porcelain + stash) at the instant before rmtree to close the TOCTOU window.
@@ -49,6 +48,7 @@ import argparse
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import time
@@ -76,25 +76,16 @@ LOG = LIMEN_ROOT / "logs" / "reap-clones.jsonl"
 CLONE_REAP_ACCEPTANCE = LIMEN_ROOT / "docs" / "clone-reap-acceptance.jsonl"
 CLONE_REAP_ACCEPTANCE_DOC = LIMEN_ROOT / "docs" / "clone-reap-acceptance.md"
 
-# CORE repos the operator lives in / the conductor needs local — never reaped even if pushed-clean.
-DEFAULT_CORE = "limen session-meta sovereign-systems--elevate-align portfolio portvs universal-mail--automation"
-CORE = set(os.environ.get("LIMEN_REAP_CORE", DEFAULT_CORE).split())
+# PORTVS's three control pins plus the operator-protected PRDS workstream.
+# Other authored repositories are remote-default, subject to all custody/owner
+# checks below. Explicit host pins are additive; they cannot unpin controls.
+DEFAULT_CORE = "limen domus-genoma portvs public-record-data-scrapper prds-ops prds-engine prds-admin clavis"
+CORE = set(DEFAULT_CORE.split()) | set(os.environ.get("LIMEN_REAP_CORE", "").split())
 
 # Paths that are somebody else's lifecycle (worktree reaper, cartridge co-tenant, throwaway roots).
 EXCLUDE_MARKERS = (".claude/worktrees", ".limen-worktrees", ".home-cartridge", ".worktrees", "/node_modules/")
 
-# Gitignored files are normally regenerable (deps, build output, caches) — losing them is loss-free.
-# But a gitignored file can also be IRREPLACEABLE local state (a .env secret, a local *.db, a data/
-# dir) that lives on NO remote. `git status --porcelain` hides all ignored files, so we enumerate them
-# with --ignored and reap only when EVERY ignored entry's top path component is a known-regenerable dir
-# (or a regenerable-suffixed top-level file). Anything else → KEEP (the ignored-file data-loss class).
-REGENERABLE_DIRS = set(
-    "node_modules .venv venv .venv-demucs __pycache__ .pytest_cache .mypy_cache .ruff_cache "
-    ".tox dist build .next .nuxt .svelte-kit .astro .turbo .parcel-cache .vercel .wrangler "
-    ".gradle coverage .nyc_output .eggs .ipynb_checkpoints".split()
-)
-REGENERABLE_SUFFIXES = (".pyc", ".pyo")
-REGENERABLE_FILES = {".DS_Store"}
+# Generated-looking names are not custody proof; another owner must verify regeneration.
 _ACTIVE_PROCESS_CWDS: dict[Path, int] = {}
 
 # Non-interactive git: fail (→ fail-safe KEEP) rather than block on a credential/GUI prompt.
@@ -207,15 +198,12 @@ def clone_reap_accepted(repo: Path, slug: str, reason: str, acceptance_events: l
         resolved = str(repo.resolve())
     except OSError:
         resolved = str(repo)
-    names = {repo.name, slug}
     for event in reversed(acceptance_events):
-        if event.get("root") not in names and event.get("slug") != slug:
+        if event.get("path") != resolved or event.get("slug") != slug:
             continue
         if event.get("accepted") is not True:
             continue
         if event.get("reason") and event.get("reason") != reason:
-            continue
-        if event.get("path") and event.get("path") != resolved:
             continue
         archive_ok = event.get("archive_verified") is True or event.get("archive_status") in ACCEPTED_ARCHIVE_STATUSES
         if not archive_ok:
@@ -229,28 +217,19 @@ def clone_reap_accepted(repo: Path, slug: str, reason: str, acceptance_events: l
 
 
 def _ignored_is_all_regenerable(repo: Path) -> bool:
-    """True iff every gitignored working-tree entry is provably regenerable (safe to lose on re-clone).
-
-    `git status --porcelain --ignored` collapses an ignored directory to a single `!! dir/` line, so we
-    test the TOP path component against the regenerable allowlist. An unknown ignored file (e.g. `.env`,
-    `local.db`, `data/`) is treated as irreplaceable → not-all-regenerable → the caller KEEPS the clone.
-    A quoted/exotic path never matches the allowlist, so it also fails safe (KEEP).
-    """
-    out = _run(["git", "-C", str(repo), "status", "--porcelain", "--ignored"])
-    for line in out.splitlines():
-        if not line.startswith("!! "):
-            continue
-        path = line[3:].strip().strip('"').rstrip("/")
-        if not path:
-            return False
-        top = path.split("/", 1)[0]
-        base = path.rsplit("/", 1)[-1]
-        if top in REGENERABLE_DIRS:
-            continue
-        if "/" not in path and (base in REGENERABLE_FILES or base.endswith(REGENERABLE_SUFFIXES)):
-            continue
-        return False  # an ignored entry we cannot prove regenerable → not loss-free
-    return True
+    """True only when no ignored payload exists; a name cannot prove reconstruction."""
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo), "ls-files", "--others", "--ignored", "--exclude-standard", "-z"],
+            capture_output=True,
+            timeout=30,
+            check=False,
+            env=_GIT_ENV,
+            stdin=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    return result.returncode == 0 and not result.stdout
 
 
 def _nested_context_reason(repo: Path) -> str | None:
@@ -262,6 +241,9 @@ def _nested_context_reason(repo: Path) -> str | None:
     """
     gitdir = repo / ".git"
     try:
+        retired_metadata = gitdir / "retired-worktree-admin"
+        if retired_metadata.exists():
+            return "retired-worktree-metadata-custody-unproven"
         wt = gitdir / "worktrees"
         if wt.is_dir() and any(wt.iterdir()):
             return "has-linked-worktrees"
@@ -280,22 +262,100 @@ def _has_local_only_objects(repo: Path) -> bool:
     """True iff any commit reachable from a LOCAL ref, the reflog, or the stash is NOT on a remote.
 
     This is the comprehensive replacement for `git log --branches`: it enumerates every local ref
-    namespace (refs/heads, refs/tags, refs/notes, refs/stash) plus --reflog, and subtracts --remotes.
+    namespace (refs/heads, refs/tags, refs/notes, refs/stash) plus --reflog, and subtracts
+    only origin's tracking refs.
     refs/stash, refs/notes, refs/tags and reflog-only (hard-reset) commits live on NO remote, so this
     surfaces them even when remote-tracking refs are stale. (Category C — stale/force-rewound remotes
     that make refs/heads commits *look* pushed — is caught by the belt's post-`fetch --prune` re-run.)
     """
+
+    def checked(*args: str) -> str | None:
+        try:
+            result = subprocess.run(
+                ["git", "-C", str(repo), *args],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+                env=_GIT_ENV,
+                stdin=subprocess.DEVNULL,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return None
+        return result.stdout if result.returncode == 0 else None
+
     ns = ["refs/heads", "refs/tags", "refs/notes", "refs/stash"]
-    refs = _run(["git", "-C", str(repo), "for-each-ref", "--format=%(refname)", *ns]).split()
-    cmd = ["git", "-C", str(repo), "rev-list", "--max-count=1", "--reflog", *refs, "--not", "--remotes"]
-    return bool(_run(cmd))
+    local_output = checked("for-each-ref", "--format=%(refname)", *ns)
+    origin_output = checked("for-each-ref", "--format=%(refname)", "refs/remotes/origin")
+    if local_output is None or origin_output is None:
+        return True
+    refs = local_output.split()
+    origin_refs = origin_output.split()
+    if not origin_refs:
+        return True
+    unique = checked("rev-list", "--max-count=1", "--reflog", *refs, "--not", *origin_refs)
+    return unique is None or bool(unique.strip())
 
 
-def _pristine_now(repo: Path) -> bool:
-    """Last-millisecond TOCTOU belt: re-sample the cheapest data guards immediately before rmtree."""
-    if _run(["git", "-C", str(repo), "status", "--porcelain"]):
+def _has_unreachable_objects(repo: Path) -> bool:
+    """Fail closed for objects unreachable from ordinary refs, including reflog-only data.
+
+    A fetch --prune can make a stale remote-tracking tip's unique history
+    unreachable. A local-only blob or commit can also survive without a ref,
+    stash, or a provable remote ref. Neither case is proved disposable by
+    ordinary ref reachability.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(repo), "fsck", "--full", "--no-reflogs", "--unreachable"],
+            capture_output=True,
+            text=True,
+            timeout=90,
+            check=False,
+            env=_GIT_ENV,
+            stdin=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return True
+    if result.returncode != 0:
+        return True
+    return any(
+        line.startswith(("unreachable ", "dangling ")) for line in (result.stdout + "\n" + result.stderr).splitlines()
+    )
+
+
+def _pristine_now(repo: Path, expected_identity: tuple[int, int] | None = None) -> bool:
+    """Last-millisecond TOCTOU belt: re-sample data guards immediately before rmtree."""
+    try:
+        observed = repo.lstat()
+    except OSError:
+        return False
+    if not stat.S_ISDIR(observed.st_mode) or repo.is_symlink():
+        return False
+    if (repo / ".git").is_symlink() or not (repo / ".git").is_dir():
+        return False
+    if expected_identity is not None and (observed.st_dev, observed.st_ino) != expected_identity:
+        return False
+    if _nested_context_reason(repo) or not _ignored_is_all_regenerable(repo):
+        return False
+    try:
+        status = subprocess.run(
+            ["git", "-C", str(repo), "status", "--porcelain=v1", "--untracked-files=all", "-z"],
+            capture_output=True,
+            timeout=30,
+            check=False,
+            env=_GIT_ENV,
+            stdin=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return False
+    if status.returncode != 0 or status.stdout:
         return False
     if _run(["git", "-C", str(repo), "stash", "list"]):
+        return False
+    if _has_local_only_objects(repo):
+        return False
+    if _has_unreachable_objects(repo):
         return False
     return True
 
@@ -327,6 +387,9 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
     sp = str(rp)
     if rp == LIMEN_ROOT or LIMEN_ROOT == rp:
         return Verdict(False, "live-root")
+    prds_root = (WORKSPACE / "prds-work").resolve()
+    if rp == prds_root or prds_root in rp.parents:
+        return Verdict(False, "protected-prds-root")
     owner_pid = active_process_owner(repo)
     if owner_pid is not None:
         return Verdict(False, f"active-process-cwd:{owner_pid}")
@@ -334,7 +397,7 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
         return Verdict(False, "excluded-root")
     # STANDALONE clone only: a registered worktree has a .git FILE, not a directory — leave those to
     # reclaim-worktrees.py (removing one with rmtree would corrupt the parent's worktree registry).
-    if not (repo / ".git").is_dir():
+    if (repo / ".git").is_symlink() or not (repo / ".git").is_dir():
         return Verdict(False, "not-a-clone")
     if repo.name in CORE or origin_slug(repo).split("/")[-1] in CORE:
         return Verdict(False, "core")
@@ -365,8 +428,12 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
     # commits live outside refs/heads and are invisible to --branches — but they are un-mirrored work.
     if _has_local_only_objects(repo):
         return Verdict(False, "unpushed-objects")
-    # HEAD itself must be reachable from a remote ref (covers detached-HEAD-off-a-remote edge cases).
-    if not _run(["git", "-C", str(repo), "branch", "-r", "--contains", "HEAD"]):
+    if _has_unreachable_objects(repo):
+        return Verdict(False, "unreachable-objects")
+    # HEAD itself must be reachable from origin, not an unrelated remote namespace.
+    if not _run(
+        ["git", "-C", str(repo), "for-each-ref", "--contains", "HEAD", "--format=%(refname)", "refs/remotes/origin"]
+    ):
         return Verdict(False, "head-not-on-remote")
 
     # No canonical home = we could not re-clone it. Never reap a clone with no origin.
@@ -383,16 +450,6 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
     for line in _run(["git", "-C", str(repo), "ls-files", "-v"]).splitlines():
         if line[:1].islower() or line.startswith("S "):
             return Verdict(False, "hidden-modifications")
-
-    # Idle gate — waived under disk pressure (a pushed mirror is loss-free at any age; when the disk
-    # is full we reclaim NOW rather than wait out the idle window).
-    if not pressure:
-        try:
-            age_days = (now - os.path.getmtime(repo)) / 86400
-        except OSError:
-            age_days = idle_days  # unknown age → treat as old enough (still fully gated above)
-        if age_days < idle_days:
-            return Verdict(False, "fresh")
 
     return Verdict(True, "pushed-mirror" if not pressure else "pushed-mirror-under-pressure")
 
@@ -412,10 +469,8 @@ def confirm_recloneable(repo: Path) -> bool:
     returns False, so we skip rather than risk loss; a later online beat reaps it. A pure mirror that is
     merely BEHIND origin still passes — after the fetch its HEAD is an ancestor of the advanced tip, so
     nothing is local-only (this preserves the remote-unreachable=80 behind-origin fix). Disable the
-    network belt (trust local refs) with LIMEN_REAP_VERIFY_REMOTE=0.
+    Network verification cannot be bypassed for retirement.
     """
-    if os.environ.get("LIMEN_REAP_VERIFY_REMOTE", "1").strip().lower() in {"0", "false", "no", "off"}:
-        return True
     head = _run(["git", "-C", str(repo), "rev-parse", "HEAD"])
     if not head:
         return False
@@ -445,9 +500,11 @@ def confirm_recloneable(repo: Path) -> bool:
         return False
     if fetch.returncode != 0:
         return False  # could not verify against the live remote → fail-safe keep
-    # Authoritative proof: after the refresh, nothing reachable from any local ref/reflog/stash is
-    # missing from the remote. Catches force-push orphans, ahead-of-origin HEADs, and deleted branches.
-    return not _has_local_only_objects(repo)
+    # Authoritative proof: after refresh, no local ref/reflog/stash is missing
+    # from the remote, and pruning did not strand otherwise-unreferenced objects.
+    # Catches force-push orphans, ahead-of-origin HEADs, deleted branches, and
+    # old history held only by stale remote-tracking refs.
+    return not _has_local_only_objects(repo) and not _has_unreachable_objects(repo)
 
 
 def active_task_slugs(tasks_path: Path) -> set[str]:
@@ -527,7 +584,7 @@ def main() -> int:
     free_gib = disk_free_gib(WORKSPACE)
     # Pressure waives only the idle age, never a preservation predicate. Percent
     # remains display-only; the live envelope is the sole storage authority.
-    # Unknown telemetry cannot establish pressure: preserve the idle-age gate.
+    # Pressure labels the report; it does not waive any custody predicate.
     pressure = (
         args.pressure
         if args.pressure is not None
@@ -541,17 +598,25 @@ def main() -> int:
         f"[reap-clones] disk {pct:.0f}% used, "
         f"{f'{free_gib:.0f}GiB' if free_gib is not None else 'unknown'} free "
         f"(required {required_free if required_free is not None else 'unknown'}GiB) → "
-        f"pressure={'ON' if pressure else 'off'}; mode={mode}; idle-gate={'waived' if pressure else f'{idle_days:g}d'}"
+        f"pressure={'ON' if pressure else 'off'}; mode={mode}; mtime-authority=disabled"
     )
 
     reaped = kept = 0
-    freed = 0
+    apparent_bytes = 0
+    free_before = disk_free_gib(WORKSPACE)
     kept_reasons: dict[str, int] = {}
     clone_reap_acceptance = load_clone_reap_acceptance()
     LOG.parent.mkdir(parents=True, exist_ok=True)
     logf = LOG.open("a") if args.apply else None
     try:
         for repo in discover_clones(WORKSPACE, maxdepth):
+            try:
+                observed = repo.lstat()
+                identity = (observed.st_dev, observed.st_ino)
+            except OSError:
+                kept += 1
+                kept_reasons["path-identity-unavailable"] = kept_reasons.get("path-identity-unavailable", 0) + 1
+                continue
             v = classify(repo, active, now, idle_days, pressure)
             if not v.reap:
                 kept += 1
@@ -571,33 +636,89 @@ def main() -> int:
             except Exception:
                 sz = 0
             slug = origin_slug(repo)
-            # TOCTOU belt: work may have landed between classify() and now — re-verify pristine at the
-            # last instant before an irreversible delete.
-            if args.apply and not _pristine_now(repo):
-                kept += 1
-                kept_reasons["raced-dirty"] = kept_reasons.get("raced-dirty", 0) + 1
-                continue
             if args.apply:
                 accepted, accept_reason = clone_reap_accepted(repo, slug, v.reason, clone_reap_acceptance)
                 if not accepted:
                     kept += 1
                     kept_reasons[accept_reason] = kept_reasons.get(accept_reason, 0) + 1
                     continue
-            print(f"  {'REAP' if args.apply else 'WOULD reap'}: {repo}  ({slug}, {sz / 1e9:.2f} GB, {v.reason})")
+                # Recheck the live origin and local bytes after all slower work, at the deletion edge.
+                if not confirm_recloneable(repo) or not _pristine_now(repo, identity):
+                    kept += 1
+                    kept_reasons["raced-or-unproven"] = kept_reasons.get("raced-or-unproven", 0) + 1
+                    continue
             if args.apply:
-                shutil.rmtree(repo, ignore_errors=True)
+                try:
+                    shutil.rmtree(repo)
+                except OSError as exc:
+                    kept += 1
+                    kept_reasons["remove-incomplete"] = kept_reasons.get("remove-incomplete", 0) + 1
+                    if logf:
+                        logf.write(
+                            json.dumps(
+                                {
+                                    "repo": str(repo),
+                                    "slug": slug,
+                                    "state": "remove-incomplete",
+                                    "error": type(exc).__name__,
+                                }
+                            )
+                            + "\n"
+                        )
+                        logf.flush()
+                    print(f"  INCOMPLETE/INVESTIGATE: {repo} (removal failed: {type(exc).__name__})")
+                    continue
+                if repo.exists() or repo.is_symlink():
+                    kept += 1
+                    kept_reasons["remove-incomplete"] = kept_reasons.get("remove-incomplete", 0) + 1
+                    if logf:
+                        logf.write(
+                            json.dumps(
+                                {
+                                    "repo": str(repo),
+                                    "slug": slug,
+                                    "state": "remove-incomplete",
+                                    "error": "path-still-present",
+                                }
+                            )
+                            + "\n"
+                        )
+                        logf.flush()
+                    print(f"  INCOMPLETE/INVESTIGATE: {repo} (path still present)")
+                    continue
                 if logf:
-                    logf.write(json.dumps({"repo": str(repo), "slug": slug, "bytes": sz, "reason": v.reason}) + "\n")
+                    logf.write(
+                        json.dumps(
+                            {
+                                "repo": str(repo),
+                                "slug": slug,
+                                "apparent_bytes": sz,
+                                "reason": v.reason,
+                                "state": "removed",
+                            }
+                        )
+                        + "\n"
+                    )
+                    logf.flush()
+            print(
+                f"  {'REAPED' if args.apply else 'WOULD reap'}: {repo}  ({slug}, {sz / 1e9:.2f} GB apparent, {v.reason})"
+            )
             reaped += 1
-            freed += sz
+            apparent_bytes += sz
     finally:
         if logf:
             logf.close()
 
     kr = ", ".join(f"{k}={n}" for k, n in sorted(kept_reasons.items())) or "none"
+    free_after = disk_free_gib(WORKSPACE)
+    observed_delta = (
+        f"{free_after - free_before:+.2f} GiB observed free-space change"
+        if args.apply and free_before is not None and free_after is not None
+        else "free-space change unmeasured"
+    )
     print(
         f"[reap-clones] {'reaped' if args.apply else 'would reap'} {reaped} clone(s), "
-        f"{freed / 1e9:.2f} GB; kept {kept} ({kr})."
+        f"{apparent_bytes / 1e9:.2f} GB apparent; {observed_delta}; kept {kept} ({kr})."
     )
     return 0
 

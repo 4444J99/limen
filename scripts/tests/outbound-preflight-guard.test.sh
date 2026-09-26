@@ -35,6 +35,18 @@ effectors:
     predicate: "PREDICATE_CMD {target}"
     max_age_seconds: 900
     reason: "fixture reason"
+  arca.release-assets:
+    title: "fixture ARCA asset effector"
+    match:
+      - '\barca\.sh\s+assets\b(?=[^;&|\n]*\s--apply(?:\s|[;&|]|$))'
+      - '\barca-release-assets\.py\b(?=[^;&|\n]*\s--apply(?:\s|[;&|]|$))'
+      - '\barca-preserve-git-ciphertext\.py\b(?=[^;&|\n]*\s--apply(?:\s|[;&|]|$))'
+    target:
+      kind: github_repository
+      pattern: '--repo\s+([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)'
+    predicate: "PREDICATE_CMD {target}"
+    max_age_seconds: 300
+    reason: "private repository identity must be observed"
 YAML
 
 mk_registry() {  # mk_registry <predicate-command>
@@ -74,6 +86,30 @@ assert_passes 'git status && ls -la' "passes an ordinary command"
 assert_passes 'python3 -m pytest cli/tests -q' "passes a test run"
 assert_passes 'echo "email someone@example.com about it later"' \
   "passes prose that merely mentions an address"
+assert_denied 'bash scripts/arca.sh assets --repo owner/vault --catalog catalog.enc --object object.enc --apply' \
+  "denies ARCA release assets without a private-repository receipt"
+assert_passes 'bash scripts/arca.sh assets --repo owner/vault --catalog catalog.enc --object object.enc' \
+  "allows local ARCA asset planning without a remote receipt"
+assert_passes 'python3 scripts/arca-release-assets.py --repo owner/vault --catalog catalog.enc --object object.enc' \
+  "allows direct local asset planning"
+assert_passes 'python3 scripts/arca-preserve-git-ciphertext.py /private/arca --repo owner/vault --catalog-output catalog.gpg' \
+  "allows local ciphertext preservation planning"
+assert_denied 'python3 scripts/arca-release-assets.py --apply --repo owner/vault --catalog catalog.enc --object object.enc' \
+  "denies direct asset apply before other options without a receipt"
+assert_passes 'bash scripts/arca.sh assets --repo owner/vault --catalog catalog.enc; echo --apply' \
+  "does not borrow apply from a separate command"
+assert_denied 'python3 scripts/arca-preserve-git-ciphertext.py /private/arca --repo owner/vault --catalog-output catalog.gpg --apply' \
+  "denies ARCA divergent-ciphertext publication without a private-repository receipt"
+assert_denied 'bash scripts/arca.sh assets --repo "$TARGET" --catalog catalog.enc --object object.enc --apply' \
+  "denies an ARCA release target that is hidden in a shell variable"
+LIMEN_ROOT="$ROOT" LIMEN_OUTBOUND_REGISTRY="$TMP/live.yaml" \
+  python3 "$PRODUCER" --action arca.release-assets --target owner/vault >/dev/null 2>&1
+assert_passes 'bash scripts/arca.sh assets --repo owner/vault --catalog catalog.enc --object object.enc --apply' \
+  "passes ARCA release assets only after an exact-repository receipt"
+assert_passes 'python3 scripts/arca-preserve-git-ciphertext.py /private/arca --repo owner/vault --catalog-output catalog.gpg --apply' \
+  "passes ARCA divergent-ciphertext publication after an exact-repository receipt"
+assert_denied 'bash scripts/arca.sh assets --repo owner/other --catalog catalog.enc --object object.enc --apply' \
+  "does not reuse an ARCA private-repository receipt for another repository"
 
 # ── PASS only with a FRESH, PASSING, TARGET-BOUND receipt ───────────────────────────────────
 LIMEN_ROOT="$ROOT" LIMEN_OUTBOUND_REGISTRY="$TMP/live.yaml" \

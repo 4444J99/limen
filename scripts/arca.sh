@@ -57,9 +57,11 @@ set -euo pipefail
 WORKSPACE="${ARCA_WORKSPACE:-$HOME/Workspace}"
 VAULT_REPO="${ARCA_REPO:-organvm/arca}"
 VAULT_DIR="${ARCA_VAULT_DIR:-$HOME/.arca-vault}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 KEY_SERVICE="${ARCA_KEY_SERVICE:-limen-arca-vault}"
 MAX_MB="${ARCA_MAX_MB:-512}"
 CHUNK_MB="${ARCA_CHUNK_MB:-90}"   # per-blob ceiling; GitHub hard-rejects files >100MB
+MAX_COMMIT_MB="${ARCA_MAX_COMMIT_MB:-128}" # bounded Git update; large estates must ship incrementally
 CLONE_URL_BASE="${ARCA_CLONE_URL_BASE:-https://github.com}"  # test hook: hermetic file:// remotes
 # A VERB IS REQUIRED. This used to default to `backup`, which meant typing `arca.sh` to see what it
 # does silently STARTED A BACKUP — sweeping every ~/Workspace/_*-private store, encrypting, and
@@ -82,6 +84,13 @@ arca.sh — encrypted private-estate vault. A VERB IS REQUIRED.
   arca.sh status                  manifest vs local: what's covered, what's stale
   arca.sh seal <src> <out.enc>    one-off envelope: tar+encrypt, roundtrip verified
   arca.sh unseal <in.enc> <dest>  decrypt a one-off envelope into <dest>
+  arca.sh assets --repo <owner/repo> --catalog <catalog.enc> --object <ciphertext> [--object ...] [--apply]
+                                  store opaque ciphertext as neutral, verified release assets
+  arca.sh objects <src> <out> [--previous <catalog.gpg>]
+                                  create independently encrypted file objects + encrypted catalog
+  arca.sh objects <destination> --restore-catalog <catalog.gpg> --objects-root <object-store>
+  arca.sh objects restore <catalog.gpg> <object-store> <new-destination>
+                                  verify and atomically restore one complete tree
 
 Config (env): ARCA_WORKSPACE, ARCA_REPO, ARCA_VAULT_DIR, ARCA_KEY_SERVICE, ARCA_MAX_MB,
 ARCA_CHUNK_MB, ARCA_CLONE_URL_BASE. Generations: the manifest owns the CURRENT generation
@@ -130,6 +139,128 @@ store_hash() {
 
 file_bytes() { # file_bytes <file> — portable byte count (wc -c works on BSD and GNU; stat -f%z is BSD-only)
   wc -c < "$1" | tr -d ' '
+}
+
+vault_pending_bytes() { # unique blobs reachable from HEAD but not the known remote main
+  local remote_ref="refs/remotes/origin/main"
+  local revision=HEAD
+  git -C "$VAULT_DIR" rev-parse --verify HEAD >/dev/null 2>&1 || { printf '0\n'; return 0; }
+  if git -C "$VAULT_DIR" show-ref --verify --quiet "$remote_ref"; then revision="${remote_ref}..HEAD"; fi
+  git -C "$VAULT_DIR" rev-list --objects "$revision" \
+    | awk '{print $1}' \
+    | git -C "$VAULT_DIR" cat-file --batch-check='%(objecttype) %(objectsize)' \
+    | awk '$1 == "blob" { total += $2 } END { printf "%.0f\n", total }'
+}
+
+staged_blob_bytes() { # union of pending history and index blobs absent from remote history
+  python3 - "$VAULT_DIR" <<'PY'
+import subprocess, sys
+root = sys.argv[1]
+paths = subprocess.check_output(
+    ["git", "-C", root, "diff", "--cached", "--name-only", "-z"]
+)
+def objects(ref):
+    return set(subprocess.check_output(
+        ["git", "-C", root, "rev-list", "--objects", "--no-object-names", ref]
+    ).splitlines())
+
+def exists(ref):
+    return subprocess.run(["git", "-C", root, "rev-parse", "--verify", ref],
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+
+remote = objects("refs/remotes/origin/main") if exists("refs/remotes/origin/main") else set()
+seen = objects("HEAD") if exists("HEAD") else set()
+for raw in filter(None, paths.split(b"\0")):
+    path = raw.decode("utf-8", "surrogateescape")
+    entries = subprocess.check_output(
+        ["git", "-C", root, "ls-files", "-s", "-z", "--", f":(literal){path}"]
+    )
+    for entry in filter(None, entries.split(b"\0")):
+        metadata, _indexed_path = entry.split(b"\t", 1)
+        _mode, oid, stage = metadata.split()
+        if stage != b"0":
+            continue
+        seen.add(oid)
+oids = sorted(seen - remote)
+output = subprocess.check_output(
+    ["git", "-C", root, "cat-file", "--batch-check=%(objecttype) %(objectsize)"],
+    input=b"".join(oid + b"\n" for oid in oids),
+)
+total = 0
+for row in output.splitlines():
+    kind, size = row.split()
+    if kind == b"blob":
+        total += int(size)
+print(total)
+PY
+}
+
+stage_batch() {
+  python3 - "$VAULT_DIR" "$1" <<'PY'
+import subprocess, sys
+root, label = sys.argv[1:]
+patterns = ["manifest.json"]
+if label != "generation":
+    patterns += [f"{label}.tar.enc", f"{label}.tar.enc.part.*"]
+raw = subprocess.check_output(["git", "-C", root, "ls-files", "--cached", "--others",
+                               "--exclude-standard", "-z", "--", *patterns])
+paths = sorted(set(p.decode("utf-8", "surrogateescape") for p in raw.split(b"\0") if p))
+if paths:
+    subprocess.run(["git", "-C", root, "add", "-A", "--",
+                    *(f":(literal){p}" for p in paths)], check=True)
+PY
+}
+
+manifest_remove() {
+  python3 - "$VAULT_DIR/manifest.json" "$1" <<'PY'
+import json, sys
+path, name = sys.argv[1:]
+with open(path) as stream:
+    manifest = json.load(stream)
+manifest.pop(name, None)
+with open(path, "w") as stream:
+    json.dump(manifest, stream, indent=1, sort_keys=True)
+PY
+}
+
+validate_commit_limit() {
+  [[ "$MAX_COMMIT_MB" =~ ^[1-9][0-9]*$ ]] && [ "$MAX_COMMIT_MB" -le 128 ] \
+    || die "ARCA_MAX_COMMIT_MB must be an integer from 1 through 128"
+}
+
+record_pushed_head() {
+  local local_head remote_head
+  local_head=$(git -C "$VAULT_DIR" rev-parse HEAD) || die "cannot resolve pushed HEAD"
+  remote_head=$(git -C "$VAULT_DIR" ls-remote --exit-code origin refs/heads/main | awk '{print $1}') \
+    || die "cannot verify pushed ciphertext; custody incomplete"
+  [ "$local_head" = "$remote_head" ] || die "remote changed after push; custody incomplete"
+  git -C "$VAULT_DIR" update-ref refs/remotes/origin/main "$remote_head"
+}
+
+commit_push_batch() {
+  local label="$1" pending staged limit
+  git -C "$VAULT_DIR" diff --cached --quiet \
+    || die "existing staged vault changes retained; cannot isolate batch"
+  limit=$(( MAX_COMMIT_MB * 1024 * 1024 ))
+  pending=$(vault_pending_bytes) || die "cannot measure unpushed Git objects; ciphertext retained"
+  if [ "$pending" -gt "$limit" ]; then
+    die "refusing oversized pending Git history (${pending} bytes > ${limit}); ciphertext retained for object-store custody"
+  fi
+  stage_batch "$label" || die "cannot stage bounded batch; ciphertext retained"
+  staged=$(staged_blob_bytes) || die "cannot measure staged ciphertext; nothing pushed"
+  if [ "$staged" -gt "$limit" ]; then
+    git -C "$VAULT_DIR" reset -q -- '*.tar.enc*' manifest.json
+    if [ "$label" != "generation" ]; then manifest_remove "$label"; fi
+    die "refusing oversized Git update (${staged} bytes > ${limit}); local ciphertext retained, coverage incomplete"
+  fi
+  git -C "$VAULT_DIR" diff --cached --quiet && return 0
+  git -C "$VAULT_DIR" commit -q -m "arca: seal $label $(date -u '+%F %TZ')" \
+    || die "cannot commit bounded ciphertext batch; local files retained"
+  git -C "$VAULT_DIR" push -q origin main \
+    || die "bounded ciphertext commit is local-only; custody remains incomplete"
+  record_pushed_head
+  changed=0
+  log "vault pushed bounded batch → $VAULT_REPO"
 }
 
 manifest_get() { # manifest_get <name> <field>
@@ -235,12 +366,14 @@ seal_store() { # seal_store <name> <force> — seal one store into the current g
   [ -d "$WORKSPACE/$name" ] || return 0
   size_mb=$(( $(du -sk "$WORKSPACE/$name" | cut -f1) / 1024 ))
   if [ "$size_mb" -gt "$MAX_MB" ]; then
-    log "SKIPPED $name — ${size_mb}MB exceeds ARCA_MAX_MB=$MAX_MB (raise the cap or split the store; a silent skip would read as covered, so this line is the alarm)"
-    return 0
+    die "incomplete coverage: ${size_mb}MB store exceeds ARCA_MAX_MB=$MAX_MB; source retained"
   fi
   h=$(store_hash "$WORKSPACE/$name")
   old=$(manifest_get "$name" hash)
-  [ "$h" = "$old" ] && [ "$force" != "1" ] && return 0
+  if [ "$h" = "$old" ] && [ "$force" != "1" ] \
+     && [ -z "$(git -C "$VAULT_DIR" status --porcelain=v1 --untracked-files=all -- "$name.tar.enc" "$name.tar.enc.part.*" manifest.json)" ]; then
+    return 0
+  fi
   [ -n "$key" ] || key=$(vault_key)
   tmp=$(mktemp -d)
   tar -C "$WORKSPACE" -cf "$tmp/$name.tar" "$name"
@@ -273,6 +406,11 @@ seal_store() { # seal_store <name> <force> — seal one store into the current g
 cut_generation() { # cut_generation [next-repo] — archive the current generation, prep a fresh one
   #                    re-points VAULT_REPO; the caller re-seals + pushes
   local cur_gen cur_repo base next_repo
+  if [ -d "$VAULT_DIR/.git" ]; then
+    [ -z "$(git -C "$VAULT_DIR" status --porcelain=v1 --untracked-files=all)" ] \
+      || die "rotation retained: local vault has unpublished changes"
+    record_pushed_head
+  fi
   cur_repo="$VAULT_REPO"
   if [ -d "$VAULT_DIR/.git" ]; then
     cur_gen=$(manifest_get _generation current)
@@ -290,12 +428,17 @@ cut_generation() { # cut_generation [next-repo] — archive the current generati
     || gh repo create "$next_repo" --private --confirm \
          -d "ARCA — encrypted private-estate vault, generation $(( cur_gen + 1 )) (ciphertext only; key lives in the owner's Keychain)" >/dev/null \
     || die "cannot create private vault repo $next_repo"
+  [ "$(gh repo view "$next_repo" --json visibility -q .visibility)" = "PRIVATE" ] \
+    || die "new generation is not PRIVATE; rotation refused"
   if [ -d "$VAULT_DIR/.git" ]; then
     # In-place cut: abandon the current generation's history so the new one is a ROOT commit
     # (no generation ever inherits another's growth). The working tree is kept; the caller
     # re-seals every store into the fresh tree. The shallow marker is dropped too — it names a
     # commit that stops existing, and the new generation is a full root, not a shallow cut.
     git -C "$VAULT_DIR" remote set-url origin "$CLONE_URL_BASE/$next_repo.git"
+    # The new generation is an independent root. Do not treat the archived remote's
+    # tracking ref as custody evidence or as the baseline for bounded pushes.
+    git -C "$VAULT_DIR" update-ref -d refs/remotes/origin/main 2>/dev/null || true
     git -C "$VAULT_DIR" checkout -q --orphan "arca-gen$(( cur_gen + 1 ))"
     git -C "$VAULT_DIR" rm -rf --cached -q . 2>/dev/null || true
     git -C "$VAULT_DIR" branch -q -D main 2>/dev/null || true
@@ -316,6 +459,12 @@ cut_generation() { # cut_generation [next-repo] — archive the current generati
 cmd_backup() {
   ensure_vault
   local key="" changed=0 force=0 pack_mb
+  validate_commit_limit
+  local pending_bytes limit_bytes
+  pending_bytes=$(vault_pending_bytes) || die "cannot measure pending Git history; ciphertext retained"
+  limit_bytes=$(( MAX_COMMIT_MB * 1024 * 1024 ))
+  [ "$pending_bytes" -le "$limit_bytes" ] \
+    || die "refusing oversized pending Git history (${pending_bytes} bytes > ${limit_bytes}); ciphertext retained for object-store custody"
   # Generation rotation (the root-cause fix, #2089): once the current generation's pack
   # crosses ARCA_MAX_MB, cut the next generation instead of growing one history forever.
   pack_mb=$(vault_pack_mb 2>/dev/null || echo 0)
@@ -327,25 +476,25 @@ cmd_backup() {
   for s in "$WORKSPACE"/_*-private; do
     [ -d "$s" ] || continue
     seal_store "$(basename "$s")" "$force"
+    if [ "$changed" = "1" ]; then
+      commit_push_batch "$(basename "$s")"
+    fi
   done
   # -A stages deletions too (monolith→parts transitions and vice versa); the vault is a
   # machine-owned ciphertext repo, so the pathspec keeps this surgical anyway. A rotation
   # commits the generation metadata even if every store was already current.
   if [ "$changed" = "1" ] || [ "$force" = "1" ]; then
-    git -C "$VAULT_DIR" add -A -- '*.tar.enc*' manifest.json
-    git -C "$VAULT_DIR" commit -q -m "arca: seal $(date -u '+%F %TZ')"
-    # A fresh clone of an empty repo has no upstream yet (and a freshly cut generation
-    # points at a brand-new repo) — `push -u` establishes it and is a no-op on the
-    # already-tracking case. Every commit THIS run is pushed: unpushed retries from a
-    # previous run are covered by the origin/main branch below.
-    git -C "$VAULT_DIR" push -q -u origin main || die "push failed — ciphertext committed locally, will retry next beat"
-    log "vault pushed → $VAULT_REPO"
-  elif [ -n "$(git -C "$VAULT_DIR" log --oneline 'origin/main..HEAD' 2>/dev/null || true)" ]; then
+    commit_push_batch "generation"
+  elif [ "$(vault_pending_bytes)" -gt 0 ]; then
     # Push whatever is unpushed — a seal a previous run committed but failed to push (the
     # "retry next beat" promise lives here, not in the failure message). origin/main, not
     # @{u}: after a failed `push -u` the upstream is never recorded, but the remote ref is.
     log "retrying unpushed seal commit(s) from a previous run"
-    git -C "$VAULT_DIR" push -q origin main || die "push failed — ciphertext committed locally, will retry next beat"
+    pending_bytes=$(vault_pending_bytes) || die "cannot measure pending Git history; ciphertext retained"
+    [ "$pending_bytes" -le "$limit_bytes" ] \
+      || die "refusing oversized pending Git history (${pending_bytes} bytes > ${limit_bytes}); ciphertext retained for object-store custody"
+    git -C "$VAULT_DIR" push -q origin main || die "bounded seal commit remains local-only; custody incomplete"
+    record_pushed_head
     log "vault pushed → $VAULT_REPO"
   elif [ "$changed" = "0" ]; then
     log "everything current — nothing to seal"
@@ -353,17 +502,21 @@ cmd_backup() {
 }
 
 cmd_rotate() { # cmd_rotate [next-repo] — cut a new generation NOW (seed if no working vault exists)
+  validate_commit_limit
+  local changed=0 manifest_repo
   if [ ! -d "$VAULT_DIR/.git" ]; then
     log "no working vault — archiving $VAULT_REPO and seeding a fresh generation"
+  else
+    manifest_repo=$(manifest_get _generation repo)
+    [ -n "$manifest_repo" ] && VAULT_REPO="$manifest_repo"
   fi
   cut_generation "${1:-}"
   for s in "$WORKSPACE"/_*-private; do
     [ -d "$s" ] || continue
     seal_store "$(basename "$s")" 1
+    if [ "$changed" = "1" ]; then commit_push_batch "$(basename "$s")"; fi
   done
-  git -C "$VAULT_DIR" add -A -- '*.tar.enc*' manifest.json
-  git -C "$VAULT_DIR" commit -q -m "arca: rotate $(date -u '+%F %TZ')"
-  git -C "$VAULT_DIR" push -q -u origin main || die "push failed — ciphertext committed locally, will retry next beat"
+  commit_push_batch generation
   log "vault pushed → $VAULT_REPO"
 }
 
@@ -427,8 +580,16 @@ cmd_status() { # cmd_status [--json] [--strict] — COVERAGE: does the vault hol
   # Under --json that would prepend prose to the payload and make it unparseable — a
   # machine-readable interface has to keep stdout pure, so its chatter goes to stderr instead.
   if [ "$as_json" = "1" ]; then ensure_vault 1>&2; else ensure_vault; fi
-  local name h old when state stale=0 first=1
-  if [ "$as_json" = "1" ]; then printf '{"schema":"limen.arca_coverage.v1","stores":['; fi
+  local name h old when state stale=0 first=1 vault_pending=0 vault_status vault_head remote_head
+  vault_status=$(git -C "$VAULT_DIR" status --porcelain=v1 --untracked-files=all 2>/dev/null || echo unavailable)
+  remote_head=$(git -C "$VAULT_DIR" ls-remote --exit-code origin refs/heads/main 2>/dev/null | awk '{print $1}') || remote_head=""
+  vault_head=$(git -C "$VAULT_DIR" rev-parse --verify HEAD 2>/dev/null || true)
+  if [ -n "$vault_status" ] || [ -z "$remote_head" ] || [ "$vault_head" != "$remote_head" ]; then
+    vault_pending=1
+    stale=1
+  fi
+  if [ "$as_json" = "1" ]; then printf '{"schema":"limen.arca_coverage.v1","vault_state":"%s","stores":[' \
+    "$([ "$vault_pending" = "0" ] && printf 'remote_current' || printf 'local_or_unpushed')"; fi
   for s in "$WORKSPACE"/_*-private; do
     [ -d "$s" ] || continue
     name=$(basename "$s"); h=$(store_hash "$s"); old=$(manifest_get "$name" hash); when=$(manifest_get "$name" updated)
@@ -449,6 +610,7 @@ cmd_status() { # cmd_status [--json] [--strict] — COVERAGE: does the vault hol
       esac
     fi
   done
+  [ "$vault_pending" = "0" ] || { [ "$as_json" = "1" ] || echo "  ✗ vault has local or unpushed changes — remote custody incomplete"; }
   if [ "$as_json" = "1" ]; then
     local ok_json=true
     if [ "$stale" = "1" ]; then ok_json=false; fi
@@ -490,6 +652,37 @@ cmd_unseal() {
   log "unsealed $(basename "$in") → $dest"
 }
 
+cmd_assets() {
+  local -a args=()
+  local repo_set=0
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --repo|--catalog|--object)
+        [ $# -ge 2 ] || die "$1 requires a path"
+        args+=("$1" "$2")
+        [ "$1" != "--repo" ] || repo_set=1
+        shift 2 ;;
+      --apply)
+        args+=(--apply); shift ;;
+      *) die "unknown assets option '$1'" ;;
+    esac
+  done
+  [ "$repo_set" = "1" ] || die "assets requires explicit --repo so the outbound receipt is bound to the target"
+  python3 "$SCRIPT_DIR/arca-release-assets.py" "${args[@]}"
+}
+
+cmd_objects() {
+  if [ "${1:-}" = "restore" ]; then
+    shift
+    [ "$#" -eq 3 ] || die "objects restore requires <catalog.gpg> <object-store> <new-destination>"
+    local catalog="$1" object_root="$2" destination="$3"
+    python3 "$SCRIPT_DIR/arca-file-objects.py" "$destination" --restore-catalog "$catalog" --objects-root "$object_root"
+    return
+  fi
+  [ "$#" -ge 2 ] || die "objects requires <source-directory> <output-directory>"
+  python3 "$SCRIPT_DIR/arca-file-objects.py" "$@"
+}
+
 case "$CMD" in
   backup)  cmd_backup ;;
   rotate)  shift; cmd_rotate "$@" ;;
@@ -497,5 +690,7 @@ case "$CMD" in
   status)  shift; cmd_status "$@" ;;
   seal)    shift; cmd_seal "$@" ;;
   unseal)  shift; cmd_unseal "$@" ;;
-  *) die "unknown verb '$CMD' (backup|rotate|restore|status|seal|unseal)" ;;
+  assets)  shift; cmd_assets "$@" ;;
+  objects) shift; cmd_objects "$@" ;;
+  *) die "unknown verb '$CMD' (backup|rotate|restore|status|seal|unseal|assets|objects)" ;;
 esac

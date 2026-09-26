@@ -1,0 +1,44 @@
+{
+  "schema": "limen.remote-first-custody-checkpoint.v1",
+  "cohort": "git-store-custody-20260925",
+  "candidate": "candidate-01",
+  "date": "2026-09-25",
+  "owner": "https://github.com/4444J99/limen/issues/2740",
+  "encrypted_store": {
+    "catalog_sha256": "cdae1e1104438bfdadb67e4e0097f315d205bd7082ec9f54e8dcf9eec6b27f93",
+    "files": 326,
+    "asset_count": 327,
+    "ciphertext_bytes": 1574759,
+    "remote_verification": "sha256-and-size-verified; catalog-published-last",
+    "coverage": "incomplete-native-metadata"
+  },
+  "encrypted_provenance": {
+    "catalog_sha256": "1e67d45e73dfbb7bd5d18235a60e551dde62c4fc3a6ae8efb38a02b38e04567e",
+    "asset_count": 2,
+    "ciphertext_bytes": 1801,
+    "remote_verification": "full-readback-verified"
+  },
+  "unreachable_objects_in_captured_store": {"commit": 59, "tree": 117, "blob": 11},
+  "subsequent_git_source_parity": {
+    "local_objects": 640,
+    "object_inventory_sha256": "b2515c0a8742ea7cc04b5c21297c551f826b095fac722ca1ead93d2af7cf5259",
+    "live_remote_anchors_present_locally": 244,
+    "missing_from_verified_remote_graph": 0,
+    "selected_remote_refs_stable_across_check": true,
+    "local_object_inventory_stable_across_check": true,
+    "new_preservation_branches": 3,
+    "new_tree_tags": 1,
+    "default_branch_changed": false,
+    "scope": "all locally present Git objects, not a full clone or administrative-state restore"
+  },
+  "restoration_verified": false,
+  "independent_key_recovery_verified": false,
+  "independent_replica_verified": false,
+  "retirement_authorized": false,
+  "local_disposition": "retained",
+  "removed_copies": 0,
+  "native_recovery_gate": "matching key found in configured keyring; native unlock unavailable",
+  "external_device_observation": "no independent custody volume mounted",
+  "free_space_sample_kib": 30808580,
+  "free_space_change_attributed_to_this_attempt": false
+}

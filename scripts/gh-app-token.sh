@@ -72,7 +72,7 @@ while [ "$#" -gt 0 ]; do
       ;;
     --require-permission)
       if [ "$#" -lt 2 ] || [[ ! "$2" =~ ^[a-z][a-z0-9_]*=(read|write)$ ]]; then
-        echo "gh-app-token: --require-permission requires NAME=read or NAME=write" >&2
+        echo "gh-app-token: --require-permission requires NAME=read or NAME=write" >&2 # allow-secret: diagnostic label only
         exit 2
       fi
       REQUIRED_PERMISSIONS+=("$2")
@@ -96,7 +96,7 @@ if [ "$REQUIRE_SECRETS_WRITE" = "1" ] && [ "$APP_ONLY" != "1" ]; then
 fi
 
 if [ "$REQUIRED_PERMISSION_COUNT" -gt 0 ] && [ "$APP_ONLY" != "1" ]; then
-  echo "gh-app-token: --require-permission requires --app-only" >&2
+  echo "gh-app-token: --require-permission requires --app-only" >&2 # allow-secret: diagnostic label only
   exit 2
 fi
 

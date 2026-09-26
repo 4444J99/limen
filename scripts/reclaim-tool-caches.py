@@ -33,10 +33,11 @@ LOG_PATH = ROOT / "logs" / "reclaim-tool-caches.jsonl"
 class CacheSpec:
     label: str
     process_tokens: tuple[str, ...]
+    lifecycle_owner: str | None = None
 
 
 CACHE_SPECS = (
-    CacheSpec("~/.cache/codex-runtimes", ()),
+    CacheSpec("~/.cache/codex-runtimes", ("codex",), "Domus installed runtime lifecycle"),
     CacheSpec("~/.cache/npm", ("npm", "npx", "node")),
     CacheSpec("~/.cache/organvm/capabilities", ("capabilities/conductor", "capabilities/voice-scorer")),
     CacheSpec("~/.cache/pnpm", ("pnpm", "node")),
@@ -46,11 +47,15 @@ CACHE_SPECS = (
     CacheSpec("~/.npm/_cacache", ("npm", "npx", "node")),
     CacheSpec("~/.pytest_cache", ("pytest",)),
     CacheSpec("~/.local/share/pnpm/store", ("pnpm", "node")),
-    CacheSpec("~/.local/share/codex/.tmp", ("codex",)),
-    CacheSpec("~/.local/share/limen/runtimes", ("limen",)),
-    CacheSpec("~/.local/share/nvim/mason", ("nvim", "mason", "lua-language-server")),
-    CacheSpec("~/.serena/language_servers/static", ("serena", "language_servers/static", "lua-language-server")),
-    CacheSpec("~/.claude/plugins/marketplaces/claude-code-warp", ("claude-code-warp",)),
+    CacheSpec("~/.local/share/codex/.tmp", ("codex",), "Codex recovery custody"),
+    CacheSpec("~/.local/share/limen/runtimes", ("limen",), "Domus installed runtime lifecycle"),
+    CacheSpec("~/.local/share/nvim/mason", ("nvim", "mason", "lua-language-server"), "Domus installed tools"),
+    CacheSpec(
+        "~/.serena/language_servers/static",
+        ("serena", "language_servers/static", "lua-language-server"),
+        "Domus installed tools",
+    ),
+    CacheSpec("~/.claude/plugins/marketplaces/claude-code-warp", ("claude-code-warp",), "Domus plugin custody"),
     CacheSpec("~/Library/Caches/ms-playwright", ("playwright",)),
     CacheSpec("~/Library/Caches/ms-playwright-go", ("playwright",)),
     CacheSpec("~/Library/Caches/go-build", ("go",)),
@@ -62,7 +67,7 @@ CACHE_SPECS = (
     CacheSpec("~/Library/Caches/prisma-nodejs", ("prisma", "node")),
     CacheSpec("~/Library/Caches/pylint", ("pylint",)),
     CacheSpec("~/Library/Caches/virtualenv", ("virtualenv",)),
-    CacheSpec("~/Library/Application Support/Godot/export_templates", ("godot",)),
+    CacheSpec("~/Library/Application Support/Godot/export_templates", ("godot",), "Domus installed tools"),
 )
 
 EXCLUDED_CLASSES = (
@@ -75,7 +80,14 @@ EXCLUDED_CLASSES = (
     "mail-messages-photos",
     "worktrees",
     "personal-raw-data",
+    "application-recovery-git-stores",
+    "installed-runtimes-and-tools",
+    "plugin-source-checkouts",
 )
+
+
+class CacheCustodyRequired(ValueError):
+    """A cache contains repository state owned by the custody lifecycle."""
 
 
 def expand(path: str) -> Path:
@@ -122,7 +134,7 @@ def fmt_bytes(value: int | None) -> str:
 
 
 def process_snapshot() -> tuple[list[dict[str, object]], str]:
-    """Return bounded PID/argv/cwd evidence, or an explicit sensor error."""
+    """Return PID/open-file/executable/cwd evidence, or an explicit sensor error."""
 
     try:
         ps = subprocess.run(
@@ -132,8 +144,8 @@ def process_snapshot() -> tuple[list[dict[str, object]], str]:
             timeout=10,
             check=False,
         )
-        cwd = subprocess.run(
-            ["lsof", "-nP", "-a", "-d", "cwd", "-F", "pcn"],
+        opened = subprocess.run(
+            ["lsof", "-nP", "-F", "pfn"],
             text=True,
             capture_output=True,
             timeout=15,
@@ -141,8 +153,10 @@ def process_snapshot() -> tuple[list[dict[str, object]], str]:
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
         return [], f"process-sensor-error:{type(exc).__name__}"
-    if ps.returncode != 0 or cwd.returncode != 0:
-        return [], f"process-sensor-returncode:ps={ps.returncode},lsof={cwd.returncode}"
+    if ps.returncode != 0 or opened.returncode != 0:
+        return [], f"process-sensor-returncode:ps={ps.returncode},lsof={opened.returncode}"
+    if opened.stderr.strip():
+        return [], "process-sensor-incomplete:lsof-diagnostic"
 
     rows: dict[int, dict[str, object]] = {}
     for line in ps.stdout.splitlines():
@@ -150,14 +164,23 @@ def process_snapshot() -> tuple[list[dict[str, object]], str]:
         if not fields or not fields[0].isdigit():
             continue
         pid = int(fields[0])
-        rows[pid] = {"pid": pid, "command": fields[1] if len(fields) > 1 else "", "cwd": ""}
+        rows[pid] = {"pid": pid, "command": fields[1] if len(fields) > 1 else "", "cwd": "", "references": []}
 
     current_pid: int | None = None
-    for line in cwd.stdout.splitlines():
+    descriptor = ""
+    for line in opened.stdout.splitlines():
         if line.startswith("p") and line[1:].isdigit():
             current_pid = int(line[1:])
+            rows.setdefault(current_pid, {"pid": current_pid, "command": "", "cwd": "", "references": []})
+            descriptor = ""
+        elif line.startswith("f"):
+            descriptor = line[1:]
         elif line.startswith("n") and current_pid in rows:
-            rows[current_pid]["cwd"] = line[1:]
+            name = line[1:]
+            if name.startswith("/"):
+                rows[current_pid]["references"].append(name)
+                if descriptor == "cwd":
+                    rows[current_pid]["cwd"] = name
     return list(rows.values()), ""
 
 
@@ -172,12 +195,13 @@ def _path_contains(parent: Path, child: str) -> bool:
 
 
 def active_owners(spec: CacheSpec, path: Path, processes: Iterable[dict[str, object]]) -> list[int]:
-    tokens = tuple(token.lower() for token in spec.process_tokens)
+    # Program-name substrings are neither reference proof nor proof of absence.
+    # lsof includes executable mappings, libraries, cwd and open data files.
     owners: set[int] = set()
     for row in processes:
-        command = str(row.get("command") or "").lower()
         cwd = str(row.get("cwd") or "")
-        if any(token in command for token in tokens) or _path_contains(path, cwd):
+        references = [cwd, str(row.get("executable") or ""), *row.get("references", [])]
+        if any(_path_contains(path, str(reference)) for reference in references):
             try:
                 owners.add(int(row["pid"]))
             except (KeyError, TypeError, ValueError):
@@ -190,9 +214,12 @@ def _tree_identity(path: Path) -> tuple[str, int]:
 
     digest = hashlib.sha256()
     count = 0
+    deadline = time.monotonic() + 30
 
     def add(entry: Path) -> None:
         nonlocal count
+        if time.monotonic() >= deadline:
+            raise TimeoutError("cache identity inspection exceeded its deadline")
         info = entry.lstat()
         relative = "." if entry == path else str(entry.relative_to(path))
         record = (
@@ -217,6 +244,12 @@ def _tree_identity(path: Path) -> tuple[str, int]:
             followlinks=False,
             onerror=raise_walk_error,
         ):
+            if (
+                ".git" in directories
+                or ".git" in files
+                or ("HEAD" in files and {"objects", "refs"}.issubset(directories))
+            ):
+                raise CacheCustodyRequired("repository state requires owner-specific custody")
             directories.sort()
             files.sort()
             root_path = Path(root)
@@ -248,11 +281,13 @@ def inspect_caches() -> list[dict[str, Any]]:
     for spec in CACHE_SPECS:
         path = expand(spec.label)
         exists = path.exists() or path.is_symlink()
-        kib = du_kib(path) if exists else 0
+        kib = du_kib(path) if exists and not spec.lifecycle_owner else None if exists else 0
         owners = active_owners(spec, path, processes) if not sensor_error else []
         reason = "missing"
         identity: dict[str, object] | None = None
-        if exists and not _under_home(path):
+        if exists and spec.lifecycle_owner:
+            reason = "owner-policy-required"
+        elif exists and not _under_home(path):
             reason = "outside-home"
         elif exists and sensor_error:
             reason = "sensor-unknown"
@@ -263,6 +298,8 @@ def inspect_caches() -> list[dict[str, Any]]:
         elif exists:
             try:
                 identity = _identity(path, int(kib))
+            except CacheCustodyRequired:
+                reason = "repository-custody-required"
             except (OSError, StopIteration):
                 reason = "identity-unknown"
             else:
@@ -273,10 +310,11 @@ def inspect_caches() -> list[dict[str, Any]]:
                 "label": spec.label,
                 "exists": exists,
                 "classification": reason,
+                "lifecycle_owner": spec.lifecycle_owner,
                 "active_pids": owners,
                 "sensor_error": sensor_error,
                 "reclaimable_kib": int(kib or 0),
-                "reclaimable_size": fmt_bytes(int(kib or 0) * 1024),
+                "reclaimable_size": fmt_bytes(kib * 1024 if kib is not None else None),
                 "identity": identity,
             }
         )
@@ -338,6 +376,16 @@ def apply_plan(expected_plan_sha: str) -> dict[str, Any]:
 
     removed: list[dict[str, object]] = []
     for path, candidate in verified:
+        # A lengthy inspection of other caches must not make an earlier process
+        # snapshot or identity receipt deletion authority for this candidate.
+        spec = next(spec for spec in CACHE_SPECS if expand(spec.label) == path)
+        if spec.lifecycle_owner:
+            raise ValueError("owner-specific lifecycle required; cache retained")
+        processes, sensor_error = process_snapshot()
+        if sensor_error or active_owners(spec, path, processes):
+            raise ValueError("process references changed or unavailable; cache retained")
+        if _identity(path, int(candidate["reclaimable_kib"])) != candidate:
+            raise ValueError("candidate identity changed immediately before retirement")
         remove_path(path)
         removed.append(candidate)
 
@@ -363,8 +411,20 @@ def apply_plan(expected_plan_sha: str) -> dict[str, Any]:
 
 def write_log(payload: dict[str, Any]) -> None:
     LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
-    with LOG_PATH.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(payload, sort_keys=True) + "\n")
+    descriptor = os.open(
+        LOG_PATH,
+        os.O_WRONLY | os.O_APPEND | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0),
+        0o600,
+    )
+    try:
+        os.fchmod(descriptor, 0o600)
+        handle = os.fdopen(descriptor, "a", encoding="utf-8")
+        descriptor = -1
+        with handle:
+            handle.write(json.dumps(payload, sort_keys=True) + "\n")
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
 
 
 def _print_human(payload: dict[str, Any]) -> None:
