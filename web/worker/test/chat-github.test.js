@@ -48,6 +48,18 @@ async function fixture() {
   });
   return {controller,principal,calls,service,values};
 }
+test("GitHub redirects fail closed using the Workers-supported manual mode", async () => {
+  const f = await fixture();
+  let requests = 0;
+  f.controller.request = async (url, options) => {
+    requests++;
+    assert.equal(new URL(url).hostname, "api.github.com");
+    assert.equal(options.redirect, "manual");
+    return new Response(null, { status: 302, headers: { location: "https://untrusted.invalid/" } });
+  };
+  await assert.rejects(f.controller.github("/repos/4444J99/limen"), /chat_github_http_302/);
+  assert.equal(requests, 1);
+});
 test("canonical admission and duplicate replay keep payloads out of graphs", async()=>{
   const f=await fixture();
   const first=await f.controller.submit(f.principal,input());
