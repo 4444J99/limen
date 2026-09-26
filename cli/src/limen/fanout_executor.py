@@ -55,6 +55,10 @@ class FanoutExecutionError(RuntimeError):
     """A provider launch, probe, or landing failed closed."""
 
 
+class PrelaunchFanoutExecutionError(FanoutExecutionError):
+    """Definite rejection before provider acceptance; not a generic exception."""
+
+
 class TransientFanoutExecutionError(FanoutExecutionError):
     """A bounded retry or another live executor may clear this failure."""
 
@@ -78,6 +82,7 @@ class ProviderState:
     status: str
     detail: str = ""
     failure_class: str | None = None
+    provider_state: str = "unknown"
 
 
 @dataclass(frozen=True)
@@ -312,7 +317,26 @@ def _predicate_timeout(packet: dict[str, Any]) -> int:
     remaining = int(
         (datetime.fromisoformat(packet["deadline"].replace("Z", "+00:00")) - datetime.now(timezone.utc)).total_seconds()
     )
-    return max(1, min(1800, remaining))
+    if remaining <= 0:
+        raise FanoutExecutionError("verification deadline exhausted")
+    return min(600, remaining)
+
+
+def _admit_predicate(packet: dict[str, Any]) -> dict[str, Any]:
+    """Reuse the keeper's verification window across retries and worker restarts."""
+    client = client_from_env()
+    if not isinstance(client, HttpConductClient):
+        raise FanoutExecutionError("verification requires the remote execution keeper")
+    work_key = packet["work_key"]
+    reservation = client.reserve_growth(
+        work_key, "verification", hashlib.sha256((work_key + ":verification").encode()).hexdigest()
+    )
+    deadlines = [
+        datetime.fromisoformat(value.replace("Z", "+00:00")) for value in (packet["deadline"], reservation["deadline"])
+    ]
+    bounded = {**packet, "deadline": min(deadlines).isoformat()}
+    _predicate_timeout(bounded)
+    return bounded
 
 
 def _predicate_environment(home: Path) -> dict[str, str]:
@@ -331,7 +355,9 @@ def _run_predicate(packet: dict[str, Any], worktree: Path) -> subprocess.Complet
     """Run provider-controlled predicates without network or ambient credentials."""
 
     from limen.host_admission import hold_lease
+    from limen.dispatch import _run_capture
 
+    packet = _admit_predicate(packet)
     with tempfile.TemporaryDirectory(prefix="limen-fanout-predicate-") as temporary:
         home = Path(temporary)
         git_common = Path(
@@ -405,21 +431,112 @@ def _run_predicate(packet: dict[str, Any], worktree: Path) -> subprocess.Complet
                 owner=f"fanout:{canonical_hash(packet['work_id'])[:24]}",
                 surface="fanout-predicate",
             ):
-                return subprocess.run(
+                return _run_capture(
                     command,
                     cwd=str(worktree),
                     env=_predicate_environment(home),
-                    text=True,
-                    capture_output=True,
                     timeout=_predicate_timeout(packet),
-                    check=False,
                 )
         except (OSError, subprocess.SubprocessError) as exc:
             raise FanoutExecutionError(f"predicate sandbox failed: {exc}") from exc
 
 
+def _landing_root(packet: dict[str, Any]) -> Path:
+    """Reserve a durable landing root before cloning; never erase failed results."""
+    from limen.inventory_admission import reserve_growth
+    from limen.worktree_roots import default_worktrees_root
+
+    base = Path(os.environ.get("LIMEN_WORKTREES") or default_worktrees_root())
+    root = base / f"fanout-land-{canonical_hash(packet['work_id'])[:24]}"
+    if root.exists() or root.is_symlink():
+        if not root.is_symlink():
+            try:
+                prior = json.loads((root / "landing-custody.json").read_text())
+                if (
+                    prior.get("work_id") == packet["work_id"]
+                    and prior.get("work_key") == packet["work_key"]
+                    and prior.get("state") in {"release-pending", "remote-receipt-recorded"}
+                    and prior.get("run_receipt")
+                ):
+                    return root
+            except (OSError, ValueError):
+                pass
+        raise FanoutExecutionError(f"retained landing requires custody recovery: {root}")
+    reserve_growth("worktree", str(root / "repository"), work_key=packet["work_key"])
+    root.mkdir(parents=True, exist_ok=False, mode=0o700)
+    (root / "landing-custody.json").write_text(
+        json.dumps(
+            {
+                "work_id": packet["work_id"],
+                "work_key": packet["work_key"],
+                "owner": "fanout-result-landing",
+                "state": "preserved-unfinished",
+                "cleanup_owner": "scripts/reclaim-worktrees.py",
+            },
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    return root
+
+
+def _release_landing_copies(root: Path, packet: dict[str, Any], receipt: RunReceiptV1) -> None:
+    from limen.worktree_abandonment import retire_released_worktree
+
+    repository = packet["execution"]["owner_repository"]
+    head = receipt.observed_heads_after[repository]
+    branch = packet["execution"]["topic_branch"]
+    clone = root / "repository"
+    live_root = Path(
+        os.environ.get("LIMEN_LIVE_ROOT") or os.environ.get("LIMEN_ROOT") or Path.home() / "Workspace/limen"
+    )
+    custody = {
+        "work_id": packet["work_id"],
+        "work_key": packet["work_key"],
+        "owner": "fanout-result-landing",
+        "state": "release-pending",
+        "run_receipt": receipt.model_dump(mode="json"),
+        "cleanup_owner": "scripts/reclaim-worktrees.py",
+    }
+    marker = root / "landing-custody.json"
+    pending = marker.with_suffix(".pending")
+    pending.write_text(json.dumps(custody, sort_keys=True) + "\n")
+    os.replace(pending, marker)
+    releases = []
+    for copy in (root / "worktree", root / f"verify-{canonical_hash(head)[:16]}"):
+        releases.append(
+            retire_released_worktree(
+                clone,
+                copy,
+                expected_head=head,
+                remote_ref=f"refs/heads/{branch}",
+                receipt_root=live_root / "logs/worktree-abandonment",
+            )
+        )
+    pending.write_text(
+        json.dumps(
+            {
+                "work_id": packet["work_id"],
+                "work_key": packet["work_key"],
+                "owner": "fanout-result-landing",
+                "state": "remote-receipt-recorded",
+                "run_receipt": receipt.model_dump(mode="json"),
+                "receipt_id": receipt.receipt_id,
+                "head": head,
+                "branch": branch,
+                "releases": releases,
+                "clone_disposition": "retained-remote-backed-recovery-anchor",
+                "cleanup_owner": "scripts/reclaim-worktrees.py",
+            },
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    os.replace(pending, marker)
+
+
 class PatchLandingMixin:
-    """Apply one provider result in a disposable clone and leave only remote custody."""
+    """Apply provider results with durable local custody until retirement is proven."""
 
     def apply_result(self, provider_run_id: str, worktree: Path) -> None:
         raise NotImplementedError
@@ -441,34 +558,58 @@ class PatchLandingMixin:
         allowed = tuple(str(path) for path in packet["authority"]["path_prefixes"])
         if not attempt.provider_run_id or not attempt.provider_run_url:
             raise FanoutExecutionError("terminal provider attempt has no exact run receipt")
-        if remote_default_head(repository) != exact_base:
-            raise StaleResultError(f"{repository} default head moved from exact base {exact_base}")
-
-        with tempfile.TemporaryDirectory(prefix="limen-fanout-land-") as temporary:
-            root = Path(temporary)
-            clone = root / "repository"
-            worktree = root / "worktree"
-            _checked(
-                ["gh", "repo", "clone", repository, str(clone), "--", "--filter=blob:none", "--no-checkout"],
-                timeout=300,
-            )
-            _checked(["git", "fetch", "origin", exact_base], cwd=clone, timeout=300)
-            remote_branch = _run(["git", "ls-remote", "--exit-code", "--heads", "origin", branch], cwd=clone)
-            if remote_branch.returncode == 0:
-                return self._receipt_from_existing(node, attempt, clone, branch, exact_base, allowed)
-            if remote_branch.returncode != 2:
-                detail = (remote_branch.stderr or remote_branch.stdout).strip()
-                raise FanoutExecutionError(f"remote branch probe failed: {detail[-800:]}")
-            _checked(["git", "worktree", "add", "-b", branch, str(worktree), exact_base], cwd=clone, timeout=180)
-            return self._land_new_result(
-                node,
-                attempt,
-                worktree,
+        root = _landing_root(packet)
+        prior = json.loads((root / "landing-custody.json").read_text())
+        if prior.get("run_receipt"):
+            receipt = RunReceiptV1.model_validate(prior["run_receipt"])
+            if receipt.run_id != node["run_id"] or receipt.receipt_id != f"receipt-{attempt.attempt_id}":
+                raise FanoutExecutionError("retained landing receipt belongs to another attempt")
+            pr_url = next((check.url for check in receipt.checks if check.name == "pull-request"), None)
+            if not pr_url:
+                raise FanoutExecutionError("retained landing has no pull-request receipt")
+            self._verify_remote_receipts(
                 repository,
                 branch,
+                _assert_topic_branch(repository, branch),
+                receipt.observed_heads_after[repository],
+                pr_url,
                 exact_base,
-                allowed,
             )
+            _release_landing_copies(root, packet, receipt)
+            return receipt
+        if remote_default_head(repository) != exact_base:
+            raise StaleResultError(f"{repository} default head moved from exact base {exact_base}")
+        clone = root / "repository"
+        worktree = root / "worktree"
+        _checked(
+            ["gh", "repo", "clone", repository, str(clone), "--", "--filter=blob:none", "--no-checkout"],
+            timeout=300,
+        )
+        _checked(["git", "fetch", "origin", exact_base], cwd=clone, timeout=300)
+        remote_branch = _run(["git", "ls-remote", "--exit-code", "--heads", "origin", branch], cwd=clone)
+        if remote_branch.returncode == 0:
+            receipt = self._receipt_from_existing(node, attempt, clone, branch, exact_base, allowed)
+            _release_landing_copies(root, packet, receipt)
+            return receipt
+        if remote_branch.returncode != 2:
+            detail = (remote_branch.stderr or remote_branch.stdout).strip()
+            raise FanoutExecutionError(f"remote branch probe failed: {detail[-800:]}")
+        from limen.inventory_admission import reserve_growth
+
+        reserve_growth("worktree", str(worktree), work_key=packet["work_key"])
+        reserve_growth("branch", f"{repository}:{branch}", work_key=packet["work_key"])
+        _checked(["git", "worktree", "add", "-b", branch, str(worktree), exact_base], cwd=clone, timeout=180)
+        receipt = self._land_new_result(
+            node,
+            attempt,
+            worktree,
+            repository,
+            branch,
+            exact_base,
+            allowed,
+        )
+        _release_landing_copies(root, packet, receipt)
+        return receipt
 
     def _land_new_result(
         self,
@@ -583,12 +724,16 @@ class PatchLandingMixin:
 
         from limen.host_admission import hold_lease, worktree_scope
 
+        packet = _admit_predicate(packet)
         verification = repository.parent / f"verify-{canonical_hash(head)[:16]}"
         git_root = repository
         if _run(["git", "rev-parse", "--is-bare-repository"], cwd=repository).stdout.strip() != "true":
             git_root = Path(
                 _checked(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"], cwd=repository).strip()
             ).parent
+        from limen.inventory_admission import reserve_growth
+
+        reserve_growth("worktree", str(verification), work_key=packet["work_key"])
         _checked(["git", "worktree", "add", "--detach", str(verification), head], cwd=git_root)
         scope = worktree_scope(verification)
         with hold_lease(
@@ -1186,6 +1331,12 @@ def launch_ready_nodes(
         ) or (unused or eligible_adapters)[0]
         if existing:
             current = existing[-1]
+            if (
+                current.adapter == "jules-api"
+                and current.provider_state in {"unknown", "nonterminal"}
+                and current.status in {"failed", "blocked"}
+            ):
+                continue  # A local failure is not proof that provider compute stopped.
             if current.status not in {"launching", "failed", "blocked"}:
                 continue
             if (
@@ -1274,6 +1425,25 @@ def launch_ready_nodes(
             )
             continue
         try:
+            if node.get("execution_admission"):
+                admission_deadline = str(node["execution_admission"]["attempt_deadline"])
+                if datetime.fromisoformat(admission_deadline.replace("Z", "+00:00")) <= datetime.now(timezone.utc):
+                    raise PrelaunchFanoutExecutionError("execution attempt deadline exhausted before provider launch")
+                if getattr(adapter, "enforces_deadline", False):
+                    packet = {**packet, "deadline": admission_deadline}
+                elif (
+                    adapter.name == "jules-api"
+                    and getattr(adapter, "fenced_async_submission", False)
+                    and node["execution_admission"].get("deadline_policy") == "fenced_async"
+                ):
+                    # Async providers may outlive Limen's execution lease. Admission therefore
+                    # bounds the create call, while the exact provider identity remains owned
+                    # and late output requires a separately admitted recovery/integration pass.
+                    packet = {**packet, "submission_deadline": admission_deadline}
+                else:
+                    raise PrelaunchFanoutExecutionError(
+                        f"{adapter.name}: provider hard-deadline enforcement unavailable"
+                    )
             if adapter.local_heavy:
                 from limen.host_admission import hold_lease
 
@@ -1311,6 +1481,9 @@ def launch_ready_nodes(
             failed = launching.model_copy(
                 update={
                     "status": "failed",
+                    # AmbiguousProviderLaunchError is handled above and retains
+                    # unknown occupancy. Only a definite refusal releases it.
+                    "provider_state": "not_started" if isinstance(exc, PrelaunchFanoutExecutionError) else "unknown",
                     "failure_class": ("transient" if isinstance(exc, TransientFanoutExecutionError) else "permanent"),
                     "updated_at": datetime.now(timezone.utc),
                     "detail": str(exc)[:4096],
@@ -1329,6 +1502,7 @@ def launch_ready_nodes(
             update={
                 "provider_run_id": provider.provider_run_id,
                 "provider_run_url": provider.provider_run_url,
+                "provider_state": "nonterminal" if adapter.name == "jules-api" else "unknown",
                 "status": "submitted",
                 "updated_at": datetime.now(timezone.utc),
             }
@@ -1360,22 +1534,39 @@ def refresh_provider_attempts(
         if not node.get("lease") or not node.get("attempts"):
             continue
         attempt = ExecutorAttemptV1.model_validate(node["attempts"][-1])
-        if attempt.status in _TERMINAL_ATTEMPT_STATES or not attempt.provider_run_id:
+        remote_pending = attempt.adapter == "jules-api" and attempt.provider_state not in {"terminal", "not_started"}
+        if attempt.status in _TERMINAL_ATTEMPT_STATES and not remote_pending:
             continue
         adapter = by_name.get(attempt.adapter)
         if adapter is None:
             continue
-        state = adapter.probe(attempt.provider_run_id)
+        if not attempt.provider_run_id:
+            if not remote_pending:
+                continue
+            recovered = adapter.recover(node["packet"], attempt.attempt_id)
+            if recovered is None:
+                continue  # Incomplete/missing evidence never permits a second POST.
+            attempt = attempt.model_copy(
+                update={"provider_run_id": recovered.provider_run_id, "provider_run_url": recovered.provider_run_url}
+            )
+        executor_client = _client_for_existing_session(client, str(node["executor_session_id"]), adapter)
+        claim = executor_client.claim(attempt.lease_id, attempt.lease_generation)
+        provider_run_id = attempt.provider_run_id
+        if not provider_run_id:
+            raise FanoutExecutionError("provider recovery returned no accepted identity")
+        state = adapter.probe(provider_run_id)
         updated = attempt.model_copy(
             update={
-                "status": state.status,
-                "failure_class": state.failure_class,
+                "status": attempt.status if attempt.status in {"failed", "blocked"} else state.status,
+                "failure_class": attempt.failure_class
+                if attempt.status in {"failed", "blocked"}
+                else state.failure_class,
+                "provider_state": state.provider_state,
                 "detail": state.detail[:4096],
                 "updated_at": datetime.now(timezone.utc),
             }
         )
-        claim = client.claim(attempt.lease_id, attempt.lease_generation)
-        client.heartbeat(
+        executor_client.heartbeat(
             attempt.lease_id,
             claim["capability_token"],
             generation=attempt.lease_generation,
@@ -1404,7 +1595,13 @@ def settle_exhausted_attempts(
         if lane is None or node.get("status") not in {"reserved", "running"} or node.get("receipts") or not attempts:
             continue
         current = attempts[-1]
-        deadline = datetime.fromisoformat(str(packet["deadline"]).replace("Z", "+00:00"))
+        deadline_values = [datetime.fromisoformat(str(packet["deadline"]).replace("Z", "+00:00"))]
+        execution_admission = node.get("execution_admission")
+        if isinstance(execution_admission, dict) and execution_admission.get("attempt_deadline"):
+            deadline_values.append(
+                datetime.fromisoformat(str(execution_admission["attempt_deadline"]).replace("Z", "+00:00"))
+            )
+        deadline = min(deadline_values)
         terminal_failure = current.status in {"failed", "blocked"}
         exhausted = terminal_failure and (
             len(attempts) >= int(packet["retry"]["max_attempts"])
@@ -1421,7 +1618,7 @@ def settle_exhausted_attempts(
         summary = (
             "finite provider attempt limit exhausted"
             if exhausted
-            else "campaign deadline reached without an exact provider receipt"
+            else "execution boundary reached; provider identity retained for separately admitted recovery"
         )
         deadline_boundary = deadline_imminent and not exhausted
         summary, campaign = _campaign_receipt(
@@ -1494,6 +1691,8 @@ def land_succeeded_attempts(
         if adapter is None:
             raise FanoutExecutionError(f"no live adapter can harvest {attempt.adapter}")
         claim = client.claim(attempt.lease_id, attempt.lease_generation)
+        if claim.get("observation_only"):
+            continue
         try:
             receipt = adapter.land(
                 node,
@@ -1577,6 +1776,7 @@ def land_succeeded_attempts(
             {
                 "run_id": node["run_id"],
                 "attempt_id": attempt.attempt_id,
+                "run_receipt": receipt.model_dump(mode="json"),
                 "receipt_id": receipt.receipt_id,
                 "provider_run_url": attempt.provider_run_url,
                 "pr": next(check.url for check in receipt.checks if check.name == "pull-request"),
@@ -1620,11 +1820,22 @@ def wake_executor_workers(
         try:
             graph = lane.client.graph(root_run_id)
             root = next(node for node in graph.get("nodes", []) if node.get("run_id") == graph.get("root_run_id"))
-            environment["LIMEN_FANOUT_WORKER_DEADLINE"] = str(root["packet"]["deadline"])
+            deadline = str(root["execution_admission"]["attempt_deadline"])
+            if datetime.fromisoformat(deadline.replace("Z", "+00:00")) <= datetime.now(timezone.utc):
+                wakes.append(
+                    {
+                        "session_id": session_id,
+                        "adapter": lane.primary.name,
+                        "status": "observation-only-expired-deadline",
+                    }
+                )
+                continue
+            environment["LIMEN_FANOUT_WORKER_DEADLINE"] = deadline
         except (KeyError, StopIteration, RuntimeError):
-            # The worker retains its finite lease-TTL fallback if this optional
-            # wake-time read is temporarily unavailable.
-            pass
+            wakes.append(
+                {"session_id": session_id, "adapter": lane.primary.name, "status": "blocked-missing-execution-deadline"}
+            )
+            continue
         with open(os.devnull, "r+", encoding="utf-8") as null:
             subprocess.Popen(
                 [
@@ -1669,7 +1880,10 @@ def run_executor_worker(root_run_id: str, session_id: str, primary_adapter: str)
         try:
             worker_deadline = datetime.fromisoformat(raw_deadline.replace("Z", "+00:00"))
         except ValueError:
-            worker_deadline = datetime.now(timezone.utc) + timedelta(hours=6)
+            return 2
+        if worker_deadline.tzinfo is None:
+            return 2
+        worker_deadline = min(worker_deadline, datetime.now(timezone.utc) + timedelta(minutes=30))
         client = None
         primary = None
         lanes: dict[str, ExecutionLane] = {}

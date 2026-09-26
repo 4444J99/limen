@@ -106,3 +106,52 @@ def test_verify_scoped_remains_contractual_thin_wrapper() -> None:
     lines = (ROOT / "scripts" / "verify-scoped.sh").read_text(encoding="utf-8").splitlines()
     assert len(lines) <= 20
     assert any('exec python3 "$ROOT/scripts/verify.py" --changed' in line for line in lines)
+
+
+def test_explicit_ci_batch_budget_is_not_silently_clamped_to_ten_minutes(monkeypatch):
+    verify = load_verify()
+    observed = []
+    monkeypatch.setattr(verify.time, "monotonic", lambda: 100.0)
+    monkeypatch.setattr(verify, "changed_set", lambda _base: ["changed.py"])
+    monkeypatch.setattr(verify, "select", lambda *_args: (["cheap"], []))
+    monkeypatch.setattr(verify, "run_gate_wave", lambda *_args, **kw: not observed.append(kw["aggregate_deadline"]))
+    monkeypatch.delenv("LIMEN_WORK_KEY", raising=False)
+    for seconds, expected in [(600, 700), (1800, 1900), (5000, 1900)]:
+        observed.clear()
+        assert (
+            verify.cmd_changed(
+                registry(),
+                None,
+                jobs=1,
+                gate_timeout_seconds=1500,
+                gate_output_bytes=1024,
+                total_timeout_seconds=seconds,
+            )
+            == 0
+        )
+        assert observed and set(observed) == {expected}
+
+
+def test_larger_ci_budget_never_extends_an_authenticated_keeper_window(monkeypatch):
+    from datetime import datetime, timedelta, timezone
+    from unittest.mock import Mock
+    from limen.conduct import client
+
+    verify = load_verify()
+    observed = []
+    monkeypatch.setattr(verify.time, "monotonic", lambda: 100.0)
+    monkeypatch.setattr(verify, "changed_set", lambda _base: ["changed.py"])
+    monkeypatch.setattr(verify, "select", lambda *_args: (["cheap"], []))
+    monkeypatch.setattr(verify, "run_gate_wave", lambda *_args, **kw: not observed.append(kw["aggregate_deadline"]))
+    keeper = Mock()
+    keeper.reserve_growth.return_value = {"deadline": (datetime.now(timezone.utc) + timedelta(seconds=40)).isoformat()}
+    monkeypatch.setattr(client, "client_from_env", lambda: keeper)
+    monkeypatch.setenv("LIMEN_WORK_KEY", "approved-fixture")
+    assert (
+        verify.cmd_changed(
+            registry(), None, jobs=1, gate_timeout_seconds=1500, gate_output_bytes=1024, total_timeout_seconds=1800
+        )
+        == 0
+    )
+    assert observed and all(100 < stamp <= 140 for stamp in observed)
+    keeper.reserve_growth.assert_called_once()

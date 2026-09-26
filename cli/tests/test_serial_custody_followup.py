@@ -120,3 +120,9 @@ def test_deferred_result_directory_sync_failure_retains_process_receipts(tmp_pat
         assert pending.read_bytes() == original
     finally:
         dispatch._clear_result_receipts(task.id)
+
+
+@pytest.fixture(autouse=True)
+def _approved_claim_priority(approved_execution_policy):
+    """Only the named synthetic claim is approved; real keeper custody still runs."""
+    approved_execution_policy("ACK-CUSTODY")

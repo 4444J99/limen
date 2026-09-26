@@ -880,7 +880,11 @@ def harvest_root(
     executors = execution_adapters if execution_adapters is not None else discover_execution_adapters(repositories)
     executor_sessions = resume_execution_sessions(graph, keeper, executors) if executors else {}
     if isinstance(keeper, HttpConductClient):
-        refreshed: list[dict[str, Any]] = []
+        # Read-only provider reconciliation remains legal after the execution
+        # fence. Each attempt uses its existing executor principal and lease;
+        # this does not wake expired workers or restore landing authority.
+        jules = tuple(adapter for adapter in executors if adapter.name == "jules-api")
+        refreshed = refresh_provider_attempts(root_run_id, client=keeper, adapters=jules) if jules else []
         provider_landed: list[dict[str, Any]] = []
         launched: list[dict[str, Any]] = []
         wakes = wake_executor_workers(root_run_id, executor_sessions)

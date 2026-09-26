@@ -816,9 +816,11 @@ if [[ -d "$wt" ]]; then
   fi
   created="reused"
 elif git -C "$repo" show-ref --verify --quiet "refs/heads/$branch"; then
+  PYTHONPATH="$script_dir/../cli/src${PYTHONPATH:+:$PYTHONPATH}" python3 -c 'import sys; from limen.inventory_admission import reserve_growth; reserve_growth("worktree", sys.argv[1])' "$wt"
   git -C "$repo" worktree add "$wt" "$branch" >/dev/null
   created="created"
 else
+  PYTHONPATH="$script_dir/../cli/src${PYTHONPATH:+:$PYTHONPATH}" python3 -c 'import sys; from limen.inventory_admission import reserve_growth; reserve_growth("worktree", sys.argv[2]); reserve_growth("branch", sys.argv[1])' "$branch" "$wt"
   git -C "$repo" worktree add -b "$branch" "$wt" "$from_ref" >/dev/null
   created="created"
 fi

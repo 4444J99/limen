@@ -92,36 +92,6 @@ def _submit_landing_projection(
     return acknowledged
 
 
-def _advance_landing_execution(
-    tasks_path: Path,
-    task: Task,
-    selection: LandingSelection,
-) -> Task:
-    """Honor dispatched -> in_progress before a terminal landing transition."""
-
-    if task.status != "dispatched":
-        return task
-    desired = task.model_copy(deep=True)
-    now = datetime.datetime.now(datetime.timezone.utc)
-    desired.status = "in_progress"
-    desired.updated = now
-    desired.dispatch_log.append(
-        DispatchLogEntry(
-            timestamp=now,
-            agent="jules",
-            session_id=f"jules-land-active:{selection.intent_token[:16]}",
-            status="in_progress",
-            output=f"jules-land: external custody completed for session {selection.session_id}",
-        )
-    )
-    return _submit_landing_projection(
-        tasks_path,
-        task,
-        desired,
-        session_id=f"jules-land-active-{selection.intent_token[:16]}",
-    )
-
-
 def _landing_intent_token(
     task_id: str,
     session_id: str,
@@ -447,6 +417,7 @@ def _append_terminal_outcome(
             session_id=session_id,
             status=status,
             output=output,
+            lifecycle_repair="jules-landing-terminal",
             landing_event="terminal",
             landing_terminal=True,
             landing_outcome=outcome,
@@ -481,7 +452,6 @@ def commit_landing_receipt(
                 f"  FENCE {selection.task_id}: Jules claim changed while PR work ran; left {pr_url} for reconciliation"
             )
             return False
-        task = _advance_landing_execution(tasks_path, task, selection)
         desired = task.model_copy(deep=True)
         now = datetime.datetime.now(datetime.timezone.utc)
         _append_terminal_outcome(
@@ -523,7 +493,6 @@ def commit_terminal_landing_outcome(
         if task is None:
             print(f"  FENCE {selection.task_id}: owner changed while recording {outcome}")
             return False
-        task = _advance_landing_execution(tasks_path, task, selection)
         desired = task.model_copy(deep=True)
         now = datetime.datetime.now(datetime.timezone.utc)
         _append_terminal_outcome(
@@ -596,11 +565,6 @@ def commit_landing_failure(
                 intent_token=selection.intent_token,
                 branch=selection.branch,
                 attempt_count=attempt,
-            )
-            acknowledged = _advance_landing_execution(
-                tasks_path,
-                acknowledged,
-                terminal_selection,
             )
             terminal = acknowledged.model_copy(deep=True)
             _append_terminal_outcome(

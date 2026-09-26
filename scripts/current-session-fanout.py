@@ -987,7 +987,9 @@ def _work_packet(
     )
 
 
-def _reserved_result(result: Any, *, label: str, client: Any | None = None) -> dict[str, Any]:
+def _reserved_result(
+    result: Any, *, label: str, client: Any | None = None, claim_capability: bool = True
+) -> dict[str, Any]:
     if not isinstance(result, dict):
         raise FanoutReservationError(f"{label} reservation returned a non-object response")
     status = str(result.get("status") or "")
@@ -1005,6 +1007,10 @@ def _reserved_result(result: Any, *, label: str, client: Any | None = None) -> d
         or not isinstance(lease.get("executor"), dict)
     ):
         raise FanoutReservationError(f"{label} reservation omitted required lease identity")
+    if not claim_capability:
+        # A fanout-root is conductor-owned coordination, not an executor run.
+        # Do not claim or forward an executor capability for that metadata node.
+        return {key: value for key, value in result.items() if key != "capability_token"}
     if not result.get("capability_token"):
         if client is None or not hasattr(client, "claim"):
             raise FanoutReservationError(f"{label} reservation requires an executor-authenticated capability claim")
@@ -1105,6 +1111,7 @@ def reserve_fanout(snapshot: dict[str, Any], client: Any | None = None) -> dict[
         work_id=root_task_id,
         work_key=f"current-session-fanout/{snapshot['session_hash']}/root",
         intent={
+            "kind": "fanout-root",  # Coordination envelope; planner/executor consume the execution slots.
             "objective": "reserve current-session peer fanout",
             "session_hash": snapshot["session_hash"],
             "packet_ids": [packet["id"] for packet in planners + executors],
@@ -1141,7 +1148,7 @@ def reserve_fanout(snapshot: dict[str, Any], client: Any | None = None) -> dict[
     planner_reservations: dict[str, tuple[Any, dict[str, Any]]] = {}
     executor_reservations: dict[str, tuple[Any, dict[str, Any]]] = {}
     try:
-        root_result = _reserved_result(client.submit(root_packet), label="root", client=client)
+        root_result = _reserved_result(client.submit(root_packet), label="root", client=client, claim_capability=False)
         accepted.append(root_result)
         actual_root = str(root_result["root_run_id"])
         for packet in planners:
@@ -1227,7 +1234,7 @@ def reserve_fanout(snapshot: dict[str, Any], client: Any | None = None) -> dict[
             lease_id=str(root_result["lease"]["lease_id"]),
             lease_generation=int(root_result["lease"]["generation"]),
             execution_hash=str(root_packet.execution_hash),
-            capability_token=str(root_result["capability_token"]),
+            capability_token=None,
         ),
         "reserved_children": len(planners) + len(executors),
         "root_execution_hash": root_packet.execution_hash,

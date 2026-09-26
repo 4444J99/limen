@@ -347,11 +347,21 @@ class ExecutorAttemptV1(ProtocolModel):
     adapter: str
     provider_run_id: str | None = None
     provider_run_url: str | None = None
+    # Provider occupancy is independent of local lease/result settlement.
+    provider_state: Literal["unknown", "not_started", "nonterminal", "terminal"] = "unknown"
     status: Literal["launching", "submitted", "running", "succeeded", "failed", "blocked"]
     failure_class: Literal["transient", "permanent"] | None = None
     submitted_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
     detail: str = ""
+
+    @model_validator(mode="after")
+    def validate_provider_occupancy(self):
+        if self.provider_state == "terminal" and not self.provider_run_id:
+            raise ValueError("terminal provider observation requires provider_run_id")
+        if self.provider_state == "not_started" and self.provider_run_id:
+            raise ValueError("accepted provider identity cannot be classified not_started")
+        return self
 
     @field_validator("attempt_id", "run_id", "lease_id", "adapter")
     @classmethod

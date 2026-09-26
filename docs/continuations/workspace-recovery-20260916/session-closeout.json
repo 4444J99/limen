@@ -1,0 +1,278 @@
+{
+  "schema": "limen.workspace-recovery-session-closeout.v1",
+  "outcome": "unfinished",
+  "session": "stopped_by_user",
+  "automatic_continuation": false,
+  "owner": "https://github.com/4444J99/limen/pull/2673",
+  "limen_merge": "6374d23044ba36be5ebb6bfc65d541af832aff47",
+  "worker_deployment": "https://github.com/4444J99/limen/actions/runs/35164197894",
+  "worker_live_sha": "6374d23044ba36be5ebb6bfc65d541af832aff47",
+  "domus_merge": "a804ed00ed52ed8329d88f307a243ea02184992d",
+  "domus_owner": "https://github.com/organvm/domus-genoma/pull/390",
+  "containment": {
+    "mode": "observe",
+    "dispatch_enabled": false,
+    "execution_policy": "approved-priorities",
+    "approved_priorities": [],
+    "maintenance_window": null
+  },
+  "retired_working_copies": 66,
+  "removed_file_allocated_bytes": 9961877504,
+  "net_volume_bytes_recovered": null,
+  "runtime_audit": {
+    "candidates": 21,
+    "source_files_compared": 41788,
+    "removed": 0,
+    "rows": [
+      {
+        "sha": "06f96a8f41bcba81ee4b5989939f5114fb7ba8f4",
+        "tracked_files_compared": 2001,
+        "changed_source": [],
+        "generated_extras_count": 57,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 134
+      },
+      {
+        "sha": "09bdc2081caa5216253efffb3e5ed216cae294bc",
+        "tracked_files_compared": 1865,
+        "changed_source": [],
+        "generated_extras_count": 54,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 129
+      },
+      {
+        "sha": "0c2a2bfe33468681e4bb82efee8ec611ee3fe4e6",
+        "tracked_files_compared": 1865,
+        "changed_source": [],
+        "generated_extras_count": 53,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 129
+      },
+      {
+        "sha": "0fe1782b2bb691114973fc1903ce47d70d0e452c",
+        "tracked_files_compared": 1892,
+        "changed_source": [],
+        "generated_extras_count": 57,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 129
+      },
+      {
+        "sha": "136dc01fc3627678c490e7ce5095953043e1f15f",
+        "tracked_files_compared": 1168,
+        "changed_source": [],
+        "generated_extras_count": 61,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 112
+      },
+      {
+        "sha": "16fd02e1a72d7ee8d5432d637221938aa94e3cf5",
+        "tracked_files_compared": 2235,
+        "changed_source": [],
+        "generated_extras_count": 67,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 178
+      },
+      {
+        "sha": "2739be92a7eca233429df38939e04b4d1ba4bc40",
+        "tracked_files_compared": 2266,
+        "changed_source": [],
+        "generated_extras_count": 69,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 186
+      },
+      {
+        "sha": "30207a7fc91848477cb00ee5273024d14fd0b19c",
+        "tracked_files_compared": 2266,
+        "changed_source": [],
+        "generated_extras_count": 68,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 186
+      },
+      {
+        "sha": "3c1313aab9e03706d776bf8cbcc390883acddc68",
+        "tracked_files_compared": 2258,
+        "changed_source": [],
+        "generated_extras_count": 75,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 186
+      },
+      {
+        "sha": "3c50891dc674ad070dc5f6632fd12f4a6b493a48",
+        "tracked_files_compared": 1998,
+        "changed_source": [],
+        "generated_extras_count": 55,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 134
+      },
+      {
+        "sha": "4a86f3825ef3a2acf308e1bbd3a0c8463c42d0e1",
+        "tracked_files_compared": 1196,
+        "changed_source": [],
+        "generated_extras_count": 52,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 119
+      },
+      {
+        "sha": "4eed57745ca1f942202a9b33477fdc982c68cbb0",
+        "tracked_files_compared": 2178,
+        "changed_source": [],
+        "generated_extras_count": 57,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 137
+      },
+      {
+        "sha": "612d4081f0cb0d71e2e8f5c792129a4e6ba1f895",
+        "tracked_files_compared": 2462,
+        "changed_source": [],
+        "generated_extras_count": 58,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 173
+      },
+      {
+        "sha": "6440c9fa8daa55ce25e7ad39bd949ae79b1718c0",
+        "tracked_files_compared": 2266,
+        "changed_source": [],
+        "generated_extras_count": 65,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 186
+      },
+      {
+        "sha": "8a59bc2a40afb799dbf6b7a7cc382c552146ba3e",
+        "tracked_files_compared": 1214,
+        "changed_source": [],
+        "generated_extras_count": 52,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 121
+      },
+      {
+        "sha": "91eedfac8ef8edd8b0dee5eb6b6b805cdec2a575",
+        "tracked_files_compared": 2468,
+        "changed_source": [],
+        "generated_extras_count": 61,
+        "unexpected_source": [
+          "logs/notification-canary-receipt.json"
+        ],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 175
+      },
+      {
+        "sha": "968e0abbd260e6d20af55bb40b4774fdfe1074e4",
+        "tracked_files_compared": 2246,
+        "changed_source": [],
+        "generated_extras_count": 69,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 179
+      },
+      {
+        "sha": "a3ba7da0bd1480d6db52c9df427a5df471ac6349",
+        "tracked_files_compared": 2266,
+        "changed_source": [],
+        "generated_extras_count": 75,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 186
+      },
+      {
+        "sha": "a60175462bee077d99544b2133d8f662f9b1c3f4",
+        "tracked_files_compared": 2241,
+        "changed_source": [],
+        "generated_extras_count": 69,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 179
+      },
+      {
+        "sha": "bc19871ac688f6a0892d61bffdd699070b6df620",
+        "tracked_files_compared": 2223,
+        "changed_source": [],
+        "generated_extras_count": 72,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 178
+      },
+      {
+        "sha": "cafae8cf0cf83e51ac53af0a04693eb4a1cbcc15",
+        "tracked_files_compared": 1214,
+        "changed_source": [],
+        "generated_extras_count": 52,
+        "unexpected_source": [],
+        "wheel_digest_matches": true,
+        "changed_installed_package": [],
+        "ancestor_of_deployed_main": true,
+        "verified_build_copies": 121
+      }
+    ]
+  },
+  "private_receipt_digests": {
+    "workspace-recovery-runtime-source-audit-20260916.json": "56ade76a74adf5ce00bf6fc8d2676499605b6ed2662dcdb46373f160aa394159",
+    "workspace-recovery-runtime-custody-20260916.json": "1fa6063ec984c2a7370b6e83259663220353f50f1782854ec23c353232d533a3",
+    "workspace-recovery-runtime-prune-plan-20260916.json": "87898e5964bcaf687cc85b0470d664b5e4898fd4598d5ca1e217d55b349c5048",
+    "workspace-recovery-live-acceptance-20260916.json": "286423f9d5872ee0c8b893f25d5a10397058d8fd01c1cabecd6f55166e8ddae7"
+  },
+  "retained_checkouts": {
+    "limen": "existing isolated recovery worktree owns successor capsule; reuse, do not duplicate",
+    "domus": "merged/deployed, retained for ignored-cache disposition and complete session/process ownership clearance"
+  },
+  "acceptance_limit": "Resource reservation refusal is live-proven; full priority/concurrency/restart/estate coverage remains unfinished. This receipt proves session custody, not recovery completion.",
+  "closeout_checks": {
+    "credential_wall": "PASS: all 29 secret atoms registered",
+    "no_tasks_on_me": "PASS: every owed task has owner; no orphaned watchers; estate debt reported separately",
+    "verification_scope_exception": "Selecting origin/main after squash merge traversed 57 historical-only paths and selected 49 gates. Stopped that verifier; HEAD-relative six-file handoff selects four gates. Historical merge-path escalation remains recovery-owner work, not a reason to rerun all prior checks."
+  }
+}

@@ -305,18 +305,18 @@ EXPECTED_PUBLIC_SOURCES: dict[str, dict[str, object]] = {
         "url": "https://github.com/organvm/limen/blob/d8b44e60e404b044436addf8108732cc28c06371/docs/positioning/evidence/flagship-evidence.yaml",
     },
     "LAVREA_METHODOLOGY": {
-        "repository": "organvm/laurea",
+        "repository": "4444J99/laurea",
         "path": "METHODOLOGY.md",
         "head": "02e360c9828336ac95ce8223c65d127ffea27661",
         "blob": "b671568236f386041a416d28964b50820249ac2a",
-        "url": "https://github.com/organvm/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/METHODOLOGY.md",
+        "url": "https://github.com/4444J99/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/METHODOLOGY.md",
     },
     "LAVREA_BASELINES": {
-        "repository": "organvm/laurea",
+        "repository": "4444J99/laurea",
         "path": "src/laurea/baselines.py",
         "head": "02e360c9828336ac95ce8223c65d127ffea27661",
         "blob": "c66c496a9b0c647876bbe09a5d10dde80708c689",
-        "url": "https://github.com/organvm/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/src/laurea/baselines.py",
+        "url": "https://github.com/4444J99/laurea/blob/02e360c9828336ac95ce8223c65d127ffea27661/src/laurea/baselines.py",
     },
     "GITHUB_CONTRIBUTIONS": {
         "url": "https://docs.github.com/en/account-and-profile/reference/profile-contributions-reference"

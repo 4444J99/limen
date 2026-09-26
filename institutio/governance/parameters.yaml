@@ -20,6 +20,90 @@
 schema_version: 0.1
 
 parameters:
+  LIMEN_ENABLE_JULES_API:
+    default: "0"
+    env: LIMEN_ENABLE_JULES_API
+    self_update: none
+    owner: vigilia
+    note: "Opt-in REST transport only; does not grant broker admission, bypass deadlines or activate a scheduler. Owner #2680."
+  LIMEN_JULES_API_CONCURRENCY:
+    default: 1
+    env: LIMEN_JULES_API_CONCURRENCY
+    self_update: none
+    owner: vigilia
+    note: "Declared REST adapter lane ceiling, 1 through 15; actual account limits and shared broker reservations take precedence. Owner #2680."
+  LIMEN_CHAT_VERIFICATION:
+    default: ""
+    env: LIMEN_CHAT_VERIFICATION
+    self_update: none
+    owner: worker
+    note: "Trusted host attestation bound to an immutable GitHub artifact; never candidate stdout."
+  LIMEN_CHAT_CONTEXT:
+    default: ""
+    env: LIMEN_CHAT_CONTEXT
+    self_update: none
+    owner: worker
+    note: "Non-secret immutable execution context supplied by authenticated keeper to Actions."
+  LIMEN_CHAT_RUN_ID:
+    default: ""
+    env: LIMEN_CHAT_RUN_ID
+    self_update: none
+    owner: worker
+    note: "Canonical keeper run identity; not a provider run identity."
+  LIMEN_CHAT_EXECUTOR_TOKEN:
+    default: ""
+    env: LIMEN_CHAT_EXECUTOR_TOKEN
+    self_update: none
+    owner: worker
+    note: "Dedicated executor-only credential; private custody and installation owned by #320."
+  LIMEN_CHAT_GITHUB_TOKEN:
+    default: ""
+    env: LIMEN_CHAT_GITHUB_TOKEN
+    self_update: none
+    owner: worker
+    note: "Dedicated exact-repository GitHub credential; private custody owned by #320."
+  LIMEN_CHAT_GITHUB:
+    default: ""
+    env: LIMEN_CHAT_GITHUB
+    self_update: none
+    owner: worker
+    note: "Private disabled-by-default Chat execution configuration and grants; #320 owns installation."
+  LIMEN_CONDUCT_MCP_OAUTH:
+    default: ""
+    env: LIMEN_CONDUCT_MCP_OAUTH
+    self_update: none
+    owner: worker
+    note: "Private optional OAuth resource configuration for /mcp, owned by credential wall #320. Empty preserves legacy bearer-only operation. Explicit issuer/resource/JWKS/scope and subject/client bindings select existing principals without expanding roles; real values stay in the credential organ and Worker secret."
+  LIMEN_ATTEMPT_DEADLINE:
+    default: ""
+    env: LIMEN_ATTEMPT_DEADLINE
+    self_update: none
+    owner: vigilia
+    note: "Keeper-owned deadline passed to an admitted execution process; callers cannot extend it."
+  LIMEN_CHAMBER_WORKTREE_ROOT:
+    default: "~/Workspace/chamber_worktrees"
+    env: LIMEN_CHAMBER_WORKTREE_ROOT
+    self_update: none
+    owner: vigilia
+    note: "Existing chamber checkout lifecycle inventory root."
+  LIMEN_RECLAIM_CHAMBER_WT:
+    default: 1
+    env: LIMEN_RECLAIM_CHAMBER_WT
+    self_update: none
+    owner: vigilia
+    note: "Include chamber PR checkouts in the existing reclaimer inventory."
+  LIMEN_WORK_KEY:
+    default: ""
+    env: LIMEN_WORK_KEY
+    self_update: none
+    owner: vigilia
+    note: "Approved outcome work key for shared resource admission."
+  LIMEN_EXECUTION_POLICY:
+    default: "{}"
+    env: LIMEN_EXECUTION_POLICY
+    self_update: none
+    owner: vigilia
+    note: "Administrator-installed approved priorities for the conduct keeper; empty fails closed."
   LIMEN_MCP_POLICY:
     default: "~/.config/domus/mcp-policy.json"
     env: LIMEN_MCP_POLICY
