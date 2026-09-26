@@ -238,16 +238,27 @@ class JulesApiClient:
         token = ""
         seen_tokens: set[str] = set()
         rows: dict[str, dict] = {}
+        page_size = 100
         for page in range(1, self.max_pages + 1):
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                raise JulesApiError("pagination_deadline_exceeded")
-            query: dict[str, int | str] = {"pageSize": 100}
-            if token:
-                query["pageToken"] = token
-            result = self._request(
-                "GET", path + "?" + urllib.parse.urlencode(query), timeout=min(self.timeout, remaining)
-            )
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise JulesApiError("pagination_deadline_exceeded")
+                query: dict[str, int | str] = {"pageSize": page_size}
+                if token:
+                    query["pageToken"] = token
+                try:
+                    result = self._request(
+                        "GET", path + "?" + urllib.parse.urlencode(query), timeout=min(self.timeout, remaining)
+                    )
+                    break
+                except JulesApiError as exc:
+                    # Retry only a rejected read page, at the same cursor. The
+                    # byte cap and total deadline remain unchanged. At most six
+                    # reductions (100 -> 1) are possible across this catalog.
+                    if exc.code != "response_limit_exceeded" or page_size == 1:
+                        raise
+                    page_size = max(1, page_size // 2)
             batch = result.get(field, [])
             if not isinstance(batch, list) or any(not isinstance(row, dict) for row in batch):
                 raise JulesApiError("invalid_catalog")
