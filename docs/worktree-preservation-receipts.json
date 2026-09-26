@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-08-28T15:31:10Z",
+  "generated_utc": "2026-09-26T02:25:47Z",
   "receipts": [
     {
       "branch": "pr-110-branch",
@@ -4946,6 +4946,44 @@
         " M src/web/next-env.d.ts"
       ],
       "worktree_status_sha256": "6aa328aa8cd8cb1e2ed25de8251a3add0659afad54850a1db1f66c560270dcc6"
+    },
+    {
+      "branch": "main",
+      "classification": "bounded tracked patch and untracked archive privately preserved; owner decision required",
+      "custody_bundle_sha256": "3761dd7687b668c1c09ba06ac2590cf20ad74dcfc72ea7dfd66550aa1a73abeb",
+      "dirty_patch_bytes": 0,
+      "dirty_patch_command": "git diff --binary HEAD",
+      "dirty_patch_max_bytes": 67108864,
+      "dirty_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "dirty_paths_count": 0,
+      "dirty_paths_sample": [],
+      "dirty_paths_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "evidence_updated_utc": "2026-09-26T02:25:47Z",
+      "head": "d4ec45cb456fa63a5c594eb429537fac572ce320",
+      "lane": "owner-blocker",
+      "next_action": "Do not delete, reclaim, force-push, or auto-port this worktree from lifecycle cleanup. A bounded private tracked patch/untracked archive receipt exists; create a narrow owner packet to review, push, supersede, or retire this preserved dirty state.",
+      "private_patch": ".limen-private/session-corpus/lifecycle/worktree-preserve/spine-closeout-20260916-bypass-successor-d1501f60-3761dd7687b668c1/dirty.patch",
+      "private_patch_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "private_receipt": ".limen-private/session-corpus/lifecycle/worktree-preserve/spine-closeout-20260916-bypass-successor-d1501f60-3761dd7687b668c1/receipt.json",
+      "private_untracked_archive": ".limen-private/session-corpus/lifecycle/worktree-preserve/spine-closeout-20260916-bypass-successor-d1501f60-3761dd7687b668c1/untracked.tar",
+      "private_untracked_manifest": ".limen-private/session-corpus/lifecycle/worktree-preserve/spine-closeout-20260916-bypass-successor-d1501f60-3761dd7687b668c1/untracked-manifest.json",
+      "repo": "4444J99/limen",
+      "root": "spine-closeout-20260916-bypass-successor",
+      "status": "private_bundle_preserved",
+      "untracked_archive_bytes": 419840,
+      "untracked_archive_sha256": "8a0ee4312beffdfbea5a35017b04fcd2e6bbc9782893e15c174747382b18544f",
+      "untracked_entries_count": 1,
+      "untracked_manifest_sha256": "b441dd438db06f2831ecfadaf3efa54defedad882ec2ac79bfd737a8f971a902",
+      "untracked_paths_count": 1,
+      "untracked_paths_sample": [],
+      "untracked_paths_sha256": "7557663b3821bbdc495571bb565b642663747d633e804977cf7bce72d3a9d634",
+      "untracked_payload_bytes": 409504,
+      "worktree_key": "d1501f60612103e7b150c440552872c009cff4d4e3b06a2742953cbb7902e950",
+      "worktree_status_count": 1,
+      "worktree_status_sample": [
+        "## main...origin/main [behind 54]"
+      ],
+      "worktree_status_sha256": "1ad3995e5d37bdaf2b139c22c60b9b9d431311facd639f2f711ce04d3f896b46"
     }
   ],
   "schema": 1
