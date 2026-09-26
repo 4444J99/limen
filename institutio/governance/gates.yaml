@@ -1120,8 +1120,8 @@ gates:
     owner: continuity
     note: "Hermetic generation-rotation fixtures for ARCA (POTESTAS 0.3, #2089): a seed backup commits ciphertext and pushes to a depth-1 private clone; a re-run makes no commit; a changed store re-seals; an oversized pack auto-cuts generation -g2 as an orphan ROOT commit that is pushed to a fresh repo, with the old generation recorded as archived and the manifest re-pointed; `rotate` on a vault-less env seeds a fresh generation and archives the env repo; status distinguishes current/never-sealed/changed; chunked ciphertext reassembles and restores byte-identical; the freshness sensor follows the manifest's `_generation.repo`. Uses local file:// bare remotes and shimmed gh/security, so it never touches the real Keychain or the real arca repos."
   arca-release-assets-test:
-    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_arca_release_assets.py -q"
-    paths: ["scripts/arca-release-assets.py", "scripts/tests/test_arca_release_assets.py"]
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_arca_release_assets.py scripts/tests/test_arca_publication_encryption.py -q"
+    paths: ["scripts/arca-release-assets.py", "scripts/private-vault.py", "scripts/tests/test_arca_release_assets.py", "scripts/tests/test_arca_publication_encryption.py"]
     owner: continuity
     note: "Encrypted large-object release assets use neutral digest names, private-repository checks, resumable uploads, per-asset limits, and exact readback verification without placing payloads in Git commits."
   arca-file-objects-test:

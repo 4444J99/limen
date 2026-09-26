@@ -5623,7 +5623,7 @@ def test_missing_checkout_is_measured_reserved_hydrated_then_isolated(tmp_path: 
     monkeypatch.setattr(
         D,
         "_clone_repo",
-        lambda _task: {
+        lambda _task, **_kw: {
             "repository_id": "77123",
             "lease_id": "77123-testlease",
             "store": str(store),
@@ -5715,16 +5715,19 @@ def test_clone_repo_acquires_immutable_identity_lease_on_worktree_device(tmp_pat
 
     monkeypatch.setattr(repo_lifecycle, "ensure", fake_ensure)
     task = _wtask(repo="not-present/example")
-    repo = D._clone_repo(task)
-    repeated = D._clone_repo(task)
+    repo = D._clone_repo(task, attempt_id="attempt-one")
+    repeated = D._clone_repo(task, attempt_id="attempt-one")
+    retried = D._clone_repo(task, attempt_id="attempt-two")
 
     assert repo["store"] == str(scratch / ".worktrees-repo-cache" / "github-77123")
     assert repo["worktree"] == str(worktrees / "managed-checkout")
     assert repeated == repo
     assert ensure_calls == [
-        (77123, "HEAD", "test-session:WT-CLASSIFY", "WT-CLASSIFY"),
-        (77123, "HEAD", "test-session:WT-CLASSIFY", "WT-CLASSIFY"),
+        (77123, "HEAD", "test-session:WT-CLASSIFY:attempt-one", "WT-CLASSIFY"),
+        (77123, "HEAD", "test-session:WT-CLASSIFY:attempt-one", "WT-CLASSIFY"),
+        (77123, "HEAD", "test-session:WT-CLASSIFY:attempt-two", "WT-CLASSIFY"),
     ]
+    assert retried["store"] == repo["store"]
     assert not repo["store"].startswith(str(internal))
 
 
@@ -5741,10 +5744,17 @@ def test_isolated_dispatch_uses_and_releases_managed_checkout(tmp_path: Path, mo
         "head": "a" * 40,
     }
     lifecycle: list[str] = []
+    attempts: list[str] = []
+
+    def acquire(_task, *, attempt_id):
+        assert attempt_id not in attempts
+        attempts.append(attempt_id)
+        return {**lease, "lease_id": attempt_id}
+
     monkeypatch.setattr(D, "_resolve_agent_binary", lambda agent: agent)
     monkeypatch.setattr(D, "_resolve_repo_dir", lambda _task: None)
     monkeypatch.setattr(D, "_repo_unavailable_reason", lambda _repo: None)
-    monkeypatch.setattr(D, "_clone_repo", lambda _task: lease)
+    monkeypatch.setattr(D, "_clone_repo", acquire)
     monkeypatch.setattr(D, "_default_branch", lambda _repo: "main")
     monkeypatch.setattr(D, "_same_repo_pr_head_for_task", lambda _task: None)
     monkeypatch.setattr(D, "_git_plumbing", lambda *_a, **_kw: subprocess.CompletedProcess([], 0, "", ""))
@@ -5770,9 +5780,12 @@ def test_isolated_dispatch_uses_and_releases_managed_checkout(tmp_path: Path, mo
     task = _wtask(repo="owner/project")
 
     result = D._isolated_local_run("claude", task, dry_run=False, base_agent_args=[])
+    retry = D._isolated_local_run("claude", task, dry_run=False, base_agent_args=[])
 
     assert result == "https://github.com/owner/project/pull/1"
-    assert lifecycle == ["release:77123-lease"]
+    assert retry == result
+    assert len(attempts) == 2
+    assert lifecycle == [f"release:{attempt}" for attempt in attempts]
     assert worktree.is_dir()
 
 

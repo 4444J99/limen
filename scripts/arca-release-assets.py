@@ -10,9 +10,11 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -31,6 +33,13 @@ MAX_HYDRATE_BYTES = 128 * 1024**2
 HYDRATE_DEADLINE_SECONDS = 5 * 60
 REPO_RE = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$")
 OPENPGP_ARMOR = b"-----BEGIN PGP MESSAGE-----"
+PRIVATE_SPEC = importlib.util.spec_from_file_location(
+    "arca_publisher_private_vault", Path(__file__).with_name("private-vault.py")
+)
+if PRIVATE_SPEC is None or PRIVATE_SPEC.loader is None:
+    raise RuntimeError("private-vault encryption verifier unavailable")
+PRIVATE = importlib.util.module_from_spec(PRIVATE_SPEC)
+PRIVATE_SPEC.loader.exec_module(PRIVATE)
 
 
 class AssetError(RuntimeError):
@@ -174,6 +183,29 @@ def _preflight(
     return [*assets[1:], assets[0]], f"arca-objects-{catalog_digest[:32]}", total
 
 
+def _verify_encryption(assets: list[tuple[Path, str, str, int]]) -> None:
+    """Verify complete envelopes, exact bytes and the pinned recipient before publication.
+
+    A filename, header, or caller-supplied digest is not encryption evidence.
+    Legacy ciphertext must first use the preservation adapter's OpenPGP envelope;
+    legacy reconstruction remains supported separately.
+    """
+    deadline = time.monotonic() + 300
+    for source, _name, digest, size in assets:
+        if time.monotonic() >= deadline:
+            raise AssetError("encryption verification deadline reached; local sources retained")
+        try:
+            failures = PRIVATE._ciphertext_failures(
+                {"ciphertext": "opaque-asset", "ciphertext_sha256": digest, "ciphertext_bytes": size}, source
+            )
+        except (OSError, PRIVATE.VaultError) as exc:
+            raise AssetError("encryption verification unavailable; no assets published") from exc
+        if failures:
+            raise AssetError(
+                "asset lacks verified pinned-recipient encryption; use the legacy preservation adapter for AES payloads"
+            )
+
+
 def publish(
     repo: str,
     catalog: Path,
@@ -190,16 +222,19 @@ def publish(
         raise AssetError("batch deadline must be between 60 and 1500 seconds")
     if not 1 <= MAX_UPLOAD_FILES <= 16:
         raise AssetError("ARCA_MAX_UPLOAD_FILES must be between 1 and 16")
-    stable_id, canonical, default_branch = _canonical_repository(repo) if apply else (None, repo, "main")
     assets, tag, total = _preflight(catalog, objects, expected_digests)
+    if apply:
+        _verify_encryption(assets)
+    stable_id, canonical, default_branch = _canonical_repository(repo) if apply else (None, repo, "main")
     object_assets = assets[:-1]
     groups = (
         [(tag, assets)]
-        if len(assets) <= MAX_RELEASE_ASSETS else
-        [
-            (f"{tag}-part-{index // MAX_RELEASE_ASSETS + 1:04d}", object_assets[index:index + MAX_RELEASE_ASSETS])
+        if len(assets) <= MAX_RELEASE_ASSETS
+        else [
+            (f"{tag}-part-{index // MAX_RELEASE_ASSETS + 1:04d}", object_assets[index : index + MAX_RELEASE_ASSETS])
             for index in range(0, len(object_assets), MAX_RELEASE_ASSETS)
-        ] + [(tag, [assets[-1]])]
+        ]
+        + [(tag, [assets[-1]])]
     )
     if not apply:
         return {
@@ -221,8 +256,15 @@ def publish(
 
     prior_assets = _existing_assets(canonical)
     for group_tag, group_assets in groups:
-        _publish_group(canonical, default_branch, group_tag, group_assets, prior_assets,
-                       remaining_timeout, verify_existing_by_server_digest)
+        _publish_group(
+            canonical,
+            default_branch,
+            group_tag,
+            group_assets,
+            prior_assets,
+            remaining_timeout,
+            verify_existing_by_server_digest,
+        )
         for _source, name, _digest_value, _size in group_assets:
             prior_assets.setdefault(name, group_tag)
     return {
@@ -253,10 +295,7 @@ def _publish_group(
         else None
     )
     names = set(existing.stdout.splitlines()) if existing else set()
-    remote_digests = (
-        _release_asset_digests(canonical, tag)
-        if names and verify_existing_by_server_digest else {}
-    )
+    remote_digests = _release_asset_digests(canonical, tag) if names and verify_existing_by_server_digest else {}
     if existing is None:
         _authorize_write(canonical)
         _run(
@@ -295,7 +334,9 @@ def _publish_group(
                 # enough for the deadline and never include the catalog marker.
                 pending: list[tuple[Path, str, str]] = []
                 pending_bytes = 0
-                remaining_objects = assets[index - 1:-1] if assets[-1][1].startswith("catalog-") else assets[index - 1:]
+                remaining_objects = (
+                    assets[index - 1 : -1] if assets[-1][1].startswith("catalog-") else assets[index - 1 :]
+                )
                 for next_source, next_name, next_digest, next_size in remaining_objects:
                     if next_name in names or next_name in prior_assets:
                         break
@@ -310,12 +351,20 @@ def _publish_group(
                     if _digest(source) != (expected_digest, _size):
                         raise AssetError("asset source changed before upload; no mismatched bytes sent")
                 upload_paths: list[Path] = []
-                for pending_source, pending_name, _ in pending:
+                for pending_source, pending_name, pending_digest in pending:
                     upload_path = readback / pending_name
-                    upload_path.symlink_to(pending_source.resolve())
+                    # Freeze verified ciphertext before authorization/transport. A symlink
+                    # allowed later source replacement to substitute unverified plaintext.
+                    shutil.copyfile(pending_source, upload_path)
+                    os.chmod(upload_path, 0o600)
+                    if _digest(upload_path)[0] != pending_digest:
+                        raise AssetError("asset source changed while staging; no mismatched bytes sent")
                     upload_paths.append(upload_path)
                 _authorize_write(canonical)
-                _run(["gh", "release", "upload", tag, *map(str, upload_paths), "--repo", canonical], timeout=remaining_timeout())
+                _run(
+                    ["gh", "release", "upload", tag, *map(str, upload_paths), "--repo", canonical],
+                    timeout=remaining_timeout(),
+                )
                 for upload_path in upload_paths:
                     upload_path.unlink()
                     names.add(upload_path.name)
@@ -330,7 +379,11 @@ def _publish_group(
                         raise AssetError("release readback digest mismatch; local source retained")
                     downloaded.unlink()
                     verified_in_batch.add(pending_name)
-                print(f"ARCA assets verified {len(verified_in_batch)}/{len(assets)} (batched readback)", file=sys.stderr, flush=True)
+                print(
+                    f"ARCA assets verified {len(verified_in_batch)}/{len(assets)} (batched readback)",
+                    file=sys.stderr,
+                    flush=True,
+                )
                 continue
             _run(
                 [
@@ -375,10 +428,13 @@ def _release_asset_digests(repo: str, tag: str) -> dict[str, tuple[str, int]]:
             digest = row["digest"]
             size = row["size"]
             if (
-                not isinstance(name, str) or name in result
-                or row["state"] != "uploaded" or not isinstance(digest, str)
+                not isinstance(name, str)
+                or name in result
+                or row["state"] != "uploaded"
+                or not isinstance(digest, str)
                 or not re.fullmatch(r"sha256:[0-9a-f]{64}", digest)
-                or not isinstance(size, int) or size < 0
+                or not isinstance(size, int)
+                or size < 0
             ):
                 raise ValueError("existing asset metadata is incomplete")
             result[name] = (digest.removeprefix("sha256:"), size)
@@ -466,12 +522,26 @@ def hydrate_ciphertext(
                 raise AssetError("ciphertext hydration deadline reached")
             target = destination / name
             if target.exists() or target.is_symlink():
-                if target.is_symlink() or not target.is_file() or _digest(target) != verified_tags[locations[name]][name]:
+                if (
+                    target.is_symlink()
+                    or not target.is_file()
+                    or _digest(target) != verified_tags[locations[name]][name]
+                ):
                     raise AssetError("existing ciphertext differs from verified remote object")
                 continue
             _run(
-                ["gh", "release", "download", locations[name], "--repo", canonical,
-                 "--pattern", name, "--dir", str(staging)],
+                [
+                    "gh",
+                    "release",
+                    "download",
+                    locations[name],
+                    "--repo",
+                    canonical,
+                    "--pattern",
+                    name,
+                    "--dir",
+                    str(staging),
+                ],
                 timeout=min(120, max(1, int(remaining))),
             )
             staged = staging / name
@@ -494,9 +564,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--repo", required=True)
     parser.add_argument("--catalog", type=Path, required=True, help="already encrypted catalog")
-    parser.add_argument(
-        "--object", type=Path, action="append", default=[], help="encrypted payload object; repeatable"
-    )
+    parser.add_argument("--object", type=Path, action="append", default=[], help="encrypted payload object; repeatable")
     parser.add_argument("--objects-dir", type=Path, help="directory of encrypted .gpg objects")
     parser.add_argument("--batch-deadline-seconds", type=int, default=BATCH_DEADLINE_SECONDS)
     parser.add_argument("--verify-existing-by-server-digest", action="store_true")
@@ -508,9 +576,14 @@ def main() -> int:
         if bool(args.object) == bool(args.objects_dir):
             raise AssetError("provide exactly one of --object or --objects-dir")
         objects = _objects_from_dir(args.objects_dir) if args.objects_dir else args.object
-        result = publish(args.repo, args.catalog, objects, apply=args.apply,
-                         batch_deadline_seconds=args.batch_deadline_seconds,
-                         verify_existing_by_server_digest=args.verify_existing_by_server_digest)
+        result = publish(
+            args.repo,
+            args.catalog,
+            objects,
+            apply=args.apply,
+            batch_deadline_seconds=args.batch_deadline_seconds,
+            verify_existing_by_server_digest=args.verify_existing_by_server_digest,
+        )
     except AssetError as exc:
         print(f"arca-release-assets: {exc}", file=sys.stderr)
         return 1

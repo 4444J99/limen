@@ -79,7 +79,7 @@ def test_local_presubmit_rejections_record_zero_provider_runs(tmp_path, monkeypa
             "_repo_unavailable_reason",
             lambda *a: "repo unavailable: private-error-token" if case == "isolated_repo" else None,
         )
-        monkeypatch.setattr(dispatch, "_clone_repo", lambda *a: None)
+        monkeypatch.setattr(dispatch, "_clone_repo", lambda *a, **kw: None)
     if case == "inplace_packet":
         monkeypatch.setattr(dispatch, "_workstream_packet_for", lambda *a: {"schema_version": "fixture"})
     if case in {"inplace_host", "isolated_host"}:
