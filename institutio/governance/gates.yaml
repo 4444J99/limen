@@ -1156,6 +1156,11 @@ gates:
     note: "Regression for the form-twin split predicate: a proper fresh-history twin passes; a branch-copy twin (shared commit SHAs — the fork leak) must red P1; a file outside form-manifest.yaml paths must red P3. The protocol is docs/repo-split-protocol.md; owed splits are the doctor's [SPLIT owed] citation."
 
   # ── python estate ───────────────────────────────────────────────────────────
+  ruff-pin-test:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_check_ruff_pin.py -q"
+    paths: ["scripts/check-ruff-pin.py", "scripts/tests/test_check_ruff_pin.py", "cli/pyproject.toml"]
+    owner: verify
+    note: "Verify the actual interpreter-launched Ruff executable, including version mismatch, malformed output, and bounded execution failure; installed package metadata is not executable parity."
   ruff-lint:
     cache:
       mode: content

@@ -11,6 +11,7 @@ command that fixes it. This turns the machine-dependent 1,308-finding false-red 
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -27,12 +28,26 @@ def pinned_version() -> str:
 
 
 def installed_version() -> str | None:
-    try:
-        from importlib.metadata import version
+    """Inspect the command the gates execute, not potentially stale dist-info.
 
-        return version("ruff")
-    except Exception:
+    Ruff's Python launcher can select a Homebrew binary outside the installed
+    wheel. Matching package metadata alone does not establish toolchain parity.
+    """
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "ruff", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+            stdin=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.SubprocessError):
         return None
+    if result.returncode:
+        return None
+    match = re.fullmatch(r"ruff ([0-9][0-9A-Za-z.]*)", result.stdout.strip())
+    return match.group(1) if match else None
 
 
 def main() -> int:
@@ -40,16 +55,16 @@ def main() -> int:
     have = installed_version()
     if have is None:
         print(
-            f"check-ruff-pin: ruff is not importable from this interpreter — "
-            f"run: python3 -m pip install -e 'cli[test]'  (pins ruff=={want})",
+            f"check-ruff-pin: this interpreter could not execute a verifiable Ruff binary — "
+            f"use an isolated environment installed from cli[test] (pins ruff=={want})",
             file=sys.stderr,
         )
         return 1
     if have != want:
         print(
-            f"check-ruff-pin: interpreter ruff {have} != pinned {want} — verdicts would be "
-            f"machine-dependent noise. Fix: python3 -m pip install 'ruff=={want}' "
-            f"(add --break-system-packages on a Homebrew/PEP-668 python)",
+            f"check-ruff-pin: executed ruff {have} != pinned {want} — verdicts would be "
+            "machine-dependent noise. Use an isolated environment installed from cli[test]; "
+            "do not overwrite a package-manager-owned binary to repair Python metadata.",
             file=sys.stderr,
         )
         return 1
