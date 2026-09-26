@@ -167,8 +167,8 @@ def test_recurrence_reopens_healed_task(tmp_path, approved_execution_policy):
     _empty_board(tmp_path)
     run(tmp_path, apply=True)
     tasks_path = tmp_path / "tasks.yaml"
-
     approved_execution_policy("HEAL-mainred-4444j99-limen")
+
     # Simulate the heal landing through the keeper's legal lifecycle.
     for status in ("dispatched", "in_progress", "done"):
         before = load_limen_file(tasks_path)
@@ -177,6 +177,7 @@ def test_recurrence_reopens_healed_task(tmp_path, approved_execution_policy):
         task.status = status
         if status == "dispatched":
             task.target_agent = "codex"
+        contract_hash = execution_contract_hash(task) if status == "dispatched" else None
         task.updated = dt.datetime.now(dt.timezone.utc)
         task.dispatch_log.append(
             DispatchLogEntry(
@@ -184,8 +185,8 @@ def test_recurrence_reopens_healed_task(tmp_path, approved_execution_policy):
                 agent="codex",
                 session_id=f"heal-{status}",
                 status=status,
+                execution_contract_hash=contract_hash,
                 output=f"simulated heal {status}",
-                execution_contract_hash=execution_contract_hash(task),
             )
         )
         apply_limen_file_sync(
