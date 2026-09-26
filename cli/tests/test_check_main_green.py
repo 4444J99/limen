@@ -16,7 +16,6 @@ CHECK = ROOT / "scripts" / "check-main-green.py"
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 from limen.execution_contract import execution_contract_hash  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
-from limen.execution_contract import execution_contract_hash  # noqa: E402
 from limen.models import (  # noqa: E402
     JULES_LANDING_HOLD_LABEL,
     Budget,
