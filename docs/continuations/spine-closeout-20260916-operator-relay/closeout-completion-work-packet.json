@@ -1,0 +1,118 @@
+{
+  "schema_version": "limen.work_packet.v1",
+  "root_run_id": null,
+  "parent_run_id": null,
+  "work_id": "codex-bypass-closeout-20260926",
+  "work_key": "codex-bypass-closeout-20260926",
+  "intent": {
+    "objective": "Complete the direct-human Codex bypass-all closeout by producing one current-main, unstarted, protected, finite continuation capsule and a remotely durable tested receipt.",
+    "source": "direct-human-request-2026-09-25",
+    "terminal_predicate": "bash docs/continuations/spine-closeout-bypass-final-20260926/launch.sh --check"
+  },
+  "execution": {
+    "base": "91cc8b3dd4f6c6b6cc53da3dc8bd7dee8b88c568",
+    "branch": "work/spine-closeout-bypass-final-20260926",
+    "worktree": "/Users/4jp/Workspace/limen/.worktrees/spine-closeout-bypass-final-20260926",
+    "provider_launch": false,
+    "sandbox": "danger-full-access"
+  },
+  "intent_hash": "",
+  "execution_hash": "",
+  "initiator": {
+    "schema_version": "limen.agent_identity.v1",
+    "agent": "codex",
+    "surface": "direct",
+    "session_id": "01a0abb1-f709-7530-92a2-b5c13c3ee2ef",
+    "native_run_id": "01a0abb1-f709-7530-92a2-b5c13c3ee2ef",
+    "provider_identity": "codex"
+  },
+  "conductor": {
+    "schema_version": "limen.agent_identity.v1",
+    "agent": "codex",
+    "surface": "direct",
+    "session_id": "01a0abb1-f709-7530-92a2-b5c13c3ee2ef",
+    "native_run_id": "01a0abb1-f709-7530-92a2-b5c13c3ee2ef",
+    "provider_identity": "codex"
+  },
+  "preferred_agent": "codex",
+  "required_capabilities": [
+    "code",
+    "conduct",
+    "execute"
+  ],
+  "resource_claims": [
+    {
+      "schema_version": "limen.resource_claim.v1",
+      "key": "repository/4444J99/limen/branch/work/spine-closeout-bypass-final-20260926",
+      "mode": "exclusive"
+    }
+  ],
+  "storage_envelope_claims": [
+    {
+      "schema_version": "limen.prima_materia_resource_claim.v1",
+      "claim_id": "codexBypassCloseout20260926",
+      "source_instance_id": "limenMain91cc8b3dd4f6",
+      "operation_id": "renderProtectedCapsule",
+      "hydrated_inputs_bytes": 0,
+      "workspace_bytes": 67108864,
+      "temporary_expansion_bytes": 33554432,
+      "output_bytes": 4194304,
+      "encryption_chunking_bytes": 0,
+      "rollback_bytes": 4194304,
+      "memory_bytes": 1073741824,
+      "file_count": 5000,
+      "network_bytes": 16777216,
+      "wall_time_seconds": 1800,
+      "effective_from": "2026-09-26T02:31:02Z",
+      "effective_until": "2026-09-26T03:15:00Z",
+      "rollback_until": "2026-09-27T03:15:00Z"
+    }
+  ],
+  "predicate": "bash docs/continuations/spine-closeout-bypass-final-20260926/launch.sh --check",
+  "receipt_target": "git:4444J99/limen:docs/receipts/spine-closeout-bypass-final-20260926.json",
+  "work_loan": {
+    "schema_version": "limen.work_loan.v1",
+    "source_origin": "human_prompt",
+    "horizon": "present",
+    "value_case": "Honor the explicit request to complete closeout without recreating the terminal permission mismatch or bypassing finite-workspace admission.",
+    "budget_cost": 1,
+    "owner_surface": "4444J99/limen#2664"
+  },
+  "campaign": null,
+  "authority": {
+    "schema_version": "limen.authority_envelope.v1",
+    "actions": [
+      "code",
+      "conduct"
+    ],
+    "repositories": [
+      "4444J99/limen"
+    ],
+    "path_prefixes": [
+      "docs/continuations/spine-closeout-bypass-final-20260926",
+      "docs/receipts/spine-closeout-bypass-final-20260926.json"
+    ],
+    "external_effects": [],
+    "may_delegate": false
+  },
+  "deadline": "2026-09-26T03:15:00Z",
+  "spend": {
+    "schema_version": "limen.spend_envelope.v1",
+    "unit": "runs",
+    "limit": 1,
+    "reserve": 0
+  },
+  "retry": {
+    "schema_version": "limen.retry_policy.v1",
+    "max_attempts": 1,
+    "transient_only": true
+  },
+  "depth": 0,
+  "fanout": {
+    "schema_version": "limen.fanout_bounds.v1",
+    "max_children": 0,
+    "max_depth": 0
+  },
+  "effect": "write",
+  "task_id": null
+}
