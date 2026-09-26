@@ -94,7 +94,9 @@ async function boundedJwksFetch(url, options) {
   });
   const read = async () => {
     // Only the configured URL reaches this function; JWT jku/x5u are never used.
-    const response = await fetch(url, { ...options, redirect: "error" });
+    // Workers supports only follow/manual. Inspect the original response below
+    // so a redirect is rejected without ever contacting its Location target.
+    const response = await fetch(url, { ...options, redirect: "manual" });
     if (response.status !== 200) { await response.body?.cancel(); throw new Error("JWKS unavailable"); }
     const length = response.headers.get("content-length");
     if (length && (!/^\d+$/.test(length) || Number(length) > MAX_JWKS_BYTES)) {
