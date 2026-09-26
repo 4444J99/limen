@@ -4,6 +4,7 @@ import io
 import json
 import unittest
 import urllib.error
+import urllib.parse
 from datetime import datetime, timezone
 from unittest.mock import patch
 
