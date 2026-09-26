@@ -125,6 +125,37 @@ def test_optional_failure_does_not_create_ci_red_onset(monkeypatch, tmp_path: Pa
     )
 
 
+def test_pending_optional_review_does_not_block_but_required_or_unknown_does(monkeypatch, tmp_path):
+    module = _load(tmp_path)
+    payload = {
+        "state": "OPEN",
+        "isDraft": False,
+        "labels": [{"name": "lifecycle:delivery"}],
+        "mergeable": "MERGEABLE",
+        "baseRefName": "main",
+        "headRefOid": "a" * 40,
+        "files": [],
+        "statusCheckRollup": [{"name": "optional-review", "state": "PENDING"}],
+    }
+    monkeypatch.setattr(module, "stale_base_verdict", lambda *_args: None)
+    monkeypatch.setattr(module, "merge_queue_capability", lambda *_args: "inactive")
+    monkeypatch.setattr(module, "_is_trivial", lambda *_args: False)
+    for raw, expected in [
+        ('[{"name":"contract","bucket":"pass"}]', "READY"),
+        ('[{"name":"contract","bucket":"pending"}]', "CI-PENDING"),
+        ("not-json", "REQUIRED-CHECKS-UNMEASURED"),
+    ]:
+
+        def fake_gh(args, selected=raw, **kwargs):
+            if args[:2] == ["pr", "view"]:
+                return SimpleNamespace(returncode=0, stdout=json.dumps(payload))
+            assert args[:2] == ["pr", "checks"] and "--required" in args
+            return SimpleNamespace(returncode=0, stdout=selected)
+
+        monkeypatch.setattr(module, "gh", fake_gh)
+        assert module.assess(("organvm/repo", 7))[2] == expected
+
+
 def test_ledger_persistence_failure_is_reported_without_crashing(monkeypatch, tmp_path: Path, capsys) -> None:
     module = _load(tmp_path)
     monkeypatch.setattr(module.os, "replace", lambda *_args: (_ for _ in ()).throw(OSError("read-only")))
