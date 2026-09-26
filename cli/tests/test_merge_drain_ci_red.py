@@ -143,6 +143,10 @@ def test_pending_optional_review_does_not_block_but_required_or_unknown_does(mon
     for raw, expected in [
         ('[{"name":"contract","bucket":"pass"}]', "READY"),
         ('[{"name":"contract","bucket":"pending"}]', "CI-PENDING"),
+        ('[{"name":"contract","bucket":"unknown"}]', "REQUIRED-CHECKS-UNMEASURED"),
+        ('[{"name":"contract"}]', "REQUIRED-CHECKS-UNMEASURED"),
+        ('[{"bucket":"pass"}]', "REQUIRED-CHECKS-UNMEASURED"),
+        ("[null]", "REQUIRED-CHECKS-UNMEASURED"),
         ("not-json", "REQUIRED-CHECKS-UNMEASURED"),
     ]:
 
@@ -291,3 +295,34 @@ def test_authorization_error_does_not_probe_for_absence(monkeypatch, tmp_path):
     monkeypatch.setattr(module, "gh", fake_gh)
     assert module._failing_required_checks("organvm/repo", 7, "main") is None
     assert len(calls) == 1
+
+
+def test_protected_pr_only_policy_proves_zero_checks_without_disabling_protection(monkeypatch, tmp_path):
+    module = _load(tmp_path)
+    for required, rules, expected in [
+        ({"contexts": [], "checks": []}, [{"type": "pull_request"}], ()),
+        ({"contexts": ["ci"], "checks": []}, [{"type": "pull_request"}], None),
+        ({"contexts": [], "checks": [{"context": "ci"}]}, [], None),
+        ({"contexts": []}, [], None),
+        (None, [], None),
+        ({"contexts": [], "checks": []}, [{"type": "required_status_checks"}], None),
+        ({"contexts": [], "checks": []}, [{"type": "workflows"}], None),
+        ({"contexts": [], "checks": []}, [{}], None),
+    ]:
+
+        def fake_gh(args, selected=required, effective=rules, **kwargs):
+            if args[:2] == ["pr", "checks"]:
+                return SimpleNamespace(
+                    returncode=1, stdout="", stderr="no required checks reported on the 'topic' branch"
+                )
+            if "/rules/" in args[1]:
+                return SimpleNamespace(returncode=0, stdout=json.dumps(effective))
+            return SimpleNamespace(
+                returncode=0,
+                stdout=json.dumps(
+                    {"name": "main", "protected": True, "protection": {"required_status_checks": selected}}
+                ),
+            )
+
+        monkeypatch.setattr(module, "gh", fake_gh)
+        assert module._failing_required_checks("organvm/repo", 7, "main") == expected

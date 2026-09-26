@@ -144,8 +144,28 @@ def _no_required_policy(repo: str, branch: str | None) -> bool:
             return False
         info = json.loads(metadata.stdout)
         effective = json.loads(rules.stdout)
-        return (isinstance(info, dict) and info.get("name") == branch
-                and info.get("protected") is False and effective == [])
+        if not isinstance(info, dict) or info.get("name") != branch or type(info.get("protected")) is not bool:
+            return False
+        if not isinstance(effective, list):
+            return False
+        # A PR-only ruleset protects the branch without requiring a CI context.
+        # Unknown rule types remain unmeasured, not proof of absent checks.
+        non_check_rules = {
+            "pull_request",
+            "creation",
+            "update",
+            "deletion",
+            "non_fast_forward",
+            "required_linear_history",
+            "required_signatures",
+        }
+        if any(not isinstance(rule, dict) or rule.get("type") not in non_check_rules for rule in effective):
+            return False
+        if info["protected"] is False:
+            return True
+        protection = info.get("protection")
+        required = protection.get("required_status_checks") if isinstance(protection, dict) else None
+        return isinstance(required, dict) and required.get("contexts") == [] and required.get("checks") == []
     except (OSError, ValueError, TypeError, subprocess.TimeoutExpired):
         return False
 
@@ -168,19 +188,49 @@ def _required_checks_in_states(repo: str, num: int, branch: str | None, states: 
         rows = json.loads(result.stdout)
     except (TypeError, ValueError):
         message = (getattr(result, "stderr", "") or result.stdout or "").strip()
-        if (result.returncode == 1 and message.startswith("no required checks reported on the ")
-                and _no_required_policy(repo, branch)):
+        if (
+            result.returncode == 1
+            and message.startswith("no required checks reported on the ")
+            and _no_required_policy(repo, branch)
+        ):
             return ()
         return None
     if not isinstance(rows, list):
+        return None
+    known_states = {
+        "pass",
+        "success",
+        "neutral",
+        "skipping",
+        "skipped",
+        "fail",
+        "failure",
+        "error",
+        "cancel",
+        "cancelled",
+        "timed_out",
+        "action_required",
+        "pending",
+        "in_progress",
+        "queued",
+        "expected",
+        "waiting",
+        "requested",
+    }
+    if any(
+        not isinstance(row, dict)
+        or not isinstance(row.get("name"), str)
+        or not row["name"]
+        or str(row.get("bucket") or row.get("state") or "").lower() not in known_states
+        for row in rows
+    ):
         return None
     return tuple(
         sorted(
             str(row.get("name"))
             for row in rows
             if isinstance(row, dict)
-            and str(row.get("bucket") or row.get("state") or "").lower()
-            in states
+            and str(row.get("bucket") or row.get("state") or "").lower() in states
             and row.get("name")
         )
     )
@@ -386,7 +436,10 @@ def assess(rn):
             # an operator-facing CI-red onset or block the required-check rail.
         if any(s in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", "") for s in states):
             pending_required = _required_checks_in_states(
-                repo, num, d.get("baseRefName"), {"pending", "in_progress", "queued", "expected", ""}
+                repo,
+                num,
+                d.get("baseRefName"),
+                {"pending", "in_progress", "queued", "expected", "waiting", "requested"},
             )
             if pending_required is None:
                 return (repo, num, "REQUIRED-CHECKS-UNMEASURED")
