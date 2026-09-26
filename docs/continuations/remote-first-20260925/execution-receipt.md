@@ -317,3 +317,80 @@ The prior 29/30 broader result remains failed; this narrower result does not
 supersede it. Only dispatch retry identity and payload-encryption provenance
 remain unresolved among the reviewed source findings. No installed hooks or
 scheduled runtime were changed. The source checkout is retained for those owners.
+
+## Completion request continuation: remaining source reviews resolved
+
+Attempt started 2026-09-26 01:26:46 UTC in the same retained checkout, with two
+implementation tasks: dispatch retry identity and publication encryption proof.
+Source commit `16a23b39e` closes both findings. Integration commit
+`c8acf4f60835796f79e3febdfc3a1452b8d99d8b` includes current main
+`0068e553d` without a rebase or force-push. Both commits are pushed on #2718.
+
+### Implemented and verified
+
+- Each isolated launch supplies a fresh attempt identity. Duplicate acquisition
+  within that attempt stays idempotent; later launch/release cycles cannot reuse
+  the prior released lease. The canonical store remains shared.
+- Publication requires private-vault's complete OpenPGP framing, exact bytes,
+  and pinned-recipient checks for every catalog and payload before GitHub
+  discovery or mutation. Filenames, headers, and caller-supplied hashes are not
+  encryption evidence. Local planning remains available without remote effects.
+- Native GPG tests verify real pinned-public-key encryption and reject renamed
+  plaintext, forged headers, trailing plaintext, wrong recipients, unavailable
+  verification, and changed sources. Transport fixtures test their own separate
+  boundary; they do not claim real remote publication.
+- Upload staging freezes verified ciphertext into private temporary files and
+  rechecks their digests. Replacing the original during outbound authorization
+  cannot replace the uploaded bytes.
+- The legacy adapter wraps existing AES blobs/parts in pinned OpenPGP envelopes.
+  Outer identities stay inside the encrypted catalog; inner Git bytes remain
+  exact. Fixed-catalog resume validates the envelopes, and historical unwrapped
+  catalogs remain readable. Existing captures are retained, not overwritten.
+  Resume decryption still requires the native private key; public-key encryption
+  is not independent recovery.
+
+Focused verification passed **419 tests**, including the complete dispatch and
+local-prelaunch files, 29 publisher/native-envelope cases, and 4 legacy cases.
+The legacy fixture reconstructs the exact original commit for both wrapped and
+historical transports. This is not restoration of the owner's private estate.
+
+Scoped verification passed **34 of 35 cheap gates**, including mypy over 204
+source files, whole-estate Ruff lint/format, and both implicated ARCA gates.
+The sole failure is `positioning-foundry-technical-readiness-public-live`.
+That failure prevented heavy gates; no full CLI/API acceptance is claimed.
+
+The main integration had one conflict in `scripts/consolidate-github.py`.
+Resolution preserved that file byte-for-byte from current main, including its
+receipt-resume safeguards. Its tests and incoming authentication tests passed
+**82 tests plus 29 subtests**. Secret scanning identified two false positives
+on literal diagnostic labels in main's App-token script; only those lines got
+the existing narrow annotation. Secret scanning and LFS remain enabled. No
+GitHub repository transfer or credential-setting change was performed.
+
+All **16 previously observed review threads are resolved** with exact-head
+evidence. GitHub reports the integrated branch mergeable. Source review closure
+is not merge, deployment, lifecycle acceptance, or master-plan completion.
+
+### Integration authority and remaining acceptance
+
+The documented bootstrap was attempted once:
+`bash scripts/gh-app-token.sh --repo 4444J99/limen --which`.
+It reports no GitHub App installation for that exact repository and correctly
+refuses fallback for a configured App identity. The authenticated connector and
+normal Git push remain available. No token was printed, extracted, substituted,
+or placed in a receipt.
+
+Owner: E4 integration (#2741), with the existing GitHub App credential owner.
+Next external prerequisite: authorize/install the existing App for the exact
+repository and verify its required grant through the existing bootstrap before
+rerunning the live-observation predicate. No new App, credential change, or
+permission expansion was performed. The failed scoped result does not authorize
+merge or installed-runtime activation.
+
+Restoration, independent replicas, complete classification, native runtime
+cycles, and authorized retrieval remain in their existing epics. Data-volume
+availability was **42,436,836 KiB (40.47 GiB)** at 01:47 UTC, not recovery
+attributable to this attempt. No protected snapshot, private original, PRDS
+checkout, or canonical store was removed. The active source checkout is retained.
+The five original end states remain unverified as a complete set; no overall
+completion percentage is asserted.
