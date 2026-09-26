@@ -221,3 +221,85 @@ not reclaim attributable to this attempt. Local metadata containment earns no
 reclaimed-storage credit. No private original, protected PRDS checkout, internal
 snapshot, canonical store or user branch was deleted. E4's remaining installed
 cycle and final-store custody gates remain open in the existing program.
+
+## Continued implementation: verification repair and ARCA review remediation
+
+Attempt started 2026-09-26 00:41:59 UTC. Existing owners remain E1/E5 for custody
+and E4 for integration; umbrella #2739 and recovery PR #2718 are unchanged.
+Source commit `d4c7ee7f6fc5cdd58dd3f6fec9901d8be44b8779` was committed with
+the effective secret-scan hook, pushed with the effective LFS hook, and verified
+as PR #2718's live head through the authenticated GitHub connector.
+
+### Correction to the prior verification diagnosis
+
+The preceding claim of inherited repository-wide lint findings was incorrect.
+The host Python package metadata reports Ruff 0.15.8, but its module launcher
+executes the Homebrew Ruff 0.16.9 binary. The pin checker inspected metadata only.
+It now runs the exact interpreter's `-m ruff --version`, validates the output,
+and fails closed on mismatch, launch failure, or its ten-second deadline.
+Eleven regression cases are wired through the existing hermetic test runner.
+The existing Limen virtual environment runs the declared Ruff 0.15.8: whole-estate
+lint passes and all 723 files pass formatting. No package-manager binary, lint
+rule, capability, or authentication configuration was changed.
+
+Hosted PR-gate run 36197586536 at the preceding head failed because the real
+extended-attribute test used a macOS attribute name on Linux. The fixture now
+uses Linux's unprivileged `user.` namespace there and preserves the real native
+capture/restore assertions on macOS. The 17 object tests plus 11 pin tests pass
+locally; a local macOS pass is not a hosted Linux receipt.
+
+Live GitHub metadata also confirms PR #2709 merged on 2026-09-24 at
+`a77aa0375b10091bb5c74bbdc063a899e569b013`; its old prose is not current state.
+That merge does not prove this recovery PR or its installed runtime.
+
+### ARCA safety changes and review evidence
+
+- The update cap counts the deduplicated union of pending history and changed
+  index blobs, excluding remote-reachable objects. Missing tracking refs count
+  all reachable HEAD blobs as pending rather than zero.
+- Backup and explicit rotation share per-store staging and bounded commits.
+  Rotation validates its cap before mutation, follows the manifest's current
+  repository, verifies private destination visibility, and refuses unpublished
+  old-generation state before changing its branch.
+- Rejected store manifest entries are removed without losing generation
+  metadata. Repeated refusal, including unborn HEAD, remains incomplete.
+  Matching source hashes no longer suppress resealing dirty local payloads.
+  Oversized source stores fail explicitly instead of returning success.
+- Successful pushes require live exact-HEAD readback and establish the tracking
+  reference even after an empty clone or rotation. Status uses live remote
+  evidence; the freshness sensor consumes custody state rather than trusting
+  recent push time alone. Pre-existing staged changes remain untouched.
+- The existing outbound-writer registry now records two shared push sites and
+  two read-only live-reference probes. No writer or predicate was disabled.
+
+`bash scripts/tests/arca-generation.test.sh` passes **41 checks** using isolated
+temporary repositories. Cases cover unchanged retries after rejected first
+pushes, pending-plus-staged limits, inherited ciphertext isolation, deleted
+remote branches, unborn-HEAD refusal, dirty payload repair, and rotation
+retention. The twelve corresponding ARCA shell review threads were answered
+with exact-commit evidence and resolved; other review findings remain open.
+
+The final scoped batch selected **30 gates: 29 passed, 1 failed**. Its failure is
+`positioning-foundry-technical-readiness-public-live`: the local GitHub CLI is
+unauthenticated and the predicate reports `live GitHub observation failed closed`.
+The authenticated connector and ordinary Git push both work. This is not a
+green scoped receipt, and no merge or runtime deployment is claimed. The source
+changes are retained in the existing draft PR, not installed into scheduled jobs.
+
+### Remaining boundary and checkout disposition
+
+PR #2718 remains draft. Still-open review work includes dispatch retry lease
+identity, producer-bound encryption evidence for generic release payloads, and
+dry-run outbound-effector matching. Catalog-last release publication was already
+implemented: all 20 publisher tests passed again, and that separate review thread
+was answered and resolved without new source changes. E1/E5 retain independent
+key-restoration and replica acceptance; E4 retains installed lifecycle proof;
+E6 retains authorized private retrieval. Whole-estate classification and the
+200 GiB capacity outcome are not complete.
+
+At 2026-09-26 01:01 UTC, Data-volume availability measured **40,575,540 KiB
+(38.70 GiB)**. This observation is not reclaim attributable to this attempt.
+No user checkout, private original, canonical store, PRDS material, or internal
+snapshot was removed. The existing source worktree remains active and retained.
+There are still **0/5 fully verified original end-state criteria**; source-level
+progress is not a defensible overall completion percentage.
