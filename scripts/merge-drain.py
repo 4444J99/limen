@@ -139,16 +139,12 @@ def _no_required_policy(repo: str, branch: str | None) -> bool:
     return _required_checks.no_required_policy(gh, repo, branch)
 
 
-def _required_checks_in_states(
-    repo: str, num: int, branch: str | None, states: set[str]
-) -> tuple[str, ...] | None:
+def _required_checks_in_states(repo: str, num: int, branch: str | None, states: set[str]) -> tuple[str, ...] | None:
     # Delegates to the ONE shared policy (scripts/_required_checks.py, issue #2764).
     return _required_checks.required_checks_in_states(gh, repo, num, branch, states)
 
 
-def _failing_required_checks(
-    repo: str, num: int, branch: str | None = None
-) -> tuple[str, ...] | None:
+def _failing_required_checks(repo: str, num: int, branch: str | None = None) -> tuple[str, ...] | None:
     # Delegates to the ONE shared policy (scripts/_required_checks.py, issue #2764).
     # Kept as a thin wrapper: cli/tests/test_merge_drain_ci_red.py exercises the
     # organ's surface directly.
@@ -351,9 +347,7 @@ def assess(rn):
             # Optional check failures stay visible in GitHub, but do not create
             # an operator-facing CI-red onset or block the required-check rail.
         if any(s in _required_checks.ROLLUP_PENDING_STATES for s in states):
-            pending_required = _required_checks.pending_required_checks(
-                gh, repo, num, d.get("baseRefName")
-            )
+            pending_required = _required_checks.pending_required_checks(gh, repo, num, d.get("baseRefName"))
             if pending_required is None:
                 return (repo, num, _required_checks.UNMEASURED)
             if pending_required:
