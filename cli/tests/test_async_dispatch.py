@@ -529,8 +529,13 @@ def test_inflight_markers_consume_slots(tmp_path):
     assert picked == []  # 4 already running, cap 4 → 0 new
 
 
-def test_inflight_markers_consume_per_lane_limit(tmp_path):
+def test_inflight_markers_consume_per_lane_limit(tmp_path, monkeypatch, approved_execution_policy):
+    approved_execution_policy("C0", "C1", "C2", "A0", "A1", "A2")
     da = _load(tmp_path, n_open=0)
+    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "1")
+    monkeypatch.setattr(da, "dispatch_admission_check", lambda *_args, **_kwargs: {"allow": True, "status": "approved"})
+    monkeypatch.setattr(da, "_worktree_admission_snapshot", lambda: {"active": False, "reason": ""})
+    monkeypatch.setattr(da, "_worktree_admission_for_task", lambda *_args, **_kwargs: (False, "unit-test admitted"))
     today = datetime.date.today()
     lf = load_limen_file(tmp_path / "tasks.yaml")
     lf.portal.budget.per_agent = {"codex": 50, "agy": 50}
