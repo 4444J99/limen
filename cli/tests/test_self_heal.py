@@ -75,12 +75,22 @@ class _R:
         self.stderr = stderr
 
 
+# Required-check probe answers for the canned universe, keyed by PR number.
+# PR 54's rollup failure is on `e2e`, which is a REQUIRED check → CI-RED.
+_REQUIRED_CHECKS = {
+    54: [{"name": "e2e", "bucket": "fail", "state": "FAILURE"}],
+}
+
+
 def _fake_gh(args, timeout=60):
-    # `gh search prs …`  → the PR list ;  `gh pr view <n> …` → that PR's detail
+    # `gh search prs …` → the PR list ; `gh pr view <n> …` → that PR's detail ;
+    # `gh pr checks <n> --required …` → that PR's required-check states.
     if args[:2] == ["search", "prs"]:
         return _R(json.dumps(_PRS))
     if args[:2] == ["pr", "view"]:
         return _R(json.dumps(_VIEW[int(args[2])]))
+    if args[:2] == ["pr", "checks"]:
+        return _R(json.dumps(_REQUIRED_CHECKS.get(int(args[2]), [])))
     return _R("[]")
 
 
@@ -340,6 +350,17 @@ def test_chronic_check_cannot_hide_a_distinct_new_failure(tmp_path, monkeypatch)
             }
         ),
         encoding="utf-8",
+    )
+    # Under the shared required-check policy (issue #2764) the heal verdict keys on
+    # REQUIRED checks only: lint must be a failing required check here for the
+    # "distinct new failure defeats the freeze" intent to hold.
+    monkeypatch.setitem(
+        _REQUIRED_CHECKS,
+        54,
+        [
+            {"name": "e2e", "bucket": "fail", "state": "FAILURE"},
+            {"name": "lint", "bucket": "fail", "state": "FAILURE"},
+        ],
     )
 
     assert _run(m, monkeypatch, p) == 0
@@ -662,3 +683,125 @@ def test_the_cost_knob_spelling_is_not_offered(tmp_path, monkeypatch):
     with pytest.raises(SystemExit) as excinfo:
         _run(m, monkeypatch, p, "--dry-run", "--scan-max", "500")
     assert excinfo.value.code == 2  # argparse "unrecognized arguments", not a silent default
+
+
+# ── REQUIRED-CHECK PARITY (issue #2764) ─────────────────────────────────────────────────
+# self-heal must classify CI-RED exactly like merge-drain: only a failing REQUIRED
+# check is CI-RED. Optional-only failures must not emit repair tasks, and an
+# unreadable required-check policy must fail closed (no task, not green).
+
+
+def _assess_view(**overrides):
+    view = {
+        "state": "OPEN",
+        "isDraft": False,
+        "mergeable": "MERGEABLE",
+        "baseRefName": "main",
+        "headRefOid": "a" * 40,
+        "files": [],
+        "statusCheckRollup": [{"name": "pr-gate", "conclusion": "FAILURE"}],
+    }
+    view.update(overrides)
+    return view
+
+
+def _assess_with(m, monkeypatch, view, checks, branch_policy=None):
+    """Run m.assess with scripted `pr checks --required` and branch-policy answers."""
+
+    def fake_gh(args, timeout=60):
+        if args[:2] == ["pr", "view"]:
+            return _R(json.dumps(view))
+        if args[:2] == ["pr", "checks"]:
+            assert "--required" in args
+            return checks(args)
+        if args[0] == "api" and args[1].startswith("repos/"):
+            assert branch_policy is not None, f"unexpected branch-policy probe: {args!r}"
+            return branch_policy(args)
+        raise AssertionError(f"unexpected gh call: {args!r}")
+
+    monkeypatch.setattr(m, "gh", fake_gh)
+    monkeypatch.setattr(m, "stale_base_verdict", lambda *a: None)
+    monkeypatch.setattr(m, "merge_queue_capability", lambda *a: "inactive")
+    return m.assess(("organvm/repo", 7, "https://example.invalid/7"))
+
+
+def _ok(*rows):
+    return lambda args: _R(json.dumps(list(rows)))
+
+
+def test_required_failure_is_ci_red_with_required_names_only(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    view = _assess_view(
+        statusCheckRollup=[
+            {"name": "pr-gate", "conclusion": "FAILURE"},
+            {"name": "nightly-docs", "conclusion": "FAILURE"},
+        ]
+    )
+    verdict = _assess_with(
+        m,
+        monkeypatch,
+        view,
+        checks=_ok(
+            {"name": "pr-gate", "bucket": "fail", "state": "FAILURE"},
+            {"name": "nightly-docs", "bucket": "pass", "state": "SUCCESS"},
+        ),
+    )
+    assert verdict == ("organvm/repo", 7, "https://example.invalid/7", "CI-RED", ["pr-gate"])
+
+
+def test_optional_only_failure_is_not_ci_red(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    view = _assess_view(statusCheckRollup=[{"name": "nightly-docs", "conclusion": "FAILURE"}])
+    verdict = _assess_with(
+        m,
+        monkeypatch,
+        view,
+        checks=_ok({"name": "pr-gate", "bucket": "pass", "state": "SUCCESS"}),
+    )
+    assert verdict[3] == "READY", "optional-only failure must not be CI-RED"
+
+
+def test_no_required_checks_proven_absent_is_not_ci_red(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    view = _assess_view(statusCheckRollup=[{"name": "nightly-docs", "conclusion": "FAILURE"}])
+
+    def checks(args):
+        return _R("", returncode=1, stderr="no required checks reported on the main branch")
+
+    def branch_policy(args):
+        if "/rules/branches/" in args[1]:
+            return _R("[]")
+        return _R(json.dumps({"name": "main", "protected": False}))
+
+    verdict = _assess_with(m, monkeypatch, view, checks=checks, branch_policy=branch_policy)
+    assert verdict[3] == "READY"
+
+
+def test_unreadable_required_policy_is_unmeasured_not_green(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    view = _assess_view()
+
+    def checks(args):
+        return _R("not-json", returncode=1, stderr="boom")
+
+    verdict = _assess_with(m, monkeypatch, view, checks=checks)
+    assert verdict == ("organvm/repo", 7, "https://example.invalid/7", "REQUIRED-CHECKS-UNMEASURED", [])
+
+
+def test_unmeasured_verdict_emits_no_heal_task(tmp_path, monkeypatch):
+    m = _load(tmp_path, monkeypatch)
+    p = tmp_path / "tasks.yaml"
+    _board(p)
+    view = _assess_view()
+
+    def fake_gh(args, timeout=60):
+        if args[:2] == ["search", "prs"]:
+            return _R(json.dumps([{"number": 7, "repository": {"nameWithOwner": "organvm/repo"}, "url": "u/7"}]))
+        if args[:2] == ["pr", "view"]:
+            return _R(json.dumps(view))
+        return _R("not-json", returncode=1, stderr="boom")
+
+    monkeypatch.setattr(m, "gh", fake_gh)
+    monkeypatch.setattr(sys, "argv", ["self-heal", "--tasks", str(p)])
+    assert m.main() == 0
+    assert yaml.safe_load(p.read_text())["tasks"] == []
