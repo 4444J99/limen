@@ -201,8 +201,8 @@ class JulesApiClient:
         key: str,
         *,
         transport: Callable = _transport,
-        timeout: float = 15,
-        total_timeout: float = 90,
+        timeout: float = 30,
+        total_timeout: float = 600,
         max_pages: int = 100,
         max_bytes: int = 4 * 1024 * 1024,
     ):
@@ -233,7 +233,7 @@ class JulesApiClient:
             raise JulesApiError("invalid_resource_path")
         return self._transport(method, path, self._key, payload, timeout or self.timeout, self.max_bytes)
 
-    def _list(self, path: str, field: str) -> Catalog:
+    def _list(self, path: str, field: str, *, fields: str | None = None) -> Catalog:
         deadline = time.monotonic() + self.total_timeout
         token = ""
         seen_tokens: set[str] = set()
@@ -245,6 +245,8 @@ class JulesApiClient:
                 if remaining <= 0:
                     raise JulesApiError("pagination_deadline_exceeded")
                 query: dict[str, int | str] = {"pageSize": page_size}
+                if fields is not None:
+                    query["fields"] = fields
                 if token:
                     query["pageToken"] = token
                 try:
@@ -290,8 +292,11 @@ class JulesApiClient:
     def sources(self) -> Catalog:
         return self._list("sources", "sources")
 
-    def sessions(self) -> Catalog:
-        return self._list("sessions", "sessions")
+    def sessions(self, *, observation_only: bool = False) -> Catalog:
+        # Account accounting needs metadata, not prompts or generated patches.
+        # Preserve nextPageToken and the full-record default used by recovery.
+        fields = "sessions(name,id,state,createTime),nextPageToken" if observation_only else None
+        return self._list("sessions", "sessions", fields=fields)
 
     def activities(self, name: str) -> Catalog:
         return self._list(session_name(name) + "/activities", "activities")
@@ -382,7 +387,9 @@ class JulesApiClient:
     def find_attempt(self, *, marker: str, source: str) -> dict | None:
         matches = [
             row
-            for row in self.sessions().items
+            for row in self._list(
+                "sessions", "sessions", fields="sessions(name,id,prompt,sourceContext,url),nextPageToken"
+            ).items
             if str(row.get("prompt", "")).splitlines()[:1] == [marker]
             and isinstance(row.get("sourceContext"), dict)
             and row["sourceContext"].get("source") == source
@@ -437,7 +444,7 @@ def main() -> int:
     try:
         client = JulesApiClient.from_env()
         sources = client.sources()
-        result = observe(client.sessions())
+        result = observe(client.sessions(observation_only=True))
         result["sources_observed"] = len(sources.items)
     except JulesApiError as exc:
         print(

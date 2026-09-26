@@ -75,7 +75,7 @@ def bind_ci_credential(clavis: Any, source_ref: str | None, *, apply: bool, clie
             return {**receipt, "error_code": "credential_source_unreadable"}
         client = client_factory(key)
         sources = client.sources()
-        observation = observe(client.sessions())
+        observation = observe(client.sessions(observation_only=True))
         observation["sources_observed"] = len(sources.items)
         receipt["provider_observation"] = observation
         # CLAVIS pipes the value through gh's stdin. No literal key enters argv,
