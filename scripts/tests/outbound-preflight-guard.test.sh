@@ -38,9 +38,9 @@ effectors:
   arca.release-assets:
     title: "fixture ARCA asset effector"
     match:
-      - '\barca\.sh\s+assets\b'
-      - '\barca-release-assets\.py\b'
-      - '\barca-preserve-git-ciphertext\.py\b'
+      - '\barca\.sh\s+assets\b(?=[^;&|\n]*\s--apply(?:\s|[;&|]|$))'
+      - '\barca-release-assets\.py\b(?=[^;&|\n]*\s--apply(?:\s|[;&|]|$))'
+      - '\barca-preserve-git-ciphertext\.py\b(?=[^;&|\n]*\s--apply(?:\s|[;&|]|$))'
     target:
       kind: github_repository
       pattern: '--repo\s+([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)'
@@ -88,6 +88,16 @@ assert_passes 'echo "email someone@example.com about it later"' \
   "passes prose that merely mentions an address"
 assert_denied 'bash scripts/arca.sh assets --repo owner/vault --catalog catalog.enc --object object.enc --apply' \
   "denies ARCA release assets without a private-repository receipt"
+assert_passes 'bash scripts/arca.sh assets --repo owner/vault --catalog catalog.enc --object object.enc' \
+  "allows local ARCA asset planning without a remote receipt"
+assert_passes 'python3 scripts/arca-release-assets.py --repo owner/vault --catalog catalog.enc --object object.enc' \
+  "allows direct local asset planning"
+assert_passes 'python3 scripts/arca-preserve-git-ciphertext.py /private/arca --repo owner/vault --catalog-output catalog.gpg' \
+  "allows local ciphertext preservation planning"
+assert_denied 'python3 scripts/arca-release-assets.py --apply --repo owner/vault --catalog catalog.enc --object object.enc' \
+  "denies direct asset apply before other options without a receipt"
+assert_passes 'bash scripts/arca.sh assets --repo owner/vault --catalog catalog.enc; echo --apply' \
+  "does not borrow apply from a separate command"
 assert_denied 'python3 scripts/arca-preserve-git-ciphertext.py /private/arca --repo owner/vault --catalog-output catalog.gpg --apply' \
   "denies ARCA divergent-ciphertext publication without a private-repository receipt"
 assert_denied 'bash scripts/arca.sh assets --repo "$TARGET" --catalog catalog.enc --object object.enc --apply' \

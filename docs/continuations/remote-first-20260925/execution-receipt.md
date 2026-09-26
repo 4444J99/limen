@@ -303,3 +303,17 @@ No user checkout, private original, canonical store, PRDS material, or internal
 snapshot was removed. The existing source worktree remains active and retained.
 There are still **0/5 fully verified original end-state criteria**; source-level
 progress is not a defensible overall completion percentage.
+
+### Final same-attempt ARCA hook correction
+
+The dry-run effector finding was subsequently repaired in this same custody
+workstream: the three ARCA release/preservation command patterns require the
+mutating `--apply` form within the same command segment. Default local plans
+remain available without network receipts; publisher-internal preflight remains
+unchanged and still runs before outbound mutation. The guard matrix passes,
+including three local-plan cases, apply before other options, and a separate
+command containing `--apply`. All **7 scoped gates** for this correction pass.
+The prior 29/30 broader result remains failed; this narrower result does not
+supersede it. Only dispatch retry identity and payload-encryption provenance
+remain unresolved among the reviewed source findings. No installed hooks or
+scheduled runtime were changed. The source checkout is retained for those owners.

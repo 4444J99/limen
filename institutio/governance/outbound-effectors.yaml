@@ -119,9 +119,9 @@ effectors:
   arca.release-assets:
     title: "ARCA encrypted release-asset publication — prove target identity and privacy"
     match:
-      - '\barca\.sh\s+assets\b'
-      - '\barca-release-assets\.py\b'
-      - '\barca-preserve-git-ciphertext\.py\b'
+      - '\barca\.sh\s+assets\b(?=[^;&|\n]*\s--apply(?:\s|[;&|]|$))'
+      - '\barca-release-assets\.py\b(?=[^;&|\n]*\s--apply(?:\s|[;&|]|$))'
+      - '\barca-preserve-git-ciphertext\.py\b(?=[^;&|\n]*\s--apply(?:\s|[;&|]|$))'
     target:
       kind: github_repository
       pattern: '--repo\s+([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)'
@@ -131,3 +131,5 @@ effectors:
       ARCA release assets are outward custody writes. Confirm the exact immutable GitHub
       repository identity and private visibility immediately before creating or uploading
       encrypted assets; a public or renamed target stays closed.
+      Default local planning performs no outbound write and needs no remote receipt;
+      each publisher also enforces its own preflight immediately before mutation.
