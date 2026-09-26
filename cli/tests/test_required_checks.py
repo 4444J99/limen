@@ -33,13 +33,7 @@ def _gh_for(checks_result, branch_meta=None, rules=None):
         if args[0] == "api" and "/rules/branches/" in args[1]:
             return _R(json.dumps([] if rules is None else rules))
         if args[0] == "api" and "/branches/" in args[1]:
-            return _R(
-                json.dumps(
-                    {"name": "main", "protected": False}
-                    if branch_meta is None
-                    else branch_meta
-                )
-            )
+            return _R(json.dumps({"name": "main", "protected": False} if branch_meta is None else branch_meta))
         raise AssertionError(f"unexpected gh call: {args!r}")
 
     return fake_gh
@@ -77,9 +71,7 @@ def test_optional_only_failure_returns_empty_tuple():
     # An optional diagnostic failing in the rollup never appears in
     # `gh pr checks --required` output, so the required rail reads green.
     mod = _load()
-    gh = _gh_for(
-        _R(json.dumps([{"name": "pr-gate", "bucket": "pass", "state": "SUCCESS"}]))
-    )
+    gh = _gh_for(_R(json.dumps([{"name": "pr-gate", "bucket": "pass", "state": "SUCCESS"}])))
     assert mod.failing_required_checks(gh, "organvm/repo", 7, "main") == ()
 
 
@@ -114,9 +106,7 @@ def test_no_required_checks_unproven_when_branch_has_required_checks():
         branch_meta={
             "name": "main",
             "protected": True,
-            "protection": {
-                "required_status_checks": {"contexts": ["pr-gate"], "checks": []}
-            },
+            "protection": {"required_status_checks": {"contexts": ["pr-gate"], "checks": []}},
         },
         rules=[{"type": "pull_request"}],
     )
