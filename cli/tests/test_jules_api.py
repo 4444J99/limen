@@ -4,6 +4,7 @@ import io
 import json
 import unittest
 import urllib.error
+import urllib.parse
 from datetime import datetime, timezone
 from unittest.mock import patch
 
@@ -67,6 +68,49 @@ class ApiTests(unittest.TestCase):
 
     def test_empty_catalog(self):
         self.assertEqual(JulesApiClient("key", transport=Wire({})).sessions().items, ())
+
+    def test_observation_projection_preserves_complete_pagination(self):
+        wire = Wire({"sessions": [session()], "nextPageToken": "next"}, {"sessions": [session("223456789012")]})
+        result = JulesApiClient("key", transport=wire).sessions(observation_only=True)
+        self.assertEqual(observe(result, NOW)["sessions_observed"], 2)
+        for call in wire.calls:
+            query = urllib.parse.parse_qs(urllib.parse.urlsplit(call[1]).query)
+            self.assertEqual(query["fields"], ["sessions(name,id,state,createTime),nextPageToken"])
+        self.assertIn("pageToken=next", wire.calls[1][1])
+
+    def test_default_session_catalog_preserves_recovery_fields(self):
+        row = session(prompt="recovery marker", sourceContext={"source": SOURCE})
+        wire = Wire({"sessions": [row]})
+        self.assertEqual(JulesApiClient("key", transport=wire).sessions().items, (row,))
+        self.assertNotIn("fields=", wire.calls[0][1])
+
+    def test_oversized_page_reduces_size_without_losing_cursor_or_rows(self):
+        wire = Wire(
+            {"sessions": [session()], "nextPageToken": "next"},
+            JulesApiError("response_limit_exceeded"),
+            {"sessions": [session("223456789012")], "nextPageToken": "last"},
+            {"sessions": [session("323456789012")]},
+        )
+        result = JulesApiClient("key", transport=wire).sessions()
+        self.assertEqual(len(result.items), 3)
+        self.assertEqual(result.pages, 3)
+        self.assertIn("pageSize=100&pageToken=next", wire.calls[1][1])
+        self.assertIn("pageSize=50&pageToken=next", wire.calls[2][1])
+        self.assertIn("pageSize=50&pageToken=last", wire.calls[3][1])
+        self.assertEqual({call[5] for call in wire.calls}, {4 * 1024 * 1024})
+
+    def test_single_oversized_record_fails_after_finite_reductions(self):
+        wire = Wire(*(JulesApiError("response_limit_exceeded") for _ in range(7)))
+        with self.assertRaisesRegex(JulesApiError, "response_limit_exceeded"):
+            JulesApiClient("key", transport=wire).sessions()
+        self.assertEqual(len(wire.calls), 7)
+        self.assertIn("pageSize=1", wire.calls[-1][1])
+
+    def test_provider_rejection_is_not_retried(self):
+        wire = Wire(JulesApiError("provider_rejected", 403))
+        with self.assertRaisesRegex(JulesApiError, "provider_rejected"):
+            JulesApiClient("key", transport=wire).sessions()
+        self.assertEqual(len(wire.calls), 1)
 
     def test_repeated_cursor_is_error(self):
         with self.assertRaisesRegex(JulesApiError, "repeated_page_token"):
@@ -160,8 +204,11 @@ class ApiTests(unittest.TestCase):
             session("223456789012", prompt="[marker]\nbody", sourceContext={"source": SOURCE}),
             session("323456789012", prompt="[marker]\nbody", sourceContext={"source": "sources/github/other/repo"}),
         ]
-        got = JulesApiClient("key", transport=Wire({"sessions": rows})).find_attempt(marker="[marker]", source=SOURCE)
+        wire = Wire({"sessions": rows})
+        got = JulesApiClient("key", transport=wire).find_attempt(marker="[marker]", source=SOURCE)
         self.assertEqual(got["id"], "223456789012")
+        query = urllib.parse.parse_qs(urllib.parse.urlsplit(wire.calls[0][1]).query)
+        self.assertEqual(query["fields"], ["sessions(name,id,prompt,sourceContext,url),nextPageToken"])
 
     def test_find_attempt_duplicate_refuses_to_pick_one(self):
         rows = [session(i, prompt="[marker]", sourceContext={"source": SOURCE}) for i in ["1", "2"]]
