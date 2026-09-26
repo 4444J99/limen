@@ -796,11 +796,7 @@ def test_unmeasured_verdict_emits_no_heal_task(tmp_path, monkeypatch):
 
     def fake_gh(args, timeout=60):
         if args[:2] == ["search", "prs"]:
-            return _R(
-                json.dumps(
-                    [{"number": 7, "repository": {"nameWithOwner": "organvm/repo"}, "url": "u/7"}]
-                )
-            )
+            return _R(json.dumps([{"number": 7, "repository": {"nameWithOwner": "organvm/repo"}, "url": "u/7"}]))
         if args[:2] == ["pr", "view"]:
             return _R(json.dumps(view))
         return _R("not-json", returncode=1, stderr="boom")
