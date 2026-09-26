@@ -1,4 +1,19 @@
 #!/usr/bin/env bash
+# DISABLED: this legacy collision packet was calculated for consolidation INTO
+# `organvm`. Under the current personal-first direction (target 4444J99) it
+# renames repositories under 4444J99 itself before the legacy transfer wrapper
+# aborts for missing preflight/receipt arguments. Retained as a historical
+# reference only; see docs/consolidation/EXECUTION-MANIFEST.md.
+cat >&2 <<EOF
+Refusing: consolidation-renames-apply.sh is a legacy packet calculated for the
+obsolete transfer-into-organvm direction. Under the current 4444J99-first
+consolidation it would rename repositories under 4444J99 itself.
+Use scripts/consolidate-github.py, which holds name collisions for explicit
+review instead of renaming them.
+EOF
+exit 2
+# --- historical content below; unreachable ---
+
 # Consolidation collision renames — run ONLY after consolidation-gate opens
 # Generated from docs/consolidation/COLLISION-RENAMES.md (verified 2026-07-02)
 #

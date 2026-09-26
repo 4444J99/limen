@@ -5,6 +5,7 @@ import importlib.util
 import io
 import json
 import os
+import re
 import subprocess
 import tempfile
 import unittest
@@ -251,6 +252,58 @@ class ConsolidationTests(unittest.TestCase):
             data = json.loads(path.read_text())
             self.assertFalse(data["inventory_pages_complete"])
             self.assertEqual(data["visibility_coverage"], "credential_visible_only")
+
+    def test_dry_run_output_is_machine_readable_for_gates(self):
+        out = io.StringIO()
+        rows = [state(1, "organvm", "shared"), state(2, "meta-organvm", "Shared"), state(3, "organvm", "solo")]
+        with patch.object(mod, "inventory", return_value=(rows, [])), redirect_stdout(out):
+            self.assertEqual(mod.main([]), 0)
+        stdout = out.getvalue()
+        owners = re.search(r"\b(\d+)\s+repos across\s+(\d+)\s+owners", stdout)
+        collisions = re.search(r"name collisions.*:\s*(\d+)", stdout)
+        self.assertIsNotNone(owners)
+        self.assertIsNotNone(collisions)
+        self.assertEqual((owners.group(1), owners.group(2)), ("3", "2"))
+        self.assertEqual(collisions.group(1), "1")
+        self.assertIn("DRY-RUN", stdout)
+        # Gate semantics: a nonzero collision count keeps the irreversible apply gate closed.
+        self.assertGreater(int(collisions.group(1)), 0)
+
+    def test_existing_receipt_is_refused_without_resume(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "receipt.json"
+            before = {"schema": mod.RECEIPT_SCHEMA, "target": mod.TARGET,
+                      "results": [{"id": 7, "status": "transfer_verified"}]}
+            mod.write_receipt(path, before)
+            err = io.StringIO()
+            with patch.object(mod, "inventory", return_value=([state()], [])), redirect_stderr(err), redirect_stdout(io.StringIO()):
+                self.assertEqual(mod.main(["--receipt", str(path)]), 1)
+            self.assertIn("already exists", err.getvalue())
+            self.assertEqual(json.loads(path.read_text()), before)
+
+    def test_resume_preserves_prior_wave_results(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "receipt.json"
+            prior_result = {"id": 7, "status": "transfer_verified"}
+            mod.write_receipt(path, {"schema": mod.RECEIPT_SCHEMA, "target": mod.TARGET,
+                                     "observed_at": "2026-09-24T00:00:00+00:00",
+                                     "inventory_pages_complete": True, "results": [prior_result]})
+            with patch.object(mod, "inventory", return_value=([state()], [])), redirect_stdout(io.StringIO()):
+                self.assertEqual(mod.main(["--receipt", str(path), "--resume"]), 0)
+            data = json.loads(path.read_text())
+            self.assertEqual(data["results"][0], prior_result)
+            self.assertEqual(data["resumed_from"], "2026-09-24T00:00:00+00:00")
+            self.assertTrue(data["prior_inventory_pages_complete"])
+
+    def test_resume_rejects_foreign_or_malformed_receipt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "receipt.json"
+            path.write_text(json.dumps({"schema": "other", "target": mod.TARGET, "results": []}))
+            err = io.StringIO()
+            with patch.object(mod, "inventory", return_value=([state()], [])), redirect_stderr(err), redirect_stdout(io.StringIO()):
+                self.assertEqual(mod.main(["--receipt", str(path), "--resume"]), 1)
+            self.assertIn("foreign or malformed", err.getvalue())
+            self.assertEqual(json.loads(path.read_text())["results"], [])
 
 
 if __name__ == "__main__":
