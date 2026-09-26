@@ -29,11 +29,11 @@ import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # sibling scripts/ for _pr_scan, _notify
 import _notify  # noqa: E402
 import _dependency_upkeep  # noqa: E402
+import _required_checks  # noqa: E402  # the ONE required-check policy (issue #2764)
 from _pr_scan import (  # noqa: E402
     enumerate_open_prs_result,
     merge_queue_capability,
@@ -133,113 +133,22 @@ def lifecycle_disposition(labels) -> str | None:
 
 
 def _no_required_policy(repo: str, branch: str | None) -> bool:
-    """Prove absence through both branch protection and effective rules."""
-    if not isinstance(branch, str) or not branch.strip():
-        return False
-    encoded = quote(branch, safe="")
-    try:
-        metadata = gh(["api", f"repos/{repo}/branches/{encoded}"], timeout=20)
-        rules = gh(["api", f"repos/{repo}/rules/branches/{encoded}"], timeout=20)
-        if metadata.returncode or rules.returncode:
-            return False
-        info = json.loads(metadata.stdout)
-        effective = json.loads(rules.stdout)
-        if not isinstance(info, dict) or info.get("name") != branch or type(info.get("protected")) is not bool:
-            return False
-        if not isinstance(effective, list):
-            return False
-        # A PR-only ruleset protects the branch without requiring a CI context.
-        # Unknown rule types remain unmeasured, not proof of absent checks.
-        non_check_rules = {
-            "pull_request",
-            "creation",
-            "update",
-            "deletion",
-            "non_fast_forward",
-            "required_linear_history",
-            "required_signatures",
-        }
-        if any(not isinstance(rule, dict) or rule.get("type") not in non_check_rules for rule in effective):
-            return False
-        if info["protected"] is False:
-            return True
-        protection = info.get("protection")
-        required = protection.get("required_status_checks") if isinstance(protection, dict) else None
-        return isinstance(required, dict) and required.get("contexts") == [] and required.get("checks") == []
-    except (OSError, ValueError, TypeError, subprocess.TimeoutExpired):
-        return False
+    # Delegates to the ONE shared policy (scripts/_required_checks.py, issue #2764).
+    # Kept as a thin wrapper: cli/tests/test_merge_drain_ci_red.py exercises the
+    # organ's surface directly.
+    return _required_checks.no_required_policy(gh, repo, branch)
 
 
 def _required_checks_in_states(repo: str, num: int, branch: str | None, states: set[str]) -> tuple[str, ...] | None:
-    result = gh(
-        [
-            "pr",
-            "checks",
-            str(num),
-            "-R",
-            repo,
-            "--required",
-            "--json",
-            "name,bucket,state",
-        ],
-        timeout=40,
-    )
-    try:
-        rows = json.loads(result.stdout)
-    except (TypeError, ValueError):
-        message = (getattr(result, "stderr", "") or result.stdout or "").strip()
-        if (
-            result.returncode == 1
-            and message.startswith("no required checks reported on the ")
-            and _no_required_policy(repo, branch)
-        ):
-            return ()
-        return None
-    if not isinstance(rows, list):
-        return None
-    known_states = {
-        "pass",
-        "success",
-        "neutral",
-        "skipping",
-        "skipped",
-        "fail",
-        "failure",
-        "error",
-        "cancel",
-        "cancelled",
-        "timed_out",
-        "action_required",
-        "pending",
-        "in_progress",
-        "queued",
-        "expected",
-        "waiting",
-        "requested",
-    }
-    if any(
-        not isinstance(row, dict)
-        or not isinstance(row.get("name"), str)
-        or not row["name"]
-        or str(row.get("bucket") or row.get("state") or "").lower() not in known_states
-        for row in rows
-    ):
-        return None
-    return tuple(
-        sorted(
-            str(row.get("name"))
-            for row in rows
-            if isinstance(row, dict)
-            and str(row.get("bucket") or row.get("state") or "").lower() in states
-            and row.get("name")
-        )
-    )
+    # Delegates to the ONE shared policy (scripts/_required_checks.py, issue #2764).
+    return _required_checks.required_checks_in_states(gh, repo, num, branch, states)
 
 
 def _failing_required_checks(repo: str, num: int, branch: str | None = None) -> tuple[str, ...] | None:
-    return _required_checks_in_states(
-        repo, num, branch, {"fail", "failure", "error", "cancel", "cancelled", "timed_out", "action_required"}
-    )
+    # Delegates to the ONE shared policy (scripts/_required_checks.py, issue #2764).
+    # Kept as a thin wrapper: cli/tests/test_merge_drain_ci_red.py exercises the
+    # organ's surface directly.
+    return _required_checks.failing_required_checks(gh, repo, num, branch)
 
 
 def _load_ci_red_ledger() -> dict[str, dict[str, object]] | None:
@@ -425,24 +334,22 @@ def assess(rn):
             head = str(d.get("headRefOid") or "")
             return (repo, num, "READY", head, "direct") if head else (repo, num, "ERR")
         states = [(c.get("conclusion") or c.get("state") or "") for c in (d.get("statusCheckRollup") or [])]
-        if any(s in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED") for s in states):
+        if any(s in _required_checks.ROLLUP_FAIL_STATES for s in states):
+            # The failure verdict comes from the ONE shared policy (issue #2764) — the
+            # same call self-heal.py makes, so the two organs cannot drift again.
             failing_required = _failing_required_checks(repo, num, d.get("baseRefName"))
-            if failing_required is None:
-                return (repo, num, "REQUIRED-CHECKS-UNMEASURED")
-            if failing_required:
+            verdict = _required_checks.classify_required_failure(failing_required)
+            if verdict == _required_checks.UNMEASURED:
+                return (repo, num, _required_checks.UNMEASURED)
+            if verdict == _required_checks.CI_RED:
                 head = str(d.get("headRefOid") or "")
                 return (repo, num, "CI-RED", head, failing_required)
             # Optional check failures stay visible in GitHub, but do not create
             # an operator-facing CI-red onset or block the required-check rail.
-        if any(s in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", "") for s in states):
-            pending_required = _required_checks_in_states(
-                repo,
-                num,
-                d.get("baseRefName"),
-                {"pending", "in_progress", "queued", "expected", "waiting", "requested"},
-            )
+        if any(s in _required_checks.ROLLUP_PENDING_STATES for s in states):
+            pending_required = _required_checks.pending_required_checks(gh, repo, num, d.get("baseRefName"))
             if pending_required is None:
-                return (repo, num, "REQUIRED-CHECKS-UNMEASURED")
+                return (repo, num, _required_checks.UNMEASURED)
             if pending_required:
                 return (repo, num, "CI-PENDING")
         if d.get("mergeable") == "MERGEABLE":
