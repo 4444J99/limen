@@ -147,9 +147,7 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch, a
     reset = {"jules": _iso(now, 23)}
     lifecycle = tmp_path / ".limen-private" / "session-corpus" / "lifecycle"
     lifecycle.mkdir(parents=True)
-    (lifecycle / "always-working.json").write_text(
-        json.dumps({"items": [{"assignment_packet": {"task_id": "REV0"}}]})
-    )
+    (lifecycle / "always-working.json").write_text(json.dumps({"items": [{"assignment_packet": {"task_id": "REV0"}}]}))
     tasks = [
         Task(
             id=f"REV{i}",
