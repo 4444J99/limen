@@ -67,6 +67,7 @@ from _pr_scan import (  # noqa: E402
     stale_base_verdict,
 )
 from _valve_effects import record as record_valve_effect  # noqa: E402
+import _required_checks  # noqa: E402  # the ONE required-check policy (issue #2764)
 
 # DERIVED from env so the conductor survives relocation; same defaults as merge-drain.py.
 OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
@@ -217,8 +218,9 @@ def review_feedback(repo, num):
 
 
 def assess(pr):
-    # identical classification logic to merge-drain.py.assess (kept verbatim so the two organs
-    # always agree on what is READY vs CI-RED vs CONFLICT — they are two halves of one verdict).
+    # Classification parity with merge-drain.py.assess is enforced structurally: both
+    # organs route required-check failure verdicts through scripts/_required_checks.py
+    # (issue #2764), so the two can never drift into disagreeing copies again.
     repo, num, url = pr
     try:
         r = gh(
@@ -242,17 +244,25 @@ def assess(pr):
             return (repo, num, url, "CONFLICT", [])
         rollup = d.get("statusCheckRollup") or []
         states = [(c.get("conclusion") or c.get("state") or "") for c in rollup]
-        if any(s in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED") for s in states):
-            failing_checks = sorted(
-                {
-                    str(check.get("name") or "?")
-                    for check in rollup
-                    if (check.get("conclusion") or check.get("state") or "")
-                    in ("FAILURE", "ERROR", "CANCELLED", "TIMED_OUT", "ACTION_REQUIRED")
-                }
+        if any(s in _required_checks.ROLLUP_FAIL_STATES for s in states):
+            # The failure verdict comes from the ONE shared policy (issue #2764) — the
+            # same call merge-drain.py makes, so the two organs cannot drift again.
+            # Previously every failed rollup status was CI-RED here, emitting repair
+            # tasks for optional diagnostics merge-drain would have merged past.
+            failing_required = _required_checks.failing_required_checks(
+                gh, repo, num, d.get("baseRefName")
             )
-            return (repo, num, url, "CI-RED", failing_checks)
-        if any(s in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", "") for s in states):
+            verdict = _required_checks.classify_required_failure(failing_required)
+            if verdict == _required_checks.CI_RED:
+                return (repo, num, url, "CI-RED", sorted(failing_required))
+            if verdict == _required_checks.UNMEASURED:
+                # Fail closed: unreadable required-check policy is neither green nor
+                # an observed required failure — no heal task, no merge signal.
+                return (repo, num, url, _required_checks.UNMEASURED, [])
+            # OPTIONAL-ONLY: an optional diagnostic failed while the required rail
+            # is green. It stays visible in GitHub but emits no self-heal repair
+            # task — fall through to the pending/readiness classification below.
+        if any(s in _required_checks.ROLLUP_PENDING_STATES for s in states):
             return (repo, num, url, "CI-PENDING", [])
         if d.get("mergeable") == "MERGEABLE":
             # STALE-BASE GATE (identical to merge-drain.assess — one verdict): only a positively
