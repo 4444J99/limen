@@ -79,6 +79,10 @@ def test_a_variable_stops_the_constant_run_without_losing_the_verb(ce, tmp_path)
     assert ce.scan_file(path) == {"gh pr merge"}
 
 
+def test_consolidation_write_commands_remain_visible(ce):
+    assert ce.scan_file(ROOT / "scripts/consolidate-github.py") == {"gh api -X POST", "gh api -X PUT"}
+
+
 def test_several_distinct_verbs_in_one_file_are_reported_separately(ce, tmp_path):
     path = _src(
         tmp_path,

@@ -11,6 +11,17 @@ Source date: 2026-09-21. Activation repair checkpoint: 2026-09-22. The user auth
 
 The read-only `limen-jules-api observe` command emits aggregate JSON from real paginated provider reads. Missing credentials and incomplete/unknown observations exit 2 with null counts, not zero usage or a successful dispatch report. It performs no issue creation, session creation, plan approval, feedback, merge, or deletion.
 
+Account observation requests only `name`, `id`, `state` and `createTime`, plus
+`nextPageToken`, using Google's response field mask. Attempt recovery separately
+requests the exact prompt/source identity and URL; full session reads remain
+available for result inspection. Neither path omits pagination or assumes ordering.
+The client retains a 4 MB response ceiling and 100-page ceiling. Observed account
+pages take roughly 10–16 seconds each, so the default request deadline is 30 seconds
+and the whole-catalog deadline is 600 seconds, not an unbounded scan. Oversized
+read pages may be halved at the same cursor, at most six reductions per catalog;
+an oversized single record still fails closed. Provider mutations are never retried
+by this mechanism. Packet submission and integration deadlines remain independent.
+
 ## Activation prerequisites that are still real
 
 1. Recover the existing Jules API key through the credential owner's managed secret storage. Bind it as `JULES_API_KEY` in the actual executor, never source, chat, a public receipt, or a shell command containing the literal key. A presence check in one Chat container does not prove absence from another runtime. The contract workflow tests the repository secret read-only only on an accepted default-branch push or manual default-branch run. PR jobs never receive the provider key, including same-repository PRs. A skipped PR readback is not an authenticated success.

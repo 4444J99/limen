@@ -109,7 +109,7 @@ class JulesApiExecutionAdapter(PatchLandingMixin):
                     raise PrelaunchFanoutExecutionError(
                         "Jules submission deadline exhausted before account observation"
                     )
-            observed = observe(self.client.sessions())
+            observed = observe(self.client.sessions(observation_only=True))
             # These are conservative observed guards, NOT a vendor balance.
             # Shared reservations and all other callers remain broker-owned.
             if observed["observed_rolling_starts"] >= 100 or observed["nonterminal_sessions"] >= 15:
