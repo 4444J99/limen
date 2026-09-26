@@ -132,7 +132,9 @@ def test_accel_allows_is_ledger_gated():
 # ── dispatch_parallel integration: the tail is win-class only ───────────────────────────────────
 @pytest.mark.parametrize("approved", [False, True])
 def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch, approved_execution_policy, approved):
-    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "0")
+    # Exercise the real admission boundary: unapproved tasks remain open and no
+    # provider handoff occurs; approved tasks exercise the accelerator normally.
+    monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "1")
     monkeypatch.setattr(D, "_window_hours", lambda a: 24.0)
     monkeypatch.delenv("LIMEN_ACCEL", raising=False)
     # jules near its cliff with budget to burn; ledger: jules WINS revenue, WASTES coverage.
@@ -143,6 +145,11 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch, a
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     now = datetime.datetime.now(datetime.timezone.utc)
     reset = {"jules": _iso(now, 23)}
+    lifecycle = tmp_path / ".limen-private" / "session-corpus" / "lifecycle"
+    lifecycle.mkdir(parents=True)
+    (lifecycle / "always-working.json").write_text(
+        json.dumps({"items": [{"assignment_packet": {"task_id": "REV0"}}]})
+    )
     tasks = [
         Task(
             id=f"REV{i}",
@@ -182,15 +189,19 @@ def test_dispatch_parallel_accel_tail_is_win_class_only(tmp_path, monkeypatch, a
         )
         for i in range(10)
     ]
-    if approved:
-        policy = approved_execution_policy(*(task.id for task in tasks))
-        (tmp_path / "logs" / "autonomy-policy.json").write_text(json.dumps(policy))
     lf = _lf({"jules": 100}, {"jules": 5}, reset)
     lf.tasks = tasks
     tp = tmp_path / "tasks.yaml"
     save_limen_file(tp, lf)
+    if approved:
+        policy = approved_execution_policy(*(task.id for task in tasks))
+        (tmp_path / "logs" / "autonomy-policy.json").write_text(json.dumps(policy))
     monkeypatch.setattr(D, "_deps_met", lambda t, by: True)
     monkeypatch.setattr(D, "_worktree_debt_gate", lambda: (False, ""))
+    # External workspace receipts are tested by their own predicates. Keep the
+    # budget-selection test isolated while leaving priority admission real.
+    monkeypatch.setenv("LIMEN_SESSION_VALUE_GATE", "0")
+    monkeypatch.setattr(D, "_run_handoff_relay", lambda *_args, **_kwargs: {"ok": True})
     # The provider is synthetic; real selection, admission and keeper writes run.
     # Deadline enforcement has its own tests and is not disabled in production.
     launches = []
