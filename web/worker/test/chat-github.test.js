@@ -48,6 +48,16 @@ async function fixture() {
   });
   return {controller,principal,calls,service,values};
 }
+test("GitHub transport does not bind native fetch to the controller", async () => {
+  const f = await fixture();
+  f.controller.request = async function (url, options) {
+    assert.equal(this, undefined, "Workers native fetch rejects an unrelated receiver");
+    assert.equal(new URL(url).hostname, "api.github.com");
+    assert.equal(options.redirect, "manual");
+    return Response.json({ id: 1255213941 });
+  };
+  assert.deepEqual(await f.controller.github("/repos/4444J99/limen"), { id: 1255213941 });
+});
 test("GitHub redirects fail closed using the Workers-supported manual mode", async () => {
   const f = await fixture();
   let requests = 0;

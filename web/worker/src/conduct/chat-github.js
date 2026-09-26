@@ -72,7 +72,9 @@ export class ChatGithubController {
   }
 
   async github(path, method = "GET", body = undefined, missing = false) {
-    const response = await this.request(`https://api.github.com${path}`, {
+    // Native Workers fetch rejects the controller instance as its receiver.
+    const request = this.request;
+    const response = await request(`https://api.github.com${path}`, {
       method, redirect: "manual", signal: AbortSignal.timeout(10000),
       headers: { authorization: `Bearer ${this.env.LIMEN_CHAT_GITHUB_TOKEN}`, "user-agent": "limen-chat-github",
         accept: "application/vnd.github+json", "content-type": "application/json", "x-github-api-version": "2022-11-28" },
