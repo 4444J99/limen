@@ -16,6 +16,7 @@ CHECK = ROOT / "scripts" / "check-main-green.py"
 sys.path.insert(0, str(ROOT / "cli" / "src"))
 from limen.execution_contract import execution_contract_hash  # noqa: E402
 from limen.io import load_limen_file, save_limen_file  # noqa: E402
+from limen.execution_contract import execution_contract_hash  # noqa: E402
 from limen.models import (  # noqa: E402
     JULES_LANDING_HOLD_LABEL,
     Budget,
@@ -167,8 +168,8 @@ def test_recurrence_reopens_healed_task(tmp_path, approved_execution_policy):
     _empty_board(tmp_path)
     run(tmp_path, apply=True)
     tasks_path = tmp_path / "tasks.yaml"
-
     approved_execution_policy("HEAL-mainred-4444j99-limen")
+
     # Simulate the heal landing through the keeper's legal lifecycle.
     for status in ("dispatched", "in_progress", "done"):
         before = load_limen_file(tasks_path)
@@ -177,6 +178,7 @@ def test_recurrence_reopens_healed_task(tmp_path, approved_execution_policy):
         task.status = status
         if status == "dispatched":
             task.target_agent = "codex"
+        contract_hash = execution_contract_hash(task) if status == "dispatched" else None
         task.updated = dt.datetime.now(dt.timezone.utc)
         task.dispatch_log.append(
             DispatchLogEntry(
@@ -184,8 +186,8 @@ def test_recurrence_reopens_healed_task(tmp_path, approved_execution_policy):
                 agent="codex",
                 session_id=f"heal-{status}",
                 status=status,
+                execution_contract_hash=contract_hash,
                 output=f"simulated heal {status}",
-                execution_contract_hash=execution_contract_hash(task),
             )
         )
         apply_limen_file_sync(
