@@ -1,0 +1,88 @@
+{
+  "schema": "limen.closeout.receipt.v1",
+  "slug": "spine-closeout-successor-20260926",
+  "recorded_at": "2026-09-26T02:41:06Z",
+  "outcome": "blocked",
+  "confidence": "high",
+  "scope": "Limen workspace closeout and continuation-capsule handoff",
+  "evidence": {
+    "successor_worktree": {
+      "path": ".worktrees/spine-closeout-successor-20260926",
+      "branch": "work/spine-closeout-successor-20260926",
+      "head": "6c1c725af877db4e80dad135b7026ed2703c4130",
+      "status": "superseded; one staged receipt and one untracked draft remain local",
+      "tracking": "origin/work/spine-closeout-successor-20260926",
+      "pull_request": "https://github.com/4444J99/limen/pull/2756",
+      "pull_request_state": "closed_unmerged; superseded by #2759"
+    },
+    "live_root": {
+      "path": "shared Limen checkout",
+      "state": "detached_and_dirty",
+      "head": "d4ec45cb456fa63a5c594eb429537fac572ce320",
+      "dirty_paths": [
+        "docs/branch-hygiene.md",
+        "docs/jules-orphan-adoptions.jsonl"
+      ],
+      "generated_receipt_dirty_path": "docs/live-root-gate.md",
+      "release_head": "91cc8b3dd4f6c6b6cc53da3dc8bd7dee8b88c568",
+      "relation": "behind_54_ahead_0",
+      "owner": "operator-live-root-gate"
+    },
+    "worktree_reclaim_check": {
+      "command": "python3 scripts/reclaim-worktrees.py --check --json",
+      "result": "read_only_pass_with_four_candidates",
+      "candidates": [
+        "chat-github-20260917",
+        "schema-hosting-identity-20260915",
+        "ucc-cloudflare-source-reconciliation-20260917",
+        "ucc-local-credential-delivery-20260917"
+      ],
+      "action": "not_applied",
+      "reason": "candidate status alone is not deletion authority; custody and review closure remain required"
+    },
+    "residue_census": {
+      "command": "python3 scripts/residue-census.py --json",
+      "result": "one_breach_two_unmeasured",
+      "breaches": ["worktrees"],
+      "unmeasured": ["agent_runtime_mib", "atom_ledger_mib"],
+      "report_only_over_cap": ["remote_branches"],
+      "owners": [
+        "scripts/reclaim-worktrees.py",
+        "scripts/agent-state-metabolism.py",
+        "unassigned-atom-ledger-owner"
+      ]
+    },
+    "remote_probe": {
+      "result": "available_via_gh_api_from_admitted_operator_worktree",
+      "observed": [
+        "Limen #2755 open at 6c8d25ff72ce26f6a0f2dd7dd922a2240e1c5108",
+        "Limen #2756 closed unmerged; both predecessor-lineage threads resolved as superseded",
+        "Limen #2759 open at fbe0bd3aa6593913900db251d9bdde36f51d2e38"
+      ],
+      "interpretation": "remote status is measured; no merge or deployment acceptance is claimed"
+    }
+  },
+  "operator_gate": {
+    "id": "live-root-not-release-and-dirty",
+    "required_action": "reconcile the live root against the current release without discarding its two dirty files, then rerun the live-root gate",
+    "next_command": "python3 scripts/live-root-gate.py",
+    "forbidden_until_gate": [
+      "branch switch",
+      "reset",
+      "stash",
+      "launchctl reload",
+      "worktree reclaim"
+    ]
+  },
+  "continuation": {
+    "capsule_worktree": ".worktrees/spine-closeout-successor-20260926-v2",
+    "capsule_index": ".limen-workstream/README.md",
+    "launch_command_from_capsule_worktree": "bash .limen-workstream/kickstart.sh",
+    "remote_custody": "successor v2 receipt and relay note are pushed and tracked by open PR #2759; no provider launch has occurred"
+  },
+  "completion": {
+    "zero_open_items": false,
+    "closeout_complete": false,
+    "reason": "operator-owned live-root gate, worktree cap breach, two unmeasured residue rows, open PR and deployment acceptance gates remain"
+  }
+}
