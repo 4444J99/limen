@@ -150,7 +150,7 @@ def _no_required_policy(repo: str, branch: str | None) -> bool:
         return False
 
 
-def _failing_required_checks(repo: str, num: int, branch: str | None = None) -> tuple[str, ...] | None:
+def _required_checks_in_states(repo: str, num: int, branch: str | None, states: set[str]) -> tuple[str, ...] | None:
     result = gh(
         [
             "pr",
@@ -180,9 +180,15 @@ def _failing_required_checks(repo: str, num: int, branch: str | None = None) -> 
             for row in rows
             if isinstance(row, dict)
             and str(row.get("bucket") or row.get("state") or "").lower()
-            in {"fail", "failure", "error", "cancel", "cancelled", "timed_out", "action_required"}
+            in states
             and row.get("name")
         )
+    )
+
+
+def _failing_required_checks(repo: str, num: int, branch: str | None = None) -> tuple[str, ...] | None:
+    return _required_checks_in_states(
+        repo, num, branch, {"fail", "failure", "error", "cancel", "cancelled", "timed_out", "action_required"}
     )
 
 
@@ -379,7 +385,13 @@ def assess(rn):
             # Optional check failures stay visible in GitHub, but do not create
             # an operator-facing CI-red onset or block the required-check rail.
         if any(s in ("PENDING", "IN_PROGRESS", "QUEUED", "EXPECTED", "") for s in states):
-            return (repo, num, "CI-PENDING")
+            pending_required = _required_checks_in_states(
+                repo, num, d.get("baseRefName"), {"pending", "in_progress", "queued", "expected", ""}
+            )
+            if pending_required is None:
+                return (repo, num, "REQUIRED-CHECKS-UNMEASURED")
+            if pending_required:
+                return (repo, num, "CI-PENDING")
         if d.get("mergeable") == "MERGEABLE":
             # STALE-BASE GATE (kept identical to self-heal.assess — one verdict): only a positively
             # detected active queue can accept a stale exact head. GitHub then synthesizes and
