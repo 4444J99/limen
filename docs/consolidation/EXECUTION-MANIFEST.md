@@ -1,5 +1,13 @@
 # GitHub Consolidation Execution Manifest
 
+> **⚠️ Phase 1 packet DISABLED.** `scripts/consolidation-renames-apply.sh` was
+> calculated for the obsolete transfer-into-`organvm` direction. Under the
+> current personal-first direction (target `4444J99`) it renames repositories
+> **under `4444J99` itself** before the legacy transfer wrapper aborts, so the
+> script now refuses to run. Do not run it. `scripts/consolidate-github.py`
+> holds name collisions for explicit review instead of renaming them. The
+> packet is retained below as an immutable historical reference only.
+
 **Status:** Staged for execution (all read-only verification complete, scripts ready).  
 **Verified:** 2026-07-02 dry-run (34 repos, 13 collision groups, transfer + rewrite + app-wire steps mapped).  
 **Gate:** Awaiting human `consolidation-gate` open (requires your explicit `--apply` authorization).
@@ -21,10 +29,20 @@
 
 **When you open the consolidation-gate**, run these in order (all are destructive/irreversible):
 
-### Phase 1: Resolve Collisions (13 renames)
+### Phase 1: Resolve Collisions — DISABLED
+
+The legacy rename packet below was calculated for consolidation **into `organvm`**
+and is **disabled** under the current `4444J99`-first direction: it would rename
+repositories under `4444J99` itself before the legacy transfer wrapper aborts for
+missing preflight/receipt arguments. `scripts/consolidation-renames-apply.sh`
+now exits 2 unconditionally. Collisions are held for explicit operator review by
+`scripts/consolidate-github.py` instead of being renamed.
+
+Historical record (do not run):
 
 ```bash
-LIMEN_CONSOLIDATION_GATE=consolidation-gate-open bash scripts/consolidation-renames-apply.sh
+# DISABLED — retained for history only:
+# LIMEN_CONSOLIDATION_GATE=consolidation-gate-open bash scripts/consolidation-renames-apply.sh
 ```
 
 After renames complete, verify no collisions remain:

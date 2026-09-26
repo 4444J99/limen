@@ -22,7 +22,10 @@
 #   bash scripts/gh-app-token.sh --repo OWNER/REPO --which
 #   bash scripts/gh-app-token.sh --repo OWNER/REPO --verify-app
 #   bash scripts/gh-app-token.sh --repo OWNER/REPO --app-only --require-secrets-write
-# The optional Secrets-write assertion checks the returned grant; it never expands App permissions.
+#   bash scripts/gh-app-token.sh --repo OWNER/REPO --app-only --verify-app --require-permission administration=write
+# Assertions check the final returned grant; they never expand App permissions.
+# Repeat --require-permission NAME=read|write for every operation-required grant.
+# --verify-app without assertions proves token minting, not operation readiness.
 #
 # Credentials (set via scripts/set-credential.sh — never on a command line / in history):
 #   GITHUB_APP_ID                — the App's numeric id (Settings → Developer settings → GitHub Apps)
@@ -40,6 +43,8 @@ API="${GITHUB_API:-https://api.github.com}"
 MODE=""
 APP_ONLY=0
 REQUIRE_SECRETS_WRITE=0
+REQUIRED_PERMISSIONS=()
+REQUIRED_PERMISSION_COUNT=0
 TARGET_REPO="${LIMEN_GITHUB_TARGET_REPO:-}"
 TARGET_REPO_SOURCE="${TARGET_REPO:+environment}"
 
@@ -65,6 +70,15 @@ while [ "$#" -gt 0 ]; do
       APP_ONLY=1
       shift
       ;;
+    --require-permission)
+      if [ "$#" -lt 2 ] || [[ ! "$2" =~ ^[a-z][a-z0-9_]*=(read|write)$ ]]; then
+        echo "gh-app-token: --require-permission requires NAME=read or NAME=write" >&2 # allow-secret: diagnostic label only
+        exit 2
+      fi
+      REQUIRED_PERMISSIONS+=("$2")
+      REQUIRED_PERMISSION_COUNT=$((REQUIRED_PERMISSION_COUNT + 1))
+      shift 2
+      ;;
     --require-secrets-write)
       REQUIRE_SECRETS_WRITE=1
       shift
@@ -78,6 +92,11 @@ done
 
 if [ "$REQUIRE_SECRETS_WRITE" = "1" ] && [ "$APP_ONLY" != "1" ]; then
   echo "gh-app-token: --require-secrets-write requires --app-only" >&2
+  exit 2
+fi
+
+if [ "$REQUIRED_PERMISSION_COUNT" -gt 0 ] && [ "$APP_ONLY" != "1" ]; then
+  echo "gh-app-token: --require-permission requires --app-only" >&2 # allow-secret: diagnostic label only
   exit 2
 fi
 
@@ -201,6 +220,20 @@ except (ValueError, TypeError, AttributeError):
     allowed = False
 raise SystemExit(0 if allowed else 1)' || {
       log "exact-repository App token lacks the required Secrets-write grant"; return 1; }
+  fi
+  if [ "$REQUIRED_PERMISSION_COUNT" -gt 0 ]; then
+    printf '%s' "$resp" | python3 -c 'import json, sys
+try:
+    permissions = json.load(sys.stdin)["permissions"]
+    allowed = isinstance(permissions, dict)
+    for requirement in sys.argv[1:]:
+        name, needed = requirement.split("=", 1)
+        granted = permissions.get(name) if allowed else None
+        allowed = allowed and granted in ("read", "write") and (needed == "read" or granted == "write")
+except (ValueError, TypeError, KeyError, AttributeError):
+    allowed = False
+raise SystemExit(0 if allowed else 1)' "${REQUIRED_PERMISSIONS[@]}" || {
+      log "exact-repository App token lacks a required operation permission"; return 1; }
   fi
   tok=$(printf '%s' "$resp" | json_field token) || {
     log "numeric-repository-scoped installation token missing from API response"; return 1; }
