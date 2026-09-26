@@ -249,9 +249,7 @@ def assess(pr):
             # same call merge-drain.py makes, so the two organs cannot drift again.
             # Previously every failed rollup status was CI-RED here, emitting repair
             # tasks for optional diagnostics merge-drain would have merged past.
-            failing_required = _required_checks.failing_required_checks(
-                gh, repo, num, d.get("baseRefName")
-            )
+            failing_required = _required_checks.failing_required_checks(gh, repo, num, d.get("baseRefName"))
             verdict = _required_checks.classify_required_failure(failing_required)
             if verdict == _required_checks.CI_RED:
                 return (repo, num, url, "CI-RED", sorted(failing_required))
