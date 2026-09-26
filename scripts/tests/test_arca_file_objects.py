@@ -4,6 +4,7 @@ import importlib.util
 import json
 import os
 import stat
+import sys
 from pathlib import Path
 
 import pytest
@@ -167,8 +168,13 @@ def test_extended_metadata_is_encrypted_and_restored(tmp_path: Path, monkeypatch
     source.mkdir(mode=0o700)
     file = source / "record"
     file.write_bytes(b"private payload")
-    arca._native_setxattr(source, "com.example.arca-root-test", b"root metadata")
-    arca._native_setxattr(file, "com.example.arca-file-test", b"file metadata\x00value")
+    # Linux requires a user namespace for unprivileged xattrs. Preserve the
+    # same native round trip on both platforms; do not skip metadata coverage.
+    prefix = "user." if sys.platform == "linux" else ""
+    root_attribute = f"{prefix}com.example.arca-root-test"
+    file_attribute = f"{prefix}com.example.arca-file-test"
+    arca._native_setxattr(source, root_attribute, b"root metadata")
+    arca._native_setxattr(file, file_attribute, b"file metadata\x00value")
     output = tmp_path / "objects-store"
     captured = arca.build(source, output)
     assert captured["coverage"] == "incomplete-native-metadata"
@@ -180,8 +186,8 @@ def test_extended_metadata_is_encrypted_and_restored(tmp_path: Path, monkeypatch
     restored = tmp_path / "restored"
     restored_result = arca.restore(output / "catalog.gpg", output, restored)
     assert restored_result["coverage"] == "incomplete-native-metadata"
-    assert arca._native_getxattr(restored, "com.example.arca-root-test") == b"root metadata"
-    assert arca._native_getxattr(restored / "record", "com.example.arca-file-test") == b"file metadata\x00value"
+    assert arca._native_getxattr(restored, root_attribute) == b"root metadata"
+    assert arca._native_getxattr(restored / "record", file_attribute) == b"file metadata\x00value"
 
 
 def test_failed_extended_metadata_restore_does_not_publish_tree(

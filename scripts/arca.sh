@@ -143,22 +143,33 @@ file_bytes() { # file_bytes <file> — portable byte count (wc -c works on BSD a
 
 vault_pending_bytes() { # unique blobs reachable from HEAD but not the known remote main
   local remote_ref="refs/remotes/origin/main"
-  git -C "$VAULT_DIR" show-ref --verify --quiet "$remote_ref" || { printf '0\n'; return 0; }
-  git -C "$VAULT_DIR" rev-list --objects "${remote_ref}..HEAD" \
+  local revision=HEAD
+  git -C "$VAULT_DIR" rev-parse --verify HEAD >/dev/null 2>&1 || { printf '0\n'; return 0; }
+  if git -C "$VAULT_DIR" show-ref --verify --quiet "$remote_ref"; then revision="${remote_ref}..HEAD"; fi
+  git -C "$VAULT_DIR" rev-list --objects "$revision" \
     | awk '{print $1}' \
     | git -C "$VAULT_DIR" cat-file --batch-check='%(objecttype) %(objectsize)' \
     | awk '$1 == "blob" { total += $2 } END { printf "%.0f\n", total }'
 }
 
-staged_blob_bytes() { # sum staged blobs before a commit can make an oversized push
+staged_blob_bytes() { # union of pending history and index blobs absent from remote history
   python3 - "$VAULT_DIR" <<'PY'
 import subprocess, sys
 root = sys.argv[1]
 paths = subprocess.check_output(
     ["git", "-C", root, "diff", "--cached", "--name-only", "-z"]
 )
-total = 0
-seen = set()
+def objects(ref):
+    return set(subprocess.check_output(
+        ["git", "-C", root, "rev-list", "--objects", "--no-object-names", ref]
+    ).splitlines())
+
+def exists(ref):
+    return subprocess.run(["git", "-C", root, "rev-parse", "--verify", ref],
+                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
+
+remote = objects("refs/remotes/origin/main") if exists("refs/remotes/origin/main") else set()
+seen = objects("HEAD") if exists("HEAD") else set()
 for raw in filter(None, paths.split(b"\0")):
     path = raw.decode("utf-8", "surrogateescape")
     entries = subprocess.check_output(
@@ -167,27 +178,79 @@ for raw in filter(None, paths.split(b"\0")):
     for entry in filter(None, entries.split(b"\0")):
         metadata, _indexed_path = entry.split(b"\t", 1)
         _mode, oid, stage = metadata.split()
-        if stage != b"0" or oid in seen:
+        if stage != b"0":
             continue
         seen.add(oid)
-        total += int(subprocess.check_output(
-            ["git", "-C", root, "cat-file", "-s", oid.decode("ascii")], text=True
-        ).strip())
+oids = sorted(seen - remote)
+output = subprocess.check_output(
+    ["git", "-C", root, "cat-file", "--batch-check=%(objecttype) %(objectsize)"],
+    input=b"".join(oid + b"\n" for oid in oids),
+)
+total = 0
+for row in output.splitlines():
+    kind, size = row.split()
+    if kind == b"blob":
+        total += int(size)
 print(total)
 PY
 }
 
+stage_batch() {
+  python3 - "$VAULT_DIR" "$1" <<'PY'
+import subprocess, sys
+root, label = sys.argv[1:]
+patterns = ["manifest.json"]
+if label != "generation":
+    patterns += [f"{label}.tar.enc", f"{label}.tar.enc.part.*"]
+raw = subprocess.check_output(["git", "-C", root, "ls-files", "--cached", "--others",
+                               "--exclude-standard", "-z", "--", *patterns])
+paths = sorted(set(p.decode("utf-8", "surrogateescape") for p in raw.split(b"\0") if p))
+if paths:
+    subprocess.run(["git", "-C", root, "add", "-A", "--",
+                    *(f":(literal){p}" for p in paths)], check=True)
+PY
+}
+
+manifest_remove() {
+  python3 - "$VAULT_DIR/manifest.json" "$1" <<'PY'
+import json, sys
+path, name = sys.argv[1:]
+with open(path) as stream:
+    manifest = json.load(stream)
+manifest.pop(name, None)
+with open(path, "w") as stream:
+    json.dump(manifest, stream, indent=1, sort_keys=True)
+PY
+}
+
+validate_commit_limit() {
+  [[ "$MAX_COMMIT_MB" =~ ^[1-9][0-9]*$ ]] && [ "$MAX_COMMIT_MB" -le 128 ] \
+    || die "ARCA_MAX_COMMIT_MB must be an integer from 1 through 128"
+}
+
+record_pushed_head() {
+  local local_head remote_head
+  local_head=$(git -C "$VAULT_DIR" rev-parse HEAD) || die "cannot resolve pushed HEAD"
+  remote_head=$(git -C "$VAULT_DIR" ls-remote --exit-code origin refs/heads/main | awk '{print $1}') \
+    || die "cannot verify pushed ciphertext; custody incomplete"
+  [ "$local_head" = "$remote_head" ] || die "remote changed after push; custody incomplete"
+  git -C "$VAULT_DIR" update-ref refs/remotes/origin/main "$remote_head"
+}
+
 commit_push_batch() {
   local label="$1" pending staged limit
+  git -C "$VAULT_DIR" diff --cached --quiet \
+    || die "existing staged vault changes retained; cannot isolate batch"
   limit=$(( MAX_COMMIT_MB * 1024 * 1024 ))
   pending=$(vault_pending_bytes) || die "cannot measure unpushed Git objects; ciphertext retained"
   if [ "$pending" -gt "$limit" ]; then
     die "refusing oversized pending Git history (${pending} bytes > ${limit}); ciphertext retained for object-store custody"
   fi
-  git -C "$VAULT_DIR" add -A -- '*.tar.enc*' manifest.json
+  stage_batch "$label" || die "cannot stage bounded batch; ciphertext retained"
   staged=$(staged_blob_bytes) || die "cannot measure staged ciphertext; nothing pushed"
   if [ "$staged" -gt "$limit" ]; then
     git -C "$VAULT_DIR" reset -q -- '*.tar.enc*' manifest.json
+    if [ "$label" != "generation" ]; then manifest_remove "$label"; fi
     die "refusing oversized Git update (${staged} bytes > ${limit}); local ciphertext retained, coverage incomplete"
   fi
   git -C "$VAULT_DIR" diff --cached --quiet && return 0
@@ -195,6 +258,7 @@ commit_push_batch() {
     || die "cannot commit bounded ciphertext batch; local files retained"
   git -C "$VAULT_DIR" push -q origin main \
     || die "bounded ciphertext commit is local-only; custody remains incomplete"
+  record_pushed_head
   changed=0
   log "vault pushed bounded batch → $VAULT_REPO"
 }
@@ -302,12 +366,14 @@ seal_store() { # seal_store <name> <force> — seal one store into the current g
   [ -d "$WORKSPACE/$name" ] || return 0
   size_mb=$(( $(du -sk "$WORKSPACE/$name" | cut -f1) / 1024 ))
   if [ "$size_mb" -gt "$MAX_MB" ]; then
-    log "SKIPPED $name — ${size_mb}MB exceeds ARCA_MAX_MB=$MAX_MB (raise the cap or split the store; a silent skip would read as covered, so this line is the alarm)"
-    return 0
+    die "incomplete coverage: ${size_mb}MB store exceeds ARCA_MAX_MB=$MAX_MB; source retained"
   fi
   h=$(store_hash "$WORKSPACE/$name")
   old=$(manifest_get "$name" hash)
-  [ "$h" = "$old" ] && [ "$force" != "1" ] && return 0
+  if [ "$h" = "$old" ] && [ "$force" != "1" ] \
+     && [ -z "$(git -C "$VAULT_DIR" status --porcelain=v1 --untracked-files=all -- "$name.tar.enc" "$name.tar.enc.part.*" manifest.json)" ]; then
+    return 0
+  fi
   [ -n "$key" ] || key=$(vault_key)
   tmp=$(mktemp -d)
   tar -C "$WORKSPACE" -cf "$tmp/$name.tar" "$name"
@@ -340,6 +406,11 @@ seal_store() { # seal_store <name> <force> — seal one store into the current g
 cut_generation() { # cut_generation [next-repo] — archive the current generation, prep a fresh one
   #                    re-points VAULT_REPO; the caller re-seals + pushes
   local cur_gen cur_repo base next_repo
+  if [ -d "$VAULT_DIR/.git" ]; then
+    [ -z "$(git -C "$VAULT_DIR" status --porcelain=v1 --untracked-files=all)" ] \
+      || die "rotation retained: local vault has unpublished changes"
+    record_pushed_head
+  fi
   cur_repo="$VAULT_REPO"
   if [ -d "$VAULT_DIR/.git" ]; then
     cur_gen=$(manifest_get _generation current)
@@ -357,6 +428,8 @@ cut_generation() { # cut_generation [next-repo] — archive the current generati
     || gh repo create "$next_repo" --private --confirm \
          -d "ARCA — encrypted private-estate vault, generation $(( cur_gen + 1 )) (ciphertext only; key lives in the owner's Keychain)" >/dev/null \
     || die "cannot create private vault repo $next_repo"
+  [ "$(gh repo view "$next_repo" --json visibility -q .visibility)" = "PRIVATE" ] \
+    || die "new generation is not PRIVATE; rotation refused"
   if [ -d "$VAULT_DIR/.git" ]; then
     # In-place cut: abandon the current generation's history so the new one is a ROOT commit
     # (no generation ever inherits another's growth). The working tree is kept; the caller
@@ -386,8 +459,7 @@ cut_generation() { # cut_generation [next-repo] — archive the current generati
 cmd_backup() {
   ensure_vault
   local key="" changed=0 force=0 pack_mb
-  [[ "$MAX_COMMIT_MB" =~ ^[1-9][0-9]*$ ]] && [ "$MAX_COMMIT_MB" -le 128 ] \
-    || die "ARCA_MAX_COMMIT_MB must be an integer from 1 through 128"
+  validate_commit_limit
   local pending_bytes limit_bytes
   pending_bytes=$(vault_pending_bytes) || die "cannot measure pending Git history; ciphertext retained"
   limit_bytes=$(( MAX_COMMIT_MB * 1024 * 1024 ))
@@ -413,7 +485,7 @@ cmd_backup() {
   # commits the generation metadata even if every store was already current.
   if [ "$changed" = "1" ] || [ "$force" = "1" ]; then
     commit_push_batch "generation"
-  elif [ -n "$(git -C "$VAULT_DIR" log --oneline 'origin/main..HEAD' 2>/dev/null || true)" ]; then
+  elif [ "$(vault_pending_bytes)" -gt 0 ]; then
     # Push whatever is unpushed — a seal a previous run committed but failed to push (the
     # "retry next beat" promise lives here, not in the failure message). origin/main, not
     # @{u}: after a failed `push -u` the upstream is never recorded, but the remote ref is.
@@ -422,6 +494,7 @@ cmd_backup() {
     [ "$pending_bytes" -le "$limit_bytes" ] \
       || die "refusing oversized pending Git history (${pending_bytes} bytes > ${limit_bytes}); ciphertext retained for object-store custody"
     git -C "$VAULT_DIR" push -q origin main || die "bounded seal commit remains local-only; custody incomplete"
+    record_pushed_head
     log "vault pushed → $VAULT_REPO"
   elif [ "$changed" = "0" ]; then
     log "everything current — nothing to seal"
@@ -429,17 +502,21 @@ cmd_backup() {
 }
 
 cmd_rotate() { # cmd_rotate [next-repo] — cut a new generation NOW (seed if no working vault exists)
+  validate_commit_limit
+  local changed=0 manifest_repo
   if [ ! -d "$VAULT_DIR/.git" ]; then
     log "no working vault — archiving $VAULT_REPO and seeding a fresh generation"
+  else
+    manifest_repo=$(manifest_get _generation repo)
+    [ -n "$manifest_repo" ] && VAULT_REPO="$manifest_repo"
   fi
   cut_generation "${1:-}"
   for s in "$WORKSPACE"/_*-private; do
     [ -d "$s" ] || continue
     seal_store "$(basename "$s")" 1
+    if [ "$changed" = "1" ]; then commit_push_batch "$(basename "$s")"; fi
   done
-  git -C "$VAULT_DIR" add -A -- '*.tar.enc*' manifest.json
-  git -C "$VAULT_DIR" commit -q -m "arca: rotate $(date -u '+%F %TZ')"
-  git -C "$VAULT_DIR" push -q -u origin main || die "push failed — ciphertext committed locally, will retry next beat"
+  commit_push_batch generation
   log "vault pushed → $VAULT_REPO"
 }
 
@@ -505,7 +582,7 @@ cmd_status() { # cmd_status [--json] [--strict] — COVERAGE: does the vault hol
   if [ "$as_json" = "1" ]; then ensure_vault 1>&2; else ensure_vault; fi
   local name h old when state stale=0 first=1 vault_pending=0 vault_status vault_head remote_head
   vault_status=$(git -C "$VAULT_DIR" status --porcelain=v1 --untracked-files=all 2>/dev/null || echo unavailable)
-  remote_head=$(git -C "$VAULT_DIR" rev-parse --verify refs/remotes/origin/main 2>/dev/null || true)
+  remote_head=$(git -C "$VAULT_DIR" ls-remote --exit-code origin refs/heads/main 2>/dev/null | awk '{print $1}') || remote_head=""
   vault_head=$(git -C "$VAULT_DIR" rev-parse --verify HEAD 2>/dev/null || true)
   if [ -n "$vault_status" ] || [ -z "$remote_head" ] || [ "$vault_head" != "$remote_head" ]; then
     vault_pending=1

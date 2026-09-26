@@ -135,6 +135,8 @@ def _coverage(vault_dir: str, timeout: int) -> tuple[list[dict] | None, str | No
         stores = payload["stores"]
     except Exception:  # noqa: BLE001 — malformed output is a finding, not a crash
         return None, "arca.sh status returned unparseable JSON"
+    if payload.get("vault_state") != "remote_current":
+        return None, "vault custody is local, unpushed, or unverified"
     return (stores, None) if isinstance(stores, list) else (None, "arca.sh status returned no store list")
 
 
