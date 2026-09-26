@@ -190,6 +190,79 @@ def _gh_write_verb(parts: list[str]) -> str | None:
     return None
 
 
+
+_SUBPROCESS_SINKS = frozenset({"run", "call", "Popen", "check_output", "check_call"})
+
+
+def _gh_forwarding_wrappers(tree: ast.Module) -> dict[str, list[str]]:
+    """Local helpers that prepend a fixed argv prefix to caller-supplied args.
+
+    scripts/consolidate-github.py routes every `gh` invocation through
+    `gh_json(args)`, which runs `subprocess.run(["gh", *args], ...)`. The caller's
+    list literal starts with `"api"`, not `"gh"` — so a scanner that only walks
+    list literals whose first element is `"gh"` goes structurally blind the moment
+    a script adopts this shape. That is exactly the hole class C exists to close:
+    the ungated effector (`gh api -X POST` transferring repository ownership,
+    `gh api -X PUT` rewriting topics) is still performed in-process; only its
+    spelling changed.
+
+    A wrapper is recognised syntactically: a local `def` whose body contains
+    `subprocess.<sink>(["gh", *param], ...)` where `param` is one of the def's
+    parameters — i.e. the caller's args are forwarded verbatim after the prefix.
+    """
+    wrappers: dict[str, list[str]] = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.FunctionDef):
+            continue
+        params = {a.arg for a in (*node.args.args, *node.args.kwonlyargs)}
+        if node.args.vararg:
+            params.add(node.args.vararg.arg)
+        if node.args.kwarg:
+            params.add(node.args.kwarg.arg)
+        for call in ast.walk(node):
+            if not (
+                isinstance(call, ast.Call)
+                and isinstance(call.func, ast.Attribute)
+                and call.func.attr in _SUBPROCESS_SINKS
+                and isinstance(call.func.value, ast.Name)
+                and call.func.value.id == "subprocess"
+                and call.args
+                and isinstance(call.args[0], ast.List)
+            ):
+                continue
+            argv = call.args[0]
+            prefix = _leading_constants(argv)
+            if not prefix or prefix[0] != "gh":
+                continue
+            forwarded = any(
+                isinstance(elt, ast.Starred)
+                and isinstance(elt.value, ast.Name)
+                and elt.value.id in params
+                for elt in argv.elts
+            )
+            if forwarded:
+                wrappers.setdefault(node.name, prefix)
+    return wrappers
+
+
+def _list_bindings(tree: ast.Module) -> dict[str, ast.List]:
+    """Simple `name = [...]` bindings, so a wrapper call through a variable still resolves.
+
+    consolidate-github.py builds `payload = ["api", "-X", "PUT", ...]` and passes the
+    name to `gh_json(payload)`. First binding wins; this is a syntactic scanner,
+    not an evaluator.
+    """
+    bound: dict[str, ast.List] = {}
+    for node in ast.walk(tree):
+        if (
+            isinstance(node, ast.Assign)
+            and len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and isinstance(node.value, ast.List)
+        ):
+            bound.setdefault(node.targets[0].id, node.value)
+    return bound
+
 def scan_file(path: Path) -> set[str]:
     """Outward-write capabilities this module performs in-process, as stable labels."""
     try:
@@ -213,6 +286,26 @@ def scan_file(path: Path) -> set[str]:
         elif isinstance(node, ast.ImportFrom):
             if node.module and node.module.split(".")[0] in SMTP_MODULES:
                 found.add(f"import {node.module.split('.')[0]}")
+    # See through local argv-forwarding wrappers (e.g. consolidate-github.py's
+    # gh_json): the caller's list is an argv whose leading element would be "gh"
+    # at exec time, so it must be verb-checked with the prefix re-attached.
+    wrappers = _gh_forwarding_wrappers(tree)
+    if wrappers:
+        bound = _list_bindings(tree)
+        for node in ast.walk(tree):
+            if (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Name)
+                and node.func.id in wrappers
+                and node.args
+            ):
+                arg = node.args[0]
+                if isinstance(arg, ast.Name):
+                    arg = bound.get(arg.id, arg)
+                if isinstance(arg, ast.List):
+                    verb = _gh_write_verb(wrappers[node.func.id] + _leading_constants(arg))
+                    if verb:
+                        found.add(verb)
     return found
 
 

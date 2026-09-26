@@ -123,6 +123,61 @@ def test_gh_api_with_an_explicit_get_is_not_flagged(ce, tmp_path):
     assert ce.scan_file(_src(tmp_path, 'run(["gh", "api", "-X", "GET", "repos/o/r"])\n')) == set()
 
 
+def test_argv_forwarding_wrapper_calls_are_seen_through(ce, tmp_path):
+    """consolidate-github.py routes every gh call through `gh_json(args)`, which runs
+    `subprocess.run(["gh", *args], ...)`. The caller's list literal starts with `"api"`,
+    not `"gh"` — a scanner that only walks list literals starting with `"gh"` goes
+    structurally blind the moment a script adopts this shape, and that is exactly the
+    class-C hole: `gh api -X POST` transferring repository ownership still runs
+    in-process; only its spelling changed.
+    """
+    body = (
+        "import subprocess\n"
+        "def gh_json(args, t=60):\n"
+        '    return subprocess.run(["gh", *args], capture_output=True, text=True, timeout=t)\n'
+        'gh_json(["api", "-X", "POST", "repos/o/r/transfer"])\n'
+    )
+    assert ce.scan_file(_src(tmp_path, body)) == {"gh api -X POST"}
+
+
+def test_wrapper_call_through_a_bound_name_is_seen_through(ce, tmp_path):
+    """consolidate-github.py builds `payload = ["api", "-X", "PUT", ...]` and passes the
+    name to `gh_json(payload)`. The wrapper indirection must not hide it either."""
+    body = (
+        "import subprocess\n"
+        "def gh_json(args):\n"
+        '    return subprocess.run(["gh", *args], capture_output=True, text=True)\n'
+        'payload = ["api", "-X", "PUT", "repos/o/r/topics"]\n'
+        "gh_json(payload)\n"
+    )
+    assert ce.scan_file(_src(tmp_path, body)) == {"gh api -X PUT"}
+
+
+def test_read_only_wrapper_calls_stay_silent(ce, tmp_path):
+    """Read-only call sites through the same wrapper shape must stay silent: a gate
+    that fires on reads is hostile to the preflight predicates it wants written."""
+    body = (
+        "import subprocess\n"
+        "def _gh(args):\n"
+        '    return subprocess.run(["gh", *args], capture_output=True, text=True)\n'
+        '_gh(["api", "repos/o/r"])\n'
+    )
+    assert ce.scan_file(_src(tmp_path, body)) == set()
+
+
+def test_a_helper_that_runs_a_fixed_argv_is_not_a_wrapper(ce, tmp_path):
+    """A def that runs a FIXED gh argv forwards nothing caller-controlled, so its call
+    sites carry no argv to see through — treating every gh-running helper as a wrapper
+    would be the opposite failure mode."""
+    body = (
+        "import subprocess\n"
+        "def gh_status():\n"
+        '    return subprocess.run(["gh", "auth", "status"], capture_output=True, text=True)\n'
+        "gh_status()\n"
+    )
+    assert ce.scan_file(_src(tmp_path, body)) == set()
+
+
 @pytest.mark.parametrize(
     "line,expected",
     [
