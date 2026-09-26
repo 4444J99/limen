@@ -40,7 +40,8 @@ class JulesWorkflowContract(unittest.TestCase):
         steps = [step for step in job["steps"] if expression in json.dumps(step)]
         self.assertEqual(len(steps), 1)
         self.assertEqual(steps[0]["env"]["JULES_API_KEY"], expression)
-        self.assertEqual(steps[0]["run"], "python -m limen.jules_api observe > jules-api-observation.json")
+        self.assertEqual(steps[0]["run"], "timeout 660s python -m limen.jules_api observe > jules-api-observation.json")
+        self.assertEqual(job["timeout-minutes"], "12")
         for name, other in self.workflow["jobs"].items():
             if name != "account-readback":
                 self.assertNotIn("secrets.", json.dumps(other))
