@@ -698,7 +698,7 @@ def validate_source_projection(matrix: dict[str, Any], candidates: list[dict[str
 
     errors: list[str] = []
     try:
-        public_repositories, public_count, private_count, public_digest = load_public_census_contract()
+        public_repositories, public_count, _, public_digest = load_public_census_contract()
         _, policy_digest = load_classification_policy_contract()
     except ProofSetError as exc:
         return [str(exc)], set()
@@ -717,8 +717,17 @@ def validate_source_projection(matrix: dict[str, Any], candidates: list[dict[str
         errors.append("candidate source projection needs a valid observation timestamp")
 
     privacy = matrix.get("privacy_split")
-    if not isinstance(privacy, dict) or privacy.get("private_repositories_in_w01_census") != private_count:
-        errors.append("privacy split W01 private repository count does not match the tracked census")
+    if not isinstance(privacy, dict):
+        errors.append("privacy_split must be a mapping")
+    elif privacy.get("private_repositories_in_w01_census") is not None:
+        # The private-repository count is derived from the tracked W01 census at
+        # validation time. A hand-maintained mirror here drifts on every census
+        # regen, so the validator fails closed on its reintroduction instead of
+        # re-binding it (see #2388).
+        errors.append(
+            "privacy_split.private_repositories_in_w01_census is derived from the tracked W01 census; "
+            "remove the hand-maintained value so the census stays the single source of truth"
+        )
 
     w02_repositories = projection.get("w02_front_door_proof_repositories")
     if not isinstance(w02_repositories, list) or not w02_repositories:
