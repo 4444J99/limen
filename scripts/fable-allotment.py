@@ -342,6 +342,20 @@ def compute_balance() -> dict[str, Any]:
 
 
 def cmd_balance(args: argparse.Namespace) -> int:
+    pinned = os.environ.get("LIMEN_CLAUDE_TRANSCRIPTS_DIR", "").strip()
+    if pinned and not Path(pinned).exists():
+        # #1932: a pin is an explicit measurement claim — "read the spend from here".
+        # The claim being false used to read gracefully as zero spend, and the write
+        # path below then stamped that zero over the canonical meter — recreating the
+        # exact blindness class #1930 healed. Refuse to write and fail loudly instead.
+        print(
+            f"[fable-allotment] balance: LIMEN_CLAUDE_TRANSCRIPTS_DIR pins {pinned!r}, "
+            "which does not exist — refusing to write a fail-open zero balance over "
+            "the canonical meter. Fix the pin, run unpinned, or pass --no-write for "
+            "a print-only probe.",
+            file=sys.stderr,
+        )
+        return 2
     balance = compute_balance()
     out = Path(args.out) if args.out else ROOT / "logs" / "fable-allotment.json"
     if not args.no_write:
