@@ -329,20 +329,7 @@ def test_open_pr_protects_only_its_exact_local_head(repo):
 def test_github_open_head_snapshot_keeps_exact_oid(monkeypatch):
     monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
     monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
-    payload = [
-        {
-            "number": 7,
-            "headRefName": "same-name",
-            "headRefOid": "a" * 40,
-            "state": "OPEN",
-            "mergedAt": None,
-        }
-    ]
-    monkeypatch.setattr(
-        reap.subprocess,
-        "run",
-        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, json.dumps(payload), ""),
-    )
+    _gh_api_stub(monkeypatch, [[_rest_pr(7, "same-name", "open", oid="a" * 40)]])
 
     merged, open_heads, closed_heads, online = reap.gh_head_states()
 
@@ -529,15 +516,15 @@ def test_gh_head_states_keeps_every_closed_head_oid_for_a_reused_name(monkeypatc
     identity vouch for the tip."""
     monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
     monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
-    payload = [
-        {"number": 10, "headRefName": "reused", "headRefOid": "a" * 40, "state": "CLOSED", "mergedAt": None},
-        {"number": 11, "headRefName": "reused", "headRefOid": "b" * 40, "state": "CLOSED", "mergedAt": None},
-        {"number": 12, "headRefName": "no-oid", "headRefOid": "", "state": "CLOSED", "mergedAt": None},
-    ]
-    monkeypatch.setattr(
-        reap.subprocess,
-        "run",
-        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, json.dumps(payload), ""),
+    _gh_api_stub(
+        monkeypatch,
+        [
+            [
+                _rest_pr(10, "reused", "closed", oid="a" * 40),
+                _rest_pr(11, "reused", "closed", oid="b" * 40),
+                _rest_pr(12, "no-oid", "closed", oid=""),
+            ]
+        ],
     )
 
     _merged, _open, closed, online = reap.gh_head_states()
@@ -553,23 +540,18 @@ def test_gh_head_states_keeps_every_closed_head_oid_for_a_reused_name(monkeypatc
 
 
 def test_gh_head_states_warns_when_the_pr_window_truncates(monkeypatch, capsys):
-    """`gh pr list` returns the N most recent PRs, so a limit below the repo's PR count silently
-    blinds every proof for older heads — and an unseen PR is indistinguishable from no PR."""
+    """A set LIMEN_BRANCH_REAP_PR_LIMIT is a hard ceiling — hitting it warns loudly,
+    because an unseen PR is indistinguishable from no PR."""
     monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
     monkeypatch.setenv("LIMEN_BRANCH_REAP_PR_LIMIT", "2")
     monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
-    payload = [
-        {"number": 1, "headRefName": "a", "headRefOid": "a" * 40, "state": "CLOSED", "mergedAt": None},
-        {"number": 2, "headRefName": "b", "headRefOid": "b" * 40, "state": "CLOSED", "mergedAt": None},
-    ]
-    monkeypatch.setattr(
-        reap.subprocess,
-        "run",
-        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, json.dumps(payload), ""),
-    )
+    pages = [[_rest_pr(1, "a", "closed"), _rest_pr(2, "b", "closed"), _rest_pr(3, "c", "closed")]]
+    _gh_api_stub(monkeypatch, pages)
 
-    reap.gh_head_states()
+    merged, _open, closed, online = reap.gh_head_states()
 
+    assert online is True
+    assert len(closed) == 2  # truncated to the ceiling
     out = capsys.readouterr().out
     assert "WARN" in out and "LIMEN_BRANCH_REAP_PR_LIMIT" in out
 
@@ -578,16 +560,102 @@ def test_gh_head_states_is_quiet_below_the_ceiling(monkeypatch, capsys):
     monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
     monkeypatch.setenv("LIMEN_BRANCH_REAP_PR_LIMIT", "50")
     monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
-    payload = [{"number": 1, "headRefName": "a", "headRefOid": "a" * 40, "state": "CLOSED", "mergedAt": None}]
-    monkeypatch.setattr(
-        reap.subprocess,
-        "run",
-        lambda *args, **kwargs: subprocess.CompletedProcess(args[0], 0, json.dumps(payload), ""),
-    )
+    _gh_api_stub(monkeypatch, [[_rest_pr(1, "a", "closed")]])
 
     reap.gh_head_states()
 
     assert "WARN" not in capsys.readouterr().out
+
+
+def _rest_pr(number, head, state, merged_at=None, oid=None):
+    """One REST pulls-endpoint row (state: open/closed; merged_at marks MERGED)."""
+    return {
+        "number": number,
+        "head": {"ref": head, "sha": oid if oid is not None else f"{number:040d}"},
+        "state": state,
+        "merged_at": merged_at,
+    }
+
+
+def _gh_api_stub(monkeypatch, pr_pages, nwo="o/r", fail_repo_view=False, fail_api=False):
+    """Stub `gh repo view` + `gh api .../pulls --paginate --slurp` (array of pages)."""
+    calls = []
+
+    def fake_run(args, **kwargs):
+        calls.append(list(args))
+        if args[1] == "repo":
+            if fail_repo_view:
+                return subprocess.CompletedProcess(args, 1, "", "boom")
+            return subprocess.CompletedProcess(args, 0, nwo + "\n", "")
+        if fail_api:
+            return subprocess.CompletedProcess(args, 1, "", "boom")
+        return subprocess.CompletedProcess(args, 0, json.dumps(pr_pages), "")
+
+    monkeypatch.setattr(reap.subprocess, "run", fake_run)
+    return calls
+
+
+def test_gh_head_states_paginates_the_whole_repo(monkeypatch, capsys):
+    """Coverage is exact, not windowed: every page the API returns is consulted."""
+    monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
+    monkeypatch.delenv("LIMEN_BRANCH_REAP_PR_LIMIT", raising=False)
+    monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
+    pages = [
+        [_rest_pr(n, f"m{n}", "closed", merged_at="2026-09-01T00:00:00Z") for n in range(1, 101)],
+        [_rest_pr(101, "late", "open")],
+        [_rest_pr(102, "old", "closed")],
+    ]
+    calls = _gh_api_stub(monkeypatch, pages)
+
+    merged, open_, closed, online = reap.gh_head_states()
+
+    assert online is True
+    assert any("pulls" in a for c in calls for a in c)  # the paginated pulls endpoint
+    assert len(merged) == 100  # every page-1 head is visible, not just a window
+    assert open_ == {"late": f"{101:040d}"}
+    assert set(closed) == {"old"}
+    assert "WARN" not in capsys.readouterr().out
+
+
+def test_gh_head_states_derives_merged_from_merged_at(monkeypatch):
+    """The REST endpoint has no MERGED state — merged_at is the discriminator."""
+    monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
+    monkeypatch.delenv("LIMEN_BRANCH_REAP_PR_LIMIT", raising=False)
+    monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
+    pages = [
+        [
+            _rest_pr(1, "m", "closed", merged_at="2026-09-01T00:00:00Z"),
+            _rest_pr(2, "c", "closed"),
+            _rest_pr(3, "o", "open"),
+        ]
+    ]
+    _gh_api_stub(monkeypatch, pages)
+
+    merged, open_, closed, online = reap.gh_head_states()
+
+    assert online is True
+    assert set(merged) == {"m"} and merged["m"] is not None
+    assert open_ == {"o": f"{3:040d}"}
+    assert set(closed) == {"c"}
+
+
+def test_gh_head_states_api_failure_is_offline(monkeypatch):
+    """A transport failure reads as offline — never as 'no PRs exist'."""
+    monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
+    monkeypatch.delenv("LIMEN_BRANCH_REAP_PR_LIMIT", raising=False)
+    monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
+    _gh_api_stub(monkeypatch, [], fail_api=True)
+
+    assert reap.gh_head_states() == ({}, {}, {}, False)
+
+
+def test_gh_head_states_repo_view_failure_is_offline(monkeypatch):
+    monkeypatch.delenv("LIMEN_OFFLINE", raising=False)
+    monkeypatch.delenv("LIMEN_BRANCH_REAP_PR_LIMIT", raising=False)
+    monkeypatch.setattr(reap.shutil, "which", lambda _name: "/usr/bin/gh")
+    _gh_api_stub(monkeypatch, [], fail_repo_view=True)
+
+    assert reap.gh_head_states() == ({}, {}, {}, False)
 
 
 def test_ledger_files_decided_separately_from_unfulfilled_intentions(tmp_path, monkeypatch):
