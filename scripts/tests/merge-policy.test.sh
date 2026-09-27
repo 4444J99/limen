@@ -287,6 +287,74 @@ jq '.url="https://github.com/organvm-vii-kerygma/portfolio/pull/234"' "$fixture"
 mv "$stubdir/canonical.json" "$fixture"
 check "dependency canonical URL guard" 2
 
+# --- AUTONOMY-PAUSED chokepoint (#1079) ---
+# A sandbox repo root carries the REAL governor so the chokepoint exercises the live
+# release semantics (expiry, merged-owner). The pause check runs before any `gh` call,
+# so the held case needs no network fixture; the override case reuses the gh stub.
+pause_root="$(mktemp -d)"
+mkdir -p "$pause_root/scripts" "$pause_root/logs"
+cp "$policy" "$pause_root/scripts/merge-policy.sh"
+cp "$(dirname "$policy")/autonomy-governor.py" "$pause_root/scripts/autonomy-governor.py"
+pause_policy="$pause_root/scripts/merge-policy.sh"
+trap 'rm -rf "$stubdir" "$pause_root"' EXIT
+mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
+
+pause_run() { # [extra env assignments...] — run the sandboxed policy, echo "exit|output"
+  set +e
+  out=$(env "$@" PATH="$stubdir:$PATH" bash "$pause_policy" 1 --repo o/r 2>&1)
+  got=$?
+  set -e
+  printf '%s|%s' "$got" "$out"
+}
+
+# 1. A live pause marker holds the merge lane even when the PR is green.
+cat > "$pause_root/logs/AUTONOMY_PAUSED" <<'MARKER'
+armed_at: 2026-09-26T00:00:00Z
+owner_surface: merge-policy.test.sh pause case
+prohibitions: dispatch, merge, rebase, PR mutation, worktree reclaim, Claude-lane action
+release_predicate: explicit test resume
+MARKER
+res="$(pause_run)"; got="${res%%|*}"; out="${res#*|}"
+if [ "$got" = "2" ] && printf '%s' "$out" | grep -q "autonomy is PAUSED" \
+    && printf '%s' "$out" | grep -qi "prohibitions: dispatch, merge"; then
+  printf '  ok   %-34s exit=%s\n' "paused marker holds merge lane" "$got"; pass=$((pass+1))
+else
+  printf '  FAIL %-34s want=2 got=%s\n' "paused marker holds merge lane" "$got"
+  printf '%s\n' "$out" | sed 's/^/       /'; fail=$((fail+1))
+fi
+
+# 2. The operator's explicit override releases the chokepoint; the predicate's
+#    normal verdict (green non-deploy → CLEARED) still runs underneath.
+res="$(pause_run LIMEN_FORCE_AUTONOMY=1)"; got="${res%%|*}"; out="${res#*|}"
+if [ "$got" = "0" ] && printf '%s' "$out" | grep -q "MERGE-MODE: direct"; then
+  printf '  ok   %-34s exit=%s\n' "force-autonomy override releases pause" "$got"; pass=$((pass+1))
+else
+  printf '  FAIL %-34s want=0 got=%s\n' "force-autonomy override releases pause" "$got"
+  printf '%s\n' "$out" | sed 's/^/       /'; fail=$((fail+1))
+fi
+
+# 3. A governor that cannot run means HOLD, never CLEARED (fail toward caution).
+mv "$pause_root/scripts/autonomy-governor.py" "$pause_root/scripts/autonomy-governor.py.bak"
+res="$(pause_run LIMEN_FORCE_AUTONOMY=1)"; got="${res%%|*}"; out="${res#*|}"
+mv "$pause_root/scripts/autonomy-governor.py.bak" "$pause_root/scripts/autonomy-governor.py"
+if [ "$got" = "2" ] && printf '%s' "$out" | grep -q "reported no mode"; then
+  printf '  ok   %-34s exit=%s\n' "unreadable governor holds" "$got"; pass=$((pass+1))
+else
+  printf '  FAIL %-34s want=2 got=%s\n' "unreadable governor holds" "$got"
+  printf '%s\n' "$out" | sed 's/^/       /'; fail=$((fail+1))
+fi
+
+# 4. No logs/ directory at all (fresh checkout, nothing could be paused) skips the
+#    chokepoint entirely — the normal verdict runs.
+rm -rf "$pause_root/logs"
+res="$(pause_run)"; got="${res%%|*}"; out="${res#*|}"
+if [ "$got" = "0" ] && printf '%s' "$out" | grep -q "MERGE-MODE: direct"; then
+  printf '  ok   %-34s exit=%s\n' "no logs dir skips chokepoint" "$got"; pass=$((pass+1))
+else
+  printf '  FAIL %-34s want=0 got=%s\n' "no logs dir skips chokepoint" "$got"
+  printf '%s\n' "$out" | sed 's/^/       /'; fail=$((fail+1))
+fi
+
 echo
 echo "passed=$pass failed=$fail"
 if [ "$fail" -eq 0 ]; then
