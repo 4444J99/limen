@@ -107,6 +107,23 @@ def _assert_process_gone(pid: int, *, timeout: float = 2.0) -> None:
     pytest.fail(f"fixture process {pid} remained alive after bounded cleanup")
 
 
+def _await_startup_receipt(path: Path, *, timeout: float) -> None:
+    """Wait for a fixture's startup receipt instead of racing its startup.
+
+    Fixture processes (provider scripts, registration wrappers) write their pid
+    receipts asynchronously after spawn; asserting immediately after the
+    launch/registration call races their startup on loaded machines (#2295).
+    A bounded poll awaits the deterministic signal without extending any
+    production timeout or sleep.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if path.is_file():
+            return
+        time.sleep(0.01)
+    pytest.fail(f"fixture startup receipt {path} was never written within {timeout}s")
+
+
 @pytest.fixture
 def effector_repo(tmp_path: Path) -> tuple[Path, Path, Path, int]:
     root = tmp_path / "repo"
@@ -299,6 +316,7 @@ def test_full_relay_exec_proof_closes_while_keepalive_remains_live(
     assert launch.receipt.activation_response_sha256 is not None
     assert registrations == [False, True]
     assert elapsed < 10
+    _await_startup_receipt(provider_pid_path, timeout=5.0)
     assert provider_pid_path.is_file()
     assert not provider_env_leaks.exists()
     assert launch.receipt.launch_pid == int(provider_pid_path.read_text(encoding="utf-8"))
@@ -1939,14 +1957,17 @@ def test_registration_timeout_kills_an_exited_wrappers_pipe_holding_descendant(
 ) -> None:
     wrapper = tmp_path / "register-wrapper"
     child_pid_path = tmp_path / "child.pid"
+    # POSIX sh, not python: the child-pid startup receipt must be written
+    # deterministically before the bounded registration deadline can fire. A
+    # python wrapper pays interpreter startup inside that 0.3s window and loses
+    # the race on loaded machines, so the receipt is never created (#2295).
+    # The descendant keeps the registration pipes open exactly as before.
     wrapper.write_text(
         (
-            "#!/usr/bin/env python3\n"
-            "import os, subprocess, sys\n"
-            "child = subprocess.Popen("
-            "[sys.executable, '-c', 'import time; time.sleep(30)'],"
-            " stdout=sys.stdout, stderr=sys.stderr)\n"
-            "open(os.environ['RELAY_TEST_CHILD_PID'], 'w', encoding='utf-8').write(str(child.pid))\n"
+            "#!/bin/sh\n"
+            "set -eu\n"
+            f"{sys.executable} -c 'import time; time.sleep(30)' &\n"
+            'printf \'%s\\n\' "$!" > "$RELAY_TEST_CHILD_PID"\n'
         ),
         encoding="utf-8",
     )
@@ -1970,6 +1991,7 @@ def test_registration_timeout_kills_an_exited_wrappers_pipe_holding_descendant(
         )
 
     assert raised.value.code == "relay_registration_timeout"
+    _await_startup_receipt(child_pid_path, timeout=2.0)
     child_pid = int(child_pid_path.read_text(encoding="utf-8"))
     deadline = time.monotonic() + 2
     while time.monotonic() < deadline:
