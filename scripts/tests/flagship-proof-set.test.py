@@ -467,10 +467,21 @@ class FlagshipProofSetTests(unittest.TestCase):
         self.assertTrue(any("evidence repository is not present" in error for error in errors), errors)
         self.assertFalse(any(private_like_identity in error for error in errors), errors)
 
-    def test_private_census_count_is_bound_to_w01(self) -> None:
+    def test_private_census_count_is_derived_not_declared(self) -> None:
+        # The hand-maintained W01 private-count mirror is gone: absence validates
+        # against the tracked census, and reintroducing a stale literal fails
+        # closed instead of re-binding (see #2388).
         matrix = copy.deepcopy(self.matrix)
-        matrix["privacy_split"]["private_repositories_in_w01_census"] += 1
-        self.assert_error_contains(matrix, "private repository count does not match")
+        matrix["privacy_split"].pop("private_repositories_in_w01_census", None)
+        errors = MODULE.validate_matrix(matrix, now=self.observed_at, enforce_freshness=True)
+        self.assertFalse(
+            any("private_repositories_in_w01_census" in error for error in errors),
+            errors,
+        )
+
+        stale = copy.deepcopy(self.matrix)
+        stale["privacy_split"]["private_repositories_in_w01_census"] = 0
+        self.assert_error_contains(stale, "private_repositories_in_w01_census")
 
     def test_live_workflow_must_match_current_default_branch_head(self) -> None:
         candidate = copy.deepcopy(self.candidate("public_records"))
