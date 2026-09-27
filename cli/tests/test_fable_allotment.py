@@ -234,3 +234,47 @@ def test_balance_is_idempotent(tmp_path):
     first = (root / "logs" / "fable-allotment.json").read_text()
     subprocess.run([sys.executable, str(SCRIPT), "balance"], capture_output=True, text=True, env=env)
     assert (root / "logs" / "fable-allotment.json").read_text() == first
+
+
+def test_balance_refuses_write_when_pinned_dir_missing(tmp_path):
+    """#1932: a typo'd LIMEN_CLAUDE_TRANSCRIPTS_DIR pin must not stamp a fail-open
+    zero balance over the canonical meter — the run fails loudly instead."""
+    root = tmp_path / "root"
+    (root / "logs").mkdir(parents=True)
+    meter = root / "logs" / "fable-allotment.json"
+    meter.write_text(json.dumps({"week": "2026-09-21", "spent_pct": 53.6, "over_cap": True}))
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "balance"],
+        capture_output=True,
+        text=True,
+        env={
+            "LIMEN_ROOT": str(root),
+            "LIMEN_CLAUDE_TRANSCRIPTS_DIR": str(tmp_path / "typo-dir"),
+            "PATH": __import__("os").environ.get("PATH", ""),
+        },
+    )
+    assert proc.returncode != 0, proc.stdout
+    assert "LIMEN_CLAUDE_TRANSCRIPTS_DIR" in proc.stderr
+    assert json.loads(meter.read_text())["over_cap"] is True
+
+
+def test_balance_still_writes_when_pinned_dir_exists(tmp_path):
+    """#1932 negative control: a pin that EXISTS keeps the old write behavior —
+    this is what verify-fable-gate.sh block 5 asserts."""
+    root = tmp_path / "root"
+    (root / "logs").mkdir(parents=True)
+    empty = tmp_path / "pinned-empty"
+    empty.mkdir()
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "balance"],
+        capture_output=True,
+        text=True,
+        env={
+            "LIMEN_ROOT": str(root),
+            "LIMEN_CLAUDE_TRANSCRIPTS_DIR": str(empty),
+            "PATH": __import__("os").environ.get("PATH", ""),
+        },
+    )
+    assert proc.returncode == 0, proc.stderr
+    out = json.loads((root / "logs" / "fable-allotment.json").read_text())
+    assert out["spent_pct"] == 0.0 and out["over_cap"] is False
