@@ -113,7 +113,7 @@ REQUIRED_ACCEPTANCE_PROOF_FIELDS = SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS
 
 # Operator standing grant (2026-07-09) — round two of the removal-acceptance covenant, now for clones.
 # The worktree sibling (reclaim-worktrees.py STANDING_ACCEPTANCE) pre-accepts its loss-free class; the
-# clone organ was left gated on an unfed ledger AND never beat-wired, so ~/Workspace creept back every
+# clone organ was left gated on an unfed ledger AND never beat-wired, so ~/Workspace crept back every
 # time (the recurring "why is local storage full" pain). classify() already proves the loss-free gate
 # adversarially (14 data-loss paths guarded); its True verdict is "pushed-mirror[-under-pressure]" —
 # every local byte is on the live remote, re-cloneable, nothing unpushed/untracked. Pre-accept exactly
@@ -447,7 +447,7 @@ def confirm_recloneable(repo: Path) -> bool:
         return False
     if fetch.returncode != 0:
         return False  # could not verify against the live remote → fail-safe keep
-    # Authoritative proof: after the refresh, nothing reachable from a local ref/reflog/stash is
+    # Authoritative proof: after the refresh, nothing reachable from any local ref/reflog/stash is
     # missing from the remote. Catches force-push orphans, ahead-of-origin HEADs, and deleted branches.
     return not _has_local_only_objects(repo)
 
