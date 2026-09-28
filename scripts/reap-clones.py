@@ -113,7 +113,7 @@ REQUIRED_ACCEPTANCE_PROOF_FIELDS = SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS
 
 # Operator standing grant (2026-07-09) — round two of the removal-acceptance covenant, now for clones.
 # The worktree sibling (reclaim-worktrees.py STANDING_ACCEPTANCE) pre-accepts its loss-free class; the
-# clone organ was left gated on an unfed ledger AND never beat-wired, so ~/Workspace crept back every
+# clone organ was left gated on an unfed ledger AND never beat-wired, so ~/Workspace creept back every
 # time (the recurring "why is local storage full" pain). classify() already proves the loss-free gate
 # adversarially (14 data-loss paths guarded); its True verdict is "pushed-mirror[-under-pressure]" —
 # every local byte is on the live remote, re-cloneable, nothing unpushed/untracked. Pre-accept exactly
@@ -235,8 +235,9 @@ def _ignored_is_all_regenerable(repo: Path) -> bool:
     test the TOP path component against the regenerable allowlist. An unknown ignored file (e.g. `.env`,
     `local.db`, `data/`) is treated as irreplaceable → not-all-regenerable → the caller KEEPS the clone.
     A quoted/exotic path never matches the allowlist, so it also fails safe (KEEP).
+    Only repository-local ignore policy can establish regenerability, never ambient global excludes.
     """
-    out = _run(["git", "-C", str(repo), "status", "--porcelain", "--ignored"])
+    out = _run(["git", "-C", str(repo), "-c", "core.excludesFile=/dev/null", "status", "--porcelain", "--ignored"])
     for line in out.splitlines():
         if not line.startswith("!! "):
             continue
@@ -293,7 +294,7 @@ def _has_local_only_objects(repo: Path) -> bool:
 
 def _pristine_now(repo: Path) -> bool:
     """Last-millisecond TOCTOU belt: re-sample the cheapest data guards immediately before rmtree."""
-    if _run(["git", "-C", str(repo), "status", "--porcelain"]):
+    if _run(["git", "-C", str(repo), "-c", "core.excludesFile=/dev/null", "status", "--porcelain"]):
         return False
     if _run(["git", "-C", str(repo), "stash", "list"]):
         return False
@@ -348,7 +349,8 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
     # DATA GUARD (the "7 genesis screenshots" rule): any dirty OR untracked file → never touch it.
     # `git status --porcelain` omits gitignored files, so a non-empty result means real, unsaved work
     # (tracked edits or hand-dropped untracked inputs). Keep and let capture handle it.
-    if _run(["git", "-C", str(repo), "status", "--porcelain"]):
+    # A global ignore such as build/ must not hide unsaved work in an allowlisted directory.
+    if _run(["git", "-C", str(repo), "-c", "core.excludesFile=/dev/null", "status", "--porcelain"]):
         return Verdict(False, "dirty-or-untracked")
     # IGNORED-DATA GUARD: porcelain hid the ignored files above — a `.env`, a local `*.db`, or a data/
     # dir lives on no remote and re-clone cannot restore it. Reap only if every ignored entry is a
@@ -445,7 +447,7 @@ def confirm_recloneable(repo: Path) -> bool:
         return False
     if fetch.returncode != 0:
         return False  # could not verify against the live remote → fail-safe keep
-    # Authoritative proof: after the refresh, nothing reachable from any local ref/reflog/stash is
+    # Authoritative proof: after the refresh, nothing reachable from a local ref/reflog/stash is
     # missing from the remote. Catches force-push orphans, ahead-of-origin HEADs, and deleted branches.
     return not _has_local_only_objects(repo)
 
