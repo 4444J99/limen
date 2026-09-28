@@ -1270,3 +1270,28 @@ def test_cleanup_failure_identifies_stage_without_weakening_failure(monkeypatch,
         paired_module._terminate_process_group(Process(), mode="check")
     assert caught.value.code == "single-rail-check-termination-failed"
     assert caught.value.reasons == (stage,)
+
+
+def test_slow_reap_does_not_mask_triggering_error(monkeypatch):
+    """#1931: a load-delayed reap must not surface as termination-failed.
+
+    Under heavy load the wait deadline can expire even though the SIGKILLed
+    leader already died (the waiting parent itself goes unscheduled). The
+    non-blocking recheck must observe the completed reap and let cleanup
+    return normally instead of masking the triggering error.
+    """
+
+    class SlowReapProcess:
+        pid = 12345
+
+        def wait(self, timeout):
+            # The deadline wait expires as if starved; the immediate recheck
+            # finds the leader already reaped.
+            if timeout:
+                raise subprocess.TimeoutExpired("fixture", timeout)
+            return 0
+
+    monkeypatch.setattr(paired_module.os, "killpg", lambda pid, sig: None)
+    monkeypatch.setattr(paired_module, "_wait_for_process_group_exit", lambda *args, **kwargs: True)
+    # Must not raise: cleanup succeeded, only late.
+    paired_module._terminate_process_group(SlowReapProcess(), mode="check")
