@@ -60,9 +60,27 @@ _root="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 # LIMEN_FORCE_AUTONOMY=1 preserves the operator's explicit override (honored inside
 # the governor). No new registry: every consumer of this predicate (loops, sessions,
 # fleet) inherits the pause for free.
+#
+# Re-entrancy guard (Copilot high + Codex P1 post-merge review on #2768):
+# autonomy-governor.py's release completion (_try_complete_release) invokes this same
+# predicate. The governor has already decided to complete the release; re-entering the
+# pause chokepoint here would read the still-present marker, HOLD, and deadlock the
+# escape path (the estate stays paused until manual intervention). The guard is set
+# ONLY by the governor's own release path — never by external callers — and skips
+# just this chokepoint; every other check below still runs.
 _autonomy_mode=""
-if [ -d "$_root/logs" ] && [ -f "$_root/scripts/autonomy-governor.py" ]; then
-  _autonomy_mode="$(LIMEN_ROOT="$_root" python3 "$_root/scripts/autonomy-governor.py" mode 2>/dev/null || true)"
+_autonomy_rc=0
+_autonomy_armed=0
+if [ -z "${LIMEN_SKIP_AUTONOMY_PAUSE_CHECK:-}" ] && [ -d "$_root/logs" ]; then
+  _autonomy_armed=1
+  if [ -f "$_root/scripts/autonomy-governor.py" ]; then
+    if _autonomy_out="$(LIMEN_ROOT="$_root" python3 "$_root/scripts/autonomy-governor.py" mode 2>/dev/null)"; then
+      _autonomy_mode="$(printf '%s' "$_autonomy_out" | tr -d '[:space:]')"
+    else
+      _autonomy_rc=$?
+      _autonomy_mode=""
+    fi
+  fi
 fi
 if [ "$_autonomy_mode" = "paused" ]; then
   _pause_prohibitions=""
@@ -74,9 +92,19 @@ if [ "$_autonomy_mode" = "paused" ]; then
   echo "  Release the pause (scripts/pause.py release), then re-run."
   exit 2
 fi
-if [ -z "$_autonomy_mode" ] && [ -d "$_root/logs" ]; then
-  echo "VERDICT: HOLD — autonomy-governor reported no mode; refusing to clear a merge on an unverified pause state."
-  exit 2
+# Fail toward caution (Copilot high + Codex P2 post-merge review on #2768): the
+# predicate proceeds only on a KNOWN governor verdict. A nonzero governor exit (even
+# with stdout — the old `|| true` discarded the exit status and accepted any text),
+# an empty read, or an unrecognized mode all mean the pause state is unverified:
+# HOLD, never CLEARED.
+if [ "$_autonomy_armed" = "1" ]; then
+  case "$_autonomy_mode" in
+    observe|dispatch) ;;  # verified live — the normal verdict runs underneath
+    *)
+      echo "VERDICT: HOLD — autonomy-governor reported an unverified pause state (exit=$_autonomy_rc, mode='${_autonomy_mode:-<empty>}'); refusing to clear a merge."
+      exit 2
+      ;;
+  esac
 fi
 DEPLOY_RE="$(python3 "$_root/scripts/verify.py" --deploy-regex 2>/dev/null || true)"
 if [ -z "$DEPLOY_RE" ]; then
