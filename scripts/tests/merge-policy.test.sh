@@ -377,10 +377,56 @@ fi
 mv "$pause_root/scripts/autonomy-governor.py" "$pause_root/scripts/autonomy-governor.py.bak"
 res="$(pause_run LIMEN_FORCE_AUTONOMY=1)"; got="${res%%|*}"; out="${res#*|}"
 mv "$pause_root/scripts/autonomy-governor.py.bak" "$pause_root/scripts/autonomy-governor.py"
-if [ "$got" = "2" ] && printf '%s' "$out" | grep -q "reported no mode"; then
+if [ "$got" = "2" ] && printf '%s' "$out" | grep -q "unverified pause state"; then
   printf '  ok   %-34s exit=%s\n' "unreadable governor holds" "$got"; pass=$((pass+1))
 else
   printf '  FAIL %-34s want=2 got=%s\n' "unreadable governor holds" "$got"
+  printf '%s\n' "$out" | sed 's/^/       /'; fail=$((fail+1))
+fi
+
+# 5. A governor that prints a mode but exits NONZERO is unverified: HOLD, never
+#    CLEARED. (Copilot high on #2768 — the old `|| true` discarded the exit status
+#    and accepted the stdout text, so this exact stub CLEARED before the fix.)
+cp "$pause_root/scripts/autonomy-governor.py" "$pause_root/scripts/autonomy-governor.py.real"
+cat > "$pause_root/scripts/autonomy-governor.py" <<'STUB'
+#!/usr/bin/env python3
+import sys
+print("observe")
+sys.exit(1)
+STUB
+res="$(pause_run)"; got="${res%%|*}"; out="${res#*|}"
+if [ "$got" = "2" ] && printf '%s' "$out" | grep -q "unverified pause state"; then
+  printf '  ok   %-34s exit=%s\n' "nonzero governor exit holds" "$got"; pass=$((pass+1))
+else
+  printf '  FAIL %-34s want=2 got=%s\n' "nonzero governor exit holds" "$got"
+  printf '%s\n' "$out" | sed 's/^/       /'; fail=$((fail+1))
+fi
+
+# 6. An unrecognized governor mode is unverified too: HOLD. (Codex P2 on #2768 —
+#    the old code accepted any nonempty text as an allowed mode.)
+cat > "$pause_root/scripts/autonomy-governor.py" <<'STUB'
+#!/usr/bin/env python3
+print("banana")
+STUB
+res="$(pause_run)"; got="${res%%|*}"; out="${res#*|}"
+if [ "$got" = "2" ] && printf '%s' "$out" | grep -q "unverified pause state"; then
+  printf '  ok   %-34s exit=%s\n' "unknown governor mode holds" "$got"; pass=$((pass+1))
+else
+  printf '  FAIL %-34s want=2 got=%s\n' "unknown governor mode holds" "$got"
+  printf '%s\n' "$out" | sed 's/^/       /'; fail=$((fail+1))
+fi
+mv "$pause_root/scripts/autonomy-governor.py.real" "$pause_root/scripts/autonomy-governor.py"
+
+# 7. Re-entrancy guard (Copilot high + Codex P1 on #2768): the governor's release
+#    path sets LIMEN_SKIP_AUTONOMY_PAUSE_CHECK; the nested predicate must skip the
+#    chokepoint instead of HOLDing on the still-present marker — a nested HOLD is
+#    what deadlocked the PR-owned release escape path. The marker from case 1 is
+#    live here, so without the guard this exits 2.
+res="$(pause_run LIMEN_SKIP_AUTONOMY_PAUSE_CHECK=1)"; got="${res%%|*}"; out="${res#*|}"
+if [ "$got" = "0" ] && printf '%s' "$out" | grep -q "MERGE-MODE: direct"; then
+  printf '  ok   %-34s exit=%s\n' "release guard skips pause chokepoint" "$got"; pass=$((pass+1))
+else
+  printf '  FAIL %-34s want=0 got=%s\n' "release guard skips pause chokepoint" "$got"
   printf '%s\n' "$out" | sed 's/^/       /'; fail=$((fail+1))
 fi
 
