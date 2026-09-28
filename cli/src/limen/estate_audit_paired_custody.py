@@ -624,7 +624,15 @@ def _terminate_process_group(process: subprocess.Popen[bytes], *, mode: str) -> 
     try:
         process.wait(timeout=PROCESS_GROUP_KILL_SECONDS)
     except subprocess.TimeoutExpired as exc:
-        raise PairedCustodyError(f"single-rail-{mode}-termination-failed", reasons=("leader-not-reaped",)) from exc
+        # The wait deadline is scheduler-sensitive, not just child-sensitive: under
+        # heavy load the waiting parent itself can go unscheduled past the deadline
+        # even though the SIGKILLed leader already died. One non-blocking recheck
+        # before declaring the leader unreapable, so a merely-late reap does not
+        # mask the triggering error with termination-failed (#1931).
+        try:
+            process.wait(timeout=0)
+        except subprocess.TimeoutExpired:
+            raise PairedCustodyError(f"single-rail-{mode}-termination-failed", reasons=("leader-not-reaped",)) from exc
     if not _wait_for_process_group_exit(
         process,
         process_group,
