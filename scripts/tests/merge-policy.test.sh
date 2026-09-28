@@ -235,6 +235,46 @@ rate_limit_case "fetch exhausted after retries"
 rate_limit_case "API quota exhausted" 2 auto
 rate_limit_case "HTTP 403 forbidden" 3 auto
 rate_limit_case "HTTP 401 unauthorized" 3 auto
+# #2147: transient transport failures are HOLDs (exit 2), never BLOCKED merge verdicts.
+# Auth/permission errors stay BLOCKED (pinned above); only the transport class moves.
+transport_case() {
+  local message="$1"
+  export GH_PR_VIEW_ERROR="$message"
+  set +e
+  PATH="$stubdir:$PATH" bash "$policy" 1 --repo o/r >/dev/null 2>&1
+  local got=$?
+  set -e
+  if [ "$got" = "2" ] && [ "$(cat err.txt)" = "caller-owned" ]; then
+    printf '  ok   %-34s exit=%s\n' "transport: $message" "$got"
+    pass=$((pass+1))
+  else
+    printf '  FAIL %-34s want=2 got=%s residue=%s\n' "transport: $message" "$got" "$(cat err.txt)"
+    fail=$((fail+1))
+  fi
+  unset GH_PR_VIEW_ERROR
+}
+transport_case "HTTP 502 Bad Gateway"
+transport_case "HTTP 503 Service Unavailable"
+transport_case "HTTP 504 Gateway Timeout"
+transport_case "HTTP 500 Internal Server Error"
+transport_case "dial tcp 140.82.114.6:443: i/o timeout"
+transport_case "could not resolve host: api.github.com"
+transport_case "connection reset by peer"
+transport_case "network is unreachable"
+# negative control: a genuinely unreadable PR stays BLOCKED
+export GH_PR_VIEW_ERROR="HTTP 404 Not Found"
+set +e
+PATH="$stubdir:$PATH" bash "$policy" 1 --repo o/r >/dev/null 2>&1
+got=$?
+set -e
+if [ "$got" = "3" ]; then
+  printf '  ok   %-34s exit=%s\n' "transport-negative: 404 stays BLOCKED" "$got"
+  pass=$((pass+1))
+else
+  printf '  FAIL %-34s want=3 got=%s\n' "transport-negative: 404 stays BLOCKED" "$got"
+  fail=$((fail+1))
+fi
+unset GH_PR_VIEW_ERROR
 export GH_PR_VIEW_ERROR="repository not found"
 set +e
 PATH="$stubdir:$PATH" bash "$policy" 1 --repo o/r >/dev/null 2>&1
