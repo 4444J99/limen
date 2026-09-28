@@ -92,6 +92,13 @@ lookup_failure() {
     echo "VERDICT: HOLD — GitHub API quota is exhausted." >&2
     exit 2
   fi
+  # #2147 residual: a transient transport failure is not a merge verdict either.
+  # "I could not look" (502/503/504, timeout, DNS, reset) must HOLD, never BLOCKED —
+  # only auth/permission errors and genuinely unreadable PRs (404, wrong repo) do.
+  if grep -Eqi 'HTTP 5[0-9]{2}|timed? ?out|connection (reset|refused)|could not resolve|no such host|network (is )?unreachable|tls handshake|unexpected eof|broken pipe|bad gateway|service unavailable|gateway timeout' "$err"; then
+    echo "VERDICT: HOLD — GitHub API lookup failed with a transient transport error; re-run." >&2
+    exit 2
+  fi
   echo "VERDICT: BLOCKED — cannot read PR; lookup failure cause is unverified." >&2
   exit 3
 }
