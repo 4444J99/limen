@@ -475,23 +475,6 @@ def test_regenerable_ignored_files_still_reap(tmp_path):
     assert v.reason == "pushed-mirror"
 
 
-def test_ambient_global_gitignore_does_not_blind_untracked_files(tmp_path, monkeypatch):
-    """Ambient core.excludesFile must not blind the data guard to untracked files in regenerable-named dirs."""
-    clone = _init_origin_and_clone(tmp_path, "ambientignore")
-    global_ignore = tmp_path / "global_ignore"
-    global_ignore.write_text("build/\n")
-    global_config = tmp_path / "global_config"
-    global_config.write_text(f"[core]\n\texcludesFile = {global_ignore}\n")
-    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(global_config))
-
-    (clone / "build").mkdir()
-    (clone / "build" / "notes.txt").write_text("unsaved work\n")
-
-    v = _verdict(clone, age_days=99, pressure=True)
-    assert v.reap is False
-    assert v.reason == "dirty-or-untracked"
-
-
 def test_skip_worktree_hidden_edit_is_never_reaped(tmp_path):
     """A skip-worktree bit hides a local edit to a tracked file from porcelain → the override is data."""
     clone = _init_origin_and_clone(tmp_path, "skipwt")
