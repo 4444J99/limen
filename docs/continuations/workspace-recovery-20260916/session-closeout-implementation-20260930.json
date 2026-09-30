@@ -1,0 +1,53 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "01a0f41f-93aa-7a30-88bf-706426c0fa6a",
+  "repository": "4444J99/limen",
+  "worktree_name": "session-closeout-20260930",
+  "base_head": "3b888f722656cd162fe0ee87c6bd2cae34d1efae",
+  "publication_branch": "fix/session-closeout-20260930",
+  "owner_url": "https://github.com/4444J99/limen/pull/2785",
+  "disposition": "handoff",
+  "owned_paths": [
+    ".agents/skills/closeout/SKILL.md",
+    ".claude/skills/closeout/SKILL.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "cli/src/limen/session_closeout.py",
+    "cli/tests/test_closeout_session_scope.py",
+    "cli/tests/test_orphan_watchers.py",
+    "cli/tests/test_session_closeout.py",
+    "docs/architecture/continuation-capsules.md",
+    "docs/continuations/workspace-recovery-20260916/launch.sh",
+    "docs/continuations/workspace-recovery-20260916/verify-closeout.py",
+    "docs/session-closeout.md",
+    "institutio/governance/gates.yaml",
+    "scripts/check-agent-docs.py",
+    "scripts/closeout-fast.sh",
+    "scripts/no-tasks-on-me.sh",
+    "scripts/orphan-watchers.py",
+    "scripts/session-closeout.py"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "head": "3eafefc7b590f048f408b24c507dd8c413c30a3b",
+      "exit_code": 0,
+      "purpose": "release",
+      "evidence": "docs/continuations/workspace-recovery-20260916/session-closeout-implementation-20260930.md",
+      "sha256": "d89cb431ecfb5f74960fa781dbd0a925dbec840bd69d8eebd782a7725484181b"
+    },
+    {
+      "head": "3eafefc7b590f048f408b24c507dd8c413c30a3b",
+      "exit_code": 1,
+      "purpose": "completion",
+      "owner_url": "https://github.com/4444J99/limen/pull/2785",
+      "evidence": "docs/continuations/workspace-recovery-20260916/session-closeout-implementation-20260930.md",
+      "sha256": "d89cb431ecfb5f74960fa781dbd0a925dbec840bd69d8eebd782a7725484181b"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/continuations/workspace-recovery-20260916/session-closeout-implementation-20260930.md",
+    "sha256": "d89cb431ecfb5f74960fa781dbd0a925dbec840bd69d8eebd782a7725484181b"
+  }
+}
