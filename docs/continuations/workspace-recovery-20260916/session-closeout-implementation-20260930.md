@@ -13,3 +13,5 @@ Custody: this isolated implementation checkout has no untracked deliverables. Ig
 Domus source landed in PR #405 (64b4e4ef). Targeted chezmoi deployment excluded scripts. The immutable candidate installation is source adoption only, not a Limen main merge. No existing peer process was killed, root migrated, or successor session created.
 
 Credential ownership predicate: `python3 scripts/credential-wall.py --check` exited 0; all 31 secret atoms registered. No new credential was created or copied.
+
+Final observer correction: the live checker initially counted its own lsof child. The correction excludes only that launched observation PID; the source census now returns zero retained processes. The changed session checker suite passes 24 tests, and changed-module mypy and pinned Ruff pass; 13 unchanged watcher/historical tests retain their earlier pass. The final task-completion observation is an explicit source-landing predicate: GitHub reports PR #2785 merged=false, exit 1. Earlier external-evidence and admission failures remain recorded above, without claiming their rerun.
