@@ -1692,6 +1692,9 @@ def _sweep_receipt_lens():
         return None
 
 
+from estate_posture import visibility_intent
+
+
 def visibility_drift(rows: list[dict], estate: dict, receipt_ok=None) -> tuple[list[str], list[str]]:
     """Class G, pure: desired visibility − observed. ``publish_candidate`` is desired-public,
     matching apply-visibility.py: its nominal operation-private class preserves the pre-publication
@@ -1713,9 +1716,7 @@ def visibility_drift(rows: list[dict], estate: dict, receipt_ok=None) -> tuple[l
         full = str(row.get("full_name") or "")
         cls_name = classify_repo(full, estate, facts=row)
         desired = (classes.get(cls_name) or {}).get("visibility") if cls_name else None
-        publish_candidate = bool((overrides.get(full) or {}).get("publish_candidate"))
-        if publish_candidate:
-            desired = "public"
+        desired, publish_candidate, preservation_review = visibility_intent(estate, full, desired, row)
         if desired not in ("public", "private"):
             continue  # 'any' is exempt; unclassed is rung J's finding
         observed = "private" if row.get("private") else "public"
@@ -1806,7 +1807,7 @@ def custody_drift(ledger: list, grants: dict, by_repo: dict, org_set: set) -> li
     return out
 
 
-def shelf_drift(shelves: dict, rows: list) -> list[str]:
+def shelf_drift(shelves: dict, rows: list, target: str | None = None) -> list[str]:
     """Class P's pure join (shelf parity, custody v4.0.0 Phase 2): declared shelf membership
     (estate shelf_assignments, bare names) vs census owner, BOTH directions — a declared repo
     living elsewhere is drift, and an undeclared repo squatting in a shelf org is drift.
@@ -1824,7 +1825,7 @@ def shelf_drift(shelves: dict, rows: list) -> list[str]:
             owners_ = owners_by_name.get(n) or set()
             if not owners_:
                 out.append(f"{org}/{n}: declared on the shelf but absent from the census")
-            elif org not in owners_:
+            elif org not in owners_ and target not in owners_:
                 out.append(f"{n}: declared shelf {org}, census owner {'/'.join(sorted(owners_))} — transfer owed")
     for n, owners_ in sorted(owners_by_name.items()):
         for o in sorted(owners_):
@@ -2211,7 +2212,7 @@ def doctor(estate: dict, *, parity_only: bool, offline: bool, strict: bool = Fal
         if not rows:
             skips.append("[P shelf-parity] no census facts (run census online first)")
         else:
-            for d in shelf_drift(shelves_reg, rows):
+            for d in shelf_drift(shelves_reg, rows, (estate.get("personal_consolidation") or {}).get("target") if (estate.get("personal_consolidation") or {}).get("enabled") else None):
                 fails.append(f"[P shelf-parity] {d}")
 
     # D — permission-over-grant (PR B, armed): the personal estate's FULL roll vs ACCESS — the
