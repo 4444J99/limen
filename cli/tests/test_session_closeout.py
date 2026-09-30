@@ -254,3 +254,23 @@ def test_external_receipt_preserves_subject_checkout(case, tmp_path):
     command(root, "commit", "--allow-empty", "-m", "moved subject")
     with pytest.raises(closeout.Unmeasured, match="exact subject head"):
         closeout.evaluate(root, SID, path, audit=audit, binding=binding)
+
+
+def test_failed_completion_gate_can_be_handed_off_but_not_claimed_complete(case):
+    _, receipt, _, _, publish, evaluate = case
+    check = receipt["verification"][0]
+    check.update(exit_code=75, purpose="completion", owner_url=OWNER)
+    publish()
+    result = evaluate()
+    assert result["session_released"]
+    assert not result["task_completed"]
+    receipt["disposition"] = "complete"
+    publish()
+    assert not evaluate()["session_released"]
+
+
+def test_failed_release_predicate_is_not_erased_by_handoff(case):
+    _, receipt, _, _, publish, evaluate = case
+    receipt["verification"][0].update(exit_code=1, purpose="release", owner_url=OWNER)
+    publish()
+    assert not evaluate()["session_released"]

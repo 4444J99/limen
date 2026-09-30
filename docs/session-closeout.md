@@ -49,7 +49,10 @@ Required fields:
   the current editor. A path absent from both sets is unknown, not implicitly a sibling's.
 - `verification`: command receipts with `head`, `exit_code`, committed `evidence` path,
   and that evidence's `sha256`. Include implicated tests, required credential ownership,
-  and other applicable gates. The checker reuses these immutable results and rejects
+  and other applicable gates. A failed task-completion check may carry
+  `purpose: completion` and the same open `owner_url` only for `handoff`; its failure
+  remains recorded and never proves task completion. Release/custody failures still
+  block release. The checker reuses these immutable results and rejects
   subsequent changes to owned implementation. It never reruns a green full suite.
 - `custody`: `verified`, committed redacted `evidence` path and `sha256`. This must cite
   actual custody checks (or verified absence of private/local-only payload). A missing
@@ -85,8 +88,9 @@ installed policy discovery to exact source through Domus #403.
 
 The live keeper audit of all six screenshot sessions found zero retained runs and
 leases, complete retained-state coverage, and no current registration. Request history
-and registration witness remain unmeasured. These observations do not release any
-session by themselves. Preserve the native transcript metadata and recover each
+and broker registration witness remain unmeasured. All six exact native transcript
+metadata identities were independently verified. These observations do not release
+any session by themselves. Preserve the native metadata and recover each
 owner receipt before invoking the explicit checker. No protected checkout was changed.
 
 | Screenshot session | Existing owner | Required reconciliation |
@@ -98,7 +102,7 @@ owner receipt before invoking the explicit checker. No protected checkout was ch
 | Enable GitHub interaction in chats | Domus #403; Limen #2680 / #2764 | Install discovery fix; feature acceptance and private custody remain separate |
 | Resolve Limen workspace drift | #2763 | Bind scoped checks; estate drift is a distinct claim |
 
-Validation of the implementation: 34 focused closeout/watcher regressions pass,
+Validation of the implementation: 36 focused closeout/watcher regressions pass,
 whole Python type checking passes, instruction drift passes, and 52 Domus runtime
 regressions pass. The scoped batch passed 34 of its 36 cheap gates; initial lint
 used Homebrew Ruff 0.16.9 despite distribution metadata 0.15.8. Rechecking lint and
@@ -111,3 +115,17 @@ Next command after owner reconciliation: `bash scripts/verify-scoped.sh --base
 3b888f722656cd162fe0ee87c6bd2cae34d1efae --total-timeout-seconds 600`. Use the actual
 pinned Ruff executable. Runtime adoption from a published implementation branch is
 a candidate installation; only an exact default-branch receipt proves source landing.
+
+Installed adoption: Domus PR #405 merged as `64b4e4ef`; its two managed loader
+surfaces were applied through targeted chezmoi with scripts excluded. The published
+Limen candidate `922f477f6` was installed into a new immutable runtime without
+retiring editable installations. `protocol-root` returned ready twice with identical
+results and policy digest `5e58e02a201795a3739753e8f96107923988a7668166200c7572c247bbe4b390`.
+This proves candidate adoption, not main landing. Heavy CLI/API verification was
+attempted through the normal admission context and denied (`swap-fraction`,
+`disk-throughput`); no peer was stopped or admission rule changed.
+
+OpenCode native discovery passed from home, the Domus checkout and a temporary
+directory with zero model turns. Codex native catalog verification was attempted
+through its required heavy lease and denied by the same host pressure; its discovery
+result remains unmeasured. The deployed entry itself resolves successfully.
