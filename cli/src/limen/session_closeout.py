@@ -124,7 +124,18 @@ def process_observation(root: Path, session_id: str) -> list[int]:
         ancestors.add(cursor)
     # lsof exit 1 can mean an incomplete permission-limited scan; never turn it
     # into an empty successful observation.
-    cwd_rows = run(["lsof", "-nP", "-a", "-d", "cwd", "-F", "pn"]).splitlines()
+    command = ["lsof", "-nP", "-a", "-d", "cwd", "-F", "pn"]
+    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as observer:
+        try:
+            stdout, _ = observer.communicate(timeout=20)
+        except subprocess.TimeoutExpired:
+            observer.kill()  # Only this checker-owned observation child.
+            observer.communicate()
+            raise
+        if observer.returncode:
+            raise subprocess.CalledProcessError(observer.returncode, command)
+        ancestors.add(observer.pid)
+    cwd_rows = stdout.decode("utf-8").splitlines()
     owned = {pid for pid, (_, command) in processes.items() if session_id in command}
     pid = None
     for row in cwd_rows:
