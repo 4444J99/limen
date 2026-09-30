@@ -1,0 +1,34 @@
+S2 — Control and remaining authored-source parity
+
+User request: "git parity 1:1 on all the repos in ~/Workspace and purge/prune local", split into streams for independent external agents on this Mac.
+
+Read /Users/4jp/AGENTS.md and applicable repository instructions before acting. Work only on this approved outcome. Existing owners: https://github.com/4444J99/limen/issues/2739 (program), https://github.com/4444J99/portvs/issues/14 (residency), https://github.com/4444J99/domus-genoma/issues/397 (control consumers). Re-query their live state; do not duplicate issues or close existing atoms.
+
+S0 is the sole recovery writer. S1–S5 perform read-only inspection and return evidence/operation packets to S0. Partition ownership by resolved Git common directory and immutable remote repository identity, not checkout pathname. Do not fetch, stage, commit, stash, switch, prune, delete, or write shared ledgers unless you are S0 executing an admitted operation. Read-only Git inspection should disable optional locks and fsmonitor. Register your actual native identity and obtain any required conduct lease through the existing broker; never fabricate lease identities or edit tasks.yaml. If the broker is unavailable, continue inspection without new lifecycle claims.
+
+Preserve protected PRDS/support repositories, active human sessions, dirty work, private originals, snapshots, and required runtime consumers. Do not kill sessions, force-push, reset, blanket-clean ignored files, expire reflogs, run immediate object pruning, delete remote branches, or relocate clones merely to claim cleanup. No new paid service or unrestricted backlog. Outside-Workspace registrations are outside mutation scope but may protect shared stores.
+
+1:1 custody means exact local object IDs matched to freshly verified remote custody refs, plus recoverability of their object graphs. Cached tracking refs or a local-path remote are insufficient. Retained tracking branches must have zero ahead/behind divergence to claim synchronization. Whole-repository removal additionally needs all refs, detached heads, stashes, reflog-only/unreachable objects, metadata, LFS, submodules, alternates, and non-Git payload accounted for. Private material uses existing encrypted custody and verified restore workflows; never publish private payloads or sensitive inventories to public Git.
+
+The 2026-09-30 census is a checkpoint, not current parity proof: 208 valid checkout paths / 135 common Git stores; 44 dirty paths; five stashes; seven no-remote repositories; 17 unresolved .git markers; 212 registered worktrees including three outside Workspace and one Workspace registration missed by traversal. Structurally identified runtime bare-store count changed to 3,276 during inspection. Revalidate your assigned denominator and represent unknown/unreadable state explicitly. Disk free was ~24.5 GiB; use existing checkouts and configured scratch, respecting admission.
+
+At most four sessions, one recovery writer, and one heavy workload. Inherit the original attempt deadline: 30 minutes per attempt, at most 10 minutes verification, 120 cumulative agent-minutes for this outcome across all streams/restarts. One corrective retry needs changed inputs. Stop and checkpoint at exhaustion; splitting work does not renew the budget.
+
+Return a compact handoff: scope/common-dir identity; observed revision and timestamp; remote repository identity/ref/object evidence; preservation gaps; proposed exact operations; protection/consumer findings; predicate and exit code; evidence destination; disposition and next owner/action. Use existing WorkPacketV1 / RunReceiptV1 contracts where required. S0 consolidates redacted artifacts under this continuation directory and publishes through the owning repository rail. Sensitive raw evidence stays with its existing private owner. Never equate a push, queued merge, candidate manifest, or test with completed retirement.
+
+Closeout loader discovery: /Users/4jp/.agents/skills/closeout/SKILL.md expects /Users/4jp/Workspace/library/engine/organvm/limen/.agents/skills/closeout/SKILL.md, absent at inspection. Its legacy compatibility allowance expired 2026-09-30T00:00:00Z. S0 files the exact discovery defect with Domus. This does not authorize a broad migration or prevent independent eligible cohorts from progressing.
+
+YOUR STREAM
+
+Inspect control repositories and other authored estate assigned by S0. Initial grouping: five control common directories / 29 paths plus 59 other authored common directories / 80 paths. Exclude S1's protected workload cohort and S3's private/runtime ownership.
+
+Enumerate every checkout, local ref, detached HEAD, remote, upstream, status count, stash, and linked dependency in your scope. Query current remote identities and advertisements without fetch. Distinguish exact synchronization, recoverable but unsynchronized state, unique local history, no authorized remote, and unmeasured access. Branch age, closed-unmerged PRs, lack of an open PR, and cached refs are not landing proof.
+
+Prepare additive preservation operations for S0 for unique inactive source. Keep original history and unrelated edits intact. Use existing authorized repository owners; do not create new public repositories or push upstream-owned refs as a shortcut. Secret/privacy scans are required before publication. Route sensitive history to S3's existing encrypted owner.
+
+For clean inactive tracking branches prepare fast-forward-only reconciliation. For divergence preserve exact local tips independently; no force-push/rebase/reset. Whole-copy retirement needs S3 custody plus S4 protection/consumer/landing qualification.
+
+Control-source copies remain retained while Codex/Claude roots, private state, chezmoi source, scheduled jobs, installed/loaded runtime/configuration consumers, or active sessions depend on them. Document exact candidate-specific dependencies for Domus #397. Do not implement broad runtime relocation or host repair.
+
+Return per-store exact revision/live remote evidence, preservation actions, retention reasons, and independently executable predicates. A clean pushed inactive copy may become a retirement candidate, but your evidence alone is not removal authority.
+

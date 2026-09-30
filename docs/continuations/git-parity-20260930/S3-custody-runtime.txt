@@ -1,0 +1,34 @@
+S3 — Private, bare, runtime and exceptional-object custody
+
+User request: "git parity 1:1 on all the repos in ~/Workspace and purge/prune local", split into streams for independent external agents on this Mac.
+
+Read /Users/4jp/AGENTS.md and applicable repository instructions before acting. Work only on this approved outcome. Existing owners: https://github.com/4444J99/limen/issues/2739 (program), https://github.com/4444J99/portvs/issues/14 (residency), https://github.com/4444J99/domus-genoma/issues/397 (control consumers). Re-query their live state; do not duplicate issues or close existing atoms.
+
+S0 is the sole recovery writer. S1–S5 perform read-only inspection and return evidence/operation packets to S0. Partition ownership by resolved Git common directory and immutable remote repository identity, not checkout pathname. Do not fetch, stage, commit, stash, switch, prune, delete, or write shared ledgers unless you are S0 executing an admitted operation. Read-only Git inspection should disable optional locks and fsmonitor. Register your actual native identity and obtain any required conduct lease through the existing broker; never fabricate lease identities or edit tasks.yaml. If the broker is unavailable, continue inspection without new lifecycle claims.
+
+Preserve protected PRDS/support repositories, active human sessions, dirty work, private originals, snapshots, and required runtime consumers. Do not kill sessions, force-push, reset, blanket-clean ignored files, expire reflogs, run immediate object pruning, delete remote branches, or relocate clones merely to claim cleanup. No new paid service or unrestricted backlog. Outside-Workspace registrations are outside mutation scope but may protect shared stores.
+
+1:1 custody means exact local object IDs matched to freshly verified remote custody refs, plus recoverability of their object graphs. Cached tracking refs or a local-path remote are insufficient. Retained tracking branches must have zero ahead/behind divergence to claim synchronization. Whole-repository removal additionally needs all refs, detached heads, stashes, reflog-only/unreachable objects, metadata, LFS, submodules, alternates, and non-Git payload accounted for. Private material uses existing encrypted custody and verified restore workflows; never publish private payloads or sensitive inventories to public Git.
+
+The 2026-09-30 census is a checkpoint, not current parity proof: 208 valid checkout paths / 135 common Git stores; 44 dirty paths; five stashes; seven no-remote repositories; 17 unresolved .git markers; 212 registered worktrees including three outside Workspace and one Workspace registration missed by traversal. Structurally identified runtime bare-store count changed to 3,276 during inspection. Revalidate your assigned denominator and represent unknown/unreadable state explicitly. Disk free was ~24.5 GiB; use existing checkouts and configured scratch, respecting admission.
+
+At most four sessions, one recovery writer, and one heavy workload. Inherit the original attempt deadline: 30 minutes per attempt, at most 10 minutes verification, 120 cumulative agent-minutes for this outcome across all streams/restarts. One corrective retry needs changed inputs. Stop and checkpoint at exhaustion; splitting work does not renew the budget.
+
+Return a compact handoff: scope/common-dir identity; observed revision and timestamp; remote repository identity/ref/object evidence; preservation gaps; proposed exact operations; protection/consumer findings; predicate and exit code; evidence destination; disposition and next owner/action. Use existing WorkPacketV1 / RunReceiptV1 contracts where required. S0 consolidates redacted artifacts under this continuation directory and publishes through the owning repository rail. Sensitive raw evidence stays with its existing private owner. Never equate a push, queued merge, candidate manifest, or test with completed retirement.
+
+Closeout loader discovery: /Users/4jp/.agents/skills/closeout/SKILL.md expects /Users/4jp/Workspace/library/engine/organvm/limen/.agents/skills/closeout/SKILL.md, absent at inspection. Its legacy compatibility allowance expired 2026-09-30T00:00:00Z. S0 files the exact discovery defect with Domus. This does not authorize a broad migration or prevent independent eligible cohorts from progressing.
+
+YOUR STREAM
+
+Inspect only the custody/private and runtime/cache scope assigned by S0. Initial grouping: ten private common Git directories / ten paths and 52 runtime/cache common directories / 54 paths. Additional structurally identified bare-shaped stores comprised 3,260 Codex temporary stores and 16 OpenCode snapshot stores; count changed during inspection. Structural emptiness is not disposal authority.
+
+Validate the purpose, actual Git integrity/objects, owner, activity and recovery role of bare stores without mutating them. Resolve runtime-generated stores through their owning lifecycle. Empty/no-remote/no-ref stores are not automatically disposable. Active runtime creation means the denominator needs a timestamp and explicit moving-state caveat.
+
+For all proposed standalone removals, account for custom refs, all stashes including auxiliary parents/untracked data, reflog-only commits, unreachable/dangling objects, Git metadata, alternates, submodules, LFS objects, ignored/untracked payload and nested repositories. Existing all-local-ref proof enumerates only heads/tags/notes/stash and is insufficient alone. Preserve evidence of repository configuration and recovery intent as required.
+
+Seven marker repositories lacked remotes and one backup remote was local-only. Resolve authorized source/custody owner for each; do not publish private stores to public Git. Use existing encrypted custody, exact hashes/manifests, independent copies and restoration receipts. Prepare operations for S0, one cohort at a time. An archive located only on this disk is not remote or independent custody.
+
+Coordinate object/payload checks with S1/S2 and runtime/scheduled consumer checks with S4. Do not stop, retune, or signal protected applications or sessions. Avoid exposing changed filenames/private paths in shared/public output.
+
+Return a candidate-level custody matrix: exact objects/payload accounted for, live remote or encrypted owner evidence, restore coverage, consumer dependencies, unresolved gaps, and allowed disposition. Unknown/unverified material stays retained. Do not launch unrelated encryption/context/runtime architecture work.
+
