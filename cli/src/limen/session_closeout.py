@@ -254,9 +254,19 @@ def evaluate(
         if not isinstance(check, dict) or not isinstance(check.get("head"), str):
             raise Unmeasured("malformed scoped verification")
         revision = check.get("head", "")
-        if type(check.get("exit_code")) is not int or check["exit_code"] != 0 or not SHA.fullmatch(revision):
+        if type(check.get("exit_code")) is not int or not SHA.fullmatch(revision):
             findings.append("required scoped predicate has no passing exact-head receipt")
             continue
+        if check["exit_code"] != 0:
+            if (
+                disposition == "handoff"
+                and check.get("purpose") == "completion"
+                and check.get("owner_url") == receipt["owner_url"]
+                and current_owner.get("state") == "open"
+            ):
+                notes.append({"owner_url": receipt["owner_url"], "completion_check_exit": check["exit_code"]})
+            else:
+                findings.append("required scoped predicate has no passing exact-head receipt")
         git(root, "merge-base", "--is-ancestor", revision, head)
         evidence_path = safe_path(check.get("evidence"))
         evidence_paths.add(evidence_path)
