@@ -102,55 +102,43 @@ owner receipt before invoking the explicit checker. No protected checkout was ch
 | Enable GitHub interaction in chats | Domus #403; Limen #2680 / #2764 | Install discovery fix; feature acceptance and private custody remain separate |
 | Resolve Limen workspace drift | #2763 | Bind scoped checks; estate drift is a distinct claim |
 
-Validation of the implementation: 36 focused closeout/watcher regressions pass,
-whole Python type checking passes, instruction drift passes, and 52 Domus runtime
-regressions pass. The scoped batch passed 34 of its 36 cheap gates; initial lint
-used Homebrew Ruff 0.16.9 despite distribution metadata 0.15.8. Rechecking lint and
-format with an isolated actual 0.15.8 executable passes. The remaining public-readiness
-gate fails because a formerly public candidate now resolves to a private archived
-repository. This is an observed external evidence mismatch, not a closeout-code pass.
-Do not merge on an aggregate-green claim until that owner repairs the accepted evidence.
+## Implementation acceptance
 
-Next command after owner reconciliation: `bash scripts/verify-scoped.sh --base
-3b888f722656cd162fe0ee87c6bd2cae34d1efae --total-timeout-seconds 600`. Use the actual
-pinned Ruff executable. Runtime adoption from a published implementation branch is
-a candidate installation; only an exact default-branch receipt proves source landing.
+The canonical session checker, adapters, installed protocol bundle and native
+discovery fixes are implemented. Domus PR #405 merged as `64b4e4ef`; targeted
+chezmoi adoption excludes scripts and preserves editable installations. Limen
+PR #2785 owns source landing and adoption of its exact merged default-branch SHA.
 
-Installed adoption: Domus PR #405 merged as `64b4e4ef`; its two managed loader
-surfaces were applied through targeted chezmoi with scripts excluded. The published
-Limen candidate `922f477f6` was installed into a new immutable runtime without
-retiring editable installations. `protocol-root` returned ready twice with identical
-results and policy digest `5e58e02a201795a3739753e8f96107923988a7668166200c7572c247bbe4b390`.
-This proves candidate adoption, not main landing. Heavy CLI/API verification was
-attempted through the normal admission context and denied (`swap-fraction`,
-`disk-throughput`); no peer was stopped or admission rule changed.
+CLI verification accounts for all 8,223 collected cases across bounded shards:
+8,221 passed and two environment-dependent integration cases skipped. Unchanged
+passing cases were retained; changed test files were rerun. The collection digest
+and precise execution history are recorded in the implementation evidence below.
+Five fixture repairs remove startup races, isolate healthy pressure input for the
+shell-helper test, and clean up a lock-test child plus a registration monitor.
+The final 31-case workstream shard passes the unchanged process-cleanup guard.
+No production admission threshold or cleanup guard was weakened.
 
-OpenCode native discovery passed from home, the Domus checkout and a temporary
-directory with zero model turns. Codex native catalog verification was attempted
-through its required heavy lease and denied by the same host pressure; its discovery
-result remains unmeasured. The deployed entry itself resolves successfully.
+The API suite passes 52 tests; 37 focused closeout regressions, whole Python type
+checking, pinned Ruff lint/format and instruction drift also pass. Domus runtime
+tests pass 52 cases. Native Codex and OpenCode discovery each pass from home,
+the Domus checkout and a temporary directory, with zero model turns.
 
-## Resumed implementation: public evidence reconciled
+The operator explicitly authorized a process-local pressure exception for this
+verification. Only swap/disk pressure reasons were eligible; disk pressure was
+waived in the observed runs. The machine-wide heavy lease, verifier lock and
+bounded four-worker execution remained enforced. No peer was stopped, permanent
+policy changed, shared checkout migrated, or successor capsule launched.
 
-Authenticated repository metadata was read for all 54 historical public candidates.
-All observations succeeded; 26 are now explicitly private. The existing public
-observation withdrawal registry now binds those unchanged blocked snapshot rows.
-Only candidate and full-row digests are added; no private repository contents or
-new canonical private coordinates are published. This is the existing custody
-disposition, not a missing-response exemption. The candidate denominator remains 62,
-all readiness scores remain zero, and no transfer becomes eligible.
+Authenticated metadata reconciled all 54 historical public candidates. The existing
+withdrawal registry binds 27 positively restricted rows by digest; 27 remaining
+public immutable heads verified. The candidate denominator remains 62, readiness
+scores remain zero, and no transfer becomes eligible. Private contents and new
+private coordinates were not published. The new-delta scoped batch passed all
+eight gates, including 57+16 readiness regressions and live public verification.
 
-The live public-readiness predicate now passes: 28 immutable public heads verified,
-26 withdrawn and explicitly unverified. All 57 technical-readiness regressions pass,
-including refusal to upgrade a withdrawn historical lifecycle fixture. The earlier
-public-evidence merge blocker is resolved. Heavy verification was attempted again
-on explicit resume through normal admission; it remains denied for swap-fraction
-and disk-throughput. The unchanged heavy/native results remain unmeasured; do not
-merge or call the task complete on this narrower public-evidence result.
-
-During the resumed scoped batch, one additional candidate changed from public to
-private between live observations. Its positive restriction observation was added
-using the same binding, bringing withdrawals to 27. The public result above is a
-point-in-time observation, not a claim that ongoing owner visibility changes stop.
-The batch also found the new top-level protocol document absent from DOCS-MANIFEST;
-its exact-path gate and installed-bundle consumers now justify a sanctioned row.
+Durable predicate and custody evidence:
+`docs/continuations/workspace-recovery-20260916/session-closeout-implementation-20260930.md`.
+Its companion JSON is the exact-session receipt. Terminal use requires verified
+source landing, adoption of that merged runtime, and a passing installed session
+predicate. The six historical checkouts retain the owners above; this implementation
+does not bulk-certify their completion or authorize their deletion.

@@ -21,3 +21,52 @@ Explicit resume: authenticated metadata covered all 54 historical public candida
 Operator-authorized pressure exception: the human explicitly stated `authorize override host admission`. A process-local wrapper filtered only swap-fraction and disk-throughput reasons for the pending verification and native-discovery calls. Live pressure observations were retained, the normal exclusive heavy lease and verifier lock were acquired, two pytest workers ran, and no installed policy, peer, or permanent threshold changed. At execution, disk-throughput was the waived reason.
 
 On published head 3586be046, the CLI gate reached 93 percent then hit its 550-second bound (one failure marker was emitted; no final traceback survived the bounded interruption, and no failure name was persisted). The CLI gate is failed/incomplete, never green. The API gate passed all 52 tests in 2.04 seconds. Codex native discovery then passed from home, Domus checkout and temp, with zero model turns. The ten-minute verification allowance is exhausted; no broad retry was started. The outstanding completion owner is still PR #2785. Next diagnostic command on an explicitly resumed verification attempt: `bash scripts/run-pytest-hermetic.sh cli/tests -q -n 2 -x --tb=short`, under the normal lease and the explicit operator pressure exception if still necessary; fail-fast must preserve the first traceback before any full-suite continuation. No merge was attempted on this failed CLI result.
+
+## Final authorized continuation
+
+The human explicitly resumed with “walk this all the way home.” The preceding
+failed/incomplete records are historical attempts, superseded by the evidence here.
+The fail-fast diagnostic captured startup races in the background-child PID receipt,
+MCP EOF probe, and shell-helper pressure fixture. Repairs preserve the original
+cleanup/protocol/lease assertions: capture the OS child PID directly, allow a finite
+10-second MCP probe, and supply deterministic healthy pressure to the real CLI and
+lease store. Production admission is unchanged.
+
+The next bounded four-worker run passed 6,808 cases before a relay fixture startup
+race. That fixture now acknowledges startup and wrapper exit before starting its
+0.3-second descendant-cleanup deadline. Unchanged passing cases were retained;
+the entire changed relay file and all unexecuted cases ran in a 1,448-case shard:
+1,446 passed, two skipped. Mechanical set reconciliation proves coverage of all
+8,223 collected node IDs, with zero missing IDs and no unresolved failed case.
+Sorted node IDs joined with a final newline have SHA-256
+`53757d069e17fcebeb68f8311b11e7d0b9f0fe818e5eb218b57f29b6d4d1d1d4`.
+The skips are the real remote-sandbox integration and installed Praxis registry
+integration cases; neither is counted as a pass. Reproduction entrypoint remains
+`bash scripts/run-pytest-hermetic.sh cli/tests -q -n 4 --tb=short`; the bounded
+continuation retained passing node IDs and invalidated each changed test file.
+
+The verification runner correctly rejected a live process after otherwise passing
+tests. Instrumented process-group inspection and a one-case reproduction identified
+the lock fixture's orphaned `sleep 30`. The fixture now owns and cleans its process
+group. A full workstream-file run then exposed the registration monitor's expected
+poll tail; the ordering fixture now waits for its terminal receipt and process exit.
+The final complete workstream shard passes all 31 cases and the unchanged runner
+cleanup guard (27.17 seconds). No production guard was relaxed. Aggregate accepted
+CLI coverage is 8,221 passed / two skipped, with passing unchanged shards retained;
+this is not a claim that the earlier failed monolithic invocations exited zero.
+
+Unchanged evidence retained: API 52 passed; Domus runtime 52 passed; Codex and
+OpenCode each discovered the installed entry in all three native locations with
+zero model turns; whole Python typing and prior scoped governance/readiness gates
+passed. Final changed-tree cheap predicates are run before publication. No new
+credential was used; the credential-wall predicate remains part of final release.
+
+Custody update: full CLI tests generated ignored cache, observation/status logs,
+and organ-health build outputs inside this isolated checkout. They contain no
+imported private payload or independent deliverable; their relevant outcomes are
+reduced into this tracked evidence. Protected historical checkouts remain untouched.
+The terminal receipt is evaluated only after PR #2785 is merged and its exact
+default-branch SHA is installed. GitHub's merge receipt and the runtime's immutable
+manifest provide the external landing/adoption proof without a successor worktree.
+
+Final changed-tree cheap batch: all ten selected gates passed (syntax, diff hygiene, instruction drift, parameters, test hygiene, docs manifest, exports, note links, whole-estate pinned Ruff lint and format). Unchanged typed source, API and readiness receipts remain valid.
