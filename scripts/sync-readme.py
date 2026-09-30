@@ -14,6 +14,7 @@ numbers (proven by that repo's own CI), so profile-verify.py can hold the whole 
 from __future__ import annotations
 
 import argparse
+import html
 import importlib.util
 import json
 import os
@@ -93,8 +94,7 @@ def render_readme(
     # Left-aligned, seamless: no centering box, no bordered cards — the type hierarchy and the
     # borderless SVGs carry the eye. Lean set only (redundant Milestones + badge-chip panels dropped).
     L.append(
-        '<img src="./assets/typing-header.svg" alt="I build production systems that solve '
-        'expensive problems." width="760" />'
+        f'<img src="./assets/typing-header.svg" alt="{html.escape(str(fd.get("headline", "Education, systems, and creative practice")), quote=True)}" width="760" />'
     )
     L.append("")
     L.append(f"# {name} &nbsp;·&nbsp; `@4444J99`")

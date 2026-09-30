@@ -22,10 +22,10 @@ import _profile as P  # noqa: E402
 
 
 ASSETS = {
-    "typing-header.svg": lambda f: P.render_typing_header([
-        "I build production systems that solve expensive problems.",
-        "Not demos. Live platforms — tested, deployed, running.",
-    ]),
+    "typing-header.svg": lambda f: P.render_typing_header(
+        json.loads((Path(__file__).resolve().parent.parent / "positioning-seeds.json").read_text())
+        .get("frontdoor", {}).get("header_lines", ["Education, systems, and creative practice"])
+    ),
     "stats-card.svg": P.render_stats_card,
     "languages.svg": P.render_languages,
     "heatmap.svg": P.render_heatmap,
