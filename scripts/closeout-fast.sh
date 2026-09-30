@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ "$#" -gt 0 ]]; then
+  exec python3 "$(dirname "${BASH_SOURCE[0]}")/session-closeout.py" "$@"
+fi
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 AMBIENT_PYTHONPATH="${PYTHONPATH:-}"
 PYTHONPATH_VALUE="$ROOT/cli/src${AMBIENT_PYTHONPATH:+:$AMBIENT_PYTHONPATH}"

@@ -2576,6 +2576,7 @@ def test_conduct_registration_precedes_runway_admission(tmp_path: Path, monkeypa
         "EVENTS_CAPTURE": str(events),
         "REAL_PYTHON": real_python,
         "REGISTER_RC": "42",
+        "LIMEN_CONDUCT_KEEPALIVE_POLL_SECONDS": "1",
     }
 
     rejected = subprocess.run(
@@ -2626,6 +2627,21 @@ def test_conduct_registration_precedes_runway_admission(tmp_path: Path, monkeypa
         "provider",
     ]
     assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is not None
+
+    # Registration starts a monitor that outlives the provider by one poll.
+    # Wait for its terminal receipt and exit rather than leaking it to pytest.
+    status_path = capsule / "conduct-keepalive.json"
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        status = json.loads(status_path.read_text(encoding="utf-8"))
+        if status.get("state") == "stopped":
+            try:
+                os.kill(int(status["keepalive_pid"]), 0)
+            except ProcessLookupError:
+                break
+        time.sleep(0.05)
+    else:
+        pytest.fail("conduct ordering fixture left its keepalive monitor alive")
 
 
 def test_conduct_keepalive_refreshes_without_exposing_credential_to_provider(
@@ -2961,7 +2977,8 @@ def test_capsule_advisory_lock_releases_when_its_shell_owner_is_killed(tmp_path:
             "capsule-lock-owner",
             str(lock_path),
             str(ready_path),
-        ]
+        ],
+        start_new_session=True,
     )
     try:
         deadline = time.monotonic() + 5
@@ -2983,6 +3000,12 @@ def test_capsule_advisory_lock_releases_when_its_shell_owner_is_killed(tmp_path:
         )
         assert probe.returncode == 0
     finally:
+        # Killing the shell deliberately leaves its foreground sleep alive.
+        # Reap this fixture's whole group after checking the lock handoff.
+        try:
+            os.killpg(holder.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
         if holder.poll() is None:
             holder.kill()
             holder.wait(timeout=2)
