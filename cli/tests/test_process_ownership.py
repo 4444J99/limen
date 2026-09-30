@@ -78,6 +78,23 @@ def test_mixed_native_host_census_retains_peers_and_services_but_blocks_jobs(coh
     assert result["process_count"] == 2
 
 
+def test_command_normalization_is_bounded_to_each_census(cohort, monkeypatch):
+    _, _, _, evaluate = cohort
+    calls = []
+    original = ownership.canonical_argv
+
+    def normalize(argv):
+        calls.append(tuple(argv))
+        return original(argv)
+
+    monkeypatch.setattr(ownership, "canonical_argv", normalize)
+    first = evaluate()
+    assert len(calls) == len(set(calls))
+    before = len(calls)
+    assert evaluate() == first
+    assert len(calls) == before * 2  # No cached authority survives a new observation.
+
+
 def test_shared_services_alone_allow_release_without_stopping_them(cohort):
     processes, _, _, evaluate = cohort
     del processes[104], processes[105]
