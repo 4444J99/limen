@@ -20,6 +20,12 @@
 # literals, if ever enumerated, live off-repo and never enter git.
 set -euo pipefail
 
+# Explicit session mode never inspects the implementation root as the subject.
+# No arguments retain the historical estate check for existing beat callers.
+if [[ "$#" -gt 0 ]]; then
+  exec python3 "$(dirname "${BASH_SOURCE[0]}")/session-closeout.py" "$@"
+fi
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 REGISTRY="${LIMEN_HIS_HAND_LEVERS:-$ROOT/his-hand-levers.json}"

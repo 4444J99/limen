@@ -584,9 +584,14 @@ gates:
     paths: ["scripts/session-orient.py", "scripts/hooks/session-orient.sh", "scripts/session-lifecycle-pressure.py", "scripts/hooks/session-lifecycle-pressure.sh", "scripts/done-session-orient.sh", "cli/tests/test_session_orient.py", "cli/src/limen/private_board.py"]
     owner: continuity
     note: "Session orientation + lifecycle-pressure hooks stay wired and PII-clean."
+  session-closeout-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_session_closeout.py cli/tests/test_closeout_session_scope.py -q"
+    paths: ["cli/src/limen/session_closeout.py", "scripts/session-closeout.py", "scripts/no-tasks-on-me.sh", "scripts/closeout-fast.sh", "cli/tests/test_session_closeout.py", "cli/tests/test_closeout_session_scope.py", "docs/continuations/workspace-recovery-20260916/verify-closeout.py", "docs/continuations/workspace-recovery-20260916/launch.sh"]
+    owner: continuity
+    note: "Identity-bound, read-only session release with remote custody and sibling isolation."
   agent-docs:
     command: "python3 scripts/check-agent-docs.py"
-    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "docs/deployment.md", "scripts/check-agent-docs.py", "scripts/check-student-email-grounding.py", "institutio/governance/gates.yaml", "mcp/src/limen_mcp/server.py", ".agents/skills/agy_conductor/SKILL.md", "integrations/copilot/limen-conductor.agent.md", ".claude/skills/closeout/SKILL.md", ".github/copilot-instructions.md"]
+    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "docs/deployment.md", "scripts/check-agent-docs.py", "scripts/check-student-email-grounding.py", "institutio/governance/gates.yaml", "mcp/src/limen_mcp/server.py", ".agents/skills/agy_conductor/SKILL.md", "integrations/copilot/limen-conductor.agent.md", ".claude/skills/closeout/SKILL.md", ".agents/skills/closeout/SKILL.md", "docs/architecture/continuation-capsules.md", "docs/session-closeout.md", ".github/copilot-instructions.md"]
     owner: docs
     note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist. Paths cover ALL the checker's real inputs (2026-08-06: server.py — the VALID_STATUSES source — and both adapters were missing, so editing them never selected this gate under scoped verification). gates.yaml is a path because check S reads its instruction_surfaces block (byte-budget ratchet)."
   github-estate-census-custody-test:
