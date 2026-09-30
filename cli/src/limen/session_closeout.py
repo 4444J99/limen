@@ -109,48 +109,16 @@ def published(root: Path, revision: str, branch: str) -> bool:
     return True
 
 
-def process_observation(root: Path, session_id: str) -> list[int]:
-    """Observe exact checkout cwd and session-tagged processes without signaling."""
-    rows = run(["ps", "-axo", "pid=,ppid=,command="]).splitlines()
-    processes = {}
-    for row in rows:
-        bits = row.strip().split(None, 2)
-        if len(bits) == 3:
-            processes[int(bits[0])] = (int(bits[1]), bits[2])
-    ancestors = {os.getpid()}
-    cursor = os.getpid()
-    while cursor in processes and processes[cursor][0] not in ancestors:
-        cursor = processes[cursor][0]
-        ancestors.add(cursor)
-    # lsof exit 1 can mean an incomplete permission-limited scan; never turn it
-    # into an empty successful observation.
-    command = ["lsof", "-nP", "-a", "-d", "cwd", "-F", "pn"]
-    with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE) as observer:
-        try:
-            stdout, _ = observer.communicate(timeout=20)
-        except subprocess.TimeoutExpired:
-            observer.kill()  # Only this checker-owned observation child.
-            observer.communicate()
-            raise
-        if observer.returncode:
-            raise subprocess.CalledProcessError(observer.returncode, command)
-        ancestors.add(observer.pid)
-    cwd_rows = stdout.decode("utf-8").splitlines()
-    owned = {pid for pid, (_, command) in processes.items() if session_id in command}
-    pid = None
-    for row in cwd_rows:
-        if row.startswith("p"):
-            pid = int(row[1:])
-        elif row.startswith("n") and pid is not None and Path(row[1:]).resolve() == root:
-            owned.add(pid)
-    return sorted(owned - ancestors)
+def process_observation(root: Path, session_id: str, *, evidence: list[dict] | tuple[dict, ...] = ()) -> dict:
+    from limen.process_ownership import observe
+
+    return observe(root, session_id, evidence=evidence)
 
 
 def native_witness(path: Path, session_id: str) -> bool:
-    # Read only the metadata header; no prompt bodies enter the public report.
-    with path.open() as source:
-        first = json.loads(source.readline(64 * 1024))
-    return first.get("type") == "session_meta" and first.get("payload", {}).get("id") == session_id
+    from limen.process_ownership import transcript_witness
+
+    return transcript_witness(path)["thread_id"] == session_id
 
 
 def evaluate(
@@ -162,7 +130,7 @@ def evaluate(
     binding: dict | None,
     native_verified: bool = False,
     read_owner: Callable[[str], dict] = owner_readback,
-    observe_processes: Callable[[Path, str], list[int]] = process_observation,
+    observe_processes: Callable[..., Any] = process_observation,
 ) -> dict:
     root = root.resolve(strict=True)
     head = git(root, "rev-parse", "HEAD")
@@ -295,6 +263,19 @@ def evaluate(
         payload = git(receipt_root, "show", f"{receipt_head}:{custody_path}", raw=True)
         if hashlib.sha256(payload).hexdigest() != custody.get("sha256"):
             findings.append("artifact custody evidence digest mismatch")
+    process_evidence = []
+    if attribution := receipt.get("process_ownership"):
+        if not isinstance(attribution, dict):
+            raise Unmeasured("malformed process ownership evidence")
+        attribution_path = safe_path(attribution.get("evidence"))
+        evidence_paths.add(attribution_path)
+        payload = git(receipt_root, "show", f"{receipt_head}:{attribution_path}", raw=True)
+        if hashlib.sha256(payload).hexdigest() != attribution.get("sha256"):
+            raise Unmeasured("process ownership evidence digest mismatch")
+        packet = json.loads(payload)
+        if packet.get("schema") != "limen.process_ownership.v1" or not isinstance(packet.get("processes"), list):
+            raise Unmeasured("malformed process ownership evidence")
+        process_evidence = packet["processes"]
     base = receipt.get("base_head", "")
     if not isinstance(base, str) or not SHA.fullmatch(base):
         raise Unmeasured("session baseline revision is required")
@@ -309,8 +290,23 @@ def evaluate(
         findings.append("implementation paths cannot be declared read-only")
     if disposition == "complete" and any(row.get("status") not in {"done", "succeeded", "archived"} for row in runs):
         findings.append("failed or handed-off runs do not prove task completion")
-    processes = observe_processes(root, session_id)
-    if processes:
+    observation = (
+        observe_processes(root, session_id, evidence=process_evidence)
+        if process_evidence
+        else observe_processes(root, session_id)
+    )
+    # Legacy observer injection remains supported; unidentified PIDs always block.
+    if isinstance(observation, list):
+        observation = {
+            "complete": True,
+            "process_count": len(observation),
+            "observed_count": len(observation),
+            "counts": {"unknown": len(observation)},
+            "processes": [{"pid": pid, "category": "unknown"} for pid in observation],
+        }
+    if not isinstance(observation, dict) or observation.get("complete") is not True:
+        raise Unmeasured("process ownership observation unavailable or invalid")
+    if observation["process_count"]:
         findings.append("session worktree has surviving or unattributed processes")
     return {
         "schema": SCHEMA,
@@ -325,7 +321,8 @@ def evaluate(
         "successor_required": False,
         "findings": findings,
         "retained_work": notes,
-        "process_count": len(processes),
+        "process_count": observation["process_count"],
+        "process_observation": observation,
         "coverage": audit["coverage"],
     }
 
