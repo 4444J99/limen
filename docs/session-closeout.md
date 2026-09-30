@@ -142,3 +142,26 @@ Its companion JSON is the exact-session receipt. Terminal use requires verified
 source landing, adoption of that merged runtime, and a passing installed session
 predicate. The six historical checkouts retain the owners above; this implementation
 does not bulk-certify their completion or authorize their deletion.
+
+## Process ownership recovery
+
+The process census reports checker, shared_service, foreign_session, owned_survivor,
+unknown and unmeasured instances. Exact native transcript headers distinguish thread
+identity from root-session membership. Native child jobs remain owned by their parent
+session. Shared service authority requires the effective enabled configuration, policy
+owner, exact canonical command, verified host identity and declared individual bootstrap
+relationship. An app-server subtree is never an exemption. Unreadable identity, PID
+reuse, missing native metadata and stale evidence fail closed. Reports omit raw argv
+and environment; only allowlisted native identity keys are retained during observation.
+
+Domus provides `domus-process-ownership observe --worktree PATH --session-id ID`.
+Observation does not write or signal. Explicit `adopt` records private atomic receipts
+for verified existing shared services without restarting them. Native launches retain
+stdio, lifetime descriptors, signals and exit status through the companion. Operational
+receipts are revalidated against current PID start, command, host and configuration;
+they confer no authority by themselves. A committed optional receipt sidecar is
+`process_ownership: {evidence: RELATIVE_PATH, sha256: DIGEST}` with schema
+`limen.process_ownership.v1` and a processes array. Stale claims are unmeasured.
+
+Runtime acceptance remains separate from source publication and scoped release.
+Limen #2763 owns reconciliation; Domus #397 and #403 own deployment and discovery.

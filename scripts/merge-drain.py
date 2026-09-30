@@ -429,6 +429,7 @@ def _merge_policy(repo, num, expected_head):
     try:
         r = subprocess.run(
             [
+                "bash",
                 str(POLICY),
                 str(num),
                 "--repo",
