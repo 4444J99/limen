@@ -210,7 +210,8 @@ def test_stdio_probe_resolves_relative_command_against_declared_cwd(
         "cwd": str(runtime),
     }
 
-    ok, detail = module._probe_stdio(server, timeout=1)
+    # This tests cwd resolution and EOF handling, not a one-second host SLA.
+    ok, detail = module._probe_stdio(server, timeout=10)
 
     assert ok is False
     assert detail == "ProtocolError"

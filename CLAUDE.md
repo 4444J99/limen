@@ -166,15 +166,16 @@ silence a fresh violation.
 
 ## Closeout Definition
 
-A *closeout* means **ZERO open or dangling items introduced by this task/session** — never end one with a "but here's what's still open" caveat for work you created or claimed. Before declaring closeout:
-
-1. **Every owner records its own remaining work** — each repo, component, and ledger carries its residual items in its *own* record; nothing is parked in your head or in a single throwaway list.
-2. **An idempotent fixed point is reached** — re-running the full verification produces **no changes** (see [Definition of Done](#definition-of-done)). If a re-run still mutates state, you are not done.
-3. **All loose work you introduced or touched is committed across every affected repo** — no uncommitted diffs, no stranded branches; `git status` is clean wherever you touched.
-
-If gaps remain, **close them first**, then archive and hand off. A genuinely human-gated item is **filed in its own git-tracked owner** — a lever in `his-hand-levers.json`, or (for any token/secret/login/env atom) the credential organ + Wall #320 — **never recited back to the operator in a closeout, and never appended as a "but also this" tail.** The relay cites the registry and the green predicate; it does **not** enumerate his atoms. He reads owed work in the registry on his own cadence — **a closeout that hands him a list has failed, even when every item is technically homed.** If an atom is *already* filed, that is DONE: do not re-surface it. A registry-declared single-owner fast-lane PR is not left pending: merge its locally verified exact head before closeout. On other rails, a green-but-pending PR is a **homed** item, not a dangling one: its owner is the beat's merge rung (`scripts/merge-drain.py` via `scripts/drain.sh`) — cite that owner and end. Never launch a synchronous waiter or babysit CI from an agent/provider session. When the predicates are green at the fixed point, end with the terminal statement — **"CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items"** — and **stop**: nothing follows it. A closeout that keeps talking past the terminal statement — any caveat tail — has failed. Run `/closeout` to execute this discipline.
-
-Point 1 has a shipped predicate — **`scripts/no-tasks-on-me.sh`** (exit `0` ⟺ nothing hangs on the ephemeral session). It proves every human-gated item lives in the git-tracked registry with a real owner (recall-only memory at `~/.claude/…` is **not** a durable home), that no preserved work is stranded on a local-only `*-staged-*` ref (each must be merged or cited by a lever), and that the registry stays PII-clean (it publishes). Since 2026-08-15 it also reads **working-tree state**, which no arm of it previously did: §11 the session's own worktree is clean and its branch pushed (the live checkout is skipped — `capture.sh` keeps it dirty by design), §12 no orphaned watcher outlives the session, §13 the session left ≥1 durable artifact beyond `logs/` and daemon runtime paths. Estate-wide worktree debt is **reported, never failed** — that is the reaper organ's ledger, and inheriting its backlog would red every closeout for work that is not this session's. Credential/secret atoms live in a **separate** git-tracked home (the credential organ), so the closeout gate is **both** `scripts/no-tasks-on-me.sh` **and** `scripts/credential-wall.py --check` (exit `0` ⟺ every secret in use is homed). Both green ⟺ nothing hangs, and the relay then names the registry, never the atoms. Run them instead of re-auditing ownership by hand each session; a chat audit you have to repeat next session — or a "here's what's still open" list handed to the operator — *is* leaving the discipline hanging on him. The lane-neutral form of this discipline is the closure covenant in `AGENTS.md` → **Full Lifecycle Closure** (check Q); this section is Claude's binding of it.
+Follow `AGENTS.md` → Full Lifecycle Closure and `.agents/skills/closeout/SKILL.md`.
+Session release, task completion, estate health and deletion eligibility are distinct
+claims. Use the session-id/worktree-bound predicate and remotely durable owner receipt;
+unknown ownership and owned unpublished work fail closed. A filed atom is homed, not
+implemented. Reuse unchanged scoped verification; a read-only recheck must mutate nothing.
+A completed session creates no successor capsule. Handoffs retain existing task states.
+Use the established exact-head merge rail, or one `merge-drain` submission where applicable.
+After a successful session predicate, end with:
+CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items
+Nothing follows the terminal statement.
 
 ## Definition of Done
 
@@ -182,7 +183,7 @@ When asked to define "done" or a "goal", deliver an **executable predicate** —
 
 - **Write the predicate first.** Before doing the work, author a `done.sh` (or a test) that checks every concrete completion criterion: tests pass, build green, no dangling items, each owner records its own remaining work. Commit it (durable predicates only — not one-off throwaways; see [Edits Policy](#edits-policy)).
 - **It must be self-verifying, runnable, and idempotent.** Exit `0` ⟺ done.
-- **Do not claim completion — or write any closeout — until it exits 0.** Run it and summarize the output as proof. If it fails, keep iterating until it passes. If a higher-priority harness rule prevents running it, report the blocker rather than claiming verified completion.
+- **Do not claim completion — or write any closeout — until it exits 0.** Run it and summarize the output as proof. If it fails, make a bounded correction after inputs change; otherwise preserve the precise owner and evidence. If a higher-priority harness rule prevents running it, report the blocker rather than claiming verified completion.
 - For whole-system "done" in this repo, the predicate is already shipped: **`scripts/verify-whole.sh`** (lint → compile → contracts → `pytest web/api/tests cli/tests -q` → runtime/worker probes → dashboard build → `git diff --check`; prints `Whole-system verification passed`). A task-level `done.sh` should call it or a scoped subset — `scripts/verify-scoped.sh` is the shipped scoped subset; don't reinvent either.
 
 ## Engage the Real Problem First

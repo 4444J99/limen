@@ -4,7 +4,8 @@
 > (`institutio/governance/gates.yaml` → `instruction_surfaces`, check S). The binding stub in
 > `AGENTS.md` points here; this file is the full doctrine.
 
-Every closeout and every new autonomous initiative must leave or begin from one continuation capsule.
+Completed sessions require a terminal receipt, not a successor capsule. Unfinished sessions
+reuse their existing durable owner. Every new autonomous initiative begins from one continuation capsule.
 For repository-backed work, use the existing worktree launcher (`limen workstream` /
 `scripts/start-worktree-session.sh`) instead of inventing a parallel session framework. If no Git
 repository is a logical owner, use an isolated owner-native workspace or remote receipt and explain
@@ -41,8 +42,10 @@ future model, provider table, task count, completion percentage, or claim that O
 Environment figures may select a lane, deny unsafe work, or trigger a session switch; they must never
 be edited to manufacture green.
 
-The next session finishes only when its live predicates pass and every discovered leaf has one of the
-closure receipts in `AGENTS.md` → Full Lifecycle Closure. If context, value, resource, provider, or
-human gates require a boundary, emit the successor capsule and its launch command before ending. A
-closeout without that command is incomplete; a new autonomous session without a capsule must create
-one before broad execution.
+A session ends when its session-scoped release predicate passes; completing the broader
+workstream additionally requires that workstream's own acceptance. At a resource or context
+boundary, preserve the existing owner receipt and unused/active lease disposition. Creating
+or launching a successor is separately admitted work, never a closeout prerequisite. An
+exhausted attempt cannot renew its allowance through a successor. A new autonomous session
+requires a valid capsule before execution; a retained expired capsule remains historical
+custody, not permission to launch. Follow `docs/session-closeout.md` for release evidence.
