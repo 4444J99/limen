@@ -19,7 +19,10 @@
     "docs/architecture/continuation-capsules.md",
     "docs/continuations/workspace-recovery-20260916/launch.sh",
     "docs/continuations/workspace-recovery-20260916/verify-closeout.py",
+    "docs/positioning/foundry/psp-c11/public-observation-withdrawals.json",
+    "docs/positioning/foundry/psp-c11/test_technical_readiness.py",
     "docs/session-closeout.md",
+    "institutio/governance/docs-manifest.yaml",
     "institutio/governance/gates.yaml",
     "scripts/check-agent-docs.py",
     "scripts/closeout-fast.sh",
@@ -30,24 +33,24 @@
   "retained_work": [],
   "verification": [
     {
-      "head": "2ce12324881314e12965f8de04057ad75ccbfe61",
+      "head": "5bbb6430d205ebb27ba20000a5fd345321dc2e0a",
       "exit_code": 0,
       "purpose": "release",
       "evidence": "docs/continuations/workspace-recovery-20260916/session-closeout-implementation-20260930.md",
-      "sha256": "355d8069ad6580309fd18a1e2048155d75507ce44c5dbb5cc76fc0c479cb9c02"
+      "sha256": "7f03705212d73da63c8292d1b3b2ddff11160568cebcd092d02dfb05fc6fcbc5"
     },
     {
-      "head": "2ce12324881314e12965f8de04057ad75ccbfe61",
+      "head": "5bbb6430d205ebb27ba20000a5fd345321dc2e0a",
       "exit_code": 1,
       "purpose": "completion",
       "owner_url": "https://github.com/4444J99/limen/pull/2785",
       "evidence": "docs/continuations/workspace-recovery-20260916/session-closeout-implementation-20260930.md",
-      "sha256": "355d8069ad6580309fd18a1e2048155d75507ce44c5dbb5cc76fc0c479cb9c02"
+      "sha256": "7f03705212d73da63c8292d1b3b2ddff11160568cebcd092d02dfb05fc6fcbc5"
     }
   ],
   "custody": {
     "verified": true,
     "evidence": "docs/continuations/workspace-recovery-20260916/session-closeout-implementation-20260930.md",
-    "sha256": "355d8069ad6580309fd18a1e2048155d75507ce44c5dbb5cc76fc0c479cb9c02"
+    "sha256": "7f03705212d73da63c8292d1b3b2ddff11160568cebcd092d02dfb05fc6fcbc5"
   }
 }
