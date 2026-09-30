@@ -448,6 +448,33 @@ def main() -> int:
         if "BLOCKED: <atom>" not in skill_text:
             errors.append(".claude/skills/closeout/SKILL.md lacks the BLOCKED-once protocol")
 
+    canonical_closeout = ROOT / ".agents/skills/closeout/SKILL.md"
+    canonical_text = canonical_closeout.read_text(encoding="utf-8")
+    for phrase in (
+        "--session-id",
+        "--worktree",
+        "--receipt",
+        "no successor capsule",
+        "Unknown ownership fails",
+        "Whole-repository verification",
+        terminal,
+    ):
+        if phrase not in canonical_text:
+            errors.append(f"canonical closeout lacks scoped stopping contract: {phrase}")
+    if ".agents/skills/closeout/SKILL.md" not in skill_text or "## Steps" in skill_text:
+        errors.append("Claude closeout must be a pointer to the canonical skill")
+    for forbidden in (
+        "Re-run until",
+        "Commit loose work across all repos",
+        "leave merges/deploys to Anthony",
+        "Closeout Definition",
+    ):
+        if forbidden in canonical_text:
+            errors.append(f"canonical closeout carries obsolete stopping rule: {forbidden}")
+    capsules_text = (ROOT / "docs/architecture/continuation-capsules.md").read_text()
+    if "A closeout without that command is incomplete" in capsules_text:
+        errors.append("capsule doctrine makes a successor an unconditional closeout gate")
+
     standard_text = STANDARD.read_text(encoding="utf-8")
     try:
         if precedence_items(agents_text) != precedence_items(standard_text):

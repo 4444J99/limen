@@ -59,8 +59,10 @@ def test_watcher_with_dead_parent_above_floor_is_orphan(tmp_path):
     assert proc.returncode == 1
     assert "ORPHAN" in proc.stdout and "26294" in proc.stdout
     events = journal_events(tmp_path)
-    assert events and events[-1]["event"] == "orphan-watchers"
-    assert events[-1]["orphans"][0]["pid"] == 26294
+    assert events == []  # --check is observational, including on failure
+    repeated = run(tmp_path, watcher_row(ppid=1, etime="45:00"), "--check")
+    assert repeated.returncode == 1
+    assert journal_events(tmp_path) == []
 
 
 def test_young_orphan_below_age_floor_is_spared(tmp_path):

@@ -332,20 +332,22 @@ local checkout; the branch, PR, plan, task, or blocker remains the durable lifec
 worktree produced no usable code, emit and push the plan/owner task that captures the prompt's intent
 before reaping it.
 
-Closure is a covenant, not one lane's ritual: every lane — native CLI, desktop app, IDE extension,
-dispatched fleet, MCP client — ends a claimed task at an idempotent fixed point with zero dangling
-items, then stops. The shipped predicates are `scripts/no-tasks-on-me.sh` (nothing hangs on the
-ephemeral session) and `scripts/credential-wall.py` `--check` (every secret in use is homed); both
-green is the closure bar for any lane that can run them, and the terminal statement —
-"CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items" — ends the closeout: nothing
-follows it. Option menus, caveat tails, "here's what's still open" lists, and items parked only in
-the transcript are not closure forms; they are the failure this covenant exists to prevent.
+Closure is a covenant across every lane. Use
+`scripts/no-tasks-on-me.sh --session-id ID --worktree PATH --receipt RECEIPT --json`.
+The committed owner receipt binds custody, publication, scoped verification (including
+`scripts/credential-wall.py --check` for secrets used), and retained broker obligations.
+Session release, task completion, estate health and deletion eligibility are distinct.
+Unknown ownership fails closed; estate diagnostics do not substitute for session proof.
+See [session evidence](docs/session-closeout.md). Option menus, caveat tails, and items
+parked only in the transcript are not closure forms. A handoff leaves unfinished tasks open.
+After a passing session predicate at an idempotent fixed point, end with:
+"CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items". Nothing follows it.
 
 ## Continuation Capsules
 
-Every closeout and autonomous initiative leaves or begins from one continuation capsule (worktree +
-finite-runway contract + README + one launch command + remote receipt); reality decides the ending,
-never a predeclared one. Full doctrine: [`docs/architecture/continuation-capsules.md`](docs/architecture/continuation-capsules.md).
+Completed sessions need no successor. Handoffs reuse existing owners. New autonomous
+initiatives require finite capsules; creation/launch is separately admitted and never
+renews exhausted allowance. [Doctrine](docs/architecture/continuation-capsules.md).
 
 ## Bounded Composition
 

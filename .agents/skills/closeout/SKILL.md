@@ -1,21 +1,41 @@
 ---
 name: closeout
-description: Drive a task to a true closeout — ZERO open or dangling items. Verify ground truth read-only across all owners, close every gap so each owner records its own residual work, reach an idempotent fixed point (re-run = no changes), commit all loose work, and produce a relay handoff. Use when asked to close out, finalize, wrap up, archive, or hand off.
+description: Prove session release through scoped evidence; distinguish completed work from durable handoff and estate health.
 ---
 
 # Closeout
 
-A closeout means **ZERO open or dangling items** — no caveats, no "still open" list. Canonical definition: `AGENTS.md` → Closeout Definition.
+Authority: `AGENTS.md` → Full Lifecycle Closure. Zero dangling items means zero
+unowned obligations on this session. A filed task remains unfinished until its own
+acceptance predicate passes. Session release does not authorize checkout retirement.
 
-## Steps
+1. Resolve the exact native session, its worktree, and its existing owner/continuation.
+   Preserve the caller worktree separately from the installed protocol root. Inspect
+   only the accepted scope; never adopt a sibling checkout to obtain a green result.
+2. Finish the authorized work or publish a handoff in its existing owner. Preserve
+   private artifacts through their custody owner. Record exact owned paths and explicit
+   retained-work owners in the existing continuation's `session-closeout.json` using
+   `limen.session_closeout.v1` (see `docs/session-closeout.md`). Unknown ownership fails
+   closed. Commit and publish the receipt and owned artifacts through the normal PR rail.
+3. Reuse passing verification for unchanged implementation. Run implicated scoped gates
+   once per changed tree, including credential-wall evidence for secrets used by the
+   session. Whole-repository verification is required only for a whole-repository claim.
+4. Run `scripts/no-tasks-on-me.sh --session-id ID --worktree PATH --receipt RECEIPT --json`
+   from the resolved protocol root with the authenticated conduct environment. For a
+   legacy unregistered Codex session, also supply its exact `--native-transcript PATH`.
+   This read-only predicate checks publication, ownership, custody, scoped verification,
+   retained broker obligations and surviving processes. Exit 2 is unmeasured, never pass.
+   No-argument `no-tasks-on-me.sh` and `closeout-fast.sh` remain estate diagnostics.
+5. A successful recheck on unchanged owned evidence creates no files, issues, leases,
+   worktrees or provider runs. Do not replay a green full suite. A completed session
+   needs no successor capsule. A handoff reuses its existing durable owner; successor
+   creation requires separately admitted continuation work and never renews a budget.
+6. Honor existing merge/deployment authority. A genuine external gate is stated once
+   as `BLOCKED: <atom>` and homed with its owner, predicate and next command. Do not
+   weaken custody or relabel unknown ownership to pass. Report the scoped result;
+   task completion, session release, estate health and deletion eligibility stay distinct.
 
-1. **Verify ground truth (read-only) across all owners.** Fan out parallel read-only explorers — one per repo / component / ledger — each returning a structured packet `{ found, not_found, confidence }`. Merge into one report and flag conflicts. Never guess a location or timeframe; verify each explicitly.
-2. **Close every gap.** For each open item, either resolve it now or record it in *its own owner's* record (the repo/ledger that owns it) with the cheapest path to resolution. Nothing parked in a throwaway list.
-3. **Reach an idempotent fixed point.** Run the done-predicate (`scripts/verify-whole.sh` or the task's `done.sh`). Re-run until it produces **no changes** and exits 0. If a re-run still mutates state, you are not done — return to step 2.
-4. **Commit loose work across all repos.** `git add <path>` explicitly (**never `-A`**); commit; confirm `git status` is clean everywhere you touched. Push staged branches — but leave merges/deploys to Anthony.
-5. **Produce a continuation capsule.** For repository-backed work, use the canonical worktree launcher to create an isolated next-session worktree. When no repository is the logical owner, use an isolated owner-native workspace or remote receipt instead and record why. In either case, include a thin README prompt index, cohesive intent/runtime/closeout modules, executable completion/switch predicates, one launch command, and a durable owner receipt. The capsule defines how current reality derives the next lane and ending; it never hard-codes a future provider, task count, or verdict.
-6. **Produce a relay handoff.** A concise RELAY/closeout note: what changed, the proof (predicate output), the capsule's one-line launch command, and only the genuinely human-gated remainder — each already recorded in its owner.
-
-## Gate
-
-Do **not** declare closeout until: every owner records its own remaining work, the verification re-runs to a zero-change fixed point, all loose work is committed, and the successor capsule is remotely durable with a tested launch command. Closeout means ZERO open items.
+Only after the session predicate exits 0 may the terminal statement be emitted:
+CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items
+Nothing follows that statement. If the predicate fails, preserve the precise owner
+receipt and report the actual outcome without claiming a successful closeout.
