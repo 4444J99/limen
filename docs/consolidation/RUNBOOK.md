@@ -15,6 +15,25 @@ are evidence, not authority to reverse this direction. **Do not run the legacy
 `scripts/rewrite-owners.py --apply` into `organvm`. Do not edit the broker-owned
 `tasks.yaml` projection.** Reconcile each actual location through its existing owner.
 
+## September 30 implementation amendment
+
+The owner authorized implementation through the authenticated CLI, including privacy and
+cost reduction. `institutio/github/estate.yaml::personal_consolidation` now supersedes
+older build-in-public candidates: private is the default, with stable-ID public exceptions
+for verified finished showcases or required distribution dependencies. Limen retains its
+existing public control-plane distribution. Further exceptions require evidence, not a label.
+
+Visibility changes are a separate preservation-reviewed operation. The reconciler reports
+migration privacy drift and holds changes for #2721 rather than blindly unpublishing Pages,
+detaching public forks, or dropping protections. A history sweep alone no longer promotes
+unfinished work. Logical shelf membership accepts personal custody without ordering a
+reverse transfer into an organization.
+
+The September 30 CLI session authenticated successfully as `4444J99`; the earlier Chat
+connector limitation below does not apply to that owner-authenticated CLI. Raw census,
+billing and integration evidence belong in the existing private estate evidence repository.
+See [the implementation packet](PERSONAL-ESTATE-20260930.md).
+
 ## Boundaries
 
 - Authorization is already given. Preservation evidence and demonstrated tool capability
