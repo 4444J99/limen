@@ -897,43 +897,32 @@ def test_local_dispatch_returns_owner_routed_blocker_when_host_denies(monkeypatc
 
 
 def test_shell_helper_acquires_refreshes_and_releases_exact_lease(tmp_path: Path) -> None:
-    fake_bin = tmp_path / "bin"
-    fake_bin.mkdir()
-    commands = {
-        "iostat": """#!/usr/bin/env bash
-printf 'disk0\\nKB/t xfrs MB/s\\n1 1 0\\n1 1 0\\n1 1 0\\n'
-""",
-        "ps": """#!/usr/bin/env bash
-if [[ "${1:-}" == "-axo" ]]; then exit 0; fi
-exec /bin/ps "$@"
-""",
-        "sysctl": """#!/usr/bin/env bash
-if [[ "$*" == *"vm.swapusage hw.memsize"* ]]; then
-  printf 'total = 0.00M  used = 0.00M  free = 0.00M\\n17179869184\\n'
-  exit 0
-fi
-case "${*: -1}" in
-  vm.swapusage) printf 'total = 0.00M  used = 0.00M  free = 0.00M\\n' ;;
-  hw.memsize) printf '17179869184\\n' ;;
-  kern.memorystatus_vm_pressure_level) printf '1\\n' ;;
-  *) exit 1 ;;
-esac
-""",
-    }
-    for name, body in commands.items():
-        path = fake_bin / name
-        path.write_text(body, encoding="utf-8")
-        path.chmod(0o755)
+    # Exercise the real CLI and lease store with deterministic pressure input.
+    # Sensor parsing has separate tests; this shell lifecycle test must not
+    # depend on one-second sensor subprocess startup under xdist load.
+    fixture_root = tmp_path / "fixture"
+    scripts = fixture_root / "scripts"
+    scripts.mkdir(parents=True)
+    (scripts / "host-work-admission.py").write_text(
+        "import runpy, time\n"
+        f"namespace = runpy.run_path({str(ROOT / 'scripts' / 'host-work-admission.py')!r})\n"
+        'RealController = namespace["AdmissionController"]\n'
+        f"pressure = {healthy_pressure()!r}\n"
+        "def controller(root):\n"
+        '    return RealController(root, pressure_probe=lambda: {**pressure, "observed_epoch": time.time()})\n'
+        'namespace["main"].__globals__["AdmissionController"] = controller\n'
+        'raise SystemExit(namespace["main"]())\n',
+        encoding="utf-8",
+    )
 
     state_root = tmp_path / "state"
     shell = f"""
 set -euo pipefail
-export PATH={fake_bin!s}:$PATH
 export LIMEN_HOST_ADMISSION_ROOT={state_root!s}
 export VITALS_LOAD_WARN_PER_CORE=999
 export VITALS_LOAD_CRIT_PER_CORE=999
 source {ROOT / "scripts" / "lib" / "host-admission.sh"}
-host_admission_acquire fixture {ROOT!s}
+host_admission_acquire fixture {fixture_root!s}
 [[ -n "$HOST_ADMISSION_LEASE_ID" ]]
 host_admission_release
 """

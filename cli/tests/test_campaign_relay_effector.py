@@ -1955,13 +1955,13 @@ def test_registration_timeout_kills_an_exited_wrappers_pipe_holding_descendant(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from limen import bounded_subprocess
+
     wrapper = tmp_path / "register-wrapper"
     child_pid_path = tmp_path / "child.pid"
-    # POSIX sh, not python: the child-pid startup receipt must be written
-    # deterministically before the bounded registration deadline can fire. A
-    # python wrapper pays interpreter startup inside that 0.3s window and loses
-    # the race on loaded machines, so the receipt is never created (#2295).
-    # The descendant keeps the registration pipes open exactly as before.
+    # Synchronize fixture startup before starting the short cleanup deadline.
+    # Even a POSIX shell may not start within 0.3s on a loaded host (#2295).
+    # The exited wrapper's descendant still holds the real registration pipes.
     wrapper.write_text(
         (
             "#!/bin/sh\n"
@@ -1978,6 +1978,19 @@ def test_registration_timeout_kills_an_exited_wrappers_pipe_holding_descendant(
         "RELAY_TEST_CHILD_PID": str(child_pid_path),
     }
     monkeypatch.setattr(relay_process, "_REGISTRATION_TIMEOUT_SECONDS", 0.3)
+    real_popen = bounded_subprocess.subprocess.Popen
+
+    def ready_wrapper(*args, **kwargs):
+        process = real_popen(*args, **kwargs)
+        try:
+            _await_startup_receipt(child_pid_path, timeout=10.0)
+            process.wait(timeout=10.0)
+        except BaseException:
+            bounded_subprocess._terminate_process_group(process)
+            raise
+        return process
+
+    monkeypatch.setattr(bounded_subprocess.subprocess, "Popen", ready_wrapper)
 
     with pytest.raises(CampaignRelayError, match="bounded deadline") as raised:
         _bounded_registration(
