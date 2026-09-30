@@ -102,6 +102,22 @@ class ConsolidationTests(unittest.TestCase):
             with self.subTest(kwargs=kwargs):
                 self.assertIn(hold, mod.build_plan([state(**kwargs)], [])[0]["holds"])
 
+    def test_retired_private_pages_require_bound_owner_intent_and_404_evidence(self):
+        row = mod.build_plan([state(private=True, visibility="private", has_pages=True)], [])[0]
+        record = preflight(row)
+        record["pages_retirement"] = {
+            "intent": "owner-approved-unfinished-preview-retirement",
+            "public_http_status": 404,
+            "evidence_ref": "private://review/retired-preview",
+        }
+        self.assertTrue(mod.pages_retirement_matches(row, record))
+        for field, value in (("public_http_status", 200), ("evidence_ref", ""), ("intent", "live-site-migration")):
+            bad = dict(record, pages_retirement=dict(record["pages_retirement"], **{field: value}))
+            self.assertFalse(mod.pages_retirement_matches(row, bad))
+        self.assertFalse(mod.pages_retirement_matches(row, dict(record, id=999)))
+        public = dict(row, visibility="public")
+        self.assertFalse(mod.pages_retirement_matches(public, dict(record, visibility="public")))
+
     def test_topic_union_preserves_logical_organ_and_concurrent_additions(self):
         before = state()
         current = state(owner=mod.TARGET, topics=["organ-ii", "new-topic"])

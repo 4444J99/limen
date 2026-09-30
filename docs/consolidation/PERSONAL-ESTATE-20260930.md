@@ -62,3 +62,19 @@ packet contains aggregate facts only. No transfer or visibility change is claime
 
 This packet remains open under #2721 until these predicates have live receipts. The isolated
 implementation checkout is retained for continuation; existing dirty work is preserved.
+
+## Unfinished public preview retirement
+
+The owner-approved private-by-default posture intentionally retires unfinished public previews.
+It does not require keeping every prototype website published. Retain full Git history and
+Pages build sources privately. A native-transfer preflight may clear a Pages migration hold
+only for an already-private repository with an ID-bound accepted preservation record, an
+explicit owner-approved unfinished-preview retirement disposition, and a private evidence
+reference proving the former public URL returned HTTP 404. This does not authorize deleting
+Pages configuration, changing DNS, losing active protections, or retiring verified showcases.
+The original `has_pages` configuration flag may remain true after the public preview retires.
+
+Personal plan reconciliation: the authenticated plan UI currently labels Pro as the current
+plan, while a private repository rules API still returns HTTP 403 asking for Pro. A billing
+failure banner is also present. The UI badge does not prove working private-feature entitlement;
+verify capability before applying privacy changes to protected repositories.
