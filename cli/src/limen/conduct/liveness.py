@@ -190,6 +190,11 @@ SESSION_RUNTIMES = ("claude", "codex", "gemini", "opencode")
 NON_INTERACTIVE_SUBCOMMANDS = ("bg-spare", "bg-pty-host", "agents", "app-server")
 
 
+def invocation_subcommand(words: tuple[str, ...] | list[str]) -> str:
+    """Pure argv classifier shared with process ownership; conveys no exemption."""
+    return "" if len(words) < 2 or words[1].startswith("-") else words[1]
+
+
 def _invocation_subcommand(pid: int) -> str:
     """`pid`'s first argv word after the program, when it is a bare subcommand; `""` otherwise.
 
@@ -209,10 +214,7 @@ def _invocation_subcommand(pid: int) -> str:
         ).stdout.strip()
     except (OSError, subprocess.TimeoutExpired):
         return ""  # unreadable argv accuses no one of being a service — the runtime check stands
-    words = out.split()
-    if len(words) < 2:
-        return ""
-    return "" if words[1].startswith("-") else words[1]
+    return invocation_subcommand(out.split())
 
 
 def _is_session(pid: int) -> bool:
