@@ -129,3 +129,28 @@ OpenCode native discovery passed from home, the Domus checkout and a temporary
 directory with zero model turns. Codex native catalog verification was attempted
 through its required heavy lease and denied by the same host pressure; its discovery
 result remains unmeasured. The deployed entry itself resolves successfully.
+
+## Resumed implementation: public evidence reconciled
+
+Authenticated repository metadata was read for all 54 historical public candidates.
+All observations succeeded; 26 are now explicitly private. The existing public
+observation withdrawal registry now binds those unchanged blocked snapshot rows.
+Only candidate and full-row digests are added; no private repository contents or
+new canonical private coordinates are published. This is the existing custody
+disposition, not a missing-response exemption. The candidate denominator remains 62,
+all readiness scores remain zero, and no transfer becomes eligible.
+
+The live public-readiness predicate now passes: 28 immutable public heads verified,
+26 withdrawn and explicitly unverified. All 57 technical-readiness regressions pass,
+including refusal to upgrade a withdrawn historical lifecycle fixture. The earlier
+public-evidence merge blocker is resolved. Heavy verification was attempted again
+on explicit resume through normal admission; it remains denied for swap-fraction
+and disk-throughput. The unchanged heavy/native results remain unmeasured; do not
+merge or call the task complete on this narrower public-evidence result.
+
+During the resumed scoped batch, one additional candidate changed from public to
+private between live observations. Its positive restriction observation was added
+using the same binding, bringing withdrawals to 27. The public result above is a
+point-in-time observation, not a claim that ongoing owner visibility changes stop.
+The batch also found the new top-level protocol document absent from DOCS-MANIFEST;
+its exact-path gate and installed-bundle consumers now justify a sanctioned row.
