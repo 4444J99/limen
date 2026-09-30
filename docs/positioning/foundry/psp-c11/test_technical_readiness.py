@@ -486,14 +486,14 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
 
     def test_withdrawals_preserve_denominator_and_never_verify_private_heads(self) -> None:
         withdrawn = MODULE.public_observation_withdrawals(self.audit)
-        self.assertEqual(len(withdrawn), 1)
+        self.assertEqual(len(withdrawn), 27)
         self.assertEqual(len(self.audit["candidates"]), 62)
         heads = {
             row["repository"]: row["observed_head"]
             for row in self.audit["candidates"]
             if row["visibility"] == "public" and row["repository"] not in withdrawn
         }
-        self.assertEqual(len(heads), 53)
+        self.assertEqual(len(heads), 27)
         self.assertEqual(MODULE.validate_audit(self.audit, self.snapshot, self.contract, live_heads=heads), [])
         repository = next(iter(withdrawn))
         heads[repository] = next(
@@ -1764,7 +1764,14 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             row["blockers"] = []
             row["transfer_eligible"] = False
             changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
-            self.assertEqual([], self.errors(changed))
+            # A historical lifecycle fixture may now be owner-restricted. Its
+            # immutable custody binding must reject even a nontransferable upgrade.
+            expected = (
+                ["public observation withdrawal validation failed closed"]
+                if row["repository"] in MODULE.public_observation_withdrawals(self.audit)
+                else []
+            )
+            self.assertEqual(expected, self.errors(changed))
             self.assertEqual(1, changed["summary"]["status_counts"]["verified_nontransferable_lifecycle"])
             row["transfer_eligible"] = True
             changed["summary"] = MODULE.compute_summary(changed["candidates"], self.snapshot)
