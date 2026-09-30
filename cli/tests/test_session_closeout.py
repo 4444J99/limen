@@ -274,3 +274,18 @@ def test_failed_release_predicate_is_not_erased_by_handoff(case):
     receipt["verification"][0].update(exit_code=1, purpose="release", owner_url=OWNER)
     publish()
     assert not evaluate()["session_released"]
+
+
+def test_process_observer_does_not_count_its_own_lsof_child(tmp_path, monkeypatch):
+    from unittest.mock import MagicMock
+    import os
+
+    monkeypatch.setattr(closeout, "run", lambda command: f"{os.getpid()} 1 checker")
+    child = MagicMock()
+    child.pid = 999999
+    child.returncode = 0
+    child.communicate.return_value = (f"p{child.pid}\nn{tmp_path}\n".encode(), b"")
+    context = MagicMock()
+    context.__enter__.return_value = child
+    monkeypatch.setattr(closeout.subprocess, "Popen", lambda *args, **kwargs: context)
+    assert closeout.process_observation(tmp_path, SID) == []
