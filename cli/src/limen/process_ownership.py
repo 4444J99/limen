@@ -262,6 +262,14 @@ def assess(
 ) -> dict:
     """Classify each exact instance; a shared host never exempts its whole tree."""
     witnesses = witnesses or {}
+    argv_cache: dict[tuple[str, ...], tuple[str, ...]] = {}
+
+    def normalized(argv: tuple[str, ...] | list[str]) -> tuple[str, ...]:
+        key = tuple(argv)
+        if key not in argv_cache:
+            argv_cache[key] = canonical_argv(key)
+        return argv_cache[key]
+
     rows = []
     service_instances: dict[int, str] = {}
     evidence_index = {row["pid"]: row for row in evidence}
@@ -291,7 +299,7 @@ def assess(
             continue
         if not in_scope and not thread and process.pid not in evidence_index:
             # Still classify configured parents needed as bootstrap witnesses.
-            relevant = any(canonical_argv(process.argv) == canonical_argv(c["argv"]) for c in contracts)
+            relevant = any(normalized(process.argv) == normalized(c["argv"]) for c in contracts)
             if not relevant:
                 continue
         category, reason, owner = "unknown", "ownership_unresolved", None
@@ -306,7 +314,7 @@ def assess(
             claim = evidence_index.get(process.pid)
             if claim and (
                 claim.get("process_identity") != process.started
-                or claim.get("argv_sha256") != digest(canonical_argv(process.argv))
+                or claim.get("argv_sha256") != digest(normalized(process.argv))
             ):
                 category, reason = "unmeasured", "process_evidence_stale"
             else:
@@ -323,7 +331,7 @@ def assess(
                 elif category != "unmeasured":
                     matches = []
                     for contract in contracts:
-                        if canonical_argv(process.argv) != canonical_argv(contract["argv"]):
+                        if normalized(process.argv) != normalized(contract["argv"]):
                             continue
                         parent_service = service_instances.get(process.parent)
                         if contract.get("parent_service") and parent_service != contract["parent_service"]:
@@ -344,7 +352,7 @@ def assess(
                                 and ancestor.uid == process.uid
                                 and home_matches
                                 and invocation_subcommand(ancestor.argv) == "app-server"
-                                and canonical_argv(ancestor.argv) == canonical_argv(contract["host_argv"])
+                                and normalized(ancestor.argv) == normalized(contract["host_argv"])
                             ):
                                 if identity(cursor) == ancestor.started:
                                     host = ancestor
@@ -359,7 +367,7 @@ def assess(
                         service_instances[process.pid] = owner
                         service_witness = {
                             "service_id": owner,
-                            "argv_sha256": digest(canonical_argv(process.argv)),
+                            "argv_sha256": digest(normalized(process.argv)),
                             "contract_sha256": contract["contract_sha256"],
                             "host_pid": host.pid,
                             "host_identity": host.started,
