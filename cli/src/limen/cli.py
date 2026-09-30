@@ -41,6 +41,7 @@ from limen.progress import (
 )
 from limen.progress_source_registry import build_source_registry
 from limen.status import print_status
+from limen.repository_retirement_cli import repos_group
 
 # The live owner of a quota-exhausted keeper. NOT a human lever: L-CLOUDFLARE-DO-QUOTA was
 # RETIRED 2026-08-10 because the recurrence proved the defect is ours — unbounded heartbeat
@@ -120,6 +121,7 @@ def main():
 
 main.add_command(conduct_group)
 main.add_command(fanout_group)
+main.add_command(repos_group)
 
 
 @main.command("observe")

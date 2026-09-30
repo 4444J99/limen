@@ -104,7 +104,7 @@ def _canonical_sha256(payload: object) -> str:
     return hashlib.sha256(_canonical_bytes(payload)).hexdigest()
 
 
-def _file_sha256(path: Path) -> str:
+def _file_sha256(path: Path, *, checkpoint=None) -> str:
     digest = hashlib.sha256()
     try:
         before = path.lstat()
@@ -112,6 +112,8 @@ def _file_sha256(path: Path) -> str:
             raise PersonalCustodyError("source-file-not-regular")
         with path.open("rb") as handle:
             while chunk := handle.read(CHUNK_BYTES):
+                if checkpoint is not None:
+                    checkpoint()
                 digest.update(chunk)
         after = path.lstat()
     except OSError as exc:
@@ -170,7 +172,7 @@ def _acl_sha256(path: Path) -> str:
     return hashlib.sha256(b"\n".join(entries)).hexdigest()
 
 
-def _record(path: Path, source: Path) -> ContentRecord:
+def _record(path: Path, source: Path, *, checkpoint=None) -> ContentRecord:
     try:
         info = path.lstat()
     except OSError as exc:
@@ -199,7 +201,7 @@ def _record(path: Path, source: Path) -> ContentRecord:
             mode,
             int(info.st_size),
             physical,
-            _file_sha256(path),
+            _file_sha256(path, checkpoint=checkpoint),
             None,
             xattrs_sha256,
             acl_sha256,
