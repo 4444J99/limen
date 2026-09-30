@@ -179,6 +179,20 @@ def preflight_matches(row, record):
             and all(type(record.get(k)) is type(row[k]) and record[k] == row[k] for k in fields))
 
 
+
+def pages_retirement_matches(row, record):
+    """An owner-approved private preview retirement is distinct from a live site move."""
+    return (
+        preflight_matches(row, record)
+        and row["visibility"] == "private"
+        and isinstance(record.get("pages_retirement"), dict)
+        and record["pages_retirement"].get("intent") == "owner-approved-unfinished-preview-retirement"
+        and record["pages_retirement"].get("public_http_status") == 404
+        and isinstance(record["pages_retirement"].get("evidence_ref"), str)
+        and bool(record["pages_retirement"]["evidence_ref"].strip())
+    )
+
+
 def write_receipt(path, data):
     """Write atomically and privately; failure before an effect stops the effect."""
     path = Path(path)
@@ -320,7 +334,11 @@ def main(argv=None):
         plan = build_plan(source, target)
         receipt.update(inventory_pages_complete=True, plan=plan)
         for row in plan:
-            if args.apply and not preflight_matches(row, preflight.get(row["id"])):
+            record = preflight.get(row["id"])
+            if args.apply and pages_retirement_matches(row, record):
+                row["holds"] = [h for h in row["holds"] if h != "pages-migration-required"]
+                row["publication_disposition"] = "intentional-private-preview-retirement"
+            if args.apply and not preflight_matches(row, record):
                 row["holds"].append("preservation-preflight-required")
         held = sum(bool(r["holds"]) for r in plan)
         owners = {r["owner"] for r in source}
