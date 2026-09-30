@@ -30,24 +30,24 @@
   "retained_work": [],
   "verification": [
     {
-      "head": "3eafefc7b590f048f408b24c507dd8c413c30a3b",
+      "head": "2ce12324881314e12965f8de04057ad75ccbfe61",
       "exit_code": 0,
       "purpose": "release",
       "evidence": "docs/continuations/workspace-recovery-20260916/session-closeout-implementation-20260930.md",
-      "sha256": "d89cb431ecfb5f74960fa781dbd0a925dbec840bd69d8eebd782a7725484181b"
+      "sha256": "355d8069ad6580309fd18a1e2048155d75507ce44c5dbb5cc76fc0c479cb9c02"
     },
     {
-      "head": "3eafefc7b590f048f408b24c507dd8c413c30a3b",
+      "head": "2ce12324881314e12965f8de04057ad75ccbfe61",
       "exit_code": 1,
       "purpose": "completion",
       "owner_url": "https://github.com/4444J99/limen/pull/2785",
       "evidence": "docs/continuations/workspace-recovery-20260916/session-closeout-implementation-20260930.md",
-      "sha256": "d89cb431ecfb5f74960fa781dbd0a925dbec840bd69d8eebd782a7725484181b"
+      "sha256": "355d8069ad6580309fd18a1e2048155d75507ce44c5dbb5cc76fc0c479cb9c02"
     }
   ],
   "custody": {
     "verified": true,
     "evidence": "docs/continuations/workspace-recovery-20260916/session-closeout-implementation-20260930.md",
-    "sha256": "d89cb431ecfb5f74960fa781dbd0a925dbec840bd69d8eebd782a7725484181b"
+    "sha256": "355d8069ad6580309fd18a1e2048155d75507ce44c5dbb5cc76fc0c479cb9c02"
   }
 }
