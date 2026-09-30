@@ -32,6 +32,21 @@
 
 schema_version: 0.1
 
+# September 30 direction supersedes older build-in-public candidacy and physical shelf custody.
+# Holds remain visible drift; the effector requires repository-specific preservation evidence.
+personal_consolidation:
+  enabled: true
+  target: 4444J99
+  sources: [a-organvm, meta-organvm, organvm, organvm-i-theoria, organvm-ii-poiesis, organvm-iii-ergon, organvm-iv-taxis, organvm-v-logos, organvm-vi-koinonia, organvm-vii-kerygma]
+  default_visibility: private
+  public_exceptions:
+    - repository_id: 1255213941
+      coordinates: [4444J99/limen, organvm/limen]
+      why: "Public control-plane distribution dependency; preserve current publication."
+  owner: gitvs
+  note: "#2721: personal-first custody, private by default, verified showcases and required distribution exceptions only. Per-repository preservation review precedes effects."
+
+
 # Limen is the personal supra-organization controller: it governs every organization and cannot
 # be owned by one governed child. Numeric GitHub identity survives transfers; only live routing
 # follows the canonical coordinate. Organizations continue to own their domain products, policies,

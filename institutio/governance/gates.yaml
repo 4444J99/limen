@@ -1098,6 +1098,11 @@ gates:
     note: "OUTBOUND-EFFECTORS registry drift, the fifth VIGILIA-shaped panel's predicate. Class A holds declaration↔disk parity (a `predicate:` naming a file that does not exist would, because the guard fails CLOSED inside its match, deny EVERY matching action the moment the hook is armed — the live 2026-07-31 state of github.comment). Class B holds the single-capture-group bound the registry states in prose: the guard reads group(1) only, so a two-group target pattern silently discards the second half and runs the predicate against a PARTIAL target — checking the ambient repo's #N while the command addresses another repo's #N. Class C is the structural one: a PreToolUse(Bash) hook sees a COMMAND STRING, so it can never see subprocess.run([\"gh\",\"pr\",\"comment\",...]) inside a Python module — which is the form every dangerous outward action in this estate actually takes, unattended, on the beat. 24 such sites are baselined; the surface is now visible and cannot grow. A hand grep found only 17 of them (argv bound to a name, argv through a local sh() wrapper), which is why this is an AST walk and not a pattern."
 
   # ── GitHub estate (GITVS — the GitHub custodian) ────────────────────────────
+  estate-posture-test:
+    command: "python3 -m unittest discover -s tests -p test_estate_posture.py"
+    paths: ["scripts/estate_posture.py", "scripts/gitvs.py", "scripts/apply-visibility.py", "scripts/check-audience.py", "tests/test_estate_posture.py", "institutio/github/estate.yaml"]
+    owner: gitvs
+    note: "Personal migration privacy precedence, stable-identity public exceptions, held visibility effects, audience derivation, and logical shelf preservation."
   gitvs-parity:
     command: "python3 scripts/gitvs.py doctor --offline --parity-only"
     paths: ["scripts/gitvs.py", "institutio/github/estate.yaml", "institutio/github/access.yaml", "scripts/setup-rulesets.py", "scripts/reap-branches.py", "scripts/sync-marketplace-config.py"]
