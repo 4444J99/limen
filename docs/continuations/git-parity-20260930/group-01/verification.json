@@ -1,0 +1,17 @@
+{
+  "head": "dbf2fc88ae8fa175498d72f8f61203875e826105",
+  "scoped_verification": {
+    "command": "isolated pinned Python environment: bash scripts/verify-scoped.sh --base a64f3af1460e2c1040418d1eec2a75e36ee1d814 --total-timeout-seconds 300 --gate-timeout-seconds 120 --gate-output-bytes 32768 --jobs 2",
+    "exit_code": 75,
+    "cheap_wave": "PASS",
+    "heavy_wave": "admission denied: swap-fraction,disk-throughput",
+    "log_sha256": "942cca75979554d2ce3befb93ac0d40877a24733b97fe40c1279bde24acaf568"
+  },
+  "credential_wall": {
+    "command": "python3 scripts/credential-wall.py --check",
+    "exit_code": 0,
+    "registered_atoms": 31
+  },
+  "owner_receipt": "https://github.com/4444J99/limen/issues/2741#issuecomment-5940986189",
+  "pr": "https://github.com/4444J99/limen/pull/2801"
+}

@@ -1,0 +1,47 @@
+{
+  "repository_id": 1332536900,
+  "commit": "8e80ff7accce764650c962800b3eb324a38e48c2",
+  "remote_readback": true,
+  "escrow_only_decryption": true,
+  "snapshots": [
+    {
+      "sha256": "072f1a68aa999b9e4dd8c0bf8f0a2f34dbfeba695a3ab9629f70ad16eeb90fab",
+      "records": 4529,
+      "inventory": [
+        "inventory-ddd41e7c38578c26.json"
+      ],
+      "restore_verified": true
+    },
+    {
+      "sha256": "abbf172fba1a8361c7b94dbe8f56c17fe1daba21aa151a101bbbfb4b6671f045",
+      "records": 521,
+      "inventory": [
+        "inventory-cb783640bbbf746d.json"
+      ],
+      "restore_verified": true
+    },
+    {
+      "sha256": "8a191b00116e024e2e4b96997b004fe78bfec0cc6a02651a5cf691736092308b",
+      "records": 903,
+      "inventory": [
+        "inventory-f503c4af2085455f.json"
+      ],
+      "restore_verified": true
+    },
+    {
+      "sha256": "ea4a3557c44db3ad76d5e605a8fda06de4df96b3f9ecb11ad28bb9f93716c71b",
+      "records": 905,
+      "inventory": [
+        "refresh/inventory-f503c4af2085455f.json"
+      ],
+      "restore_verified": true
+    }
+  ],
+  "native_metadata_verified": false,
+  "current_source_freshness": "not-certified",
+  "retirement_accepted": false,
+  "scope": "captured snapshot recovery; original-root retirement and session-private-artifact custody are not accepted",
+  "retained_original_roots": 41,
+  "retired_original_roots": 0,
+  "private_artifacts_retained_owner": "https://github.com/4444J99/limen/issues/2742"
+}
