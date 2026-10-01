@@ -51,6 +51,22 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             for row in self.snapshot["candidates"]
             if row["visibility"] == "public" and row["preflight_disposition"] == "experiment"
         )
+        # Positive synthetic readiness scenarios are independent of live owner
+        # visibility changes. Keep the real manifest for withdrawal controls.
+        load_json = MODULE.load_json
+        candidate_digest = MODULE._sha256_text(candidate_id)
+
+        def scenario_json(path: Path) -> dict:
+            value = load_json(path)
+            if path == MODULE.PUBLIC_OBSERVATION_WITHDRAWALS:
+                value["withdrawals"] = [
+                    row for row in value["withdrawals"] if row["candidate_id_sha256"] != candidate_digest
+                ]
+            return value
+
+        patch = mock.patch.object(MODULE, "load_json", side_effect=scenario_json)
+        patch.start()
+        self.addCleanup(patch.stop)
         return self.public_row(audit, candidate_id)
 
     def private_row(self, audit: dict | None = None) -> dict:
@@ -486,14 +502,14 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
 
     def test_withdrawals_preserve_denominator_and_never_verify_private_heads(self) -> None:
         withdrawn = MODULE.public_observation_withdrawals(self.audit)
-        self.assertEqual(len(withdrawn), 27)
+        self.assertEqual(len(withdrawn), 41)
         self.assertEqual(len(self.audit["candidates"]), 62)
         heads = {
             row["repository"]: row["observed_head"]
             for row in self.audit["candidates"]
             if row["visibility"] == "public" and row["repository"] not in withdrawn
         }
-        self.assertEqual(len(heads), 27)
+        self.assertEqual(len(heads), 13)
         self.assertEqual(MODULE.validate_audit(self.audit, self.snapshot, self.contract, live_heads=heads), [])
         repository = next(iter(withdrawn))
         heads[repository] = next(
