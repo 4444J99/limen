@@ -1,0 +1,81 @@
+{
+  "schema": "group02.retirement-execution.v1",
+  "custody_release_id": 401287970,
+  "custody_receipt_ref": "b97e9eabd50881fbe2ad1dd47a2d65fbb4309be3",
+  "retired_ids": [
+    "G02-03"
+  ],
+  "retired_logical_bytes": 2051460,
+  "retired_allocated_kib": 2844,
+  "ignored_payload_purges": [
+    {
+      "id": "2eb5d7a0e0331c947ad9585dd8b73e30b0ee7433e016b51be9bd348cf8a75b52",
+      "sha256": "cc760d4ec2ee60627905f7a2c40a6ec65cbe2fbf39648b5aff73923b402165a0",
+      "state": "completed",
+      "purged": true
+    },
+    {
+      "id": "7e8b7f4dbf0b86f125cccd82359270db5aec8bee219483c75a617789e5f056a2",
+      "sha256": "6e5ff78044af10ed50c0976dfcc248444181ae0c7e1e75185f8a92eb3df08b8e",
+      "state": "completed",
+      "purged": true
+    },
+    {
+      "id": "110599a447a3587b5c68eb7717baf2c98e526fdeba23cc74ffc9097a34851a44",
+      "sha256": "62832027ca3dd5b555f6b9aaeb18956bc8aaf041073098ba9d7c62cde55d0272",
+      "state": "completed",
+      "purged": true
+    },
+    {
+      "id": "a83af9e2b99d58cf5c382d2673687112e8ddb0fe57948c58651388119bc3fefc",
+      "sha256": "68b289ff189ed3e852e3941bc2e55908e3e5c3d90dbb50dca656414f3f157d92",
+      "state": "completed",
+      "purged": true
+    },
+    {
+      "id": "f0220e287ed5193ba64e54c33a85c1cd3e3243908bb35d0ad734438c91ef1503",
+      "sha256": "09eac5e29a4263ba4d161b76c02006c80c32e4c8fd3d9d4ef50645e69ae4b413",
+      "state": "completed",
+      "purged": true
+    },
+    {
+      "id": "78ebcd3463076db7b35c56135c4e7e18ce70b99f1203a600b4ba2b0342a453a8",
+      "sha256": "04c5f577261b3f9c199662eeb4b031668d05434a5b6d12f27819777f1846e5e3",
+      "state": "completed",
+      "purged": true
+    },
+    {
+      "id": "1c404df5219abc9004b4ca54386bb40b959994238d020162bf698a63a1d4123a",
+      "sha256": "be9d60b579a7413441435ed0c247eb98482e89672a032c3f8a31eba1cc3caa0b",
+      "state": "completed",
+      "purged": true
+    }
+  ],
+  "retained_ids": [
+    "G02-01",
+    "G02-02",
+    "G02-04",
+    "G02-05",
+    "G02-06",
+    "G02-07",
+    "G02-08",
+    "G02-09",
+    "G02-10",
+    "G02-11"
+  ],
+  "native_cutover": {
+    "status": "retained-protected-consumers",
+    "open_database_count": 6,
+    "consumer_count": 4
+  },
+  "worktree_reclaim": {
+    "candidate_count": 0,
+    "idle_held_count": 4,
+    "dirty_held_count": 1
+  },
+  "verification": {
+    "focused_tests": 4,
+    "scoped_gates": 8,
+    "ruff": "passed"
+  }
+}
