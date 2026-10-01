@@ -33,6 +33,90 @@ def repos_group():
     """Synchronize, preserve, and retire an exact admitted repository batch."""
 
 
+@repos_group.command("custody")
+@click.option("--allowlist", type=click.Path(path_type=Path, exists=True, dir_okay=False))
+@click.option("--apply", is_flag=True, help="Preserve exact listed roots; never remove sources.")
+@click.option("--verify", type=click.Path(path_type=Path, exists=True, dir_okay=False))
+@click.option("--candidate", multiple=True, help="Opaque candidate IDs within the unchanged allowlist.")
+@click.option("--max-seconds", type=click.IntRange(1, 900), default=600)
+def custody(allowlist, apply, verify, candidate, max_seconds):
+    """Encrypted archives and two-device restoration for an exact source allowlist."""
+    from limen.agent_state.crypto import CryptoError
+    from limen.host_admission import AdmissionDenied, hold_lease
+    from limen.repository_archive_custody import ArchiveCustody, default_config
+    from limen.repository_archive_custody import allowlist as read_allowlist
+    from limen.repository_retirement import atomic_json, digest
+
+    if bool(allowlist) == bool(verify) or (verify and (apply or candidate)):
+        raise click.UsageError("Use --allowlist [--apply] or --verify RECEIPT.")
+    data = state_root().parent / "repository-archives"
+    runtime = Runtime(time.time() + max_seconds)
+    engine = ArchiveCustody(runtime, data / "scratch")
+    try:
+        config = default_config(Path(__file__).resolve().parents[3])
+        if verify:
+            with (
+                hold_lease(
+                    "heavy",
+                    owner=os.environ.get("CODEX_THREAD_ID", f"archive-{os.getpid()}"),
+                    surface="repository-archive-verify",
+                ),
+                runtime.verification(),
+            ):
+                result = engine.verify(json.loads(verify.read_text()), config)
+        else:
+            binding, entries = read_allowlist(allowlist)
+            if candidate:
+                selected = set(candidate)
+                if not selected.issubset({digest(e["path"])[:16] for e in entries}):
+                    raise click.UsageError("Candidate is outside the exact allowlist.")
+                entries = [e for e in entries if digest(e["path"])[:16] in selected]
+            if not apply:
+                result = {
+                    "preview": True,
+                    "allowlist_sha256": binding,
+                    "candidates": engine.preview(entries),
+                    "retirement_authorized": False,
+                }
+            else:
+                rows = []
+                with hold_lease(
+                    "heavy",
+                    owner=os.environ.get("CODEX_THREAD_ID", f"archive-{os.getpid()}"),
+                    surface="repository-archive-capture",
+                ):
+                    for entry in entries:
+                        try:
+                            row = engine.capture(entry, binding, config, data / binding)
+                        except (RetirementError, OSError, ValueError, CryptoError) as exc:
+                            row = {
+                                "candidate": digest(entry["path"])[:16],
+                                "status": "retained",
+                                "reason": str(exc)
+                                if isinstance(exc, RetirementError)
+                                else "archive-capture-unavailable",
+                            }
+                        rows.append(row)
+                        atomic_json(data / binding / "progress.json", {"candidates": rows})
+                result = {"allowlist_sha256": binding, "candidates": rows, "retirement_authorized": False}
+        click.echo(json.dumps(result, sort_keys=True))
+        if any(row.get("status") == "retained" for row in result.get("candidates", [])):
+            raise click.exceptions.Exit(1)
+    except (RetirementError, OSError, ValueError, CryptoError, AdmissionDenied) as exc:
+        if isinstance(exc, AdmissionDenied):
+            raise click.ClickException(
+                "archive-host-admission-denied: " + ", ".join(exc.decision.get("reasons", []))
+            ) from exc
+        raise click.ClickException(
+            str(exc) if isinstance(exc, RetirementError) else "archive-prerequisite-unavailable"
+        ) from exc
+    finally:
+        if (apply or verify) and engine.diagnostics:
+            # Internal FileVault storage, mode 0600. Never print raw private diagnostics.
+            engine.scratch_ready()
+            atomic_json(data / "diagnostics.json", {"failures": engine.diagnostics})
+
+
 def _campaign(batch: Path | None, resume: str | None) -> Campaign:
     if bool(batch) == bool(resume):
         raise click.UsageError("Specify exactly one of --batch or --resume.")

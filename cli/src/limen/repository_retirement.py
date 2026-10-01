@@ -118,10 +118,19 @@ class Runtime:
             raise RetirementError("deadline-exhausted")
         return remaining
 
-    def run(self, argv: list[str], *, data: str | None = None, timeout: float | None = None):
+    def run(
+        self,
+        argv: list[str],
+        *,
+        data: str | None = None,
+        timeout: float | None = None,
+        environment: dict[str, str] | None = None,
+    ):
         allowed = min(self.check(), timeout or self.command_seconds)
         env = {key: value for key, value in os.environ.items() if not key.startswith("GIT_")}
         env.update(GIT_OPTIONAL_LOCKS="0", GIT_TERMINAL_PROMPT="0", GIT_NO_LAZY_FETCH="1")
+        if environment:
+            env.update(environment)
         started = time.monotonic()
         operation = Path(argv[0]).name
         try:
@@ -179,6 +188,8 @@ def load_manifest(path: Path) -> dict[str, Any]:
     if value.get("schema") != SCHEMA or not IDENTIFIER.fullmatch(value.get("campaign_id", "")):
         raise RetirementError("invalid-batch-manifest")
     timestamp(value["deadline"])
+    if value.get("custody", {}).get("mode", "encrypted-volume") not in {"encrypted-volume", "arca-envelope"}:
+        raise RetirementError("unsupported-custody-mode")
     repositories = value.get("repositories")
     if not isinstance(repositories, list) or not repositories or len(repositories) > 500:
         raise RetirementError("batch-must-list-exact-repositories")
@@ -607,7 +618,14 @@ class Runner:
         self.campaign = campaign
         self.runtime = runtime or Runtime(timestamp(campaign.manifest["deadline"]))
         self.keeper = keeper
-        self.custody = custody or PairCustody(campaign.manifest["custody"], self.runtime)
+        if custody is not None:
+            self.custody = custody
+        elif campaign.manifest["custody"].get("mode") == "arca-envelope":
+            from limen.repository_archive_custody import EnvelopePairCustody
+
+            self.custody = EnvelopePairCustody(campaign.manifest["custody"], self.runtime)
+        else:
+            self.custody = PairCustody(campaign.manifest["custody"], self.runtime)
         self.remote_identity = remote_identity
         self.owner_probe = owner_probe or (lambda p: process_owner(self.runtime, p))
         self.heavy = heavy or (
@@ -660,6 +678,11 @@ class Runner:
         )
 
     def _verify_current(self, entry: dict, row: dict, *, review: bool = False) -> dict:
+        if self.campaign.manifest["custody"].get("mode") == "arca-envelope":
+            # A local Keychain decryption test proves payload restoration, not
+            # recovery of the key after loss of this host. No envelope proof
+            # can enter acceptance/removal until that independent gate exists.
+            raise RetirementError("archive-independent-key-recovery-proof-required")
         observed = self._read(entry)
         self.safe(observed, entry, review=review)
         if observed != row["observed"]:

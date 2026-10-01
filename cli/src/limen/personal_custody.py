@@ -8,6 +8,7 @@ and exact plan/content digests but no source or child paths.
 from __future__ import annotations
 
 import argparse
+import ctypes
 import hashlib
 import json
 import os
@@ -130,6 +131,42 @@ def _xattrs_sha256(path: Path) -> str:
     try:
         listxattr = getattr(os, "listxattr", None)
         getxattr = getattr(os, "getxattr", None)
+        if (listxattr is None or getxattr is None) and sys.platform == "darwin":
+            # CPython macOS builds need not expose os.*xattr. Use the native
+            # no-follow APIs; unavailable metadata must never become an empty set.
+            libc = ctypes.CDLL("/usr/lib/libSystem.B.dylib", use_errno=True)
+            listing = libc.listxattr
+            listing.argtypes = [ctypes.c_char_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int]
+            listing.restype = ctypes.c_ssize_t
+            getting = libc.getxattr
+            getting.argtypes = [
+                ctypes.c_char_p,
+                ctypes.c_char_p,
+                ctypes.c_void_p,
+                ctypes.c_size_t,
+                ctypes.c_uint32,
+                ctypes.c_int,
+            ]
+            getting.restype = ctypes.c_ssize_t
+            encoded = os.fsencode(path)
+            size = listing(encoded, None, 0, 1)
+            if size < 0:
+                raise OSError(ctypes.get_errno(), "native listxattr failed")
+            buffer = ctypes.create_string_buffer(size)
+            count = listing(encoded, buffer, size, 1)
+            if count < 0:
+                raise OSError(ctypes.get_errno(), "native listxattr changed")
+            payload = []
+            for name in sorted(filter(None, buffer.raw[:count].split(b"\0"))):
+                length = getting(encoded, name, None, 0, 0, 1)
+                if length < 0:
+                    raise OSError(ctypes.get_errno(), "native getxattr failed")
+                value = ctypes.create_string_buffer(length)
+                actual = getting(encoded, name, value, length, 0, 1)
+                if actual != length:
+                    raise OSError(ctypes.get_errno(), "native getxattr changed")
+                payload.append((os.fsdecode(name), hashlib.sha256(value.raw[:actual]).hexdigest()))
+            return _canonical_sha256(payload)
         if listxattr is None or getxattr is None:
             raise AttributeError("xattr functions unavailable")
         names = sorted(listxattr(path, follow_symlinks=False))
