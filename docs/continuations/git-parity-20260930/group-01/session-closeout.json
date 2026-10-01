@@ -16,7 +16,14 @@
     "docs/runbooks/repository-retirement.md",
     "scripts/check-ruff-pin.py"
   ],
-  "retained_work": [],
+  "retained_work": [
+    {
+      "paths": [
+        "docs/continuations/git-parity-20260930/group-01/custody.json"
+      ],
+      "owner_url": "https://github.com/4444J99/limen/issues/2742"
+    }
+  ],
   "verification": [
     {
       "head": "dbf2fc88ae8fa175498d72f8f61203875e826105",
