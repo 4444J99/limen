@@ -659,7 +659,7 @@ def test_metabolize_host_pressure_probe_is_read_only():
     start = sensors.index("  host-pressure-stale:")
     end = sensors.index("\n  runtime-lag:", start)
     assert "source: [metabolize]" in sensors[start:end]
-    assert "host-pressure-stale.py --read-only" in sensors[start:end]
+    assert "host-pressure-stale.py --read-only --on-demand" in sensors[start:end]
 
 
 def test_overlapping_samples_cannot_replace_a_newer_timestamp(tmp_path, monkeypatch):
