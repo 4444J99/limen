@@ -1,0 +1,72 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "01a0f92c-a888-7871-b070-a4db564df9b1",
+  "repository": "4444J99/limen",
+  "worktree_name": "group05-archive-custody-20261001",
+  "base_head": "a64f3af1460e2c1040418d1eec2a75e36ee1d814",
+  "publication_branch": "fix/group05-archive-custody-20261001",
+  "owner_url": "https://github.com/4444J99/limen/issues/2742",
+  "source_owner_url": "https://github.com/4444J99/limen/pull/2802",
+  "disposition": "handoff",
+  "owned_paths": [
+    "cli/src/limen/personal_custody.py",
+    "cli/src/limen/repository_archive_custody.py",
+    "cli/src/limen/repository_retirement.py",
+    "cli/src/limen/repository_retirement_cli.py",
+    "cli/tests/test_repository_archive_custody.py",
+    "docs/runbooks/repository-archive-custody.md",
+    "institutio/governance/outbound-effectors.yaml"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "head": "ebf2b3d9b8c58dfc0205b89768ed768c368f0134",
+      "exit_code": 0,
+      "command": "Recorded passing exact-head archive, lint and type checks",
+      "evidence": "docs/continuations/workspace-recovery-20260916/group05-20261001/passing-checks.json",
+      "sha256": "a7d973eed09e54f3176a2fe085b9a7b18882a423b62daa2be9d284b888fee074"
+    },
+    {
+      "head": "ebf2b3d9b8c58dfc0205b89768ed768c368f0134",
+      "exit_code": 0,
+      "command": "credential-wall.py --check",
+      "evidence": "docs/continuations/workspace-recovery-20260916/group05-20261001/credential-wall.json",
+      "sha256": "68e9db928c557887b3259d8934c93f7c519d707288245902eae346e907f4b516"
+    },
+    {
+      "head": "ebf2b3d9b8c58dfc0205b89768ed768c368f0134",
+      "exit_code": 1,
+      "purpose": "completion",
+      "owner_url": "https://github.com/4444J99/limen/issues/2742",
+      "command": [
+        "bash",
+        "scripts/verify-scoped.sh",
+        "--base",
+        "a64f3af1460e2c1040418d1eec2a75e36ee1d814",
+        "--require-base",
+        "--total-timeout-seconds",
+        "90",
+        "--gate-timeout-seconds",
+        "60",
+        "--gate-output-bytes",
+        "8192",
+        "--jobs",
+        "1"
+      ],
+      "evidence": "docs/continuations/workspace-recovery-20260916/group05-20261001/scoped-verification.json",
+      "sha256": "b28cfb7f713478ee3e349679fb1a34d50c49702ad7539e8895c60b275dba2f04"
+    }
+  ],
+  "custody": {
+    "verified": false,
+    "evidence": "docs/continuations/workspace-recovery-20260916/group05-20261001/custody-status.json",
+    "sha256": "31368cbcd37f5b265d07516cc002a605edc15937883d3f58ba54572d7658429c"
+  },
+  "checkout_disposition": "retained; no retirement authorized without custody and process/session release proof",
+  "completion_status": "Group 05 remains unfinished; source/tests/PR are not live recovery proof",
+  "resume": {
+    "requires": "New admitted continuation under the existing owner; no automatic provider launch or budget renewal",
+    "next_command": "limen repos custody --allowlist <unchanged exact Group 05 allowlist> --candidate da597b1442d0125e --apply --max-seconds 120",
+    "predicate": "Successful live restoration from both registered independent devices, independent key recovery, complete source parity/custody, missing-store recovery and independent acceptance before any eligible removal"
+  }
+}
