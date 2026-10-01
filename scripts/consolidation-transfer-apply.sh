@@ -1,27 +1,12 @@
 #!/usr/bin/env bash
-# Consolidation transfer — run ONLY after renames are complete and dry-run shows collisions = 0
-# Generated from docs/consolidation/RUNBOOK.md gate 4 (verified 2026-07-02)
-#
-# This transfers all remaining source repos to organvm and applies source-owner topics.
-# Prerequisite: consolidation-renames-apply.sh completed successfully + dry-run verified collisions = 0
-
+# Owner-authorized personal consolidation; preservation evidence is required.
 set -euo pipefail
-
-if [ "${LIMEN_CONSOLIDATION_GATE:-}" != "consolidation-gate-open" ]; then
-  cat >&2 <<EOF
-Refusing to run irreversible GitHub consolidation transfer.
-Open the human consolidation gate first, then run:
-  LIMEN_CONSOLIDATION_GATE=consolidation-gate-open bash $0
-EOF
+if [[ "$#" -lt 2 ]]; then
+  echo "Usage: $0 PRIVATE_PREFLIGHT PRIVATE_RECEIPT [--allow-partial] [--resume]" >&2
   exit 2
 fi
-
-echo "⚠ GitHub mutation gate: transfers are IRREVERSIBLE. Verify you have admin:org + workflow."
-echo ""
-echo "Running consolidation transfer (--apply)..."
-cd /Users/4jp/Workspace/limen
-PYTHONPATH=cli/src python3 scripts/consolidate-github.py --apply
-
-echo ""
-echo "✓ Transfer complete. 34 repos have been moved to organvm with source-owner topics."
-echo "  Next: run consolidation-owner-rewrite-apply.sh to update local remotes + tasks.yaml refs."
+preflight="$1"
+receipt="$2"
+shift 2
+here="$(cd "$(dirname "$0")" && pwd)"
+exec python3 "$here/consolidate-github.py" --apply --preflight "$preflight" --receipt "$receipt" "$@"

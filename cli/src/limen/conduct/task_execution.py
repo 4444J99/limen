@@ -380,11 +380,23 @@ def start_task_execution(
     if isinstance(keeper, LocalConductClient):
         attempts = launch_ready_nodes(root_run_id, client=keeper, adapters_by_session=selected)
         wakes: list[dict[str, str]] = []
-        launched = len(attempts)
+        launched = sum(
+            bool(attempt.get("provider_run_id")) and attempt.get("status") in {"submitted", "running", "succeeded"}
+            for attempt in attempts
+        )
         if result.get("status") == "duplicate" and not attempts:
             return {
                 "schema_version": "limen.task_execution_start.v1",
-                "status": "already_running",
+                "status": (
+                    "already_running"
+                    if any(
+                        a.get("provider_run_id") and a.get("status") in {"submitted", "running"}
+                        for a in node.get("attempts", [])
+                    )
+                    else "blocked"
+                    if node.get("attempts") and node["attempts"][-1].get("status") in {"failed", "blocked"}
+                    else "submission_pending"
+                ),
                 "run_id": result["run_id"],
                 "root_run_id": root_run_id,
                 "executor_session_id": selected_session_id,
@@ -397,16 +409,22 @@ def start_task_execution(
     else:
         attempts = []
         wakes = wake_executor_workers(root_run_id, selected)
-        launched = len(wakes)
-    if launched != 1:
-        raise TaskExecutionError(f"canonical task reserved but executor wake count was {launched}, expected 1")
+        launched = 0  # A worker wake contains no provider acceptance evidence.
+        if len(wakes) != 1 or wakes[0].get("status") != "woken":
+            raise TaskExecutionError("canonical task reserved but executor wake was not confirmed")
+    if launched > 1:
+        raise TaskExecutionError("canonical task returned multiple provider acceptances")
+    status = "launched" if launched == 1 else "submission_pending"
+    if attempts and all(attempt.get("status") in {"failed", "blocked"} for attempt in attempts):
+        status = "blocked"
     return {
         "schema_version": "limen.task_execution_start.v1",
-        "status": "already_running" if result.get("status") == "duplicate" else "launched",
+        "status": status,
         "run_id": result["run_id"],
         "root_run_id": root_run_id,
         "executor_session_id": selected_session_id,
-        "targeted_launch_count": 1,
+        "targeted_launch_count": launched,
+        "executor_wake_count": len(wakes),
         "executor_wakes": wakes,
         "attempts": attempts,
         "unavailable_adapters": unavailable,

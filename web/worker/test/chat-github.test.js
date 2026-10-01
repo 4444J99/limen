@@ -48,6 +48,49 @@ async function fixture() {
   });
   return {controller,principal,calls,service,values};
 }
+test("GitHub transport does not bind native fetch to the controller", async () => {
+  const f = await fixture();
+  f.controller.request = async function (url, options) {
+    assert.equal(this, undefined, "Workers native fetch rejects an unrelated receiver");
+    assert.equal(new URL(url).hostname, "api.github.com");
+    assert.equal(options.redirect, "manual");
+    return Response.json({ id: 1255213941 });
+  };
+  assert.deepEqual(await f.controller.github("/repos/4444J99/limen"), { id: 1255213941 });
+});
+test("omitted read ref resolves the default branch once and pins file reads", async () => {
+  const f = await fixture();
+  const urls = [];
+  f.controller.request = async (url, options) => {
+    assert.equal(options.method, "GET");
+    urls.push(url);
+    const path = new URL(url).pathname;
+    if (path.endsWith("/repos/4444J99/limen")) return Response.json({ private: false, default_branch: "trunk" });
+    if (path.endsWith("/commits/trunk")) return Response.json({ sha, commit: { tree: { sha } } });
+    assert.equal(new URL(url).searchParams.get("ref"), sha);
+    return Response.json({ type: "file", encoding: "base64", size: 5, sha, content: btoa("hello") });
+  };
+  const query = { repository: "4444J99/limen", path: "scripts/chat-github-canary.py" };
+  assert.deepEqual(await f.controller.read(f.principal, query), {
+    repository: query.repository, commit: sha, path: query.path, blob_sha: sha, content: "hello",
+  });
+  assert.equal(urls.length, 3);
+  for (const ref of [null, "", "feature/unapproved", 42]) {
+    await assert.rejects(f.controller.read(f.principal, { ...query, ref }), /chat_exact_ref_required/);
+  }
+});
+test("GitHub redirects fail closed using the Workers-supported manual mode", async () => {
+  const f = await fixture();
+  let requests = 0;
+  f.controller.request = async (url, options) => {
+    requests++;
+    assert.equal(new URL(url).hostname, "api.github.com");
+    assert.equal(options.redirect, "manual");
+    return new Response(null, { status: 302, headers: { location: "https://untrusted.invalid/" } });
+  };
+  await assert.rejects(f.controller.github("/repos/4444J99/limen"), /chat_github_http_302/);
+  assert.equal(requests, 1);
+});
 test("canonical admission and duplicate replay keep payloads out of graphs", async()=>{
   const f=await fixture();
   const first=await f.controller.submit(f.principal,input());

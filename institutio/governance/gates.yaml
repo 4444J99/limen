@@ -584,9 +584,14 @@ gates:
     paths: ["scripts/session-orient.py", "scripts/hooks/session-orient.sh", "scripts/session-lifecycle-pressure.py", "scripts/hooks/session-lifecycle-pressure.sh", "scripts/done-session-orient.sh", "cli/tests/test_session_orient.py", "cli/src/limen/private_board.py"]
     owner: continuity
     note: "Session orientation + lifecycle-pressure hooks stay wired and PII-clean."
+  session-closeout-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_session_closeout.py cli/tests/test_closeout_session_scope.py cli/tests/test_process_ownership.py -q"
+    paths: ["cli/src/limen/process_ownership.py", "cli/src/limen/process_services.py", "cli/tests/test_process_ownership.py", "cli/src/limen/session_closeout.py", "scripts/session-closeout.py", "scripts/no-tasks-on-me.sh", "scripts/closeout-fast.sh", "cli/tests/test_session_closeout.py", "cli/tests/test_closeout_session_scope.py", "docs/continuations/workspace-recovery-20260916/verify-closeout.py", "docs/continuations/workspace-recovery-20260916/launch.sh"]
+    owner: continuity
+    note: "Identity-bound, read-only session release with remote custody and sibling isolation."
   agent-docs:
     command: "python3 scripts/check-agent-docs.py"
-    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "docs/deployment.md", "scripts/check-agent-docs.py", "scripts/check-student-email-grounding.py", "institutio/governance/gates.yaml", "mcp/src/limen_mcp/server.py", ".agents/skills/agy_conductor/SKILL.md", "integrations/copilot/limen-conductor.agent.md", ".claude/skills/closeout/SKILL.md", ".github/copilot-instructions.md"]
+    paths: ["CLAUDE.md", "AGENTS.md", "GEMINI.md", "CONTRIBUTING.md", "docs/agent-instruction-standard.md", "docs/deployment.md", "scripts/check-agent-docs.py", "scripts/check-student-email-grounding.py", "institutio/governance/gates.yaml", "mcp/src/limen_mcp/server.py", ".agents/skills/agy_conductor/SKILL.md", "integrations/copilot/limen-conductor.agent.md", ".claude/skills/closeout/SKILL.md", ".agents/skills/closeout/SKILL.md", "docs/architecture/continuation-capsules.md", "docs/session-closeout.md", ".github/copilot-instructions.md"]
     owner: docs
     note: "Agent-instruction docs match the canonical task-state vocabulary; referenced scripts exist. Paths cover ALL the checker's real inputs (2026-08-06: server.py — the VALID_STATUSES source — and both adapters were missing, so editing them never selected this gate under scoped verification). gates.yaml is a path because check S reads its instruction_surfaces block (byte-budget ratchet)."
   github-estate-census-custody-test:
@@ -657,6 +662,7 @@ gates:
       - "docs/positioning/foundry/psp-c11/foundry-preflight-contract.json"
       - "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
       - "docs/positioning/foundry/psp-c11/technical-readiness-audit.json"
+      - "docs/positioning/foundry/psp-c11/public-observation-withdrawals.json"
       - "docs/positioning/foundry/psp-c11/test_technical_readiness.py"
       - "docs/positioning/foundry/psp-c11/verify_technical_readiness.py"
       - "institutio/positioning/program.yaml"
@@ -675,6 +681,7 @@ gates:
       - "docs/positioning/foundry/psp-c11/foundry-preflight-contract.json"
       - "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
       - "docs/positioning/foundry/psp-c11/technical-readiness-audit.json"
+      - "docs/positioning/foundry/psp-c11/public-observation-withdrawals.json"
       - "docs/positioning/foundry/psp-c11/verify_technical_readiness.py"
       - "institutio/governance/gates.yaml"
       - "institutio/positioning/github-map.json"
@@ -682,13 +689,14 @@ gates:
       - "scripts/positioning-program.py"
     timeout_seconds: 300
     owner: positioning-program
-    note: "PSP-P13-W03 scoped public-evidence validation uses bounded concurrent immutable-blob, attempt-provenance, and compact fully paginated digest-bound Actions-artifact scans plus one batched repository-bound immutable commit observation for every accepted public candidate, including blocked rows, under one 270-second deadline and a 64 MiB aggregate decoded-blob ceiling; artifact pages bypass the long-lived JSON cache and only completeness counts plus bounded exact matches survive, artifact identities use only attempt-available output/artifact digests, and mutable branch drift, private-inclusive census, and private custody remain outside ordinary PR acceptance."
+    note: "PSP-P13-W03 scoped public-evidence validation uses bounded concurrent immutable-blob, attempt-provenance, and compact fully paginated digest-bound Actions-artifact scans plus one batched repository-bound immutable commit observation for every non-withdrawn accepted public candidate, including blocked rows; reviewed full-row-bound custody withdrawals remain blocked and explicitly unverified, under one 270-second deadline and a 64 MiB aggregate decoded-blob ceiling; artifact pages bypass the long-lived JSON cache and only completeness counts plus bounded exact matches survive, artifact identities use only attempt-available output/artifact digests, and mutable branch drift, private-inclusive census, and private custody remain outside ordinary PR acceptance."
   positioning-foundry-technical-readiness-live:
     command: "python3 -B docs/positioning/foundry/psp-c11/verify_technical_readiness.py --audit docs/positioning/foundry/psp-c11/technical-readiness-audit.json --live --json"
     paths:
       - "docs/positioning/foundry/psp-c11/foundry-preflight-contract.json"
       - "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
       - "docs/positioning/foundry/psp-c11/technical-readiness-audit.json"
+      - "docs/positioning/foundry/psp-c11/public-observation-withdrawals.json"
       - "docs/positioning/foundry/psp-c11/verify_technical_readiness.py"
       - "institutio/governance/gates.yaml"
       - "institutio/positioning/github-map.json"
@@ -1095,6 +1103,11 @@ gates:
     note: "OUTBOUND-EFFECTORS registry drift, the fifth VIGILIA-shaped panel's predicate. Class A holds declaration↔disk parity (a `predicate:` naming a file that does not exist would, because the guard fails CLOSED inside its match, deny EVERY matching action the moment the hook is armed — the live 2026-07-31 state of github.comment). Class B holds the single-capture-group bound the registry states in prose: the guard reads group(1) only, so a two-group target pattern silently discards the second half and runs the predicate against a PARTIAL target — checking the ambient repo's #N while the command addresses another repo's #N. Class C is the structural one: a PreToolUse(Bash) hook sees a COMMAND STRING, so it can never see subprocess.run([\"gh\",\"pr\",\"comment\",...]) inside a Python module — which is the form every dangerous outward action in this estate actually takes, unattended, on the beat. 24 such sites are baselined; the surface is now visible and cannot grow. A hand grep found only 17 of them (argv bound to a name, argv through a local sh() wrapper), which is why this is an AST walk and not a pattern."
 
   # ── GitHub estate (GITVS — the GitHub custodian) ────────────────────────────
+  estate-posture-test:
+    command: "python3 -m unittest discover -s tests -p test_estate_posture.py"
+    paths: ["scripts/estate_posture.py", "scripts/gitvs.py", "scripts/apply-visibility.py", "scripts/check-audience.py", "tests/test_estate_posture.py", "institutio/github/estate.yaml"]
+    owner: gitvs
+    note: "Personal migration privacy precedence, stable-identity public exceptions, held visibility effects, audience derivation, and logical shelf preservation."
   gitvs-parity:
     command: "python3 scripts/gitvs.py doctor --offline --parity-only"
     paths: ["scripts/gitvs.py", "institutio/github/estate.yaml", "institutio/github/access.yaml", "scripts/setup-rulesets.py", "scripts/reap-branches.py", "scripts/sync-marketplace-config.py"]
@@ -1159,7 +1172,7 @@ gates:
     owner: verify
     note: "Bind the actual Worker hint store and reconciler to real Python keeper registration, reservation, executor attempt and receipt behavior. Worker-only changes must exercise this cross-language boundary. Uses isolated in-memory keeper and Worker storage, real bounded Node invocations and an isolated fixture assessor; no live service or credential. Proves restart/replay preservation and refusal to route into another human-protected session."
   pytest-cli:
-    command: "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests -q -n auto --maxfail=20 --tb=short"
     paths: ["cli/**", "cli/tests/test_cloud_routine.py", "ianva/**", "his-hand-levers.json", "cloud-routines.json", "spec/contracts/cloud-routine-receipt-v1.schema.json", "scripts/cloud-routine-ingest.py", "scripts/check-cloud-routine-ingest.py", "docs/receipts/cloud-routine-findings-20260808.json", "docs/receipts/cloud-routine-lineage.json", "docs/receipts/irf-p0-owner-classification-20260808.json"]
     tier: heavy
     serialize: true

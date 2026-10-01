@@ -1,0 +1,38 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "01a0f46d-979a-75a2-86dd-547b5666fd99",
+  "repository": "4444J99/limen",
+  "publication_branch": "fix/process-ownership-healing-20260930",
+  "owner_url": "https://github.com/4444J99/limen/issues/2763",
+  "disposition": "handoff",
+  "worktree_name": "spine-closeout-successor-20260926-v2",
+  "base_head": "763e9fcc46c9d3c74b4ac5f027ca674b1687b2d7",
+  "owned_paths": [
+    ".codex/plans/2026-09-30-process-ownership-healing.md",
+    "cli/src/limen/conduct/liveness.py",
+    "cli/src/limen/process_ownership.py",
+    "cli/src/limen/process_services.py",
+    "cli/src/limen/session_closeout.py",
+    "cli/tests/test_merge_drain.py",
+    "cli/tests/test_process_ownership.py",
+    "cli/tests/test_session_closeout.py",
+    "docs/session-closeout.md",
+    "institutio/governance/gates.yaml",
+    "scripts/merge-drain.py"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "head": "3d997d793c70d8c24e713d6b048f762a24a8d92a",
+      "exit_code": 0,
+      "command": "Reuse unchanged scoped source checks and credential-wall.py --check; evidence and custody inspection",
+      "evidence": "docs/continuations/process-ownership-healing-20260930/session-evidence.json",
+      "sha256": "f2d6f92f95c433930d136f3066ee91d976a1a4d54b3d99bdf0406bf1a36d24bc"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/continuations/process-ownership-healing-20260930/session-evidence.json",
+    "sha256": "f2d6f92f95c433930d136f3066ee91d976a1a4d54b3d99bdf0406bf1a36d24bc"
+  }
+}

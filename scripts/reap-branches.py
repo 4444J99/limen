@@ -70,8 +70,9 @@ Env: LIMEN_ROOT, LIMEN_BRANCH_REAP_REPO_ROOT (optional target repository; receip
      under LIMEN_ROOT), LIMEN_BRANCH_REAP_MAX (100), LIMEN_BRANCH_REAP_EVERY_MIN (30),
      LIMEN_BRANCH_REAP_GRACE_MIN (60; --check only: a landed branch younger than this many minutes
      is digesting, not lingering — --apply eligibility is unaffected),
-     LIMEN_BRANCH_REAP_PR_LIMIT (3000; how many recent PRs to read for proofs 2/3 — hitting the
-     ceiling WARNs, because an unseen PR is indistinguishable from no PR),
+     LIMEN_BRANCH_REAP_PR_LIMIT (unset/0 = paginate every PR page for proofs 2/3; a set
+     value is a fail-safe hard ceiling — hitting it WARNs, because an unseen PR is
+     indistinguishable from no PR),
      LIMEN_BRANCH_REAP_PROTECT (extra protected branch names, space-separated), LIMEN_OFFLINE.
 """
 
@@ -310,6 +311,82 @@ class DecidedBranch:
         return f"refs/pull/{self.pull_number}/head"
 
 
+def _gh_all_prs() -> list[dict] | None:
+    """Every PR on the repo via the REST pulls endpoint (newest first); None on failure.
+
+    Uses `gh api --paginate` so coverage is exact, not windowed: the old `gh pr list`
+    --limit ceiling silently blinded every proof for older heads once the repo outgrew it
+    (an unseen PR is indistinguishable from no PR — i.e. livework). The REST endpoint
+    pages deterministically via Link headers (no search-index flicker mid-walk), and each
+    pull carries merged_at, so MERGED vs CLOSED-unmerged is derived, never guessed.
+    """
+    try:
+        nwo_res = subprocess.run(
+            ["gh", "repo", "view", "--json", "nameWithOwner", "--jq", ".nameWithOwner"],
+            cwd=str(repository_root()),
+            capture_output=True,
+            text=True,
+            timeout=30,
+            env=_GIT_ENV,
+        )
+        nwo = (nwo_res.stdout or "").strip()
+        if nwo_res.returncode != 0 or "/" not in nwo:
+            return None
+        res = subprocess.run(
+            [
+                "gh",
+                "api",
+                f"repos/{nwo}/pulls",
+                "-f",
+                "state=all",
+                "-f",
+                "per_page=100",
+                "-f",
+                "sort=created",
+                "-f",
+                "direction=desc",
+                "--paginate",
+                "--slurp",
+            ],
+            # PR state belongs to the branch target. LIMEN_ROOT may only be the control/receipt
+            # repository when this reaper operates on another checkout.
+            cwd=str(repository_root()),
+            capture_output=True,
+            text=True,
+            timeout=300,
+            env=_GIT_ENV,
+        )
+    except Exception:
+        return None
+    if res.returncode != 0 or not res.stdout.strip():
+        return None
+    try:
+        pages = json.loads(res.stdout)
+    except Exception:
+        return None
+    if not isinstance(pages, list):
+        return None
+    rows: list[dict] = []
+    for page in pages:
+        if not isinstance(page, list):
+            return None
+        for p in page:
+            if not isinstance(p, dict):
+                continue
+            head = p.get("head") or {}
+            merged_at = p.get("merged_at")
+            rows.append(
+                {
+                    "number": p.get("number"),
+                    "headRefName": head.get("ref"),
+                    "headRefOid": head.get("sha"),
+                    "state": "MERGED" if merged_at else ("OPEN" if p.get("state") == "open" else "CLOSED"),
+                    "mergedAt": merged_at,
+                }
+            )
+    return rows
+
+
 def gh_head_states() -> tuple[dict[str, float | None], dict[str, str], dict[str, tuple[ClosedPullRef, ...]], bool]:
     """(merged heads, open head→exact SHA, closed head→pull-ref records, online).
 
@@ -323,47 +400,34 @@ def gh_head_states() -> tuple[dict[str, float | None], dict[str, str], dict[str,
     """
     if os.environ.get("LIMEN_OFFLINE") or not shutil.which("gh"):
         return {}, {}, {}, False
-    # `gh pr list` returns the N MOST RECENT PRs, so a limit below the repo's PR count silently
-    # blinds every proof for older heads — and silence here looks exactly like "no PR exists",
-    # i.e. livework. Measured on organvm/limen 2026-08-07 at the former hard-coded 800: of 241
-    # local branches that HAD a PR, 132 were invisible (64 CLOSED, 50 OPEN, 18 MERGED). The 50
-    # OPEN ones are the sharp edge — those heads were not being protected as in-flight at all.
-    # Raised, made tunable, and made LOUD on truncation (charter: no silent caps).
-    pr_limit = _int_env("LIMEN_BRANCH_REAP_PR_LIMIT", 3000, minimum=1)
-    try:
-        res = subprocess.run(
-            [
-                "gh",
-                "pr",
-                "list",
-                "--state",
-                "all",
-                "--json",
-                "number,headRefName,headRefOid,state,mergedAt",
-                "--limit",
-                str(pr_limit),
-            ],
-            cwd=str(LIMEN_ROOT),
-            capture_output=True,
-            text=True,
-            timeout=60,
-            env=_GIT_ENV,
-        )
-        if res.returncode != 0 or not res.stdout.strip():
-            return {}, {}, {}, False
-        prs = json.loads(res.stdout)
-    except Exception:
+    # `gh pr list` pages the search API newest-first, so a hard result cap below the repo's
+    # PR count silently blinds every proof for older heads — and silence here looks exactly
+    # like "no PR exists", i.e. livework. Measured on organvm/limen 2026-08-07 at the former
+    # hard-coded 800: of 241 local branches that HAD a PR, 132 were invisible (64 CLOSED,
+    # 50 OPEN, 18 MERGED). The 50 OPEN ones are the sharp edge — those heads were not being
+    # protected as in-flight at all. So enumerate EVERY PR via the REST pulls endpoint with
+    # gh's --paginate (charter: no silent caps). LIMEN_BRANCH_REAP_PR_LIMIT stays as a
+    # fail-safe hard ceiling for pathological repos (0/unset = no ceiling); hitting it warns
+    # loudly.
+    prs = _gh_all_prs()
+    if prs is None:
         return {}, {}, {}, False
-    if len(prs) >= pr_limit:
-        # Hit the ceiling → older PRs were almost certainly dropped. This is NOT uniformly fail-safe,
-        # which is why it warns instead of passing quietly: a dropped MERGED or CLOSED PR only costs
-        # a proof (→ the branch is KEPT as livework), but a dropped OPEN PR removes the in-flight
-        # PROTECTION, leaving that head reapable if any other proof happens to hold. Truncation can
-        # therefore make the reaper both blinder AND bolder — never let it happen silently.
+    hard_cap = _int_env("LIMEN_BRANCH_REAP_PR_LIMIT", 0, minimum=0)
+    capped = False
+    if hard_cap and len(prs) > hard_cap:
+        prs = prs[:hard_cap]
+        capped = True
+    if capped:
+        # Hit the ceiling → older PRs were almost certainly dropped. This is NOT uniformly
+        # fail-safe, which is why it warns instead of passing quietly: a dropped MERGED or
+        # CLOSED PR only costs a proof (→ the branch is KEPT as livework), but a dropped OPEN
+        # PR removes the in-flight PROTECTION, leaving that head reapable if any other proof
+        # happens to hold. Truncation can therefore make the reaper both blinder AND bolder —
+        # never let it happen silently.
         print(
-            f"[reap-branches] WARN — gh returned {len(prs)} PRs at the --limit ceiling ({pr_limit}); "
+            f"[reap-branches] WARN — PR enumeration hit the LIMEN_BRANCH_REAP_PR_LIMIT ceiling ({hard_cap}); "
             "older PRs are out of view, so some heads may be misreported as live-work AND some open "
-            "PRs may have lost their in-flight protection. Raise LIMEN_BRANCH_REAP_PR_LIMIT."
+            "PRs may have lost their in-flight protection. Raise or unset LIMEN_BRANCH_REAP_PR_LIMIT."
         )
     merged: dict[str, float | None] = {}
     open_: dict[str, str] = {}

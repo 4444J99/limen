@@ -176,18 +176,29 @@ def test_inner_timeout_reaps_its_child_before_outer_deadline(tmp_path, monkeypat
 
     m, _agents, _registry = load_module(tmp_path, monkeypatch, stub_btm=False)
     monkeypatch.setattr(m, "IS_DARWIN", True)
-    pid_file = tmp_path / "child.pid"
+    from limen import bounded_subprocess
+
     tool = tmp_path / "sfltool"
-    tool.write_text(
-        f"#!{sys.executable}\nimport os,time\nfrom pathlib import Path\nPath({str(pid_file)!r}).write_text(str(os.getpid()))\ntime.sleep(60)\n"
-    )
+    tool.write_text(f"#!{sys.executable}\nimport time\ntime.sleep(60)\n")
     tool.chmod(0o755)
+    spawned = []
+    real_popen = bounded_subprocess.subprocess.Popen
+
+    def capture_child(*args, **kwargs):
+        child = real_popen(*args, **kwargs)
+        spawned.append(child)
+        return child
+
+    # The OS-assigned PID exists even if timeout precedes Python startup.
+    monkeypatch.setattr(bounded_subprocess.subprocess, "Popen", capture_child)
     monkeypatch.setenv("PATH", str(tmp_path))
     started = time.monotonic()
     assert m._sfltool_dumpbtm(timeout=0.5) is None
     assert time.monotonic() - started < 5
+    assert len(spawned) == 1
+    assert spawned[0].returncode is not None
     with pytest.raises(ProcessLookupError):
-        os.kill(int(pid_file.read_text()), 0)
+        os.kill(spawned[0].pid, 0)
     assert m.census_btm(None, {"estate": {}, "prefixes": []})["total"] is None
 
 

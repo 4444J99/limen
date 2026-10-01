@@ -17,6 +17,12 @@ or retire the disposable copy through the existing reclaimer after custody verif
 Preservation is not completion. Resume interrupted cleanup from its receipts and verify
 that a second pass makes no changes. Use configured runtime roots for scratch.
 
+Local disposable-worktree admission measures available bytes on the target volume. Below
+50 GiB free, it latches new worktree creation closed; it reopens only at 200 GiB free.
+The latch is kept in the user's state directory across producer and machine restarts.
+An unreadable or invalid latch fails closed. Existing checkouts and their running work
+remain available; the gate applies only to new worktree reservations.
+
 
 Verification stores bounded success receipts for every passing gate. Reuse requires
 an unchanged content, dependency, environment and gate-definition fingerprint.

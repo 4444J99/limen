@@ -28,7 +28,15 @@ Latest interrupted item: 21 old immutable runtimes were audited but NOT removed.
 
 `python3 docs/continuations/workspace-recovery-20260916/verify-closeout.py` checks this handoff's custody and containment only. It MUST NOT be used as a recovery-completion predicate.
 
-To inspect the prepared continuation without launching an agent:
+To inspect the current session without launching an agent:
 `bash docs/continuations/workspace-recovery-20260916/launch.sh --check`
+
+`--check` is session-scoped and read-only: it resolves the live branch/HEAD,
+reports retained concurrent work (with owner attribution) without touching
+it, and still rejects the session's own uncommitted implementation. It does
+NOT bind the session to the historical capsule branch or require whole-
+checkout cleanliness. Plain `verify-closeout.py` (no flags) remains the
+one-time historical-capsule custody predicate; use it only on the preserved
+checkout, never to judge a session that merely shares the checkout.
 
 On explicit user resumption, the same launcher without --check delegates to the existing private capsule kickstart and its original finite contract. It never creates another checkout. An expired contract stops launch; it is not silently renewed. The public receipt and the existing PR are the durable entry points if local preparation must be reconstructed.

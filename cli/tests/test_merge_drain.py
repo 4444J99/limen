@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import importlib.util
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "merge-drain.py"
@@ -188,6 +187,7 @@ def test_policy_recheck_is_exact_head_bound(monkeypatch):
 
     assert mod._merge_policy("organvm/limen", 1194, "deadbeefcafe") == "queue"
     assert calls[0][0] == [
+        "bash",
         str(mod.POLICY),
         "1194",
         "--repo",
@@ -450,3 +450,14 @@ def test_merge_timeout_is_unconfirmed_and_never_retried(monkeypatch, capsys, sta
     assert "secret" not in out
     if stage == "effect":
         assert "outcome=unconfirmed" in out
+
+
+def test_readable_nonexecutable_policy_runs_through_bash(tmp_path, monkeypatch):
+    mod = _load()
+    policy = tmp_path / "merge-policy.sh"
+    policy.write_text(
+        "#!/bin/bash\nprintf 'VERDICT: CLEARED\\nMERGE-MODE: direct\\nMERGE-HEAD: " + "a" * 40 + "\\n'\nexit 0\n"
+    )
+    policy.chmod(0o644)
+    monkeypatch.setattr(mod, "POLICY", policy)
+    assert mod._merge_policy("example/project", 1, "a" * 40) == "direct"
