@@ -64,7 +64,8 @@ def _now() -> str:
 def _run_git(repo: Path, *args: str, timeout: int = 120) -> subprocess.CompletedProcess[str]:
     try:
         return subprocess.run(
-            ["git", "-C", str(repo), *args],
+            ["git", "-c", "core.fsmonitor=false", "-C", str(repo), *args],
+            env={**os.environ, "GIT_OPTIONAL_LOCKS": "0", "GIT_TERMINAL_PROMPT": "0"},
             capture_output=True,
             text=True,
             timeout=timeout,
@@ -167,8 +168,8 @@ def _raise_crash(
     )
 
 
-def _registered_worktree_paths(superproject: Path) -> tuple[Path, ...]:
-    listed = _run_git(superproject, "worktree", "list", "--porcelain")
+def _registered_worktree_paths(superproject: Path, *, git_runner=None) -> tuple[Path, ...]:
+    listed = (git_runner or _run_git)(superproject, "worktree", "list", "--porcelain")
     if listed.returncode != 0:
         raise RuntimeError((listed.stderr or listed.stdout or "worktree-list-unavailable").strip())
     paths: list[Path] = []
@@ -228,6 +229,7 @@ def detach_registered_worktree(
     reason: str,
     receipt_root: Path,
     owner_probe: OwnerProbe | None = None,
+    git_runner=None,
 ) -> dict[str, Any]:
     """Detach one clean registered worktree using Git's non-forced native operation."""
 
@@ -247,22 +249,23 @@ def detach_registered_worktree(
         gitfile_stat = gitfile.lstat()
         if not stat.S_ISREG(gitfile_stat.st_mode) or gitfile.is_symlink():
             raise RuntimeError("target-is-not-linked-worktree")
-        registered = _registered_worktree_paths(superproject)
+        run_git = git_runner or _run_git
+        registered = _registered_worktree_paths(superproject, git_runner=run_git)
         if target not in registered:
             raise RuntimeError("target-not-registered")
         owner = (owner_probe or _default_cwd_owner_probe)(target)
         if owner is not None:
             code = "owner-probe-unavailable" if owner == -1 else f"active-process-cwd:{owner}"
             raise RuntimeError(code)
-        status = _run_git(target, "status", "--porcelain=v1", "-z", "--untracked-files=all")
+        status = run_git(target, "status", "--porcelain=v1", "-z", "--untracked-files=all")
         if status.returncode != 0:
             raise RuntimeError("worktree-status-unavailable")
         if status.stdout:
             raise RuntimeError("worktree-not-clean")
-        ignored = _run_git(target, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
+        ignored = run_git(target, "ls-files", "--others", "--ignored", "--exclude-standard", "-z")
         if ignored.returncode != 0 or ignored.stdout:
             raise RuntimeError("ignored-payload-custody-unproven")
-        head = _run_git(target, "rev-parse", "HEAD")
+        head = run_git(target, "rev-parse", "HEAD")
         if head.returncode != 0 or not head.stdout.strip():
             raise RuntimeError("worktree-head-unavailable")
         receipt = _write_state(
@@ -274,14 +277,14 @@ def detach_registered_worktree(
         )
         phase = "detach"
         receipt = _write_state(receipt_path, receipt, state="applying", phase=phase)
-        detached = _run_git(superproject, "worktree", "remove", str(target))
+        detached = run_git(superproject, "worktree", "remove", str(target))
         if detached.returncode != 0:
             raise RuntimeError(
                 f"git-worktree-remove-failed: {(detached.stderr or detached.stdout or 'unknown').strip()[:300]}"
             )
         if target.exists() or target.is_symlink():
             raise RuntimeError("target-remains-after-detach")
-        if target in _registered_worktree_paths(superproject):
+        if target in _registered_worktree_paths(superproject, git_runner=run_git):
             raise RuntimeError("target-remains-registered")
         completed = _write_state(
             receipt_path,
@@ -696,11 +699,21 @@ def purge_remote_proven_path(
         raise ValueError("remote-purge-head-invalid")
 
     def advertised_ref(value: object) -> bool:
+        if not isinstance(value, str) or not value.startswith(("refs/heads/", "refs/tags/", "refs/pull/")):
+            return False
+        if value.startswith("refs/pull/") and not re.fullmatch(r"refs/pull/[1-9][0-9]*/(?:head|merge)", value):
+            return False
+        # Provider names must be actual Git refs, not merely strings with a
+        # permitted prefix. Read the predicate's own exit; never consult a
+        # stale refs/remotes cache to make provider evidence pass.
         return (
-            isinstance(value, str)
-            and value.startswith(("refs/heads/", "refs/tags/", "refs/pull/"))
-            and not any(char.isspace() or ord(char) < 32 for char in value)
-            and not value.endswith("/")
+            subprocess.run(
+                ["git", "check-ref-format", value],
+                capture_output=True,
+                timeout=10,
+                check=False,
+            ).returncode
+            == 0
         )
 
     if not remote_refs or not all(advertised_ref(value) for value in remote_refs):

@@ -104,7 +104,7 @@ def _canonical_sha256(payload: object) -> str:
     return hashlib.sha256(_canonical_bytes(payload)).hexdigest()
 
 
-def _file_sha256(path: Path) -> str:
+def _file_sha256(path: Path, *, checkpoint=None) -> str:
     digest = hashlib.sha256()
     try:
         before = path.lstat()
@@ -112,6 +112,8 @@ def _file_sha256(path: Path) -> str:
             raise PersonalCustodyError("source-file-not-regular")
         with path.open("rb") as handle:
             while chunk := handle.read(CHUNK_BYTES):
+                if checkpoint is not None:
+                    checkpoint()
                 digest.update(chunk)
         after = path.lstat()
     except OSError as exc:
@@ -129,6 +131,8 @@ def _xattrs_sha256(path: Path) -> str:
         listxattr = getattr(os, "listxattr", None)
         getxattr = getattr(os, "getxattr", None)
         if listxattr is None or getxattr is None:
+            if sys.platform == "darwin":
+                return _canonical_sha256(_darwin_xattrs(path))
             raise AttributeError("xattr functions unavailable")
         names = sorted(listxattr(path, follow_symlinks=False))
         payload = [
@@ -145,6 +149,43 @@ def _xattrs_sha256(path: Path) -> str:
         # platform limitation remains explicit in the private manifest.
         return f"unavailable:{type(exc).__name__}"
     return _canonical_sha256(payload)
+
+
+def _darwin_xattrs(path: Path) -> list[tuple[str, str]]:
+    """Use Darwin's no-follow API when this Python lacks os xattr functions."""
+    import ctypes
+
+    native = ctypes.CDLL("/usr/lib/libSystem.B.dylib", use_errno=True)
+    native.listxattr.argtypes = [ctypes.c_char_p, ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int]
+    native.listxattr.restype = ctypes.c_ssize_t
+    native.getxattr.argtypes = [
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+        ctypes.c_void_p,
+        ctypes.c_size_t,
+        ctypes.c_uint32,
+        ctypes.c_int,
+    ]
+    native.getxattr.restype = ctypes.c_ssize_t
+    encoded = os.fsencode(path)
+    nofollow = 1  # XATTR_NOFOLLOW
+
+    def checked(value: int) -> int:
+        if value < 0:
+            code = ctypes.get_errno()
+            raise OSError(code, os.strerror(code))
+        return value
+
+    size = checked(native.listxattr(encoded, None, 0, nofollow))
+    names = ctypes.create_string_buffer(size)
+    length = checked(native.listxattr(encoded, names, size, nofollow))
+    result = []
+    for name in sorted(filter(None, names.raw[:length].split(b"\0"))):
+        size = checked(native.getxattr(encoded, name, None, 0, 0, nofollow))
+        value = ctypes.create_string_buffer(size)
+        length = checked(native.getxattr(encoded, name, value, size, 0, nofollow))
+        result.append((os.fsdecode(name), hashlib.sha256(value.raw[:length]).hexdigest()))
+    return result
 
 
 def _acl_sha256(path: Path) -> str:
@@ -170,7 +211,7 @@ def _acl_sha256(path: Path) -> str:
     return hashlib.sha256(b"\n".join(entries)).hexdigest()
 
 
-def _record(path: Path, source: Path) -> ContentRecord:
+def _record(path: Path, source: Path, *, checkpoint=None) -> ContentRecord:
     try:
         info = path.lstat()
     except OSError as exc:
@@ -199,7 +240,7 @@ def _record(path: Path, source: Path) -> ContentRecord:
             mode,
             int(info.st_size),
             physical,
-            _file_sha256(path),
+            _file_sha256(path, checkpoint=checkpoint),
             None,
             xattrs_sha256,
             acl_sha256,

@@ -1,0 +1,41 @@
+S4 — Cleanup candidate and tool qualification
+
+User request: "git parity 1:1 on all the repos in ~/Workspace and purge/prune local", split into streams for independent external agents on this Mac.
+
+Read /Users/4jp/AGENTS.md and applicable repository instructions before acting. Work only on this approved outcome. Existing owners: https://github.com/4444J99/limen/issues/2739 (program), https://github.com/4444J99/portvs/issues/14 (residency), https://github.com/4444J99/domus-genoma/issues/397 (control consumers). Re-query their live state; do not duplicate issues or close existing atoms.
+
+S0 is the sole recovery writer. S1–S5 perform read-only inspection and return evidence/operation packets to S0. Partition ownership by resolved Git common directory and immutable remote repository identity, not checkout pathname. Do not fetch, stage, commit, stash, switch, prune, delete, or write shared ledgers unless you are S0 executing an admitted operation. Read-only Git inspection should disable optional locks and fsmonitor. Register your actual native identity and obtain any required conduct lease through the existing broker; never fabricate lease identities or edit tasks.yaml. If the broker is unavailable, continue inspection without new lifecycle claims.
+
+Preserve protected PRDS/support repositories, active human sessions, dirty work, private originals, snapshots, and required runtime consumers. Do not kill sessions, force-push, reset, blanket-clean ignored files, expire reflogs, run immediate object pruning, delete remote branches, or relocate clones merely to claim cleanup. No new paid service or unrestricted backlog. Outside-Workspace registrations are outside mutation scope but may protect shared stores.
+
+1:1 custody means exact local object IDs matched to freshly verified remote custody refs, plus recoverability of their object graphs. Cached tracking refs or a local-path remote are insufficient. Retained tracking branches must have zero ahead/behind divergence to claim synchronization. Whole-repository removal additionally needs all refs, detached heads, stashes, reflog-only/unreachable objects, metadata, LFS, submodules, alternates, and non-Git payload accounted for. Private material uses existing encrypted custody and verified restore workflows; never publish private payloads or sensitive inventories to public Git.
+
+The 2026-09-30 census is a checkpoint, not current parity proof: 208 valid checkout paths / 135 common Git stores; 44 dirty paths; five stashes; seven no-remote repositories; 17 unresolved .git markers; 212 registered worktrees including three outside Workspace and one Workspace registration missed by traversal. Structurally identified runtime bare-store count changed to 3,276 during inspection. Revalidate your assigned denominator and represent unknown/unreadable state explicitly. Disk free was ~24.5 GiB; use existing checkouts and configured scratch, respecting admission.
+
+At most four sessions, one recovery writer, and one heavy workload. Inherit the original attempt deadline: 30 minutes per attempt, at most 10 minutes verification, 120 cumulative agent-minutes for this outcome across all streams/restarts. One corrective retry needs changed inputs. Stop and checkpoint at exhaustion; splitting work does not renew the budget.
+
+Return a compact handoff: scope/common-dir identity; observed revision and timestamp; remote repository identity/ref/object evidence; preservation gaps; proposed exact operations; protection/consumer findings; predicate and exit code; evidence destination; disposition and next owner/action. Use existing WorkPacketV1 / RunReceiptV1 contracts where required. S0 consolidates redacted artifacts under this continuation directory and publishes through the owning repository rail. Sensitive raw evidence stays with its existing private owner. Never equate a push, queued merge, candidate manifest, or test with completed retirement.
+
+Closeout loader discovery: /Users/4jp/.agents/skills/closeout/SKILL.md expects /Users/4jp/Workspace/library/engine/organvm/limen/.agents/skills/closeout/SKILL.md, absent at inspection. Its legacy compatibility allowance expired 2026-09-30T00:00:00Z. S0 files the exact discovery defect with Domus. This does not authorize a broad migration or prevent independent eligible cohorts from progressing.
+
+YOUR STREAM
+
+Review S0's exact candidate scopes plus S1–S3 evidence. Prepare cleanup manifests and narrowly scoped correction patches as text for S0; do not edit files, fetch, prune, or remove anything yourself.
+
+Use the existing classifier/protection registry and inspect actual tool behavior before invocation. Confirm each candidate's live remote identity, exact preserved revision, full object/payload custody, inactive owner/process/lease state, filesystem device/inode/path identity, mounted-volume status, shared-store/alternates dependencies, and installed/loaded/scheduled consumers. A lease timeout, old heartbeat, missing path, or clean status alone never establishes eligibility.
+
+Tool facts requiring fresh validation against the chosen source revision:
+- reap-branches.py --check is read-only; ordinary dry-run fetches origin/main. Its timestamp-based squash classification is insufficient alone for destructive branch retirement.
+- reclaim-worktrees.py --check --json produces the existing reclaim plan/digest and queries live refs. Apply requires expected-plan-sha and reclassification.
+- reap-clones.py has no read-only --check; dry-run creates a log directory and fetches with --prune. Its default depth 3 misses deeper library repositories.
+- clone-maintenance.sh mutates refs/GC/state and must not be used as an inventory.
+- gitvs.py doctor --parity-only is registry wiring, not actual Git parity.
+
+Concrete local source gap: remote_refs_containing_head returns provider refs/heads/* or refs/tags/*, whereas purge_remote_proven_path requires refs/remotes/*, causing remote-purge-refs-invalid. Prepare the smallest consistent correction: validated live-provider branch/tag namespaces at the boundary, with strict ref syntax and existing drift/identity checks preserved. Cached remote-tracking refs are not sufficient proof. Require custom-ref/reflog/unreachable accounting before whole-store purge.
+
+Also qualify removal error handling: clone reaper's ignore_errors=True can hide a failed removal. Success requires physical absent-path readback. Preserve interrupted-operation journal recovery.
+
+Define focused tests for accepted live proof, invalid/stale/mismatched refs, dirty/ignored payload gaps, protected or active paths, identity/owner drift, alternates/dependent worktrees, failed/partial deletion, and second-pass idempotence. S0 applies and runs necessary corrections in an existing suitable owner worktree without unrelated edits or new below-admission worktrees.
+
+Return one exact allowlisted operation packet per eligible cohort, plan digest, proof/acceptance links, source revision, test requirements, and retention packets for noneligible candidates. Never emit fabricated acceptance records or broaden into general estate repair.
+
