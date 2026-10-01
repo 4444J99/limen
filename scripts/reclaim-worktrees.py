@@ -102,7 +102,7 @@ from limen.worktree_abandonment import (
     quarantine_path,
 )
 from limen.worktree_debt import is_generated_log_shell
-from limen.worktree_roots import iter_worktree_targets
+from limen.worktree_roots import WorktreeTarget, iter_worktree_targets
 from reap_acceptance import (
     REQUIRED_ACCEPTANCE_PROOF_FIELDS as SHARED_REQUIRED_ACCEPTANCE_PROOF_FIELDS,
 )
@@ -121,6 +121,102 @@ def _option_value(name: str) -> str:
         if value == name and index + 1 < len(sys.argv):
             return sys.argv[index + 1]
     return ""
+
+
+def _option_values(name: str) -> list[str]:
+    values = []
+    for index, value in enumerate(sys.argv):
+        if value.startswith(name + "="):
+            values.append(value[len(name) + 1:])
+        elif value == name:
+            if index + 1 >= len(sys.argv) or sys.argv[index + 1].startswith("--"):
+                raise ValueError("target-argument-missing")
+            values.append(sys.argv[index + 1])
+    return values
+
+
+def exact_scope_targets(paths: list[str], manifest_path: Path) -> tuple[list[WorktreeTarget], str]:
+    """Admit only explicit roots from one committed, remotely published owner scope."""
+    if not paths or manifest_path.is_symlink():
+        raise ValueError("exact-scope-required")
+    manifest_path = manifest_path.resolve(strict=True)
+    owner_result = git(["rev-parse", "--show-toplevel"], manifest_path.parent)
+    if owner_result.returncode:
+        raise ValueError("scope-owner-unavailable")
+    owner = Path(owner_result.stdout.strip()).resolve(strict=True)
+    head = git(["rev-parse", "HEAD"], owner).stdout.strip()
+    relative = manifest_path.relative_to(owner).as_posix()
+    committed = git(["show", f"{head}:{relative}"], owner)
+    raw = manifest_path.read_bytes()
+    if committed.returncode or committed.stdout.encode() != raw or not reachable_from_remote(owner, head):
+        raise ValueError("scope-not-committed-and-published")
+    packet = json.loads(raw)
+    if not isinstance(packet, dict) or packet.get("schema") != "limen.worktree_reclaim_scope.v1" or packet.get("accepted") is not True:
+        raise ValueError("scope-not-accepted")
+    if not packet.get("owner_url") or not packet.get("authorization"):
+        raise ValueError("scope-owner-authorization-missing")
+    records = packet.get("targets")
+    if not isinstance(records, list) or not records:
+        raise ValueError("scope-targets-missing")
+    accepted = {}
+    for record in records:
+        key = record.get("path_sha256") if isinstance(record, dict) else None
+        if not isinstance(key, str) or len(key) != 64 or key in accepted:
+            raise ValueError("scope-target-identity-invalid")
+        if not record.get("root") or not record.get("repository"):
+            raise ValueError("scope-repository-missing")
+        accepted[key] = record
+    targets = []
+    seen = set()
+    for value in paths:
+        path = Path(value)
+        if not path.is_absolute() or ".." in path.parts or path.is_symlink():
+            raise ValueError("target-indirection")
+        resolved = path.resolve(strict=True)
+        if resolved != path or resolved in seen or resolved in _SELF_GUARD:
+            raise ValueError("target-duplicate-indirect-or-protected")
+        key = hashlib.sha256(str(resolved).encode()).hexdigest()
+        record = accepted.get(key)
+        if record is None or record["root"] != resolved.name:
+            raise ValueError("target-outside-accepted-scope")
+        remote = git(["remote", "get-url", "origin"], resolved)
+        if remote.returncode or remote.stdout.strip() != record.get("origin"):
+            raise ValueError("target-repository-drift")
+        proofs = {}
+        for item in record.get("preserved_ignored", []):
+            relative = item.get("path", "")
+            evidence_path = item.get("evidence", "")
+            if not relative or Path(relative).is_absolute() or ".." in Path(relative).parts:
+                raise ValueError("ignored-proof-path-invalid")
+            if not evidence_path or Path(evidence_path).is_absolute() or ".." in Path(evidence_path).parts:
+                raise ValueError("ignored-evidence-path-invalid")
+            evidence = subprocess.run(["git", "-C", str(owner), "show", f"{head}:{evidence_path}"],
+                                      capture_output=True, timeout=30, check=False)
+            if evidence.returncode:
+                raise ValueError("ignored-evidence-not-committed")
+            if item.get("kind") == "encrypted-original":
+                custody = json.loads(evidence.stdout)
+                if custody.get("status") != "verified" or custody.get("copy_count") != 2 or not all(
+                    row.get("restoration_passed") is True for row in custody.get("restores", [])
+                ):
+                    raise ValueError("ignored-encrypted-custody-unverified")
+                original_path = item.get("original_git_path", "")
+                if not original_path or Path(original_path).is_absolute() or ".." in Path(original_path).parts:
+                    raise ValueError("original-artifact-path-invalid")
+                evidence = subprocess.run(["git", "-C", str(owner), "show", f"{custody['source_head']}:{original_path}"],
+                                          capture_output=True, timeout=30, check=False)
+                if evidence.returncode:
+                    raise ValueError("original-artifact-unavailable")
+            if hashlib.sha256(evidence.stdout).hexdigest() != item.get("sha256"):
+                raise ValueError("ignored-evidence-digest-mismatch")
+            proofs[relative] = item["sha256"]
+        _SCOPE_IGNORED[resolved] = {
+            "proofs": proofs,
+            "generated": bool(record.get("regeneration_proof")),
+        }
+        seen.add(resolved)
+        targets.append(WorktreeTarget(path=resolved, min_age_h=0, source="accepted-stream"))
+    return targets, hashlib.sha256(raw).hexdigest()
 
 
 def _int_env(name: str, default: int) -> int:
@@ -167,6 +263,8 @@ APPLY = "--apply" in sys.argv and not CHECK
 FORCE = "--force" in sys.argv  # ignore the throttle
 GENERATED_ONLY = "--generated-only" in sys.argv
 HELP = "--help" in sys.argv or "-h" in sys.argv
+SCOPE_DIGEST = ""
+_SCOPE_IGNORED: dict[Path, dict] = {}
 
 
 EXPECTED_PLAN_SHA = _option_value("--expected-plan-sha")
@@ -228,6 +326,29 @@ def git(args, cwd, timeout=30):
     except Exception as e:  # fail open per-dir
         r = subprocess.CompletedProcess(args, 1, "", str(e))
         return r
+
+
+def scoped_ignored_preserved(root: Path, ignored: str) -> bool:
+    packet = _SCOPE_IGNORED.get(root.resolve())
+    if packet is None:
+        return not ignored.strip()
+    for relative in ignored.splitlines():
+        path = Path(relative)
+        if path.is_absolute() or ".." in path.parts:
+            return False
+        if packet["generated"] and (
+            any(part in GENERATED_CLEAN_PATHS for part in path.parts)
+            or path.name.endswith(".tsbuildinfo")
+            or path.name in {"vite.config.js", "vite.config.d.ts"}
+        ):
+            continue
+        expected = packet["proofs"].get(relative)
+        actual = root / path
+        if expected is None or actual.is_symlink() or not actual.is_file():
+            return False
+        if hashlib.sha256(actual.read_bytes()).hexdigest() != expected:
+            return False
+    return True
 
 
 def active_async_task_prefixes() -> set[str]:
@@ -561,6 +682,9 @@ def remote_clone_content_probe(
         status = git(["status", "--porcelain=v1", "-z", "--untracked-files=all"], current)
         if status.returncode != 0 or status.stdout:
             raise RuntimeError("remote-purge-working-tree-drift")
+        ignored = git(["ls-files", "--others", "--ignored", "--exclude-standard"], current)
+        if ignored.returncode or not scoped_ignored_preserved(current, ignored.stdout):
+            raise RuntimeError("remote-purge-ignored-custody-drift")
         observed_head = git(["rev-parse", "HEAD"], current).stdout.strip()
         observed_refs = remote_refs_containing_head(current, observed_head)
         observed_local_refs = all_local_refs_remote_proof(current)
@@ -1071,7 +1195,7 @@ def classify(
             return ("remove-worktree" if is_wt else "remove-clone"), CUSTODY_RESTORED_REASON
         return "skip", "dirty"
     ignored = git(["ls-files", "--others", "--ignored", "--exclude-standard"], d)
-    if ignored.returncode != 0 or ignored.stdout.strip():
+    if ignored.returncode != 0 or not scoped_ignored_preserved(d, ignored.stdout):
         return "skip", "ignored-payload-custody-unproven"
     is_wt = (d / ".git").is_file()  # gitdir-pointer ⇒ registered worktree
     if source == "workspace-checkout" and is_wt:
@@ -1234,6 +1358,9 @@ def build_candidate_manifest(
         ),
         "candidates": selected,
     }
+    if SCOPE_DIGEST:
+        manifest["scope_manifest_sha256"] = SCOPE_DIGEST
+        manifest["requested_targets"] = sorted(str(path) for path, _age, _source in dirs)
     if custody_proof:
         manifest["estate_custody"] = custody_proof
     canonical = json.dumps(
@@ -1282,11 +1409,11 @@ def _print_json_result(
 
 
 def main():
-    global _ACTIVE_PROCESS_CWDS, _REMOTE_ADVERTISEMENT_CACHE
+    global _ACTIVE_PROCESS_CWDS, _REMOTE_ADVERTISEMENT_CACHE, SCOPE_DIGEST
     if HELP:
         print(
             "usage: reclaim-worktrees.py [--check] [--json] [--apply] [--force] "
-            "[--repository-root PATH] "
+            "[--repository-root PATH] [--target PATH ... --scope-manifest PATH] "
             "[--generated-only] [--expected-plan-sha SHA256] "
             "[--estate-custody-root PATH --estate-custody-plan-sha SHA256]\n\n"
             "Dry-run by default. Use --check --json for a canonical candidate manifest, "
@@ -1338,7 +1465,18 @@ def main():
             print(f"reclaim [CUSTODY-BLOCKED]: {exc.code}")
         return 2
 
-    targets = iter_worktree_targets(LIMEN_ROOT)
+    try:
+        requested = _option_values("--target")
+        scope_path = _option_value("--scope-manifest")
+        if bool(requested) != bool(scope_path):
+            raise ValueError("target-and-scope-manifest-required-together")
+        if requested:
+            targets, SCOPE_DIGEST = exact_scope_targets(requested, Path(scope_path))
+        else:
+            targets = iter_worktree_targets(LIMEN_ROOT)
+    except (ValueError, OSError, RuntimeError) as exc:
+        print(json.dumps({"mode": "SCOPE-BLOCKED", "apply": APPLY, "error_type": type(exc).__name__}))
+        return 2
     if not targets:
         print("reclaim: no worktree roots present — nothing to do")
         return 0
