@@ -1,0 +1,250 @@
+diff --git a/cli/tests/test_vltima_organ.py b/cli/tests/test_vltima_organ.py
+index 60952553..4ffdc8cc 100644
+--- a/cli/tests/test_vltima_organ.py
++++ b/cli/tests/test_vltima_organ.py
+@@ -90,4 +90,3 @@ def test_render_ideal_doc_records_autopoietic_loop(tmp_path: Path, monkeypatch)
+     assert "# VLTIMA Ideal Form" in markdown
+     assert "Doctrine becomes work only through bounded packets" in markdown
+     assert "No `tasks.yaml` mutation in v1" in markdown
+-
+diff --git a/cli/tests/test_vltima_organ_health.py b/cli/tests/test_vltima_organ_health.py
+index ec2ffc4a..8653ac9f 100644
+--- a/cli/tests/test_vltima_organ_health.py
++++ b/cli/tests/test_vltima_organ_health.py
+@@ -36,7 +36,6 @@ def test_loop_defines_vltima_cadence_and_gates_lane():
+ 
+     assert 'C_VLTIMA="${LIMEN_BEAT_VLTIMA:-' in text
+     assert "LIMEN_VLTIMA:-0" in text
+-    assert "scripts/vltima-organ.py\" --write" in text
++    assert 'scripts/vltima-organ.py" --write' in text
+     assert "stamp vltima" in text
+     assert "--materialize-private" not in re.search(r"if due_voice vltima.*?fi", text, re.S).group(0)
+-
+diff --git a/cli/tests/test_vltima_owner_certainty.py b/cli/tests/test_vltima_owner_certainty.py
+index c2a73d01..25640d6e 100644
+--- a/cli/tests/test_vltima_owner_certainty.py
++++ b/cli/tests/test_vltima_owner_certainty.py
+@@ -103,4 +103,3 @@ def test_build_certainty_counts_unowned_dispatchable_as_zero(tmp_path: Path) ->
+     assert certainty["coverage"]["claim_count"] == 1
+     assert certainty["coverage"]["owner_status_counts"] == {"owned_current": 1}
+     assert certainty["coverage"]["unowned_dispatchable_count"] == 0
+-
+diff --git a/cli/tests/test_vltima_packetize.py b/cli/tests/test_vltima_packetize.py
+index 8aa056b1..94f820bc 100644
+--- a/cli/tests/test_vltima_packetize.py
++++ b/cli/tests/test_vltima_packetize.py
+@@ -82,4 +82,3 @@ def test_render_markdown_preserves_non_dispatch_contract() -> None:
+     assert "v1 never mutates `tasks.yaml`" in markdown
+     assert "`candidate` is not `queued`" in markdown
+     assert "VLTIMA-PACKET" in markdown
+-
+diff --git a/institutio/governance/parameters.yaml b/institutio/governance/parameters.yaml
+index 8d15aed9..d901bd30 100644
+--- a/institutio/governance/parameters.yaml
++++ b/institutio/governance/parameters.yaml
+@@ -639,6 +639,18 @@ parameters:
+     self_update: none
+     owner: continuity
+     note: "Ignored local private cartridge root (parent of session-corpus, photos-universe, etc.). Full media-dedup paths/hashes live here and are never committed; public receipts carry aggregates only."
++  LIMEN_PRIVATE_MAIL_STORY:
++    default: "$LIMEN_ROOT/.limen-private/mail-story"
++    env: LIMEN_PRIVATE_MAIL_STORY
++    self_update: none
++    owner: mail
++    note: "Ignored private cartridge for mail-story atoms and snapshots; tracked reports retain only redacted counts and hashes."
++  LIMEN_MAIL_ENVELOPE_INDEX:
++    default: "~/Library/Mail/V10/MailData/Envelope Index"
++    env: LIMEN_MAIL_ENVELOPE_INDEX
++    self_update: none
++    owner: mail
++    note: "Read-only Apple Mail Envelope Index path used by mail-story-ledger.py for local metadata inventory; never mutates provider mail."
+   LIMEN_PRIVATE_SESSION_CORPUS:
+     default: "$LIMEN_ROOT/.limen-private/session-corpus"
+     env: LIMEN_PRIVATE_SESSION_CORPUS
+@@ -933,6 +945,54 @@ parameters:
+     self_update: none
+     owner: continuity
+     note: "When 1 (default), session-orient.py refreshes origin with a hard-bounded 3s fetch before deriving ahead/behind, so the Git line reports a fresh comparison rather than one against whatever origin/main happened to sit on disk — the mechanism behind two sessions running gates against a 19-commits-behind checkout. Set 0 (or LIMEN_OFFLINE) to skip the network entirely; the section then labels itself 'refs STALE' rather than silently reading like parity. The label, not the fetch, is the invariant: a stale read that announces itself is safe."
++  LIMEN_LIFECYCLE_EXACT_SIZE_TARGET_LIMIT:
++    default: 32
++    env: LIMEN_LIFECYCLE_EXACT_SIZE_TARGET_LIMIT
++    self_update: none
++    owner: continuity
++    note: "Maximum worktree target count for exact recursive lifecycle-pressure size scans; larger inventories use bounded disk/sample accounting."
++  LIMEN_LIFECYCLE_DU_TIMEOUT_SECONDS:
++    default: 3
++    env: LIMEN_LIFECYCLE_DU_TIMEOUT_SECONDS
++    self_update: none
++    owner: continuity
++    note: "Per-run timeout for disk-usage based lifecycle-pressure worktree size accounting before falling back to sampling."
++  LIMEN_LIFECYCLE_SIZE_SAMPLE_TARGET_LIMIT:
++    default: 16
++    env: LIMEN_LIFECYCLE_SIZE_SAMPLE_TARGET_LIMIT
++    self_update: none
++    owner: continuity
++    note: "Maximum worktree roots sampled when lifecycle-pressure cannot complete exact or du-backed size accounting."
++  LIMEN_LIFECYCLE_SIZE_SAMPLE_FILE_LIMIT:
++    default: 2000
++    env: LIMEN_LIFECYCLE_SIZE_SAMPLE_FILE_LIMIT
++    self_update: none
++    owner: continuity
++    note: "Maximum files sampled during lifecycle-pressure fallback size accounting."
++  LIMEN_LIFECYCLE_SIZE_SAMPLE_SECONDS:
++    default: 2
++    env: LIMEN_LIFECYCLE_SIZE_SAMPLE_SECONDS
++    self_update: none
++    owner: continuity
++    note: "Total seconds allowed for lifecycle-pressure fallback size sampling."
++  LIMEN_PR_STATUS_TTL_MIN:
++    default: 30
++    env: LIMEN_PR_STATUS_TTL_MIN
++    self_update: none
++    owner: dashboard
++    note: "Freshness window for public PR-status aggregate cache; avoids live GitHub fetches on every static dashboard build."
++  LIMEN_PR_STATUS_REQUEST_TIMEOUT_MS:
++    default: 4000
++    env: LIMEN_PR_STATUS_REQUEST_TIMEOUT_MS
++    self_update: none
++    owner: dashboard
++    note: "Per-request timeout for PR-status GitHub API reads; failures reuse cached aggregate counts when available."
++  LIMEN_PR_STATUS_TOTAL_TIMEOUT_MS:
++    default: 20000
++    env: LIMEN_PR_STATUS_TOTAL_TIMEOUT_MS
++    self_update: none
++    owner: dashboard
++    note: "Total network budget for stale PR-status refresh before falling back to cached or partial aggregate counts."
+   LIMEN_INSIGHT_CADENCE_VERIFY_ROOT:
+     default: ""
+     env: LIMEN_INSIGHT_CADENCE_VERIFY_ROOT
+diff --git a/web/app/scripts/fetch-pr-status.mjs b/web/app/scripts/fetch-pr-status.mjs
+index 88dc2f54..341cd8d1 100644
+--- a/web/app/scripts/fetch-pr-status.mjs
++++ b/web/app/scripts/fetch-pr-status.mjs
+@@ -1,5 +1,5 @@
+ #!/usr/bin/env node
+-import { existsSync, readFileSync, writeFileSync } from "fs";
++import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+ import { execFileSync } from "child_process";
+ import { join, dirname } from "path";
+ import { fileURLToPath } from "url";
+@@ -28,7 +28,27 @@ function resolveGitHubToken() {
+ const GITHUB_TOKEN = resolveGitHubToken();
+ const outPath = join(__dirname, "..", "public", "pr-status.json");
+ const previous = existsSync(outPath) ? JSON.parse(readFileSync(outPath, "utf8")) : null;
+-const REQUEST_TIMEOUT_MS = Number(process.env.LIMEN_PR_STATUS_REQUEST_TIMEOUT_MS || 15_000);
++const requestTimeoutMs = Number(process.env.LIMEN_PR_STATUS_REQUEST_TIMEOUT_MS || 4000);
++const totalTimeoutMs = Number(process.env.LIMEN_PR_STATUS_TOTAL_TIMEOUT_MS || 20000);
++const deadlineMs = Date.now() + totalTimeoutMs;
++
++function hasBudget() {
++  return Date.now() < deadlineMs;
++}
++
++async function fetchWithBudget(url, headers) {
++  if (!hasBudget()) return null;
++  const controller = new AbortController();
++  const remaining = Math.max(1, deadlineMs - Date.now());
++  const timer = setTimeout(() => controller.abort(), Math.min(requestTimeoutMs, remaining));
++  try {
++    return await fetch(url, { headers, signal: controller.signal });
++  } catch {
++    return null;
++  } finally {
++    clearTimeout(timer);
++  }
++}
+ 
+ function previousRepo(repo) {
+   return previous?.repos?.find((item) => item.repo === repo) || null;
+@@ -39,11 +59,9 @@ async function fetchPRs(repo) {
+   const headers = { Accept: "application/vnd.github.v3+json" };
+   if (GITHUB_TOKEN) headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+ 
+-  let res;
+-  try {
+-    res = await fetch(url, { headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+-  } catch (error) {
+-    console.error(`Failed to fetch PRs for ${repo}: ${error instanceof Error ? error.message : "network error"}`);
++  const res = await fetchWithBudget(url, headers);
++  if (res === null) {
++    console.error(`Failed to fetch PRs for ${repo}: timeout or network error`);
+     return null;
+   }
+   if (!res.ok) {
+@@ -71,10 +89,8 @@ async function fetchCheckRuns(repo, headSha) {
+   const headers = { Accept: "application/vnd.github.v3+json" };
+   if (GITHUB_TOKEN) headers.Authorization = `Bearer ${GITHUB_TOKEN}`;
+ 
+-  let res;
+-  try {
+-    res = await fetch(url, { headers, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+-  } catch {
++  const res = await fetchWithBudget(url, headers);
++  if (res === null) {
+     return null;
+   }
+   if (!res.ok) return null;
+@@ -102,10 +118,17 @@ async function main() {
+   }
+   console.log("Fetching PR status for", REPOS.length, "repos...");
+   const results = [];
++  let partial = false;
+ 
+   for (const repo of REPOS) {
++    if (!hasBudget()) {
++      partial = true;
++      console.log(`  ${repo}: skipped, total fetch budget exhausted`);
++      continue;
++    }
+     const prs = await fetchPRs(repo);
+     if (prs === null) {
++      partial = true;
+       const fallback = previousRepo(repo);
+       if (fallback) {
+         results.push({ ...fallback, stale: true, error: "fetch_failed" });
+@@ -118,7 +141,13 @@ async function main() {
+     }
+     const prsWithChecks = [];
+     for (const pr of prs) {
++      if (!hasBudget()) {
++        partial = true;
++        prsWithChecks.push({ ...pr, checks: null });
++        continue;
++      }
+       const checks = await fetchCheckRuns(repo, pr.head);
++      if (checks === null) partial = true;
+       prsWithChecks.push({ ...pr, checks });
+     }
+     results.push({ repo, prs: prsWithChecks, count: prsWithChecks.length });
+@@ -131,18 +160,25 @@ async function main() {
+     0
+   );
+ 
++  let summary = {
++    total_repos: REPOS.length,
++    total_open_prs: totalPRs,
++    prs_with_failing_ci: totalFailed,
++  };
++  if (partial && previous?.summary) {
++    summary = previous.summary;
++    console.log("PR status fetch partial; reused cached aggregate summary.");
++  }
++
+   const output = {
+     generated_at: new Date().toISOString(),
+     repos: [],
+-    summary: {
+-      total_repos: REPOS.length,
+-      total_open_prs: totalPRs,
+-      prs_with_failing_ci: totalFailed,
+-    },
++    summary,
+   };
+ 
++  mkdirSync(dirname(outPath), { recursive: true });
+   writeFileSync(outPath, JSON.stringify(output, null, 2));
+-  console.log(`Wrote ${outPath} (${totalPRs} PRs across ${REPOS.length} repos)`);
++  console.log(`Wrote ${outPath} (${summary.total_open_prs} PRs across ${REPOS.length} repos)`);
+ }
+ 
+ main().catch((e) => {
