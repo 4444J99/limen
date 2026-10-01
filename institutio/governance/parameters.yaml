@@ -523,7 +523,7 @@ parameters:
     env: LIMEN_HOST_PRESSURE_STALE
     self_update: none
     owner: vitals
-    note: "Gate for the host-pressure-stale beat sensor (institutio/governance/sensors.yaml section 0o): scripts/host-pressure-stale.py fails when sampled_at misses VITALS_STALE_BEATS declared sample cadences while LIMEN_VIGILIA=1. Watches the watcher; a silent gauge also fires one onset-deduped notification (scripts/_notify.py, IF-HOST-PRESSURE form 4). Read by the beat-sensors runner via the SENSORS registry. 0 disables the pass."
+    note: "Gate for the host-pressure-stale beat sensor (institutio/governance/sensors.yaml section 0o): the registered beat runs scripts/host-pressure-stale.py --read-only --on-demand and fails when the current host-admission pressure observation is unavailable or malformed; read-only on-demand sensing never emits the legacy notification. The default maintenance mode still evaluates sampled_at against VITALS_STALE_BEATS and may emit the onset-deduped notification when invoked without --read-only. Read by the beat-sensors runner via the SENSORS registry. 0 disables the registered pass."
   LIMEN_RUNTIME_LAG:
     default: "1"
     env: LIMEN_RUNTIME_LAG
