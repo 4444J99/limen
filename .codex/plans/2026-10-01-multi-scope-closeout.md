@@ -10,7 +10,7 @@ and native lineage. Preserve v1 and never signal peers or delete evidence to pas
 Reconcile historical sessions `01a0f92b-a511-7871-89fe-d86f687b8bc3` and
 `01a0f4d8-3220-7b92-b78e-5f0a58e24313` as handoffs under their existing owners.
 The current session is `01a0f974-79b7-7f90-a787-5ef3f5359948`. Private evidence and
-new receipts belong to the existing estate-vault PR 1. Preserve prior invalid attempts.
+new receipts belong to the existing private owner PR. Preserve prior invalid attempts.
 
 Release requires merged source, verified installed protocol, exact native transcript
 binding, complete scope, independent restored journal custody, and two unchanged

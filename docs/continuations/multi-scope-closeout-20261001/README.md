@@ -17,7 +17,7 @@ were corrected; 2,105 inherited estate lint findings (none in changed files) and
 public technical-readiness predicate remain unresolved. Details: `verification.json`.
 
 Owner: https://github.com/4444J99/limen/issues/2763. Merge and installation are pending
-the landing gates. The private evidence owner is the existing estate-vault PR 1;
+the landing gates. Private evidence remains with its existing private owner PR;
 two independent restores now prove custody for the exact Group 04 session journal.
 Historical multi-scope receipts and the three unresolved Workspace process identities
 remain required before installed release. No session is certified by this source PR.
