@@ -223,6 +223,12 @@ if [ -n "$req_json" ] && printf '%s' "$req_json" | jq -e 'type == "array"' >/dev
   req_scope="required"
   req_failing=$(printf '%s' "$req_json" | jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")] | length')
   req_pending=$(printf '%s' "$req_json" | jq '[.[] | select(.bucket == "pending")] | length')
+elif [ -n "$REPO" ] && python3 "$_root/scripts/_required_checks.py" \
+    --prove-no-required "$REPO" --branch "$base" >/dev/null 2>&1; then
+  # gh emits text/nonzero rather than [] when the policy has no required checks.
+  # Prove that absence through the shared branch-protection AND rules predicate;
+  # an unavailable/unknown policy still retains the conservative fallback above.
+  req_scope="required"; req_failing=0; req_pending=0
 fi
 
 echo "PR #$PR — $title"
