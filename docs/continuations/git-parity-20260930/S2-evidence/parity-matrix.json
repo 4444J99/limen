@@ -1,0 +1,4289 @@
+{
+ "schema": "S2-EVIDENCE-V1",
+ "redacted": true,
+ "note": "branch subjects and remote URLs omitted; no credentials detected in any remote URL",
+ "observed_at": "2026-09-30T20:30:26Z",
+ "stores": [
+  {
+   "commondir": "/Users/4jp/Workspace/.limen-worktrees/m1_repos/a-i--skills/.git",
+   "remote_identity": ":organvm-iv-taxis/a-i--skills",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/.limen-worktrees/m1_repos/hokage-chess/.git",
+   "remote_identity": ":organvm/hokage-chess--4444j99",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "81a717b1ac01b051f8c80f351d8b5a421be95911",
+     "remote_sha": "cd41bdf5b30f1731057a3c5c75135ef7355e2a9f",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-09 13:27:11 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/.limen-worktrees/m1_repos/public-process/.git",
+   "remote_identity": ":organvm-vi-koinonia/public-process",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 1,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "1855450fc0f894a7a8f1f0f1004a14ff96588386",
+     "remote_sha": "0311183ef33cbb45c87aede39658294753dd65ba",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-23 06:00:29 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/.limen-worktrees/m1_repos/public-process/_pipeline/.git",
+   "remote_identity": ":organvm/essay-pipeline",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 5,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "ec9c7b130ae17e9cf1afaa091d6982167caead96",
+     "remote_sha": "b152a7c942aa73f6b159c6b462616ef14357c871",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-19 04:52:54 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "remediate-17",
+     "local_sha": "8fed57c6c2916aa265618ca5fea82770b408be97",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 08:36:42 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "remediate-18",
+     "local_sha": "d85cddab91775f61468c294d2e68346c8d7194b2",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 08:33:33 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "remediate-21",
+     "local_sha": "ba99fe097ad915515f54589a95559e516df7fed7",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 08:36:14 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "remediate-24",
+     "local_sha": "fc173168f0be4b59833f76fea2761bf04d461e8b",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 08:32:43 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "remediate-17",
+    "remediate-18",
+    "remediate-21",
+    "remediate-24"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/.limen-worktrees/m1_repos/public-process/_standards/.git",
+   "remote_identity": ":organvm/editorial-standards",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "f07e8653cf56e6a1012e833aa24a7d05a6f53884",
+     "remote_sha": "0a913f9709e57b6b1cfa2e5964c09f832726e71f",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-06-22 10:09:14 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/.limen-worktrees/m1_repos/relationship-pipeline/.git",
+   "remote_identity": ":organvm/relationship-pipeline",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 3,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "a1011dae19d27d2327415d747c3d9994eee4662e",
+     "remote_sha": "af6d0b8b88b340f601d9bc07eb1967ca56291701",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-22 18:17:45 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "remediate-11",
+     "local_sha": "6d4f720358f71817519f3fd46688ee9aa4defeb7",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 08:27:27 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "remediate-12",
+     "local_sha": "030f661df5e63b27bce82849e4fd0fb851a05f9f",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 08:27:53 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "remediate-11",
+    "remediate-12"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/.social-automation-worktrees/linkedin-effector-20260803/.git",
+   "remote_identity": "organvm/social-automation",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "218f516bdc716975d341f48bfaa3ddb210c946f9",
+     "remote_sha": "cb48a8f405e4e101798becd56800f34baa9c625d",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-03 20:38:25 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "remediate-10",
+     "local_sha": "27439d6e597107e1d682bd154b687b6a5a1431d9",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 08:26:52 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "remediate-10"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/4444J99/application-pipeline/.git",
+   "remote_identity": ":organvm/application-pipeline",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 4,
+   "branches": 7,
+   "exact_heads": 2,
+   "unsynced_heads": [
+    {
+     "branch": "fix/truthful-outreach-receipts-20260803",
+     "local_sha": "b43d200f42de13a5f5fb65fdc7b6c25a93bf5b30",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-03 20:18:58 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "main",
+     "local_sha": "951938a1a35b084be33aa4b7a4f502866351cd92",
+     "remote_sha": "3f76abf70059872f376f25f672bf95e26b6e92bb",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-05 13:32:38 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "ops/career-pass-20260728",
+     "local_sha": "ffebdc9971965208d941da31c641f3f6e7c4d038",
+     "remote_sha": "9a15f768bc0061bb1c806daae3c52b0a39092583",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-28 15:28:36 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "remediate-83",
+     "local_sha": "fddd3dc98bae91292eaff1fd3a30dc002dce2ce5",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-07-28 15:15:48 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "work/application-pr83-repair-20260728",
+     "local_sha": "fddd3dc98bae91292eaff1fd3a30dc002dce2ce5",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-07-28 15:15:48 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/4444J99/editorial-standards/.git",
+   "remote_identity": "4444J99/editorial-standards",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 2,
+   "branches": 2,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "codex/editorial-reader-regeneration-20260925",
+     "local_sha": "6ffacea2b4d502940b6ca41af096820cb2e45b43",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-25 22:25:47 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "d0488a7208d976daa32486e223b6656105a321cd",
+     "remote_sha": "0a913f9709e57b6b1cfa2e5964c09f832726e71f",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-09 07:11:17 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [
+    "codex/editorial-reader-regeneration-20260925"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/4444J99/estate-vault/.git",
+   "remote_identity": ":4444J99/estate-vault",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "e32f92b23655d900a078f778998750494192db27",
+     "remote_sha": "cdbda266d61e62852a6a87e84b825a9ab0f1e1a8",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-10 20:40:05 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/4444J99/organvm-ci-relay/.git",
+   "remote_identity": "4444J99/organvm-ci-relay",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 2,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/4444J99/organvm-corpvs-testamentvm/.git",
+   "remote_identity": ":organvm/organvm-corpvs-testamentvm",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 3,
+   "branches": 2,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "8eeee2130ebd9d3a3bd0ee024164ac9a97992389",
+     "remote_sha": "81ba4d6e6d6e44ad5dcb35e9b1677ffdc0ff41c1",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-17 15:03:00 -0300",
+     "unique_local_history": false
+    },
+    {
+     "branch": "work/career-portal-registry-20260728",
+     "local_sha": "fa5e8ef31de8a52cbc6cf74b5129ec38715cdee5",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-07-28 12:06:04 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "work/career-portal-registry-20260728"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/4444J99/organvm-engine/.git",
+   "remote_identity": "4444J99/organvm-engine",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "codex/context-library-portability-20260926",
+     "local_sha": "e02065f383e2738fdd683d4a6c535a528ac65816",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-25 23:10:18 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "0110ec7998a67a946da9067195b98073f5726470",
+     "remote_sha": "3cfb12c7db85456373cd94efe0480ac5bf79436b",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-24 11:52:57 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [
+    "codex/context-library-portability-20260926"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/4444J99/peer-audited--behavioral-blockchain/.git",
+   "remote_identity": ":4444J99/peer-audited--behavioral-blockchain",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 3,
+   "branches": 9,
+   "exact_heads": 6,
+   "unsynced_heads": [
+    {
+     "branch": "lane/verify",
+     "local_sha": "899fd4cd3cd0865054675579857a710f2ab6e003",
+     "remote_sha": "718c8e2e058dea0802b8cec636774f6f397799d2",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 21:59:50 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "94ae96d04a897eaf0999f7691ef5e17d114c8970",
+     "remote_sha": "2ec1d01a1f58b5bc7290b3f17822da1e26a99564",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 21:52:53 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "work/verify/planning-custody-receipt",
+     "local_sha": "ca614829f7fa203b3dcd26e1e2ebcfce505ad326",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-15 13:17:18 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "lane/verify",
+    "work/verify/planning-custody-receipt"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/4444J99/portvs/.git",
+   "remote_identity": ":organvm/portvs",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 6,
+   "exact_heads": 3,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "48da3da293ecd7604b6c9d3ce19d0bf49a70013d",
+     "remote_sha": "afb1af5f3e3c0dc943177cf7a3acd08987c17548",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-27 08:30:52 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "remediate-1",
+     "local_sha": "766f3c7bb846a19857c33d55eb9307358fdb5aaf",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 08:28:25 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "remediate-3",
+     "local_sha": "95512d1eae587fe50c252531526ac83e52a1ede7",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 08:30:05 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "remediate-1",
+    "remediate-3"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/4444J99/simvltanea/.git",
+   "remote_identity": ":4444J99/simvltanea",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "1b855c5beb19d56d39e199f6d8d9159f651f12b3",
+     "remote_sha": "0324129cadffd8f102f66cf43faf8a9143dd21b2",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-11 09:03:53 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/4444J99/styx-public-repo/.git",
+   "remote_identity": ":4444J99/styx-public",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 10,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "chore/styx-990-pr991-closeout",
+     "local_sha": "1e1c969791de94374e3a67c36f96d359b5713e56",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-16 16:59:44 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "lane/evolve-platform",
+     "local_sha": "d688fd83ed232442cd7f694392d18f939be3519d",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-16 21:59:55 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "lane/expand-external",
+     "local_sha": "bb8101ac7efeda161ffc20b51f2e1ee4fe465a73",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-16 21:59:59 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "lane/expand-product",
+     "local_sha": "711905ca9aa44dd2eee3d58ce427355b21f3e8fb",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-16 22:00:04 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "lane/heal",
+     "local_sha": "2cde23b4c35b99ee60f7952bb4de3e09447db659",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-16 22:10:06 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "lane/verify",
+     "local_sha": "41b95f6286e5665e43f1c86008906775637790ab",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-16 21:59:50 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "340437fb6ee7aa6dd791a276a0499fa5eed933ee",
+     "remote_sha": "3a471c4b88cf208b836bc8ea1864f5508f0583b3",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-17 12:00:18 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "work/lane-evolve-platform/bifurcation-types-extraction-2026-09-17",
+     "local_sha": "9b1c52a0016a1b033ff629e3c049df75b5cd004b",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-17 11:49:58 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "work/lane-verify/ci-gate-fixes-2026-09-17",
+     "local_sha": "c750c75a4cff7f4245af80d23475dd5aeaf73fdc",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-17 11:07:24 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "work/verify/990-local-demo-login-throttle",
+     "local_sha": "27a1a717c23449d3590de97888862f7b4d94dc13",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-16 16:04:01 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "chore/styx-990-pr991-closeout",
+    "lane/evolve-platform",
+    "lane/expand-external",
+    "lane/expand-product",
+    "lane/heal",
+    "lane/verify",
+    "main",
+    "work/lane-evolve-platform/bifurcation-types-extraction-2026-09-17",
+    "work/lane-verify/ci-gate-fixes-2026-09-17",
+    "work/verify/990-local-demo-login-throttle"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/4444J99/universal-mail--automation-backup/.git",
+   "remote_identity": null,
+   "remote_access": "LOCAL_PATH_REMOTE",
+   "state": "NO_AUTHORIZED_REMOTE",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "4044b12636338e9f8d8cc43ec6ecc149c694b933",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-10 20:21:45 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/4444J99/universal-mail--automation/.git",
+   "remote_identity": ":4444J99/universal-mail--automation",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 2,
+   "branches": 2,
+   "exact_heads": 2,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/4444J99/victoroff-os/.git",
+   "remote_identity": ":4444J99/victoroff-os",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 2,
+   "branches": 4,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "chamber-pr-332",
+     "local_sha": "c4ee3eb41bbb5bf6cb514b3efe8cc2cbee3e43f5",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-26 14:27:59 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "chamber-pr-333",
+     "local_sha": "b4cab5b81fb0856f5165c68790cb99eeabcb61f7",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-26 14:24:58 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "main",
+     "local_sha": "b0c1331e99a6911dcb3b37f5fd8678060b3c8186",
+     "remote_sha": "75e47e042a95df67a8f305e8231a32e05fc96f89",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-27 08:49:49 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "remediate-327",
+     "local_sha": "699c06a867082427f75c6f0aadc8be786a36ff03",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-26 09:05:55 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "remediate-327"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/_collaboration-operations-private/state/hydrated/4444J99--content-engine--asset-amplifier/.git",
+   "remote_identity": ":4444J99/content-engine--asset-amplifier",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "3b8a6286e35e5d69cdbfc5be63c0df59d1bd2a12",
+     "remote_sha": "d162a5c29aecde0a5bd0270fe7a5f68c359d77c3",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-23 06:26:46 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/_collaboration-operations-private/state/hydrated/4444J99--mirror-mirror/.git",
+   "remote_identity": ":4444J99/mirror-mirror",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/_collaboration-operations-private/state/hydrated/4444J99--peer-audited--behavioral-blockchain/.git",
+   "remote_identity": ":4444J99/peer-audited--behavioral-blockchain",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "52d1e83aa126fc4c2cb983a421b1b8673a975c51",
+     "remote_sha": "2ec1d01a1f58b5bc7290b3f17822da1e26a99564",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-02 14:51:01 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/_collaboration-operations-private/state/hydrated/4444J99--sovereign-systems--elevate-align/.git",
+   "remote_identity": ":4444J99/sovereign-systems--elevate-align",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 1,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "130db3fb4b96b6a9d67e258c2094e1e7d6258357",
+     "remote_sha": "db259cd32c2e3fdb7c33ea98e907f2db71f69686",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-19 03:57:06 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": [
+    "/Users/4jp/Documents/Codex/2026-08-27/referenced-chatgpt-conversation-this-is-an/work/sovereign-social-card"
+   ]
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/_collaboration-operations-private/state/hydrated/4444J99--styx-behavioral-art/.git",
+   "remote_identity": ":4444J99/styx-behavioral-art",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 3,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "70ae67a5a34c96ebc3a4cb74812e7040a31364b5",
+     "remote_sha": "5838d62a3832a1686e582594b57d05487edacf04",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-19 05:41:16 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "remediate-11",
+     "local_sha": "cafd41209c5c62e10a086a658d7718bac8338809",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-07-30 15:37:11 +0000",
+     "unique_local_history": true
+    },
+    {
+     "branch": "remediate-8",
+     "local_sha": "743377d06240be03efc01d8e8fffe16ada0dd690",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 08:24:05 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "remediate-11",
+    "remediate-8"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/_collaboration-operations-private/state/hydrated/4444J99--your-fit-tailored/.git",
+   "remote_identity": ":4444J99/your-fit-tailored",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "eab96ea50888454370f664935e8fd1ea2763c7e8",
+     "remote_sha": "7d23744f1e689316631a5156753b5d7a52fcf0dc",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-23 06:26:59 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "remediate-pr-27",
+     "local_sha": "849ca7ad1d83ccc9698e54a212dba5bf050f67d3",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 08:22:59 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/_diagnostics/.git",
+   "remote_identity": ":organvm/_diagnostics",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "ba76f73606682c37afac30366ef57cdbd32f9f93",
+     "remote_sha": "8ff69e389e4d0a6bdba5dcc2848ed0f641051fd5",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-26 08:07:05 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/_people-private/.custody-staging/meeting-20260915/arca-vault/.git",
+   "remote_identity": "organvm/arca-g3",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "01e3e672931538acc6c8575d58a2203e63f369a2",
+     "remote_sha": "32a9fa34e618fa39c7ab05835ba17d262b8eb86d",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-15 13:16:40 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/_people-private/.git",
+   "remote_identity": null,
+   "remote_access": "NO_REMOTE",
+   "state": "NO_AUTHORIZED_REMOTE",
+   "checkouts": 1,
+   "branches": 0,
+   "exact_heads": 0,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/a-organvm/organvm-engine/.git",
+   "remote_identity": "organvm/organvm-engine",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 2,
+   "branches": 3,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "codex/reader-mode-v1-final-20260901",
+     "local_sha": "5cf2949e7597b85c285b2d39976a16a14f9d5fc7",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-08 19:41:50 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "limen/limen-060-4a78",
+     "local_sha": "a7d0abffab1e3490f8cdf6395d56ef739bc27ec1",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-16 22:14:35 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "main",
+     "local_sha": "2fe27eb59a4e0df45a0c1bbc53e173e2b893cbfa",
+     "remote_sha": "3cfb12c7db85456373cd94efe0480ac5bf79436b",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-22 07:51:25 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/chamber_worktrees/organvm-iii-ergon/trendpulse/.git",
+   "remote_identity": ":organvm-iii-ergon/trendpulse",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 4,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "fix/default-ci-types-20260827",
+     "local_sha": "85d6a49bf2410a4a249d29114c9e8699fab72f98",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 14:31:48 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "main",
+     "local_sha": "31d3130e4782f56bf1608d5a25f21353144eb2af",
+     "remote_sha": "3044be554f6d4b1b6e11764b74774054ba18e6e9",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-07 00:09:26 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "pr-8",
+     "local_sha": "fbfb09fa55891a33ed741de83d257910f0a3a048",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-06-20 00:43:54 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "remediate-pr-8",
+     "local_sha": "36c35a52f2ac54a0c418a19046e9d3ae8ec4acb6",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 08:32:26 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "pr-8",
+    "remediate-pr-8"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/chamber_worktrees/organvm-iii-ergon/writelens/.git",
+   "remote_identity": ":organvm-iii-ergon/writelens",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 2,
+   "branches": 2,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "7f590ca996a8c7327398007929c7d3f4f5f0084e",
+     "remote_sha": "7607f907f46b22da0ce50c14d655167a538beafc",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-07 06:46:29 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "remediate-6",
+     "local_sha": "dc0efd3d9472fa0c91f0ea65c8a1b01867c1dec3",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-26 09:07:25 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "remediate-6"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/charles-universe/.git",
+   "remote_identity": ":organvm-iii-ergon/charles-universe",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 4,
+   "exact_heads": 3,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "4ecdfa1a74b59ab9a0b5c38912ce1dfbdebbc198",
+     "remote_sha": "8dc14a9fb5ca4ba52fef207ff4ce38834e13d3bd",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-21 08:24:05 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 1,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/charles-universe/.git/modules/shared-projects/mirror-mirror",
+   "remote_identity": ":4444J99/mirror-mirror",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/charles-universe/.git/modules/shared-projects/your-fit-tailored",
+   "remote_identity": ":4444J99/your-fit-tailored",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "eab96ea50888454370f664935e8fd1ea2763c7e8",
+     "remote_sha": "7d23744f1e689316631a5156753b5d7a52fcf0dc",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-23 06:26:59 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/collaboration-operations-platform/.git",
+   "remote_identity": ":organvm-iii-ergon/collaboration-operations-platform",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 4,
+   "exact_heads": 2,
+   "unsynced_heads": [
+    {
+     "branch": "rescue/20260806-swarm-state",
+     "local_sha": "9c44084c7e1fb67d89276e92ec4d73a0956558c2",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-06 23:38:04 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "work/platform-alpha-20260802",
+     "local_sha": "4ba0f30f04320cbf6fc63e61f3d3e80787353269",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-02 15:47:27 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "rescue/20260806-swarm-state",
+    "work/platform-alpha-20260802"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/doctoral-execution-20260908/applications/.git",
+   "remote_identity": "organvm/application-pipeline",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/doctoral-execution-20260908/omni/.git",
+   "remote_identity": "organvm/metasystem-master",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "phd/omni-reproducibility-baseline-2026-09-03",
+     "local_sha": "18a8e31441b39af26a997d1916ae6238fb2158bd",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-06 09:37:42 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "phd/omni-reproducibility-baseline-2026-09-03"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/domus-genoma/.git",
+   "remote_identity": "4444J99/domus-genoma",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 4,
+   "branches": 22,
+   "exact_heads": 16,
+   "unsynced_heads": [
+    {
+     "branch": "fix/cce-managed-refresh-20260925",
+     "local_sha": "37bf9cbdfc8533efc646f5a9b83275a487f9d634",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-24 23:52:45 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "fix/codex-startup-closeout",
+     "local_sha": "d11f196949ccf2d4ca812173595bea284979aafb",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-22 11:10:50 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "fix/domus-source-root-reconcile-20260925",
+     "local_sha": "aba45318eb2951e04e1284b8fcc1cfa94c2fbf35",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-24 23:16:13 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "fix/security-hardening-domus-genoma",
+     "local_sha": "663b3cc97b0acc1ad1f59d62483c4182e0191611",
+     "remote_sha": "18f0ca2badfc09442180b26d7bdce9ac5e89f078",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-01 21:08:04 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "fix/unattended-auth-20260916",
+     "local_sha": "631e1403c9aff1bc792e25b0bc51986758b0a294",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-16 13:06:26 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "master",
+     "local_sha": "71d47d4c4212183a85c1366926bfea47c5b226d5",
+     "remote_sha": "e98e7433972a1d07c3e3ea478ca329fe9f0be564",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-24 20:42:41 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [
+    "fix/cce-managed-refresh-20260925",
+    "fix/domus-source-root-reconcile-20260925",
+    "fix/security-hardening-domus-genoma"
+   ],
+   "stashes": 1,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/domus-genoma/_agents/cache/uv/git-v0/checkouts/42910dfe8296368e/701e7c84/.git",
+   "remote_identity": null,
+   "remote_access": "LOCAL_PATH_REMOTE",
+   "state": "NO_AUTHORIZED_REMOTE",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "701e7c843f46c6a649203a488cece1bf19f1df90",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-08 13:26:10 +0200",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/domus-genoma/_agents/cache/uv/git-v0/db/42910dfe8296368e/.git",
+   "remote_identity": null,
+   "remote_access": "NO_REMOTE",
+   "state": "NO_AUTHORIZED_REMOTE",
+   "checkouts": 1,
+   "branches": 0,
+   "exact_heads": 0,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/domus-genoma/_agents/cache/uv/git-v1/checkouts/42910dfe8296368e/7a296833/.git",
+   "remote_identity": null,
+   "remote_access": "LOCAL_PATH_REMOTE",
+   "state": "NO_AUTHORIZED_REMOTE",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "7a2968335f2198b966864de1ce3655c8e485a653",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-24 10:57:40 +0200",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/domus-genoma/_agents/cache/uv/git-v1/checkouts/42910dfe8296368e/d0f7f926/.git",
+   "remote_identity": null,
+   "remote_access": "LOCAL_PATH_REMOTE",
+   "state": "NO_AUTHORIZED_REMOTE",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "d0f7f92631c23dc4c5ed0b5ccd35bc623b19a809",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-30 20:53:23 +0200",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/domus-genoma/_agents/cache/uv/git-v1/db/42910dfe8296368e/.git",
+   "remote_identity": null,
+   "remote_access": "NO_REMOTE",
+   "state": "NO_AUTHORIZED_REMOTE",
+   "checkouts": 1,
+   "branches": 0,
+   "exact_heads": 0,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/hospes-operations-private/.git",
+   "remote_identity": "organvm/hospes-operations-private",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 2,
+   "branches": 2,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "fix/portal-auth-boundaries-20260916",
+     "local_sha": "a9d3d575a32229941b6c3d8f738bb748d1c419ea",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-16 13:55:39 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "3a4d14eb668b96b8e279a44066a57b9c1998483e",
+     "remote_sha": "e55f8deec966da1280860724a3dc42d61db34d86",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-31 18:02:39 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "fix/portal-auth-boundaries-20260916",
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/hospes/.git",
+   "remote_identity": "organvm/hospes-operations-private",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 29,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "claude/hospes-dossier-20260814",
+     "local_sha": "e54821e808fa0adbc335e44af7de1fae00e81d8f",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-14 12:51:19 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "claude/hospes-issue-24-20260814",
+     "local_sha": "5ca30f6796b215c3838bef446374d5bcd56163c2",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-14 22:30:53 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "claude/hospes-issue-25-20260814",
+     "local_sha": "61f4e7a7c78284ed4e562d066147dbde31da6228",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-14 21:31:14 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "claude/hospes-issue-26-20260814",
+     "local_sha": "105ed603780787a49487fb10eb8f3e099c1d5d77",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-14 20:32:25 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "claude/hospes-issue-27-20260814",
+     "local_sha": "24fdf5b85dd2362abf10d34a755dd69ef4e3389d",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-14 23:07:27 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "claude/hospes-issue-28-20260815",
+     "local_sha": "4327357ac1b84694634fd414ab4bee5ec9ebf4b7",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-15 02:15:46 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "claude/hospes-issue-29-20260814",
+     "local_sha": "67e1d4a8e96d09ed8effd35ff564bdc6e355385c",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-14 23:53:15 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "claude/hospes-issue-30-20260814",
+     "local_sha": "d473f4fe23fcb80e7220f6f04eb600442d9651ea",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-14 21:46:22 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "claude/hospes-issue-31-20260814",
+     "local_sha": "c6d3e58ee15f65fe710435e86e0870f575a7df9b",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-14 23:29:00 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "claude/hospes-issue-32-20260815",
+     "local_sha": "1f46108e349fa127124d4e044259b337475c5818",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-15 02:38:15 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "claude/hospes-issue-33-20260815",
+     "local_sha": "55e919bb41d8790dd5595270ec075af17bca314c",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-15 01:21:29 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "claude/hospes-issue-34-20260814",
+     "local_sha": "5044eaca6dd65ffc846339b083f0a1b41cdbbada",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-15 00:37:00 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "claude/hospes-issue-59-20260814",
+     "local_sha": "f4b8a946e414765f910a540ae6a15ea12e5166f6",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-14 23:18:41 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "codex/hospes-codeql-closeout-20260810",
+     "local_sha": "c5cf98ff5ddfa5ee165ba12031dbe47f85e44792",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-10 12:03:20 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "codex/hospes-completion-registry-20260810",
+     "local_sha": "03ddb36fdf6953e258fe34c1556e4e86439a2810",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-10 12:16:33 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "codex/hospes-encryption-artifacts-20260810",
+     "local_sha": "ceb851097489c043cea76bd1ede49a3142f269d1",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-10 13:37:55 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "codex/hospes-issue-21-20260810",
+     "local_sha": "5a832d3aeae3557f739668814d94fed5960225d9",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-10 16:35:24 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "codex/hospes-issue-22-20260810",
+     "local_sha": "dba78b1fa6b6f4f119bdae31174b57cc6a7b9d3a",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-10 19:08:57 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "codex/hospes-issue-23-20260810",
+     "local_sha": "b09ed5894640523dcb877335e9a280a2f36133fa",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-11 22:20:36 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "codex/hospes-issue-23-endzone-20260812",
+     "local_sha": "ef60b2964d664b577487e3bcfa32302d8c50b032",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-12 09:49:34 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "codex/hospes-storage-migration-20260810",
+     "local_sha": "8f2fc4412b89b8ccbefc4d5b1f8dfa9212294c2c",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-10 13:06:04 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "codex/hospes-whole-project-completion-20260810",
+     "local_sha": "7a8c62f4a521945e2c8cbe263fbdd0d3e6dd1b23",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-10 11:59:21 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "feat/demo-video-recorder",
+     "local_sha": "8ef9d6af116400c9619990b8cdd969147ec0404c",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-13 01:10:48 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "feat/guided-demo-personas",
+     "local_sha": "9914b0fcde7c661779d2f97cd73bc9acf7c0acf4",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-13 03:01:39 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "feat/hardening-issue-sync",
+     "local_sha": "c5bddd3b633c6e0bbe76ec87af24527f95f0a61c",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-15 13:55:47 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "feat/hardening-registry",
+     "local_sha": "a004db2301b75fb9c6124a3dece5d74fea779d0a",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-15 13:16:34 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "feat/one-role-model",
+     "local_sha": "d2b32a7b249ac6e1d49f1e2ef9574a7885ed2845",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-15 18:30:31 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "feat/predicate-runner",
+     "local_sha": "06f58a2add0996ee29ecce85af44e739cce4c4de",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-15 13:42:02 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "dba0a25a93ebb79aba24aae4c2cc808c5f82c9d2",
+     "remote_sha": "e55f8deec966da1280860724a3dc42d61db34d86",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-19 20:14:20 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "claude/hospes-dossier-20260814",
+    "claude/hospes-issue-24-20260814",
+    "claude/hospes-issue-25-20260814",
+    "claude/hospes-issue-26-20260814",
+    "claude/hospes-issue-27-20260814",
+    "claude/hospes-issue-28-20260815",
+    "claude/hospes-issue-29-20260814",
+    "claude/hospes-issue-30-20260814",
+    "claude/hospes-issue-31-20260814",
+    "claude/hospes-issue-32-20260815",
+    "claude/hospes-issue-33-20260815",
+    "claude/hospes-issue-34-20260814",
+    "claude/hospes-issue-59-20260814",
+    "codex/hospes-codeql-closeout-20260810",
+    "codex/hospes-completion-registry-20260810",
+    "codex/hospes-encryption-artifacts-20260810",
+    "codex/hospes-issue-21-20260810",
+    "codex/hospes-issue-22-20260810",
+    "codex/hospes-issue-23-20260810",
+    "codex/hospes-issue-23-endzone-20260812",
+    "codex/hospes-storage-migration-20260810",
+    "codex/hospes-whole-project-completion-20260810",
+    "feat/demo-video-recorder",
+    "feat/guided-demo-personas",
+    "feat/hardening-issue-sync",
+    "feat/hardening-registry",
+    "feat/one-role-model",
+    "feat/predicate-runner",
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/intel-suite/.git",
+   "remote_identity": null,
+   "remote_access": "NO_REMOTE",
+   "state": "NO_AUTHORIZED_REMOTE",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "4617ab3df9a60256586aae125d4a927d4fd09e33",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-20 15:55:55 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/laurea/.git",
+   "remote_identity": ":organvm/laurea",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "33e63d385a64209dc12fcbf3b055fb102f999deb",
+     "remote_sha": "b4a2de881743ce4fde3c23fcff55243e3626ebc2",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-21 10:24:49 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/codex/.tmp/marketplaces/.staging/marketplace-upgrade-804OOq/.git",
+   "remote_identity": "anthropics/claude-plugins-official",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "6bfd4e0c6d3da6050984fa5ed8281d915fa7ed69",
+     "remote_sha": "ab024cdcfa7ca80be204acd4907656ba5a968589",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-23 08:49:36 -0700",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/codex/.tmp/marketplaces/claude-code-warp/.git",
+   "remote_identity": "warpdotdev/claude-code-warp",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/codex/.tmp/marketplaces/claude-plugins-official/.git",
+   "remote_identity": "anthropics/claude-plugins-official",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "2a8ad9f74633d10e3d9bb0660a03bfc6e50584b1",
+     "remote_sha": "ab024cdcfa7ca80be204acd4907656ba5a968589",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-29 14:28:19 -0700",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/codex/.tmp/plugins/.git",
+   "remote_identity": null,
+   "remote_access": "NO_REMOTE",
+   "state": "NO_AUTHORIZED_REMOTE",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "1dc195897af4161d039b80d8471ec0a10c9bbc89",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-11 15:01:04 -0700",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/codex/memories/.git",
+   "remote_identity": null,
+   "remote_access": "NO_REMOTE",
+   "state": "NO_AUTHORIZED_REMOTE",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "f352a38dfce894302de5d3957c9ee7d2c50f4532",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-30 20:02:58 +0000",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/codex/plugins/.marketplace-plugin-source-staging/marketplace-plugin-source-Y7Jk5c/.git",
+   "remote_identity": "stripe/ai",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "77e2f4be0fb4bb461219ccd3bd119301209a7c7a",
+     "remote_sha": "9a36da0458aafcfcc6be3094cf9ef2880fa4226b",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-23 12:04:52 -0700",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/codex/plugins/.marketplace-plugin-source-staging/marketplace-plugin-source-ZLylwj/.git",
+   "remote_identity": "stripe/ai",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "3ca4090c2aef3fc1fd21754c5ef82efe0d56149e",
+     "remote_sha": "9a36da0458aafcfcc6be3094cf9ef2880fa4226b",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-28 03:16:20 +0000",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": true,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/580e/portfolio/.git",
+   "remote_identity": "organvm-vii-kerygma/portfolio",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 2,
+   "branches": 3,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "codex/psp-c06-public-surfaces-preflight",
+     "local_sha": "7c150fc81184df1715824be28b32472baadbb3b6",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-13 00:49:21 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "codex/psp-p06-experience-preflight",
+     "local_sha": "8974543ba9675ed0504141895812476efef5dd80",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-12 20:15:35 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "85bfaa84287e4a3b90b49187caa4313c4edda1aa",
+     "remote_sha": "4f7f0648312d423d54c7d2cc2e0eb19a08cb5b7b",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-09 07:30:50 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [
+    "codex/psp-c06-public-surfaces-preflight",
+    "codex/psp-p06-experience-preflight"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/b4ca/limen/.git",
+   "remote_identity": null,
+   "remote_access": "LOCAL_PATH_REMOTE",
+   "state": "NO_AUTHORIZED_REMOTE",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "codex/psp-p07-w05-proof-destination",
+     "local_sha": "e7541f00c5856f759d1d9e272caba94c444b6068",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-14 14:07:51 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "59a35ab498de77a9ecd323924d467d2a480ea810",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-14 12:30:14 -0300",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "codex/psp-p07-w05-proof-destination",
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/b4ca/portfolio-psp-c06/.git",
+   "remote_identity": "organvm-vii-kerygma/portfolio",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 2,
+   "branches": 3,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "codex/psp-c06-public-surfaces-preflight",
+     "local_sha": "6cb1abf0bf08e71341476886385eba5499c51bb7",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-12 19:54:06 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "codex/psp-p10-w04-conversion-preflight",
+     "local_sha": "c44bab44dca190ec115dd498ff252f57e2441a58",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-13 01:06:43 -0300",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "85bfaa84287e4a3b90b49187caa4313c4edda1aa",
+     "remote_sha": "4f7f0648312d423d54c7d2cc2e0eb19a08cb5b7b",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-09 07:30:50 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [
+    "codex/psp-c06-public-surfaces-preflight",
+    "codex/psp-p10-w04-conversion-preflight"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/LazyVim/.git",
+   "remote_identity": "LazyVim/LazyVim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": true,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/SchemaStore.nvim/.git",
+   "remote_identity": "b0o/SchemaStore.nvim",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "b73cf982d16ff69e528d2ab269482f11c0825f64",
+     "remote_sha": "5553e77b8628b7a08fc2a5135c17647f11d828ee",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-20 16:01:32 +0000",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/blink.cmp/.git",
+   "remote_identity": "saghen/blink.cmp",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": true,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/bufferline.nvim/.git",
+   "remote_identity": "akinsho/bufferline.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/catppuccin/.git",
+   "remote_identity": "catppuccin/nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/conform.nvim/.git",
+   "remote_identity": "stevearc/conform.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/flash.nvim/.git",
+   "remote_identity": "folke/flash.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/friendly-snippets/.git",
+   "remote_identity": "rafamadriz/friendly-snippets",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/gitsigns.nvim/.git",
+   "remote_identity": "lewis6991/gitsigns.nvim",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "8d79f2410c76e62b92e51c28c82e28c1c5a3daeb",
+     "remote_sha": "070a5d7b985546cc57e1fc61e5bc507fecac6045",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 15:54:45 +0100",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/grug-far.nvim/.git",
+   "remote_identity": "MagicDuck/grug-far.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/lazy.nvim/.git",
+   "remote_identity": "folke/lazy.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 0,
+   "exact_heads": 0,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": true,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/lazydev.nvim/.git",
+   "remote_identity": "folke/lazydev.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/lualine.nvim/.git",
+   "remote_identity": "nvim-lualine/lualine.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/markdown-preview.nvim/.git",
+   "remote_identity": "iamcco/markdown-preview.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/mason-lspconfig.nvim/.git",
+   "remote_identity": "mason-org/mason-lspconfig.nvim",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "49b16d699f9ca83184330c6eb886737a27f23bdd",
+     "remote_sha": "b3298993d55fa194279b5eb9dbfb3a43da65cadf",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-18 12:15:30 +0200",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/mason.nvim/.git",
+   "remote_identity": "williamboman/mason.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": true,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/mini.ai/.git",
+   "remote_identity": "nvim-mini/mini.ai",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/mini.files/.git",
+   "remote_identity": "nvim-mini/mini.files",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/mini.icons/.git",
+   "remote_identity": "nvim-mini/mini.icons",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "98faae31e9be1cc054ae63485e58ceb185efcad0",
+     "remote_sha": "f642e3ba8c12afbc8f32f6d77ef6597eac56786f",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-07 16:37:19 +0300",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/mini.pairs/.git",
+   "remote_identity": "nvim-mini/mini.pairs",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/noice.nvim/.git",
+   "remote_identity": "folke/noice.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/nui.nvim/.git",
+   "remote_identity": "MunifTanjim/nui.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/nvim-lint/.git",
+   "remote_identity": "mfussenegger/nvim-lint",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/nvim-lspconfig/.git",
+   "remote_identity": "neovim/nvim-lspconfig",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "master",
+     "local_sha": "ffd261c09c3dabd0bf1a438f47a8ae3b22f3c3ff",
+     "remote_sha": "3e8d598d3b5f8338a41699c436e5fa11d2666cf0",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-18 13:08:11 +0000",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/nvim-treesitter-textobjects/.git",
+   "remote_identity": "nvim-treesitter/nvim-treesitter-textobjects",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/nvim-treesitter/.git",
+   "remote_identity": "nvim-treesitter/nvim-treesitter",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "f603a2f4da48728f80257fb5fbb90145fd1dc173",
+     "remote_sha": "910fdf6f49e9dee7e7257c7d11a76b040fdfb9de",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-19 11:22:56 +0000",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": true,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/nvim-ts-autotag/.git",
+   "remote_identity": "windwp/nvim-ts-autotag",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/persistence.nvim/.git",
+   "remote_identity": "folke/persistence.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/plenary.nvim/.git",
+   "remote_identity": "nvim-lua/plenary.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/render-markdown.nvim/.git",
+   "remote_identity": "MeanderingProgrammer/render-markdown.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/snacks.nvim/.git",
+   "remote_identity": "folke/snacks.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/todo-comments.nvim/.git",
+   "remote_identity": "folke/todo-comments.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/tokyonight.nvim/.git",
+   "remote_identity": "folke/tokyonight.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/trouble.nvim/.git",
+   "remote_identity": "folke/trouble.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/ts-comments.nvim/.git",
+   "remote_identity": "folke/ts-comments.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/venv-selector.nvim/.git",
+   "remote_identity": "linux-cultist/venv-selector.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.agent-runtime/opencode/data/nvim/lazy/which-key.nvim/.git",
+   "remote_identity": "folke/which-key.nvim",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.claude/worktrees/vltima-closeout-20260709/.git",
+   "remote_identity": null,
+   "remote_access": "LOCAL_PATH_REMOTE",
+   "state": "NO_AUTHORIZED_REMOTE",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "codex/vltima-closeout-20260709",
+     "local_sha": "08ef4c538f75e0cf63e84ed263f1ccaf0104e35d",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-26 08:03:57 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "27f511aa8c541d4dc8673b089c4ff3d7bc56e284",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-07-09 08:23:52 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "codex/vltima-closeout-20260709",
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.git",
+   "remote_identity": "4444J99/limen",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 21,
+   "branches": 28,
+   "exact_heads": 22,
+   "unsynced_heads": [
+    {
+     "branch": "fix/background-items-jetbrains-20260925",
+     "local_sha": "6c8d25ff72ce26f6a0f2dd7dd922a2240e1c5108",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-25 21:35:43 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "fix/portfolio-visibility-interlock-20260917",
+     "local_sha": "bb30a091f5d3eda066ebf2c7a3956c04493b92e2",
+     "remote_sha": "531124808fccc06ad2f35f7309b227f693e06991",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 21:29:38 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "fix/workstream-private-email-20260916",
+     "local_sha": "66567cde03747d616d722286baf341c82b546129",
+     "remote_sha": "604c50b4c2b542992c06fdfb7b7251d187e9f118",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 17:21:30 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "main",
+     "local_sha": "d4ec45cb456fa63a5c594eb429537fac572ce320",
+     "remote_sha": "04417f540cfa460450430661591ff1cf44d67fcf",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-20 15:37:58 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "temp-pr-2621",
+     "local_sha": "b36be786c6c4f31a4a45ce31da4f539f134f28ec",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-12 11:16:28 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "work/spine-closeout-successor-20260926-v2",
+     "local_sha": "f92fd520762d278a48986b0fb7e0bf7ff2fe8589",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-25 23:03:10 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "fix/background-items-jetbrains-20260925",
+    "work/spine-closeout-successor-20260926-v2"
+   ],
+   "stashes": 1,
+   "detached_head": true,
+   "lfs_files": 22,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.limen-private/shelter-vault/.git",
+   "remote_identity": null,
+   "remote_access": "NO_REMOTE",
+   "state": "NO_AUTHORIZED_REMOTE",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "2ea33d1e424dbee0ccd5136ad8d9695b899bff9c",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-15 09:48:31 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.worktrees/alchemical-security-20260916/.git",
+   "remote_identity": ":organvm/alchemical-synthesizer",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 1,
+   "unsynced_heads": [
+    {
+     "branch": "fix/security-findings-20260916",
+     "local_sha": "6ebca82635ca37d2e6fd9d4d7d125a6e16dfea0a",
+     "remote_sha": "3f197538e62a46731c3f7e5141e7e700d7dbf0c1",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 03:09:29 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "fix/security-findings-20260916"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.worktrees/clavis-jules-delivery-20260926/.git",
+   "remote_identity": "4444J99/clavis",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 1,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "18897b384c20d027c8debee8ee1c2c568088ecd7",
+     "remote_sha": "81f1074432eea8345b4e005b52116defd74b4ce9",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-24 22:33:30 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.worktrees/editorial-gap-filling-20260915/.git",
+   "remote_identity": ":organvm/editorial-standards",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "codex/reader-mode-v1-20260831",
+     "local_sha": "b08f55d687e02e503c81406c03500dffa0999b89",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-16 02:01:26 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "codex/reader-mode-v1-20260831"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.worktrees/hospes-pilot-acceptance-20260916/.git",
+   "remote_identity": "organvm/hospes",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 1,
+   "unsynced_heads": [
+    {
+     "branch": "fix/pilot-review-coverage-20260916",
+     "local_sha": "5615b7737ff1c2ee572077a8e147fdeb80052cee",
+     "remote_sha": "2efd56177f477dc2373e2eb6c83af490682e188c",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-15 22:59:08 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "fix/pilot-review-coverage-20260916"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.worktrees/laurea-coverage-20260916/.git",
+   "remote_identity": ":organvm/laurea",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "fix/explicit-source-coverage-20260916",
+     "local_sha": "7df6eda7393358846f813fc5a7487a356476d1e3",
+     "remote_sha": "4920f6e73e42a390aab986fc80b45edc225ffae0",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 11:57:23 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "faf6c5f67130925518233f5f99a76182b544fb85",
+     "remote_sha": "b4a2de881743ce4fde3c23fcff55243e3626ebc2",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-30 18:39:55 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [
+    "fix/explicit-source-coverage-20260916"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.worktrees/learning-resources-pr11-20260916/.git",
+   "remote_identity": "organvm/learning-resources",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 1,
+   "unsynced_heads": [
+    {
+     "branch": "fix/workflow-permissions-20260916",
+     "local_sha": "9aafd48524d34269233bea0dad8d1f794a4eede9",
+     "remote_sha": "d267fdf9c046433bc602e8ef7f896d86f01fb979",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 10:58:31 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.worktrees/learning-security-20260916/.git",
+   "remote_identity": ":organvm/learning-resources",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 1,
+   "unsynced_heads": [
+    {
+     "branch": "fix/workflow-permissions-20260916",
+     "local_sha": "defb7a0ba0dd94abe86bcf69eec0136c6d382e50",
+     "remote_sha": "d267fdf9c046433bc602e8ef7f896d86f01fb979",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 02:57:03 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "fix/workflow-permissions-20260916"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.worktrees/relay-profile-pr30-20260916/.git",
+   "remote_identity": "4444J99/organvm-ci-relay",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "b53a47f93ef861044eb5a3b888a4fc72801dc4cf",
+     "remote_sha": "5e8d3dc793b6d2c25200b17c30892e795097d6e6",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-13 15:38:59 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "security/dedicated-admission-app",
+     "local_sha": "8d270867578fb8696578c20167ea0abe4b865238",
+     "remote_sha": "a411cbfa87d2896f3012f3dafda09bc92cdb70c7",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 12:10:48 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.worktrees/schema-hosting-identity-20260915/.git",
+   "remote_identity": ":organvm-iv-taxis/schema-definitions",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "fix/registry-hosting-owner-20260915",
+     "local_sha": "06326aa548f6c4fc9dd01bead88a5f5132b6445e",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-16 01:36:12 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "2c2b7c8b0e841a4abde82230be88524d43f9b3c2",
+     "remote_sha": "240edf756ba6e66081c525a1879145b8ec953be4",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-01 01:16:54 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "fix/registry-hosting-owner-20260915",
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.worktrees/shared-github-gap-filling-20260916/.git",
+   "remote_identity": "organvm/.github",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 2,
+   "exact_heads": 1,
+   "unsynced_heads": [
+    {
+     "branch": "fix/cla-template-pr-events-20260916",
+     "local_sha": "f58f585d3ea71f666744fda6b32eb345a29707fe",
+     "remote_sha": "a16516800cc0caa0df66c1842556580f7a234d93",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 06:24:20 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/.worktrees/speech-score-engine/.git",
+   "remote_identity": ":organvm-iii-ergon/speech-score-engine",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 3,
+   "branches": 5,
+   "exact_heads": 1,
+   "unsynced_heads": [
+    {
+     "branch": "feat/lady-macbeth-macbeth-score",
+     "local_sha": "f3e34d8721f5fa3af95166ebeb576808f25e58c9",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-09 15:47:00 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "main",
+     "local_sha": "1ee865fcedd121dc109cfdc3f2f1261a3bb841a0",
+     "remote_sha": "d8569814c27cbdac9a8dd05fa020986b448252dd",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-09 07:17:10 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "remediate-pr-1",
+     "local_sha": "e37df193c5dfe05da766551783615e87de2a5e73",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-05-13 23:20:50 +0000",
+     "unique_local_history": false
+    },
+    {
+     "branch": "remediate-pr-21",
+     "local_sha": "a658ed2ae7711a00fa1a3bcd0ec570bd4a8ec831",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-26 13:53:00 +0000",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "remediate-pr-21"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/issue_backlog_work/peer-audited--behavioral-blockchain/.git",
+   "remote_identity": "organvm/peer-audited--behavioral-blockchain",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "9c69118253ec2d417f70d98c8c5d68249a39245d",
+     "remote_sha": "2ec1d01a1f58b5bc7290b3f17822da1e26a99564",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-18 11:42:45 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/issue_backlog_work/repo_clone/.git",
+   "remote_identity": "organvm/peer-audited--behavioral-blockchain",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "404618df38ca00ffd695098e166878a5c567e86c",
+     "remote_sha": "2ec1d01a1f58b5bc7290b3f17822da1e26a99564",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-20 22:49:46 +0000",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/limen/peer-audited--behavioral-blockchain/.git",
+   "remote_identity": "organvm/peer-audited--behavioral-blockchain",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "9c69118253ec2d417f70d98c8c5d68249a39245d",
+     "remote_sha": "2ec1d01a1f58b5bc7290b3f17822da1e26a99564",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-07-18 11:42:45 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/ops-witness/.git",
+   "remote_identity": ":a-organvm/ops-witness",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "6dfdf2fa1d19381662610201bc987d9060c0c233",
+     "remote_sha": "01ba86d2085e926bf90269bad674039329d0c5b9",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-20 19:05:01 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/ops/.git",
+   "remote_identity": "organvm/ops",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "1070450e2ff20cb07ee383da363d972b82451300",
+     "remote_sha": "35c60b741ab3df2011b163d7a2fd17c0ef8bebe0",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-23 18:11:07 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/organvm-corpvs-testamentvm/.git",
+   "remote_identity": "organvm/organvm-corpvs-testamentvm",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 2,
+   "branches": 3,
+   "exact_heads": 1,
+   "unsynced_heads": [
+    {
+     "branch": "fix/brew-schedule-irf-20260925",
+     "local_sha": "e6866dc87328317e4e6904d3e3d70cc520087149",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-25 18:35:22 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "a2a79d5f897bf75131555f06aa18987af6fa343c",
+     "remote_sha": "81ba4d6e6d6e44ad5dcb35e9b1677ffdc0ff41c1",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-21 08:29:17 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [
+    "fix/brew-schedule-irf-20260925"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [
+    "/private/tmp/limen-closeout-20260925.jOY5YC/corpvs-registry"
+   ],
+   "worktrees_outside_workspace": [
+    "/private/tmp/limen-closeout-20260925.jOY5YC/corpvs-registry"
+   ]
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/organvm-dot-github/.git",
+   "remote_identity": "organvm/.github",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/organvm-iv-taxis/organvm-iv-taxis.github.io/.git",
+   "remote_identity": "organvm-iv-taxis/organvm-iv-taxis.github.io",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/organvm-v-logos/organvm-v-logos.github.io/.git",
+   "remote_identity": "organvm-v-logos/organvm-v-logos.github.io",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/organvm-vi-koinonia/organvm-vi-koinonia.github.io/.git",
+   "remote_identity": "organvm-vi-koinonia/organvm-vi-koinonia.github.io",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/organvm-vii-kerygma/organvm-vii-kerygma.github.io/.git",
+   "remote_identity": "organvm-vii-kerygma/organvm-vii-kerygma.github.io",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/organvm-vii-kerygma/portfolio/.git",
+   "remote_identity": ":organvm-vii-kerygma/portfolio",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 4,
+   "branches": 7,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "chamber-pr-169",
+     "local_sha": "a47b5147a528d51959ae005cef931c1453f3bdb0",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-07-09 22:28:51 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "chamber-pr-229",
+     "local_sha": "898217e3a614a56926d81a496682080858c47df0",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-26 14:28:27 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "fix/default-lint-20260827",
+     "local_sha": "ad1f4931bba061d072015757f54b5c90bff9cbb1",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 14:33:54 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "main",
+     "local_sha": "0be833435e9df74bd37f9d2ef09c1206e9f2706f",
+     "remote_sha": "4f7f0648312d423d54c7d2cc2e0eb19a08cb5b7b",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-26 09:03:26 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "remediate-198",
+     "local_sha": "504c6762dfd4b1d4979889ab78d2f4250d4383be",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-26 09:06:21 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "remediate-228",
+     "local_sha": "2e2ab9bc8eda8861d6b6acf58fe34ab811805242",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-26 14:24:30 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "remediate-229",
+     "local_sha": "94ee0cada3697221f7a64af17b9c4df3e6a4169d",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-08-27 08:38:51 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "chamber-pr-229",
+    "remediate-198",
+    "remediate-228",
+    "remediate-229"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/organvm/limen/.git",
+   "remote_identity": "4444J99/limen",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 2,
+   "branches": 4,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "4444j99-plan-requested-change",
+     "local_sha": "bee0bbb352b877e615bba3d2531203e031a556fc",
+     "remote_sha": "47ebb20de736bbe599db63b529057da40d461716",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-10 12:26:26 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "fix/inventory-admission-2606",
+     "local_sha": "fb30e77d469162ba81426657532e96e976338ace",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-10 12:47:16 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "fix/inventory-admission-2608",
+     "local_sha": "54d264bd4a93ac999d5db411fe7ef4944b2eb869",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-10 12:48:16 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "main",
+     "local_sha": "74505dddaad6892fd101dee0928bda44166b3d21",
+     "remote_sha": "04417f540cfa460450430661591ff1cf44d67fcf",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-10 18:52:07 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/organvm/peer-audited--behavioral-blockchain/.git",
+   "remote_identity": "4444J99/peer-audited--behavioral-blockchain",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 2,
+   "branches": 2,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "4444j99-improved-doodle",
+     "local_sha": "eaa0b1398d8e580666200d82a42bfb2150d9de60",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-10 14:08:49 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "eaa0b1398d8e580666200d82a42bfb2150d9de60",
+     "remote_sha": "2ec1d01a1f58b5bc7290b3f17822da1e26a99564",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-10 14:08:49 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "4444j99-improved-doodle",
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/organvm/public-record-data-scrapper/.git",
+   "remote_identity": "organvm-iii-ergon/public-record-data-scrapper",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 2,
+   "branches": 5,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "4444j99-public-record-scraper",
+     "local_sha": "1ddfcfb237fd8199a96f6b62682a607b56d5ade5",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-10 13:55:32 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "4444j99-repository-healing",
+     "local_sha": "20bcd74856e78d02b5655154b72cab51a9a23aff",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-10 19:45:52 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "4444j99-scraper-fix",
+     "local_sha": "439a9c4a8faffd39205d796519cd148f18615753",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-10 14:00:32 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "4444j99-telegram-feature-completion",
+     "local_sha": "7b254d5f6e60d8cc4a96f8df7bab0775b43b9b81",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-10 13:51:51 -0400",
+     "unique_local_history": true
+    },
+    {
+     "branch": "main",
+     "local_sha": "439a9c4a8faffd39205d796519cd148f18615753",
+     "remote_sha": "5aa6d566334d0f4b3bbebbe903525924d81401e1",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-10 14:00:32 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "4444j99-public-record-scraper",
+    "4444j99-repository-healing",
+    "4444j99-scraper-fix",
+    "4444j99-telegram-feature-completion",
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/post-dsp-platform/.git",
+   "remote_identity": ":4444J99/post-dsp-platform",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "de7a9df5dde1ee6fafe328c454e51dba4aa7cddb",
+     "remote_sha": "6f36b6043c7526dbf2c8ace51071066f94a66f35",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-08-15 16:25:09 -0300",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/prds-engine-verify/.git",
+   "remote_identity": ":4444J99/prds-engine",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": true,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/prds-ops-repair/.git",
+   "remote_identity": ":4444J99/prds-ops",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 2,
+   "branches": 3,
+   "exact_heads": 2,
+   "unsynced_heads": [
+    {
+     "branch": "pr13-head",
+     "local_sha": "2bb47e81269426f9fad831ecd1dd81703415a7a8",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-25 19:25:47 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/prds-work/clavis/.git",
+   "remote_identity": "4444J99/clavis",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "d4a9340d95f14a36d18597a698930270f44bd437",
+     "remote_sha": "81f1074432eea8345b4e005b52116defd74b4ce9",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-22 18:13:40 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/prds-work/prds-admin/.git",
+   "remote_identity": "4444J99/prds-admin",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/prds-work/prds-engine/.git",
+   "remote_identity": "4444J99/prds-engine",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 2,
+   "branches": 6,
+   "exact_heads": 5,
+   "unsynced_heads": [
+    {
+     "branch": "release/v0.2.0-candidate",
+     "local_sha": "f73b4ef37bbb9f516a363325a5b0dbd43a17cc36",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2026-09-22 22:07:22 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [
+    "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/engine-verify/repo"
+   ],
+   "worktrees_outside_workspace": [
+    "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/engine-verify/repo"
+   ]
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/prds-work/prds-ops/.git",
+   "remote_identity": "4444J99/prds-ops",
+   "remote_access": "OK",
+   "state": "RECOVERABLE_UNSYNCHRONIZED",
+   "checkouts": 2,
+   "branches": 3,
+   "exact_heads": 2,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "c1cdd4d547f4efcc6667df2ceeea68f6666c4532",
+     "remote_sha": "98d5d0074535d1f80be226044fa8f7313b0d5f38",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-23 19:05:38 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/public-record-data-scrapper/.git",
+   "remote_identity": ":organvm-iii-ergon/public-record-data-scrapper",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 23,
+   "branches": 42,
+   "exact_heads": 33,
+   "unsynced_heads": [
+    {
+     "branch": "fix/ucc-verification-foundation",
+     "local_sha": "805a715cd60b6e73dcb3e6d0bbd230a623882e5b",
+     "remote_sha": "a4a2a7ce1ee65e3d25360aa8c4c68fab23a762f0",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 22:16:05 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "lane/evolve-platform",
+     "local_sha": "de44e7d873b4a11ee87bd137a03488bcb88828a3",
+     "remote_sha": "10eba49c2eae2e25efcf761790eded9b73b8d70a",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-15 17:04:33 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "lane/expand-public-records",
+     "local_sha": "74d458f5332c183612827ab0bf1cb7611cebab37",
+     "remote_sha": "bd7bca3180fd1c8f08ff4b5e3448c5230117d2f2",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-12 11:37:00 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "lane/heal",
+     "local_sha": "47f7ab4079184ca89fc93d20fa868cab5aa86cd3",
+     "remote_sha": "e7fc359e3cdd1ce5159569e9007713812c400017",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-12 11:37:06 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "lane/verify",
+     "local_sha": "74d458f5332c183612827ab0bf1cb7611cebab37",
+     "remote_sha": "28a2775af8e6e1854c230791c6c9663953da8e04",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-12 11:37:00 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "pr13-remote-head",
+     "local_sha": "0c5a0ced0f22618e35d86db31fd47a31d9b3620a",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2025-10-30 01:02:57 +0000",
+     "unique_local_history": true
+    },
+    {
+     "branch": "repair/pr13-ops-recovery",
+     "local_sha": "0c5a0ced0f22618e35d86db31fd47a31d9b3620a",
+     "remote_sha": null,
+     "reason": "no advertised head with this name",
+     "committed": "2025-10-30 01:02:57 +0000",
+     "unique_local_history": true
+    },
+    {
+     "branch": "work/expand-public-records/483-s7-1-wave-1-expansion-top-10-d",
+     "local_sha": "87540a96c52bfbeb7b2c7d40db29115ad5ee1de7",
+     "remote_sha": "3a957d6e79b1349d2848df1ce3ef9c32d88ff22b",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 16:07:27 -0400",
+     "unique_local_history": false
+    },
+    {
+     "branch": "work/expand-public-records/486-s9-1-historical-backfill-strat",
+     "local_sha": "22296e8ca60c37c1706d441d2765c3b120f9961e",
+     "remote_sha": "19f521dab634cf83b5fbc00c88424795891d36ce",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-16 17:30:17 -0400",
+     "unique_local_history": false
+    }
+   ],
+   "unique_local_branches": [
+    "pr13-remote-head",
+    "repair/pr13-ops-recovery"
+   ],
+   "stashes": 1,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/spira-salvtis-operatio/.git",
+   "remote_identity": ":4444J99/spira-salvtis-operatio",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/spira-salvtis-template/.git",
+   "remote_identity": ":4444J99/spira-salvtis-template",
+   "remote_access": "OK",
+   "state": "UNIQUE_LOCAL_HISTORY",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 0,
+   "unsynced_heads": [
+    {
+     "branch": "main",
+     "local_sha": "098f51a3d1aa58ba798b858bac93450731d0a29a",
+     "remote_sha": "23aa7507b1f8dfe06100a1fffac9186344db9163",
+     "reason": "local tip != advertised tip (divergence)",
+     "committed": "2026-09-20 13:53:26 -0400",
+     "unique_local_history": true
+    }
+   ],
+   "unique_local_branches": [
+    "main"
+   ],
+   "stashes": 0,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  },
+  {
+   "commondir": "/Users/4jp/Workspace/the-thing-without-a-name/.git",
+   "remote_identity": "organvm/the-thing-without-a-name",
+   "remote_access": "OK",
+   "state": "EXACTLY_SYNCHRONIZED_WITH_LOCAL_EXTRAS",
+   "checkouts": 1,
+   "branches": 1,
+   "exact_heads": 1,
+   "unsynced_heads": [],
+   "unique_local_branches": [],
+   "stashes": 1,
+   "detached_head": false,
+   "lfs_files": 0,
+   "submodule_gitdirs": 0,
+   "has_alternates": false,
+   "prunable_worktrees": [],
+   "worktrees_outside_workspace": []
+  }
+ ]
+}
