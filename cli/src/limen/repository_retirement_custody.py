@@ -5,13 +5,14 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import plistlib
 import shutil
 from dataclasses import asdict
 from pathlib import Path
 
 from limen.personal_custody import ContentRecord, _diskutil_volume_identity, _inventory_volume
 from limen.repository_retirement import RetirementError, Runtime, atomic_json, digest, identity, records
+
+LOCAL_CUSTODY_POLICY = "registered-independent-devices.v2"
 
 
 def logical(values) -> list[dict]:
@@ -33,20 +34,11 @@ class PairCustody:
         *,
         volume_probe=_diskutil_volume_identity,
         copy_tree=None,
-        encryption_probe=None,
     ):
         self.config = config
         self.runtime = runtime
         self.volume_probe = volume_probe
         self.copy_tree = copy_tree or self._copy
-        self.encryption_probe = encryption_probe or self._encrypted
-
-    def _encrypted(self, root: Path) -> bool:
-        result = self.runtime.run(["/usr/sbin/diskutil", "info", "-plist", str(root)])
-        if result.returncode:
-            return False
-        value = plistlib.loads(result.stdout.encode())
-        return value.get("Encrypted") is True or value.get("FileVault") is True
 
     def targets(self, sources: list[Path]) -> list[Path]:
         inventory_bytes = Path(self.config["inventory"]).read_bytes()
@@ -61,8 +53,6 @@ class PairCustody:
             self.runtime.check()
             actual = self.volume_probe(root)
             _inventory_volume(inventory, name, actual)
-            if not self.encryption_probe(root):
-                raise RetirementError("custody-volume-encryption-unverified")
             if any(root == source or source in root.parents or root in source.parents for source in sources):
                 raise RetirementError("custody-overlaps-source")
             if root.is_symlink() or any(p.is_symlink() for p in root.parents):
@@ -95,6 +85,8 @@ class PairCustody:
             raise RetirementError("custody-source-drift")
 
     def verify(self, proof: dict, *, restore: bool = True) -> None:
+        if proof.get("policy") != LOCAL_CUSTODY_POLICY:
+            raise RetirementError("custody-policy-recapture-required")
         sources = [Path(row["identity"]["path"]) for row in proof["sources"]]
         targets = self.targets(sources)
         if self.volume_identities != proof["volumes"]:
@@ -131,6 +123,7 @@ class PairCustody:
             )
         proof: dict = {
             "schema": "limen.repository_custody.v1",
+            "policy": LOCAL_CUSTODY_POLICY,
             "sources": values,
             "volumes": self.volume_identities,
             "journal_root": str(journal_root),

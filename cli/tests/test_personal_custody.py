@@ -9,6 +9,38 @@ import pytest
 from limen import personal_custody as custody
 
 
+def test_acl_digest_handles_nonempty_native_entries(tmp_path, monkeypatch):
+    import hashlib
+    import subprocess
+
+    monkeypatch.setattr(custody.sys, "platform", "darwin")
+    monkeypatch.setattr(
+        custody.subprocess,
+        "run",
+        lambda *_a, **_k: subprocess.CompletedProcess([], 0, b"file header\n 0: user:test allow read\n", b""),
+    )
+    assert custody._acl_sha256(tmp_path) == hashlib.sha256(b"0: user:test allow read").hexdigest()
+
+
+@pytest.mark.skipif(custody.sys.platform != "darwin", reason="Darwin native xattrs")
+def test_native_xattrs_fallback_preserves_values_and_does_not_follow_links(tmp_path, monkeypatch):
+    import hashlib
+    import subprocess
+
+    target = tmp_path / "target"
+    target.write_text("payload")
+    link = tmp_path / "link"
+    link.symlink_to(target)
+    monkeypatch.setattr(custody.os, "listxattr", None, raising=False)
+    monkeypatch.setattr(custody.os, "getxattr", None, raising=False)
+    before = custody._xattrs_sha256(link)
+    subprocess.run(["/usr/bin/xattr", "-w", "com.limen.custody-test", "value", str(target)], check=True)
+    assert ("com.limen.custody-test", hashlib.sha256(b"value").hexdigest()) in custody._darwin_xattrs(target)
+    assert custody._xattrs_sha256(target) == custody._canonical_sha256(custody._darwin_xattrs(target))
+    assert not custody._xattrs_sha256(target).startswith("unavailable:")
+    assert custody._xattrs_sha256(link) == before
+
+
 def _volume(path: Path, *, device: str, physical: str, uuid: str) -> custody.VolumeIdentity:
     return custody.VolumeIdentity(
         mount=str(path.resolve()),
