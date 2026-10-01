@@ -184,13 +184,14 @@ def test_completion_failure_keeps_open_handoff(cohort):
 
 
 @pytest.mark.parametrize("same_id", [True, False])
-def test_repository_transfer_uses_stable_identity(cohort, monkeypatch, same_id):
+@pytest.mark.parametrize("prefix", ["https://github.com/", "git@github.com:", "ssh://git@github.com/"])
+def test_repository_transfer_uses_stable_identity(cohort, monkeypatch, same_id, prefix):
     _, receipt, _, publish, evaluate = cohort
     original = closeout.git
 
     def remote_alias(root, *args, **kwargs):
         if args == ("remote", "get-url", "origin"):
-            return "https://github.com/old-owner/" + root.name + ".git"
+            return prefix + "old-owner/" + root.name + ".git"
         return original(root, *args, **kwargs)
 
     for index, row in enumerate(receipt["scope_roots"][:2]):
@@ -232,3 +233,47 @@ def test_nested_scope_requires_parent_coverage(cohort, declared):
     else:
         with pytest.raises(closeout.Unmeasured, match="parent ownership"):
             evaluate()
+
+
+@pytest.mark.parametrize("nested", [True, False])
+def test_malformed_retained_work_is_unmeasured(cohort, nested):
+    roots, receipt, _, publish, evaluate = cohort
+    receipt["scope_roots"][0]["retained_work"] = ["invalid"]
+    if nested:
+        child = roots["owner"] / "private-retained"
+        child.mkdir()
+        roots["private"] = child
+        receipt["scope_roots"][2].update(path_sha256=path_digest(child), nested_in="owner")
+    publish()
+    with pytest.raises(closeout.Unmeasured, match="retained work"):
+        evaluate()
+
+
+def test_relative_native_cwd_is_unmeasured(cohort):
+    _, _, transcript, _, evaluate = cohort
+    transcript.write_text(json.dumps({"type": "session_meta", "payload": {"id": SID, "cwd": "."}}))
+    with pytest.raises(closeout.Unmeasured, match="native transcript"):
+        evaluate()
+
+
+def test_scoped_cli_errors_preserve_v2_schema(monkeypatch, capsys, tmp_path):
+    from limen.conduct import client
+
+    monkeypatch.setattr(client, "client_from_env", lambda: (_ for _ in ()).throw(RuntimeError("unavailable")))
+    assert (
+        closeout.main(
+            [
+                "--session-id",
+                SID,
+                "--worktree",
+                str(tmp_path),
+                "--receipt",
+                "receipt.json",
+                "--scope-root",
+                f"owner={tmp_path}",
+                "--json",
+            ]
+        )
+        == 2
+    )
+    assert json.loads(capsys.readouterr().out)["schema"] == closeout.SCHEMA_V2

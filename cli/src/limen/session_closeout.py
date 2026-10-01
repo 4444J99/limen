@@ -15,6 +15,7 @@ import subprocess
 from collections.abc import Callable
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal, overload
+from urllib.parse import urlsplit
 
 SCHEMA = "limen.session_closeout.v1"
 SCHEMA_V2 = "limen.session_closeout.v2"
@@ -336,6 +337,20 @@ def repository_readback(slug: str) -> dict:
     return json.loads(run(["gh", "api", "--method", "GET", f"repos/{slug}"]))
 
 
+def github_repository_slug(remote: str) -> str | None:
+    if remote.startswith("git@github.com:"):
+        slug = remote.removeprefix("git@github.com:")
+    else:
+        parsed = urlsplit(remote)
+        if parsed.hostname != "github.com" or parsed.scheme not in {"https", "http", "ssh", "git"}:
+            return None
+        slug = parsed.path.lstrip("/")
+    slug = slug.removesuffix(".git")
+    if not re.fullmatch(r"[\w.-]+/[\w.-]+", slug):
+        raise Unmeasured("invalid GitHub repository remote")
+    return slug
+
+
 def evaluate_scoped(
     session_root: Path,
     session_id: str,
@@ -382,7 +397,8 @@ def evaluate_scoped(
         raise Unmeasured("no broker binding or exact native-session witness")
     if native_transcript is not None:
         witness = transcript_witness(native_transcript)
-        if witness["thread_id"] != session_id or not witness.get("cwd") or Path(witness["cwd"]).resolve() != anchor:
+        cwd = Path(witness.get("cwd") or "")
+        if witness["thread_id"] != session_id or not cwd.is_absolute() or cwd != cwd.resolve() or cwd != anchor:
             raise Unmeasured("native transcript identity or root mismatch")
     declarations = receipt.get("scope_roots")
     if not isinstance(declarations, list) or not declarations:
@@ -391,6 +407,10 @@ def evaluate_scoped(
     if len(ids) != len(declarations) or len(set(ids)) != len(ids) or set(ids) != set(roots):
         raise Unmeasured("scope mappings do not match receipt")
     by_id = {row["id"]: row for row in declarations}
+    for row in declarations:
+        retained = row.get("retained_work", [])
+        if not isinstance(retained, list) or any(not isinstance(item, dict) for item in retained):
+            raise Unmeasured("malformed retained work ownership")
     for identifier, root in roots.items():
         parents = [key for key, path in roots.items() if key != identifier and root.is_relative_to(path)]
         if parents:
@@ -522,8 +542,9 @@ def evaluate_scoped(
         if identifier != receipt_id and row.get("subject_head") != head:
             raise Unmeasured("scope is not bound to the exact subject head")
         remote = git(root, "remote", "get-url", "origin")
-        slug = re.sub(r"^(?:https://github.com/|git@github.com:)", "", remote).removesuffix(".git")
-        if remote.startswith(("https://github.com/", "git@github.com:")):
+        github_slug = github_repository_slug(remote)
+        slug = github_slug if github_slug is not None else remote.removesuffix(".git")
+        if github_slug is not None:
             if slug not in repository_cache:
                 repository_cache[slug] = read_repository(slug)
             repo = repository_cache[slug]
@@ -651,7 +672,7 @@ def main(argv: list[str] | None = None) -> int:
     except (ValueError, TypeError, KeyError, OSError, subprocess.SubprocessError, RuntimeError) as exc:
         # Do not print subprocess stderr, credential-bearing argv, or private paths.
         result = {
-            "schema": SCHEMA,
+            "schema": SCHEMA_V2 if args.scope_root else SCHEMA,
             "session_released": False,
             "task_completed": False,
             "successor_required": False,

@@ -305,7 +305,8 @@ def assess(
             if in_scope:
                 rows.append({"pid": process.pid, "category": "checker", "reason": "checker_ancestry"})
             continue
-        if not in_scope and not thread and process.pid not in evidence_index:
+        subject_tagged = process.env.get("CODEX_SESSION_ID") == session_id
+        if not in_scope and not thread and not subject_tagged and process.pid not in evidence_index:
             # Still classify configured parents needed as bootstrap witnesses.
             relevant = any(normalized(process.argv) == normalized(c["argv"]) for c in contracts)
             if not relevant:
@@ -389,7 +390,12 @@ def assess(
                             category, reason = "unmeasured", "process_evidence_conflict"
                     elif len(identities) > 1:
                         category, reason = "unmeasured", "service_registration_ambiguous"
-        if in_scope or (thread and belongs_to_subject(thread, session_id, witnesses)) or process.pid in evidence_index:
+        if (
+            in_scope
+            or subject_tagged
+            or (thread and belongs_to_subject(thread, session_id, witnesses))
+            or process.pid in evidence_index
+        ):
             row = {"pid": process.pid, "process_identity": process.started, "category": category, "reason": reason}
             if owner:
                 row["owner"] = owner
