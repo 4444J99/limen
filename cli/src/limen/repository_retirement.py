@@ -21,7 +21,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from limen.personal_custody import _assert_content, _record
+from limen.personal_custody import _assert_content, _file_sha256, _record
 from limen.worktree_abandonment import (
     CustodyPathIdentity,
     WorktreeAbandonmentError,
@@ -192,8 +192,9 @@ def load_manifest(path: Path) -> dict[str, Any]:
         seen.add(str(source))
         if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+#[1-9][0-9]*", repo.get("owner", "")):
             raise RetirementError("existing-owner-issue-required")
-    for index, a in enumerate(seen := sorted(seen)):
-        if any(Path(a) in Path(b).parents for b in seen[index + 1 :]):
+    ordered_paths = sorted(seen)
+    for index, a in enumerate(ordered_paths):
+        if any(Path(a) in Path(b).parents for b in ordered_paths[index + 1 :]):
             raise RetirementError("overlapping-assigned-roots")
     return value
 
@@ -213,7 +214,11 @@ def worktrees(runtime: Runtime, repo: Path) -> list[dict[str, str]]:
     output = runtime.text(repo, "worktree", "list", "--porcelain", "-z")
     rows: list[dict[str, str]] = []
     for block in output.split("\0\0"):
-        row = dict(field.split(" ", 1) if " " in field else (field, "") for field in block.split("\0") if field)
+        row: dict[str, str] = {}
+        for field in block.split("\0"):
+            if field:
+                key, _, value = field.partition(" ")
+                row[key] = value
         if "worktree" in row:
             rows.append(row)
     if not rows:
@@ -295,7 +300,9 @@ def process_owner(runtime: Runtime, root: Path) -> int | None:
     return None
 
 
-def sync(runtime: Runtime, entry: dict[str, Any], observed: dict[str, Any], *, on_change=None) -> list[dict[str, Any]]:
+def sync(
+    runtime: Runtime, entry: dict[str, Any], observed: dict[str, Any], *, on_change=None, before_checkout=None
+) -> list[dict[str, Any]]:
     path = Path(entry["path"])
     for remote, value in observed["remotes"].items():
         # Configured refspecs are recorded, but never apply their leading '+' or
@@ -332,8 +339,14 @@ def sync(runtime: Runtime, entry: dict[str, Any], observed: dict[str, Any], *, o
             raise RetirementError("branch-ancestry-unavailable")
         checkout = checked.get(ref)
         if checkout:
+            if checkout != path:
+                continue
             if runtime.text(checkout, "status", "--porcelain=v1", "-z", "--untracked-files=all"):
                 continue
+            if runtime.text(checkout, "ls-files", "--others", "--ignored", "--exclude-standard", "-z"):
+                if before_checkout is None:
+                    continue
+                before_checkout()
             result = runtime.git(checkout, "merge", "--ff-only", "--no-edit", target)
         else:
             result = runtime.git(path, "update-ref", ref, target, old)
@@ -415,6 +428,39 @@ def dependencies(runtime: Runtime, observed: dict[str, Any], assigned: set[str])
             nested_common = Path(runtime.text(Path(current), "rev-parse", "--path-format=absolute", "--git-common-dir"))
             if root not in nested_common.parents:
                 raise RetirementError("nested-repository-external-store")
+            if runtime.git(Path(current), "fsck", "--full", "--no-dangling").returncode:
+                raise RetirementError("nested-git-object-integrity-unproven")
+        if (
+            ".git" in dirs
+            and Path(current) != root
+            and runtime.git(Path(current), "fsck", "--full", "--no-dangling").returncode
+        ):
+            raise RetirementError("nested-git-object-integrity-unproven")
+    objects = runtime.text(root, "cat-file", "--batch-all-objects", "--batch-check")
+    storage = runtime.git(root, "config", "--get", "lfs.storage")
+    if storage.returncode not in {0, 1}:
+        raise RetirementError("lfs-storage-unavailable")
+    lfs = common / "lfs" if not storage.stdout.strip() else Path(storage.stdout.strip())
+    if not lfs.is_absolute():
+        lfs = common / lfs
+    if storage.stdout.strip() and common not in lfs.resolve().parents:
+        raise RetirementError("external-lfs-storage")
+    for line in objects.splitlines():
+        oid, kind, size = line.split()
+        if kind != "blob" or int(size) > 512:
+            continue
+        content = runtime.text(root, "cat-file", "blob", oid)
+        if not content.startswith("version https://git-lfs.github.com/spec/v1\n"):
+            continue
+        match = re.search(r"^oid sha256:([0-9a-f]{64})$", content, re.MULTILINE)
+        if match is None:
+            raise RetirementError("lfs-pointer-invalid")
+        object_id = match.group(1)
+        payload = lfs / "objects" / object_id[:2] / object_id[2:4] / object_id
+        if not payload.is_file() or payload.is_symlink():
+            raise RetirementError("local-lfs-payload-custody-missing")
+        if _file_sha256(payload, checkpoint=runtime.check) != object_id:
+            raise RetirementError("local-lfs-payload-corrupt")
 
 
 class Campaign:
@@ -487,6 +533,22 @@ def public_publish(runtime: Runtime, campaign: Campaign) -> dict:
     previous = campaign.state.get("publication")
     owner = campaign.manifest["repositories"][0]["owner"]
     repository, number = owner.split("#")
+    # Machine progress publication is restricted to the exact existing owner.
+    # Observe the issue and authenticated principal before every outward write;
+    # missing, redirected, locked, or closed owners cannot receive this receipt.
+    target = runtime.run(["gh", "api", f"repos/{repository}/issues/{number}"])
+    principal = runtime.run(["gh", "api", "user"])
+    if target.returncode or principal.returncode:
+        raise RetirementError("receipt-owner-observation-failed")
+    observed_owner = json.loads(target.stdout)
+    if (
+        observed_owner.get("number") != int(number)
+        or observed_owner.get("state") != "open"
+        or observed_owner.get("locked")
+        or observed_owner.get("html_url", "").lower() != f"https://github.com/{repository}/issues/{number}".lower()
+        or not json.loads(principal.stdout).get("login")
+    ):
+        raise RetirementError("receipt-owner-not-authorized")
     if previous and previous["body_sha256"] == body_hash:
         comment = previous["id"]
     else:
@@ -587,8 +649,15 @@ class Runner:
         with self.runtime.verification():
             return inspect(self.runtime, entry, self.remote_identity)
 
-    def _proof(self, observed: dict, custody: dict) -> str:
-        return digest({"manifest": self.campaign.hash, "observed": observed, "custody": custody["digest"]})
+    def _proof(self, observed: dict, custody: dict, pre_sync=None) -> str:
+        return digest(
+            {
+                "manifest": self.campaign.hash,
+                "observed": observed,
+                "custody": custody["digest"],
+                "pre_sync": pre_sync["digest"] if pre_sync else None,
+            }
+        )
 
     def _verify_current(self, entry: dict, row: dict, *, review: bool = False) -> dict:
         observed = self._read(entry)
@@ -597,7 +666,7 @@ class Runner:
             raise RetirementError("candidate-proof-invalidated")
         for source in row["custody"]["sources"]:
             self.custody.verify_source(Path(source["identity"]["path"]), source)
-        if self._proof(observed, row["custody"]) != row["proof_sha256"]:
+        if self._proof(observed, row["custody"], row.get("pre_sync_custody")) != row["proof_sha256"]:
             raise RetirementError("candidate-proof-digest-mismatch")
         return observed
 
@@ -707,7 +776,14 @@ class Runner:
                                     current_row["changes"].append(change)
                                     campaign.save()
 
-                                sync(runtime, entry, observed, on_change=recorded)
+                                def before_checkout(current_row=row, before=observed):
+                                    with self.heavy():
+                                        current_row["pre_sync_custody"] = self.custody.capture(
+                                            proof_sources(before), journal_root=campaign.root / "removals"
+                                        )
+                                    campaign.save()
+
+                                sync(runtime, entry, observed, on_change=recorded, before_checkout=before_checkout)
                                 observed = self._read(entry)
                                 row["observed"] = observed
                                 row.update(status="synchronized", reason="custody-pending")
@@ -720,13 +796,15 @@ class Runner:
                                     row["custody"] = self.custody.capture(
                                         proof_sources(observed), journal_root=campaign.root / "removals"
                                     )
-                                row["proof_sha256"] = self._proof(observed, row["custody"])
+                                row["proof_sha256"] = self._proof(observed, row["custody"], row.get("pre_sync_custody"))
                                 row.update(status="preserved", reason="independent-acceptance-pending")
                                 campaign.save()
                             if not self.keeper.accepted(row["proof_sha256"]):
                                 row.update(status="preserved", reason="independent-acceptance-pending")
                                 continue
                             with self.heavy():
+                                if row.get("pre_sync_custody"):
+                                    self.custody.verify(row["pre_sync_custody"], restore=False)
                                 self.custody.verify(row["custody"], restore=False)
                                 observed = self._verify_current(entry, row)
                                 if (path / ".git").is_file():
@@ -773,8 +851,8 @@ class Runner:
                                         custody_content_sha256=digest(source["records"]),
                                         receipt_root=campaign.root / "removals",
                                         owner_probe=self.owner_probe,
-                                        content_probe=lambda p, expected_source=source: self.custody.verify_source(
-                                            p, expected_source
+                                        content_probe=lambda p, expected_source=source: (  # type: ignore[misc]
+                                            self.custody.verify_source(p, expected_source)
                                         ),
                                     )
                                 row["removal"] = removed
@@ -806,6 +884,20 @@ class Runner:
                 if self.keeper:
                     consumed, remaining = self.keeper.accounting()
                     campaign.state.update(agent_minutes_consumed=consumed, agent_minutes_remaining=remaining)
+                    pending = {
+                        digest(path)[:16]: row["proof_sha256"]
+                        for path, row in campaign.state["candidates"].items()
+                        if row["status"] == "preserved"
+                    }
+                    if pending and hasattr(self.keeper, "request_review"):
+                        request_key = digest(pending)
+                        if request_key not in campaign.state.setdefault("review_requests", {}):
+                            campaign.state["review_requests"][request_key] = {"state": "requesting"}
+                            campaign.save()
+                            campaign.state["review_requests"][request_key] = {
+                                "state": "reserved",
+                                "receipt": self.keeper.request_review(pending),
+                            }
                 campaign.state["free_after"] = (
                     os.statvfs(existing[0].parent if existing else campaign.root).f_bavail
                     * os.statvfs(existing[0].parent if existing else campaign.root).f_frsize
@@ -840,6 +932,8 @@ class Runner:
                 with lock(self.campaign.root.parent / "locks" / (observed["key"].split(":")[1] + ".lock")):
                     self._verify_current(entry, row, review=True)
                     with self.heavy():
+                        if row.get("pre_sync_custody"):
+                            self.custody.verify(row["pre_sync_custody"])
                         self.custody.verify(row["custody"])
                     self._verify_current(entry, row, review=True)
                     proofs[digest(entry["path"])[:16]] = row["proof_sha256"]
@@ -913,7 +1007,9 @@ def prepare_linked(runtime: Runtime, root: Path, observed: dict, custody: dict, 
                 custody_content_sha256=digest(expected),
                 receipt_root=Path(custody["journal_root"]),
                 owner_probe=lambda p: process_owner(runtime, p),
-                content_probe=lambda p, expected_subtree=subtree: _assert_content(p, expected_subtree),
+                content_probe=lambda p, expected_subtree=subtree: (  # type: ignore[misc]
+                    _assert_content(p, expected_subtree)
+                ),
             )
         else:
             target.unlink()

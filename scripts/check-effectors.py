@@ -64,6 +64,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import hashlib
 import re
 import sys
 from pathlib import Path
@@ -262,7 +263,7 @@ def check_declaration(registry: dict, findings: list[str]) -> dict:
             # check-runner-coverage, generalised: a declared predicate that is not on disk turns
             # a fail-closed guard into a total denial the moment it is armed.
             for token in predicate.split():
-                if token.endswith(".py") or token.endswith(".sh"):
+                if token.endswith((".py", ".sh")):
                     if not (ROOT / token).is_file():
                         findings.append(
                             f"A predicate-missing: effector '{eid}' predicate names {token}, "
@@ -313,11 +314,21 @@ def check_patterns(effectors: dict, findings: list[str]) -> None:
             )
 
 
-def check_coverage(findings: list[str]) -> None:
+def check_coverage(findings: list[str], registry: dict | None = None) -> None:
     """Class C — in-process outward senders the PreToolUse(Bash) guard structurally cannot see."""
     for path in _iter_python_files():
         rel = path.relative_to(ROOT).as_posix()
         for verb in sorted(scan_file(path)):
+            # Explicitly reviewed native guards are code-bound. Any code change
+            # invalidates the registration rather than silently widening it.
+            guarded = (registry or {}).get("in_process_gates", {}).get(rel, {})
+            if (
+                verb in guarded.get("verbs", [])
+                and guarded.get("code_sha256") == hashlib.sha256(path.read_bytes()).hexdigest()
+                and guarded.get("guard")
+                and guarded.get("owner")
+            ):
+                continue
             findings.append(
                 f"C ungated-effector: {rel} performs `{verb}` in-process, where the "
                 f"PreToolUse(Bash) guard is structurally blind — no command string ever exists"
@@ -355,7 +366,7 @@ def collect() -> list[str]:
     effectors = check_declaration(registry, findings)
     if effectors:
         check_patterns(effectors, findings)
-    check_coverage(findings)
+    check_coverage(findings, registry)
     return findings
 
 

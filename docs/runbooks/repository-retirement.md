@@ -66,6 +66,15 @@ Interrupted checkout preparation or incomplete purge remains retained with its j
 and verified archives; it is not silently repeated. Changed content invalidates only
 that candidate's acceptance. A new acceptance reservation is required for a changed
 proof; the original review receipt cannot authorize it.
+The executor requests that replacement through the existing parent reservation,
+once per changed proof set. It does not launch an unreserved reviewer or restart
+campaign accounting. Original ignored files are archived before any checkout
+fast-forward that could replace them. Missing or corrupt local LFS payload blocks
+retirement, including pointers retained only in unreachable Git objects.
+
+Machine progress publication observes the exact open owner issue and authenticated
+principal before writing. Its native guard is registered by code digest in the
+outbound effector registry; changing that code invalidates its registration.
 
 The command stops at the inherited deadline or allowance. Active/open-file ownership,
 unassigned ownership, unsupported remote identity mappings, shallow/promisor histories,

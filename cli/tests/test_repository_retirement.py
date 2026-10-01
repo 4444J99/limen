@@ -307,3 +307,104 @@ def test_keeper_rejects_self_acceptance_and_previous_campaign(fixture):
     packet["execution"]["repository_retirement"]["campaign_id"] = "old-stopped-campaign"
     with pytest.raises(RetirementError, match="keeper-campaign-binding-mismatch"):
         Keeper(campaign.manifest, client=Client())
+
+
+def test_upstream_ignored_file_collision_preserves_original_before_ff(fixture, tmp_path):
+    source, remote, campaign, runner, _ = fixture
+    (source / "secret.env").write_text("original-private-credential")
+    producer = tmp_path / "producer"
+    git(tmp_path, "clone", "-q", str(remote), str(producer))
+    git(producer, "config", "user.name", "Test")
+    git(producer, "config", "user.email", "test@example.invalid")
+    (producer / "secret.env").write_text("upstream tracked content")
+    git(producer, "add", "-f", "secret.env")
+    git(producer, "commit", "-qm", "upstream collision")
+    git(producer, "push", "-q", "origin", "main")
+    result = runner.apply()
+    assert result["branches_synchronized"] == 1
+    before = campaign.state["candidates"][str(source)]["pre_sync_custody"]
+    archived = (
+        Path(campaign.manifest["custody"]["archive_root"])
+        / "limen-private/repository-retirement"
+        / before["digest"]
+        / before["sources"][0]["key"]
+    )
+    assert (archived / "secret.env").read_text() == "original-private-credential"
+    assert (source / "secret.env").read_text() == "upstream tracked content"
+    runner.accept()
+    assert runner.apply()["copies_removed"] == 1
+
+
+def test_unreachable_lfs_pointer_missing_payload_blocks_retirement(fixture):
+    source, _, _, runner, _ = fixture
+    pointer = "version https://git-lfs.github.com/spec/v1\noid sha256:" + "a" * 64 + "\nsize 123\n"
+    (source / "pointer").write_text(pointer)
+    git(source, "hash-object", "-w", "pointer")
+    (source / "pointer").unlink()
+    result = runner.apply()
+    assert result["retained"][0]["reason"] == "local-lfs-payload-custody-missing"
+    assert source.exists()
+
+
+def test_crash_after_completed_purge_is_reconciled_without_repeating(fixture, monkeypatch):
+    source, _, campaign, runner, _ = fixture
+    runner.apply()
+    runner.accept()
+    original = runner._remote_readback
+
+    def fail(_observed):
+        raise RetirementError("post-removal-remote-readback-changed")
+
+    monkeypatch.setattr(runner, "_remote_readback", fail)
+    assert runner.apply()["copies_removed"] == 0
+    assert not source.exists()
+    campaign.state["interrupted_attempt"] = True
+    campaign.save()
+    monkeypatch.setattr(runner, "_remote_readback", original)
+    assert runner.apply()["copies_removed"] == 1
+
+
+def test_receipt_publisher_rejects_closed_owner_before_post(fixture, monkeypatch):
+    from limen.repository_retirement import public_publish
+
+    _, _, campaign, runner, _ = fixture
+    calls = []
+
+    def response(argv, **kwargs):
+        calls.append(argv)
+        body = {"login": "operator"} if argv[-1] == "user" else {"number": 2739, "state": "closed"}
+        return subprocess.CompletedProcess(argv, 0, json.dumps(body), "")
+
+    monkeypatch.setattr(runner.runtime, "run", response)
+    with pytest.raises(RetirementError, match="receipt-owner-not-authorized"):
+        public_publish(runner.runtime, campaign)
+    assert all("POST" not in argv for argv in calls)
+
+
+def test_native_effector_registration_is_code_bound(tmp_path, monkeypatch):
+    import importlib.util
+
+    root = Path(__file__).resolve().parents[2]
+    spec = importlib.util.spec_from_file_location("retirement_effectors", root / "scripts/check-effectors.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    sender = tmp_path / "sender.py"
+    sender.write_text('argv = ["gh", "api", "--method", "POST"]\n')
+    monkeypatch.setattr(module, "ROOT", tmp_path)
+    monkeypatch.setattr(module, "_iter_python_files", lambda: [sender])
+    registry = {
+        "in_process_gates": {
+            "sender.py": {
+                "verbs": ["gh api -X POST"],
+                "code_sha256": hashlib.sha256(sender.read_bytes()).hexdigest(),
+                "guard": "reviewed native guard",
+                "owner": "4444J99/limen#2739",
+            }
+        }
+    }
+    findings = []
+    module.check_coverage(findings, registry)
+    assert findings == []
+    sender.write_text(sender.read_text() + "# changed implementation\n")
+    module.check_coverage(findings, registry)
+    assert len(findings) == 1 and "ungated-effector" in findings[0]

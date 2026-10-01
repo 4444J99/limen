@@ -9,6 +9,7 @@ from pathlib import Path
 
 import click
 
+from limen.conduct.broker import ConductError
 from limen.repository_retirement import (
     Campaign,
     RetirementError,
@@ -42,6 +43,7 @@ def _campaign(batch: Path | None, resume: str | None) -> Campaign:
             raise click.UsageError("Invalid campaign ID.")
         value = json.loads((state_root() / resume / "state.json").read_text())["manifest"]
     else:
+        assert batch is not None
         value = load_manifest(batch)
     return Campaign(value, state_root())
 
@@ -83,9 +85,19 @@ def retire(batch, resume, apply, json_output):
                 result = runner.apply()
                 public_publish(runtime, campaign)
                 result = campaign.summary()
+                if not result.get("retained") and not campaign.state.get("root_report"):
+                    proofs = {
+                        key: row["proof_sha256"]
+                        for key, row in campaign.state["candidates"].items()
+                        if row["status"] == "removed"
+                    }
+                    campaign.state["root_report"] = keeper.report(proofs)
+                    campaign.save()
         click.echo(json.dumps(result, sort_keys=True, indent=2))
         if apply and result.get("retained"):
             raise click.exceptions.Exit(1)
+    except ConductError as exc:
+        raise click.ClickException(f"keeper-rejected-{type(exc).__name__}: status={exc.status}") from exc
     except (RetirementError, OSError, ValueError, KeyError) as exc:
         if isinstance(exc, RetirementError):
             detail = str(exc)
@@ -103,6 +115,8 @@ def accept(resume):
         keeper = Keeper(campaign.manifest)
         result = Runner(campaign, keeper=keeper, runtime=Runtime(min(keeper.deadline, time.time() + 600))).accept()
         click.echo(json.dumps(result, sort_keys=True))
+    except ConductError as exc:
+        raise click.ClickException(f"keeper-rejected-{type(exc).__name__}: status={exc.status}") from exc
     except (RetirementError, OSError, ValueError, KeyError) as exc:
         raise click.ClickException(str(exc) if isinstance(exc, RetirementError) else "acceptance-unavailable") from exc
 

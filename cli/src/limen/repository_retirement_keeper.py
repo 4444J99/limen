@@ -7,7 +7,7 @@ import time
 from datetime import UTC, datetime
 
 from limen.conduct.client import client_from_env
-from limen.conduct.models import AgentIdentityV1, PredicateEvidenceV1, RunReceiptV1
+from limen.conduct.models import AgentIdentityV1, PredicateEvidenceV1, RunReceiptV1, WorkPacketV1
 from limen.repository_retirement import RetirementError, digest, manifest_binding, timestamp
 
 
@@ -18,7 +18,7 @@ class Keeper:
         self.graph = self.client.graph(manifest["run_id"])
         self.nodes = {node["run_id"]: node for node in self.graph["nodes"]}
         self.root = self.nodes[manifest["run_id"]]
-        self.reviewer = self.nodes.get(manifest.get("review_run_id"))
+        self.reviewer: dict = self.nodes.get(manifest.get("review_run_id")) or {}
         if self.reviewer is None or self.reviewer["run_id"] == self.root["run_id"]:
             raise RetirementError("independent-review-capacity-not-reserved")
         actors = [self.root.get("executor_session_id"), self.reviewer.get("executor_session_id")]
@@ -42,12 +42,22 @@ class Keeper:
             raise RetirementError("independent-review-allowance-invalid")
         self.limit = packet["spend"]["limit"]
         self.deadline = min(timestamp(manifest["deadline"]), timestamp(packet["deadline"]))
-        self.claimed = None
+        self.claimed: dict | None = None
         if self.reviewer.get("parent_run_id") != self.root["run_id"]:
             raise RetirementError("reviewer-not-reserved-under-this-campaign")
         review_binding = self.reviewer["packet"].get("execution", {}).get("repository_retirement", {})
         if review_binding != binding:
             raise RetirementError("reviewer-campaign-binding-mismatch")
+        self.review_nodes = [
+            node
+            for node in self.nodes.values()
+            if node.get("parent_run_id") == self.root["run_id"]
+            and node["packet"].get("execution", {}).get("repository_retirement") == binding
+            and node.get("executor_session_id") != self.root.get("executor_session_id")
+        ]
+        live = [node for node in self.review_nodes if node.get("lease", {}).get("state") in {"reserved", "active"}]
+        if live:
+            self.reviewer = live[-1]
 
     def accounting(self) -> tuple[float, float]:
         total = 0.0
@@ -99,16 +109,37 @@ class Keeper:
             )
 
     def accepted(self, proof_hash: str) -> bool:
-        for receipt in self.reviewer.get("receipts", []):
+        for receipt in [r for reviewer in self.review_nodes for r in reviewer.get("receipts", [])]:
             if (
                 receipt.get("mutation_authorized") is True
                 and receipt.get("outcome") == "succeeded"
-                and receipt.get("executor", {}).get("session_id") == self.reviewer["executor_session_id"]
+                and receipt.get("executor", {}).get("session_id")
+                in {n["executor_session_id"] for n in self.review_nodes}
                 and receipt.get("predicate", {}).get("exit_code") == 0
                 and proof_hash in receipt.get("observed_heads_after", {}).values()
             ):
                 return True
         return False
+
+    def request_review(self, proofs: dict[str, str]) -> dict | None:
+        if self.reviewer.get("lease", {}).get("state") in {"reserved", "active"}:
+            return None
+        packet = dict(self.reviewer["packet"])
+        suffix = digest(proofs)[:32]
+        packet.update(
+            work_id="repository-review-" + suffix,
+            work_key="repository-review-" + suffix,
+            intent={"repository_proofs": proofs},
+            intent_hash="",
+            execution_hash="",
+            resource_claims=[],
+            task_id=None,
+        )
+        packet["execution"] = {
+            **packet["execution"],
+            "command": ["limen", "repos", "accept", "--resume", self.manifest["campaign_id"]],
+        }
+        return self.client.split(self.root["run_id"], WorkPacketV1.model_validate(packet))
 
     def report(self, proofs: dict[str, str], *, review: bool = False, succeeded: bool = True) -> dict:
         node = self.reviewer if review else self.root
@@ -129,6 +160,7 @@ class Keeper:
             outcome="succeeded" if succeeded else "blocked",
             completed_at=datetime.now(UTC),
         )
+        assert self.claimed is not None
         return self.client.report(
             lease["lease_id"], self.claimed["capability_token"], receipt, generation=lease["generation"]
         )
