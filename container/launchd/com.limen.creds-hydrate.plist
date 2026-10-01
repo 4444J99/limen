@@ -27,20 +27,20 @@
         <string>-c</string>
         <!-- The versioned interpreter remains updateable, but protected I/O is attributed to
              DomusAgentHost. `op` lives on the Homebrew PATH. -->
-        <string>export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"; PY="$LIMEN_ROOT/.venv/bin/python3"; [ -x "$PY" ] || PY="$(command -v python3 || echo python3)"; exec "$PY" "$LIMEN_ROOT/scripts/creds-hydrate.py" --apply</string>
+        <string>export PATH="/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"; exec "$HOME/.local/share/limen/current/venv/bin/python3" "$LIMEN_ROOT/scripts/creds-hydrate.py" --apply</string>
     </array>
     <key>EnvironmentVariables</key>
     <dict>
         <key>HOME</key><string>/Users/4jp</string>
-        <key>LIMEN_ROOT</key><string>/Users/4jp/Workspace/limen</string>
-        <key>PYTHONPATH</key><string>/Users/4jp/Workspace/limen/cli/src</string>
+        <key>LIMEN_ROOT</key><string>/Users/4jp/.local/share/limen/current/source</string>
+        <key>PYTHONPATH</key><string>/Users/4jp/.local/share/limen/current/source/cli/src</string>
     </dict>
     <!-- RunAtLoad hydrates promptless lanes at login; StartInterval re-runs every 30 min.
          One-shot assess-and-exit model, so no KeepAlive. -->
     <key>StartInterval</key><integer>1800</integer>
     <key>RunAtLoad</key><true/>
     <key>ProcessType</key><string>Background</string>
-    <key>StandardOutPath</key><string>/Users/4jp/Workspace/limen/logs/creds-hydrate.out.log</string>
-    <key>StandardErrorPath</key><string>/Users/4jp/Workspace/limen/logs/creds-hydrate.err.log</string>
+    <key>StandardOutPath</key><string>/Users/4jp/.local/state/limen/launchd/creds-hydrate.out.log</string>
+    <key>StandardErrorPath</key><string>/Users/4jp/.local/state/limen/launchd/creds-hydrate.err.log</string>
 </dict>
 </plist>
