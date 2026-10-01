@@ -1447,6 +1447,7 @@ sensors:
     default: "1"
     source: [metabolize]
     owner: vitals
+    timeout: 15
     steps:
       - command: "python3 scripts/host-pressure-stale.py --read-only --on-demand"
         severity: advisory
