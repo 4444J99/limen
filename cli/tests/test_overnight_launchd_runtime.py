@@ -5,7 +5,6 @@ import plistlib
 import tomllib
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 OVERNIGHT_PLIST = ROOT / "container" / "launchd" / "com.limen.overnight-watch.plist"
 PYPROJECT = ROOT / "cli" / "pyproject.toml"
@@ -43,3 +42,37 @@ def test_immutable_runtime_declares_trial_protocol_dependency() -> None:
         dependencies = tomllib.load(handle)["project"]["dependencies"]
 
     assert "rfc8785==0.1.4" in dependencies
+
+
+def test_control_plane_launchd_consumers_have_no_editable_source_paths() -> None:
+    paths = [ROOT / "container/launchd" / name for name in CONTROL_PLISTS]
+    paths.append(ROOT / "ianva/deploy/com.ianva.gateway.plist")
+
+    def strings(value):
+        if isinstance(value, str):
+            yield value
+        elif isinstance(value, dict):
+            for child in value.values():
+                yield from strings(child)
+        elif isinstance(value, list):
+            for child in value:
+                yield from strings(child)
+
+    for path in paths:
+        payload = plistlib.loads(path.read_bytes())
+        values = list(strings(payload))
+        assert not any("/Workspace/limen" in value for value in values)
+        assert not any("/Workspace/domus-genoma" in value for value in values)
+        assert not any("__IANVA_DIR__" in value for value in values)
+        for key in ("StandardOutPath", "StandardErrorPath"):
+            assert payload[key].startswith("/Users/4jp/.local/state/limen/launchd/")
+
+
+def test_credential_job_and_gateway_use_installed_interpreter() -> None:
+    credentials = plistlib.loads((ROOT / "container/launchd/com.limen.creds-hydrate.plist").read_bytes())
+    command = credentials["ProgramArguments"][-1]
+    assert "$HOME/.local/share/limen/current/venv/bin/python3" in command
+    assert ".venv/bin" not in command
+    assert "command -v python3" not in command
+    gateway = plistlib.loads((ROOT / "ianva/deploy/com.ianva.gateway.plist").read_bytes())
+    assert gateway["EnvironmentVariables"]["PATH"].split(":")[0].endswith("/.local/share/limen/current/venv/bin")
