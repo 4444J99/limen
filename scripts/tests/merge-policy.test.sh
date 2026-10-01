@@ -29,6 +29,17 @@ if [[ "\$*" == *"pr view"* ]] && [ -n "\${GH_PR_VIEW_ERROR:-}" ]; then
   exit 1
 fi
 case "\$*" in
+  *"api repos/o/r/rules/branches/main"*)
+    case "\${GH_NO_REQUIRED_POLICY:-unknown}" in
+      verified) printf '%s\n' '[{"type":"pull_request"}]' ;;
+      required) printf '%s\n' '[{"type":"required_status_checks"}]' ;;
+      *) exit 1 ;;
+    esac ;;
+  *"api repos/o/r/branches/main"*)
+    case "\${GH_NO_REQUIRED_POLICY:-unknown}" in
+      verified|required) printf '%s\n' '{"name":"main","protected":true,"protection":{"required_status_checks":{"contexts":[],"checks":[]}}}' ;;
+      *) exit 1 ;;
+    esac ;;
   *"api graphql"*)
     case "\${GH_QUEUE_CAPABILITY:-unknown}" in
       active) printf '%s\n' '{"data":{"repository":{"mergeQueue":{"id":"MQ_fixture"}}}}' ;;
@@ -116,6 +127,17 @@ echo "merge-policy.sh verdict matrix:"
 # CLEARED (exit 0) — only genuinely-mergeable, policy-safe states
 mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"
 check_output "clean non-deploy + green" 0 "MERGE-MODE: direct"
+export GH_NO_REQUIRED_POLICY=verified
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$FAILING"
+check_output "proven no required: advisory failure" 0 "scope=required failing=0 pending=0"
+mkjson OPEN false UNSTABLE "$WEB_FILES" "$FAILING"
+check "no required still protects live deploy" 2
+export GH_NO_REQUIRED_POLICY=required
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$FAILING"
+check "rules require checks: cannot prove absence" 2
+export GH_NO_REQUIRED_POLICY=unknown
+check "unavailable policy: fail closed on red" 2
+unset GH_NO_REQUIRED_POLICY
 mkjson OPEN false CLEAN "$WEB_FILES" "$GREEN"
 check_output "clean website-sensitive + green" 0 "MERGE-MODE: direct"
 # Pins the CLASSIFICATION, not just the verdict. Without this the fixture can drift to a

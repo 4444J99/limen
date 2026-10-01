@@ -156,3 +156,26 @@ def classify_required_failure(failing_required) -> str:
     if failing_required:
         return CI_RED
     return OPTIONAL_ONLY
+
+
+if __name__ == "__main__":
+    # Shell adapters use the same measured-absence predicate as the self-* organs.
+    # API errors, unknown rules, or required contexts never establish absence.
+    import argparse
+    import subprocess
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--prove-no-required", required=True, metavar="OWNER/REPO")
+    parser.add_argument("--branch", required=True)
+    arguments = parser.parse_args()
+
+    def gh(arguments, timeout=20):
+        return subprocess.run(
+            ["gh", *arguments], capture_output=True, text=True, timeout=timeout, check=False
+        )
+
+    if no_required_policy(gh, arguments.prove_no_required, arguments.branch):
+        print("NO-REQUIRED-CHECKS")
+        raise SystemExit(0)
+    print(UNMEASURED)
+    raise SystemExit(2)
