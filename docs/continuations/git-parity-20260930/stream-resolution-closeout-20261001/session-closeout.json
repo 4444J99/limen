@@ -1,0 +1,32 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "01a0f401-e100-7083-8216-faa9508c2c20",
+  "repository": "4444J99/limen",
+  "worktree_name": "repository-retirement-20260930",
+  "base_head": null,
+  "publication_branch": "docs/stream-resolution-session-closeout-20261001",
+  "owner_url": "https://github.com/4444J99/limen/issues/2739",
+  "disposition": "handoff",
+  "owned_paths": [
+    "cli/src/limen/worktree_abandonment.py",
+    "cli/tests/test_worktree_abandonment.py",
+    "docs/continuations/git-parity-20260930/stream-resolution-20261001.md"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "head": "2c7fb50d47941e32ca9de435523242592e2b51fc",
+      "exit_code": 0,
+      "command": "python3 -m pytest cli/tests/test_worktree_abandonment.py cli/tests/test_reclaim_worktrees.py -q",
+      "evidence": "docs/continuations/git-parity-20260930/stream-resolution-closeout-20261001/handoff-evidence.json",
+      "sha256": "378885b554ba5f5ca43b6d9f388714789ebd59234059b1b2ccd5e740b2872a9e"
+    }
+  ],
+  "custody": {
+    "verified": false,
+    "evidence": "docs/continuations/git-parity-20260930/stream-resolution-closeout-20261001/handoff-evidence.json",
+    "sha256": "378885b554ba5f5ca43b6d9f388714789ebd59234059b1b2ccd5e740b2872a9e"
+  },
+  "caller_worktree": "/Users/4jp/Workspace",
+  "scope_limitation": "Caller is a non-Git containment root. Native session initial Git revision is unmeasured; this owner checkout is a distinct implementation worktree. Earlier historical session ownership is not erased by the bounded list here."
+}
