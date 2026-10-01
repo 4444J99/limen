@@ -1,0 +1,19 @@
+{
+  "schema": "limen.stream_resolution_handoff.v1",
+  "merged_pr": 2789,
+  "merge_commit": "6dbb8d1a1b6315fc796c8eff3e3eca6871513704",
+  "implementation_head": "2c7fb50d47941e32ca9de435523242592e2b51fc",
+  "focused_tests": {
+    "passed": 85,
+    "command": "python3 -m pytest cli/tests/test_worktree_abandonment.py cli/tests/test_reclaim_worktrees.py -q",
+    "exit_code": 0
+  },
+  "whole_estate_lint_passed": false,
+  "custody_verified": false,
+  "remaining_owners": [
+    "https://github.com/4444J99/limen/issues/2741",
+    "https://github.com/4444J99/limen/issues/2742"
+  ],
+  "scope": "Published helper repair and stream reconciliation; complete private/native custody and current candidate retirement remain unproven.",
+  "credential_wall": "No raw credentials or private payload are included in this handoff. Independent credential ownership evidence is not certified."
+}
