@@ -699,11 +699,21 @@ def purge_remote_proven_path(
         raise ValueError("remote-purge-head-invalid")
 
     def advertised_ref(value: object) -> bool:
+        if not isinstance(value, str) or not value.startswith(("refs/heads/", "refs/tags/", "refs/pull/")):
+            return False
+        if value.startswith("refs/pull/") and not re.fullmatch(r"refs/pull/[1-9][0-9]*/(?:head|merge)", value):
+            return False
+        # Provider names must be actual Git refs, not merely strings with a
+        # permitted prefix. Read the predicate's own exit; never consult a
+        # stale refs/remotes cache to make provider evidence pass.
         return (
-            isinstance(value, str)
-            and value.startswith(("refs/heads/", "refs/tags/", "refs/pull/"))
-            and not any(char.isspace() or ord(char) < 32 for char in value)
-            and not value.endswith("/")
+            subprocess.run(
+                ["git", "check-ref-format", value],
+                capture_output=True,
+                timeout=10,
+                check=False,
+            ).returncode
+            == 0
         )
 
     if not remote_refs or not all(advertised_ref(value) for value in remote_refs):
