@@ -7,6 +7,7 @@ import tarfile
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 SPEC = importlib.util.spec_from_file_location(
     "independent_custody", Path(__file__).resolve().parents[1] / "check-group02-independent-custody.py"
@@ -16,6 +17,29 @@ SPEC.loader.exec_module(CHECK)
 
 
 class ArchiveBoundaryTests(unittest.TestCase):
+    def test_replica_writer_never_overwrites_existing_payload(self):
+        with tempfile.TemporaryDirectory() as root:
+            mount = Path(root)
+            source = mount / "source"
+            source.write_bytes(b"ciphertext")
+            target = mount / "private/replicas/cipher.enc"
+            with patch.object(CHECK, "REPLICA_MOUNTS", (mount,)):
+                CHECK.write_replica(source, target)
+                with self.assertRaises(FileExistsError):
+                    CHECK.write_replica(source, target)
+            self.assertEqual(target.read_bytes(), b"ciphertext")
+            self.assertEqual(target.stat().st_mode & 0o777, 0o600)
+
+    def test_replica_parent_symlink_is_rejected(self):
+        with tempfile.TemporaryDirectory() as root:
+            mount = Path(root)
+            destination = mount / "elsewhere"
+            destination.mkdir()
+            os.symlink(destination, mount / "private")
+            with patch.object(CHECK, "REPLICA_MOUNTS", (mount,)), self.assertRaises(ValueError):
+                CHECK.private_replica_parent(mount / "private/replicas")
+            self.assertFalse((destination / "replicas").exists())
+
     def test_captured_link_schema_matches_inventory_without_following(self):
         with tempfile.TemporaryDirectory() as root:
             directory = Path(root)

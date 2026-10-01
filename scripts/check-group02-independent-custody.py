@@ -14,6 +14,8 @@ import importlib.util
 import json
 import os
 import re
+import shutil
+import stat
 import subprocess
 import sys
 import tarfile
@@ -29,6 +31,59 @@ RESTORE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(RESTORE)
 SMALL_CIPHER_LIMIT = 4 * 1024 * 1024
 MAX_ARCHIVE_BYTES = 2 * 1024 * 1024 * 1024
+REPLICA_MOUNTS = (Path("/Volumes/Archive4T"), Path("/Volumes/T7Recovery"))
+REPLICA_DEVICE_IDS = {
+    "Archive4T": "device_7b1949b90546f414a63811ef0a5caeea",
+    "T7Recovery": "device_6d45f17db43abb97bf79bc1d4dfdbe06",
+}
+
+
+def replica_roots() -> dict[str, tuple[str, Path]]:
+    from limen.agent_state.custody import _device_identity
+
+    identities = {_device_identity(Path.home())}
+    result = {}
+    for mount in REPLICA_MOUNTS:
+        if mount.is_symlink() or not mount.is_mount():
+            raise ValueError("replica-volume-unmounted")
+        identity = _device_identity(mount)
+        if identity != REPLICA_DEVICE_IDS[mount.name]:
+            raise ValueError("replica-device-identity-mismatch")
+        if identity in identities:
+            raise ValueError("replica-device-not-independent")
+        identities.add(identity)
+        result[mount.name] = (identity, mount / "limen-private/group02-custody-20261001")
+    return result
+
+
+def private_replica_parent(parent: Path) -> None:
+    mount = next(m for m in REPLICA_MOUNTS if m in parent.parents)
+    current = mount
+    for component in parent.relative_to(mount).parts:
+        current /= component
+        try:
+            current.mkdir(mode=0o700)
+        except FileExistsError:
+            pass
+        info = current.lstat()
+        forbidden = 0o077 if current == parent else 0o022
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) & forbidden:
+            raise ValueError("replica-parent-not-private")
+
+
+def write_replica(source: Path, target: Path) -> None:
+    private_replica_parent(target.parent)
+    # Interrupted or foreign payload remains visible; never overwrite it.
+    fd = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(fd, "wb") as output, source.open("rb") as incoming:
+        shutil.copyfileobj(incoming, output, length=1024 * 1024)
+        output.flush()
+        os.fsync(output.fileno())
+    fd = os.open(target.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
 
 
 def normalized_entries(entries: dict) -> dict:
@@ -57,7 +112,16 @@ def safe_members(archive: tarfile.TarFile, prefix: str) -> list[tarfile.TarInfo]
     return members
 
 
-def verify(entry: dict, release: dict, receipt: dict) -> dict:
+def verify(
+    entry: dict,
+    release: dict,
+    receipt: dict,
+    replica: Path | None = None,
+    device_id: str | None = None,
+    preserve_only: bool = False,
+) -> dict:
+    if preserve_only and replica is None:
+        raise ValueError("preserve-only-requires-replica")
     cohort = entry["id"]
     asset = next(a for a in release["assets"] if a["name"] == entry["asset"])
     if asset["size"] != entry["ciphertext_bytes"]:
@@ -77,23 +141,53 @@ def verify(entry: dict, release: dict, receipt: dict) -> dict:
         with tempfile.TemporaryDirectory(prefix="group02-independent-", dir=scratch_root) as scratch:
             temporary = Path(scratch)
             cipher = temporary / "cipher.enc"
-            run(
-                "gh",
-                "release",
-                "download",
-                receipt["release_tag"],
-                "--repo",
-                "4444J99/domus-genoma",
-                "--pattern",
-                entry["asset"],
-                "--output",
-                str(cipher),
-            )
+            existing = replica is not None and os.path.lexists(replica)
+            if existing:
+                info = replica.lstat()
+                if (
+                    not stat.S_ISREG(info.st_mode)
+                    or info.st_nlink != 1
+                    or info.st_uid != os.getuid()
+                    or stat.S_IMODE(info.st_mode) & 0o077
+                ):
+                    raise ValueError("replica-not-private-regular-file")
+                private_replica_parent(replica.parent)
+                cipher = replica
+            else:
+                run(
+                    "gh",
+                    "release",
+                    "download",
+                    receipt["release_tag"],
+                    "--repo",
+                    "4444J99/domus-genoma",
+                    "--pattern",
+                    entry["asset"],
+                    "--output",
+                    str(cipher),
+                )
             if (
                 cipher.stat().st_size != entry["ciphertext_bytes"]
                 or RESTORE.digest(cipher) != entry["ciphertext_sha256"]
             ):
                 raise ValueError("ciphertext-mismatch")
+            if replica is not None and not existing:
+                write_replica(cipher, replica)
+                cipher = replica
+                if RESTORE.digest(cipher) != entry["ciphertext_sha256"]:
+                    raise ValueError("replica-readback-mismatch")
+            if preserve_only:
+                return {
+                    "id": cohort,
+                    "accepted": False,
+                    "status": "ciphertext-preserved-restore-unproven",
+                    "ciphertext_preserved": True,
+                    "ciphertext_sha256": entry["ciphertext_sha256"],
+                    "ciphertext_bytes": entry["ciphertext_bytes"],
+                    "replica_device_id": device_id,
+                    "replica_created": not existing,
+                    "plaintext_scratch_removed": True,
+                }
             env = dict(os.environ)
             env.pop("OP_SERVICE_ACCOUNT_TOKEN", None)
             key = run("op", "read", "op://Private/limen-arca-vault/password", env=env).strip()
@@ -187,6 +281,10 @@ def verify(entry: dict, release: dict, receipt: dict) -> dict:
                 "restored_git_fsck_exit": fsck,
                 "excluded_nested_count": entry["excluded_nested_count"],
             }
+        if replica is not None:
+            result.update(
+                replica_device_id=device_id, ciphertext_sha256=entry["ciphertext_sha256"], replica_created=not existing
+            )
         return {**result, "plaintext_scratch_removed": True}
     finally:
         if lease:
@@ -196,7 +294,20 @@ def verify(entry: dict, release: dict, receipt: dict) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--id", action="append", choices=[f"G02-{i:02}" for i in range(1, 12)])
+    parser.add_argument(
+        "--replica",
+        choices=[p.name for p in REPLICA_MOUNTS],
+        help="preserve and restore exact ciphertext on an authorized independent physical drive",
+    )
+    parser.add_argument(
+        "--preserve-only",
+        action="store_true",
+        help="verify encrypted replication without requesting a key; custody remains unaccepted",
+    )
     args = parser.parse_args()
+    if args.preserve_only and not args.replica:
+        parser.error("--preserve-only requires --replica")
+    device_id, replica_root = replica_roots()[args.replica] if args.replica else (None, None)
     envelope = json.loads(
         run("gh", "api", f"repos/4444J99/_diagnostics/contents/{RESTORE.RECEIPT_PATH}?ref={RESTORE.RECEIPT_REF}")
     )
@@ -210,7 +321,14 @@ def main() -> int:
     results = []
     for entry in entries:
         try:
-            result = verify(entry, release, receipt)
+            result = verify(
+                entry,
+                release,
+                receipt,
+                replica_root / entry["asset"] if replica_root else None,
+                device_id,
+                args.preserve_only,
+            )
         except (OSError, ValueError, KeyError, subprocess.SubprocessError, tarfile.TarError) as error:
             result = {
                 "id": entry["id"],
@@ -218,19 +336,22 @@ def main() -> int:
                 "status": "verification-failed",
                 "failure_class": type(error).__name__,
             }
+            if isinstance(error, subprocess.CalledProcessError):
+                surface = Path(error.cmd[0]).name
+                result["failure_surface"] = surface if surface in {"op", "openssl", "git", "gh"} else "subprocess"
         results.append(result)
         print(
             json.dumps(
                 {
                     "schema": "group02.independent-restore.v1",
-                    "key_source": "canonical-credential-organ",
+                    "key_source": "not-requested" if args.preserve_only else "canonical-credential-organ",
                     "mac_keychain_consulted": False,
                     **result,
                 }
             ),
             flush=True,
         )
-        if result.get("status") == "admission-denied":
+        if result.get("status") == "admission-denied" or result.get("failure_surface") == "op":
             break
     return 0 if len(results) == len(entries) and all(r["accepted"] for r in results) else 1
 
