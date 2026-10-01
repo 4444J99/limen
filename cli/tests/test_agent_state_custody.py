@@ -623,9 +623,11 @@ def test_device_identity_collapses_usb_volumes_to_hardware_serial(
     assert custody._device_identity(first) == custody._device_identity(second)
 
 
+@pytest.mark.parametrize("unrelated", [b"", b'    "Unrelated" = <\xcc>\n'])
 def test_device_identity_uses_usb_hardware_serial_when_disk_uuid_missing(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    unrelated: bytes,
 ) -> None:
     target = tmp_path / "external"
     target.mkdir()
@@ -634,7 +636,8 @@ def test_device_identity_uses_usb_hardware_serial_when_disk_uuid_missing(
         if args[0] == "/usr/sbin/ioreg":
             return SimpleNamespace(
                 returncode=0,
-                stdout=b"""
+                stdout=unrelated
+                + b"""
 +-o External <class IOUSBHostDevice, id 0x1>
   {
     "USB Serial Number" = "external-device-serial"
@@ -668,6 +671,19 @@ def test_device_identity_uses_usb_hardware_serial_when_disk_uuid_missing(
 
     assert identity.startswith("device_")
     assert len(identity) == len("device_") + 32
+
+
+def test_usb_identity_rejects_invalid_selected_serial(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        custody.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(
+            returncode=0,
+            stdout=b'+-o External <class IOUSBHostDevice, id 0x1>\n  "USB Serial Number" = "bad\xcc"\n  +-o Media <class IOMedia, id 0x2>\n    "BSD Name" = "disk4"\n',
+        ),
+    )
+    with pytest.raises(ReceiptError, match="serial is invalid"):
+        custody._usb_hardware_serial("disk4")
 
 
 def test_device_identity_requires_stable_external_media_identity(

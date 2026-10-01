@@ -227,7 +227,13 @@ def _usb_hardware_serial(physical: str) -> str | None:
     if result.returncode:
         raise ReceiptError("custody physical-device probe failed")
     try:
-        output = result.stdout.decode("utf-8") if isinstance(result.stdout, bytes) else str(result.stdout)
+        # ioreg may emit non-UTF-8 bytes in unrelated device properties. Preserve
+        # those bytes without allowing them into the selected hardware identity.
+        output = (
+            result.stdout.decode("utf-8", errors="surrogateescape")
+            if isinstance(result.stdout, bytes)
+            else str(result.stdout)
+        )
     except UnicodeError as exc:
         raise ReceiptError("custody physical-device evidence is invalid") from exc
 
@@ -279,6 +285,10 @@ def _usb_hardware_serial(physical: str) -> str | None:
             None,
         )
         if serial is not None:
+            try:
+                serial.encode("utf-8", errors="strict")
+            except UnicodeError as exc:
+                raise ReceiptError("custody physical-device serial is invalid") from exc
             candidates.add(serial)
     if len(candidates) > 1:
         raise ReceiptError("custody physical-device evidence is ambiguous")

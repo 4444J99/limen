@@ -1,0 +1,26 @@
+{
+  "schema": "limen.multi_scope_closeout_verification.v1",
+  "session_id": "01a0f974-79b7-7f90-a787-5ef3f5359948",
+  "owner_url": "https://github.com/4444J99/limen/issues/2763",
+  "source_baseline": "c7132820c",
+  "focused_tests": {"exit_code": 0, "passed": 104, "files": ["test_session_closeout.py", "test_session_closeout_scoped.py", "test_closeout_session_scope.py", "test_process_ownership.py", "test_agent_state_custody.py"]},
+  "python_typecheck": {"exit_code": 0, "cli_modules": 197, "mcp_and_ianva_modules": 14},
+  "changed_python_lint": {"exit_code": 0},
+  "changed_python_format": {"exit_code": 0, "files": 6},
+  "agent_instruction_drift": {"exit_code": 0},
+  "credential_wall": {"exit_code": 0, "registered_atoms": 31},
+  "diff_hygiene": {"exit_code": 0},
+  "scoped_batch": {
+    "exit_code": 1,
+    "selected_gate_count": 34,
+    "failures": [
+      {"gate": "python-typecheck", "disposition": "corrected; complete typecheck rerun passed"},
+      {"gate": "ruff-lint", "disposition": "unresolved inherited findings", "finding_count": 2105, "changed_file_findings": 0},
+      {"gate": "positioning-foundry-technical-readiness-public-live", "disposition": "unresolved public readiness evidence"}
+    ]
+  },
+  "merged": false,
+  "installed": false,
+  "session_released": false,
+  "retirement_authorized": false
+}
