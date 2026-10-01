@@ -3,9 +3,11 @@
 <!--
   ianva gateway keepalive (LaunchAgent), mirroring com.limen.heartbeat.
 
-  INSTALL (his-hand): replace __IANVA_DIR__ with the absolute path to the ianva/ dir, then:
+  INSTALL: verify the receipt-bound Domus runtime and Rule #55a admission first.
+  Keep an active gateway protected until its clients drain; then use its owner lifecycle.
+  Create the private bounded-log state directory before loading this reviewed plist.
+  Historical commands (not an admission boundary):
     cp deploy/com.ianva.gateway.plist ~/Library/LaunchAgents/
-    sed -i '' "s#__IANVA_DIR__#$PWD#g" ~/Library/LaunchAgents/com.ianva.gateway.plist
     launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.ianva.gateway.plist
   RESTART:  launchctl kickstart -k gui/$(id -u)/com.ianva.gateway
 -->
@@ -15,16 +17,16 @@
   <key>ProgramArguments</key>
   <array>
     <string>/bin/bash</string>
-    <string>__IANVA_DIR__/scripts/ianva-serve.sh</string>
+    <string>/Users/4jp/.local/share/limen/current/source/ianva/scripts/ianva-serve.sh</string>
   </array>
   <key>RunAtLoad</key>        <true/>
   <key>KeepAlive</key>        <true/>
   <key>ThrottleInterval</key> <integer>10</integer>
-  <key>StandardOutPath</key>  <string>__IANVA_DIR__/logs/gateway.out.log</string>
-  <key>StandardErrorPath</key><string>__IANVA_DIR__/logs/gateway.err.log</string>
+  <key>StandardOutPath</key>  <string>/Users/4jp/.local/state/limen/launchd/gateway.out.log</string>
+  <key>StandardErrorPath</key><string>/Users/4jp/.local/state/limen/launchd/gateway.err.log</string>
   <key>EnvironmentVariables</key>
   <dict>
-    <key>PATH</key><string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <key>PATH</key><string>/Users/4jp/.local/share/limen/current/venv/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
   </dict>
 </dict>
 </plist>
