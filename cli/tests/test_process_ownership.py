@@ -259,3 +259,14 @@ def test_multi_scope_observer_uses_one_snapshot(cohort, monkeypatch):
     monkeypatch.setattr(ownership, "assess", lambda *args, **kwargs: {"complete": True})
     assert ownership.observe_many((root, root / "nested"), "subject", anchor=root)["complete"]
     assert calls == [root]
+
+
+def test_subject_tagged_child_without_witness_stays_unmeasured(cohort):
+    processes, _, witnesses, evaluate = cohort
+    root = processes[101].cwd
+    processes[104].cwd = root.parent / "undeclared"
+    del witnesses["subject"]
+    result = evaluate(scope_roots=(root / "declared",))
+    rows = {row["pid"]: row for row in result["processes"]}
+    assert rows[104]["category"] == "unmeasured"
+    assert not result["complete"]

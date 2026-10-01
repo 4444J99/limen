@@ -15,9 +15,35 @@
     "selected_gate_count": 34,
     "failures": [
       {"gate": "python-typecheck", "disposition": "corrected; complete typecheck rerun passed"},
-      {"gate": "ruff-lint", "disposition": "unresolved inherited findings", "finding_count": 2105, "changed_file_findings": 0},
+      {"gate": "ruff-lint", "disposition": "historical false-red: executed Homebrew binary differed from Python metadata pin", "finding_count": 2105, "changed_file_findings": 0},
       {"gate": "positioning-foundry-technical-readiness-public-live", "disposition": "unresolved public readiness evidence"}
     ]
+  },
+  "landing_correction": {
+    "cheap_gate_count": 34,
+    "cheap_exit_code": 0,
+    "session_closeout_tests_passed": 82,
+    "technical_readiness_tests_passed": 57,
+    "ruff_executable_controls_passed": 5,
+    "ruff_executed_version": "0.15.8",
+    "ruff_lint_findings": 0,
+    "review_defects_corrected": 5,
+    "public_visibility_reconciliation": {
+      "new_owner_restricted_rows": 14,
+      "candidate_count": 62,
+      "historical_public_candidates": 54,
+      "verified_immutable_public_heads": 13,
+      "withdrawn_unverified": 41,
+      "retained_blockers": 494,
+      "transfer_eligible": 0
+    },
+    "scoped_batch_exit_code": 75,
+    "heavy_shard": "pytest-cli",
+    "heavy_shard_status": "not_admitted",
+    "admission_reason": "swap-fraction",
+    "swap_used_bytes": 6271533056,
+    "memory_bytes": 17179869184,
+    "next_command": "uv run --with './cli[test]' --with mypy --with pyyaml --with types-PyYAML python scripts/verify.py --changed --base c7132820c --gate-timeout-seconds 300 --total-timeout-seconds 550"
   },
   "merged": false,
   "installed": false,

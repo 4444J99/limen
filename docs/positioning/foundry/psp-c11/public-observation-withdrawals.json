@@ -190,6 +190,104 @@
       "reason": "owner_restricted_visibility",
       "recorded_at": "2026-09-30T21:57:24Z",
       "snapshot_row_sha256": "ba743a914b4aab9bdcacfc015b21110be6e39b5bbfda8ca2b9c34feec6a4a96c"
+    },
+    {
+      "candidate_id_sha256": "94d52d0389b1cba22e82b9535c9c51d092d137dab83fa2a6d30c7f4c88864f7e",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "d8e9e60a8e5e50b5dc8d8a78e4057ad7eb412d5ced6799d3aa60a41983037ca3"
+    },
+    {
+      "candidate_id_sha256": "f75a0e85ebf2c84c3a1085e6fcd3d9729ee44b8bd8be7859a32449e577300072",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "94fd706d27805b982b3228d45ad2013d57e47657604433e83360f7a3497a705f"
+    },
+    {
+      "candidate_id_sha256": "2d773c7a32a62f2104d62d8aaec9fc221958e178d914905710f94a7c6de1fb83",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "bd19627ba5e836633c4e6011c109305991d3c10d7576afec28bbc2a6b52e2550"
+    },
+    {
+      "candidate_id_sha256": "9a169d5d48eb18257e1d6e20fe5ca917092101f3e02962bb8103d1321cb029f4",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "fe541c4e012165cff5ca28c1fd827189d54c6f4b48f3a3f11af2cbcfcb0f061b"
+    },
+    {
+      "candidate_id_sha256": "fc360da7b7ee328987b55f1bb589bc771728eb282126a682cddaeb01023a029a",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "d386fda67fea7513200ef72327bc9cd7dbe450acb4e7380e8d29ea13e27fdfc9"
+    },
+    {
+      "candidate_id_sha256": "c20616f37853bad5f05ce6450568d4f941b03c9c2d284f8241a803b76cf4ea63",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "831ff0be205be3210f5581bca70e3493e9d69de7210f9ed7cc9c5966573a8668"
+    },
+    {
+      "candidate_id_sha256": "a2a241cd1b178193837355929a24d192c584f6a3deab919b5e9e9d6c999c72df",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "fc225b21c62a5a9ebfd6a1d49db055e1de23fccfea45bd4fcc52877840042d08"
+    },
+    {
+      "candidate_id_sha256": "5bb7ee3fd24512a75c3d10e6cdca74bc494c34516e5731c4409adb7c0d8dbdf9",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "ae622b83b176b9b3597f1a00b353982a3a106a289f36fdf445129e72f82c549f"
+    },
+    {
+      "candidate_id_sha256": "37558c86c41086ede418829b7f8b7392e0d69bb2c7492edcadbe3b04a3a9eb1c",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "09f64137925882e9ad4823468759f711b2d038ecf6cc12a6e53564e47cb0f1b5"
+    },
+    {
+      "candidate_id_sha256": "f79dd55cc6150f6a79d8100cbddaca5cbdc3ce1f94dbaf4c146504690b047fb7",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "ff8f0b0fb2ee0a000e2417b97a2ca4a3bc0934620176ef12a89c2aac8d34ebdd"
+    },
+    {
+      "candidate_id_sha256": "c107938b106fbb333be3935c9cc50cc72aacebfd16a5073e3f5c736b55a66ff2",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "8e0e5e444df8a3b763116b07b828d7ddc07ef102a99bc4d1628a17cac7363601"
+    },
+    {
+      "candidate_id_sha256": "610b19b4c94ce23584b8bd52f64861a4e3e4a4983ec8a5026b35713180a9efc3",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "b6907d5a63171fba9f9c12182fccd1874b664376e614e8f6d03c88011289b884"
+    },
+    {
+      "candidate_id_sha256": "3cf580f529fb6727b49c772a6b11a3461e71bfa73c0bf434cee926481e99814b",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "45db165fa1167ae5e7d089f8212720ecfc26c80204729a72425050822b46a545"
+    },
+    {
+      "candidate_id_sha256": "840e0b18245172f01e0630d047bbf0074dc54255a852582d4506661c85c4e8f6",
+      "disposition": "withdrawn_from_public_verification",
+      "reason": "owner_restricted_visibility",
+      "recorded_at": "2026-10-01T23:22:16Z",
+      "snapshot_row_sha256": "7e1416f074c4b8515ecf23c424972fe4d68c48771053c22af3172f8e37a63669"
     }
   ]
 }
