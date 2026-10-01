@@ -3,11 +3,10 @@
 The independent custody verifier now accepts `--replica Archive4T` or
 `--replica T7Recovery` for any of the eleven pinned views. It reuses native
 custody physical-device identities and requires both mounted drives to be
-distinct from each other and the internal device. It stores only exact encrypted
-release assets on the two pinned physical-device identities; a replacement device
-with the same volume name is refused pending owner profile reconciliation. It stores
-only exact encrypted
-release assets under each drive's `limen-private/group02-custody-20261001/`.
+distinct from each other and the internal device. Both drives must match their
+pinned physical identities; replacement media with the same volume name requires
+owner profile reconciliation. Only exact encrypted release assets are stored under
+each drive's `limen-private/group02-custody-20261001/`.
 The new leaf directory is mode 0700; ciphertext files are exclusive-created,
 mode 0600, synced, and hash-read back. Existing files must be private, singly
 linked regular files with the pinned hash; they are never overwritten. Owned
