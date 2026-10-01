@@ -2,6 +2,7 @@
 
 import importlib.util
 import io
+import os
 import tarfile
 import tempfile
 import unittest
@@ -15,6 +16,17 @@ SPEC.loader.exec_module(CHECK)
 
 
 class ArchiveBoundaryTests(unittest.TestCase):
+    def test_captured_link_schema_matches_inventory_without_following(self):
+        with tempfile.TemporaryDirectory() as root:
+            directory = Path(root)
+            link = directory / "link"
+            target = directory / "missing-external-target"
+            os.symlink(target, link)
+            entries = CHECK.RESTORE.inventory(directory)
+            entries["link"]["kind"] = "link"
+            CHECK.RESTORE.verify_tree(directory, CHECK.normalized_entries(entries))
+            self.assertFalse(target.exists())
+
     def archive(self, name: str, kind: bytes = tarfile.REGTYPE, target: str = ""):
         data = io.BytesIO()
         with tarfile.open(fileobj=data, mode="w") as archive:
