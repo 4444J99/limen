@@ -15,7 +15,8 @@ acceptance predicate passes. Session release does not authorize checkout retirem
 2. Finish the authorized work or publish a handoff in its existing owner. Preserve
    private artifacts through their custody owner. Record exact owned paths and explicit
    retained-work owners in the existing continuation's `session-closeout.json` using
-   `limen.session_closeout.v1` (see `docs/session-closeout.md`). Unknown ownership fails
+   `limen.session_closeout.v1`, or v2 with explicit roots for multi-repository sessions
+   (see `docs/session-closeout.md`). Unknown ownership fails
    closed. Commit and publish the receipt and owned artifacts through the normal PR rail.
 3. Reuse passing verification for unchanged implementation. Run implicated scoped gates
    once per changed tree, including credential-wall evidence for secrets used by the
@@ -23,6 +24,8 @@ acceptance predicate passes. Session release does not authorize checkout retirem
 4. Run `scripts/no-tasks-on-me.sh --session-id ID --worktree PATH --receipt RECEIPT --json`
    from the resolved protocol root with the authenticated conduct environment. For a
    legacy unregistered Codex session, also supply its exact `--native-transcript PATH`.
+   With v2, keep `--worktree` bound to the native caller and supply every declared
+   `--scope-root ID=PATH`; never substitute a child repository for the native anchor.
    This read-only predicate checks publication, ownership, custody, scoped verification,
    retained broker obligations and surviving processes. Exit 2 is unmeasured, never pass.
    No-argument `no-tasks-on-me.sh` and `closeout-fast.sh` remain estate diagnostics.

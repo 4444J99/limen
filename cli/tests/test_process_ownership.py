@@ -218,3 +218,44 @@ def sys_platform_supported():
     import sys
 
     return sys.platform == "darwin" or sys.platform.startswith("linux")
+
+
+def test_multi_scope_anchor_is_exact_and_native_lineage_is_global(cohort):
+    processes, _, _, evaluate = cohort
+    root = processes[101].cwd
+    declared = root / "declared"
+    processes[105].cwd = root / "undeclared"
+    processes[104].cwd = root.parent / "outside"
+    processes[102].cwd = declared
+    result = evaluate(scope_roots=(declared,))
+    rows = {row["pid"]: row for row in result["processes"]}
+    assert 105 not in rows
+    assert rows[101]["category"] == "shared_service"
+    assert rows[102]["category"] == "shared_service"
+    assert rows[104]["category"] == "owned_survivor"
+    assert result["process_count"] == 1
+
+
+def test_multi_scope_unknown_anchor_and_unreadable_root_fail(cohort):
+    processes, _, _, evaluate = cohort
+    root = processes[101].cwd
+    processes[104].env = {}
+    processes[104].readable = False
+    result = evaluate(scope_roots=(root / "subdirectory",))
+    assert not result["complete"]
+    assert result["counts"]["unknown"] == 1
+
+
+def test_multi_scope_observer_uses_one_snapshot(cohort, monkeypatch):
+    from limen import process_services
+
+    processes, contracts, witnesses, _ = cohort
+    root = processes[101].cwd
+    calls = []
+    monkeypatch.setattr(ownership, "snapshot", lambda path: (calls.append(path) or processes, set()))
+    monkeypatch.setattr(ownership, "read_native_witnesses", lambda *args: witnesses)
+    monkeypatch.setattr(process_services, "service_contracts", lambda *args: contracts)
+    monkeypatch.setattr(ownership, "process_identity", lambda pid: processes[pid].started)
+    monkeypatch.setattr(ownership, "assess", lambda *args, **kwargs: {"complete": True})
+    assert ownership.observe_many((root, root / "nested"), "subject", anchor=root)["complete"]
+    assert calls == [root]
