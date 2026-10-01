@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-from limen.personal_custody import VolumeIdentity
+from limen.personal_custody import PersonalCustodyError, VolumeIdentity
 from limen.repository_retirement import (
     Campaign,
     RetirementError,
@@ -131,7 +131,6 @@ def fixture(tmp_path):
         config,
         runtime,
         volume_probe=lambda p: volumes[p],
-        encryption_probe=lambda _p: True,
         copy_tree=lambda a, b: shutil.copytree(a, b, symlinks=True, copy_function=shutil.copy2),
     )
     gate = Gate()
@@ -145,6 +144,29 @@ def fixture(tmp_path):
         remote_identity=lambda _r, _url: {"id": 42, "name": "test/repository", "private": True},
     )
     return source, remote, campaign, runner, gate
+
+
+def test_local_custody_does_not_probe_volume_encryption(fixture, monkeypatch):
+    source, _, _, runner, _ = fixture
+    monkeypatch.setattr(runner.runtime, "run", lambda *_a, **_k: pytest.fail("encryption probe"))
+    roots = runner.custody.targets([source])
+    assert len(roots) == 2
+
+
+def test_local_custody_still_rejects_wrong_registered_volume(fixture):
+    source, _, _, runner, _ = fixture
+    runner.custody.volume_probe = lambda p: VolumeIdentity(str(p), "/dev/wrong", "wrong", "wrong")
+    with pytest.raises(PersonalCustodyError, match="inventory-device-drift"):
+        runner.custody.targets([source])
+
+
+def test_previous_policy_requires_new_capture(fixture):
+    source, _, campaign, runner, _ = fixture
+    runner.apply()
+    proof = dict(campaign.state["candidates"][str(source)]["custody"])
+    proof.pop("policy")
+    with pytest.raises(RetirementError, match="custody-policy-recapture-required"):
+        runner.custody.verify(proof)
 
 
 def test_preserve_accept_remove_and_idempotent_resume(fixture):

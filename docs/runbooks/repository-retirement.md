@@ -26,8 +26,14 @@ List all authorized linked paths; unlisted dependent stores are retained.
 
 `custody` contains `inventory`, its SHA-256 `inventory_sha256`, `archive_root`, and
 `recovery_root`. These must identify the existing registered Archive4T and T7Recovery
-devices. Both mounts must independently pass physical identity and encryption checks.
-The command never configures encryption, creates keys, or prints credentials.
+devices. Both mounts must independently pass physical identity checks and exact
+restore verification. Local SSD volume encryption is not required. Encryption
+applies to private material published to remote Git storage, through ARCA's
+owning lifecycle; public source may retain its normal source remote. The command
+never configures volume encryption, creates keys, or prints credentials.
+Local custody proofs bind `registered-independent-devices.v2`; older proofs need
+recapture and independent acceptance rather than reuse under the corrected policy.
+Local paired custody is not remote ciphertext or independent-key recovery proof.
 
 The preview prints the immutable `manifest_binding` and exact common-directory
 resource claims. The admitted executor packet binds these using
