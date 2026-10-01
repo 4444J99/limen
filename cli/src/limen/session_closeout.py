@@ -15,8 +15,10 @@ import subprocess
 from collections.abc import Callable
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal, overload
+from urllib.parse import urlsplit
 
 SCHEMA = "limen.session_closeout.v1"
+SCHEMA_V2 = "limen.session_closeout.v2"
 SHA = re.compile(r"[0-9a-f]{40}")
 OWNER = re.compile(r"https://github.com/([\w.-]+/[\w.-]+)/(issues|pull)/(\d+)")
 
@@ -327,12 +329,309 @@ def evaluate(
     }
 
 
+def path_digest(path: Path) -> str:
+    return hashlib.sha256(os.fsencode(str(path))).hexdigest()
+
+
+def repository_readback(slug: str) -> dict:
+    return json.loads(run(["gh", "api", "--method", "GET", f"repos/{slug}"]))
+
+
+def github_repository_slug(remote: str) -> str | None:
+    if remote.startswith("git@github.com:"):
+        slug = remote.removeprefix("git@github.com:")
+    else:
+        parsed = urlsplit(remote)
+        if parsed.hostname != "github.com" or parsed.scheme not in {"https", "http", "ssh", "git"}:
+            return None
+        slug = parsed.path.lstrip("/")
+    slug = slug.removesuffix(".git")
+    if not re.fullmatch(r"[\w.-]+/[\w.-]+", slug):
+        raise Unmeasured("invalid GitHub repository remote")
+    return slug
+
+
+def evaluate_scoped(
+    session_root: Path,
+    session_id: str,
+    receipt_path: Path,
+    scope_roots: dict[str, Path],
+    *,
+    audit: dict,
+    binding: dict | None,
+    native_transcript: Path | None = None,
+    read_owner: Callable[[str], dict] = owner_readback,
+    read_repository: Callable[[str], dict] | None = None,
+    observe_processes: Callable[..., Any] | None = None,
+) -> dict:
+    """Validate explicit roots and one native anchor without guessing repositories."""
+    from limen.process_ownership import observe_many, transcript_witness
+
+    anchor = session_root.resolve(strict=True)
+    roots = {key: path.resolve(strict=True) for key, path in scope_roots.items()}
+    if any(not path.is_absolute() or path.absolute() != roots[key] for key, path in scope_roots.items()):
+        raise Unmeasured("scope mappings must use canonical absolute paths")
+    if len(set(roots.values())) != len(roots):
+        raise Unmeasured("duplicate canonical scope roots")
+    receipt_path = receipt_path.resolve(strict=True)
+    receipt_root = Path(git(receipt_path.parent, "rev-parse", "--show-toplevel")).resolve()
+    receipt_head = git(receipt_root, "rev-parse", "HEAD")
+    relative = receipt_path.relative_to(receipt_root).as_posix()
+    raw = receipt_path.read_bytes()
+    if raw != git(receipt_root, "show", f"{receipt_head}:{relative}", raw=True):
+        raise Unmeasured("closeout receipt is not committed at the inspected head")
+    receipt = json.loads(raw)
+    if receipt.get("schema") != SCHEMA_V2 or receipt.get("session_id") != session_id:
+        raise Unmeasured("closeout receipt session identity mismatch")
+    if receipt.get("session_root_path_sha256") != path_digest(anchor):
+        raise Unmeasured("native session root mismatch")
+    if audit.get("session_id") != session_id or audit.get("coverage", {}).get("retained_state_complete") is not True:
+        raise Unmeasured("session audit missing or incomplete")
+    runs = audit.get("runs")
+    if not isinstance(runs, list) or audit.get("retained_run_count") != len(runs):
+        raise Unmeasured("retained run coverage is incomplete")
+    if binding is not None:
+        if binding.get("session_id") != session_id or Path(binding.get("worktree") or "").resolve() != anchor:
+            raise Unmeasured("broker session/worktree binding mismatch")
+    elif audit.get("session_present") is not False or native_transcript is None:
+        raise Unmeasured("no broker binding or exact native-session witness")
+    if native_transcript is not None:
+        witness = transcript_witness(native_transcript)
+        cwd = Path(witness.get("cwd") or "")
+        if witness["thread_id"] != session_id or not cwd.is_absolute() or cwd != cwd.resolve() or cwd != anchor:
+            raise Unmeasured("native transcript identity or root mismatch")
+    declarations = receipt.get("scope_roots")
+    if not isinstance(declarations, list) or not declarations:
+        raise Unmeasured("explicit scope roots are required")
+    ids = [row.get("id") for row in declarations if isinstance(row, dict)]
+    if len(ids) != len(declarations) or len(set(ids)) != len(ids) or set(ids) != set(roots):
+        raise Unmeasured("scope mappings do not match receipt")
+    by_id = {row["id"]: row for row in declarations}
+    for row in declarations:
+        retained = row.get("retained_work", [])
+        if not isinstance(retained, list) or any(not isinstance(item, dict) for item in retained):
+            raise Unmeasured("malformed retained work ownership")
+    for identifier, root in roots.items():
+        parents = [key for key, path in roots.items() if key != identifier and root.is_relative_to(path)]
+        if parents:
+            parent = max(parents, key=lambda key: len(roots[key].parts))
+            prefix = root.relative_to(roots[parent]).as_posix()
+            retained = by_id[parent].get("retained_work", [])
+            if by_id[identifier].get("nested_in") != parent or not any(
+                matches(prefix, item.get("paths", [])) for item in retained
+            ):
+                raise Unmeasured("nested scope lacks explicit parent ownership")
+    receipt_id = receipt.get("receipt_root_id")
+    if receipt_id not in roots or roots[receipt_id] != receipt_root:
+        raise Unmeasured("receipt repository scope mismatch")
+    disposition = receipt.get("disposition")
+    if disposition not in {"complete", "handoff", "read_only"}:
+        raise Unmeasured("invalid session disposition")
+    owner_cache: dict[str, dict] = {}
+
+    def owner(url: Any) -> dict:
+        if not isinstance(url, str) or not OWNER.fullmatch(url):
+            raise Unmeasured("durable owner is required")
+        if url not in owner_cache:
+            owner_cache[url] = read_owner(url)
+        return owner_cache[url]
+
+    current_owner = owner(receipt.get("owner_url"))
+    findings: list[str] = []
+    notes: list[dict] = []
+    if disposition == "handoff" and current_owner.get("state") != "open":
+        findings.append("unfinished handoff owner is not open")
+    if type(audit.get("active_lease_count")) is not int or audit["active_lease_count"] != 0:
+        findings.append("session has active or unmeasured leases")
+    terminal = {
+        "done",
+        "failed",
+        "failed_blocked",
+        "needs_human",
+        "archived",
+        "succeeded",
+        "blocked",
+        "cancelled",
+        "partial",
+    }
+    if any(row.get("status") not in terminal for row in runs):
+        findings.append("session has nonterminal runs")
+    if disposition == "complete" and any(row.get("status") not in {"done", "succeeded", "archived"} for row in runs):
+        findings.append("failed or handed-off runs do not prove task completion")
+    evidence_paths = {relative}
+
+    def evidence(packet: dict) -> bytes:
+        path = safe_path(packet.get("evidence"))
+        evidence_paths.add(path)
+        payload = git(receipt_root, "show", f"{receipt_head}:{path}", raw=True)
+        if hashlib.sha256(payload).hexdigest() != packet.get("sha256"):
+            raise Unmeasured("committed evidence digest mismatch")
+        if (receipt_root / path).read_bytes() != payload:
+            raise Unmeasured("committed evidence has local changes")
+        return payload
+
+    custody = receipt.get("custody")
+    if not isinstance(custody, dict) or custody.get("verified") is not True:
+        findings.append("required artifact custody is unproven")
+    elif not isinstance(custody.get("root_ids"), list) or sorted(custody["root_ids"]) != sorted(roots):
+        raise Unmeasured("custody coverage does not match scope")
+    else:
+        evidence(custody)
+    process_evidence = []
+    if packet := receipt.get("process_ownership"):
+        value = json.loads(evidence(packet))
+        if value.get("schema") != "limen.process_ownership.v1" or not isinstance(value.get("processes"), list):
+            raise Unmeasured("malformed process ownership evidence")
+        process_evidence = value["processes"]
+    checks = receipt.get("verification")
+    if not isinstance(checks, list) or not checks:
+        raise Unmeasured("scoped verification evidence is required")
+    checks_by_root: dict[str, list[dict]] = {key: [] for key in roots}
+    for check in checks:
+        if not isinstance(check, dict) or check.get("root_id") not in roots:
+            raise Unmeasured("verification scope is unavailable")
+        evidence(check)
+        checks_by_root[check["root_id"]].append(check)
+        if type(check.get("exit_code")) is not int:
+            raise Unmeasured("verification exit is unavailable")
+        if check["exit_code"] != 0:
+            if (
+                disposition == "handoff"
+                and check.get("purpose") == "completion"
+                and owner(check.get("owner_url")).get("state") == "open"
+            ):
+                notes.append(
+                    {
+                        "root_id": check["root_id"],
+                        "owner_url": check["owner_url"],
+                        "completion_check_exit": check["exit_code"],
+                    }
+                )
+            else:
+                findings.append(f"{check['root_id']}: required scoped predicate failed")
+    effects = receipt.get("external_effects", [])
+    if not isinstance(effects, list):
+        raise Unmeasured("malformed external effect coverage")
+    for effect in effects:
+        if not isinstance(effect, dict) or not effect.get("kind") or not effect.get("id"):
+            raise Unmeasured("malformed external effect")
+        evidence(effect)
+        if effect.get("verified") is not True and (
+            disposition != "handoff" or owner(effect.get("owner_url")).get("state") != "open"
+        ):
+            findings.append(f"external effect {effect['id']}: readback unavailable")
+    heads: dict[str, str] = {}
+    read_repository = read_repository or repository_readback
+    repository_cache: dict[str, dict] = {}
+    for row in declarations:
+        identifier = row["id"]
+        root = roots[identifier]
+        if row.get("path_sha256") != path_digest(root):
+            raise Unmeasured("scope path binding mismatch")
+        if row.get("kind") == "retained":
+            if identifier == receipt_id or owner(row.get("owner_url")).get("state") != "open":
+                raise Unmeasured("retained scope owner unavailable")
+            notes.append({"root_id": identifier, "owner_url": row["owner_url"]})
+            if disposition == "complete":
+                findings.append(f"{identifier}: retained scope requires handoff")
+            continue
+        if row.get("kind") != "git" or Path(git(root, "rev-parse", "--show-toplevel")).resolve() != root:
+            raise Unmeasured("scope is not an exact Git root")
+        head = git(root, "rev-parse", "HEAD")
+        heads[identifier] = head
+        if identifier != receipt_id and row.get("subject_head") != head:
+            raise Unmeasured("scope is not bound to the exact subject head")
+        remote = git(root, "remote", "get-url", "origin")
+        github_slug = github_repository_slug(remote)
+        slug = github_slug if github_slug is not None else remote.removesuffix(".git")
+        if github_slug is not None:
+            if slug not in repository_cache:
+                repository_cache[slug] = read_repository(slug)
+            repo = repository_cache[slug]
+            if (
+                type(row.get("repository_id")) is not int
+                or row["repository_id"] != repo.get("id")
+                or row.get("repository") != repo.get("full_name")
+            ):
+                raise Unmeasured("scope repository identity mismatch")
+        elif row.get("repository") != slug:
+            raise Unmeasured("scope repository identity mismatch")
+        if not published(root, head, row.get("publication_branch", "")):
+            findings.append(f"{identifier}: inspected head is not remotely durable")
+        base = row.get("base_head", "")
+        if not isinstance(base, str) or not SHA.fullmatch(base):
+            raise Unmeasured("scope baseline revision is required")
+        git(root, "merge-base", "--is-ancestor", base, head)
+        own, retained = row.get("owned_paths"), row.get("retained_work")
+        if not isinstance(own, list) or not isinstance(retained, list):
+            raise Unmeasured("explicit scope path ownership is required")
+        own = [safe_path(path) for path in own]
+        siblings = []
+        for item in retained:
+            paths = [safe_path(path) for path in item.get("paths", [])]
+            if not paths or owner(item.get("owner_url")).get("state") != "open":
+                raise Unmeasured("retained work owner unavailable")
+            siblings.extend(paths)
+            notes.append({"root_id": identifier, "paths": paths, "owner_url": item["owner_url"]})
+        dirty = dirty_paths(git(root, "status", "--porcelain=v1", "-z", "--untracked-files=all", raw=True))
+        for path in sorted(dirty):
+            if matches(path, own) or (identifier == receipt_id and path in evidence_paths):
+                findings.append(f"{identifier}: owned uncommitted path: {path}")
+            elif not matches(path, siblings):
+                findings.append(f"{identifier}: unattributed dirty path: {path}")
+        for check in checks_by_root[identifier]:
+            revision = check.get("head", "")
+            if not isinstance(revision, str) or not SHA.fullmatch(revision):
+                raise Unmeasured("verification revision is required")
+            git(root, "merge-base", "--is-ancestor", revision, head)
+            if own and git(root, "diff", "--name-only", revision, head, "--", *own):
+                findings.append(f"{identifier}: owned implementation changed since verification")
+        if own and not checks_by_root[identifier]:
+            raise Unmeasured("owned scope has no verification")
+        for raw_path in git(root, "diff", "--name-only", "-z", base, head, raw=True).split(b"\0"):
+            if raw_path:
+                path = os.fsdecode(raw_path)
+                if not (identifier == receipt_id and path in evidence_paths) and not matches(path, own + siblings):
+                    findings.append(f"{identifier}: unattributed committed path: {path}")
+        if disposition == "read_only" and own:
+            findings.append(f"{identifier}: implementation paths cannot be read-only")
+    observer = observe_processes or observe_many
+    observation = observer(tuple(roots.values()), session_id, anchor=anchor, evidence=process_evidence)
+    if (
+        not isinstance(observation, dict)
+        or observation.get("complete") is not True
+        or type(observation.get("process_count")) is not int
+    ):
+        raise Unmeasured("process ownership observation unavailable or invalid")
+    if observation["process_count"]:
+        findings.append("session scopes have surviving or unattributed processes")
+    return {
+        "schema": SCHEMA_V2,
+        "session_id": session_id,
+        "head": heads[receipt_id],
+        "heads": heads,
+        "receipt_head": receipt_head,
+        "session_released": not findings,
+        "disposition": disposition,
+        "task_completed": not findings and disposition == "complete",
+        "estate_completed": False,
+        "retirement_authorized": False,
+        "successor_required": False,
+        "findings": findings,
+        "retained_work": notes,
+        "process_count": observation["process_count"],
+        "process_observation": observation,
+        "coverage": audit["coverage"],
+    }
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--session-id", required=True)
     parser.add_argument("--worktree", type=Path, required=True)
     parser.add_argument("--receipt", type=Path, required=True)
     parser.add_argument("--native-transcript", type=Path)
+    parser.add_argument("--scope-root", action="append", default=[], metavar="ID=PATH")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--check", action="store_true", help="Read-only (all invocations are read-only)")
     args = parser.parse_args(argv)
@@ -345,12 +644,35 @@ def main(argv: list[str] | None = None) -> int:
         binding = next((row for row in sessions if row.get("session_id") == args.session_id), None)
         native = bool(args.native_transcript and native_witness(args.native_transcript, args.session_id))
         receipt = args.receipt if args.receipt.is_absolute() else args.worktree / args.receipt
-        result = evaluate(args.worktree, args.session_id, receipt, audit=audit, binding=binding, native_verified=native)
+        if args.scope_root:
+            roots = {}
+            for value in args.scope_root:
+                identifier, separator, path = value.partition("=")
+                if (
+                    not separator
+                    or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", identifier)
+                    or identifier in roots
+                ):
+                    raise Unmeasured("invalid or duplicate scope mapping")
+                roots[identifier] = Path(path)
+            result = evaluate_scoped(
+                args.worktree,
+                args.session_id,
+                receipt,
+                roots,
+                audit=audit,
+                binding=binding,
+                native_transcript=args.native_transcript,
+            )
+        else:
+            result = evaluate(
+                args.worktree, args.session_id, receipt, audit=audit, binding=binding, native_verified=native
+            )
         code = 0 if result["session_released"] else 1
     except (ValueError, TypeError, KeyError, OSError, subprocess.SubprocessError, RuntimeError) as exc:
         # Do not print subprocess stderr, credential-bearing argv, or private paths.
         result = {
-            "schema": SCHEMA,
+            "schema": SCHEMA_V2 if args.scope_root else SCHEMA,
             "session_released": False,
             "task_completed": False,
             "successor_required": False,

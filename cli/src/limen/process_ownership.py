@@ -221,7 +221,7 @@ def transcript_witness(path: Path) -> dict:
     )
     if session != thread and (not parent or payload.get("forked_from_id") != parent):
         raise ObservationUnavailable("native_ancestry_invalid")
-    return {"thread_id": thread, "session_id": session, "parent_thread_id": parent}
+    return {"thread_id": thread, "session_id": session, "parent_thread_id": parent, "cwd": payload.get("cwd")}
 
 
 def read_native_witnesses(home: Path, ids: set[str], seen: frozenset[str] = frozenset()) -> dict[str, dict]:
@@ -259,6 +259,7 @@ def assess(
     witnesses: dict[str, dict] | None = None,
     evidence: list[dict] | tuple[dict, ...] = (),
     identity=process_identity,
+    scope_roots: tuple[Path, ...] | None = None,
 ) -> dict:
     """Classify each exact instance; a shared host never exempts its whole tree."""
     witnesses = witnesses or {}
@@ -291,13 +292,21 @@ def assess(
     for process in pending:
         visit(process)
     for process in ordered:
-        in_scope = bool(process.cwd and process.cwd.is_relative_to(root))
+        in_scope = bool(
+            process.cwd
+            and (
+                process.cwd.is_relative_to(root)
+                if scope_roots is None
+                else process.cwd == root or any(process.cwd.is_relative_to(path) for path in scope_roots)
+            )
+        )
         thread = process.env.get("CODEX_THREAD_ID")
         if process.pid in excluded:
             if in_scope:
                 rows.append({"pid": process.pid, "category": "checker", "reason": "checker_ancestry"})
             continue
-        if not in_scope and not thread and process.pid not in evidence_index:
+        subject_tagged = process.env.get("CODEX_SESSION_ID") == session_id
+        if not in_scope and not thread and not subject_tagged and process.pid not in evidence_index:
             # Still classify configured parents needed as bootstrap witnesses.
             relevant = any(normalized(process.argv) == normalized(c["argv"]) for c in contracts)
             if not relevant:
@@ -381,7 +390,12 @@ def assess(
                             category, reason = "unmeasured", "process_evidence_conflict"
                     elif len(identities) > 1:
                         category, reason = "unmeasured", "service_registration_ambiguous"
-        if in_scope or (thread and belongs_to_subject(thread, session_id, witnesses)) or process.pid in evidence_index:
+        if (
+            in_scope
+            or subject_tagged
+            or (thread and belongs_to_subject(thread, session_id, witnesses))
+            or process.pid in evidence_index
+        ):
             row = {"pid": process.pid, "process_identity": process.started, "category": category, "reason": reason}
             if owner:
                 row["owner"] = owner
@@ -400,6 +414,27 @@ def assess(
 
 
 def observe(root: Path, session_id: str, *, evidence: list[dict] | tuple[dict, ...] = ()) -> dict:
+    return _observe(root, session_id, evidence=evidence)
+
+
+def observe_many(
+    scope_roots: tuple[Path, ...],
+    session_id: str,
+    *,
+    anchor: Path,
+    evidence: list[dict] | tuple[dict, ...] = (),
+) -> dict:
+    """Observe explicit recursive roots and an exact-only native anchor once."""
+    return _observe(anchor, session_id, scope_roots=scope_roots, evidence=evidence)
+
+
+def _observe(
+    root: Path,
+    session_id: str,
+    *,
+    scope_roots: tuple[Path, ...] | None = None,
+    evidence: list[dict] | tuple[dict, ...] = (),
+) -> dict:
     from limen.process_services import service_contracts
 
     processes, excluded = snapshot(root)
@@ -420,7 +455,15 @@ def observe(root: Path, session_id: str, *, evidence: list[dict] | tuple[dict, .
         if operational.is_symlink() or state.st_uid != os.getuid() or state.st_mode & 0o077:
             raise ObservationUnavailable("unsafe_process_evidence_root")
         for process in processes.values():
-            if not process.cwd or not process.cwd.is_relative_to(root) or process.pid in excluded:
+            in_scope = bool(
+                process.cwd
+                and (
+                    process.cwd.is_relative_to(root)
+                    if scope_roots is None
+                    else process.cwd == root or any(process.cwd.is_relative_to(path) for path in scope_roots)
+                )
+            )
+            if not in_scope or process.pid in excluded:
                 continue
             path = operational / f"{process.pid}.json"
             if not path.exists():
@@ -445,5 +488,12 @@ def observe(root: Path, session_id: str, *, evidence: list[dict] | tuple[dict, .
                 raise ObservationUnavailable("process_evidence_conflict")
             claims[process.pid] = row
     return assess(
-        processes, excluded, root, session_id, contracts=contracts, witnesses=witnesses, evidence=list(claims.values())
+        processes,
+        excluded,
+        root,
+        session_id,
+        contracts=contracts,
+        witnesses=witnesses,
+        evidence=list(claims.values()),
+        scope_roots=scope_roots,
     )

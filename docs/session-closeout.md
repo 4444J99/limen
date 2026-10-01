@@ -70,6 +70,49 @@ in this session's fixed point. Unknown ownership must be reconciled in the exist
 
 ## Installation and propagation
 
+### Explicit multi-repository sessions
+
+Use `limen.session_closeout.v2` when the native caller is a non-Git container or the
+session owns several repositories. Preserve `--worktree` as the native/broker anchor
+and pass repeatable `--scope-root ID=PATH` arguments using canonical absolute paths.
+The mappings must match `scope_roots` exactly. No repositories are inferred by scanning
+the container. V1 behavior and receipt shape remain unchanged.
+
+V2 carries `session_root_path_sha256` (SHA-256 of the canonical path's filesystem
+bytes), `receipt_root_id`, `session_id`, `owner_url`, and `disposition`. Each scope has
+an opaque `id`, matching `path_sha256`, and `kind: git` or `retained`. A Git scope binds
+`repository`, numeric GitHub `repository_id`, `base_head`, `publication_branch`,
+`owned_paths`, and `retained_work`; all except the receipt root also bind `subject_head`.
+The receipt root derives its live head, avoiding a self-referential hash. Repository
+aliases are validated against GitHub's stable ID and canonical name. For non-GitHub
+remotes, use the exact origin URL without its `.git` suffix as `repository`.
+
+Retained roots require an open `owner_url` and force handoff rather than task completion.
+Nested roots require `nested_in` naming the nearest declared parent and an explicit
+parent `retained_work` prefix covering the child. Git scopes must be exact Git top levels.
+Duplicate canonical roots and symlink aliases are rejected. Absolute private paths stay
+only in local arguments; committed receipts contain opaque IDs and hashes.
+
+Verification uses the v1 fields plus `root_id`. Evidence is committed in the receipt
+repository and each Git scope independently checks publication, ancestry, dirty paths,
+committed changes, and verification freshness. Failed `purpose: completion` checks may
+be handed off to their exact open owner; release failures always block. `custody.root_ids`
+must equal the complete scope set, with committed hash-bound custody evidence. Optional
+`external_effects` entries carry `id`, `kind`, `verified`, `evidence`, and `sha256`;
+unverified effects need an open owner under handoff. The producer must enumerate all
+actual effects and preserve their readbacks without secret values.
+
+For legacy native sessions, transcript metadata must bind both ID and `cwd` to the
+anchor. If a transcript and broker binding disagree, evaluation is unmeasured. One
+process snapshot covers exact-anchor processes, recursive declared roots, and exact
+native lineage anywhere. Undeclared siblings are excluded; unknown anchor processes
+still block. Shared services and foreign sessions require positive identity evidence.
+V2 returns per-root `heads` and root-qualified findings without private paths.
+
+```sh
+bash scripts/no-tasks-on-me.sh --session-id ID --worktree NATIVE_ROOT --receipt PRIVATE_RECEIPT --native-transcript TRANSCRIPT --scope-root owner=OWNER_ROOT --scope-root subject=SUBJECT_ROOT --json
+```
+
 Domus resolves the verified immutable protocol bundle. Its installer isolates ambient
 Git export attributes and validates policy payload digests before activation. The source
 and installed checker implement the same stopping rule. Adapter skills point to the
