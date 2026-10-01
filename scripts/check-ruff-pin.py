@@ -11,6 +11,7 @@ command that fixes it. This turns the machine-dependent 1,308-finding false-red 
 from __future__ import annotations
 
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -28,11 +29,17 @@ def pinned_version() -> str:
 
 def installed_version() -> str | None:
     try:
-        from importlib.metadata import version
-
-        return version("ruff")
-    except Exception:
+        result = subprocess.run(
+            [sys.executable, "-m", "ruff", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
         return None
+    match = re.fullmatch(r"ruff ([0-9][0-9A-Za-z.]*)\s*", result.stdout)
+    return match.group(1) if result.returncode == 0 and match else None
 
 
 def main() -> int:
