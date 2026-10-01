@@ -51,10 +51,26 @@ and generated instructor materials. The documented flow begins with an LMS expor
 dates, generates a dated schedule and instructor layer, and produces a structural review and
 handoff. A generated file is not proof of a successful live LMS import.
 
-The next public software demonstration should use an instructor-authored, student-free
-input and publish its exact command, output, structural check, and limitations. Broader
-classroom-RPG and adaptive-syllabus applications remain separate software projects whose
-build and runtime readiness need their own verification.
+On October 1, 2026, local reproduction using the existing curated instructor shell
+and course memory passed with this command, run from the private course workspace:
+
+```sh
+python3 -m courses._engine.recapitulate --course enc1101 courses/enc1101/terms/summer-2026.yaml
+```
+
+The engine generated ten artifacts and dated all 25 graded items. Its structural
+report found no unmatched cartridge items, cadence entries, or announcement bodies.
+Regeneration left the tracked text outputs unchanged, and all 69 course-engine tests
+passed. Those tests cover date/DST conversion, course isolation, allowlisted structural
+ingest, and generated-text privacy checks. The repository's tracked-content privacy
+guard also passed. Only these structural results are published here; source exports,
+course bodies, student records, and the private repository remain in private custody.
+
+This evidence establishes reproducible local generation. LMS import, notification
+activation, live classroom use, adaptive lesson delivery, and learning outcomes retain
+their own acceptance requirements. Broader classroom-RPG and adaptive-syllabus
+applications remain separate software projects whose build and runtime readiness need
+their own verification.
 
 ## Academic practice and creative work
 
