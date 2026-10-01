@@ -31,6 +31,13 @@ SMALL_CIPHER_LIMIT = 4 * 1024 * 1024
 MAX_ARCHIVE_BYTES = 2 * 1024 * 1024 * 1024
 
 
+def normalized_entries(entries: dict) -> dict:
+    """The capture manifest spells lstat symlinks 'link'; inventory uses 'symlink'."""
+    return {
+        name: {**item, "kind": "symlink" if item["kind"] == "link" else item["kind"]} for name, item in entries.items()
+    }
+
+
 def run(*args: str, **kwargs: object) -> bytes:
     return subprocess.run(args, check=True, capture_output=True, timeout=120, **kwargs).stdout
 
@@ -150,15 +157,22 @@ def verify(entry: dict, release: dict, receipt: dict) -> dict:
                 # after all regular extraction and chmod operations complete.
                 archive.extractall(temporary / "restored", members=[m for m in members if not m.issym()], filter="data")
             restored = temporary / "restored/source"
-            for name, item in manifest["entries"].items():
+            entries = normalized_entries(manifest["entries"])
+            for name, item in entries.items():
                 path = PurePosixPath(name)
                 if path.is_absolute() or ".." in path.parts:
                     raise ValueError("manifest-path")
                 if item["kind"] != "symlink":
                     os.chmod(restored / name, item["mode"])
             for member in links:
-                os.symlink(member.linkname, temporary / "restored" / member.name)
-            RESTORE.verify_tree(restored, manifest["entries"])
+                link = temporary / "restored" / member.name
+                os.symlink(member.linkname, link)
+                name = PurePosixPath(member.name).relative_to("source").as_posix()
+                mode = entries[name]["mode"]
+                # Never chmod through a captured link, including absolute ones.
+                if hasattr(os, "lchmod"):
+                    os.lchmod(link, mode)
+            RESTORE.verify_tree(restored, entries)
             if len(manifest["entries"]) != entry["verified_entries"]:
                 raise ValueError("manifest-count")
             fsck = None
