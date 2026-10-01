@@ -122,14 +122,14 @@ class PairCustody:
 
     def capture(self, sources: list[Path], *, journal_root: Path) -> dict:
         targets = self.targets(sources)
-        values = []
+        values: list[dict] = []
         for source in sources:
             before = identity(source)
             content = records(self.runtime, source)
             values.append(
                 {"identity": before, "key": digest(before)[:24], "records": [asdict(value) for value in content]}
             )
-        proof = {
+        proof: dict = {
             "schema": "limen.repository_custody.v1",
             "sources": values,
             "volumes": self.volume_identities,
@@ -147,7 +147,12 @@ class PairCustody:
                 archived = private / proof["digest"] / value["key"]
                 if archived.exists():
                     if logical(records(self.runtime, archived)) != logical(value["records"]):
-                        raise RetirementError("custody-existing-object-mismatch")
+                        if (archived.parent / "receipt.json").exists():
+                            raise RetirementError("custody-existing-object-mismatch")
+                        # Only an incomplete, unreceipted copy may resume. A
+                        # previously verified immutable archive is never repaired
+                        # by overwriting it from a potentially changed source.
+                        self.copy_tree(source, archived)
                 else:
                     self.copy_tree(source, archived)
                 self.verify_source(source, value)
