@@ -55,6 +55,13 @@
       ],
       "evidence": "docs/continuations/workspace-recovery-20260916/group05-20261001/scoped-verification.json",
       "sha256": "b28cfb7f713478ee3e349679fb1a34d50c49702ad7539e8895c60b275dba2f04"
+    },
+    {
+      "head": "ebf2b3d9b8c58dfc0205b89768ed768c368f0134",
+      "exit_code": 0,
+      "command": "Exact allowlist retained-path census; confirms retention only and does not verify custody",
+      "evidence": "docs/continuations/workspace-recovery-20260916/group05-20261001/custody-status.json",
+      "sha256": "31368cbcd37f5b265d07516cc002a605edc15937883d3f58ba54572d7658429c"
     }
   ],
   "custody": {
