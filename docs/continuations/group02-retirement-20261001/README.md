@@ -62,3 +62,19 @@ The user override removed the shared-dependency scope blocker. It did not erase
 native-client drain, custody, active-source or idle-age predicates. E3 cutover
 is still incomplete; source integration and encrypted preservation are credited
 only to their measured acceptance. See `execution.json` for redacted receipts.
+
+## Merge-policy correction
+
+The shared dependency override also permits repairing the precise integration
+defect blocking this work. GitHub reports a protected main branch with empty
+required status-check contexts/checks and a pull-request-only ruleset. The
+Python merge-drain policy measures that absence correctly, but its final shell
+policy treated `gh pr checks --required`'s text/nonzero response as unknown and
+counted all advisory failures as required. The shell now delegates that case to
+the existing `_required_checks.py` branch-protection/rules predicate (#2764).
+
+No branch protection, workflow, review, required check or dependency audit is
+disabled. Advisory failures stay visible. Required rules, unreadable policy,
+unknown rule types, and website-sensitive deploy failures still hold. The
+regression matrix passes 73 cases; the shared-policy tests pass 12 cases; live
+measurement independently returns `NO-REQUIRED-CHECKS` for this branch.
