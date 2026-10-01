@@ -1,0 +1,38 @@
+S0 — Coordinator and sole recovery writer
+
+User request: "git parity 1:1 on all the repos in ~/Workspace and purge/prune local", split into streams for independent external agents on this Mac.
+
+Read /Users/4jp/AGENTS.md and applicable repository instructions before acting. Work only on this approved outcome. Existing owners: https://github.com/4444J99/limen/issues/2739 (program), https://github.com/4444J99/portvs/issues/14 (residency), https://github.com/4444J99/domus-genoma/issues/397 (control consumers). Re-query their live state; do not duplicate issues or close existing atoms.
+
+S0 is the sole recovery writer. S1–S5 perform read-only inspection and return evidence/operation packets to S0. Partition ownership by resolved Git common directory and immutable remote repository identity, not checkout pathname. Do not fetch, stage, commit, stash, switch, prune, delete, or write shared ledgers unless you are S0 executing an admitted operation. Read-only Git inspection should disable optional locks and fsmonitor. Register your actual native identity and obtain any required conduct lease through the existing broker; never fabricate lease identities or edit tasks.yaml. If the broker is unavailable, continue inspection without new lifecycle claims.
+
+Preserve protected PRDS/support repositories, active human sessions, dirty work, private originals, snapshots, and required runtime consumers. Do not kill sessions, force-push, reset, blanket-clean ignored files, expire reflogs, run immediate object pruning, delete remote branches, or relocate clones merely to claim cleanup. No new paid service or unrestricted backlog. Outside-Workspace registrations are outside mutation scope but may protect shared stores.
+
+1:1 custody means exact local object IDs matched to freshly verified remote custody refs, plus recoverability of their object graphs. Cached tracking refs or a local-path remote are insufficient. Retained tracking branches must have zero ahead/behind divergence to claim synchronization. Whole-repository removal additionally needs all refs, detached heads, stashes, reflog-only/unreachable objects, metadata, LFS, submodules, alternates, and non-Git payload accounted for. Private material uses existing encrypted custody and verified restore workflows; never publish private payloads or sensitive inventories to public Git.
+
+The 2026-09-30 census is a checkpoint, not current parity proof: 208 valid checkout paths / 135 common Git stores; 44 dirty paths; five stashes; seven no-remote repositories; 17 unresolved .git markers; 212 registered worktrees including three outside Workspace and one Workspace registration missed by traversal. Structurally identified runtime bare-store count changed to 3,276 during inspection. Revalidate your assigned denominator and represent unknown/unreadable state explicitly. Disk free was ~24.5 GiB; use existing checkouts and configured scratch, respecting admission.
+
+At most four sessions, one recovery writer, and one heavy workload. Inherit the original attempt deadline: 30 minutes per attempt, at most 10 minutes verification, 120 cumulative agent-minutes for this outcome across all streams/restarts. One corrective retry needs changed inputs. Stop and checkpoint at exhaustion; splitting work does not renew the budget.
+
+Return a compact handoff: scope/common-dir identity; observed revision and timestamp; remote repository identity/ref/object evidence; preservation gaps; proposed exact operations; protection/consumer findings; predicate and exit code; evidence destination; disposition and next owner/action. Use existing WorkPacketV1 / RunReceiptV1 contracts where required. S0 consolidates redacted artifacts under this continuation directory and publishes through the owning repository rail. Sensitive raw evidence stays with its existing private owner. Never equate a push, queued merge, candidate manifest, or test with completed retirement.
+
+Closeout loader discovery: /Users/4jp/.agents/skills/closeout/SKILL.md expects /Users/4jp/Workspace/library/engine/organvm/limen/.agents/skills/closeout/SKILL.md, absent at inspection. Its legacy compatibility allowance expired 2026-09-30T00:00:00Z. S0 files the exact discovery defect with Domus. This does not authorize a broad migration or prevent independent eligible cohorts from progressing.
+
+YOUR STREAM
+
+Coordinate and execute this recovery. Reconcile every physical Git marker, registered worktree, bare store, symlink alias, and repository common directory under Workspace. Resolve the 17 invalid markers and the missed Workspace registration; preserve dependencies of the three outside registrations. Deduplicate identities and assign explicit disjoint scopes to S1–S3. Load the authoritative protection/exclusion registry; missing/invalid protection data blocks cleanup.
+
+Receive S1–S4 handoffs. Obtain exclusive common-directory ownership before any Git mutation. Verify sanctioned Git transport independently of GitHub connector access: the connector worked, gh was logged out, and public ls-remote worked at inspection. Do not invent credentials or count connector read access as push access.
+
+Preserve unique inactive source with secret/privacy checks and additive branches in existing authorized remote owners. Keep active dirty work protected. Save stash/ref metadata and restore-verifiable custody. Fast-forward only clean inactive tracking branches; preserve divergent histories separately. Re-query exact remote IDs/OIDs after publication.
+
+Execute the lowest-risk eligible cohort immediately when its evidence is complete; do not wait for all streams or repeat unchanged inventories. Before each removal verify the exact plan digest, filesystem identity, whole-store custody, inactivity, protection, runtime/scheduled consumers, alternates, and linked worktree dependencies. Use existing journaled reclaim paths, not ad hoc recursive deletion. Require S4 qualification of the tool path and S5 independent readback. Serialize preservation, pruning, patches, and removal.
+
+Prune only proven stale tracking refs, qualified obsolete local branches, and genuinely stale worktree registrations on accessible mounted storage. Do not delete a registered worktree that is merely on an unmounted volume. Branch retirement needs repository-qualified landing/equivalence evidence plus custody and review disposition.
+
+Publish these handoffs and redacted receipts in the owning Git repository through its required branch/PR rail, staging only this outcome's paths. Preserve unrelated dirty edits. Reuse existing owner records and acceptance ledgers. File the canonical-loader defect with Domus #397; retain affected control copies until consumer detachment succeeds.
+
+Report separate denominators and numbers: remote-ready repositories, synchronized retained branches, unresolved repositories, retired copies, allocated bytes removed, and actual free GiB. Do not claim estate parity with unresolved repositories. A bounded partial checkpoint is not completion.
+
+Done for a cohort: exact source/payload custody verified, intended operation applied, deleted targets absent, protected material intact, durable remote receipt read back, and unchanged second pass yields no additional authorized cleanup.
+

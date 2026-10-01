@@ -115,3 +115,12 @@ effectors:
     reason: >-
       A public comment needs proof the existing thread was actually fetched — so a reply never
       repeats, contradicts, or ignores what is already there.
+
+# Native machine receipt guard: exact existing owner, authenticated observation,
+# write-ahead deduplication and exact live readback. Code changes require review.
+in_process_gates:
+  cli/src/limen/repository_retirement.py:
+    verbs: ["gh api -X POST"]
+    code_sha256: edeb933e157a73bf23500265ae3fa0530447ec77874593bb30d7e2bcd7aa2515
+    owner: "4444J99/limen#2739"
+    guard: "public_publish: exact open owner and authenticated principal; journal-bound redacted progress only"
