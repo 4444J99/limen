@@ -1,5 +1,5 @@
 import { ChunkedDurableStateStore } from "./durable-store.js";
-import { acceptInventoryObservation, requireInventoryCollector, executionAdmission, executionActive, executionPriority, projectionExecutionStatus } from "./inventory-admission.js";
+import { acceptInventoryObservation, requireInventoryCollector, executionAdmission, executionActive, pendingRemoteAttempts, executionPriority, projectionExecutionStatus } from "./inventory-admission.js";
 import notificationRegistry from "../../../../institutio/governance/notification-events.limen.json" with { type: "json" };
 import { sessionAudit } from "./session-audit.js";
 import { conflictingKeys, parseResource, sortedClaims } from "./resources.js";
@@ -686,7 +686,8 @@ export class ConductKernel {
     const claims = this.effectiveClaims(packet);
     const conflicts = [];
     for (const lease of Object.values(this.state.leases)) {
-      if (!ACTIVE_LEASE_STATES.has(lease.state)) continue;
+      if (!ACTIVE_LEASE_STATES.has(lease.state)
+          && !pendingRemoteAttempts(this.state.runs[lease.run_id] || {}).some((row) => row.lease_id === lease.lease_id)) continue;
       const keys = conflictingKeys(claims, lease.resources);
       if (keys.length) conflicts.push({ lease_id: lease.lease_id, run_id: lease.run_id, keys });
     }
@@ -1029,11 +1030,12 @@ export class ConductKernel {
     if (enforced && lease.executor_principal_id !== principal.principal_id) {
       throw new ConductError("lease belongs to another executor principal", 403);
     }
-    if (!ACTIVE_LEASE_STATES.has(lease.state)) {
-      throw new ConductError(`lease is not active: ${lease.state}`);
-    }
     const run = this.state.runs[lease.run_id];
     if (!run) throw new ConductError(`lease points to missing run: ${lease.run_id}`, 500);
+    const observationOnly = !ACTIVE_LEASE_STATES.has(lease.state);
+    if (observationOnly && !this.remoteObservationOwned(run, lease)) {
+      throw new ConductError(`lease is not active: ${lease.state}`);
+    }
     requireWorkLoan(run.packet);
     const principalId = lease.executor_principal_id || principal.principal_id;
     const token = await capabilityToken(
@@ -1057,7 +1059,15 @@ export class ConductKernel {
       run_id: lease.run_id,
       generation: lease.generation,
       capability_token: token,
+      observation_only: observationOnly,
     };
+  }
+
+  remoteObservationOwned(run, lease, attemptId = null) {
+    return (run.attempts || []).some((row) => row.adapter === "jules-api"
+      && row.lease_id === lease.lease_id && row.lease_generation === lease.generation
+      && (row.provider_state || "unknown") !== "not_started"
+      && (attemptId === null || row.attempt_id === attemptId));
   }
 
   async heartbeat(
@@ -1074,8 +1084,17 @@ export class ConductKernel {
       capabilityToken,
       generation,
       principal,
+      attempt !== null,
     );
-    if (!ACTIVE_LEASE_STATES.has(lease.state)) throw new ConductError(`lease is not active: ${lease.state}`);
+    if (!ACTIVE_LEASE_STATES.has(lease.state)) {
+      const run = this.state.runs[lease.run_id];
+      if (!attempt || !this.remoteObservationOwned(run, lease, attempt.attempt_id)) {
+        throw new ConductError(`lease is not active: ${lease.state}`);
+      }
+      this.recordAttempt(run, lease, attempt);
+      this.recordEvent("provider.observed_after_fence", {lease_id: leaseId, run_id: lease.run_id});
+      return {status: "observation_only", lease: this.publicLease(lease), attempt_created: false};
+    }
     for (const [resource, expected] of Object.entries(lease.observed_heads || {})) {
       const actual = observedHeads[resource];
       if (actual === undefined || actual !== expected) {
@@ -1173,7 +1192,7 @@ export class ConductKernel {
       if (run.attempts.length >= run.packet.spend.limit) {
         throw new ConductError("executor spend limit exhausted");
       }
-      if (run.attempts.some((row) => !["failed", "blocked"].includes(row.status))) {
+      if (pendingRemoteAttempts(run).length || run.attempts.some((row) => !["failed", "blocked"].includes(row.status))) {
         throw new ConductError("a prior executor attempt is still live");
       }
       run.attempts.push(clone(attempt));
@@ -1196,6 +1215,14 @@ export class ConductKernel {
         throw new ConductError("executor provider receipt identity changed");
       }
     }
+    const before = prior.provider_state || "unknown";
+    const after = attempt.provider_state || "unknown";
+    if ((["terminal", "not_started"].includes(before) && after !== before)
+        || (before === "nonterminal" && after === "not_started")
+        || (after === "terminal" && !attempt.provider_run_id)
+        || (after === "not_started" && attempt.provider_run_id)) {
+      throw new ConductError("executor provider occupancy evidence regressed");
+    }
     const transitions = {
       launching: new Set(["launching", "submitted", "running", "succeeded", "failed", "blocked"]),
       submitted: new Set(["submitted", "running", "succeeded", "failed", "blocked"]),
@@ -1205,6 +1232,7 @@ export class ConductKernel {
       failed: new Set(["failed"]),
       blocked: new Set(["blocked"]),
     };
+    if (attempt.adapter === "jules-api") transitions.running.add("submitted");
     if (!transitions[prior.status]?.has(attempt.status)) {
       throw new ConductError("executor attempt status regressed");
     }
@@ -1213,7 +1241,7 @@ export class ConductKernel {
   }
 
   async rerouteAfterAttempt(run, lease, attempt) {
-    if (!["failed", "blocked"].includes(attempt.status)) return null;
+    if (!["failed", "blocked"].includes(attempt.status) || pendingRemoteAttempts(run).length) return null;
     const attempts = run.attempts || [];
     if (
       attempts.length >= run.packet.retry.max_attempts
@@ -1883,10 +1911,15 @@ export class ConductKernel {
 
   activeLoad() {
     const load = {};
+    const counted = new Set();
     for (const lease of Object.values(this.state.leases)) {
-      if (!ACTIVE_LEASE_STATES.has(lease.state) || asDate(lease.hard_deadline) <= this.now) continue;
       const run = this.state.runs[lease.run_id];
-      if (run) load[run.executor_session_id] = (load[run.executor_session_id] || 0) + 1;
+      if (!run || counted.has(run.run_id)) continue;
+      const occupied = ACTIVE_LEASE_STATES.has(lease.state) && asDate(lease.hard_deadline) > this.now
+        || pendingRemoteAttempts(run).some((row) => row.lease_id === lease.lease_id);
+      if (!occupied) continue;
+      counted.add(run.run_id);
+      load[run.executor_session_id] = (load[run.executor_session_id] || 0) + 1;
     }
     return load;
   }

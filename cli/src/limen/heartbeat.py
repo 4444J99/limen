@@ -6,19 +6,18 @@ import hashlib
 import json
 import math
 import os
-from pathlib import Path
 import shutil
 import subprocess
 import sys
 import time
 import uuid
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Callable
 
 from limen.bounded_subprocess import BoundedSubprocessError, run_bounded_subprocess
 from limen.host_admission import AdmissionController, AdmissionStateError
 from limen.notification_effect import DeliveryReceipt, emit_notification_event
-
 
 LABEL = "com.limen.heartbeat"
 CONTRACT_RELATIVE_PATH = Path("spec/scheduled-process-contracts.json")
@@ -26,6 +25,7 @@ NOTIFICATION_REGISTRY_RELATIVE_PATH = Path("institutio/governance/notification-e
 STATE_SCHEMA = "limen.heartbeat_state.v1"
 PRIVATE_RECEIPT_SCHEMA = "limen.heartbeat_private_receipt.v1"
 PUBLIC_RECEIPT_SCHEMA = "limen.heartbeat_public_receipt.v1"
+MAX_AUDIT_STREAM_BYTES = 262144
 REVIEWED_RUNTIME_DIGEST_ENV = "LIMEN_HEARTBEAT_REVIEWED_RUNTIME_DIGEST"
 SYSTEM_FAILURES = frozenset({"descendants", "invalid", "output", "resource", "timeout", "unavailable"})
 NOTIFICATION_STABLE_ID = "limen.heartbeat.finding"
@@ -441,12 +441,47 @@ def _notification_receipt_fields(
 def _append_audit(state_root: Path, receipt: dict[str, Any]) -> None:
     audit = state_root / "audit.jsonl"
     audit.parent.mkdir(parents=True, exist_ok=True)
-    if audit.exists() and audit.stat().st_size >= 1024 * 1024:
-        os.replace(audit, audit.with_suffix(".jsonl.1"))
-    with audit.open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(receipt, sort_keys=True, separators=(",", ":")) + "\n")
-        handle.flush()
-        os.fsync(handle.fileno())
+    if audit.is_symlink() or (audit.exists() and not audit.is_file()):
+        raise HeartbeatContractError("heartbeat audit path is unsafe")
+    encoded = (json.dumps(receipt, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+
+    def preserve(contents: bytes) -> None:
+        history = state_root / "history"
+        if history.is_symlink() or (history.exists() and not history.is_dir()):
+            raise HeartbeatContractError("heartbeat audit history path is unsafe")
+        history.mkdir(parents=True, exist_ok=True)
+        digest = hashlib.sha256(contents).hexdigest()
+        archived = history / f"audit.jsonl-{digest}"
+        if archived.exists():
+            if archived.is_symlink() or not archived.is_file() or _sha256(archived) != digest:
+                raise HeartbeatContractError("heartbeat audit archive identity mismatch")
+            if archived.read_bytes() != contents:
+                raise HeartbeatContractError("heartbeat audit archive collision")
+        else:
+            descriptor = os.open(archived, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(descriptor, "wb") as handle:
+                handle.write(contents)
+                handle.flush()
+                os.fsync(handle.fileno())
+        if audit.exists():
+            audit.unlink()
+
+    existing = audit.read_bytes() if audit.exists() else b""
+    if len(encoded) > MAX_AUDIT_STREAM_BYTES:
+        if existing:
+            preserve(existing)
+        preserve(encoded)
+    else:
+        if len(existing) + len(encoded) > MAX_AUDIT_STREAM_BYTES:
+            preserve(existing)
+        descriptor = os.open(audit, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+        with os.fdopen(descriptor, "ab") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+    if not audit.exists():
+        descriptor = os.open(audit, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        os.close(descriptor)
 
 
 def _write_receipts(state_root: Path, contract: dict[str, Any], receipt: dict[str, Any]) -> None:

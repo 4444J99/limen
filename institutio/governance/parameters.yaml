@@ -20,6 +20,18 @@
 schema_version: 0.1
 
 parameters:
+  LIMEN_ENABLE_JULES_API:
+    default: "0"
+    env: LIMEN_ENABLE_JULES_API
+    self_update: none
+    owner: vigilia
+    note: "Opt-in REST transport only; does not grant broker admission, bypass deadlines or activate a scheduler. Owner #2680."
+  LIMEN_JULES_API_CONCURRENCY:
+    default: 1
+    env: LIMEN_JULES_API_CONCURRENCY
+    self_update: none
+    owner: vigilia
+    note: "Declared REST adapter lane ceiling, 1 through 15; actual account limits and shared broker reservations take precedence. Owner #2680."
   LIMEN_CHAT_VERIFICATION:
     default: ""
     env: LIMEN_CHAT_VERIFICATION

@@ -217,7 +217,9 @@ def test_value_selection_uses_underwriting_only_inside_existing_buckets(monkeypa
     assert [task.id for task in ordered] == ["DEADLINE", "ORDINARY"]
 
 
-def test_dispatch_refuses_provider_launch_when_reservation_cannot_land(monkeypatch) -> None:
+def test_dispatch_refuses_provider_launch_when_reservation_cannot_land(monkeypatch, admitted_local_execution) -> None:
+    admitted_local_execution(dispatch, task_row()["id"])
+
     class BrokenStore:
         def record_reservation(self, *_args, **_kwargs) -> None:
             raise WorkLoanJournalError("journal unavailable")
@@ -233,7 +235,7 @@ def test_dispatch_refuses_provider_launch_when_reservation_cannot_land(monkeypat
     monkeypatch.setattr(dispatch, "call_agent_dispatch", launch)
 
     result = dispatch._journaled_agent_dispatch(
-        "jules",
+        "codex",
         Task.model_validate(task_row()),
         False,
         "reservation-1",
@@ -245,7 +247,8 @@ def test_dispatch_refuses_provider_launch_when_reservation_cannot_land(monkeypat
     assert launched is False
 
 
-def test_dispatch_records_actual_usage_after_launch(monkeypatch, tmp_path: Path) -> None:
+def test_dispatch_records_actual_usage_after_launch(monkeypatch, tmp_path: Path, admitted_local_execution) -> None:
+    admitted_local_execution(dispatch, task_row()["id"])
     journal = store(tmp_path)
     ticks = iter((10.0, 12.25))
     monkeypatch.setattr(dispatch, "default_work_loan_journal_store", lambda: journal)
@@ -253,7 +256,7 @@ def test_dispatch_records_actual_usage_after_launch(monkeypatch, tmp_path: Path)
     monkeypatch.setattr(dispatch.time, "monotonic", lambda: next(ticks))
 
     result = dispatch._journaled_agent_dispatch(
-        "jules",
+        "codex",
         Task.model_validate(task_row()),
         False,
         "reservation-1",
@@ -262,4 +265,4 @@ def test_dispatch_records_actual_usage_after_launch(monkeypatch, tmp_path: Path)
     assert result == "provider-run"
     [snapshot] = journal_snapshots(journal.read())
     assert snapshot["actual"]["elapsed_seconds"] == 2.25
-    assert snapshot["actual"]["host_local_seconds"] is None
+    assert snapshot["actual"]["host_local_seconds"] == 2.25

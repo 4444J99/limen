@@ -18,6 +18,8 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.usefixtures("isolated_workstream_growth")
+
 ROOT = Path(__file__).resolve().parents[2]
 STARTER = ROOT / "scripts" / "start-worktree-session.sh"
 
@@ -95,7 +97,13 @@ def test_the_refusal_does_not_depend_on_what_is_installed(repo: Path, tmp_path: 
     for tool in ("git", "python3", "bash", "sed", "tr", "awk", "grep", "cat", "mktemp", "dirname", "basename"):
         src = shutil.which(tool)
         if src:
-            os.symlink(src, stripped / tool)
+            if tool == "python3":
+                import shlex
+
+                (stripped / tool).write_text("#!/bin/sh\nexec " + shlex.quote(src) + ' "$@"\n')
+                (stripped / tool).chmod(0o755)
+            else:
+                os.symlink(src, stripped / tool)
 
     bad_stripped = _run("--branch-prefix", "nope", "--agent", "claude", str(repo), "p1", path=str(stripped))
     bad_full = _run("--branch-prefix", "nope", "--agent", "claude", str(repo), "p2")

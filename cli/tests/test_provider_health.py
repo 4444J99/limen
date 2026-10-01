@@ -218,10 +218,13 @@ def test_terminal_classifier_and_retry_policy_are_bounded() -> None:
     assert policy().smoke_timeout_seconds == 120
 
 
-def test_opencode_run_retries_one_transient_attempt_and_appends_outcome(tmp_path, monkeypatch) -> None:
+def test_opencode_run_checkpoints_transient_failure_without_unadmitted_retry(
+    tmp_path, monkeypatch, admitted_local_execution
+) -> None:
     from limen import dispatch
 
     task = Task(id="HEALTH-RETRY", title="retry", target_agent="opencode", created=NOW.date())
+    admitted_local_execution(dispatch, task.id)
     ledger = tmp_path / "provider-outcomes.jsonl"
     monkeypatch.setenv("LIMEN_PROVIDER_OUTCOME_LEDGER", str(ledger))
     monkeypatch.setenv("LIMEN_PROVIDER_SAME_MODEL_RETRIES", "1")
@@ -244,12 +247,12 @@ def test_opencode_run_retries_one_transient_attempt_and_appends_outcome(tmp_path
 
     result = dispatch._run_isolated_agent("opencode", task, tmp_path, ["opencode", "prompt"], 30)
 
-    assert result is True
-    assert len(calls) == 2
+    assert result is False
+    assert len(calls) == 1
     rows = load_provider_outcomes(ledger)
     assert [row.terminal_class for row in rows] == ["stream_failure"]
     assert rows[0].retry_count == 0
-    assert dispatch._MODEL_SELECTION_RECEIPTS[task.id]["_provider_retry_count"] == 1
+    assert dispatch._MODEL_SELECTION_RECEIPTS[task.id].get("_provider_retry_count", 0) == 0
     dispatch._MODEL_SELECTION_RECEIPTS.pop(task.id, None)
 
 

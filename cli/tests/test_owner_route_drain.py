@@ -148,6 +148,13 @@ def _run_main(mod, monkeypatch, tmp_path, *, argv, verdict_facts, armed_env="0",
     marker = tmp_path / "AUTONOMY_PAUSED"
     if pause:
         marker.write_text("paused")
+
+    class Clock(dt.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return NOW if tz is None else NOW.astimezone(tz)
+
+    monkeypatch.setattr(mod, "datetime", Clock)
     monkeypatch.setattr(mod, "PAUSE_MARKER", marker)
     monkeypatch.setenv("LIMEN_OWNER_ROUTE_DRAIN_APPLY", armed_env)
     monkeypatch.setattr(mod, "_enumerate_jules_prs", lambda max_total: list(verdict_facts))

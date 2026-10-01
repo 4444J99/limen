@@ -1,0 +1,219 @@
+name: Jules API contract
+
+on:
+  pull_request:
+    paths:
+      - 'cli/src/limen/jules_api.py'
+      - 'cli/src/limen/jules_api_adapter.py'
+      - 'cli/src/limen/jules_credentials.py'
+      - 'cli/src/limen/vigilia/params.py'
+      - 'cli/tests/test_jules_api.py'
+      - 'cli/tests/test_jules_api_adapter.py'
+      - 'cli/tests/test_jules_api_workflow.py'
+      - 'cli/tests/test_jules_api_credentials.py'
+      - 'cli/tests/test_jules_api_wall_deadline.py'
+      - 'cli/src/limen/bounded_subprocess.py'
+      - 'cli/tests/test_vigilia_params_cache.py'
+      - 'cli/tests/test_accelerator.py'
+      - 'cli/pyproject.toml'
+      - 'institutio/governance/parameters.yaml'
+      - '.github/workflows/jules-api-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'cli/src/limen/jules_api*.py'
+      - 'cli/src/limen/jules_credentials.py'
+      - 'cli/tests/test_jules_api*.py'
+      - '.github/workflows/jules-api-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jules-api-contract-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Offline REST contract
+        env:
+          PYTHONPATH: cli/src
+        run: |
+          python -m unittest discover -s cli/tests -p test_jules_api.py -v
+          python -m py_compile cli/src/limen/jules_api.py cli/src/limen/jules_api_adapter.py
+      - name: Verify installed framework, parameters and pinned source formatting
+        env:
+          LIMEN_ENABLE_JULES_API: '0'
+          JULES_API_KEY: ''
+        run: |
+          python -m pip install -e 'cli[test]'
+          python scripts/check-params.py
+          python -m ruff check cli/src/limen/jules_api*.py cli/src/limen/jules_credentials.py cli/src/limen/vigilia/params.py cli/tests/test_jules_api*.py cli/tests/test_vigilia_params_cache.py cli/tests/test_accelerator.py
+          python -m ruff format --check cli/src/limen/jules_api*.py cli/src/limen/jules_credentials.py cli/src/limen/vigilia/params.py cli/tests/test_jules_api*.py cli/tests/test_vigilia_params_cache.py cli/tests/test_accelerator.py
+          python -m unittest discover -s cli/tests -p 'test_jules_api*.py' -v
+          bash scripts/run-pytest-hermetic.sh cli/tests/test_accelerator.py cli/tests/test_vigilia_params_cache.py cli/tests/test_vigilia.py cli/tests/test_jules_api_wall_deadline.py -q --tb=short
+          python - <<'PY'
+          from importlib.metadata import entry_points
+          entries = [e for e in entry_points(group='limen.fanout_execution') if e.name == 'jules-api']
+          assert len(entries) == 1
+          adapter = entries[0].load()()
+          assert adapter.enforces_deadline is False
+          assert not adapter.eligible({'execution': {'owner_repository': '4444J99/limen'}})
+          PY
+
+  account-readback:
+    needs: contract
+    # PRs are secret-free, including same-repository PRs. This is a post-landing
+    # activation proof, never a substitute for the offline contract above.
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Observe actual Jules account (no task creation)
+        env:
+          JULES_API_KEY: ${{ secrets.JULES_API_KEY }}
+          PYTHONPATH: cli/src
+        run: timeout 1320s python -m limen.jules_api observe > jules-api-observation.json
+      - name: Preserve aggregate readback, including missing-key failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jules-api-observation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: jules-api-observation.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  witness-contract:
+    # Source verification on the working personal runner is not provider activation
+    # or a replacement for any independently required ops-witness check.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: organvm/ops-witness
+          ref: 75af87fe7e47d76d005f985c19d5c20be09e6266
+          path: witness
+          sparse-checkout: |
+            scripts/jules-orchestrator.mjs
+            scripts/test-jules-api-witness.mjs
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: 4444J99/limen
+          ref: ec33e5bc4d5d097cac6569516f24ccabee78891a
+          path: observer
+          sparse-checkout: cli/src/limen/jules_api.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify exact witness bytes and run regression contract
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          from pathlib import Path
+          expected = {
+              'witness/scripts/jules-orchestrator.mjs': '04ecb45ea69c8fc5bea3d97c85f033c42f6ef89fefe1f41c56245b673722cad1',
+              'witness/scripts/test-jules-api-witness.mjs': '1b3847d1ab08174d82712e7c4934a82ebe31f7a4c91e9a1387c68fdbcbd8b30d',
+              'observer/cli/src/limen/jules_api.py': 'd067f2dbe4c2c6d3bef1c1fb07614124e441a8d615313fb9687045bb007bea2d',
+          }
+          for path, digest in expected.items():
+              actual = hashlib.sha256(Path(path).read_bytes()).hexdigest()
+              assert actual == digest, f'source mismatch: {path}'
+          PY
+          node --test witness/scripts/test-jules-api-witness.mjs | tee witness-contract.tap
+      - name: Prove unavailable credentials remain unknown without provider writes
+        env:
+          JULES_API_KEY: ''
+          LIMEN_JULES_API_CLIENT: ${{ github.workspace }}/observer/cli/src/limen/jules_api.py
+        run: |
+          set -euo pipefail
+          status=0
+          node witness/scripts/jules-orchestrator.mjs > witness-no-key.json || status=$?
+          test "$status" -eq 2
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          row = json.loads(Path('witness-no-key.json').read_text())
+          assert row['status'] == 'unavailable'
+          assert row['error_code'] == 'jules_api_key_missing_or_invalid'
+          assert row['observed_rolling_starts'] is None
+          assert row['nonterminal_sessions'] is None
+          assert row['vendor_quota_remaining'] is None
+          assert row['witness_receipt']['provider_mutations'] == 0
+          assert row['witness_receipt']['merges_performed'] == 0
+          PY
+      - name: Preserve exact-source contract evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jules-witness-contract-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            witness-contract.tap
+            witness-no-key.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  cli-first-failure:
+    # Manual incident diagnostic only. The inherited first failure is already preserved
+    # on both the pinned base and API head; the complete required PR Gate remains unchanged.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - source: base
+            ref: 4d19db8eaeb689fec4f3b0e4d53f1d6e97b0edf4
+          - source: api-head
+            ref: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.ref }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Match PR Gate Python dependency environment
+        run: python -m pip install pyyaml -r web/api/requirements.txt -e 'cli[test]'
+      - name: Capture first real CLI failure without waiving the full gate
+        env:
+          JULES_API_KEY: ''
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD > diagnostic-source.txt
+          timeout 180s bash scripts/run-pytest-hermetic.sh cli/tests -x -vv --tb=short 2>&1 | tee cli-first-failure.log
+      - name: Preserve diagnostic source and failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cli-first-failure-${{ matrix.source }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            diagnostic-source.txt
+            cli-first-failure.log
+          if-no-files-found: warn
+          retention-days: 14

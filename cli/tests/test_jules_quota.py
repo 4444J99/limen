@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import sys
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -52,6 +52,35 @@ def test_used_today_counts_only_jules_dispatch_receipts_today() -> None:
     assert module.used_today(board, date(2000, 1, 1)) == 0
 
 
+def test_used_today_normalizes_timezone_and_naive_utc() -> None:
+    module = load_jules_quota()
+    utc_day = date(2026, 9, 18)
+    offset_stamp = datetime(2026, 9, 17, 20, 30, tzinfo=timezone(timedelta(hours=-4)))
+    naive_utc_stamp = datetime(2026, 9, 18, 0, 30)
+    assert module.used_today(_board_with_dispatches(offset_stamp), utc_day) == 1
+    assert module.used_today(_board_with_dispatches(naive_utc_stamp), utc_day) == 1
+
+
+def test_rolling_window_crosses_midnight_and_excludes_boundaries() -> None:
+    module = load_jules_quota()
+    now = datetime(2026, 9, 18, 0, 30, tzinfo=timezone.utc)
+    for delta, expected in [
+        (timedelta(0), 1),
+        (timedelta(hours=-1), 1),
+        (timedelta(hours=-24), 0),
+        (timedelta(seconds=1), 0),
+    ]:
+        assert module.used_rolling_24h(_board_with_dispatches(now + delta), now) == expected
+
+
+def test_rolling_window_normalizes_timezone_and_naive_utc() -> None:
+    module = load_jules_quota()
+    now = datetime(2026, 9, 18, 0, 30, tzinfo=timezone.utc)
+    offset = (now - timedelta(hours=1)).astimezone(timezone(timedelta(hours=-4)))
+    assert module.used_rolling_24h(_board_with_dispatches(offset), now) == 1
+    assert module.used_rolling_24h(_board_with_dispatches(now.replace(tzinfo=None)), now) == 1
+
+
 def test_main_alarms_on_orphans_and_prints_gauge(monkeypatch, tmp_path: Path, capsys) -> None:
     """An unmapped completed session turns the sensor advisory-red and shows in the gauge."""
     module = load_jules_quota()
@@ -70,7 +99,9 @@ def test_main_alarms_on_orphans_and_prints_gauge(monkeypatch, tmp_path: Path, ca
     monkeypatch.setattr(module, "probe_jules_remote_sessions", lambda: snapshot)
 
     assert module.main() == 1
-    assert "jules-quota: used=1 target=100 orphans=1 recovery=0" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert "jules-quota: used=1 target=100 orphans=1 recovery=0" in output
+    assert "local_window=utc_day local_launches_24h=1 vendor_remaining=unverified" in output
 
 
 def test_main_healthy_when_adopted_and_no_recovery(monkeypatch, tmp_path: Path, capsys) -> None:

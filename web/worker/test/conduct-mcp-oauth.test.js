@@ -65,7 +65,7 @@ function mockJwks(t, config, implementation) {
   t.mock.method(globalThis, "fetch", async (url, options) => {
     calls.push({ url, options });
     assert.equal(url, config.jwks_uri);
-    assert.equal(options.redirect, "error");
+    assert.equal(options.redirect, "manual");
     assert.ok(options.signal instanceof AbortSignal);
     return implementation ? implementation(url, options) : Response.json({ keys: [jwk] });
   });

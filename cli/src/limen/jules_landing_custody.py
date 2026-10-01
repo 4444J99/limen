@@ -366,8 +366,8 @@ def land_one(
         elif local_branch.returncode == 1:
             from limen.inventory_admission import reserve_growth
 
-            reserve_growth("branch", f"{repo_dir}:{branch}", work_key=task.id)
             reserve_growth("worktree", str(wt), work_key=task.id)
+            reserve_growth("branch", f"{repo_dir}:{branch}", work_key=task.id)
             add = _git(
                 ["worktree", "add", "-b", branch, str(wt), f"origin/{base}"],
                 repo_dir,

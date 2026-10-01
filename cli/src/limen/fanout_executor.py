@@ -55,6 +55,10 @@ class FanoutExecutionError(RuntimeError):
     """A provider launch, probe, or landing failed closed."""
 
 
+class PrelaunchFanoutExecutionError(FanoutExecutionError):
+    """Definite rejection before provider acceptance; not a generic exception."""
+
+
 class TransientFanoutExecutionError(FanoutExecutionError):
     """A bounded retry or another live executor may clear this failure."""
 
@@ -78,6 +82,7 @@ class ProviderState:
     status: str
     detail: str = ""
     failure_class: str | None = None
+    provider_state: str = "unknown"
 
 
 @dataclass(frozen=True)
@@ -591,8 +596,8 @@ class PatchLandingMixin:
             raise FanoutExecutionError(f"remote branch probe failed: {detail[-800:]}")
         from limen.inventory_admission import reserve_growth
 
-        reserve_growth("branch", f"{repository}:{branch}", work_key=packet["work_key"])
         reserve_growth("worktree", str(worktree), work_key=packet["work_key"])
+        reserve_growth("branch", f"{repository}:{branch}", work_key=packet["work_key"])
         _checked(["git", "worktree", "add", "-b", branch, str(worktree), exact_base], cwd=clone, timeout=180)
         receipt = self._land_new_result(
             node,
@@ -1326,6 +1331,12 @@ def launch_ready_nodes(
         ) or (unused or eligible_adapters)[0]
         if existing:
             current = existing[-1]
+            if (
+                current.adapter == "jules-api"
+                and current.provider_state in {"unknown", "nonterminal"}
+                and current.status in {"failed", "blocked"}
+            ):
+                continue  # A local failure is not proof that provider compute stopped.
             if current.status not in {"launching", "failed", "blocked"}:
                 continue
             if (
@@ -1415,11 +1426,24 @@ def launch_ready_nodes(
             continue
         try:
             if node.get("execution_admission"):
-                if not getattr(adapter, "enforces_deadline", False):
-                    raise FanoutExecutionError(f"{adapter.name}: provider hard-deadline enforcement unavailable")
-                packet = {**packet, "deadline": node["execution_admission"]["attempt_deadline"]}
-                if datetime.fromisoformat(packet["deadline"].replace("Z", "+00:00")) <= datetime.now(timezone.utc):
-                    raise FanoutExecutionError("execution attempt deadline exhausted before provider launch")
+                admission_deadline = str(node["execution_admission"]["attempt_deadline"])
+                if datetime.fromisoformat(admission_deadline.replace("Z", "+00:00")) <= datetime.now(timezone.utc):
+                    raise PrelaunchFanoutExecutionError("execution attempt deadline exhausted before provider launch")
+                if getattr(adapter, "enforces_deadline", False):
+                    packet = {**packet, "deadline": admission_deadline}
+                elif (
+                    adapter.name == "jules-api"
+                    and getattr(adapter, "fenced_async_submission", False)
+                    and node["execution_admission"].get("deadline_policy") == "fenced_async"
+                ):
+                    # Async providers may outlive Limen's execution lease. Admission therefore
+                    # bounds the create call, while the exact provider identity remains owned
+                    # and late output requires a separately admitted recovery/integration pass.
+                    packet = {**packet, "submission_deadline": admission_deadline}
+                else:
+                    raise PrelaunchFanoutExecutionError(
+                        f"{adapter.name}: provider hard-deadline enforcement unavailable"
+                    )
             if adapter.local_heavy:
                 from limen.host_admission import hold_lease
 
@@ -1457,6 +1481,9 @@ def launch_ready_nodes(
             failed = launching.model_copy(
                 update={
                     "status": "failed",
+                    # AmbiguousProviderLaunchError is handled above and retains
+                    # unknown occupancy. Only a definite refusal releases it.
+                    "provider_state": "not_started" if isinstance(exc, PrelaunchFanoutExecutionError) else "unknown",
                     "failure_class": ("transient" if isinstance(exc, TransientFanoutExecutionError) else "permanent"),
                     "updated_at": datetime.now(timezone.utc),
                     "detail": str(exc)[:4096],
@@ -1475,6 +1502,7 @@ def launch_ready_nodes(
             update={
                 "provider_run_id": provider.provider_run_id,
                 "provider_run_url": provider.provider_run_url,
+                "provider_state": "nonterminal" if adapter.name == "jules-api" else "unknown",
                 "status": "submitted",
                 "updated_at": datetime.now(timezone.utc),
             }
@@ -1506,22 +1534,39 @@ def refresh_provider_attempts(
         if not node.get("lease") or not node.get("attempts"):
             continue
         attempt = ExecutorAttemptV1.model_validate(node["attempts"][-1])
-        if attempt.status in _TERMINAL_ATTEMPT_STATES or not attempt.provider_run_id:
+        remote_pending = attempt.adapter == "jules-api" and attempt.provider_state not in {"terminal", "not_started"}
+        if attempt.status in _TERMINAL_ATTEMPT_STATES and not remote_pending:
             continue
         adapter = by_name.get(attempt.adapter)
         if adapter is None:
             continue
-        state = adapter.probe(attempt.provider_run_id)
+        if not attempt.provider_run_id:
+            if not remote_pending:
+                continue
+            recovered = adapter.recover(node["packet"], attempt.attempt_id)
+            if recovered is None:
+                continue  # Incomplete/missing evidence never permits a second POST.
+            attempt = attempt.model_copy(
+                update={"provider_run_id": recovered.provider_run_id, "provider_run_url": recovered.provider_run_url}
+            )
+        executor_client = _client_for_existing_session(client, str(node["executor_session_id"]), adapter)
+        claim = executor_client.claim(attempt.lease_id, attempt.lease_generation)
+        provider_run_id = attempt.provider_run_id
+        if not provider_run_id:
+            raise FanoutExecutionError("provider recovery returned no accepted identity")
+        state = adapter.probe(provider_run_id)
         updated = attempt.model_copy(
             update={
-                "status": state.status,
-                "failure_class": state.failure_class,
+                "status": attempt.status if attempt.status in {"failed", "blocked"} else state.status,
+                "failure_class": attempt.failure_class
+                if attempt.status in {"failed", "blocked"}
+                else state.failure_class,
+                "provider_state": state.provider_state,
                 "detail": state.detail[:4096],
                 "updated_at": datetime.now(timezone.utc),
             }
         )
-        claim = client.claim(attempt.lease_id, attempt.lease_generation)
-        client.heartbeat(
+        executor_client.heartbeat(
             attempt.lease_id,
             claim["capability_token"],
             generation=attempt.lease_generation,
@@ -1550,7 +1595,13 @@ def settle_exhausted_attempts(
         if lane is None or node.get("status") not in {"reserved", "running"} or node.get("receipts") or not attempts:
             continue
         current = attempts[-1]
-        deadline = datetime.fromisoformat(str(packet["deadline"]).replace("Z", "+00:00"))
+        deadline_values = [datetime.fromisoformat(str(packet["deadline"]).replace("Z", "+00:00"))]
+        execution_admission = node.get("execution_admission")
+        if isinstance(execution_admission, dict) and execution_admission.get("attempt_deadline"):
+            deadline_values.append(
+                datetime.fromisoformat(str(execution_admission["attempt_deadline"]).replace("Z", "+00:00"))
+            )
+        deadline = min(deadline_values)
         terminal_failure = current.status in {"failed", "blocked"}
         exhausted = terminal_failure and (
             len(attempts) >= int(packet["retry"]["max_attempts"])
@@ -1567,7 +1618,7 @@ def settle_exhausted_attempts(
         summary = (
             "finite provider attempt limit exhausted"
             if exhausted
-            else "campaign deadline reached without an exact provider receipt"
+            else "execution boundary reached; provider identity retained for separately admitted recovery"
         )
         deadline_boundary = deadline_imminent and not exhausted
         summary, campaign = _campaign_receipt(
@@ -1640,6 +1691,8 @@ def land_succeeded_attempts(
         if adapter is None:
             raise FanoutExecutionError(f"no live adapter can harvest {attempt.adapter}")
         claim = client.claim(attempt.lease_id, attempt.lease_generation)
+        if claim.get("observation_only"):
+            continue
         try:
             receipt = adapter.land(
                 node,
@@ -1767,7 +1820,17 @@ def wake_executor_workers(
         try:
             graph = lane.client.graph(root_run_id)
             root = next(node for node in graph.get("nodes", []) if node.get("run_id") == graph.get("root_run_id"))
-            environment["LIMEN_FANOUT_WORKER_DEADLINE"] = str(root["execution_admission"]["attempt_deadline"])
+            deadline = str(root["execution_admission"]["attempt_deadline"])
+            if datetime.fromisoformat(deadline.replace("Z", "+00:00")) <= datetime.now(timezone.utc):
+                wakes.append(
+                    {
+                        "session_id": session_id,
+                        "adapter": lane.primary.name,
+                        "status": "observation-only-expired-deadline",
+                    }
+                )
+                continue
+            environment["LIMEN_FANOUT_WORKER_DEADLINE"] = deadline
         except (KeyError, StopIteration, RuntimeError):
             wakes.append(
                 {"session_id": session_id, "adapter": lane.primary.name, "status": "blocked-missing-execution-deadline"}
@@ -1817,6 +1880,8 @@ def run_executor_worker(root_run_id: str, session_id: str, primary_adapter: str)
         try:
             worker_deadline = datetime.fromisoformat(raw_deadline.replace("Z", "+00:00"))
         except ValueError:
+            return 2
+        if worker_deadline.tzinfo is None:
             return 2
         worker_deadline = min(worker_deadline, datetime.now(timezone.utc) + timedelta(minutes=30))
         client = None

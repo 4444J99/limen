@@ -10,6 +10,9 @@ in-code default (the organ degrades, it never crashes the beat).
 from __future__ import annotations
 
 import importlib
+from collections.abc import Mapping, Iterator
+from copy import deepcopy
+from functools import lru_cache
 import os
 from pathlib import Path
 from typing import Any, Callable, Optional, TypeVar, Union, overload
@@ -48,16 +51,53 @@ def panel_path() -> Optional[Path]:
     return root.joinpath(*_PANEL_REL) if root else None
 
 
-def _load_panel() -> dict[str, object]:
+def _version(path: Path) -> tuple[int, int, int, int, int]:
+    stat = path.stat()
+    return stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns
+
+
+@lru_cache(maxsize=8)
+def _cached_panel(path: Path, version: tuple[int, int, int, int, int]) -> dict[str, object]:
+    # Do not associate replacement/racing bytes with an earlier file identity.
+    if _version(path) != version:
+        raise OSError("parameter panel changed before read")
+    text = path.read_text()
+    if _version(path) != version:
+        raise OSError("parameter panel changed during read")
+    data = yaml_module.safe_load(text)
+    if not isinstance(data, dict):
+        return {}
+    parameters = data.get("parameters", {})
+    return parameters if isinstance(parameters, dict) else {}
+
+
+class _PanelView(Mapping[str, object]):
+    """Copy only the selected entry; never expose the cached mutable registry."""
+
+    def __init__(self, panel: dict[str, object]):
+        self.__panel = panel
+
+    def __getitem__(self, key: str) -> object:
+        return deepcopy(self.__panel[key])
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self.__panel)
+
+    def __len__(self) -> int:
+        return len(self.__panel)
+
+
+def _load_panel() -> Mapping[str, object]:
     path = panel_path()
-    if yaml_module is None or not path or not path.exists():
+    if yaml_module is None or path is None:
         return {}
     try:
-        data = yaml_module.safe_load(path.read_text())
-        if not isinstance(data, dict):
-            return {}
-        params = data.get("parameters", {})
-        return params if isinstance(params, dict) else {}
+        path = path.resolve()
+        # Every read re-stats the selected panel. Edits, atomic replacements,
+        # permissions and worktree changes invalidate the bounded parsed cache.
+        # Copy on access: fetching one parameter must not copy the entire
+        # 1,000-entry panel. Callers still cannot change cached defaults.
+        return _PanelView(_cached_panel(path, _version(path)))
     except Exception:
         return {}
 

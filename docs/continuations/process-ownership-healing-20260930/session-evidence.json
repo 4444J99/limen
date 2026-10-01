@@ -1,0 +1,23 @@
+{
+  "session_id": "01a0f46d-979a-75a2-86dd-547b5666fd99",
+  "verified_head": "3d997d793c70d8c24e713d6b048f762a24a8d92a",
+  "tests_reused": "Previously passing scoped tests and source integrity controls; implementation unchanged since accepted exact-head tests.",
+  "verification_reference": "https://github.com/4444J99/limen/issues/2763#issuecomment-5921951799",
+  "credential_wall": "Installed canonical credential-wall.py --check exited 0 during closeout.",
+  "custody": "All implementation and redacted evidence committed and published. No unique private payload created. Credentials remain in existing owned runtime homes, never copied into artifacts.",
+  "checkout_disposition": "Retain both implementation checkouts; no deletion authority.",
+  "handoff": "Domus PR407 merge acceptance remains with #397/#403; broader estate remains with Limen #2763.",
+  "own_paths": [
+    ".codex/plans/2026-09-30-process-ownership-healing.md",
+    "cli/src/limen/conduct/liveness.py",
+    "cli/src/limen/process_ownership.py",
+    "cli/src/limen/process_services.py",
+    "cli/src/limen/session_closeout.py",
+    "cli/tests/test_merge_drain.py",
+    "cli/tests/test_process_ownership.py",
+    "cli/tests/test_session_closeout.py",
+    "docs/session-closeout.md",
+    "institutio/governance/gates.yaml",
+    "scripts/merge-drain.py"
+  ]
+}

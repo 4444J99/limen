@@ -331,6 +331,7 @@ export function validateExecutorAttempt(payload, now = new Date()) {
     schema_version: "limen.executor_attempt.v1",
     provider_run_id: null,
     provider_run_url: null,
+    provider_state: "unknown",
     failure_class: null,
     submitted_at: timestamp,
     updated_at: timestamp,
@@ -348,6 +349,8 @@ export function validateExecutorAttempt(payload, now = new Date()) {
   attempt.executor = identityDefaults(attempt.executor);
   assertIdentity(attempt.executor, "executor");
   if (attempt.provider_run_id !== null) assertIdentifier(attempt.provider_run_id, "provider_run_id");
+  if (attempt.provider_state === "terminal" && !attempt.provider_run_id) fail("terminal provider observation requires provider_run_id");
+  if (attempt.provider_state === "not_started" && attempt.provider_run_id) fail("accepted provider identity cannot be classified not_started");
   if (!["launching", "submitted", "running", "succeeded", "failed", "blocked"].includes(attempt.status)) {
     fail("executor attempt status is unsupported");
   }

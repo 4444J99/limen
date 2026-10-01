@@ -72,8 +72,10 @@ export class ChatGithubController {
   }
 
   async github(path, method = "GET", body = undefined, missing = false) {
-    const response = await this.request(`https://api.github.com${path}`, {
-      method, redirect: "error", signal: AbortSignal.timeout(10000),
+    // Native Workers fetch rejects the controller instance as its receiver.
+    const request = this.request;
+    const response = await request(`https://api.github.com${path}`, {
+      method, redirect: "manual", signal: AbortSignal.timeout(10000),
       headers: { authorization: `Bearer ${this.env.LIMEN_CHAT_GITHUB_TOKEN}`, "user-agent": "limen-chat-github",
         accept: "application/vnd.github+json", "content-type": "application/json", "x-github-api-version": "2022-11-28" },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
@@ -115,8 +117,9 @@ export class ChatGithubController {
       return { repository: body.repository, number: pr.number, state: pr.state, head: pr.head.sha,
         base: pr.base.sha, merged: pr.merged, merge_commit_sha: pr.merge_commit_sha, url: pr.html_url };
     }
-    if (typeof body.ref !== "string" || !(SHA.test(body.ref) || body.ref === repo.default_branch)) fail("chat_exact_ref_required", 422);
-    const commit = await this.github(`/repos/${body.repository}/commits/${encodeURIComponent(body.ref)}`);
+    const ref = body.ref === undefined ? repo.default_branch : body.ref;
+    if (typeof ref !== "string" || !(SHA.test(ref) || ref === repo.default_branch)) fail("chat_exact_ref_required", 422);
+    const commit = await this.github(`/repos/${body.repository}/commits/${encodeURIComponent(ref)}`);
     if (body.path === undefined) {
       const tree = await this.github(`/repos/${body.repository}/git/trees/${commit.commit.tree.sha}?recursive=1`);
       if (tree.truncated) fail("chat_tree_truncated", 422);

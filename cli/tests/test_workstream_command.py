@@ -6,6 +6,7 @@ import os
 import pty
 import shlex
 import shutil
+import signal
 import stat
 import subprocess
 import sys
@@ -14,6 +15,8 @@ from dataclasses import replace
 from pathlib import Path
 
 import pytest
+
+pytestmark = pytest.mark.usefixtures("isolated_workstream_growth")
 from click.testing import CliRunner
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -2573,6 +2576,7 @@ def test_conduct_registration_precedes_runway_admission(tmp_path: Path, monkeypa
         "EVENTS_CAPTURE": str(events),
         "REAL_PYTHON": real_python,
         "REGISTER_RC": "42",
+        "LIMEN_CONDUCT_KEEPALIVE_POLL_SECONDS": "1",
     }
 
     rejected = subprocess.run(
@@ -2623,6 +2627,21 @@ def test_conduct_registration_precedes_runway_admission(tmp_path: Path, monkeypa
         "provider",
     ]
     assert json.loads(contract.read_text(encoding="utf-8"))["runway"]["started_epoch"] is not None
+
+    # Registration starts a monitor that outlives the provider by one poll.
+    # Wait for its terminal receipt and exit rather than leaking it to pytest.
+    status_path = capsule / "conduct-keepalive.json"
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        status = json.loads(status_path.read_text(encoding="utf-8"))
+        if status.get("state") == "stopped":
+            try:
+                os.kill(int(status["keepalive_pid"]), 0)
+            except ProcessLookupError:
+                break
+        time.sleep(0.05)
+    else:
+        pytest.fail("conduct ordering fixture left its keepalive monitor alive")
 
 
 def test_conduct_keepalive_refreshes_without_exposing_credential_to_provider(
@@ -2958,7 +2977,8 @@ def test_capsule_advisory_lock_releases_when_its_shell_owner_is_killed(tmp_path:
             "capsule-lock-owner",
             str(lock_path),
             str(ready_path),
-        ]
+        ],
+        start_new_session=True,
     )
     try:
         deadline = time.monotonic() + 5
@@ -2980,6 +3000,12 @@ def test_capsule_advisory_lock_releases_when_its_shell_owner_is_killed(tmp_path:
         )
         assert probe.returncode == 0
     finally:
+        # Killing the shell deliberately leaves its foreground sleep alive.
+        # Reap this fixture's whole group after checking the lock handoff.
+        try:
+            os.killpg(holder.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
         if holder.poll() is None:
             holder.kill()
             holder.wait(timeout=2)
@@ -3032,14 +3058,18 @@ def test_concurrent_capsule_render_keeps_partial_kickstart_unlaunchable(tmp_path
         str(repo),
         "Race Capsule",
     ]
-    rendering = subprocess.Popen(command, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    rendering = subprocess.Popen(
+        command, env=env, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True
+    )
     render_stdout = ""
     render_stderr = ""
     try:
         deadline = time.monotonic() + 5
         while not sync_entered.exists() and rendering.poll() is None and time.monotonic() < deadline:
             time.sleep(0.01)
-        assert sync_entered.exists(), rendering.stderr.read() if rendering.stderr else ""
+        assert sync_entered.exists(), (
+            "bounded fixture rendezvous was not reached; release the child before collecting output"
+        )
 
         wt = repo / ".worktrees" / "race-capsule"
         capsule = wt / ".limen-workstream"
@@ -3084,8 +3114,8 @@ def test_concurrent_capsule_render_keeps_partial_kickstart_unlaunchable(tmp_path
         try:
             render_stdout, render_stderr = rendering.communicate(timeout=10)
         except subprocess.TimeoutExpired:
-            rendering.kill()
-            render_stdout, render_stderr = rendering.communicate()
+            os.killpg(rendering.pid, signal.SIGKILL)
+            render_stdout, render_stderr = rendering.communicate(timeout=2)
 
     assert rendering.returncode == 0, render_stdout + render_stderr
     wt = repo / ".worktrees" / "race-capsule"
@@ -3117,6 +3147,7 @@ def test_concurrent_capsule_render_keeps_partial_kickstart_unlaunchable(tmp_path
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        start_new_session=True,
     )
     launch_stdout = ""
     launch_stderr = ""
@@ -3124,7 +3155,9 @@ def test_concurrent_capsule_render_keeps_partial_kickstart_unlaunchable(tmp_path
         deadline = time.monotonic() + 5
         while not admit_entered.exists() and launching.poll() is None and time.monotonic() < deadline:
             time.sleep(0.01)
-        assert admit_entered.exists(), launching.stderr.read() if launching.stderr else ""
+        assert admit_entered.exists(), (
+            "bounded fixture rendezvous was not reached; release the child before collecting output"
+        )
         assert (capsule / ".capsule.lock").is_file()
 
         render_during_launch = subprocess.run(
@@ -3149,8 +3182,8 @@ def test_concurrent_capsule_render_keeps_partial_kickstart_unlaunchable(tmp_path
         try:
             launch_stdout, launch_stderr = launching.communicate(timeout=10)
         except subprocess.TimeoutExpired:
-            launching.kill()
-            launch_stdout, launch_stderr = launching.communicate()
+            os.killpg(launching.pid, signal.SIGKILL)
+            launch_stdout, launch_stderr = launching.communicate(timeout=2)
 
     assert launching.returncode == 0, launch_stdout + launch_stderr
     assert launched_capture.exists()

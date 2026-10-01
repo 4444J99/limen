@@ -1,0 +1,28 @@
+name: Ops-owned scheduler release carrier
+
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/ops-owner-release.yml']
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+# One fixed owner-only read command on the existing incident carrier PR avoids
+# making another commit merely to refresh evidence. No comment becomes code,
+# a source ref, a deployment request, or a run-state write.
+jobs:
+  owner:
+    if: >-
+      github.event_name == 'push' || github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' && github.event.action == 'created' &&
+       github.event.issue.number == 2731 && github.event.comment.user.id == 24796448 &&
+       github.event.comment.body == '/ops inspect')
+    uses: 4444J99/ops/.github/workflows/cloudflare-owner-release.yml@d8dc9d52cba35877cafb2321af940a6955285615
+    with:
+      source_sha: d8dc9d52cba35877cafb2321af940a6955285615
+    secrets:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

@@ -219,13 +219,14 @@ def main(argv: list[str] | None = None) -> int:
     print(f"orphan-watchers: {len(orphans)} ORPHAN PR watcher shell(s) — a session died and left its poll loop:")
     for o in orphans:
         print(f"    pid {o['pid']} (age {o['age_s']}s, parent {o['ppid']} gone) {o['command'][:120]}")
-    _journal(
-        {
-            "ts": int(time.time()),
-            "event": "orphan-watchers",
-            "orphans": [{"pid": o["pid"], "age_s": o["age_s"], "command": o["command"][:160]} for o in orphans],
-        }
-    )
+    if args.reap:
+        _journal(
+            {
+                "ts": int(time.time()),
+                "event": "orphan-watchers",
+                "orphans": [{"pid": o["pid"], "age_s": o["age_s"], "command": o["command"][:160]} for o in orphans],
+            }
+        )
     if args.reap:
         reap(orphans)
     return 1

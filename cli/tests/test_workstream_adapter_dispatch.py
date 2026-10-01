@@ -158,10 +158,11 @@ def test_opencode_unsafe_or_interactive_flags_fail_before_launch(extra, tmp_path
         D._assert_opencode_workstream_argv(argv, workspace=tmp_path)
 
 
-def test_opencode_final_spawn_receives_exact_safe_argv_and_environment(monkeypatch, tmp_path):
+def test_opencode_final_spawn_receives_exact_safe_argv_and_environment(monkeypatch, tmp_path, admitted_local_execution):
     monkeypatch.setattr(D, "_opencode_model", lambda task=None: "provider/fixture")
     monkeypatch.setattr(D, "_show_opencode_clock_after_run", lambda task: None)
     task = _task("opencode")
+    admitted_local_execution(D, task.id)
     argv = D._workspace_agent_args("opencode", D._agent_argv("opencode", task), tmp_path)
     cmd = ["opencode", *argv, "perform the bounded edit"]
     seen: dict[str, object] = {}
@@ -184,9 +185,12 @@ def test_opencode_final_spawn_receives_exact_safe_argv_and_environment(monkeypat
     assert "OPENCODE_DISABLE_PROJECT_CONFIG" not in env
 
 
-def test_opencode_environment_drift_stops_before_process_creation(monkeypatch, tmp_path, capsys):
+def test_opencode_environment_drift_stops_before_process_creation(
+    monkeypatch, tmp_path, capsys, admitted_local_execution
+):
     monkeypatch.setattr(D, "_opencode_model", lambda task=None: "provider/fixture")
     task = _task("opencode")
+    admitted_local_execution(D, task.id)
     argv = D._workspace_agent_args("opencode", D._agent_argv("opencode", task), tmp_path)
     cmd = ["opencode", *argv, "perform the bounded edit"]
     spawned = False
@@ -228,8 +232,11 @@ def test_opencode_environment_drift_stops_before_process_creation(monkeypatch, t
         ),
     ],
 )
-def test_final_adapter_argv_drift_stops_before_process_creation(agent, argv, monkeypatch, tmp_path, capsys):
+def test_final_adapter_argv_drift_stops_before_process_creation(
+    agent, argv, monkeypatch, tmp_path, capsys, admitted_local_execution
+):
     task = _task(agent)
+    admitted_local_execution(D, task.id)
     spawned = False
 
     def forbidden_spawn(*args, **kwargs):
@@ -347,8 +354,9 @@ def test_shared_command_spawn_rechecks_runway_after_provider_preflight(monkeypat
     assert "runway is exhausted" in D._workstream_successor_reason(result)
 
 
-def test_claude_auth_retry_rechecks_runway_before_second_process(monkeypatch, tmp_path):
+def test_claude_auth_failure_stops_without_a_second_process(monkeypatch, tmp_path, admitted_local_execution):
     task = _task("claude")
+    admitted_local_execution(D, task.id)
     deadline = int(task.workstream_contract["runway"]["deadline_epoch"])
     clock = [deadline - 1]
     calls = 0
@@ -364,7 +372,6 @@ def test_claude_auth_retry_rechecks_runway_before_second_process(monkeypatch, tm
 
     result = D._run_isolated_agent("claude", task, tmp_path, ["claude", "prompt"], 30)
 
-    assert D._is_workstream_successor_result(result)
-    assert D._workstream_successor_reason(result) == "workstream launch contract unavailable"
+    assert result is False
     assert not D._is_prelaunch_result(result)
-    assert calls == 1
+    assert calls == 1  # Correction requires another admitted attempt, not an auth loop.

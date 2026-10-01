@@ -64,6 +64,8 @@ ESTATE = ROOT / "institutio" / "github" / "estate.yaml"
 ACCESS = ROOT / "institutio" / "github" / "access.yaml"
 REGISTER = ROOT / "organs" / "consulting" / "constellation" / "registry.yaml"
 
+from estate_posture import visibility_intent
+
 AUDIENCES = ("world", "collab", "self")
 
 
@@ -123,7 +125,7 @@ def derive(estate: dict, access: dict, register: dict) -> dict:
     for repo, body in sorted((estate.get("repo_overrides") or {}).items()):
         body = body or {}
         cls = str(body.get("class") or "")
-        visibility = vis_of.get(cls, "any")
+        visibility, candidate, _ = visibility_intent(estate, repo, vis_of.get(cls, "any"))
         granted = bool(grants.get(repo))
         rows.append(
             {
@@ -133,7 +135,7 @@ def derive(estate: dict, access: dict, register: dict) -> dict:
                 "granted": granted,
                 "declared": body.get("audience"),
                 "suggested_by": lanes.get(repo),
-                "publish_candidate": bool(body.get("publish_candidate")),
+                "publish_candidate": candidate,
                 "never_grantable": cls in never_grant_classes,
                 "observed": observed_audience(visibility, granted),
             }

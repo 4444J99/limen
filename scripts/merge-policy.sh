@@ -9,7 +9,8 @@
 #   exit 0  CLEARED — safe to `gh pr merge`. (A non-deploy PR that is mergeable, or a
 #                     deploy-touching PR whose CI is fully GREEN + COMPLETE.)
 #   exit 2  HOLD    — website-sensitive AND CI not yet green/complete, or the PR is a draft,
-#                     or a non-deploy PR still has checks running. Wait for green; never
+#                     or a non-deploy PR still has checks running, or autonomy is paused
+#                     (autonomy-governor mode=paused). Wait for green; never
 #                     blind-merge a live deploy.
 #   exit 3  BLOCKED — GitHub itself refuses the merge right now: conflicts (DIRTY), stale base
 #                     without an active merge queue (BEHIND), or a branch-protection gate not
@@ -49,6 +50,34 @@ repo_args=(); [ -n "$REPO" ] && repo_args=(--repo "$REPO")
 # forces website-sensitive — a broken environment can only HOLD, never blind-deploy.
 STALE=0
 _root="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
+
+# AUTONOMY-PAUSED chokepoint (issue #1079): the 2026-07-15 incident merged green PRs
+# while autonomy was paused because nothing in the interactive merge path consulted
+# the pause. The governor computes the authoritative mode — pause marker, expiry,
+# merged-owner release, maintenance blockers, policy — and it alone decides; the
+# marker's `prohibitions:` line is quoted for the human. Fail toward caution: a
+# governor that cannot run (or reports nothing) means HOLD, never CLEARED.
+# LIMEN_FORCE_AUTONOMY=1 preserves the operator's explicit override (honored inside
+# the governor). No new registry: every consumer of this predicate (loops, sessions,
+# fleet) inherits the pause for free.
+_autonomy_mode=""
+if [ -d "$_root/logs" ] && [ -f "$_root/scripts/autonomy-governor.py" ]; then
+  _autonomy_mode="$(LIMEN_ROOT="$_root" python3 "$_root/scripts/autonomy-governor.py" mode 2>/dev/null || true)"
+fi
+if [ "$_autonomy_mode" = "paused" ]; then
+  _pause_prohibitions=""
+  if [ -f "$_root/logs/AUTONOMY_PAUSED" ]; then
+    _pause_prohibitions="$(grep -i '^prohibitions:' "$_root/logs/AUTONOMY_PAUSED" 2>/dev/null || true)"
+  fi
+  echo "VERDICT: HOLD — autonomy is PAUSED (autonomy-governor mode=paused)."
+  [ -n "$_pause_prohibitions" ] && echo "  marker $_root/logs/AUTONOMY_PAUSED — $_pause_prohibitions"
+  echo "  Release the pause (scripts/pause.py release), then re-run."
+  exit 2
+fi
+if [ -z "$_autonomy_mode" ] && [ -d "$_root/logs" ]; then
+  echo "VERDICT: HOLD — autonomy-governor reported no mode; refusing to clear a merge on an unverified pause state."
+  exit 2
+fi
 DEPLOY_RE="$(python3 "$_root/scripts/verify.py" --deploy-regex 2>/dev/null || true)"
 if [ -z "$DEPLOY_RE" ]; then
   echo "merge-policy: cannot derive the deploy regex from the GATES registry — treating the PR as website-sensitive (fail toward caution)." >&2
@@ -61,6 +90,13 @@ j="$(mktemp)"; err="$(mktemp)"; trap 'rm -f "$j" "$err"' EXIT
 lookup_failure() {
   if grep -Eqi 'rate limit|api quota|429|fetch exhausted' "$err"; then
     echo "VERDICT: HOLD — GitHub API quota is exhausted." >&2
+    exit 2
+  fi
+  # #2147 residual: a transient transport failure is not a merge verdict either.
+  # "I could not look" (502/503/504, timeout, DNS, reset) must HOLD, never BLOCKED —
+  # only auth/permission errors and genuinely unreadable PRs (404, wrong repo) do.
+  if grep -Eqi 'HTTP 5[0-9]{2}|timed? ?out|connection (reset|refused)|could not resolve|no such host|network (is )?unreachable|tls handshake|unexpected eof|broken pipe|bad gateway|service unavailable|gateway timeout' "$err"; then
+    echo "VERDICT: HOLD — GitHub API lookup failed with a transient transport error; re-run." >&2
     exit 2
   fi
   echo "VERDICT: BLOCKED — cannot read PR; lookup failure cause is unverified." >&2

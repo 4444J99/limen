@@ -12,10 +12,11 @@ from test_serial_claim_custody import _open_board
 
 
 @pytest.fixture(autouse=True)
-def _hermetic_dispatch(tmp_path, monkeypatch):
+def _hermetic_dispatch(tmp_path, monkeypatch, admitted_local_execution):
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path / "hermetic-root"))
     monkeypatch.setenv("LIMEN_WORKTREE_DEBT_GATE", "0")
     monkeypatch.setenv("LIMEN_DISPATCH_ADMISSION", "0")
+    admitted_local_execution(dispatch, "ACK-CUSTODY", "NEXT")
     for name in ("LIMEN_VALUE_REPOS", "LIMEN_VALUE_REPOS_FILE", "LIMEN_VALUE_GATE_STRICT"):
         monkeypatch.delenv(name, raising=False)
 
@@ -250,7 +251,7 @@ def test_clone_failure_is_redacted_before_prelaunch_result(tmp_path, monkeypatch
 
 
 @pytest.mark.parametrize("guard", ["host", "workstream"])
-def test_auth_retry_guard_refusal_keeps_first_provider_attempt(tmp_path, monkeypatch, capsys, guard):
+def test_auth_failure_does_not_launch_an_unadmitted_retry(tmp_path, monkeypatch, capsys, guard):
     task = _open_board(tmp_path / "tasks.yaml").tasks[0]
     actuals = _journal(monkeypatch)
     calls = []
@@ -284,7 +285,8 @@ def test_auth_retry_guard_refusal_keeps_first_provider_attempt(tmp_path, monkeyp
     assert not dispatch._is_prelaunch_result(result)
     assert actuals[0]["metrics"] == {"runs": 1}
     assert "private-error-token" not in str(result) + capsys.readouterr().out
-    assert dispatch._is_workstream_successor_result(result) == (guard == "workstream")
+    assert not dispatch._is_workstream_successor_result(result)
+    # No second call is authorized merely because the first failed authentication.
 
 
 def test_exception_after_run_boundary_does_not_become_no_launch(tmp_path, monkeypatch, capsys):

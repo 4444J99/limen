@@ -35,6 +35,9 @@ from limen.workstream_contract import RECEIPT_MODULES, new_contract
 
 ROOT = Path(__file__).resolve().parents[2]
 
+# Relay protocol fixtures own a finite local growth grant, not a live remote keeper.
+pytestmark = pytest.mark.usefixtures("isolated_workstream_growth")
+
 
 def _spawn_fixture_relay_process(
     command: list[str],
@@ -102,6 +105,23 @@ def _assert_process_gone(pid: int, *, timeout: float = 2.0) -> None:
             return
         time.sleep(0.02)
     pytest.fail(f"fixture process {pid} remained alive after bounded cleanup")
+
+
+def _await_startup_receipt(path: Path, *, timeout: float) -> None:
+    """Wait for a fixture's startup receipt instead of racing its startup.
+
+    Fixture processes (provider scripts, registration wrappers) write their pid
+    receipts asynchronously after spawn; asserting immediately after the
+    launch/registration call races their startup on loaded machines (#2295).
+    A bounded poll awaits the deterministic signal without extending any
+    production timeout or sleep.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if path.is_file():
+            return
+        time.sleep(0.01)
+    pytest.fail(f"fixture startup receipt {path} was never written within {timeout}s")
 
 
 @pytest.fixture
@@ -296,6 +316,7 @@ def test_full_relay_exec_proof_closes_while_keepalive_remains_live(
     assert launch.receipt.activation_response_sha256 is not None
     assert registrations == [False, True]
     assert elapsed < 10
+    _await_startup_receipt(provider_pid_path, timeout=5.0)
     assert provider_pid_path.is_file()
     assert not provider_env_leaks.exists()
     assert launch.receipt.launch_pid == int(provider_pid_path.read_text(encoding="utf-8"))
@@ -1934,16 +1955,19 @@ def test_registration_timeout_kills_an_exited_wrappers_pipe_holding_descendant(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    from limen import bounded_subprocess
+
     wrapper = tmp_path / "register-wrapper"
     child_pid_path = tmp_path / "child.pid"
+    # Synchronize fixture startup before starting the short cleanup deadline.
+    # Even a POSIX shell may not start within 0.3s on a loaded host (#2295).
+    # The exited wrapper's descendant still holds the real registration pipes.
     wrapper.write_text(
         (
-            "#!/usr/bin/env python3\n"
-            "import os, subprocess, sys\n"
-            "child = subprocess.Popen("
-            "[sys.executable, '-c', 'import time; time.sleep(30)'],"
-            " stdout=sys.stdout, stderr=sys.stderr)\n"
-            "open(os.environ['RELAY_TEST_CHILD_PID'], 'w', encoding='utf-8').write(str(child.pid))\n"
+            "#!/bin/sh\n"
+            "set -eu\n"
+            f"{sys.executable} -c 'import time; time.sleep(30)' &\n"
+            'printf \'%s\\n\' "$!" > "$RELAY_TEST_CHILD_PID"\n'
         ),
         encoding="utf-8",
     )
@@ -1954,6 +1978,19 @@ def test_registration_timeout_kills_an_exited_wrappers_pipe_holding_descendant(
         "RELAY_TEST_CHILD_PID": str(child_pid_path),
     }
     monkeypatch.setattr(relay_process, "_REGISTRATION_TIMEOUT_SECONDS", 0.3)
+    real_popen = bounded_subprocess.subprocess.Popen
+
+    def ready_wrapper(*args, **kwargs):
+        process = real_popen(*args, **kwargs)
+        try:
+            _await_startup_receipt(child_pid_path, timeout=10.0)
+            process.wait(timeout=10.0)
+        except BaseException:
+            bounded_subprocess._terminate_process_group(process)
+            raise
+        return process
+
+    monkeypatch.setattr(bounded_subprocess.subprocess, "Popen", ready_wrapper)
 
     with pytest.raises(CampaignRelayError, match="bounded deadline") as raised:
         _bounded_registration(
@@ -1967,6 +2004,7 @@ def test_registration_timeout_kills_an_exited_wrappers_pipe_holding_descendant(
         )
 
     assert raised.value.code == "relay_registration_timeout"
+    _await_startup_receipt(child_pid_path, timeout=2.0)
     child_pid = int(child_pid_path.read_text(encoding="utf-8"))
     deadline = time.monotonic() + 2
     while time.monotonic() < deadline:

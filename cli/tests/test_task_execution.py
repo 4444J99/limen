@@ -52,6 +52,7 @@ class FakeAdapter:
     capabilities = CODE_RECEIPT_CAPABILITIES
     conduct_token_env = "LIMEN_CONDUCT_TOKEN_FAKE"
     worker_env_allowlist = frozenset()
+    enforces_deadline = True  # Synchronous fixture; no external job outlives this call.
 
     def __init__(self, *, eligible: bool = True):
         self.is_eligible = eligible
@@ -101,9 +102,21 @@ def test_task_execution_paths_reject_keeper_projection_authority():
         )
 
 
-def test_local_keeper_start_is_reserved_once_and_idempotent(tmp_path, monkeypatch):
+@pytest.mark.parametrize("enforces_deadline", [False, True])
+def test_local_keeper_start_is_reserved_once_and_idempotent(
+    tmp_path, monkeypatch, approved_execution_policy, enforces_deadline
+):
+    approved_execution_policy("AW-VALUE-REPOS-test")
     keeper = LocalConductClient(tmp_path / "conduct.sqlite")
     adapter = FakeAdapter()
+    adapter.enforces_deadline = enforces_deadline
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return NOW if tz is None else NOW.astimezone(tz)
+
+    monkeypatch.setattr("limen.fanout_executor.datetime", Clock)
     monkeypatch.setattr("limen.conduct.broker.utc_now", lambda: NOW)
     monkeypatch.setattr("limen.fanout_executor.remote_default_head", lambda _repo: BASE)
 
@@ -122,11 +135,11 @@ def test_local_keeper_start_is_reserved_once_and_idempotent(tmp_path, monkeypatc
         now=NOW,
     )
 
-    assert first["status"] == "launched"
-    assert first["targeted_launch_count"] == 1
-    assert repeated["status"] == "already_running"
+    assert first["status"] == ("launched" if enforces_deadline else "blocked")
+    assert first["targeted_launch_count"] == int(enforces_deadline)
+    assert repeated["status"] == ("already_running" if enforces_deadline else "blocked")
     assert repeated["idempotent"] is True
-    assert len(adapter.launches) == 1
+    assert len(adapter.launches) == int(enforces_deadline)
     graph = keeper.graph(first["root_run_id"])
     node = next(row for row in graph["nodes"] if row["run_id"] == first["run_id"])
     assert node["packet"]["task_id"] == "AW-VALUE-REPOS-test"
@@ -244,7 +257,9 @@ def test_renamed_capability_executor_is_visible_and_woken(monkeypatch):
         now=NOW,
     )
 
-    assert result["status"] == "launched"
+    assert result["status"] == "submission_pending"
+    assert result["targeted_launch_count"] == 0
+    assert result["executor_wake_count"] == 1
     assert keeper.packet.preferred_agent == "jules"
     assert keeper.packet.execution["executor_session_id"] == keeper.executor_session_id
     assert wakes == [("run-1", (keeper.executor_session_id,))]
@@ -296,5 +311,7 @@ def test_adapter_registration_failure_is_visible_without_blocking_healthy_peer(m
         now=NOW,
     )
 
-    assert result["status"] == "launched"
+    assert result["status"] == "submission_pending"
+    assert result["targeted_launch_count"] == 0
+    assert result["executor_wake_count"] == 1
     assert result["unavailable_adapters"] == [{"adapter": "auth-needed", "reason": "credential unavailable"}]

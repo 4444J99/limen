@@ -80,9 +80,7 @@ def _plan(estate: dict, rows: list[dict], gitvs, receipt_ok) -> list[dict]:
         full = str(row.get("full_name") or "")
         cls_name = gitvs.classify_repo(full, estate, facts=row)
         desired = (classes.get(cls_name) or {}).get("visibility") if cls_name else None
-        publish_candidate = bool((overrides.get(full) or {}).get("publish_candidate"))
-        if publish_candidate:
-            desired = "public"  # publish_candidate ⇒ desired-public (green sweep is the gate)
+        desired, publish_candidate, preservation_review = gitvs.visibility_intent(estate, full, desired, row)
         if desired not in ("public", "private"):
             continue
         observed = "private" if row.get("private") else "public"
@@ -117,7 +115,7 @@ def _plan(estate: dict, rows: list[dict], gitvs, receipt_ok) -> list[dict]:
             {
                 "repo": full,
                 "class": cls_name,
-                "action": "publish" if desired == "public" else "demote",
+                "action": "review" if preservation_review else ("publish" if desired == "public" else "demote"),
                 "why": f"class '{cls_name}' demands {desired}, observed {observed}",
             }
         )
@@ -184,6 +182,9 @@ def main(argv: list[str] | None = None) -> int:
         if done >= cap:
             print(f"   ~ held  {action} {repo} — per-run cap reached")
             continue
+        if action == "review":
+            print(f"   ~ held  review {repo} — #2721 preservation preflight required")
+            continue
         if action == "demote":
             why = p.get("why") or "leak-posture auto-guard"
             if args.apply:
@@ -214,7 +215,7 @@ def main(argv: list[str] | None = None) -> int:
         done += 1
         _log({**p, "result": result, "mode": "apply", "receipt": why})
         print(f"   ✓ publish {repo} → public ({result}) — sweep green, directive-armed")
-    return 0
+    return 2 if any(p["action"] == "review" for p in plan) else 0
 
 
 if __name__ == "__main__":

@@ -26,9 +26,33 @@ const HORIZONS = new Map([
 ]);
 const CANONICAL_ORIGINS = new Set(["obligation", "human_prompt", "agent_recommendation", "system_debt"]);
 const CANONICAL_HORIZONS = new Set(["past", "present", "future"]);
-const PLACEHOLDER_RE = /(?:<[^>]+>|\b(?:tbd|todo|fixme|replace[-_ ]me)\b)/i;
+const PLACEHOLDER_WORD_RE = /\b(?:tbd|todo|fixme|replace[-_ ]me)\b/i;
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DATETIME_RE = /^(\d{4})-(\d{2})-(\d{2})T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,6})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d)$/;
+
+// Linear-time equivalent of /<[^>]+>/.test(value): the regex matches iff some
+// '<' is followed by a '>' with at least one non-'>' character between them.
+// The regex form backtracks quadratically on '<'-heavy input (CodeQL
+// js/polynomial-redos); this single pass decides the same predicate in O(n).
+function hasAnglePlaceholder(value) {
+  let open = -1;
+  for (let i = 0; i < value.length; i++) {
+    const ch = value[i];
+    if (ch === "<") {
+      if (open === -1) open = i;
+    } else if (ch === ">") {
+      if (open !== -1) {
+        if (i > open + 1) return true;
+        open = -1;
+      }
+    }
+  }
+  return false;
+}
+
+export function hasPlaceholder(value) {
+  return typeof value === "string" && (hasAnglePlaceholder(value) || PLACEHOLDER_WORD_RE.test(value));
+}
 
 function slug(value) {
   return String(value || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
@@ -51,7 +75,7 @@ function fieldOrLabel(task, fields, prefixes) {
 }
 
 export function executablePredicate(value) {
-  if (typeof value !== "string" || !value.trim() || /[\r\n\0]/.test(value) || PLACEHOLDER_RE.test(value)) return false;
+  if (typeof value !== "string" || !value.trim() || /[\r\n\0]/.test(value) || hasPlaceholder(value)) return false;
   const tokens = shellSplit(value.trim());
   if (!tokens) return false;
   let index = 0;
@@ -66,7 +90,7 @@ export function executablePredicate(value) {
 }
 
 export function durableReceiptTarget(value) {
-  if (typeof value !== "string" || !value.trim() || /[\s\0]/.test(value) || PLACEHOLDER_RE.test(value)) return false;
+  if (typeof value !== "string" || !value.trim() || /[\s\0]/.test(value) || hasPlaceholder(value)) return false;
   if (/^github:[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+:(pull-request|issue):[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(value)) {
     return true;
   }

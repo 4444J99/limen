@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Jules daily-quota sensor: used-vs-target, orphaned completions, recovery states.
 
-The vendor grants a daily task quota that expires unused at reset; 2026-01-21 ->
-2026-07-23 the lane sat silent with no gauge (183 days, zero landed output). This
-sensor is that gauge. It never mutates anything: the EFFECTORS are the existing beat
+Vendor limits use a rolling 24-hour window, not a midnight reset. Local dispatch
+receipts measure only this broker's observed launches, never account entitlement
+or remaining vendor quota. The UTC-day target is an internal throughput goal.
+The rolling observation is evidence for admission, not independent launch authority.
+This sensor never mutates anything: the EFFECTORS are the existing beat
 rungs — drain.sh (jules-land) lands finished sessions, metabolize 4b dispatch fills
 the quota.
 
@@ -16,7 +18,7 @@ from __future__ import annotations
 
 import os
 import sys
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "cli" / "src"))
@@ -32,8 +34,13 @@ TASKS = Path(os.environ.get("LIMEN_TASKS", ROOT / "tasks.yaml"))
 ADOPTIONS = Path(os.environ.get("LIMEN_JULES_ADOPTIONS", str(ROOT / "docs" / "jules-orphan-adoptions.jsonl")))
 
 
+def _as_utc(stamp: datetime) -> datetime:
+    """Normalize historical naive timestamps and offset-aware receipts to UTC."""
+    return stamp.replace(tzinfo=timezone.utc) if stamp.tzinfo is None else stamp.astimezone(timezone.utc)
+
+
 def used_today(board: object, today: date) -> int:
-    """Count Jules dispatch receipts stamped today (UTC) — the system's own launch count."""
+    """Count Jules dispatch receipts stamped today in UTC — the system's own launch count."""
     used = 0
     for task in getattr(board, "tasks", None) or []:
         for entry in task.dispatch_log or []:
@@ -42,9 +49,32 @@ def used_today(board: object, today: date) -> int:
             if str(getattr(entry, "status", "") or "").lower() != "dispatched":
                 continue
             stamp = getattr(entry, "timestamp", None)
-            when = stamp.date() if isinstance(stamp, datetime) else None
+            when = _as_utc(stamp).date() if isinstance(stamp, datetime) else None
             if when == today:
                 used += 1
+    return used
+
+
+def used_rolling_24h(board: object, now: datetime) -> int:
+    """Observed launches in (now - 24h, now]; not vendor remaining quota.
+
+    Historical naive timestamps follow the board's UTC convention. Future stamps
+    are excluded rather than spending capacity before a launch has occurred.
+    """
+    now = _as_utc(now)
+    cutoff = now - timedelta(hours=24)
+    used = 0
+    for task in getattr(board, "tasks", None) or []:
+        for entry in task.dispatch_log or []:
+            if str(getattr(entry, "agent", "") or "").lower() != "jules":
+                continue
+            if str(getattr(entry, "status", "") or "").lower() != "dispatched":
+                continue
+            stamp = getattr(entry, "timestamp", None)
+            if not isinstance(stamp, datetime):
+                continue
+            stamp = _as_utc(stamp)
+            used += cutoff < stamp <= now
     return used
 
 
@@ -81,7 +111,11 @@ def main() -> int:
     except ValueError:
         alarm_hour = 18
     under_late = used < target and now.hour >= alarm_hour
-    print(f"  jules-quota: used={used} target={target} orphans={orphans} recovery={recovery}{probe_note}")
+    print(
+        f"  jules-quota: used={used} target={target} orphans={orphans} recovery={recovery}"
+        f" local_window=utc_day local_launches_24h={used_rolling_24h(board, now)}"
+        f" vendor_remaining=unverified{probe_note}"
+    )
     return 1 if (orphans or recovery or under_late) else 0
 
 

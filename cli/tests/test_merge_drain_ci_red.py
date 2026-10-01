@@ -125,6 +125,41 @@ def test_optional_failure_does_not_create_ci_red_onset(monkeypatch, tmp_path: Pa
     )
 
 
+def test_pending_optional_review_does_not_block_but_required_or_unknown_does(monkeypatch, tmp_path):
+    module = _load(tmp_path)
+    payload = {
+        "state": "OPEN",
+        "isDraft": False,
+        "labels": [{"name": "lifecycle:delivery"}],
+        "mergeable": "MERGEABLE",
+        "baseRefName": "main",
+        "headRefOid": "a" * 40,
+        "files": [],
+        "statusCheckRollup": [{"name": "optional-review", "state": "PENDING"}],
+    }
+    monkeypatch.setattr(module, "stale_base_verdict", lambda *_args: None)
+    monkeypatch.setattr(module, "merge_queue_capability", lambda *_args: "inactive")
+    monkeypatch.setattr(module, "_is_trivial", lambda *_args: False)
+    for raw, expected in [
+        ('[{"name":"contract","bucket":"pass"}]', "READY"),
+        ('[{"name":"contract","bucket":"pending"}]', "CI-PENDING"),
+        ('[{"name":"contract","bucket":"unknown"}]', "REQUIRED-CHECKS-UNMEASURED"),
+        ('[{"name":"contract"}]', "REQUIRED-CHECKS-UNMEASURED"),
+        ('[{"bucket":"pass"}]', "REQUIRED-CHECKS-UNMEASURED"),
+        ("[null]", "REQUIRED-CHECKS-UNMEASURED"),
+        ("not-json", "REQUIRED-CHECKS-UNMEASURED"),
+    ]:
+
+        def fake_gh(args, selected=raw, **kwargs):
+            if args[:2] == ["pr", "view"]:
+                return SimpleNamespace(returncode=0, stdout=json.dumps(payload))
+            assert args[:2] == ["pr", "checks"] and "--required" in args
+            return SimpleNamespace(returncode=0, stdout=selected)
+
+        monkeypatch.setattr(module, "gh", fake_gh)
+        assert module.assess(("organvm/repo", 7))[2] == expected
+
+
 def test_ledger_persistence_failure_is_reported_without_crashing(monkeypatch, tmp_path: Path, capsys) -> None:
     module = _load(tmp_path)
     monkeypatch.setattr(module.os, "replace", lambda *_args: (_ for _ in ()).throw(OSError("read-only")))
@@ -260,3 +295,34 @@ def test_authorization_error_does_not_probe_for_absence(monkeypatch, tmp_path):
     monkeypatch.setattr(module, "gh", fake_gh)
     assert module._failing_required_checks("organvm/repo", 7, "main") is None
     assert len(calls) == 1
+
+
+def test_protected_pr_only_policy_proves_zero_checks_without_disabling_protection(monkeypatch, tmp_path):
+    module = _load(tmp_path)
+    for required, rules, expected in [
+        ({"contexts": [], "checks": []}, [{"type": "pull_request"}], ()),
+        ({"contexts": ["ci"], "checks": []}, [{"type": "pull_request"}], None),
+        ({"contexts": [], "checks": [{"context": "ci"}]}, [], None),
+        ({"contexts": []}, [], None),
+        (None, [], None),
+        ({"contexts": [], "checks": []}, [{"type": "required_status_checks"}], None),
+        ({"contexts": [], "checks": []}, [{"type": "workflows"}], None),
+        ({"contexts": [], "checks": []}, [{}], None),
+    ]:
+
+        def fake_gh(args, selected=required, effective=rules, **kwargs):
+            if args[:2] == ["pr", "checks"]:
+                return SimpleNamespace(
+                    returncode=1, stdout="", stderr="no required checks reported on the 'topic' branch"
+                )
+            if "/rules/" in args[1]:
+                return SimpleNamespace(returncode=0, stdout=json.dumps(effective))
+            return SimpleNamespace(
+                returncode=0,
+                stdout=json.dumps(
+                    {"name": "main", "protected": True, "protection": {"required_status_checks": selected}}
+                ),
+            )
+
+        monkeypatch.setattr(module, "gh", fake_gh)
+        assert module._failing_required_checks("organvm/repo", 7, "main") == expected

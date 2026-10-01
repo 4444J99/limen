@@ -30,8 +30,9 @@ def _task(**over: object) -> Task:
     return Task.model_validate(values)
 
 
-def test_legacy_task_without_requirements_remains_ready() -> None:
+def test_legacy_task_without_requirements_remains_ready(approved_execution_policy) -> None:
     task = _task()
+    approved_execution_policy(task.id)
 
     assert task.execution_requirements is None
     assert "execution_requirements" not in task.model_dump(mode="json", exclude_none=True)
@@ -51,8 +52,9 @@ def test_mount_requirement_uses_live_probe_for_present_and_absent_mounts() -> No
     assert absent.blockers == ("required mount unavailable: /runtime/arbitrary-volume",)
 
 
-def test_dispatchable_uses_the_same_live_mount_gate(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_dispatchable_uses_the_same_live_mount_gate(monkeypatch: pytest.MonkeyPatch, approved_execution_policy) -> None:
     task = _task(execution_requirements=[{"kind": "mount", "path": "/runtime/volume-a"}])
+    approved_execution_policy(task.id)
     monkeypatch.setattr("limen.runtime_requirements.os.path.ismount", lambda path: path == "/runtime/volume-a")
     assert _dispatchable(task) is True
 
