@@ -121,9 +121,17 @@ def signed_host(tmp_path, monkeypatch):
     return executable, receipt
 
 
-def test_signed_fixed_host_binds_binary_and_requirement(signed_host):
+def test_signed_fixed_host_binds_binary_and_requirement(signed_host, monkeypatch):
     executable, receipt = signed_host
+    calls = []
+
+    def verify(argv, **kwargs):
+        calls.append(argv)
+        return SimpleNamespace(returncode=0)
+
+    monkeypatch.setattr("limen.process_lifetime.subprocess.run", verify)
     assert set(signed_responsible_host(executable)) == {str(executable), str(receipt)}
+    assert calls[0][4] == "=" + receipt.read_text().strip()
 
 
 def test_failed_codesign_is_not_host_authority(signed_host, monkeypatch):

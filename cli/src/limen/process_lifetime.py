@@ -35,7 +35,7 @@ def signed_responsible_host(executable: Path) -> dict[str, str]:
             return {}
         captured = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in (executable, receipt)}
         verification = subprocess.run(
-            ["/usr/bin/codesign", "--verify", "--strict", "-R", requirement, str(bundle)],
+            ["/usr/bin/codesign", "--verify", "--strict", "-R", "=" + requirement, str(bundle)],
             capture_output=True,
             timeout=5,
             check=False,
