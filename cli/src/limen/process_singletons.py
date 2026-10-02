@@ -30,7 +30,7 @@ def vendor_files_unchanged(files: dict) -> bool:
                 not path.is_absolute()
                 or path.is_symlink()
                 or not path.is_file()
-                or path.stat().st_size > 2 * 1024 * 1024
+                or path.stat().st_size > 32 * 1024 * 1024
             ):
                 return False
             if hashlib.sha256(path.read_bytes()).hexdigest() != checksum:

@@ -308,7 +308,12 @@ def _serena_singleton_contracts(processes, contracts, candidates):
         package = metadata.parent.parent / "serena"
         dashboard, constants = package / "dashboard.py", package / "constants.py"
         files = (metadata, dashboard, constants, Path(peer.argv[1]), Path(peer.argv[0]).resolve())
-        if any(not path.is_file() or path.is_symlink() or path.stat().st_size > 2 * 1024 * 1024 for path in files):
+        if any(
+            not path.is_file()
+            or path.is_symlink()
+            or path.stat().st_size > (32 if index == len(files) - 1 else 2) * 1024 * 1024
+            for index, path in enumerate(files)
+        ):
             continue
         captured = {str(path.resolve()): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}
         source = dashboard.read_text()
