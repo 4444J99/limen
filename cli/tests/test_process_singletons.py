@@ -33,7 +33,7 @@ def test_wrong_health_fails_closed(body):
     assert not _check(body, ["start", "start"])
 
 
-def _check(body, identities):
+def _check(body, identities, replacement_argv=None):
     process = Process(10, 1, 501, "start", ("/vendor/bin/python", "-c", SERENA_TRAY_COMMAND))
 
     class Response:
@@ -51,6 +51,10 @@ def _check(body, identities):
     values = iter(identities)
     listener = SimpleNamespace(returncode=0, stdout=b"p10\nf4\nn127.0.0.1:24224\n")
     with (
+        patch(
+            "limen.process_singletons.native_details",
+            side_effect=[(process.argv, {}), (replacement_argv or process.argv, {})],
+        ),
         patch("limen.process_singletons.subprocess.run", return_value=listener),
         patch(
             "limen.process_singletons.urllib.request.build_opener",
@@ -66,6 +70,10 @@ def test_typed_health_and_stable_identity():
 
 def test_pid_reuse_after_health_fails_closed():
     assert not _check(b'{"status":"alive"}', ["start", "replacement"])
+
+
+def test_exec_replacement_with_same_pid_and_start_fails_closed():
+    assert not _check(b'{"status":"alive"}', ["start", "start"], ("/unrelated",))
 
 
 @pytest.fixture

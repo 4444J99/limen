@@ -11,7 +11,7 @@ import json
 import subprocess
 import urllib.request
 
-from limen.process_ownership import Process
+from limen.process_ownership import Process, native_details
 
 SERENA_TRAY_COMMAND = "from serena.dashboard import SerenaDashboardTrayManager; SerenaDashboardTrayManager().run()"
 SERENA_TRAY_PORT = 24224
@@ -48,6 +48,8 @@ def serena_tray_alive(process: Process, identity) -> bool:
     ):
         return False
     try:
+        if native_details(process.pid)[0] != process.argv:
+            return False  # exec can change argv without changing PID/start time.
         listener = subprocess.run(
             ["/usr/sbin/lsof", "-nP", "-a", "-p", str(process.pid), "-iTCP:24224", "-sTCP:LISTEN", "-Fpn"],
             capture_output=True,
@@ -63,6 +65,6 @@ def serena_tray_alive(process: Process, identity) -> bool:
             body = response.read(257)
             if len(body) > 256 or json.loads(body) != {"status": "alive"}:
                 return False
-        return identity(process.pid) == process.started
+        return identity(process.pid) == process.started and native_details(process.pid)[0] == process.argv
     except (OSError, ValueError, subprocess.SubprocessError):
         return False
