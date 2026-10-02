@@ -220,8 +220,16 @@ def test_completion_failure_keeps_open_handoff(cohort):
 @pytest.mark.parametrize("same_id", [True, False])
 @pytest.mark.parametrize("prefix", ["https://github.com/", "git@github.com:", "ssh://git@github.com/"])
 def test_repository_transfer_uses_stable_identity(cohort, monkeypatch, same_id, prefix):
-    _, receipt, _, publish, evaluate = cohort
+    roots, receipt, _, publish, evaluate = cohort
     original = closeout.git
+    original_run = closeout.run
+
+    def publication_api(command, **kwargs):
+        if command[:4] == ["gh", "api", "--method", "GET"]:
+            root = roots[command[4].split("/")[2]]
+            tip, ref = original(root, "ls-remote", "--exit-code", "origin", "refs/heads/work").split()
+            return json.dumps({"ref": ref, "object": {"type": "commit", "sha": tip}})
+        return original_run(command, **kwargs)
 
     def remote_alias(root, *args, **kwargs):
         if args == ("remote", "get-url", "origin"):
@@ -232,6 +240,7 @@ def test_repository_transfer_uses_stable_identity(cohort, monkeypatch, same_id, 
         row.update(repository=f"new-owner/{row['id']}", repository_id=index + 1)
     publish()
     monkeypatch.setattr(closeout, "git", remote_alias)
+    monkeypatch.setattr(closeout, "run", publication_api)
 
     def read_repository(slug):
         identifier = slug.split("/")[1]
