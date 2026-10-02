@@ -353,7 +353,7 @@ def assess(
                         if peer:
                             # Detached helpers inherit no authority from matching
                             # ancestry or health. Require a finally classified peer.
-                            from limen.process_singletons import serena_tray_alive
+                            from limen.process_singletons import serena_tray_alive, vendor_files_unchanged
 
                             source = processes.get(peer.get("pid"))
                             verified = verified_services.get(peer.get("pid"))
@@ -377,6 +377,7 @@ def assess(
                                 or peer_contract.get("config_home") != contract.get("config_home")
                                 or normalized(peer_contract["host_argv"]) != normalized(contract["host_argv"])
                                 or identity(peer_host.pid) != peer_host.started
+                                or not vendor_files_unchanged(contract.get("singleton_vendor_files"))
                                 or not serena_tray_alive(process, identity)
                             ):
                                 continue
