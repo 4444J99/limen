@@ -1,10 +1,18 @@
 """A lifetime bridge requires reciprocal kernel endpoints, not shared names."""
 
 import struct
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
-from limen.process_lifetime import decode_pipe, find_lifetime_descriptors, live_lifetime_bridge, reciprocal_pipe
-from limen.process_ownership import Process
+from limen.process_lifetime import (
+    decode_pipe,
+    find_lifetime_descriptors,
+    live_lifetime_bridge,
+    reciprocal_pipe,
+    signed_responsible_host,
+)
+from limen.process_ownership import Process, assess
 
 
 @pytest.fixture
@@ -99,3 +107,85 @@ def test_descriptor_replacement_during_witness_is_rejected(endpoints, monkeypatc
     calls = iter([reader, writer, {**reader, "handle": 3}])
     monkeypatch.setattr("limen.process_lifetime.kernel_pipe", lambda pid, fd: next(calls))
     assert not live_lifetime_bridge(host, peer, 3, 4, lambda pid: "host" if pid == 10 else "peer")
+
+
+@pytest.fixture
+def signed_host(tmp_path, monkeypatch):
+    monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+    executable = tmp_path / "Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost"
+    executable.parent.mkdir(parents=True)
+    executable.write_bytes(b"managed executable")
+    receipt = tmp_path / "Applications/.DomusAgentHost.designated-requirement"
+    receipt.write_text('cdhash H"' + "a" * 40 + '"\n')
+    monkeypatch.setattr("limen.process_lifetime.subprocess.run", lambda *args, **kwargs: SimpleNamespace(returncode=0))
+    return executable, receipt
+
+
+def test_signed_fixed_host_binds_binary_and_requirement(signed_host):
+    executable, receipt = signed_host
+    assert set(signed_responsible_host(executable)) == {str(executable), str(receipt)}
+
+
+def test_failed_codesign_is_not_host_authority(signed_host, monkeypatch):
+    executable, _ = signed_host
+    monkeypatch.setattr("limen.process_lifetime.subprocess.run", lambda *args, **kwargs: SimpleNamespace(returncode=1))
+    assert signed_responsible_host(executable) == {}
+
+
+def test_bad_designated_requirement_is_rejected(signed_host):
+    executable, receipt = signed_host
+    receipt.write_text("arbitrary requirement")
+    assert signed_responsible_host(executable) == {}
+
+
+def test_responsible_host_assessor_requires_finally_verified_peer(tmp_path, monkeypatch):
+    import hashlib
+
+    native = Process(100, 1, 501, "native", ("/codex", "app-server"), cwd=tmp_path)
+    peer = Process(101, 100, 501, "peer", ("/code-mode-host",), cwd=tmp_path)
+    host = Process(10, 1, 501, "responsible", ("/signed-host", "run", "--", "codex"), cwd=tmp_path)
+    vendor = tmp_path / "host"
+    vendor.write_bytes(b"signed")
+    processes = {p.pid: p for p in (native, peer, host)}
+    parent = {
+        "service_id": "codex/code-mode-host",
+        "argv": list(peer.argv),
+        "host_argv": list(native.argv),
+        "contract_sha256": "peer-contract",
+    }
+    contract = {
+        "service_id": "codex/responsible-host",
+        "argv": list(host.argv),
+        "host_argv": list(native.argv),
+        "contract_sha256": "host-contract",
+        "singleton_pid": host.pid,
+        "singleton_identity": host.started,
+        "singleton_peer": {
+            "pid": peer.pid,
+            "identity": peer.started,
+            "argv": list(peer.argv),
+            "contract_sha256": "peer-contract",
+        },
+        "singleton_vendor_files": {str(vendor): hashlib.sha256(vendor.read_bytes()).hexdigest()},
+        "lifetime_fds": [3, 4],
+    }
+    monkeypatch.setattr("limen.process_lifetime.live_lifetime_bridge", lambda *args: True)
+
+    def evaluate(evidence=()):
+        return {
+            r["pid"]: r
+            for r in assess(
+                processes,
+                set(),
+                tmp_path,
+                "subject",
+                contracts=[parent, contract],
+                identity=lambda pid: processes[pid].started,
+                evidence=evidence,
+            )["processes"]
+        }
+
+    assert evaluate()[10]["category"] == "shared_service"
+    assert evaluate()[10]["service_id"] == "codex/responsible-host"
+    contract["singleton_peer"]["contract_sha256"] = "wrong"
+    assert evaluate()[10]["category"] == "unknown"

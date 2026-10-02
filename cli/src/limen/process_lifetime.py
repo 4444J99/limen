@@ -8,10 +8,45 @@ ABI: macOS SDK sys/proc_info.h pipe_fdinfo, 24+136+24 bytes.
 from __future__ import annotations
 
 import ctypes
+import hashlib
+import re
 import struct
+import subprocess
 import sys
+from pathlib import Path
 
 from limen.process_ownership import Process, native_details
+
+
+def signed_responsible_host(executable: Path) -> dict[str, str]:
+    """Bind the fixed managed host to its external designated-requirement check."""
+    expected = Path.home() / "Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost"
+    if executable != expected or executable.is_symlink() or not executable.is_file():
+        return {}
+    bundle = executable.parents[2]
+    receipt = bundle.parent / ".DomusAgentHost.designated-requirement"
+    if bundle.is_symlink() or receipt.is_symlink() or not receipt.is_file() or receipt.stat().st_size > 4096:
+        return {}
+    try:
+        requirement = receipt.read_text().strip()
+        if not re.fullmatch(r'cdhash H"[a-f0-9]{40}"', requirement):
+            return {}
+        if executable.stat().st_size > 32 * 1024 * 1024:
+            return {}
+        captured = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in (executable, receipt)}
+        verification = subprocess.run(
+            ["/usr/bin/codesign", "--verify", "--strict", "-R", requirement, str(bundle)],
+            capture_output=True,
+            timeout=5,
+            check=False,
+        )
+        if verification.returncode or any(
+            hashlib.sha256(Path(p).read_bytes()).hexdigest() != sha for p, sha in captured.items()
+        ):
+            return {}
+        return captured
+    except (OSError, ValueError, subprocess.SubprocessError):
+        return {}
 
 
 def decode_pipe(payload: bytes) -> dict:

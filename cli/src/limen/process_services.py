@@ -291,7 +291,93 @@ def service_contracts(processes: dict[int, Process]) -> list[dict]:
                         }
                     )
     contracts.extend(_serena_singleton_contracts(processes, contracts, singleton_candidates))
+    contracts.extend(_responsible_host_contracts(processes, contracts, settings, policy_digest))
     return contracts
+
+
+def _responsible_host_contracts(processes, contracts, settings, policy_digest):
+    from limen.process_lifetime import find_lifetime_descriptors, signed_responsible_host
+    from limen.process_singletons import vendor_files_unchanged
+
+    authority = settings.get("responsible_host", {})
+    if (
+        authority.get("client") != "codex"
+        or authority.get("launch_prefix") != ["run", "--"]
+        or authority.get("lifetime_contract") != "pipe-handle-device-inode"
+        or authority.get("peer_service_ids") != ["codex/code-mode-host"]
+        or authority.get("require_signed_deployment") is not True
+        or not isinstance(authority.get("descriptor_limit"), int)
+        or not 1 <= authority["descriptor_limit"] <= 128
+        or not isinstance(authority.get("executable"), str)
+    ):
+        return []
+    executable = Path(authority["executable"])
+    files = signed_responsible_host(executable)
+    if not files:
+        return []
+    launcher = Path.home() / ".local/libexec/domus-agent-runtime.py"
+    if launcher.is_symlink() or not launcher.is_file() or launcher.stat().st_size > 2 * 1024 * 1024:
+        return []
+    files[str(launcher)] = hashlib.sha256(launcher.read_bytes()).hexdigest()
+    result = []
+    for host in processes.values():
+        if (
+            not host.started
+            or not host.readable
+            or len(host.argv) < 9
+            or host.argv[:3] != (str(executable), "run", "--")
+            or Path(host.argv[4]).resolve() != launcher.resolve()
+            or host.argv[5:9] != ("exec", "codex", "--", "codex")
+        ):
+            continue
+        interpreter = Path(host.argv[3]).resolve()
+        if (
+            not interpreter.is_file()
+            or not interpreter.name.lower().startswith("python")
+            or interpreter.stat().st_size > 32 * 1024 * 1024
+        ):
+            continue
+        captured = {**files, str(interpreter): hashlib.sha256(interpreter.read_bytes()).hexdigest()}
+        for contract in contracts:
+            if contract["service_id"] != "codex/code-mode-host":
+                continue
+            for peer in processes.values():
+                if (
+                    peer.uid != host.uid
+                    or not peer.started
+                    or not peer.readable
+                    or canonical_argv(peer.argv) != canonical_argv(contract["argv"])
+                ):
+                    continue
+                try:
+                    pair = find_lifetime_descriptors(host.pid, peer.pid, host.uid, authority["descriptor_limit"])
+                except (OSError, ValueError):
+                    continue  # Kernel census failure cannot grant ownership.
+                if pair is None or not vendor_files_unchanged(captured):
+                    continue
+                binding = {
+                    "pid": peer.pid,
+                    "identity": peer.started,
+                    "argv": list(peer.argv),
+                    "contract_sha256": contract["contract_sha256"],
+                }
+                result.append(
+                    {
+                        "service_id": "codex/responsible-host",
+                        "argv": list(host.argv),
+                        "host_argv": contract["host_argv"],
+                        "config_home": contract.get("config_home"),
+                        "singleton_peer": binding,
+                        "singleton_pid": host.pid,
+                        "singleton_identity": host.started,
+                        "singleton_vendor_files": captured,
+                        "lifetime_fds": list(pair),
+                        "contract_sha256": digest(
+                            [policy_digest, list(host.argv), host.pid, host.started, binding, list(pair), captured]
+                        ),
+                    }
+                )
+    return result
 
 
 def _serena_singleton_contracts(processes, contracts, candidates):
