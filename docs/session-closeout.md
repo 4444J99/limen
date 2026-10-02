@@ -219,6 +219,16 @@ direct app-server worker must match an already registered native-host command.
 These contracts still require the existing verified parent-service and host checks;
 temporary paths, familiar filenames and app ancestry alone confer no authority.
 
+Detached Serena tray managers require an explicit source-owned
+`process_contract.detached_helper: serena-tray-manager` declaration. Candidate
+contracts bind exact raw uv-environment commands, pinned vendor metadata and
+module bytes, both native process identities, and a configured backend contract.
+The backend must first be positively classified as shared under the same host
+and configuration; a conflicting peer receipt cannot confer authority. The tray
+also needs one PID-bound IPv4 loopback listener on port 24224, bounded typed health
+without redirects or proxies, and unchanged native identity. Health alone,
+matching Python binaries, or app ancestry never exempt a detached process.
+
 Source-owned native-host helper declarations name one sibling executable and its
 exact arguments. They bind both host and helper bytes plus policy provenance,
 require a valid effective Codex configuration, and retain the assessor's exact
