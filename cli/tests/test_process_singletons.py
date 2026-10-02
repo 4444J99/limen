@@ -78,6 +78,10 @@ def test_exec_replacement_with_same_pid_and_start_fails_closed():
 
 @pytest.fixture
 def singleton(tmp_path, monkeypatch):
+    import hashlib
+
+    vendor_file = tmp_path / "dashboard.py"
+    vendor_file.write_bytes(b"pinned vendor source")
     host = Process(100, 1, 501, "host", ("/codex", "app-server"), cwd=tmp_path)
     peer = Process(101, 100, 501, "peer", ("/serena", "stdio"), cwd=tmp_path)
     tray = Process(10, 1, 501, "tray", ("/vendor/bin/python", "-c", SERENA_TRAY_COMMAND), cwd=tmp_path)
@@ -98,6 +102,7 @@ def singleton(tmp_path, monkeypatch):
         "contract_sha256": "helper",
         "singleton_pid": tray.pid,
         "singleton_identity": tray.started,
+        "singleton_vendor_files": {str(vendor_file): hashlib.sha256(vendor_file.read_bytes()).hexdigest()},
         "singleton_peer": {
             "pid": peer.pid,
             "identity": peer.started,
@@ -205,6 +210,15 @@ def test_vendor_candidate_binds_both_native_instances(vendor):
     assert len(candidates) == 1
     assert candidates[0]["singleton_pid"] == 10
     assert candidates[0]["singleton_peer"]["pid"] == 101
+
+
+def test_vendor_changed_after_derivation_fails_closed(singleton):
+    from pathlib import Path
+
+    _, _, helper, evaluate = singleton
+    Path(next(iter(helper["singleton_vendor_files"]))).write_bytes(b"changed")
+    rows = {row["pid"]: row for row in evaluate()["processes"]}
+    assert rows[10]["category"] == "unknown"
 
 
 @pytest.mark.parametrize("mutation", ["vendor", "extra_args", "other_environment", "symlink"])

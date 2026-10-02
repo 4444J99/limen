@@ -7,14 +7,37 @@ precedence before a singleton can become a shared service.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import urllib.request
+from pathlib import Path
 
 from limen.process_ownership import Process, native_details
 
 SERENA_TRAY_COMMAND = "from serena.dashboard import SerenaDashboardTrayManager; SerenaDashboardTrayManager().run()"
 SERENA_TRAY_PORT = 24224
+
+
+def vendor_files_unchanged(files: dict) -> bool:
+    """Recheck bounded regular vendor files captured by the source resolver."""
+    if not isinstance(files, dict) or not files or len(files) > 8:
+        return False
+    try:
+        for name, checksum in files.items():
+            path = Path(name)
+            if (
+                not path.is_absolute()
+                or path.is_symlink()
+                or not path.is_file()
+                or path.stat().st_size > 2 * 1024 * 1024
+            ):
+                return False
+            if hashlib.sha256(path.read_bytes()).hexdigest() != checksum:
+                return False
+        return True
+    except (OSError, TypeError, ValueError):
+        return False
 
 
 def exact_loopback_listener(output: bytes, pid: int) -> bool:

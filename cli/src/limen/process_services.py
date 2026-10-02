@@ -352,6 +352,7 @@ def _serena_singleton_contracts(processes, contracts, candidates):
                         "singleton_peer": binding,
                         "singleton_pid": tray.pid,
                         "singleton_identity": tray.started,
+                        "singleton_vendor_files": captured,
                         "contract_sha256": digest(
                             [contract["contract_sha256"], binding, tray.pid, tray.started, list(argv), captured]
                         ),
