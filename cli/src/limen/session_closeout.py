@@ -15,7 +15,7 @@ import subprocess
 from collections.abc import Callable
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal, overload
-from urllib.parse import urlsplit
+from urllib.parse import quote, urlsplit
 
 SCHEMA = "limen.session_closeout.v1"
 SCHEMA_V2 = "limen.session_closeout.v2"
@@ -95,11 +95,27 @@ def published(root: Path, revision: str, branch: str) -> bool:
     if not SHA.fullmatch(revision) or not branch or branch.startswith("-"):
         return False
     ref = f"refs/heads/{branch}"
-    rows = git(root, "ls-remote", "--exit-code", "origin", ref).splitlines()
-    if len(rows) != 1:
-        return False
-    tip, remote_ref = rows[0].split()
-    if remote_ref != ref or not SHA.fullmatch(tip):
+    slug = github_repository_slug(git(root, "remote", "get-url", "origin"))
+    if slug is not None:
+        # GitHub publication uses the authenticated exact-ref API. Ambient SSH
+        # ControlPersist otherwise creates a detached master during this read,
+        # which the same predicate correctly rejects as an unattributed process.
+        # Never turn that self-created state into an SSH ownership exemption.
+        value = json.loads(
+            run(["gh", "api", "--method", "GET", f"repos/{slug}/git/ref/heads/{quote(branch, safe='')}"])
+        )
+        if not isinstance(value, dict) or not isinstance(value.get("object"), dict):
+            raise Unmeasured("GitHub publication ref readback is malformed")
+        if value["object"].get("type") != "commit":
+            raise Unmeasured("GitHub publication ref is not a commit")
+        tip, remote_ref = value["object"].get("sha"), value.get("ref")
+    else:
+        # Preserve non-GitHub/local transport support and its exact live-ref proof.
+        rows = git(root, "ls-remote", "--exit-code", "origin", ref).splitlines()
+        if len(rows) != 1:
+            return False
+        tip, remote_ref = rows[0].split()
+    if remote_ref != ref or not isinstance(tip, str) or not SHA.fullmatch(tip):
         return False
     # A moving remote never makes a cached origin/* ref publication evidence.
     if tip == revision:
