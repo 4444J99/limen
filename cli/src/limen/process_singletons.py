@@ -19,7 +19,7 @@ SERENA_TRAY_COMMAND = "from serena.dashboard import SerenaDashboardTrayManager; 
 SERENA_TRAY_PORT = 24224
 
 
-def vendor_files_unchanged(files: dict) -> bool:
+def vendor_files_unchanged(files: object) -> bool:
     """Recheck bounded regular vendor files captured by the source resolver."""
     if not isinstance(files, dict) or not files or len(files) > 8:
         return False
