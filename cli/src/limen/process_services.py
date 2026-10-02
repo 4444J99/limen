@@ -306,7 +306,7 @@ def _responsible_host_contracts(processes, contracts, settings, policy_digest):
         or authority.get("lifetime_contract") != "pipe-handle-device-inode"
         or authority.get("peer_service_ids") != ["codex/code-mode-host"]
         or authority.get("require_signed_deployment") is not True
-        or not isinstance(authority.get("descriptor_limit"), int)
+        or type(authority.get("descriptor_limit")) is not int
         or not 1 <= authority["descriptor_limit"] <= 128
         or not isinstance(authority.get("executable"), str)
     ):

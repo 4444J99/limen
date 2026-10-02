@@ -146,6 +146,42 @@ def test_bad_designated_requirement_is_rejected(signed_host):
     assert signed_responsible_host(executable) == {}
 
 
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("client", "other"),
+        ("launch_prefix", ["run"]),
+        ("lifetime_contract", "ancestry"),
+        ("peer_service_ids", ["unrelated"]),
+        ("require_signed_deployment", False),
+        ("descriptor_limit", 0),
+        ("descriptor_limit", 129),
+        ("descriptor_limit", "128"),
+        ("descriptor_limit", True),
+        ("executable", None),
+    ],
+)
+def test_invalid_source_authority_never_probes_host(field, value, monkeypatch):
+    from limen.process_services import _responsible_host_contracts
+
+    authority = {
+        "client": "codex",
+        "launch_prefix": ["run", "--"],
+        "lifetime_contract": "pipe-handle-device-inode",
+        "peer_service_ids": ["codex/code-mode-host"],
+        "require_signed_deployment": True,
+        "descriptor_limit": 128,
+        "executable": "/declared-host",
+    }
+    authority[field] = value
+
+    def forbidden(*args):
+        pytest.fail("invalid authority reached native host probe")
+
+    monkeypatch.setattr("limen.process_lifetime.signed_responsible_host", forbidden)
+    assert _responsible_host_contracts({}, [], {"responsible_host": authority}, "policy") == []
+
+
 def test_responsible_host_assessor_requires_finally_verified_peer(tmp_path, monkeypatch):
     import hashlib
 
@@ -179,7 +215,7 @@ def test_responsible_host_assessor_requires_finally_verified_peer(tmp_path, monk
     }
     monkeypatch.setattr("limen.process_lifetime.live_lifetime_bridge", lambda *args: True)
 
-    def evaluate(evidence=()):
+    def evaluate(evidence=(), witnesses=None):
         return {
             r["pid"]: r
             for r in assess(
@@ -188,6 +224,7 @@ def test_responsible_host_assessor_requires_finally_verified_peer(tmp_path, monk
                 tmp_path,
                 "subject",
                 contracts=[parent, contract],
+                witnesses=witnesses,
                 identity=lambda pid: processes[pid].started,
                 evidence=evidence,
             )["processes"]
@@ -197,3 +234,13 @@ def test_responsible_host_assessor_requires_finally_verified_peer(tmp_path, monk
     assert evaluate()[10]["service_id"] == "codex/responsible-host"
     contract["singleton_peer"]["contract_sha256"] = "wrong"
     assert evaluate()[10]["category"] == "unknown"
+    contract["singleton_peer"]["contract_sha256"] = "peer-contract"
+    witnesses = {key: {"thread_id": key, "session_id": key, "parent_thread_id": None} for key in ("subject", "foreign")}
+    for thread, expected in (("subject", "owned_survivor"), ("foreign", "foreign_session")):
+        host.env = {"CODEX_THREAD_ID": thread, "CODEX_SESSION_ID": thread}
+        assert evaluate(witnesses=witnesses)[10]["category"] == expected
+    host.env = {"CODEX_THREAD_ID": "missing", "CODEX_SESSION_ID": "missing"}
+    assert evaluate(witnesses=witnesses)[10]["category"] == "unmeasured"
+    host.env = {}
+    peer.env = {"CODEX_THREAD_ID": "foreign", "CODEX_SESSION_ID": "foreign"}
+    assert evaluate(witnesses=witnesses)[10]["category"] == "unknown"
