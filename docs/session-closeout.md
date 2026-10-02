@@ -229,6 +229,16 @@ also needs one PID-bound IPv4 loopback listener on port 24224, bounded typed hea
 without redirects or proxies, and unchanged native identity. Health alone,
 matching Python binaries, or app ancestry never exempt a detached process.
 
+A source-owned responsible host may separately declare a lifetime bridge. It requires
+the fixed signed Domus host and designated-requirement receipt, the managed Codex
+launcher route and file digests, and a finally verified code-mode peer under the
+same native host/configuration. Two complete kernel FD censuses are bounded at
+128 descriptors; truncation fails closed. Exactly one reciprocal FIFO reader/writer
+pair must match handles, UID, device and inode. Native identity, command and pipe
+descriptors are rechecked before granting the individual contract. An app name,
+shared pipe alone, an unrelated peer, or native-session ownership never becomes
+a blanket shared-service exemption.
+
 Source-owned native-host helper declarations name one sibling executable and its
 exact arguments. They bind both host and helper bytes plus policy provenance,
 require a valid effective Codex configuration, and retain the assessor's exact

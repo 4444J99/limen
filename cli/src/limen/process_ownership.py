@@ -354,11 +354,16 @@ def assess(
                             # Detached helpers inherit no authority from matching
                             # ancestry or health. Require a finally classified peer.
                             from limen.process_singletons import serena_tray_alive, vendor_files_unchanged
+                            from limen.process_lifetime import live_lifetime_bridge
 
                             source = processes.get(peer.get("pid"))
                             verified = verified_services.get(peer.get("pid"))
+                            peer_service = {
+                                "serena/tray-manager": "serena",
+                                "codex/responsible-host": "codex/code-mode-host",
+                            }.get(str(contract.get("service_id", "")))
                             if (
-                                contract.get("service_id") != "serena/tray-manager"
+                                not peer_service
                                 or tuple(process.argv) != tuple(contract["argv"])
                                 or process.pid != contract.get("singleton_pid")
                                 or process.started != contract.get("singleton_identity")
@@ -372,14 +377,25 @@ def assess(
                                 continue
                             peer_contract, peer_host = verified
                             if (
-                                peer_contract["service_id"] != "serena"
+                                peer_contract["service_id"] != peer_service
                                 or peer_contract["contract_sha256"] != peer.get("contract_sha256")
                                 or peer_contract.get("config_home") != contract.get("config_home")
                                 or normalized(peer_contract["host_argv"]) != normalized(contract["host_argv"])
                                 or identity(peer_host.pid) != peer_host.started
                                 or not vendor_files_unchanged(contract.get("singleton_vendor_files"))
-                                or not serena_tray_alive(process, identity)
                             ):
+                                continue
+                            if peer_service == "serena":
+                                live_helper = serena_tray_alive(process, identity)
+                            else:
+                                pair = contract.get("lifetime_fds")
+                                live_helper = bool(
+                                    isinstance(pair, list)
+                                    and len(pair) == 2
+                                    and all(isinstance(fd, int) and 0 <= fd < 4096 for fd in pair)
+                                    and live_lifetime_bridge(process, source, pair[0], pair[1], identity)
+                                )
+                            if not live_helper:
                                 continue
                             matches.append((contract, peer_host))
                             continue
