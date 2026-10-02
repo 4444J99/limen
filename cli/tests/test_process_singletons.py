@@ -212,6 +212,16 @@ def test_vendor_candidate_binds_both_native_instances(vendor):
     assert candidates[0]["singleton_peer"]["pid"] == 101
 
 
+@pytest.mark.parametrize("size_mib,accepted", [(17, True), (33, False)])
+def test_native_python_has_its_own_bounded_executable_limit(vendor, size_mib, accepted):
+    from pathlib import Path
+
+    processes, _, _, derive = vendor
+    with Path(processes[101].argv[0]).open("r+b") as binary:
+        binary.truncate(size_mib * 1024 * 1024)
+    assert bool(derive()) is accepted
+
+
 def test_vendor_changed_after_derivation_fails_closed(singleton):
     from pathlib import Path
 
