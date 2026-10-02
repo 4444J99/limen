@@ -108,6 +108,47 @@ def _cua_embedded_commands(
     return commands
 
 
+def _native_helper_contracts(host: dict, home: str, policy_digest: str) -> list[dict]:
+    """Only source-declared sibling helpers of an exact native host are eligible."""
+    commands = []
+    executable = Path(host["argv"][0]).resolve()
+    if not executable.is_file():
+        return []
+    for helper in host.get("helpers", []):
+        relative = helper.get("executable_relative")
+        args = helper.get("args")
+        service = helper.get("service_id")
+        if (
+            not isinstance(relative, str)
+            or Path(relative).name != relative
+            or relative in {"", ".", ".."}
+            or not isinstance(args, list)
+            or not all(isinstance(arg, str) for arg in args)
+            or not isinstance(service, str)
+            or not service.startswith("codex/")
+        ):
+            continue
+        binary = executable.with_name(relative)
+        if binary.is_symlink() or not binary.is_file():
+            continue
+        argv = [str(binary), *args]
+        files = {}
+        for path in (executable, binary):
+            with path.open("rb") as source:
+                files[str(path)] = hashlib.file_digest(source, "sha256").hexdigest()
+        commands.append(
+            {
+                "service_id": service,
+                "argv": argv,
+                "parent_service": None,
+                "host_argv": host["argv"],
+                "config_home": home,
+                "contract_sha256": digest([policy_digest, host["argv"], argv, files]),
+            }
+        )
+    return commands
+
+
 def service_contracts(processes: dict[int, Process]) -> list[dict]:
     estate = load_estate()
     policy, policy_digest = estate.load_policy(estate.policy_path())
@@ -134,6 +175,9 @@ def service_contracts(processes: dict[int, Process]) -> list[dict]:
         ambiguous = {row["client"] for row in issues if row["reason"] == "ambiguous_registration"}
         if "codex" in ambiguous or not any(row["state"] == "valid" for row in configs):
             continue
+        for host in resolved_hosts:
+            if host.get("client") == "codex":
+                contracts.extend(_native_helper_contracts(host, home, policy_digest))
         for record in records:
             spec, authority = record.get("spec"), record.get("policy")
             if (

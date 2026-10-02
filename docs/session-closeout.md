@@ -219,6 +219,12 @@ direct app-server worker must match an already registered native-host command.
 These contracts still require the existing verified parent-service and host checks;
 temporary paths, familiar filenames and app ancestry alone confer no authority.
 
+Source-owned native-host helper declarations name one sibling executable and its
+exact arguments. They bind both host and helper bytes plus policy provenance,
+require a valid effective Codex configuration, and retain the assessor's exact
+same-user native-host identity and direct-parent requirement. A sibling binary
+without a declaration, a symlink helper, or an additional argument is not authority.
+
 Domus provides `domus-process-ownership observe --worktree PATH --session-id ID`.
 Observation does not write or signal. Explicit `adopt` records private atomic receipts
 for verified existing shared services without restarting them. Native launches retain
