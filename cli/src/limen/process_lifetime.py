@@ -55,6 +55,43 @@ def reciprocal_pipe(reader: dict, writer: dict, uid: int) -> bool:
     )
 
 
+def kernel_pipes(pid: int, limit: int) -> list[tuple[int, dict]]:
+    """Bound the complete FD census; truncation is not an empty pipe set."""
+    if sys.platform != "darwin" or sys.byteorder != "little" or pid <= 0 or not 1 <= limit <= 128:
+        raise ValueError("native_descriptor_scope_unsupported")
+    library = ctypes.CDLL("/usr/lib/libproc.dylib", use_errno=True)
+    library.proc_pidinfo.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_uint64, ctypes.c_void_p, ctypes.c_int]
+    library.proc_pidinfo.restype = ctypes.c_int
+    payload = ctypes.create_string_buffer((limit + 1) * 8)
+    size = library.proc_pidinfo(pid, 1, 0, payload, len(payload))
+    if size <= 0 or size % 8 or size > limit * 8:
+        raise ValueError("native_descriptor_census_unmeasured_or_truncated")
+    result = []
+    seen = set()
+    for offset in range(0, size, 8):
+        descriptor, kind = struct.unpack_from("<iI", payload.raw, offset)
+        if descriptor < 0 or descriptor in seen:
+            raise ValueError("native_descriptor_census_ambiguous")
+        seen.add(descriptor)
+        if kind == 6:  # PROX_FDTYPE_PIPE, SDK sys/proc_info.h.
+            result.append((descriptor, kernel_pipe(pid, descriptor)))
+    return result
+
+
+def find_lifetime_descriptors(host_pid: int, peer_pid: int, uid: int, limit: int) -> tuple[int, int] | None:
+    """Exactly one reader/writer pair, over two bounded complete censuses."""
+    if host_pid == peer_pid:
+        return None
+    readers, writers = kernel_pipes(host_pid, limit), kernel_pipes(peer_pid, limit)
+    matches = [
+        (read_fd, write_fd)
+        for read_fd, reader in readers
+        for write_fd, writer in writers
+        if reciprocal_pipe(reader, writer, uid)
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
 def live_lifetime_bridge(host: Process, peer: Process, read_fd: int, write_fd: int, identity) -> bool:
     """Reject PID reuse, exec, closed/replaced descriptors and crossed users."""
     if (
