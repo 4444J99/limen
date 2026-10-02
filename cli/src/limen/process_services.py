@@ -6,8 +6,8 @@ import hashlib
 import importlib.util
 import json
 import os
-import shutil
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -158,6 +158,7 @@ def service_contracts(processes: dict[int, Process]) -> list[dict]:
     hosts = settings.get("hosts", [])
     contracts = []
     hashes = {}
+    singleton_candidates = []
     homes = {p.env["CODEX_HOME"] for p in processes.values() if p.env.get("CODEX_HOME")}
     if not homes:
         homes.add(os.environ.get("CODEX_HOME", str(Path.home() / ".codex")))
@@ -237,6 +238,13 @@ def service_contracts(processes: dict[int, Process]) -> list[dict]:
                             expected = "git+" + metadata.get("url", "") + "@" + vcs.get("commit_id", "")
                             if source == expected:
                                 commands.append((list(process.argv), record["service"]))
+                                if (
+                                    record["service"] == "serena"
+                                    and authority.get("process_contract", {}).get("detached_helper")
+                                    == "serena-tray-manager"
+                                    and re.fullmatch(r"git\+https://github\.com/oraios/serena@[a-f0-9]{40}", source)
+                                ):
+                                    singleton_candidates.append((process, direct, home))
             elif kind == "capability":
                 name = authority["process_contract"]["capability"]
                 commands.extend((command, record["service"]) for command in _capability_commands(name))
@@ -282,4 +290,77 @@ def service_contracts(processes: dict[int, Process]) -> list[dict]:
                             "contract_sha256": provenance,
                         }
                     )
+    contracts.extend(_serena_singleton_contracts(processes, contracts, singleton_candidates))
     return contracts
+
+
+def _serena_singleton_contracts(processes, contracts, candidates):
+    """Bind an explicit singleton candidate to one pinned backend contract.
+
+    Candidate generation does not assert that the peer is shared. The assessor
+    must classify that exact peer before using this detached contract.
+    """
+    from limen.process_singletons import SERENA_TRAY_COMMAND
+
+    result = []
+    for peer, metadata, home in candidates:
+        environment = Path(peer.argv[1]).parent.parent
+        package = metadata.parent.parent / "serena"
+        dashboard, constants = package / "dashboard.py", package / "constants.py"
+        files = (metadata, dashboard, constants, Path(peer.argv[1]), Path(peer.argv[0]).resolve())
+        if any(
+            not path.is_file()
+            or path.is_symlink()
+            or path.stat().st_size > (32 if index == len(files) - 1 else 2) * 1024 * 1024
+            for index, path in enumerate(files)
+        ):
+            continue
+        captured = {str(path.resolve()): hashlib.sha256(path.read_bytes()).hexdigest() for path in files}
+        source = dashboard.read_text()
+        if (
+            SERENA_TRAY_COMMAND not in source
+            or 'HOST = "127.0.0.1"' not in source
+            or "PORT = SerenaPorts.TRAY_MANAGER_PORT" not in source
+            or "TRAY_MANAGER_PORT = 0x5EA0" not in constants.read_text()
+        ):
+            continue
+        argv = (str(environment / "bin/python"), "-c", SERENA_TRAY_COMMAND)
+        if peer.argv[0] != argv[0]:
+            continue  # Canonical Python alone can alias another uv environment.
+        for tray in processes.values():
+            if tray.argv != argv or tray.uid != peer.uid or not tray.started or not peer.started:
+                continue
+            for contract in contracts:
+                if (
+                    contract["service_id"] != "serena"
+                    or tuple(contract["argv"]) != peer.argv
+                    or contract.get("config_home") != home
+                ):
+                    continue
+                if any(
+                    hashlib.sha256(path.read_bytes()).hexdigest() != captured[str(path.resolve())] for path in files
+                ):
+                    continue
+                binding = {
+                    "pid": peer.pid,
+                    "identity": peer.started,
+                    "argv": list(peer.argv),
+                    "contract_sha256": contract["contract_sha256"],
+                }
+                result.append(
+                    {
+                        "service_id": "serena/tray-manager",
+                        "argv": list(argv),
+                        "host_argv": contract["host_argv"],
+                        "config_home": home,
+                        "parent_service": None,
+                        "singleton_peer": binding,
+                        "singleton_pid": tray.pid,
+                        "singleton_identity": tray.started,
+                        "singleton_vendor_files": captured,
+                        "contract_sha256": digest(
+                            [contract["contract_sha256"], binding, tray.pid, tray.started, list(argv), captured]
+                        ),
+                    }
+                )
+    return result
