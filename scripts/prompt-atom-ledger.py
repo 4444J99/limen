@@ -903,10 +903,10 @@ def load_lifecycle_module() -> Any:
 
         def rebase(path: Any) -> Path:
             candidate = Path(path)
-            if any(candidate == root or root in candidate.parents for root in provider_roots):
-                return source_home / candidate.relative_to(original_home)
             if any(candidate == root or root in candidate.parents for root in runtime_roots):
                 return source_home / candidate.relative_to(REPO)
+            if any(candidate == root or root in candidate.parents for root in provider_roots):
+                return source_home / candidate.relative_to(original_home)
             return candidate
 
         module.HOME = source_home
