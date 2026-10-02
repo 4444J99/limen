@@ -93,9 +93,9 @@ def cohort(tmp_path, monkeypatch):
             SID,
             path,
             changes.pop("scope_roots", roots),
-            audit=audit,
+            audit=changes.pop("audit", audit),
             binding=changes.pop("binding", None),
-            native_transcript=transcript,
+            native_transcript=changes.pop("native_transcript", transcript),
             read_owner=lambda url: {"state": "open"},
             observe_processes=changes.pop(
                 "observe_processes", lambda *args, **kwargs: {"complete": True, "process_count": 0}
@@ -114,6 +114,40 @@ def test_non_git_native_root_releases_explicit_scopes_idempotently(cohort):
     assert result["session_released"] and not result["task_completed"]
     assert evaluate() == result
     assert {key: git(root, "status", "--porcelain") for key, root in roots.items() if key != "private"} == before
+
+
+@pytest.mark.parametrize(
+    "failure", [None, "foreign_identity", "wrong_scope", "no_native_witness", "absent_registration"]
+)
+def test_explicit_current_broker_scope_preserves_native_anchor(cohort, failure):
+    roots, receipt, _, publish, evaluate = cohort
+    receipt["broker_scope_root_id"] = "subject"
+    publish()
+    audit = {
+        "session_id": SID,
+        "session_present": True,
+        "active_lease_count": 0,
+        "retained_run_count": 0,
+        "runs": [],
+        "coverage": {"retained_state_complete": True},
+    }
+    binding = {"session_id": SID, "worktree": str(roots["subject"])}
+    changes = {"audit": audit, "binding": binding}
+    if failure == "foreign_identity":
+        binding["session_id"] = "another-session"
+    elif failure == "wrong_scope":
+        binding["worktree"] = str(roots["owner"])
+    elif failure == "no_native_witness":
+        changes["native_transcript"] = None
+    elif failure == "absent_registration":
+        audit["session_present"] = False
+    if failure:
+        with pytest.raises(closeout.Unmeasured):
+            evaluate(**changes)
+    else:
+        result = evaluate(**changes)
+        assert result["session_released"]
+        assert evaluate(**changes) == result
 
 
 @pytest.mark.parametrize(

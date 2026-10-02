@@ -103,7 +103,13 @@ unverified effects need an open owner under handoff. The producer must enumerate
 actual effects and preserve their readbacks without secret values.
 
 For legacy native sessions, transcript metadata must bind both ID and `cwd` to the
-anchor. If a transcript and broker binding disagree, evaluation is unmeasured. One
+anchor. A broker's current execution checkout may differ from that start directory
+only when the receipt explicitly names `broker_scope_root_id`: a declared canonical
+scope matching the same registered session's live worktree. This requires the exact
+native transcript and a present broker registration; all declared scopes still undergo
+their normal ownership, publication, custody and process checks. Without that explicit
+witness, a transcript/broker mismatch remains unmeasured. No child checkout replaces
+the native `--worktree` anchor. One
 process snapshot covers exact-anchor processes, recursive declared roots, and exact
 native lineage anywhere. Undeclared siblings are excluded; unknown anchor processes
 still block. Shared services and foreign sessions require positive identity evidence.
