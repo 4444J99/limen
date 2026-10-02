@@ -4,21 +4,22 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
-
-from limen.process_ownership import Process
-from limen.process_ownership import assess
+from limen.process_ownership import Process, assess
 from limen.process_singletons import SERENA_TRAY_COMMAND, exact_loopback_listener, serena_tray_alive
 
 
-@pytest.mark.parametrize("output", [
-    b"p99\nn127.0.0.1:24224\n",
-    b"p10\nn*:24224\n",
-    b"p10\nn[::1]:24224\n",
-    b"p10\nn127.0.0.1:24224\nn127.0.0.1:24224\n",
-    b"p10\np11\nn127.0.0.1:24224\n",
-    b"p10\nn127.0.0.1:242240\n",
-    b"\xff",
-])
+@pytest.mark.parametrize(
+    "output",
+    [
+        b"p99\nn127.0.0.1:24224\n",
+        b"p10\nn*:24224\n",
+        b"p10\nn[::1]:24224\n",
+        b"p10\nn127.0.0.1:24224\nn127.0.0.1:24224\n",
+        b"p10\np11\nn127.0.0.1:24224\n",
+        b"p10\nn127.0.0.1:242240\n",
+        b"\xff",
+    ],
+)
 def test_listener_identity_failures(output):
     assert not exact_loopback_listener(output, 10)
 
@@ -27,26 +28,34 @@ def test_exact_listener():
     assert exact_loopback_listener(b"p10\nf4\nn127.0.0.1:24224\n", 10)
 
 
-@pytest.mark.parametrize("body", [b'{"status":"dead"}', b'{"status":"alive","extra":1}', b'x' * 257])
+@pytest.mark.parametrize("body", [b'{"status":"dead"}', b'{"status":"alive","extra":1}', b"x" * 257])
 def test_wrong_health_fails_closed(body):
     assert not _check(body, ["start", "start"])
 
 
 def _check(body, identities):
     process = Process(10, 1, 501, "start", ("/vendor/bin/python", "-c", SERENA_TRAY_COMMAND))
+
     class Response:
         status = 200
+
         def read(self, limit):
             return body[:limit]
+
         def __enter__(self):
             return self
+
         def __exit__(self, *args):
             return None
+
     values = iter(identities)
     listener = SimpleNamespace(returncode=0, stdout=b"p10\nf4\nn127.0.0.1:24224\n")
-    with patch("limen.process_singletons.subprocess.run", return_value=listener), patch(
-        "limen.process_singletons.urllib.request.build_opener",
-        return_value=SimpleNamespace(open=lambda *args, **kwargs: Response()),
+    with (
+        patch("limen.process_singletons.subprocess.run", return_value=listener),
+        patch(
+            "limen.process_singletons.urllib.request.build_opener",
+            return_value=SimpleNamespace(open=lambda *args, **kwargs: Response()),
+        ),
     ):
         return serena_tray_alive(process, lambda pid: next(values))
 
@@ -65,19 +74,42 @@ def singleton(tmp_path, monkeypatch):
     peer = Process(101, 100, 501, "peer", ("/serena", "stdio"), cwd=tmp_path)
     tray = Process(10, 1, 501, "tray", ("/vendor/bin/python", "-c", SERENA_TRAY_COMMAND), cwd=tmp_path)
     processes = {p.pid: p for p in (host, peer, tray)}
-    backend = {"service_id": "serena", "argv": list(peer.argv), "host_argv": list(host.argv),
-               "config_home": str(tmp_path / "home"), "contract_sha256": "backend"}
+    backend = {
+        "service_id": "serena",
+        "argv": list(peer.argv),
+        "host_argv": list(host.argv),
+        "config_home": str(tmp_path / "home"),
+        "contract_sha256": "backend",
+    }
     host.env["CODEX_HOME"] = backend["config_home"]
-    helper = {"service_id": "serena/tray-manager", "argv": list(tray.argv),
-              "host_argv": list(host.argv), "config_home": backend["config_home"],
-              "contract_sha256": "helper", "singleton_pid": tray.pid,
-              "singleton_identity": tray.started,
-              "singleton_peer": {"pid": peer.pid, "identity": peer.started,
-                                 "argv": list(peer.argv), "contract_sha256": "backend"}}
+    helper = {
+        "service_id": "serena/tray-manager",
+        "argv": list(tray.argv),
+        "host_argv": list(host.argv),
+        "config_home": backend["config_home"],
+        "contract_sha256": "helper",
+        "singleton_pid": tray.pid,
+        "singleton_identity": tray.started,
+        "singleton_peer": {
+            "pid": peer.pid,
+            "identity": peer.started,
+            "argv": list(peer.argv),
+            "contract_sha256": "backend",
+        },
+    }
     monkeypatch.setattr("limen.process_singletons.serena_tray_alive", lambda p, i: True)
+
     def evaluate(**kwargs):
-        return assess(processes, set(), tmp_path, "subject", contracts=[backend, helper],
-                      identity=lambda pid: processes[pid].started, **kwargs)
+        return assess(
+            processes,
+            set(),
+            tmp_path,
+            "subject",
+            contracts=[backend, helper],
+            identity=lambda pid: processes[pid].started,
+            **kwargs,
+        )
+
     return processes, backend, helper, evaluate
 
 
@@ -111,9 +143,13 @@ def test_peer_binding_cannot_be_expanded(singleton, mutation):
 def test_conflicting_peer_receipt_does_not_confer_shared_authority(singleton):
     processes, _, _, evaluate = singleton
     from limen.process_ownership import canonical_argv, digest
-    claim = {"pid": 101, "process_identity": "peer",
-             "argv_sha256": digest(canonical_argv(processes[101].argv)),
-             "service_id": "wrong"}
+
+    claim = {
+        "pid": 101,
+        "process_identity": "peer",
+        "argv_sha256": digest(canonical_argv(processes[101].argv)),
+        "service_id": "wrong",
+    }
     rows = {r["pid"]: r for r in evaluate(evidence=[claim])["processes"]}
     assert rows[101]["category"] == "unmeasured"
     assert rows[10]["category"] == "unknown"
@@ -122,6 +158,7 @@ def test_conflicting_peer_receipt_does_not_confer_shared_authority(singleton):
 @pytest.fixture
 def vendor(tmp_path):
     from limen.process_services import _serena_singleton_contracts
+
     environment = tmp_path / "vendor"
     binary = environment / "bin/python"
     binary.parent.mkdir(parents=True)
@@ -140,10 +177,17 @@ def vendor(tmp_path):
     peer = Process(101, 100, 501, "peer", (str(binary), str(entry), "start-mcp-server"))
     tray = Process(10, 1, 501, "tray", (str(binary), "-c", SERENA_TRAY_COMMAND))
     processes = {p.pid: p for p in (peer, tray)}
-    contract = {"service_id": "serena", "argv": list(peer.argv), "host_argv": ["/codex", "app-server"],
-                "config_home": "home", "contract_sha256": "backend"}
+    contract = {
+        "service_id": "serena",
+        "argv": list(peer.argv),
+        "host_argv": ["/codex", "app-server"],
+        "config_home": "home",
+        "contract_sha256": "backend",
+    }
+
     def derive():
         return _serena_singleton_contracts(processes, [contract], [(peer, metadata, "home")])
+
     return processes, dashboard, contract, derive
 
 

@@ -13,10 +13,7 @@ import urllib.request
 
 from limen.process_ownership import Process
 
-SERENA_TRAY_COMMAND = (
-    "from serena.dashboard import SerenaDashboardTrayManager; "
-    "SerenaDashboardTrayManager().run()"
-)
+SERENA_TRAY_COMMAND = "from serena.dashboard import SerenaDashboardTrayManager; SerenaDashboardTrayManager().run()"
 SERENA_TRAY_PORT = 24224
 
 
@@ -52,9 +49,10 @@ def serena_tray_alive(process: Process, identity) -> bool:
         return False
     try:
         listener = subprocess.run(
-            ["/usr/sbin/lsof", "-nP", "-a", "-p", str(process.pid),
-             "-iTCP:24224", "-sTCP:LISTEN", "-Fpn"],
-            capture_output=True, timeout=3, check=False,
+            ["/usr/sbin/lsof", "-nP", "-a", "-p", str(process.pid), "-iTCP:24224", "-sTCP:LISTEN", "-Fpn"],
+            capture_output=True,
+            timeout=3,
+            check=False,
         )
         if listener.returncode or not exact_loopback_listener(listener.stdout, process.pid):
             return False

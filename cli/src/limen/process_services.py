@@ -6,8 +6,8 @@ import hashlib
 import importlib.util
 import json
 import os
-import shutil
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -332,18 +332,29 @@ def _serena_singleton_contracts(processes, contracts, candidates):
                     or contract.get("config_home") != home
                 ):
                     continue
-                if any(hashlib.sha256(path.read_bytes()).hexdigest() != captured[str(path.resolve())] for path in files):
+                if any(
+                    hashlib.sha256(path.read_bytes()).hexdigest() != captured[str(path.resolve())] for path in files
+                ):
                     continue
                 binding = {
-                    "pid": peer.pid, "identity": peer.started, "argv": list(peer.argv),
+                    "pid": peer.pid,
+                    "identity": peer.started,
+                    "argv": list(peer.argv),
                     "contract_sha256": contract["contract_sha256"],
                 }
-                result.append({
-                    "service_id": "serena/tray-manager", "argv": list(argv),
-                    "host_argv": contract["host_argv"], "config_home": home,
-                    "parent_service": None, "singleton_peer": binding,
-                    "singleton_pid": tray.pid, "singleton_identity": tray.started,
-                    "contract_sha256": digest([contract["contract_sha256"], binding, tray.pid,
-                                               tray.started, list(argv), captured]),
-                })
+                result.append(
+                    {
+                        "service_id": "serena/tray-manager",
+                        "argv": list(argv),
+                        "host_argv": contract["host_argv"],
+                        "config_home": home,
+                        "parent_service": None,
+                        "singleton_peer": binding,
+                        "singleton_pid": tray.pid,
+                        "singleton_identity": tray.started,
+                        "contract_sha256": digest(
+                            [contract["contract_sha256"], binding, tray.pid, tray.started, list(argv), captured]
+                        ),
+                    }
+                )
     return result
