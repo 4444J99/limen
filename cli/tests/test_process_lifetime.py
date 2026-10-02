@@ -3,7 +3,7 @@
 import struct
 
 import pytest
-from limen.process_lifetime import decode_pipe, live_lifetime_bridge, reciprocal_pipe
+from limen.process_lifetime import decode_pipe, find_lifetime_descriptors, live_lifetime_bridge, reciprocal_pipe
 from limen.process_ownership import Process
 
 
@@ -58,4 +58,44 @@ def test_kernel_observation_failure_is_not_a_match(monkeypatch):
         raise ValueError("unmeasured")
 
     monkeypatch.setattr("limen.process_lifetime.kernel_pipe", missing)
+    assert not live_lifetime_bridge(host, peer, 3, 4, lambda pid: "host" if pid == 10 else "peer")
+
+
+def test_descriptor_discovery_requires_one_reciprocal_pair(endpoints, monkeypatch):
+    reader, writer = endpoints
+    monkeypatch.setattr(
+        "limen.process_lifetime.kernel_pipes", lambda pid, limit: [(3, reader)] if pid == 10 else [(4, writer)]
+    )
+    assert find_lifetime_descriptors(10, 20, 501, 128) == (3, 4)
+    assert find_lifetime_descriptors(10, 20, 502, 128) is None
+    assert find_lifetime_descriptors(10, 10, 501, 128) is None
+
+
+def test_multiple_matching_descriptors_are_not_silently_selected(endpoints, monkeypatch):
+    reader, writer = endpoints
+    monkeypatch.setattr(
+        "limen.process_lifetime.kernel_pipes",
+        lambda pid, limit: [(3, reader), (5, reader)] if pid == 10 else [(4, writer)],
+    )
+    assert find_lifetime_descriptors(10, 20, 501, 128) is None
+
+
+def test_command_replacement_during_witness_is_rejected(endpoints, monkeypatch):
+    host = Process(10, 1, 501, "host", ("/declared-host",))
+    peer = Process(20, 1, 501, "peer", ("/verified-peer",))
+    calls = iter([(host.argv, {}), (peer.argv, {}), (("/replacement",), {})])
+    monkeypatch.setattr("limen.process_lifetime.native_details", lambda pid: next(calls))
+    monkeypatch.setattr("limen.process_lifetime.kernel_pipe", lambda pid, fd: endpoints[0 if pid == 10 else 1])
+    assert not live_lifetime_bridge(host, peer, 3, 4, lambda pid: "host" if pid == 10 else "peer")
+
+
+def test_descriptor_replacement_during_witness_is_rejected(endpoints, monkeypatch):
+    host = Process(10, 1, 501, "host", ("/declared-host",))
+    peer = Process(20, 1, 501, "peer", ("/verified-peer",))
+    monkeypatch.setattr(
+        "limen.process_lifetime.native_details", lambda pid: (host.argv if pid == 10 else peer.argv, {})
+    )
+    reader, writer = endpoints
+    calls = iter([reader, writer, {**reader, "handle": 3}])
+    monkeypatch.setattr("limen.process_lifetime.kernel_pipe", lambda pid, fd: next(calls))
     assert not live_lifetime_bridge(host, peer, 3, 4, lambda pid: "host" if pid == 10 else "peer")
