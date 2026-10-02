@@ -68,6 +68,13 @@ other sessions are never signaled. An unavailable process census is unmeasured. 
 retained-work owners preserve concurrent edits without including their changing contents
 in this session's fixed point. Unknown ownership must be reconciled in the existing owner.
 
+GitHub publication is measured through an authenticated, bounded exact-ref API read,
+including private repositories and transferred aliases. The returned ref, commit type,
+SHA and any required local ancestry are checked; authentication failure is unmeasured,
+not a fallback to SSH. This avoids creating an ambient `ControlPersist` SSH master
+during a supposedly read-only recheck. Non-GitHub/local Git publication support remains
+available through its live remote-ref check; no transport or process is blanket-exempted.
+
 ## Installation and propagation
 
 ### Explicit multi-repository sessions
