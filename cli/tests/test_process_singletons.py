@@ -168,6 +168,32 @@ def test_conflicting_peer_receipt_does_not_confer_shared_authority(singleton):
     assert rows[10]["category"] == "unknown"
 
 
+@pytest.mark.parametrize("thread,category", [("subject", "owned_survivor"), ("peer", "foreign_session")])
+def test_native_thread_precedence_is_not_erased_by_singleton(singleton, thread, category):
+    processes, _, _, evaluate = singleton
+    processes[10].env.update(CODEX_THREAD_ID=thread, CODEX_SESSION_ID=thread)
+    witness = {thread: {"thread_id": thread, "session_id": thread, "parent_thread_id": None}}
+    rows = {row["pid"]: row for row in evaluate(witnesses=witness)["processes"]}
+    assert rows[10]["category"] == category
+    assert rows[10]["reason"] == "exact_native_thread"
+
+
+def test_foreign_native_peer_cannot_authorize_detached_tray(singleton):
+    processes, _, _, evaluate = singleton
+    processes[101].env.update(CODEX_THREAD_ID="peer", CODEX_SESSION_ID="peer")
+    witness = {"peer": {"thread_id": "peer", "session_id": "peer", "parent_thread_id": None}}
+    rows = {row["pid"]: row for row in evaluate(witnesses=witness)["processes"]}
+    assert rows[101]["category"] == "foreign_session"
+    assert rows[10]["category"] == "unknown"
+
+
+def test_failed_native_health_witness_does_not_authorize_tray(singleton, monkeypatch):
+    _, _, _, evaluate = singleton
+    monkeypatch.setattr("limen.process_singletons.serena_tray_alive", lambda p, identity: False)
+    rows = {row["pid"]: row for row in evaluate()["processes"]}
+    assert rows[10]["category"] == "unknown"
+
+
 @pytest.fixture
 def vendor(tmp_path):
     from limen.process_services import _serena_singleton_contracts
