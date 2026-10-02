@@ -7,6 +7,7 @@ import importlib.util
 import json
 import os
 import shutil
+import re
 import sys
 from pathlib import Path
 
@@ -51,6 +52,62 @@ def _capability_commands(name: str) -> list[list[str]]:
     return [module._process_argv(checkout, selected, [])]
 
 
+def _cua_embedded_commands(
+    helper: Path, processes: dict[int, Process], hosts: list[dict], byte_witnesses: dict[str, str] | None = None
+) -> list[list[str]]:
+    """Bind exact workers to the declared REPL's embedded vendor code.
+
+    A temporary basename, app ancestry, or matching node binary alone proves
+    nothing. The assessor still independently verifies each live parent service
+    and its native host identity before any returned command can be shared.
+    """
+    if not helper.is_file() or helper.stat().st_size > 128 * 1024 * 1024:
+        return []
+    parent_argv = canonical_argv([str(helper)])
+    node = helper.with_name("node")
+    embedded = helper.read_bytes()
+    if byte_witnesses is not None:
+        byte_witnesses[str(helper.resolve())] = hashlib.sha256(embedded).hexdigest()
+    commands = []
+    for process in processes.values():
+        parent = processes.get(process.parent)
+        if not parent or parent.uid != process.uid or canonical_argv(parent.argv) != parent_argv:
+            continue
+        argv = process.argv
+        if len(argv) == 4 and argv[1:] == ("app-server", "--listen", "stdio://"):
+            if Path(argv[0]).is_file() and any(canonical_argv(argv) == canonical_argv(host["argv"]) for host in hosts):
+                commands.append(list(argv))
+            continue
+        if not node.is_file() or not argv or canonical_argv([argv[0]]) != canonical_argv([str(node)]):
+            continue
+        if (
+            len(argv) == 7
+            and argv[1] == "--experimental-vm-modules"
+            and argv[3] == "--session-id"
+            and argv[5] == "--working-dir"
+        ):
+            script, directory = Path(argv[2]), Path(argv[6])
+            if script.name != "kernel.js" or not re.fullmatch(r"[a-f0-9]{32}", argv[4]):
+                continue
+        elif len(argv) == 3:
+            script, directory = Path(argv[1]), Path(argv[2])
+            if script.name != "trusted-worker.js":
+                continue
+        else:
+            continue
+        if not directory.is_absolute() or process.cwd is None or directory.resolve() != process.cwd.resolve():
+            continue
+        if script.is_symlink() or not script.is_file() or not 1024 <= script.stat().st_size <= 2 * 1024 * 1024:
+            continue
+        source = script.read_bytes()
+        if source not in embedded:
+            continue
+        if byte_witnesses is not None:
+            byte_witnesses[str(script.resolve())] = hashlib.sha256(source).hexdigest()
+        commands.append(list(argv))
+    return commands
+
+
 def service_contracts(processes: dict[int, Process]) -> list[dict]:
     estate = load_estate()
     policy, policy_digest = estate.load_policy(estate.policy_path())
@@ -89,6 +146,7 @@ def service_contracts(processes: dict[int, Process]) -> list[dict]:
             ):
                 continue
             argv = [spec["command"], *spec["args"]]
+            byte_witnesses: dict[str, str] = {}
             commands = [(argv, None)]
             if Path(argv[0]).name == "domus-agent-host" and argv[1:3] == ["ensure", "--"]:
                 argv = argv[3:]
@@ -147,8 +205,14 @@ def service_contracts(processes: dict[int, Process]) -> list[dict]:
                 helper = spec["env"].get("CUA_REPL_NODE_REPL_PATH")
                 if helper:
                     commands.append(([helper], record["service"]))
+                    commands.extend(
+                        (command, record["service"])
+                        for command in _cua_embedded_commands(Path(helper), processes, resolved_hosts, byte_witnesses)
+                    )
             for command, parent_service in commands:
                 files = [Path(word).resolve() for word in command if Path(word).is_absolute() and Path(word).is_file()]
+                if byte_witnesses and helper:
+                    files.append(Path(helper).resolve())
                 file_digests = {}
                 for path in files:
                     key = str(path)
@@ -157,6 +221,10 @@ def service_contracts(processes: dict[int, Process]) -> list[dict]:
                             hashes[key] = hashlib.file_digest(source, "sha256").hexdigest()
                     file_digests[key] = hashes[key]
                 provenance = digest([policy_digest, record["fingerprint"], canonical_argv(command), file_digests])
+                if any(
+                    key in byte_witnesses and checksum != byte_witnesses[key] for key, checksum in file_digests.items()
+                ):
+                    continue  # Captured vendor bytes changed during contract derivation.
                 for host in resolved_hosts:
                     if host.get("client") != record["client"]:
                         continue
