@@ -390,8 +390,29 @@ def evaluate_scoped(
     runs = audit.get("runs")
     if not isinstance(runs, list) or audit.get("retained_run_count") != len(runs):
         raise Unmeasured("retained run coverage is incomplete")
+    broker_scope = receipt.get("broker_scope_root_id")
+    expected_binding = anchor
+    if broker_scope is not None:
+        if (
+            not isinstance(broker_scope, str)
+            or broker_scope not in roots
+            or native_transcript is None
+            or binding is None
+            or audit.get("session_present") is not True
+        ):
+            raise Unmeasured("explicit broker scope witness unavailable")
+        # A broker's current execution checkout may differ from the native start
+        # directory. Accept only an explicitly named, fully checked receipt scope;
+        # never substitute that checkout for the native anchor or infer a sibling.
+        expected_binding = roots[broker_scope]
     if binding is not None:
-        if binding.get("session_id") != session_id or Path(binding.get("worktree") or "").resolve() != anchor:
+        bound_path = Path(binding.get("worktree") or "")
+        if (
+            binding.get("session_id") != session_id
+            or not bound_path.is_absolute()
+            or bound_path != bound_path.resolve()
+            or bound_path != expected_binding
+        ):
             raise Unmeasured("broker session/worktree binding mismatch")
     elif audit.get("session_present") is not False or native_transcript is None:
         raise Unmeasured("no broker binding or exact native-session witness")
