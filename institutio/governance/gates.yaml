@@ -585,8 +585,8 @@ gates:
     owner: continuity
     note: "Session orientation + lifecycle-pressure hooks stay wired and PII-clean."
   session-closeout-test:
-    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_session_closeout.py cli/tests/test_session_closeout_scoped.py cli/tests/test_closeout_session_scope.py cli/tests/test_process_ownership.py cli/tests/test_cua_process_contracts.py -q"
-    paths: ["cli/src/limen/process_ownership.py", "cli/src/limen/process_services.py", "cli/tests/test_process_ownership.py", "cli/tests/test_cua_process_contracts.py", "cli/src/limen/session_closeout.py", "scripts/session-closeout.py", "scripts/no-tasks-on-me.sh", "scripts/closeout-fast.sh", "cli/tests/test_session_closeout.py", "cli/tests/test_session_closeout_scoped.py", "cli/tests/test_closeout_session_scope.py", "docs/continuations/workspace-recovery-20260916/verify-closeout.py", "docs/continuations/workspace-recovery-20260916/launch.sh"]
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_session_closeout.py cli/tests/test_session_closeout_scoped.py cli/tests/test_closeout_session_scope.py cli/tests/test_process_ownership.py cli/tests/test_cua_process_contracts.py cli/tests/test_native_host_helpers.py -q"
+    paths: ["cli/src/limen/process_ownership.py", "cli/src/limen/process_services.py", "cli/tests/test_process_ownership.py", "cli/tests/test_cua_process_contracts.py", "cli/tests/test_native_host_helpers.py", "cli/src/limen/session_closeout.py", "scripts/session-closeout.py", "scripts/no-tasks-on-me.sh", "scripts/closeout-fast.sh", "cli/tests/test_session_closeout.py", "cli/tests/test_session_closeout_scoped.py", "cli/tests/test_closeout_session_scope.py", "docs/continuations/workspace-recovery-20260916/verify-closeout.py", "docs/continuations/workspace-recovery-20260916/launch.sh"]
     owner: continuity
     note: "Identity-bound, read-only session release with remote custody and sibling isolation."
   agent-docs:
