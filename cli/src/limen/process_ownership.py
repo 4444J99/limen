@@ -273,6 +273,7 @@ def assess(
 
     rows = []
     service_instances: dict[int, str] = {}
+    verified_services: dict[int, tuple[dict, Process]] = {}
     evidence_index = {row["pid"]: row for row in evidence}
     if len(evidence_index) != len(evidence):
         raise ObservationUnavailable("duplicate_process_evidence")
@@ -287,6 +288,12 @@ def assess(
         visited.add(process.pid)
         if process.parent in processes:
             visit(processes[process.parent])
+        for contract in contracts:
+            peer = contract.get("singleton_peer")
+            if peer and tuple(process.argv) == tuple(contract["argv"]):
+                dependency = processes.get(peer.get("pid"))
+                if dependency and dependency.pid != process.pid:
+                    visit(dependency)
         ordered.append(process)
 
     for process in pending:
@@ -342,6 +349,40 @@ def assess(
                     for contract in contracts:
                         if normalized(process.argv) != normalized(contract["argv"]):
                             continue
+                        peer = contract.get("singleton_peer")
+                        if peer:
+                            # Detached helpers inherit no authority from matching
+                            # ancestry or health. Require a finally classified peer.
+                            from limen.process_singletons import serena_tray_alive, vendor_files_unchanged
+
+                            source = processes.get(peer.get("pid"))
+                            verified = verified_services.get(peer.get("pid"))
+                            if (
+                                contract.get("service_id") != "serena/tray-manager"
+                                or tuple(process.argv) != tuple(contract["argv"])
+                                or process.pid != contract.get("singleton_pid")
+                                or process.started != contract.get("singleton_identity")
+                                or not source
+                                or not verified
+                                or source.uid != process.uid
+                                or source.started != peer.get("identity")
+                                or tuple(source.argv) != tuple(peer.get("argv", ()))
+                                or identity(source.pid) != source.started
+                            ):
+                                continue
+                            peer_contract, peer_host = verified
+                            if (
+                                peer_contract["service_id"] != "serena"
+                                or peer_contract["contract_sha256"] != peer.get("contract_sha256")
+                                or peer_contract.get("config_home") != contract.get("config_home")
+                                or normalized(peer_contract["host_argv"]) != normalized(contract["host_argv"])
+                                or identity(peer_host.pid) != peer_host.started
+                                or not vendor_files_unchanged(contract.get("singleton_vendor_files"))
+                                or not serena_tray_alive(process, identity)
+                            ):
+                                continue
+                            matches.append((contract, peer_host))
+                            continue
                         parent_service = service_instances.get(process.parent)
                         if contract.get("parent_service") and parent_service != contract["parent_service"]:
                             continue
@@ -388,6 +429,8 @@ def assess(
                             or claim.get("host_identity") != host.started
                         ):
                             category, reason = "unmeasured", "process_evidence_conflict"
+                        if category == "shared_service":
+                            verified_services[process.pid] = (contract, host)
                     elif len(identities) > 1:
                         category, reason = "unmeasured", "service_registration_ambiguous"
         if (
