@@ -210,6 +210,15 @@ relationship. An app-server subtree is never an exemption. Unreadable identity, 
 reuse, missing native metadata and stale evidence fail closed. Reports omit raw argv
 and environment; only allowlisted native identity keys are retained during observation.
 
+Configured CUA helpers may declare their direct worker commands only when the live
+parent is the exact configured helper. Kernel and trusted-worker scripts must have
+their complete bytes embedded in that helper binary, use the helper's sibling Node
+executable, and match their exact argument shape and observed working directory.
+Captured script and helper digests are rechecked before issuing the contract. A
+direct app-server worker must match an already registered native-host command.
+These contracts still require the existing verified parent-service and host checks;
+temporary paths, familiar filenames and app ancestry alone confer no authority.
+
 Domus provides `domus-process-ownership observe --worktree PATH --session-id ID`.
 Observation does not write or signal. Explicit `adopt` records private atomic receipts
 for verified existing shared services without restarting them. Native launches retain
