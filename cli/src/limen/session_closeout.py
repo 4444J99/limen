@@ -136,7 +136,7 @@ def process_observation(root: Path, session_id: str, *, evidence: list[dict] | t
 def native_witness(path: Path, session_id: str) -> bool:
     from limen.process_ownership import transcript_witness
 
-    return transcript_witness(path)["thread_id"] == session_id
+    return transcript_witness(path, session_id)["thread_id"] == session_id
 
 
 def evaluate(
@@ -433,7 +433,7 @@ def evaluate_scoped(
     elif audit.get("session_present") is not False or native_transcript is None:
         raise Unmeasured("no broker binding or exact native-session witness")
     if native_transcript is not None:
-        witness = transcript_witness(native_transcript)
+        witness = transcript_witness(native_transcript, session_id)
         cwd = Path(witness.get("cwd") or "")
         if witness["thread_id"] != session_id or not cwd.is_absolute() or cwd != cwd.resolve() or cwd != anchor:
             raise Unmeasured("native transcript identity or root mismatch")
@@ -667,7 +667,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--session-id", required=True)
     parser.add_argument("--worktree", type=Path, required=True)
     parser.add_argument("--receipt", type=Path, required=True)
-    parser.add_argument("--native-transcript", type=Path)
+    parser.add_argument("--native-witness", "--native-transcript", dest="native_transcript", type=Path)
     parser.add_argument("--scope-root", action="append", default=[], metavar="ID=PATH")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--check", action="store_true", help="Read-only (all invocations are read-only)")

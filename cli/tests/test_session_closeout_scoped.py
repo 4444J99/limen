@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import sqlite3
 import subprocess
 
 import pytest
@@ -114,6 +115,28 @@ def test_non_git_native_root_releases_explicit_scopes_idempotently(cohort):
     assert result["session_released"] and not result["task_completed"]
     assert evaluate() == result
     assert {key: git(root, "status", "--porcelain") for key, root in roots.items() if key != "private"} == before
+
+
+def test_antigravity_database_binds_exact_scoped_native_anchor(cohort):
+    _, _, transcript, _, evaluate = cohort
+    path = transcript.with_suffix(".db")
+    with sqlite3.connect(path) as connection:
+        connection.execute(
+            "CREATE TABLE conversation_summaries "
+            "(conversation_id TEXT PRIMARY KEY, workspace_uris TEXT, parent_conversation_id TEXT)"
+        )
+        connection.execute(
+            "INSERT INTO conversation_summaries VALUES (?, ?, ?)",
+            (SID, json.dumps([transcript.parent.as_uri()]), ""),
+        )
+    assert evaluate(native_transcript=path)["session_released"]
+    with sqlite3.connect(path) as connection:
+        connection.execute(
+            "UPDATE conversation_summaries SET workspace_uris = ?",
+            (json.dumps([transcript.parent.parent.as_uri()]),),
+        )
+    with pytest.raises(closeout.Unmeasured, match="root mismatch"):
+        evaluate(native_transcript=path)
 
 
 @pytest.mark.parametrize(
