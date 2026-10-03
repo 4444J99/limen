@@ -513,7 +513,21 @@ def evaluate_scoped(
     elif not isinstance(custody.get("root_ids"), list) or sorted(custody["root_ids"]) != sorted(roots):
         raise Unmeasured("custody coverage does not match scope")
     else:
-        evidence(custody)
+        custody_payload = evidence(custody)
+        if contract := custody.get("contract"):
+            if contract != "limen.custody_receipt.v2":
+                raise Unmeasured("unsupported scoped custody contract")
+            from limen.portable_custody import validate_bundle
+
+            try:
+                validate_bundle(
+                    custody_payload,
+                    session_id=session_id,
+                    scope_paths={row["id"]: row.get("path_sha256") for row in declarations},
+                    read_evidence=evidence,
+                )
+            except (ValueError, TypeError, KeyError) as exc:
+                raise Unmeasured("portable custody evidence graph is incomplete or invalid") from exc
     process_evidence = []
     if packet := receipt.get("process_ownership"):
         value = json.loads(evidence(packet))
