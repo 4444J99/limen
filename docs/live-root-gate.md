@@ -1,8 +1,8 @@
 # Live Root Gate
 
-Generated: `2026-07-10T14:02:38+00:00`
+Generated: `2026-09-30T20:48:29+00:00`
 
-Status: `ready`
+Status: `blocked`
 
 ## Rule
 
@@ -12,35 +12,40 @@ Status: `ready`
 
 ## Gate State
 
-- Operator gate required: `False`.
+- Operator gate required: `True`.
 - Release reconcile allowed without human: `False`.
 - Launchd reload allowed without human: `False`.
-- Blocking gates: none.
+- Blocking gates: `live-root-not-release-branch`, `live-root-not-at-release`, `live-root-dirty`.
 
 ## Live Root
 
 - Path: `~/Workspace/limen`.
-- Branch: `main`; release branch `main`.
-- HEAD: `377000e1347ff10844f72d5779942fe7cb480fff`.
-- Release head: `377000e1347ff10844f72d5779942fe7cb480fff`.
-- Matches release: `True`; ahead `0` behind `0`.
+- Branch: `HEAD`; release branch `main`.
+- HEAD: `d4ec45cb456fa63a5c594eb429537fac572ce320`.
+- Release head: `04417f540cfa460450430661591ff1cf44d67fcf`.
+- Matches release: `False`; ahead `0` behind `69`.
 - Unique local commits: `0`; patch-equivalent commits: `0`.
-- Dirty entries: `0`.
-- Ignored generated receipt dirty entries: `2`.
-  - `docs/dispatch-health.md`
+- Dirty entries: `3`.
+- Ignored generated receipt dirty entries: `1`.
   - `docs/live-root-gate.md`
+
+### Dirty Paths
+
+- `docs/branch-hygiene.md`
+- `docs/jules-orphan-adoptions.jsonl`
+- `docs/continuations/git-parity-20260930/`
 
 ## Heartbeat
 
 - Plist: `~/Library/LaunchAgents/com.limen.heartbeat.plist` present `True`.
-- Loaded launchd state: `running` pid `75477`.
+- Loaded launchd state: `not running` pid `None`.
 - Loaded env matches plist for tracked LIMEN_* keys.
 
 ## Verified Worktree
 
 - Path: `~/Workspace/limen`.
-- Branch: `main`.
-- Matches release: `True`.
+- Branch: `HEAD`.
+- Matches release: `False`.
 
 ## Stop Conditions
 
