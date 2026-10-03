@@ -235,8 +235,9 @@ def _ignored_is_all_regenerable(repo: Path) -> bool:
     test the TOP path component against the regenerable allowlist. An unknown ignored file (e.g. `.env`,
     `local.db`, `data/`) is treated as irreplaceable → not-all-regenerable → the caller KEEPS the clone.
     A quoted/exotic path never matches the allowlist, so it also fails safe (KEEP).
+    Only repository-local ignore policy can establish regenerability, never ambient global excludes.
     """
-    out = _run(["git", "-C", str(repo), "status", "--porcelain", "--ignored"])
+    out = _run(["git", "-C", str(repo), "-c", "core.excludesFile=/dev/null", "status", "--porcelain", "--ignored"])
     for line in out.splitlines():
         if not line.startswith("!! "):
             continue
@@ -293,7 +294,7 @@ def _has_local_only_objects(repo: Path) -> bool:
 
 def _pristine_now(repo: Path) -> bool:
     """Last-millisecond TOCTOU belt: re-sample the cheapest data guards immediately before rmtree."""
-    if _run(["git", "-C", str(repo), "status", "--porcelain"]):
+    if _run(["git", "-C", str(repo), "-c", "core.excludesFile=/dev/null", "status", "--porcelain"]):
         return False
     if _run(["git", "-C", str(repo), "stash", "list"]):
         return False
@@ -348,7 +349,8 @@ def classify(repo: Path, active_slugs: set[str], now: float, idle_days: float, p
     # DATA GUARD (the "7 genesis screenshots" rule): any dirty OR untracked file → never touch it.
     # `git status --porcelain` omits gitignored files, so a non-empty result means real, unsaved work
     # (tracked edits or hand-dropped untracked inputs). Keep and let capture handle it.
-    if _run(["git", "-C", str(repo), "status", "--porcelain"]):
+    # A global ignore such as build/ must not hide unsaved work in an allowlisted directory.
+    if _run(["git", "-C", str(repo), "-c", "core.excludesFile=/dev/null", "status", "--porcelain"]):
         return Verdict(False, "dirty-or-untracked")
     # IGNORED-DATA GUARD: porcelain hid the ignored files above — a `.env`, a local `*.db`, or a data/
     # dir lives on no remote and re-clone cannot restore it. Reap only if every ignored entry is a
