@@ -83,7 +83,10 @@ def _pid_alive(pid: int) -> bool:
     return True
 
 
-def test_scoped_conductor_registers_with_canonical_broker_without_cell_board(tmp_path: Path) -> None:
+@pytest.mark.parametrize("registration_delay", [0, 1.2])
+def test_scoped_conductor_registers_with_canonical_broker_without_cell_board(
+    tmp_path: Path, registration_delay: float
+) -> None:
     root = tmp_path / "limen"
     cell = root / ".claude" / "worktrees" / "demo"
     cell.mkdir(parents=True)
@@ -110,6 +113,7 @@ tasks:
     fake_limen = fake_bin / "limen"
     fake_limen.write_text(
         "#!/usr/bin/env bash\n"
+        f"sleep {registration_delay}\n"
         'printf \'%s\\n\' "$*" > "$LIMEN_LIVE_ROOT/register.args"\n'
         "printf 'agent=%s\\nroot=%s\\nlive=%s\\nworkstream=%s\\n' "
         '"$LIMEN_AGENT" "$LIMEN_ROOT" "$LIMEN_LIVE_ROOT" "${LIMEN_WORKSTREAM:-}" '
@@ -135,11 +139,13 @@ tasks:
 
     assert result.returncode == 0, result.stderr
     register_env = root / "register.env"
-    for _ in range(50):
-        if register_env.exists():
-            break
-        time.sleep(0.02)
-
+    receipt_path = root / "logs" / "cells" / "demo.pid"
+    # conduct admits an asynchronous registrar. Observe its terminal receipt,
+    # not a one-second host-speed assumption about its intermediate env file.
+    assert _wait_until(
+        lambda: receipt_path.exists() and _receipt(receipt_path).get("state") in {"exited", "failed"},
+        attempts=500,
+    )
     assert register_env.exists()
     assert not (cell / "tasks.cell.yaml").exists()
     assert "T1" in canonical_board.read_text(encoding="utf-8")
@@ -160,7 +166,6 @@ tasks:
     assert receipt["cell_path"] == str(cell)
     assert receipt["run_id"] == ""
     assert receipt["human_protected"] == "0"
-    receipt_path = root / "logs" / "cells" / "demo.pid"
     assert _wait_until(lambda: _receipt(receipt_path).get("state") == "exited")
     assert _receipt(receipt_path)["registration_status"] == "accepted"
     assert "unbound variable" not in (root / "logs" / "cells" / "demo.conduct.log").read_text()
