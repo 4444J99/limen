@@ -1,0 +1,318 @@
+{
+  "$defs": {
+    "CapturedArtifactV2": {
+      "additionalProperties": false,
+      "description": "One chunk/object in the immutable capture denominator.",
+      "properties": {
+        "artifact_id": {
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "ciphertext_bytes": {
+          "exclusiveMinimum": 0,
+          "title": "Ciphertext Bytes",
+          "type": "integer"
+        },
+        "ciphertext_digest": {
+          "title": "Ciphertext Digest",
+          "type": "string"
+        },
+        "manifest_digest": {
+          "title": "Manifest Digest",
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "manifest_digest",
+        "ciphertext_digest",
+        "ciphertext_bytes"
+      ],
+      "title": "CapturedArtifactV2",
+      "type": "object"
+    },
+    "CustodyReplicaV2": {
+      "additionalProperties": false,
+      "properties": {
+        "account_namespace_id": {
+          "title": "Account Namespace Id",
+          "type": "string"
+        },
+        "artifacts": {
+          "items": {
+            "$ref": "#/$defs/ReplicaArtifactV2"
+          },
+          "maxItems": 4096,
+          "minItems": 1,
+          "title": "Artifacts",
+          "type": "array"
+        },
+        "backend": {
+          "enum": [
+            "github",
+            "gdrive",
+            "physical"
+          ],
+          "title": "Backend",
+          "type": "string"
+        },
+        "device_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Device Id"
+        },
+        "encryption_profile_digest": {
+          "title": "Encryption Profile Digest",
+          "type": "string"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "replica_id": {
+          "title": "Replica Id",
+          "type": "string"
+        },
+        "retention_evidence_digest": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Retention Evidence Digest"
+        },
+        "retention_until": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Retention Until"
+        }
+      },
+      "required": [
+        "replica_id",
+        "backend",
+        "account_namespace_id",
+        "encryption_profile_digest",
+        "artifacts",
+        "observed_at"
+      ],
+      "title": "CustodyReplicaV2",
+      "type": "object"
+    },
+    "ReplicaArtifactV2": {
+      "additionalProperties": false,
+      "description": "Exact encrypted object generation; no bearer URLs in portable receipts.",
+      "properties": {
+        "artifact_id": {
+          "title": "Artifact Id",
+          "type": "string"
+        },
+        "ciphertext_bytes": {
+          "exclusiveMinimum": 0,
+          "title": "Ciphertext Bytes",
+          "type": "integer"
+        },
+        "ciphertext_digest": {
+          "title": "Ciphertext Digest",
+          "type": "string"
+        },
+        "manifest_digest": {
+          "title": "Manifest Digest",
+          "type": "string"
+        },
+        "object_id": {
+          "title": "Object Id",
+          "type": "string"
+        },
+        "readback_digest": {
+          "title": "Readback Digest",
+          "type": "string"
+        },
+        "readback_evidence_digest": {
+          "title": "Readback Evidence Digest",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "string"
+        }
+      },
+      "required": [
+        "artifact_id",
+        "manifest_digest",
+        "ciphertext_digest",
+        "ciphertext_bytes",
+        "object_id",
+        "revision",
+        "readback_digest",
+        "readback_evidence_digest"
+      ],
+      "title": "ReplicaArtifactV2",
+      "type": "object"
+    },
+    "ReplicaRestorationV2": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_digest": {
+          "title": "Evidence Digest",
+          "type": "string"
+        },
+        "full_restore": {
+          "const": true,
+          "title": "Full Restore",
+          "type": "boolean"
+        },
+        "logical_manifest_digest": {
+          "title": "Logical Manifest Digest",
+          "type": "string"
+        },
+        "native_metadata_digest": {
+          "title": "Native Metadata Digest",
+          "type": "string"
+        },
+        "native_metadata_verified": {
+          "const": true,
+          "title": "Native Metadata Verified",
+          "type": "boolean"
+        },
+        "passed": {
+          "const": true,
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "predicate_digest": {
+          "title": "Predicate Digest",
+          "type": "string"
+        },
+        "replica_id": {
+          "title": "Replica Id",
+          "type": "string"
+        },
+        "restored_at": {
+          "format": "date-time",
+          "title": "Restored At",
+          "type": "string"
+        },
+        "source_atoms_verified": {
+          "exclusiveMinimum": 0,
+          "title": "Source Atoms Verified",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "replica_id",
+        "restored_at",
+        "logical_manifest_digest",
+        "native_metadata_digest",
+        "source_atoms_verified",
+        "predicate_digest",
+        "evidence_digest",
+        "full_restore",
+        "native_metadata_verified",
+        "passed"
+      ],
+      "title": "ReplicaRestorationV2",
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Backend-neutral proof, additive to the unchanged physical-device v1.\n\nSchema validity does not perform provider observation or grant retirement. The\nproducer must authenticate exact generations and run the full native restorer.",
+  "properties": {
+    "captured_artifacts": {
+      "items": {
+        "$ref": "#/$defs/CapturedArtifactV2"
+      },
+      "maxItems": 4096,
+      "minItems": 1,
+      "title": "Captured Artifacts",
+      "type": "array"
+    },
+    "chunk_manifest_digests": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 4096,
+      "minItems": 1,
+      "title": "Chunk Manifest Digests",
+      "type": "array"
+    },
+    "custody_id": {
+      "title": "Custody Id",
+      "type": "string"
+    },
+    "encryption_profile_digest": {
+      "title": "Encryption Profile Digest",
+      "type": "string"
+    },
+    "logical_manifest_digest": {
+      "title": "Logical Manifest Digest",
+      "type": "string"
+    },
+    "native_metadata_digest": {
+      "title": "Native Metadata Digest",
+      "type": "string"
+    },
+    "replicas": {
+      "items": {
+        "$ref": "#/$defs/CustodyReplicaV2"
+      },
+      "maxItems": 32,
+      "minItems": 2,
+      "title": "Replicas",
+      "type": "array"
+    },
+    "restoration_proofs": {
+      "items": {
+        "$ref": "#/$defs/ReplicaRestorationV2"
+      },
+      "maxItems": 32,
+      "minItems": 2,
+      "title": "Restoration Proofs",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "limen.custody_receipt.v2",
+      "default": "limen.custody_receipt.v2",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_atoms": {
+      "exclusiveMinimum": 0,
+      "title": "Source Atoms",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "custody_id",
+    "encryption_profile_digest",
+    "chunk_manifest_digests",
+    "captured_artifacts",
+    "logical_manifest_digest",
+    "native_metadata_digest",
+    "source_atoms",
+    "replicas",
+    "restoration_proofs"
+  ],
+  "title": "CustodyReceiptV2",
+  "type": "object"
+}

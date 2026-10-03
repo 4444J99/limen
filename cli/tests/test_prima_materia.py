@@ -660,6 +660,7 @@ def test_generated_schemas_match_models(tmp_path: Path) -> None:
         "collaborator-universe-manifest-v1.schema.json",
         "composition-manifest-v1.schema.json",
         "custody-receipt-v1.schema.json",
+        "custody-receipt-v2.schema.json",
         "frozen-wave-manifest-v1.schema.json",
         "prima-materia-event-v1.schema.json",
         "project-universe-manifest-v1.schema.json",
