@@ -217,6 +217,15 @@ def test_completion_failure_keeps_open_handoff(cohort):
     assert not evaluate()["session_released"]
 
 
+@pytest.mark.parametrize("contract", ["limen.custody_receipt.v2", "unknown-contract"])
+def test_portable_contract_requires_real_committed_supporting_evidence(cohort, contract):
+    _, receipt, _, publish, evaluate = cohort
+    receipt["custody"]["contract"] = contract
+    publish()
+    with pytest.raises(closeout.Unmeasured):
+        evaluate()
+
+
 @pytest.mark.parametrize("same_id", [True, False])
 @pytest.mark.parametrize("prefix", ["https://github.com/", "git@github.com:", "ssh://git@github.com/"])
 def test_repository_transfer_uses_stable_identity(cohort, monkeypatch, same_id, prefix):
