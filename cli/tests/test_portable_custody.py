@@ -63,6 +63,7 @@ def graph():
                             "ctime_ns": 1,
                             "atime_ns": 1,
                             "flags": 0,
+                            "nlink": 1,
                             "xattrs": {},
                             "acl": "absent",
                             "size": None,

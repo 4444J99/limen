@@ -70,6 +70,35 @@ not be rewritten to call cloud accounts physical devices. Portable recovery keep
 the original native session/caller and records old/new scope lineage explicitly;
 it never drops a missing historical root from the denominator.
 
+The scoped session consumer accepts v2 only through a
+`limen.portable_custody_evidence.v1` bundle: set the custody packet's `contract`
+to `limen.custody_receipt.v2`. The bundle binds the exact session and all original
+scope path digests, embeds the v2 contract, and resolves every supporting digest
+through committed, unchanged owner evidence. Capture manifests enumerate the
+same logical/native atoms in every original root; ciphertext manifests bind the
+exact captured object denominator. Authenticated readback records bind provider,
+account namespace, object ID, revision, bytes and checksum. Retention covers all
+generations and must still be in force. Each full restore has a committed predicate
+and an observation that covers every logical and native atom. Contract validity,
+an expired retention receipt, or a partial restore renamed "full" cannot satisfy
+this consumer. Legacy custody evidence is unchanged and cannot substitute for a
+new portable contract's supporting graph.
+
+`limen.native_capture.capture_manifests` supplies bounded, no-ignore native
+capture. It reads file contents, symlink targets without traversal, cross-root
+hardlinks, ownership, modes, timestamps, flags, xattrs and ACLs. macOS creation
+timestamps use `getattrlist` nanoseconds, not rounded Python floats. Native value
+bytes and file contents are represented by digests in these inventories; raw
+recovery bytes still belong in the encrypted archive. Unsupported metadata,
+changed sources and exhausted resource bounds reject the whole capture, never a
+silently reduced denominator. The caller must admit the heavy workload and keep
+the generated inventories in private encrypted custody.
+
+These functions do not upload ciphertext, execute an independent restore, relax
+historical path binding or authorize deletion. Missing/relocated roots still
+require separately implemented and verified lineage acceptance; all six original
+scopes and current deltas remain work until their owning predicates pass.
+
 The existing T7 lifeboat already points at the correct symbolic form:
 
 | Layer | Existing Root | Role |
