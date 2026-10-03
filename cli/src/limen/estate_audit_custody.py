@@ -20,7 +20,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from limen.agent_state.custody import _device_identity
+from limen.agent_state.custody import _device_identity, _volume_mount
 from limen.agent_state.models import ReceiptError
 from limen.agent_state.pipeline import PipelineError, require_mounted_external
 from limen.worktree_roots import WorktreeTarget, iter_worktree_targets
@@ -686,7 +686,7 @@ def assert_custody_target_identity(
         probe = probe.parent
     try:
         result = subprocess.run(
-            ["/usr/sbin/diskutil", "info", "-plist", str(probe)],
+            ["/usr/sbin/diskutil", "info", "-plist", str(_volume_mount(probe))],
             capture_output=True,
             check=False,
             timeout=20,
