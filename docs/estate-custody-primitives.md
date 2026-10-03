@@ -99,6 +99,18 @@ historical path binding or authorize deletion. Missing/relocated roots still
 require separately implemented and verified lineage acceptance; all six original
 scopes and current deltas remain work until their owning predicates pass.
 
+`limen.native_equivalence.compare_native_manifests` supplies the inventory
+comparison primitive for that pending lineage/restore consumer. It requires
+complete original and observed records, identical root/atom membership, and exact
+content, ownership, modes, mtime, birthtime, flags, xattrs, ACLs and hardlink
+membership. Original atime and filesystem-maintained ctime remain mandatory
+historical records; a restored filesystem's distinct clocks are reported, never
+asserted recreated. The report binds both complete input digests but does not
+establish live freshness, encrypted custody, relocation permission, retirement,
+or session release. The complete historical inventory must stay in encrypted
+custody; a comparison report cannot replace it. Lineage wiring and live proof
+over all original scopes remain unfinished.
+
 The existing T7 lifeboat already points at the correct symbolic form:
 
 | Layer | Existing Root | Role |
