@@ -1,5 +1,15 @@
 # Worktree Reclaim Acceptance
 
+For an explicitly accepted stream, use repeatable `--target PATH` arguments with
+`--scope-manifest PATH`. The scope must be committed and published in its owner,
+use schema `limen.worktree_reclaim_scope.v1`, bind each root by path digest and
+origin, and cite the operator authorization. The exact target set and scope digest
+are included in the check/apply plan. This mode does not enumerate sibling roots.
+Known regenerated outputs need explicit source/lockfile reconstruction evidence;
+other ignored bytes need matching committed artifacts or verified encrypted custody.
+Apply rehashes that evidence before destruction. The ordinary unscoped behavior,
+protected roots, process/lock guards and all-local-ref preservation are unchanged.
+
 `scripts/reclaim-worktrees.py --apply` detaches registered worktrees and moves
 standalone worktree-like clones or generated residue into recoverable
 same-filesystem quarantine only after the loss-free reclaim gate passes.
