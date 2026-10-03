@@ -61,6 +61,41 @@ The latch is kept in the user's state directory across producer and machine rest
 An unreadable or invalid latch fails closed. Existing checkouts and their running work
 remain available; the gate applies only to new worktree reservations.
 
+### Standing closeout-only isolation admission
+
+On 2026-10-03 the human authorized this standing corrective directive, owned by
+[Limen issue #2821](https://github.com/4444J99/limen/issues/2821). A direct human
+session may manually admit one small, read-only isolation checkout to reconcile
+its own exact published policy scope when a shared checkout has moved. This is
+a manual closeout lane, not an automatic worktree producer or implementation lane.
+The default storage latch and automated reservation guards remain unchanged.
+
+Before creation, publish an admission receipt in the existing session owner:
+native session identity, repository identity, exact live published head, destination,
+estimated tracked bytes, declared maximum 256 MiB, measured target-volume free
+bytes, a 30-minute deadline, and retained-checkout/custody owner. Available space
+must exceed the declared budget plus a 10 GiB safety floor. Unknown measurements,
+invalid storage state, symlinked destinations, an existing destination, or an
+unresolved prior isolation checkout deny admission. Never clear or alter the
+general storage latch. This directive expressly authorizes the documented manual
+Git worktree creation after those checks, without pretending the automatic
+reservation adapter admitted it.
+
+Use an existing exact published topic branch and existing object store; do not
+clone, hydrate source corpora, install dependencies, run heavy gates or upstream
+code, create replacement sessions, or perform general implementation there.
+Check actual allocated size after creation and before any use. If the budget or
+free-space floor is violated, stop use and preserve the checkout with its owner;
+do not delete data merely to repair admission. Repeated attempts do not renew the
+one-checkout allowance or deadline. Keep the native caller as the closeout anchor.
+
+Verification may reuse unchanged passing shards. Cleanup is separately authorized
+only through the existing custody-verified reclaimer; retention is valid when
+reaping is not proven safe. Completion, rights, rollout, process ownership,
+broker state and all original project gates retain their independent predicates.
+Rollback is a reviewed removal of this exception, not a reset of state or deletion
+of retained checkouts. Adoption is measured by admission and terminal/retention
+receipts, not by a successful checkout command.
 
 Verification stores bounded success receipts for every passing gate. Reuse requires
 an unchanged content, dependency, environment and gate-definition fingerprint.
@@ -93,3 +128,4 @@ Provider-result predicates use the same keeper-owned verification deadline as th
 verification runner, including across retries and restarts. Check admission before
 creating their verification checkout; use the existing process-group timeout helper
 for the actual predicate. Input hashing consumes the verification allowance too.
+
