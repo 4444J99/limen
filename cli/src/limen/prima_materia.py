@@ -395,6 +395,178 @@ class CustodyReceiptV1(PrimaMateriaModel):
         return self
 
 
+class CapturedArtifactV2(PrimaMateriaModel):
+    """One chunk/object in the immutable capture denominator."""
+
+    artifact_id: str
+    manifest_digest: _Digest
+    ciphertext_digest: _Digest
+    ciphertext_bytes: int = Field(gt=0)
+
+    _id = field_validator("artifact_id")(_validate_opaque_id)
+    _capture_digests = field_validator("manifest_digest", "ciphertext_digest")(_validate_digest)
+
+
+class ReplicaArtifactV2(CapturedArtifactV2):
+    """Exact encrypted object generation; no bearer URLs in portable receipts."""
+
+    object_id: str
+    revision: str
+    readback_digest: _Digest
+    readback_evidence_digest: _Digest
+
+    _digests = field_validator("manifest_digest", "ciphertext_digest", "readback_digest", "readback_evidence_digest")(
+        _validate_digest
+    )
+    _references = field_validator("object_id", "revision")(_validate_registry_key)
+
+    @model_validator(mode="after")
+    def readback_matches(self) -> ReplicaArtifactV2:
+        for value in (self.object_id, self.revision):
+            if any(
+                character not in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_./-"
+                for character in value
+            ):
+                raise ValueError("replica references must be provider IDs, not secret-bearing URLs")
+        if self.readback_digest != self.ciphertext_digest:
+            raise ValueError("replica ciphertext readback must match the captured object")
+        return self
+
+
+class CustodyReplicaV2(PrimaMateriaModel):
+    replica_id: str
+    backend: Literal["github", "gdrive", "physical"]
+    account_namespace_id: str
+    device_id: str | None = None
+    encryption_profile_digest: _Digest
+    artifacts: tuple[ReplicaArtifactV2, ...] = Field(min_length=1, max_length=4096)
+    observed_at: datetime
+    retention_until: datetime | None = None
+    retention_evidence_digest: _Digest | None = None
+
+    _ids = field_validator("replica_id", "account_namespace_id")(_validate_opaque_id)
+    _device = field_validator("device_id")(lambda value: _validate_opaque_id(value) if value is not None else None)
+    _profile = field_validator("encryption_profile_digest")(_validate_digest)
+    _retention_digest = field_validator("retention_evidence_digest")(
+        lambda value: _validate_digest(value) if value is not None else None
+    )
+    _observed = field_validator("observed_at")(_validate_aware_datetime)
+    _retention = field_validator("retention_until")(_validate_optional_aware_datetime)
+
+    @property
+    def failure_domain(self) -> str:
+        # Provider failures span accounts/repositories. An account is not a device.
+        return f"physical:{self.device_id}" if self.backend == "physical" else self.backend
+
+    @model_validator(mode="after")
+    def identities_and_retention_are_explicit(self) -> CustodyReplicaV2:
+        if (self.backend == "physical") != (self.device_id is not None):
+            raise ValueError("only physical replicas carry device identities")
+        identifiers = [artifact.artifact_id for artifact in self.artifacts]
+        if len(set(identifiers)) != len(identifiers):
+            raise ValueError("duplicate artifact identity in replica")
+        generations = [(artifact.object_id, artifact.revision) for artifact in self.artifacts]
+        if len(set(generations)) != len(generations):
+            raise ValueError("one provider generation cannot stand in for multiple chunks")
+        if (self.retention_until is None) != (self.retention_evidence_digest is None):
+            raise ValueError("retention requires both horizon and provider evidence")
+        if self.retention_until is not None and self.retention_until <= self.observed_at:
+            raise ValueError("retention horizon must follow the observation")
+        return self
+
+
+class ReplicaRestorationV2(PrimaMateriaModel):
+    replica_id: str
+    restored_at: datetime
+    logical_manifest_digest: _Digest
+    native_metadata_digest: _Digest
+    source_atoms_verified: int = Field(gt=0)
+    predicate_digest: _Digest
+    evidence_digest: _Digest
+    full_restore: Literal[True]
+    native_metadata_verified: Literal[True]
+    passed: Literal[True]
+
+    _id = field_validator("replica_id")(_validate_opaque_id)
+    _time = field_validator("restored_at")(_validate_aware_datetime)
+    _digests = field_validator(
+        "logical_manifest_digest", "native_metadata_digest", "predicate_digest", "evidence_digest"
+    )(_validate_digest)
+
+
+class CustodyReceiptV2(PrimaMateriaModel):
+    """Backend-neutral proof, additive to the unchanged physical-device v1.
+
+    Schema validity does not perform provider observation or grant retirement. The
+    producer must authenticate exact generations and run the full native restorer.
+    """
+
+    schema_version: Literal["limen.custody_receipt.v2"] = "limen.custody_receipt.v2"
+    custody_id: str
+    encryption_profile_digest: _Digest
+    chunk_manifest_digests: tuple[_Digest, ...] = Field(min_length=1, max_length=4096)
+    captured_artifacts: tuple[CapturedArtifactV2, ...] = Field(min_length=1, max_length=4096)
+    logical_manifest_digest: _Digest
+    native_metadata_digest: _Digest
+    source_atoms: int = Field(gt=0)
+    replicas: tuple[CustodyReplicaV2, ...] = Field(min_length=2, max_length=32)
+    restoration_proofs: tuple[ReplicaRestorationV2, ...] = Field(min_length=2, max_length=32)
+
+    _id = field_validator("custody_id")(_validate_opaque_id)
+    _digests = field_validator("encryption_profile_digest", "logical_manifest_digest", "native_metadata_digest")(
+        _validate_digest
+    )
+    _manifests = field_validator("chunk_manifest_digests")(
+        lambda values: tuple(_validate_digest(value) for value in values)
+    )
+
+    @model_validator(mode="after")
+    def every_independent_replica_is_complete_and_restored(self) -> CustodyReceiptV2:
+        expected = set(self.chunk_manifest_digests)
+        if len(expected) != len(self.chunk_manifest_digests):
+            raise ValueError("custody denominator contains duplicate manifests")
+        captured_objects = {artifact.artifact_id: artifact for artifact in self.captured_artifacts}
+        if len(captured_objects) != len(self.captured_artifacts):
+            raise ValueError("capture denominator contains duplicate artifact identities")
+        if {artifact.manifest_digest for artifact in self.captured_artifacts} != expected:
+            raise ValueError("capture denominator does not cover exactly the declared manifests")
+        replicas = {replica.replica_id: replica for replica in self.replicas}
+        if len(replicas) != len(self.replicas):
+            raise ValueError("duplicate replica identity")
+        if len({replica.failure_domain for replica in self.replicas}) < 2:
+            raise ValueError("at least two independent provider/device failure domains required")
+        proofs = {proof.replica_id: proof for proof in self.restoration_proofs}
+        if len(proofs) != len(self.restoration_proofs) or set(proofs) != set(replicas):
+            raise ValueError("every replica requires exactly one full restoration proof")
+        retained = False
+        for identifier, replica in replicas.items():
+            if replica.encryption_profile_digest != self.encryption_profile_digest:
+                raise ValueError("replica encryption profile differs from capture")
+            if {artifact.artifact_id for artifact in replica.artifacts} != set(captured_objects):
+                raise ValueError("replica does not cover the full ciphertext denominator")
+            for artifact in replica.artifacts:
+                original = captured_objects[artifact.artifact_id]
+                if (
+                    artifact.manifest_digest != original.manifest_digest
+                    or artifact.ciphertext_digest != original.ciphertext_digest
+                    or artifact.ciphertext_bytes != original.ciphertext_bytes
+                ):
+                    raise ValueError("replica differs from immutable captured ciphertext identity")
+            proof = proofs[identifier]
+            if (
+                proof.logical_manifest_digest != self.logical_manifest_digest
+                or proof.native_metadata_digest != self.native_metadata_digest
+                or proof.source_atoms_verified != self.source_atoms
+            ):
+                raise ValueError("full content/native restoration denominator mismatch")
+            if proof.restored_at < replica.observed_at:
+                raise ValueError("restore predates the authenticated replica observation")
+            retained |= replica.retention_until is not None and replica.retention_until > proof.restored_at
+        if not retained:
+            raise ValueError("at least one restore-tested replica needs evidenced retention")
+        return self
+
+
 class CompositionManifestV1(PrimaMateriaModel):
     schema_version: Literal["limen.composition_manifest.v1"] = "limen.composition_manifest.v1"
     composition_id: str
