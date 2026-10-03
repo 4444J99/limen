@@ -66,6 +66,7 @@ def _native_entry(entry: Any) -> dict:
         "atime_ns",
         "ctime_ns",
         "flags",
+        "nlink",
         "xattrs",
         "acl",
         "hardlink_group",
@@ -77,7 +78,7 @@ def _native_entry(entry: Any) -> dict:
     _require(
         all(
             type(metadata[key]) is int
-            for key in ("mode", "uid", "gid", "mtime_ns", "birthtime_ns", "atime_ns", "ctime_ns", "flags")
+            for key in ("mode", "uid", "gid", "mtime_ns", "birthtime_ns", "atime_ns", "ctime_ns", "flags", "nlink")
         ),
         "native numeric metadata readings are malformed",
     )
@@ -85,6 +86,7 @@ def _native_entry(entry: Any) -> dict:
         0 <= metadata["mode"] <= 0o7777 and metadata["uid"] >= 0 and metadata["gid"] >= 0,
         "native ownership or mode is malformed",
     )
+    _require(metadata["nlink"] > 0, "native hardlink count is unmeasured")
     attrs = metadata["xattrs"]
     _require(
         isinstance(attrs, dict)
@@ -172,7 +174,8 @@ def validate_bundle(
         _require(manifest.get("session_id") == session_id, "capture session mismatch")
         _require(manifest.get("scope_paths") == dict(scope_paths), "capture original scope mismatch")
         entries = manifest.get("entries")
-        _require(isinstance(entries, dict) and set(entries) == set(scope_paths), "capture scope denominator mismatch")
+        if not isinstance(entries, dict) or set(entries) != set(scope_paths):
+            raise PortableCustodyError("capture scope denominator mismatch")
         _require(
             all(isinstance(rows, dict) and rows for rows in entries.values()), "capture root is empty or unmeasured"
         )
@@ -194,12 +197,12 @@ def validate_bundle(
         _require(manifest.get("session_id") == session_id, "ciphertext capture session mismatch")
         _require(manifest.get("scope_paths") == dict(scope_paths), "ciphertext capture original scope mismatch")
         # A manifest cannot embed its own digest; compare its remaining fields.
-        expected = [
+        expected_chunks = [
             {key: value for key, value in row.items() if key != "manifest_digest"}
             for row in captured
             if row["manifest_digest"] == digest
         ]
-        _require(manifest.get("artifacts") == expected, "ciphertext capture denominator mismatch")
+        _require(manifest.get("artifacts") == expected_chunks, "ciphertext capture denominator mismatch")
     for replica in receipt.replicas:
         _require(replica.observed_at <= now, "replica observation is future-dated")
         for artifact in replica.artifacts:
