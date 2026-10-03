@@ -1525,11 +1525,11 @@ parameters:
     owner: horrevm
     note: "Freshness bound for `horrevm-custody.py --status`: once armed, a rail whose last verified push is older than this many days exits 1 (advisory escalation in the beat). PARKED/dry-run states always exit 0."
   LIMEN_HORREVM_DRIVE_BUDGET_GB:
-    default: 5
+    default: ""
     env: LIMEN_HORREVM_DRIVE_BUDGET_GB
     self_update: none
     owner: horrevm
-    note: "Hard payload cap (GB) for the gdrive custody rail ($0-capex law: never grow into a paid tier). Push is refused over-cap or when remote free < 2x payload."
+    note: "Optional operator payload cap (GB) for gdrive. Empty derives admission from live measured free quota with a 2x generation reserve; unknown quota fails closed. Never buys or upgrades capacity. An explicit cap remains binding."
   LIMEN_HORREVM_DROPBOX_BUDGET_GB:
     default: 1
     env: LIMEN_HORREVM_DROPBOX_BUDGET_GB

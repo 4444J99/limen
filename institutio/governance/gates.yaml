@@ -265,6 +265,13 @@ gates:
     scoped: false
     owner: representation
     note: "Representation Substrate records and opportunities stay schema-clean."
+  horrevm-capacity:
+    command: "python3 scripts/tests/horrevm-capacity.test.py"
+    paths: ["scripts/horrevm-custody.py", "scripts/tests/horrevm-capacity.test.py"]
+    scoped: true
+    tier: cheap
+    owner: horrevm
+    note: "Remote custody capacity admission uses measured quota; unknown quota fails closed."
   ucc-credential-delivery:
     command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_ucc_local_delivery.py cli/tests/test_creds_hydrate.py -q"
     paths: ["scripts/ucc-cloudflare-delivery.py", "scripts/creds-hydrate.py", "scripts/tests/test_ucc_local_delivery.py", "cli/tests/test_creds_hydrate.py"]
