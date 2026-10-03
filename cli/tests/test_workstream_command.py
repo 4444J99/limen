@@ -940,7 +940,6 @@ def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path,
     assert rendered_timeout.exit_code == 0, rendered_timeout.output
     monkeypatch.delenv("LIMEN_AGENT")
     timeout_wt = repo / ".worktrees" / "jules-timeout"
-    started = time.monotonic()
     timed_out = subprocess.run(
         ["bash", str(timeout_wt / ".limen-workstream" / "kickstart.sh")],
         cwd=timeout_wt,
@@ -950,8 +949,11 @@ def test_autonomous_jules_workstream_uses_remote_cloud_transport(tmp_path: Path,
         timeout=10,
         check=False,
     )
-    assert timed_out.returncode != 0
-    assert time.monotonic() - started < 4
+    assert timed_out.returncode == 124
+    # The one-second production deadline covers the provider, not Git setup or
+    # scheduler delay. Require its exact timeout diagnostic, not a host-speed
+    # assertion; subprocess.run still imposes a hard ten-second outer ceiling.
+    assert "bounded command timed out after 1s: jules" in timed_out.stdout + timed_out.stderr
     monkeypatch.delenv("JULES_SLEEP")
     monkeypatch.delenv("LIMEN_WORKSTREAM_PREFLIGHT_TIMEOUT_SECONDS")
 

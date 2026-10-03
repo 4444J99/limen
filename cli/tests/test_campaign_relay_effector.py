@@ -946,7 +946,9 @@ def test_startup_stream_read_error_after_partial_bytes_fails_closed(
         def read(self, _size):
             self.reads += 1
             if self.reads == 1:
-                return self.stream.read(1)
+                # Inject the partial-read path directly: provider startup timing
+                # is unrelated to the subsequent read-error contract.
+                return b"x"
             raise OSError("injected startup stream read failure")
 
         def close(self):
