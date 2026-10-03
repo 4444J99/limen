@@ -12,6 +12,44 @@ One corrective retry requires changed relevant inputs. Renaming, restarting, or 
 work cannot replenish its allowance. Exhaustion checkpoints unfinished work and stops
 automatic continuation. Discoveries stay in their owning registry without automatic fanout.
 
+### Authorized project continuation: github-engineering-standards
+
+On 2026-10-03 the human explicitly authorized revision of this owning policy to
+continue the approved github-engineering-standards completion outcome. Owner:
+[Limen issue #2821](https://github.com/4444J99/limen/issues/2821).
+This exception applies only to direct human-authorized local work for repository
+`4444J99/github-engineering-standards`, including its correction, six-source review,
+rights analysis, evidence adapters, custody work and nine-gate completion plan.
+It supersedes the default exhausted-attempt stop, changed-input-only corrective
+retry restriction and 120 cumulative agent-minute ceiling for that outcome,
+including the abbreviated default limit summary in global agent instructions.
+An already exhausted attempt does not bar this expressly authorized continuation.
+
+Continue in successive bounded tranches of at most 30 minutes, including at most
+10 minutes of verification per tranche. At the boundary checkpoint actual work
+with its issue, scoped verified commit/push and retained-checkout disposition;
+then the next tranche may proceed under this standing project authorization.
+Record cumulative usage rather than resetting or concealing it. A boundary is a
+checkpoint, not completion and not a demand for repeated human reauthorization.
+Continue until the original objective is proven, the human stops or changes the
+work, or a genuine external prerequisite prevents further meaningful progress.
+Do not repeatedly rerun an unchanged failed action; investigate or change its
+relevant inputs before retrying.
+
+All other constraints remain in force: two implementation tasks estate-wide,
+one heavy workload, host/storage admission, protected human sessions, broker-owned
+dispatch and finite subprocess deadlines. This exception does not enable general
+scheduler dispatch, authorize unrelated backlog or grant a remote provider a new
+deadline. Jules and other remote implementation remain unavailable until their
+owning adapter proves deadline enforcement and provider/data eligibility.
+Keep restricted material encrypted with verified remote custody and recovery;
+never publish raw unlicensed content, private records or credentials. Native
+rollout, protection changes, changed credentials, costs and public publication
+retain their applicable explicit approvals. Policy adoption and rights decisions
+must have authentic authority; all nine original gates require actual evidence.
+Neither this exception nor a green test permits weakened denominators, invented
+receipts or substituted completion criteria. Human-required gates remain human-required.
+
 Release includes a checkout disposition: retain active/dirty/advanced/unbacked work,
 or retire the disposable copy through the existing reclaimer after custody verification.
 Preservation is not completion. Resume interrupted cleanup from its receipts and verify
