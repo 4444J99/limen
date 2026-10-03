@@ -605,7 +605,13 @@ def _terminate_process_group(process: subprocess.Popen[bytes], *, mode: str) -> 
     except ProcessLookupError:
         pass
     except OSError as exc:
-        raise PairedCustodyError(f"single-rail-{mode}-termination-failed", reasons=("term-signal-refused",)) from exc
+        # A just-exited Darwin group can refuse a signal before its disappearance
+        # becomes visible. Only positive leader reap AND absent group clear that
+        # race; a live/unobservable group still fails closed.
+        if process.poll() is None or _process_group_exists(process_group):
+            raise PairedCustodyError(
+                f"single-rail-{mode}-termination-failed", reasons=("term-signal-refused",)
+            ) from exc
 
     if not _wait_for_process_group_exit(
         process,
