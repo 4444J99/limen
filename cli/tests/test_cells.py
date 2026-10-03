@@ -160,6 +160,49 @@ tasks:
     assert receipt["cell_path"] == str(cell)
     assert receipt["run_id"] == ""
     assert receipt["human_protected"] == "0"
+    receipt_path = root / "logs" / "cells" / "demo.pid"
+    assert _wait_until(lambda: _receipt(receipt_path).get("state") == "exited")
+    assert _receipt(receipt_path)["registration_status"] == "accepted"
+    assert "unbound variable" not in (root / "logs" / "cells" / "demo.conduct.log").read_text()
+
+
+def test_failed_cell_registration_emits_terminal_receipt(tmp_path: Path) -> None:
+    root = tmp_path / "limen"
+    cell = _init_cell_with_remote(root, "demo")
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir()
+    fake_limen = fake_bin / "limen"
+    fake_limen.write_text("#!/usr/bin/env bash\nexit 7\n", encoding="utf-8")
+    fake_limen.chmod(0o755)
+    result = subprocess.run(
+        [
+            "bash",
+            str(CELLS),
+            "_registration-loop",
+            "demo",
+            "codex",
+            "cell",
+            str(cell),
+            str(root),
+            "0",
+            "",
+            "fixture-owner",
+            "",
+            "",
+            "0",
+            "direct",
+        ],
+        env={**os.environ, "LIMEN_ROOT": str(root), "PATH": f"{fake_bin}:{os.environ['PATH']}"},
+        text=True,
+        capture_output=True,
+        timeout=5,
+    )
+    assert result.returncode == 1
+    receipt = _receipt(root / "logs" / "cells" / "demo.pid")
+    assert receipt["state"] == "failed"
+    assert receipt["registration_status"] == "failed"
+    assert receipt["owner_token"] == "fixture-owner"
+    assert "unbound variable" not in result.stderr
 
 
 def test_cell_commands_ignore_non_cell_worktrees(tmp_path: Path) -> None:
