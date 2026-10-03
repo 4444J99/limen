@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -118,10 +119,15 @@ def _await_startup_receipt(path: Path, *, timeout: float) -> None:
     """
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        if path.is_file():
+        try:
+            pid = int(path.read_text(encoding="utf-8").strip())
+        except (FileNotFoundError, ValueError):
+            time.sleep(0.01)
+            continue
+        if pid > 0:
             return
         time.sleep(0.01)
-    pytest.fail(f"fixture startup receipt {path} was never written within {timeout}s")
+    pytest.fail(f"fixture startup receipt {path} did not contain a valid PID within {timeout}s")
 
 
 @pytest.fixture
@@ -1966,7 +1972,7 @@ def test_registration_timeout_kills_an_exited_wrappers_pipe_holding_descendant(
         (
             "#!/bin/sh\n"
             "set -eu\n"
-            f"{sys.executable} -c 'import time; time.sleep(30)' &\n"
+            f"{shlex.quote(sys.executable)} -c 'import time; time.sleep(30)' &\n"
             'printf \'%s\\n\' "$!" > "$RELAY_TEST_CHILD_PID"\n'
         ),
         encoding="utf-8",
