@@ -153,6 +153,16 @@ def test_local_custody_does_not_probe_volume_encryption(fixture, monkeypatch):
     assert len(roots) == 2
 
 
+def test_runtime_reports_untracked_bytes_hidden_by_ambient_excludes(fixture, tmp_path):
+    source, _, _, runner, _ = fixture
+    excludes = tmp_path / "ambient-ignore"
+    excludes.write_text("hidden-payload\n")
+    git(source, "config", "core.excludesFile", str(excludes))
+    (source / "hidden-payload").write_text("unique local bytes\n")
+    assert git(source, "status", "--porcelain=v1") == ""
+    assert "hidden-payload" in runner.runtime.text(source, "status", "--porcelain=v1")
+
+
 def test_local_custody_still_rejects_wrong_registered_volume(fixture):
     source, _, _, runner, _ = fixture
     runner.custody.volume_probe = lambda p: VolumeIdentity(str(p), "/dev/wrong", "wrong", "wrong")
