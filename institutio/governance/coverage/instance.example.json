@@ -1,0 +1,33 @@
+{
+  "schema_version": "institutional.coverage-instance.v1",
+  "synthetic": true,
+  "subject_ref": "synthetic:person-001",
+  "catalog_id": "institutional-coverage",
+  "records": [
+    {"responsibility_id": "IC-D001", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D002", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D003", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D004", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D005", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D006", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D007", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D008", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D009", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D010", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D011", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D012", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D013", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D014", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D015", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-D016", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-C001", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-C002", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-C003", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-C004", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-C005", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-C006", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-C007", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-P001", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}},
+    {"responsibility_id": "IC-P002", "applicability": "unknown", "service_state": "not_assessed", "accountable_owner_ref": null, "delivery_provider_ref": null, "authority_ref": null, "disposition_reason": null, "evidence": {}}
+  ]
+}
