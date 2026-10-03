@@ -1,0 +1,34 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "01a0f4ed-d3a7-74d3-9bed-73ea8e4a4944",
+  "repository": "4444J99/limen",
+  "worktree_name": "group02-restored-retirement-20261001",
+  "base_head": "875f19907e1ea155fad2a49e25aaf578b0ad8f8e",
+  "publication_branch": "fix/group02-session-handoff-20261001",
+  "owner_url": "https://github.com/4444J99/domus-genoma/issues/397",
+  "disposition": "handoff",
+  "owned_paths": [
+    "scripts/check-group02-independent-custody.py",
+    "scripts/retire-restored-ignored-payload.py",
+    "scripts/lib/_required_checks.py",
+    "scripts/lib/merge-policy.sh",
+    "tests/test_group02_independent_custody.py",
+    "docs/continuations/group02-retirement-20261001/",
+    "docs/continuations/group02-device-replicas-20261001/"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "command": "python3 scripts/credential-wall.py --check",
+      "head": "cf72a34e4040ee82d7d91a05cc7f32d5cb2fe6f4",
+      "exit_code": 0,
+      "evidence": "docs/continuations/group02-device-replicas-20261001/session-evidence.json",
+      "sha256": "565983d9a2ee8985c9d170ad4064342caa7b6365eaa7af78e4c0566da95a55b1"
+    }
+  ],
+  "custody": {
+    "verified": false,
+    "evidence": "docs/continuations/group02-device-replicas-20261001/session-evidence.json",
+    "sha256": "565983d9a2ee8985c9d170ad4064342caa7b6365eaa7af78e4c0566da95a55b1"
+  }
+}
