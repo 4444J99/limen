@@ -108,8 +108,28 @@ historical records; a restored filesystem's distinct clocks are reported, never
 asserted recreated. The report binds both complete input digests but does not
 establish live freshness, encrypted custody, relocation permission, retirement,
 or session release. The complete historical inventory must stay in encrypted
-custody; a comparison report cannot replace it. Lineage wiring and live proof
-over all original scopes remain unfinished.
+custody; a comparison report cannot replace it.
+
+`limen.scope_lineage.validate_lineage` and the scoped predicate accept an explicit
+`scope_lineage` committed packet for relocated, still-present roots. The record
+binds the full original/current root maps, exact custody-bundle digest and a
+committed destination native inventory. Complete portable custody is validated
+before any live scan. Every relocated root must match both the original native
+records and a fresh destination observation under finite host admission; generic
+`verified` flags, path aliases, stale snapshots and narrowed original root lists
+cannot grant rebinding. Unchanged roots remain in the full custody graph and the
+normal scoped checks; relocation proof does not silently claim their current
+delta coverage. Missing/retired roots remain unmeasured. Live custody producers,
+capture cutsets for mutable evidence ledgers, cross-root hardlink dependency
+closure and retired-root acceptance remain unfinished; no existing scope is
+certified from this wiring alone.
+
+The native observation requires an already-admitted heavy caller or ancestor.
+Admission belongs outside the predicate: `require_existing_heavy` reads the
+existing private store under its existing lock, checks TTL, process-start identity
+and ancestry, and neither probes pressure nor creates, refreshes or reaps leases.
+An unadmitted caller remains unmeasured. This preserves the unchanged-recheck
+contract; it does not waive host admission for the outer workload.
 
 The existing T7 lifeboat already points at the correct symbolic form:
 

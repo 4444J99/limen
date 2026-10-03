@@ -273,6 +273,40 @@ def test_unprovable_live_legacy_scope_fails_only_attempted_mutation(tmp_path: Pa
     assert service.status(probe=False)["leases"][0]["kind"] == "execution"
 
 
+def test_existing_heavy_check_never_creates_missing_store(tmp_path: Path) -> None:
+    root = tmp_path / "missing"
+    with pytest.raises(AdmissionStateError):
+        controller(root).require_existing_heavy(pid=202)
+    assert not root.exists()
+
+
+@pytest.mark.parametrize("failure", [None, "foreign", "expired", "reused", "dead", "execution"])
+def test_existing_heavy_check_is_read_only_and_identity_bound(tmp_path: Path, failure) -> None:
+    now = [100.0]
+    service = controller(
+        tmp_path / "state",
+        now=now,
+        descendant=lambda pid, ancestor: (pid, ancestor) == (202, 101),
+    )
+    service.acquire("execution" if failure == "execution" else "heavy", owner="worker", surface="test", pid=101)
+    before = {p.name: p.read_bytes() for p in service.root.iterdir()}
+    if failure == "expired":
+        now[0] = 10000.0
+    elif failure == "reused":
+        service.identity = lambda pid: "changed" if pid == 101 else f"start-{pid}"
+    elif failure == "dead":
+        service.alive = lambda pid: pid != 101
+    service.pressure_probe = lambda: pytest.fail("read-only inheritance must not probe pressure")
+    pid = 303 if failure == "foreign" else 202
+    for _ in range(2):
+        if failure is None:
+            service.require_existing_heavy(pid=pid)
+        else:
+            with pytest.raises(AdmissionStateError):
+                service.require_existing_heavy(pid=pid)
+    assert {p.name: p.read_bytes() for p in service.root.iterdir()} == before
+
+
 def test_nested_process_inherits_parent_heavy_lease_without_releasing_it(tmp_path: Path) -> None:
     service = controller(
         tmp_path / "state",

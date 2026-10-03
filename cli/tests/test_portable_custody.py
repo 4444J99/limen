@@ -9,6 +9,7 @@ import pytest
 
 from limen.portable_custody import PortableCustodyError, assemble_bundle, validate_bundle
 from limen.prima_materia import CustodyReceiptV2
+from limen.scope_lineage import validate_lineage
 
 SID = "portable-session"
 SCOPES = {"first": "a" * 64, "second": "b" * 64}
@@ -206,6 +207,90 @@ def validate(bundle, files, **changes):
         now=changes.get("now", NOW),
         read_evidence=lambda packet: files[packet["evidence"]],
     )
+
+
+@pytest.fixture
+def lineage(graph):
+    bundle, files = graph
+    custody = json.dumps(bundle).encode()
+    source_digest = bundle["custody_receipt"]["native_metadata_digest"]
+    original = json.loads(files[bundle["supporting_evidence"][source_digest]["evidence"]])
+    locations = {"first": "c" * 64, "second": SCOPES["second"]}
+    current = {
+        **original,
+        "scope_paths": {"first": locations["first"]},
+        "entries": {"first": deepcopy(original["entries"]["first"])},
+    }
+    current["entries"]["first"]["."]["metadata"].update(atime_ns=20, ctime_ns=30)
+    current_raw = json.dumps(current).encode()
+    files["evidence/current-native"] = current_raw
+    record = {
+        "schema": "limen.scope_lineage.v1",
+        "session_id": SID,
+        "disposition": "relocated",
+        "original_scope_paths": SCOPES,
+        "current_scope_paths": locations,
+        "custody_sha256": hashlib.sha256(custody).hexdigest(),
+        "current_native": {"evidence": "evidence/current-native", "sha256": hashlib.sha256(current_raw).hexdigest()},
+    }
+    return record, custody, files, locations, current_raw
+
+
+def prove_lineage(lineage, observer):
+    record, custody, files, locations, _ = lineage
+    return validate_lineage(
+        json.dumps(record).encode(),
+        custody,
+        session_id=SID,
+        original_scope_paths=SCOPES,
+        current_scope_paths=locations,
+        read_evidence=lambda packet: files[packet["evidence"]],
+        observe_current=observer,
+        now=NOW,
+    )
+
+
+def test_relocation_requires_all_custody_and_fresh_destination(lineage):
+    calls = []
+
+    def observe(paths, atoms, file_bytes):
+        calls.append((paths, atoms, file_bytes))
+        return lineage[-1]
+
+    report = prove_lineage(lineage, observe)
+    assert calls == [({"first": "c" * 64}, 1, 0)]
+    assert report["relocated_root_ids"] == ["first"]
+    assert report["original_scope_paths"] == SCOPES
+    assert report["relocation_verified"] is True
+    assert report["retirement_authorized"] is False
+
+
+@pytest.mark.parametrize("mutation", ["session", "origin", "destination", "custody", "retired", "snapshot"])
+def test_lineage_refuses_rebinding_without_complete_evidence(lineage, mutation):
+    record, _, files, _, _ = lineage
+    if mutation == "session":
+        record["session_id"] = "another-session"
+    elif mutation == "origin":
+        record["original_scope_paths"] = {"first": SCOPES["first"]}
+    elif mutation == "destination":
+        record["current_scope_paths"] = {"first": "d" * 64}
+    elif mutation == "custody":
+        record["custody_sha256"] = "f" * 64
+    elif mutation == "retired":
+        record["disposition"] = "retired"
+    else:
+        files["evidence/current-native"] = b"{}"
+    calls = []
+    with pytest.raises(PortableCustodyError):
+        prove_lineage(lineage, lambda *args: calls.append(args))
+    assert calls == []
+
+
+def test_committed_snapshot_does_not_replace_live_measurement(lineage):
+    current = json.loads(lineage[-1])
+    current["entries"]["first"]["."]["metadata"]["mode"] = 0o700
+    with pytest.raises(PortableCustodyError):
+        prove_lineage(lineage, lambda *_: json.dumps(current).encode())
 
 
 def replace_record(bundle, files, old_digest, mutation):

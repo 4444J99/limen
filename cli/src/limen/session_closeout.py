@@ -12,7 +12,7 @@ import json
 import os
 import re
 import subprocess
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal, overload
 from urllib.parse import quote, urlsplit
@@ -379,6 +379,7 @@ def evaluate_scoped(
     read_owner: Callable[[str], dict] = owner_readback,
     read_repository: Callable[[str], dict] | None = None,
     observe_processes: Callable[..., Any] | None = None,
+    observe_native: Callable[[dict[str, Path], str, int, int], bytes] | None = None,
 ) -> dict:
     """Validate explicit roots and one native anchor without guessing repositories."""
     from limen.process_ownership import observe_many, transcript_witness
@@ -508,6 +509,8 @@ def evaluate_scoped(
         return payload
 
     custody = receipt.get("custody")
+    if "scope_lineage" in receipt and (not isinstance(receipt["scope_lineage"], dict) or not receipt["scope_lineage"]):
+        raise Unmeasured("malformed scope lineage packet")
     if not isinstance(custody, dict) or custody.get("verified") is not True:
         findings.append("required artifact custody is unproven")
     elif not isinstance(custody.get("root_ids"), list) or sorted(custody["root_ids"]) != sorted(roots):
@@ -520,14 +523,58 @@ def evaluate_scoped(
             from limen.portable_custody import validate_bundle
 
             try:
-                validate_bundle(
-                    custody_payload,
-                    session_id=session_id,
-                    scope_paths={row["id"]: row.get("path_sha256") for row in declarations},
-                    read_evidence=evidence,
-                )
+                if receipt.get("scope_lineage") is None:
+                    validate_bundle(
+                        custody_payload,
+                        session_id=session_id,
+                        scope_paths={row["id"]: row.get("path_sha256") for row in declarations},
+                        read_evidence=evidence,
+                    )
             except (ValueError, TypeError, KeyError) as exc:
                 raise Unmeasured("portable custody evidence graph is incomplete or invalid") from exc
+    lineage_verified = False
+    if lineage_packet := receipt.get("scope_lineage"):
+        if not isinstance(custody, dict) or custody.get("contract") != "limen.custody_receipt.v2":
+            raise Unmeasured("scope lineage requires complete portable custody")
+        from limen.scope_lineage import validate_lineage
+
+        def relocation_observer(locations: Mapping[str, str], atoms: int, file_bytes: int) -> bytes:
+            relocated_roots = {key: roots[key] for key in locations}
+            if observe_native is not None:
+                return observe_native(relocated_roots, session_id, atoms, file_bytes)
+            from limen.native_capture import capture_manifests
+
+            _, native = capture_manifests(
+                relocated_roots,
+                session_id=session_id,
+                max_atoms=atoms,
+                max_file_bytes=file_bytes,
+                timeout_seconds=120,
+            )
+            return native
+
+        def prove_lineage() -> None:
+            validate_lineage(
+                evidence(lineage_packet),
+                evidence(custody),
+                session_id=session_id,
+                original_scope_paths={row["id"]: row.get("path_sha256") for row in declarations},
+                current_scope_paths={key: path_digest(path) for key, path in roots.items()},
+                read_evidence=evidence,
+                observe_current=relocation_observer,
+            )
+
+        try:
+            if observe_native is None:
+                from limen.host_admission import AdmissionController
+
+                AdmissionController().require_existing_heavy(pid=os.getpid())
+                prove_lineage()
+            else:
+                prove_lineage()
+        except (ValueError, TypeError, KeyError, RuntimeError) as exc:
+            raise Unmeasured("scope lineage or live native observation is incomplete") from exc
+        lineage_verified = True
     process_evidence = []
     if packet := receipt.get("process_ownership"):
         value = json.loads(evidence(packet))
@@ -577,7 +624,7 @@ def evaluate_scoped(
     for row in declarations:
         identifier = row["id"]
         root = roots[identifier]
-        if row.get("path_sha256") != path_digest(root):
+        if row.get("path_sha256") != path_digest(root) and not lineage_verified:
             raise Unmeasured("scope path binding mismatch")
         if row.get("kind") == "retained":
             if identifier == receipt_id or owner(row.get("owner_url")).get("state") != "open":
