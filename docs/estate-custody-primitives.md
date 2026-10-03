@@ -46,6 +46,30 @@ Key rules recovered from those surfaces:
 
 ## Primitive Layers
 
+### Portable recovery amendment (2026-10-03)
+
+External drives are optional library/processing attachments, not a prerequisite
+for session measurement or recovery. An intentionally detached drive remains an
+observed offline replica; it is not replaced by a fabricated mount or device ID.
+The two-independent-copy/full-restore gate remains binding.
+
+`limen.custody_receipt.v2` adds a backend-neutral contract alongside unchanged
+v1 physical-device receipts. Each replica binds its provider, opaque account
+namespace, exact encrypted object generation, capture profile, manifest,
+authenticated ciphertext readback and full content/native-metadata restoration.
+GitHub and Google Drive are separate provider failure domains. Two repositories,
+folders or accounts at one provider are not two independent vendors. Only a real
+physical replica carries `device_id`. At least one restored replica must bind a
+retention horizon to provider evidence. Dropbox remains a sealed continuity
+kernel/recovery-card rail, not an estate archive fallback.
+
+A valid schema is not a provider observation, restore execution, session release
+or deletion permission. The producers and acceptance consumers must authenticate
+these facts before v2 evidence can authorize any retirement. Legacy receipts must
+not be rewritten to call cloud accounts physical devices. Portable recovery keeps
+the original native session/caller and records old/new scope lineage explicitly;
+it never drops a missing historical root from the denominator.
+
 The existing T7 lifeboat already points at the correct symbolic form:
 
 | Layer | Existing Root | Role |
