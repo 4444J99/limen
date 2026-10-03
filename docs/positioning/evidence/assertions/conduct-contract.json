@@ -1,0 +1,34 @@
+{
+  "contract_name": "assertion-evidence.v1",
+  "contract_version": 1,
+  "assertion_id": "limen-conduct-contract-20260831",
+  "assertion_class": "historical_record",
+  "statement": "At audited commit bc4e3a06f87fc9c36444d89411e76a261f995b2a, the Limen tree implements versioned conduct records, a deterministic broker, resource-conflict rules, bounded delegation, exact-head fencing, and terminal receipt validation.",
+  "verification_state": "verified",
+  "evidence_references": [
+    {
+      "evidence_id": "limen-conduct-models",
+      "independence_group": "limen-source-tree-91eedfac",
+      "evidence_type": "primary_source",
+      "reference": "cli/src/limen/conduct/models.py",
+      "body_hash": "sha256:0a75ef469c8effa608d810f96c6d1043ebaf6aef486c53fe49db35a778d5f1f5",
+      "observed_at": "2026-08-31T22:35:19Z"
+    },
+    {
+      "evidence_id": "limen-conduct-broker",
+      "independence_group": "limen-source-tree-91eedfac",
+      "evidence_type": "primary_source",
+      "reference": "cli/src/limen/conduct/broker.py",
+      "body_hash": "sha256:d3e49b7efe3dfe9ba240b41938e401fa6b3ea11e05e372f6f7e4dc66a85b4a17",
+      "observed_at": "2026-08-31T22:35:19Z"
+    },
+    {
+      "evidence_id": "limen-conduct-protocol-tests",
+      "independence_group": "limen-repository-tests-91eedfac",
+      "evidence_type": "artifact",
+      "reference": "cli/tests/test_conduct_protocol.py",
+      "body_hash": "sha256:e8bd385008a9a4267cbc410cb8488a3a377cc094cc6ffcd2762fecd5b096d316",
+      "observed_at": "2026-08-31T22:35:19Z"
+    }
+  ]
+}

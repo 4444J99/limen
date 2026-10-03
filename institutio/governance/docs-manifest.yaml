@@ -18,6 +18,7 @@ schema_version: 0.1
 sanctioned:
   - {path: session-closeout.md, kind: doc, owner: governance, why: "consumed at this exact path by institutio/governance/gates.yaml and the Domus immutable closeout protocol bundle"}
   - {path: architecture, kind: dir, owner: docs, why: "living subsystem/protocol design docs"}
+  - {path: audiences, kind: dir, owner: docs, why: "reader-mode editions bound to the root project-record.yml"}
   - {path: consolidation, kind: dir, owner: docs, why: "consolidation lineage"}
   - {path: continuations, kind: dir, owner: docs, why: "session continuation records"}
   - {path: diurnal, kind: dir, owner: diurnal, why: "dated three-phase daily emissions (morning/midday/evening); registry institutio/governance/diurnal.yaml"}

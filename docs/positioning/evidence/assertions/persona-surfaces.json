@@ -1,0 +1,34 @@
+{
+  "contract_name": "assertion-evidence.v1",
+  "contract_version": 1,
+  "assertion_id": "limen-persona-surfaces-20260831",
+  "assertion_class": "historical_record",
+  "statement": "At audited commit bc4e3a06f87fc9c36444d89411e76a261f995b2a, the API and Worker implementations distinguish owner, client, and public personas and expose redacted status contracts according to those sanctions.",
+  "verification_state": "verified",
+  "evidence_references": [
+    {
+      "evidence_id": "limen-fastapi-personas",
+      "independence_group": "limen-source-tree-91eedfac",
+      "evidence_type": "primary_source",
+      "reference": "web/api/main.py",
+      "body_hash": "sha256:70d6ce1a3f08fb303ba2e32a633d1d2a10773f14c62b498b9b175d3c33d342c5",
+      "observed_at": "2026-08-31T22:35:19Z"
+    },
+    {
+      "evidence_id": "limen-worker-personas",
+      "independence_group": "limen-source-tree-91eedfac",
+      "evidence_type": "primary_source",
+      "reference": "web/worker/src/index.js",
+      "body_hash": "sha256:4f81dd2dc24fa2c9742658dbcd8be624dd95c80cbd58542bb04c87f4628c8262",
+      "observed_at": "2026-08-31T22:35:19Z"
+    },
+    {
+      "evidence_id": "limen-fastapi-persona-tests",
+      "independence_group": "limen-repository-tests-91eedfac",
+      "evidence_type": "artifact",
+      "reference": "web/api/tests/test_main.py",
+      "body_hash": "sha256:d356a6a0424fa523887c2d0b3e27ac267789b1675d8567c7840728fcf84af4d1",
+      "observed_at": "2026-08-31T22:35:19Z"
+    }
+  ]
+}
