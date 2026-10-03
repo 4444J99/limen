@@ -1515,6 +1515,7 @@ def _pick_reservations(
     admission_snapshot=None,
     running_local=None,
     machine_lease=False,
+    reservation_blocker=None,
 ):
     picked = []
     picked_ids = set(_claimed_task_ids())
@@ -1556,6 +1557,7 @@ def _pick_reservations(
     )
     id2 = {t.id: t for t in lf.tasks}  # for dependency resolution
     states = []
+    targeted_resource_refusal = None
     for agent in agents:
         # Locality is the census authority (LOCAL_CHECKOUT_AGENTS); a non-local lane runs off-box.
         is_async = agent not in LOCAL_CHECKOUT_AGENTS  # remote lane — off-box, not gated by the local cap
@@ -1575,6 +1577,21 @@ def _pick_reservations(
         if rem <= 0:
             continue
         if not is_async and not resource_admitted:
+            target = id2.get(task_id)
+            if (
+                target is not None
+                and _dispatchable(target)
+                and _effective_target_agent(target) in {agent, "any"}
+                and agent_can_run_task(agent, target)
+                and _deps_met(target, id2)
+                and _routine_generated_buildout_allowed(target)
+            ):
+                targeted_resource_refusal = {
+                    "id": "targeted-local-resource-admission",
+                    "task_id": task_id,
+                    "agent": agent,
+                    "reason": resource_reason,
+                }
             if not dry:
                 print(f"  Local resource admission blocked {agent}: {resource_reason}")
             continue
@@ -1671,6 +1688,8 @@ def _pick_reservations(
             progressed = True
         if not progressed:
             break
+    if not picked and targeted_resource_refusal is not None and reservation_blocker is not None:
+        reservation_blocker.update(targeted_resource_refusal)
     return picked, reset_changed
 
 
@@ -1724,6 +1743,7 @@ def reserve_and_launch(
             weak_proxy_agents,
             task_id=task_id,
             local_per_agent=local_per_agent,
+            reservation_blocker=reservation_blocker,
         )
         return picked
     with _queue_lock(TASKS) as got:
@@ -1774,6 +1794,7 @@ def reserve_and_launch(
                 admission_snapshot=live_snapshot,
                 running_local=used_slots,
                 machine_lease=True,
+                reservation_blocker=reservation_blocker,
             )
             by_id = {task.id: task for task in lf.tasks}
             reserved_contract_hashes = {tid: execution_contract_hash(by_id[tid]) for _agent, tid in picked}
