@@ -10,22 +10,29 @@ empty-branch-is-a-todo), so they are **kept, never auto-deleted** — this is th
 location instead of hanging invisibly.
 Resolve each: open a PR and land it, or delete the branch by hand if the intention is abandoned.
 
-## Decided — closed PR, work preserved (4) — reapable, awaiting acceptance
+## Merged-but-advanced (1) — has commits ADDED after the PR merged
 
-A human CLOSED these PRs unmerged and the local tip is still that PR's exact head, so
-GitHub preserves the commit at `refs/pull/N/head` — `git fetch origin pull/N/head`
-recovers it. Deleting the local ref loses nothing. These are NOT unfulfilled intentions:
-the intention was already decided against. They are reap candidates gated on
-`docs/branch-reap-acceptance.jsonl`, not on anyone re-deciding them.
+These heads had a MERGED PR but the local branch has newer commits not on `main`.
+Push them as a follow-up PR, or delete if the extra commits are throwaway.
 
-- `feat/mcp-estate-contract-20260908` — PR #2567 `refs/pull/2567/head` @ `9e4daacf8128b6a38b30191cf42cc185fb3f4987`; local tip matches exact pull head — 9e4daacf8 docs: hand off full MCP estate completion scope
-- `feat/mcp-healing-delivery-20260908` — PR #2577 `refs/pull/2577/head` @ `5ea335bfd3262a2fcf43825d7e527494ccf4e8d9`; local tip matches exact pull head — 5ea335bfd fix(mcp): classify native plugin capabilities separately
-- `fix/keeper-publication-recovery-20260908` — PR #2569 `refs/pull/2569/head` @ `27c0d3d3a573f4a6fbdf689123aa4db02b8a1814`; local tip matches exact pull head — 27c0d3d3a feat: expose bounded authenticated keeper session audit evidence
-- `work/git-finishline-20260908` — PR #2573 `refs/pull/2573/head` @ `de70f51959613a3dab5d8887a49fab9eef642687`; local tip matches exact pull head — de70f5195 docs: retain partial audit and broker release receipts
+- `work/perplexity-research-backend-20260717` — 4847f895 fix(ci): fix ruff linting and ignore pycache binaries in test-domus-packages
 
-## Live-work branches (3) — decide each
+## Live-work branches (16) — decide each
 
-- `work/git-finishline-handoff-20260908` — aac08eaa6 docs: home verified custody and continuation receipts
-- `work/recovery-green-20260908` — eef3466ee wip: preserve recovery corrections and verification handoff
-- `work/recovery-intent-completion-20260908` — de70f5195 docs: retain partial audit and broker release receipts
+- `feat/cartridge-own-copilot-mcp` — 1ee9930f fix(ci): wrap launchd-contract-wrap long line and exclude templates from ruff in lint_test
+- `feat/mcp-estate-policy-20260908` — 6f8adbb0 fix(mcp): add version-bound conditional repair rollback
+- `feat/notification-contract` — 2a1df8bf fix(notify): close review lifecycle gaps
+- `fix/1password-ssh-opt-in` — a181ee1b fix(ssh): make 1Password SSH agent routing opt-in (LIMEN_USE_1PASSWORD_SSH)
+- `fix/agent-surface-healthcheck-20260827` — 685a67b5 fix(agents): validate current instruction surfaces
+- `fix/codex-mcp-targeted-apply-20260908` — 53068b25 fix(mcp): reconcile active profile without model retuning
+- `fix/mcp-auth-durability-20260908` — a38d3e63 fix(mcp): pin Serena launcher and bound native startup
+- `fix/no-synchronous-pr-waiters` — 5913079f fix(agents): prohibit synchronous PR waiters
+- `fix/no-wait-heartbeat-digest-20260827` — 65616673 fix(agents): make sole-owner landing immediate
+- `fix/npmrc-absolute-prefix` — be680efb fix(npm): the prefix value itself — the rename commit carried only the move
+- `fix/opencode-runtime-receipt-20260916` — e58248e7 docs: record verified managed OpenCode runtime repair
+- `fix/remove-limen-overnight-watch` — d2ffc652 Fix producer command lint
+- `fix/security-hardening-domus-genoma` — 663b3cc9 capture: autonomic off-disk sync 2026-07-02T01:03:35Z
+- `limen/gh-organvm-domus-genoma-278-e703f515` — d919e199 capture: autonomic off-disk sync 2026-07-16T04:48:58Z
+- `pr159` — 472f0368 capture: autonomic off-disk sync 2026-07-08T02:21:47Z
+- `work/standing-file-provider-authority-20260728` — b4582849 fix(storage): close standing authority review gaps
 
