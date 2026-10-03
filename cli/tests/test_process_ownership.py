@@ -2,6 +2,7 @@
 
 import json
 import os
+import sqlite3
 
 import pytest
 from limen import process_ownership as ownership
@@ -185,6 +186,57 @@ def test_native_witness_reads_header_only_and_checks_child_lineage(tmp_path):
     path.write_text(json.dumps(header))
     with pytest.raises(ownership.ObservationUnavailable):
         ownership.transcript_witness(path)
+
+
+@pytest.fixture
+def antigravity_database(tmp_path):
+    path = tmp_path / "conversation_summaries.db"
+    with sqlite3.connect(path) as connection:
+        connection.execute(
+            "CREATE TABLE conversation_summaries "
+            "(conversation_id TEXT PRIMARY KEY, workspace_uris TEXT, parent_conversation_id TEXT)"
+        )
+        connection.executemany(
+            "INSERT INTO conversation_summaries VALUES (?, ?, ?)",
+            [("root", json.dumps([tmp_path.as_uri()]), ""), ("child", json.dumps([tmp_path.as_uri()]), "root")],
+        )
+    return path
+
+
+def test_antigravity_native_witness_reads_exact_identity_and_lineage(antigravity_database, tmp_path):
+    before = antigravity_database.read_bytes()
+    assert ownership.transcript_witness(antigravity_database, "child") == {
+        "thread_id": "child",
+        "session_id": "child",
+        "parent_thread_id": "root",
+        "cwd": str(tmp_path),
+    }
+    assert antigravity_database.read_bytes() == before
+    assert not list(tmp_path.glob("*.db-*"))
+
+
+@pytest.mark.parametrize("failure", ["missing", "cycle", "missing_parent", "ambiguous", "remote_uri", "wal"])
+def test_antigravity_native_witness_rejects_unproven_metadata(antigravity_database, failure):
+    path = antigravity_database
+    with sqlite3.connect(path) as connection:
+        if failure == "cycle":
+            connection.execute(
+                "UPDATE conversation_summaries SET parent_conversation_id='child' WHERE conversation_id='root'"
+            )
+        elif failure == "missing_parent":
+            connection.execute(
+                "UPDATE conversation_summaries SET parent_conversation_id='absent' WHERE conversation_id='child'"
+            )
+        elif failure == "ambiguous":
+            connection.execute("UPDATE conversation_summaries SET workspace_uris='[]' WHERE conversation_id='child'")
+        elif failure == "remote_uri":
+            connection.execute(
+                "UPDATE conversation_summaries SET workspace_uris='[\"file://remote/private\"]' WHERE conversation_id='child'"
+            )
+    if failure == "wal":
+        path.with_name(path.name + "-wal").write_bytes(b"pending native update")
+    with pytest.raises(ownership.ObservationUnavailable):
+        ownership.transcript_witness(path, "absent" if failure == "missing" else "child")
 
 
 def test_snapshot_rejects_permission_limited_census(monkeypatch, tmp_path):

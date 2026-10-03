@@ -12,11 +12,13 @@ import json
 import os
 import re
 import shlex
+import sqlite3
 import struct
 import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 from limen.conduct.liveness import invocation_subcommand
 from limen.host_admission import pid_is_alive, process_identity
@@ -205,7 +207,73 @@ def belongs_to_subject(thread: str, subject: str, witnesses: dict[str, dict]) ->
     return False
 
 
-def transcript_witness(path: Path) -> dict:
+def antigravity_witness(path: Path, session_id: str) -> dict:
+    """Read exact native identities from a settled Antigravity metadata database."""
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", session_id):
+        raise ObservationUnavailable("native_thread_identifier_invalid")
+    wal = Path(str(path) + "-wal")
+    if wal.exists() and wal.stat().st_size:
+        raise ObservationUnavailable("native_metadata_snapshot_required")
+    before = path.stat()
+    # Immutable read avoids SQLite creating lock/SHM files in the vendor root.
+    # Refuse a pending WAL above rather than silently omit newer native records.
+    uri = path.resolve(strict=True).as_uri() + "?mode=ro&immutable=1"
+    try:
+        with sqlite3.connect(uri, uri=True, timeout=1) as connection:
+            connection.execute("PRAGMA query_only=ON")
+            seen: set[str] = set()
+            cursor = session_id
+            subject = None
+            while cursor:
+                if cursor in seen or len(seen) >= 32:
+                    raise ObservationUnavailable("native_ancestry_cycle")
+                seen.add(cursor)
+                row = connection.execute(
+                    "SELECT conversation_id, workspace_uris, parent_conversation_id "
+                    "FROM conversation_summaries WHERE conversation_id = ?",
+                    (cursor,),
+                ).fetchone()
+                if row is None or not all(isinstance(value, str) for value in row):
+                    raise ObservationUnavailable("native_metadata_invalid")
+                workspaces = json.loads(row[1])
+                if not isinstance(workspaces, list) or len(workspaces) != 1 or not isinstance(workspaces[0], str):
+                    raise ObservationUnavailable("native_scope_ambiguous")
+                parsed = urlsplit(workspaces[0])
+                cwd = Path(unquote(parsed.path))
+                if (
+                    parsed.scheme != "file"
+                    or parsed.netloc not in ("", "localhost")
+                    or parsed.query
+                    or parsed.fragment
+                    or not cwd.is_absolute()
+                    or cwd != cwd.resolve()
+                ):
+                    raise ObservationUnavailable("native_metadata_invalid")
+                if subject is None:
+                    subject = {
+                        "thread_id": row[0],
+                        "session_id": row[0],
+                        "parent_thread_id": row[2] or None,
+                        "cwd": str(cwd),
+                    }
+                cursor = row[2]
+    except (sqlite3.Error, json.JSONDecodeError) as exc:
+        raise ObservationUnavailable("native_metadata_invalid") from exc
+    if subject is None:
+        raise ObservationUnavailable("native_metadata_invalid")
+    after = path.stat()
+    if (before.st_ino, before.st_size, before.st_mtime_ns) != (after.st_ino, after.st_size, after.st_mtime_ns):
+        raise ObservationUnavailable("native_metadata_changed")
+    if wal.exists() and wal.stat().st_size:
+        raise ObservationUnavailable("native_metadata_snapshot_required")
+    return subject
+
+
+def transcript_witness(path: Path, session_id: str | None = None) -> dict:
+    if path.suffix == ".db":
+        if session_id is None:
+            raise ObservationUnavailable("native_thread_identifier_required")
+        return antigravity_witness(path, session_id)
     with path.open() as source:
         row = json.loads(source.readline(64 * 1024))
     payload = row.get("payload", {})
