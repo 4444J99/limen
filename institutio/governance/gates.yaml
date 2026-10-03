@@ -272,6 +272,13 @@ gates:
     tier: cheap
     owner: horrevm
     note: "Remote custody capacity admission uses measured quota; unknown quota fails closed."
+  portable-storage-policy:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_portable_storage_policy.py cli/tests/test_cloud_storage_doctor.py -q"
+    paths: ["institutio/governance/storage-roles.yaml", "scripts/tests/test_portable_storage_policy.py", "scripts/cloud-storage-doctor.py"]
+    scoped: true
+    tier: cheap
+    owner: horrevm
+    note: "Detached drives stay observable; remote custody preserves full restoration, independence and retirement requirements."
   ucc-credential-delivery:
     command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_ucc_local_delivery.py cli/tests/test_creds_hydrate.py -q"
     paths: ["scripts/ucc-cloudflare-delivery.py", "scripts/creds-hydrate.py", "scripts/tests/test_ucc_local_delivery.py", "cli/tests/test_creds_hydrate.py"]

@@ -27,6 +27,26 @@ provenance:
     - /Volumes/Archive4T/_OPERATIONS/STORAGE-OPERATING-MANUAL-2026-06-15.md
 health_signal: logs/cloud-storage-health.json
 
+# 2026-10-03 portable recovery amendment. These are acceptance requirements,
+# not a declaration that any current provider or original session has passed.
+portable_recovery:
+  owner: horrevm
+  contract: limen.custody_receipt.v2
+  external_drives_required: false
+  primary_ciphertext_backend: github
+  independent_ciphertext_backend: googledrive
+  capacity_authority: authenticated-live-provider-quota
+  dropbox_bulk_fallback_allowed: false
+  acceptance:
+    - complete-original-capture-and-current-delta-denominator
+    - authenticated-exact-object-revision-readback-on-each-replica
+    - independent-provider-or-device-failure-domains
+    - full-logical-and-native-metadata-restore-from-each-replica
+    - evidenced-retention-beyond-restoration
+    - explicit-original-root-to-restored-root-relocation
+  unavailable_rails_remain_visible: true
+  retirement_requires_separate_proof: true
+
 rails:
   icloud:
     service: "iCloud Drive (com.apple.CloudDocs)"
@@ -148,10 +168,10 @@ rails:
   archive4t:
     service: "Archive4T (APFS volume, 4TB SSD)"
     declared_state: adopted
-    role: "PRIMARY local archive — system of record for curated recovered data, manifests, operating docs; Backblaze-backed; library-preserve.py preserve destination."
+    role: "Optional local archive — existing curated recovered data, manifests, operating docs remain preserved; Backblaze-backed when attached. Portable session recovery uses independently verified remote custody and does not require this mount."
     never: ["Time Machine-only safety", "scratch work", "unreviewed Downloads dumps", "living inside a consumer sync folder"]
     mount: "/Volumes/Archive4T"
-    required_mounted: true    # the SSOT offline is drift the operator wants surfaced
+    required_mounted: false   # absence stays visible; portable recovery is separately gated
     trust_gates:
       - {id: mounted, gate: "volume mounted", automatable: true}
 
