@@ -26,6 +26,16 @@ An absent registration requires `--native-transcript PATH` witnessing the exact 
 Codex ID, plus the same published owner receipt; absence alone never means no obligations.
 Do not publish raw transcripts or private artifact paths in the receipt.
 
+`--native-witness PATH` is the provider-neutral spelling; `--native-transcript`
+remains a compatible alias. Codex JSONL uses the existing first `session_meta`
+record. Antigravity accepts its native `conversation_summaries.db`, querying only
+the exact session and up to 32 ancestors. Each identity must have one canonical
+local file workspace URI; absent ancestors, cycles, ambiguous roots and changing
+database metadata fail closed. A nonempty WAL requires a settled native database
+or a custody-verified SQLite snapshot before observation. The adapter is read-only
+and does not infer process ownership, registration, session release or task
+completion from an idle status.
+
 ## Existing owner receipt
 
 Store `limen.session_closeout.v1` in the existing continuation's `session-closeout.json`.
