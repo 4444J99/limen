@@ -398,9 +398,17 @@ def _try_complete_release(fields: dict[str, str]) -> bool:
     if not pr:
         return False
     policy = os.environ.get("LIMEN_MERGE_POLICY_BIN") or str(Path(__file__).resolve().parent / "merge-policy.sh")
+    # Re-entrancy guard (Copilot high + Codex P1 post-merge review on #2768): the
+    # nested predicate must not re-enter this governor's pause chokepoint — the marker
+    # is still present by design, so a nested pause read would HOLD and deadlock the
+    # release the governor already decided to complete. merge-policy.sh skips only its
+    # autonomy chokepoint under this variable; every other check still runs.
+    release_env = dict(os.environ)
+    release_env["LIMEN_SKIP_AUTONOMY_PAUSE_CHECK"] = "1"
     try:
         verdict = subprocess.run(
-            ["bash", policy, pr], capture_output=True, text=True, timeout=90, check=False, cwd=str(ROOT)
+            ["bash", policy, pr], capture_output=True, text=True, timeout=90,
+            check=False, cwd=str(ROOT), env=release_env,
         )
     except (OSError, subprocess.SubprocessError):
         return False
