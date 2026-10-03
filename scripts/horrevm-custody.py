@@ -51,9 +51,41 @@ RESTORE_TEST_DAYS = 30
 
 MAX_AGE_DAYS = int(os.environ.get("LIMEN_HORREVM_MAX_AGE_DAYS", "7"))
 BUDGET_GB = {
-    "gdrive": float(os.environ.get("LIMEN_HORREVM_DRIVE_BUDGET_GB", "5")),
+    "gdrive": float(os.environ["LIMEN_HORREVM_DRIVE_BUDGET_GB"])
+    if os.environ.get("LIMEN_HORREVM_DRIVE_BUDGET_GB", "").strip() else None,
     "dropbox": float(os.environ.get("LIMEN_HORREVM_DROPBOX_BUDGET_GB", "1")),
 }
+
+
+def transfer_envelope(remote: str, size: int, free: object) -> dict:
+    """Fail closed on unknown quota; allow custody within measured existing capacity.
+
+    The transfer retains room for an independent generation of the payload. This is
+    capacity admission, not evidence of object retention or successful restoration.
+    Dropbox remains a bounded continuity rail, never an estate archive fallback.
+    """
+    import math
+
+    budget = BUDGET_GB[remote]
+    cap = None if budget is None else budget * 1e9
+    quota_known = (
+        isinstance(free, (int, float)) and not isinstance(free, bool)
+        and math.isfinite(free) and free >= 0
+    )
+    valid_cap = cap is None or (math.isfinite(cap) and cap >= 0)
+    reason = "admitted"
+    if size < 0 or not valid_cap:
+        reason = "invalid-transfer-budget"
+    elif not quota_known:
+        reason = "quota-unmeasured"
+    elif cap is not None and size > cap:
+        reason = "operator-budget-exceeded"
+    elif free < 2 * size:
+        reason = "insufficient-generation-capacity"
+    return {"admitted": reason == "admitted", "reason": reason,
+            "payload_bytes": size, "required_free_bytes": 2 * size,
+            "quota_free_bytes": free if quota_known else None,
+            "operator_cap_bytes": cap if valid_cap else None}
 
 # The approved egress list (mirrors the lever text; edit BOTH or neither).
 # type dir-mirror: source is ALREADY ciphertext — copied as-is.
@@ -258,10 +290,10 @@ def push(apply: bool) -> int:
                         staged.append((kernel_dir / "kernel.tar.enc", "kernel.tar.enc"))
                         staged.append((kernel_dir / "RECOVERY-CARD.md", "RECOVERY-CARD.md"))
             size = payload_bytes([s for s, _ in staged])
-            cap = BUDGET_GB[remote] * 1e9
             free = rail.get("quota_free")
-            if size > cap or (isinstance(free, (int, float)) and free < 2 * size):
-                say(f"  {remote}: BUDGET REFUSED ({size / 1e9:.2f}GB vs cap {cap / 1e9:.0f}GB, free {free})")
+            rail["transfer_envelope"] = transfer_envelope(remote, size, free)
+            if not rail["transfer_envelope"]["admitted"]:
+                say(f"  {remote}: TRANSFER REFUSED ({rail['transfer_envelope']['reason']})")
                 continue
             verified = True
             for local, sub in staged:
