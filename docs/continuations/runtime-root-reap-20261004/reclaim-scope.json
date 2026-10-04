@@ -1,0 +1,137 @@
+{
+  "accepted": true,
+  "authorization": "Operator direct-session instruction 2026-10-04: 'You own the complete reap lifecycle for TARGET_PATH. TARGET_PATH(S): /Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees, /Users/4jp/Workspace/limen/.worktrees, /Users/4jp/Workspace/limen/.claude/worktrees. Goal: preserve all unique local work remotely, verify full local-to-remote parity, then reap the local directory.' and 'My explicit assignment of these exact TARGET_PATHS is the operator authorization required by the scoped reclaim contract. Bind that authorization truthfully in the required limen.worktree_reclaim_scope.v1 manifest and use the existing owner/PR rail.'",
+  "authorized_root_paths": [
+    "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees",
+    "/Users/4jp/Workspace/limen/.worktrees",
+    "/Users/4jp/Workspace/limen/.claude/worktrees"
+  ],
+  "owner_url": "https://github.com/4444J99/limen",
+  "schema": "limen.worktree_reclaim_scope.v1",
+  "targets": [
+    {
+      "git_common_dir": ".git",
+      "head": "3f197538e62a46731c3f7e5141e7e700d7dbf0c1",
+      "kind": "standalone-clone",
+      "origin": "git@github.com:organvm/alchemical-synthesizer.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/alchemical-security-20260916",
+      "path_sha256": "48eb6315d9ac6e2e8e6bfddbef378520436623ff75649772123aebda2101e0e6",
+      "regeneration_proof": "ignored-payload-is-generated-only; reconstruction from committed lockfiles",
+      "repository": "git@github.com:organvm/alchemical-synthesizer.git",
+      "root": "alchemical-security-20260916"
+    },
+    {
+      "git_common_dir": ".git",
+      "head": "71dc78a1fb3e6e6578ef10cdb2536bdc3369df1c",
+      "kind": "standalone-clone",
+      "origin": "https://github.com/4444J99/clavis.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/clavis-jules-delivery-20260926",
+      "path_sha256": "677c3d24cecc9b394ae6ac4b27610911aee82865d7a7ee7dcedd25c5d956facd",
+      "regeneration_proof": "ignored-payload-is-generated-only; reconstruction from committed lockfiles",
+      "repository": "https://github.com/4444J99/clavis.git",
+      "root": "clavis-jules-delivery-20260926"
+    },
+    {
+      "git_common_dir": ".git",
+      "head": "b08f55d687e02e503c81406c03500dffa0999b89",
+      "kind": "standalone-clone",
+      "origin": "git@github.com:organvm/editorial-standards.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/editorial-gap-filling-20260915",
+      "path_sha256": "4adf42d01e68a640d6eb036cd0ce807beab9bbb63c850d6752f0032dd63cc4d3",
+      "repository": "git@github.com:organvm/editorial-standards.git",
+      "root": "editorial-gap-filling-20260915"
+    },
+    {
+      "git_common_dir": ".git",
+      "head": "4920f6e73e42a390aab986fc80b45edc225ffae0",
+      "kind": "standalone-clone",
+      "origin": "git@github.com:organvm/laurea.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/laurea-coverage-20260916",
+      "path_sha256": "ab2123accf35853464ca9d7db753175e4fa56e5e9590192393ae6e58b09476c1",
+      "repository": "git@github.com:organvm/laurea.git",
+      "root": "laurea-coverage-20260916"
+    },
+    {
+      "git_common_dir": ".git",
+      "head": "d267fdf9c046433bc602e8ef7f896d86f01fb979",
+      "kind": "standalone-clone",
+      "origin": "https://github.com/organvm/learning-resources.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/learning-resources-pr11-20260916",
+      "path_sha256": "15856a87af0661ac8b0ce88708fd74dc2e43845faf0b822698b3bae44eae811f",
+      "repository": "https://github.com/organvm/learning-resources.git",
+      "root": "learning-resources-pr11-20260916"
+    },
+    {
+      "git_common_dir": ".git",
+      "head": "d267fdf9c046433bc602e8ef7f896d86f01fb979",
+      "kind": "standalone-clone",
+      "origin": "git@github.com:organvm/learning-resources.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/learning-security-20260916",
+      "path_sha256": "9306657b400394fd4cd80b8144d841688e1c83ce75c3921ef38a43bb8910ee8d",
+      "repository": "git@github.com:organvm/learning-resources.git",
+      "root": "learning-security-20260916"
+    },
+    {
+      "git_common_dir": ".git",
+      "head": "a411cbfa87d2896f3012f3dafda09bc92cdb70c7",
+      "kind": "standalone-clone",
+      "origin": "https://github.com/4444J99/organvm-ci-relay.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/relay-profile-pr30-20260916",
+      "path_sha256": "12ef3c923323c1e61bab7953d1bcb40885b2a34484925f450c12eb54ac571f96",
+      "repository": "https://github.com/4444J99/organvm-ci-relay.git",
+      "root": "relay-profile-pr30-20260916"
+    },
+    {
+      "git_common_dir": ".git",
+      "head": "06326aa548f6c4fc9dd01bead88a5f5132b6445e",
+      "kind": "standalone-clone",
+      "origin": "git@github.com:organvm-iv-taxis/schema-definitions.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/schema-hosting-identity-20260915",
+      "path_sha256": "fbd71b0c69cce22d4c86f0dab67d89c7e2876a86405b8da3e68cce038e17d96c",
+      "repository": "git@github.com:organvm-iv-taxis/schema-definitions.git",
+      "root": "schema-hosting-identity-20260915"
+    },
+    {
+      "git_common_dir": ".git",
+      "head": "a16516800cc0caa0df66c1842556580f7a234d93",
+      "kind": "standalone-clone",
+      "origin": "https://github.com/organvm/.github.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/shared-github-gap-filling-20260916",
+      "path_sha256": "51170bd51b72c3ae42475658615aa7a01515eed6482a7bbd3a47b6116c5b1fb1",
+      "repository": "https://github.com/organvm/.github.git",
+      "root": "shared-github-gap-filling-20260916"
+    },
+    {
+      "git_common_dir": "/Users/4jp/Workspace/limen/.git",
+      "head": "44ad0e7e5feaf1e381e529824ecdd42bffb41ec9",
+      "kind": "linked-worktree",
+      "origin": "https://github.com/4444J99/limen.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/jules-rolling-quota-20260925",
+      "path_sha256": "00901ac1528030d5f1084aa3c663ffc23e5eacef2676cff042e43bf9e2205e54",
+      "regeneration_proof": "ignored-payload-is-generated-only; reconstruction from committed lockfiles",
+      "repository": "4444J99/limen",
+      "root": "jules-rolling-quota-20260925"
+    },
+    {
+      "git_common_dir": "/Users/4jp/Workspace/limen/.git",
+      "head": "970fdddaf91d59c608d163a449b33c5816f50a24",
+      "kind": "linked-worktree",
+      "origin": "https://github.com/4444J99/limen.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/spine-closeout-custody-20260926",
+      "path_sha256": "078b02088dbec082780308bc92752e4a986b1d631e51c35154773c773bce84bd",
+      "regeneration_proof": "ignored-payload-is-generated-only; reconstruction from committed lockfiles",
+      "repository": "4444J99/limen",
+      "root": "spine-closeout-custody-20260926"
+    },
+    {
+      "git_common_dir": "/Users/4jp/Workspace/limen/.git",
+      "head": "eecce176771d09527425b07f75695a574909716e",
+      "kind": "linked-worktree",
+      "origin": "https://github.com/4444J99/limen.git",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/ucc-cloudflare-source-reconciliation-20260917",
+      "path_sha256": "1b7e73788c24a2fddce087b77d4987f1cbc6aa0b9d79942a0b7f5a6077ce00f7",
+      "repository": "4444J99/limen",
+      "root": "ucc-cloudflare-source-reconciliation-20260917"
+    }
+  ]
+}
