@@ -6,6 +6,10 @@
  "remote_parity": "every reaped HEAD verified against live git ls-remote at scope time; see acceptance events (archive_proof) for sha and live refs",
  "acceptance_events": [
   {
+   "root": "a-i--skills",
+   "head_proof": "HEAD 6b53d3ec952527cc82bb38b272e425a81ee3dd25 clean"
+  },
+  {
    "root": "antigravity-witness-20261003",
    "head_proof": "HEAD ceb560da8aea9162851abc3b6e31e66698217be3 clean"
   },
@@ -16,6 +20,10 @@
   {
    "root": "estate-multi-session-closeout-20261001",
    "head_proof": "HEAD 32b42f2b16b06751d38aabb3c7dfe3b2bb015f5f clean"
+  },
+  {
+   "root": "ges-policy-closeout-01a0f994",
+   "head_proof": "HEAD 58520a5490ba4b2d90307d16717f1c2a3764c18e clean"
   },
   {
    "root": "group01-custody-policy-20261001",
@@ -34,28 +42,40 @@
    "head_proof": "HEAD e94f98e38efa1d81e5fd64f09360bb29d78316e7 clean"
   },
   {
+   "root": "hokage-chess",
+   "head_proof": "HEAD cd41bdf5b30f1731057a3c5c75135ef7355e2a9f clean"
+  },
+  {
    "root": "portable-verification-defects-20261003",
    "head_proof": "HEAD c1b558abcead0a5badf49b5c8b90940fbe2b35fa clean"
+  },
+  {
+   "root": "pr2609",
+   "head_proof": "HEAD 2ffc781eba913a5704688527ebbf0efada2006b1 clean"
+  },
+  {
+   "root": "remote-estate-triage-20261003",
+   "head_proof": "HEAD e9edadf4a43779c0ca535c2565765606bc7da68f clean"
   },
   {
    "root": "remote-estate-triage-pr2779-20261003",
    "head_proof": "HEAD 47a255de8b2fd8f61279dc2c3a8605e7b7a8783b clean"
   },
   {
-   "root": "retirement-ignore-20261003",
-   "head_proof": "HEAD 82a7c75ef1a5f91f98f810337853ceebf33ccd5a clean"
-  },
-  {
-   "root": "session-01a0f990-closeout-20261003",
-   "head_proof": "HEAD 171d032dfe8f5502c72cec16d57df5fbaaa23a40 clean"
-  },
-  {
    "root": "repository-retirement-20260930",
    "head_proof": "HEAD 606490c74a2da04eb2a3acb69567990bf853bf28 clean"
   },
   {
-   "root": "pr2609",
-   "head_proof": "HEAD 2ffc781eba913a5704688527ebbf0efada2006b1 clean"
+   "root": "retirement-ignore-20261003",
+   "head_proof": "HEAD 82a7c75ef1a5f91f98f810337853ceebf33ccd5a clean"
+  },
+  {
+   "root": "ruff-format-fix-20261003",
+   "head_proof": "HEAD 49aeef6be31a0e334c3f0b3d9a5153768f15689c clean"
+  },
+  {
+   "root": "session-01a0f990-closeout-20261003",
+   "head_proof": "HEAD 171d032dfe8f5502c72cec16d57df5fbaaa23a40 clean"
   }
  ],
  "tranche1": {
