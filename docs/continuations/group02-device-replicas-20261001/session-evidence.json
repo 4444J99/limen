@@ -1,0 +1,15 @@
+{
+  "schema": "group02.session_evidence.v1",
+  "implementation_head": "cf72a34e4040ee82d7d91a05cc7f32d5cb2fe6f4",
+  "merged_pr": "https://github.com/4444J99/limen/pull/2809",
+  "merge_commit": "c7132820c07798a31892d01593b1569feb5a9045",
+  "focused_tests": 5,
+  "focused_tests_exit_code": 0,
+  "scoped_gates_pass": 11,
+  "estate_ruff_exit_code": 1,
+  "credential_wall_exit_code": 0,
+  "physical_ciphertext_copies": 4,
+  "physical_device_restore_accepted": false,
+  "full_cohort_independent_custody_verified": false,
+  "retention": "All protected clients and source stores retained except previously proven diagnostics retirement; owner Domus 397 retains unfinished stream."
+}
