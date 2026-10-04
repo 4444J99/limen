@@ -87,7 +87,8 @@ the container. V1 behavior and receipt shape remain unchanged.
 
 V2 carries `session_root_path_sha256` (SHA-256 of the canonical path's filesystem
 bytes), `receipt_root_id`, `session_id`, `owner_url`, and `disposition`. Each scope has
-an opaque `id`, matching `path_sha256`, and `kind: git` or `retained`. A Git scope binds
+an opaque `id`, matching `path_sha256`, and `kind: git`, `retained`, or explicitly
+evidence-backed `retired` (see below). A Git scope binds
 `repository`, numeric GitHub `repository_id`, `base_head`, `publication_branch`,
 `owned_paths`, and `retained_work`; all except the receipt root also bind `subject_head`.
 The receipt root derives its live head, avoiding a self-referential hash. Repository
@@ -121,6 +122,48 @@ process snapshot covers exact-anchor processes, recursive declared roots, and ex
 native lineage anywhere. Undeclared siblings are excluded; unknown anchor processes
 still block. Shared services and foreign sessions require positive identity evidence.
 V2 returns per-root `heads` and root-qualified findings without private paths.
+
+### Already-retired original roots
+
+A completed historical retirement does not make its original root disappear from
+session scope. Keep its ID and original canonical path in `--scope-root`, and use
+`kind: retired` with the original `path_sha256`. No dummy checkout is created.
+Retired identities remain in custody and process coverage; the process observer
+still receives their original paths. A missing root without this evidence is
+unmeasured, never silently omitted. Reappeared paths and symlink aliases fail.
+The receipt owner, native caller and broker execution checkout cannot be retired
+through this contract. Recognition grants no new deletion authority.
+
+`scope_retirement` is a committed `evidence`/`sha256` packet in the receipt owner.
+Its `limen.scope_retirement.v1` record binds `session_id`, the complete original
+`scope_paths` ID-to-path-hash map, `custody_sha256`, `retired_root_ids`, and
+`executions` packets. Custody must be a fully validated portable v2 graph over
+every original root, including the retired ones: exact authenticated readback,
+independent full native restorations and retained custody remain mandatory.
+Neither a generic verified flag nor a historical `retired_ids` list suffices.
+Portable provider replicas are supported; an external drive is not required by
+this acceptance path.
+
+Each `limen.scope_retirement_execution.v1` observation repeats the exact session,
+scope and custody bindings, records its non-overlapping `retired_root_ids`, aware
+`executed_at`, integer `exit_code: 0`, `absence_measured: true`, and a committed
+`dependencies` packet. Execution must follow both full restorations. Its
+`limen.scope_retirement_dependencies.v1` observation repeats the bindings, carries
+`observed_at` between restoration and execution, complete sorted `scope_root_ids`,
+the execution's sorted `retired_root_ids`, `observation_complete: true`, explicit
+`git_store_consumers` edges (`store_root_id`, `consumer_root_id`) and an
+`external_consumers` list. A surviving Git-store consumer, external consumer or
+incomplete census fails. Producers must measure the entire dependency scope,
+including outside consumers; unknown coverage cannot be recorded as an empty list.
+Original native link counts and group membership independently reject hardlinks
+escaping the retired cut set. Lossy historical metadata is not upgraded by inference.
+
+This consumer does not manufacture execution or dependency observations from old
+summaries. Historical evidence needs a truthful producer/adapter with the original
+observations and full custody graph; unavailable evidence remains unmeasured.
+The read-only checker rechecks absence after process observation and preserves the
+original denominator in its `scope_retirement` result. An unchanged successful
+recheck creates no files, leases, worktrees, provider runs or new owners.
 
 ```sh
 bash scripts/no-tasks-on-me.sh --session-id ID --worktree NATIVE_ROOT --receipt PRIVATE_RECEIPT --native-transcript TRANSCRIPT --scope-root owner=OWNER_ROOT --scope-root subject=SUBJECT_ROOT --json

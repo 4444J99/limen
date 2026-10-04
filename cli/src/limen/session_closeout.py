@@ -386,14 +386,14 @@ def evaluate_scoped(
 
     anchor = session_root.resolve(strict=True)
     roots = {}
+    absent_roots = set()
     for key, scope_path in scope_roots.items():
         try:
             roots[key] = scope_path.resolve(strict=True)
-        except FileNotFoundError as error:
-            # Keep the original denominator: neither omit the root nor create a
-            # replacement checkout. Historical retirement needs an authenticated
-            # custody/dependency contract before it can bypass live observation.
-            raise Unmeasured(f"scope root {key!r} is absent; custody-backed retirement is not measured") from error
+        except FileNotFoundError:
+            # Retain original absent paths for custody AND process observation.
+            roots[key] = scope_path.resolve(strict=False)
+            absent_roots.add(key)
     if any(not path.is_absolute() or path.absolute() != roots[key] for key, path in scope_roots.items()):
         raise Unmeasured("scope mappings must use canonical absolute paths")
     if len(set(roots.values())) != len(roots):
@@ -453,6 +453,8 @@ def evaluate_scoped(
     if len(ids) != len(declarations) or len(set(ids)) != len(ids) or set(ids) != set(roots):
         raise Unmeasured("scope mappings do not match receipt")
     by_id = {row["id"]: row for row in declarations}
+    if absent_roots and not receipt.get("scope_retirement"):
+        raise Unmeasured(f"scope roots {sorted(absent_roots)!r} are absent; custody-backed retirement is not measured")
     for row in declarations:
         retained = row.get("retained_work", [])
         if not isinstance(retained, list) or any(not isinstance(item, dict) for item in retained):
@@ -517,6 +519,10 @@ def evaluate_scoped(
         return payload
 
     custody = receipt.get("custody")
+    if "scope_retirement" in receipt and (
+        not isinstance(receipt["scope_retirement"], dict) or not receipt["scope_retirement"]
+    ):
+        raise Unmeasured("malformed scope retirement packet")
     if "scope_lineage" in receipt and (not isinstance(receipt["scope_lineage"], dict) or not receipt["scope_lineage"]):
         raise Unmeasured("malformed scope lineage packet")
     if not isinstance(custody, dict) or custody.get("verified") is not True:
@@ -541,6 +547,31 @@ def evaluate_scoped(
             except (ValueError, TypeError, KeyError) as exc:
                 raise Unmeasured("portable custody evidence graph is incomplete or invalid") from exc
     lineage_verified = False
+    retirement_result = None
+    if retirement_packet := receipt.get("scope_retirement"):
+        if not isinstance(custody, dict) or custody.get("contract") != "limen.custody_receipt.v2":
+            raise Unmeasured("scope retirement requires complete portable custody")
+        if any(
+            identifier in {receipt_id, broker_scope}
+            or roots[identifier] == anchor
+            or by_id[identifier].get("kind") != "retired"
+            or roots[identifier].is_symlink()
+            for identifier in absent_roots
+        ):
+            raise Unmeasured("scope retirement cannot replace a protected or undeclared root")
+        from limen.scope_retirement import validate_retirement
+
+        try:
+            retirement_result = validate_retirement(
+                evidence(retirement_packet),
+                evidence(custody),
+                session_id=session_id,
+                original_scope_paths={row["id"]: row.get("path_sha256") for row in declarations},
+                absent_root_ids=absent_roots,
+                read_evidence=evidence,
+            )
+        except (ValueError, TypeError, KeyError) as exc:
+            raise Unmeasured("scope retirement custody or dependency evidence is incomplete") from exc
     if lineage_packet := receipt.get("scope_lineage"):
         if not isinstance(custody, dict) or custody.get("contract") != "limen.custody_receipt.v2":
             raise Unmeasured("scope lineage requires complete portable custody")
@@ -632,8 +663,12 @@ def evaluate_scoped(
     for row in declarations:
         identifier = row["id"]
         root = roots[identifier]
-        if row.get("path_sha256") != path_digest(root) and not lineage_verified:
+        if row.get("path_sha256") != path_digest(root) and (not lineage_verified or row.get("kind") == "retired"):
             raise Unmeasured("scope path binding mismatch")
+        if row.get("kind") == "retired":
+            if retirement_result is None or identifier not in absent_roots:
+                raise Unmeasured("retired scope is not absent with verified retirement evidence")
+            continue
         if row.get("kind") == "retained":
             if identifier == receipt_id or owner(row.get("owner_url")).get("state") != "open":
                 raise Unmeasured("retained scope owner unavailable")
@@ -711,6 +746,17 @@ def evaluate_scoped(
         raise Unmeasured("process ownership observation unavailable or invalid")
     if observation["process_count"]:
         findings.append("session scopes have surviving or unattributed processes")
+    for identifier in absent_roots:
+        try:
+            roots[identifier].lstat()
+        except FileNotFoundError:
+            pass
+        except OSError as exc:
+            raise Unmeasured("retired scope absence observation unavailable") from exc
+        else:
+            raise Unmeasured("retired scope reappeared during process observation")
+        if roots[identifier].resolve(strict=False) != roots[identifier]:
+            raise Unmeasured("retired scope path binding changed during observation")
     return {
         "schema": SCHEMA_V2,
         "session_id": session_id,
@@ -727,6 +773,7 @@ def evaluate_scoped(
         "retained_work": notes,
         "process_count": observation["process_count"],
         "process_observation": observation,
+        "scope_retirement": retirement_result,
         "coverage": audit["coverage"],
     }
 
