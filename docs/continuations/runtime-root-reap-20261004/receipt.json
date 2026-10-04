@@ -1,0 +1,244 @@
+{
+  "schema": "limen.runtime_root_reap_receipt.v1",
+  "generated_at": "2026-10-04T23:55:00Z",
+  "session": {
+    "lane": "opencode",
+    "session_id": "ses_ef6e8d3c8ffe6kh0QD5KIEVDgy",
+    "isolation_worktree": "/Users/4jp/Workspace/.limen-worktrees/reap-runtime-roots-20261004",
+    "branch": "reap/runtime-roots-authorization-20261004",
+    "note": "Session working directory was moved out of /Users/4jp/Workspace/limen/.worktrees before any mutation so the operator-assigned container was never a session anchor."
+  },
+  "authorization": {
+    "source": "operator direct-session instruction, 2026-10-04",
+    "bound_in": "docs/continuations/runtime-root-reap-20261004/reclaim-scope*.json",
+    "schema": "limen.worktree_reclaim_scope.v1",
+    "owner_url": "https://github.com/4444J99/limen",
+    "publication": "each packet is committed on reap/runtime-roots-authorization-20261004 and the exact bytes are re-read from the live GitHub ref by scripts/reclaim-worktrees.py before any target is admitted"
+  },
+  "targets": [
+    {
+      "path": "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees",
+      "outcome": "reaped",
+      "container_removed": true,
+      "note": "7 entries -> 0. Linked worktrees c06-portfolio and 8eef/portfolio were detached before their shared stores 580e/portfolio and b4ca/portfolio-psp-c06, which were then purged. b4ca/limen was a 223 MB non-Git limen copy, journal-quarantined after its unique payload was staged."
+    },
+    {
+      "path": "/Users/4jp/Workspace/limen/.claude/worktrees",
+      "outcome": "children_reaped_container_retained",
+      "container_removed": false,
+      "note": "vltima-closeout-20260709 reaped. Container is empty but 12 VS Code Python language-server processes hold it as cwd."
+    },
+    {
+      "path": "/Users/4jp/Workspace/limen/.worktrees",
+      "outcome": "partially_reaped",
+      "container_removed": false,
+      "note": "21 of 24 entries reaped. Retained: reap-scope-20261004 (active sibling session) and speech-score-engine (registered store owner for an external worktree outside this scope)."
+    }
+  ],
+  "paths_removed": {
+    "count": 26,
+    "via": "scripts/reclaim-worktrees.py --apply --expected-plan-sha <digest>, one committed scope packet per pass",
+    "target_a_codex_runtime_root": [
+      "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/c06-portfolio",
+      "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/8eef/portfolio",
+      "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/580e/portfolio",
+      "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/b4ca/portfolio-psp-c06"
+    ],
+    "target_b_claude_root": [
+      "/Users/4jp/Workspace/limen/.claude/worktrees/vltima-closeout-20260709"
+    ],
+    "target_c_worktrees_root": [
+      "/Users/4jp/Workspace/limen/.worktrees/alchemical-security-20260916",
+      "/Users/4jp/Workspace/limen/.worktrees/clavis-jules-delivery-20260926",
+      "/Users/4jp/Workspace/limen/.worktrees/editorial-gap-filling-20260915",
+      "/Users/4jp/Workspace/limen/.worktrees/jules-rolling-quota-20260925",
+      "/Users/4jp/Workspace/limen/.worktrees/laurea-coverage-20260916",
+      "/Users/4jp/Workspace/limen/.worktrees/learning-resources-pr11-20260916",
+      "/Users/4jp/Workspace/limen/.worktrees/learning-security-20260916",
+      "/Users/4jp/Workspace/limen/.worktrees/relay-profile-pr30-20260916",
+      "/Users/4jp/Workspace/limen/.worktrees/schema-hosting-identity-20260915",
+      "/Users/4jp/Workspace/limen/.worktrees/shared-github-gap-filling-20260916",
+      "/Users/4jp/Workspace/limen/.worktrees/spine-closeout-custody-20260926",
+      "/Users/4jp/Workspace/limen/.worktrees/ucc-cloudflare-source-reconciliation-20260917",
+      "/Users/4jp/Workspace/limen/.worktrees/chat-github-20260917",
+      "/Users/4jp/Workspace/limen/.worktrees/hospes-pilot-acceptance-20260916",
+      "/Users/4jp/Workspace/limen/.worktrees/hospes-portal-hardening-20260916",
+      "/Users/4jp/Workspace/limen/.worktrees/personal-estate-20260930",
+      "/Users/4jp/Workspace/limen/.worktrees/spine-closeout-20260916",
+      "/Users/4jp/Workspace/limen/.worktrees/spine-closeout-20260916-operator-relay",
+      "/Users/4jp/Workspace/limen/.worktrees/spine-closeout-successor-20260926",
+      "/Users/4jp/Workspace/limen/.worktrees/workspace-recovery-20260916",
+      "/Users/4jp/Workspace/limen/.worktrees/speech-score-engine/.worktrees/lady-macbeth-macbeth-followup-20260809"
+    ],
+    "removal_evidence": "each removal is a typed limen.worktree_abandonment.v1 receipt under logs/worktree-abandonment/, cited by name in the reclaim JSON receipt; nothing was removed by ad hoc recursive deletion"
+  },
+  "unique_work_rescued": [
+    {
+      "what": "branch codex/psp-c06-public-surfaces-preflight @ 6cb1abf0bf08",
+      "found_in": "/Users/4jp/Workspace/limen/.agent-runtime/codex/worktrees/b4ca/portfolio-psp-c06",
+      "problem": "advertised by no remote ref; verified unpreserved before removal",
+      "action": "pushed to https://github.com/organvm-vii-kerygma/portfolio.git refs/heads/preserve/reap-20261004/psp-c06-public-surfaces-preflight",
+      "reverified": "all_local_refs_remote_proof then reported ALL_REFS_PROVEN=true with no unpreserved refs"
+    },
+    {
+      "what": "5 uncommitted tracked files (VLTIMA closeout tranche)",
+      "found_in": "/Users/4jp/Workspace/limen/.claude/worktrees/vltima-closeout-20260709",
+      "action": "committed 043d23056b01 and pushed to refs/heads/preserve/reap-20261004/vltima-closeout-20260709",
+      "verified_against_github": "live ls-remote returned 043d23056b01; independent fetch gave tree 2cd3c5a83b764a1969ba7ac7fcdf4ec78a5b466c identical to local, and all five changed blobs matched byte-for-byte",
+      "landing_status": "NOT landed. The parameters.yaml delta removes 60 lines including LIMEN_MAIL_ENVELOPE_INDEX and LIMEN_PRIVATE_MAIL_STORY, which are present on current main; landing it as-is would regress live parameters. Preserve-branch custody only; landing is a separate owner decision."
+    },
+    {
+      "what": "annotated-free tag vigilia/pii-preserve-life @ 071e10f469",
+      "found_in": "/Users/4jp/Workspace/limen/.claude/worktrees/vltima-closeout-20260709",
+      "problem": "commit existed only via this local tag; not an ancestor of any other local ref and advertised by no remote ref",
+      "action": "pushed to refs/tags/preserve/reap-20261004/vigilia-pii-preserve-life",
+      "publication_safety": "4444J99/limen is a PUBLIC repository; gitleaks detect --no-git reported no leaks across all four added files before publishing"
+    },
+    {
+      "what": "5 workstream capsules (.limen-workstream) for spine-closeout-20260916, spine-closeout-20260916-operator-relay, spine-closeout-successor-20260926, workspace-recovery-20260916 and the nested lady-macbeth-macbeth-followup-20260809",
+      "problem": "intent.md, manifest.md, README.md, workstream.json, capsule.identity, kickstart.sh and conduct-keepalive.json were absent from the committed object graph in all five capsules; the capsule is the durable intent record the workstream owed",
+      "action": "committed to docs/continuations/runtime-root-reap-20261004/capsules/ and published; capsule.identity is a pure sha256 manifest with no secrets, so publication was safe"
+    }
+  ],
+  "regeneration_and_reconstruction_evidence": [
+    {
+      "payload": ".agent-runtime/codex/worktrees/b4ca/limen (223 MB, non-Git limen source copy)",
+      "method": "git hash-object --stdin-paths against 4444J99/limen then git cat-file -e per blob",
+      "result": "3774 of 3777 file blobs already present in the committed object graph",
+      "residue": "3 absent blobs: scripts/__pycache__/session-plan.cpython-313.pyc (generated bytecode), logs/await-pr.log and .limen-private/link-health/last.json (staged, see custody)"
+    },
+    {
+      "payload": "generated caches, .pytest_cache, .astro, .generated/surfaces, web/app/public, out/, .coverage, egg-info",
+      "method": "allowlist check plus committed lockfile presence (package-lock.json, uv.lock, requirements.txt) in each owning repository",
+      "result": "reconstructible from committed source and lockfiles; removed through scripts/reclaim-generated-state.py where allowlisted, and otherwise moved loss-free to quarantine with a typed receipt"
+    },
+    {
+      "payload": "logs/worktree-abandonment receipts inside vltima-closeout-20260709",
+      "result": "identified as pytest fixtures under /private/var/.../pytest-of-4jp/pytest-70/popen-gw9/test_quarantine_orphan_moves_a0/, i.e. test residue, not operational receipts"
+    }
+  ],
+  "payload_still_quarantined": {
+    "root": "/Users/4jp/Workspace/_limen-worktree-abandonment",
+    "entries_this_session": 155,
+    "total_size": "723 MB",
+    "recovery": "same-filesystem recoverable MOVE, never a delete; every entry has a typed limen.worktree_abandonment.v1 receipt under logs/worktree-abandonment/ naming its source and destination",
+    "notable": [
+      "nongit-copy-b4ca-limen - the full 223 MB non-Git limen source copy, retained because it is the independent second copy behind the local restore proof",
+      "generated-*-pytest_cache, generated-*-__pycache__, generated-*-astro - regenerated caches",
+      "nongit copy residue of .recode tool indexes and .DS_Store markers"
+    ],
+    "note": "quarantine consumed 723 MB while the targets released far more; it is deliberately retained rather than deleted, because deletion is the separately proof-gated step this session did not perform."
+  },
+  "custody": {
+    "staging_root": "/Users/4jp/Workspace/limen/.limen-private/custody-staging/reap-runtime-roots-20261004",
+    "permissions": "0700 directories, 0600 payload files",
+    "payload": [
+      {
+        "original": ".agent-runtime/codex/worktrees/b4ca/limen/logs/await-pr.log",
+        "sha256": "3617ac6365c33a1bf69e8376c7e19254f8d205a0bb73837b2ef9216d5dc2c175"
+      },
+      {
+        "original": ".agent-runtime/codex/worktrees/b4ca/limen/.limen-private/link-health/last.json",
+        "sha256": "b059a1102d8fba81a85ed5795576e43e2600f2440629b64a28215cc8592b3f20"
+      },
+      {
+        "original": ".worktrees/personal-estate-20260930/.limen-private/session-corpus/lifecycle/personal-estate-20260930-cli-inventory.json",
+        "sha256": "1e0a4eaf11400e66b7cc2797a7b713145f5cd9819fcb3791dcb1f0edc4dd5ce9"
+      },
+      {
+        "original": ".worktrees/personal-estate-20260930/.limen-private/session-corpus/lifecycle/personal-estate-issue-update.md",
+        "sha256": "3acaa2d4b711011e387b9cbed244be13a9e94e16f01c64ffec10abccc78ad4d0"
+      },
+      {
+        "original": ".worktrees/personal-estate-20260930/.limen-private/session-corpus/lifecycle/personal-estate-pr-body.md",
+        "sha256": "9cdcb4faf2fbfc07ba404f43ac8ef42a0edad3e792626b6b43cf27fcf238cde5"
+      }
+    ],
+    "independent_copies": 2,
+    "copies": [
+      "staging root payload/",
+      "/Users/4jp/Workspace/_limen-worktree-abandonment/nongit-copy-b4ca-limen and the personal-estate original checkout path under quarantine"
+    ],
+    "local_restoration_proof": {
+      "status": "passed",
+      "method": "restored both b4ca/limen payload files from the independent quarantined copy into staging restore-proof/ and compared sha256 against the staged originals",
+      "result": "await-pr.log and link-health-last.json both RESTORE_MATCH"
+    },
+    "external_custody_state": "pending",
+    "blocked_atom": {
+      "atom": "two-drive-and-remote-encrypted-custody-for-private-reap-payload",
+      "reason": "limen.personal_custody requires two registered external devices; neither /Volumes/Archive4T nor /Volumes/T7Recovery is mounted on this host",
+      "consulted_contract": "cli/src/limen/portable_custody.py v2 - requires capture, authenticated readback, retention and full-restoration records per digest, and explicitly does not upload, restore, authorize deletion or mint evidence. Provider observers and native restorers own those records, so no portable-custody bundle was fabricated here.",
+      "owner": "docs/architecture/run-and-gun-substrate.md two-copy/restore gate",
+      "next_command": "mount both external custody devices, then python3 -m limen.personal_custody --plan <plan> --apply",
+      "not_a_task_blocker": "per the portable custody contract a missing SSD does not invalidate the local evidence above; originals are retained in two independent local copies with a passing restoration proof until the off-host gate clears"
+    }
+  },
+  "retained": [
+    {
+      "path": "/Users/4jp/Workspace/limen/.worktrees/reap-scope-20261004",
+      "reason": "active sibling recovery session",
+      "evidence": "HEAD advanced 3d9351ab -> 68270bbd -> 9a8d92903 and ignored payload grew 0 -> 141 during this reap, so the directory is in active use by another session",
+      "action_taken": "excluded from every scope packet and never targeted",
+      "next_action": "its owning session completes and releases it; then reap through the same scope rail"
+    },
+    {
+      "path": "/Users/4jp/Workspace/limen/.worktrees/speech-score-engine",
+      "reason": "registered store owner for a worktree outside this scope",
+      "evidence": "git worktree list registers /Users/4jp/Workspace/chamber_worktrees/chamber_2/speech-score-engine/pr-1 against this repository's common directory; that consumer exists, has its own staged modification to CLAUDE.md, and is intact after this reap",
+      "action_taken": "retained; its nested child lady-macbeth-macbeth-followup-20260809 was reaped first per children-before-store ordering",
+      "next_action": "reap once the external pr-1 worktree is itself released"
+    },
+    {
+      "path": "/Users/4jp/Workspace/limen/.claude/worktrees",
+      "reason": "container empty but held as cwd by 12 live processes",
+      "evidence": "12 VS Code Python language-server processes (flake8, isort, pylint) spawned by VS Code hold this directory as cwd; they belong to another application and were not killed",
+      "action_taken": "contents fully reaped; container retained rather than rmdir'd out from under live processes",
+      "next_action": "reload or close the VS Code window, then: rmdir /Users/4jp/Workspace/limen/.claude/worktrees"
+    },
+    {
+      "path": "/Users/4jp/Workspace/limen/.worktrees",
+      "reason": "retains the two entries above",
+      "next_action": "after both are released, rmdir the container"
+    }
+  ],
+  "disk": {
+    "volume": "/System/Volumes/Data",
+    "free_before_bytes": 14632404992,
+    "free_after_bytes": 32145488896,
+    "free_before_gib": 13.63,
+    "free_after_gib": 29.93,
+    "delta_gib": 16.3,
+    "note": "measured with df -k on the same volume before the first removal and after the last; the quarantine root (723 MB) and the staged custody payload are deliberately still consuming space because they hold the only recoverable copies"
+  },
+  "idempotency": {
+    "claim": "a second pass over the authorized scope yields no further authorized cleanup",
+    "basis": "every removal re-ran the reclaimer with a fresh --check and an --expected-plan-sha digest; the final state of each target was re-probed and residual ignored payload measured 0 before each removal",
+    "residual_checked": [
+      "jules-rolling-quota-20260925",
+      "spine-closeout-custody-20260926",
+      "vltima-closeout-20260709",
+      "chat-github-20260917",
+      "hospes-pilot-acceptance-20260916",
+      "hospes-portal-hardening-20260916",
+      "personal-estate-20260930",
+      "spine-closeout-20260916",
+      "spine-closeout-20260916-operator-relay",
+      "spine-closeout-successor-20260926",
+      "workspace-recovery-20260916",
+      "lady-macbeth-macbeth-followup-20260809",
+      "c06-portfolio",
+      "8eef/portfolio",
+      "580e/portfolio",
+      "b4ca/portfolio-psp-c06"
+    ]
+  },
+  "boundaries_respected": [
+    "children were processed before their shared store or parent in every case (c06-portfolio before 580e/portfolio; 8eef/portfolio before b4ca/portfolio-psp-c06; lady-macbeth before speech-score-engine)",
+    "no target or payload outside the three operator-assigned TARGET_PATHs was removed, and the rest of .agent-runtime/codex was left untouched",
+    "no process was killed except two idle git-lfs ssh multiplexing helpers (PIDs 4740 and 4717) that this session itself created from its own pushes, each verified childless with no in-flight transfer and no second consumer of its socket",
+    "the human acceptance ledger docs/worktree-reclaim-acceptance.jsonl was not edited; authorization was bound through committed limen.worktree_reclaim_scope.v1 packets instead",
+    "direct main writes were never made; all publication went through the topic branch and PR rail",
+    "no portable custody evidence was minted to satisfy the two-drive gate"
+  ]
+}
