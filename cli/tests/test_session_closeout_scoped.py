@@ -3,10 +3,12 @@
 import hashlib
 import json
 import subprocess
+from datetime import UTC, datetime
 
 import pytest
 from limen import session_closeout as closeout
 from limen.session_closeout import path_digest
+from portable_custody_fixtures import make_graph, make_retirement
 
 SID = "multi-session"
 OWNER = "https://github.com/example/project/issues/1"
@@ -119,11 +121,11 @@ def test_non_git_native_root_releases_explicit_scopes_idempotently(cohort):
 def test_absent_original_root_reports_unmeasured_without_recreating_it(cohort, tmp_path):
     roots, _, _, _, evaluate = cohort
     missing = tmp_path / "historically-retired"
-    mapping = {**roots, "retired-root": missing}
-    with pytest.raises(closeout.Unmeasured, match="retired-root.*custody-backed retirement is not measured"):
+    mapping = {**roots, "private": missing}
+    with pytest.raises(closeout.Unmeasured, match="private.*custody-backed retirement is not measured"):
         evaluate(scope_roots=mapping)
     assert not missing.exists()
-    assert set(mapping) == {*roots, "retired-root"}
+    assert set(mapping) == set(roots)
 
 
 def test_dangling_scope_link_is_not_accepted_as_retirement(cohort, tmp_path):
@@ -131,10 +133,126 @@ def test_dangling_scope_link_is_not_accepted_as_retirement(cohort, tmp_path):
     missing = tmp_path / "absent-target"
     link = tmp_path / "dangling-scope"
     link.symlink_to(missing, target_is_directory=True)
-    with pytest.raises(closeout.Unmeasured, match="dangling-root.*custody-backed retirement is not measured"):
+    with pytest.raises(closeout.Unmeasured, match="canonical absolute paths"):
         evaluate(scope_roots={**roots, "dangling-root": link})
     assert link.is_symlink()
     assert not missing.exists()
+
+
+@pytest.fixture
+def retired_cohort(cohort, tmp_path):
+    roots, receipt, _, publish, evaluate = cohort
+    roots["retired"] = tmp_path / "already-retired"
+    receipt["scope_roots"].append({"id": "retired", "kind": "retired", "path_sha256": path_digest(roots["retired"])})
+    scopes = {row["id"]: row["path_sha256"] for row in receipt["scope_roots"]}
+    bundle, files = make_graph(session_id=SID, scope_paths=scopes, now=datetime.now(UTC))
+    retirement, custody, _, _, _ = make_retirement(
+        bundle, files, session_id=SID, scope_paths=scopes, retired_root_ids={"retired"}
+    )
+    for path, raw in files.items():
+        target = roots["owner"] / path
+        target.parent.mkdir(exist_ok=True)
+        target.write_bytes(raw)
+    (roots["owner"] / "custody.json").write_bytes(custody)
+    retirement_raw = json.dumps(retirement).encode()
+    (roots["owner"] / "retirement.json").write_bytes(retirement_raw)
+    receipt["custody"] = {
+        "verified": True,
+        "contract": "limen.custody_receipt.v2",
+        "root_ids": sorted(roots),
+        "evidence": "custody.json",
+        "sha256": hashlib.sha256(custody).hexdigest(),
+    }
+    receipt["scope_retirement"] = {
+        "evidence": "retirement.json",
+        "sha256": hashlib.sha256(retirement_raw).hexdigest(),
+    }
+    publish()
+    return roots, receipt, publish, evaluate
+
+
+def test_retired_root_releases_without_creation_or_scope_pruning(retired_cohort, tmp_path):
+    roots, _, _, evaluate = retired_cohort
+    calls = []
+
+    def observe(paths, *args, **kwargs):
+        calls.append(paths)
+        return {"complete": True, "process_count": 0}
+
+    before = git(roots["owner"], "status", "--porcelain")
+    filesystem_before = {
+        path.relative_to(tmp_path): path.read_bytes() for path in tmp_path.rglob("*") if path.is_file()
+    }
+    result = evaluate(observe_processes=observe)
+    assert result["session_released"]
+    assert result["scope_retirement"]["original_root_ids"] == sorted(roots)
+    assert result["scope_retirement"]["retired_root_ids"] == ["retired"]
+    assert not result["retirement_authorized"]
+    assert set(calls[0]) == set(roots.values())
+    assert evaluate(observe_processes=observe) == result
+    assert git(roots["owner"], "status", "--porcelain") == before
+    assert not roots["retired"].exists()
+    assert {path.relative_to(tmp_path): path.read_bytes() for path in tmp_path.rglob("*") if path.is_file()} == (
+        filesystem_before
+    )
+
+
+@pytest.mark.parametrize(
+    "failure", ["source_returns", "symlink_returns", "during_observation", "dirty_evidence", "legacy"]
+)
+def test_retired_root_stays_fail_closed(retired_cohort, failure):
+    roots, receipt, publish, evaluate = retired_cohort
+    changes = {}
+    if failure == "source_returns":
+        roots["retired"].mkdir()
+    elif failure == "symlink_returns":
+        roots["retired"].symlink_to(roots["private"], target_is_directory=True)
+    elif failure == "during_observation":
+
+        def observe(*args, **kwargs):
+            roots["retired"].mkdir()
+            return {"complete": True, "process_count": 0}
+
+        changes["observe_processes"] = observe
+    elif failure == "dirty_evidence":
+        (roots["owner"] / "retirement.json").write_text("{}")
+    else:
+        receipt["custody"].pop("contract")
+        publish()
+    with pytest.raises(closeout.Unmeasured):
+        evaluate(**changes)
+
+
+def test_process_in_retired_scope_blocks_release(retired_cohort):
+    _, _, _, evaluate = retired_cohort
+    assert not evaluate(observe_processes=lambda *args, **kwargs: {"complete": True, "process_count": 1})[
+        "session_released"
+    ]
+
+
+def test_retirement_cannot_replace_broker_execution_checkout(retired_cohort):
+    roots, receipt, publish, evaluate = retired_cohort
+    receipt["broker_scope_root_id"] = "retired"
+    publish()
+    audit = {
+        "session_id": SID,
+        "session_present": True,
+        "active_lease_count": 0,
+        "retained_run_count": 0,
+        "runs": [],
+        "coverage": {"retained_state_complete": True},
+    }
+    with pytest.raises(closeout.Unmeasured, match="protected or undeclared"):
+        evaluate(audit=audit, binding={"session_id": SID, "worktree": str(roots["retired"])})
+
+
+@pytest.mark.parametrize("packet", [None, False, {}, "unmeasured"])
+def test_malformed_retirement_packet_never_bypasses_custody(cohort, packet):
+    _, receipt, _, publish, evaluate = cohort
+    receipt["scope_retirement"] = packet
+    publish()
+    with pytest.raises(closeout.Unmeasured, match="malformed scope retirement"):
+        evaluate()
 
 
 @pytest.mark.parametrize(
