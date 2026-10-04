@@ -126,7 +126,8 @@ def validate_retirement(
             "retirement dependency coverage is incomplete",
         )
         edges, external = dependency.get("git_store_consumers"), dependency.get("external_consumers")
-        _require(isinstance(edges, list) and isinstance(external, list), "retirement consumers are unmeasured")
+        if not isinstance(edges, list) or not isinstance(external, list):
+            raise PortableCustodyError("retirement consumers are unmeasured")
         _require(not external, "retirement has external surviving consumers")
         for edge in edges:
             _require(
