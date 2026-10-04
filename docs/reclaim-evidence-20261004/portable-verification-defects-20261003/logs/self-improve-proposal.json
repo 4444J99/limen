@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-10-03T19:21:17.859568+00:00",
+  "source": "/Users/4jp/.local/share/limen/worktrees/portable-verification-defects-20261003/tasks.yaml",
+  "organ": "self-improve",
+  "ladder_rung": "self-improve (final)",
+  "thresholds": {
+    "fail_rate": 0.6,
+    "min_samples": 5,
+    "chronic_redispatch": 5,
+    "min_pattern": 3
+  },
+  "board_summary": {
+    "total_tasks": 0,
+    "status_breakdown": {},
+    "real_lanes_observed": []
+  },
+  "lane_adjustments": [],
+  "retire_patterns": [],
+  "rerank": [],
+  "apply": {
+    "wired": true,
+    "note": "--apply now closes the loop: lane weights are consumed by route.py (_learned_weights, gated LIMEN_SI_APPLY=1); rerank boost/deprioritise set OPEN tasks' priority (idempotent targets); retire→archived/superseded is gated behind LIMEN_SI_RETIRE=1 (destructive, default OFF). All under the canonical queue lock, reversible."
+  }
+}
