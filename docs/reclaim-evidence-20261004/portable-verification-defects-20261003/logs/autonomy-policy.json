@@ -1,0 +1,5 @@
+{
+  "mode": "observe",
+  "dispatch_enabled": false,
+  "reason": "Default after 2026-06-20 usage audit: observe safely; dispatch requires an explicit policy change."
+}
