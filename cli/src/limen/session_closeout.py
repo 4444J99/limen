@@ -385,7 +385,17 @@ def evaluate_scoped(
     from limen.process_ownership import observe_many, transcript_witness
 
     anchor = session_root.resolve(strict=True)
-    roots = {key: path.resolve(strict=True) for key, path in scope_roots.items()}
+    roots = {}
+    for key, path in scope_roots.items():
+        try:
+            roots[key] = path.resolve(strict=True)
+        except FileNotFoundError as error:
+            # Keep the original denominator: neither omit the root nor create a
+            # replacement checkout. Historical retirement needs an authenticated
+            # custody/dependency contract before it can bypass live observation.
+            raise Unmeasured(
+                f"scope root {key!r} is absent; custody-backed retirement is not measured"
+            ) from error
     if any(not path.is_absolute() or path.absolute() != roots[key] for key, path in scope_roots.items()):
         raise Unmeasured("scope mappings must use canonical absolute paths")
     if len(set(roots.values())) != len(roots):
