@@ -1565,6 +1565,9 @@ def fake_popen(*args, **kwargs):
         time.sleep(0.01)
     return FakeProc()
 da.subprocess.Popen = fake_popen
+# Match the parent's _load unit fixture; the reservation-race test is not a
+# live host-capacity canary. Dedicated resource-denial tests retain the gate.
+da.current_required_free_gib = lambda: 0.0
 picked = da.reserve_and_launch(['codex'], per_agent=1, cap=1, dry=False)
 Path({str(first_out)!r}).write_text(json.dumps(picked))
 """
@@ -1577,6 +1580,7 @@ spec.loader.exec_module(da)
 def must_not_spawn(*args, **kwargs):
     raise AssertionError('second process reused the reserved local slot')
 da.subprocess.Popen = must_not_spawn
+da.current_required_free_gib = lambda: 0.0
 picked = da.reserve_and_launch(['codex'], per_agent=1, cap=1, dry=False)
 Path({str(second_out)!r}).write_text(json.dumps(picked))
 """
@@ -1584,8 +1588,8 @@ Path({str(second_out)!r}).write_text(json.dumps(picked))
     deadline = time.monotonic() + 10
     while not ready.exists() and first.poll() is None and time.monotonic() < deadline:
         time.sleep(0.01)
-    assert ready.exists(), "first dispatcher never reached the pre-marker barrier"
     try:
+        assert ready.exists(), "first dispatcher never reached the pre-marker barrier"
         second = subprocess.run(
             [sys.executable, "-c", second_code],
             env=env,
@@ -3151,6 +3155,26 @@ def test_targeted_only_dry_run_is_exact_and_does_not_mutate(tmp_path, monkeypatc
     assert receipt["harvested_count"] == 0
 
 
+@pytest.mark.parametrize("dry", [True, False])
+def test_targeted_resource_denial_records_actual_observation(tmp_path, monkeypatch, dry):
+    da = _load(tmp_path, n_open=1)
+    monkeypatch.setattr(da, "_disk_free_gib", lambda: 0.25)
+    monkeypatch.setattr(da, "current_required_free_gib", lambda: 1.0)
+    blocker = {}
+    before = (tmp_path / "tasks.yaml").read_bytes()
+    assert (
+        da.reserve_and_launch(["codex"], per_agent=1, cap=1, dry=dry, task_id="T0", reservation_blocker=blocker) == []
+    )
+    assert blocker == {
+        "id": "targeted-local-resource-admission",
+        "task_id": "T0",
+        "agent": "codex",
+        "reason": "resource envelope breached (0.250 < 1.000 GiB)",
+    }
+    assert (tmp_path / "tasks.yaml").read_bytes() == before
+    assert not list(da.RUNS.glob("*.running"))
+
+
 def test_targeted_only_dry_run_is_unmocked_byte_identical_across_control_surfaces(tmp_path):
     os.environ["LIMEN_ROOT"] = str(tmp_path)
     os.environ["LIMEN_TASKS"] = str(tmp_path / "tasks.yaml")
@@ -3262,11 +3286,20 @@ pathlib.Path("logs/handoff.json").write_text("MUTATED BY FORBIDDEN REFRESH")
         check=False,
     )
 
-    assert proc.returncode == 0, proc.stdout + proc.stderr
     assert byte_snapshot() == before
     receipt = json.loads(proc.stdout.splitlines()[-1])
-    assert receipt["status"] == "would_launch"
-    assert receipt["launched"] == [["codex", task.id]]
+    if proc.returncode == 10:
+        # This is an unmocked host canary. A real capacity denial is a valid
+        # read-only result only when the actual refusing gate is named.
+        assert receipt["status"] == "zero_launch"
+        assert receipt["launched"] == []
+        assert receipt["blocker"]["id"] == "targeted-local-resource-admission"
+        assert receipt["blocker"]["task_id"] == task.id
+        assert receipt["blocker"]["reason"]
+    else:
+        assert proc.returncode == 0, proc.stdout + proc.stderr
+        assert receipt["status"] == "would_launch"
+        assert receipt["launched"] == [["codex", task.id]]
 
 
 def test_targeted_only_retains_dispatch_admission_gate(tmp_path, monkeypatch, capsys):

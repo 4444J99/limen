@@ -84,7 +84,7 @@ def test_two_remote_vendors_without_device_ids():
         lambda r: r["replicas"][0].update(device_id="fakeDeviceIdentifier"),
         lambda r: r["replicas"][0]["artifacts"][0].update(readback_digest="0" * 64),
         lambda r: r["replicas"][0]["artifacts"][0].update(
-            object_id="https://provider/object?token=secret"  # allow-secret
+            object_id="https://provider/object?token=secret"  # allow-secret: synthetic rejection fixture
         ),  # allow-secret
         lambda r: r["replicas"][1]["artifacts"][0].update(ciphertext_bytes=99),
         lambda r: r["replicas"][1].update(encryption_profile_digest="0" * 64),

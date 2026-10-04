@@ -322,7 +322,10 @@ registration_loop() {
     "$run_owner_session_id" "$human_protected"
   trap 'registration_final_state="stopped"; exit 0' TERM INT
   trap 'write_cell_receipt "$slug" "$registration_final_state" "$registration_status" "$cpid" "$start_identity" "$owner_token" "$session_id" "$agent" "$surface" "$p" "$loop" "$workstream" "$run_id" "$run_owner_session_id" "$human_protected"' EXIT
-  cd "$p" || { registration_status="failed"; registration_final_state="failed"; return 1; }
+  # This function owns the registration-loop process. Exit while its local
+  # receipt fields still exist: returning first unwinds them before the EXIT
+  # trap and leaves a stale starting/registered receipt (nounset: slug).
+  cd "$p" || { registration_status="failed"; registration_final_state="failed"; exit 1; }
   export LIMEN_ROOT="$p"
   export LIMEN_LIVE_ROOT="$canonical_root"
   export LIMEN_AGENT="$agent"
@@ -352,14 +355,14 @@ registration_loop() {
     if ! limen "${register_args[@]}"; then
       registration_status="failed"
       registration_final_state="failed"
-      return 1
+      exit 1
     fi
     registration_status="accepted"
     write_cell_receipt \
       "$slug" "registered" "$registration_status" "$cpid" "$start_identity" "$owner_token" \
       "$session_id" "$agent" "$surface" "$p" "$loop" "$workstream" "$run_id" \
       "$run_owner_session_id" "$human_protected"
-    [ "$loop" = "1" ] || return 0
+    [ "$loop" = "1" ] || exit 0
     for _ in {1..30}; do
       sleep 1
     done

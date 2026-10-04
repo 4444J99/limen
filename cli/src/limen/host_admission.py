@@ -993,6 +993,48 @@ class AdmissionController:
             "reaped": reaped or [],
         }
 
+    def require_existing_heavy(self, *, pid: int) -> None:
+        """Require live caller/ancestor admission without creating or changing state."""
+        if pid <= 0 or not self.alive(pid) or self.identity(pid) is None:
+            raise AdmissionStateError("caller process identity is unavailable")
+        try:
+            root_stat = self.root.lstat()
+            if (
+                not stat.S_ISDIR(root_stat.st_mode)
+                or root_stat.st_uid != os.getuid()
+                or stat.S_IMODE(root_stat.st_mode) & 0o077
+            ):
+                raise AdmissionStateError("existing admission root is not private")
+            flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0)
+            fd = os.open(self.root / ".lock", flags)
+        except OSError as exc:
+            raise AdmissionStateError("existing heavy admission is unavailable") from exc
+        try:
+            lock_stat = os.fstat(fd)
+            if (
+                not stat.S_ISREG(lock_stat.st_mode)
+                or lock_stat.st_uid != os.getuid()
+                or stat.S_IMODE(lock_stat.st_mode) & 0o077
+            ):
+                raise AdmissionStateError("existing admission lock is not private")
+            fcntl.flock(fd, fcntl.LOCK_SH)
+            state = self._load()
+            now = self.clock()
+            for lease in state["leases"]:
+                owner_pid = int(lease["pid"])
+                if (
+                    lease["kind"] == "heavy"
+                    and now < float(lease["expires_epoch"])
+                    and self.alive(owner_pid)
+                    and self.identity(owner_pid) == lease["process_identity"]
+                    and (pid == owner_pid or self.descendant(pid, owner_pid))
+                ):
+                    return
+            raise AdmissionStateError("no live caller-owned or ancestor heavy admission")
+        finally:
+            fcntl.flock(fd, fcntl.LOCK_UN)
+            os.close(fd)
+
     def acquire(
         self,
         kind: str,
