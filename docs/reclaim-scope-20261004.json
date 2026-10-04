@@ -66,13 +66,13 @@
     {
      "path": "logs/autonomy-policy.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/group02-restored-retirement-20261001/logs/autonomy-policy.json",
+     "evidence": "docs/reclaim-evidence-20261004/group02-restored-retirement-20261001/48431773f5fc361d03f74df17b0d99e2024c5c8250636d16027179f3e327c376.evidence",
      "sha256": "48431773f5fc361d03f74df17b0d99e2024c5c8250636d16027179f3e327c376"
     },
     {
      "path": "logs/tabularius-organ-state.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/group02-restored-retirement-20261001/logs/tabularius-organ-state.json",
+     "evidence": "docs/reclaim-evidence-20261004/group02-restored-retirement-20261001/fe3e8d0bf0f8ec342b7ca5bdfd9029b6a9e4098cf2e5ecc58098a7080b2e7af6.evidence",
      "sha256": "fe3e8d0bf0f8ec342b7ca5bdfd9029b6a9e4098cf2e5ecc58098a7080b2e7af6"
     }
    ],
@@ -96,157 +96,157 @@
     {
      "path": "logs/autonomy-policy.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/autonomy-policy.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/48431773f5fc361d03f74df17b0d99e2024c5c8250636d16027179f3e327c376.evidence",
      "sha256": "48431773f5fc361d03f74df17b0d99e2024c5c8250636d16027179f3e327c376"
     },
     {
      "path": "logs/claude-identity-bundle-status.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/claude-identity-bundle-status.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/287e973674ba12b1749d1637dc8ed1ffbc10d8b647b195911b67531a613b68d9.evidence",
      "sha256": "287e973674ba12b1749d1637dc8ed1ffbc10d8b647b195911b67531a613b68d9"
     },
     {
      "path": "logs/feed-health.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/feed-health.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/e1240194c3700a3d6b577de73474a10a2025b03ab05f5f4cbe6bb7ad0279aaa3.evidence",
      "sha256": "e1240194c3700a3d6b577de73474a10a2025b03ab05f5f4cbe6bb7ad0279aaa3"
     },
     {
      "path": "logs/fork-safety.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/fork-safety.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/19c591d8e7986e151d3c4cf5c7955899c47cac5cc0e3f527c4171f62d77025ca.evidence",
      "sha256": "19c591d8e7986e151d3c4cf5c7955899c47cac5cc0e3f527c4171f62d77025ca"
     },
     {
      "path": "logs/observation/feed-latest.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/observation/feed-latest.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/846a6dbe848eb3b25649e58a1a2b00de4b69c01d9d7bef0935fb7a4f5d34de7c.evidence",
      "sha256": "846a6dbe848eb3b25649e58a1a2b00de4b69c01d9d7bef0935fb7a4f5d34de7c"
     },
     {
      "path": "logs/observation/feed.jsonl",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/observation/feed.jsonl",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/38699bf72dca69921919eeab8d1f59df506b6499378595656a6928649df26273.evidence",
      "sha256": "38699bf72dca69921919eeab8d1f59df506b6499378595656a6928649df26273"
     },
     {
      "path": "logs/route-health.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/route-health.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/69c144fa2109ff445754468eca70b32bec3a7797b2230034a7f326178e40f2bc.evidence",
      "sha256": "69c144fa2109ff445754468eca70b32bec3a7797b2230034a7f326178e40f2bc"
     },
     {
      "path": "logs/self-improve-proposal.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/self-improve-proposal.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/b6713b9bbf26cd7552786688c7b5755dcc36e22f8a9cb873bb2d8ddf453be373.evidence",
      "sha256": "b6713b9bbf26cd7552786688c7b5755dcc36e22f8a9cb873bb2d8ddf453be373"
     },
     {
      "path": "logs/worktree-abandonment/090048fb19de7e9a292fa90e7615923dc9e40abc9b0a0cb49357c77d62fb9891.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/090048fb19de7e9a292fa90e7615923dc9e40abc9b0a0cb49357c77d62fb9891.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/5cecef155ecc13f77217dbc39708ea18ad826288e9aa2084ef0ba8388e05b0aa.evidence",
      "sha256": "5cecef155ecc13f77217dbc39708ea18ad826288e9aa2084ef0ba8388e05b0aa"
     },
     {
      "path": "logs/worktree-abandonment/1a0c7ede9f1125ae34dc69d928f8c5e4da2ae7840a54d669bf2b1644fcadf874.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/1a0c7ede9f1125ae34dc69d928f8c5e4da2ae7840a54d669bf2b1644fcadf874.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/cd564007d69bd4a2269bf04d008d7093ea81d19d9faa8759a366c6445e2eee4c.evidence",
      "sha256": "cd564007d69bd4a2269bf04d008d7093ea81d19d9faa8759a366c6445e2eee4c"
     },
     {
      "path": "logs/worktree-abandonment/1e2fee5d6d60b6d967f5fb6d0e62a1522f2d233403591de127830619a1a9a19e.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/1e2fee5d6d60b6d967f5fb6d0e62a1522f2d233403591de127830619a1a9a19e.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/b79eaa608a3f92a516e25287d0f93a59ab7b2f5db3e4a5bb8a49b9b797ce4891.evidence",
      "sha256": "b79eaa608a3f92a516e25287d0f93a59ab7b2f5db3e4a5bb8a49b9b797ce4891"
     },
     {
      "path": "logs/worktree-abandonment/2913f705e2a89ba2780d75de8dea77846a4697e2f0c1cee0ce10530df6718f0e.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/2913f705e2a89ba2780d75de8dea77846a4697e2f0c1cee0ce10530df6718f0e.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/471f6d68625b8e0a67b568196bda93af94b7897828384bbcf1f419b97ecc5f28.evidence",
      "sha256": "471f6d68625b8e0a67b568196bda93af94b7897828384bbcf1f419b97ecc5f28"
     },
     {
      "path": "logs/worktree-abandonment/2cfc290034a0a20a23a84045e659aa63baf41bfa52b13928804340d0dd05f047.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/2cfc290034a0a20a23a84045e659aa63baf41bfa52b13928804340d0dd05f047.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/25743598f5b61b53818f6ba232f1c1c919e2653e49fa99a1724a239f49a962af.evidence",
      "sha256": "25743598f5b61b53818f6ba232f1c1c919e2653e49fa99a1724a239f49a962af"
     },
     {
      "path": "logs/worktree-abandonment/2e787827888125cf212361043d7da9251a974c057a3397a42f021820e23c23e9.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/2e787827888125cf212361043d7da9251a974c057a3397a42f021820e23c23e9.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/b182c21d9aaf727517f963ce6a1cd998b27a45082157dfb1aeff69d0bf4e9f8b.evidence",
      "sha256": "b182c21d9aaf727517f963ce6a1cd998b27a45082157dfb1aeff69d0bf4e9f8b"
     },
     {
      "path": "logs/worktree-abandonment/36bfc427dfa4e8184e7f3a4442002c5648d7ad8a80c6249191bfefcc7ffc8254.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/36bfc427dfa4e8184e7f3a4442002c5648d7ad8a80c6249191bfefcc7ffc8254.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/d58dcbe065ff3ba87e2ea1bbbfaf6f8444f632b7b5a7efc761f77dc3766bc025.evidence",
      "sha256": "d58dcbe065ff3ba87e2ea1bbbfaf6f8444f632b7b5a7efc761f77dc3766bc025"
     },
     {
      "path": "logs/worktree-abandonment/6f021fd80a3f3dec2cf9ff57ccb9962bd9477a62336ea15f9040cf1a9b053fff.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/6f021fd80a3f3dec2cf9ff57ccb9962bd9477a62336ea15f9040cf1a9b053fff.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/2ccd06fee3cbda0a121336d7b2d7d91e87509d9674d76f1e6f190225c75944a6.evidence",
      "sha256": "2ccd06fee3cbda0a121336d7b2d7d91e87509d9674d76f1e6f190225c75944a6"
     },
     {
      "path": "logs/worktree-abandonment/9863cefcc82152df40a6fa3ce1a090659e93375ea7603c828d6b9f0ab05a8a7c.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/9863cefcc82152df40a6fa3ce1a090659e93375ea7603c828d6b9f0ab05a8a7c.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/901d3a054186ffa5d751eed1ddfc2e89bd9b5c003002925948dff17230e38cd4.evidence",
      "sha256": "901d3a054186ffa5d751eed1ddfc2e89bd9b5c003002925948dff17230e38cd4"
     },
     {
      "path": "logs/worktree-abandonment/9e747b2643937a888f65d016d2a67cbf96ed90a1fe5aa100637c57e343b36905.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/9e747b2643937a888f65d016d2a67cbf96ed90a1fe5aa100637c57e343b36905.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/199f0fd8fb2e3ef5f2e166d6e62cf2291821f97331d35224c882b42eff7b0939.evidence",
      "sha256": "199f0fd8fb2e3ef5f2e166d6e62cf2291821f97331d35224c882b42eff7b0939"
     },
     {
      "path": "logs/worktree-abandonment/dbb635e4631ea386ec41f27892e2b08bea63e77d7edeb925d998776490fc72d1.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/dbb635e4631ea386ec41f27892e2b08bea63e77d7edeb925d998776490fc72d1.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/5d274d3197fca212b23e259b4a36a00a9e24a32b6985464fc333cc912d85b148.evidence",
      "sha256": "5d274d3197fca212b23e259b4a36a00a9e24a32b6985464fc333cc912d85b148"
     },
     {
      "path": "logs/worktree-abandonment/e5ba4885ab06cfb627ee49e812ff3305b679e59044c5d4e00ca031784b7819cc.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/e5ba4885ab06cfb627ee49e812ff3305b679e59044c5d4e00ca031784b7819cc.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/d5aed4bd847ed9a614a28dab972ef58ed4c41262fee30fe424bb049655c2795a.evidence",
      "sha256": "d5aed4bd847ed9a614a28dab972ef58ed4c41262fee30fe424bb049655c2795a"
     },
     {
      "path": "logs/worktree-abandonment/f341aac2040194e247016987c9a468b6679e8174ae5d5462f7ddf4b0a0e4c5ff.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/f341aac2040194e247016987c9a468b6679e8174ae5d5462f7ddf4b0a0e4c5ff.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/22555923cea62ca4e92da731f931fcb5713f907124849311a3a16b15ad29fcde.evidence",
      "sha256": "22555923cea62ca4e92da731f931fcb5713f907124849311a3a16b15ad29fcde"
     },
     {
      "path": "logs/worktree-abandonment/f6f1f878419dd7c7b4f6501ae23748023f24b474b46877d999b1bd712e8f4b86.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/logs/worktree-abandonment/f6f1f878419dd7c7b4f6501ae23748023f24b474b46877d999b1bd712e8f4b86.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/20da8943324827a76880c2a16c579e18422347621ded813678d7ca79dd8daf5a.evidence",
      "sha256": "20da8943324827a76880c2a16c579e18422347621ded813678d7ca79dd8daf5a"
     },
     {
      "path": "web/app/out/organ-health.html",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/web/app/out/organ-health.html",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/6eece60cf786b9f8117858d57c707a94ff89278569aa07791ccd3669315757e9.evidence",
      "sha256": "6eece60cf786b9f8117858d57c707a94ff89278569aa07791ccd3669315757e9"
     },
     {
      "path": "web/app/out/organ-health.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/web/app/out/organ-health.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/f764f39fafab8486377338e228058ec77879a2325d5f705c5a0c37fcffc2ea4e.evidence",
      "sha256": "f764f39fafab8486377338e228058ec77879a2325d5f705c5a0c37fcffc2ea4e"
     },
     {
      "path": "web/app/public/organ-health.html",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/web/app/public/organ-health.html",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/6eece60cf786b9f8117858d57c707a94ff89278569aa07791ccd3669315757e9.evidence",
      "sha256": "6eece60cf786b9f8117858d57c707a94ff89278569aa07791ccd3669315757e9"
     },
     {
      "path": "web/app/public/organ-health.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/web/app/public/organ-health.json",
+     "evidence": "docs/reclaim-evidence-20261004/portable-verification-defects-20261003/f764f39fafab8486377338e228058ec77879a2325d5f705c5a0c37fcffc2ea4e.evidence",
      "sha256": "f764f39fafab8486377338e228058ec77879a2325d5f705c5a0c37fcffc2ea4e"
     }
    ],
@@ -280,37 +280,37 @@
     {
      "path": "cli/src/limen.egg-info/PKG-INFO",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/retirement-ignore-20261003/cli/src/limen.egg-info/PKG-INFO",
+     "evidence": "docs/reclaim-evidence-20261004/retirement-ignore-20261003/a59efb2a970c3cf6f7946c7b890e3d0bf53f7040327f40661a0f9bae7f9b56c2.evidence",
      "sha256": "a59efb2a970c3cf6f7946c7b890e3d0bf53f7040327f40661a0f9bae7f9b56c2"
     },
     {
      "path": "cli/src/limen.egg-info/SOURCES.txt",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/retirement-ignore-20261003/cli/src/limen.egg-info/SOURCES.txt",
+     "evidence": "docs/reclaim-evidence-20261004/retirement-ignore-20261003/103a539072ca183749e16327a96daaa5cc57810d1a23688bdb21d06b12ba1ff0.evidence",
      "sha256": "103a539072ca183749e16327a96daaa5cc57810d1a23688bdb21d06b12ba1ff0"
     },
     {
      "path": "cli/src/limen.egg-info/dependency_links.txt",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/retirement-ignore-20261003/cli/src/limen.egg-info/dependency_links.txt",
+     "evidence": "docs/reclaim-evidence-20261004/retirement-ignore-20261003/01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b.evidence",
      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
     },
     {
      "path": "cli/src/limen.egg-info/entry_points.txt",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/retirement-ignore-20261003/cli/src/limen.egg-info/entry_points.txt",
+     "evidence": "docs/reclaim-evidence-20261004/retirement-ignore-20261003/be89b41439475ecc359491a5760363a09213c472c862270b1817cf5da84027e6.evidence",
      "sha256": "be89b41439475ecc359491a5760363a09213c472c862270b1817cf5da84027e6"
     },
     {
      "path": "cli/src/limen.egg-info/requires.txt",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/retirement-ignore-20261003/cli/src/limen.egg-info/requires.txt",
+     "evidence": "docs/reclaim-evidence-20261004/retirement-ignore-20261003/a527ac57e5034bd8918b766f18105bacdd068bfa2673b97d77bc94ab0e43c843.evidence",
      "sha256": "a527ac57e5034bd8918b766f18105bacdd068bfa2673b97d77bc94ab0e43c843"
     },
     {
      "path": "cli/src/limen.egg-info/top_level.txt",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/retirement-ignore-20261003/cli/src/limen.egg-info/top_level.txt",
+     "evidence": "docs/reclaim-evidence-20261004/retirement-ignore-20261003/80a07e3a69c0bca5d7ba24d1e90abea4cfd4ba7e5551527af3cbb1aa738c7f8c.evidence",
      "sha256": "80a07e3a69c0bca5d7ba24d1e90abea4cfd4ba7e5551527af3cbb1aa738c7f8c"
     }
    ],
@@ -343,13 +343,13 @@
     {
      "path": "logs/worktree-abandonment/2bc37014afb92ad390d5364638e51ec0629f4fd3ba4fdccb3f43241f861dd24d.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/repository-retirement-20260930/logs/worktree-abandonment/2bc37014afb92ad390d5364638e51ec0629f4fd3ba4fdccb3f43241f861dd24d.json",
+     "evidence": "docs/reclaim-evidence-20261004/repository-retirement-20260930/908829c5813a251c1c24afc90f5100d7192ca67d3499723295642234ae17db2f.evidence",
      "sha256": "908829c5813a251c1c24afc90f5100d7192ca67d3499723295642234ae17db2f"
     },
     {
      "path": "logs/worktree-abandonment/cc7eb10b19f91fa92cb74830dd4faf847f413ba9166af1ad13c2e2444b3e6c20.json",
      "kind": "committed-copy",
-     "evidence": "docs/reclaim-evidence-20261004/repository-retirement-20260930/logs/worktree-abandonment/cc7eb10b19f91fa92cb74830dd4faf847f413ba9166af1ad13c2e2444b3e6c20.json",
+     "evidence": "docs/reclaim-evidence-20261004/repository-retirement-20260930/1a2056a136d73940c0e021d15d4dc54fc267cf218f675bf5e44271bc00553d24.evidence",
      "sha256": "1a2056a136d73940c0e021d15d4dc54fc267cf218f675bf5e44271bc00553d24"
     }
    ],

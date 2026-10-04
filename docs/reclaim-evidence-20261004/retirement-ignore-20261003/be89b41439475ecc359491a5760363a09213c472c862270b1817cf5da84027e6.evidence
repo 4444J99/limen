@@ -1,0 +1,6 @@
+[console_scripts]
+limen = limen.cli:main
+limen-jules-api = limen.jules_api:main
+
+[limen.fanout_execution]
+jules-api = limen.jules_api_adapter:create_adapter
