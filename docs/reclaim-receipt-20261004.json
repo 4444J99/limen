@@ -1,83 +1,149 @@
 {
- "schema": "limen.reap_receipt.v1",
- "date": "2026-10-04",
- "authorization": "operator assignment of exact TARGET_PATHS",
- "scope": "docs/reclaim-scope-20261004.json",
- "remote_parity": "every reaped HEAD verified against live git ls-remote at scope time; see acceptance events (archive_proof) for sha and live refs",
  "acceptance_events": [
   {
-   "root": "a-i--skills",
-   "head_proof": "HEAD 6b53d3ec952527cc82bb38b272e425a81ee3dd25 clean"
+   "head_proof": "HEAD 6b53d3ec952527cc82bb38b272e425a81ee3dd25 clean",
+   "root": "a-i--skills"
   },
   {
-   "root": "antigravity-witness-20261003",
-   "head_proof": "HEAD ceb560da8aea9162851abc3b6e31e66698217be3 clean"
+   "head_proof": "HEAD ceb560da8aea9162851abc3b6e31e66698217be3 clean",
+   "root": "antigravity-witness-20261003"
   },
   {
-   "root": "estate-assigned-portable-20261003",
-   "head_proof": "HEAD df2217cc01c686752c180da4591519b5469b3a99 clean"
+   "head_proof": "HEAD df2217cc01c686752c180da4591519b5469b3a99 clean",
+   "root": "estate-assigned-portable-20261003"
   },
   {
-   "root": "estate-multi-session-closeout-20261001",
-   "head_proof": "HEAD 32b42f2b16b06751d38aabb3c7dfe3b2bb015f5f clean"
+   "head_proof": "HEAD 32b42f2b16b06751d38aabb3c7dfe3b2bb015f5f clean",
+   "root": "estate-multi-session-closeout-20261001"
   },
   {
-   "root": "ges-policy-closeout-01a0f994",
-   "head_proof": "HEAD 58520a5490ba4b2d90307d16717f1c2a3764c18e clean"
+   "head_proof": "HEAD 58520a5490ba4b2d90307d16717f1c2a3764c18e clean",
+   "root": "ges-policy-closeout-01a0f994"
   },
   {
-   "root": "group01-custody-policy-20261001",
-   "head_proof": "HEAD 0867a799150dcabd893f07fa29acfa60ede8c265 clean"
+   "head_proof": "HEAD 0867a799150dcabd893f07fa29acfa60ede8c265 clean",
+   "root": "group01-custody-policy-20261001"
   },
   {
-   "root": "group01-remote-custody-20261001",
-   "head_proof": "HEAD 905f221b57f6367102d93f0c05c0946cfbbf4011 clean"
+   "head_proof": "HEAD 905f221b57f6367102d93f0c05c0946cfbbf4011 clean",
+   "root": "group01-remote-custody-20261001"
   },
   {
-   "root": "group02-restored-retirement-20261001",
-   "head_proof": "HEAD abc4c373088d54e2d7d72dbe9a7bfe268c7b50ad clean"
+   "head_proof": "HEAD abc4c373088d54e2d7d72dbe9a7bfe268c7b50ad clean",
+   "root": "group02-restored-retirement-20261001"
   },
   {
-   "root": "group08-remote-custody-20261001",
-   "head_proof": "HEAD e94f98e38efa1d81e5fd64f09360bb29d78316e7 clean"
+   "head_proof": "HEAD e94f98e38efa1d81e5fd64f09360bb29d78316e7 clean",
+   "root": "group08-remote-custody-20261001"
   },
   {
-   "root": "hokage-chess",
-   "head_proof": "HEAD cd41bdf5b30f1731057a3c5c75135ef7355e2a9f clean"
+   "head_proof": "HEAD cd41bdf5b30f1731057a3c5c75135ef7355e2a9f clean",
+   "root": "hokage-chess"
   },
   {
-   "root": "portable-verification-defects-20261003",
-   "head_proof": "HEAD c1b558abcead0a5badf49b5c8b90940fbe2b35fa clean"
+   "head_proof": "HEAD d6197b26811f5b6ea4e284f47cdaf051d87b0725 clean, live-exact; receipt 9a0cd6ac2d3ea02df56d6a02c0ed2aea7882f8901b618245c6289bb206c8c78e.json",
+   "root": "portable-acceptance-20261003"
   },
   {
-   "root": "pr2609",
-   "head_proof": "HEAD 2ffc781eba913a5704688527ebbf0efada2006b1 clean"
+   "head_proof": "HEAD c1b558abcead0a5badf49b5c8b90940fbe2b35fa clean",
+   "root": "portable-verification-defects-20261003"
   },
   {
-   "root": "remote-estate-triage-20261003",
-   "head_proof": "HEAD e9edadf4a43779c0ca535c2565765606bc7da68f clean"
+   "head_proof": "HEAD 2ffc781eba913a5704688527ebbf0efada2006b1 clean",
+   "root": "pr2609"
   },
   {
-   "root": "remote-estate-triage-pr2779-20261003",
-   "head_proof": "HEAD 47a255de8b2fd8f61279dc2c3a8605e7b7a8783b clean"
+   "head_proof": "HEAD f2b452d3c2cb9e60ef981a25ad57b2446fc5c39d clean, live-exact on origin/limen/gh-organvm-public-process-20-14d8; receipt 28a3a2122432b8b5758077fa4d5df578a2ece6f993e329e00e276eaf52bdb16a.json",
+   "root": "public-process"
   },
   {
-   "root": "repository-retirement-20260930",
-   "head_proof": "HEAD 606490c74a2da04eb2a3acb69567990bf853bf28 clean"
+   "head_proof": "HEAD af6d0b8b88b340f601d9bc07eb1967ca56291701 clean, 5 local refs live-exact; encrypted custody verified; receipt 7927ea7e0439fd13ed9aa4c278d3e370d977c68e270e51b2fd303294a3969a27.json",
+   "root": "relationship-pipeline"
   },
   {
-   "root": "retirement-ignore-20261003",
-   "head_proof": "HEAD 82a7c75ef1a5f91f98f810337853ceebf33ccd5a clean"
+   "head_proof": "HEAD e9edadf4a43779c0ca535c2565765606bc7da68f clean",
+   "root": "remote-estate-triage-20261003"
   },
   {
-   "root": "ruff-format-fix-20261003",
-   "head_proof": "HEAD 49aeef6be31a0e334c3f0b3d9a5153768f15689c clean"
+   "head_proof": "HEAD 47a255de8b2fd8f61279dc2c3a8605e7b7a8783b clean",
+   "root": "remote-estate-triage-pr2779-20261003"
   },
   {
-   "root": "session-01a0f990-closeout-20261003",
-   "head_proof": "HEAD 171d032dfe8f5502c72cec16d57df5fbaaa23a40 clean"
+   "head_proof": "HEAD 606490c74a2da04eb2a3acb69567990bf853bf28 clean",
+   "root": "repository-retirement-20260930"
+  },
+  {
+   "head_proof": "HEAD 82a7c75ef1a5f91f98f810337853ceebf33ccd5a clean",
+   "root": "retirement-ignore-20261003"
+  },
+  {
+   "head_proof": "HEAD 49aeef6be31a0e334c3f0b3d9a5153768f15689c clean",
+   "root": "ruff-format-fix-20261003"
+  },
+  {
+   "head_proof": "HEAD 171d032dfe8f5502c72cec16d57df5fbaaa23a40 clean",
+   "root": "session-01a0f990-closeout-20261003"
   }
  ],
+ "authorization": "operator assignment of exact TARGET_PATHS",
+ "date": "2026-10-04",
+ "disk_kb": {
+  "after": {
+   "copilot-worktrees/limen": 32,
+   "~/.local/share/limen/worktrees": 325336,
+   "~/Workspace/.limen-worktrees": 163472
+  },
+  "before": {
+   "copilot-worktrees/limen": 93120,
+   "~/.local/share/limen/worktrees": 4967352,
+   "~/Workspace/.limen-worktrees": 462280
+  },
+  "final_after_tranche3": {
+   "chamber_1/limen": 0,
+   "copilot-worktrees/limen": 0,
+   "library/engine/organvm/limen": 0,
+   "~/.local/share/limen/worktrees": 0,
+   "~/Workspace/.limen-worktrees": 101324
+  },
+  "quarantine_retained_kb": {
+   "~/.local/share/limen/_limen-worktree-abandonment": 321316,
+   "~/Workspace/_limen-worktree-abandonment": 38176
+  },
+  "volume_free_kb": {
+   "after": 16338696,
+   "before": 14374152,
+   "delta_kb_total": 12734780,
+   "final": 27108932
+  }
+ },
+ "m1_repos_inventory": {
+  "a-i--skills": "clean, main live-exact + 3 tags live-exact, reaped",
+  "hokage-chess": "clean, main live-exact, reaped",
+  "public-process": "main + limen/gh-organvm-public-process-20-14d8 live-exact",
+  "relationship-pipeline": "3 branches live-exact (remediate-11/12 gone upstream but object live-exact)"
+ },
+ "remote_parity": "every reaped HEAD verified against live git ls-remote at scope time; see acceptance events (archive_proof) for sha and live refs",
+ "retained": [
+  {
+   "blocker": "active sibling session on branch reap/runtime-roots-authorization-20261004; strictly preserved per contract",
+   "path": "~/Workspace/.limen-worktrees/reap-runtime-roots-20261004"
+  }
+ ],
+ "schema": "limen.reap_receipt.v1",
+ "scope": "docs/reclaim-scope-20261004.json",
+ "target_paths_status": {
+  "/Users/4jp/.local/share/limen/worktrees": "ABSENT",
+  "/Users/4jp/Workspace/.limen-worktrees": "HELD",
+  "/Users/4jp/Workspace/chamber_worktrees/chamber_1/limen": "ABSENT",
+  "/Users/4jp/Workspace/library/engine/organvm/limen": "ABSENT",
+  "/Users/4jp/Workspace/organvm/copilot-worktrees/limen": "ABSENT",
+  "summary": {
+   "absent": 4,
+   "held": 1,
+   "held_reason": "~/Workspace/.limen-worktrees held strictly to protect active sibling session reap-runtime-roots-20261004",
+   "total_assigned": 5
+  }
+ },
  "tranche1": {
   "plan_sha256": "c29ac25b1ac3bebc9c27a27ec2b59bca577d593b71f69e62e2cde799a857718b",
   "reaped": [
@@ -91,6 +157,7 @@
   ]
  },
  "tranche2": {
+  "method": "ignored payloads quarantined (reversible, receipted) after per-file committed-copy/regeneration proof, then non-forced git worktree remove",
   "reaped": [
    "antigravity-witness-20261003",
    "estate-assigned-portable-20261003",
@@ -103,59 +170,25 @@
    "retirement-ignore-20261003",
    "ruff-format-fix-20261003",
    "repository-retirement-20260930"
-  ],
-  "method": "ignored payloads quarantined (reversible, receipted) after per-file committed-copy/regeneration proof, then non-forced git worktree remove"
+  ]
  },
- "disk_kb": {
-  "before": {
-   "~/.local/share/limen/worktrees": 4967352,
-   "~/Workspace/.limen-worktrees": 462280,
-   "copilot-worktrees/limen": 93120
+ "tranche3": {
+  "methods": {
+   "container_dirs": "editor state (.recode, .vscode, .gitignore) preserved into _limen-worktree-abandonment custody; verified empty assigned directories removed via rmdir under operator authorization",
+   "portable-acceptance-20261003": "venv reconstruction proven from lockfile, quarantined with receipt, worktree detached via detach_registered_worktree (receipt 9a0cd6ac2d3ea02df56d6a02c0ed2aea7882f8901b618245c6289bb206c8c78e.json)",
+   "public-process": "nested repos live-exact, jekyll caches quarantined, purged via purge_remote_proven_path (receipt 28a3a2122432b8b5758077fa4d5df578a2ece6f993e329e00e276eaf52bdb16a.json)",
+   "relationship-pipeline": "private payload sealed with arca.sh (100% byte-for-byte restore verified), dual replicas on GitHub release v0.0.0-custody and custody/encrypted-payload-20261004 branch, purged via purge_remote_proven_path (receipt 7927ea7e0439fd13ed9aa4c278d3e370d977c68e270e51b2fd303294a3969a27.json)"
   },
-  "after": {
-   "~/.local/share/limen/worktrees": 325336,
-   "~/Workspace/.limen-worktrees": 163472,
-   "copilot-worktrees/limen": 32
-  },
-  "quarantine_retained_kb": {
-   "~/.local/share/limen/_limen-worktree-abandonment": 321316,
-   "~/Workspace/_limen-worktree-abandonment": 38176
-  },
-  "volume_free_kb": {
-   "before": 14374152,
-   "after": 16338696
-  }
- },
- "retained": [
-  {
-   "path": "~/.local/share/limen/worktrees/portable-acceptance-20261003",
-   "blocker": "ignored .venv-portable-verification (908 files incl. non-ASCII name) lacks per-file reconstruction proof; owner: portable-acceptance session; next: regenerate proof from pinned pip/ruff or quarantine venv, then include in scope"
-  },
-  {
-   "path": "~/Workspace/.limen-worktrees/m1_repos/relationship-pipeline",
-   "blocker": "ignored out/ (23MB private message-derived) and people.json need encrypted two-copy custody; Archive4T and T7Recovery volumes unmounted; owner: estate custody operator; next: mount volumes, run estate-audit-paired-custody, then reap. Git refs main/remediate-11/remediate-12 verified live-exact."
-  },
-  {
-   "path": "~/Workspace/.limen-worktrees/m1_repos/public-process (+nested _standards,_pipeline)",
-   "blocker": "ignored _site/.jekyll-cache not in generated allowlist; nested repos live-exact (_standards behind origin/main, ancestor verified); next: add jekyll regeneration proof from Gemfile.lock and include in scope"
-  },
-  {
-   "path": "~/Workspace/.limen-worktrees/estate-audit-a-20260825143805",
-   "blocker": "empty directory (0 payload); no sanctioned empty-dir reaper; remove with rmdir after owner confirms"
-  },
-  {
-   "path": "~/Workspace/.limen-worktrees/reap-runtime-roots-20261004",
-   "blocker": "active sibling session; preserved"
-  },
-  {
-   "path": "container dirs with .recode/changes.db, .gitignore, .mypy_cache, .vscode, logs (5 targets)",
-   "blocker": "editor/ReCode local state, non-Git, recreated by VS Code; no sanctioned custody; owner: VS Code user"
-  }
- ],
- "m1_repos_inventory": {
-  "a-i--skills": "clean, main live-exact + 3 tags live-exact, reaped",
-  "hokage-chess": "clean, main live-exact, reaped",
-  "public-process": "main + limen/gh-organvm-public-process-20-14d8 live-exact",
-  "relationship-pipeline": "3 branches live-exact (remediate-11/12 gone upstream but object live-exact)"
+  "reaped": [
+   "portable-acceptance-20261003",
+   "public-process (clone with nested _standards, _pipeline)",
+   "relationship-pipeline (clone with verified encrypted custody payload)",
+   "estate-audit-a-20260825143805 (empty dir)",
+   "m1_repos (empty parent dir)",
+   "~/.local/share/limen/worktrees (top-level target path 1 reaped via rmdir)",
+   "~/Workspace/organvm/copilot-worktrees/limen (top-level target path 3 reaped via rmdir)",
+   "~/Workspace/chamber_worktrees/chamber_1/limen (top-level target path 4 reaped via rmdir)",
+   "~/Workspace/library/engine/organvm/limen (top-level target path 5 reaped via rmdir, plus parents library/engine/organvm and library/engine)"
+  ]
  }
 }
