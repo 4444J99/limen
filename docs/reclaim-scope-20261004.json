@@ -32,14 +32,6 @@
    "regeneration_proof": "ignored bytes are tool caches/bytecode/venv regenerated from committed pyproject/lockfile sources; no unique content"
   },
   {
-   "root": "ges-policy-closeout-01a0f994",
-   "repository": "4444J99/limen",
-   "origin": "https://github.com/4444J99/limen.git",
-   "path_sha256": "2ac96ac256a766b52f3b0e65e7f342aeac8806716257b1ecf1d79bd23e8e6bdb",
-   "path": "/Users/4jp/.local/share/limen/worktrees/ges-policy-closeout-01a0f994",
-   "preserved_ignored": []
-  },
-  {
    "root": "group01-custody-policy-20261001",
    "repository": "4444J99/limen",
    "origin": "https://github.com/4444J99/limen.git",
@@ -47,14 +39,6 @@
    "path": "/Users/4jp/.local/share/limen/worktrees/group01-custody-policy-20261001",
    "preserved_ignored": [],
    "regeneration_proof": "ignored bytes are tool caches/bytecode/venv regenerated from committed pyproject/lockfile sources; no unique content"
-  },
-  {
-   "root": "group01-remote-custody-20261001",
-   "repository": "organvm/arca-g3",
-   "origin": "https://github.com/organvm/arca-g3.git",
-   "path_sha256": "993dd98106a4fb3526131930bdaa27943231fa64addc96abd06f0ba921995909",
-   "path": "/Users/4jp/.local/share/limen/worktrees/group01-remote-custody-20261001",
-   "preserved_ignored": []
   },
   {
    "root": "group02-restored-retirement-20261001",
@@ -77,14 +61,6 @@
     }
    ],
    "regeneration_proof": "ignored bytes are tool caches/bytecode/venv regenerated from committed pyproject/lockfile sources; no unique content"
-  },
-  {
-   "root": "group08-remote-custody-20261001",
-   "repository": "organvm/arca-g3",
-   "origin": "https://github.com/organvm/arca-g3.git",
-   "path_sha256": "c986722a14d44c4d902c602c38e201533e3a885bdf6fb8220615fb4baab80ff3",
-   "path": "/Users/4jp/.local/share/limen/worktrees/group08-remote-custody-20261001",
-   "preserved_ignored": []
   },
   {
    "root": "portable-verification-defects-20261003",
@@ -326,14 +302,6 @@
    "regeneration_proof": "ignored bytes are tool caches/bytecode/venv regenerated from committed pyproject/lockfile sources; no unique content"
   },
   {
-   "root": "session-01a0f990-closeout-20261003",
-   "repository": "4444J99/estate-vault",
-   "origin": "git@github.com:4444J99/estate-vault.git",
-   "path_sha256": "3adcb2a6ff57fd00947ae9555edeb0d0aa72bcad258e50754c34b92e7b6387a2",
-   "path": "/Users/4jp/.local/share/limen/worktrees/session-01a0f990-closeout-20261003",
-   "preserved_ignored": []
-  },
-  {
    "root": "repository-retirement-20260930",
    "repository": "4444J99/limen",
    "origin": "https://github.com/4444J99/limen.git",
@@ -354,30 +322,6 @@
     }
    ],
    "regeneration_proof": "ignored bytes are tool caches/bytecode/venv regenerated from committed pyproject/lockfile sources; no unique content"
-  },
-  {
-   "root": "pr2609",
-   "repository": "4444J99/limen",
-   "origin": "https://github.com/4444J99/limen.git",
-   "path_sha256": "8862b4b26a211ce3a67f3611343573aad2e274cdceed4db6c3b1a58216fd2aef",
-   "path": "/Users/4jp/Workspace/organvm/copilot-worktrees/limen/pr2609",
-   "preserved_ignored": []
-  },
-  {
-   "root": "a-i--skills",
-   "repository": "organvm-iv-taxis/a-i--skills",
-   "origin": "git@github.com:organvm-iv-taxis/a-i--skills.git",
-   "path_sha256": "4982ab09c187c00cccfcea4cdc77477f36d8950a4a460b2eb3d4bfee6a264be8",
-   "path": "/Users/4jp/Workspace/.limen-worktrees/m1_repos/a-i--skills",
-   "preserved_ignored": []
-  },
-  {
-   "root": "hokage-chess",
-   "repository": "organvm/hokage-chess--4444j99",
-   "origin": "git@github.com:organvm/hokage-chess--4444j99.git",
-   "path_sha256": "bed38f7bea89161fe1920d3bc503b8a026b5ad6b8ddf961edf36763e557464e0",
-   "path": "/Users/4jp/Workspace/.limen-worktrees/m1_repos/hokage-chess",
-   "preserved_ignored": []
   }
  ]
 }
