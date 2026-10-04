@@ -48,6 +48,7 @@ sanctioned:
   - {path: QUICKEN-RESIDUE.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/quicken.py"}
   - {path: RECLASSIFY-PROPOSAL.md, kind: doc, owner: fleet, why: "consumed at this exact path by institutio/governance/parameters.yaml (+2 more)"}
   - {path: RULESETS-DRYRUN.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/check-removal-acceptance.py"}
+  - {path: VLTIMA-IDEAL-FORM.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-organ.py"}
   - {path: agent-board-log-review.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/agent-board-log-review.py"}
   - {path: agent-code-diff-review.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/ship-docs.sh (+2 more)"}
   - {path: agent-code-review-queue.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/agent-code-review-queue.py (+1 more)"}
@@ -142,6 +143,8 @@ sanctioned:
   - {path: tabularius-record-keeper.md, kind: doc, owner: governance, why: "consumed at this exact path by tasks.yaml"}
   - {path: tabularius-writer-audit.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/always-working.py"}
   - {path: vltima-absorb-cadence.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-absorb-cadence.py (+1 more)"}
+  - {path: vltima-action-packets.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-packetize.py"}
+  - {path: vltima-owner-certainty.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-owner-certainty.py"}
   - {path: vltima-prior-excavations.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-prior-excavations.py (+1 more)"}
   - {path: vltima-result-digest.md, kind: doc, owner: fleet, why: "consumed at this exact path by scripts/vltima-result-digest.py"}
   - {path: worktree-lifecycle-ledger.md, kind: doc, owner: fleet, why: "consumed at this exact path by cli/tests/test_session_lifecycle_pressure.py (+2 more)"}

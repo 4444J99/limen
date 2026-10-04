@@ -851,7 +851,6 @@ may not carry a distance *in the registry* — there is no field to lie in; the 
 - **Ideal form:** every local/remote AI movement is absorbed through a privacy-safe membrane,
   classified by temporal authority, assigned to its rightful owner, and converted only into bounded
   packets with receipt and verification.
-- **Distance:** absorption, prior-excavation, and result-digest surfaces exist; this tranche adds
-  owner certainty, packetization, a gated heartbeat organ, a CLI surface, and a read-only predicate.
-- **Status:** PARTIAL.
+- **Distance:** DERIVED — `python3 scripts/vltima-organ.py`.
+- **Status:** SHIPPED.
 - **Owner:** VLTIMA organ (`scripts/vltima-organ.py`) + Anthony for future enqueue/daemon arming.

@@ -1284,7 +1284,7 @@ while true; do
   # (LIMEN_VLTIMA=1) because broad absorption is a deliberate organ, not surprise dispatch.
   # The default write path touches only VLTIMA-owned doctrine/state and never mutates tasks.yaml.
   if due_voice vltima "$C_VLTIMA" && [ "${LIMEN_VLTIMA:-0}" = "1" ]; then
-    timeout "${LIMEN_VLTIMA_TIMEOUT:-900}" python3 "$LIMEN_ROOT/scripts/vltima-organ.py" --write 2>&1 | tail -2 || true
+    beat_run vltima-organ timeout "${LIMEN_VLTIMA_TIMEOUT:-900}" python3 "$LIMEN_ROOT/scripts/vltima-organ.py" --write || true
     stamp vltima
   fi
 

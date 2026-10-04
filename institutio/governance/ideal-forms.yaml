@@ -492,3 +492,24 @@ ideals:
         follows it
       environment: repo
       at_ideal_when: exit_zero
+
+  IF-RECORD-KEEPER-COVENANT:
+    ideal: >
+      A single covenant registry declares the testament class as keeper-owned; one parity
+      gate holds every agent surface to the covenant; one lane is the only path sessions use to write memory.
+    owner: tabularius
+    probe: null
+    probe_absent_reason: >
+      Covenant registry and memory-ticket lane staged in sibling PRs; arming is operator-controlled.
+
+  IF-VLTIMA-AUTOPOIETIC-MEMBRANE:
+    ideal: >
+      Every local/remote AI movement is absorbed through a privacy-safe membrane,
+      classified by temporal authority, assigned to its rightful owner, and converted only into bounded
+      packets with receipt and verification.
+    owner: "VLTIMA organ (scripts/vltima-organ.py) + Anthony"
+    probe:
+      command: "python3 scripts/vltima-organ.py"
+      derives: "whether the VLTIMA autopoietic absorption membrane runs and validates movement cleanly"
+      environment: repo
+      at_ideal_when: exit_zero
