@@ -217,6 +217,38 @@ def test_completion_failure_keeps_open_handoff(cohort):
     assert not evaluate()["session_released"]
 
 
+@pytest.mark.parametrize("contract", ["limen.custody_receipt.v2", "unknown-contract"])
+def test_portable_contract_requires_real_committed_supporting_evidence(cohort, contract):
+    _, receipt, _, publish, evaluate = cohort
+    receipt["custody"]["contract"] = contract
+    publish()
+    with pytest.raises(closeout.Unmeasured):
+        evaluate()
+
+
+@pytest.mark.parametrize("packet", [None, False, {}, "unmeasured"])
+def test_empty_lineage_cannot_bypass_portable_graph_validation(cohort, packet):
+    _, receipt, _, publish, evaluate = cohort
+    receipt["custody"]["contract"] = "limen.custody_receipt.v2"
+    receipt["scope_lineage"] = packet
+    publish()
+    with pytest.raises(closeout.Unmeasured, match="malformed scope lineage"):
+        evaluate()
+
+
+def test_legacy_verified_flag_cannot_grant_relocation(cohort):
+    _, receipt, _, publish, evaluate = cohort
+    receipt["scope_lineage"] = {
+        "evidence": receipt["custody"]["evidence"],
+        "sha256": receipt["custody"]["sha256"],
+    }
+    publish()
+    calls = []
+    with pytest.raises(closeout.Unmeasured, match="requires complete portable custody"):
+        evaluate(observe_native=lambda *args: calls.append(args))
+    assert calls == []
+
+
 @pytest.mark.parametrize("same_id", [True, False])
 @pytest.mark.parametrize("prefix", ["https://github.com/", "git@github.com:", "ssh://git@github.com/"])
 def test_repository_transfer_uses_stable_identity(cohort, monkeypatch, same_id, prefix):

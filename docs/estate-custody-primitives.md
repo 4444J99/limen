@@ -70,6 +70,67 @@ not be rewritten to call cloud accounts physical devices. Portable recovery keep
 the original native session/caller and records old/new scope lineage explicitly;
 it never drops a missing historical root from the denominator.
 
+The scoped session consumer accepts v2 only through a
+`limen.portable_custody_evidence.v1` bundle: set the custody packet's `contract`
+to `limen.custody_receipt.v2`. The bundle binds the exact session and all original
+scope path digests, embeds the v2 contract, and resolves every supporting digest
+through committed, unchanged owner evidence. Capture manifests enumerate the
+same logical/native atoms in every original root; ciphertext manifests bind the
+exact captured object denominator. Authenticated readback records bind provider,
+account namespace, object ID, revision, bytes and checksum. Retention covers all
+generations and must still be in force. Each full restore has a committed predicate
+and an observation that covers every logical and native atom. Contract validity,
+an expired retention receipt, or a partial restore renamed "full" cannot satisfy
+this consumer. Legacy custody evidence is unchanged and cannot substitute for a
+new portable contract's supporting graph.
+
+`limen.native_capture.capture_manifests` supplies bounded, no-ignore native
+capture. It reads file contents, symlink targets without traversal, cross-root
+hardlinks, ownership, modes, timestamps, flags, xattrs and ACLs. macOS creation
+timestamps use `getattrlist` nanoseconds, not rounded Python floats. Native value
+bytes and file contents are represented by digests in these inventories; raw
+recovery bytes still belong in the encrypted archive. Unsupported metadata,
+changed sources and exhausted resource bounds reject the whole capture, never a
+silently reduced denominator. The caller must admit the heavy workload and keep
+the generated inventories in private encrypted custody.
+
+These functions do not upload ciphertext, execute an independent restore, relax
+historical path binding or authorize deletion. Missing/relocated roots still
+require separately implemented and verified lineage acceptance; all six original
+scopes and current deltas remain work until their owning predicates pass.
+
+`limen.native_equivalence.compare_native_manifests` supplies the inventory
+comparison primitive for that pending lineage/restore consumer. It requires
+complete original and observed records, identical root/atom membership, and exact
+content, ownership, modes, mtime, birthtime, flags, xattrs, ACLs and hardlink
+membership. Original atime and filesystem-maintained ctime remain mandatory
+historical records; a restored filesystem's distinct clocks are reported, never
+asserted recreated. The report binds both complete input digests but does not
+establish live freshness, encrypted custody, relocation permission, retirement,
+or session release. The complete historical inventory must stay in encrypted
+custody; a comparison report cannot replace it.
+
+`limen.scope_lineage.validate_lineage` and the scoped predicate accept an explicit
+`scope_lineage` committed packet for relocated, still-present roots. The record
+binds the full original/current root maps, exact custody-bundle digest and a
+committed destination native inventory. Complete portable custody is validated
+before any live scan. Every relocated root must match both the original native
+records and a fresh destination observation under finite host admission; generic
+`verified` flags, path aliases, stale snapshots and narrowed original root lists
+cannot grant rebinding. Unchanged roots remain in the full custody graph and the
+normal scoped checks; relocation proof does not silently claim their current
+delta coverage. Missing/retired roots remain unmeasured. Live custody producers,
+capture cutsets for mutable evidence ledgers, cross-root hardlink dependency
+closure and retired-root acceptance remain unfinished; no existing scope is
+certified from this wiring alone.
+
+The native observation requires an already-admitted heavy caller or ancestor.
+Admission belongs outside the predicate: `require_existing_heavy` reads the
+existing private store under its existing lock, checks TTL, process-start identity
+and ancestry, and neither probes pressure nor creates, refreshes or reaps leases.
+An unadmitted caller remains unmeasured. This preserves the unchanged-recheck
+contract; it does not waive host admission for the outer workload.
+
 The existing T7 lifeboat already points at the correct symbolic form:
 
 | Layer | Existing Root | Role |

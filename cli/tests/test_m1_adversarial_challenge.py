@@ -16,6 +16,8 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 CLI_SRC = ROOT / "cli" / "src"
 if str(CLI_SRC) not in sys.path:
@@ -364,8 +366,16 @@ class TestFailOpenInvariants:
         assert record["bifrons"]["stars"] == 0
         assert record["observatory"]["external_gaps"] == 0
 
-    def test_build_feed_record_bifrons_degradation_propagates(self, tmp_path):
-        """When Bifrons degrades, composite status is 'degraded'."""
+    @pytest.mark.parametrize("vitals_action,expected_status", [("ok", "degraded"), ("shed", "shed")])
+    def test_build_feed_record_bifrons_degradation_propagates(
+        self, tmp_path, monkeypatch, vitals_action, expected_status
+    ):
+        """Bifrons degradation propagates without overriding host shedding."""
+        import limen.vigilia.vitals as vitals_mod
+
+        # Isolate the subsystem under test. Live host shedding legitimately
+        # takes precedence over Bifrons degradation and is covered separately.
+        monkeypatch.setattr(vitals_mod, "beat_gate", lambda **kwargs: {"level": 1, "action": vitals_action})
         script_dir = tmp_path / "scripts"
         script_dir.mkdir(parents=True)
         broken_script = script_dir / "bifrons-organ.py"
@@ -373,7 +383,7 @@ class TestFailOpenInvariants:
 
         record = build_feed_record(source="bifrons_test", root=tmp_path)
         assert record["schema"] == SCHEMA_V1
-        assert "degraded" in record["status"]
+        assert record["status"] == expected_status
 
     def test_emit_feed_record_under_full_outage(self, tmp_path, monkeypatch):
         """Ensure emission to disk succeeds even under full outage."""

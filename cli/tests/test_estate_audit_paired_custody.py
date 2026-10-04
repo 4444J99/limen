@@ -1249,6 +1249,9 @@ def test_cleanup_failure_identifies_stage_without_weakening_failure(monkeypatch,
     class Process:
         pid = 12345
 
+        def poll(self):
+            return None
+
         def wait(self, timeout):
             if stage == "leader-not-reaped":
                 raise subprocess.TimeoutExpired("fixture", timeout)
@@ -1270,6 +1273,27 @@ def test_cleanup_failure_identifies_stage_without_weakening_failure(monkeypatch,
         paired_module._terminate_process_group(Process(), mode="check")
     assert caught.value.code == "single-rail-check-termination-failed"
     assert caught.value.reasons == (stage,)
+
+
+def test_refused_term_after_positive_reap_and_group_disappearance_is_not_failure(monkeypatch):
+    class Process:
+        pid = 12345
+
+        def poll(self):
+            return 0
+
+        def wait(self, timeout):
+            return 0
+
+    def signal_group(pid, sig):
+        if sig == signal.SIGTERM:
+            raise PermissionError("fixture exited before signal")
+        if sig == 0:
+            raise ProcessLookupError("fixture group is gone")
+        pytest.fail("no live group may be signalled")
+
+    monkeypatch.setattr(paired_module.os, "killpg", signal_group)
+    paired_module._terminate_process_group(Process(), mode="check")
 
 
 def test_slow_reap_does_not_mask_triggering_error(monkeypatch):
