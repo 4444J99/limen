@@ -116,6 +116,27 @@ def test_non_git_native_root_releases_explicit_scopes_idempotently(cohort):
     assert {key: git(root, "status", "--porcelain") for key, root in roots.items() if key != "private"} == before
 
 
+def test_absent_original_root_reports_unmeasured_without_recreating_it(cohort, tmp_path):
+    roots, _, _, _, evaluate = cohort
+    missing = tmp_path / "historically-retired"
+    mapping = {**roots, "retired-root": missing}
+    with pytest.raises(closeout.Unmeasured, match="retired-root.*custody-backed retirement is not measured"):
+        evaluate(scope_roots=mapping)
+    assert not missing.exists()
+    assert set(mapping) == {*roots, "retired-root"}
+
+
+def test_dangling_scope_link_is_not_accepted_as_retirement(cohort, tmp_path):
+    roots, _, _, _, evaluate = cohort
+    missing = tmp_path / "absent-target"
+    link = tmp_path / "dangling-scope"
+    link.symlink_to(missing, target_is_directory=True)
+    with pytest.raises(closeout.Unmeasured, match="dangling-root.*custody-backed retirement is not measured"):
+        evaluate(scope_roots={**roots, "dangling-root": link})
+    assert link.is_symlink()
+    assert not missing.exists()
+
+
 @pytest.mark.parametrize(
     "failure", [None, "foreign_identity", "wrong_scope", "no_native_witness", "absent_registration"]
 )
