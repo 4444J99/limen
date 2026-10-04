@@ -641,7 +641,7 @@ def test_expected_volume_and_stable_physical_identity_are_both_required(
     custody.mkdir(parents=True)
 
     def fake_run(arguments, **_kwargs):
-        assert arguments[-1] == str(custody)
+        assert arguments[-1] == str(volume)
         return SimpleNamespace(
             returncode=0,
             stdout=plistlib.dumps(
@@ -653,6 +653,7 @@ def test_expected_volume_and_stable_physical_identity_are_both_required(
         )
 
     monkeypatch.setattr(custody_module.subprocess, "run", fake_run)
+    monkeypatch.setattr(custody_module, "_volume_mount", lambda _path: volume)
     observed_mounts: list[Path] = []
 
     def device_identity(mount: Path) -> str:
