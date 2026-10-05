@@ -1,0 +1,198 @@
+{
+  "document_type": "first-attempt preservation and retained-scope receipt; not completion or deletion certification",
+  "owner": "https://github.com/4444J99/limen/pull/2832",
+  "publication": {
+    "commit": "0a0c6b5905f479b7fa27c36d4cae5db2b46f6ccf",
+    "files": 17,
+    "every_blob_readback_verified": true
+  },
+  "sourcery_content_preservation": {
+    "owner": "https://github.com/4444J99/limen/pull/2832",
+    "target_index": 3,
+    "source_path_sha256": "8043e475d3b11bdf70eb75f6b2741d61d6cf82c7ef2cd7b503d559e3fecd8abc",
+    "repository": "4444J99/arca-g3",
+    "ref": "custody/assigned-six-01a1094e-20261005",
+    "commit": "d6f5d0df8095153d79c08aba84b27e947406c5a3",
+    "object_path": "custody/assigned-six-01a1094e/sourcery-content-snapshot.tar.enc",
+    "ciphertext_bytes": 42528,
+    "ciphertext_sha256": "668282d310bd439843a998367e9f6b03ed8ee341f990c1edc3b1cdd7fd8ce067",
+    "github_ciphertext_readback_verified": true,
+    "database_counts": {
+      "conversation": 3,
+      "messages": 6
+    },
+    "snapshot_files": 3,
+    "capture_kind": "consistent SQLite content snapshot plus application files; not a full native capture",
+    "source_modified": false,
+    "source_retained": true,
+    "native_metadata_restore_verified": false,
+    "full_live_delta_coverage_verified": false,
+    "key_escrow_independent_recovery_verified": false,
+    "removed": false,
+    "drive_ciphertext_readback_verified": true,
+    "drive_content_restore_verified": true,
+    "github_content_restore_verified": true
+  },
+  "scope_presence": [
+    {
+      "target_index": 0,
+      "path_sha256": "a7ef15a2b9b5f621169d02c239bd68fc6691fc9bdf32e44bb4e995a8b562911f",
+      "present": true
+    },
+    {
+      "target_index": 1,
+      "path_sha256": "09a008dd2e7650900637ada7fbe16122b6e2ab48bfe670e6ca94c4e843ff7a38",
+      "present": true
+    },
+    {
+      "target_index": 2,
+      "path_sha256": "8d85d263c4b1736047d3d01b378a79d7cbfd49291dff0de0e15395f3ae3a5ca0",
+      "present": true
+    },
+    {
+      "target_index": 3,
+      "path_sha256": "8043e475d3b11bdf70eb75f6b2741d61d6cf82c7ef2cd7b503d559e3fecd8abc",
+      "present": true
+    },
+    {
+      "target_index": 4,
+      "path_sha256": "8b4563a75db4a60cb4dfe3026cfde83fc2e21a13efb15f0b3523dd5536193c11",
+      "present": true
+    },
+    {
+      "target_index": 5,
+      "path_sha256": "475cdf86e573a84bfc80915addc2b8d59cc59aaf5683b26f6503f4ccf8a50509",
+      "present": true
+    }
+  ],
+  "storage": {
+    "measurement_window": "final publication interval; includes concurrent writers",
+    "baseline_at": "2026-10-05T04:12:57Z",
+    "baseline_available_kib": 5794852,
+    "final_at": "2026-10-05T04:20:39.184184+00:00",
+    "final_available_kib": 4407440,
+    "observed_global_delta_bytes": -1420709888,
+    "reaped_directories": 0,
+    "reap_attributable_recovery_bytes": 0,
+    "global_delta_attributed_to_this_lane": false
+  },
+  "holds": [
+    {
+      "atom": "host_heavy_admission_denied",
+      "owner": "https://github.com/4444J99/limen/pull/2832",
+      "predicate": "native full-capture/restore requires unchanged machine-wide heavy admission",
+      "next_command": "python3 scripts/host-work-admission.py diagnose",
+      "next_action": "After pressure changes, resume the original outcome through the existing broker and unchanged accounting; do not automatically rerun the failed gate unchanged."
+    },
+    {
+      "atom": "live-consumer-and-parent-store-release",
+      "owner": "https://github.com/4444J99/limen/pull/2832",
+      "predicate": "exact target has no active/protected consumers and parent/shared-store dependencies are resolved",
+      "next_action": "Detach only the target navigation folder through its owning editor lifecycle; rerun complete live-consumer and repository-qualified parent-store checks. Preserve protected sessions."
+    },
+    {
+      "atom": "full-native-custody-restoration-unproven",
+      "owner": "https://github.com/4444J99/limen/pull/2832",
+      "predicate": "complete private payload denominator, two independent native restores and independent key recovery",
+      "next_action": "Reuse verified content captures and add the still-missing encrypted native recovery evidence under host admission; keep every source until the owning retirement predicate passes."
+    }
+  ],
+  "run_receipt": {
+    "schema_version": "limen.run_receipt.v1",
+    "receipt_id": "assigned-six-reap-first-attempt-01a1094e",
+    "run_id": "run-0e2c9affd741296951831af517ce751a",
+    "lease_id": "lease-1061-0e2c9affd7412969",
+    "lease_generation": 1061,
+    "executor": {
+      "schema_version": "limen.agent_identity.v1",
+      "agent": "codex",
+      "surface": "direct",
+      "session_id": "01a1094e-2b9c-7fe2-b5d2-781260fb14c5",
+      "native_run_id": null,
+      "provider_identity": "codex"
+    },
+    "provider_identity": "codex",
+    "observed_heads_before": {
+      "4444J99/limen:work/reap-scope-20261004": "6b9ff6d0590ef3dbe4233c2d206d17fc8ea3b2ea"
+    },
+    "observed_heads_after": {
+      "4444J99/limen:work/reap-scope-20261004": "0a0c6b5905f479b7fa27c36d4cae5db2b46f6ccf",
+      "4444J99/arca-g3:custody/assigned-six-01a1094e-20261005": "d6f5d0df8095153d79c08aba84b27e947406c5a3"
+    },
+    "changed_paths": [
+      "docs/receipts/assigned-reap-20261004/target-5-receipt.json",
+      "docs/receipts/assigned-reap-20261004/target-2-receipt.json",
+      "docs/receipts/assigned-reap-20261004/admission-receipt.json",
+      "docs/receipts/assigned-reap-20261004/target-3-receipt.json",
+      "docs/receipts/assigned-reap-20261004/target-4-receipt.json",
+      "docs/receipts/assigned-reap-20261004/earlier-two-root-checkpoint.json",
+      "docs/receipts/assigned-reap-20261004/scope.json",
+      "docs/receipts/assigned-reap-20261004/target-1-receipt.json",
+      "docs/receipts/assigned-reap-20261004/target-0-receipt.json",
+      "docs/receipts/assigned-reap-20261004/recode-reconstruction/rebuild-empty.cjs",
+      "docs/receipts/assigned-reap-20261004/recode-reconstruction/reconstruction.lock.json",
+      "docs/receipts/assigned-reap-20261004/recode-reconstruction/README.md",
+      "docs/receipts/assigned-reap-20261004/recode-reconstruction/package-lock.json",
+      "docs/receipts/assigned-reap-20261004/recode-reconstruction/package.json",
+      "docs/receipts/assigned-reap-20261004/recode-reconstruction/initializer.sql.json",
+      "docs/receipts/assigned-reap-20261004/recode-reconstruction/verification.json",
+      "docs/receipts/assigned-reap-20261004/recode-reconstruction/LICENSE.ReCode"
+    ],
+    "provider_run_url": "https://github.com/4444J99/limen/pull/2832",
+    "predicate": {
+      "command": "python3 /private/tmp/limen-six-capture.py 0",
+      "exit_code": 75,
+      "summary": "Machine-wide native-capture admission denied: swap-fraction and vitals-shed. No unchanged admission retry or source deletion.",
+      "observed_at": "2026-10-05T04:20:39.184756Z"
+    },
+    "checks": [
+      {
+        "name": "locked-empty-ReCode-reconstruction",
+        "status": "success",
+        "url": null,
+        "head": null
+      },
+      {
+        "name": "exact-17-file-remote-byte-readback",
+        "status": "success",
+        "url": null,
+        "head": "0a0c6b5905f479b7fa27c36d4cae5db2b46f6ccf"
+      },
+      {
+        "name": "Sourcery-GitHub-and-Drive-ciphertext-readback-and-content-restore",
+        "status": "success",
+        "url": null,
+        "head": "d6f5d0df8095153d79c08aba84b27e947406c5a3"
+      },
+      {
+        "name": "credential-wall-31-registered-atoms",
+        "status": "success",
+        "url": null,
+        "head": null
+      },
+      {
+        "name": "full-native-restoration-and-safe-reap",
+        "status": "pending",
+        "url": null,
+        "head": null
+      },
+      {
+        "name": "owner-PR-full-scoped-gates",
+        "status": "pending",
+        "url": null,
+        "head": null
+      }
+    ],
+    "reviews": [],
+    "spend": {
+      "unit": "minutes",
+      "actual": 28.312,
+      "reserved": 30
+    },
+    "child_runs": [],
+    "campaign": null,
+    "outcome": "blocked",
+    "completed_at": "2026-10-05T04:20:39.184184Z"
+  },
+  "retained_responsibility": "Original directory assignment remains owned by this PR. No new outcome name, budget reset or completed state is asserted."
+}
