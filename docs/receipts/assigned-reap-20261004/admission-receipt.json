@@ -1,0 +1,57 @@
+{
+  "owner": "https://github.com/4444J99/limen/pull/2832",
+  "native_session_id": "01a1094e-2b9c-7fe2-b5d2-781260fb14c5",
+  "run_id": "run-0e2c9affd741296951831af517ce751a",
+  "lease": {
+    "schema_version": "limen.lease.v1",
+    "lease_id": "lease-1061-0e2c9affd7412969",
+    "run_id": "run-0e2c9affd741296951831af517ce751a",
+    "executor": {
+      "schema_version": "limen.agent_identity.v1",
+      "native_run_id": null,
+      "provider_identity": "codex",
+      "agent": "codex",
+      "surface": "direct",
+      "session_id": "01a1094e-2b9c-7fe2-b5d2-781260fb14c5"
+    },
+    "resources": [
+      {
+        "schema_version": "limen.resource_claim.v1",
+        "key": "external/receipt-publication",
+        "mode": "exclusive"
+      },
+      {
+        "schema_version": "limen.resource_claim.v1",
+        "key": "external/remote-preservation",
+        "mode": "exclusive"
+      },
+      {
+        "schema_version": "limen.resource_claim.v1",
+        "key": "git-common:743cca674affa4b1e1eaf29c6b75899cf0c85be1d9f71ffde94536fd069124fc",
+        "mode": "exclusive"
+      },
+      {
+        "schema_version": "limen.resource_claim.v1",
+        "key": "recovery-writer",
+        "mode": "exclusive"
+      }
+    ],
+    "observed_heads": {},
+    "generation": 1061,
+    "resource_generations": {
+      "external/receipt-publication": 3,
+      "external/remote-preservation": 3,
+      "git-common:743cca674affa4b1e1eaf29c6b75899cf0c85be1d9f71ffde94536fd069124fc": 3,
+      "recovery-writer": 3
+    },
+    "acquired_at": "2026-10-05T03:52:20.465Z",
+    "heartbeat_at": "2026-10-05T03:52:20.465Z",
+    "hard_deadline": "2026-10-05T04:22:08.498Z",
+    "state": "reserved"
+  },
+  "policy_sha256": "511ea1b153cdffdfbd60cef9a197ca7b594c6debfe515f68fe24b1eb94d5d2d4",
+  "earlier_outcome_accounting_preserved": true,
+  "dispatch_enabled": false,
+  "new_worktrees": 0,
+  "approval_source": "Explicit human approved response in the same native session"
+}

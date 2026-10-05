@@ -1,0 +1,78 @@
+{
+  "document_type": "assigned directory reap receipt; not a deletion certificate or RunReceiptV1",
+  "owner": "https://github.com/4444J99/limen/pull/2832",
+  "native_session_id": "01a1094e-2b9c-7fe2-b5d2-781260fb14c5",
+  "observed_at": "2026-10-05T04:02:37.484761+00:00",
+  "target": {
+    "root": ".limen-private",
+    "path_sha256": "09a008dd2e7650900637ada7fbe16122b6e2ab48bfe670e6ca94c4e843ff7a38",
+    "repository": "4444J99/limen",
+    "origin": "https://github.com/4444J99/limen.git",
+    "kind": "nested-payload-container",
+    "operator_authorized": true
+  },
+  "broker": {
+    "run_id": "run-0e2c9affd741296951831af517ce751a",
+    "lease_id": "lease-1061-0e2c9affd7412969",
+    "generation": 1061,
+    "deadline": "2026-10-05T04:22:08.498Z"
+  },
+  "source_present": true,
+  "prior_inventory": {
+    "file_count": 183386,
+    "logical_bytes": 12702672658,
+    "allocated_bytes": 13217857536,
+    "class_counts": {
+      "unclassified-retain": 183195,
+      "unique-git-bundle-needs-object-parity": 13,
+      "non-reconstructible-application-state": 35,
+      "symlink": 139,
+      "private-media-no-reconstruction-proof": 4
+    },
+    "snapshot_reused": true,
+    "full_live_refresh_claimed": false
+  },
+  "root_consumers": {
+    "pids": [
+      2867,
+      3096,
+      3123,
+      23435,
+      44670,
+      44672,
+      44697,
+      55294,
+      59056,
+      59061,
+      64927,
+      64950
+    ],
+    "observation_scope": "root directory descriptors only; incomplete recursive consumer inventory",
+    "idle_proven": false
+  },
+  "preservation": {
+    "full_remote_recoverability_verified": false,
+    "native_restore_verified": false
+  },
+  "reap": {
+    "removed": false,
+    "directories_removed": 0,
+    "reap_attributable_recovery_bytes": 0
+  },
+  "blockers": [
+    {
+      "atom": "full_payload_custody_or_reconstruction_unproven",
+      "owner": "https://github.com/4444J99/limen/pull/2832",
+      "next_action": "Complete bounded native capture and full provider-independent restoration after host admission permits it; retain source until then."
+    },
+    {
+      "atom": "host_heavy_admission_denied",
+      "owner": "https://github.com/4444J99/limen/pull/2832",
+      "reasons": [
+        "swap-fraction",
+        "vitals-shed"
+      ],
+      "next_action": "Resume native capture under the unchanged machine-wide host gate after live host pressure changes; no unchanged automatic retry."
+    }
+  ]
+}

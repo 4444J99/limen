@@ -1,0 +1,25 @@
+{
+  "source_repository": "https://github.com/aiyuekuang/ReCode",
+  "source_commit": "d8400faf7778d2bb922c1b141ff7f86056367350",
+  "source_path": "src/database.ts",
+  "source_git_blob": "c7f8fcd33f9305b81258a5e61743d7bc8a8254f5",
+  "sql_js_version": "1.13.0",
+  "distribution": {
+    "name": "sql.js",
+    "version": "1.13.0",
+    "resolved": "https://registry.npmjs.org/sql.js/-/sql.js-1.13.0.tgz",
+    "integrity": "sha512-RJbVP1HRDlUUXahJ7VMTcu9Rm1Nzw+EBpoPr94vnbD4LwR715F3CcxE2G2k45PewcaZ57pjetYa+LoSJLAASgA==",
+    "tarball_sha256": "6d70e68446df85ac8f56e34dd10986cfe1182335cb0f071b71b3f007bc33394a",
+    "wasm_sha256": "0734155c83e493983d1f2ff5b09a4fab6e35a32e9449c7e4e545756439f62d73",
+    "installed_wasm_matches_distribution": true,
+    "payload_bytes": 7969610,
+    "source_is_remote_distribution": true
+  },
+  "expected_empty_sha256": "f90509771073d502d74485bde9bcac1167e1fc08eac7b1805c5d19892c1687a0",
+  "sqlite_version": "3.49.1",
+  "initializer_sha256": "39b64398fdd525f1f7c3586e7fbb8da103a84df8eb011f51000c3d3b2aac7e23",
+  "distribution_inputs": {
+    "dist/sql-wasm.js": "694ca5b36aa3e6e71f417819d7df390b65343665fcfa5c69015ca33d93d291b3",
+    "dist/sql-wasm.wasm": "0734155c83e493983d1f2ff5b09a4fab6e35a32e9449c7e4e545756439f62d73"
+  }
+}
