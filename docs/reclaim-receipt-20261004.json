@@ -86,6 +86,48 @@
   }
  ],
  "authorization": "operator assignment of exact TARGET_PATHS",
+ "custody_repair": {
+  "editor_state": {
+   "bundle_name": "limen-worktrees-editor-state-20261004.tar.enc",
+   "bytes": 16089632,
+   "contents": [
+    "editor-state-local-share-worktrees-recode/changes.db (37 records)",
+    "editor-state-chamber_1-limen-recode/changes.db (0 records)",
+    "editor-state-copilot-worktrees-limen-recode/changes.db (0 records)",
+    "editor-state-library-engine-organvm-limen-recode/changes.db (0 records)",
+    "editor-state-chamber_1-limen-vscode/settings.json"
+   ],
+   "provider_github": {
+    "asset_url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/limen-worktrees-editor-state-20261004.tar.enc",
+    "release": "v0.0.0-custody",
+    "repo": "organvm/relationship-pipeline"
+   },
+   "sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf"
+  },
+  "private_payload": {
+   "branch_replica": {
+    "branch": "custody/encrypted-payload-20261004",
+    "repo": "organvm/relationship-pipeline"
+   },
+   "bundle_name": "relationship-pipeline-private.tar.enc",
+   "bytes": 23746080,
+   "dual_restore_verification": "fresh downloads from both GitHub release and Google Drive unsealed with arca.sh; 100% byte-for-byte identical (0 mismatches across 42 files)",
+   "provider_1_github": {
+    "asset_url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/relationship-pipeline-private.tar.enc",
+    "download_verified": true,
+    "release": "v0.0.0-custody",
+    "repo": "organvm/relationship-pipeline"
+   },
+   "provider_2_gdrive": {
+    "download_verified": true,
+    "md5": "d616183b575e960c479d48c8b2f1e785",
+    "rate_limit_observation": "rclone shared client_id experiences API throttling and IPv6 DNS timeouts on directory listings and chunked completion; resolved via point-to-point object transfer with IPv4 bind (rclone copyto --bind 0.0.0.0)",
+    "remote_path": "gdrive:limen-custody/relationship-pipeline-private.tar.enc"
+   },
+   "sha256": "aebe125ea84c2a6d9ddf4c02567a5d7188a23e3e8826662aa6beed603660e31d"
+  },
+  "status": "verified_two_independent_providers"
+ },
  "date": "2026-10-04",
  "disk_kb": {
   "after": {
@@ -109,6 +151,17 @@
    "~/.local/share/limen/_limen-worktree-abandonment": 321316,
    "~/Workspace/_limen-worktree-abandonment": 38176
   },
+  "space_accounting": {
+   "note": "volume_free_delta_kb reflects total filesystem change including independent concurrent session cleanups; total_attributable_reclaimed_kb isolates space freed strictly by this tranche",
+   "quarantine_reclaimed_kb": 263168,
+   "target_footprint_after_kb": 101324,
+   "target_footprint_before_kb": 5522848,
+   "total_attributable_reclaimed_kb": 5684692,
+   "tranche_direct_reclaimed_kb": 5421524,
+   "volume_free_current_kb": 27108932,
+   "volume_free_delta_kb": 12734780,
+   "volume_free_initial_kb": 14374152
+  },
   "volume_free_kb": {
    "after": 16338696,
    "before": 14374152,
@@ -121,6 +174,26 @@
   "hokage-chess": "clean, main live-exact, reaped",
   "public-process": "main + limen/gh-organvm-public-process-20-14d8 live-exact",
   "relationship-pipeline": "3 branches live-exact (remediate-11/12 gone upstream but object live-exact)"
+ },
+ "quarantine_reap": {
+  "reaped_entries": [
+   "ignored-public-process-.jekyll-cache-1791155255942604000 (reconstructible Jekyll cache)",
+   "ignored-public-process-_site-1791155255944376000 (reconstructible Jekyll site build)",
+   "ignored-relationship-pipeline-out-1791156429396310000 (preserved on 2 independent providers)",
+   "ignored-relationship-pipeline-people.json-1791156429398023000 (preserved on 2 independent providers)",
+   "editor-state-chamber_1-limen-recode (preserved in sealed bundle)",
+   "editor-state-chamber_1-limen-vscode (preserved in sealed bundle)",
+   "editor-state-chamber_1-limen-gitignore (preserved in sealed bundle)",
+   "editor-state-copilot-worktrees-limen-recode (preserved in sealed bundle)",
+   "editor-state-copilot-worktrees-limen-gitignore (preserved in sealed bundle)",
+   "editor-state-library-engine-organvm-limen-recode (preserved in sealed bundle)",
+   "editor-state-library-engine-organvm-limen-gitignore (preserved in sealed bundle)",
+   "synced-target5-logs (synced to central limen repository)",
+   "ignored-portable-acceptance-20261003-* (reconstructible build caches, pycaches, and virtualenv)",
+   "editor-state-local-share-worktrees-* (preserved in sealed bundle and reconstructible mypy cache)"
+  ],
+  "reclaimed_kb": 263168,
+  "status": "completed"
  },
  "remote_parity": "every reaped HEAD verified against live git ls-remote at scope time; see acceptance events (archive_proof) for sha and live refs",
  "retained": [
