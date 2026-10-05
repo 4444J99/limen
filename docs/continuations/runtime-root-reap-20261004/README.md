@@ -80,9 +80,11 @@ full-restore observations across two independent failure domains.
 | `4444J99/arca-g3` (`custody/reap-runtime-roots-20261004`, PR 1) | `github:arca-g3` | 2027-04-03 | 5/5 member digests |
 | `~/.arca-vault/` + vault manifest | `physical:local-arca-vault` | n/a | convenience copy, same host |
 
-### Recovery key: UNRESOLVED — a login-Keychain item does not prove host-loss recovery
+### Recovery key: UNRESOLVED under Wall #320
 
 An earlier revision asserted this key "survives loss of this host". **That claim is withdrawn.**
+It also cited `refs/heads/work/reap-scope-20260704`, which does not exist on the remote; the live ref
+is `refs/heads/work/reap-scope-20261004`, verified with `git ls-remote` before correcting.
 
 Verified: the secret is readable at login Keychain service `limen-arca-vault`; access was read-only;
 the same key performed every encryption and restoration in this session.
@@ -90,20 +92,32 @@ the same key performed every encryption and restoration in this session.
 No independently recoverable custody was found:
 - `security list-keychains` returns only the local `login.keychain-db` and the System keychain — no
   iCloud keychain is present.
-- `defaults read com.apple.security` lists only the local `login.keychain` in its `DLDBSearchList`, so
-  iCloud Keychain sync is not enabled for it.
+- `defaults read com.apple.security` lists only the local `login.keychain` in its `DLDBSearchList`.
 - `op item list --vault Limen-Automation` returns only a Jules API key; no `limen-arca-vault` item.
 - No key file in `~/.arca-vault`, and no `RECOVERY-CARD` in that vault.
 
 **Consequence:** the replicas are recoverable only while this Mac survives. The two provider failure
-domains are real, but recoverability is currently host-bound.
+domains are real, but recoverability is host-bound.
 
-Owner: the credential organ (Wall #320) or the operator enabling iCloud Keychain. Escrowing a secret
-into a password manager and enabling iCloud Keychain are credential/account actions reserved to the
-operator, so this session performed neither.
+**Wall #320 acceptance predicate — measured this session, still FAIL:**
+1. `python3 scripts/credential-wall.py --check` exits 0 with `limen-arca-vault` registered as a Wall
+   #320 atom whose probe resolves **off this host**, **and**
+2. a re-run of the key probe above shows an independently readable copy.
+
+Both halves are required. The measured run: `--check` exited **0** and reported all 31 secret atoms
+registered — but `limen-arca-vault` is **not among them**. A green `--check` that does not index the
+atom in question is not evidence for this gate, so half 1 fails on its registration clause despite the
+zero exit, and half 2 fails on independent readability. Status stays **UNRESOLVED**.
+
+Next action: the operator registers the secret in the credential organ (1Password vault
+`Limen-Automation`), or enables iCloud Keychain for the login keychain. Both are credential/account
+actions reserved to the operator, so this session performed neither.
+
+This blocks off-host recoverability of the private payload only — not the existence of the provider
+replicas, and not any reap gate.
 
 What remains valid: encryption at rest, two independent provider replicas, authenticated readbacks,
-and full restorations. Only off-host recoverability of the **key** is unresolved.
+and full restorations.
 
 **Purging is not authorized.** The acceptance predicate accepts the custody graph; it does not
 authorize retiring quarantine originals.
@@ -119,18 +133,36 @@ object database behind that work. That path is outside the assigned TARGET_PATHs
 Owner action: `pr-1`'s owner commits or discards its change and positively releases it → verify parity
 → reap the store → `rmdir .worktrees`.
 
+`.claude/worktrees` was removed: it held zero entries before any holder was touched, and its 12
+holders measured as idle VS Code Python language servers (0 children, 0.0% CPU) — editor helpers, not
+protected sessions and not dependent stores.
+
 **`reap-scope-20261004` — awaiting positive owner release.**
 This session reaped it earlier on remote parity plus process inactivity. **That was a policy error**:
 neither establishes release of a protected sibling session, and positive owner release was never
 obtained. It is recorded as such, not as a success. Mitigating fact: no data was lost — the lane
-re-created its checkout from the pushed branch within minutes and advanced to head `295666a2`, which is
-advertised by `refs/heads/work/reap-scope-20261004` and `refs/pull/2832/head`. Loss-freeness held, but
-that is a mitigation, not authorization. The directory is present and in use; it stays until its owner
-positively releases it.
+re-created its checkout from the pushed branch and has since advanced twice more, to remote head
+`6b9ff6d05` on `refs/heads/work/reap-scope-20261004` while the local checkout sits at `295666a2`. The
+lane is still writing; loss-freeness held, but that is a mitigation, not authorization. The directory
+is present and in use; it stays until its owner positively releases it.
 
-`.claude/worktrees` was removed: it held zero entries before any holder was touched, and its 12
-holders measured as idle VS Code Python language servers (0 children, 0.0% CPU) — editor helpers, not
-protected sessions and not dependent stores.
+## Owner-release probe — neither owner has released
+
+Positive release is an explicit act. Process inactivity, remote parity and a stable HEAD are
+observations, not release, and were not treated as such.
+
+| Lane | Observation | Release obtained | Disposition |
+| --- | --- | --- | --- |
+| `reap-scope-20261004` | head stable at `6b9ff6d05` over 20s; PR 2832 OPEN, `mergedAt=null` | **no** | intact, untouched |
+| `pr-1` → gates `speech-score-engine` | `M  CLAUDE.md`, 1 dirty path | **no** | retained |
+
+Consequence: no reap and no container removal is authorized this round. Both entries and the
+quarantine (166 entries, 0 purge-authorized) are preserved.
+
+**Next-round procedure, on positive release:** verify live remote parity for the released head → run
+the applicable custody predicates (portable custody acceptance for the private payload; per-entry
+retirement predicates for quarantine) → reap eligible copies through the scoped reclaim rail → `rmdir`
+the now-empty `.worktrees` container.
 
 ## Unique work rescued before removal
 

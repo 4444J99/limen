@@ -263,7 +263,35 @@
       "owner": "credential organ (Wall #320) via scripts/creds-hydrate.py, or the operator enabling iCloud Keychain",
       "next_command": "op item create --vault Limen-Automation --title 'limen-arca-vault key' --category 'Secure Note' --value <key>, then re-run this receipt's key-evidence probe to replace UNRESOLVED with a citation",
       "action_not_taken_here": "Escrowing a secret into a password manager and enabling iCloud Keychain are credential and account actions reserved to the operator, so this session did not perform either.",
-      "what_remains_valid": "The encrypted-at-rest property, the two independent provider replicas, the authenticated readbacks and the full restorations all stand. Only off-host recoverability of the KEY is unresolved."
+      "what_remains_valid": "The encrypted-at-rest property, the two independent provider replicas, the authenticated readbacks and the full restorations all stand. Only off-host recoverability of the KEY is unresolved.",
+      "wall": {
+        "owner": "Wall #320 credential organ",
+        "wall_reference": "docs/architecture credential organ / issue 4444J99/limen#320",
+        "authority": "scripts/creds-hydrate.py is the credential organ's file sink; it hydrates an op:// item into its destination",
+        "acceptance_predicate": "scripts/credential-wall.py --check exits 0 with the limen-arca-vault secret registered as a Wall #320 atom whose probe resolves off this host, AND a re-run of this receipt's key probe shows an independently readable copy. Both halves are required; neither alone closes the gate.",
+        "probe_this_session_ran": [
+          "security list-keychains  -> only ~/Library/Keychains/login.keychain-db and /Library/Keychains/System.keychain",
+          "defaults read com.apple.security -> DLDBSearchList contains only the local login.keychain",
+          "op item list --vault Limen-Automation -> only 'Jules API key'; no limen-arca-vault item",
+          "ls ~/.arca-vault for a key file -> none; no RECOVERY-CARD in that vault"
+        ],
+        "predicate_result": "FAIL - no independently recoverable copy is registered",
+        "next_action": "Operator registers the limen-arca-vault secret in the credential organ (1Password vault Limen-Automation), or enables iCloud Keychain for the login keychain. Either makes the secret independently recoverable and lets the predicate above be re-run.",
+        "next_command": "op item create --vault Limen-Automation --title 'limen-arca-vault key' --category 'Secure Note' --value <key>   # operator-only: a credential write",
+        "then": "python3 scripts/credential-wall.py --check   # in the limen checkout",
+        "status_unchanged": "UNRESOLVED",
+        "blocks": "off-host recoverability of the private payload only; not the provider replicas' existence, and not any reap gate",
+        "measured_run_this_session": {
+          "command": "python3 scripts/credential-wall.py --check",
+          "exit": 0,
+          "stdout": "\u2713 credential-wall: all 31 secret atoms registered (every token/secret/login/env has a home)",
+          "registered_atoms_reported": 31,
+          "limen_arca_vault_registered": false,
+          "why_this_is_still_a_fail": "The script exits 0 and reports every secret atom registered, but limen-arca-vault is not among them. A green --check that does not index the atom in question is not evidence for this gate, so half 1 of the predicate fails on its registration clause even though the exit code is 0.",
+          "predicate_result": "FAIL - half 1 fails on registration, half 2 fails on independent readability",
+          "status_unchanged": "UNRESOLVED"
+        }
+      }
     },
     "staging_root": "/Users/4jp/Workspace/limen/.limen-private/custody-staging/reap-runtime-roots-20261004",
     "permissions": "0700 directories, 0600 payload files",
@@ -320,7 +348,15 @@
       "status": "LIVE SIBLING - INTACT, NOT TOUCHED",
       "evidence": "re-created by its owning lane after this session's premature reap; head 295666a25f0e3c4657360d7995353e95659b0cd2 advertised by refs/heads/work/reap-scope-20261004 and refs/pull/2832/head; clean tree",
       "gate": "awaiting positive owner release",
-      "next_action": "the owning lane positively releases it; only then verify parity, reap, and rmdir the .worktrees container"
+      "next_action": "the owning lane positively releases it; only then verify parity, reap, and rmdir the .worktrees container",
+      "live_parity_at_last_check": {
+        "ref": "refs/heads/work/reap-scope-20261004",
+        "remote_head": "6b9ff6d0590ef3dbe4233c2d206d17fc8ea3b2ea",
+        "local_head": "295666a25f0e3c4657360d7995353e95659b0cd2",
+        "divergence": "remote is ahead of the local checkout; the lane is still writing",
+        "owner_release": "NOT obtained",
+        "disposition": "intact; untouched by this session"
+      }
     }
   ],
   "released_since_first_report": [
@@ -329,7 +365,7 @@
       "status": "REAPED ON INSUFFICIENT EVIDENCE; NOW PRESENT AGAIN",
       "error": "This lane's checkout was reaped on remote parity plus process inactivity. Neither establishes release of a protected sibling session. Positive owner release was never obtained, so the action did not meet the bar and is recorded as a policy error, not a success.",
       "evidence_actually_held_at_the_time": [
-        "HEAD 5f0b4604fcafd3ac48f694d3edbf0c6787e16cd8 advertised by refs/heads/work/reap-scope-20260704 and refs/pull/2832/head",
+        "HEAD 5f0b4604fcafd3ac48f694d3edbf0c6787e16cd8 advertised by refs/heads/work/reap-scope-20261004 and refs/pull/2832/head",
         "no process cwd, no running async task, clean tree, zero ignored payload"
       ],
       "evidence_that_should_have_been_required": "an explicit release signal from the owning lane or the operator",
@@ -406,5 +442,37 @@
     "issue": "the workspace registered folder '34 \u00b7 Codex worktrees' at .agent-runtime/codex/worktrees, a container this reap removed, which would have left VS Code resolving a missing folder",
     "fix": "repointed that one entry to its surviving parent .agent-runtime/codex",
     "scope_note": "two other workspace entries were already dangling before this session (../../.local/share/limen/worktrees and ../organvm/copilot-worktrees/limen, both removed by a peer reap); they were left alone as out of scope"
+  },
+  "ref_typo_correction": {
+    "defect": "the receipt cited refs/heads/work/reap-scope-20260704, which does not exist on the remote",
+    "verified_live_before_editing": {
+      "refs/heads/work/reap-scope-20261004": "6b9ff6d0590ef3dbe4233c2d206d17fc8ea3b2ea",
+      "refs/heads/work/reap-scope-20260704": "ABSENT (git ls-remote --refs origin)"
+    },
+    "occurrences_corrected": 1,
+    "local_branch_name": "work/reap-scope-20261004"
+  },
+  "owner_release_probe": {
+    "probed_at": "2026-10-05",
+    "method": "Positive release is an explicit act by an owner. Process inactivity, remote parity and a stable HEAD are observations, not release, and were not treated as such.",
+    "sibling_lane": {
+      "path": "/Users/4jp/Workspace/limen/.worktrees/reap-scope-20261004",
+      "head_over_20s": "stable at 6b9ff6d0590ef3dbe4233c2d206d17fc8ea3b2ea",
+      "interpretation": "stability is not release; earlier in this session the same lane advanced three times",
+      "pr_2832": "OPEN, mergedAt=null",
+      "positive_release_obtained": false,
+      "disposition": "intact and untouched"
+    },
+    "dependency_lane": {
+      "path": "/Users/4jp/Workspace/chamber_worktrees/chamber_2/speech-score-engine/pr-1",
+      "dirty_paths": [
+        "M  CLAUDE.md"
+      ],
+      "dirty_count": 1,
+      "positive_release_obtained": false,
+      "disposition": "still carries an uncommitted change; outside the assigned TARGET_PATHs; speech-score-engine retained"
+    },
+    "consequence": "Neither owner has released. No reap and no container removal is authorized this round. Both entries and the quarantine are preserved.",
+    "next_round_procedure": "On positive release: verify live remote parity for the released head, run the applicable custody predicates (portable custody acceptance for private payload; per-entry retirement predicates for quarantine), reap eligible copies through the scoped reclaim rail, then rmdir the now-empty .worktrees container."
   }
 }
