@@ -1,0 +1,108 @@
+{
+  "schema": "limen.session_closeout_audit.v1",
+  "audited_at": "2026-10-05",
+  "scope": "session release for the runtime-root reap lane; distinct from task completion, estate health and deletion eligibility",
+  "working_directory": "/Users/4jp/Workspace/limen",
+  "session_predicate": {
+    "command": "scripts/no-tasks-on-me.sh --session-id ses_ef6e8d3c8ffe6kh0QD5KIEVDgy --worktree /Users/4jp/Workspace/.limen-worktrees/reap-runtime-roots-20261004 --receipt docs/continuations/runtime-root-reap-20261004/session-closeout.json --json",
+    "exit_code": 2,
+    "meaning": "UNMEASURED, never a pass",
+    "reported": {
+      "status": "unmeasured",
+      "error_type": "BrokerUnavailable",
+      "session_released": false,
+      "task_completed": false
+    },
+    "why": "the predicate requires the authenticated conduct environment and failed at broker acquisition, so it never evaluated the worktree anchor, custody, publication or scoped verification",
+    "additional_note": "both of this session's native checkouts were released after publication, so even with a broker the anchor would need re-binding; the repository root was NOT substituted, because that would be adopting a sibling checkout to obtain a green result",
+    "consequence": "no closeout completion is claimed. This receipt is the owner record, not a substitute for the predicate."
+  },
+  "verified_against_disk_and_git": {
+    "assigned_paths": {
+      ".agent-runtime/codex/worktrees": "absent",
+      ".claude/worktrees": "absent",
+      ".worktrees": "PRESENT - reap-scope-20261004, speech-score-engine, both unreleased",
+      "lane checkout": "absent",
+      "lane scratch": "absent"
+    },
+    "owner_branch_pushed": "56a89228 reachable at refs/heads/reap/runtime-roots-authorization-20261004",
+    "receipts_on_remote": [
+      "receipt.json",
+      "session-closeout.json",
+      "remote-recoverability.json",
+      "custody-retention-clause-probe.json",
+      "README.md",
+      "quarantine-ledger.redacted.json"
+    ],
+    "worktree_registry": "2 entries: the main checkout and the unreleased sibling; both released registrations pruned via git worktree prune",
+    "stray_remote_branches": "none; the single reap/* remote branch is the owner branch itself"
+  },
+  "correction_to_my_own_published_ledger": {
+    "published_value": "164 quarantine entries",
+    "live_value": 171,
+    "attribution_measured_from_receipts": {
+      "this_lane": 154,
+      "no_receipt_found": 12,
+      "other_lane_origins": {
+        "organvm": 2,
+        "agy": 3
+      }
+    },
+    "finding": "the quarantine root at /Users/4jp/Workspace/_limen-worktree-abandonment is SHARED across lanes. The published 164 is this lane's point-in-time snapshot, not the live root total.",
+    "why_it_matters": "a reader could have read 164 as the root's contents. It is not.",
+    "anomalous_reading": "the first delta check I ran was invalid because the published ledger is redacted and hides destination names; the figures above come from re-reading each entry's abandonment receipt target, not from inference"
+  },
+  "local_only_state_created_by_this_lane": [
+    {
+      "path": "limen.code-workspace",
+      "state": "untracked, never committed in this repository's history",
+      "my_change": "repointed folder '34 Codex worktrees' from the removed .agent-runtime/codex/worktrees to .agent-runtime/codex, repairing a dangling reference this reap created",
+      "why_not_pushed": "it is a machine-local VS Code workspace file carrying local absolute paths; 4444J99/limen is a PUBLIC repository, there is no repo precedent for tracking *.code-workspace, and direct main writes are forbidden",
+      "gap": "LOCAL ONLY - the repaired content has no remote home",
+      "named_followup": "decide whether *.code-workspace and .vscode/ are tracked project config or personal local artifacts; if tracked, land them through the PR rail with local paths stripped",
+      "owner": "repo maintainer / operator",
+      "next_action": "answer the tracking question, then either commit the file through a PR or record it as deliberately local"
+    },
+    {
+      "path": ".limen-private/custody-staging/reap-runtime-roots-20261004",
+      "state": "gitignored by design (.gitignore:55 .limen-private/)",
+      "contents": "196 KB: manifest, payload, publication, remote-custody-receipt, restore-proof",
+      "parity": "NOT a parity gap. The payload is encrypted and replicated to two independent providers, each copy re-downloaded and verified; the receipts are committed in private 4444J99/arca-g3",
+      "owner": "custody owner: arca-g3 PR 1"
+    }
+  ],
+  "working_tree_state_not_mine": {
+    "items": [
+      {
+        "path": ".gitignore",
+        "change": "adds '.recode' under a 'ReCode local database' comment"
+      },
+      {
+        "path": ".vscode/settings.json",
+        "change": "untracked, pre-existing"
+      }
+    ],
+    "attribution": "NOT this lane's work; both were present before this session began and I did not author them",
+    "action_taken": "none - not committed, not reverted, not stashed",
+    "why": "committing another lane's in-flight editor/tool config would steal their work; reverting would destroy it. Both are broader workspace WIP, distinct from this lane's closure.",
+    "status": "OPEN, owned by whichever lane introduced .recode"
+  },
+  "lane_local_closure": {
+    "verdict": "this lane's own work is finished and durably published",
+    "evidence": [
+      "27 directories removed under committed scope packets, each with a typed abandonment receipt",
+      "4 of 5 assigned paths verified absent on disk",
+      "all receipts and capsules present on the live owner branch",
+      "private payload proven recoverable on two independent providers, each replica re-downloaded and decrypted",
+      "scoped verification passed (verify-scoped.sh exit 0, 4/4 gates) and gitleaks clean at publication time"
+    ],
+    "not_finished_but_not_mine": ".worktrees retains two unreleased entries owned by other lanes"
+  },
+  "verdict": "NOT SAFE TO CLOSE AS A SESSION. Lane-local work is complete and published; the session predicate is unmeasured (exit 2, broker unavailable), the native anchor is released, and one local-only edit has no remote home. No full retirement and no closeout completion is claimed.",
+  "minimum_next_actions": [
+    "provision LIMEN_CONDUCT_URL and LIMEN_CONDUCT_TOKEN so the session predicate can measure (owner: limen conduct deployment)",
+    "bind the session predicate to a surviving native checkout rather than the repository root (owner: this lane's successor run)",
+    "decide the tracking status of *.code-workspace and .vscode/ (owner: repo maintainer)",
+    "resolve the shared-quarantine ledger wording so the published 164 is not read as the live root total (owner: this lane)"
+  ]
+}
