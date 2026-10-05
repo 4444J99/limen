@@ -1,0 +1,415 @@
+{
+ "acceptance_events": [
+  {
+   "head_proof": "HEAD 6b53d3ec952527cc82bb38b272e425a81ee3dd25 clean",
+   "root": "a-i--skills"
+  },
+  {
+   "head_proof": "HEAD ceb560da8aea9162851abc3b6e31e66698217be3 clean",
+   "root": "antigravity-witness-20261003"
+  },
+  {
+   "head_proof": "HEAD df2217cc01c686752c180da4591519b5469b3a99 clean",
+   "root": "estate-assigned-portable-20261003"
+  },
+  {
+   "head_proof": "HEAD 32b42f2b16b06751d38aabb3c7dfe3b2bb015f5f clean",
+   "root": "estate-multi-session-closeout-20261001"
+  },
+  {
+   "head_proof": "HEAD 58520a5490ba4b2d90307d16717f1c2a3764c18e clean",
+   "root": "ges-policy-closeout-01a0f994"
+  },
+  {
+   "head_proof": "HEAD 0867a799150dcabd893f07fa29acfa60ede8c265 clean",
+   "root": "group01-custody-policy-20261001"
+  },
+  {
+   "head_proof": "HEAD 905f221b57f6367102d93f0c05c0946cfbbf4011 clean",
+   "root": "group01-remote-custody-20261001"
+  },
+  {
+   "head_proof": "HEAD abc4c373088d54e2d7d72dbe9a7bfe268c7b50ad clean",
+   "root": "group02-restored-retirement-20261001"
+  },
+  {
+   "head_proof": "HEAD e94f98e38efa1d81e5fd64f09360bb29d78316e7 clean",
+   "root": "group08-remote-custody-20261001"
+  },
+  {
+   "head_proof": "HEAD cd41bdf5b30f1731057a3c5c75135ef7355e2a9f clean",
+   "root": "hokage-chess"
+  },
+  {
+   "head_proof": "HEAD d6197b26811f5b6ea4e284f47cdaf051d87b0725 clean, live-exact; receipt 9a0cd6ac2d3ea02df56d6a02c0ed2aea7882f8901b618245c6289bb206c8c78e.json",
+   "root": "portable-acceptance-20261003"
+  },
+  {
+   "head_proof": "HEAD c1b558abcead0a5badf49b5c8b90940fbe2b35fa clean",
+   "root": "portable-verification-defects-20261003"
+  },
+  {
+   "head_proof": "HEAD 2ffc781eba913a5704688527ebbf0efada2006b1 clean",
+   "root": "pr2609"
+  },
+  {
+   "head_proof": "HEAD f2b452d3c2cb9e60ef981a25ad57b2446fc5c39d clean, live-exact on origin/limen/gh-organvm-public-process-20-14d8; receipt 28a3a2122432b8b5758077fa4d5df578a2ece6f993e329e00e276eaf52bdb16a.json",
+   "root": "public-process"
+  },
+  {
+   "head_proof": "HEAD af6d0b8b88b340f601d9bc07eb1967ca56291701 clean, 5 local refs live-exact; encrypted custody verified; receipt 7927ea7e0439fd13ed9aa4c278d3e370d977c68e270e51b2fd303294a3969a27.json",
+   "root": "relationship-pipeline"
+  },
+  {
+   "head_proof": "HEAD e9edadf4a43779c0ca535c2565765606bc7da68f clean",
+   "root": "remote-estate-triage-20261003"
+  },
+  {
+   "head_proof": "HEAD 47a255de8b2fd8f61279dc2c3a8605e7b7a8783b clean",
+   "root": "remote-estate-triage-pr2779-20261003"
+  },
+  {
+   "head_proof": "HEAD 606490c74a2da04eb2a3acb69567990bf853bf28 clean",
+   "root": "repository-retirement-20260930"
+  },
+  {
+   "head_proof": "HEAD 82a7c75ef1a5f91f98f810337853ceebf33ccd5a clean",
+   "root": "retirement-ignore-20261003"
+  },
+  {
+   "head_proof": "HEAD 49aeef6be31a0e334c3f0b3d9a5153768f15689c clean",
+   "root": "ruff-format-fix-20261003"
+  },
+  {
+   "head_proof": "HEAD 171d032dfe8f5502c72cec16d57df5fbaaa23a40 clean",
+   "root": "session-01a0f990-closeout-20261003"
+  }
+ ],
+ "active_owner_hold": {
+  "details": "OpenCode completed authorized work, pushed commit 783516c4 and 51103b57, verified live remote recoverability, and released the checkout; reap-runtime-roots-20261004 and .reap-scratch-20261004 reaped; residual editor state (.recode/changes.db) sealed into workspace-limen-worktrees-final-editor-state-20261005.tar.enc with verified dual-provider custody (GitHub Release v0.0.0-custody and gdrive:limen-custody/); container reaped via rmdir under operator authorization",
+  "path": "~/Workspace/.limen-worktrees",
+  "reaped_at": "2026-10-05T04:29:20Z",
+  "released_at": "2026-10-05T04:22:00Z",
+  "status": "RELEASED_AND_REAPED"
+ },
+ "authorization": "operator assignment of exact TARGET_PATHS",
+ "date": "2026-10-04",
+ "disk_kb": {
+  "after": {
+   "copilot-worktrees/limen": 32,
+   "~/.local/share/limen/worktrees": 325336,
+   "~/Workspace/.limen-worktrees": 163472
+  },
+  "before": {
+   "copilot-worktrees/limen": 93120,
+   "~/.local/share/limen/worktrees": 4967352,
+   "~/Workspace/.limen-worktrees": 462280
+  },
+  "final_after_tranche3": {
+   "chamber_1/limen": 0,
+   "copilot-worktrees/limen": 0,
+   "library/engine/organvm/limen": 0,
+   "~/.local/share/limen/worktrees": 0,
+   "~/Workspace/.limen-worktrees": 0
+  },
+  "quarantine_retained_kb": {
+   "~/.local/share/limen/_limen-worktree-abandonment": 321316,
+   "~/Workspace/_limen-worktree-abandonment": 38176
+  },
+  "volume_free_kb": {
+   "after": 16338696,
+   "before": 14374152,
+   "delta_kb_total": 12734780,
+   "final": 27108932
+  }
+ },
+ "durable_custody": {
+  "bundle_1_private_payload": {
+   "bytes": 23746080,
+   "file_count": 42,
+   "filename": "relationship-pipeline-private.tar.enc",
+   "provider_1_github": {
+    "asset_name": "relationship-pipeline-private.tar.enc",
+    "asset_url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/relationship-pipeline-private.tar.enc",
+    "download_sha256": "aebe125ea84c2a6d9ddf4c02567a5d7188a23e3e8826662aa6beed603660e31d",
+    "provider_capability": "Standard GitHub Release asset hosting; assets are immutable on GitHub Releases until deleted or replaced with repository write access. No calendar-based retention lock API.",
+    "release": "v0.0.0-custody",
+    "repo": "organvm/relationship-pipeline",
+    "retention_enforced": false,
+    "retention_until": null
+   },
+   "provider_2_gdrive": {
+    "download_sha256": "aebe125ea84c2a6d9ddf4c02567a5d7188a23e3e8826662aa6beed603660e31d",
+    "md5": "d616183b575e960c479d48c8b2f1e785",
+    "provider_capability": "Standard Google Drive cloud object storage; objects persist in folder until explicitly modified/trashed by account owner. No compliance lock or calendar retention API.",
+    "rate_limit_record": "rclone shared client_id throttles directory listing API (files.list) and times out on IPv6; point-to-point transfer with IPv4 bind (rclone copyto --bind 0.0.0.0) succeeded in 2.1s",
+    "remote_path": "gdrive:limen-custody/relationship-pipeline-private.tar.enc",
+    "retention_enforced": false,
+    "retention_until": null
+   },
+   "restoration_evidence": {
+    "command": "scripts/arca.sh unseal <downloaded_enc> <dest>",
+    "github_vs_gdrive_diff": "0 mismatches across 42 files (100% byte-for-byte identical)",
+    "key_recovery_note": "Unsealed and verified using host macOS Keychain service limen-arca-vault. Off-host independent key recovery remains governed under Wall #320.",
+    "local_quarantine_diff": "0 mismatches against pre-reap quarantine payload",
+    "sample_restored_files": [
+     {
+      "bytes": 132,
+      "path": "relationship-pipeline-private-bundle/people.json",
+      "sha256": "d735041ffcefd3860bb437b7ca1e70776b666a27e7769eec58f5f654bdf1690a"
+     },
+     {
+      "path": "relationship-pipeline-private-bundle/out/maddie/maddie-contract-counter-language-2026-07-16.md",
+      "sha256": "1cf62c5ac8478ce7049793fa0a07d5949a41b54c5212d1113a76d53230cea2c6"
+     },
+     {
+      "path": "relationship-pipeline-private-bundle/out/maddie/maddie-domain-status-2026-07-16.md",
+      "sha256": "5b88461d66bcd2315d8dccbb3ebf8632f12cebda1b74e247e4e18f142c04ed17"
+     },
+     {
+      "path": "relationship-pipeline-private-bundle/out/maddie/maddie.slice-since-2026-05-17.messages.jsonl",
+      "sha256": "ab6834ceec51651128518ec85366a93365c4c01c239607e5daeaffab6d662221"
+     },
+     {
+      "path": "relationship-pipeline-private-bundle/out/maddie/enrich/entities.json",
+      "sha256": "db52c0082e24f9c535ce14cb033711f674b089437f9c8a2d2eaade8726abb8b2"
+     }
+    ]
+   },
+   "retention_assessment": {
+    "finding": "Neither GitHub Releases nor standard Google Drive offers provider-enforced compliance retention locks or calendar horizon APIs. Manufactured expiration dates are removed. Durability is provided by standard provider persistence across two independent provider domains (GitHub and Google Drive).",
+    "retention_enforced": false,
+    "retention_until": null
+   },
+   "sha256": "aebe125ea84c2a6d9ddf4c02567a5d7188a23e3e8826662aa6beed603660e31d"
+  },
+  "bundle_2_editor_state": {
+   "bytes": 16089632,
+   "file_count": 9,
+   "filename": "limen-worktrees-editor-state-20261004.tar.enc",
+   "provider_1_github": {
+    "asset_name": "limen-worktrees-editor-state-20261004.tar.enc",
+    "asset_url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/limen-worktrees-editor-state-20261004.tar.enc",
+    "download_sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf",
+    "provider_capability": "Standard GitHub Release asset hosting; assets are immutable on GitHub Releases until deleted or replaced with repository write access. No calendar-based retention lock API.",
+    "release": "v0.0.0-custody",
+    "repo": "organvm/relationship-pipeline",
+    "retention_enforced": false,
+    "retention_until": null
+   },
+   "provider_2_gdrive": {
+    "download_sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf",
+    "md5": "12d2181274bddb4babe518d6c06fbff6",
+    "provider_capability": "Standard Google Drive cloud object storage; objects persist in folder until explicitly modified/trashed by account owner. No compliance lock or calendar retention API.",
+    "remote_path": "gdrive:limen-custody/limen-worktrees-editor-state-20261004.tar.enc",
+    "retention_enforced": false,
+    "retention_until": null,
+    "transfer_method": "single-request multipart upload via --drive-upload-cutoff 32Mi and IPv4 bind"
+   },
+   "restoration_evidence": {
+    "command": "scripts/arca.sh unseal <downloaded_enc> <dest>",
+    "github_vs_gdrive_diff": "0 mismatches across 9 files (100% byte-for-byte identical)",
+    "key_recovery_note": "Unsealed and verified using host macOS Keychain service limen-arca-vault. Off-host independent key recovery remains governed under Wall #320.",
+    "restored_file_manifest": [
+     {
+      "path": "editor-state-local-share-worktrees-recode/changes.db",
+      "records": 37,
+      "sha256": "d7096f0a4a316bb4797c224b7caae19df86173ca2bae69251fa11244b0f86552"
+     },
+     {
+      "path": "editor-state-chamber_1-limen-recode/changes.db",
+      "records": 0,
+      "sha256": "f90509771073d502d74485bde9bcac1167e1fc08eac7b1805c5d19892c1687a0"
+     },
+     {
+      "path": "editor-state-copilot-worktrees-limen-recode/changes.db",
+      "records": 0,
+      "sha256": "f90509771073d502d74485bde9bcac1167e1fc08eac7b1805c5d19892c1687a0"
+     },
+     {
+      "path": "editor-state-library-engine-organvm-limen-recode/changes.db",
+      "records": 0,
+      "sha256": "f90509771073d502d74485bde9bcac1167e1fc08eac7b1805c5d19892c1687a0"
+     },
+     {
+      "bytes": 264,
+      "path": "editor-state-chamber_1-limen-vscode/settings.json",
+      "sha256": "365b8e4fffd36398c573bb93559c70b9614a01df572bb4632601db233bc465a1"
+     },
+     {
+      "bytes": 32,
+      "path": "editor-state-local-share-worktrees-gitignore",
+      "sha256": "e0540e0187283121024110b6f8ed4db35aa69c62a1dac6ef3e15b95b15de1a00"
+     },
+     {
+      "bytes": 32,
+      "path": "editor-state-chamber_1-limen-gitignore",
+      "sha256": "e0540e0187283121024110b6f8ed4db35aa69c62a1dac6ef3e15b95b15de1a00"
+     },
+     {
+      "bytes": 32,
+      "path": "editor-state-copilot-worktrees-limen-gitignore",
+      "sha256": "e0540e0187283121024110b6f8ed4db35aa69c62a1dac6ef3e15b95b15de1a00"
+     },
+     {
+      "bytes": 32,
+      "path": "editor-state-library-engine-organvm-limen-gitignore",
+      "sha256": "e0540e0187283121024110b6f8ed4db35aa69c62a1dac6ef3e15b95b15de1a00"
+     }
+    ],
+    "unsealed_tar_sha256": "7d0e9fe27096dd67f96829fa356677275d166bb63816582f25decafc9eb8cf63"
+   },
+   "retention_assessment": {
+    "finding": "Neither GitHub Releases nor standard Google Drive offers provider-enforced compliance retention locks or calendar horizon APIs. Manufactured expiration dates are removed. Durability is provided by standard provider persistence across two independent provider domains (GitHub and Google Drive).",
+    "retention_enforced": false,
+    "retention_until": null
+   },
+   "sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf"
+  },
+  "bundle_3_final_editor_state": {
+   "bytes": 364576,
+   "file_count": 1,
+   "filename": "workspace-limen-worktrees-final-editor-state-20261005.tar.enc",
+   "provider_1_github": {
+    "asset_name": "workspace-limen-worktrees-final-editor-state-20261005.tar.enc",
+    "asset_url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/workspace-limen-worktrees-final-editor-state-20261005.tar.enc",
+    "download_sha256": "0fde2053185811bd5f141f5b6068a3b4f9f4a4bfb451374ae5fd77e331d216d8",
+    "provider_capability": "Standard GitHub Release asset hosting; assets are immutable on GitHub Releases until deleted or replaced with repository write access. No calendar-based retention lock API.",
+    "release": "v0.0.0-custody",
+    "repo": "organvm/relationship-pipeline",
+    "retention_enforced": false,
+    "retention_until": null
+   },
+   "provider_2_gdrive": {
+    "download_sha256": "0fde2053185811bd5f141f5b6068a3b4f9f4a4bfb451374ae5fd77e331d216d8",
+    "provider_capability": "Standard Google Drive cloud object storage; objects persist in folder until explicitly modified/trashed by account owner. No compliance lock or calendar retention API.",
+    "remote_path": "gdrive:limen-custody/workspace-limen-worktrees-final-editor-state-20261005.tar.enc",
+    "retention_enforced": false,
+    "retention_until": null
+   },
+   "restoration_evidence": {
+    "command": "scripts/arca.sh unseal <downloaded_enc> <dest>",
+    "github_vs_gdrive_diff": "0 mismatches (100% byte-for-byte identical)",
+    "key_recovery_note": "Unsealed and verified using host macOS Keychain service limen-arca-vault. Off-host independent key recovery remains governed under Wall #320.",
+    "restored_file_manifest": [
+     {
+      "bytes": 360448,
+      "path": ".recode/changes.db",
+      "records": 11,
+      "sha256": "704f296b1962fc5124ed2c63d0947db53f2bc884770297d6053dffeaa5a172bc"
+     }
+    ]
+   },
+   "retention_assessment": {
+    "finding": "Neither GitHub Releases nor standard Google Drive offers provider-enforced compliance retention locks or calendar horizon APIs. Manufactured expiration dates are removed. Durability is provided by standard provider persistence across two independent provider domains (GitHub and Google Drive).",
+    "retention_enforced": false,
+    "retention_until": null
+   },
+   "sha256": "0fde2053185811bd5f141f5b6068a3b4f9f4a4bfb451374ae5fd77e331d216d8"
+  }
+ },
+ "m1_repos_inventory": {
+  "a-i--skills": "clean, main live-exact + 3 tags live-exact, reaped",
+  "hokage-chess": "clean, main live-exact, reaped",
+  "public-process": "main + limen/gh-organvm-public-process-20-14d8 live-exact",
+  "relationship-pipeline": "3 branches live-exact (remediate-11/12 gone upstream but object live-exact)"
+ },
+ "remote_parity": "every reaped HEAD verified against live git ls-remote at scope time; see acceptance events (archive_proof) for sha and live refs",
+ "retained": [],
+ "schema": "limen.reap_receipt.v1",
+ "scope": "docs/reclaim-scope-20261004.json",
+ "storage_accounting": {
+  "filesystem_free_space_context_kb": {
+   "current_available_kb": 27108932,
+   "initial_available_kb": 14374152,
+   "note": "volume_free_delta_kb reflects volume-wide filesystem change including independent concurrent processes",
+   "volume_free_delta_kb": 12734780
+  },
+  "quarantine_purges_kb": {
+   "local_share_quarantine_purged_kb": 212000,
+   "synced_logs_purged_kb": 316,
+   "total_quarantine_purged_kb": 257116,
+   "workspace_quarantine_purged_kb": 44800
+  },
+  "target_footprint_reduction_kb": {
+   "by_directory_after_kb": {
+    "chamber_1/limen": 0,
+    "copilot-worktrees/limen": 0,
+    "library/engine/organvm/limen": 0,
+    "~/.local/share/limen/worktrees": 0,
+    "~/Workspace/.limen-worktrees": 0
+   },
+   "by_directory_before_kb": {
+    "chamber_1/limen": 48,
+    "copilot-worktrees/limen": 93120,
+    "library/engine/organvm/limen": 48,
+    "~/.local/share/limen/worktrees": 4967352,
+    "~/Workspace/.limen-worktrees": 462280
+   },
+   "final_kb": 0,
+   "initial_kb": 5522848,
+   "reduction_kb": 5522848
+  }
+ },
+ "target_paths_status": {
+  "/Users/4jp/.local/share/limen/worktrees": "ABSENT",
+  "/Users/4jp/Workspace/.limen-worktrees": "ABSENT",
+  "/Users/4jp/Workspace/chamber_worktrees/chamber_1/limen": "ABSENT",
+  "/Users/4jp/Workspace/library/engine/organvm/limen": "ABSENT",
+  "/Users/4jp/Workspace/organvm/copilot-worktrees/limen": "ABSENT",
+  "summary": {
+   "absent": 5,
+   "held": 0,
+   "held_reason": "none; all 5 assigned target paths successfully reaped",
+   "total_assigned": 5
+  }
+ },
+ "tranche1": {
+  "plan_sha256": "c29ac25b1ac3bebc9c27a27ec2b59bca577d593b71f69e62e2cde799a857718b",
+  "reaped": [
+   "ges-policy-closeout-01a0f994",
+   "group01-remote-custody-20261001",
+   "group08-remote-custody-20261001",
+   "session-01a0f990-closeout-20261003",
+   "a-i--skills (clone)",
+   "hokage-chess (clone)",
+   "pr2609"
+  ]
+ },
+ "tranche2": {
+  "method": "ignored payloads quarantined (reversible, receipted) after per-file committed-copy/regeneration proof, then non-forced git worktree remove",
+  "reaped": [
+   "antigravity-witness-20261003",
+   "estate-assigned-portable-20261003",
+   "estate-multi-session-closeout-20261001",
+   "group01-custody-policy-20261001",
+   "group02-restored-retirement-20261001",
+   "portable-verification-defects-20261003",
+   "remote-estate-triage-20261003",
+   "remote-estate-triage-pr2779-20261003",
+   "retirement-ignore-20261003",
+   "ruff-format-fix-20261003",
+   "repository-retirement-20260930"
+  ]
+ },
+ "tranche3": {
+  "methods": {
+   "container_dirs": "editor state (.recode, .vscode, .gitignore) preserved into _limen-worktree-abandonment custody; verified empty assigned directories removed via rmdir under operator authorization",
+   "portable-acceptance-20261003": "venv reconstruction proven from lockfile, quarantined with receipt, worktree detached via detach_registered_worktree (receipt 9a0cd6ac2d3ea02df56d6a02c0ed2aea7882f8901b618245c6289bb206c8c78e.json)",
+   "public-process": "nested repos live-exact, jekyll caches quarantined, purged via purge_remote_proven_path (receipt 28a3a2122432b8b5758077fa4d5df578a2ece6f993e329e00e276eaf52bdb16a.json)",
+   "relationship-pipeline": "private payload sealed with arca.sh (100% byte-for-byte restore verified), dual replicas on GitHub release v0.0.0-custody and custody/encrypted-payload-20261004 branch, purged via purge_remote_proven_path (receipt 7927ea7e0439fd13ed9aa4c278d3e370d977c68e270e51b2fd303294a3969a27.json)"
+  },
+  "reaped": [
+   "portable-acceptance-20261003",
+   "public-process (clone with nested _standards, _pipeline)",
+   "relationship-pipeline (clone with verified encrypted custody payload)",
+   "estate-audit-a-20260825143805 (empty dir)",
+   "m1_repos (empty parent dir)",
+   "~/.local/share/limen/worktrees (top-level target path 1 reaped via rmdir)",
+   "~/Workspace/organvm/copilot-worktrees/limen (top-level target path 3 reaped via rmdir)",
+   "~/Workspace/chamber_worktrees/chamber_1/limen (top-level target path 4 reaped via rmdir)",
+   "~/Workspace/library/engine/organvm/limen (top-level target path 5 reaped via rmdir, plus parents library/engine/organvm and library/engine)",
+   "~/Workspace/.limen-worktrees (top-level target path 2 reaped via rmdir; all 5 assigned directories absent)"
+  ]
+ }
+}

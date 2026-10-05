@@ -1,0 +1,47 @@
+{
+  "bundle_id": "com.anthropic.claude-code",
+  "bundle_path": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-1026/popen-gw1/test_strict_flag_is_what_separ0/store/ClaudeCode.app",
+  "bundle_present": true,
+  "class_findings": [
+    "registered_unassessable_bundle"
+  ],
+  "concurrent_version_race_risk": false,
+  "current_binary": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-1026/popen-gw1/test_strict_flag_is_what_separ0/store/versions/2.1.222",
+  "findings": [],
+  "hardlink_inode_matches": true,
+  "info_plist_matches": true,
+  "instances": [
+    {
+      "assessable": false,
+      "inode_matches": true,
+      "ls_registered": false,
+      "path": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-1026/popen-gw1/test_strict_flag_is_what_separ0/store/ClaudeCode.app",
+      "present": true,
+      "repairable": true,
+      "source": "vendor:_jb() per start"
+    },
+    {
+      "assessable": false,
+      "inode_matches": false,
+      "ls_registered": true,
+      "path": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-1026/popen-gw1/test_strict_flag_is_what_separ0/Applications/Claude Code URL Handler.app",
+      "present": true,
+      "repairable": false,
+      "source": "vendor:startBackgroundHousekeeping() per 24h"
+    }
+  ],
+  "observed_at": "2026-10-04T02:18:10.334777+00:00",
+  "ok": true,
+  "platform": "Darwin",
+  "platform_supported": true,
+  "schema": "limen.claude_identity_bundle.v1",
+  "status": "at-ideal",
+  "strict_ok": false,
+  "versions": [
+    {
+      "runnable": true,
+      "size_bytes": 64,
+      "version": "2.1.222"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "schema": "limen.observation.feed.v1",
+  "observed_at": "2026-10-03T19:20:57.595371+00:00",
+  "source": "composite",
+  "vitals": {
+    "level": 2,
+    "action": "shed",
+    "load_per_core": 2.268,
+    "swap_used_gib": 15.64,
+    "ram_gib": 16.0
+  },
+  "bifrons": {
+    "stars": 419,
+    "dossiers": 107,
+    "resonance_edges": 12,
+    "awaiting_gate": 0
+  },
+  "observatory": {
+    "hero": "organvm-iii-ergon/a-i-chat--exporter",
+    "external_gaps": 0,
+    "internal_gaps": 0,
+    "top_mechanism": null
+  },
+  "status": "shed"
+}

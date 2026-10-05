@@ -1,0 +1,38 @@
+{
+  "bundle": "relationship-pipeline-private.tar.enc",
+  "ciphertext_sha256": "aebe125ea84c2a6d9ddf4c02567a5d7188a23e3e8826662aa6beed603660e31d",
+  "ciphertext_bytes": 23746080,
+  "provider_1": {
+    "type": "github_release",
+    "repo": "organvm/relationship-pipeline",
+    "release": "v0.0.0-custody",
+    "asset": "relationship-pipeline-private.tar.enc",
+    "url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/relationship-pipeline-private.tar.enc",
+    "download_sha256": "aebe125ea84c2a6d9ddf4c02567a5d7188a23e3e8826662aa6beed603660e31d",
+    "retention_enforced": false,
+    "retention_until": null,
+    "provider_capability": "Standard GitHub Release asset hosting; assets are immutable on GitHub Releases until deleted or replaced with repository write access. No calendar-based retention lock API."
+  },
+  "provider_2": {
+    "type": "google_drive",
+    "remote_path": "gdrive:limen-custody/relationship-pipeline-private.tar.enc",
+    "md5": "d616183b575e960c479d48c8b2f1e785",
+    "download_sha256": "aebe125ea84c2a6d9ddf4c02567a5d7188a23e3e8826662aa6beed603660e31d",
+    "rate_limit_observation": "rclone shared client_id throttles directory listing API (files.list) and times out on IPv6; point-to-point transfer with IPv4 bind (rclone copyto --bind 0.0.0.0) succeeded in 2.1s",
+    "retention_enforced": false,
+    "retention_until": null,
+    "provider_capability": "Standard Google Drive cloud object storage; objects persist in folder until explicitly modified/trashed by account owner. No compliance lock or calendar retention API."
+  },
+  "retention_assessment": {
+    "retention_enforced": false,
+    "retention_until": null,
+    "finding": "Neither GitHub Releases nor standard Google Drive offers provider-enforced compliance retention locks or calendar horizon APIs. Manufactured expiration dates are removed. Durability is provided by standard provider persistence across two independent provider domains (GitHub and Google Drive)."
+  },
+  "restoration_verification": {
+    "unseal_tool": "scripts/arca.sh unseal",
+    "file_count": 42,
+    "github_vs_gdrive_diff": "0 mismatches across 42 files (100% byte-for-byte identical)",
+    "pre_reap_quarantine_diff": "0 mismatches against local quarantine payload",
+    "key_recovery_note": "Unsealed and verified using host macOS Keychain service limen-arca-vault. Off-host independent key recovery remains governed under Wall #320."
+  }
+}

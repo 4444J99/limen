@@ -1,0 +1,75 @@
+{
+  "document_type": "assigned directory reap receipt; not a deletion certificate or RunReceiptV1",
+  "owner": "https://github.com/4444J99/limen/pull/2832",
+  "native_session_id": "01a1094e-2b9c-7fe2-b5d2-781260fb14c5",
+  "observed_at": "2026-10-05T04:02:37.484761+00:00",
+  "target": {
+    "root": "%Users%4jp%Workspace%limen",
+    "path_sha256": "8043e475d3b11bdf70eb75f6b2741d61d6cf82c7ef2cd7b503d559e3fecd8abc",
+    "repository": "4444J99/limen",
+    "origin": null,
+    "kind": "non-git-payload",
+    "operator_authorized": true
+  },
+  "broker": {
+    "run_id": "run-0e2c9affd741296951831af517ce751a",
+    "lease_id": "lease-1061-0e2c9affd7412969",
+    "generation": 1061,
+    "deadline": "2026-10-05T04:22:08.498Z"
+  },
+  "source_present": true,
+  "prior_inventory": {
+    "file_count": 4,
+    "logical_bytes": 53280,
+    "allocated_bytes": 57344,
+    "class_counts": {
+      "configuration-needs-owner-parity": 1,
+      "non-reconstructible-application-state": 3
+    },
+    "snapshot_reused": true,
+    "full_live_refresh_claimed": false
+  },
+  "root_consumers": {
+    "pids": [
+      3405,
+      3416,
+      3418,
+      23578,
+      44711,
+      44712,
+      44716,
+      55441,
+      59069,
+      59080,
+      64936,
+      64955
+    ],
+    "observation_scope": "root directory descriptors only; incomplete recursive consumer inventory",
+    "idle_proven": false
+  },
+  "preservation": {
+    "full_remote_recoverability_verified": false,
+    "native_restore_verified": false
+  },
+  "reap": {
+    "removed": false,
+    "directories_removed": 0,
+    "reap_attributable_recovery_bytes": 0
+  },
+  "blockers": [
+    {
+      "atom": "full_payload_custody_or_reconstruction_unproven",
+      "owner": "https://github.com/4444J99/limen/pull/2832",
+      "next_action": "Complete bounded native capture and full provider-independent restoration after host admission permits it; retain source until then."
+    },
+    {
+      "atom": "host_heavy_admission_denied",
+      "owner": "https://github.com/4444J99/limen/pull/2832",
+      "reasons": [
+        "swap-fraction",
+        "vitals-shed"
+      ],
+      "next_action": "Resume native capture under the unchanged machine-wide host gate after live host pressure changes; no unchanged automatic retry."
+    }
+  ]
+}

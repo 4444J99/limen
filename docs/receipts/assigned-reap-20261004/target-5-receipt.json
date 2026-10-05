@@ -1,0 +1,79 @@
+{
+  "document_type": "assigned directory reap receipt; not a deletion certificate or RunReceiptV1",
+  "owner": "https://github.com/4444J99/limen/pull/2832",
+  "native_session_id": "01a1094e-2b9c-7fe2-b5d2-781260fb14c5",
+  "observed_at": "2026-10-05T04:02:37.484761+00:00",
+  "target": {
+    "root": "-Users-4jp-Workspace-limen",
+    "path_sha256": "475cdf86e573a84bfc80915addc2b8d59cc59aaf5683b26f6503f4ccf8a50509",
+    "repository": "4444J99/domus-genoma",
+    "origin": "git@github.com:4444J99/domus-genoma.git",
+    "kind": "nested-payload-container",
+    "operator_authorized": true,
+    "identity_note": "Owning source repository redirect resolved from live default commit; target itself is not a Git root."
+  },
+  "broker": {
+    "run_id": "run-0e2c9affd741296951831af517ce751a",
+    "lease_id": "lease-1061-0e2c9affd7412969",
+    "generation": 1061,
+    "deadline": "2026-10-05T04:22:08.498Z"
+  },
+  "source_present": true,
+  "prior_inventory": {
+    "file_count": 2,
+    "logical_bytes": 30632,
+    "allocated_bytes": 32768,
+    "class_counts": {
+      "unique-agent-memory-needs-owner-parity": 1,
+      "non-reconstructible-application-state": 1
+    },
+    "snapshot_reused": true,
+    "full_live_refresh_claimed": false
+  },
+  "root_consumers": {
+    "pids": [
+      3417,
+      3424,
+      3427,
+      23624,
+      44717,
+      44718,
+      44724,
+      55446,
+      59147,
+      61035,
+      64941,
+      64959
+    ],
+    "observation_scope": "root directory descriptors only; incomplete recursive consumer inventory",
+    "idle_proven": false
+  },
+  "preservation": {
+    "full_remote_recoverability_verified": false,
+    "native_restore_verified": false,
+    "fresh_file_denominator_matches_prior_inventory": true,
+    "tracked_memory_byte_parity": true,
+    "tracked_memory_repository": "4444J99/domus-genoma",
+    "tracked_memory_commit": "0d93f029a8200b98686f95c4dfd173a0f1aaf357",
+    "tracked_memory_blob_shas": [
+      "a18da32acb9d48bff61dc5660323180a360573ef"
+    ],
+    "generated_database_reconstruction_verified": true,
+    "database_generated_bytes": 28672,
+    "reconstruction_recipe": "docs/receipts/assigned-reap-20261004/recode-reconstruction/",
+    "full_content_recovery_dependencies_verified": true,
+    "complete_retirement_predicate_verified": false
+  },
+  "reap": {
+    "removed": false,
+    "directories_removed": 0,
+    "reap_attributable_recovery_bytes": 0
+  },
+  "blockers": [
+    {
+      "atom": "active_consumer_hold",
+      "owner": "https://github.com/4444J99/limen/pull/2832",
+      "next_action": "Detach this exact navigation folder in its owning editor surfaces without signaling protected sessions; rerun complete consumer and parent-store dependency checks before lifecycle deletion."
+    }
+  ]
+}

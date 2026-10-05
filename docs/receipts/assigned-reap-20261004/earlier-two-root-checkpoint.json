@@ -1,0 +1,38 @@
+{
+  "document_type": "owner checkpoint; not a RunReceiptV1 or completion receipt",
+  "owner": "https://github.com/4444J99/limen/pull/2832",
+  "native_session_id": "01a1094e-2b9c-7fe2-b5d2-781260fb14c5",
+  "earlier_outcome": "non-git-reap-20261004",
+  "earlier_run_id": "run-45fe73fe8ccfe727428e33740f3014b9",
+  "earlier_attempt_deadline": "2026-10-04T23:35:32.210Z",
+  "earlier_reserved_agent_seconds": 3600,
+  "earlier_reserved_agent_seconds_ceiling": 7200,
+  "earlier_corrective_roots_used": 2,
+  "predicate_status": "not_run_in_corrected_attempt",
+  "predicate_exit_code": null,
+  "custody_repository": "4444J99/arca-g3",
+  "custody_ref": "custody/non-git-reap-01a10925-20261004",
+  "custody_commit": "c31f37cbc6c0219ffce744f233dec5664492037b",
+  "existing_ciphertext_objects_rechecked": [
+    {
+      "artifact": "reconciliation",
+      "bytes": 383520,
+      "github_ref_and_bytes_verified": true
+    },
+    {
+      "artifact": "repair",
+      "bytes": 32288,
+      "github_ref_and_bytes_verified": true
+    }
+  ],
+  "google_drive_readback": "reconciliation attempt hit 30-second process deadline; no retry; repair not attempted in continuation",
+  "native_restoration": "unproven: restored xattrs and exact mtime/birthtime differ",
+  "reconstruction": "four empty databases byte-identical, but committed producer recipe and locked SQLite version not established",
+  "reaped_directories": 0,
+  "reap_attributable_recovery_bytes": 0,
+  "source_disposition": "all eight targets retained; live consumers and custody proof pending",
+  "proposed_six_root_outcome": "assigned-custody-runtime-reap-20261004",
+  "policy_update": "Exact additive patch explicitly approved by the human and applied on 2026-10-05; previous outcome accounting unchanged.",
+  "publication_status": "This historical checkpoint is published under the independently admitted original six-root receipt-publication authority; the expired two-root attempt was not restarted.",
+  "next_action": "apply approved exact additive policy patch, obtain first six-root broker admission, preserve and restore unique payloads, publish committed per-root evidence, reap independently eligible roots after consumer release"
+}

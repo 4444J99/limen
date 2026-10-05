@@ -1,0 +1,18 @@
+{
+  "mitigation_present": true,
+  "mitigation_missing": [],
+  "boundary_epoch": 1000000000.0,
+  "boundary_iso": "2001-09-08T21:46:40",
+  "boundary_source": "override",
+  "reports_dir": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-1026/popen-gw1/test_no_pii_only_names_and_fra0",
+  "matches_total": 1,
+  "recurrences": [
+    {
+      "name": "Python-new.ips",
+      "mtime": 1000005000.0,
+      "mtime_iso": "2001-09-08T23:10:00",
+      "frame": "nw_settings_child_has_forked"
+    }
+  ],
+  "green": false
+}
