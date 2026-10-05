@@ -1,0 +1,15 @@
+{
+  "session_id": "9d27afab-f81e-45d5-9ec0-3b89756d9654",
+  "verified_head": "97db29509129e3362f14e8d6b3eedd2b157bc9b3",
+  "tests_reused": "Previously passing scoped tests and source integrity controls (scripts/verify-scoped.sh --base origin/main passed 5/5 cheap gates).",
+  "verification_reference": "https://github.com/4444J99/limen/pull/2832",
+  "credential_wall": "Installed canonical credential-wall.py --check exited 0 during closeout (31 secret atoms registered).",
+  "custody": "All unique branch commits (origin/preserve/agy-fix-self-heal-retirement-predicate) and parity proofs verified and pushed to remote origin. Non-reconstructible editor states and abandonment logs quarantined to /Users/4jp/Workspace/_limen-worktree-abandonment with typed receipts committed. No private payload leaked.",
+  "target_dispositions": {
+    "/Users/4jp/Workspace/organvm/limen": "REAPED (199,768 KB freed, remote-proven)",
+    "/Users/4jp/limen-lanes/agy/limen": "REAPED (296,544 KB freed, remote-proven, parent agy/ reaped)",
+    "/Users/4jp/Workspace/limen/mcp": "HELD (34,804 KB tool caches reaped; clean tracked source held for active MCP runtime)",
+    "/Users/4jp/Workspace/limen": "HELD (active session live checkout, protected by _SELF_GUARD)"
+  },
+  "process_census": "Zero surviving or unattributed processes in worktree reap-scope-20261004 (process_count: 0)."
+}

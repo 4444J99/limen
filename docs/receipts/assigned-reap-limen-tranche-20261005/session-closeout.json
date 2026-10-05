@@ -1,0 +1,38 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "9d27afab-f81e-45d5-9ec0-3b89756d9654",
+  "repository": "4444J99/limen",
+  "publication_branch": "work/reap-scope-20261004",
+  "owner_url": "https://github.com/4444J99/limen/pull/2832",
+  "disposition": "complete",
+  "worktree_name": "reap-scope-20261004",
+  "base_head": "ff6b2714a013e82c3132205183ca10302a0ce0c3",
+  "owned_paths": [
+    "docs/receipts/assigned-reap-20261004",
+    "docs/receipts/assigned-reap-limen-tranche-20261005/README.md",
+    "docs/receipts/assigned-reap-limen-tranche-20261005/abandonment-receipts",
+    "docs/receipts/assigned-reap-limen-tranche-20261005/receipt.json",
+    "docs/receipts/assigned-reap-limen-tranche-20261005/scope.json",
+    "docs/reclaim-evidence-20261004",
+    "docs/reclaim-receipt-20261004.json",
+    "docs/reclaim-scope-20261004.json",
+    "docs/worktree-reclaim-acceptance.jsonl",
+    "institutio/governance/docs-manifest.yaml"
+  ],
+  "retained_work": [],
+  "verification": [
+    {
+      "head": "97db29509129e3362f14e8d6b3eedd2b157bc9b3",
+      "exit_code": 0,
+      "purpose": "completion",
+      "command": "bash scripts/verify-scoped.sh --base origin/main && python3 scripts/credential-wall.py --check",
+      "evidence": "docs/receipts/assigned-reap-limen-tranche-20261005/session-evidence.json",
+      "sha256": "f98aa0e10d1f110d79f307e6567169be2c2ddce33d2ff1866401aa9f4c4f681e"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/assigned-reap-limen-tranche-20261005/session-evidence.json",
+    "sha256": "f98aa0e10d1f110d79f307e6567169be2c2ddce33d2ff1866401aa9f4c4f681e"
+  }
+}
