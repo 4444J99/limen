@@ -247,7 +247,7 @@ def capture_manifests(
                 "birthtime_ns": mac_birthtime_ns(path),
                 "atime_ns": before.st_atime_ns,
                 "ctime_ns": before.st_ctime_ns,
-                "flags": before.st_flags,
+                "flags": getattr(before, "st_flags", 0),
                 "nlink": before.st_nlink,
                 "xattrs": attrs,
                 "acl": acl,
