@@ -1,0 +1,17 @@
+{
+  "command": "npm ci --ignore-scripts --no-audit --no-fund; node rebuild-empty.cjs OUTPUT.db",
+  "exit_code": 0,
+  "result": {
+    "source_commit": "d8400faf7778d2bb922c1b141ff7f86056367350",
+    "sql_js_version": "1.13.0",
+    "sqlite_version": "3.49.1",
+    "bytes": 28672,
+    "sha256": "f90509771073d502d74485bde9bcac1167e1fc08eac7b1805c5d19892c1687a0",
+    "integrity": "ok",
+    "changes_rows": 0,
+    "sequence_rows": 0,
+    "matched": true
+  },
+  "output_is_disposable": true,
+  "original_sources_modified": false
+}

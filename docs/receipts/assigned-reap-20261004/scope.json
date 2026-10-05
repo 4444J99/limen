@@ -1,0 +1,58 @@
+{
+  "schema": "limen.worktree_reclaim_scope.v1",
+  "accepted": true,
+  "owner_url": "https://github.com/4444J99/limen/pull/2832",
+  "authorization": "Exact operator instruction in native Codex session 01a1093b-3bc1-7163-8997-8fda0c2e2ed8 on 2026-10-04 explicitly assigns the six TARGET_PATHS and authorizes preservation, live remote parity verification, and reaping subject to recovery-writer, shared-store, active-owner, and custody gates. This submission records that actual instruction. It grants no claim that preservation or deletion predicates passed. Continued by native session 01a1094e-2b9c-7fe2-b5d2-781260fb14c5; human explicitly approved the prepared additive execution-policy patch on 2026-10-05. Operator scope acceptance alone does not certify deletion predicates.",
+  "targets": [
+    {
+      "root": "limen-artifact-custody",
+      "path_sha256": "a7ef15a2b9b5f621169d02c239bd68fc6691fc9bdf32e44bb4e995a8b562911f",
+      "repository": "4444J99/limen",
+      "origin": null,
+      "kind": "non-git-payload",
+      "operator_authorized": true
+    },
+    {
+      "root": ".limen-private",
+      "path_sha256": "09a008dd2e7650900637ada7fbe16122b6e2ab48bfe670e6ca94c4e843ff7a38",
+      "repository": "4444J99/limen",
+      "origin": "https://github.com/4444J99/limen.git",
+      "kind": "nested-payload-container",
+      "operator_authorized": true
+    },
+    {
+      "root": ".agent-runtime",
+      "path_sha256": "8d85d263c4b1736047d3d01b378a79d7cbfd49291dff0de0e15395f3ae3a5ca0",
+      "repository": "4444J99/limen",
+      "origin": "https://github.com/4444J99/limen.git",
+      "kind": "nested-payload-container",
+      "operator_authorized": true
+    },
+    {
+      "root": "%Users%4jp%Workspace%limen",
+      "path_sha256": "8043e475d3b11bdf70eb75f6b2741d61d6cf82c7ef2cd7b503d559e3fecd8abc",
+      "repository": "4444J99/limen",
+      "origin": null,
+      "kind": "non-git-payload",
+      "operator_authorized": true
+    },
+    {
+      "root": "-Users-4jp--limen",
+      "path_sha256": "8b4563a75db4a60cb4dfe3026cfde83fc2e21a13efb15f0b3523dd5536193c11",
+      "repository": "4444J99/domus-genoma",
+      "origin": "git@github.com:4444J99/domus-genoma.git",
+      "kind": "nested-payload-container",
+      "operator_authorized": true,
+      "identity_note": "Owning source repository redirect resolved from live default commit; target itself is not a Git root."
+    },
+    {
+      "root": "-Users-4jp-Workspace-limen",
+      "path_sha256": "475cdf86e573a84bfc80915addc2b8d59cc59aaf5683b26f6503f4ccf8a50509",
+      "repository": "4444J99/domus-genoma",
+      "origin": "git@github.com:4444J99/domus-genoma.git",
+      "kind": "nested-payload-container",
+      "operator_authorized": true,
+      "identity_note": "Owning source repository redirect resolved from live default commit; target itself is not a Git root."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+[
+  "\n      CREATE TABLE IF NOT EXISTS changes (\n        id INTEGER PRIMARY KEY AUTOINCREMENT,\n        timestamp TEXT NOT NULL,\n        file_path TEXT NOT NULL,\n        old_content TEXT,\n        new_content TEXT,\n        diff TEXT,\n        content_hash TEXT,\n        lines_added INTEGER DEFAULT 0,\n        lines_removed INTEGER DEFAULT 0,\n        batch_id TEXT,\n        operation_type TEXT DEFAULT 'edit',\n        rollback_to_id INTEGER,\n        covered_by_rollback_id INTEGER,\n        created_at DATETIME DEFAULT CURRENT_TIMESTAMP\n      )\n    ",
+  "CREATE INDEX IF NOT EXISTS idx_file_path ON changes(file_path)",
+  "CREATE INDEX IF NOT EXISTS idx_timestamp ON changes(timestamp)",
+  "CREATE INDEX IF NOT EXISTS idx_created_at ON changes(created_at)",
+  "CREATE INDEX IF NOT EXISTS idx_batch_id ON changes(batch_id)",
+  "ALTER TABLE changes ADD COLUMN operation_type TEXT DEFAULT 'edit'",
+  "ALTER TABLE changes ADD COLUMN rollback_to_id INTEGER",
+  "ALTER TABLE changes ADD COLUMN covered_by_rollback_id INTEGER"
+]

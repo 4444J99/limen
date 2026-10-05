@@ -1,0 +1,8 @@
+{
+  "name": "limen-empty-recode-recovery",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "sql.js": "1.13.0"
+  }
+}
