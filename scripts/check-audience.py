@@ -64,6 +64,10 @@ ESTATE = ROOT / "institutio" / "github" / "estate.yaml"
 ACCESS = ROOT / "institutio" / "github" / "access.yaml"
 REGISTER = ROOT / "organs" / "consulting" / "constellation" / "registry.yaml"
 
+# The shared helper lives beside this file: cli/tests load this script with
+# spec_from_file_location, which does not put scripts/ on sys.path, so resolve the sibling
+# directory here instead of relying on the caller's path (P1 follow-up #2783).
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from estate_posture import visibility_intent
 
 AUDIENCES = ("world", "collab", "self")

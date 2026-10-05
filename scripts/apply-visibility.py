@@ -80,6 +80,9 @@ def _plan(estate: dict, rows: list[dict], gitvs, receipt_ok) -> list[dict]:
         full = str(row.get("full_name") or "")
         cls_name = gitvs.classify_repo(full, estate, facts=row)
         desired = (classes.get(cls_name) or {}).get("visibility") if cls_name else None
+        # The migration return masks legacy candidacy (publish_candidate=False); keep the raw
+        # override flag so a confirmed red sweep still demotes a live-public legacy candidate.
+        legacy_candidate = bool((overrides.get(full) or {}).get("publish_candidate"))
         desired, publish_candidate, preservation_review = gitvs.visibility_intent(estate, full, desired, row)
         if desired not in ("public", "private"):
             continue
@@ -111,6 +114,22 @@ def _plan(estate: dict, rows: list[dict], gitvs, receipt_ok) -> list[dict]:
                         }
                     )
             continue
+        if legacy_candidate and observed == "public":
+            # P1 follow-up (#2783): visibility_intent returns private intent + preservation review
+            # for a scoped legacy candidate, but a CONFIRMED red sweep is a live secret in public
+            # history — the protective demotion predates the migration and is not waived by it.
+            # Unknown/stale receipts keep the review hold below.
+            ok, why = receipt_ok(full)
+            if not ok and why == "receipt red":
+                plan.append(
+                    {
+                        "repo": full,
+                        "class": cls_name,
+                        "action": "demote",
+                        "why": "publish-sweep RED on a live-public candidate — history secret exposed",
+                    }
+                )
+                continue
         plan.append(
             {
                 "repo": full,
