@@ -77,7 +77,17 @@
     "local_alternates": false
   },
   "source_pr": "https://github.com/4444J99/limen/pull/2834",
-  "temporary_verification_artifacts": "disposable copies owned by this attempt; cleanup follows committed receipt and verified remote payload",
+  "temporary_verification_artifacts": {
+    "temporary_artifacts_removed": true,
+    "temporary_allocated_bytes": 51523584,
+    "free_bytes_before": 42291191808,
+    "free_bytes_after": 42342785024,
+    "free_byte_change_attribution": "unattributed-concurrent-volume-change",
+    "original_targets_removed": 0,
+    "receipt_remote_equal": true,
+    "scope": "only-this-attempt-generated-copies",
+    "original_target_cleanup": false
+  },
   "verification": {
     "credential_wall": "passed-31-secret-atoms-registered",
     "full_scoped_exact_tree": "pending",
@@ -90,6 +100,6 @@
       "passed": 25
     }
   },
-  "verified_source_commit": "e8e2b8a729671d04db3d82a1ce36f974360e1cf0"
+  "verified_source_commit": "e8e2b8a729671d04db3d82a1ce36f974360e1cf0",
+  "checkpoint_receipt_commit": "0d3173e85678d34b0ad9e4a0bda3e195845890ee"
 }
-
