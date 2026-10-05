@@ -25,14 +25,50 @@ before `580e`; likewise `8eef/portfolio` before `b4ca/portfolio-psp-c06`, and th
 
 ## Outcome
 
-| Target | Outcome |
-| --- | --- |
-| `.agent-runtime/codex/worktrees` | **reaped**, container removed |
-| `.claude/worktrees` | contents reaped; empty container retained (12 VS Code language servers hold it as cwd) |
-| `.worktrees` | 21 of 24 entries reaped; `reap-scope-20261004` (active sibling session) and `speech-score-engine` (external registered-worktree store) retained |
+**Status: INCOMPLETE — no completion claimed.** 26 directories are removed and the staged
+private payload is remotely recoverable, but only 1 of the 3 target containers is absent.
 
-26 directories removed through `scripts/reclaim-worktrees.py` under committed scope packets.
-Measured free-space change on `/System/Volumes/Data`: **13.63 GiB → 29.93 GiB (+16.3 GiB)**.
+| Target | Container | Contents |
+| --- | --- | --- |
+| `.agent-runtime/codex/worktrees` | **removed** | 7 entries reaped, incl. both shared stores after their children |
+| `.claude/worktrees` | retained (empty) | 1 entry reaped; 0 remain |
+| `.worktrees` | retained | 21 of 24 reaped; 2 remain under owner control |
+
+Measured free-space change on `/System/Volumes/Data`: **13.63 GiB → 29.92 GiB (+16.29 GiB)**.
+
+### What still blocks an all-absent state
+
+| Path | Why | Owner / next action |
+| --- | --- | --- |
+| `.worktrees/reap-scope-20261004` | sibling recovery lane **not released** — PR 2832 open. Its HEAD *is* on the live remote, but quiesced is not finished. | its owning session closes PR 2832, then reap + `rmdir` |
+| `.worktrees/speech-score-engine` | registered store for `chamber_worktrees/chamber_2/speech-score-engine/pr-1`, an external worktree outside this scope with its own live staged edit | that worktree's owner releases it |
+| `.claude/worktrees` | empty, but 12 VS Code Python language servers hold it as cwd | reload or close the VS Code window, then `rmdir` |
+
+## Custody — remote, verified, two failure domains
+
+An earlier revision claimed custody was satisfied by two local copies. That was wrong:
+same filesystem means one failure domain. It is now genuinely independent.
+
+Payload is encrypted with `cli/src/limen/prima_materia_store.py` (AES-256-GCM, system
+libcrypto EVP) under the operator's existing login-Keychain service `limen-arca-vault`,
+read-only — no Keychain item was created or modified. Ciphertext bundle sha256
+`c29576f52f9ee8de76e4066a8d8edca1414230ba19b174e8029bbfadb0a560f9`.
+
+| Replica | Failure domain | Readback | Full restore |
+| --- | --- | --- | --- |
+| `gdrive:limen-custody/runtime-root-reap-20261004/` | `gdrive` | digest match | 5/5 member digests |
+| `4444J99/arca-g3` (`custody/reap-runtime-roots-20261004`, PR 1) | `github:arca-g3` | digest match | 5/5 member digests |
+| `~/.arca-vault/` + vault `manifest.json` | `physical:local-arca-vault` | convenience copy, same host |
+
+Each remote copy was re-downloaded from the provider, its digest compared, decrypted
+through `EncryptedObjectStore.restore`, and the recovered tar extracted so every member
+file digest could be checked against the original. No custody evidence was minted.
+
+The external SSDs were never required — the portable cloud transport satisfied the
+two-failure-domain contract, so `limen.personal_custody` does not gate this payload.
+
+Originals stay in local staging and same-filesystem quarantine until an independent
+retention decision retires them.
 
 ## Unique work rescued before removal
 
@@ -48,21 +84,6 @@ Measured free-space change on `/System/Volumes/Data`: **13.63 GiB → 29.93 GiB 
 
 ## Retained, with named next actions
 
-| Path | Why | Next action |
-| --- | --- | --- |
-| `.worktrees/reap-scope-20261004` | active sibling session (HEAD advanced twice during this reap) | reap after its owner releases it |
-| `.worktrees/speech-score-engine` | registered store for `chamber_worktrees/chamber_2/speech-score-engine/pr-1` | reap after that external worktree is released |
-| `.claude/worktrees` | 12 VS Code Python language servers hold it as cwd | reload/close the VS Code window, then `rmdir` |
-
-## Custody
-
-723 MB sits in `/Users/4jp/Workspace/_limen-worktree-abandonment` as recoverable same-filesystem
-**moves**, each with a typed receipt — not deletions. Five unique files are additionally staged under
-`.limen-private/custody-staging/reap-runtime-roots-20261004/` (mode 0700/0600) with a sha256
-manifest, in two independent local copies, and a local full-restore proof that **passed**.
-
-Off-host custody is still open: `limen.personal_custody` needs `/Volumes/Archive4T` and
-`/Volumes/T7Recovery`, and neither is mounted. Per the portable custody contract
-(`cli/src/limen/portable_custody.py`) that gate needs provider-observed authenticated readback and
-independent restoration records, which this session must not mint — so the originals are retained
-until it clears rather than deleted to manufacture a green result.
+See the outcome table above. In short: `reap-scope-20261004` (unreleased sibling lane),
+`speech-score-engine` (external registered-worktree store), and the two containers that
+still hold them.

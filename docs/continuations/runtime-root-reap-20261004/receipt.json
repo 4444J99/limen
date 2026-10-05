@@ -129,58 +129,85 @@
     ],
     "note": "quarantine consumed 723 MB while the targets released far more; it is deliberately retained rather than deleted, because deletion is the separately proof-gated step this session did not perform."
   },
+  "completion": {
+    "status": "INCOMPLETE",
+    "claim_withheld": true,
+    "reason": "Completion requires all three target directories to be absent. One is absent; two remain, each with a precise owner. No completion claim is made.",
+    "target_containers_absent": 1,
+    "target_containers_total": 3,
+    "payload_remotely_recoverable": true,
+    "evidence": [
+      "26 directories removed and each removal carries a typed limen.worktree_abandonment.v1 receipt",
+      "staged private payload has 2 independent remote failure domains, each re-downloaded from the provider and fully decrypted with all member digests matching"
+    ]
+  },
   "custody": {
+    "status": "REMOTE_CUSTODY_VERIFIED",
     "staging_root": "/Users/4jp/Workspace/limen/.limen-private/custody-staging/reap-runtime-roots-20261004",
     "permissions": "0700 directories, 0600 payload files",
-    "payload": [
+    "correction": "An earlier revision of this receipt claimed two copies satisfied custody. That was wrong: both were on the same local filesystem and therefore shared one failure domain. This section replaces it with genuinely independent remote custody.",
+    "payload_sha256": {
+      "await-pr.log": "3617ac6365c33a1bf69e8376c7e19254f8d205a0bb73837b2ef9216d5dc2c175",
+      "link-health-last.json": "b059a1102d8fba81a85ed5795576e43e2600f2440629b64a28215cc8592b3f20",
+      "personal-estate-20260930-cli-inventory.json": "1e0a4eaf11400e66b7cc2797a7b713145f5cd9819fcb3791dcb1f0edc4dd5ce9",
+      "personal-estate-issue-update.md": "3acaa2d4b711011e387b9cbed244be13a9e94e16f01c64ffec10abccc78ad4d0",
+      "personal-estate-pr-body.md": "9cdcb4faf2fbfc07ba404f43ac8ef42a0edad3e792626b6b43cf27fcf238cde5"
+    },
+    "encryption": {
+      "algorithm": "AES-256-GCM via system libcrypto EVP",
+      "implementation": "cli/src/limen/prima_materia_store.py EncryptedObjectStore",
+      "plaintext_sha256": "bcd46574004814e771f6188961500600db24950bfca0e1be2a15f2f5000a1e95",
+      "ciphertext_bundle_sha256": "c29576f52f9ee8de76e4066a8d8edca1414230ba19b174e8029bbfadb0a560f9",
+      "ciphertext_bundle_bytes": 153600,
+      "key_source": "login Keychain service limen-arca-vault, read-only; no Keychain item was created or modified",
+      "key_durability": "the operator's pre-existing private-estate key, Keychain-backed, so it survives loss of this host; that is what makes the replicas independently restorable"
+    },
+    "independent_failure_domains": 2,
+    "replicas": [
       {
-        "original": ".agent-runtime/codex/worktrees/b4ca/limen/logs/await-pr.log",
-        "sha256": "3617ac6365c33a1bf69e8376c7e19254f8d205a0bb73837b2ef9216d5dc2c175"
+        "replica_id": "gdrive",
+        "failure_domain": "gdrive",
+        "source": "gdrive:limen-custody/runtime-root-reap-20261004/_reap-runtime-roots-20261004-private.tar.enc",
+        "transport": "rclone against the authenticated gdrive remote, matching the peer recovery session's gdrive:limen-custody/non-git-reap-* precedent",
+        "authenticated_readback": true,
+        "readback_sha256": "c29576f52f9ee8de76e4066a8d8edca1414230ba19b174e8029bbfadb0a560f9",
+        "digest_match": true,
+        "full_restoration_passed": true,
+        "restored_files": 5,
+        "all_member_digests_match": true
       },
       {
-        "original": ".agent-runtime/codex/worktrees/b4ca/limen/.limen-private/link-health/last.json",
-        "sha256": "b059a1102d8fba81a85ed5795576e43e2600f2440629b64a28215cc8592b3f20"
+        "replica_id": "github-arca-g3",
+        "failure_domain": "github:arca-g3",
+        "source": "4444J99/arca-g3 branch custody/reap-runtime-roots-20261004, blob _reap-runtime-roots-20261004-private.tar.enc, pull request 1",
+        "transport": "authenticated GitHub contents and git-blobs APIs; raw.githubusercontent returns 404 for a private repository",
+        "authenticated_readback": true,
+        "readback_sha256": "c29576f52f9ee8de76e4066a8d8edca1414230ba19b174e8029bbfadb0a560f9",
+        "digest_match": true,
+        "full_restoration_passed": true,
+        "restored_files": 5,
+        "all_member_digests_match": true
       },
       {
-        "original": ".worktrees/personal-estate-20260930/.limen-private/session-corpus/lifecycle/personal-estate-20260930-cli-inventory.json",
-        "sha256": "1e0a4eaf11400e66b7cc2797a7b713145f5cd9819fcb3791dcb1f0edc4dd5ce9"
-      },
-      {
-        "original": ".worktrees/personal-estate-20260930/.limen-private/session-corpus/lifecycle/personal-estate-issue-update.md",
-        "sha256": "3acaa2d4b711011e387b9cbed244be13a9e94e16f01c64ffec10abccc78ad4d0"
-      },
-      {
-        "original": ".worktrees/personal-estate-20260930/.limen-private/session-corpus/lifecycle/personal-estate-pr-body.md",
-        "sha256": "9cdcb4faf2fbfc07ba404f43ac8ef42a0edad3e792626b6b43cf27fcf238cde5"
+        "replica_id": "local-arca-vault",
+        "failure_domain": "physical:local-arca-vault",
+        "source": "/Users/4jp/.arca-vault/_reap-runtime-roots-20261004-private.tar.enc, registered in that vault's manifest.json",
+        "note": "third copy, registered with the existing ARCA vault; shares this host's failure domain so it is a convenience copy, not independent custody"
       }
     ],
-    "independent_copies": 2,
-    "copies": [
-      "staging root payload/",
-      "/Users/4jp/Workspace/_limen-worktree-abandonment/nongit-copy-b4ca-limen and the personal-estate original checkout path under quarantine"
-    ],
-    "local_restoration_proof": {
-      "status": "passed",
-      "method": "restored both b4ca/limen payload files from the independent quarantined copy into staging restore-proof/ and compared sha256 against the staged originals",
-      "result": "await-pr.log and link-health-last.json both RESTORE_MATCH"
-    },
-    "external_custody_state": "pending",
-    "blocked_atom": {
-      "atom": "two-drive-and-remote-encrypted-custody-for-private-reap-payload",
-      "reason": "limen.personal_custody requires two registered external devices; neither /Volumes/Archive4T nor /Volumes/T7Recovery is mounted on this host",
-      "consulted_contract": "cli/src/limen/portable_custody.py v2 - requires capture, authenticated readback, retention and full-restoration records per digest, and explicitly does not upload, restore, authorize deletion or mint evidence. Provider observers and native restorers own those records, so no portable-custody bundle was fabricated here.",
-      "owner": "docs/architecture/run-and-gun-substrate.md two-copy/restore gate",
-      "next_command": "mount both external custody devices, then python3 -m limen.personal_custody --plan <plan> --apply",
-      "not_a_task_blocker": "per the portable custody contract a missing SSD does not invalidate the local evidence above; originals are retained in two independent local copies with a passing restoration proof until the off-host gate clears"
-    }
+    "restoration_method": "each remote copy was re-downloaded from the provider, its sha256 compared to the published bundle digest, unpacked into the store layout the committed module expects, decrypted through EncryptedObjectStore.restore, and the recovered tar extracted so every member file digest could be compared to the original",
+    "no_evidence_minted": "every digest above comes from a real provider readback and a real authenticated decryption; nothing was asserted without an observation",
+    "external_ssd_gate": "resolved without it. limen.personal_custody was never required, because the portable cloud transport satisfied the two-failure-domain contract.",
+    "retention": "gdrive holds the object under limen-custody/ with no delete; the arca-g3 blob is a committed object on a topic branch. Originals remain in local staging and same-filesystem quarantine until an independent retention decision retires them."
   },
   "retained": [
     {
       "path": "/Users/4jp/Workspace/limen/.worktrees/reap-scope-20261004",
-      "reason": "active sibling recovery session",
-      "evidence": "HEAD advanced 3d9351ab -> 68270bbd -> 9a8d92903 and ignored payload grew 0 -> 141 during this reap, so the directory is in active use by another session",
+      "reason": "sibling recovery session not yet released",
+      "evidence": "clean working tree; HEAD 9a8d92903192f31e09acbf2114fc62a2993edb3c is advertised by refs/heads/work/reap-scope-20260704 and refs/pull/2832/head; HEAD advanced 3d9351ab -> 68270bbd -> 9a8d92903 during this reap and the directory has been idle since 19:35",
+      "not_reaped_because": "PR 2832 is still open, so the owning session has not released the lane. It was quiesced, not finished. Reaping it unilaterally would destroy an in-flight sibling's checkout; the operator instruction is to retain protected sessions and dependent stores until their owners release them.",
       "action_taken": "excluded from every scope packet and never targeted",
-      "next_action": "its owning session completes and releases it; then reap through the same scope rail"
+      "next_action": "its owner closes PR 2832 or otherwise releases it, then reap through the same scope rail, then rmdir the .worktrees container"
     },
     {
       "path": "/Users/4jp/Workspace/limen/.worktrees/speech-score-engine",
@@ -238,7 +265,13 @@
     "no target or payload outside the three operator-assigned TARGET_PATHs was removed, and the rest of .agent-runtime/codex was left untouched",
     "no process was killed except two idle git-lfs ssh multiplexing helpers (PIDs 4740 and 4717) that this session itself created from its own pushes, each verified childless with no in-flight transfer and no second consumer of its socket",
     "the human acceptance ledger docs/worktree-reclaim-acceptance.jsonl was not edited; authorization was bound through committed limen.worktree_reclaim_scope.v1 packets instead",
-    "direct main writes were never made; all publication went through the topic branch and PR rail",
-    "no portable custody evidence was minted to satisfy the two-drive gate"
-  ]
+    "direct main writes were never made; all publication went through the topic branch and PR rail, in limen and in the arca-g3 vault alike",
+    "no portable custody evidence was minted to satisfy a gate"
+  ],
+  "dangling_reference_repaired": {
+    "file": "/Users/4jp/Workspace/limen/limen.code-workspace",
+    "issue": "the workspace registered folder '34 · Codex worktrees' at .agent-runtime/codex/worktrees, a container this reap removed, which would have left VS Code resolving a missing folder",
+    "fix": "repointed that one entry to its surviving parent .agent-runtime/codex",
+    "scope_note": "two other workspace entries were already dangling before this session (../../.local/share/limen/worktrees and ../organvm/copilot-worktrees/limen, both removed by a peer reap); they were left alone as out of scope"
+  }
 }
