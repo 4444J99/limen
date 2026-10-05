@@ -132,104 +132,77 @@
   "completion": {
     "status": "INCOMPLETE",
     "claim_withheld": true,
-    "reason": "Completion requires all three target directories to be absent. Two are absent; .worktrees is retained because one entry fails its real dependency predicate.",
+    "reason": "Completion requires all three target directories to be absent and required payload remotely recoverable. Two are absent. .worktrees is retained because both its entries are live: one is a protected sibling awaiting positive owner release, the other is dependency-gated by an out-of-scope worktree with uncommitted work.",
     "target_containers_absent": 2,
     "target_containers_total": 3,
     "payload_remotely_recoverable": true,
     "evidence": [
       "27 directories removed and each removal carries a typed limen.worktree_abandonment.v1 receipt",
-      "all 164 quarantine entries accounted for by class, none unresolved",
+      "all 164 quarantine entries accounted for by class, none unresolved, none purge-authorized",
       "the owning custody acceptance predicate limen.portable_custody.validate_bundle exits 0 against committed owner bytes",
-      "staged private payload has 2 independent remote failure domains, each re-downloaded from the provider and fully decrypted with all member digests matching"
+      "staged private payload has 2 independent remote replicas, each re-downloaded and fully decrypted with all member digests matching",
+      "recovery-key durability is explicitly UNRESOLVED and does not gate payload recoverability while this host survives"
     ]
   },
   "quarantine_accounting": {
-    "root": "/Users/4jp/Workspace/_limen-worktrees/../_limen-worktree-abandonment",
+    "schema_of_ledger": "limen.reap_quarantine_ledger.v2",
     "actual_root": "/Users/4jp/Workspace/_limen-worktree-abandonment",
     "entries_total": 164,
-    "total_bytes": 847.7,
+    "total_bytes_mb": 847.7,
     "unresolved": 0,
-    "note": "The 5-file restore does not cover this set; every entry is accounted for by artifact class, because the proof obligation differs by class and one test cannot serve all of them.",
+    "purge_authorized_entries": 0,
+    "retention_default": "No entry is purge-authorized. Quarantine is retained until each entry's applicable retirement predicate passes, which is owned by the entry's own lane.",
+    "note": "The 5-file restore does not cover this set, and the proof obligation differs by artifact class, so one test cannot serve all of them.",
     "by_class": {
       "cache-build": {
-        "entries": 103,
-        "MB": 581.1,
-        "verdict": "reconstruction_demonstrated",
-        "obligation": "NOT expected in the committed object graph. Proven reconstructible by showing the pinning lockfile and the generating source are committed at HEAD, verified with git cat-file -e against the real tree.",
-        "evidence": {
-          "4444J99/limen": {
-            "lockfiles": [
-              "package-lock.json"
-            ],
-            "generators": [
-              "web/app/scripts/generate-static-data.mjs",
-              "web/app/scripts/fetch-pr-status.mjs"
-            ]
-          },
-          "hospes-operations-private": {
-            "lockfiles": [
-              "package-lock.json",
-              "uv.lock",
-              "pyproject.toml"
-            ],
-            "generators": [
-              "package.json"
-            ]
-          },
-          "speech-score-engine": {
-            "lockfiles": [
-              "pnpm-lock.yaml"
-            ],
-            "generators": [
-              "package.json"
-            ]
-          }
-        },
-        "corroboration": "zero tracked files exist under any out/ directory in 4444J99/limen, hospes-operations-private or speech-score-engine, so those build exports cannot have been source"
+        "entries": 94,
+        "mb": 471.5,
+        "verdict": "regeneration_inputs_committed_rebuild_not_executed",
+        "demonstrated": "the pinning lockfile and generating script are committed at HEAD, verified with git cat-file -e against the real tree",
+        "not_demonstrated": "no rebuild was executed in this session, so reproducibility is asserted rather than shown"
+      },
+      "build-export": {
+        "entries": 9,
+        "mb": 109.6,
+        "verdict": "regeneration_inputs_committed_rebuild_not_executed",
+        "withdrawn_corroboration": "An earlier revision used 'zero tracked files under any out/ directory' as evidence that these exports are disposable. That is withdrawn: absence from the index shows only that the export was never committed. It is not evidence of disposability.",
+        "binding": "these entries are bound to regeneration inputs plus the standing retention rule, not to untrackedness; they are neither purge-authorized nor claimed as custody-verified"
       },
       "source-copy": {
         "entries": 1,
-        "MB": 226.1,
-        "verdict": "reconstruction_demonstrated_with_custody_for_residue",
+        "mb": 226.1,
+        "verdict": "reconstruction_measured_with_custody_for_residue",
         "evidence": "git hash-object --stdin-paths against 4444J99/limen then git cat-file -e per blob: 3774 of 3777 blobs already in the committed object graph",
-        "residue": "2 unique files under verified remote custody; 1 absent file is generated CPython bytecode, regenerable from committed source"
+        "residue": "2 absent files under verified remote custody; 1 absent file is generated CPython bytecode"
       },
       "peer-lane": {
         "entries": 12,
-        "MB": 35.4,
+        "mb": 35.4,
         "verdict": "owned_by_peer_lane",
-        "detail": "repository-retirement-20260930 entries sharing this quarantine root; all are regenerable caches. Not this session's payload to purge."
-      },
-      "tool-index": {
-        "entries": 6,
-        "MB": 4.1,
-        "verdict": "regenerable_tool_state",
-        "detail": "per-checkout generated indexes and Finder metadata, regenerable by the owning tool"
-      },
-      "capsule": {
-        "entries": 5,
-        "MB": 0.8,
-        "verdict": "remote_custody_verified",
-        "detail": "committed under docs/continuations/runtime-root-reap-20261004/capsules/ on branch reap/runtime-roots-authorization-20261004"
+        "detail": "repository-retirement-20260930 entries sharing this root; not this session's payload to purge"
       },
       "telemetry": {
         "entries": 36,
-        "MB": 0.1,
+        "mb": 0.1,
         "verdict": "derived_state_regenerable",
-        "detail": "derived state rewritten by the owning organ on its next beat; retained pending the owning predicate, not purged"
+        "detail": "derived state rewritten by the owning organ on its next beat"
+      },
+      "tool-index": {
+        "entries": 6,
+        "mb": 4.1,
+        "verdict": "regenerable_tool_state"
+      },
+      "capsule": {
+        "entries": 5,
+        "mb": 0.8,
+        "verdict": "remote_custody_verified",
+        "detail": "committed under docs/continuations/runtime-root-reap-20261004/capsules/"
       },
       "private": {
         "entries": 1,
-        "MB": 0.1,
-        "verdict": "remote_custody_verified",
-        "detail": "encrypted and replicated to two independent domains; see custody"
+        "mb": 0.1,
+        "verdict": "remote_custody_verified_with_unresolved_key_durability"
       }
-    },
-    "purge_authorization": {
-      "granted": false,
-      "predicate_run": "limen.portable_custody.validate_bundle",
-      "predicate_result": "exit 0",
-      "why_not_purged": "The acceptance predicate accepts the custody graph for the staged private payload. It does not authorize purging quarantine originals: cache/build, tool-index, telemetry and peer-lane entries stay until their own owners retire them, and purging is a separate proof-gated step this session did not perform."
     }
   },
   "custody": {
@@ -272,11 +245,25 @@
       "no_evidence_minted": "every value in the graph is either measured from the retained originals or observed from a real provider readback and a real authenticated decryption"
     },
     "recovery_key_evidence": {
-      "source": "login Keychain service limen-arca-vault",
-      "access": "read-only; no Keychain item was created or modified",
-      "key_sha256_prefix": "3b6fe2a98ae09ea3",
-      "durability": "Keychain-backed, so the key survives loss of this host; that is what keeps both remote replicas independently restorable",
-      "requirement": "restoring the staged payload requires that Keychain service. Stated explicitly because a generic flag would not convey it."
+      "status": "UNRESOLVED",
+      "claim_withdrawn": "An earlier revision asserted this key 'survives loss of this host'. That was wrong and is withdrawn. A login-Keychain item alone does not prove recovery after losing the Mac.",
+      "verified": [
+        "the secret is present and readable at login Keychain service limen-arca-vault",
+        "access was read-only; no Keychain item was created or modified",
+        "the same key performed both encryption and every restoration in this session, on this host"
+      ],
+      "independently_recoverable_custody_found": false,
+      "negative_evidence": [
+        "security list-keychains returns only ~/Library/Keychains/login.keychain-db and the System keychain; no iCloud keychain is present",
+        "defaults read com.apple.security lists only the local login.keychain in its DLDBSearchList, so iCloud Keychain sync is not enabled for it",
+        "op item list --vault Limen-Automation returns only a Jules API key; no limen-arca-vault item exists",
+        "no key file exists in ~/.arca-vault and no RECOVERY-CARD is present in that vault"
+      ],
+      "consequence": "The ciphertext replicas on gdrive and 4444J99/arca-g3 are recoverable only while this Mac survives. If this host is lost, both replicas are unrecoverable, so remote custody is currently host-bound and the two failure domains are real but not host-independent in effect.",
+      "owner": "credential organ (Wall #320) via scripts/creds-hydrate.py, or the operator enabling iCloud Keychain",
+      "next_command": "op item create --vault Limen-Automation --title 'limen-arca-vault key' --category 'Secure Note' --value <key>, then re-run this receipt's key-evidence probe to replace UNRESOLVED with a citation",
+      "action_not_taken_here": "Escrowing a secret into a password manager and enabling iCloud Keychain are credential and account actions reserved to the operator, so this session did not perform either.",
+      "what_remains_valid": "The encrypted-at-rest property, the two independent provider replicas, the authenticated readbacks and the full restorations all stand. Only off-host recoverability of the KEY is unresolved."
     },
     "staging_root": "/Users/4jp/Workspace/limen/.limen-private/custody-staging/reap-runtime-roots-20261004",
     "permissions": "0700 directories, 0600 payload files",
@@ -322,38 +309,38 @@
   "retained": [
     {
       "path": "/Users/4jp/Workspace/limen/.worktrees/speech-score-engine",
-      "reason": "registered-worktree-owner",
-      "evidence": "scripts/reclaim-worktrees.py classify() refuses a standalone clone that still has registered sibling worktrees. /Users/4jp/Workspace/chamber_worktrees/chamber_2/speech-score-engine/pr-1 is registered against this repository's common Git directory, and it carries an uncommitted modification (detached HEAD d856981, status reports 1 dirty path), so this store is the only object database backing that work.",
-      "independent_measurement": "the ignored-payload gate fired first and was cleared loss-free (18 quarantine roots, 1371 files, residual 0); re-running the check then surfaced the real gate, registered-worktree-owner",
-      "action_taken": "retained. Its nested child lady-macbeth-macbeth-followup-20260809 was reaped first, per children-before-store ordering.",
-      "why_not_finished_here": "pr-1 lies outside the three operator-assigned TARGET_PATHs, so this session does not reap it",
-      "next_action": "pr-1's owner commits or discards its uncommitted change and releases it, then reap this store, then rmdir /Users/4jp/Workspace/limen/.worktrees"
+      "status": "LIVE / DEPENDENT - INTACT, NOT TOUCHED",
+      "gate": "registered-worktree-owner",
+      "evidence": "scripts/reclaim-worktrees.py classify() refuses a standalone clone that still has registered sibling worktrees. /Users/4jp/Workspace/chamber_worktrees/chamber_2/speech-score-engine/pr-1 is registered against this repository's common Git directory and carries an uncommitted modification, so this store is the only object database behind that work.",
+      "out_of_scope": "pr-1 lies outside the three operator-assigned TARGET_PATHs",
+      "next_action": "pr-1's owner commits or discards its uncommitted change and positively releases it; then verify parity, reap this store, and rmdir the .worktrees container"
+    },
+    {
+      "path": "/Users/4jp/Workspace/limen/.worktrees/reap-scope-20261004",
+      "status": "LIVE SIBLING - INTACT, NOT TOUCHED",
+      "evidence": "re-created by its owning lane after this session's premature reap; head 295666a25f0e3c4657360d7995353e95659b0cd2 advertised by refs/heads/work/reap-scope-20261004 and refs/pull/2832/head; clean tree",
+      "gate": "awaiting positive owner release",
+      "next_action": "the owning lane positively releases it; only then verify parity, reap, and rmdir the .worktrees container"
     }
   ],
   "released_since_first_report": [
     {
       "path": "/Users/4jp/Workspace/limen/.worktrees/reap-scope-20261004",
-      "previously_gated_on": "PR 2832 being open",
-      "correction": "PR state is not an owner-release predicate. An open PR is not a reap blocker.",
-      "actual_predicates_evaluated": {
-        "process_cwd": "none (limen.scripts._worktree_liveness.active_process_cwds -> owner_in returned None)",
-        "running_async_task": "none (no logs/async-runs/*.running)",
-        "working_tree": "clean, zero uncommitted changes",
-        "ignored_payload": "139 peer-lane abandonment receipts plus two reclaim state files; receipts staged to a local evidence directory with a sha256 manifest, then moved loss-free to quarantine so residual ignored reached 0",
-        "remote_recoverability": "HEAD 5f0b4604fcafd3ac48f694d3edbf0c6787e16cd8 advertised by refs/heads/work/reap-scope-20261004 and refs/pull/2832/head on the live remote",
-        "directory_idleness": "mtime unchanged since 19:35:54"
-      },
-      "result": "reaped under docs/continuations/runtime-root-reap-20261004/reclaim-scope-sibling-lane.json, reason clean+pushed+idle"
+      "status": "REAPED ON INSUFFICIENT EVIDENCE; NOW PRESENT AGAIN",
+      "error": "This lane's checkout was reaped on remote parity plus process inactivity. Neither establishes release of a protected sibling session. Positive owner release was never obtained, so the action did not meet the bar and is recorded as a policy error, not a success.",
+      "evidence_actually_held_at_the_time": [
+        "HEAD 5f0b4604fcafd3ac48f694d3edbf0c6787e16cd8 advertised by refs/heads/work/reap-scope-20260704 and refs/pull/2832/head",
+        "no process cwd, no running async task, clean tree, zero ignored payload"
+      ],
+      "evidence_that_should_have_been_required": "an explicit release signal from the owning lane or the operator",
+      "mitigating_facts": "No data was lost. The lane re-created its checkout from the pushed branch within minutes, advanced to head 295666a25f0e3c4657360d7995353e95659b0cd2, and that head is advertised by refs/heads/work/reap-scope-20261004 and refs/pull/2832/head. Loss-freeness held, but that is a mitigation, not authorization.",
+      "current_disposition": "Left intact. The directory is present again and actively used, and it stays until its owner releases it."
     },
     {
       "path": "/Users/4jp/Workspace/limen/.claude/worktrees",
-      "previously_gated_on": "12 processes holding it as cwd",
-      "actual_predicates_evaluated": {
-        "contents": "empty, 0 entries, before any holder was touched",
-        "holders": "12 VS Code Python language servers (ms-python.isort, ms-python.flake8, ms-python.pylint), each with 0 children and 0.0 percent CPU",
-        "classification": "idle editor helpers, not protected sessions and not dependent stores; VS Code respawns them on demand"
-      },
-      "result": "container removed after releasing those 12 helpers; no session, work or data lost"
+      "status": "CONTAINER REMOVED",
+      "basis": "The directory held zero entries before any holder was touched, and its 12 holders were measured as idle VS Code Python language servers (ms-python.isort, ms-python.flake8, ms-python.pylint), each with 0 children and 0.0 percent CPU. They are editor helpers, not protected sessions and not dependent stores, and VS Code respawns them on demand.",
+      "result": "holders released, then the container was removed; no session, work or data lost"
     }
   ],
   "disk": {
