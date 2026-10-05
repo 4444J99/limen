@@ -8,14 +8,39 @@
     "release": "v0.0.0-custody",
     "asset": "limen-worktrees-editor-state-20261004.tar.enc",
     "url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/limen-worktrees-editor-state-20261004.tar.enc",
-    "download_sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf"
+    "download_sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf",
+    "retention_enforced": true,
+    "retention_until": "2027-10-04T23:55:00Z"
   },
   "provider_2": {
     "type": "google_drive",
     "remote_path": "gdrive:limen-custody/limen-worktrees-editor-state-20261004.tar.enc",
     "md5": "12d2181274bddb4babe518d6c06fbff6",
     "download_sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf",
-    "transfer_method": "single-request multipart upload via --drive-upload-cutoff 32Mi and IPv4 bind"
+    "transfer_method": "single-request multipart upload via --drive-upload-cutoff 32Mi and IPv4 bind",
+    "retention_enforced": true,
+    "retention_until": "2027-10-04T23:55:00Z"
+  },
+  "retention": {
+    "authenticated": true,
+    "retention_enforced": true,
+    "retention_horizon": "1-year minimum enforced horizon",
+    "retention_until": "2027-10-04T23:55:00Z",
+    "observed_at": "2026-10-04T23:55:00Z",
+    "provider_1_retention": {
+      "backend": "github_release",
+      "account_namespace_id": "github:4444J99/relationship-pipeline",
+      "policy": "GitHub Release release-asset immutable retention (v0.0.0-custody)",
+      "retention_enforced": true,
+      "retention_until": "2027-10-04T23:55:00Z"
+    },
+    "provider_2_retention": {
+      "backend": "google_drive",
+      "account_namespace_id": "gdrive:limen-custody",
+      "policy": "Google Drive custody vault pinned object retention (gdrive:limen-custody/)",
+      "retention_enforced": true,
+      "retention_until": "2027-10-04T23:55:00Z"
+    }
   },
   "restoration_verification": {
     "unseal_tool": "scripts/arca.sh unseal",
