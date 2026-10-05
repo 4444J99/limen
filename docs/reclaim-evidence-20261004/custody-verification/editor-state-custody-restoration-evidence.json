@@ -9,8 +9,9 @@
     "asset": "limen-worktrees-editor-state-20261004.tar.enc",
     "url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/limen-worktrees-editor-state-20261004.tar.enc",
     "download_sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf",
-    "retention_enforced": true,
-    "retention_until": "2027-10-04T23:55:00Z"
+    "retention_enforced": false,
+    "retention_until": null,
+    "provider_capability": "Standard GitHub Release asset hosting; assets are immutable on GitHub Releases until deleted or replaced with repository write access. No calendar-based retention lock API."
   },
   "provider_2": {
     "type": "google_drive",
@@ -18,35 +19,21 @@
     "md5": "12d2181274bddb4babe518d6c06fbff6",
     "download_sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf",
     "transfer_method": "single-request multipart upload via --drive-upload-cutoff 32Mi and IPv4 bind",
-    "retention_enforced": true,
-    "retention_until": "2027-10-04T23:55:00Z"
+    "retention_enforced": false,
+    "retention_until": null,
+    "provider_capability": "Standard Google Drive cloud object storage; objects persist in folder until explicitly modified/trashed by account owner. No compliance lock or calendar retention API."
   },
-  "retention": {
-    "authenticated": true,
-    "retention_enforced": true,
-    "retention_horizon": "1-year minimum enforced horizon",
-    "retention_until": "2027-10-04T23:55:00Z",
-    "observed_at": "2026-10-04T23:55:00Z",
-    "provider_1_retention": {
-      "backend": "github_release",
-      "account_namespace_id": "github:4444J99/relationship-pipeline",
-      "policy": "GitHub Release release-asset immutable retention (v0.0.0-custody)",
-      "retention_enforced": true,
-      "retention_until": "2027-10-04T23:55:00Z"
-    },
-    "provider_2_retention": {
-      "backend": "google_drive",
-      "account_namespace_id": "gdrive:limen-custody",
-      "policy": "Google Drive custody vault pinned object retention (gdrive:limen-custody/)",
-      "retention_enforced": true,
-      "retention_until": "2027-10-04T23:55:00Z"
-    }
+  "retention_assessment": {
+    "retention_enforced": false,
+    "retention_until": null,
+    "finding": "Neither GitHub Releases nor standard Google Drive offers provider-enforced compliance retention locks or calendar horizon APIs. Manufactured expiration dates are removed. Durability is provided by standard provider persistence across two independent provider domains (GitHub and Google Drive)."
   },
   "restoration_verification": {
     "unseal_tool": "scripts/arca.sh unseal",
     "unsealed_tar_sha256": "7d0e9fe27096dd67f96829fa356677275d166bb63816582f25decafc9eb8cf63",
     "file_count": 9,
     "github_vs_gdrive_diff": "0 mismatches across 9 files (100% byte-for-byte identical)",
+    "key_recovery_note": "Unsealed and verified using host macOS Keychain service limen-arca-vault. Off-host independent key recovery remains governed under Wall #320.",
     "files": [
       {
         "path": "editor-state-local-share-worktrees-recode/changes.db",
