@@ -39,13 +39,22 @@
   },
   "correction_to_my_own_published_ledger": {
     "published_value": "164 quarantine entries",
-    "live_value": 171,
+    "live_value": 172,
     "attribution_measured_from_receipts": {
       "this_lane": 154,
       "no_receipt_found": 12,
       "other_lane_origins": {
         "organvm": 2,
         "agy": 3
+      },
+      "recheck": {
+        "observed_at": "2026-10-05T00:58 local",
+        "live_root_total": 172,
+        "published_ledger_snapshot": 164,
+        "this_lane_now": 155,
+        "delta_since_prior_recheck": "+1 = ignored-payload-reap-closeout-20261005, this lane's own closeout checkout, 100M, quarantined loss-free to clear a detach gate",
+        "other_lane_and_unreceipted_counts_unchanged": "5 other-lane (organvm 2, agy 3) and 12 with no receipt found",
+        "method_repeated": "each entry's abandonment receipt target re-read; still not diffed against the redacted ledger, which hides destination names"
       }
     },
     "finding": "the quarantine root at /Users/4jp/Workspace/_limen-worktree-abandonment is SHARED across lanes. The published 164 is this lane's point-in-time snapshot, not the live root total.",
@@ -58,10 +67,20 @@
       "state": "untracked, never committed in this repository's history",
       "my_change": "repointed folder '34 Codex worktrees' from the removed .agent-runtime/codex/worktrees to .agent-runtime/codex, repairing a dangling reference this reap created",
       "why_not_pushed": "it is a machine-local VS Code workspace file carrying local absolute paths; 4444J99/limen is a PUBLIC repository, there is no repo precedent for tracking *.code-workspace, and direct main writes are forbidden",
-      "gap": "LOCAL ONLY - the repaired content has no remote home",
-      "named_followup": "decide whether *.code-workspace and .vscode/ are tracked project config or personal local artifacts; if tracked, land them through the PR rail with local paths stripped",
-      "owner": "repo maintainer / operator",
-      "next_action": "answer the tracking question, then either commit the file through a PR or record it as deliberately local"
+      "gap": "RESOLVED BY THE REPOSITORY, not by me - see resolution below",
+      "named_followup": "ANSWERED - the repository now excludes these patterns locally",
+      "owner": "resolved; no decision owner needed",
+      "next_action": "none for this lane",
+      "resolution": {
+        "observed_at": "2026-10-05T00:54 local, while this closeout was running",
+        "change": ".git/info/exclude gained '*.code-workspace', '.vscode/' and '.recode/'; the '.recode' line added to the tracked .gitignore was removed",
+        "resulting_state": "git status is clean; limen.code-workspace remains untracked but is now deliberately excluded rather than accidentally untracked",
+        "not_my_work": "I did not write either file this session. My last write to anything was the quarantine receipt at 00:57:59, three minutes AFTER these mtimes, and no command I ran targeted .gitignore or .git/info/exclude.",
+        "attribution": "a concurrent lane sharing this repository's common git dir (.worktrees/reap-scope-20261004 resolves --git-common-dir to /Users/4jp/Workspace/limen/.git and was committing at 00:58:23)",
+        "attribution_confidence": "timing and capability, not a receipt - I did not observe the write itself and am not claiming authorship for it",
+        "why_it_matters": "the repair I made to limen.code-workspace is real and still present (folder 34 now points at .agent-runtime/codex), but it is intentionally local, so this is no longer a parity gap requiring a tracking decision",
+        "residual_note": ".git/info/exclude is itself untracked, so the decision is machine-local and does not propagate to other clones. That is a repo-hygiene observation, not an open item for this lane."
+      }
     },
     {
       "path": ".limen-private/custody-staging/reap-runtime-roots-20261004",
@@ -85,7 +104,13 @@
     "attribution": "NOT this lane's work; both were present before this session began and I did not author them",
     "action_taken": "none - not committed, not reverted, not stashed",
     "why": "committing another lane's in-flight editor/tool config would steal their work; reverting would destroy it. Both are broader workspace WIP, distinct from this lane's closure.",
-    "status": "OPEN, owned by whichever lane introduced .recode"
+    "status": "RESOLVED by a concurrent lane - no longer open workspace WIP",
+    "resolution": {
+      "observed_at": "2026-10-05T00:54 local",
+      "resulting_state": "git status clean; .gitignore matches HEAD; .vscode/ and .recode/ now excluded via .git/info/exclude; .vscode/settings.json still on disk, now ignored",
+      "not_my_work": "I did not author the .gitignore edit and did not revert it; both were outside my lane and both are now resolved by whoever made them",
+      "status": "RESOLVED by a concurrent lane - no longer open workspace WIP"
+    }
   },
   "lane_local_closure": {
     "verdict": "this lane's own work is finished and durably published",
@@ -104,5 +129,10 @@
     "bind the session predicate to a surviving native checkout rather than the repository root (owner: this lane's successor run)",
     "decide the tracking status of *.code-workspace and .vscode/ (owner: repo maintainer)",
     "resolve the shared-quarantine ledger wording so the published 164 is not read as the live root total (owner: this lane)"
+  ],
+  "corrections_made_after_publication": [
+    "the limen.code-workspace tracking follow-up was recorded as open; the repository had already answered it via .git/info/exclude three minutes before I finished. Corrected in place rather than left as a stale open item.",
+    "the quarantine live count moved from 171 to 172 during this closeout, by this lane's own entry.",
+    "an earlier correction in this same session claimed .gitignore carried an uncommitted .recode addition; by the end of the closeout the tracked tree was clean and that diff was gone. The working_tree_state_not_mine section is retained because it was accurate when measured, with this resolution attached."
   ]
 }

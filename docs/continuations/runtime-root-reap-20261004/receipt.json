@@ -700,6 +700,8 @@
     "predicate_meaning": "unmeasured, never a pass",
     "lane_local_verdict": "complete and published",
     "session_closeout_verdict": "NOT SAFE TO CLOSE",
-    "ledger_scope_correction": "published 164 is this lane's snapshot of a SHARED quarantine root; live root 171 (154 this lane, 12 no receipt, 5 other-lane origins)"
+    "ledger_scope_correction": "published 164 is this lane's snapshot of a SHARED quarantine root; live root 171 (154 this lane, 12 no receipt, 5 other-lane origins)",
+    "post_publication_corrections": 3,
+    "limen_code_workspace": "resolved - excluded via .git/info/exclude at 00:54 local by a concurrent lane; not a parity gap"
   }
 }

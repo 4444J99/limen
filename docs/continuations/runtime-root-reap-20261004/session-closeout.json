@@ -165,5 +165,15 @@
     "detected_by": "verifying the pushed tree rather than trusting the commit message",
     "fix": "receipt restored from the published head 56a89228420e and the audit written to its own artifact",
     "guard_added": "the writer now asserts schema_version == limen.session_closeout.v1 and the presence of not_completed and blockers before writing"
-  }
+  },
+  "closeout_audit_corrections": [
+    {
+      "what": "limen.code-workspace tracking follow-up was recorded open but the repository had already excluded *.code-workspace, .vscode/ and .recode/ via .git/info/exclude at 00:54 local",
+      "resolution": "no longer a parity gap; recorded as resolved by a concurrent lane, not by me"
+    },
+    {
+      "what": "quarantine live count moved 171 -> 172 by this lane's own closeout checkout",
+      "resolution": "ignored-payload-reap-closeout-20261005, 100M, quarantined loss-free"
+    }
+  ]
 }
