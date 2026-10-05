@@ -150,7 +150,9 @@ class StreamingEncryptedObjectStore(EncryptedObjectStore):
             raise PrimaMateriaStoreError("streaming-content-identity-mismatch")
         self._check(deadline)
 
-    def verify_file(self, ref: EncryptedPayloadRefV1, *, max_bytes: int, timeout_seconds: float) -> dict[str, int | str]:
+    def verify_file(
+        self, ref: EncryptedPayloadRefV1, *, max_bytes: int, timeout_seconds: float
+    ) -> dict[str, int | str]:
         deadline = self._limits(max_bytes, timeout_seconds)
         digest, size = hashlib.sha256(), 0
         for plaintext in self._plaintext(ref, max_bytes=max_bytes, deadline=deadline):
