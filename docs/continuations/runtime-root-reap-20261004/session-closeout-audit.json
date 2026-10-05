@@ -59,7 +59,19 @@
     },
     "finding": "the quarantine root at /Users/4jp/Workspace/_limen-worktree-abandonment is SHARED across lanes. The published 164 is this lane's point-in-time snapshot, not the live root total.",
     "why_it_matters": "a reader could have read 164 as the root's contents. It is not.",
-    "anomalous_reading": "the first delta check I ran was invalid because the published ledger is redacted and hides destination names; the figures above come from re-reading each entry's abandonment receipt target, not from inference"
+    "anomalous_reading": "the first delta check I ran was invalid because the published ledger is redacted and hides destination names; the figures above come from re-reading each entry's abandonment receipt target, not from inference",
+    "value_is_a_snapshot_not_an_invariant": {
+      "problem": "the quarantine root is shared, and every released lane adds an entry to it. Publishing a corrected count therefore invalidates the count being corrected.",
+      "observed_sequence": [
+        "164  published redacted ledger (point-in-time snapshot)",
+        "171  first recheck at ~00:5x local",
+        "172  recheck at 00:58 local, +1 = this lane's first closeout checkout (100M)",
+        "173  current, +1 = this lane's second closeout checkout (100M)"
+      ],
+      "rule": "read live_value as 'the root total as of observed_at', never as the root's final size. This is the last amendment to this receipt; any further release of mine adds one more entry by construction, so chasing the number would never terminate.",
+      "invariant_that_does_not_move": "purge_authorized_entries is 0 and stays 0 until each entry's own lane passes its retirement predicate. That is the figure a reader should act on.",
+      "this_lane_contribution": "two closeout checkouts, 200M total, quarantined loss-free with typed receipts and retained - not deleted"
+    }
   },
   "local_only_state_created_by_this_lane": [
     {
