@@ -1,0 +1,50 @@
+{
+  "schema": "limen.worktree_reclaim_scope.v1",
+  "accepted": true,
+  "owner_url": "https://github.com/4444J99/limen/pull/2832",
+  "authorization": "Operator assignment on 2026-10-04T23:49:37-04:00: 'My explicit assignment of these exact TARGET_PATHS is the operator authorization required by the scoped reclaim contract' covering /Users/4jp/Workspace/limen/mcp, /Users/4jp/Workspace/organvm/limen, /Users/4jp/limen-lanes/agy/limen, /Users/4jp/Workspace/limen.",
+  "targets": [
+    {
+      "root": "limen",
+      "path": "/Users/4jp/Workspace/organvm/limen",
+      "path_sha256": "1e1ef1ffac4e1f561b145a1f2f54bf1625b9735e3df4ddd736cc7c9bd5ce03b5",
+      "repository": "4444J99/limen",
+      "origin": "https://github.com/4444J99/limen.git",
+      "kind": "git-clone",
+      "status": "REAPED",
+      "operator_authorized": true
+    },
+    {
+      "root": "limen",
+      "path": "/Users/4jp/limen-lanes/agy/limen",
+      "path_sha256": "f4c4595393109d3f0837978a909c5d605d43af5fe290e4d16f3d8bc8cc273fc8",
+      "repository": "organvm/limen",
+      "origin": "https://github.com/4444J99/limen.git",
+      "kind": "git-clone",
+      "status": "REAPED",
+      "operator_authorized": true
+    },
+    {
+      "root": "mcp",
+      "path": "/Users/4jp/Workspace/limen/mcp",
+      "path_sha256": "43ac254065a197dd604dafaed92d3e8fa85cd9fb7816502128ff6ac8796ddfd9",
+      "repository": "4444J99/limen",
+      "origin": "https://github.com/4444J99/limen.git",
+      "kind": "non-git-directory",
+      "status": "HELD",
+      "operator_authorized": true,
+      "hold_reason": "Subdirectory of active live checkout /Users/4jp/Workspace/limen; tracked files required by active session; reconstructible tool caches (.venv, .mypy_cache, .recode) cleaned"
+    },
+    {
+      "root": "limen",
+      "path": "/Users/4jp/Workspace/limen",
+      "path_sha256": "0665800866c86d3ce7d8f083c8a8fbc983ff389e6dc677b50b7573325b0491dd",
+      "repository": "4444J99/limen",
+      "origin": "https://github.com/4444J99/limen.git",
+      "kind": "active-live-checkout",
+      "status": "HELD",
+      "operator_authorized": true,
+      "hold_reason": "Active live checkout and working directory of current agent session (_SELF_GUARD)"
+    }
+  ]
+}

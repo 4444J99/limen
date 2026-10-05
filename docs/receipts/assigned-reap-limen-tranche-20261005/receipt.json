@@ -1,0 +1,194 @@
+{
+  "schema": "limen.reap_receipt.v1",
+  "date": "2026-10-05",
+  "authorization": "Operator assignment on 2026-10-04T23:49:37-04:00: 'My explicit assignment of these exact TARGET_PATHS is the operator authorization required by the scoped reclaim contract' covering /Users/4jp/Workspace/limen/mcp, /Users/4jp/Workspace/organvm/limen, /Users/4jp/limen-lanes/agy/limen, /Users/4jp/Workspace/limen.",
+  "owner_url": "https://github.com/4444J99/limen/pull/2832",
+  "summary": {
+    "total_targets_assigned": 4,
+    "reaped": 2,
+    "held": 2,
+    "reaped_paths": [
+      "/Users/4jp/Workspace/organvm/limen",
+      "/Users/4jp/limen-lanes/agy/limen"
+    ],
+    "held_paths": [
+      "/Users/4jp/Workspace/limen/mcp",
+      "/Users/4jp/Workspace/limen"
+    ],
+    "direct_footprint_reclaimed_kb": 531116
+  },
+  "targets": {
+    "/Users/4jp/Workspace/organvm/limen": {
+      "status": "REAPED",
+      "target_exists_post_reap": false,
+      "initial_size_kb": 199768,
+      "final_size_kb": 0,
+      "git_head": "74505dddaad6892fd101dee0928bda44166b3d21",
+      "remote_origin": "https://github.com/4444J99/limen.git",
+      "remote_parity_evidence": {
+        "head_contained_in": "refs/heads/main (commit #2618)",
+        "all_local_refs_proven": true,
+        "local_branches_verified": [
+          {
+            "branch": "4444j99-plan-requested-change",
+            "sha": "bee0bbb352",
+            "remote_refs": [
+              "origin/feat/branch-family-governance",
+              "origin/preserve/organvm-4444j99-plan-requested-change-20261003"
+            ]
+          },
+          {
+            "branch": "fix/inventory-admission-2606",
+            "sha": "fb30e77d46",
+            "remote_refs": [
+              "origin/successor/git-finishline-20260910"
+            ]
+          },
+          {
+            "branch": "fix/inventory-admission-2608",
+            "sha": "54d264bd4a",
+            "remote_refs": [
+              "origin/fix/finishline-refund-count-20260910"
+            ]
+          },
+          {
+            "branch": "main",
+            "sha": "74505dddaa",
+            "remote_refs": [
+              "origin/main"
+            ]
+          }
+        ],
+        "local_tags_verified": [
+          {
+            "tag": "archive/pr-2543-detached-67afecedd1ab-20260828",
+            "sha": "67afecedd1ab2d85427e79eed95d0fd35c8f24f6"
+          },
+          {
+            "tag": "v0.1.0",
+            "sha": "190cb8e040d19f24e12b65302423577716db594a"
+          }
+        ]
+      },
+      "quarantine_custody_receipts": [
+        {
+          "payload": ".recode/changes.db",
+          "reason": "editor-state: recode database preserved in same-filesystem quarantine",
+          "receipt": "logs/worktree-abandonment/2710317a5c611a3e1960b152ba61becafb8262c48c49f841edbc9accda8097ec.json"
+        },
+        {
+          "payload": "logs/reap-branches.jsonl",
+          "reason": "generated-log: reap-branches.jsonl preserved in same-filesystem quarantine",
+          "receipt": "logs/worktree-abandonment/9f94b9438873f514107e88003f4f674ea9cb891ba542d713201efea46d32d00c.json"
+        }
+      ],
+      "purge_receipt": "logs/worktree-abandonment/c1ef0bec2583891e707830116a1797b323b83396822929513c7f5ec4909a0cd9.json"
+    },
+    "/Users/4jp/limen-lanes/agy/limen": {
+      "status": "REAPED",
+      "target_exists_post_reap": false,
+      "parent_dir_removed": "/Users/4jp/limen-lanes/agy",
+      "initial_size_kb": 296544,
+      "final_size_kb": 0,
+      "git_head": "a26cdf18c3b5a94b9761938eab6358daced0ba73",
+      "remote_origin": "https://github.com/4444J99/limen.git",
+      "unique_work_rescued": {
+        "branch": "fix/self-heal-retirement-predicate",
+        "sha": "6bd0b3c208a392d61b63058647392d3710af3078",
+        "commit_message": "fix(self-heal): root-cause HEAL task retirement gap and add executable predicate gate",
+        "pushed_to_remote_ref": "refs/heads/preserve/agy-fix-self-heal-retirement-predicate",
+        "remote_readback_verified": true
+      },
+      "remote_parity_evidence": {
+        "head_contained_in": "refs/heads/main (commit #2148)",
+        "all_local_refs_proven": true,
+        "local_branches_verified": [
+          {
+            "branch": "fix/self-heal-retirement-predicate",
+            "sha": "6bd0b3c208",
+            "remote_refs": [
+              "origin/preserve/agy-fix-self-heal-retirement-predicate"
+            ]
+          },
+          {
+            "branch": "main",
+            "sha": "a26cdf18c3",
+            "remote_refs": [
+              "origin/main"
+            ]
+          }
+        ],
+        "local_tags_verified": [
+          {
+            "tag": "v0.1.0",
+            "sha": "190cb8e040d19f24e12b65302423577716db594a"
+          }
+        ]
+      },
+      "quarantine_custody_receipts": [
+        {
+          "payload": ".recode/changes.db",
+          "reason": "editor-state: recode database preserved in same-filesystem quarantine",
+          "receipt": "logs/worktree-abandonment/66dbf77d11f104644ddf046cd52ec0b248c1d19280d28b87baa219ffb6fe19c9.json"
+        },
+        {
+          "payload": "logs/await-pr.log",
+          "reason": "generated-log: await-pr.log preserved in same-filesystem quarantine",
+          "receipt": "logs/worktree-abandonment/da7925f41ba4452030f9238079b8f6826cf616ee71fa69d601c6fee6d6344c2a.json"
+        },
+        {
+          "payload": "logs/tabularius-organ-state.json",
+          "reason": "generated-log: tabularius-organ-state.json preserved in same-filesystem quarantine",
+          "receipt": "logs/worktree-abandonment/fab4fd2be31bc036a7eec4acd4fb540a8011eb67f845aaa486de5a272196f4c4.json"
+        }
+      ],
+      "caches_cleaned": [
+        ".mypy_cache (reconstructible via mypy from pyproject.toml)",
+        ".ruff_cache (reconstructible via ruff from pyproject.toml)",
+        "cli/.mypy_cache (reconstructible via mypy)",
+        "cli/.pytest_cache (reconstructible via pytest)",
+        "cli/src/limen.egg-info (reconstructible via python build)",
+        "__pycache__ (reconstructible python bytecode)"
+      ],
+      "purge_receipt": "logs/worktree-abandonment/310c21257129b75f322c10ee73a383af8b6a57334de786b22a1338be4852babb.json"
+    },
+    "/Users/4jp/Workspace/limen/mcp": {
+      "status": "HELD",
+      "target_exists_post_reap": true,
+      "initial_size_kb": 35012,
+      "final_size_kb": 208,
+      "reclaimed_kb": 34804,
+      "kind": "non-git-directory",
+      "tracked_files_preserved": [
+        "pyproject.toml",
+        "src/limen_mcp/intake.py",
+        "src/limen_mcp/py.typed",
+        "src/limen_mcp/runtime_requirements.py",
+        "src/limen_mcp/server.py",
+        "uv.lock"
+      ],
+      "caches_reclaimed": [
+        ".venv (34MB virtual environment, reconstructible from uv.lock and pyproject.toml)",
+        ".mypy_cache (reconstructible via mypy)",
+        ".recode (empty 28KB editor db, sha256 f9050977... identical to sealed bundle)",
+        "src/limen_mcp.egg-info (reconstructible build artifact)",
+        "__pycache__ (reconstructible bytecode)"
+      ],
+      "hold_reason": "Subdirectory of active live checkout /Users/4jp/Workspace/limen; tracked files required for MCP tooling in active session",
+      "blocker": "Parent checkout active session dependency",
+      "blocker_owner": "Active operator / IDE session",
+      "next_action": "Reap directory with parent /Users/4jp/Workspace/limen following session closeout and workspace migration"
+    },
+    "/Users/4jp/Workspace/limen": {
+      "status": "HELD",
+      "target_exists_post_reap": true,
+      "initial_size_kb": 39221228,
+      "final_size_kb": 39221228,
+      "kind": "active-live-checkout",
+      "hold_reason": "Current active working directory and live checkout for this agent session (_SELF_GUARD)",
+      "blocker": "Active self/live-checkout session running developer harness and current turn",
+      "blocker_owner": "Active operator / IDE harness",
+      "next_action": "Session closeout; release checkout after workspace migration or repo retirement"
+    }
+  }
+}
