@@ -146,7 +146,8 @@
     ],
     "full_retirement_claimed": false,
     "closeout_completion_claimed": false,
-    "session_predicate_note": "scripts/no-tasks-on-me.sh binds to a native caller worktree. This session's caller checkout was released after publication, so no session-closeout completion is claimed; unknown ownership fails closed rather than being substituted with the repository root."
+    "session_predicate_note": "scripts/no-tasks-on-me.sh binds to a native caller worktree. This session's caller checkout was released after publication, so no session-closeout completion is claimed; unknown ownership fails closed rather than being substituted with the repository root.",
+    "session_closeout_completion_claimed": false
   },
   "quarantine_accounting": {
     "schema_of_ledger": "limen.reap_quarantine_ledger.v2",
@@ -692,5 +693,13 @@
     ],
     "prerequisite_for_step_6": "both entries removed; until then the container is legitimately occupied"
   },
-  "status": "PARTIAL"
+  "status": "PARTIAL",
+  "session_closeout_audit": {
+    "artifact": "docs/continuations/runtime-root-reap-20261004/session-closeout-audit.json",
+    "predicate_exit": 2,
+    "predicate_meaning": "unmeasured, never a pass",
+    "lane_local_verdict": "complete and published",
+    "session_closeout_verdict": "NOT SAFE TO CLOSE",
+    "ledger_scope_correction": "published 164 is this lane's snapshot of a SHARED quarantine root; live root 171 (154 this lane, 12 no receipt, 5 other-lane origins)"
+  }
 }
