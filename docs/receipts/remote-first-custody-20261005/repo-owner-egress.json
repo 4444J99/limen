@@ -1,0 +1,143 @@
+{
+  "schema": "limen.repo_owner_egress_checkpoint.v1",
+  "recorded_at": "2026-10-05T18:23:19Z",
+  "owner": "https://github.com/4444J99/limen/issues/2739",
+  "intent": "Publish unique local work and recovery data first; let each owning repository continue its work remotely; reap only copies with positive retirement evidence; external mirrors are the final pass.",
+  "attempt": {
+    "deadline_utc": "2026-10-05T18:22:00Z",
+    "outcome": "remote-publication-checkpoint",
+    "deadline_renewed": false,
+    "no_new_native_children": true,
+    "bulk_admission": "denied",
+    "bulk_denial_reasons": [
+      "swap-fraction",
+      "disk-throughput",
+      "vitals-shed"
+    ],
+    "light_source_byte_limit": 1048576,
+    "git_object_source_byte_limit": 8388608
+  },
+  "data_publication": {
+    "repository": "4444J99/arca-g3",
+    "branch": "custody/limen-reap-20261005",
+    "immutable_commit": "bb2355f11a173dd1f3b061891fe1005134ed1122",
+    "prefix": "limen-reap/20261005/repo-owner-egress",
+    "file_count": 60,
+    "logical_file_bytes": 340553,
+    "native_atom_count": 86,
+    "roots": [
+      {
+        "id": "r01",
+        "owner": "4444J99/limen",
+        "files": 49,
+        "bytes": 216618,
+        "atoms": 65
+      },
+      {
+        "id": "r02",
+        "owner": "4444J99/limen",
+        "files": 2,
+        "bytes": 28704,
+        "atoms": 4
+      },
+      {
+        "id": "r03",
+        "owner": "4444J99/limen",
+        "files": 4,
+        "bytes": 33805,
+        "atoms": 6
+      },
+      {
+        "id": "r04",
+        "owner": "4444J99/domus-genoma",
+        "files": 3,
+        "bytes": 30794,
+        "atoms": 6
+      },
+      {
+        "id": "r05",
+        "owner": "4444J99/domus-genoma",
+        "files": 2,
+        "bytes": 30632,
+        "atoms": 5
+      }
+    ],
+    "source_stability_verified": true,
+    "original_archives_encrypted": true,
+    "raw_xattr_and_acl_values_encrypted": true,
+    "controller_and_private_inventory_encrypted": true,
+    "fresh_remote_readback_equal": true,
+    "archive_decryption_equal": true,
+    "raw_native_metadata_decryption_equal": true,
+    "local_object_alternates": false,
+    "full_native_restore_verified": false,
+    "independent_key_recovery_verified": false,
+    "retirement_eligible": false
+  },
+  "git_object_publication": {
+    "owning_repository": "4444J99/limen",
+    "custody_repository": "4444J99/arca-g3",
+    "immutable_commit": "227ab986573946b8cfbee7ec06b84237ac5386d4",
+    "prefix": "limen-reap/20261005/repo-owner-egress/git-object-preservation",
+    "missing_historical_heads": 4,
+    "unique_objects": 206,
+    "unique_object_bytes": 6698339,
+    "remote_ciphertext_and_decryption_equal": true,
+    "all_decoded_object_ids_verified": true,
+    "source_baseline": "ff6b2714a013e82c3132205183ca10302a0ce0c3",
+    "local_object_alternates": false,
+    "original_bundle_serialization_preserved": false,
+    "source_retired": false
+  },
+  "owning_repositories": [
+    {
+      "repository": "4444J99/limen",
+      "remote_owner": "https://github.com/4444J99/limen/pull/2834",
+      "action": "Validate the scoped custody change, finish admitted bulk egress, and bind retirement proof separately."
+    },
+    {
+      "repository": "4444J99/speech-score-engine",
+      "remote_owner": "https://github.com/4444J99/speech-score-engine/pull/29",
+      "commit": "572bb15ef62a668b47e4cb3f171b7dfda7017f4c",
+      "exact_remote_tip_verified": true,
+      "original_index_and_checkout_unchanged": true,
+      "action": "Review the preserved staged instruction edit and run repository checks before merging; release the dependent checkout separately."
+    },
+    {
+      "repository": "4444J99/domus-genoma",
+      "remote_owner": "https://github.com/4444J99/domus-genoma/pull/411",
+      "commit": "d3a94bc829d7f036685e9f285700c71a8bd1b3e3",
+      "action": "Validate the repository receipt and retain custody/retirement responsibility for the two transcript roots."
+    }
+  ],
+  "source_git_coverage": {
+    "repository": "4444J99/limen",
+    "local_ref_count": 43,
+    "exact_advertised_tips": 39,
+    "positive_ancestry_to_advertised_tip": 4,
+    "advertised_successor": "af509be70c8d2ef87f4a8cce5b01d792e5914157",
+    "all_checked_against_live_remote": true
+  },
+  "remaining": {
+    "owner": "https://github.com/4444J99/limen/issues/2739",
+    "bulk_roots": [
+      "r06",
+      "r07"
+    ],
+    "bulk_source_capture_started": false,
+    "predicate": "Heavy host admission, bounded stable capture and fresh remote recovery must pass before bulk source retirement can be assessed.",
+    "next_command": "python3 scripts/host-work-admission.py diagnose",
+    "new_native_dispatch_gate": "execution_priority_not_approved",
+    "private_key_escrow_gate": "Independent key recovery unverified",
+    "external_mirrors": "deferred until full remote publication",
+    "full_campaign_verified": false
+  },
+  "local_disposition": {
+    "original_targets_removed_this_pass": 0,
+    "reported_reclaimed_gib": 0,
+    "active_and_shared_dependency_sources_retained": true,
+    "own_staging_retained_with_this_remote_owner": true,
+    "primary_checkout_head_unchanged": "ff6b2714a013e82c3132205183ca10302a0ce0c3",
+    "private_vault_checkout_and_normal_index_unchanged": true
+  }
+}

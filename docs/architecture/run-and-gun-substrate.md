@@ -19,6 +19,13 @@ recoverable collection; external SSDs are full mirrors and processing substrate.
 - Do not move, delete, dedupe, or purge personal data without the relevant two-copy/restore gate and
   an owner receipt.
 
+Repository egress precedes repository feature completion. Preserve unfinished work in its owning
+repository as a pushed PR, plan, task or receipt with a concrete predicate and next action. Verify
+fresh remote recovery, then reap each eligible disposable local copy; each repository continues its
+work from its remote owner. Do not require every repository's feature work to finish before local
+egress. External-drive mirroring remains the final pass. Personal-data restore, independent key
+recovery, active-owner release and shared-store dependency gates still govern deletion.
+
 Correction owner: [Limen #2739](https://github.com/4444J99/limen/issues/2739).
 Remote readiness and retirement eligibility remain separate. Legacy v2 retention gates
 are unchanged; the additive Git-mirrored acceptance adapter remains pending.
