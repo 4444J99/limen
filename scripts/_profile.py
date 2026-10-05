@@ -105,14 +105,56 @@ def _gh(args: list[str], *, timeout: int = 90) -> str:
     return proc.stdout
 
 
-def gh_json(path: str, *, paginate: bool = False, timeout: int = 90) -> Any:
+def gh_json(path: str, *, paginate: bool = False, timeout: int = 90, retries: int = 3) -> Any:
+    """GET a REST endpoint via gh, retrying transient failures with backoff.
+
+    The profile schedule fails closed when live facts are missing; a single transient
+    404/5xx/rate-limit on one fact fetch must not erase the whole run. Bounded retries
+    here only — after exhaustion the call raises and callers keep their existing
+    omission-on-failure semantics, so the fail-closed exit in profile-visuals.py is
+    unchanged.
+    """
     args = ["api", path]
     if paginate:
         args.insert(1, "--paginate")
-    return json.loads(_gh(args, timeout=timeout) or "null")
+    last: Exception | None = None
+    for attempt in range(retries):
+        try:
+            return json.loads(_gh(args, timeout=timeout) or "null")
+        except (GhError, subprocess.TimeoutExpired) as exc:
+            last = exc
+            if not _is_transient(exc) or attempt == retries - 1:
+                raise
+            time.sleep(1.5 * (attempt + 1))
+    raise last or GhError("gh_json failed")
 
 
 _TRANSIENT = ("resource_limits", "rate limit", "was submitted too quickly", "timed out", "timeout")
+
+# HTTP status classes gh reports for REST calls (e.g. "Not Found (HTTP 404)").
+# 404 is included: the profile pipeline's documented failure mode is *transient* 404s
+# on live endpoints; a persistent 404 simply takes the same omission path after retries.
+_HTTP_TRANSIENT = (
+    "http 404",
+    "http 408",
+    "http 409",
+    "http 425",
+    "http 429",
+    "http 500",
+    "http 502",
+    "http 503",
+    "http 504",
+    "connection",
+    "econnreset",
+    "broken pipe",
+    "temporarily unavailable",
+)
+
+
+def _is_transient(exc: Exception) -> bool:
+    """True when the failure looks like a transient API/network blip worth retrying."""
+    msg = str(exc).lower()
+    return any(t in msg for t in _TRANSIENT) or any(t in msg for t in _HTTP_TRANSIENT)
 
 
 def gh_graphql(query: str, *, timeout: int = 90, retries: int = 3, **variables: Any) -> dict[str, Any]:
