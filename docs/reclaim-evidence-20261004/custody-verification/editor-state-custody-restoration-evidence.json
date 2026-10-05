@@ -1,0 +1,73 @@
+{
+  "bundle": "limen-worktrees-editor-state-20261004.tar.enc",
+  "ciphertext_sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf",
+  "ciphertext_bytes": 16089632,
+  "provider_1": {
+    "type": "github_release",
+    "repo": "organvm/relationship-pipeline",
+    "release": "v0.0.0-custody",
+    "asset": "limen-worktrees-editor-state-20261004.tar.enc",
+    "url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/limen-worktrees-editor-state-20261004.tar.enc",
+    "download_sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf"
+  },
+  "provider_2": {
+    "type": "google_drive",
+    "remote_path": "gdrive:limen-custody/limen-worktrees-editor-state-20261004.tar.enc",
+    "md5": "12d2181274bddb4babe518d6c06fbff6",
+    "download_sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf",
+    "transfer_method": "single-request multipart upload via --drive-upload-cutoff 32Mi and IPv4 bind"
+  },
+  "restoration_verification": {
+    "unseal_tool": "scripts/arca.sh unseal",
+    "unsealed_tar_sha256": "7d0e9fe27096dd67f96829fa356677275d166bb63816582f25decafc9eb8cf63",
+    "file_count": 9,
+    "github_vs_gdrive_diff": "0 mismatches across 9 files (100% byte-for-byte identical)",
+    "files": [
+      {
+        "path": "editor-state-local-share-worktrees-recode/changes.db",
+        "records": 37,
+        "sha256": "d7096f0a4a316bb4797c224b7caae19df86173ca2bae69251fa11244b0f86552"
+      },
+      {
+        "path": "editor-state-chamber_1-limen-recode/changes.db",
+        "records": 0,
+        "sha256": "f90509771073d502d74485bde9bcac1167e1fc08eac7b1805c5d19892c1687a0"
+      },
+      {
+        "path": "editor-state-copilot-worktrees-limen-recode/changes.db",
+        "records": 0,
+        "sha256": "f90509771073d502d74485bde9bcac1167e1fc08eac7b1805c5d19892c1687a0"
+      },
+      {
+        "path": "editor-state-library-engine-organvm-limen-recode/changes.db",
+        "records": 0,
+        "sha256": "f90509771073d502d74485bde9bcac1167e1fc08eac7b1805c5d19892c1687a0"
+      },
+      {
+        "path": "editor-state-chamber_1-limen-vscode/settings.json",
+        "bytes": 264,
+        "sha256": "365b8e4fffd36398c573bb93559c70b9614a01df572bb4632601db233bc465a1"
+      },
+      {
+        "path": "editor-state-local-share-worktrees-gitignore",
+        "bytes": 32,
+        "sha256": "e0540e0187283121024110b6f8ed4db35aa69c62a1dac6ef3e15b95b15de1a00"
+      },
+      {
+        "path": "editor-state-chamber_1-limen-gitignore",
+        "bytes": 32,
+        "sha256": "e0540e0187283121024110b6f8ed4db35aa69c62a1dac6ef3e15b95b15de1a00"
+      },
+      {
+        "path": "editor-state-copilot-worktrees-limen-gitignore",
+        "bytes": 32,
+        "sha256": "e0540e0187283121024110b6f8ed4db35aa69c62a1dac6ef3e15b95b15de1a00"
+      },
+      {
+        "path": "editor-state-library-engine-organvm-limen-gitignore",
+        "bytes": 32,
+        "sha256": "e0540e0187283121024110b6f8ed4db35aa69c62a1dac6ef3e15b95b15de1a00"
+      }
+    ]
+  }
+}

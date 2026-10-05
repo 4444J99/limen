@@ -85,49 +85,16 @@
    "root": "session-01a0f990-closeout-20261003"
   }
  ],
- "authorization": "operator assignment of exact TARGET_PATHS",
- "custody_repair": {
-  "editor_state": {
-   "bundle_name": "limen-worktrees-editor-state-20261004.tar.enc",
-   "bytes": 16089632,
-   "contents": [
-    "editor-state-local-share-worktrees-recode/changes.db (37 records)",
-    "editor-state-chamber_1-limen-recode/changes.db (0 records)",
-    "editor-state-copilot-worktrees-limen-recode/changes.db (0 records)",
-    "editor-state-library-engine-organvm-limen-recode/changes.db (0 records)",
-    "editor-state-chamber_1-limen-vscode/settings.json"
-   ],
-   "provider_github": {
-    "asset_url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/limen-worktrees-editor-state-20261004.tar.enc",
-    "release": "v0.0.0-custody",
-    "repo": "organvm/relationship-pipeline"
-   },
-   "sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf"
-  },
-  "private_payload": {
-   "branch_replica": {
-    "branch": "custody/encrypted-payload-20261004",
-    "repo": "organvm/relationship-pipeline"
-   },
-   "bundle_name": "relationship-pipeline-private.tar.enc",
-   "bytes": 23746080,
-   "dual_restore_verification": "fresh downloads from both GitHub release and Google Drive unsealed with arca.sh; 100% byte-for-byte identical (0 mismatches across 42 files)",
-   "provider_1_github": {
-    "asset_url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/relationship-pipeline-private.tar.enc",
-    "download_verified": true,
-    "release": "v0.0.0-custody",
-    "repo": "organvm/relationship-pipeline"
-   },
-   "provider_2_gdrive": {
-    "download_verified": true,
-    "md5": "d616183b575e960c479d48c8b2f1e785",
-    "rate_limit_observation": "rclone shared client_id experiences API throttling and IPv6 DNS timeouts on directory listings and chunked completion; resolved via point-to-point object transfer with IPv4 bind (rclone copyto --bind 0.0.0.0)",
-    "remote_path": "gdrive:limen-custody/relationship-pipeline-private.tar.enc"
-   },
-   "sha256": "aebe125ea84c2a6d9ddf4c02567a5d7188a23e3e8826662aa6beed603660e31d"
-  },
-  "status": "verified_two_independent_providers"
+ "active_owner_hold": {
+  "lifecycle_ownership": "Retained by this session; will finish reap of container and remaining editor/scratch state immediately after opencode releases the checkout.",
+  "path": "~/Workspace/.limen-worktrees",
+  "retained_subpaths": [
+   "~/Workspace/.limen-worktrees/reap-runtime-roots-20261004 (active OpenCode checkout, branch reap/runtime-roots-authorization-20261004, held by opencode PID 32916)",
+   "~/Workspace/.limen-worktrees/.recode/changes.db (editor state for sibling checkout)",
+   "~/Workspace/.limen-worktrees/.gitignore"
+  ]
  },
+ "authorization": "operator assignment of exact TARGET_PATHS",
  "date": "2026-10-04",
  "disk_kb": {
   "after": {
@@ -151,17 +118,6 @@
    "~/.local/share/limen/_limen-worktree-abandonment": 321316,
    "~/Workspace/_limen-worktree-abandonment": 38176
   },
-  "space_accounting": {
-   "note": "volume_free_delta_kb reflects total filesystem change including independent concurrent session cleanups; total_attributable_reclaimed_kb isolates space freed strictly by this tranche",
-   "quarantine_reclaimed_kb": 263168,
-   "target_footprint_after_kb": 101324,
-   "target_footprint_before_kb": 5522848,
-   "total_attributable_reclaimed_kb": 5684692,
-   "tranche_direct_reclaimed_kb": 5421524,
-   "volume_free_current_kb": 27108932,
-   "volume_free_delta_kb": 12734780,
-   "volume_free_initial_kb": 14374152
-  },
   "volume_free_kb": {
    "after": 16338696,
    "before": 14374152,
@@ -169,31 +125,131 @@
    "final": 27108932
   }
  },
+ "durable_custody": {
+  "bundle_1_private_payload": {
+   "bytes": 23746080,
+   "file_count": 42,
+   "filename": "relationship-pipeline-private.tar.enc",
+   "provider_1_github": {
+    "asset_name": "relationship-pipeline-private.tar.enc",
+    "asset_url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/relationship-pipeline-private.tar.enc",
+    "download_sha256": "aebe125ea84c2a6d9ddf4c02567a5d7188a23e3e8826662aa6beed603660e31d",
+    "release": "v0.0.0-custody",
+    "repo": "organvm/relationship-pipeline"
+   },
+   "provider_2_gdrive": {
+    "download_sha256": "aebe125ea84c2a6d9ddf4c02567a5d7188a23e3e8826662aa6beed603660e31d",
+    "md5": "d616183b575e960c479d48c8b2f1e785",
+    "rate_limit_record": "rclone shared client_id throttles directory listing API (files.list) and times out on IPv6; point-to-point transfer with IPv4 bind (rclone copyto --bind 0.0.0.0) succeeded in 2.1s",
+    "remote_path": "gdrive:limen-custody/relationship-pipeline-private.tar.enc"
+   },
+   "restoration_evidence": {
+    "command": "scripts/arca.sh unseal <downloaded_enc> <dest>",
+    "github_vs_gdrive_diff": "0 mismatches across 42 files (100% byte-for-byte identical)",
+    "local_quarantine_diff": "0 mismatches against pre-reap quarantine payload",
+    "sample_restored_files": [
+     {
+      "bytes": 132,
+      "path": "relationship-pipeline-private-bundle/people.json",
+      "sha256": "d735041ffcefd3860bb437b7ca1e70776b666a27e7769eec58f5f654bdf1690a"
+     },
+     {
+      "path": "relationship-pipeline-private-bundle/out/maddie/maddie-contract-counter-language-2026-07-16.md",
+      "sha256": "1cf62c5ac8478ce7049793fa0a07d5949a41b54c5212d1113a76d53230cea2c6"
+     },
+     {
+      "path": "relationship-pipeline-private-bundle/out/maddie/maddie-domain-status-2026-07-16.md",
+      "sha256": "5b88461d66bcd2315d8dccbb3ebf8632f12cebda1b74e247e4e18f142c04ed17"
+     },
+     {
+      "path": "relationship-pipeline-private-bundle/out/maddie/maddie.slice-since-2026-05-17.messages.jsonl",
+      "sha256": "ab6834ceec51651128518ec85366a93365c4c01c239607e5daeaffab6d662221"
+     },
+     {
+      "path": "relationship-pipeline-private-bundle/out/maddie/enrich/entities.json",
+      "sha256": "db52c0082e24f9c535ce14cb033711f674b089437f9c8a2d2eaade8726abb8b2"
+     }
+    ]
+   },
+   "sha256": "aebe125ea84c2a6d9ddf4c02567a5d7188a23e3e8826662aa6beed603660e31d"
+  },
+  "bundle_2_editor_state": {
+   "bytes": 16089632,
+   "file_count": 9,
+   "filename": "limen-worktrees-editor-state-20261004.tar.enc",
+   "provider_1_github": {
+    "asset_name": "limen-worktrees-editor-state-20261004.tar.enc",
+    "asset_url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/limen-worktrees-editor-state-20261004.tar.enc",
+    "download_sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf",
+    "release": "v0.0.0-custody",
+    "repo": "organvm/relationship-pipeline"
+   },
+   "provider_2_gdrive": {
+    "download_sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf",
+    "md5": "12d2181274bddb4babe518d6c06fbff6",
+    "remote_path": "gdrive:limen-custody/limen-worktrees-editor-state-20261004.tar.enc",
+    "transfer_method": "single-request multipart upload via --drive-upload-cutoff 32Mi and IPv4 bind"
+   },
+   "restoration_evidence": {
+    "command": "scripts/arca.sh unseal <downloaded_enc> <dest>",
+    "github_vs_gdrive_diff": "0 mismatches across 9 files (100% byte-for-byte identical)",
+    "restored_file_manifest": [
+     {
+      "path": "editor-state-local-share-worktrees-recode/changes.db",
+      "records": 37,
+      "sha256": "d7096f0a4a316bb4797c224b7caae19df86173ca2bae69251fa11244b0f86552"
+     },
+     {
+      "path": "editor-state-chamber_1-limen-recode/changes.db",
+      "records": 0,
+      "sha256": "f90509771073d502d74485bde9bcac1167e1fc08eac7b1805c5d19892c1687a0"
+     },
+     {
+      "path": "editor-state-copilot-worktrees-limen-recode/changes.db",
+      "records": 0,
+      "sha256": "f90509771073d502d74485bde9bcac1167e1fc08eac7b1805c5d19892c1687a0"
+     },
+     {
+      "path": "editor-state-library-engine-organvm-limen-recode/changes.db",
+      "records": 0,
+      "sha256": "f90509771073d502d74485bde9bcac1167e1fc08eac7b1805c5d19892c1687a0"
+     },
+     {
+      "bytes": 264,
+      "path": "editor-state-chamber_1-limen-vscode/settings.json",
+      "sha256": "365b8e4fffd36398c573bb93559c70b9614a01df572bb4632601db233bc465a1"
+     },
+     {
+      "bytes": 32,
+      "path": "editor-state-local-share-worktrees-gitignore",
+      "sha256": "e0540e0187283121024110b6f8ed4db35aa69c62a1dac6ef3e15b95b15de1a00"
+     },
+     {
+      "bytes": 32,
+      "path": "editor-state-chamber_1-limen-gitignore",
+      "sha256": "e0540e0187283121024110b6f8ed4db35aa69c62a1dac6ef3e15b95b15de1a00"
+     },
+     {
+      "bytes": 32,
+      "path": "editor-state-copilot-worktrees-limen-gitignore",
+      "sha256": "e0540e0187283121024110b6f8ed4db35aa69c62a1dac6ef3e15b95b15de1a00"
+     },
+     {
+      "bytes": 32,
+      "path": "editor-state-library-engine-organvm-limen-gitignore",
+      "sha256": "e0540e0187283121024110b6f8ed4db35aa69c62a1dac6ef3e15b95b15de1a00"
+     }
+    ],
+    "unsealed_tar_sha256": "7d0e9fe27096dd67f96829fa356677275d166bb63816582f25decafc9eb8cf63"
+   },
+   "sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf"
+  }
+ },
  "m1_repos_inventory": {
   "a-i--skills": "clean, main live-exact + 3 tags live-exact, reaped",
   "hokage-chess": "clean, main live-exact, reaped",
   "public-process": "main + limen/gh-organvm-public-process-20-14d8 live-exact",
   "relationship-pipeline": "3 branches live-exact (remediate-11/12 gone upstream but object live-exact)"
- },
- "quarantine_reap": {
-  "reaped_entries": [
-   "ignored-public-process-.jekyll-cache-1791155255942604000 (reconstructible Jekyll cache)",
-   "ignored-public-process-_site-1791155255944376000 (reconstructible Jekyll site build)",
-   "ignored-relationship-pipeline-out-1791156429396310000 (preserved on 2 independent providers)",
-   "ignored-relationship-pipeline-people.json-1791156429398023000 (preserved on 2 independent providers)",
-   "editor-state-chamber_1-limen-recode (preserved in sealed bundle)",
-   "editor-state-chamber_1-limen-vscode (preserved in sealed bundle)",
-   "editor-state-chamber_1-limen-gitignore (preserved in sealed bundle)",
-   "editor-state-copilot-worktrees-limen-recode (preserved in sealed bundle)",
-   "editor-state-copilot-worktrees-limen-gitignore (preserved in sealed bundle)",
-   "editor-state-library-engine-organvm-limen-recode (preserved in sealed bundle)",
-   "editor-state-library-engine-organvm-limen-gitignore (preserved in sealed bundle)",
-   "synced-target5-logs (synced to central limen repository)",
-   "ignored-portable-acceptance-20261003-* (reconstructible build caches, pycaches, and virtualenv)",
-   "editor-state-local-share-worktrees-* (preserved in sealed bundle and reconstructible mypy cache)"
-  ],
-  "reclaimed_kb": 263168,
-  "status": "completed"
  },
  "remote_parity": "every reaped HEAD verified against live git ls-remote at scope time; see acceptance events (archive_proof) for sha and live refs",
  "retained": [
@@ -204,6 +260,39 @@
  ],
  "schema": "limen.reap_receipt.v1",
  "scope": "docs/reclaim-scope-20261004.json",
+ "storage_accounting": {
+  "filesystem_free_space_context_kb": {
+   "current_available_kb": 27108932,
+   "initial_available_kb": 14374152,
+   "note": "volume_free_delta_kb reflects volume-wide filesystem change including independent concurrent processes",
+   "volume_free_delta_kb": 12734780
+  },
+  "quarantine_purges_kb": {
+   "local_share_quarantine_purged_kb": 212000,
+   "synced_logs_purged_kb": 316,
+   "total_quarantine_purged_kb": 257116,
+   "workspace_quarantine_purged_kb": 44800
+  },
+  "target_footprint_reduction_kb": {
+   "by_directory_after_kb": {
+    "chamber_1/limen": 0,
+    "copilot-worktrees/limen": 0,
+    "library/engine/organvm/limen": 0,
+    "~/.local/share/limen/worktrees": 0,
+    "~/Workspace/.limen-worktrees": 101324
+   },
+   "by_directory_before_kb": {
+    "chamber_1/limen": 48,
+    "copilot-worktrees/limen": 93120,
+    "library/engine/organvm/limen": 48,
+    "~/.local/share/limen/worktrees": 4967352,
+    "~/Workspace/.limen-worktrees": 462280
+   },
+   "final_kb": 101324,
+   "initial_kb": 5522848,
+   "reduction_kb": 5421524
+  }
+ },
  "target_paths_status": {
   "/Users/4jp/.local/share/limen/worktrees": "ABSENT",
   "/Users/4jp/Workspace/.limen-worktrees": "HELD",
