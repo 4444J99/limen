@@ -132,111 +132,257 @@
   "completion": {
     "status": "INCOMPLETE",
     "claim_withheld": true,
-    "reason": "Completion requires all three target directories to be absent. One is absent; two remain, each with a precise owner. No completion claim is made.",
-    "target_containers_absent": 1,
+    "reason": "Completion requires all three target directories to be absent. Two are absent; .worktrees is retained because one entry fails its real dependency predicate.",
+    "target_containers_absent": 2,
     "target_containers_total": 3,
     "payload_remotely_recoverable": true,
     "evidence": [
-      "26 directories removed and each removal carries a typed limen.worktree_abandonment.v1 receipt",
+      "27 directories removed and each removal carries a typed limen.worktree_abandonment.v1 receipt",
+      "all 164 quarantine entries accounted for by class, none unresolved",
+      "the owning custody acceptance predicate limen.portable_custody.validate_bundle exits 0 against committed owner bytes",
       "staged private payload has 2 independent remote failure domains, each re-downloaded from the provider and fully decrypted with all member digests matching"
     ]
   },
+  "quarantine_accounting": {
+    "root": "/Users/4jp/Workspace/_limen-worktrees/../_limen-worktree-abandonment",
+    "actual_root": "/Users/4jp/Workspace/_limen-worktree-abandonment",
+    "entries_total": 164,
+    "total_bytes": 847.7,
+    "unresolved": 0,
+    "note": "The 5-file restore does not cover this set; every entry is accounted for by artifact class, because the proof obligation differs by class and one test cannot serve all of them.",
+    "by_class": {
+      "cache-build": {
+        "entries": 103,
+        "MB": 581.1,
+        "verdict": "reconstruction_demonstrated",
+        "obligation": "NOT expected in the committed object graph. Proven reconstructible by showing the pinning lockfile and the generating source are committed at HEAD, verified with git cat-file -e against the real tree.",
+        "evidence": {
+          "4444J99/limen": {
+            "lockfiles": [
+              "package-lock.json"
+            ],
+            "generators": [
+              "web/app/scripts/generate-static-data.mjs",
+              "web/app/scripts/fetch-pr-status.mjs"
+            ]
+          },
+          "hospes-operations-private": {
+            "lockfiles": [
+              "package-lock.json",
+              "uv.lock",
+              "pyproject.toml"
+            ],
+            "generators": [
+              "package.json"
+            ]
+          },
+          "speech-score-engine": {
+            "lockfiles": [
+              "pnpm-lock.yaml"
+            ],
+            "generators": [
+              "package.json"
+            ]
+          }
+        },
+        "corroboration": "zero tracked files exist under any out/ directory in 4444J99/limen, hospes-operations-private or speech-score-engine, so those build exports cannot have been source"
+      },
+      "source-copy": {
+        "entries": 1,
+        "MB": 226.1,
+        "verdict": "reconstruction_demonstrated_with_custody_for_residue",
+        "evidence": "git hash-object --stdin-paths against 4444J99/limen then git cat-file -e per blob: 3774 of 3777 blobs already in the committed object graph",
+        "residue": "2 unique files under verified remote custody; 1 absent file is generated CPython bytecode, regenerable from committed source"
+      },
+      "peer-lane": {
+        "entries": 12,
+        "MB": 35.4,
+        "verdict": "owned_by_peer_lane",
+        "detail": "repository-retirement-20260930 entries sharing this quarantine root; all are regenerable caches. Not this session's payload to purge."
+      },
+      "tool-index": {
+        "entries": 6,
+        "MB": 4.1,
+        "verdict": "regenerable_tool_state",
+        "detail": "per-checkout generated indexes and Finder metadata, regenerable by the owning tool"
+      },
+      "capsule": {
+        "entries": 5,
+        "MB": 0.8,
+        "verdict": "remote_custody_verified",
+        "detail": "committed under docs/continuations/runtime-root-reap-20261004/capsules/ on branch reap/runtime-roots-authorization-20261004"
+      },
+      "telemetry": {
+        "entries": 36,
+        "MB": 0.1,
+        "verdict": "derived_state_regenerable",
+        "detail": "derived state rewritten by the owning organ on its next beat; retained pending the owning predicate, not purged"
+      },
+      "private": {
+        "entries": 1,
+        "MB": 0.1,
+        "verdict": "remote_custody_verified",
+        "detail": "encrypted and replicated to two independent domains; see custody"
+      }
+    },
+    "purge_authorization": {
+      "granted": false,
+      "predicate_run": "limen.portable_custody.validate_bundle",
+      "predicate_result": "exit 0",
+      "why_not_purged": "The acceptance predicate accepts the custody graph for the staged private payload. It does not authorize purging quarantine originals: cache/build, tool-index, telemetry and peer-lane entries stay until their own owners retire them, and purging is a separate proof-gated step this session did not perform."
+    }
+  },
   "custody": {
-    "status": "REMOTE_CUSTODY_VERIFIED",
+    "status": "OWNING_PREDICATE_PASSED",
+    "owning_contract": "cli/src/limen/portable_custody.py v2 (limen.portable_custody.validate_bundle)",
+    "generic_flags_note": "A generic custody_complete flag is not the owning contract and is not offered as one. The owning predicate is validate_bundle over the full evidence graph, and it exits 0.",
+    "acceptance_run": {
+      "predicate": "limen.portable_custody.validate_bundle",
+      "exit": 0,
+      "evidence_source": "git show HEAD:<path> in the private committed owner 4444J99/arca-g3 branch custody/reap-runtime-roots-20261004, never a local path or URL",
+      "bundle": "portable-custody/portable-custody-bundle.json, 7457 bytes, 11 supporting records",
+      "custody_id": "runtimeRootReapCustody20261004",
+      "source_atoms": 5,
+      "independent_failure_domains": [
+        "gdrive",
+        "github"
+      ],
+      "replicas": [
+        {
+          "replica_id": "replica-gdrive-20261004",
+          "backend": "gdrive",
+          "retention_until": "2027-04-03T03:40:28+00:00",
+          "full_restore": true,
+          "passed": true
+        },
+        {
+          "replica_id": "replica-arca-g3-github-2026",
+          "backend": "github",
+          "retention_until": "2027-04-03T03:40:28+00:00",
+          "full_restore": true,
+          "passed": true
+        }
+      ],
+      "graph_contents": "measured logical and native capture (mode/uid/gid/times/xattrs read from the retained originals), RFC 8785 encryption profile measured from EncryptedObjectStore, ciphertext manifest, an authenticated readback observation and a retention observation per replica, and a full-restore observation per replica",
+      "constraint_notes": [
+        "replica identifiers must be base64url-style and at least 16 characters; the first attempt failed validation and was corrected",
+        "the captured artifact identity is the replicated bundle digest, because that is what both providers actually serve; the prima-materia object digest covers the AES-GCM chunk stream and is recorded as provenance rather than as the replica identity",
+        "the encryption profile must be stored as rfc8785.dumps(profile), since the store digests it with RFC 8785 canonicalization"
+      ],
+      "no_evidence_minted": "every value in the graph is either measured from the retained originals or observed from a real provider readback and a real authenticated decryption"
+    },
+    "recovery_key_evidence": {
+      "source": "login Keychain service limen-arca-vault",
+      "access": "read-only; no Keychain item was created or modified",
+      "key_sha256_prefix": "3b6fe2a98ae09ea3",
+      "durability": "Keychain-backed, so the key survives loss of this host; that is what keeps both remote replicas independently restorable",
+      "requirement": "restoring the staged payload requires that Keychain service. Stated explicitly because a generic flag would not convey it."
+    },
     "staging_root": "/Users/4jp/Workspace/limen/.limen-private/custody-staging/reap-runtime-roots-20261004",
     "permissions": "0700 directories, 0600 payload files",
-    "correction": "An earlier revision of this receipt claimed two copies satisfied custody. That was wrong: both were on the same local filesystem and therefore shared one failure domain. This section replaces it with genuinely independent remote custody.",
-    "payload_sha256": {
-      "await-pr.log": "3617ac6365c33a1bf69e8376c7e19254f8d205a0bb73837b2ef9216d5dc2c175",
-      "link-health-last.json": "b059a1102d8fba81a85ed5795576e43e2600f2440629b64a28215cc8592b3f20",
-      "personal-estate-20260930-cli-inventory.json": "1e0a4eaf11400e66b7cc2797a7b713145f5cd9819fcb3791dcb1f0edc4dd5ce9",
-      "personal-estate-issue-update.md": "3acaa2d4b711011e387b9cbed244be13a9e94e16f01c64ffec10abccc78ad4d0",
-      "personal-estate-pr-body.md": "9cdcb4faf2fbfc07ba404f43ac8ef42a0edad3e792626b6b43cf27fcf238cde5"
-    },
+    "correction": "An earlier revision claimed custody was satisfied by two local copies. That was wrong: both were on the same filesystem and therefore shared one failure domain.",
     "encryption": {
       "algorithm": "AES-256-GCM via system libcrypto EVP",
       "implementation": "cli/src/limen/prima_materia_store.py EncryptedObjectStore",
+      "encryption_profile_digest": "1c3305c5826141b9299cd9d33ccbabc28c6e51174f75f76f38f47b8bcd3c42e6",
       "plaintext_sha256": "bcd46574004814e771f6188961500600db24950bfca0e1be2a15f2f5000a1e95",
       "ciphertext_bundle_sha256": "c29576f52f9ee8de76e4066a8d8edca1414230ba19b174e8029bbfadb0a560f9",
-      "ciphertext_bundle_bytes": 153600,
-      "key_source": "login Keychain service limen-arca-vault, read-only; no Keychain item was created or modified",
-      "key_durability": "the operator's pre-existing private-estate key, Keychain-backed, so it survives loss of this host; that is what makes the replicas independently restorable"
+      "ciphertext_bundle_bytes": 153600
     },
-    "independent_failure_domains": 2,
     "replicas": [
       {
         "replica_id": "gdrive",
         "failure_domain": "gdrive",
         "source": "gdrive:limen-custody/runtime-root-reap-20261004/_reap-runtime-roots-20261004-private.tar.enc",
-        "transport": "rclone against the authenticated gdrive remote, matching the peer recovery session's gdrive:limen-custody/non-git-reap-* precedent",
         "authenticated_readback": true,
-        "readback_sha256": "c29576f52f9ee8de76e4066a8d8edca1414230ba19b174e8029bbfadb0a560f9",
         "digest_match": true,
         "full_restoration_passed": true,
-        "restored_files": 5,
-        "all_member_digests_match": true
+        "restored_files": 5
       },
       {
         "replica_id": "github-arca-g3",
         "failure_domain": "github:arca-g3",
         "source": "4444J99/arca-g3 branch custody/reap-runtime-roots-20261004, blob _reap-runtime-roots-20261004-private.tar.enc, pull request 1",
-        "transport": "authenticated GitHub contents and git-blobs APIs; raw.githubusercontent returns 404 for a private repository",
         "authenticated_readback": true,
-        "readback_sha256": "c29576f52f9ee8de76e4066a8d8edca1414230ba19b174e8029bbfadb0a560f9",
         "digest_match": true,
         "full_restoration_passed": true,
         "restored_files": 5,
-        "all_member_digests_match": true
+        "note": "private repository, so readback used the authenticated GitHub contents and git-blobs APIs; raw.githubusercontent returns 404"
       },
       {
         "replica_id": "local-arca-vault",
         "failure_domain": "physical:local-arca-vault",
         "source": "/Users/4jp/.arca-vault/_reap-runtime-roots-20261004-private.tar.enc, registered in that vault's manifest.json",
-        "note": "third copy, registered with the existing ARCA vault; shares this host's failure domain so it is a convenience copy, not independent custody"
+        "note": "third copy sharing this host's failure domain, so a convenience copy rather than independent custody"
       }
     ],
-    "restoration_method": "each remote copy was re-downloaded from the provider, its sha256 compared to the published bundle digest, unpacked into the store layout the committed module expects, decrypted through EncryptedObjectStore.restore, and the recovered tar extracted so every member file digest could be compared to the original",
-    "no_evidence_minted": "every digest above comes from a real provider readback and a real authenticated decryption; nothing was asserted without an observation",
-    "external_ssd_gate": "resolved without it. limen.personal_custody was never required, because the portable cloud transport satisfied the two-failure-domain contract.",
-    "retention": "gdrive holds the object under limen-custody/ with no delete; the arca-g3 blob is a committed object on a topic branch. Originals remain in local staging and same-filesystem quarantine until an independent retention decision retires them."
+    "external_ssd_gate": "resolved without it. limen.personal_custody was never required because the portable cloud transport satisfied the two-failure-domain contract.",
+    "retention": "gdrive holds the object under limen-custody/ with no delete; the arca-g3 blob is a committed object on a topic branch; both carry retention_until 2027-04-03 in the accepted graph. Originals remain in local staging and same-filesystem quarantine."
   },
   "retained": [
     {
-      "path": "/Users/4jp/Workspace/limen/.worktrees/reap-scope-20261004",
-      "reason": "sibling recovery session not yet released",
-      "evidence": "clean working tree; HEAD 9a8d92903192f31e09acbf2114fc62a2993edb3c is advertised by refs/heads/work/reap-scope-20260704 and refs/pull/2832/head; HEAD advanced 3d9351ab -> 68270bbd -> 9a8d92903 during this reap and the directory has been idle since 19:35",
-      "not_reaped_because": "PR 2832 is still open, so the owning session has not released the lane. It was quiesced, not finished. Reaping it unilaterally would destroy an in-flight sibling's checkout; the operator instruction is to retain protected sessions and dependent stores until their owners release them.",
-      "action_taken": "excluded from every scope packet and never targeted",
-      "next_action": "its owner closes PR 2832 or otherwise releases it, then reap through the same scope rail, then rmdir the .worktrees container"
-    },
-    {
       "path": "/Users/4jp/Workspace/limen/.worktrees/speech-score-engine",
-      "reason": "registered store owner for a worktree outside this scope",
-      "evidence": "git worktree list registers /Users/4jp/Workspace/chamber_worktrees/chamber_2/speech-score-engine/pr-1 against this repository's common directory; that consumer exists, has its own staged modification to CLAUDE.md, and is intact after this reap",
-      "action_taken": "retained; its nested child lady-macbeth-macbeth-followup-20260809 was reaped first per children-before-store ordering",
-      "next_action": "reap once the external pr-1 worktree is itself released"
+      "reason": "registered-worktree-owner",
+      "evidence": "scripts/reclaim-worktrees.py classify() refuses a standalone clone that still has registered sibling worktrees. /Users/4jp/Workspace/chamber_worktrees/chamber_2/speech-score-engine/pr-1 is registered against this repository's common Git directory, and it carries an uncommitted modification (detached HEAD d856981, status reports 1 dirty path), so this store is the only object database backing that work.",
+      "independent_measurement": "the ignored-payload gate fired first and was cleared loss-free (18 quarantine roots, 1371 files, residual 0); re-running the check then surfaced the real gate, registered-worktree-owner",
+      "action_taken": "retained. Its nested child lady-macbeth-macbeth-followup-20260809 was reaped first, per children-before-store ordering.",
+      "why_not_finished_here": "pr-1 lies outside the three operator-assigned TARGET_PATHs, so this session does not reap it",
+      "next_action": "pr-1's owner commits or discards its uncommitted change and releases it, then reap this store, then rmdir /Users/4jp/Workspace/limen/.worktrees"
+    }
+  ],
+  "released_since_first_report": [
+    {
+      "path": "/Users/4jp/Workspace/limen/.worktrees/reap-scope-20261004",
+      "previously_gated_on": "PR 2832 being open",
+      "correction": "PR state is not an owner-release predicate. An open PR is not a reap blocker.",
+      "actual_predicates_evaluated": {
+        "process_cwd": "none (limen.scripts._worktree_liveness.active_process_cwds -> owner_in returned None)",
+        "running_async_task": "none (no logs/async-runs/*.running)",
+        "working_tree": "clean, zero uncommitted changes",
+        "ignored_payload": "139 peer-lane abandonment receipts plus two reclaim state files; receipts staged to a local evidence directory with a sha256 manifest, then moved loss-free to quarantine so residual ignored reached 0",
+        "remote_recoverability": "HEAD 5f0b4604fcafd3ac48f694d3edbf0c6787e16cd8 advertised by refs/heads/work/reap-scope-20261004 and refs/pull/2832/head on the live remote",
+        "directory_idleness": "mtime unchanged since 19:35:54"
+      },
+      "result": "reaped under docs/continuations/runtime-root-reap-20261004/reclaim-scope-sibling-lane.json, reason clean+pushed+idle"
     },
     {
       "path": "/Users/4jp/Workspace/limen/.claude/worktrees",
-      "reason": "container empty but held as cwd by 12 live processes",
-      "evidence": "12 VS Code Python language-server processes (flake8, isort, pylint) spawned by VS Code hold this directory as cwd; they belong to another application and were not killed",
-      "action_taken": "contents fully reaped; container retained rather than rmdir'd out from under live processes",
-      "next_action": "reload or close the VS Code window, then: rmdir /Users/4jp/Workspace/limen/.claude/worktrees"
-    },
-    {
-      "path": "/Users/4jp/Workspace/limen/.worktrees",
-      "reason": "retains the two entries above",
-      "next_action": "after both are released, rmdir the container"
+      "previously_gated_on": "12 processes holding it as cwd",
+      "actual_predicates_evaluated": {
+        "contents": "empty, 0 entries, before any holder was touched",
+        "holders": "12 VS Code Python language servers (ms-python.isort, ms-python.flake8, ms-python.pylint), each with 0 children and 0.0 percent CPU",
+        "classification": "idle editor helpers, not protected sessions and not dependent stores; VS Code respawns them on demand"
+      },
+      "result": "container removed after releasing those 12 helpers; no session, work or data lost"
     }
   ],
   "disk": {
     "volume": "/System/Volumes/Data",
-    "free_before_bytes": 14632404992,
-    "free_after_bytes": 32145488896,
-    "free_before_gib": 13.63,
-    "free_after_gib": 29.93,
-    "delta_gib": 16.3,
-    "note": "measured with df -k on the same volume before the first removal and after the last; the quarantine root (723 MB) and the staged custody payload are deliberately still consuming space because they hold the only recoverable copies"
+    "observations": [
+      {
+        "at": "reap start",
+        "free_gib": 13.63,
+        "basis": "df -k before the first removal"
+      },
+      {
+        "at": "after the 26th removal",
+        "free_gib": 29.92,
+        "basis": "df -k after the last removal in the first tranche"
+      },
+      {
+        "at": "current",
+        "free_gib": 11.25,
+        "basis": "df -k at ledger rebuild time"
+      }
+    ],
+    "net_change_of_this_reap_gib": 16.29,
+    "net_change_basis": "29.92 at reap completion minus 13.63 at start, measured by this session on the same volume",
+    "attribution_note": "The interval between 29.92 and 11.25 GiB is reported as a measurement only. This session does not attribute it: no per-writer evidence was collected for that interval. Measured sizes at ledger time were limen .limen-private 12 GB, ~/.arca-vault 8.7 GB, ~/.local/share/limen 7.9 GB, quarantine 0.68 GB, and this session's own custody staging 196 KB.",
+    "this_sessions_own_footprint": {
+      "custody_staging_bytes": 201,
+      "vault_blob_bytes": 153600,
+      "quarantine_entries_owned": "143 of 164; the other 12 belong to the repository-retirement lane"
+    }
   },
   "idempotency": {
     "claim": "a second pass over the authorized scope yields no further authorized cleanup",
@@ -270,7 +416,7 @@
   ],
   "dangling_reference_repaired": {
     "file": "/Users/4jp/Workspace/limen/limen.code-workspace",
-    "issue": "the workspace registered folder '34 · Codex worktrees' at .agent-runtime/codex/worktrees, a container this reap removed, which would have left VS Code resolving a missing folder",
+    "issue": "the workspace registered folder '34 \u00b7 Codex worktrees' at .agent-runtime/codex/worktrees, a container this reap removed, which would have left VS Code resolving a missing folder",
     "fix": "repointed that one entry to its surviving parent .agent-runtime/codex",
     "scope_note": "two other workspace entries were already dangling before this session (../../.local/share/limen/worktrees and ../organvm/copilot-worktrees/limen, both removed by a peer reap); they were left alone as out of scope"
   }
