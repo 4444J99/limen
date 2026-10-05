@@ -1,0 +1,43 @@
+{
+  "bundle": "workspace-limen-worktrees-final-editor-state-20261005.tar.enc",
+  "ciphertext_sha256": "0fde2053185811bd5f141f5b6068a3b4f9f4a4bfb451374ae5fd77e331d216d8",
+  "ciphertext_bytes": 364576,
+  "provider_1": {
+    "type": "github_release",
+    "repo": "organvm/relationship-pipeline",
+    "release": "v0.0.0-custody",
+    "asset": "workspace-limen-worktrees-final-editor-state-20261005.tar.enc",
+    "url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/workspace-limen-worktrees-final-editor-state-20261005.tar.enc",
+    "download_sha256": "0fde2053185811bd5f141f5b6068a3b4f9f4a4bfb451374ae5fd77e331d216d8",
+    "retention_enforced": false,
+    "retention_until": null,
+    "provider_capability": "Standard GitHub Release asset hosting; assets are immutable on GitHub Releases until deleted or replaced with repository write access. No calendar-based retention lock API."
+  },
+  "provider_2": {
+    "type": "google_drive",
+    "remote_path": "gdrive:limen-custody/workspace-limen-worktrees-final-editor-state-20261005.tar.enc",
+    "download_sha256": "0fde2053185811bd5f141f5b6068a3b4f9f4a4bfb451374ae5fd77e331d216d8",
+    "retention_enforced": false,
+    "retention_until": null,
+    "provider_capability": "Standard Google Drive cloud object storage; objects persist in folder until explicitly modified/trashed by account owner. No compliance lock or calendar retention API."
+  },
+  "retention_assessment": {
+    "retention_enforced": false,
+    "retention_until": null,
+    "finding": "Neither GitHub Releases nor standard Google Drive offers provider-enforced compliance retention locks or calendar horizon APIs. Manufactured expiration dates are removed. Durability is provided by standard provider persistence across two independent provider domains (GitHub and Google Drive)."
+  },
+  "restoration_verification": {
+    "unseal_tool": "scripts/arca.sh unseal",
+    "file_count": 1,
+    "github_vs_gdrive_diff": "0 mismatches (100% byte-for-byte identical)",
+    "key_recovery_note": "Unsealed and verified using host macOS Keychain service limen-arca-vault. Off-host independent key recovery remains governed under Wall #320.",
+    "files": [
+      {
+        "path": ".recode/changes.db",
+        "bytes": 360448,
+        "sha256": "704f296b1962fc5124ed2c63d0947db53f2bc884770297d6053dffeaa5a172bc",
+        "records": 11
+      }
+    ]
+  }
+}

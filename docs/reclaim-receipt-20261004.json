@@ -86,14 +86,11 @@
   }
  ],
  "active_owner_hold": {
-  "lifecycle_ownership": "Retained by this session; will finish reap of container and remaining editor/scratch state immediately after opencode releases the checkout.",
+  "details": "OpenCode completed authorized work, pushed commit 783516c4 and 51103b57, verified live remote recoverability, and released the checkout; reap-runtime-roots-20261004 and .reap-scratch-20261004 reaped; residual editor state (.recode/changes.db) sealed into workspace-limen-worktrees-final-editor-state-20261005.tar.enc with verified dual-provider custody (GitHub Release v0.0.0-custody and gdrive:limen-custody/); container reaped via rmdir under operator authorization",
   "path": "~/Workspace/.limen-worktrees",
-  "retained_subpaths": [
-   "~/Workspace/.limen-worktrees/reap-runtime-roots-20261004 (active OpenCode checkout, branch reap/runtime-roots-authorization-20261004, held by opencode PID 32916)",
-   "~/Workspace/.limen-worktrees/.reap-scratch-20261004 (sibling session scratch directory: 29 files, 1040 KB)",
-   "~/Workspace/.limen-worktrees/.recode/changes.db (editor state for sibling checkout, 352 KB)",
-   "~/Workspace/.limen-worktrees/.gitignore (32 bytes)"
-  ]
+  "reaped_at": "2026-10-05T04:29:20Z",
+  "released_at": "2026-10-05T04:22:00Z",
+  "status": "RELEASED_AND_REAPED"
  },
  "authorization": "operator assignment of exact TARGET_PATHS",
  "date": "2026-10-04",
@@ -113,7 +110,7 @@
    "copilot-worktrees/limen": 0,
    "library/engine/organvm/limen": 0,
    "~/.local/share/limen/worktrees": 0,
-   "~/Workspace/.limen-worktrees": 103812
+   "~/Workspace/.limen-worktrees": 0
   },
   "quarantine_retained_kb": {
    "~/.local/share/limen/_limen-worktree-abandonment": 321316,
@@ -268,6 +265,47 @@
     "retention_until": null
    },
    "sha256": "3bd0e4ec0c8d2762f2c0ebb8690038e572286579d4b699888cce91850501e8cf"
+  },
+  "bundle_3_final_editor_state": {
+   "bytes": 364576,
+   "file_count": 1,
+   "filename": "workspace-limen-worktrees-final-editor-state-20261005.tar.enc",
+   "provider_1_github": {
+    "asset_name": "workspace-limen-worktrees-final-editor-state-20261005.tar.enc",
+    "asset_url": "https://github.com/4444J99/relationship-pipeline/releases/download/v0.0.0-custody/workspace-limen-worktrees-final-editor-state-20261005.tar.enc",
+    "download_sha256": "0fde2053185811bd5f141f5b6068a3b4f9f4a4bfb451374ae5fd77e331d216d8",
+    "provider_capability": "Standard GitHub Release asset hosting; assets are immutable on GitHub Releases until deleted or replaced with repository write access. No calendar-based retention lock API.",
+    "release": "v0.0.0-custody",
+    "repo": "organvm/relationship-pipeline",
+    "retention_enforced": false,
+    "retention_until": null
+   },
+   "provider_2_gdrive": {
+    "download_sha256": "0fde2053185811bd5f141f5b6068a3b4f9f4a4bfb451374ae5fd77e331d216d8",
+    "provider_capability": "Standard Google Drive cloud object storage; objects persist in folder until explicitly modified/trashed by account owner. No compliance lock or calendar retention API.",
+    "remote_path": "gdrive:limen-custody/workspace-limen-worktrees-final-editor-state-20261005.tar.enc",
+    "retention_enforced": false,
+    "retention_until": null
+   },
+   "restoration_evidence": {
+    "command": "scripts/arca.sh unseal <downloaded_enc> <dest>",
+    "github_vs_gdrive_diff": "0 mismatches (100% byte-for-byte identical)",
+    "key_recovery_note": "Unsealed and verified using host macOS Keychain service limen-arca-vault. Off-host independent key recovery remains governed under Wall #320.",
+    "restored_file_manifest": [
+     {
+      "bytes": 360448,
+      "path": ".recode/changes.db",
+      "records": 11,
+      "sha256": "704f296b1962fc5124ed2c63d0947db53f2bc884770297d6053dffeaa5a172bc"
+     }
+    ]
+   },
+   "retention_assessment": {
+    "finding": "Neither GitHub Releases nor standard Google Drive offers provider-enforced compliance retention locks or calendar horizon APIs. Manufactured expiration dates are removed. Durability is provided by standard provider persistence across two independent provider domains (GitHub and Google Drive).",
+    "retention_enforced": false,
+    "retention_until": null
+   },
+   "sha256": "0fde2053185811bd5f141f5b6068a3b4f9f4a4bfb451374ae5fd77e331d216d8"
   }
  },
  "m1_repos_inventory": {
@@ -277,24 +315,7 @@
   "relationship-pipeline": "3 branches live-exact (remediate-11/12 gone upstream but object live-exact)"
  },
  "remote_parity": "every reaped HEAD verified against live git ls-remote at scope time; see acceptance events (archive_proof) for sha and live refs",
- "retained": [
-  {
-   "blocker": "active sibling session on branch reap/runtime-roots-authorization-20261004; strictly preserved per contract",
-   "path": "~/Workspace/.limen-worktrees/reap-runtime-roots-20261004"
-  },
-  {
-   "blocker": "sibling session scratch directory (.reap-scratch-20261004) in active container",
-   "path": "~/Workspace/.limen-worktrees/.reap-scratch-20261004"
-  },
-  {
-   "blocker": "editor state for sibling checkout in active container",
-   "path": "~/Workspace/.limen-worktrees/.recode/changes.db"
-  },
-  {
-   "blocker": "container gitignore in active container",
-   "path": "~/Workspace/.limen-worktrees/.gitignore"
-  }
- ],
+ "retained": [],
  "schema": "limen.reap_receipt.v1",
  "scope": "docs/reclaim-scope-20261004.json",
  "storage_accounting": {
@@ -316,7 +337,7 @@
     "copilot-worktrees/limen": 0,
     "library/engine/organvm/limen": 0,
     "~/.local/share/limen/worktrees": 0,
-    "~/Workspace/.limen-worktrees": 103812
+    "~/Workspace/.limen-worktrees": 0
    },
    "by_directory_before_kb": {
     "chamber_1/limen": 48,
@@ -325,21 +346,21 @@
     "~/.local/share/limen/worktrees": 4967352,
     "~/Workspace/.limen-worktrees": 462280
    },
-   "final_kb": 103812,
+   "final_kb": 0,
    "initial_kb": 5522848,
-   "reduction_kb": 5419036
+   "reduction_kb": 5522848
   }
  },
  "target_paths_status": {
   "/Users/4jp/.local/share/limen/worktrees": "ABSENT",
-  "/Users/4jp/Workspace/.limen-worktrees": "HELD",
+  "/Users/4jp/Workspace/.limen-worktrees": "ABSENT",
   "/Users/4jp/Workspace/chamber_worktrees/chamber_1/limen": "ABSENT",
   "/Users/4jp/Workspace/library/engine/organvm/limen": "ABSENT",
   "/Users/4jp/Workspace/organvm/copilot-worktrees/limen": "ABSENT",
   "summary": {
-   "absent": 4,
-   "held": 1,
-   "held_reason": "~/Workspace/.limen-worktrees held strictly to protect active sibling session reap-runtime-roots-20261004",
+   "absent": 5,
+   "held": 0,
+   "held_reason": "none; all 5 assigned target paths successfully reaped",
    "total_assigned": 5
   }
  },
@@ -387,7 +408,8 @@
    "~/.local/share/limen/worktrees (top-level target path 1 reaped via rmdir)",
    "~/Workspace/organvm/copilot-worktrees/limen (top-level target path 3 reaped via rmdir)",
    "~/Workspace/chamber_worktrees/chamber_1/limen (top-level target path 4 reaped via rmdir)",
-   "~/Workspace/library/engine/organvm/limen (top-level target path 5 reaped via rmdir, plus parents library/engine/organvm and library/engine)"
+   "~/Workspace/library/engine/organvm/limen (top-level target path 5 reaped via rmdir, plus parents library/engine/organvm and library/engine)",
+   "~/Workspace/.limen-worktrees (top-level target path 2 reaped via rmdir; all 5 assigned directories absent)"
   ]
  }
 }
