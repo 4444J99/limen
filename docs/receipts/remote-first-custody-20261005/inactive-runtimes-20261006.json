@@ -34,8 +34,8 @@
     "private_prefix": "limen-reap/20261006/inactive-runtimes",
     "fresh_remote_recovery_verified": false,
     "captured_candidates": 21,
-    "observed_commit": "333450bed91946d827fe0fe414426f4b1cd3f048",
-    "published_batches": 15,
+    "observed_commit": "a155fadcc5d57a68de0735a9af10d76de661932a",
+    "published_batches": 17,
     "total_batches": 25,
     "recovery_gate": {
       "owner": "4444J99/limen#320",
@@ -65,6 +65,9 @@
     },
     "intent": "Remove the empty directory with rmdir; any raced-in entry prevents removal",
     "files_to_remove": 0,
-    "status": "admitted"
+    "status": "retired",
+    "empty_directory_removed": true,
+    "files_removed": 0,
+    "finished_at": "2026-10-06T20:51:56.040614+00:00"
   }
 }
