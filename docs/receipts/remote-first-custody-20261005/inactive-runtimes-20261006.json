@@ -51,5 +51,20 @@
     "authorized": false,
     "required": "Stable encrypted capture and full independent recovery of candidate contents; live no-owner and exact-plan validation by domus-limen-runtime prune before removal"
   },
-  "source_membership": "Exact private prune plan preserved with this generation; no active or current runtime included"
+  "source_membership": "Exact private prune plan preserved with this generation; no active or current runtime included",
+  "parallel_cleanup": {
+    "original_root_index": 11,
+    "label": "empty legacy worktree parent",
+    "directory_empty": true,
+    "symlink": false,
+    "process_probe": {
+      "command": "lsof -nP -F pn +D <original-root-11>",
+      "exit_code": 1,
+      "reported_processes": 0,
+      "stderr_empty": true
+    },
+    "intent": "Remove the empty directory with rmdir; any raced-in entry prevents removal",
+    "files_to_remove": 0,
+    "status": "admitted"
+  }
 }
