@@ -1,0 +1,16 @@
+{
+  "schema": "limen.sourcery_egress.v1",
+  "date": "2026-10-06",
+  "owner": "4444J99/limen#2739",
+  "original_root_index": 19,
+  "status": "preservation-prepared",
+  "source_logical_byte_limit": 16777216,
+  "staging_budget_bytes": 1073741824,
+  "safety_floor_bytes": 10737418240,
+  "deadline_minutes": 30,
+  "source_removed": false,
+  "reason": "Resolve the older capture's separate key-profile recovery gap with a fresh stable canonical-escrow capture.",
+  "publication_repository": "4444J99/arca-g3",
+  "publication_prefix": "limen-reap/20261006/sourcery",
+  "acceptance": "Fresh immutable readback and independent canonical escrow recovery; native restore and original retirement remain distinct."
+}
