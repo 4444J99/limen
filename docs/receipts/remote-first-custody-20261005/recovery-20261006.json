@@ -139,7 +139,8 @@
       "content_owners": [
         "4444J99/limen",
         "4444J99/speech-score-engine"
-      ]
+      ],
+      "independent_escrow_key_recovery_verified": true
     },
     "receipts": {
       "files": 33790,
@@ -152,11 +153,14 @@
       "payload_batches_observed": 26,
       "total_batches_including_manifest": 27,
       "final_manifest_published": true,
-      "remote_recovery_verified": false,
+      "remote_recovery_verified": true,
       "payload_bytes_published": 3389926336,
       "remaining_payload_batches": 0,
-      "readback_files_verified_at_checkpoint": 9,
-      "readback_files_total": 52
+      "readback_files_verified_at_checkpoint": 52,
+      "readback_files_total": 52,
+      "independent_escrow_key_recovery_verified": true,
+      "archive_plaintext_hash_and_size_equal": true,
+      "verification_finished_at": "2026-10-06T19:56:11.987156+00:00"
     },
     "continuation": {
       "authority": "https://github.com/4444J99/limen/issues/2739#issuecomment-5842180605",
@@ -186,7 +190,15 @@
         "transport": "Immutable raw HTTPS with serial byte-range resume",
         "ssh_attempt": "Timed out without advancing the advertised branch",
         "verification": "SHA-256 and exact remote Git blob identities for all files, then escrow decryption"
-      }
+      },
+      "execution_proof": {
+        "private_repository": "4444J99/arca-g3",
+        "commit": "d4e841b8d2298ed36acc35be139286b0c5654434",
+        "prefix": "limen-reap/20261006/receipts-execution-proof",
+        "fresh_remote_readback_equal": true,
+        "independent_escrow_decryption_equal": true
+      },
+      "current_transfer_state": "Recovery verified; transfer ended; exclusive lease released"
     }
   },
   "local_disposition": {
