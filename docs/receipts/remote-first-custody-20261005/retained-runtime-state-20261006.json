@@ -14,7 +14,7 @@
   "logical_source_bytes": 389305465,
   "ciphertext_bytes": 162408976,
   "all_sources_stable": true,
-  "status": "publication-in-progress",
+  "status": "remote-recovery-verified",
   "source_logical_byte_limit": 1073741824,
   "staging_budget_bytes": 3221225472,
   "safety_floor_bytes": 10737418240,
@@ -24,8 +24,13 @@
   "source_removed": false,
   "publication_repository": "4444J99/arca-g3",
   "publication_prefix": "limen-reap/20261006/retained-runtime-state",
-  "observed_commit": "773e769f6741786b8678eaac807495e0fa17200a",
-  "published_batches": 1,
+  "observed_commit": "ab6f717d72dc9ed0745f4bd3365ca28eb2d62288",
+  "published_batches": 3,
   "total_batches": 3,
-  "acceptance": "Stable capture, private remote publication, fresh immutable readback and independent escrow recovery; removal requires separate owner and restoration eligibility."
+  "acceptance": "Stable capture, private remote publication, fresh immutable readback and independent escrow recovery; removal requires separate owner and restoration eligibility.",
+  "fresh_remote_files_verified": 13,
+  "independent_escrow_recovery_verified": true,
+  "logical_restore_verified_roots": 4,
+  "private_execution_proof_commit": "6826e291f20e736f3f5df9d8a2ad524dec1e70d6",
+  "native_filesystem_materialization_verified": false
 }
