@@ -29,13 +29,13 @@
     ]
   },
   "custody": {
-    "publication": "partial",
+    "publication": "complete",
     "private_repository": "4444J99/arca-g3",
     "private_prefix": "limen-reap/20261006/inactive-runtimes",
     "fresh_remote_recovery_verified": false,
     "captured_candidates": 21,
-    "observed_commit": "a155fadcc5d57a68de0735a9af10d76de661932a",
-    "published_batches": 17,
+    "observed_commit": "0dde7cb57c73bf457aa39e25ddb7265a4e3992be",
+    "published_batches": 25,
     "total_batches": 25,
     "recovery_gate": {
       "owner": "4444J99/limen#320",
@@ -44,7 +44,8 @@
       "predicate": "Canonical escrow check and cohort-specific decryption succeed",
       "next_command": "domus-agent-host ensure -- python3 scripts/check-arca-escrow.py",
       "publication_can_continue_without_key": true
-    }
+    },
+    "ciphertext_readback": "in_progress"
   },
   "retirement": {
     "original_runtimes_removed": 0,
