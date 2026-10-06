@@ -1,0 +1,23 @@
+{
+  "schema": "limen.cold_copy_cleanup.v1",
+  "date": "2026-10-06",
+  "owner": "4444J99/limen#2739",
+  "status": "verified-temporary-copy-retirement",
+  "private_cleanup_proof_commit": "7b8524f5796f145933d474937395851d6b202799",
+  "fresh_remote_equal": true,
+  "independent_escrow_decryption_equal": true,
+  "temporary_ciphertext_files_removed": 62,
+  "temporary_logical_bytes_removed": 2721473984,
+  "observed_free_bytes_delta": 532844544,
+  "original_sources_removed": 0,
+  "live_remote_payload_and_proof_tree_unchanged": true,
+  "august": {
+    "status": "bounded-units-prepared",
+    "day_root_groups": 4,
+    "logical_source_cap_bytes_per_group": 1610612736,
+    "initial_free_space_requirement_bytes": 16106127360,
+    "monthly_root_extra_atom_count": 1,
+    "monthly_root_metadata_pending": true,
+    "original_sources_retained": true
+  }
+}
