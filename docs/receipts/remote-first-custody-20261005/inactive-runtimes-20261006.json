@@ -96,5 +96,13 @@
     "present": 15,
     "empty": 0,
     "remaining_roots_not_retirement_certified": true
+  },
+  "temporary_copy_retirement": {
+    "files_removed": 136,
+    "logical_bytes_removed": 5453388768,
+    "observed_free_bytes_delta": 2727456768,
+    "proof_commit": "2c97de3ab6aa9f07606fd19ea3e8455bd0db3ddc",
+    "proof_fresh_remote_and_independent_escrow_verified": true,
+    "original_sources_removed_by_this_step": 0
   }
 }
