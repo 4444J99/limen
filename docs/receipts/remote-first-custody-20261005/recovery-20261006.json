@@ -208,13 +208,29 @@
     "original_target_denominator": 24,
     "observed_absent": 8,
     "observed_empty": 1,
-    "observed_nonempty": 15
+    "observed_nonempty": 15,
+    "verified_transfer_copy_retirement": {
+      "schema": "limen.verified_transfer_copy_retirement.v1",
+      "private_proof_commit": "d4e841b8d2298ed36acc35be139286b0c5654434",
+      "source_generation": "541239876755c8e718fd019f72280b1f67f4ce50",
+      "original_sources_removed": 0,
+      "temporary_ciphertext_files_removed": 102,
+      "temporary_logical_bytes_removed": 6779852672,
+      "free_bytes_before": 39951896576,
+      "scope": "Only ciphertext payload files in this transfer publication and readback directories; manifests retained",
+      "free_bytes_after": 40242159616,
+      "observed_free_bytes_delta": 290263040,
+      "finished_at": "2026-10-06T19:58:00.570779+00:00",
+      "concurrent_host_activity_may_affect_free_space": true,
+      "encrypted_execution_proof_commit": "9b0d361d1dc6a4ade1f6201b6c70c7db5ea2f3d0",
+      "proof_fresh_remote_and_escrow_verified": true
+    }
   },
   "remaining_work": {
     "native_restoration_owner": "4444J99/limen#2739",
     "domus_roots_owner": "4444J99/domus-genoma#411",
     "predicate": "Full native restoration plus independent replica and retention evidence, protected-owner release and shared-store dependency proof before original removal",
-    "next_action": "Resolve the measured provenance mismatch through a supported restoration path without discarding original values or weakening the native comparator; continue admitted bulk egress."
+    "next_action": "Continue remote egress for the remaining estate roots. Resolve the measured native provenance mismatch through a supported restoration path, establish replica/retention and owner/dependency release before original-source removal. Receipt and artifact archive remote recovery is now verified."
   },
   "repo_owners": {
     "limen": "https://github.com/4444J99/limen/pull/2834",
