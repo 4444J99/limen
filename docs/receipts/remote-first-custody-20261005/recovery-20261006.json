@@ -1,0 +1,139 @@
+{
+  "schema": "limen.remote_recovery_checkpoint.v1",
+  "owner": "4444J99/limen#2739",
+  "date": "2026-10-06",
+  "private_proof_repository": "4444J99/arca-g3",
+  "private_proof_commit": "f3524e7a1ac98d59584647a0b29fb02000ed1d26",
+  "private_proof_prefix": "limen-reap/20261006/native-recovery",
+  "proof_blobs_fresh_remote_equal": 4,
+  "scope": {
+    "root_count": 5,
+    "files": 60,
+    "native_atoms": 86
+  },
+  "key_recovery": {
+    "canonical_escrow_used": true,
+    "local_keychain_used_for_recovery": false,
+    "fresh_committed_source_decrypted": true
+  },
+  "results": [
+    {
+      "archive_decryption_equal": true,
+      "atoms": 65,
+      "current_source_matches_capture": true,
+      "fresh_remote_ciphertext": true,
+      "immutable_source_commit": "bb2355f11a173dd1f3b061891fe1005134ed1122",
+      "independent_escrow_key_used": true,
+      "logical_restore_equal": true,
+      "mismatch_field_counts": {
+        "xattrs": 65
+      },
+      "native_materialized_fields_equal": false,
+      "original_historical_clocks_preserved": true,
+      "owner": "4444J99/limen",
+      "retirement_authorized": false,
+      "root_id": "r01",
+      "source_removed": false
+    },
+    {
+      "archive_decryption_equal": true,
+      "atoms": 4,
+      "current_source_matches_capture": true,
+      "fresh_remote_ciphertext": true,
+      "immutable_source_commit": "bb2355f11a173dd1f3b061891fe1005134ed1122",
+      "independent_escrow_key_used": true,
+      "logical_restore_equal": true,
+      "mismatch_field_counts": {
+        "xattrs": 4
+      },
+      "native_materialized_fields_equal": false,
+      "original_historical_clocks_preserved": true,
+      "owner": "4444J99/limen",
+      "retirement_authorized": false,
+      "root_id": "r02",
+      "source_removed": false
+    },
+    {
+      "archive_decryption_equal": true,
+      "atoms": 6,
+      "current_source_matches_capture": true,
+      "fresh_remote_ciphertext": true,
+      "immutable_source_commit": "bb2355f11a173dd1f3b061891fe1005134ed1122",
+      "independent_escrow_key_used": true,
+      "logical_restore_equal": true,
+      "mismatch_field_counts": {
+        "xattrs": 3
+      },
+      "native_materialized_fields_equal": false,
+      "original_historical_clocks_preserved": true,
+      "owner": "4444J99/limen",
+      "retirement_authorized": false,
+      "root_id": "r03",
+      "source_removed": false
+    },
+    {
+      "archive_decryption_equal": true,
+      "atoms": 6,
+      "current_source_matches_capture": true,
+      "fresh_remote_ciphertext": true,
+      "immutable_source_commit": "bb2355f11a173dd1f3b061891fe1005134ed1122",
+      "independent_escrow_key_used": true,
+      "logical_restore_equal": true,
+      "mismatch_field_counts": {
+        "xattrs": 2
+      },
+      "native_materialized_fields_equal": false,
+      "original_historical_clocks_preserved": true,
+      "owner": "4444J99/domus-genoma",
+      "retirement_authorized": false,
+      "root_id": "r04",
+      "source_removed": false
+    },
+    {
+      "archive_decryption_equal": true,
+      "atoms": 5,
+      "current_source_matches_capture": true,
+      "fresh_remote_ciphertext": true,
+      "immutable_source_commit": "bb2355f11a173dd1f3b061891fe1005134ed1122",
+      "independent_escrow_key_used": true,
+      "logical_restore_equal": true,
+      "mismatch_field_counts": {
+        "xattrs": 2
+      },
+      "native_materialized_fields_equal": false,
+      "original_historical_clocks_preserved": true,
+      "owner": "4444J99/domus-genoma",
+      "retirement_authorized": false,
+      "root_id": "r05",
+      "source_removed": false
+    }
+  ],
+  "native_mismatch": {
+    "attribute": "com.apple.provenance",
+    "affected_atoms": 76,
+    "other_materialized_fields_equal": true,
+    "original_values_preserved": true,
+    "acceptance_not_relaxed": true
+  },
+  "bulk_attempt": {
+    "first_acquisition_denied": [
+      "swap-growth",
+      "vitals-shed"
+    ],
+    "changed_pressure_subsequently_admitted_artifact_capture": true,
+    "artifact_publication_commit": "34e673c6b65da80bd6051753dcca7080084db053",
+    "artifact_readback": "in-progress",
+    "receipts_capture": "not-started"
+  },
+  "local_disposition": {
+    "originals_removed": 0,
+    "original_sources_retained": true,
+    "private_staging_owned_by_this_receipt": true
+  },
+  "remaining_work": {
+    "native_restoration_owner": "4444J99/limen#2739",
+    "domus_roots_owner": "4444J99/domus-genoma#411",
+    "predicate": "Full native restoration plus independent replica and retention evidence, protected-owner release and shared-store dependency proof before original removal",
+    "next_action": "Resolve the measured provenance mismatch through a supported restoration path without discarding original values or weakening the native comparator; continue admitted bulk egress."
+  }
+}
