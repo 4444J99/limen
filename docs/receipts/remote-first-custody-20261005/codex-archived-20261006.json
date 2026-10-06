@@ -4,7 +4,7 @@
   "owner": "4444J99/limen#2739",
   "original_root_index": 16,
   "scope": "Archived Codex sessions",
-  "status": "published-readback-in-progress",
+  "status": "remote-recovery-verified",
   "source_files": 264,
   "logical_source_bytes": 2287104376,
   "ciphertext_bytes": 668780928,
@@ -22,5 +22,10 @@
   "source_generation": "7618bd425573b69cb0f582db4d87c564947a1d1c",
   "published_batches": 6,
   "total_batches": 6,
-  "acceptance": "Stable complete archive capture, private remote publication, fresh readback, independent escrow and logical recovery. Original chat retirement remains outside this preservation pass."
+  "acceptance": "Stable complete archive capture, private remote publication, fresh readback, independent escrow and logical recovery. Original chat retirement remains outside this preservation pass.",
+  "fresh_remote_files_verified": 12,
+  "independent_escrow_recovery_verified": true,
+  "logical_restore_verified": true,
+  "native_filesystem_materialization_verified": false,
+  "private_execution_proof_commit": "a228bc1b93e356af8fc98cbf9a43df331a7b6fdf"
 }
