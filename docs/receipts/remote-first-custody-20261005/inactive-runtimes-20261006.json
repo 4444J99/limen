@@ -34,9 +34,17 @@
     "private_prefix": "limen-reap/20261006/inactive-runtimes",
     "fresh_remote_recovery_verified": false,
     "captured_candidates": 21,
-    "observed_commit": "9c6f3dfda4c3c3e7076f586ede61a91b4ffa86aa",
-    "published_batches": 1,
-    "total_batches": 25
+    "observed_commit": "333450bed91946d827fe0fe414426f4b1cd3f048",
+    "published_batches": 15,
+    "total_batches": 25,
+    "recovery_gate": {
+      "owner": "4444J99/limen#320",
+      "atom": "ARCA escrow desktop authorization timeout",
+      "bootstrap_attempted": true,
+      "predicate": "Canonical escrow check and cohort-specific decryption succeed",
+      "next_command": "domus-agent-host ensure -- python3 scripts/check-arca-escrow.py",
+      "publication_can_continue_without_key": true
+    }
   },
   "retirement": {
     "original_runtimes_removed": 0,
