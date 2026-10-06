@@ -4,7 +4,11 @@
   "owner": "4444J99/limen#2739",
   "original_root_index": 1,
   "scope": "Full primary Git store including refs, reflogs, stash and unreachable objects present in the captured store",
-  "status": "preservation-prepared",
+  "status": "published-readback-in-progress",
+  "source_files": 5411,
+  "logical_source_bytes": 1245717876,
+  "ciphertext_bytes": 1235940560,
+  "source_stable": true,
   "source_logical_byte_limit": 3221225472,
   "staging_budget_bytes": 8589934592,
   "safety_floor_bytes": 10737418240,
@@ -20,7 +24,15 @@
     "remote_repository": "4444J99/limen",
     "landing_or_deletion_eligibility_inferred": false
   },
+  "credential_wall": {
+    "command": "domus-agent-host ensure -- python3 scripts/credential-wall.py --check",
+    "exit_code": 0,
+    "registered_atoms": 31
+  },
   "publication_repository": "4444J99/arca-g3",
   "publication_prefix": "limen-reap/20261006/limen-git-store",
-  "acceptance": "Stable full Git store capture, private remote publication, fresh readback, independent escrow and logical recovery. This preserves store bytes but does not authorize linked worktree or personal-data retirement."
+  "source_generation": "8adc0f3068ab53dd0180e4a28ca815bad3379520",
+  "published_batches": 11,
+  "total_batches": 11,
+  "acceptance": "Stable full Git store capture, private remote publication, fresh readback, independent escrow and logical recovery plus isolated Git fsck. Linked worktrees and personal-data retirement require separate owner gates."
 }
