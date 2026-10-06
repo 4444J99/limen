@@ -514,7 +514,8 @@ def evaluate_scoped(
         raise Unmeasured("custody coverage does not match scope")
     else:
         custody_payload = evidence(custody)
-        if contract := custody.get("contract"):
+        if "contract" in custody:
+            contract = custody["contract"]
             if contract != "limen.custody_receipt.v2":
                 raise Unmeasured("unsupported scoped custody contract")
             from limen.portable_custody import validate_bundle

@@ -352,20 +352,26 @@ def _make_second_replica_physical(bundle, files):
         bundle,
         files,
         artifact["readback_evidence_digest"],
-        lambda row: row.update(backend="physical", device_id=replica["device_id"], authenticated=True),
+        lambda row: row.update(
+            backend="physical", device_id=replica["device_id"], authenticated=True
+        ),
     )
     replica["retention_evidence_digest"] = replace_record(
         bundle,
         files,
         replica["retention_evidence_digest"],
-        lambda row: row.update(backend="physical", device_id=replica["device_id"], authenticated=True),
+        lambda row: row.update(
+            backend="physical", device_id=replica["device_id"], authenticated=True
+        ),
     )
     proof = next(row for row in receipt["restoration_proofs"] if row["replica_id"] == replica["replica_id"])
     proof["evidence_digest"] = replace_record(
         bundle,
         files,
         proof["evidence_digest"],
-        lambda row: row.update(device_id=replica["device_id"], authenticated=True),
+        lambda row: row.update(
+            device_id=replica["device_id"], authenticated=True
+        ),
     )
     return replica, proof
 
