@@ -32,7 +32,7 @@
     "publication": "complete",
     "private_repository": "4444J99/arca-g3",
     "private_prefix": "limen-reap/20261006/inactive-runtimes",
-    "fresh_remote_recovery_verified": false,
+    "fresh_remote_recovery_verified": true,
     "captured_candidates": 21,
     "observed_commit": "0dde7cb57c73bf457aa39e25ddb7265a4e3992be",
     "published_batches": 25,
@@ -43,14 +43,28 @@
       "bootstrap_attempted": true,
       "predicate": "Canonical escrow check and cohort-specific decryption succeed",
       "next_command": "domus-agent-host ensure -- python3 scripts/check-arca-escrow.py",
-      "publication_can_continue_without_key": true
+      "publication_can_continue_without_key": true,
+      "status": "satisfied-for-this-cohort"
     },
-    "ciphertext_readback": "in_progress"
+    "ciphertext_readback": "verified",
+    "verified_remote_files": 89,
+    "logical_restore_verified_candidates": 21,
+    "independent_escrow_decryption_verified": true
   },
   "retirement": {
-    "original_runtimes_removed": 0,
-    "authorized": false,
-    "required": "Stable encrypted capture and full independent recovery of candidate contents; live no-owner and exact-plan validation by domus-limen-runtime prune before removal"
+    "original_runtimes_removed": 21,
+    "authorized": true,
+    "owner_reclaimer": "domus-limen-runtime prune --apply --expected-plan-sha256 <verified-plan>",
+    "source_matches_capture": true,
+    "residual_candidate_count": 0,
+    "fixed_point_verified": true,
+    "recorded_removed_footprint_bytes": 4205637632,
+    "observed_free_bytes_delta": -9285632,
+    "concurrent_host_activity_may_affect_free_space": true,
+    "execution_proof_commit": "c511792d60a54741409479ac5473eb2df185e0ed",
+    "retirement_proof_commit": "da3c806ea32b3fd89f7af22b0f4915baf5156292",
+    "proof_fresh_remote_and_independent_escrow_verified": true,
+    "finished_at": "2026-10-06T21:36:00.369677+00:00"
   },
   "source_membership": "Exact private prune plan preserved with this generation; no active or current runtime included",
   "parallel_cleanup": {
@@ -70,5 +84,17 @@
     "empty_directory_removed": true,
     "files_removed": 0,
     "finished_at": "2026-10-06T20:51:56.040614+00:00"
+  },
+  "primary_checkout": {
+    "clean": true,
+    "local_head": "194d819fc5b827f5a7089abba405f51ebe3a66dc",
+    "remote_main": "194d819fc5b827f5a7089abba405f51ebe3a66dc",
+    "sync": "fast-forward"
+  },
+  "original_root_presence": {
+    "absent": 9,
+    "present": 15,
+    "empty": 0,
+    "remaining_roots_not_retirement_certified": true
   }
 }
