@@ -1,0 +1,23 @@
+{
+  "schema": "limen.august_upload_checkpoint.v1",
+  "date": "2026-10-06",
+  "owner": "4444J99/limen#2739",
+  "status": "publication-incomplete-http-408",
+  "captured_day_roots": 7,
+  "published_payload_batches": 1,
+  "total_payload_and_manifest_batches": 12,
+  "partial_generation": "4e47eda7147d2db1b46e40888fbc047714f474b3",
+  "private_checkpoint_proof_commit": "70d70dbadc688edd8d30be8c24ea677c1e91ca12",
+  "checkpoint_fresh_remote_equal": true,
+  "checkpoint_independent_escrow_decryption_equal": true,
+  "payload_logical_restore_verified": false,
+  "source_removed": false,
+  "originals_and_unpublished_ciphertext_retained": true,
+  "corrective_attempts": 1,
+  "owner_issue_comment": "https://github.com/4444J99/limen/issues/2739#issuecomment-6027161645",
+  "bootstrap": {
+    "existing_ssh_read_access": true,
+    "credential_signin_exit_code": 0
+  },
+  "next_command": "Bounded owner continuation reusing staged ciphertext through verified existing SSH transport; no successful batch replays."
+}
