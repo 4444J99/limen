@@ -9,8 +9,12 @@
     "quarantined state",
     "interrupted runtime stage"
   ],
-  "captured_roots": 0,
-  "status": "preservation-starting",
+  "captured_roots": 4,
+  "source_files": 5098,
+  "logical_source_bytes": 389305465,
+  "ciphertext_bytes": 162408976,
+  "all_sources_stable": true,
+  "status": "publication-in-progress",
   "source_logical_byte_limit": 1073741824,
   "staging_budget_bytes": 3221225472,
   "safety_floor_bytes": 10737418240,
@@ -20,5 +24,8 @@
   "source_removed": false,
   "publication_repository": "4444J99/arca-g3",
   "publication_prefix": "limen-reap/20261006/retained-runtime-state",
+  "observed_commit": "773e769f6741786b8678eaac807495e0fa17200a",
+  "published_batches": 1,
+  "total_batches": 3,
   "acceptance": "Stable capture, private remote publication, fresh immutable readback and independent escrow recovery; removal requires separate owner and restoration eligibility."
 }
