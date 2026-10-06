@@ -171,6 +171,18 @@
         ],
         "unit": 4,
         "source_removed": false
+      },
+      "operator_override": {
+        "instruction": "overide and proceed",
+        "date": "2026-10-06",
+        "scope": "Existing receipt snapshot upload and independent readback only",
+        "performance_pressure_override": true,
+        "exclusive_heavy_lease_retained": true,
+        "disk_space_floor_retained": true,
+        "source_deletion_authorized_by_override": false,
+        "global_policy_unchanged": true,
+        "transport": "https",
+        "ssh_attempt": "Timed out without advancing the advertised branch"
       }
     }
   },
