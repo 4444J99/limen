@@ -235,7 +235,9 @@ def capture_manifests(
                 content = hashlib.sha256(os.fsencode(os.readlink(path))).hexdigest()
             else:
                 pending.extend(sorted(path.iterdir(), reverse=True))
-            if not hasattr(before, "st_birthtime") or not hasattr(before, "st_flags"):
+            birthtime = getattr(before, "st_birthtime", None)
+            flags = getattr(before, "st_flags", None)
+            if birthtime is None or flags is None:
                 raise NativeCaptureError("native birthtime or file flags are unavailable")
             attrs, acl = read_native(path)
             metadata: dict[str, Any] = {
@@ -247,7 +249,7 @@ def capture_manifests(
                 "birthtime_ns": mac_birthtime_ns(path),
                 "atime_ns": before.st_atime_ns,
                 "ctime_ns": before.st_ctime_ns,
-                "flags": before.st_flags,
+                "flags": flags,
                 "nlink": before.st_nlink,
                 "xattrs": attrs,
                 "acl": acl,
