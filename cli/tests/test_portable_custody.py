@@ -78,7 +78,13 @@ def graph():
     )
     artifact = {"artifact_id": "capturedArtifact01", "ciphertext_digest": "c" * 64, "ciphertext_bytes": 100}
     manifest = put(
-        {"schema": "limen.ciphertext_manifest.v1", "session_id": SID, "scope_paths": SCOPES, "artifacts": [artifact]}
+        {
+            "schema": "limen.ciphertext_manifest.v1",
+            "session_id": SID,
+            "scope_paths": SCOPES,
+            "encryption_profile_digest": profile,
+            "artifacts": [artifact],
+        }
     )
     captured = dict(artifact, manifest_digest=manifest)
     predicate = put(b"fixture full native restorer implementation")
@@ -102,6 +108,7 @@ def graph():
                 "ciphertext_sha256": artifact["ciphertext_digest"],
                 "readback_sha256": artifact["ciphertext_digest"],
                 "ciphertext_bytes": 100,
+                "encryption_profile_digest": profile,
             }
         )
         retention = (
@@ -113,6 +120,7 @@ def graph():
                     "replica_id": identifier,
                     "backend": backend,
                     "account_namespace_id": account,
+                    "encryption_profile_digest": profile,
                     "observed_at": OBSERVED,
                     "retention_until": RETAINED,
                     "generations": [{"object_id": object_id, "revision": revision}],
@@ -153,6 +161,7 @@ def graph():
                 "logical_verified_entries": 2,
                 "native_verified_entries": 2,
                 "predicate_digest": predicate,
+                "encryption_profile_digest": profile,
                 "full_restore": True,
                 "native_metadata_verified": True,
                 "passed": True,
@@ -309,6 +318,102 @@ def test_retention_covers_every_exact_generation(graph, field, value):
     replica = bundle["custody_receipt"]["replicas"][1]
     replica["retention_evidence_digest"] = replace_record(
         bundle, files, replica["retention_evidence_digest"], lambda row: row.update({field: value})
+    )
+    with pytest.raises(PortableCustodyError):
+        validate(bundle, files)
+
+
+
+def test_rebinding_declared_profile_without_rebinding_authenticated_evidence_fails(graph):
+    bundle, files = graph
+    receipt = bundle["custody_receipt"]
+    old_digest = receipt["encryption_profile_digest"]
+    old_packet = bundle["supporting_evidence"].pop(old_digest)
+    files.pop(old_packet["evidence"])
+    raw = b"replacement encryption profile"
+    new_digest = hashlib.sha256(raw).hexdigest()
+    path = "evidence/" + new_digest
+    files[path] = raw
+    bundle["supporting_evidence"][new_digest] = {"evidence": path, "sha256": new_digest}
+    receipt["encryption_profile_digest"] = new_digest
+    for replica in receipt["replicas"]:
+        replica["encryption_profile_digest"] = new_digest
+    with pytest.raises(PortableCustodyError, match="encryption profile"):
+        validate(bundle, files)
+
+
+def _make_second_replica_physical(bundle, files):
+    receipt = bundle["custody_receipt"]
+    replica = receipt["replicas"][1]
+    replica["backend"] = "physical"
+    replica["device_id"] = "physicalDevice0001"
+    artifact = replica["artifacts"][0]
+    artifact["readback_evidence_digest"] = replace_record(
+        bundle,
+        files,
+        artifact["readback_evidence_digest"],
+        lambda row: row.update(backend="physical", device_id=replica["device_id"], authenticated=True),
+    )
+    replica["retention_evidence_digest"] = replace_record(
+        bundle,
+        files,
+        replica["retention_evidence_digest"],
+        lambda row: row.update(backend="physical", device_id=replica["device_id"], authenticated=True),
+    )
+    proof = next(row for row in receipt["restoration_proofs"] if row["replica_id"] == replica["replica_id"])
+    proof["evidence_digest"] = replace_record(
+        bundle,
+        files,
+        proof["evidence_digest"],
+        lambda row: row.update(device_id=replica["device_id"], authenticated=True),
+    )
+    return replica, proof
+
+
+def test_physical_replica_evidence_binds_device_identity(graph):
+    bundle, files = graph
+    _make_second_replica_physical(bundle, files)
+    validate(bundle, files)
+
+
+@pytest.mark.parametrize("layer", ["readback", "retention", "restoration"])
+def test_physical_replica_rejects_missing_device_identity(graph, layer):
+    bundle, files = graph
+    replica, proof = _make_second_replica_physical(bundle, files)
+    if layer == "readback":
+        artifact = replica["artifacts"][0]
+        artifact["readback_evidence_digest"] = replace_record(
+            bundle,
+            files,
+            artifact["readback_evidence_digest"],
+            lambda row: row.pop("device_id"),
+        )
+    elif layer == "retention":
+        replica["retention_evidence_digest"] = replace_record(
+            bundle,
+            files,
+            replica["retention_evidence_digest"],
+            lambda row: row.pop("device_id"),
+        )
+    else:
+        proof["evidence_digest"] = replace_record(
+            bundle,
+            files,
+            proof["evidence_digest"],
+            lambda row: row.pop("device_id"),
+        )
+    with pytest.raises(PortableCustodyError):
+        validate(bundle, files)
+
+
+def test_physical_restore_requires_authenticated_observation(graph):
+    bundle, files = graph
+    _, proof = _make_second_replica_physical(bundle, files)
+    proof["evidence_digest"] = replace_record(
+        bundle,
+        files,
+        proof["evidence_digest"],
+        lambda row: row.update(authenticated=False),
     )
     with pytest.raises(PortableCustodyError):
         validate(bundle, files)

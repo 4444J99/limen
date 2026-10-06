@@ -196,6 +196,10 @@ def validate_bundle(
         manifest = record(digest, "limen.ciphertext_manifest.v1")
         _require(manifest.get("session_id") == session_id, "ciphertext capture session mismatch")
         _require(manifest.get("scope_paths") == dict(scope_paths), "ciphertext capture original scope mismatch")
+        _require(
+            manifest.get("encryption_profile_digest") == receipt.encryption_profile_digest,
+            "ciphertext encryption profile mismatch",
+        )
         # A manifest cannot embed its own digest; compare its remaining fields.
         expected_chunks = [
             {key: value for key, value in row.items() if key != "manifest_digest"}
@@ -218,7 +222,10 @@ def validate_bundle(
                 "ciphertext_sha256": artifact.ciphertext_digest,
                 "readback_sha256": artifact.readback_digest,
                 "ciphertext_bytes": artifact.ciphertext_bytes,
+                "encryption_profile_digest": receipt.encryption_profile_digest,
             }
+            if replica.backend == "physical":
+                expected["device_id"] = replica.device_id
             _require(_matches(observed, expected), "authenticated exact-generation readback mismatch")
             _require(_time(observed.get("observed_at")) == replica.observed_at, "readback observation time mismatch")
         if replica.retention_evidence_digest is not None:
@@ -232,6 +239,8 @@ def validate_bundle(
                 and retained.get("replica_id") == replica.replica_id
                 and retained.get("backend") == replica.backend
                 and retained.get("account_namespace_id") == replica.account_namespace_id
+                and retained.get("encryption_profile_digest") == receipt.encryption_profile_digest
+                and (replica.backend != "physical" or retained.get("device_id") == replica.device_id)
                 and retained.get("generations") == generations,
                 "retention does not cover every authenticated generation",
             )
@@ -241,10 +250,12 @@ def validate_bundle(
         any(replica.retention_until is not None and replica.retention_until > now for replica in receipt.replicas),
         "restore-tested retained custody has expired",
     )
+    replicas = {replica.replica_id: replica for replica in receipt.replicas}
     for proof in receipt.restoration_proofs:
         _require(proof.restored_at <= now, "full restoration is future-dated")
         content(proof.predicate_digest)
         observed = record(proof.evidence_digest, "limen.replica_restore_observation.v1")
+        replica = replicas[proof.replica_id]
         expected = {
             "replica_id": proof.replica_id,
             "logical_manifest_digest": receipt.logical_manifest_digest,
@@ -252,12 +263,15 @@ def validate_bundle(
             "logical_verified_entries": receipt.source_atoms,
             "native_verified_entries": receipt.source_atoms,
             "predicate_digest": proof.predicate_digest,
+            "encryption_profile_digest": receipt.encryption_profile_digest,
             "full_restore": True,
             "native_metadata_verified": True,
             "passed": True,
             "scope_paths": dict(scope_paths),
             "session_id": session_id,
         }
+        if replica.backend == "physical":
+            expected.update({"authenticated": True, "device_id": replica.device_id})
         _require(_matches(observed, expected), "full native restoration observation mismatch")
         _require(_time(observed.get("restored_at")) == proof.restored_at, "full restoration time mismatch")
     _require(set(references) == used, "supporting evidence has unattributed records")
