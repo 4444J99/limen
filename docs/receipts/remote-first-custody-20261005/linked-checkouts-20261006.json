@@ -6,20 +6,20 @@
     7,
     10
   ],
-  "status": "preservation-prepared",
-  "scope": [
-    "MCP component directory",
-    "remaining linked checkout"
-  ],
-  "source_logical_byte_limit": 536870912,
-  "staging_budget_bytes": 2147483648,
-  "safety_floor_bytes": 10737418240,
-  "deadline_minutes": 30,
-  "exclusive_heavy_lease_required": true,
-  "source_removed": false,
-  "protected_session_retained": true,
-  "protected_session_owner": "https://github.com/4444J99/limen/pull/2832#issuecomment-6026179996",
+  "status": "remote-recovery-verified",
+  "source_files": 5881,
+  "ciphertext_bytes": 63617168,
+  "source_stable": true,
   "publication_repository": "4444J99/arca-g3",
   "publication_prefix": "limen-reap/20261006/linked-checkouts",
-  "acceptance": "Stable complete file capture, private remote publication, fresh readback and independent logical recovery; full Git store custody is separate, and this pass grants no protected-session release or checkout retirement."
+  "source_generation": "a540aaaf2c2ab2e382998eddf103a1ec48a4eb0e",
+  "private_execution_proof_commit": "ddc571e6c4f9d6b467bf8c151a1e58ec21e0303a",
+  "fresh_remote_files_verified": 6,
+  "independent_escrow_recovery_verified": true,
+  "logical_restore_verified": true,
+  "native_filesystem_materialization_verified": false,
+  "source_removed": false,
+  "human_protected_worktree_retained": true,
+  "active_mcp_component_retained": true,
+  "retirement_owner": "4444J99/limen#2739"
 }
