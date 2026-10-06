@@ -1,0 +1,82 @@
+{
+  "schema": "limen.remote_first_campaign_checkpoint.v1",
+  "date": "2026-10-06",
+  "owner": "4444J99/limen#2739",
+  "status": "checkpoint-publication-incomplete",
+  "estate_complete": false,
+  "original_roots": {
+    "denominator": 24,
+    "absent": 9,
+    "present": 15,
+    "absent_indices": [
+      2,
+      3,
+      8,
+      9,
+      11,
+      12,
+      13,
+      22,
+      23
+    ],
+    "census_is_not_deletion_authority": true
+  },
+  "primary": {
+    "head": "194d819fc5b827f5a7089abba405f51ebe3a66dc",
+    "status_entries": 0
+  },
+  "retirement": {
+    "inactive_runtimes_removed": 21,
+    "runtime_version_directories_remaining": 1,
+    "empty_original_root_removed": 11
+  },
+  "newly_verified_recovery_scopes": [
+    "primary-full-git-store",
+    "Sourcery",
+    "MCP-and-protected-linked-checkout-captures",
+    "Codex-July-and-September"
+  ],
+  "temporary_cleanup": {
+    "git_ciphertext_and_isolated_restore_observed_free_bytes_delta": 3740889088,
+    "cold_ciphertext_observed_free_bytes_delta": 532844544,
+    "concurrent_host_activity_affects_measurement": true
+  },
+  "observed_host_free_bytes": 20576952320,
+  "pending_publication": [
+    {
+      "scope": "August-unit-1",
+      "source_files": 193,
+      "logical_source_bytes": 1341801392,
+      "ciphertext_bytes": 513336976,
+      "source_stable": true,
+      "published_batches": 1,
+      "total_batches": 12,
+      "private_checkpoint_proof_commit": "70d70dbadc688edd8d30be8c24ea677c1e91ca12",
+      "blocker": "Git smart-HTTP 408; one corrective smaller-batch attempt exhausted",
+      "originals_retained": true
+    },
+    {
+      "scope": "private-session-corpus",
+      "source_files": 14244,
+      "logical_source_bytes": 969491044,
+      "ciphertext_bytes": 403408880,
+      "source_stable": true,
+      "published_payload_batches": 0,
+      "private_checkpoint_proof_commit": "9103d71334008bc2d0b4f49fc118fce0909009cd",
+      "blocker": "128 MiB SSH upload exceeded 180-second command deadline after corrected isolated partial-clone publisher",
+      "originals_retained": true
+    }
+  ],
+  "remaining_capture_assets": {
+    "private_proof_commit": "d2e7ae81c38861763d8adb3d95d9356f2c5ed441",
+    "fresh_remote_equal": true,
+    "independent_escrow_decryption_equal": true,
+    "asset_files": 22,
+    "includes_bounded_August_plan_and_original_month_root_file_and_native_metadata": true,
+    "payload_publication_complete": false
+  },
+  "next_owner_action": "Bounded continuation: segment staged ciphertext into 16 MiB Git payloads with stream-digest lineage, skip existing identical remote objects, then verify immutable readback and independent logical recovery.",
+  "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/2739#issuecomment-6027390659",
+  "external_mirror_phase": "last, per explicit human instruction",
+  "protected_sessions_and_personal_originals_retained": true
+}
