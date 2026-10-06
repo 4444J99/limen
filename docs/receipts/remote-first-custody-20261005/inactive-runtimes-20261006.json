@@ -7,7 +7,11 @@
     "inactive_candidates": 21,
     "allocated_candidate_bytes": 4205637632,
     "current_runtime_retained": true,
-    "mutable_recode_store_retained": true
+    "mutable_recode_store_retained": true,
+    "source_files": 113488,
+    "logical_source_bytes": 3956318711,
+    "ciphertext_bytes": 2726694384,
+    "all_sources_stable": true
   },
   "admission": {
     "authority": "Human override and proceed; subsequent proceed with remaining local estate",
@@ -15,14 +19,24 @@
     "staging_budget_bytes": 21474836480,
     "safety_floor_bytes": 10737418240,
     "exclusive_heavy_lease_required": true,
-    "disk_throughput_override_only": true,
-    "process_deadline_minutes": 30
+    "disk_throughput_override_only": false,
+    "process_deadline_minutes": 30,
+    "performance_overrides": [
+      "disk-throughput",
+      "vitals-shed",
+      "swap-growth",
+      "swap-fraction"
+    ]
   },
   "custody": {
-    "publication": "in_progress",
+    "publication": "partial",
     "private_repository": "4444J99/arca-g3",
     "private_prefix": "limen-reap/20261006/inactive-runtimes",
-    "fresh_remote_recovery_verified": false
+    "fresh_remote_recovery_verified": false,
+    "captured_candidates": 21,
+    "observed_commit": "9c6f3dfda4c3c3e7076f586ede61a91b4ffa86aa",
+    "published_batches": 1,
+    "total_batches": 25
   },
   "retirement": {
     "original_runtimes_removed": 0,
