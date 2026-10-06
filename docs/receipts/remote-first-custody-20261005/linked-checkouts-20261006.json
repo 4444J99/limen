@@ -1,0 +1,25 @@
+{
+  "schema": "limen.linked_checkout_egress.v1",
+  "date": "2026-10-06",
+  "owner": "4444J99/limen#2739",
+  "original_root_indices": [
+    7,
+    10
+  ],
+  "status": "preservation-prepared",
+  "scope": [
+    "MCP component directory",
+    "remaining linked checkout"
+  ],
+  "source_logical_byte_limit": 536870912,
+  "staging_budget_bytes": 2147483648,
+  "safety_floor_bytes": 10737418240,
+  "deadline_minutes": 30,
+  "exclusive_heavy_lease_required": true,
+  "source_removed": false,
+  "protected_session_retained": true,
+  "protected_session_owner": "https://github.com/4444J99/limen/pull/2832#issuecomment-6026179996",
+  "publication_repository": "4444J99/arca-g3",
+  "publication_prefix": "limen-reap/20261006/linked-checkouts",
+  "acceptance": "Stable complete file capture, private remote publication, fresh readback and independent logical recovery; full Git store custody is separate, and this pass grants no protected-session release or checkout retirement."
+}
