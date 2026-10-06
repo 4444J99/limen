@@ -46,5 +46,17 @@
     "external_object_borrowing": false
   },
   "private_execution_proof_commit": "46ae121a413a48ba5df0e1e9ea6cdd0e0ad516cb",
-  "native_filesystem_materialization_verified": false
+  "native_filesystem_materialization_verified": false,
+  "temporary_cleanup": {
+    "ciphertext_files_removed": 40,
+    "ciphertext_logical_bytes_removed": 2471881120,
+    "ciphertext_observed_free_bytes_delta": 2472820736,
+    "isolated_restore_atoms_removed": 6177,
+    "isolated_restore_logical_bytes_removed": 1245717876,
+    "isolated_restore_observed_free_bytes_delta": 1268068352,
+    "private_cleanup_proof_commit": "04502bf89dd2dcb805de340d84aed59a96e9b26e",
+    "fresh_remote_equal": true,
+    "independent_escrow_decryption_equal": true,
+    "original_source_removed": false
+  }
 }
