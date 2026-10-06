@@ -148,11 +148,13 @@
       "native_atoms": 40105,
       "source_stable": true,
       "publication": "partial",
-      "observed_commit": "119ae7861e5843aa9b8a57735d318e865f411c7e",
-      "payload_batches_observed": 10,
+      "observed_commit": "528dbcf9cbcfe856294febc5062354075de1f22c",
+      "payload_batches_observed": 21,
       "total_batches_including_manifest": 27,
       "final_manifest_published": false,
-      "remote_recovery_verified": false
+      "remote_recovery_verified": false,
+      "payload_bytes_published": 2818572288,
+      "remaining_payload_batches": 5
     },
     "continuation": {
       "authority": "https://github.com/4444J99/limen/issues/2739#issuecomment-5842180605",
@@ -160,7 +162,16 @@
       "per_process_deadlines_enforced": true,
       "already_published_payloads_compared_and_skipped": true,
       "source_recaptured": false,
-      "global_git_config_unchanged": true
+      "global_git_config_unchanged": true,
+      "latest_admission": {
+        "observed_at": "2026-10-06T17:46:18.814075+00:00",
+        "allowed": false,
+        "reasons": [
+          "disk-throughput"
+        ],
+        "unit": 4,
+        "source_removed": false
+      }
     }
   },
   "local_disposition": {
