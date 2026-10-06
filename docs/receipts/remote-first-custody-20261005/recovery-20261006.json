@@ -147,14 +147,16 @@
       "ciphertext_bytes": 3389926336,
       "native_atoms": 40105,
       "source_stable": true,
-      "publication": "partial",
-      "observed_commit": "528dbcf9cbcfe856294febc5062354075de1f22c",
-      "payload_batches_observed": 21,
+      "publication": "complete",
+      "observed_commit": "541239876755c8e718fd019f72280b1f67f4ce50",
+      "payload_batches_observed": 26,
       "total_batches_including_manifest": 27,
-      "final_manifest_published": false,
+      "final_manifest_published": true,
       "remote_recovery_verified": false,
-      "payload_bytes_published": 2818572288,
-      "remaining_payload_batches": 5
+      "payload_bytes_published": 3389926336,
+      "remaining_payload_batches": 0,
+      "readback_files_verified_at_checkpoint": 9,
+      "readback_files_total": 52
     },
     "continuation": {
       "authority": "https://github.com/4444J99/limen/issues/2739#issuecomment-5842180605",
@@ -181,8 +183,9 @@
         "disk_space_floor_retained": true,
         "source_deletion_authorized_by_override": false,
         "global_policy_unchanged": true,
-        "transport": "https",
-        "ssh_attempt": "Timed out without advancing the advertised branch"
+        "transport": "Immutable raw HTTPS with serial byte-range resume",
+        "ssh_attempt": "Timed out without advancing the advertised branch",
+        "verification": "SHA-256 and exact remote Git blob identities for all files, then escrow decryption"
       }
     }
   },
