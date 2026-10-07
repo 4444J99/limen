@@ -2,9 +2,10 @@
   "schema": "limen.remote_first_campaign_checkpoint.v1",
   "date": "2026-10-06",
   "owner": "4444J99/limen#2739",
-  "status": "checkpoint-publication-incomplete",
+  "status": "checkpoint-recovery-verified-proof-publication-blocked",
   "estate_complete": false,
   "original_roots": {
+    "observed_at": "2026-10-07T05:43:34.958789+00:00",
     "denominator": 24,
     "absent": 9,
     "present": 15,
@@ -19,8 +20,7 @@
       22,
       23
     ],
-    "census_is_not_deletion_authority": true,
-    "observed_at": "2026-10-07T04:30:30.625866+00:00"
+    "census_is_not_deletion_authority": true
   },
   "primary": {
     "head": "194d819fc5b827f5a7089abba405f51ebe3a66dc",
@@ -41,7 +41,8 @@
     "Codex-August-group-1-seven-day-roots",
     "Codex-August-group-4-two-day-roots-and-month-header",
     "Codex-August-group-2-nine-day-roots",
-    "Codex-August-group-3-three-day-roots"
+    "Codex-August-group-3-three-day-roots",
+    "Claude-and-Gemini"
   ],
   "temporary_cleanup": {
     "git_ciphertext_and_isolated_restore_observed_free_bytes_delta": 3740889088,
@@ -54,7 +55,7 @@
     "august_unit_1_logical_bytes_removed": 1525794208,
     "august_unit_1_observed_free_bytes_delta": 516145152
   },
-  "observed_host_free_bytes": 14180929536,
+  "observed_host_free_bytes": 17516716032,
   "pending_publication": [],
   "remaining_capture_assets": {
     "private_proof_commit": "7acbcf7221ebb513fccb7269b68c3cd5cbba2146",
@@ -65,11 +66,11 @@
     "payload_publication_complete": false,
     "includes_bounded_capture_and_rolling_readback": true
   },
-  "next_owner_action": "Finish Claude/Gemini immutable remote byte verification; independent escrow access and actual decryption remain required for certification and temporary cleanup. The credential gate is owned by #320. Preserve the prepared remaining scope controllers remotely before their captures.",
-  "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/2739#issuecomment-6027390659",
+  "next_owner_action": "Publish the verified Claude/Gemini execution proof after existing canonical escrow authorization; retire its verified temporary cipher copies and publish cleanup proof. Preserve prepared remaining controllers before the two legacy-buffer and private-document-copy captures.",
+  "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/320#issuecomment-6031776741",
   "external_mirror_phase": "last, per explicit human instruction",
   "protected_sessions_and_personal_originals_retained": true,
-  "observed_at": "2026-10-07T04:30:30.625866+00:00",
+  "observed_at": "2026-10-07T05:43:34.958789+00:00",
   "session_corpus": {
     "source_files": 14244,
     "logical_source_bytes": 969491044,
@@ -133,13 +134,15 @@
     "measurement_affected_by_concurrent_activity": true
   },
   "latest_operation_checkpoint": {
-    "observed_at": "2026-10-07T05:09:38.721989+00:00",
+    "observed_at": "2026-10-07T05:43:34.958789+00:00",
     "scope": "Claude-Gemini",
     "publication_complete": true,
-    "remote_verified_files": 15,
+    "remote_verified_files": 38,
     "remote_files_denominator": 38,
-    "independent_recovery_complete": false,
-    "credential_gate_owner": "https://github.com/4444J99/limen/issues/320#issuecomment-6031316548"
+    "independent_recovery_complete": true,
+    "execution_proof_published": false,
+    "temporary_copies_retired": false,
+    "credential_gate_owner": "https://github.com/4444J99/limen/issues/320#issuecomment-6031776741"
   },
   "august_unit_3": {
     "source_files": 132,
@@ -201,12 +204,16 @@
     "source_generation": "2b3e97bf30e7fe58c7cea3d4168aeda0c610daca",
     "complete_manifest_published": true,
     "publication_files": 38,
-    "fresh_remote_files_verified": 15,
-    "independent_key_recovery_verified": false,
-    "logical_restore_verified": false,
+    "fresh_remote_files_verified": 38,
+    "independent_key_recovery_verified": true,
+    "logical_restore_verified": true,
+    "recovery_verified_at": "2026-10-07T05:41:20.316075+00:00",
+    "execution_proof_published": false,
+    "temporary_copies_retired": false,
     "originals_retained": true,
     "credential_gate_owner": "https://github.com/4444J99/limen/issues/320#issuecomment-6031316548",
-    "observed_at": "2026-10-07T05:09:38.721989+00:00"
+    "next_action": "Seal execution proof after canonical escrow CLI authorization; then retire only verified temporary cipher copies.",
+    "proof_publication_blocker": "Separate canonical escrow read returned exit 1 after successful archive recovery."
   },
   "prepared_remaining_scopes": {
     "legacy_custody_buffers": 2,
