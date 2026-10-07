@@ -1,0 +1,17 @@
+{
+  "schema": "limen.remote_first_scope_checkpoint.v1",
+  "owner": "4444J99/limen#2739",
+  "scope": "Claude-Gemini",
+  "source_files": 6566,
+  "logical_source_bytes": 2024583748,
+  "ciphertext_bytes": 562961040,
+  "source_generation": "2b3e97bf30e7fe58c7cea3d4168aeda0c610daca",
+  "complete_manifest_published": true,
+  "publication_files": 38,
+  "fresh_remote_files_verified": 15,
+  "independent_key_recovery_verified": false,
+  "logical_restore_verified": false,
+  "originals_retained": true,
+  "credential_gate_owner": "https://github.com/4444J99/limen/issues/320#issuecomment-6031316548",
+  "observed_at": "2026-10-07T05:09:38.721989+00:00"
+}
