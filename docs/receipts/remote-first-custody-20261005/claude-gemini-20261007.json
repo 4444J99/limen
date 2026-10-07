@@ -8,10 +8,14 @@
   "source_generation": "2b3e97bf30e7fe58c7cea3d4168aeda0c610daca",
   "complete_manifest_published": true,
   "publication_files": 38,
-  "fresh_remote_files_verified": 15,
-  "independent_key_recovery_verified": false,
-  "logical_restore_verified": false,
+  "fresh_remote_files_verified": 38,
+  "independent_key_recovery_verified": true,
+  "logical_restore_verified": true,
+  "recovery_verified_at": "2026-10-07T05:41:20.316075+00:00",
+  "execution_proof_published": false,
+  "temporary_copies_retired": false,
   "originals_retained": true,
   "credential_gate_owner": "https://github.com/4444J99/limen/issues/320#issuecomment-6031316548",
-  "observed_at": "2026-10-07T05:09:38.721989+00:00"
+  "next_action": "Seal execution proof after canonical escrow CLI authorization; then retire only verified temporary cipher copies.",
+  "proof_publication_blocker": "Separate canonical escrow read returned exit 1 after successful archive recovery."
 }
