@@ -37,7 +37,8 @@
     "Codex-July-and-September",
     "private-session-corpus",
     "Codex-August-group-1-seven-day-roots",
-    "Codex-August-group-4-two-day-roots-and-month-header"
+    "Codex-August-group-4-two-day-roots-and-month-header",
+    "Codex-August-group-2-nine-day-roots"
   ],
   "temporary_cleanup": {
     "git_ciphertext_and_isolated_restore_observed_free_bytes_delta": 3740889088,
@@ -53,30 +54,29 @@
   "observed_host_free_bytes": 15043403776,
   "pending_publication": [
     {
-      "scope": "August-units-2-through-4",
+      "scope": "August-unit-3",
       "completed_units": [
         1,
+        2,
         4
       ],
       "total_units": 4,
       "source_roots_denominator": 21,
-      "verified_source_roots": 9,
-      "active_unit": 2,
-      "unit_2_capture_started": true,
-      "unit_2_admission_failed_before_source_capture": true,
-      "unit_2_next_action": "Use the bounded direct streaming capture phase after the active unit releases the heavy lease",
+      "verified_source_roots": 18,
+      "active_unit": 3,
       "originals_retained": true
     }
   ],
   "remaining_capture_assets": {
-    "private_proof_commit": "d2e7ae81c38861763d8adb3d95d9356f2c5ed441",
+    "private_proof_commit": "f07cbce40d7f1c96497482f4768205121e14d9a9",
     "fresh_remote_equal": true,
     "independent_escrow_decryption_equal": true,
     "asset_files": 22,
     "includes_bounded_August_plan_and_original_month_root_file_and_native_metadata": true,
-    "payload_publication_complete": false
+    "payload_publication_complete": false,
+    "includes_bounded_capture_and_rolling_readback": true
   },
-  "next_owner_action": "Finish group 4 immutable readback and recovery, then perform groups 2 and 3 with bounded direct streaming capture and measured publication/readback allowances. Preserve the full 10 GiB reserve.",
+  "next_owner_action": "Finish group 3 bounded capture, immutable publication and independent recovery, then reap verified owned temporary copies. Retain the full 10 GiB reserve.",
   "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/2739#issuecomment-6027390659",
   "external_mirror_phase": "last, per explicit human instruction",
   "protected_sessions_and_personal_originals_retained": true,
@@ -123,6 +123,24 @@
     "temporary_ciphertext_files_removed": 34,
     "temporary_logical_bytes_removed": 448986208,
     "observed_free_bytes_delta": 225869824,
+    "measurement_affected_by_concurrent_activity": true
+  },
+  "august_unit_2": {
+    "source_files": 155,
+    "logical_source_bytes": 1172538415,
+    "ciphertext_bytes": 368420864,
+    "source_roots": 9,
+    "publication_files": 45,
+    "source_generation": "6600736dbaff10e6fa21292c417b78df8c1efb73",
+    "recovery_proof": "7ee3b44591f1d1b0040c2e2b987263a1a2195ce0",
+    "cleanup_proof": "f82eb0c881e49004cc937f5a27acd88ea98393de",
+    "remote_readback_equal": true,
+    "independent_key_recovery_verified": true,
+    "logical_restore_verified": true,
+    "originals_retained": true,
+    "temporary_ciphertext_files_removed": 36,
+    "temporary_logical_bytes_removed": 368420864,
+    "observed_free_bytes_delta": 368500736,
     "measurement_affected_by_concurrent_activity": true
   }
 }
