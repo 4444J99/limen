@@ -73,7 +73,8 @@ def recover(vault: Path) -> dict:
     if actual != length:
         raise ValueError("ciphertext size mismatch")
     ciphertext = run(["git", "-C", str(vault), "show", ref])
-    key = run(["op", "read", "op://Private/limen-arca-vault/password"]).strip()
+    key = run([str(Path.home() / ".local/bin/op-unattended"), "--", "read",
+               "op://Limen-Automation/limen-arca-vault/password"]).strip()
     if not re.fullmatch(rb"[0-9a-fA-F]{64}", key):
         raise ValueError("escrow key shape")
     # Separate anonymous pipe for the password keeps it out of argv/environment.
