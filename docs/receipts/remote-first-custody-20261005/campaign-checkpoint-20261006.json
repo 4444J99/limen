@@ -38,7 +38,8 @@
     "private-session-corpus",
     "Codex-August-group-1-seven-day-roots",
     "Codex-August-group-4-two-day-roots-and-month-header",
-    "Codex-August-group-2-nine-day-roots"
+    "Codex-August-group-2-nine-day-roots",
+    "Codex-August-group-3-three-day-roots"
   ],
   "temporary_cleanup": {
     "git_ciphertext_and_isolated_restore_observed_free_bytes_delta": 3740889088,
@@ -52,21 +53,7 @@
     "august_unit_1_observed_free_bytes_delta": 516145152
   },
   "observed_host_free_bytes": 15043403776,
-  "pending_publication": [
-    {
-      "scope": "August-unit-3",
-      "completed_units": [
-        1,
-        2,
-        4
-      ],
-      "total_units": 4,
-      "source_roots_denominator": 21,
-      "verified_source_roots": 18,
-      "active_unit": 3,
-      "originals_retained": true
-    }
-  ],
+  "pending_publication": [],
   "remaining_capture_assets": {
     "private_proof_commit": "f07cbce40d7f1c96497482f4768205121e14d9a9",
     "fresh_remote_equal": true,
@@ -76,7 +63,7 @@
     "payload_publication_complete": false,
     "includes_bounded_capture_and_rolling_readback": true
   },
-  "next_owner_action": "Finish group 3 bounded capture, immutable publication and independent recovery, then reap verified owned temporary copies. Retain the full 10 GiB reserve.",
+  "next_owner_action": "Preserve and retire completed publisher caches where object/ref custody and inactivity are proven, then capture Claude/Gemini under the measured streaming bounds and fixed 10 GiB reserve. Other original sources and protected sessions remain owner-held.",
   "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/2739#issuecomment-6027390659",
   "external_mirror_phase": "last, per explicit human instruction",
   "protected_sessions_and_personal_originals_retained": true,
@@ -144,13 +131,45 @@
     "measurement_affected_by_concurrent_activity": true
   },
   "latest_operation_checkpoint": {
-    "observed_at_utc": "2026-10-07 04:12:22 UTC",
-    "scope": "Codex-August-group-3",
-    "source_generation": "36888d5401d0a7740462681bef7ea34bdcdd74dd",
-    "publication_complete": true,
-    "remote_readback_verified_files": 27,
-    "remote_readback_total_files": 35,
-    "logical_recovery_complete": false,
+    "observed_at_utc": "2026-10-07 04:17:02 UTC",
+    "scope": "Codex-August",
+    "recovery_complete": true,
+    "verified_source_roots": 21,
+    "source_roots_denominator": 21,
     "originals_retained": true
+  },
+  "august_unit_3": {
+    "source_files": 132,
+    "logical_source_bytes": 1099558059,
+    "ciphertext_bytes": 464802624,
+    "source_roots": 3,
+    "publication_files": 35,
+    "source_generation": "36888d5401d0a7740462681bef7ea34bdcdd74dd",
+    "recovery_proof": "5b67edc33d5cce0dc28b462e950780fffe1c5386",
+    "cleanup_proof": "4c9065fc5b9d7ae16476a2df686d943a377778d3",
+    "remote_readback_equal": true,
+    "independent_key_recovery_verified": true,
+    "logical_restore_verified": true,
+    "originals_retained": true,
+    "temporary_ciphertext_files_removed": 32,
+    "temporary_logical_bytes_removed": 464802624,
+    "observed_free_bytes_delta": -90112,
+    "measurement_affected_by_concurrent_activity": true
+  },
+  "august_recovery": {
+    "completed_units": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "source_roots_verified": 21,
+    "source_roots_denominator": 21,
+    "logical_source_bytes": 4126494554,
+    "source_files": 550,
+    "independent_key_recovery_verified": true,
+    "logical_restore_verified": true,
+    "originals_retained": true,
+    "native_source_retirement_certified": false
   }
 }

@@ -1,0 +1,20 @@
+{
+  "schema": "limen.remote_first_scope_recovery.v1",
+  "owner": "4444J99/limen#2739",
+  "source_files": 132,
+  "logical_source_bytes": 1099558059,
+  "ciphertext_bytes": 464802624,
+  "source_roots": 3,
+  "publication_files": 35,
+  "source_generation": "36888d5401d0a7740462681bef7ea34bdcdd74dd",
+  "recovery_proof": "5b67edc33d5cce0dc28b462e950780fffe1c5386",
+  "cleanup_proof": "4c9065fc5b9d7ae16476a2df686d943a377778d3",
+  "remote_readback_equal": true,
+  "independent_key_recovery_verified": true,
+  "logical_restore_verified": true,
+  "originals_retained": true,
+  "temporary_ciphertext_files_removed": 32,
+  "temporary_logical_bytes_removed": 464802624,
+  "observed_free_bytes_delta": -90112,
+  "measurement_affected_by_concurrent_activity": true
+}
