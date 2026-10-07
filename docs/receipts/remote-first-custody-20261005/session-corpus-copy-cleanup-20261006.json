@@ -1,0 +1,17 @@
+{
+  "schema": "limen.session_corpus_copy_cleanup.v1",
+  "date": "2026-10-06",
+  "owner": "4444J99/limen#2739",
+  "status": "verified-temporary-copy-retirement",
+  "source_generation": "054489fcfbde51287d1681d5e4bc14b81b8d796d",
+  "private_recovery_proof_commit": "b6092c8a61a32c5b70060230582dc1133fb0f68a",
+  "private_cleanup_proof_commit": "d280ff20c8ee4b247b2aba541b2d5985f2d3fba8",
+  "fresh_remote_equal": true,
+  "independent_escrow_decryption_equal": true,
+  "temporary_ciphertext_files_removed": 57,
+  "temporary_logical_bytes_removed": 1210226640,
+  "observed_free_bytes_delta": 131227648,
+  "original_sources_removed": 0,
+  "finished_at": "2026-10-07T00:54:34.374583+00:00",
+  "concurrent_host_activity_may_affect_measurement": true
+}
