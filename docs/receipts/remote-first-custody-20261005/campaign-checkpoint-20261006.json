@@ -34,14 +34,18 @@
     "primary-full-git-store",
     "Sourcery",
     "MCP-and-protected-linked-checkout-captures",
-    "Codex-July-and-September"
+    "Codex-July-and-September",
+    "private-session-corpus"
   ],
   "temporary_cleanup": {
     "git_ciphertext_and_isolated_restore_observed_free_bytes_delta": 3740889088,
     "cold_ciphertext_observed_free_bytes_delta": 532844544,
-    "concurrent_host_activity_affects_measurement": true
+    "concurrent_host_activity_affects_measurement": true,
+    "session_corpus_ciphertext_files_removed": 57,
+    "session_corpus_logical_bytes_removed": 1210226640,
+    "session_corpus_observed_free_bytes_delta": 131227648
   },
-  "observed_host_free_bytes": 20576952320,
+  "observed_host_free_bytes": 15043403776,
   "pending_publication": [
     {
       "scope": "August-unit-1",
@@ -49,22 +53,14 @@
       "logical_source_bytes": 1341801392,
       "ciphertext_bytes": 513336976,
       "source_stable": true,
-      "published_batches": 1,
-      "total_batches": 12,
       "private_checkpoint_proof_commit": "70d70dbadc688edd8d30be8c24ea677c1e91ca12",
-      "blocker": "Git smart-HTTP 408; one corrective smaller-batch attempt exhausted",
-      "originals_retained": true
-    },
-    {
-      "scope": "private-session-corpus",
-      "source_files": 14244,
-      "logical_source_bytes": 969491044,
-      "ciphertext_bytes": 403408880,
-      "source_stable": true,
-      "published_payload_batches": 0,
-      "private_checkpoint_proof_commit": "9103d71334008bc2d0b4f49fc118fce0909009cd",
-      "blocker": "128 MiB SSH upload exceeded 180-second command deadline after corrected isolated partial-clone publisher",
-      "originals_retained": true
+      "originals_retained": true,
+      "transport": "SSH; 16 MiB ciphertext segments",
+      "published_remote_files": 9,
+      "current_private_generation": "f3b73a496df8b308f710ba937c1768605914aa2f",
+      "complete_manifest_published": false,
+      "remaining_staging_budget_bytes": 5368709120,
+      "required_fixed_reserve_bytes": 10737418240
     }
   ],
   "remaining_capture_assets": {
@@ -75,8 +71,21 @@
     "includes_bounded_August_plan_and_original_month_root_file_and_native_metadata": true,
     "payload_publication_complete": false
   },
-  "next_owner_action": "Bounded continuation: segment staged ciphertext into 16 MiB Git payloads with stream-digest lineage, skip existing identical remote objects, then verify immutable readback and independent logical recovery.",
+  "next_owner_action": "Finish the existing August source generation in finite serial windows, verify fresh remote readback and independent logical recovery, then retire only eligible owned temporary copies before the next scope.",
   "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/2739#issuecomment-6027390659",
   "external_mirror_phase": "last, per explicit human instruction",
-  "protected_sessions_and_personal_originals_retained": true
+  "protected_sessions_and_personal_originals_retained": true,
+  "observed_at": "2026-10-07T01:21:59.023897+00:00",
+  "session_corpus": {
+    "source_files": 14244,
+    "logical_source_bytes": 969491044,
+    "ciphertext_bytes": 403408880,
+    "source_generation": "054489fcfbde51287d1681d5e4bc14b81b8d796d",
+    "recovery_proof": "b6092c8a61a32c5b70060230582dc1133fb0f68a",
+    "cleanup_proof": "d280ff20c8ee4b247b2aba541b2d5985f2d3fba8",
+    "remote_readback_equal": true,
+    "independent_key_recovery_verified": true,
+    "logical_restore_verified": true,
+    "originals_retained": true
+  }
 }
