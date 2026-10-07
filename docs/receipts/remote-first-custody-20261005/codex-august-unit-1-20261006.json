@@ -1,0 +1,13 @@
+{
+  "source_files": 193,
+  "logical_source_bytes": 1341801392,
+  "ciphertext_bytes": 513336976,
+  "publication_files": 49,
+  "source_generation": "dfaaaf54d6c1788dc89c495fc98e432627fe1d91",
+  "recovery_proof": "8f10ed42221f0c6bf4b42a87c17224ef971f11d4",
+  "cleanup_proof": "5fc13cb39c056b5395ddf9e8e71917d41c13a583",
+  "remote_readback_equal": true,
+  "independent_key_recovery_verified": true,
+  "logical_restore_verified": true,
+  "originals_retained": true
+}
