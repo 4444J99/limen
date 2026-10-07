@@ -12,10 +12,17 @@
   "independent_key_recovery_verified": true,
   "logical_restore_verified": true,
   "recovery_verified_at": "2026-10-07T05:41:20.316075+00:00",
-  "execution_proof_published": false,
-  "temporary_copies_retired": false,
+  "execution_proof_published": true,
+  "temporary_copies_retired": true,
   "originals_retained": true,
-  "credential_gate_owner": "https://github.com/4444J99/limen/issues/320#issuecomment-6031316548",
-  "next_action": "Seal execution proof after canonical escrow CLI authorization; then retire only verified temporary cipher copies.",
-  "proof_publication_blocker": "Separate canonical escrow read returned exit 1 after successful archive recovery."
+  "next_action": "Remaining approved custody scopes through verified promptless escrow.",
+  "recovery_proof": "213f35578578b6a63e902e91ab1f8d7aa8d24a00",
+  "cleanup_proof": "1cb510a18736c9ead62d9d5fc83be331c15dd28e",
+  "temporary_ciphertext_files_removed": 36,
+  "temporary_logical_bytes_removed": 562961040,
+  "observed_free_bytes_delta": -73728,
+  "measurement_affected_by_concurrent_activity": true,
+  "credential_gate_cleared": true,
+  "credential_route": "managed op-unattended, verified automation escrow",
+  "credential_resolution_receipt": "https://github.com/4444J99/limen/issues/320#issuecomment-6043886434"
 }

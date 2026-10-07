@@ -2,7 +2,7 @@
   "schema": "limen.remote_first_campaign_checkpoint.v1",
   "date": "2026-10-06",
   "owner": "4444J99/limen#2739",
-  "status": "checkpoint-recovery-verified-proof-publication-blocked",
+  "status": "checkpoint-recovery-and-temporary-cleanup-verified",
   "estate_complete": false,
   "original_roots": {
     "observed_at": "2026-10-07T05:43:34.958789+00:00",
@@ -58,15 +58,16 @@
   "observed_host_free_bytes": 17516716032,
   "pending_publication": [],
   "remaining_capture_assets": {
-    "private_proof_commit": "7acbcf7221ebb513fccb7269b68c3cd5cbba2146",
+    "private_proof_commit": "97835ef512cf60b759e05a4a8eb49cad8982dd95",
     "fresh_remote_equal": true,
     "independent_escrow_decryption_equal": true,
     "asset_files": 22,
     "includes_bounded_August_plan_and_original_month_root_file_and_native_metadata": true,
     "payload_publication_complete": false,
-    "includes_bounded_capture_and_rolling_readback": true
+    "includes_bounded_capture_and_rolling_readback": true,
+    "includes_verified_promptless_escrow_route": true
   },
-  "next_owner_action": "Publish the verified Claude/Gemini execution proof after existing canonical escrow authorization; retire its verified temporary cipher copies and publish cleanup proof. Preserve prepared remaining controllers before the two legacy-buffer and private-document-copy captures.",
+  "next_owner_action": "Preserve and retire the completed August group 3 publisher cache to restore capture headroom, then continue the legacy custody buffers and private-document copy. Preserve the fixed 10 GiB reserve and originals.",
   "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/320#issuecomment-6031776741",
   "external_mirror_phase": "last, per explicit human instruction",
   "protected_sessions_and_personal_originals_retained": true,
@@ -134,15 +135,14 @@
     "measurement_affected_by_concurrent_activity": true
   },
   "latest_operation_checkpoint": {
-    "observed_at": "2026-10-07T05:43:34.958789+00:00",
     "scope": "Claude-Gemini",
     "publication_complete": true,
     "remote_verified_files": 38,
     "remote_files_denominator": 38,
     "independent_recovery_complete": true,
-    "execution_proof_published": false,
-    "temporary_copies_retired": false,
-    "credential_gate_owner": "https://github.com/4444J99/limen/issues/320#issuecomment-6031776741"
+    "execution_proof_published": true,
+    "temporary_copies_retired": true,
+    "credential_gate_cleared": true
   },
   "august_unit_3": {
     "source_files": 132,
@@ -208,18 +208,25 @@
     "independent_key_recovery_verified": true,
     "logical_restore_verified": true,
     "recovery_verified_at": "2026-10-07T05:41:20.316075+00:00",
-    "execution_proof_published": false,
-    "temporary_copies_retired": false,
+    "execution_proof_published": true,
+    "temporary_copies_retired": true,
     "originals_retained": true,
-    "credential_gate_owner": "https://github.com/4444J99/limen/issues/320#issuecomment-6031316548",
-    "next_action": "Seal execution proof after canonical escrow CLI authorization; then retire only verified temporary cipher copies.",
-    "proof_publication_blocker": "Separate canonical escrow read returned exit 1 after successful archive recovery."
+    "next_action": "Remaining approved custody scopes through verified promptless escrow.",
+    "recovery_proof": "213f35578578b6a63e902e91ab1f8d7aa8d24a00",
+    "cleanup_proof": "1cb510a18736c9ead62d9d5fc83be331c15dd28e",
+    "temporary_ciphertext_files_removed": 36,
+    "temporary_logical_bytes_removed": 562961040,
+    "observed_free_bytes_delta": -73728,
+    "measurement_affected_by_concurrent_activity": true,
+    "credential_gate_cleared": true,
+    "credential_route": "managed op-unattended, verified automation escrow",
+    "credential_resolution_receipt": "https://github.com/4444J99/limen/issues/320#issuecomment-6043886434"
   },
   "prepared_remaining_scopes": {
     "legacy_custody_buffers": 2,
     "private_document_copy": 1,
     "source_capture_started": false,
-    "controller_asset_publication_pending": true,
+    "controller_asset_publication_pending": false,
     "originals_retained": true
   }
 }
