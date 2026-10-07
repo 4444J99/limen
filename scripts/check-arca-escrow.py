@@ -1,13 +1,12 @@
-#!/usr/bin/env python3
 """Read-only, bounded recovery from canonical escrow; never extract plaintext."""
 
 import io
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
 import tarfile
+from pathlib import Path
 
 LIMIT = 1024 * 1024
 
@@ -16,7 +15,7 @@ def run(args: list[str], data: bytes | None = None) -> bytes:
     env = dict(os.environ)
     env.pop("OP_SERVICE_ACCOUNT_TOKEN", None)
     return subprocess.run(
-        args, input=data, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        args, input=data, capture_output=True,
         check=True, timeout=30, env=env,
     ).stdout
 
@@ -55,7 +54,7 @@ def recover(vault: Path) -> dict:
         raise ValueError("manifest bound")
     manifest = json.loads(manifest_bytes)
     if not isinstance(manifest, dict):
-        raise ValueError("manifest shape")
+        raise TypeError("manifest shape")
     candidates = []
     for name, record in manifest.items():
         if name in {"_generation", "_generations"}:
@@ -86,7 +85,7 @@ def recover(vault: Path) -> dict:
         plaintext = subprocess.run(
             ["openssl", "enc", "-d", "-aes-256-cbc", "-pbkdf2", "-iter", "200000",
              "-pass", f"fd:{read_fd}"],
-            input=ciphertext, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            input=ciphertext, capture_output=True,
             pass_fds=(read_fd,), check=True, timeout=30,
         ).stdout
     finally:
@@ -101,7 +100,7 @@ def recover(vault: Path) -> dict:
 def main() -> int:
     try:
         result = recover(Path.home() / ".arca-vault")
-    except (OSError, ValueError, subprocess.SubprocessError, tarfile.TarError):
+    except (OSError, TypeError, ValueError, subprocess.SubprocessError, tarfile.TarError):
         # Neither private archive names nor provider stderr belongs in public receipts.
         print(json.dumps({"schema": "limen.arca-escrow-check.v1", "accepted": False}))
         return 1
