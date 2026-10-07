@@ -1,0 +1,22 @@
+{
+  "schema": "limen.remote_first_scope_recovery.v1",
+  "owner": "4444J99/limen#2739",
+  "scope": "legacy-codex-buffer-1",
+  "source_files": 23,
+  "logical_source_bytes": 770172031,
+  "ciphertext_bytes": 243446768,
+  "source_generation": "6154461ced44436fbde452b501a3602a82c493a6",
+  "recovery_proof": "b0fc340cf2a85de3010d8cadfa80bf90b700215d",
+  "cleanup_proof": "3cab8c48e0e2994e218464cf06b45da45b2e62e1",
+  "remote_readback_equal": true,
+  "independent_key_recovery_verified": true,
+  "logical_restore_verified": true,
+  "credential_route": "managed op-unattended; verified automation escrow",
+  "temporary_ciphertext_files_removed": 16,
+  "temporary_logical_bytes_removed": 243446768,
+  "observed_free_bytes_delta": 243429376,
+  "measurement_affected_by_concurrent_activity": true,
+  "originals_retained": true,
+  "native_source_retirement_certified": false,
+  "finished_at": "2026-10-07T18:29:35.578812+00:00"
+}
