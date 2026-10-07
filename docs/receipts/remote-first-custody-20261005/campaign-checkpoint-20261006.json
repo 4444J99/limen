@@ -142,5 +142,15 @@
     "temporary_logical_bytes_removed": 368420864,
     "observed_free_bytes_delta": 368500736,
     "measurement_affected_by_concurrent_activity": true
+  },
+  "latest_operation_checkpoint": {
+    "observed_at_utc": "2026-10-07 04:12:22 UTC",
+    "scope": "Codex-August-group-3",
+    "source_generation": "36888d5401d0a7740462681bef7ea34bdcdd74dd",
+    "publication_complete": true,
+    "remote_readback_verified_files": 27,
+    "remote_readback_total_files": 35,
+    "logical_recovery_complete": false,
+    "originals_retained": true
   }
 }
