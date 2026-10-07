@@ -36,7 +36,8 @@
     "MCP-and-protected-linked-checkout-captures",
     "Codex-July-and-September",
     "private-session-corpus",
-    "Codex-August-group-1-seven-day-roots"
+    "Codex-August-group-1-seven-day-roots",
+    "Codex-August-group-4-two-day-roots-and-month-header"
   ],
   "temporary_cleanup": {
     "git_ciphertext_and_isolated_restore_observed_free_bytes_delta": 3740889088,
@@ -54,13 +55,14 @@
     {
       "scope": "August-units-2-through-4",
       "completed_units": [
-        1
+        1,
+        4
       ],
       "total_units": 4,
       "source_roots_denominator": 21,
-      "verified_source_roots": 7,
-      "active_unit": 4,
-      "unit_2_capture_started": false,
+      "verified_source_roots": 9,
+      "active_unit": 2,
+      "unit_2_capture_started": true,
       "unit_2_admission_failed_before_source_capture": true,
       "unit_2_next_action": "Use the bounded direct streaming capture phase after the active unit releases the heavy lease",
       "originals_retained": true
@@ -103,5 +105,24 @@
     "independent_key_recovery_verified": true,
     "logical_restore_verified": true,
     "originals_retained": true
+  },
+  "august_unit_4": {
+    "source_files": 70,
+    "logical_source_bytes": 512596688,
+    "ciphertext_bytes": 224493104,
+    "source_roots": 2,
+    "publication_files": 19,
+    "source_generation": "58cde929a66ea06f609cb1cf7ab128bf56d19d74",
+    "recovery_proof": "e1b417bb706d11a209685c67981125665192f442",
+    "cleanup_proof": "365579cec8c3a5f46a82594625b08dc1ab4d93d8",
+    "remote_readback_equal": true,
+    "independent_key_recovery_verified": true,
+    "logical_restore_verified": true,
+    "month_header_original_file_recovered": true,
+    "originals_retained": true,
+    "temporary_ciphertext_files_removed": 34,
+    "temporary_logical_bytes_removed": 448986208,
+    "observed_free_bytes_delta": 225869824,
+    "measurement_affected_by_concurrent_activity": true
   }
 }
