@@ -114,7 +114,7 @@ CI_SECRETS: list[dict] = [
         "name": "OP_SERVICE_ACCOUNT_TOKEN",
         "home": "file `~/.config/op/service-account-token` (1Password service account) + `~/.zshenv` export",
         "used": "`creds-hydrate.py` headless `op read` + `--sweep-all` (fleet); `~/.zshenv` exports it so every shell's `op` is promptless too (no Touch-ID anywhere)",
-        "hand": "Bootstrap readback 2026-09-16: canonical token custody verified in Limen-Automation, exact one-vault scope verified, local installation verified, previous token preserved. Existing source items have not been migrated; per-secret hydration and old-account retirement remain separate obligations. Owner-session bootstrap may require device authentication; installed service-account reads are headless.",
+        "hand": "Bootstrap readback 2026-09-16: canonical token custody verified in Limen-Automation, exact one-vault scope verified, local installation verified, previous token preserved. ARCA escrow was copied byte-identically into Limen-Automation and its promptless read plus existing-ciphertext restoration verified on 2026-10-07; the Private original is preserved. Owning readers use managed op-unattended. Human approval for existing CLI credential workflows is standing; integration failures do not create new permission gates. Other per-secret hydration and old-account retirement remain separate obligations. Owner-session bootstrap may require device authentication; installed service-account reads are headless.",
         "issue": "#288",
     },
     {
