@@ -65,7 +65,7 @@
     "private_proof_commit": "36fdd3891ebb0e65f17594571a1a6e871a2bea25",
     "fresh_remote_equal": true,
     "independent_escrow_decryption_equal": true,
-    "asset_files": 200,
+    "asset_files": 204,
     "includes_bounded_August_plan_and_original_month_root_file_and_native_metadata": true,
     "payload_publication_complete": false,
     "includes_bounded_capture_and_rolling_readback": true,
