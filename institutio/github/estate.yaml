@@ -430,7 +430,6 @@ shelf_assignments:
       - cvrsvs-honorvm
       - hierarchia-mundi
       - nexus--babel-alexandria
-      - organvm-i-theoria.github.io
       - scale-threshold-emergence
       - universal-node-network
       - visual-substrate-inquiry
@@ -449,7 +448,6 @@ shelf_assignments:
       - ivi374ivi027-05
       - life-betterment-simulation
       - narratological-algorithmic-lenses
-      - organvm-ii-poiesis.github.io
       - vigiles-aeternae--agon-cosmogonicum
       - vigiles-aeternae--corpus-mythicum
       - vigiles-aeternae--theatrum-mundi
@@ -465,7 +463,6 @@ shelf_assignments:
       - lido-v3-audit-2026-05-04
       - meta-source--ledger-output
       - orchestration-start-here
-      - organvm-iv-taxis.github.io
       - petasum-super-petasum
       - praxis-perpetua
       - quick-fire--all-command
@@ -474,40 +471,21 @@ shelf_assignments:
       - system-governance-framework
     organvm-v-logos:
       - .github
-      - organvm-v-logos.github.io
       - studium-generale--4444j99
     organvm-vi-koinonia:
       - .github
-      - awesome-claude-code
-      - blender-mcp
       - community-hub
       - contrib
-      - gemini-cli-blender-extension
-      - organvm-vi-koinonia.github.io
       - public-process
-      - pydantic-ai
       - reading-group-curriculum
-      - typescript-sdk
     organvm-vii-kerygma:
       - .github
-      - organvm-vii-kerygma.github.io
       - portfolio
       - showcase-portfolio
       - stakeholder-portal
-    meta-organvm:
-      - meta-organvm--superproject
-      - meta-organvm.github.io
-      - organvm-i-theoria--superproject
-      - organvm-ii-poiesis--superproject
-      - organvm-iii-ergon--superproject
-      - organvm-iv-taxis--superproject
-      - organvm-v-logos--superproject
-      - organvm-vi-koinonia--superproject
-      - organvm-vii-kerygma--superproject
-      - workspace--superproject
+    meta-organvm: []                       # superprojects + landing page GitHub-archived 2026-10-08 (private consolidation step 1); archived repos leave the shelves
     organvm-iii-ergon:
       - .github
-      - organvm-iii-ergon.github.io
       - a-i-chat--exporter
       - a-i-council--coliseum
       - advocata
@@ -902,7 +880,7 @@ repo_overrides:
   organvm-iii-ergon/materia-collider: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/md-summoning: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm-iii-ergon/mesh: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  meta-organvm/meta-organvm--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  meta-organvm/meta-organvm--superproject: {class: frozen, why: "GitHub-archived 2026-10-08 (private consolidation step 1); undo = unarchive"}
   # AUDIENCE 2026-07-30: the operation half of an operation/form pair that already exists in
   # practice — 4444J99/micro-tato-play is declared "public play surface of micro-tato" below. Under
   # the split doctrine the operation stays private and the form twin carries the public face, so
@@ -919,14 +897,14 @@ repo_overrides:
   organvm-iii-ergon/object-lessons: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   4444J99/opencode-plans: {class: vault_private, why: "planning/prompt corpus — internal strategy"}
   organvm/organvm-corpvs-testamentvm: {class: vault_private, why: "testament corpus — internal strategy"}
-  meta-organvm/organvm-i-theoria--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  meta-organvm/organvm-ii-poiesis--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  meta-organvm/organvm-iii-ergon--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  meta-organvm/organvm-iv-taxis--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  meta-organvm/organvm-i-theoria--superproject: {class: frozen, why: "GitHub-archived 2026-10-08 (private consolidation step 1); undo = unarchive"}
+  meta-organvm/organvm-ii-poiesis--superproject: {class: frozen, why: "GitHub-archived 2026-10-08 (private consolidation step 1); undo = unarchive"}
+  meta-organvm/organvm-iii-ergon--superproject: {class: frozen, why: "GitHub-archived 2026-10-08 (private consolidation step 1); undo = unarchive"}
+  meta-organvm/organvm-iv-taxis--superproject: {class: frozen, why: "GitHub-archived 2026-10-08 (private consolidation step 1); undo = unarchive"}
   organvm/organvm-mcp-server: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  meta-organvm/organvm-v-logos--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  meta-organvm/organvm-vi-koinonia--superproject: {class: vault_private, why: "superproject state mirror — private state"}
-  meta-organvm/organvm-vii-kerygma--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  meta-organvm/organvm-v-logos--superproject: {class: frozen, why: "GitHub-archived 2026-10-08 (private consolidation step 1); undo = unarchive"}
+  meta-organvm/organvm-vi-koinonia--superproject: {class: frozen, why: "GitHub-archived 2026-10-08 (private consolidation step 1); undo = unarchive"}
+  meta-organvm/organvm-vii-kerygma--superproject: {class: frozen, why: "GitHub-archived 2026-10-08 (private consolidation step 1); undo = unarchive"}
   organvm-iii-ergon/palimpsest: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/payrail: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   4444J99/peer-audited--behavioral-blockchain: {class: portal_public, why: "traction/value lure — portal tier; personal estate 2026-07-30 (custody v4.0.0 transfer, jtenen lane intact)"}
@@ -959,7 +937,7 @@ repo_overrides:
   organvm-iii-ergon/vox: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm/vox--architectura-gubernatio: {class: vault_private, why: "design-provenance corpus — internal strategy"}
   organvm-iii-ergon/vox--publica: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
-  meta-organvm/workspace--superproject: {class: vault_private, why: "superproject state mirror — private state"}
+  meta-organvm/workspace--superproject: {class: frozen, why: "GitHub-archived 2026-10-08 (private consolidation step 1); undo = unarchive"}
 
 # ── expected orgs — reserved namespaces are declared, an unexpected org is drift ────────────────
 expected_orgs:
