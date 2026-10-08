@@ -2,7 +2,7 @@
   "schema": "limen.remote_first_campaign_checkpoint.v1",
   "date": "2026-10-06",
   "owner": "4444J99/limen#2739",
-  "status": "private-document-publication-in-progress-legacy-readback-checkpointed",
+  "status": "private-document-publication-in-progress-legacy-buffers-recovered",
   "estate_complete": false,
   "original_roots": {
     "observed_at": "2026-10-08T21:27:28.744607+00:00",
@@ -43,7 +43,8 @@
     "Codex-August-group-2-nine-day-roots",
     "Codex-August-group-3-three-day-roots",
     "Claude-and-Gemini",
-    "legacy-codex-buffer-1"
+    "legacy-codex-buffer-1",
+    "legacy-codex-buffer-2"
   ],
   "temporary_cleanup": {
     "git_ciphertext_and_isolated_restore_observed_free_bytes_delta": 3740889088,
@@ -57,23 +58,25 @@
     "august_unit_1_observed_free_bytes_delta": 516145152
   },
   "observed_host_free_bytes": 19739811840,
-  "pending_publication": [],
+  "pending_publication": [
+    "private-document-copy"
+  ],
   "remaining_capture_assets": {
-    "private_proof_commit": "8f0c35ead31353c28b5f09f73ea4fe1ce5684465",
+    "private_proof_commit": "b1b50b6128eb1a1545bd5af42f2fbc1c919fa849",
     "fresh_remote_equal": true,
     "independent_escrow_decryption_equal": true,
-    "asset_files": null,
+    "asset_files": 200,
     "includes_bounded_August_plan_and_original_month_root_file_and_native_metadata": true,
     "payload_publication_complete": false,
     "includes_bounded_capture_and_rolling_readback": true,
     "includes_verified_promptless_escrow_route": true,
     "includes_single_root_proof_guards_and_immutable_API_readers": true
   },
-  "next_owner_action": "Finish bounded private-document publication; use independently working authenticated HTTPS transport to finish immutable legacy readback after the exclusive heavy transfer window; retire only parity-and-recovery-certified disposable copies. External mirrors last.",
-  "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/2739",
+  "next_owner_action": "Complete private-document publication, authenticated HTTPS immutable readback, escrow and logical restoration, then verified disposable-copy retirement. Continue existing approved custody owners; external mirrors remain last.",
+  "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/2739#issuecomment-6069878618",
   "external_mirror_phase": "last, per explicit human instruction",
   "protected_sessions_and_personal_originals_retained": true,
-  "observed_at": "2026-10-08T21:34:22.480341+00:00",
+  "observed_at": "2026-10-08T22:06:00Z",
   "session_corpus": {
     "source_files": 14244,
     "logical_source_bytes": 969491044,
@@ -140,7 +143,7 @@
     "scope": "private-document-copy",
     "capture_complete": true,
     "publication_complete": false,
-    "publication_files_confirmed": 7,
+    "publication_files_confirmed": 39,
     "publication_files_denominator": 112,
     "credential_gate_cleared": true
   },
@@ -228,7 +231,7 @@
     "source_capture_started": true,
     "controller_asset_publication_pending": false,
     "originals_retained": true,
-    "legacy_custody_buffers_verified": 1,
+    "legacy_custody_buffers_verified": 2,
     "legacy_custody_buffers_denominator": 2,
     "second_legacy_buffer_capture_complete": true,
     "private_document_capture_complete": true
@@ -256,15 +259,26 @@
     "finished_at": "2026-10-07T18:29:35.578812+00:00"
   },
   "legacy_buffer_2": {
-    "source_generation": "e59898f9cccebdfc83ae1c1b75294459ece90d50",
-    "complete_manifest_published": true,
-    "remote_verified_files": 54,
-    "remote_files_denominator": 62,
+    "schema": "limen.remote_first_scope_recovery.v1",
+    "owner": "4444J99/limen#2739",
+    "scope": "legacy-codex-buffer-2",
     "source_files": 52,
     "logical_source_bytes": 2144322919,
-    "independent_recovery_complete": false,
+    "ciphertext_bytes": 1006594016,
+    "source_generation": "e59898f9cccebdfc83ae1c1b75294459ece90d50",
+    "recovery_proof": "ccaca0e9f59179e5a6710d5e086664267b988a32",
+    "cleanup_proof": "29d31aa9a191296a22606aa6caf0b3d30e630495",
+    "remote_readback_equal": true,
+    "independent_key_recovery_verified": true,
+    "logical_restore_verified": true,
+    "transport": "native Git HTTPS HTTP/1.1",
+    "temporary_ciphertext_files_removed": 61,
+    "temporary_logical_bytes_removed": 1006594016,
+    "observed_free_bytes_delta": -40960,
+    "measurement_affected_by_concurrent_activity": true,
     "originals_retained": true,
-    "transport_failure_receipt": "https://github.com/4444J99/limen/issues/2739#issuecomment-6069417297"
+    "native_source_retirement_certified": false,
+    "finished_at": "2026-10-08T21:59:56.513146+00:00"
   },
   "private_document_copy": {
     "source_capture_complete": true,
@@ -272,10 +286,10 @@
     "source_files": 19487,
     "logical_source_bytes": 2444937399,
     "ciphertext_bytes": 1855150832,
-    "publication_files_confirmed": 7,
+    "publication_files_confirmed": 39,
     "publication_files_denominator": 112,
     "publication_complete": false,
-    "latest_generation": "2729e45da35adad93a0f4a8e0cdf1c567f2e72db",
+    "latest_generation": "38b165ed3930bf041cd481fb72d05a19160e46c4",
     "independent_recovery_complete": false,
     "originals_retained": true
   },
@@ -288,5 +302,19 @@
     "independent_escrow_decryption_equal": true,
     "original_sources_removed": 0,
     "concurrent_host_activity_affects_measurement": true
+  },
+  "legacy_buffer_2_publisher_cache_retirement": {
+    "schema": "limen.publisher_cache_retirement_public_receipt.v1",
+    "unit": "legacy-codex-buffer-2",
+    "repository": "4444J99/arca-g3",
+    "preservation_proof": "feab3b13913a66a280b7fdc9e9a1c8daa86f25a6",
+    "cleanup_proof": "09f63f403074594944e09f62ef6c2084b12f02cc",
+    "fresh_remote_equal": true,
+    "independent_escrow_decryption_equal": true,
+    "logical_bytes_removed": 2018484050,
+    "observed_free_bytes_delta": 1011699712,
+    "concurrent_activity_affects_measurement": true,
+    "original_sources_removed": false,
+    "shared_store_removed": false
   }
 }
