@@ -2,7 +2,7 @@
   "schema": "limen.remote_first_campaign_checkpoint.v1",
   "date": "2026-10-06",
   "owner": "4444J99/limen#2739",
-  "status": "private-document-publication-in-progress-legacy-buffers-recovered",
+  "status": "private-document-publication-transport-blocked-legacy-buffers-recovered",
   "estate_complete": false,
   "original_roots": {
     "observed_at": "2026-10-08T21:27:28.744607+00:00",
@@ -57,12 +57,12 @@
     "august_unit_1_logical_bytes_removed": 1525794208,
     "august_unit_1_observed_free_bytes_delta": 516145152
   },
-  "observed_host_free_bytes": 19739811840,
+  "observed_host_free_bytes": 15071293440,
   "pending_publication": [
     "private-document-copy"
   ],
   "remaining_capture_assets": {
-    "private_proof_commit": "b1b50b6128eb1a1545bd5af42f2fbc1c919fa849",
+    "private_proof_commit": "36fdd3891ebb0e65f17594571a1a6e871a2bea25",
     "fresh_remote_equal": true,
     "independent_escrow_decryption_equal": true,
     "asset_files": 200,
@@ -70,13 +70,14 @@
     "payload_publication_complete": false,
     "includes_bounded_capture_and_rolling_readback": true,
     "includes_verified_promptless_escrow_route": true,
-    "includes_single_root_proof_guards_and_immutable_API_readers": true
+    "includes_single_root_proof_guards_and_immutable_API_readers": true,
+    "includes_current_https_publication_corrections_and_failure_evidence": true
   },
-  "next_owner_action": "Complete private-document publication, authenticated HTTPS immutable readback, escrow and logical restoration, then verified disposable-copy retirement. Continue existing approved custody owners; external mirrors remain last.",
-  "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/2739#issuecomment-6069878618",
+  "next_owner_action": "After payload transport recovery, resume existing document publisher with fresh immutable reconciliation; independently restore the completed archive before retiring disposable copies. Continue other existing admitted custody owners. External mirrors last.",
+  "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/2739#issuecomment-6070762687",
   "external_mirror_phase": "last, per explicit human instruction",
   "protected_sessions_and_personal_originals_retained": true,
-  "observed_at": "2026-10-08T22:06:00Z",
+  "observed_at": "2026-10-08T23:03:32.265094+00:00",
   "session_corpus": {
     "source_files": 14244,
     "logical_source_bytes": 969491044,
@@ -143,9 +144,13 @@
     "scope": "private-document-copy",
     "capture_complete": true,
     "publication_complete": false,
-    "publication_files_confirmed": 39,
+    "publication_files_confirmed": 103,
     "publication_files_denominator": 112,
-    "credential_gate_cleared": true
+    "credential_gate_cleared": true,
+    "publication_files_remaining": 9,
+    "transport_error": "HTTP 408",
+    "corrective_framing_probe_failed": true,
+    "publisher_running": false
   },
   "august_unit_3": {
     "source_files": 132,
@@ -286,12 +291,14 @@
     "source_files": 19487,
     "logical_source_bytes": 2444937399,
     "ciphertext_bytes": 1855150832,
-    "publication_files_confirmed": 39,
+    "publication_files_confirmed": 103,
     "publication_files_denominator": 112,
     "publication_complete": false,
-    "latest_generation": "38b165ed3930bf041cd481fb72d05a19160e46c4",
+    "latest_generation": "0e7ed2e208964f61318ed246f15bb17d88a53fdc",
     "independent_recovery_complete": false,
-    "originals_retained": true
+    "originals_retained": true,
+    "transport_error": "HTTP 408",
+    "latest_attempt_finished_at": "2026-10-08T22:58:11.490949Z"
   },
   "august_unit_4_publisher_cache_retirement": {
     "preservation_proof": "54d123f333ef56166d7e0fb673ac9108acddf589",
@@ -316,5 +323,6 @@
     "concurrent_activity_affects_measurement": true,
     "original_sources_removed": false,
     "shared_store_removed": false
-  }
+  },
+  "host_free_observed_at": "2026-10-08T23:03:32.265094+00:00"
 }
