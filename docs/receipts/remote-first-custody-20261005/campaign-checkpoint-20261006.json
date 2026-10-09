@@ -71,11 +71,11 @@
     "includes_single_root_proof_guards_and_immutable_API_readers": true,
     "includes_current_https_publication_corrections_and_failure_evidence": true
   },
-  "next_owner_action": "Reconcile and deploy the campaign approved priority in its owning conduct policy, then acquire recovery-writer and ordinary heavy leases. Retain caches until independent exhaustive restoration and ownership checks pass. Complete Archive4T; retain the T7Recovery rail under #2739 until its registered device is mounted.",
+  "next_owner_action": "reconcile original controller execution journals and accepted owner receipts into cumulative accounting; retain null actual remaining allowance until supported evidence exists; do not rerun old admit.py fresh-deadline constructor",
   "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/2739#issuecomment-6070762687",
   "external_mirror_phase": "last, per explicit human instruction",
   "protected_sessions_and_personal_originals_retained": true,
-  "observed_at": "2026-10-09T18:44:55.742654+00:00",
+  "observed_at": "2026-10-09T19:41:34.749869+00:00",
   "session_corpus": {
     "source_files": 14244,
     "logical_source_bytes": 969491044,
@@ -140,14 +140,14 @@
   },
   "latest_operation_checkpoint": {
     "scope": "remaining-publisher-caches-and-final-ssd-mirrors",
-    "status": "blocked-before-live-cache-retirement",
+    "status": "policy-reconciled-actual-accounting-unmeasured",
     "candidates_retained": 4,
     "removed_candidates": 0,
-    "broker_admission": "execution_priority_not_approved",
-    "heavy_admission": "swap-fraction",
+    "broker_admission": "priority-corrected; no execution admitted; actual remaining allowance unmeasured",
+    "heavy_admission": "swap-fraction at 2026-10-09T19:40:37Z",
     "pressure_override_used": false,
     "owner": "4444J99/limen#2739",
-    "receipt": "docs/receipts/remote-first-custody-20261005/publisher-cache-retirement-checkpoint-20261009.json"
+    "receipt": "docs/receipts/remote-first-custody-20261005/admission-reconciliation-20261009.json"
   },
   "august_unit_3": {
     "source_files": 132,
@@ -370,5 +370,15 @@
       "role": "private-external-scratch",
       "counts_as_second_recovery_device": false
     }
+  },
+  "admission_reconciliation": {
+    "receipt": "docs/receipts/remote-first-custody-20261005/admission-reconciliation-20261009.json",
+    "policy_status": "exact-key-installed-live-admission-gates-verified",
+    "deployment_id": "c9dfd60f-3d7f-4d7b-8a53-550d09bbb466",
+    "broker_reserved_seconds": 0,
+    "actual_remaining_seconds": null,
+    "actual_accounting_status": "unmetered-historical-direct-execution",
+    "expired_capsule_extended": false,
+    "human_opened_read_only_audits_independent": true
   }
 }
