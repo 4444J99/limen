@@ -2,7 +2,7 @@
   "schema": "limen.remote_first_campaign_checkpoint.v1",
   "date": "2026-10-06",
   "owner": "4444J99/limen#2739",
-  "status": "private-document-publication-transport-blocked-legacy-buffers-recovered",
+  "status": "all-captured-scopes-remotely-recovered-originals-retained",
   "estate_complete": false,
   "original_roots": {
     "observed_at": "2026-10-08T21:27:28.744607+00:00",
@@ -58,26 +58,24 @@
     "august_unit_1_observed_free_bytes_delta": 516145152
   },
   "observed_host_free_bytes": 15071293440,
-  "pending_publication": [
-    "private-document-copy"
-  ],
+  "pending_publication": [],
   "remaining_capture_assets": {
     "private_proof_commit": "36fdd3891ebb0e65f17594571a1a6e871a2bea25",
     "fresh_remote_equal": true,
     "independent_escrow_decryption_equal": true,
     "asset_files": 204,
     "includes_bounded_August_plan_and_original_month_root_file_and_native_metadata": true,
-    "payload_publication_complete": false,
+    "payload_publication_complete": true,
     "includes_bounded_capture_and_rolling_readback": true,
     "includes_verified_promptless_escrow_route": true,
     "includes_single_root_proof_guards_and_immutable_API_readers": true,
     "includes_current_https_publication_corrections_and_failure_evidence": true
   },
-  "next_owner_action": "After payload transport recovery, resume existing document publisher with fresh immutable reconciliation; independently restore the completed archive before retiring disposable copies. Continue other existing admitted custody owners. External mirrors last.",
+  "next_owner_action": "All captured scopes including the private-document copy pass remote recovery. Continue the existing campaign final external-mirror pass and separately gated eligible cache retirement. Personal originals remain retained.",
   "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/2739#issuecomment-6070762687",
   "external_mirror_phase": "last, per explicit human instruction",
   "protected_sessions_and_personal_originals_retained": true,
-  "observed_at": "2026-10-08T23:03:32.265094+00:00",
+  "observed_at": "2026-10-09T18:05:29.594833+00:00",
   "session_corpus": {
     "source_files": 14244,
     "logical_source_bytes": 969491044,
@@ -286,19 +284,44 @@
     "finished_at": "2026-10-08T21:59:56.513146+00:00"
   },
   "private_document_copy": {
-    "source_capture_complete": true,
-    "source_stable": true,
+    "schema": "limen.remote_first_scope_recovery.v1",
+    "owner": "4444J99/limen#2739",
+    "scope": "private-document-copy",
     "source_files": 19487,
     "logical_source_bytes": 2444937399,
     "ciphertext_bytes": 1855150832,
-    "publication_files_confirmed": 103,
-    "publication_files_denominator": 112,
-    "publication_complete": false,
-    "latest_generation": "0e7ed2e208964f61318ed246f15bb17d88a53fdc",
-    "independent_recovery_complete": false,
+    "publication_files": 112,
+    "source_generation": "bad7ecc29ee7e91e010e617acc173d96b14e2bd9",
+    "recovery_proof": "f8876b8d56bdf3ceecd68c6a3bb9adb4f5ae2dcf",
+    "cleanup_proof": "342b35e4257c1ac4bdfda20ca5785fd24db04db9",
+    "remote_readback_equal": true,
+    "independent_key_recovery_verified": true,
+    "logical_restore_verified": true,
+    "logical_restore_evidence": {
+      "logical_atoms": 21018,
+      "native_archive_sidecars": 1286
+    },
+    "recovery_proof_fresh_remote_equal": true,
+    "recovery_proof_independent_escrow_decryption_equal": true,
+    "cleanup_proof_fresh_remote_equal": true,
+    "cleanup_proof_independent_escrow_decryption_equal": true,
+    "credential_route": "managed op-unattended; verified automation escrow",
+    "credential_wall_check": "passed: all 31 secret atoms registered",
+    "temporary_ciphertext_files_removed": 111,
+    "temporary_logical_bytes_removed": 1855150832,
+    "observed_free_bytes_delta": 12288,
+    "measurement_affected_by_concurrent_activity": true,
     "originals_retained": true,
-    "transport_error": "HTTP 408",
-    "latest_attempt_finished_at": "2026-10-08T22:58:11.490949Z"
+    "native_source_retirement_certified": false,
+    "publisher_cache_retained": true,
+    "retained_cache_owner": "4444J99/limen#2739; shared final external-mirror and cache-retirement pass",
+    "external_mirror_phase": "last, existing campaign owner; outside this remote-document publication predicate",
+    "broker_registration": "authenticated broker not configured; no lifecycle transitions attempted",
+    "finished_at": "2026-10-09T18:04:03.323919+00:00",
+    "publication_complete": true,
+    "independent_recovery_complete": true,
+    "publication_files_confirmed": 112,
+    "publication_files_denominator": 112
   },
   "august_unit_4_publisher_cache_retirement": {
     "preservation_proof": "54d123f333ef56166d7e0fb673ac9108acddf589",
@@ -324,5 +347,6 @@
     "original_sources_removed": false,
     "shared_store_removed": false
   },
-  "host_free_observed_at": "2026-10-08T23:03:32.265094+00:00"
+  "host_free_observed_at": "2026-10-08T23:03:32.265094+00:00",
+  "owner_blocker_receipt_is_historical_resolved": true
 }
