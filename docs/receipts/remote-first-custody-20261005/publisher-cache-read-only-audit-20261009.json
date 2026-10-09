@@ -1,0 +1,152 @@
+{
+  "schema": "limen.publisher_cache_read_only_audit.v1",
+  "owner": "4444J99/limen#2739",
+  "received_at": "2026-10-09T19:44:12.353485+00:00",
+  "provenance": {
+    "source": "read-only auditor findings supplied by human in current coordinator session",
+    "audit_observation_timestamp": "not supplied; point-in-time observations must be rechecked before mutation",
+    "coordinator_replayed_candidate_scan": false,
+    "receipt_refresh_without_payload_replay": true,
+    "observation_not_mutation_authority": true
+  },
+  "status": "four-candidates-HOLD",
+  "allocated_bytes_total": 5186232320,
+  "matches_published_checkpoint_sizes": true,
+  "candidates": [
+    {
+      "rank": 1,
+      "candidate": "private-document",
+      "status": "HOLD",
+      "allocated_bytes": 4242604032,
+      "ref_count": 9,
+      "loose_object_storage_count": 802,
+      "packed_entry_storage_count": 316,
+      "storage_counts_are_unique_or_remote_coverage": false,
+      "source_generation": "bad7ecc29ee7e91e010e617acc173d96b14e2bd9",
+      "source_recovery_proof": "f8876b8d56bdf3ceecd68c6a3bb9adb4f5ae2dcf",
+      "temporary_copy_cleanup_proof": "342b35e4257c1ac4bdfda20ca5785fd24db04db9",
+      "source_receipts_certify_exhaustive_cache_recovery": false,
+      "remaining_gap": "nine refs include diagnostic/publication bases; unique/unreachable objects and complete administrative recovery unverified"
+    },
+    {
+      "rank": 2,
+      "candidate": "claude-gemini",
+      "status": "HOLD",
+      "allocated_bytes": 564785152,
+      "ref_count": 3,
+      "loose_object_storage_count": 276,
+      "packed_entry_storage_count": 128,
+      "storage_counts_are_unique_or_remote_coverage": false,
+      "source_generation": "2b3e97bf30e7fe58c7cea3d4168aeda0c610daca",
+      "source_recovery_proof": "213f35578578b6a63e902e91ab1f8d7aa8d24a00",
+      "temporary_copy_cleanup_proof": "1cb510a18736c9ead62d9d5fc83be331c15dd28e",
+      "source_receipts_certify_exhaustive_cache_recovery": false,
+      "remaining_gap": "complete publisher-cache coverage unverified"
+    },
+    {
+      "rank": 3,
+      "candidate": "legacy-buffer-1",
+      "status": "HOLD",
+      "allocated_bytes": 244428800,
+      "ref_count": 3,
+      "loose_object_storage_count": 133,
+      "packed_entry_storage_count": 136,
+      "storage_counts_are_unique_or_remote_coverage": false,
+      "source_generation": "6154461ced44436fbde452b501a3602a82c493a6",
+      "source_recovery_proof": "b0fc340cf2a85de3010d8cadfa80bf90b700215d",
+      "temporary_copy_cleanup_proof": "3cab8c48e0e2994e218464cf06b45da45b2e62e1",
+      "source_receipts_certify_exhaustive_cache_recovery": false,
+      "remaining_gap": "publisher cache remains despite earlier ciphertext cleanup"
+    },
+    {
+      "rank": 4,
+      "candidate": "corpus",
+      "status": "HOLD",
+      "allocated_bytes": 134414336,
+      "ref_count": 2,
+      "loose_object_storage_count": 8,
+      "packed_entry_storage_count": 82,
+      "storage_counts_are_unique_or_remote_coverage": false,
+      "source_generation": "054489fcfbde51287d1681d5e4bc14b81b8d796d",
+      "source_recovery_proof": "b6092c8a61a32c5b70060230582dc1133fb0f68a",
+      "temporary_copy_cleanup_proof": "d280ff20c8ee4b247b2aba541b2d5985f2d3fba8",
+      "source_receipts_certify_exhaustive_cache_recovery": false,
+      "remaining_gap": "cached tip predates final source generation; remote advancement does not cover local residue"
+    }
+  ],
+  "identity_and_ownership": {
+    "bare_git_directories": 4,
+    "owner_uid": 501,
+    "campaign_owner": "4444J99/limen#2739",
+    "device_inode_inspected_by_auditor": true,
+    "open_file_users_observed": false,
+    "matching_process_command_references_observed": false,
+    "lock_files_observed": false,
+    "immediate_pre_removal_recheck_required": true
+  },
+  "common_topology": {
+    "shallow": true,
+    "promisor": true,
+    "hooks_present": true,
+    "lfs_directories_present": true,
+    "FETCH_HEAD_present": true,
+    "index_present": false,
+    "reflog_directory_present": false,
+    "linked_worktree_directory_present": false,
+    "outgoing_alternates_present": false,
+    "symlinks_observed": false,
+    "multiply_linked_files_observed": false
+  },
+  "dependencies": {
+    "incoming_outside_staging": "unverified",
+    "staging_dependency_declarations_found": false,
+    "absence_of_declarations_clears_estate_dependencies": false
+  },
+  "exhaustive_recovery_requirements": [
+    "all reachable and unique/unreachable Git objects",
+    "config and all refs",
+    "shallow/promisor boundaries",
+    "hooks and LFS contents",
+    "FETCH_HEAD and transfer residue",
+    "all administrative bytes",
+    "native metadata and independent restoration"
+  ],
+  "mirror_disposition": {
+    "final_collection_manifest_frozen": false,
+    "cache_required_as_mirror_input": "not established",
+    "cache_exclusion_certified": false,
+    "private_document_explicit_retention": "shared mirror/cache-retirement pass",
+    "per_candidate_gate": "verified inclusion or documented exclusion backed by complete cache recovery",
+    "Archive4T_T7Recovery_restoration": "separate gate"
+  },
+  "controller": {
+    "entrypoint": "python3 admit.py only after valid finite admission and ordinary heavy admission; do not extend an expired packet through its constructor",
+    "guard_private_generation": "b3108c08e8740d5bd08fcc2b917d1302babba259",
+    "fixture_tests": 27,
+    "live_candidates_certified": false,
+    "historical_preserve_publisher_cache_and_reap_publisher_cache": "candidate-specific assumptions and override machinery; not reusable authority for these four candidates",
+    "reap_segmented_copies": "ciphertext-copy cleanup only; not publisher-cache retirement"
+  },
+  "required_pre_mutation_checks": [
+    "valid finite and ordinary heavy admission",
+    "candidate identity/content/refs drift",
+    "active owners/processes/open files/locks",
+    "incoming dependencies and shared stores",
+    "independent exhaustive custody/restoration",
+    "available space and 10 GiB reserve",
+    "final collection mirror disposition"
+  ],
+  "measurement_contract": "record logical/allocated removal and before/after df/APFS observations separately; concurrent changes are not attributed reclaim",
+  "audit_mutations": 0,
+  "removed_bytes": 0,
+  "attributable_physical_recovery_bytes": 0,
+  "personal_original_retirement_authorized": false,
+  "historical_retirements": "August and legacy-buffer-2 receipts are evidence only; no eligibility transferred",
+  "admission_owner_receipt": "admission-reconciliation-20261009.json",
+  "scoped_verification": {
+    "status": "passed",
+    "exit_code": 0,
+    "base": "5d50e3de7475983d29e1e209a48d82724afebeef",
+    "scope": "receipt integration only; audit observations not independently replayed"
+  }
+}

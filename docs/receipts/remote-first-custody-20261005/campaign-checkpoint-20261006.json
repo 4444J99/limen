@@ -147,7 +147,8 @@
     "heavy_admission": "swap-fraction at 2026-10-09T19:40:37Z",
     "pressure_override_used": false,
     "owner": "4444J99/limen#2739",
-    "receipt": "docs/receipts/remote-first-custody-20261005/admission-reconciliation-20261009.json"
+    "receipt": "docs/receipts/remote-first-custody-20261005/admission-reconciliation-20261009.json",
+    "read_only_audit_receipt": "docs/receipts/remote-first-custody-20261005/publisher-cache-read-only-audit-20261009.json"
   },
   "august_unit_3": {
     "source_files": 132,
@@ -380,5 +381,15 @@
     "actual_accounting_status": "unmetered-historical-direct-execution",
     "expired_capsule_extended": false,
     "human_opened_read_only_audits_independent": true
+  },
+  "publisher_cache_read_only_audit": {
+    "receipt": "docs/receipts/remote-first-custody-20261005/publisher-cache-read-only-audit-20261009.json",
+    "received_at": "2026-10-09T19:44:12.353485+00:00",
+    "candidates_HOLD": 4,
+    "allocated_bytes_total": 5186232320,
+    "exhaustive_cache_recovery_verified": false,
+    "incoming_dependencies_cleared": false,
+    "mirror_exclusion_certified": false,
+    "source_payload_recovery_not_cache_recovery": true
   }
 }
