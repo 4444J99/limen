@@ -1,0 +1,161 @@
+{
+  "accounting_authority": "Domus launch_admission / tree_size; apparent bytes",
+  "august": {
+    "catalog_retained": true,
+    "logical_source_bytes": 4126494554,
+    "native_extraction_verified_this_attempt": false,
+    "native_restoration_accepted": false,
+    "originals_retained": true,
+    "published_logical_recovery_credited_from_existing_receipts": true,
+    "retired_files": 0,
+    "selected_conversation_restored": false,
+    "source_files": 550,
+    "units": {
+      "1": {
+        "logical_source_bytes": 1341801392,
+        "recovery_proof": "8f10ed42221f0c6bf4b42a87c17224ef971f11d4",
+        "source_files": 193,
+        "source_generation": "dfaaaf54d6c1788dc89c495fc98e432627fe1d91"
+      },
+      "2": {
+        "logical_source_bytes": 1172538415,
+        "recovery_proof": "7ee3b44591f1d1b0040c2e2b987263a1a2195ce0",
+        "source_files": 155,
+        "source_generation": "6600736dbaff10e6fa21292c417b78df8c1efb73"
+      },
+      "3": {
+        "logical_source_bytes": 1099558059,
+        "recovery_proof": "5b67edc33d5cce0dc28b462e950780fffe1c5386",
+        "source_files": 132,
+        "source_generation": "36888d5401d0a7740462681bef7ea34bdcdd74dd"
+      },
+      "4": {
+        "logical_source_bytes": 512596688,
+        "recovery_proof": "e1b417bb706d11a209685c67981125665192f442",
+        "source_files": 70,
+        "source_generation": "58cde929a66ea06f609cb1cf7ab128bf56d19d74"
+      }
+    }
+  },
+  "execution_authority": {
+    "broker_bootstrap": "documented _load_limen_env restored authenticated capabilities",
+    "budget_reset": false,
+    "execution_info_result": "409 execution_active_reservation_required",
+    "existing_outcome": "remote-first-custody-20261005",
+    "expired_deadline": "2026-10-09T20:21:54.188Z",
+    "full_historical_consumption_seconds": null,
+    "historical_reservations_preserved": true,
+    "known_consumption_lower_bound_seconds": 17284.892685,
+    "new_execution_reserved": false,
+    "prior_receipt": "docs/receipts/remote-first-custody-20261005/pressure-override-result-20261009.json",
+    "remaining_allowance_seconds": null,
+    "session_registered_human_protected": true
+  },
+  "implementation_admission": {
+    "bounded_scratch_exception_requested": true,
+    "dirty_domus_checkout_preserved": true,
+    "exception_authorized": false,
+    "latch_cleared": false,
+    "reason": "storage-headroom-latched-until-200-gib-free",
+    "requested_deadline_minutes": 30,
+    "requested_maximum_bytes": 268435456,
+    "result": "denied",
+    "scratch_free_bytes": 172255510528
+  },
+  "implementation_plan": [
+    "Reconcile execution accounting and admissible finite authority through existing owner before campaign execution; preserve actual lower bounds and expired deadlines.",
+    "Use remote Domus master containing the installed migration guards and process-ownership wrapper. Apply only implicated managed targets after scoped validation.",
+    "Keep Domus quota calculation authoritative. Add 70 percent target, nonblocking launch warning with usage/headroom and existing maintenance owner/action.",
+    "Replace residue runtime du measurement with bounded read-only Domus quota observation; separate broker request routing, deduplicate by existing work identity, retain one writer and inherited deadlines/checkpoints.",
+    "Add inactive-release plan/apply: exclude current, process-active and all referenced candidates; restrict staging outside runtime, verify full membership and hashes, retain interrupted transfers and recovery instructions.",
+    "Extend existing metabolism interface for closed, unchanged, unprotected Codex history with seven-day default. Select oldest eligible cohorts until at most 70 percent; no SQLite purge and no retirement based on age alone.",
+    "Reuse all four immutable August generations. Isolated native extraction must compare membership, content, links, permissions, ownership, timestamps, ACLs and captured xattrs; retain discrepancy evidence. Logical restoration does not pass native acceptance.",
+    "Complete registered same-collection replica requirements, private catalog and selected conversation recovery; verify Codex resumes original identity and contents before native resumption.",
+    "Retire only accepted exact captured sources after fresh comparison and active-session/dependency checks. Publish custody/retirement receipts; separately measure counted quota and physical disk change."
+  ],
+  "maintenance_contract": {
+    "completion_target_bytes": 9019431321,
+    "completion_target_percent": 70,
+    "quota_increase": false,
+    "warning_percent": 80,
+    "warnings_nonblocking": true
+  },
+  "managed_runtime": {
+    "active_conversation_usability_test_passed": false,
+    "deployment_performed": false,
+    "installed_equals_locally_available_origin_master": true,
+    "installed_sha256": "e340f621058b0190036f00c07edeabbbff96fe3b01ddc10d910ddb1216e44e98",
+    "managed_launch_command": "domus-agent-runtime exec codex -- /opt/homebrew/bin/codex --version",
+    "managed_launch_exit": 0,
+    "managed_launch_output": "codex-cli 0.162.0",
+    "original_identity_resume_test_passed": false,
+    "primary_source_is_behind_installed_migration_and_process_ownership": true
+  },
+  "native_session_id": "01a12259-b51a-7f20-9e7e-891e8081060d",
+  "next_owner_actions": [
+    {
+      "next_action": "Reconcile journals and accepted terminal receipts; current expired packet must not be rerun with a fresh deadline.",
+      "owner": "4444J99/limen#2739",
+      "predicate": "explicit finite executable admission with preserved cumulative accounting"
+    },
+    {
+      "next_action": "Await requested bounded Scratch exception or existing storage admission reopening; then create the exact origin/master-based checkout and run implicated scoped tests.",
+      "owner": "4444J99/domus-genoma#397 with limen#2739",
+      "predicate": "admitted isolated implementation checkout"
+    },
+    {
+      "next_action": "Resume from immutable August units only after execution admission; retain originals on every discrepancy or missing prerequisite.",
+      "owner": "4444J99/limen#2739",
+      "predicate": "both registered replicas available and full native restoration accepted"
+    }
+  ],
+  "observed_at": "2026-10-09T20:32:40.738098+00:00",
+  "outcome": {
+    "code_implemented": false,
+    "history_removed": 0,
+    "maintenance_second_pass_accepted": false,
+    "physical_recovery_attributable_bytes": 0,
+    "quota_target_accepted": false,
+    "runtime_deployed": false
+  },
+  "owner": "4444J99/limen#2739",
+  "protected_sqlite": {
+    "classification": "vendor state; retained",
+    "concurrent_growth_possible": true,
+    "recursive_database_and_sidecar_apparent_bytes": 2663003488,
+    "row_purges": 0,
+    "vendor_specific_recovery_lifecycle_verified": false
+  },
+  "quota": {
+    "headroom_bytes": 209153629,
+    "quota_bytes": 12884901888,
+    "size_bytes": 12675748259,
+    "utilization_ratio": 0.9837675419791291,
+    "warning": true,
+    "warning_threshold_bytes": 10307921511
+  },
+  "receipt_pr": "4444J99/limen#2834",
+  "replicas": {
+    "Archive4T": "mounted; no transfer this attempt",
+    "T7Recovery": "absent; required",
+    "two_device_acceptance": false
+  },
+  "required_validation_not_yet_run": [
+    "threshold crossing",
+    "deduplicated maintenance requests",
+    "concurrent writers",
+    "interrupted transfers",
+    "unavailable replicas",
+    "source changes",
+    "corrupt archives",
+    "restoration conflicts",
+    "original identity and contents resumed through Codex",
+    "active conversations usable throughout",
+    "runtime at most 70 percent",
+    "unchanged second maintenance pass",
+    "fixture warning-to-maintenance path"
+  ],
+  "schema": "limen.preventive_codex_quota_checkpoint.v1",
+  "source_pr_head": "d82f52f818e45d44f6facc54333a3e6d23dff0dc",
+  "status": "retained-prerequisites-unmet"
+}
