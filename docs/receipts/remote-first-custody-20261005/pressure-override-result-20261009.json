@@ -1,0 +1,167 @@
+{
+  "schema": "limen.pressure_override_recovery_result.v1",
+  "owner": "4444J99/limen#2739",
+  "receipt_pr": "4444J99/limen#2834",
+  "observed_at": "2026-10-09T20:15:29.726039+00:00",
+  "native_session_id": "01a12234-5566-7c62-a3cb-e131db894e50",
+  "authorization": {
+    "source": "direct human instruction: override",
+    "scope": "swap-fraction gate only for remaining original approved window; host exclusivity, live sensors, other pressure gates, custody and originals protection retained",
+    "hard_deadline": "2026-10-09T20:21:54.188000+00:00",
+    "additional_time_granted": 0,
+    "prior_attempt_agent_seconds": 186.557222,
+    "same_outcome": true,
+    "original_consumption_retained": true,
+    "corrective_admission": "changed input: explicit pressure override; does not renew original deadline"
+  },
+  "admission": {
+    "status": "admitted-and-executed",
+    "run_id": "run-810c476a7068a56a75f39ea62fafb139",
+    "outcome_id": "remote-first-custody-20261005",
+    "corrective_work_key": "remote-first-custody-20261005-pressure-override-01a12234",
+    "original_work_key_immutable": true,
+    "deployed_policy_owner": "LIMEN_EXECUTION_POLICY",
+    "deployed_policy_change": "one exact corrective key added to existing outcome; all existing keys, priorities and limits unchanged",
+    "live_admission_proves_corrective_key_installed": true,
+    "runtime_identity_observation": {
+      "schema_version": "limen.conduct_runtime_identity.v1",
+      "git_sha": "f93f3dd9076992ce6d38f4d697a5f7176b776013",
+      "deployment_id": "c9dfd60f-3d7f-4d7b-8a53-550d09bbb466"
+    },
+    "runtime_identity_did_not_change_after_secret_install": true,
+    "hard_deadline": "2026-10-09T20:21:54.188Z",
+    "deadline_extended": false
+  },
+  "host_override": {
+    "gate": "swap-fraction",
+    "scope": "process-local AdmissionController threshold supplied through existing constructor; shared atomic lease store used",
+    "global_host_policy_changed": false,
+    "other_pressure_gates_disabled": false,
+    "exclusive_heavy_lease_acquired": true,
+    "pid_start_identity_bound": true,
+    "host_lease_released": true,
+    "existing_work_killed_or_retuned": false
+  },
+  "candidates": [
+    {
+      "candidate": "corpus",
+      "status": "retained-full-logical-git-recovery-failed",
+      "original_files": 64,
+      "allocated_bytes": 134414336,
+      "archive_bytes": 134553600,
+      "remote_generation": "ca6b222721d8c3fda23212ff4f6a6ed47c1dc512",
+      "fresh_immutable_remote_readback_equal": true,
+      "independent_escrow_archive_decryption_passed": true,
+      "stored_bytes_native_attributes_objects_refs_hardlinks_equal": true,
+      "equality_evidence_basis": "unchanged guard reached missing-required-git-object only after all stored byte/native/object/ref/hardlink equality predicates passed",
+      "full_logical_git_recovery_passed": false,
+      "failed_predicate": "missing-required-git-object",
+      "missing_required_objects": 300,
+      "immutable_remote_tree_missing_blob_bytes": 9834457915,
+      "all_missing_objects_identified_in_immutable_remote_trees": true,
+      "remote_missing_blob_bytes_downloaded": false,
+      "removed": false
+    },
+    {
+      "candidate": "legacy-buffer-1",
+      "status": "retained-full-logical-git-recovery-failed",
+      "original_files": 291,
+      "allocated_bytes": 244428800,
+      "archive_bytes": 244940800,
+      "remote_generation": "a07b8837f22e304485359308d7412e621ddcc0db",
+      "fresh_immutable_remote_readback_equal": true,
+      "independent_escrow_archive_decryption_passed": true,
+      "stored_bytes_native_attributes_objects_refs_hardlinks_equal": true,
+      "equality_evidence_basis": "unchanged guard reached missing-required-git-object only after all stored byte/native/object/ref/hardlink equality predicates passed",
+      "full_logical_git_recovery_passed": false,
+      "failed_predicate": "missing-required-git-object",
+      "missing_required_objects": 562,
+      "immutable_remote_tree_missing_blob_bytes": 12378670837,
+      "all_missing_objects_identified_in_immutable_remote_trees": true,
+      "remote_missing_blob_bytes_downloaded": false,
+      "removed": false
+    },
+    {
+      "candidate": "claude-gemini",
+      "status": "unexecuted-after-controller-output-pipe-interruption",
+      "removed": false,
+      "full_logical_git_recovery_passed": false
+    },
+    {
+      "candidate": "private-document",
+      "status": "unexecuted-after-controller-output-pipe-interruption",
+      "removed": false,
+      "full_logical_git_recovery_passed": false
+    }
+  ],
+  "accounting": {
+    "historical_consumption_lower_bound_seconds": 16212.886,
+    "first_approved_attempt_seconds_to_terminal_receipt": 186.557222,
+    "corrective_attempt_seconds_to_terminal_receipt": 885.449463,
+    "cumulative_lower_bound_seconds_to_corrective_terminal_receipt": 17284.892685,
+    "full_historical_total": null,
+    "both_broker_reservations_retained_seconds": 3600,
+    "canonical_root_count_this_session": 2,
+    "accounting_reset": false,
+    "reserved_seconds_are_not_actual_consumption": true,
+    "scope": "native historical completed-turn lower bound plus approved elapsed window through corrective terminal receipt; later publication overhead and other sessions excluded"
+  },
+  "interruption": {
+    "daemon_recovery": "controller survived initial server restart; source work was not replayed",
+    "failure": "BrokenPipeError from closed tool-output pipe after second candidate failure",
+    "effect": "controller loop ended before last two candidates; broker terminal report accepted and host released",
+    "repair": "durable event write precedes print; catch BrokenPipeError for optional stdout; syntax check passed; corrected controller preserved encrypted and not relaunched"
+  },
+  "broker_terminal": {
+    "schema_version": "limen.conduct_report_result.v1",
+    "run_id": "run-810c476a7068a56a75f39ea62fafb139",
+    "receipt_id": "receipt-pressure-override-01a12234-5566-7c62-a3cb-e131db894e50",
+    "mutation_authorized": true,
+    "run_status": "blocked"
+  },
+  "broker_final_audit": {
+    "outcome_id": "remote-first-custody-20261005",
+    "hard_deadline": "2026-10-09T20:21:54.188Z",
+    "status": "blocked",
+    "reserved_seconds": 1800,
+    "active_leases": 0,
+    "canonical_runs": 2,
+    "authorized_terminal_receipts": 1
+  },
+  "private_execution_proof": {
+    "repository": "4444J99/arca-g3",
+    "generation": "8016b8f74ad546e5ac878a165398112ea90bab98",
+    "paths": [
+      "limen-reap/20261009/pressure-override-result-01a12234/execution.json.enc.part-00000",
+      "limen-reap/20261009/pressure-override-result-01a12234/manifest.json"
+    ],
+    "fresh_remote_blob_readback_equal": true,
+    "independent_escrow_decryption_equal": true,
+    "plaintext_bytes": 277883,
+    "full_logical_cache_recovery_certified": false
+  },
+  "results": {
+    "candidate_archives_newly_published_and_read_back": 2,
+    "complete_logical_cache_recoveries": 0,
+    "caches_removed": 0,
+    "retained_candidates": 4,
+    "retained_candidate_allocated_bytes": 5186232320,
+    "allocated_bytes_removed": 0,
+    "attributable_reclaimed_bytes": 0,
+    "personal_originals_retired": 0,
+    "shared_git_stores_removed": 0,
+    "collection_frozen": false,
+    "ssd_mirrors": 0,
+    "ssd_restore_tests": 0,
+    "Archive4T": "mounted; unexecuted",
+    "T7Recovery": "absent; unexecuted",
+    "automatic_retry_scheduled": false
+  },
+  "remaining_owner": {
+    "owner": "4444J99/limen#2739",
+    "failed_predicate": "complete logical Git restoration fails on missing promisor objects despite exact stored-byte/native reconstruction",
+    "next_action": "use preserved exhaustive archives and immutable source-ref trees to reconstruct full missing-object closure on external scratch, with capacity/deadline admission; retain all caches until unchanged recovery guard plus immediate incoming-dependency/ownership checks pass; finish remaining two candidate captures and freeze complete collection before SSD mirrors",
+    "continuation_boundary": "both finite broker roots settled; no automatic third root, deadline renewal or custody-gate override",
+    "output_pipe_repair_owner": "same #2739 / PR #2834; repaired private controller and provenance encrypted in private execution proof"
+  }
+}
