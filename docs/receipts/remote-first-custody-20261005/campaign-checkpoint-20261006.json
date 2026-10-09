@@ -57,7 +57,7 @@
     "august_unit_1_logical_bytes_removed": 1525794208,
     "august_unit_1_observed_free_bytes_delta": 516145152
   },
-  "observed_host_free_bytes": 15071293440,
+  "observed_host_free_bytes": 24243826688,
   "pending_publication": [],
   "remaining_capture_assets": {
     "private_proof_commit": "36fdd3891ebb0e65f17594571a1a6e871a2bea25",
@@ -71,11 +71,11 @@
     "includes_single_root_proof_guards_and_immutable_API_readers": true,
     "includes_current_https_publication_corrections_and_failure_evidence": true
   },
-  "next_owner_action": "All captured scopes including the private-document copy pass remote recovery. Continue the existing campaign final external-mirror pass and separately gated eligible cache retirement. Personal originals remain retained.",
+  "next_owner_action": "Reconcile and deploy the campaign approved priority in its owning conduct policy, then acquire recovery-writer and ordinary heavy leases. Retain caches until independent exhaustive restoration and ownership checks pass. Complete Archive4T; retain the T7Recovery rail under #2739 until its registered device is mounted.",
   "owner_blocker_receipt": "https://github.com/4444J99/limen/issues/2739#issuecomment-6070762687",
   "external_mirror_phase": "last, per explicit human instruction",
   "protected_sessions_and_personal_originals_retained": true,
-  "observed_at": "2026-10-09T18:05:29.594833+00:00",
+  "observed_at": "2026-10-09T18:44:55.742654+00:00",
   "session_corpus": {
     "source_files": 14244,
     "logical_source_bytes": 969491044,
@@ -139,16 +139,15 @@
     "measurement_affected_by_concurrent_activity": true
   },
   "latest_operation_checkpoint": {
-    "scope": "private-document-copy",
-    "capture_complete": true,
-    "publication_complete": false,
-    "publication_files_confirmed": 103,
-    "publication_files_denominator": 112,
-    "credential_gate_cleared": true,
-    "publication_files_remaining": 9,
-    "transport_error": "HTTP 408",
-    "corrective_framing_probe_failed": true,
-    "publisher_running": false
+    "scope": "remaining-publisher-caches-and-final-ssd-mirrors",
+    "status": "blocked-before-live-cache-retirement",
+    "candidates_retained": 4,
+    "removed_candidates": 0,
+    "broker_admission": "execution_priority_not_approved",
+    "heavy_admission": "swap-fraction",
+    "pressure_override_used": false,
+    "owner": "4444J99/limen#2739",
+    "receipt": "docs/receipts/remote-first-custody-20261005/publisher-cache-retirement-checkpoint-20261009.json"
   },
   "august_unit_3": {
     "source_files": 132,
@@ -347,6 +346,29 @@
     "original_sources_removed": false,
     "shared_store_removed": false
   },
-  "host_free_observed_at": "2026-10-08T23:03:32.265094+00:00",
-  "owner_blocker_receipt_is_historical_resolved": true
+  "host_free_observed_at": "2026-10-09T18:44:55.742654+00:00",
+  "owner_blocker_receipt_is_historical_resolved": true,
+  "publisher_cache_guard_checkpoint": {
+    "private_evidence_generation": "b3108c08e8740d5bd08fcc2b917d1302babba259",
+    "fixture_tests_passed": 27,
+    "live_recovery_verified": false,
+    "claimed_capacity_recovery_bytes": 0
+  },
+  "external_mirrors": {
+    "Archive4T": {
+      "mounted": true,
+      "mirror": "not-started-admission-denied",
+      "restore": "not-started"
+    },
+    "T7Recovery": {
+      "mounted": false,
+      "mirror": "blocked-device-absent",
+      "restore": "not-started",
+      "owner": "4444J99/limen#2739"
+    },
+    "Scratch": {
+      "role": "private-external-scratch",
+      "counts_as_second_recovery_device": false
+    }
+  }
 }

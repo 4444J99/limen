@@ -1,0 +1,148 @@
+{
+  "schema": "limen.publisher_cache_retirement_checkpoint.v1",
+  "owner": "4444J99/limen#2739",
+  "pull_request": "https://github.com/4444J99/limen/pull/2834",
+  "observed_at": "2026-10-09T18:44:55.742654+00:00",
+  "status": "blocked-before-live-cache-retirement",
+  "campaign_complete": false,
+  "native_agent": "codex",
+  "protected_direct_session_registered": true,
+  "broker_bootstrap": "documented-environment-hydration-succeeded",
+  "broker_recovery_writer_admission": "rejected: execution_priority_not_approved",
+  "new_children_launched": 0,
+  "task_projection_edited": false,
+  "heavy_admission": {
+    "allowed": false,
+    "observed_at": "2026-10-09T18:39:40.110085+00:00",
+    "operation": "acquire",
+    "pressure_override_used": false,
+    "reasons": [
+      "swap-fraction"
+    ],
+    "swap_fraction": 0.43268981931032613
+  },
+  "reserve_bytes": 10737418240,
+  "observed_internal_free_bytes": 24243826688,
+  "candidates": [
+    {
+      "candidate": "private-document",
+      "logical_bytes": 4239590316,
+      "allocated_bytes": 4242604032,
+      "retained": true,
+      "content_digest": null,
+      "exhaustive_content_recovery_verified": false
+    },
+    {
+      "candidate": "claude-gemini",
+      "logical_bytes": 563719636,
+      "allocated_bytes": 564785152,
+      "retained": true,
+      "content_digest": null,
+      "exhaustive_content_recovery_verified": false
+    },
+    {
+      "candidate": "legacy-buffer-1",
+      "logical_bytes": 243831496,
+      "allocated_bytes": 244428800,
+      "retained": true,
+      "content_digest": null,
+      "exhaustive_content_recovery_verified": false
+    },
+    {
+      "candidate": "corpus",
+      "logical_bytes": 134311517,
+      "allocated_bytes": 134414336,
+      "retained": true,
+      "content_digest": null,
+      "exhaustive_content_recovery_verified": false
+    }
+  ],
+  "removed_candidates": 0,
+  "logical_bytes_removed": 0,
+  "allocated_bytes_removed": 0,
+  "claimed_internal_capacity_recovery_bytes": 0,
+  "removal_measurement_pairs": [],
+  "physical_recovery_measured": false,
+  "measurement_semantics": "No removal occurred. Current df/APFS observations are encrypted evidence, not attributable recovery. Metadata identity digests are not content digests.",
+  "exhaustive_recovery_evidence": "not-started-admission-denied",
+  "private_evidence": {
+    "repository": "4444J99/arca-g3",
+    "generation": "b3108c08e8740d5bd08fcc2b917d1302babba259",
+    "paths": [
+      "limen-reap/20261009/publisher-cache-guard-01a121f2-delivery/execution.json.enc.part-00000",
+      "limen-reap/20261009/publisher-cache-guard-01a121f2-delivery/manifest.json"
+    ],
+    "fresh_remote_equal": true,
+    "independent_escrow_decryption_equal": true
+  },
+  "controller": {
+    "status": "private-helper-implemented-and-fixture-verified; live adapter not executed",
+    "unit_tests_passed": 27,
+    "ruff_F": "passed",
+    "coverage": [
+      "complete byte archive and independent reconstruction",
+      "actual macOS ACL and xattr recovery",
+      "unreachable and missing Git objects",
+      "corrupt archive",
+      "LFS and Git transfer residue",
+      "administrative metadata and hardlink topology",
+      "candidate content and inode drift",
+      "incoming and outgoing dependencies",
+      "active owner",
+      "reserve exhaustion",
+      "remote advancement",
+      "repeat removal",
+      "inherited deadline exhaustion"
+    ],
+    "live_cache_recovery_verified": false,
+    "public_API_changed": false
+  },
+  "scoped_verification": {
+    "status": "passed",
+    "exit_code": 0,
+    "base": "eafb21c23c7c9f24e188605e426d52da5cf02f8f",
+    "command": "bash scripts/verify-scoped.sh --base eafb21c23c7c9f24e188605e426d52da5cf02f8f --require-base",
+    "passed_gates": [
+      "diff-hygiene",
+      "syntax-changed",
+      "check-docs-exports",
+      "check-note-links"
+    ],
+    "scope": "two new/updated receipt files since previously verified PR head; unchanged implementation is not re-certified by a documentation-only gate"
+  },
+  "ssd_rails": {
+    "Archive4T": {
+      "mounted": true,
+      "mirror": "not-started-admission-denied",
+      "restore": "not-started"
+    },
+    "T7Recovery": {
+      "mounted": false,
+      "mirror": "blocked-device-absent",
+      "restore": "not-started",
+      "owner": "4444J99/limen#2739"
+    },
+    "Scratch": {
+      "role": "private-external-scratch",
+      "counts_as_second_recovery_device": false
+    }
+  },
+  "final_collection_manifest_frozen": false,
+  "protected": {
+    "existing_proof_directories_removed": false,
+    "personal_originals_removed": false,
+    "primary_git_store_present": true,
+    "shared_arca_store_present": true
+  },
+  "remaining_owner": {
+    "owner": "4444J99/limen#2739",
+    "missing_predicate": "deployed execution policy admits the exact campaign; normal heavy admission; exhaustive independent recovery for each candidate; both registered SSD restores",
+    "next_action": "Reconcile and deploy the campaign approved priority in its owning conduct policy, then acquire recovery-writer and ordinary heavy leases. Retain caches until independent exhaustive restoration and ownership checks pass. Complete Archive4T; retain the T7Recovery rail under #2739 until its registered device is mounted.",
+    "next_command": "python3 admit.py (controller recovered from the encrypted evidence generation)",
+    "no_unapproved_policy_or_pressure_override_applied": true
+  },
+  "checkout_disposition": "retained-clean-at-published-topic-head-for-existing-owner-2739",
+  "personal_original_retirement": "outside-this-pass",
+  "whole_estate_completion": false,
+  "credential_wall_check": "passed: all 31 secret atoms registered"
+}
