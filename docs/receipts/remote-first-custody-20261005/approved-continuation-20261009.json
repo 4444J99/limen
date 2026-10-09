@@ -1,0 +1,33 @@
+{
+  "schema": "limen.recovery_continuation_amendment.v1",
+  "owner": "4444J99/limen#2739",
+  "receipt_pr": "4444J99/limen#2834",
+  "outcome_id": "remote-first-custody-20261005",
+  "native_session_id": "01a12234-5566-7c62-a3cb-e131db894e50",
+  "authorization": {
+    "source": "direct human approval of published proposal",
+    "approved_at": "2026-10-09T19:51:54.224Z",
+    "approved_proposal_commit": "0d6d323bd05b6d8212fef798b6879fd4197bb77e",
+    "approved_proposal_receipt": "docs/receipts/remote-first-custody-20261005/continuation-accounting-20261009.json"
+  },
+  "started_at": "2026-10-09T19:51:54.188Z",
+  "hard_deadline": "2026-10-09T20:21:54.188000+00:00",
+  "additional_seconds": 1800,
+  "verification_seconds_within_attempt": 600,
+  "max_attempts": 1,
+  "initiated_children": 0,
+  "historical_completed_native_duration_ms_lower_bound": 16212886,
+  "historical_full_campaign_duration_ms": null,
+  "cumulative_accounting_reset": false,
+  "sole_recovery_writer": true,
+  "host_override_authorized": false,
+  "scope": [
+    "supported finite broker admission with historical carry-forward",
+    "exhaustive independent publisher-cache recovery and individually measured retirement",
+    "complete collection freeze and Archive4T mirror/restoration only within deadline and after prerequisites"
+  ],
+  "personal_originals_retained": true,
+  "shared_git_stores_retained": true,
+  "automatic_continuation": false,
+  "t7_substitution": false
+}
