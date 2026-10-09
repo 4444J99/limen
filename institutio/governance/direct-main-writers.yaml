@@ -10,6 +10,12 @@ remote_enforcement:
 # default-ref sink must be classified here. `scripts/direct-main-writer-audit.py`
 # fails when a sink appears, disappears, or changes count without review.
 surfaces:
+  .github/workflows/ops-owner-release.yml:
+    disposition: owner-manual-main-guard-no-git-write
+    expected: {default_ref_literal: 1}
+  scripts/test_ops_inspect_carrier.py:
+    disposition: carrier-main-guard-test-no-git-write
+    expected: {default_ref_literal: 1}
   .github/workflows/cloudflare-kv-preflight.yml:
     # The literal is a read-only source-identity guard. No Git write exists.
     disposition: exact-main-scoped-cloudflare-release-no-git-write
