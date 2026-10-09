@@ -82,6 +82,15 @@ class ObservationTests(unittest.TestCase):
    return {'bindings':[{'type':'d1','name':'SCHED_DB','database_id':'private-scheduler-db'}]
     if name=='ops-scheduler-production' else []}
   def crons(self,name):return ['* * * * *'] if name=='ops-scheduler-production' else []
+  def request(self,path,method,data):
+   query=json.loads(data)['sql']
+   if query==m.recovery_baseline.CONTROL:
+    activation=int((dt.datetime.now(dt.timezone.utc)-dt.timedelta(days=2)).timestamp()*1000)
+    rows=[{'source_sha':m.recovery_baseline.SOURCE,'enabled':1,'activate_after':activation}]
+   elif query==m.recovery_baseline.QUEUE:
+    rows=[{'target':name,'oldest_pending_at':None} for name in m.TARGET_AGES]
+   else:raise AssertionError(query)
+   return [{'success':True,'results':rows}]
   def sql(self,statement,params):
    if self.fail:raise m.r.inv.o.SafeError('release_http_400 private-provider-body private-token')
    now=time.time()*1000
@@ -111,7 +120,7 @@ class ObservationTests(unittest.TestCase):
   def open_query(request,timeout):
    self.assertEqual(json.loads(request.data)['query'],m.QUERY)
    return io.BytesIO(json.dumps(analytics).encode())
-  with patch.object(m.r,'public',side_effect=self.public),patch.object(
+  with patch.object(m.recovery_baseline,'NOT_BEFORE',0),patch.object(m.r,'public',side_effect=self.public),patch.object(
     m.r.inv.o.OPENER,'open',side_effect=open_query):
    return m.observe(client)
 

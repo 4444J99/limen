@@ -83,6 +83,13 @@ LANE_META: dict[str, dict] = {
 # absent from the Wall before this generator existed.
 CI_SECRETS: list[dict] = [
     {
+        "name": "OPS_SOURCE_GITHUB_TOKEN",
+        "home": "GitHub Actions secret in 4444J99/limen; existing trusted gh credential, no new credential minted",
+        "used": "accepted ops reusable workflow private-source checkout; persist-credentials false",
+        "hand": "none — exact recovery commit read verified before installation on 2026-10-09",
+        "issue": "ops#6 / ops#30",
+    },
+    {
         "name": "LIMEN_API_TOKEN",
         "home": "GitHub Actions secret (set) + GCP Secret Manager `limen-api-token:latest`",
         "used": "`web/api/main.py` owner bearer; dashboard deploy runtime verification",
