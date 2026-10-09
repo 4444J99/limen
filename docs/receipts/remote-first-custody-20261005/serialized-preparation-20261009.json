@@ -1,0 +1,134 @@
+{
+  "schema": "limen.recovery_continuation_proposal.v1",
+  "owner": "4444J99/limen#2739",
+  "receipt_pr": "4444J99/limen#2834",
+  "observed_at": "2026-10-09T21:58:57.413830+00:00",
+  "native_session_id": "01a122a8-a304-73d2-87ab-32e5ff93a22f",
+  "status": "read-only-preparation-gated",
+  "base_head": "9a4960ac52c5a2c043e8cfb3cf25c9461050f47a",
+  "existing_recovery_owner_native_session": "01a12234-5566-7c62-a3cb-e131db894e50",
+  "source_receipts": [
+    "pressure-override-result-20261009.json",
+    "publisher-cache-read-only-audit-20261009.json",
+    "continuation-accounting-20261009.json"
+  ],
+  "accounting": {
+    "carried_lower_bound_seconds": 17284.892685,
+    "full_historical_total": null,
+    "remaining_allowance": null,
+    "cumulative_accounting_reset": false,
+    "new_recovery_roots": 0,
+    "new_child_reservations": 0,
+    "preparation_started_at": "2026-10-09T21:54:01Z",
+    "preparation_observed_through": "2026-10-09T21:58:57.413830+00:00",
+    "preparation_elapsed_not_in_prior_lower_bound": true,
+    "elapsed_scope": "current shared Standards/Limen coordinator turn only; not added to both outcomes or represented as full campaign usage"
+  },
+  "deadline": {
+    "expired_packet_deadline": "2026-10-09T20:21:54.188Z",
+    "expired_packet_extended": false,
+    "fresh_execution_packet_constructed": false,
+    "pressure_override_inherited": false
+  },
+  "live_observations": {
+    "external_physical_devices": [],
+    "mounted_recovery_devices": [],
+    "Archive4T_mounted": false,
+    "T7Recovery_mounted": false,
+    "Scratch_mounted": false,
+    "restored_cache_access": "unavailable on absent external staging volume",
+    "missing_object_probe_run": false,
+    "private_controller_recovered_or_executed": false,
+    "internal_available_bytes": 14663065600,
+    "internal_available_observed_at": "2026-10-09T21:55:35Z",
+    "heavy_admission": {
+      "allowed": false,
+      "reason": "swap-fraction",
+      "observed_at": "2026-10-09T21:55:17.953635+00:00",
+      "swap_fraction": 0.46694213862065226,
+      "leases": []
+    },
+    "canonical_recovery_run": "run-810c476a7068a56a75f39ea62fafb139",
+    "canonical_recovery_status": "blocked",
+    "canonical_recovery_deadline_expired": true
+  },
+  "closure_analysis": {
+    "status": "HOLD-exact-manifests-unavailable",
+    "historical_candidates": [
+      {
+        "candidate": "corpus",
+        "missing_objects": 300,
+        "closure_bytes": 9834457915,
+        "archive_bytes": 134553600,
+        "archive_generation": "ca6b222721d8c3fda23212ff4f6a6ed47c1dc512"
+      },
+      {
+        "candidate": "legacy-buffer-1",
+        "missing_objects": 562,
+        "closure_bytes": 12378670837,
+        "archive_bytes": 244940800,
+        "archive_generation": "a07b8837f22e304485359308d7412e621ddcc0db"
+      }
+    ],
+    "deduplicated_overlap_objects": null,
+    "deduplicated_unique_bytes": null,
+    "sum_is_unique_bytes": false,
+    "sum_of_per_cache_closure_bytes": 22213128752,
+    "deduplicated_unique_bytes_upper_bound_from_historical_counts": 22213128752,
+    "size_bound_requires_fresh_exact_manifest": true,
+    "sensitive_manifests": "approved private staging only; no OIDs or paths published here",
+    "G_packet_frozen": false,
+    "H_audit_started": false
+  },
+  "proposed_amendment": {
+    "status": "awaiting-explicit-human-authorization-and-applicable-admission",
+    "outcome_id": "remote-first-custody-20261005",
+    "owner": "4444J99/limen#2739",
+    "additional_execution_seconds": 1800,
+    "verification_seconds_within_attempt": 600,
+    "max_attempts": 1,
+    "automatic_continuation": false,
+    "sole_recovery_writer": true,
+    "existing_writer_native_session": "01a12234-5566-7c62-a3cb-e131db894e50",
+    "scope": [
+      "receive G exact missing-object closure manifests after external staging returns",
+      "recover and inspect independently verified private controller",
+      "perform at most one candidate reconstruction in the admitted window",
+      "publish exact recovery result and handoff to distinct H auditor; retain candidate until independent audit and immediate eligibility gates pass"
+    ],
+    "excluded": [
+      "automatic deadline renewal",
+      "inherited pressure override",
+      "cache retirement before H verdict",
+      "internal disk hydration",
+      "shared-store or personal-original deletion",
+      "SSD mirroring before complete collection freeze"
+    ],
+    "start_condition": "actual approval of this finite proposal, authenticated existing-owner broker admission, registered external staging identity and capacity, ordinary host admission",
+    "stop_condition": "hard 1800-second deadline or failed prerequisite; checkpoint rather than renew"
+  },
+  "results": {
+    "caches_removed": 0,
+    "allocated_bytes_removed": 0,
+    "attributable_reclaimed_bytes": 0,
+    "ssd_transfers": 0,
+    "collection_frozen": false,
+    "originals_and_shared_stores_retained": true
+  },
+  "standards": {
+    "sole_coordinator_native_session": "01a122a7-a8ed-7a42-bcf5-01cb77931166",
+    "coordinator_checkpoint": "02d6741907bd2f3d5e18600f0816b60298d94125",
+    "positive_A_assignment_release_received": true,
+    "historical_B_C_D_E_released": false,
+    "draft_head": "3db2831f7b37852414bd77d330a240d7a0f9a35b",
+    "workers_started": 0
+  },
+  "next_action": "restore access to registered external staging; G read-only manifests and overlap; approve finite proposal through existing owner before F execution; ordinary admission still required",
+  "checkout_disposition": "no checkout created or reused; shared primary checkout not mutated; absent topic checkout retained; coordinator receipt publication only",
+  "verification": {
+    "receipt_json_assertions": "passed before publication",
+    "remote_readback": "performed after publication; result reported separately",
+    "implementation_tests": "not run; no implementation change",
+    "logical_restoration": "not run; no restored cache accessible"
+  }
+}
