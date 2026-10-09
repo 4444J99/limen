@@ -46,7 +46,6 @@
     {
       "candidate": "corpus",
       "status": "retained-full-logical-git-recovery-failed",
-      "original_files": 64,
       "allocated_bytes": 134414336,
       "archive_bytes": 134553600,
       "remote_generation": "ca6b222721d8c3fda23212ff4f6a6ed47c1dc512",
@@ -60,12 +59,12 @@
       "immutable_remote_tree_missing_blob_bytes": 9834457915,
       "all_missing_objects_identified_in_immutable_remote_trees": true,
       "remote_missing_blob_bytes_downloaded": false,
-      "removed": false
+      "removed": false,
+      "original_entries_including_directories": 64
     },
     {
       "candidate": "legacy-buffer-1",
       "status": "retained-full-logical-git-recovery-failed",
-      "original_files": 291,
       "allocated_bytes": 244428800,
       "archive_bytes": 244940800,
       "remote_generation": "a07b8837f22e304485359308d7412e621ddcc0db",
@@ -79,7 +78,8 @@
       "immutable_remote_tree_missing_blob_bytes": 12378670837,
       "all_missing_objects_identified_in_immutable_remote_trees": true,
       "remote_missing_blob_bytes_downloaded": false,
-      "removed": false
+      "removed": false,
+      "original_entries_including_directories": 291
     },
     {
       "candidate": "claude-gemini",
@@ -162,6 +162,7 @@
     "failed_predicate": "complete logical Git restoration fails on missing promisor objects despite exact stored-byte/native reconstruction",
     "next_action": "use preserved exhaustive archives and immutable source-ref trees to reconstruct full missing-object closure on external scratch, with capacity/deadline admission; retain all caches until unchanged recovery guard plus immediate incoming-dependency/ownership checks pass; finish remaining two candidate captures and freeze complete collection before SSD mirrors",
     "continuation_boundary": "both finite broker roots settled; no automatic third root, deadline renewal or custody-gate override",
-    "output_pipe_repair_owner": "same #2739 / PR #2834; repaired private controller and provenance encrypted in private execution proof"
+    "output_pipe_repair_owner": "same #2739 / PR #2834; repaired private controller and provenance encrypted in private execution proof",
+    "next_observation_command": "GIT_NO_LAZY_FETCH=1 git --git-dir \"$RESTORED_CACHE\" rev-list --objects --all --missing=print"
   }
 }
