@@ -12,6 +12,7 @@ import urllib.request
 import release as r
 from quota_status import annotate, safe_failure
 from execution_health import health, read_receipts
+import recovery_baseline
 
 FIRST_COMPLETE_DAY = '2026-09-24'
 EXPECTED_REVISION = 'kv-recovery-d1-20260923-v2'
@@ -45,16 +46,16 @@ def record_owner(owners, namespace_id, name, shared_label='shared_namespace'):
   owners[namespace_id]=shared_label
 
 
-def build_days(kv_days, d1, today, database_days=None):
+def build_days(kv_days, d1, today, database_days=None, first_complete_day=FIRST_COMPLETE_DAY):
  by_date={row['date']:row for row in kv_days}
  previous=today-dt.timedelta(days=1)
- expected={previous.isoformat()} if previous>=dt.date.fromisoformat(FIRST_COMPLETE_DAY) else set()
+ expected={previous.isoformat()} if first_complete_day and previous>=dt.date.fromisoformat(first_complete_day) else set()
  days=[]
  for date in sorted(set(by_date)|set(d1)|expected):
   row=by_date.get(date,{})
   ops=row.get('account_operations',{})
   storage=d1.get(date)
-  complete=date<today.isoformat() and date>=FIRST_COMPLETE_DAY
+  complete=bool(first_complete_day and date<today.isoformat() and date>=first_complete_day)
   required={'read','write','list','delete'}
   within=(complete and required.issubset(ops) and storage is not None
     and ops['read']<=80000 and ops['write']<=800 and ops['list']<=800
@@ -67,7 +68,7 @@ def build_days(kv_days, d1, today, database_days=None):
  return days
 
 
-def usage(client, owners, database_owners=None):
+def usage(client, owners, database_owners=None, first_complete_day=FIRST_COMPLETE_DAY):
  now=dt.datetime.now(dt.timezone.utc)
  params={'query':QUERY,'variables':{'account':client.aid,
    'start':(now.date()-dt.timedelta(days=1)).isoformat(),'end':now.date().isoformat()}}
@@ -98,14 +99,14 @@ def usage(client, owners, database_owners=None):
   attributed=database_days.setdefault(date,{}).setdefault(owner,{'rowsRead':0,'rowsWritten':0})
   for key in ('rowsRead','rowsWritten'):
    total[key]+=values[key];attributed[key]+=values[key]
- return {'days':build_days(kv['days'],d1,now.date(),database_days),
+ return {'days':build_days(kv['days'],d1,now.date(),database_days,first_complete_day),
          'qualification':'adaptive analytics, not exact billing or proof of successful operations; absent operation dimensions remain unobserved'}
 
 
 def observe(client):
  report={'observed_at':dt.datetime.now(dt.timezone.utc).isoformat(),'mode':'read_only',
          'mutations':0,'products':{},'schedulers':{},'first_complete_day':FIRST_COMPLETE_DAY}
- owners={};database_owners={}
+ owners={};database_owners={};baseline=None
  for name in r.PRODUCTS:
   for binding in client.settings(name)['bindings']:
    if binding['type']=='kv_namespace':record_owner(owners,binding['namespace_id'],name)
@@ -131,13 +132,21 @@ def observe(client):
     # completion and the exact still-live lease; never call the new run done.
     receipts=read_receipts(client,state,TARGET_AGES) if name=='ops-scheduler-production' else {}
     entry['jobs']=project_state(state,time.time()*1000,receipts)
+    if name=='ops-scheduler-production':
+     baseline=recovery_baseline.read(client,TARGET_AGES,time.time()*1000)
+     entry['recovery']=baseline
+     for target,job in entry['jobs'].items():
+      completed=state.get('targetStates',{}).get(target,{}).get('lastCompletedAt',0)
+      job['completed_after_activation']=type(completed) in (int,float) and completed>=baseline['activate_after']
+      job['healthy']=job['healthy'] and job['completed_after_activation']
    except Exception:
     # D1 exhaustion must not erase independent product, topology or analytics
     # observations. Exception/provider text stays private; unknown jobs fail closed.
     entry['execution_error']='scheduler_execution_unavailable'
     entry['jobs']=project_state({},time.time()*1000)
   report['schedulers'][name]=entry
- report['usage']=usage(client, owners, database_owners)
+ report['first_complete_day']=baseline['first_complete_day'] if baseline else None
+ report['usage']=usage(client, owners, database_owners,report['first_complete_day'])
  products_ok=all(v['liveness_http']==200 and v['status_http']==200 and v['revision_verified'] and v['snapshot_stale'] is False for v in report['products'].values())
  topology_ok=all(report['schedulers'][n]['cron']==[] for n in r.DUPLICATES) and report['schedulers']['ops-scheduler-production']['cron']==['* * * * *']
  jobs=report['schedulers']['ops-scheduler-production'].get('jobs',{})
