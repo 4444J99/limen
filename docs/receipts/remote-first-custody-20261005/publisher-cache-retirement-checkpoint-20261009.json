@@ -2,7 +2,7 @@
   "schema": "limen.publisher_cache_retirement_checkpoint.v1",
   "owner": "4444J99/limen#2739",
   "pull_request": "https://github.com/4444J99/limen/pull/2834",
-  "observed_at": "2026-10-09T18:44:55.742654+00:00",
+  "observed_at": "2026-10-09T19:55:47.220154+00:00",
   "status": "blocked-before-live-cache-retirement",
   "campaign_complete": false,
   "native_agent": "codex",
@@ -13,13 +13,13 @@
   "task_projection_edited": false,
   "heavy_admission": {
     "allowed": false,
-    "observed_at": "2026-10-09T18:39:40.110085+00:00",
+    "observed_at": "2026-10-09T19:54:07.351640+00:00",
     "operation": "acquire",
     "pressure_override_used": false,
     "reasons": [
       "swap-fraction"
     ],
-    "swap_fraction": 0.43268981931032613
+    "swap_fraction": 0.4201123046805151
   },
   "reserve_bytes": 10737418240,
   "observed_internal_free_bytes": 24243826688,
@@ -64,7 +64,7 @@
   "removal_measurement_pairs": [],
   "physical_recovery_measured": false,
   "measurement_semantics": "No removal occurred. Current df/APFS observations are encrypted evidence, not attributable recovery. Metadata identity digests are not content digests.",
-  "exhaustive_recovery_evidence": "not-started-admission-denied",
+  "exhaustive_recovery_evidence": "not-started-host-admission-denied",
   "private_evidence": {
     "repository": "4444J99/arca-g3",
     "generation": "b3108c08e8740d5bd08fcc2b917d1302babba259",
@@ -108,12 +108,13 @@
       "check-docs-exports",
       "check-note-links"
     ],
-    "scope": "two new/updated receipt files since previously verified PR head; unchanged implementation is not re-certified by a documentation-only gate"
+    "scope": "two new/updated receipt files since previously verified PR head; unchanged implementation is not re-certified by a documentation-only gate",
+    "historical_receipt_scope": true
   },
   "ssd_rails": {
     "Archive4T": {
       "mounted": true,
-      "mirror": "not-started-admission-denied",
+      "mirror": "not-started-host-admission-denied",
       "restore": "not-started"
     },
     "T7Recovery": {
@@ -136,9 +137,9 @@
   },
   "remaining_owner": {
     "owner": "4444J99/limen#2739",
-    "missing_predicate": "actual finite allowance/retry reconciliation; ordinary heavy admission; exhaustive candidate recovery and dependencies; frozen final collection and both registered SSD restores",
-    "next_action": "Preserve all four HOLD caches. Reconcile actual finite accounting before executable admission; then preserve and independently restore every cache byte, clear incoming dependencies, and establish inclusion or certified exclusion from the final mirror collection. Recheck immediately before each retirement.",
-    "next_command": "python3 admit.py only after valid finite admission; retain inherited accounting and do not extend an expired capsule",
+    "missing_predicate": "ordinary heavy admission; independently restored exhaustive candidate recovery and fresh dependency/ownership checks; frozen final collection and both registered SSD restores",
+    "next_action": "Retain all four HOLD caches. After materially changed host conditions, reconcile the terminal approved attempt before separately admitted recovery; no automatic retry or pressure override.",
+    "next_command": "python3 scripts/host-work-admission.py status",
     "no_unapproved_policy_or_pressure_override_applied": true
   },
   "checkout_disposition": "retained-clean-at-published-topic-head-for-existing-owner-2739",
@@ -146,6 +147,15 @@
   "whole_estate_completion": false,
   "credential_wall_check": "passed: all 31 secret atoms registered",
   "admission_observation_is_historical": true,
-  "current_admission_receipt": "admission-reconciliation-20261009.json",
-  "read_only_audit_receipt": "docs/receipts/remote-first-custody-20261005/publisher-cache-read-only-audit-20261009.json"
+  "current_admission_receipt": "approved-continuation-result-20261009.json",
+  "read_only_audit_receipt": "docs/receipts/remote-first-custody-20261005/publisher-cache-read-only-audit-20261009.json",
+  "latest_admission": {
+    "status": "approved-continuation-admitted-host-blocked",
+    "run_id": "run-98437c7ef7383cf72357dbdf407f73b5",
+    "deadline": "2026-10-09T20:21:54.188Z",
+    "terminal_receipt_accepted": true,
+    "active_leases": 0,
+    "receipt": "docs/receipts/remote-first-custody-20261005/approved-continuation-result-20261009.json"
+  },
+  "current_receipt_verification": "immutable remote JSON readback and semantic receipt assertions passed; no new scoped runner batch claimed"
 }
