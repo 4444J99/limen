@@ -1,0 +1,17 @@
+{
+  "schema": "limen.private_document_transfer_checkpoint.v1",
+  "owner": "4444J99/limen#2739",
+  "scope": "private-document-copy",
+  "repository": "4444J99/arca-g3",
+  "source_generation": "bad7ecc29ee7e91e010e617acc173d96b14e2bd9",
+  "complete_manifest_published": true,
+  "published_files": 112,
+  "readback_status": "in_progress",
+  "originals_retained": true,
+  "native_source_retirement_certified": false,
+  "fixed_reserve_bytes": 10737418240,
+  "staging_budget_bytes": 7516192768,
+  "credential_wall_check": "passed: all 31 atoms registered",
+  "broker_registration": "unavailable: authenticated broker not configured; no lifecycle transitions attempted",
+  "next_action": "Complete exact-generation readback, escrow decryption, full logical archive verification, and encrypted execution proof"
+}
