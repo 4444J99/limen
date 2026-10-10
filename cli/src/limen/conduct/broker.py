@@ -383,6 +383,11 @@ class ConductBroker:
                 "run_id": run["run_id"],
                 "work_key": run["packet"]["work_key"],
                 **copy.deepcopy(run["execution_admission"]),
+                "storage_repair": self.execution_policy.get("mode") == "recovery"
+                and any(
+                    p.get("outcome_id") == run["execution_admission"]["outcome_id"] and p.get("storage_repair") is True
+                    for p in self.execution_policy.get("approved_priorities", [])
+                ),
             }
 
     def reserve_growth(self, work_key, action, identity_hash, *, principal=None, now=None):

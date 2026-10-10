@@ -124,6 +124,57 @@ main.add_command(fanout_group)
 main.add_command(repos_group)
 
 
+@main.command("repair-checkout")
+@click.option("--work-key", required=True)
+@click.option("--repository", type=click.Path(exists=True, path_type=Path), required=True)
+@click.option("--destination", type=click.Path(path_type=Path), required=True)
+@click.option("--revision", required=True)
+def repair_checkout(work_key: str, repository: Path, destination: Path, revision: str) -> None:
+    """Create one owner-admitted repair checkout; prefer an inactive existing checkout."""
+    from limen.conduct.client import HttpConductClient
+    from limen.repair_checkout import create_repair_checkout
+    from limen.storage_headroom import StorageAdmissionError
+
+    client = client_from_env()
+    if not isinstance(client, HttpConductClient):
+        raise click.ClickException("repair requires the authenticated remote keeper")
+    try:
+        click.echo(json.dumps(create_repair_checkout(client, work_key, repository, destination, revision)))
+    except (StorageAdmissionError, OSError, subprocess.SubprocessError) as exc:
+        raise click.ClickException("repair checkout denied; inspect retained owner state") from exc
+
+
+@main.command("runtime-quota")
+@click.option("--request-maintenance", is_flag=True)
+@click.option("--target-percent", type=click.IntRange(1, 100), default=100)
+@click.option("--agent", type=click.Choice(["codex", "claude", "gemini", "opencode", "total"]))
+def runtime_quota(request_maintenance: bool, target_percent: int, agent: str | None) -> None:
+    """Observe Domus quotas or file deduplicated keeper-owned maintenance intake."""
+    from limen.runtime_quota import maintenance_requests
+
+    try:
+        if request_maintenance:
+            payload = json.loads(sys.stdin.read(1024 * 1024))
+            requests = maintenance_requests(payload, resolve_tasks_path(resolve_root()))
+            click.echo(json.dumps({"status": "intake_pending", "requests": requests}))
+        else:
+            command = ["domus-agent-runtime", "quota", "--json", "--target-percent", str(target_percent)]
+            if agent:
+                command.extend(["--agent", agent])
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
+            click.echo(result.stdout)
+            if result.returncode:
+                raise click.exceptions.Exit(result.returncode)
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        raise click.ClickException("runtime quota owner unavailable or observation invalid") from exc
+
+
 @click.group("repo")
 def repo_group() -> None:
     """Acquire and release session-scoped repository residency."""

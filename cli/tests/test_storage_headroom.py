@@ -7,9 +7,15 @@ from types import SimpleNamespace
 import pytest
 
 from limen.storage_headroom import SCHEMA, StorageAdmissionError, require_storage_headroom
+from limen.storage_headroom import storage_identity as actual_storage_identity
 
 
 GIB = 1024**3
+
+
+@pytest.fixture(autouse=True)
+def identity(monkeypatch):
+    monkeypatch.setattr("limen.storage_headroom.storage_identity", lambda path: "internal")
 
 
 def _free_bytes(monkeypatch: pytest.MonkeyPatch, value: int) -> None:
@@ -46,6 +52,61 @@ def test_mid_band_allows_when_no_low_space_latch_exists(tmp_path: Path, monkeypa
     _free_bytes(monkeypatch, 100 * GIB)
 
     require_storage_headroom(tmp_path / "worktrees" / "new")
+
+
+def test_external_observation_cannot_clear_internal_legacy_latch(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    _free_bytes(monkeypatch, 49 * GIB)
+    with pytest.raises(StorageAdmissionError):
+        require_storage_headroom(tmp_path)
+    monkeypatch.setattr(
+        "limen.storage_headroom.storage_identity", lambda path: "internal" if path == Path.home() else "external"
+    )
+    _free_bytes(monkeypatch, 220 * GIB)
+    require_storage_headroom(tmp_path)
+    assert json.loads(_state(tmp_path).read_text())["blocked"] is True
+    monkeypatch.setattr("limen.storage_headroom.storage_identity", lambda path: "internal")
+    _free_bytes(monkeypatch, 100 * GIB)
+    with pytest.raises(StorageAdmissionError):
+        require_storage_headroom(tmp_path)
+
+
+def test_shared_pool_latches_across_paths(tmp_path, monkeypatch):
+    monkeypatch.setenv("XDG_STATE_HOME", str(tmp_path / "state"))
+    monkeypatch.setattr(
+        "limen.storage_headroom.storage_identity", lambda path: "internal" if path == Path.home() else "shared-apfs"
+    )
+    _free_bytes(monkeypatch, 49 * GIB)
+    with pytest.raises(StorageAdmissionError):
+        require_storage_headroom(tmp_path / "one")
+    _free_bytes(monkeypatch, 100 * GIB)
+    with pytest.raises(StorageAdmissionError):
+        require_storage_headroom(tmp_path / "two")
+
+
+def test_missing_mount_does_not_fall_back_to_parent(monkeypatch):
+    monkeypatch.setattr(Path, "is_mount", lambda path: False)
+    with pytest.raises(StorageAdmissionError, match="mount-unavailable"):
+        require_storage_headroom("/Volumes/Absent/worktrees/new")
+
+
+def test_apfs_volumes_use_persistent_container_uuid(tmp_path, monkeypatch):
+    import plistlib
+
+    monkeypatch.setattr("limen.storage_headroom.sys.platform", "darwin")
+
+    def run(args, **kwargs):
+        if args[0] == "df":
+            return SimpleNamespace(stdout=b"Filesystem\n/dev/disk4s1 1 1 1 1% /mount\n")
+        value = (
+            {"DiskUUID": "12345678-1234-1234-1234-123456789012"}
+            if args[-1] == "disk4"
+            else {"FilesystemType": "apfs", "APFSContainerReference": "disk4"}
+        )
+        return SimpleNamespace(stdout=plistlib.dumps(value))
+
+    monkeypatch.setattr("limen.storage_headroom.subprocess.run", run)
+    assert actual_storage_identity(tmp_path) == "apfs:12345678-1234-1234-1234-123456789012"
 
 
 def test_invalid_state_fails_closed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

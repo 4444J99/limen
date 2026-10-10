@@ -31,6 +31,26 @@ import {
 
 const NOW = new Date("2026-07-18T15:00:00.000Z");
 
+test("execution policy readback is fingerprint-only and conductor-authorized", async () => {
+  const policy = {mode: "recovery", dispatch_enabled: false, approved_priorities: [{work_keys: ["private-key"]}]};
+  const env = {LIMEN_EXECUTION_POLICY: JSON.stringify(policy), LIMEN_CONDUCT_RUNTIME_GIT_SHA: "a".repeat(40),
+    CF_VERSION_METADATA: {id: "deployed-generation"},
+    LIMEN_CONDUCT_PRINCIPAL_REGISTRY: principalRegistry(
+      {principal_id: "owner", agent: "codex", surface: "cli", roles: ["conductor"], bearer: "owner-bearer-at-least-24-characters"},
+      {principal_id: "observer", agent: "codex", surface: "cli", roles: ["observer"], bearer: "observer-bearer-at-least-24-characters"})};
+  const worker = new ConductKeeperDurableObject({storage: new InstrumentedConductStorage()}, env);
+  const request = bearer => new Request("https://limen.example/api/conduct/execution/policy",
+    {headers: {authorization: `Bearer ${bearer}`}});
+  assert.equal((await worker.fetch(request("observer-bearer-at-least-24-characters"))).status, 403);
+  assert.equal((await worker.fetch(request("unknown"))).status, 401);
+  const response = await worker.fetch(request("owner-bearer-at-least-24-characters"));
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.configuration_fingerprint, await canonicalHash(policy));
+  assert.equal(body.runtime.deployment_id, "deployed-generation");
+  assert.ok(!JSON.stringify(body).includes("private-key"));
+});
+
 function identity(agent, sessionId = `${agent}-session`) {
   return {
     schema_version: "limen.agent_identity.v1",

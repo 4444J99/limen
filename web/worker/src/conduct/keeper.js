@@ -576,7 +576,10 @@ export class ConductKernel {
 
   executionInfo(workKey, principal) {
     const run = this.executionRun(workKey, principal);
-    return {run_id: run.run_id, work_key: run.packet.work_key, ...clone(run.execution_admission)};
+    const priority = executionPriority(this.executionPolicy, run.packet,
+      run.parent_run_id && this.state.runs[run.parent_run_id]);
+    return {run_id: run.run_id, work_key: run.packet.work_key, ...clone(run.execution_admission),
+      storage_repair: this.executionPolicy.mode === "recovery" && priority.storage_repair === true};
   }
 
   reserveGrowth(workKey, action, identityHash, principal) {
