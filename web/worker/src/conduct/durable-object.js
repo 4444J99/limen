@@ -330,9 +330,17 @@ export class ConductKeeperDurableObject {
       let policy;
       try { policy = JSON.parse(this.env.LIMEN_EXECUTION_POLICY || "{}"); }
       catch { throw new ConductError("execution_policy_invalid", 409); }
+      const custody = request.headers.get("x-limen-policy-custody");
+      if (custody !== null) {
+        const secret = String(this.env.LIMEN_CONDUCT_CAPABILITY_SECRET || ""); // allow-secret: runtime binding, no embedded credential
+        if (secret.length < 24 || custody.length > 4096 ||
+            await canonicalHash(custody) !== await canonicalHash(secret)) {
+          throw new ConductError("policy_custody_forbidden", 403);
+        }
+      }
       const response = json({schema_version: "limen.execution_policy_readback.v1",
         configuration_fingerprint: await canonicalHash(policy),
-        runtime: runtimeIdentity(this.env)}, 200, this.env);
+        runtime: runtimeIdentity(this.env), ...(custody !== null ? {policy} : {})}, 200, this.env);
       response.headers.set("cache-control", "no-store");
       return response;
     }
