@@ -1,0 +1,25 @@
+{
+  "allowlist_sha256": "0eaa094925c08fe451ca054582503223100de5a2f80560e5ceff90cf9b11a655",
+  "listed": 11,
+  "retained_paths_observed": 11,
+  "removed": 0,
+  "reclaimed_bytes": 0,
+  "archive_state_created": false,
+  "independent_live_restoration_verified": false,
+  "independent_key_recovery_verified": false,
+  "source_coverage": {
+    "standalone_git_and_filesystem_candidates": 7,
+    "broken_pointer_filesystem_only_candidates": 4
+  },
+  "owner_url": "https://github.com/4444J99/limen/issues/2742",
+  "owner_receipt": "https://github.com/4444J99/limen/issues/2742#issuecomment-5940842917",
+  "routing_receipt": "https://github.com/4444J99/limen/issues/2741#issuecomment-5940859980",
+  "host_observation": {
+    "observed_at": "2026-10-01T21:23:27Z",
+    "allowed": false,
+    "reason": "swap-fraction",
+    "swap_fraction": 0.6185491943033412
+  },
+  "retirement_authorized": false,
+  "qualification": "This is a preservation-status observation, not verified custody. Missing Git stores, unreachable/unique payload custody, independent key recovery and live restoration remain open."
+}

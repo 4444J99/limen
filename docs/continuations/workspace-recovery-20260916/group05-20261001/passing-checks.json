@@ -1,0 +1,29 @@
+{
+  "head": "ebf2b3d9b8c58dfc0205b89768ed768c368f0134",
+  "source": "Actual command results recorded in this native session; unchanged results reused.",
+  "checks": [
+    {
+      "command": "env PYTHONPATH=cli/src python3 -m pytest -q cli/tests/test_repository_archive_custody.py --tb=short",
+      "exit_code": 0,
+      "result": "13 passed in 18.03s",
+      "exact_head": true
+    },
+    {
+      "command": "python3 -m mypy src/limen/repository_archive_custody.py src/limen/repository_retirement.py src/limen/repository_retirement_cli.py src/limen/personal_custody.py",
+      "exit_code": 0,
+      "result": "Success: no issues found in 4 source files",
+      "exact_head": true
+    },
+    {
+      "command": "python3 -m ruff check cli/src/limen/repository_archive_custody.py cli/src/limen/repository_retirement.py cli/src/limen/repository_retirement_cli.py cli/src/limen/personal_custody.py cli/tests/test_repository_archive_custody.py",
+      "exit_code": 0,
+      "result": "All checks passed!",
+      "exact_head": true
+    }
+  ],
+  "broader_regression_history": {
+    "passed": 44,
+    "qualification": "Passed before the final local variable rename; the changed archive shard subsequently passed all 13 cases at this exact published head."
+  },
+  "task_completed": false
+}
