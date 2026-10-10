@@ -1,0 +1,3 @@
+# Authorized audiovisual repair admission
+
+Isolate conductor-only, non-cacheable policy fingerprint readback from PR2840. No CLI or allowance changes. Verify implicated Worker checks, publish and merge exact head through Limen fast lane. Refresh and preserve live Worker source/settings/bindings and rollback identity before deploying merged source. Compare private owner policy fingerprint before additive authorized-outcome install. Never replace from the local empty projection. Total supplemental outcome allowance30 agent-minutes; prior charge5, current active work charged cumulatively. Preserve other owners and originals. Retain checkout under its PR.
