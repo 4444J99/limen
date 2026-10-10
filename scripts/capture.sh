@@ -77,6 +77,38 @@ _bounded_git() {
   fi
 }
 
+# PRIVATE-SIBLING ROUTING. Repos whose sensitive material lives in a private "<repo>--private"
+# sibling list it in config/capture-private-siblings.tsv (override: LIMEN_CAPTURE_SIBLING_MAP).
+# capture/* custody refs for those repos are fetched from and pushed to the sibling instead of
+# origin. Unmapped repos are unchanged. Topic-branch pushes always go to origin.
+CAPTURE_SIBLING_MAP="${LIMEN_CAPTURE_SIBLING_MAP:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." 2>/dev/null && pwd)/config/capture-private-siblings.tsv}"
+
+_origin_slug() {  # origin URL -> lowercase owner/repo (https, ssh, scp-style; .git stripped)
+  local url
+  url="$(git remote get-url origin 2>/dev/null || true)"
+  [ -n "$url" ] || return 1
+  url="${url%/}"; url="${url%.git}"; url="${url//://}"
+  printf '%s\n' "$url" | awk -F/ 'NF>=2{print tolower($(NF-1)"/"$NF)}'
+}
+
+_capture_remote() {  # prints the push target for capture/* refs: a sibling URL, or "origin"
+  local slug key target
+  slug="$(_origin_slug 2>/dev/null || true)"
+  if [ -n "$slug" ] && [ -f "$CAPTURE_SIBLING_MAP" ]; then
+    while read -r key target _; do
+      case "$key" in ''|'#'*) continue;; esac
+      key="$(printf '%s' "$key" | tr '[:upper:]' '[:lower:]')"; key="${key%.git}"
+      if [ "$key" = "$slug" ] && [ -n "$target" ]; then printf '%s\n' "$target"; return 0; fi
+    done < "$CAPTURE_SIBLING_MAP"
+  fi
+  printf 'origin\n'
+}
+
+_capture_remote_label() {  # human label for log lines
+  local t; t="$(_capture_remote)"
+  if [ "$t" = origin ]; then printf 'origin\n'; else printf 'private-sibling(%s)\n' "$t"; fi
+}
+
 _origin_default_branch() {
   local symbolic listing
   symbolic="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD 2>/dev/null || true)"
@@ -174,10 +206,17 @@ _capture_side_branch() {
   local -a parents
   # Every diverted branch has one stable ref. Dirty, behind topic branches no
   # longer leak a timestamped remote branch on every heartbeat.
+  local target target_label
   sideref="$(_capture_side_ref "$branch")"
-  remote_ref="refs/remotes/origin/$sideref"
+  target="$(_capture_remote)"
+  target_label="$(_capture_remote_label)"
+  if [ "$target" = origin ]; then
+    remote_ref="refs/remotes/origin/$sideref"
+  else
+    remote_ref="refs/remotes/capture-sibling/$sideref"
+  fi
   local_ref="$(_capture_local_ref "$branch")"
-  _bounded_git -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=15 fetch --quiet origin \
+  _bounded_git -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=15 fetch --quiet "$target" \
     "+refs/heads/$sideref:$remote_ref" >/dev/null 2>&1 || true
   remote_parent="$(git rev-parse --verify "$remote_ref" 2>/dev/null || true)"
   local_parent="$(git rev-parse --verify "$local_ref" 2>/dev/null || true)"
@@ -275,14 +314,14 @@ _capture_side_branch() {
   fi
   [ "$commit" != "$head" ] && captured=$((captured+1))
   if _bounded_git -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=15 \
-    push origin "$commit:refs/heads/$sideref" >/dev/null 2>&1; then
+    push "$target" "$commit:refs/heads/$sideref" >/dev/null 2>&1; then
     pushed=$((pushed+1))
     # Delete only the exact local retry ref we published. If another process
     # advanced it concurrently, its newer pending custody remains intact.
     git update-ref -d "$local_ref" "$commit" >/dev/null 2>&1 || true
-    echo "[capture] $name: preserved $branch through origin/$sideref (default/HEAD untouched)"
-    printf '{"ts":"%s","repo":"%s","branch":"%s","status":"preserved-off-default","side_ref":"%s","committed":1,"pushed":1}\n' \
-      "$STAMP" "$name" "$branch" "$sideref" >> "$LOG" 2>/dev/null || true
+    echo "[capture] $name: preserved $branch through $target_label/$sideref (default/HEAD untouched)"
+    printf '{"ts":"%s","repo":"%s","branch":"%s","status":"preserved-off-default","side_ref":"%s","target":"%s","committed":1,"pushed":1}\n' \
+      "$STAMP" "$name" "$branch" "$sideref" "$target_label" >> "$LOG" 2>/dev/null || true
   else
     echo "[capture] $name: DEFERRED remote preservation; coalesced local side ref $sideref retained"
     printf '{"ts":"%s","repo":"%s","branch":"%s","status":"deferred","reason":"side-ref-push-failed","side_ref":"%s"}\n' \
@@ -315,7 +354,7 @@ _capture_repo() {
     if git rev-parse --verify "$(_capture_local_ref "$capture_branch")" >/dev/null 2>&1 ||
        [ "$dirty" = 1 ]; then
       if [ "$DRY" = 1 ]; then
-        echo "[capture] $name: WOULD preserve detached HEAD through origin/$(_capture_side_ref "$capture_branch")"
+        echo "[capture] $name: WOULD preserve detached HEAD through $(_capture_remote_label)/$(_capture_side_ref "$capture_branch")"
       else
         _capture_side_branch "$name" "$capture_branch" "$dirty"
       fi
@@ -352,7 +391,7 @@ _capture_repo() {
   if [ -n "$branch" ] &&
      git rev-parse --verify "$(_capture_local_ref "$branch")" >/dev/null 2>&1; then
     if [ "$DRY" = 1 ]; then
-      echo "[capture] $name: WOULD retry pending custody through origin/$(_capture_side_ref "$branch")"
+      echo "[capture] $name: WOULD retry pending custody through $(_capture_remote_label)/$(_capture_side_ref "$branch")"
     else
       _capture_side_branch "$name" "$branch" "$dirty"
     fi
@@ -367,7 +406,7 @@ _capture_repo() {
     [ -n "$default_ahead" ] || default_ahead=0
     if [ "$dirty" = 1 ] || [ "$default_ahead" -gt 0 ] 2>/dev/null; then
       if [ "$DRY" = 1 ]; then
-        echo "[capture] $name: WOULD preserve $default_branch through origin/$(_capture_side_ref "$branch") (default/HEAD untouched)"
+        echo "[capture] $name: WOULD preserve $default_branch through $(_capture_remote_label)/$(_capture_side_ref "$branch") (default/HEAD untouched)"
       else
         _capture_side_branch "$name" "$branch" 1
       fi
