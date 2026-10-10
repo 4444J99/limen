@@ -1,0 +1,12 @@
+# capture-private-siblings.tsv: route capture/* custody refs to a PRIVATE sibling repo.
+#
+# Some repos keep sensitive material (chat exports, personal or legal text) out of the
+# original and in a private "<repo>--private" sibling. capture.sh snapshots whole working
+# trees, so for those repos its capture/* side refs must land in the sibling, not the original.
+#
+# Format: <origin owner/repo><TAB or spaces><sibling push URL>
+# Matching is case-insensitive on the origin's owner/repo (https or ssh origins both work).
+# Repos not listed here keep the default behavior (capture/* pushed to origin).
+4444J99/portfolio                           https://github.com/4444J99/portfolio--private.git
+4444J99/vox--architectura-gubernatio        https://github.com/4444J99/vox--architectura-gubernatio--private.git
+4444J99/narratological-algorithmic-lenses   https://github.com/4444J99/narratological-algorithmic-lenses--private.git
