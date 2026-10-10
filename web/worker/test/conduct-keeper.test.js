@@ -33,7 +33,7 @@ const NOW = new Date("2026-07-18T15:00:00.000Z");
 
 test("execution policy readback is fingerprint-only and conductor-authorized", async () => {
   const policy = {mode: "recovery", dispatch_enabled: false, approved_priorities: [{work_keys: ["private-key"]}]};
-  const env = {LIMEN_EXECUTION_POLICY: JSON.stringify(policy), LIMEN_CONDUCT_RUNTIME_GIT_SHA: "a".repeat(40),
+  const env = {LIMEN_CONDUCT_CAPABILITY_SECRET: "private-custody-secret-at-least-24-characters", LIMEN_EXECUTION_POLICY: JSON.stringify(policy), LIMEN_CONDUCT_RUNTIME_GIT_SHA: "a".repeat(40),
     CF_VERSION_METADATA: {id: "deployed-generation"},
     LIMEN_CONDUCT_PRINCIPAL_REGISTRY: principalRegistry(
       {principal_id: "owner", agent: "codex", surface: "cli", roles: ["conductor"], bearer: "owner-bearer-at-least-24-characters"},
@@ -53,6 +53,16 @@ test("execution policy readback is fingerprint-only and conductor-authorized", a
     approved_priorities: policy.approved_priorities, dispatch_enabled: false, mode: "recovery",
   }));
   assert.ok(!JSON.stringify(body).includes("private-key"));
+  const custodyRequest = key => new Request("https://limen.example/api/conduct/execution/policy",
+    {headers: {authorization: "Bearer owner-bearer-at-least-24-characters", "x-limen-policy-custody": key}});
+  assert.equal((await worker.fetch(custodyRequest("wrong"))).status, 403);
+  const recovered = await worker.fetch(custodyRequest(env.LIMEN_CONDUCT_CAPABILITY_SECRET));
+  assert.equal(recovered.status, 200);
+  assert.equal(recovered.headers.get("cache-control"), "no-store");
+  assert.deepEqual((await recovered.json()).policy, policy);
+  const observerRequest = custodyRequest(env.LIMEN_CONDUCT_CAPABILITY_SECRET);
+  observerRequest.headers.set("authorization", "Bearer observer-bearer-at-least-24-characters");
+  assert.equal((await worker.fetch(observerRequest)).status, 403);
 });
 
 function identity(agent, sessionId = `${agent}-session`) {
