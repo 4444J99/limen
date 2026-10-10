@@ -92,5 +92,18 @@
     "remaining_verification_seconds": 0,
     "automatic_continuation": false,
     "heavy_lease_released": true
+  },
+  "cli_import_path_correction": {
+    "receipt": "cli-import-path-verification.json",
+    "status": "UNVERIFIED: fresh heavy admission denied swap-fraction before tests",
+    "new_regression_variants": 2,
+    "tests_started": false,
+    "supplemental_authorized_seconds": 60,
+    "supplemental_used_seconds": 2.442659249994904,
+    "supplemental_remaining_seconds": 57.557340750005096,
+    "original_remaining_seconds": 0,
+    "original_nine_failures_resolved": false,
+    "unchanged_retry": false,
+    "host_override": false
   }
 }

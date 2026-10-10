@@ -156,3 +156,26 @@ remain gated on unresolved CLI verification. GES #496 was re-read at the same
 draft head; exhaustive outcome attribution and positive checkout custody remain
 unproven, so all seven HOLDs and Staged delivery remain. The existing Limen
 checkout is retained under #2840; no history or custody payload was removed.
+
+## Standalone checkout import correction
+
+Source review found that `scripts/verify.py` exports the owning checkout's
+`cli/src`, while the standalone hermetic pytest wrapper did not. The CLI
+conftest inserts that path only into the parent interpreter. The wrapper now
+prepends its own absolute source path to `PYTHONPATH`, preserving the inherited
+tail for dependencies. New regression variants launch the real wrapper from an
+unrelated directory with either no inherited path or a foreign package path,
+then check parent and child package identity.
+
+This correction is UNVERIFIED. The user explicitly authorized 60 additional
+seconds with all original usage retained. Fresh heavy admission denied
+`swap-fraction` before pytest or any regression ran. The attempt used
+2.442659250 seconds; 57.557340750 remain in the separately recorded allowance.
+There was no lease, unchanged retry or override. See
+[cli-import-path-verification.json](cli-import-path-verification.json).
+
+The original nine scoped failures remain unexplained: the scoped verifier already
+supplied `PYTHONPATH`. The named diagnostic failure has no captured traceback, so
+its suspected import cause is not yet proved by execution. No passing final-tree
+CLI receipt, merge, installation, deployment, policy replacement or reservation is
+claimed. #2840 remains draft, and the GES seven HOLDs remain independent.

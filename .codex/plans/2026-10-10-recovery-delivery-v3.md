@@ -34,3 +34,18 @@ under this exhausted allowance. The existing checkout is retained by #2840.
 See `docs/receipts/recovery-admission-20261010/cli-verification-exhaustion.json`
 and its compressed sanitized log. No allowance reset, threshold weakening,
 history deletion, scheduler, deployment, policy replacement or ops reservation.
+
+Source correction: the standalone hermetic pytest wrapper now prepends its own
+checkout's `cli/src` to `PYTHONPATH`, matching the scoped verifier and propagating
+that identity to child interpreters. Two regression variants cover absent and
+foreign inherited package paths. The original nine scoped failures are still
+unexplained because the scoped verifier already exported this path.
+
+The user explicitly authorized a separate 60-second verification window, keeping
+the original exhausted allowance intact. Fresh heavy admission denied
+`swap-fraction` before tests started: 2.442659250 seconds used, 57.557340750
+seconds retained. No unchanged retry or host override. The correction and its new
+tests remain unverified; #2840 stays draft and all dependent delivery stays gated.
+See `cli-import-path-verification.json` beside the original receipt. Continuation
+requires materially changed host evidence and the retained supplemental allowance;
+neither a restart nor the source correction renews the original allowance.

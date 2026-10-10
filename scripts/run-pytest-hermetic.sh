@@ -17,6 +17,12 @@ export GIT_SEQUENCE_EDITOR=true
 export VISUAL=true
 export EDITOR=true
 
+# Pin subprocess imports to the same checkout as the test runner. Pytest's
+# conftest sys.path applies only to its own interpreter; a child script must not
+# fall back to an absent package or an editable install from another worktree.
+pytest_source_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../cli/src" && pwd -P)"
+export PYTHONPATH="$pytest_source_root${PYTHONPATH:+:$PYTHONPATH}"
+
 # LIMEN_NOTIFY is an OUTPUT-side safety, not a test input — so it is re-armed AFTER the scrub
 # above, and the ordering is the whole point. The scrub is right: a fixture must never read the
 # operator's runtime. But osascript is not fixture input; it is an effect that leaves the machine
