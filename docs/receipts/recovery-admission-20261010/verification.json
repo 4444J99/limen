@@ -73,10 +73,24 @@
     "storage_recovery_bytes_claimed": 0
   },
   "next_owner_actions": [
-    "PR 2840: isolate the full CLI gate failures only after materially changed host admission; preserve the verification cap and actual exit codes",
+    "PR 2840: original verification allowance exhausted; resolve the owning limit before any additional tests. Observed failing node: cli/tests/test_agent_state_cli.py::test_resume_requires_explicit_run_id; traceback was not captured before timeout.",
     "Deploy the verified policy fingerprint readback through the existing Worker owner",
     "Reconcile the owner-held policy against its live fingerprint before additive installation for exact ops6-coordinate-20261009",
     "Prove exhaustive allowance and zero prior debit before atomically reserving the four-packet ops graph; no fifth run",
     "Use accepted ops preflight/apply only with A's separately acquired deployment custody; preserve B/C and hosted acceptance gates"
-  ]
+  ],
+  "cli_diagnostic_checkpoint": {
+    "receipt": "cli-verification-exhaustion.json",
+    "tested_head": "c083165d5c13468d80f3ee84cd8a5bb4de5aa3ef",
+    "exit_code": 124,
+    "failing_nodes": [
+      "cli/tests/test_agent_state_cli.py::test_resume_requires_explicit_run_id"
+    ],
+    "traceback_captured": false,
+    "prior_seconds": 514.881652415,
+    "diagnostic_seconds": 85.17430408298969,
+    "remaining_verification_seconds": 0,
+    "automatic_continuation": false,
+    "heavy_lease_released": true
+  }
 }

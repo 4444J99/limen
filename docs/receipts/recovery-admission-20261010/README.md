@@ -121,3 +121,38 @@ merge, managed CLI installation, policy installation, ops reservation or product
 apply is claimed. Existing CLI remains ff6b2714a013e82c3132205183ca10302a0ce0c3;
 actual new maintenance-intake routing is not yet adopted. Codex remains above
 quota by 29,882,864 apparent bytes at the observed read; no payload was removed.
+
+## Bounded CLI diagnostic and exhaustion
+
+The original Limen verification allowance was reconstructed from the two owning
+native sessions, counting earlier failed checks and retries conservatively,
+including overlap. Prior recorded execution totaled 514.881652415 seconds of
+600. The separate Domus outcome was excluded from this Limen meter.
+
+One heavy-leased diagnostic on `c083165d5c13468d80f3ee84cd8a5bb4de5aa3ef`
+used two workers, verbose names and `--maxfail=1`. Its cap was the remaining
+85.118347585 seconds. It emitted 958 passing reports and the failure
+`cli/tests/test_agent_state_cli.py::test_resume_requires_explicit_run_id`.
+The process-group deadline expired before pytest printed the traceback or
+terminal summary, at 11% progress. Actual exit: 124. Recorded execution was
+85.174304083 seconds, including 0.055956498 seconds of bounded cleanup beyond
+the deadline. The heavy lease was released; no leases remained at readback.
+
+The original allowance is exhausted. Partial suite progress is not a passing
+gate. The original nine failure causes remain unresolved; no source fix or
+verified-head merge is claimed. The next owner action must resolve the exhausted
+verification limit before any further tests, then target the observed subprocess
+failure with retained traceback. Restarts cannot renew this allowance.
+
+The script imports `limen` before argument validation while the test suite pins
+the worktree source only in its parent process. That is an inspection lead for
+the subprocess import environment, not a verified failure cause.
+
+Accounting and retained sanitized output are in
+[cli-verification-exhaustion.json](cli-verification-exhaustion.json) and
+[cli-diagnostic-20261010.log.gz](cli-diagnostic-20261010.log.gz).
+CLI installation, Worker deployment, policy installation and ops reservations
+remain gated on unresolved CLI verification. GES #496 was re-read at the same
+draft head; exhaustive outcome attribution and positive checkout custody remain
+unproven, so all seven HOLDs and Staged delivery remain. The existing Limen
+checkout is retained under #2840; no history or custody payload was removed.
