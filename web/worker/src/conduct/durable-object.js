@@ -19,6 +19,7 @@ import { ChatGithubController } from "./chat-github.js";
 import { configuredInventoryAuthority, InventoryAdmissionError } from "./inventory-admission.js";
 import {
   ConductValidationError,
+  canonicalHash,
   validateExecutorAttempt,
   validateReceipt,
   validateSession,
@@ -323,6 +324,17 @@ export class ConductKeeperDurableObject {
     if (path === "/api/conduct/execution/info" && request.method === "POST") {
       const body = await parseBody(request);
       return json(await this.service.call("execution_info", {work_key: bodyIdentifier(body, "work_key"), principal}), 200, this.env);
+    }
+    if (path === "/api/conduct/execution/policy" && request.method === "GET") {
+      requireRole(principal, "conductor");
+      let policy;
+      try { policy = JSON.parse(this.env.LIMEN_EXECUTION_POLICY || "{}"); }
+      catch { throw new ConductError("execution_policy_invalid", 409); }
+      const response = json({schema_version: "limen.execution_policy_readback.v1",
+        configuration_fingerprint: await canonicalHash(policy),
+        runtime: runtimeIdentity(this.env)}, 200, this.env);
+      response.headers.set("cache-control", "no-store");
+      return response;
     }
     if (path === "/api/conduct/execution/resources" && request.method === "POST") {
       const body = await parseBody(request);
