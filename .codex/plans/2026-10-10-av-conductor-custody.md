@@ -1,0 +1,3 @@
+# Use existing conductor authority for private custody
+
+Live capability-secret differs from cached local credential. Do not rotate it or affect leases. Policy contains routing/priority authority, not credential values. Explicit opt-in recover header plus existing conductor authorization governs private custody recovery. Preserve default fingerprint-only response, observer/unauthenticated denial and no-store; remove additional unavailable-secret requirement explicitly. Publish/verify before private recovery. This changes read authorization intentionally under the human instruction to clear broker admission, never priority content or execution thresholds.
