@@ -23,6 +23,15 @@ Current raw receipt SHA-256: `2862b482da574991a10875283aa5a8ae114b0deb685cba3f4d
 Current summary SHA-256: `d3b8e45ace92fc0d142c1f939496567d8b377af4467dd06d9217e2093e44dd86`.
 Source repair: [Domus PR 416](https://github.com/4444J99/domus-genoma/pull/416), pushed exact head `234d6967554d7476fe6a6da3dee9938e8aeff934`; its one merge submission returned policy HOLD, not merged. Other sessions' dirty source changes were preserved.
 
+Final lifecycle check found Claude source-type drift: a read-only chezmoi directory
+dry-run would replace the new compatibility alias with a physical directory;
+the legacy JSON alias also differs from its source type. No broad apply was run.
+PR 416 is kept draft for source-state reconciliation, not claimed release-ready.
+The runtime guard passing does not establish durable Claude configuration ownership.
+This receipt's earlier exact head identifies the tested implementation; the later
+Domus follow-up is documentation-only. Limen's receipt submission was deferred as
+LIFECYCLE-UNKNOWN, not merged. All retained checkouts remain preserved.
+
 Owner continuation: existing archive recovery and runtime-maintenance lanes. Acceptance: exact original-path bytes plus digest/readback receipts; live cartridge-guard success; native-app and interactive playback proof. Never replace missing-file identity with filename similarity or increase quota to manufacture a passing gate. Resume requires the finite recovery policy and relevant changed inputs; this receipt does not authorize automatic continuation.
 
 Verification: saved Page text and provenance-label comparison (18/18); guarded write receipts; cached endpoint receipts plus live authenticated HTTP 200 current-project recheck; all 215 preserved files rechecked for byte size and SHA-256 after correcting stale receipt paths from the human's project-folder rename; visual browser screenshots inspected; live cartridge-guard exit zero. Domus's 103 implicated Home/runtime/migration tests passed, including changed-plan, live-handle and quota-overflow refusal. Credential-wall check passed for all 31 registered atoms. Four focused documentation gates passed for this receipt. Native Terminal access was rechecked after repair and still explicitly refused by product safety policy; no security controls or quota limits were bypassed. Checkout retained for this open receipt; not eligible for retirement based on preservation alone.
