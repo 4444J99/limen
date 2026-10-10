@@ -6195,7 +6195,7 @@ parameters:
     env: LIMEN_OPERATOR_EMAIL
     self_update: none
     owner: mail
-    note: "The operator's own inbox — the single declared recipient for engine-to-operator self-notifications (opportunity-brief.py emails the daily brief here). Hardcoded default so a zero-env beat still reaches him; override only to redirect the brief to a different self address. Never a third party."
+    note: "The operator's own inbox — the single declared recipient for engine-to-operator self-notifications (opportunity-brief.py emails the daily brief here). Set it in ~/.limen.env (the address is personal and no longer committed); unset or the "<owner-email>" placeholder means the brief is not mailed. Never a third party."
 
   # --- COLLABORATION HUB: one bounded rung on the existing heartbeat ------------
   LIMEN_COLLABORATION_HUB_SYNC:

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -9,19 +11,21 @@ from pathlib import Path
 import pytest
 import yaml
 
-
 ROOT = Path(__file__).resolve().parents[2]
 VALIDATOR = ROOT / "organs" / "representation" / "validate-representation.py"
 MODULE = ROOT / "organs" / "representation" / "representation_substrate.py"
-CHRIS = ROOT / "organs" / "representation" / "records" / "christopher-author-one.yaml"
+# Third-party records and their approvals live in the private sibling repo
+# (4444J99/limen--private). Tests that need them skip when it is not checked out.
+PRIVATE_ROOT = Path(os.environ.get("LIMEN_PRIVATE_ROOT", ROOT.parent / "limen--private"))
+CHRIS = PRIVATE_ROOT / "organs" / "representation" / "records" / "christopher-author-one.yaml"
 ET4L = ROOT / "organs" / "representation" / "records" / "et4l.yaml"
 GENERIC = ROOT / "organs" / "representation" / "records" / "generic-authority-template.yaml"
 OPPORTUNITY = ROOT / "organs" / "representation" / "opportunities" / "literary-submission-landscape.yaml"
 APPROVAL_TEMPLATE = (
-    ROOT / "organs" / "representation" / "approvals" / "author-one-yale-review-nonfiction-dry-run.template.yaml"
+    PRIVATE_ROOT / "organs" / "representation" / "approvals" / "author-one-yale-review-nonfiction-dry-run.template.yaml"
 )
 REAL_SEND_TEMPLATE = (
-    ROOT / "organs" / "representation" / "approvals" / "author-one-yale-review-nonfiction-real-send.template.yaml"
+    PRIVATE_ROOT / "organs" / "representation" / "approvals" / "author-one-yale-review-nonfiction-real-send.template.yaml"
 )
 READY_CANDIDATE = "chris-metadata-only-nonfiction-candidate"
 YALE_ROUTE = "yale-review-nonfiction-route"
@@ -33,7 +37,14 @@ sys.modules["representation_substrate"] = rs
 spec.loader.exec_module(rs)
 
 
+def _require_private(*args: object) -> None:
+    for arg in args:
+        if isinstance(arg, Path) and PRIVATE_ROOT in arg.parents and not arg.exists():
+            pytest.skip(f"private record not checked out: {arg.name} (lives in limen--private)")
+
+
 def run_validator(*args: str | Path) -> subprocess.CompletedProcess[str]:
+    _require_private(*args)
     return subprocess.run(
         [sys.executable, str(VALIDATOR), *(str(arg) for arg in args)],
         cwd=ROOT,
@@ -44,6 +55,7 @@ def run_validator(*args: str | Path) -> subprocess.CompletedProcess[str]:
 
 
 def run_tool(*args: str | Path) -> subprocess.CompletedProcess[str]:
+    _require_private(*args)
     return subprocess.run(
         [sys.executable, str(MODULE), *(str(arg) for arg in args)],
         cwd=ROOT,
@@ -54,6 +66,7 @@ def run_tool(*args: str | Path) -> subprocess.CompletedProcess[str]:
 
 
 def load_record(path: Path = CHRIS) -> dict:
+    _require_private(path)
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
@@ -1423,14 +1436,16 @@ def test_export_requires_matching_mode_approval():
 def test_validator_bare_defaults_to_fleet():
     result = run_validator()
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "6/6 passed" in result.stdout
+    # 3 public fleet files; the 3 third-party records/approvals live in limen--private.
+    assert re.search(r"\b(\d+)/\1 passed", result.stdout), result.stdout
     assert "PASS" in result.stdout
 
 
 def test_validator_fleet_flag():
     result = run_validator("--fleet")
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "6/6 passed" in result.stdout
+    # 3 public fleet files; the 3 third-party records/approvals live in limen--private.
+    assert re.search(r"\b(\d+)/\1 passed", result.stdout), result.stdout
 
 
 def test_validator_fleet_quiet():
@@ -1442,7 +1457,8 @@ def test_validator_fleet_quiet():
 def test_substrate_validate_empty_paths_defaults_to_fleet():
     result = run_tool("validate")
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "6/6 passed" in result.stdout
+    # 3 public fleet files; the 3 third-party records/approvals live in limen--private.
+    assert re.search(r"\b(\d+)/\1 passed", result.stdout), result.stdout
 
 
 def test_substrate_validate_with_explicit_path():
