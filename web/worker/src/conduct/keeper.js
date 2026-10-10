@@ -288,6 +288,7 @@ export class ConductKernel {
       case "session_audit": return sessionAudit(this.state, payload.session_id);
       case "task_run": return this.taskRun(payload.task_id);
       case "execution_info": return this.executionInfo(payload.work_key, payload.principal);
+      case "execution_allowance": return this.executionAllowance(payload.work_key, payload.principal);
       case "reserve_growth": return this.reserveGrowth(payload.work_key, payload.action, payload.identity_hash, payload.principal);
       case "submit": return this.submit(payload.packet, payload.principal);
       case "submit_graph": return this.submitGraph(payload.packets, payload.principal);
@@ -580,6 +581,37 @@ export class ConductKernel {
       run.parent_run_id && this.state.runs[run.parent_run_id]);
     return {run_id: run.run_id, work_key: run.packet.work_key, ...clone(run.execution_admission),
       storage_repair: this.executionPolicy.mode === "recovery" && priority.storage_repair === true};
+  }
+
+  executionAllowance(workKey, principal) {
+    this.requireRole(principal, "conductor");
+    const priority = this.executionPolicy?.approved_priorities?.find(p =>
+      p.enabled === true && p.work_keys?.includes(workKey));
+    if (!priority) throw new ConductError("execution_priority_not_approved");
+    const runs = Object.values(this.state.runs);
+    const matching = runs.filter(r => r.packet.work_key === workKey);
+    const ids = new Set(runs.filter(r => priority.work_keys.includes(r.packet.work_key)
+      || r.execution_admission?.outcome_id === priority.outcome_id).map(r => r.run_id));
+    for (let changed = true; changed;) {
+      changed = false;
+      for (const r of runs) if (ids.has(r.parent_run_id) && !ids.has(r.run_id)) {
+        ids.add(r.run_id); changed = true;
+      }
+    }
+    const scope = runs.filter(r => ids.has(r.run_id));
+    // Never infer zero from a legacy run lacking an outcome debit.
+    const exhaustive = scope.every(r => r.execution_admission
+      && r.execution_admission.outcome_id === priority.outcome_id
+      && Number.isSafeInteger(r.execution_admission.reserved_seconds)
+        && r.execution_admission.reserved_seconds >= 0);
+    const reserved = exhaustive ? scope.reduce((sum, r) => sum + r.execution_admission.reserved_seconds, 0) : null;
+    return {schema_version: "limen.execution_allowance.v1", work_key: workKey,
+      outcome_id: priority.outcome_id, exhaustive, limit_seconds: 7200,
+      reserved_seconds: reserved, remaining_seconds: exhaustive ? Math.max(0, 7200 - reserved) : null,
+      matching_run_ids: matching.map(r => r.run_id).sort(),
+      reservations: scope.map(r => ({run_id: r.run_id, parent_run_id: r.parent_run_id,
+        status: r.status, reserved_seconds: r.execution_admission?.reserved_seconds ?? null,
+        attempt_deadline: r.execution_admission?.attempt_deadline ?? null}))};
   }
 
   reserveGrowth(workKey, action, identityHash, principal) {

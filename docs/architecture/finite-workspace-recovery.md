@@ -14,6 +14,17 @@ automatic continuation. Discoveries stay in their owning registry without automa
 
 ### Authorized project continuation: github-engineering-standards
 
+The October 9 direct instruction for the seven held correction-wave items reinstates
+an explicit 120 cumulative agent-minute ceiling for that correction outcome,
+including native descendants, replacement roots, unfinished work and publication
+tails. It takes precedence over the earlier continuation exception below for this
+scope. Unknown or exhausted allowance holds implementation; provisional lower
+bounds cannot admit it. Exact checkout custody needs positive owning-writer
+release or an accepted narrow recovery run. This hold does not block independent
+ops recovery or integration. The serialized correction order is A freeze, B, C,
+D, A reconciliation, E, A integration, with publication, release and broker
+completion between writers. Keep draft #496 and delivery Staged.
+
 On 2026-10-03 the human explicitly authorized revision of this owning policy to
 continue the approved github-engineering-standards completion outcome. Owner:
 [Limen issue #2821](https://github.com/4444J99/limen/issues/2821).

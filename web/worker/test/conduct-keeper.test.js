@@ -48,6 +48,10 @@ test("execution policy readback is fingerprint-only and conductor-authorized", a
   const body = await response.json();
   assert.equal(body.configuration_fingerprint, await canonicalHash(policy));
   assert.equal(body.runtime.deployment_id, "deployed-generation");
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal(body.configuration_fingerprint, await canonicalHash({
+    approved_priorities: policy.approved_priorities, dispatch_enabled: false, mode: "recovery",
+  }));
   assert.ok(!JSON.stringify(body).includes("private-key"));
 });
 
@@ -237,6 +241,34 @@ function serviceWith(sessions, options = {}) {
   return Promise.all(sessions.map((item) => service.call("register", { session: item })))
     .then(() => ({ service, store }));
 }
+
+test("execution allowance includes terminal debits and unknown descendant accounting", async () => {
+  const executionPolicy = {mode: "recovery", approved_priorities: [{
+    outcome_id: "ops6", enabled: true, recovery: true, work_keys: ["finite"],
+  }]};
+  const {service, store} = await serviceWith([session("codex")], {executionPolicy});
+  const principal = {principal_id: "local:codex:cli", roles: ["conductor"]};
+  const read = () => service.call("execution_allowance", {work_key: "finite", principal});
+  assert.equal((await read()).remaining_seconds, 7200);
+  assert.deepEqual((await read()).matching_run_ids, []);
+  await assert.rejects(service.call("execution_allowance", {
+    work_key: "finite", principal: {...principal, roles: ["observer"]},
+  }), /required conductor/);
+  await assert.rejects(service.call("execution_allowance", {work_key: "unknown", principal}), /not_approved/);
+  const reserved = await service.call("submit", {
+    packet: await packet({workId: "finite", conductor: identity("codex"), maxAttempts: 1}),
+  });
+  const state = await store.load();
+  state.runs[reserved.run_id].status = "expired";
+  await store.save(state);
+  assert.equal((await read()).reserved_seconds, 1800);
+  assert.equal((await read()).remaining_seconds, 5400);
+  state.runs["legacy-child"] = {run_id: "legacy-child", parent_run_id: reserved.run_id,
+    packet: {work_key: "outside-root-directory"}, status: "failed"};
+  await store.save(state);
+  assert.equal((await read()).exhaustive, false);
+  assert.equal((await read()).remaining_seconds, null);
+});
 
 test("execution resource reservations and verification deadline survive keeper restart", async () => {
   let clock = NOW;

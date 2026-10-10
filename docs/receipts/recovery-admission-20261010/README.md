@@ -19,9 +19,15 @@ No installation is safe before matching that generation. The installation rechec
 generation immediately before the existing headless Wrangler secret route; provider
 secret installation has no CAS, so deployment custody must exclude concurrent writers.
 
-`scripts/ops6-recovery-graph.py` produces a canonical fanout manifest for serial,
-read-only preparations with an explicit original deadline. It reserves and launches
-nothing. Deployment is separately gated through accepted ops source
+`scripts/ops6-recovery-graph.py` now builds ops-specific WorkPacketV1 packets.
+Construction with `--original-deadline` remains read-only. Explicit `--submit`
+first requires exhaustive keeper allowance and zero prior reservation evidence,
+then uses one atomic submit_graph transaction. Its fanout root has only the
+accepted recovery authority; A has the exclusive external deployment claim,
+B has narrower hosted-idempotency authority, and C is read-only. Dependencies
+are A -> B -> C. Four fixed reservations consume all 120 broker minutes, share
+the first admitted deadline, and cannot admit a fifth run. This command launches
+no worker. Deployment is separately gated through accepted ops source
 08d493caf5cf6fe7a64cbb67f6ed7e6b07ea119e and pinned runtime
 62469ec5b402460a5610145e67901fcdd0ca00b9. C records unavailable window evidence
 without sleeping or renewing a deadline. Hosted ALREADY_DEPLOYED and full incident
@@ -55,3 +61,63 @@ Limen owner: https://github.com/4444J99/limen/pull/2840 (draft).
 Domus owner: https://github.com/4444J99/domus-genoma/pull/415; the targeted managed
 runtime file is applied with empty post-apply diff. Its exact-head merge submission
 returned `DEFERRED — LIFECYCLE-UNKNOWN`; it was submitted once, without polling.
+
+## October 10 continuation
+
+Domus #415's base was corrected from master to main and lifecycle:delivery added.
+The unchanged 71afd2e076eaed06356eac1182a4a076f054ec3f head has exactly three
+files. One new submission after that material correction returned MERGED, at
+91c770b01b65df95040a05c3e5ace5a6d6b63eae. The merged runtime blob is
+60d70a18bf44d05ee7b4904d805272ad84f4bca0; it matches the retained accepted
+source and the deployed target. Target-specific Chezmoi diff with that accepted
+source is empty. The primary Domus checkout still points to an older master;
+its default diff would remove protections and was not applied.
+
+The native policy record at the supplied line 257 was parsed without executing
+history or emitting policy contents. Its canonical fingerprint is
+9d954a8f2fac6a04fef2cc0587181ba9ca4d161635672984bd435dec996e6249.
+The reconciler can read that record directly. Live policy readback still returns
+404, so this source has NOT been matched to live policy and no replacement occurred.
+
+A fresh 00:54:37 UTC host probe materially improved from swap fraction 0.582 to
+0.173, disk samples 179/190 to 31/20 MiB/s, and vitals ok. That admitted one
+scoped retry on the final source tree. All 16 cheap gates and the heavy API/Worker
+wave passed; Worker tests: 373 passing. Focused packet/policy tests: 11 passing;
+with existing execution-limit tests: 30 passing in total across the final runs.
+The serialized full CLI gate timed out at its default 300-second command limit,
+after approximately 82% and nine failure markers. Actual resolver exit: 1;
+individual failure identities and causes were not emitted before timeout.
+A bounded diagnostic was then denied by host admission with swap-fraction and
+vitals-shed before pytest started. No unchanged retry, threshold change or merge
+override occurred. Credential wall and diff hygiene passed.
+
+At 00:58:22 UTC, authenticated headless administration captured the live Worker
+source, settings, all 20 bindings, active version and rollback identity privately.
+Source capture SHA256: 1fba50ca31706dfedf2d1e1e1364221ff24b017207d95223739d7aad9684eb86.
+Settings SHA256: 6ab630ae08d4b3eab1ea13aa31858a4bec33dc6e32d8741d9046124f8e99b1f5.
+Active/rollback version: a0c5aa90-6538-4382-833a-b9844072d7a5, 100%; runtime source
+f93f3dd9076992ce6d38f4d697a5f7176b776013. No Worker or secret was changed.
+The earlier rejected coordinator has zero retained runs and zero active leases;
+its bounded audit cannot prove exhaustive outcome allowance. New allowance
+readback over the complete keeper ledger remains undeployed.
+
+GES #496 remains draft at 3db2831f7b37852414bd77d330a240d7a0f9a35b, different
+from the correction freeze 6c893c957f8d491d079414f3e127e37efdd44fe0. The bounded
+native search found 14 candidate files, including replacement roots outside GES,
+18 unique completed turns, two inherited duplicates, no conflicting duration_ms
+records and one unfinished turn. Candidate native active duration totals 76.9666
+minutes; elapsed timestamps use a different meter and cannot be substituted.
+These candidates include mixed-outcome work and are not exhaustive outcome
+attribution. The separate legacy native store has no October 2026 session tree.
+Remaining GES allowance is UNKNOWN, never 43.0334 minutes. No GES cwd consumer
+was observed, but that absence is not positive owning-writer release or an
+accepted recovery lease. All seven implementation items remain HOLD, predecessor
+claims/candidate bytes unchanged, delivery Staged and all wider gates retained.
+
+Integration blocker owner: #2840; predicate: final implicated CLI verification.
+Next action requires changed host evidence, isolation of actual failing tests,
+then the implicated gate within the original verification allowance. No Limen
+merge, managed CLI installation, policy installation, ops reservation or production
+apply is claimed. Existing CLI remains ff6b2714a013e82c3132205183ca10302a0ce0c3;
+actual new maintenance-intake routing is not yet adopted. Codex remains above
+quota by 29,882,864 apparent bytes at the observed read; no payload was removed.

@@ -325,14 +325,25 @@ export class ConductKeeperDurableObject {
       const body = await parseBody(request);
       return json(await this.service.call("execution_info", {work_key: bodyIdentifier(body, "work_key"), principal}), 200, this.env);
     }
+    if (path === "/api/conduct/execution/allowance" && request.method === "POST") {
+      requireRole(principal, "conductor");
+      const body = await parseBody(request, 4096);
+      const response = json(await this.service.call("execution_allowance", {
+        work_key: bodyIdentifier(body, "work_key"), principal,
+      }), 200, this.env);
+      response.headers.set("cache-control", "no-store");
+      return response;
+    }
     if (path === "/api/conduct/execution/policy" && request.method === "GET") {
       requireRole(principal, "conductor");
       let policy;
       try { policy = JSON.parse(this.env.LIMEN_EXECUTION_POLICY || "{}"); }
       catch { throw new ConductError("execution_policy_invalid", 409); }
-      return json({schema_version: "limen.execution_policy_readback.v1",
+      const response = json({schema_version: "limen.execution_policy_readback.v1",
         configuration_fingerprint: await canonicalHash(policy),
         runtime: runtimeIdentity(this.env)}, 200, this.env);
+      response.headers.set("cache-control", "no-store");
+      return response;
     }
     if (path === "/api/conduct/execution/resources" && request.method === "POST") {
       const body = await parseBody(request);

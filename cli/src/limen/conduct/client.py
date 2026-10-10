@@ -179,6 +179,9 @@ class HttpConductClient:
     def execution_info(self, work_key: str) -> dict[str, Any]:
         return self._request("POST", "/api/conduct/execution/info", {"work_key": work_key})
 
+    def execution_allowance(self, work_key: str) -> dict[str, Any]:
+        return self._request("POST", "/api/conduct/execution/allowance", {"work_key": work_key})
+
     def reserve_growth(self, work_key: str, action: str, identity_hash: str) -> dict[str, Any]:
         return self._request(
             "POST",

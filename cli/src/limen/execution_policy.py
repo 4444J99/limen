@@ -1,7 +1,25 @@
 """Additive owner-policy reconciliation against an authenticated live fingerprint."""
 
 import copy
+import json
+from pathlib import Path
 from limen.conduct.models import canonical_hash
+
+
+def native_policy_record(path: Path, line: int) -> dict:
+    """Recover private owner JSON without emitting its contents or executing history."""
+    try:
+        with path.open() as stream:
+            record = next(row for number, row in enumerate(stream, 1) if number == line)
+        item = json.loads(record)["payload"]["item"]
+        if item.get("type") != "CommandExecution" or item.get("exit_code") != 0:
+            raise ValueError
+        policy = json.loads(item["stdout"])
+        if not isinstance(policy, dict) or not isinstance(policy.get("approved_priorities"), list):
+            raise ValueError
+        return policy
+    except (OSError, StopIteration, KeyError, TypeError, ValueError):
+        raise ValueError("execution_policy_native_record_invalid") from None
 
 
 def reconcile_policy(source: dict, live: dict, *, outcome: str, work_key: str, owner: str) -> dict:

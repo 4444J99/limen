@@ -1,7 +1,8 @@
 import copy
 import pytest
 from limen.conduct.models import canonical_hash
-from limen.execution_policy import reconcile_policy
+from limen.execution_policy import native_policy_record, reconcile_policy
+import json
 
 
 def test_addition_preserves_every_existing_field_and_limit():
@@ -41,3 +42,17 @@ def test_conflicting_exact_key_cannot_steal_existing_priority():
     }
     with pytest.raises(ValueError, match="priority_conflict"):
         reconcile_policy(source, live, outcome="new", work_key="ops6", owner="ops#6")
+
+
+def test_native_recovery_requires_successful_json_record(tmp_path):
+    record = tmp_path / "native.jsonl"
+    policy = {"mode": "recovery", "approved_priorities": [], "dispatch_enabled": False}
+    item = {"type": "CommandExecution", "exit_code": 0, "stdout": json.dumps(policy)}
+    record.write_text(json.dumps({"payload": {"item": item}}) + "\n")
+    assert native_policy_record(record, 1) == policy
+    item["exit_code"] = 1
+    record.write_text(json.dumps({"payload": {"item": item}}) + "\n")
+    with pytest.raises(ValueError, match="native_record_invalid"):
+        native_policy_record(record, 1)
+    with pytest.raises(ValueError, match="native_record_invalid"):
+        native_policy_record(record, 257)

@@ -11,12 +11,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli/src"))
 from limen.conduct.client import client_from_env
 from limen.conduct.models import canonical_hash
 from limen.dispatch import _load_limen_env
-from limen.execution_policy import reconcile_policy
+from limen.execution_policy import native_policy_record, reconcile_policy
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source", type=Path, required=True)
+    source_group = parser.add_mutually_exclusive_group(required=True)
+    source_group.add_argument("--source", type=Path)
+    source_group.add_argument("--native-record", type=Path)
+    parser.add_argument("--record-line", type=int, default=257)
     parser.add_argument("--outcome", required=True)
     parser.add_argument("--work-key", required=True)
     parser.add_argument("--owner", required=True)
@@ -34,7 +37,11 @@ def main():
     try:
         client = client_from_env()
         live = client._request("GET", "/api/conduct/execution/policy")
-        source = json.loads(args.source.read_text())
+        source = (
+            native_policy_record(args.native_record, args.record_line)
+            if args.native_record
+            else json.loads(args.source.read_text())
+        )
         candidate = reconcile_policy(source, live, outcome=args.outcome, work_key=args.work_key, owner=args.owner)
         receipt.update(
             prior_fingerprint=canonical_hash(source),
