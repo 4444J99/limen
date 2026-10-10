@@ -118,7 +118,7 @@ ONE HOME (not four): FLAME.md at $LIMEN_ROOT/FLAME.md — it already rides every
 | 2026-W27 | photos-universe-20260629-182431 — photo dedup / library-preserve cleanup pass | `/Users/4jp/Workspace/photos-universe-20260629-182431 (local ` | unchecked |
 | 2026-W27 | Workstream kickstart command — 'open any model, nonconflicting worktree, knows the repo' | `origin/work/workstream-kickstart-20260629 (remote branch, no` | unchecked |
 | 2026-W27 | Persona linguistic diff engine — math diff between how two people write; model of each per | `No implementation artifact this week; adjacent scripts in /U` | unchecked |
-| 2026-W28 | literary-desk-alpha-20260708 worktree — submission machine scaffold for Chris Author-One | `/Users/4jp/Workspace/.limen-worktrees/literary-desk-alpha-20` | unchecked |
+| 2026-W28 | literary-desk-alpha-20260708 worktree — submission machine scaffold for Chris Notarnicola | `/Users/4jp/Workspace/.limen-worktrees/literary-desk-alpha-20` | unchecked |
 | 2026-W28 | PR #665 — TABULARIUS/VLTIMA kernel routing all task records through single keeper | `organvm/limen PR #665, branch limen/tabularius-vltima-kernel` | unchecked |
 | 2026-W28 | mail-story-mining-20260706 worktree — full pipeline wiring with 61 files | `/Users/4jp/Workspace/limen/.worktrees/mail-story-mining-2026` | unchecked |
 | 2026-W28 | ChatGPT movement ENGINE-DESIGN-AND-BACKLOG.md — FUNNEL-ENGINE design for three circle memb | `/Users/4jp/Workspace/_health-private/daily-mat-strength-brai` | unchecked |

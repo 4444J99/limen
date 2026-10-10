@@ -1,0 +1,77 @@
+{
+  "schema": "1.0",
+  "snapshots": [
+    {
+      "date": "2026-07-03",
+      "generated_at": "2026-07-03T11:43:04Z",
+      "balances": {
+        "anthony-personal:ach-checking": {
+          "balance": null,
+          "balance_known": false,
+          "as_of": null,
+          "type": "checking"
+        },
+        "anthony-personal:icloud-email": {
+          "balance": null,
+          "balance_known": false,
+          "as_of": null,
+          "type": "receivable"
+        },
+        "anthony-personal:gmail-email": {
+          "balance": null,
+          "balance_known": false,
+          "as_of": null,
+          "type": "receivable"
+        },
+        "anthony-personal:apple-developer": {
+          "balance": null,
+          "balance_known": false,
+          "as_of": null,
+          "type": "receivable"
+        },
+        "sovereign-systems-llc:stripe-merchant": {
+          "balance": null,
+          "balance_known": false,
+          "as_of": null,
+          "type": "receivable"
+        },
+        "sovereign-systems-llc:llc-checking": {
+          "balance": null,
+          "balance_known": false,
+          "as_of": null,
+          "type": "checking"
+        },
+        "product-exporter:ko-fi": {
+          "balance": null,
+          "balance_known": false,
+          "as_of": null,
+          "type": "receivable"
+        },
+        "product-exporter:lemon-squeezy": {
+          "balance": null,
+          "balance_known": false,
+          "as_of": null,
+          "type": "receivable"
+        },
+        "product-exporter:moneta-mint": {
+          "balance": null,
+          "balance_known": false,
+          "as_of": null,
+          "type": "receivable"
+        },
+        "product-public-records:tbd-payments": {
+          "balance": null,
+          "balance_known": false,
+          "as_of": null,
+          "type": "receivable"
+        },
+        "product-invisible-ledger:tbd-payments": {
+          "balance": null,
+          "balance_known": false,
+          "as_of": null,
+          "type": "receivable"
+        }
+      }
+    }
+  ]
+}

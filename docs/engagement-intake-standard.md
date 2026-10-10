@@ -11,7 +11,7 @@ scripts/engagement-guard.py --all                              # every live enga
 ```
 
 Its regression test is a real engagement that failed every rule below
-(`engagements/client-one.yaml`). **The guard must fail on that file.** A change that makes it
+(`engagements/victoroff.yaml`). **The guard must fail on that file.** A change that makes it
 pass has broken the guard.
 
 ---
@@ -207,5 +207,5 @@ scripts/engagement-guard.py --all
 
 - `scripts/engagement-guard.py` — the predicate
 - `engagements/REGISTER.md` — the log
-- `engagements/client-one.yaml` — the regression test (must fail)
+- `engagements/victoroff.yaml` — the regression test (must fail)
 - `engagements/examples/healthy.yaml` — the target shape (must pass)

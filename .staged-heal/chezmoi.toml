@@ -1,0 +1,31 @@
+sourceDir = "/Users/4jp/Workspace/domus-genoma"
+
+[git]
+    autoCommit = true
+    autoPush = true
+
+[data]
+    cce_corpus_store_root = "/Users/4jp/.local/share/conversation-corpus-engine/corpus-store"
+    name = "4444jPPP"
+    email = "padavano.anthony@gmail.com"
+    ssh_signing_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPCxKpD1wA+L1rlxbDKu8E+oFpX+xCszTkR9BcUW4693"
+    ssh_signing_key_literal = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPCxKpD1wA+L1rlxbDKu8E+oFpX+xCszTkR9BcUW4693"
+    org_liminal = "4444j99"
+    github_primary = "4444J99"
+    domain_handle = "4jp.dev"
+    domain_name = "anthonypadavano.com"
+    domain_name_defensive = "anthonypadavano.dev"
+    domain_system = "organvm.dev"
+    domain_system_org = "organvm.org"
+    domain_system_defensive = "organvm.io"
+    domain_email = "anthony@anthonypadavano.com"
+    domain_registrar = "cloudflare"
+    is_work = false
+    domus_auto_enabled = false
+    has_aws_credentials = false
+
+[onepassword]
+    command = "op"
+
+[edit]
+    command = "nvim"

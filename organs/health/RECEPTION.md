@@ -56,7 +56,7 @@ Prepend these invariants to every workflow prompt (incorporated here for the con
 - **Safety concerns are escalated, never self-resolved.** The safety sentinel flags and surfaces;
   only a clinician interprets clinical meaning.
 - **Accommodation records feed the legal organ (`organs/legal/`), not replace it.** The ADA matter
-  is a legal proceeding directed by counsel (Counsel Longo). Health organ outputs are structured
+  is a legal proceeding directed by counsel (Micah Longo). Health organ outputs are structured
   records; the legal organ applies legal strategy. The health organ does not give legal advice.
 - **This organ does not replace a doctor, therapist, or any licensed professional.** It replaces
   the coordination headcount that multiplies every clinical hour's effectiveness.

@@ -823,10 +823,10 @@ gates:
     owner: docs
     note: "The plan→issue→PR chain holds: every non-baselined dated plan declares `Issue: #N` and a `PR:` state (#M, (pending), or a reasoned Status:). Binds the entry joint of session-phases.yaml, which shipped advisory-only in Phase 1 and left this as its named Phase-2 gate. Chain organ: scripts/session-plan.py."
   engagement-guard:
-    command: "python3 scripts/engagement-guard.py --config engagements/examples/healthy.yaml --today 2026-09-10 && ! python3 scripts/engagement-guard.py --config engagements/client-one.yaml --today 2026-09-10"
+    command: "python3 scripts/engagement-guard.py --config engagements/examples/healthy.yaml --today 2026-09-10 && ! python3 scripts/engagement-guard.py --config engagements/victoroff.yaml --today 2026-09-10"
     paths: ["scripts/engagement-guard.py", "engagements/**", "docs/engagement-intake-standard.md"]
     owner: docs
-    note: "The engagement guard's regression contract, made real (it was prose-only from #2332 to 2026-08-14 — client-one.yaml called itself 'the guard's REGRESSION TEST' and nothing ran it): healthy.yaml must exit 0 and client-one.yaml must exit non-zero, both at a pinned --today so UNPAID-CEILING is deterministic. A refactor that turns the guard green on Client-One — or red on the healthy example — is a broken guard, not a fixed engagement. Standard: docs/engagement-intake-standard.md (13 rules; MUTUALLY-BINDING added 2026-08-14 from the single-signer-envelope precedent)."
+    note: "The engagement guard's regression contract, made real (it was prose-only from #2332 to 2026-08-14 — victoroff.yaml called itself 'the guard's REGRESSION TEST' and nothing ran it): healthy.yaml must exit 0 and victoroff.yaml must exit non-zero, both at a pinned --today so UNPAID-CEILING is deterministic. A refactor that turns the guard green on Victoroff — or red on the healthy example — is a broken guard, not a fixed engagement. Standard: docs/engagement-intake-standard.md (13 rules; MUTUALLY-BINDING added 2026-08-14 from the single-signer-envelope precedent)."
   ledger-custody:
     command: "python3 scripts/check-ledger-custody.py"
     paths: ["docs/github-pr-debt-ledger.json", "scripts/pr-debt-trend.py", "scripts/gitvs.py", "scripts/diurnal.py", "scripts/check-ledger-custody.py", "institutio/governance/ledger-custody.yaml", "institutio/governance/ledger-custody-baseline.txt"]
@@ -957,7 +957,7 @@ gates:
     paths: ["institutio/collaboration-operations/**", "institutio/github/estate.yaml", "institutio/github/access.yaml", "organs/consulting/constellation/registry.yaml", "scripts/check-collaboration-operations.py"]
     ci_job: "pr-gate.yml:pr-gate"
     owner: consulting
-    note: "The reusable collaboration-operations platform is project-neutral infrastructure, never another client lane. This predicate locks its private/no-grants/synthetic-only posture, David's mostly-complete Client-One external references, Maddie's closed push-only lane, and Ari's transcript-vault custody gate to their typed owner registries."
+    note: "The reusable collaboration-operations platform is project-neutral infrastructure, never another client lane. This predicate locks its private/no-grants/synthetic-only posture, David's mostly-complete Victoroff external references, Maddie's closed push-only lane, and Ari's transcript-vault custody gate to their typed owner registries."
   check-plan-decisions:
     command: "python3 scripts/check-plan-decisions.py --check"
     paths: ["docs/plans/**", "scripts/check-plan-decisions.py"]

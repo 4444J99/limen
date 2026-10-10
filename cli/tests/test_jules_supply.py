@@ -262,7 +262,7 @@ def test_script_reports_the_exclusion_instead_of_minting_client_work(monkeypatch
     inbox = tasks_path.parent / "logs" / "tickets" / "inbox"
     assert not list(inbox.glob("*.json")), "no client packet may be queued"
     # The report must not republish the lane's name — logs/ auto-pushes to a public origin.
-    assert "client-one" not in out.lower()
+    assert "victoroff" not in out.lower()
 
 
 def test_registry_rejects_wrong_schema(tmp_path: Path) -> None:

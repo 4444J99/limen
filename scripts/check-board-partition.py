@@ -106,7 +106,7 @@ def _disclosure_markers(lanes: frozenset[str], keywords: frozenset[str]) -> dict
     Reusing a word list built for one purpose as evidence for another is exactly the category
     error that put a client engagement at the top of the dispatch queue -- ``_LIFECYCLE_TEXT_TERMS``
     was a lifecycle vocabulary pressed into service as a value signal. The rule, not a hand-pruned
-    list, is the fix: ``client-one`` is a marker because it names ``victoroff-os``; ``hydration`` is
+    list, is the fix: ``victoroff`` is a marker because it names ``victoroff-os``; ``hydration`` is
     not, because it names nothing.
     """
     markers: dict[str, str] = {}

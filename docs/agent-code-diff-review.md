@@ -2991,7 +2991,7 @@ Evidence:
 - Claude session `8a284b0a-d749-4b41-8955-99aff1b51d47` worked VLTIMA institutional-prosthesis artifacts from the deleted `.claude/worktrees/piped-booping-kettle` worktree and Claude job temp worktrees.
 - Local transcript survives at `~/.claude/projects/-Users-4jp-Workspace-limen--claude-worktrees-piped-booping-kettle/8a284b0a-d749-4b41-8955-99aff1b51d47`.
 - Structural session count: 538 prompt events, 319 unique prompt/task bodies, 11 changed-file targets in the private queue index, and eight subagent transcript files.
-- The original job temp directories are gone, but the durable Limen surfaces are present: `docs/runbooks/first-dollar-runbook.md`, `docs/MONSTER-MAP.md`, `organ-ladder.json`, `organs/README.md`, `organs/legal/KERNEL.md`, `organs/legal/CHARTER.md`, `organs/legal/FRAMEWORK-FOR-COUNSEL.md`, and `scripts/generate-organ-backlog.py`.
+- The original job temp directories are gone, but the durable Limen surfaces are present: `docs/runbooks/first-dollar-runbook.md`, `docs/MONSTER-MAP.md`, `organ-ladder.json`, `organs/README.md`, `organs/legal/KERNEL.md`, `organs/legal/CHARTER.md`, `organs/legal/FRAMEWORK-FOR-MICAH.md`, and `scripts/generate-organ-backlog.py`.
 - Git history shows the session's intended artifacts landed through later public commits, including `65284d9` for the first-dollar runbook, `1fd0c7c` for the organ-backlog generator, `cc1b422` for the legal-organ kernel, and `7482c76` for the legal-organ charter.
 
 Outcome:
@@ -7522,7 +7522,7 @@ Evidence:
 - Current UMA CI and Deploy are green on `8ef7ee6`; `pages-build-deployment` failed on the same commit with GitHub Pages reporting "Deployment failed, try again later."
 - Local focused invariant tests pass: `python3 -m pytest tests/test_mail_resolver_receipt.py -q` reports `8 passed`. Local full `python3 -m pytest -q` cannot collect in this bare Python 3.13 environment because `googleapiclient` and `stripe` are missing; current GitHub CI is the full-suite receipt.
 - The schema doc named by the queue as `.claude/worktrees/invariant/docs/schemas/mail-invariant-rollup-v1.md` is not present at that transient path now. The durable file is `docs/schemas/mail-invariant-rollup-v1.md` in UMA main.
-- `~/.local/state/universal-mail-automation/reconcile-notes.jsonl` still has two rows: one correctly parking the Counsel/legal reply as `needs_read_only_sent_mail_verification`, and one saying branch `feat/operator-dashboard-mail-endzone` is `parked_awaiting_user_authorization`, `pushed: false`, and "do not push."
+- `~/.local/state/universal-mail-automation/reconcile-notes.jsonl` still has two rows: one correctly parking the Micah/legal reply as `needs_read_only_sent_mail_verification`, and one saying branch `feat/operator-dashboard-mail-endzone` is `parked_awaiting_user_authorization`, `pushed: false`, and "do not push."
 - Claude memory files `uma-mail-ops-state.md`, `styx-surface-packets-branch.md`, and `working-style-finish-dont-sprawl.md` were useful at closeout time, but at least `uma-mail-ops-state.md` and `styx-surface-packets-branch.md` are now time-sensitive and stale against current repo state.
 - The STYX note says a local unpushed branch `surface-packets @ 979e747` awaits author merge. Current `/Users/4jp/styx` is on `limen/merge-surface-packets-738 @ 66fa968`, with that branch pushed to origin and local `main` also at `66fa968` while `origin/main` is still `addae3a`. That is a different state than the memory note describes.
 

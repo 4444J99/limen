@@ -3758,7 +3758,7 @@
         "organs/literary/seed.yaml",
         "organs/literary/validate-literary.py",
         "organs/literary/works/christopher/private-prose-packet-1.yaml",
-        "organs/literary/writers/christopher-author-one.yaml"
+        "organs/literary/writers/christopher-notarnicola.yaml"
       ],
       "untracked_paths_sha256": "a2fea6a03d11d190e0833307c11e044f7ac211053fed91e67593760bf24684cc",
       "worktree": "/Users/4jp/Workspace/.limen-worktrees/literary-desk-alpha-20260708",

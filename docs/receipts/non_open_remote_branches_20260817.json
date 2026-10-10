@@ -1593,7 +1593,7 @@
     "ahead_main": 3
   },
   {
-    "branch": "work/client-one-external-custody-20260722",
+    "branch": "work/victoroff-external-custody-20260722",
     "sha": "456a03a4f",
     "closed_pr": null,
     "behind_main": 695,
@@ -1635,7 +1635,7 @@
     "ahead_main": 1
   },
   {
-    "branch": "worktree-client-one-closeout",
+    "branch": "worktree-victoroff-closeout",
     "sha": "3803fd9c6",
     "closed_pr": null,
     "behind_main": 26,

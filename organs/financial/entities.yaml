@@ -1,0 +1,233 @@
+# Financial Office — Entity Registry
+# MACRO: generic template. MICRO: Anthony's entities populated below.
+# Each entity is a Member in the 5-primitive kernel.
+#
+# Add/update entities by editing this file. The consolidate.py script
+# reads this to produce balance-sheet, cashflow, and payrail artifacts.
+schema_version: "1.0"
+organ: "financial"
+repo: "4444J99/limen"
+generated_at: "2026-07-03T00:00:00Z"
+
+# ── Entity taxonomy ──────────────────────────────────────────────────────
+# Each entity has: id, name, type, jurisdiction, ownership, and accounts.
+# Types: individual | llc | nonprofit | trust | joint
+entity_taxonomy:
+  individual:
+    description: "Natural person — the principal or a dependent"
+    required_fields: [name, jurisdiction, accounts]
+  llc:
+    description: "Limited liability company — business vehicle"
+    required_fields: [name, jurisdiction, ownership, accounts, ein]
+  nonprofit:
+    description: "Non-profit organization — mission vehicle"
+    required_fields: [name, jurisdiction, ownership, accounts, ein]
+
+# ── Account classification (asset vs liability) ────────────────────────
+# Every account type maps to asset or liability for net worth calculation.
+#   asset -> positive contribution to net worth
+#   liability -> negative contribution to net worth
+account_classification:
+  checking: asset
+  savings: asset
+  credit: liability
+  investment: asset
+  cash: asset
+  receivable: asset
+  payable: liability
+  crypto: asset
+  loan: liability
+  mortgage: liability
+  retirement: asset
+
+# ── MACRO: The generic field template every entity follows ─────────────
+# When adding a new person/organization, copy the structure below.
+# Fields marked (A) are auto-populated; (H) need human input; (D) derived.
+entity_template:
+  id: null                       # (H) unique slug, e.g. "anthony-personal"
+  name: null                     # (H) legal name
+  type: null                     # (H) individual | llc | nonprofit | trust
+  jurisdiction: null             # (H) country/state of formation
+  ownership: null                # (H) beneficial owner(s)
+  ein_tin: null                  # (H) EIN / TIN / SSN (last-4 only in registry)
+  notes: ""                      # (H) free-text
+  accounts:                      # (H) financial accounts belonging to this entity
+    - id: null                   #     account slug
+      institution: null          #     bank / broker / platform name
+      type: null                 #     asset: checking|savings|investment|cash|receivable|crypto  liability: credit|payable|loan|mortgage
+      currency: USD
+      balance_known: false       # (H) false = needs manual entry
+      balance: null              # (H) current balance (null if unknown)
+      as_of: null                # (H) date balance was last confirmed
+      url: null                  # (H) login URL or portal
+      notes: ""
+
+# ── MICRO: Anthony's known entities ─────────────────────────────────────
+# These are populated from known data across the codebase:
+#   - obligations-ledger.json → email accounts
+#   - his-hand-levers.json    → personal accounts, card-0186
+#   - revenue-ladder.json     → product entities
+#   - organ-ladder.json       → LLC (Sovereign Systems), NPO (Cind & Sol)
+#   - moneta/                 → the sovereign cash rail
+#   - FLAME.md canon          → MPO=NPO (Cind & Sol Foundation)
+#
+# BALANCES are NOT stored by design (no credential access). Mark
+# balance_known:false where human input is needed.
+
+entities:
+  - id: anthony-personal
+    name: "Anthony J. Padavano"
+    type: individual
+    jurisdiction: "US / New York"
+    ownership: self
+    notes: "Principal — generates revenue, holds personal accounts and obligations"
+    accounts:
+      - id: ach-checking
+        institution: "Santander"
+        type: checking
+        balance_known: false
+        notes: "historical card-0186 fraud hold discharged 2026-07-17; current account state must be re-observed"
+      - id: icloud-email
+        institution: "Apple (iCloud)"
+        type: receivable
+        balance_known: false
+        notes: "Primary email: a.j.padavano@icloud"
+      - id: gmail-email
+        institution: "Google (Gmail)"
+        type: receivable
+        balance_known: false
+        notes: "padavano.anthony@gmail — 80 obligations tracked"
+      - id: apple-developer
+        institution: "Apple Developer"
+        type: receivable
+        balance_known: false
+        notes: "Developer account — WWDC, app store connections"
+
+  - id: sovereign-systems-llc
+    name: "Sovereign Systems LLC"
+    type: llc
+    jurisdiction: "US"
+    ownership: "Anthony J. Padavano (single-member)"
+    notes: "Commercial vehicle for ORGANVM — consulting, product revenue. Dead-LLC status means Stripe KYC is blocked (obligations-ledger.json)."
+    accounts:
+      - id: stripe-merchant
+        institution: "Stripe"
+        type: receivable
+        balance_known: false
+        notes: "KYC blocked on dead LLC — prefer individual rail (Ko-fi/Lemon Squeezy/MONETA)"
+      - id: llc-checking
+        institution: "TBD"
+        type: checking
+        balance_known: false
+        notes: "Needs opening if LLC is revived"
+
+  - id: cind-and-sol-foundation
+    name: "Cind & Sol Foundation"
+    type: nonprofit
+    jurisdiction: "Panama"
+    ownership: "Cind & Sol (non-profit — see FLAME.md canon: MPO=NPO)"
+    notes: "Grant-finding engine = Quaestor. The non-profit pillar of ORGANVM's dual-entity operation."
+    accounts: []
+
+  - id: product-exporter
+    name: "ChatGPT Exporter (product revenue)"
+    type: individual
+    jurisdiction: "US"
+    ownership: "Anthony J. Padavano"
+    notes: "Rank-1 revenue product — deploy-ready. MONETA sovereign rail cut over (PR merged). First-dollar path: live page via Ko-fi/Lemon Squeezy or MONETA checkout."
+    accounts:
+      - id: ko-fi
+        institution: "Ko-fi"
+        type: receivable
+        balance_known: false
+        notes: "Individual rail (not LLC-gated). Link: ko-fi.com/ajpadavano"
+      - id: lemon-squeezy
+        institution: "Lemon Squeezy"
+        type: receivable
+        balance_known: false
+        notes: "Pro tier checkout — integrated, gated on deploy"
+      - id: moneta-mint
+        institution: "MONETA (sovereign cash rail)"
+        type: receivable
+        balance_known: false
+        notes: "Mint checkout page built. Pools demand until MINT_BTC_ADDRESS is set."
+
+  - id: product-public-records
+    name: "Public Record Data Scraper (product revenue)"
+    type: individual
+    jurisdiction: "US"
+    ownership: "Anthony J. Padavano"
+    notes: "Rank-2 revenue product — building stage. Data-as-a-service / one-off scrape gigs."
+    accounts:
+      - id: tbd-payments
+        institution: "TBD"
+        type: receivable
+        balance_known: false
+        notes: "Payment rail not yet chosen"
+
+  - id: product-invisible-ledger
+    name: "The Invisible Ledger (product revenue)"
+    type: individual
+    jurisdiction: "US"
+    ownership: "Anthony J. Padavano"
+    notes: "Rank-4 revenue product. B2B CPA tool → personal family office. This organ IS the family office face."
+    accounts:
+      - id: tbd-payments
+        institution: "TBD"
+        type: receivable
+        balance_known: false
+        notes: "Payment rail not yet chosen"
+
+# ── Known obligations (synced from root obligations-ledger.json) ──────
+# Full detail in $LIMEN_ROOT/obligations-ledger.json.
+# These are the financial-material obligations surfaced by the MAIL organ.
+obligation_sources:
+  - source: "$LIMEN_ROOT/obligations-ledger.json"
+    feed: "mail organ — every 6 beats"
+    financial_obligations:
+      - id: student-loan-default
+        entity: anthony-personal
+        title: "Student loan — default risk — U.S. Department of Education"
+        amount_unknown: true
+        frequency: "monthly"
+        priority: 88
+        next_step: "Log in at nelnet.studentaid.gov: check default status, recertify IDR plan"
+      - id: stripe-kyc
+        entity: sovereign-systems-llc
+        title: "KYC / identity verification — Stripe"
+        amount_unknown: true
+        frequency: "one-time"
+        priority: 78
+        next_step: "Prefer individual monetization rail (Ko-fi/Lemon Squeezy/MONETA) — dead LLC blocks Stripe KYC"
+
+# ── Revenue sources (synced from root revenue-ladder.json) ────────────
+# Full detail in $LIMEN_ROOT/revenue-ladder.json.
+revenue_sources:
+  - source: "$LIMEN_ROOT/revenue-ladder.json"
+    feed: "conductor beat"
+    products:
+      - id: exporter
+        product: "ChatGPT Exporter"
+        stage: deploy-ready
+        rank: 1
+        first_dollar_path: "Live page + Pro tier via MONETA/Ko-fi — individual rail, NOT dead-LLC Stripe"
+      - id: public-records
+        product: "Public Record Data Scraper"
+        stage: building
+        rank: 2
+      - id: mail-automation
+        product: "Universal Mail Automation"
+        stage: building
+        rank: 3
+      - id: invisible-ledger
+        product: "The Invisible Ledger"
+        stage: building
+        rank: 4
+      - id: mirror-mirror
+        product: "Mirror Mirror"
+        stage: building
+        rank: 5
+      - id: styx
+        product: "Styx"
+        stage: building
+        rank: 6

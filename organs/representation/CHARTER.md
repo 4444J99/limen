@@ -23,7 +23,7 @@ taking over their voice or outward choices.
 
 ## First Proofs
 
-Christopher Author-One is the first full record and the first
+Christopher Notarnicola is the first full record and the first
 `writer_submission` mode proof. One Chris record must support:
 
 - local repo evidence from Studio, Speech Score, Limen, or relationship-pipeline surfaces;
@@ -136,11 +136,11 @@ settings supplied at execution time; receipts redact those runtime values.
 
 ```bash
 python organs/representation/validate-representation.py --fleet
-python organs/representation/representation_substrate.py handoff-audit --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-public-profile-readiness --route yale-review-nonfiction-route
-python organs/representation/representation_substrate.py authority-packet --record organs/representation/records/christopher-author-one.yaml
-python organs/representation/representation_substrate.py publication-readiness --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-metadata-only-nonfiction-candidate --route yale-review-nonfiction-route
-python organs/representation/representation_substrate.py publication-send --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-metadata-only-nonfiction-candidate --route yale-review-nonfiction-route --approval-record organs/representation/approvals/author-one-yale-review-nonfiction-real-send.template.yaml
-python organs/representation/representation_substrate.py packet organs/representation/records/christopher-author-one.yaml --mode writer_submission
+python organs/representation/representation_substrate.py handoff-audit --writer organs/representation/records/christopher-notarnicola.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-public-profile-readiness --route yale-review-nonfiction-route
+python organs/representation/representation_substrate.py authority-packet --record organs/representation/records/christopher-notarnicola.yaml
+python organs/representation/representation_substrate.py publication-readiness --writer organs/representation/records/christopher-notarnicola.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-metadata-only-nonfiction-candidate --route yale-review-nonfiction-route
+python organs/representation/representation_substrate.py publication-send --writer organs/representation/records/christopher-notarnicola.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-metadata-only-nonfiction-candidate --route yale-review-nonfiction-route --approval-record organs/representation/approvals/chris-yale-review-nonfiction-real-send.template.yaml
+python organs/representation/representation_substrate.py packet organs/representation/records/christopher-notarnicola.yaml --mode writer_submission
 python organs/representation/representation_substrate.py packet organs/representation/records/et4l.yaml --mode project_page
 python organs/representation/representation_substrate.py candidate-intake --id candidate-with-source-ref --title "Sourced candidate manuscript" --content-ref source://private-manuscripts/chris/candidate-001 --source-id subject-confirmed-candidate-ref --claim-id chris-public-writing
 PYTHONPATH=cli/src python3 -m pytest cli/tests/test_representation_substrate.py -q

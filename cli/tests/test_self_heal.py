@@ -271,7 +271,7 @@ def test_partition_refusal_skips_partner_row_without_suppressing_valid_rows(tmp_
             "HEAL-cifix-organvm-exporter-54",
             "HEAL-rebase-organvm-scale-6",
         }
-    assert all("client-one" not in task_id for task_id in ids)
+    assert all("victoroff" not in task_id for task_id in ids)
 
 
 def test_fresh_live_chronic_repo_check_freezes_repeat_heal(tmp_path, monkeypatch, capsys):

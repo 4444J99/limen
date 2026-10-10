@@ -20,8 +20,8 @@
       "rival": "a top-tier litigation firm (the Cochran standard)",
       "domain_map": "Member=client/party; Mandate=claim/matter; Standing=case posture; Standard=statute/precedent/rubric; Governance=the firm's process + ethics wall",
       "macro": "a legal-institution platform any pro-se or under-resourced person can hold",
-      "micro": "Anthony's active ADA employment matter run with a top-firm's institutional weight, AUGMENTING attorney Counsel Longo (never replacing counsel, never practicing law)",
-      "first_artifact": "a case-posture brief + evidence/chain-of-custody index for the live matter, packaged as a framework deck to show Counsel",
+      "micro": "Anthony's active ADA employment matter run with a top-firm's institutional weight, AUGMENTING attorney Micah Longo (never replacing counsel, never practicing law)",
+      "first_artifact": "a case-posture brief + evidence/chain-of-custody index for the live matter, packaged as a framework deck to show Micah",
       "note": "THE FLAGSHIP he named. Augments real counsel; does NOT give legal advice or practice law."
     },
     {
@@ -292,7 +292,7 @@
       "rival": "a creator agency + studio CRM + publication desk + publicist + portfolio studio (the charter's own census)",
       "domain_map": "Member=represented subject (creator/professional); Mandate=a representation record (dossier/packet/presence); Standing=packet lifecycle (evidence -> staged -> approved -> sent); Standard=the charter's role gates (Privacy Sentinel blocks by default, Authority Clerk reports blockers not achieved status); Governance=approval-gated output modes",
       "macro": "institutional representation any creator or professional can hold — evidence librarian, provenance, opportunity analysis, submission/market-fit packets, public-presence drafts — without taking over their voice",
-      "micro": "the shipped proofs (Christopher Author-One writer_submission record, ET4L artist-organ bridge) + Anthony's own professional representation: the job campaign (LinkedIn/work comms, application packets via organvm/application-pipeline, interview-prep dossiers, the ASI north-star campaign)",
+      "micro": "the shipped proofs (Christopher Notarnicola writer_submission record, ET4L artist-organ bridge) + Anthony's own professional representation: the job campaign (LinkedIn/work comms, application packets via organvm/application-pipeline, interview-prep dossiers, the ASI north-star campaign)",
       "first_artifact": "organs/representation/ substrate already authored (CHARTER.md, KERNEL.md, representation_substrate.py, validate-representation.py, records/packets/opportunities/approvals) — this ladder entry is the organ's census admission, which derives its workstream channel",
       "note": "The organ predates its ladder entry (authored under the studio/authority program; first proofs Christopher + ET4L). Admitted to the ladder 2026-07-24 so the `representation` workstream channel derives (the job-getting/professional-presence lane) — channels derive from pillars, so an organ absent from the ladder has no lane. Working name pending an INDEX-NOMINVM pass."
     }
@@ -312,6 +312,6 @@
   "your_levers": [
     "financial identity — receiving real money (bank/KYC for a payout rail or a signed deal) is genuinely yours",
     "the send / the signature — outbound emails and any contract: I draft, you send/sign (reversible-only invariant)",
-    "institutional logins — D2L (education), and privileged/filing acts with Counsel (legal)"
+    "institutional logins — D2L (education), and privileged/filing acts with Micah (legal)"
   ]
 }

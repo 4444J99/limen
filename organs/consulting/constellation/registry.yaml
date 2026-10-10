@@ -220,7 +220,7 @@ people:
     projects:
       - name: victoroff-os
         repo: 4444J99/victoroff-os
-        keywords: [client-one, victoroff-os]
+        keywords: [victoroff, victoroff-os]
         stage: mvp
         public_face_state: none
         dossier: null

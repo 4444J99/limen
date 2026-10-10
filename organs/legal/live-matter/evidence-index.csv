@@ -1,0 +1,5 @@
+Document ID,Date,Source,Document Type,Chain of Custody,Elements Supported,Privilege Status,Notes
+EVID-001,[Date Placeholder],Client,Email,Direct from client inbox,Employer Knowledge,Unprivileged,[Placeholder - e.g. Notice of accommodation request]
+EVID-002,[Date Placeholder],Client,Medical Record,Direct from provider portal,Disability Status,Unprivileged (once disclosed),[Placeholder - e.g. Diagnosis and limitations]
+EVID-003,[Date Placeholder],Employer,Letter,Received via mail,Adverse Action,Unprivileged,[Placeholder - e.g. Denial of request]
+EVID-004,[Date Placeholder],Client,Draft Narrative,Created by client for counsel,Factual Background,Privileged (Attorney-Client),[Placeholder - e.g. Timeline of events]

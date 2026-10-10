@@ -29,7 +29,7 @@
 
 Donations land on an **existing PayPal** — no new entity, no new KYC if you already have PayPal.
 
-1. Open **https://ko-fi.com** → **Sign up** (use `<owner-email>` or Google).
+1. Open **https://ko-fi.com** → **Sign up** (use `padavano.anthony@gmail.com` or Google).
 2. **CRITICAL — set your page handle to exactly `4444J99`** → your page becomes `ko-fi.com/4444J99`.
    The live repo's Sponsor button + README already point here; any other handle and they 404.
 3. Page name: `AI Chat Exporter`.  Short bio (paste):

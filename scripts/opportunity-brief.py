@@ -6,7 +6,7 @@ correspondence-walk) surfaces everything to logs/*.json + a sealed private diges
 operator never opens. A continuous engine that is invisible *feels* like no engine at all.
 
 This closes that gap: once per day it composes a plain-text brief from the already-computed
-state files and EMAILS it to the operator's own inbox (<owner-email>) — the one
+state files and EMAILS it to the operator's own inbox (padavano.anthony@gmail.com) — the one
 surface he already reads. No new app, no phone subscribe, no lever. Reuses the headless
 `scripts/mail-send` lane (UMA mail_send.py; creds hydrated by the credential organ).
 
@@ -36,7 +36,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
-OPERATOR_EMAIL = os.environ.get("LIMEN_OPERATOR_EMAIL", "<owner-email>")
+OPERATOR_EMAIL = os.environ.get("LIMEN_OPERATOR_EMAIL", "padavano.anthony@gmail.com")
 STATE_PATH = ROOT / "logs" / "opportunity-brief-state.json"
 
 

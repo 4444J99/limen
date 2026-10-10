@@ -9,7 +9,7 @@ floor_env: LIMEN_JULES_SUPPLY_FLOOR   # default floor derives from the jules cap
 per_run_cap: 25
 repos:
   - repo: organvm/victoroff-os
-    owner_surface: client-one-governance
+    owner_surface: victoroff-governance
     workstream: governance
     target_agent: jules
     forbidden_paths: "tasks.yaml, AGENTS.md, .github/**, package.json, pnpm-lock.yaml"
@@ -21,21 +21,21 @@ repos:
         title: "Contracts validation deepening, round {n}"
         allowed: "packages/contracts/**"
         behavior: >-
-          Add one adversarial round of validator coverage to @client-one/contracts:
+          Add one adversarial round of validator coverage to @victoroff/contracts:
           new negative cases for every exported validator (malformed shapes, boundary
           values, duplicate keys), each asserting the exact rejection reason. Keep the
           existing test script; do not weaken any existing assertion.
-        predicate: "pnpm --filter @client-one/contracts test"
+        predicate: "pnpm --filter @victoroff/contracts test"
         value_case: "Each round hardens the contract layer against a class of malformed input."
         budget_cost: 1
       - id_prefix: VIC-DOMAIN-DEEPEN
         title: "Seven-intent resolver deepening, round {n}"
         allowed: "packages/domain/**"
         behavior: >-
-          Add one adversarial round of resolver tests to @client-one/domain: new orderings,
+          Add one adversarial round of resolver tests to @victoroff/domain: new orderings,
           conflicting-citation cases, and tie-break determinism checks for the seven-intent
           resolver. Keep exactly-one-next-action invariants; do not weaken existing tests.
-        predicate: "pnpm --filter @client-one/domain test"
+        predicate: "pnpm --filter @victoroff/domain test"
         value_case: "Each round pins resolver behavior against a new ordering/conflict class."
         budget_cost: 1
       - id_prefix: VIC-FIXTURES-DEEPEN
@@ -45,7 +45,7 @@ repos:
           Extend the synthetic fixtures package with one new public-safe scenario set
           (happy path, ambiguity, conflict) plus invariant tests proving no duplicates,
           citations present, and synthetic-only markers on every record.
-        predicate: "pnpm --filter @client-one/fixtures test"
+        predicate: "pnpm --filter @victoroff/fixtures test"
         value_case: "Each round grows the shared synthetic corpus every package tests against."
         budget_cost: 1
       - id_prefix: VIC-GOV-DEEPEN
@@ -65,7 +65,7 @@ repos:
           Add one round of UI contract tests: black-and-white token compliance, accessible
           names, and data-bound progress fractions for one more component or state. No new
           color literals; no hand-set progress numbers.
-        predicate: "pnpm --filter @client-one/ui test"
+        predicate: "pnpm --filter @victoroff/ui test"
         value_case: "Each round encodes another slice of the visual contract as executable tests."
         budget_cost: 1
       - id_prefix: VIC-PUB-DEEPEN
@@ -75,7 +75,7 @@ repos:
           Add one round of publication-boundary checks: a new leak class (identity string,
           telemetry marker, missing noindex/synthetic disclosure) with tests proving the
           violation is rejected and the reason is named.
-        predicate: "pnpm --filter @client-one/publication test"
+        predicate: "pnpm --filter @victoroff/publication test"
         value_case: "Each round turns one more publication risk into an executable refusal."
         budget_cost: 1
       - id_prefix: VIC-SITE-DEEPEN

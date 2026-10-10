@@ -1,0 +1,70 @@
+schema_version: representation.v3
+kind: representation_approval_record
+id: chris-yale-review-nonfiction-dry-run-template
+name: Chris Yale Review nonfiction dry-run approval template
+dry_run_only: true
+no_outward_action: true
+note: Template only; copy to a private approval record before changing statuses.
+approvals:
+  - id: chris-public-export-dry-run
+    approval_type: public_export
+    approval_target: writer_public_export
+    approval_scope: dry_run
+    status: not_requested
+    subject_id: christopher-notarnicola
+    candidate_id: chris-metadata-only-nonfiction-candidate
+    route_id: yale-review-nonfiction-route
+    dry_run_only: true
+    no_outward_action: true
+    permitted_actions:
+      - render_review_files
+      - write_review_files
+      - dry_run_export
+    claim_ids: []
+    note: Unlocks local review-file export only after Chris public-copy approval is recorded.
+  - id: chris-submission-dry-run
+    approval_type: submission
+    approval_target: writer_submission
+    approval_scope: dry_run
+    status: not_requested
+    subject_id: christopher-notarnicola
+    candidate_id: chris-metadata-only-nonfiction-candidate
+    route_id: yale-review-nonfiction-route
+    dry_run_only: true
+    no_outward_action: true
+    permitted_actions:
+      - render_review_files
+      - write_review_files
+      - dry_run_export
+    claim_ids: []
+    note: Unlocks local submission-packet dry run only after Chris approves the packet.
+  - id: yale-route-submission-dry-run
+    approval_type: submission
+    approval_target: opportunity_route_submission
+    approval_scope: dry_run
+    status: not_requested
+    subject_id: christopher-notarnicola
+    opportunity_id: literary-submission-landscape-v3
+    candidate_id: chris-metadata-only-nonfiction-candidate
+    route_id: yale-review-nonfiction-route
+    dry_run_only: true
+    no_outward_action: true
+    permitted_actions:
+      - render_review_files
+      - write_review_files
+      - dry_run_export
+    claim_ids: []
+    note: Unlocks local route-specific dry run only after the opportunity/route is approved.
+  - id: real-send-lock
+    approval_type: real_send
+    approval_scope: real_send
+    status: locked
+    real_send_lock: true
+    subject_id: christopher-notarnicola
+    opportunity_id: literary-submission-landscape-v3
+    candidate_id: chris-metadata-only-nonfiction-candidate
+    route_id: yale-review-nonfiction-route
+    no_outward_action: true
+    permitted_actions: []
+    claim_ids: []
+    note: Real send remains locked in this dry-run record; use a separate real_send approval record for publication-send.

@@ -50,7 +50,7 @@ structural. The record proves what the institution can do without naming who it 
 | Next standing | REVIEW (after first accommodation cycle closes) |
 | Patient | The principal (human — all health decisions are theirs) |
 | Clinicians | Licensed specialists — orthopedist, neurologist, physical therapist, primary care |
-| Legal counsel | Counsel Longo (ADA matter — all legal strategy stays with counsel) |
+| Legal counsel | Micah Longo (ADA matter — all legal strategy stays with counsel) |
 | Legal organ link | `organs/legal/` — accommodation record feeds the ADA matter workflow |
 | Last updated | 2026-07-05 |
 
@@ -161,7 +161,7 @@ The organ reached ACTIVE standing on 2026-07-05. The next milestone — REVIEW �
 2. **One full accommodation cycle completed** — an accommodation request that goes through the
    entire lifecycle: need identified → request submitted → employer response → accommodation
    enforced or escalated to legal organ.
-3. **An accommodation record successfully consumed by the legal organ** — counsel (Counsel Longo)
+3. **An accommodation record successfully consumed by the legal organ** — counsel (Micah Longo)
    or the legal organ's evidence index (`organs/legal/matters/*/evidence-index.csv`) contains
    a row referencing the health organ's accommodation correspondence trail.
 4. **Safety sentinel passes on every artifact produced** — zero sentinel failures across all

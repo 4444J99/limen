@@ -98,7 +98,7 @@ The combined packet command is review-only:
 
 ```bash
 python organs/representation/representation_substrate.py authority-packet \
-  --record organs/representation/records/christopher-author-one.yaml
+  --record organs/representation/records/christopher-notarnicola.yaml
 ```
 
 It renders the canon dossier, public presence draft, authority scorecard,
@@ -126,7 +126,7 @@ work, run the handoff audit:
 
 ```bash
 python organs/representation/representation_substrate.py handoff-audit \
-  --writer organs/representation/records/christopher-author-one.yaml \
+  --writer organs/representation/records/christopher-notarnicola.yaml \
   --opportunity organs/representation/opportunities/literary-submission-landscape.yaml \
   --candidate chris-public-profile-readiness \
   --route yale-review-nonfiction-route
@@ -145,7 +145,7 @@ current state for one writer, one `candidate_works` id, and one route:
 
 ```bash
 python organs/representation/representation_substrate.py publication-readiness \
-  --writer organs/representation/records/christopher-author-one.yaml \
+  --writer organs/representation/records/christopher-notarnicola.yaml \
   --opportunity organs/representation/opportunities/literary-submission-landscape.yaml \
   --candidate chris-metadata-only-nonfiction-candidate \
   --route yale-review-nonfiction-route
@@ -175,7 +175,7 @@ CLI shape is:
 
 ```bash
 python organs/representation/representation_substrate.py literary-packet \
-  --writer organs/representation/records/christopher-author-one.yaml \
+  --writer organs/representation/records/christopher-notarnicola.yaml \
   --opportunity organs/representation/opportunities/literary-submission-landscape.yaml \
   --candidate chris-public-profile-readiness \
   --route submittable-discover-route
@@ -235,10 +235,10 @@ The authority program applies to all first proofs:
 
 ```bash
 python organs/representation/validate-representation.py --fleet
-python organs/representation/representation_substrate.py handoff-audit --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-public-profile-readiness --route yale-review-nonfiction-route
-python organs/representation/representation_substrate.py authority-packet --record organs/representation/records/christopher-author-one.yaml
-python organs/representation/representation_substrate.py publication-readiness --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-metadata-only-nonfiction-candidate --route yale-review-nonfiction-route
-python organs/representation/representation_substrate.py publication-send --writer organs/representation/records/christopher-author-one.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-metadata-only-nonfiction-candidate --route yale-review-nonfiction-route --approval-record organs/representation/approvals/author-one-yale-review-nonfiction-real-send.template.yaml
-python organs/representation/representation_substrate.py packet organs/representation/records/christopher-author-one.yaml --mode writer_submission
+python organs/representation/representation_substrate.py handoff-audit --writer organs/representation/records/christopher-notarnicola.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-public-profile-readiness --route yale-review-nonfiction-route
+python organs/representation/representation_substrate.py authority-packet --record organs/representation/records/christopher-notarnicola.yaml
+python organs/representation/representation_substrate.py publication-readiness --writer organs/representation/records/christopher-notarnicola.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-metadata-only-nonfiction-candidate --route yale-review-nonfiction-route
+python organs/representation/representation_substrate.py publication-send --writer organs/representation/records/christopher-notarnicola.yaml --opportunity organs/representation/opportunities/literary-submission-landscape.yaml --candidate chris-metadata-only-nonfiction-candidate --route yale-review-nonfiction-route --approval-record organs/representation/approvals/chris-yale-review-nonfiction-real-send.template.yaml
+python organs/representation/representation_substrate.py packet organs/representation/records/christopher-notarnicola.yaml --mode writer_submission
 python organs/representation/representation_substrate.py packet organs/representation/records/et4l.yaml --mode project_page
 ```

@@ -22,7 +22,7 @@ spec.loader.exec_module(pp)
 @pytest.mark.parametrize(
     "src,want",
     [
-        ("mail <owner-email> now", "mail [email redacted] now"),
+        ("mail padavano.anthony@gmail.com now", "mail [email redacted] now"),
         ("anthony.padavano@gmail", "[email redacted]"),
         ("by Anthony Padavano", "by [name redacted]"),
         ("Padavano, Anthony", "[name redacted]"),
@@ -88,7 +88,7 @@ def test_owner_phone_when_configured():
         ("app/config/credentials.json", None, "secret"),
         ("README.md", None, "public_safe"),
         ("data/leads.csv", None, "public_safe"),
-        ("notes.md", "reach me at <owner-email>", "personal_pii"),
+        ("notes.md", "reach me at padavano.anthony@gmail.com", "personal_pii"),
         ("notes.md", "contact legal@styx.protocol for terms", "public_safe"),
         # calibration: env-example/template are build-in-public config DOCS (placeholders), not secrets
         (".env.example", None, "public_safe"),

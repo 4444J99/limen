@@ -25,7 +25,7 @@
   "retained_gates": [
     "no repository creation",
     "no collaborator grants or transfers",
-    "no Client-One mutation",
+    "no Victoroff mutation",
     "no public send",
     "synthetic fixtures only"
   ]

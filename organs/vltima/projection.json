@@ -687,7 +687,7 @@
   "organs": [
     {
       "domain_map": "Member=client/party; Mandate=claim/matter; Standing=case posture; Standard=statute/precedent/rubric; Governance=the firm's process + ethics wall",
-      "first_artifact": "a case-posture brief + evidence/chain-of-custody index for the live matter, packaged as a framework deck to show Counsel",
+      "first_artifact": "a case-posture brief + evidence/chain-of-custody index for the live matter, packaged as a framework deck to show Micah",
       "home": "organs/legal/",
       "kernel_map": {
         "Governance": "the firm's process + ethics wall",
@@ -697,7 +697,7 @@
         "Standing": "case posture"
       },
       "macro": "a legal-institution platform any pro-se or under-resourced person can hold",
-      "micro": "Anthony's active ADA employment matter run with a top-firm's institutional weight, AUGMENTING attorney Counsel Longo (never replacing counsel, never practicing law)",
+      "micro": "Anthony's active ADA employment matter run with a top-firm's institutional weight, AUGMENTING attorney Micah Longo (never replacing counsel, never practicing law)",
       "organ_kernel": [
         {
           "id": "member",

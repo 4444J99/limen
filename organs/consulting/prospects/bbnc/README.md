@@ -7,7 +7,7 @@ boundary. It does not claim that Bristol Bay Native Corporation (BBNC) requested
 commissioned the work. It contains no personal data, signatures, pricing, credentials, private
 BBNC material, or production access details.
 
-Padavano is the current delivery identity. `Client-One` appeared in the source plan, but the live
+Padavano is the current delivery identity. `Victoroff` appeared in the source plan, but the live
 identity registry supersedes that retired label; no new artifact revives it.
 
 ## Product chain

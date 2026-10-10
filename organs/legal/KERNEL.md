@@ -65,17 +65,17 @@ marked for review, and every external act waits for the attorney or authorized h
 The MACRO form is intentionally generic — no individual identity, no personal data at the template
 layer. It is the platform that scales to N matters with zero marginal design cost.
 
-### MICRO — Anthony's active ADA employment matter, augmenting attorney Counsel Longo
+### MICRO — Anthony's active ADA employment matter, augmenting attorney Micah Longo
 
 The MICRO deployment is Anthony's live ADA employment matter, run with a top firm's institutional
-weight, **augmenting attorney Counsel Longo** (never replacing counsel, never practicing law). It is
+weight, **augmenting attorney Micah Longo** (never replacing counsel, never practicing law). It is
 the proving ground for the Cochran flagship: the generic legal organ, carried by the named
 standard, focused on one high-stakes matter where missing institutional bench capacity would
 otherwise be the constraint.
 
 The MICRO posture is strict:
 
-- Counsel Longo remains counsel and the legal decision-maker.
+- Micah Longo remains counsel and the legal decision-maker.
 - Anthony remains the client and owner of his own choices.
 - The organ supplies organization, indexing, research support, draft skeletons, and review packets.
 - Nothing is filed, sent, served, threatened, or represented as advice by the organ.
@@ -105,4 +105,4 @@ No personal name other than the client's own is used in the record beyond the cl
 ---
 
 *Companion documents: [`CHARTER.md`](CHARTER.md) (virtual firm org-chart + 6-workflow orchestration) ·
-[`FRAMEWORK-FOR-COUNSEL.md`](FRAMEWORK-FOR-COUNSEL.md) (attorney-facing framework deck).*
+[`FRAMEWORK-FOR-MICAH.md`](FRAMEWORK-FOR-MICAH.md) (attorney-facing framework deck).*

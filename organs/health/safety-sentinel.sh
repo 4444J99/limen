@@ -62,7 +62,7 @@ fi
 # The artifact must not contain patient names, DOBs, or PII beyond case IDs.
 # This organ uses capability-focused documentation — no personal names in the record.
 # Check for concrete PII patterns (email, phone, SSN, DOB) and for any personal name
-# not explicitly allowed (Counsel Longo is allowed as legal counsel reference).
+# not explicitly allowed (Micah Longo is allowed as legal counsel reference).
 if grep -qinE '\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b' "$ARTIFACT" 2>/dev/null; then
   FAILURES+=("PII-LEAK: email address found in artifact")
 fi

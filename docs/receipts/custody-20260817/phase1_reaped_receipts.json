@@ -1374,7 +1374,7 @@
     "title": "docs(constellation): promote both dustin ventures dossier -> building"
   },
   {
-    "branch": "worktree-engagement-guard-client-one-update",
+    "branch": "worktree-engagement-guard-victoroff-update",
     "pr_number": 2338,
     "merged_at": "2026-08-12T17:30:52Z",
     "title": "feat(engagement-guard): SCOPE-PRICED check + rules 11-12 from live recurrence"

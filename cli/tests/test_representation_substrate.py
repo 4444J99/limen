@@ -13,15 +13,15 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 VALIDATOR = ROOT / "organs" / "representation" / "validate-representation.py"
 MODULE = ROOT / "organs" / "representation" / "representation_substrate.py"
-CHRIS = ROOT / "organs" / "representation" / "records" / "christopher-author-one.yaml"
+CHRIS = ROOT / "organs" / "representation" / "records" / "christopher-notarnicola.yaml"
 ET4L = ROOT / "organs" / "representation" / "records" / "et4l.yaml"
 GENERIC = ROOT / "organs" / "representation" / "records" / "generic-authority-template.yaml"
 OPPORTUNITY = ROOT / "organs" / "representation" / "opportunities" / "literary-submission-landscape.yaml"
 APPROVAL_TEMPLATE = (
-    ROOT / "organs" / "representation" / "approvals" / "author-one-yale-review-nonfiction-dry-run.template.yaml"
+    ROOT / "organs" / "representation" / "approvals" / "chris-yale-review-nonfiction-dry-run.template.yaml"
 )
 REAL_SEND_TEMPLATE = (
-    ROOT / "organs" / "representation" / "approvals" / "author-one-yale-review-nonfiction-real-send.template.yaml"
+    ROOT / "organs" / "representation" / "approvals" / "chris-yale-review-nonfiction-real-send.template.yaml"
 )
 READY_CANDIDATE = "chris-metadata-only-nonfiction-candidate"
 YALE_ROUTE = "yale-review-nonfiction-route"
@@ -70,7 +70,7 @@ def mark_approval_dry_run(approval: dict) -> None:
 
 def approved_publication_approval_record(tmp_path: Path) -> Path:
     record = load_record(APPROVAL_TEMPLATE)
-    record["id"] = "fixture-approved-author-one-yale-dry-run"
+    record["id"] = "fixture-approved-chris-yale-dry-run"
     for approval in record["approvals"]:
         if approval["approval_type"] != "real_send":
             approval["status"] = "approved"
@@ -82,7 +82,7 @@ def approved_publication_approval_record(tmp_path: Path) -> Path:
 
 def approved_real_send_approval_record(tmp_path: Path, *, delivery_adapter: str = "direct_email") -> Path:
     record = load_record(REAL_SEND_TEMPLATE)
-    record["id"] = f"fixture-approved-author-one-yale-real-send-{delivery_adapter}"
+    record["id"] = f"fixture-approved-chris-yale-real-send-{delivery_adapter}"
     for approval in record["approvals"]:
         if approval["approval_type"] != "real_send":
             approval["status"] = "approved"
@@ -249,7 +249,7 @@ def test_mention_indexer_filters_false_positive_names():
     text = (
         "Christian sent a note about Christopher Nolan. "
         "Chris and the Object Lessons relaunch came up later. "
-        "Christopher Author-One was also tied to Speech Score."
+        "Christopher Notarnicola was also tied to Speech Score."
     )
 
     rows = rs.index_mentions(text, profile)
@@ -258,7 +258,7 @@ def test_mention_indexer_filters_false_positive_names():
     assert "Christian" not in matches
     assert "Christopher Nolan" not in " ".join(matches)
     assert "Chris" in matches
-    assert "Christopher Author-One" in matches
+    assert "Christopher Notarnicola" in matches
 
 
 def test_public_renderer_excludes_private_message_claim_without_claim_approval():
@@ -420,7 +420,7 @@ def test_authority_packet_includes_all_artifacts_and_no_outward_action_gate():
     result = run_tool("authority-packet", "--record", CHRIS)
 
     assert result.returncode == 0, result.stdout + result.stderr
-    assert result.stdout.startswith("# Authority Packet: Christopher Author-One")
+    assert result.stdout.startswith("# Authority Packet: Christopher Notarnicola")
     assert "## Canon Dossier Artifact" in result.stdout
     assert "## Public Presence Draft Artifact" in result.stdout
     assert "## Authority Scorecard Artifact" in result.stdout
@@ -437,7 +437,7 @@ def test_chris_public_page_draft_uses_public_profile_evidence_only():
     assert result.returncode == 0, result.stdout + result.stderr
     assert "## Public Page Draft Copy" in result.stdout
     assert (
-        "Christopher Author-One can be presented from public evidence and claim-approved context only" in result.stdout
+        "Christopher Notarnicola can be presented from public evidence and claim-approved context only" in result.stdout
     )
     assert "Public writing record" in result.stdout
     assert "Speech Score lineage" not in result.stdout
@@ -522,7 +522,7 @@ def test_literary_packet_cli_smoke_for_chris_and_market_record():
     )
 
     assert result.returncode == 0, result.stdout + result.stderr
-    assert result.stdout.startswith("# Literary Desk Packet: Christopher Author-One")
+    assert result.stdout.startswith("# Literary Desk Packet: Christopher Notarnicola")
     assert "Opportunity record: literary-submission-landscape-v3" in result.stdout
     assert "Candidate work/profile: chris-public-profile-readiness" in result.stdout
     assert "Selected venue/route: submittable-discover-route" in result.stdout
@@ -709,7 +709,7 @@ def test_publication_readiness_blocks_placeholder_candidate():
     )
 
     assert result.returncode == 0, result.stdout + result.stderr
-    assert result.stdout.startswith("# Publication Readiness Packet: Christopher Author-One")
+    assert result.stdout.startswith("# Publication Readiness Packet: Christopher Notarnicola")
     assert "Publication readiness: BLOCKED" in result.stdout
     assert "Candidate status: BLOCKED" in result.stdout
     assert "Candidate Content/source ref is missing." in result.stdout
@@ -1214,7 +1214,7 @@ def test_chris_handoff_audit_proves_features_and_reports_gates():
     )
 
     assert result.returncode == 0, result.stdout + result.stderr
-    assert result.stdout.startswith("# Representation Handoff Audit: Christopher Author-One")
+    assert result.stdout.startswith("# Representation Handoff Audit: Christopher Notarnicola")
     assert "Audit status: PROVEN" in result.stdout
     assert "Broken features: 0" in result.stdout
     assert "SCAN: Opportunity routes" in result.stdout

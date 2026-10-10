@@ -16,7 +16,7 @@ content board-partition: CONST-HOSPES-CASESTUDY on organvm/portfolio names partn
 content board-partition: CONST-MM-CASESTUDY on organvm/portfolio names partner lane 4444j99/mirror-mirror
 content board-partition: CONST-MM-VISIBILITY on organvm/limen names partner lane 4444j99/mirror-mirror
 content board-partition: CONST-TATO-CASESTUDY on organvm/portfolio names partner lane 4444j99/micro-tato
-content board-partition: CONST-CLIENT_ONE-CASESTUDY on organvm/portfolio names partner lane 4444j99/victoroff-os
+content board-partition: CONST-VICTOROFF-CASESTUDY on organvm/portfolio names partner lane 4444j99/victoroff-os
 content board-partition: DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy on organvm/content-engine--asset-amplifier--a-organvm-legacy names partner lane 4444j99/content-engine--asset-amplifier
 content board-partition: DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-RANK on organvm/limen names partner lane 4444j99/content-engine--asset-amplifier
 content board-partition: DISCOVER-organvm-content-engine--asset-amplifier--a-organvm-legacy-THESIS on organvm/content-engine--asset-amplifier--a-organvm-legacy names partner lane 4444j99/content-engine--asset-amplifier
@@ -51,7 +51,7 @@ row board-partition: CONST-MM-FACE is attributed to partner lane 4444j99/mirror-
 row board-partition: CONST-SPIRAL-DOSSIER is attributed to partner lane 4444j99/sovereign-systems--elevate-align
 row board-partition: CONST-TATO-DOSSIER is attributed to partner lane 4444j99/micro-tato
 row board-partition: CONST-TATO-FACE is attributed to partner lane 4444j99/micro-tato
-row board-partition: CONST-CLIENT_ONE-FACE is attributed to partner lane 4444j99/victoroff-os
+row board-partition: CONST-VICTOROFF-FACE is attributed to partner lane 4444j99/victoroff-os
 row board-partition: DISCOVER-organvm-micro-tato is attributed to partner lane 4444j99/micro-tato
 row board-partition: DISCOVER-organvm-micro-tato-THESIS is attributed to partner lane 4444j99/micro-tato
 row board-partition: DISCOVER-organvm-sovereign-systems--elevate-align is attributed to partner lane 4444j99/sovereign-systems--elevate-align
@@ -249,7 +249,7 @@ slug board-partition: CONST-MM-FACE spells 4444j99/mirror-mirror as organvm/mirr
 slug board-partition: CONST-SPIRAL-DOSSIER spells 4444j99/sovereign-systems--elevate-align as organvm/sovereign-systems--elevate-align — the stale owner misses estate.yaml's private override
 slug board-partition: CONST-TATO-DOSSIER spells 4444j99/micro-tato as organvm/micro-tato — the stale owner misses estate.yaml's private override
 slug board-partition: CONST-TATO-FACE spells 4444j99/micro-tato as organvm/micro-tato — the stale owner misses estate.yaml's private override
-slug board-partition: CONST-CLIENT_ONE-FACE spells 4444j99/victoroff-os as organvm/victoroff-os — the stale owner misses estate.yaml's private override
+slug board-partition: CONST-VICTOROFF-FACE spells 4444j99/victoroff-os as organvm/victoroff-os — the stale owner misses estate.yaml's private override
 slug board-partition: DISCOVER-organvm-micro-tato spells 4444j99/micro-tato as organvm/micro-tato — the stale owner misses estate.yaml's private override
 slug board-partition: DISCOVER-organvm-micro-tato-THESIS spells 4444j99/micro-tato as organvm/micro-tato — the stale owner misses estate.yaml's private override
 slug board-partition: DISCOVER-organvm-sovereign-systems--elevate-align spells 4444j99/sovereign-systems--elevate-align as organvm/sovereign-systems--elevate-align — the stale owner misses estate.yaml's private override

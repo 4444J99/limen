@@ -34,11 +34,11 @@ from limen.models import Task  # noqa: E402
 # The two client engagements. estate.yaml annotates both as a "partner build lane", the
 # constellation register attaches a named person to both, and neither appears in value-repos.json
 # -- three independent registries agreeing, which is why these are the lanes and not a guess.
-CLIENT_ONE = "4444j99/victoroff-os"
+VICTOROFF = "4444j99/victoroff-os"
 ELEVATE = "4444j99/sovereign-systems--elevate-align"
 
 # The board still writes the PRE-transfer owner for both (the repos moved to 4444J99 in 2026-07).
-BOARD_CLIENT_ONE = "organvm/victoroff-os"
+BOARD_VICTOROFF = "organvm/victoroff-os"
 
 
 def _task(task_id: str, repo: str, *, context: str = "", labels: list[str] | None = None) -> Task:
@@ -58,7 +58,7 @@ def _task(task_id: str, repo: str, *, context: str = "", labels: list[str] | Non
 
 def test_client_lanes_are_partner_lanes() -> None:
     lanes = P.partner_lanes(ROOT)
-    assert CLIENT_ONE in lanes
+    assert VICTOROFF in lanes
     assert ELEVATE in lanes
 
 
@@ -71,9 +71,9 @@ def test_a_transferred_repo_is_the_same_lane_under_either_owner() -> None:
     repo, which is why nothing caught this while estate.yaml:750 had already written the hazard
     down in prose.
     """
-    assert P.is_partner_lane(BOARD_CLIENT_ONE, ROOT)
-    assert P.canonical_slug(BOARD_CLIENT_ONE, ROOT) == CLIENT_ONE
-    assert P.canonical_slug("4444J99/victoroff-os", ROOT) == CLIENT_ONE
+    assert P.is_partner_lane(BOARD_VICTOROFF, ROOT)
+    assert P.canonical_slug(BOARD_VICTOROFF, ROOT) == VICTOROFF
+    assert P.canonical_slug("4444J99/victoroff-os", ROOT) == VICTOROFF
 
 
 def test_the_operators_own_private_work_is_not_a_partner_lane() -> None:
@@ -105,7 +105,7 @@ def test_partner_keywords_exclude_funded_collaborations() -> None:
     flag every task that merely mentions chess.
     """
     keywords = P.partner_keywords(ROOT)
-    assert "client-one" in keywords
+    assert "victoroff" in keywords
     assert "chess" not in keywords
     assert "hokage" not in keywords
 
@@ -132,7 +132,7 @@ def test_funding_is_matched_by_tail_so_a_transfer_cannot_defund_a_repo() -> None
 
 
 def test_unfunded_partner_lanes_are_the_ones_vetoed() -> None:
-    for repo in (CLIENT_ONE, ELEVATE, BOARD_CLIENT_ONE):
+    for repo in (VICTOROFF, ELEVATE, BOARD_VICTOROFF):
         assert not P.is_funded(repo, ROOT), repo
         assert not P.heuristics_may_promote(repo, ROOT), repo
 
@@ -168,13 +168,13 @@ def test_the_checkout_is_located_from_the_module_not_from_the_home_directory(
     """
     monkeypatch.delenv("LIMEN_ROOT", raising=False)
     assert P._root() == ROOT
-    assert P.is_partner_lane(BOARD_CLIENT_ONE)
+    assert P.is_partner_lane(BOARD_VICTOROFF)
 
     # A caller legitimately pointing LIMEN_ROOT at a registry-less runtime data dir must not
     # collapse the boundary -- it falls back to the checkout.
     monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
     assert P._root() == ROOT
-    assert P.is_partner_lane(BOARD_CLIENT_ONE)
+    assert P.is_partner_lane(BOARD_VICTOROFF)
 
 
 def test_repo_tail_survives_every_spelling_of_a_remote() -> None:
@@ -212,7 +212,7 @@ def test_classification_agrees_with_gitvs() -> None:
 
 def test_free_text_no_longer_promotes_a_client_task() -> None:
     """The exact shape of VIC-CONTRACT-002: an unfunded client lane whose prose says "blocker"."""
-    task = _task("VIC-CONTRACT-002", BOARD_CLIENT_ONE, context="surface the blocker before merging")
+    task = _task("VIC-CONTRACT-002", BOARD_VICTOROFF, context="surface the blocker before merging")
     value_repos = D._value_tier_repos()
 
     assert D._dispatch_focus_bucket(task, value_repos) == 1
@@ -220,19 +220,19 @@ def test_free_text_no_longer_promotes_a_client_task() -> None:
 
 
 def test_custody_no_longer_promotes_a_client_task() -> None:
-    task = _task("VIC-CLIENT-STORY-001", BOARD_CLIENT_ONE, context="chain of custody for the proposal")
+    task = _task("VIC-CLIENT-STORY-001", BOARD_VICTOROFF, context="chain of custody for the proposal")
     assert D.task_passes_value_gate(task, D._value_tier_repos()) is False
 
 
 def test_a_value_label_cannot_promote_a_client_task_either() -> None:
     """Every heuristic path is below the veto, not just the free-text one."""
     for labels in ([("revenue")], ["product"], ["value-tier"], ["worktree"]):
-        task = _task("VIC-LABELLED", BOARD_CLIENT_ONE, labels=list(labels))
+        task = _task("VIC-LABELLED", BOARD_VICTOROFF, labels=list(labels))
         assert D._dispatch_focus_bucket(task, D._value_tier_repos()) == 1, labels
 
 
 def test_an_aw_prefix_cannot_promote_a_client_task() -> None:
-    task = _task("AW-CLIENT_ONE-1", BOARD_CLIENT_ONE)
+    task = _task("AW-VICTOROFF-1", BOARD_VICTOROFF)
     assert D._dispatch_focus_bucket(task, D._value_tier_repos()) == 1
 
 
@@ -243,7 +243,7 @@ def test_the_veto_survives_the_value_gate_being_switched_off(monkeypatch: pytest
     veto is checked BEFORE that branch.
     """
     monkeypatch.setenv("LIMEN_VALUE_GATE", "0")
-    task = _task("VIC-CONTRACT-002", BOARD_CLIENT_ONE, context="blocker")
+    task = _task("VIC-CONTRACT-002", BOARD_VICTOROFF, context="blocker")
     assert D.task_passes_value_gate(task, D._value_tier_repos()) is False
 
     mine = _task("LIMEN-1", "organvm/limen", context="blocker")
@@ -252,7 +252,7 @@ def test_the_veto_survives_the_value_gate_being_switched_off(monkeypatch: pytest
 
 def test_an_empty_value_repos_file_does_not_open_the_boundary() -> None:
     """``_value_gate_configured`` is False for an empty tier, which used to mean "allow all"."""
-    task = _task("VIC-CONTRACT-002", BOARD_CLIENT_ONE, context="blocker")
+    task = _task("VIC-CONTRACT-002", BOARD_VICTOROFF, context="blocker")
     assert D.task_passes_value_gate(task, set()) is False
 
 
@@ -275,7 +275,7 @@ def test_the_operators_own_work_is_untouched_by_the_veto() -> None:
 def test_sort_never_ranks_a_client_task_into_the_candidate_list() -> None:
     """End to end at the selection surface dispatch actually calls."""
     value_repos = D._value_tier_repos()
-    client = _task("VIC-CONTRACT-002", BOARD_CLIENT_ONE, context="blocker")
+    client = _task("VIC-CONTRACT-002", BOARD_VICTOROFF, context="blocker")
     mine = _task("LIMEN-1", "organvm/limen", context="blocker")
 
     ranked = D.sort_value_gate_candidates([client, mine], value_repos)
@@ -299,7 +299,7 @@ def test_sort_holds_the_boundary_whether_or_not_the_value_gate_is_configured(
     fresh clone it does not resolve, the tier is empty, and client work walked back in. Both
     branches are parametrized here so neither host shape can pass alone.
     """
-    client = _task("VIC-CONTRACT-002", BOARD_CLIENT_ONE, context="blocker")
+    client = _task("VIC-CONTRACT-002", BOARD_VICTOROFF, context="blocker")
     mine = _task("LIMEN-1", "organvm/limen", context="blocker")
 
     ranked = D.sort_value_gate_candidates([client, mine], value_repos)
@@ -314,7 +314,7 @@ def test_disk_pressure_focus_cannot_readmit_a_client_task() -> None:
     ever be dropped further -- but the assertion is cheap and the branch is exactly the shape that
     produced the readmission bug, so it is pinned rather than reasoned about.
     """
-    client = _task("VIC-CONTRACT-002", BOARD_CLIENT_ONE, context="blocker")
+    client = _task("VIC-CONTRACT-002", BOARD_VICTOROFF, context="blocker")
     mine = _task("LIMEN-1", "organvm/limen", context="blocker")
 
     for repos in (set(), D._value_tier_repos()):
@@ -351,7 +351,7 @@ def test_a_new_client_task_cannot_enter_the_board_at_all() -> None:
     enters the merge queue, and it lands on `main` -- a PUBLIC repo. Accepting a client engagement
     here IS publishing it, and nothing downstream can un-publish it.
     """
-    for repo in (BOARD_CLIENT_ONE, CLIENT_ONE, ELEVATE):
+    for repo in (BOARD_VICTOROFF, VICTOROFF, ELEVATE):
         with pytest.raises(IntakeContractError, match="unfunded partner lane"):
             T.refuse_unfunded_partner_lane(repo, "VIC-NEW-1")
 
@@ -360,7 +360,7 @@ def test_the_refusal_reaches_the_producer_seam_every_generator_uses(tmp_path: Pa
     """submit_task_upsert is the documented conversion target for every writer that used to
     load -> extend -> save_limen_file, so the refusal has to bite THERE, not only in a helper."""
     with pytest.raises(IntakeContractError, match="unfunded partner lane"):
-        T.submit_task_upsert(tmp_path, _valid_intake_fields("VIC-NEW-2", BOARD_CLIENT_ONE), agent="claude")
+        T.submit_task_upsert(tmp_path, _valid_intake_fields("VIC-NEW-2", BOARD_VICTOROFF), agent="claude")
     assert not list(tmp_path.rglob("*.json")), "a refused ticket must not be written"
 
 
@@ -374,7 +374,7 @@ def test_the_refusal_also_covers_the_raw_ticket_side_door(tmp_path: Path) -> Non
         session_id="s",
         intent=T.INTENT_UPSERT,
         task_id="VIC-RAW-1",
-        patch={"id": "VIC-RAW-1", "repo": BOARD_CLIENT_ONE},
+        patch={"id": "VIC-RAW-1", "repo": BOARD_VICTOROFF},
         precondition={"absent": True},
     )
     with pytest.raises(IntakeContractError, match="unfunded partner lane"):

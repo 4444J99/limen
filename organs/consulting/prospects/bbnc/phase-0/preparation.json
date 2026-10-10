@@ -17,7 +17,7 @@
   },
   "delivery_party": {
     "name": "Padavano",
-    "source_plan_superseded_label": "Client-One",
+    "source_plan_superseded_label": "Victoroff",
     "identity_evidence": "https://github.com/organvm/padavano/blob/main/CLAUDE.md",
     "has_bbnc_authority": false
   },

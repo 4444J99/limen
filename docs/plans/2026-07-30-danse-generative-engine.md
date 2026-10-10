@@ -88,7 +88,7 @@ the physical room. The engine is the work; everything else is a render target.
 ## ⚠️ Time-critical, needs your answer today
 
 **Are you a current South Florida resident (Miami-Dade / Broward / Palm Beach / Monroe)?**
-Your records are ambiguous — <college> teaching 2015–present, but the Watermill bio says
+Your records are ambiguous — Miami Dade College teaching 2015–present, but the Watermill bio says
 "Based in NYC." I can't resolve it and it gates real money closing in hours:
 
 - **Oolite Arts — The Ellies Creator Award: $10,000 unrestricted, 35 awards, closes 31 Jul 2026,

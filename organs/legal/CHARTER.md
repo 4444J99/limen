@@ -147,7 +147,7 @@ COCHRAN creates one-person institutional weight via these concrete mechanisms:
 organs/legal/
   KERNEL.md
   CHARTER.md
-  FRAMEWORK-FOR-COUNSEL.md
+  FRAMEWORK-FOR-MICAH.md
   matters/
     <matter-id>/
       intake.md

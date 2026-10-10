@@ -6191,7 +6191,7 @@ parameters:
     owner: mail
     note: "Per-run timeout (seconds) for the opportunity-brief sensor. The work is three JSON reads plus (once/day) one bounded scripts/mail-send subprocess; 180s covers the IMAP Sent-verification the send performs."
   LIMEN_OPERATOR_EMAIL:
-    default: "<owner-email>"
+    default: "padavano.anthony@gmail.com"
     env: LIMEN_OPERATOR_EMAIL
     self_update: none
     owner: mail

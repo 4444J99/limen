@@ -28,7 +28,7 @@ OUTPUT (per person, append-only JSONL tapes + refreshed derived Markdown views):
 
 USAGE:
   python3 scripts/capture-threads.py                 # all people in the roster
-  python3 scripts/capture-threads.py --person chris-author-one
+  python3 scripts/capture-threads.py --person chris-notarnicola
   python3 scripts/capture-threads.py --list-whatsapp # dump WA sessions (Z_PK|JID|name) to find a JID
 
 Exit 0 on success. Prints a per-person summary for verification.

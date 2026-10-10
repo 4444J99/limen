@@ -1,0 +1,76 @@
+schema_version: representation.v3
+kind: representation_approval_record
+id: chris-yale-review-nonfiction-real-send-template
+name: Chris Yale Review nonfiction real-send approval template
+approval_mode: real_send
+note: Template only; copy to a private approval record before approving or executing a send.
+approvals:
+  - id: chris-public-export-dry-run
+    approval_type: public_export
+    approval_target: writer_public_export
+    approval_scope: dry_run
+    status: not_requested
+    subject_id: christopher-notarnicola
+    candidate_id: chris-metadata-only-nonfiction-candidate
+    route_id: yale-review-nonfiction-route
+    dry_run_only: true
+    no_outward_action: true
+    permitted_actions:
+      - render_review_files
+      - write_review_files
+      - dry_run_export
+    claim_ids: []
+    note: Required before public-copy dry-run export or downstream send execution.
+  - id: chris-submission-dry-run
+    approval_type: submission
+    approval_target: writer_submission
+    approval_scope: dry_run
+    status: not_requested
+    subject_id: christopher-notarnicola
+    candidate_id: chris-metadata-only-nonfiction-candidate
+    route_id: yale-review-nonfiction-route
+    dry_run_only: true
+    no_outward_action: true
+    permitted_actions:
+      - render_review_files
+      - write_review_files
+      - dry_run_export
+    claim_ids: []
+    note: Required before Chris-approved submission execution.
+  - id: yale-route-submission-dry-run
+    approval_type: submission
+    approval_target: opportunity_route_submission
+    approval_scope: dry_run
+    status: not_requested
+    subject_id: christopher-notarnicola
+    opportunity_id: literary-submission-landscape-v3
+    candidate_id: chris-metadata-only-nonfiction-candidate
+    route_id: yale-review-nonfiction-route
+    dry_run_only: true
+    no_outward_action: true
+    permitted_actions:
+      - render_review_files
+      - write_review_files
+      - dry_run_export
+    claim_ids: []
+    note: Required before executing the selected route.
+  - id: chris-yale-real-send
+    approval_type: real_send
+    approval_target: real_submission
+    approval_scope: real_send
+    status: pending
+    subject_id: christopher-notarnicola
+    opportunity_id: literary-submission-landscape-v3
+    candidate_id: chris-metadata-only-nonfiction-candidate
+    route_id: yale-review-nonfiction-route
+    delivery_adapter: direct_email
+    recipient_ref: venue://yale-review/submissions
+    payload_ref: private://candidate-work/chris-metadata-only-nonfiction-candidate
+    sender_address_env: CHRIS_SUBMISSION_SENDER_EMAIL
+    recipient_address_env: YALE_REVIEW_SUBMISSION_EMAIL
+    message_subject_env: CHRIS_YALE_SUBMISSION_SUBJECT
+    message_body_env: CHRIS_YALE_SUBMISSION_BODY
+    payload_path_env: CHRIS_YALE_SUBMISSION_PAYLOAD_PATH
+    permitted_actions: []
+    claim_ids: []
+    note: To approve, copy privately, set status approved, set real_send_approval true, set operator_approved_at, permit send_submission, and provide SMTP runtime env vars to publication-send.

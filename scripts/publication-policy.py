@@ -534,7 +534,7 @@ def _self_test() -> list[str]:
 
     o = dict(DEFAULT_OWNER)
     # 1. redactor scrubs OWNER identifiers
-    check(redact("mail <owner-email>", o) == "mail [email redacted]", "owner email not redacted")
+    check(redact("mail padavano.anthony@gmail.com", o) == "mail [email redacted]", "owner email not redacted")
     check(redact("by Anthony Padavano", o) == "by [name redacted]", "owner name not redacted")
     check(redact("path /Users/4jp/x/y", o) == "path ~/x/y", "owner home path not normalized")
     check(redact("user 4jp done", o) == "user [user] done", "owner username token not redacted")
@@ -565,7 +565,7 @@ def _self_test() -> list[str]:
     check(classify("moneta/.env")[0] == "secret", ".env (nested) not secret")
     check(classify("README.md")[0] == "public_safe", "README not public_safe")
     check(
-        classify("notes.md", "reach me at <owner-email>")[0] == "personal_pii",
+        classify("notes.md", "reach me at padavano.anthony@gmail.com")[0] == "personal_pii",
         "owner-PII doc not personal_pii",
     )
     check(

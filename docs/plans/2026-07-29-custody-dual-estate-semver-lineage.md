@@ -17,7 +17,7 @@ above own the live answers. Nothing here restates a path list or a class table.
 | v0.2.0 | 2026-06-28 | `docs/consolidation/EXECUTION-MANIFEST.md` | Consolidation: all code into the single `organvm` org; personal account carved out as a non-code-host | superseded by v1.0.0 (amended, not reversed) |
 | v0.2.1 | 2026-07-10 | `institutio/github/estate.yaml` (PR #900) | GITVS: custody becomes declared registry data (classes, overrides, orgs block); `4444J99/**` classed portal-only | live, amended |
 | v0.2.2 | 2026-07-17 | estate.yaml orgs block (#1185) | Inverted-custody settlement: 9 empty shell orgs → $0 name reservations; Enterprise emptied by machine | live |
-| v0.3.0-rc | 2026-07-22 | branch `work/client-one-external-custody-20260722` (unmerged) | Proposed an external client-org (`client-onegroup`) custody exception for one collaboration repo | **road not taken** — never landed |
+| v0.3.0-rc | 2026-07-22 | branch `work/victoroff-external-custody-20260722` (unmerged) | Proposed an external client-org (`victoroffgroup`) custody exception for one collaboration repo | **road not taken** — never landed |
 | v0.3.0 | 2026-07-23 | `institutio/github/access.yaml` (PR #1407) | Partner partitioning: **grants, not transfers** — per-partner scoped `push` grants, ceiling-bounded, engine repos ungrantable | live (governs ACCESS in both estates) |
 | v0.3.1 | 2026-07 (out of band) | GitHub ground truth (verified 2026-07-29 via `gh`) | `victoroff-os` physically transferred `organvm` → the personal account; redirect live; **no registry row followed it** | drift — healed by this PR |
 | **v1.0.0** | **2026-07-29** | operator directive + this PR | **Dual-estate custody** (Part II) | **encoded** |
@@ -100,7 +100,7 @@ any moat-guard/positioning references) → `gitvs.py doctor` green.
 | v0.1.0 | 2026-07-10 | estate.yaml classes | Publish-the-form split: `operation_private` — "a public FORM twin may exist; the operation itself stays the moat" |
 | v0.2.0 | 2026-07-17 | `docs/repo-split-protocol.md` (PR #1159) | The hard law: never fork/branch-copy a private repo — git history leaks; fresh-init twins, history-disjoint verified (`check-split-hygiene.py` P1–P5) |
 | v0.2.1 | 2026-07-17 | `moat-guard.json` + `scripts/moat-audit.py` (PR #1183) | Crown jewels as machine-checkable literal-value leak patterns; interfaces stay public (the lure), values stay private |
-| v0.2.2 | 2026-07-22 | `CONST-CLIENT_ONE-FACE` | Every unreviewed private repo gets an *owned exposure decision*; a public face is a split, never a flip |
+| v0.2.2 | 2026-07-22 | `CONST-VICTOROFF-FACE` | Every unreviewed private repo gets an *owned exposure decision*; a public face is a split, never a flip |
 | v1.0.0 | 2026-07-29 | this excavation | Posture confirmed; the enforcement gap is **coverage**, not doctrine: moat-guard guards 1 public repo; expansion is per-repo curation work owed to `moat-guard.json`; corpvs demote is decided drift (Part III) |
 
 Platform fact the doctrine already respects: GitHub cannot disable forking of a *public* repo —
