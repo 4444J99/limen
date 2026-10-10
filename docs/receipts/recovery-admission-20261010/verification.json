@@ -1,0 +1,49 @@
+{
+  "schema": "limen.recovery_admission_checkpoint.v1",
+  "implementation_head": "d69bb1e44",
+  "limen_owner": "https://github.com/4444J99/limen/pull/2840",
+  "domus_owner": "https://github.com/4444J99/domus-genoma/pull/415",
+  "verification": {
+    "focused_limen_native_and_replica_tests_passed": 68,
+    "canonical_ops6_graph_tests_passed": 1,
+    "worker_tests_passed": 372,
+    "domus_runtime_tests_passed_on_current_remote_base": 62,
+    "credential_wall": "PASS",
+    "scoped_cheap_wave": "PASS: 14 gates, pinned Ruff 0.15.8",
+    "scoped_heavy_wave": "DENIED: swap-fraction,disk-throughput",
+    "scoped_exit_code": 75,
+    "no_host_override": true
+  },
+  "delivery": {
+    "broker_policy_installed": false,
+    "broker_readback_http_status": 404,
+    "broker_capacity_reserved": false,
+    "native_children_launched": 0,
+    "limen_worker_deployed": false,
+    "domus_managed_runtime_applied": true,
+    "domus_merge_submission": "DEFERRED: LIFECYCLE-UNKNOWN; submitted once for 71afd2e076eaed06356eac1182a4a076f054ec3f",
+    "domus_target_diff_after_apply": "empty",
+    "quota_intake_broker_acceptance": "not established; dependent Limen CLI is in draft PR",
+    "ops_production_applied": false,
+    "hosted_idempotency": "unproven",
+    "ops_acceptance": "OPEN"
+  },
+  "storage": {
+    "limen_checkout_allocated_kib": 173848,
+    "domus_checkout_allocated_kib": 6392,
+    "combined_checkout_below_256_mib": true,
+    "last_available_kib": 16500668,
+    "checkout_disposition": "retained with named PR owners",
+    "inactive_downloaded_codex_releases_found": 0,
+    "quota_reduction_bytes_claimed": 0,
+    "physical_recovery_bytes_claimed": 0,
+    "history_and_sqlite_sidecars": "retained; restoration and replica acceptance not established"
+  },
+  "next_owner_actions": [
+    "PR 2840: resume the existing scoped heavy wave only after host admission changes; no unchanged admission retry",
+    "Deploy the verified policy fingerprint readback through the existing Worker owner",
+    "Reconcile the owner-held policy against its live fingerprint before additive installation for exact ops6-coordinate-20261009",
+    "Check bounded broker admission before reserving the canonical serial preparation graph",
+    "Use accepted ops preflight/apply only with A's separately acquired deployment custody; preserve B/C and hosted acceptance gates"
+  ]
+}

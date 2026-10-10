@@ -47,3 +47,11 @@ implementation checkouts; no prior checkout or peer process was altered. The ini
 isolation was manual under this instruction, not attributed to the new repair adapter
 or a broker lease. Allocation measurements and verification are recorded alongside
 the PR publication. Broader code deployment and ops acceptance remain open.
+
+Final verification and delivery measurements are in [verification.json](verification.json).
+All 14 scoped cheap gates passed with the pinned toolchain. The scoped heavy wave
+returned exit 75 on `swap-fraction,disk-throughput`; no override was attempted.
+Limen owner: https://github.com/4444J99/limen/pull/2840 (draft).
+Domus owner: https://github.com/4444J99/domus-genoma/pull/415; the targeted managed
+runtime file is applied with empty post-apply diff. Its exact-head merge submission
+returned `DEFERRED — LIFECYCLE-UNKNOWN`; it was submitted once, without polling.
