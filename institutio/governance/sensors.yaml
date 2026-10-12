@@ -1950,6 +1950,21 @@ sensors:
         severity: advisory
         escalation: "a lane has been throughput-clamped 2+ days — landing is the bottleneck: run drain.sh rungs (jules-land, owner-route-drain, merge-drain) and read logs/throughput-governor.jsonl for the binding evidence"
 
+  runtime-maintenance-observation:
+    section: "heartbeat"
+    title: "shared runtime capacity and preservation observation"
+    gate: null
+    source: [heartbeat]
+    owner: substrate
+    cadence: 5
+    timeout: 75
+    # The one-shot contract owns the exact 900s cadence and source fingerprints.
+    # --record writes bounded private observation bookkeeping; it cannot run --apply.
+    steps:
+      - command: "python3 scripts/runtime-maintenance-observation.py"
+        severity: advisory
+        escalation: "review the exact Domus source fingerprint or shared-pool finding; preservation requires its separate owner acceptance"
+
   beat-freshness:
     section: "0z4a"
     title: "beat freshness — containment or the reviewed one-shot scheduler must match its pinned immutable runtime"

@@ -2,11 +2,35 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from limen.operating_system_evidence import review, visual_cause, link_receipts
+from limen.operating_system_evidence import review, visual_cause, link_receipts, compressed_patterns, provider_inventory
 
 ZONE = ZoneInfo("America/New_York")
 START = datetime(2026, 4, 12, tzinfo=ZONE)
 END = datetime(2026, 10, 13, tzinfo=ZONE)
+
+
+def test_compressed_history_cannot_capture_recursive_sessions_and_all_providers_are_visible(tmp_path):
+    import zstandard
+
+    raw = (json.dumps({"timestamp": "2026-09-01T12:00:00Z", "content": "runtime quota blocked"}) + "\n").encode()
+    (tmp_path / "history.jsonl").write_bytes(raw)
+    sessions = tmp_path / "sessions"
+    sessions.mkdir()
+    (sessions / "rollout.jsonl.zst").write_bytes(zstandard.ZstdCompressor().compress(raw))
+    public, _ = review([("codex-history", tmp_path, compressed_patterns(("history.jsonl",)))], START, END)
+    assert public["coverage"][0]["months"]["2026-09"]["records"] == 1
+    provider_inventory(
+        {
+            "codex": {"path": tmp_path},
+            "opaque-app": {"path": tmp_path, "opaque_payload": True},
+            "unavailable-app": {"path": tmp_path / "absent"},
+        },
+        public,
+    )
+    providers = {row["provider"]: row for row in public["provider_coverage"]}
+    assert providers["opaque-app"]["boundary"] == "opaque_payload_contract"
+    assert providers["opaque-app"]["months"]["2026-09"]["scope"] == "content_not_reviewed"
+    assert providers["unavailable-app"]["estate"] == "missing"
 
 
 def test_boundaries_dedup_corrections_gaps_and_redaction(tmp_path):

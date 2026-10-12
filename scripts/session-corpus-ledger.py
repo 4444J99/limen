@@ -976,7 +976,7 @@ def main() -> int:
             parser.error("both operating-system evidence boundaries are required")
         import importlib.util
         from zoneinfo import ZoneInfo
-        from limen.operating_system_evidence import review, render
+        from limen.operating_system_evidence import review, render, compressed_patterns, provider_inventory
 
         spec = importlib.util.spec_from_file_location(
             "os_evidence_lifecycle", REPO_ROOT / "scripts/prompt-lifecycle-ledger.py"
@@ -1018,15 +1018,24 @@ def main() -> int:
                 ("derived-vendor-health", runtime_root.parent / "logs/insight-cross-vendor", ("*.json",)),
             ]
         )
-        sources = [(source, root, (*patterns, "*.jsonl.zst")) for source, root, patterns in sources]
+        # Match each compressed carrier beside its declared plaintext pattern.
+        # A blanket recursive *.jsonl.zst under the history root would relabel
+        # session files as history and hide an earlier truncated session scan.
+        sources = [(source, root, compressed_patterns(patterns)) for source, root, patterns in sources]
         sources.extend(
             [
-                ("codex-archived", root.parent / "archived_sessions", ("*.jsonl",))
+                ("codex-archived", root.parent / "archived_sessions", ("*.jsonl", "*.jsonl.zst"))
                 for source, root, _ in sources
                 if source == "codex-sessions"
             ]
         )
         public, private = review(sources, start, end, seconds=max(1, min(3600, args.os_evidence_seconds)))
+        provider_spec = importlib.util.spec_from_file_location(
+            "os_evidence_providers", REPO_ROOT / "scripts/insight-cross-vendor-ingest.py"
+        )
+        providers = importlib.util.module_from_spec(provider_spec)
+        provider_spec.loader.exec_module(providers)
+        provider_inventory(providers.VENDOR_REGISTRY, public)
         markdown = render(public)
         if args.write:
             target = ROOT / "docs/reviews" / f"operating-system-{args.os_evidence_start}-{args.os_evidence_end}"
