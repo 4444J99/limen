@@ -27,3 +27,17 @@ def test_total_warning_and_invalid_observation(tmp_path):
     assert len(maintenance_requests(observation, tmp_path / "tasks.yaml")) == 1
     with pytest.raises(ValueError, match="observation_invalid"):
         maintenance_requests({}, tmp_path / "tasks.yaml")
+
+
+def test_shared_pool_maintenance_is_aggregate_only(tmp_path):
+    observation = {
+        "schema": "domus.agent_runtime.v2",
+        "runtime_root": str(tmp_path),
+        "agents": {"codex": {"size_bytes": 130, "quota_bytes": None}},
+        "total_size_bytes": 160,
+        "total_quota_bytes": 200,
+    }
+    rows = maintenance_requests(observation, tmp_path / "tasks.yaml")
+    assert len(rows) == 1
+    ticket = json.loads(next((tickets_root(tmp_path / "tasks.yaml") / "inbox").glob("*.json")).read_text())
+    assert "TOTAL" in ticket["patch"]["id"]

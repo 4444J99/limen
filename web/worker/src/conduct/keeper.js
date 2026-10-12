@@ -512,6 +512,7 @@ export class ConductKernel {
       schema_version: "limen.conduct_capabilities.v1",
       generated_at: this.timestamp,
       runtime_identity: this.runtimeIdentity ?? null,
+      storage_claim_census: this.storageClaimCensus(),
       sessions,
     };
     if (principal) {
@@ -522,6 +523,41 @@ export class ConductKernel {
         .sort((left, right) => left.localeCompare(right));
     }
     return response;
+  }
+
+  storageClaimCensus() {
+    const occupied = new Set();
+    for (const lease of Object.values(this.state.leases)) {
+      const run = this.state.runs[lease.run_id];
+      if (run && (ACTIVE_LEASE_STATES.has(lease.state) && asDate(lease.hard_deadline) > this.now
+          || pendingRemoteAttempts(run).some(row => row.lease_id === lease.lease_id))) occupied.add(run.run_id);
+    }
+    const claims = new Map();
+    const errors = new Set();
+    for (const run of Object.values(this.state.runs)) {
+      const packet = run.packet || {};
+      const rawClaims = packet.storage_envelope_claims || [];
+      const session = this.state.sessions[run.executor_session_id] || {};
+      if (occupied.has(run.run_id) && packet.effect === "write"
+          && (session.capabilities || []).includes("local-worktree") && !rawClaims.length) {
+        errors.add("active_local_writer_without_claim");
+      }
+      for (const claim of rawClaims) {
+        const until = asDate(claim.rollback_until);
+        if (!Number.isFinite(until.getTime())) { errors.add("invalid_storage_claim"); continue; }
+        if (until <= this.now) {
+          if (occupied.has(run.run_id)) errors.add("active_writer_claim_expired");
+          continue;
+        }
+        if (claims.has(claim.claim_id) && stableStringify(claims.get(claim.claim_id)) !== stableStringify(claim)) {
+          errors.add("conflicting_storage_claim");
+        }
+        claims.set(claim.claim_id, clone(claim));
+      }
+    }
+    return {schema: "limen.storage_claim_census.v1", observed_at: this.timestamp,
+      complete: errors.size === 0, active_run_count: occupied.size,
+      denial_reasons: [...errors].sort(), claims: [...claims.entries()].sort().map(([, claim]) => claim)};
   }
 
   taskRun(taskId) {

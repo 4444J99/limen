@@ -348,11 +348,11 @@ def _gather_insights():
                     "severity": severity,
                     "title": f"[{vendor}] {signal_key}: {count}",
                     "detail": desc,
-                    "owner": packet.get("owner") or "insight-cadence",
+                    "owner": sig.get("owner") or packet.get("owner") or "insight-cadence",
                     "source": f"insight-cross-vendor/{packet_path.name}",
                     "suggested_action": sig.get("suggested_action")
                     or f"Review {vendor} session logs for {signal_key} pattern",
-                    "healable": True,
+                    "healable": sig.get("healable", packet.get("healable", True)) is True,
                 }
             )
 

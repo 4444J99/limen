@@ -10,9 +10,13 @@ import hashlib
 import json
 import re
 import time
+import sqlite3
+from contextlib import ExitStack
+from urllib.parse import quote
 from collections import Counter, defaultdict
 from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
+import zstandard
 
 RULES = {
     "runtime_storage": (
@@ -42,6 +46,28 @@ RULES = {
     ),
 }
 COMPILED = {key: re.compile(pattern, re.IGNORECASE | re.DOTALL) for key, (pattern, _, _) in RULES.items()}
+PREFILTERS = {
+    "runtime_storage": ("quota",),
+    "chezmoi_source": ("chezmoi",),
+    "native_visual": ("computer use", "screenshot", "native visual", "screen capture", "not allowed to use the app"),
+    "host_admission": ("execution_priority_not_approved", "swap-fraction", "disk-throughput", "admission"),
+    "deployment_drift": ("runtime", "drift"),
+}
+
+
+def matches_symptom(text, lowered, symptom):
+    # Every rule is bounded to fewer than 200 characters around these anchors.
+    # Searching only those neighborhoods avoids regex backtracking over embedded
+    # tool dumps and image payloads while retaining the complete native record.
+    for needle in PREFILTERS[symptom]:
+        offset = 0
+        while (found := lowered.find(needle, offset)) >= 0:
+            if COMPILED[symptom].search(text[max(0, found - 200) : found + len(needle) + 200]):
+                return True
+            offset = found + len(needle)
+    return False
+
+
 FAILURE = re.compile(r"denied|blocked|not allowed|inconsistent state|error|failed|unavailable|exceeded", re.IGNORECASE)
 RECEIPT = re.compile(r"https://github\.com/4444J99/(?:limen|domus-genoma)/(?:pull/\d+|commit/[a-f0-9]{40})(?![a-f0-9])")
 
@@ -72,7 +98,7 @@ def visual_cause(text):
 
 
 def event_time(record):
-    values = [record.get("timestamp"), record.get("ts"), record.get("created_at")]
+    values = [record.get(key) for key in ("timestamp", "ts", "created_at", "observed_at", "generated_at", "run_at_iso")]
     payload = record.get("payload")
     if isinstance(payload, dict):
         values.extend((payload.get("timestamp"), payload.get("ts")))
@@ -99,7 +125,10 @@ def classify(record):
         role = message.get("role", role)
     kind = payload.get("type", record.get("type"))
     text = json.dumps(record, ensure_ascii=False)
-    tool = kind in {"function_call_output", "custom_tool_call_output", "tool_result"} or '"type": "tool_result"' in text
+    tool = (
+        kind in {"function_call_output", "custom_tool_call_output", "tool_result", "tool"}
+        or '"type": "tool_result"' in text
+    )
     disposition = (
         "observed_failure"
         if tool and FAILURE.search(text)
@@ -108,6 +137,88 @@ def classify(record):
         else "reported_context"
     )
     return text, disposition
+
+
+def native_records(path, source, gaps, deadline):
+    """Read native message containers and JSONL without modifying source stores."""
+    if path.suffix in {".db", ".sqlite"}:
+        try:
+            with sqlite3.connect(
+                "file:" + quote(str(path.resolve()), safe="/") + "?mode=ro", uri=True, timeout=5
+            ) as connection:
+                connection.execute("PRAGMA query_only=ON")
+                connection.execute("BEGIN")
+                connection.set_progress_handler(lambda: int(time.monotonic() >= deadline), 10000)
+                tables = {row[0] for row in connection.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+                if not {"message", "part"} <= tables:
+                    gaps[(source, "unsupported_sqlite_schema")] += 1
+                    return
+                # OpenCode's message and part JSON are the native authoritative carriers.
+                for table in ("message", "part"):
+                    query = (
+                        "SELECT p.id,p.data,m.data FROM part p LEFT JOIN message m ON m.id=p.message_id ORDER BY p.id"
+                        if table == "part"
+                        else "SELECT id,data,NULL FROM message ORDER BY id"
+                    )
+                    for row_id, raw, parent_raw in connection.execute(query):
+                        try:
+                            record = json.loads(raw)
+                            if table == "part":
+                                metadata = json.loads(parent_raw) if parent_raw else {}
+                                record = {
+                                    "timestamp": metadata.get("time", {}).get("created"),
+                                    "role": metadata.get("role"),
+                                    "payload": record,
+                                }
+                            elif isinstance(record.get("time"), dict):
+                                record = {**record, "timestamp": record["time"].get("created")}
+                            yield table + ":" + str(row_id), record, hashlib.sha256(raw.encode()).hexdigest()
+                        except (ValueError, TypeError, AttributeError):
+                            gaps[(source, "unparsed_record")] += 1
+        except sqlite3.Error:
+            gaps[(source, "sqlite_snapshot_error")] += 1
+        return
+    if path.suffix == ".json":
+        # Gemini stores pretty-printed session objects with individually dated messages.
+        if path.stat().st_size > 128 * 1024 * 1024:
+            gaps[(source, "oversized_container")] += 1
+            return
+        try:
+            document = json.loads(path.read_bytes())
+            rows = document if isinstance(document, list) else document.get("messages", [document])
+            for number, record in enumerate(rows, 1):
+                if isinstance(record, dict):
+                    yield number, record, hashlib.sha256(json.dumps(record, sort_keys=True).encode()).hexdigest()
+                else:
+                    gaps[(source, "unparsed_record")] += 1
+        except (ValueError, TypeError, AttributeError):
+            gaps[(source, "unparsed_container")] += 1
+        return
+    with ExitStack() as stack:
+        stream = stack.enter_context(path.open("rb"))
+        if path.name.endswith(".jsonl.zst"):
+            import io
+
+            stream = stack.enter_context(io.BufferedReader(zstandard.ZstdDecompressor().stream_reader(stream)))
+        number = 0
+        while raw := stream.readline(128 * 1024 * 1024 + 1):
+            number += 1
+            if time.monotonic() >= deadline:
+                gaps[(source, "deadline_reached")] += 1
+                return
+            if len(raw) > 128 * 1024 * 1024:
+                while raw and not raw.endswith(b"\n"):
+                    raw = stream.readline(8 * 1024 * 1024)
+                gaps[(source, "oversized_record")] += 1
+                continue
+            try:
+                record = json.loads(raw)
+                if not isinstance(record, dict):
+                    gaps[(source, "unparsed_record")] += 1
+                    continue
+                yield number, record, hashlib.sha256(raw).hexdigest()
+            except (ValueError, UnicodeError):
+                gaps[(source, "unparsed_record")] += 1
 
 
 def review(sources, start, end, *, seconds=180):
@@ -138,7 +249,7 @@ def review(sources, start, end, *, seconds=180):
                     break
                 if not path.is_file():
                     continue
-                if path.suffix not in {".jsonl", ".json"}:
+                if path.suffix not in {".jsonl", ".json", ".db", ".sqlite"} and not path.name.endswith(".jsonl.zst"):
                     gaps[(source, "unsupported_format")] += 1
                     continue
                 try:
@@ -147,56 +258,55 @@ def review(sources, start, end, *, seconds=180):
                     if key in files:
                         continue
                     files.add(key)
-                    with path.open("rb") as stream:
-                        for number, raw in enumerate(stream, 1):
-                            if time.monotonic() >= source_deadline:
-                                gaps[(source, "deadline_reached")] += 1
-                                break
-                            if len(raw) > 8 * 1024 * 1024:
-                                gaps[(source, "oversized_record")] += 1
+                    for number, record, fingerprint in native_records(path, source, gaps, source_deadline):
+                        stamp = event_time(record)
+                        if stamp is None:
+                            gaps[(source, "undated_record")] += 1
+                            continue
+                        if not start <= stamp < end:
+                            continue
+                        month = stamp.astimezone(zone).strftime("%Y-%m")
+                        counts[source][month] += 1
+                        text, disposition = classify(record)
+                        lowered = text.lower()
+                        for symptom in COMPILED:
+                            if not matches_symptom(text, lowered, symptom):
                                 continue
-                            try:
-                                record = json.loads(raw)
-                                if not isinstance(record, dict):
-                                    raise ValueError()  # noqa: TRY004 - stable invalid-record category
-                            except (ValueError, UnicodeError):
-                                gaps[(source, "unparsed_record")] += 1
-                                continue
-                            stamp = event_time(record)
-                            if stamp is None:
-                                gaps[(source, "undated_record")] += 1
-                                continue
-                            if not start <= stamp < end:
-                                continue
-                            month = stamp.astimezone(zone).strftime("%Y-%m")
-                            counts[source][month] += 1
-                            text, disposition = classify(record)
-                            fingerprint = hashlib.sha256(raw).hexdigest()
-                            for symptom, matcher in COMPILED.items():
-                                if not matcher.search(text):
-                                    continue
-                                occurrence = {
-                                    "id": fingerprint[:20],
-                                    "source": source,
-                                    "timestamp": stamp.isoformat(),
-                                    "disposition": disposition,
-                                    "receipt_candidates": sorted(set(RECEIPT.findall(text))),
-                                }
-                                if symptom == "native_visual":
-                                    occurrence["visual_classification"] = visual_cause(text)
-                                # A replayed body is one occurrence, with source lineage retained privately.
-                                occurrences[symptom][fingerprint] = occurrence
-                                private.append(
-                                    {"symptom": symptom, "sha256": fingerprint, "path": str(path), "line": number}
+                            occurrence = {
+                                "id": fingerprint[:20],
+                                "source": source,
+                                "timestamp": stamp.isoformat(),
+                                "disposition": disposition,
+                                "receipt_candidates": sorted(set(RECEIPT.findall(text))),
+                            }
+                            lineage = {
+                                key: hashlib.sha256(str(record[key]).encode()).hexdigest()[:20]
+                                for key in ("sessionId", "session_id", "uuid", "parentUuid", "messageID", "turn_id")
+                                if record.get(key) is not None
+                            }
+                            lineage["capsule"] = hashlib.sha256(
+                                str(path.resolve()).removesuffix(".zst").encode()
+                            ).hexdigest()[:20]
+                            occurrence["lineage"] = lineage
+                            occurrence["correction_input"] = disposition == "operator_input" and bool(
+                                re.search(
+                                    r"\b(?:instead|correction|correct|preserve|don't|do not|should|must)\b", text, re.I
                                 )
-                except OSError:
+                            )
+                            if symptom == "native_visual":
+                                occurrence["visual_classification"] = visual_cause(text)
+                            occurrences[symptom][fingerprint] = occurrence
+                            private.append(
+                                {"symptom": symptom, "sha256": fingerprint, "path": str(path), "line": number}
+                            )
+                except (OSError, zstandard.ZstdError):
                     gaps[(source, "read_error")] += 1
     providers = sorted({source for source, _, _ in sources})
     public = {
         "schema": "limen.operating_system_evidence.v1",
         "observed_at": datetime.now(UTC).isoformat(),
         "window": {"start": start.isoformat(), "end_exclusive": end.isoformat()},
-        "scope": "declared local timestamped JSON/JSONL; observations do not prove completeness or completion",
+        "scope": "Declared native JSONL, message JSON and OpenCode SQLite snapshot census; missing or non-message artifacts remain explicit. No observed records is not absence of failures.",
         "coverage": [
             {
                 "source": source,
@@ -217,6 +327,13 @@ def review(sources, start, end, *, seconds=180):
     }
     for symptom, (_, owner, predicate) in RULES.items():
         rows = sorted(occurrences[symptom].values(), key=lambda row: (row["timestamp"], row["id"]))
+        preceding = {}
+        for row in rows:
+            capsule = row["lineage"].get("capsule")
+            if row["correction_input"] and capsule in preceding:
+                row["correction_after"] = preceding[capsule]
+            if row["disposition"] == "operator_input":
+                preceding[capsule] = row["id"]
         public["symptoms"].append(
             {
                 "key": symptom,
@@ -228,6 +345,25 @@ def review(sources, start, end, *, seconds=180):
             }
         )
     return public, private
+
+
+def link_receipts(public, resolve):
+    """Bind repository-qualified candidates to exact live identities, never completion."""
+    urls = sorted(
+        {url for symptom in public["symptoms"] for row in symptom["occurrences"] for url in row["receipt_candidates"]}
+    )
+    receipts = []
+    for url in urls:
+        try:
+            identity = resolve(url)
+            if not isinstance(identity, dict) or not re.fullmatch("[0-9a-f]{40}", identity.get("sha", "")):
+                raise ValueError()
+            receipts.append({"url": url, "status": "identity_verified", **identity})
+        except (OSError, ValueError, TimeoutError):
+            receipts.append({"url": url, "status": "identity_unavailable"})
+    public["receipt_verifications"] = receipts
+    public["receipt_verified_at"] = datetime.now(UTC).isoformat()
+    return public
 
 
 def render(public):

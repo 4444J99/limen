@@ -92,6 +92,8 @@ def test_claim_in_envelope_is_counted_once(pool, tmp_path):
     assert result["required_reserve_bytes"] == 630
     assert result["outstanding_growth_bytes"] == 0
     assert result["available_growth_bytes"] == 370
+    with pytest.raises(module.PoolUnavailable, match="claim_already_owned"):
+        pool.reserve(tmp_path, owner="claude", pid=2, growth_bytes=600, claim_id="claim_000000000001", claims=(claim,))
 
 
 def test_invalid_state_is_preserved_and_fails_closed(pool, tmp_path):
@@ -109,7 +111,12 @@ def test_stale_telemetry_fails_closed(pool, tmp_path):
 
 def test_missing_selected_graph_does_not_invent_empty_claims(pool, tmp_path, monkeypatch):
     monkeypatch.delenv("LIMEN_RESOURCE_TASK_GRAPH", raising=False)
-    assert pool.observe(tmp_path)["denial_reasons"] == ["ResourceGraphMissing"]
+
+    def missing():
+        raise ValueError("broker_storage_census_unavailable")
+
+    monkeypatch.setattr(module, "broker_storage_claims", missing)
+    assert pool.observe(tmp_path)["denial_reasons"] == ["broker_storage_census_unavailable"]
 
 
 def test_symlink_state_cannot_redirect_writes(pool, tmp_path):

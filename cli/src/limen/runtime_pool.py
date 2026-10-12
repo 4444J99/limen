@@ -19,6 +19,7 @@ from typing import Any
 
 from limen.host_admission import AdmissionController, AdmissionStateError
 from limen.prima_materia import ResourceClaimV1
+from limen.storage_claim_census import broker_storage_claims
 from limen.resource_envelope import (
     ResourceGraphError,
     ResourceTelemetryUnavailable,
@@ -37,14 +38,29 @@ class PoolUnavailable(RuntimeError):
 
 
 def selected_claims() -> tuple[ResourceClaimV1, ...]:
-    claims = load_task_graph_claims(
-        expected_run_id=os.environ.get("LIMEN_RESOURCE_TASK_GRAPH_RUN_ID") or None,
-    )
-    path = Path(os.environ["LIMEN_RESOURCE_TASK_GRAPH"])
-    age = time.time() - path.stat().st_mtime
-    if not 0 <= age <= MAX_AGE_SECONDS:
-        raise PoolUnavailable("resource_graph_stale")
-    return claims
+    try:
+        machine = broker_storage_claims()
+        if not os.environ.get("LIMEN_RESOURCE_TASK_GRAPH"):
+            return machine
+        selected = load_task_graph_claims(expected_run_id=os.environ.get("LIMEN_RESOURCE_TASK_GRAPH_RUN_ID") or None)
+        path = Path(os.environ["LIMEN_RESOURCE_TASK_GRAPH"])
+        if not 0 <= time.time() - path.stat().st_mtime <= MAX_AGE_SECONDS:
+            raise PoolUnavailable("resource_graph_stale")
+        claims = {claim.claim_id: claim for claim in machine}
+        for claim in selected:
+            if claim.claim_id in claims and claims[claim.claim_id] != claim:
+                raise PoolUnavailable("resource_claim_conflict")
+            claims[claim.claim_id] = claim
+        return tuple(claims.values())
+    except PoolUnavailable:
+        raise
+    except Exception as exc:
+        reason = (
+            str(exc)
+            if isinstance(exc, ValueError) and str(exc).startswith("broker_storage_census_")
+            else "broker_storage_census_unavailable"
+        )
+        raise PoolUnavailable(reason) from exc
 
 
 class RuntimePool(AdmissionController):
@@ -137,8 +153,8 @@ class RuntimePool(AdmissionController):
         for row in rows:
             if row["volume"] != volume:
                 continue
-            claim = all_claims.get(row.get("claim_id"))
-            included = claim.active_bytes(instant) if claim else 0
+            reserved_claim = all_claims.get(row.get("claim_id"))
+            included = reserved_claim.active_bytes(instant) if reserved_claim else 0
             reserved += max(0, row["bytes"] - included)
         free = shutil.disk_usage(path).free
         available = free - envelope.required_free_bytes - reserved
@@ -149,6 +165,16 @@ class RuntimePool(AdmissionController):
             "max_age_seconds": MAX_AGE_SECONDS,
             "filesystem_free_bytes": free,
             "required_reserve_bytes": envelope.required_free_bytes,
+            "reserve_components": {
+                "projected_swap_expansion_bytes": telemetry.projected_swap_expansion_bytes,
+                "updater_claim_bytes": telemetry.updater_claim_bytes,
+                "apfs_churn_bytes": telemetry.apfs_churn_bytes,
+                "peak_concurrent_task_bytes": envelope.peak_concurrent_task_bytes,
+                "custody_and_rollback_staging_bytes": envelope.custody_and_rollback_staging_bytes,
+                "telemetry_error_bytes": telemetry.telemetry_error_bytes,
+            },
+            "observation_age_seconds": max(0, age),
+            "storage_claim_count": len(all_claims),
             "outstanding_growth_bytes": reserved,
             "available_growth_bytes": available,
             "reservation_count": sum(row["volume"] == volume for row in rows),

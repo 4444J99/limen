@@ -1561,6 +1561,11 @@ def _parse_iso(v) -> datetime | None:
 
 
 def cmd_health() -> int:
+    # Same cadence and owner routing, with no additional scheduler or native UI bypass.
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "cli/src"))
+    from limen.operating_system_health import write_health
+
+    write_health(LIMEN_ROOT, HOME)
     now = _now()
     max_packet_age = _env_num("LIMEN_CROSS_VENDOR_MAX_PACKET_AGE_DAYS", 3)
     reset_drop_pct = _env_num("LIMEN_CROSS_VENDOR_RESET_DROP_PCT", 50)
@@ -1574,7 +1579,7 @@ def cmd_health() -> int:
 
     packets: dict[str, dict] = {}
     for p in sorted(OUT_DIR.glob("*.json")) if OUT_DIR.is_dir() else []:
-        if p.name in ("run-manifest.json", "health.json"):
+        if p.name in ("run-manifest.json", "health.json") or p.name.startswith("operating-system-"):
             continue
         try:
             packets[p.stem] = json.loads(p.read_text(encoding="utf-8"))

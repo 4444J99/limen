@@ -25,7 +25,11 @@ APPROVAL_TEMPLATE = (
     PRIVATE_ROOT / "organs" / "representation" / "approvals" / "author-one-yale-review-nonfiction-dry-run.template.yaml"
 )
 REAL_SEND_TEMPLATE = (
-    PRIVATE_ROOT / "organs" / "representation" / "approvals" / "author-one-yale-review-nonfiction-real-send.template.yaml"
+    PRIVATE_ROOT
+    / "organs"
+    / "representation"
+    / "approvals"
+    / "author-one-yale-review-nonfiction-real-send.template.yaml"
 )
 READY_CANDIDATE = "chris-metadata-only-nonfiction-candidate"
 YALE_ROUTE = "yale-review-nonfiction-route"

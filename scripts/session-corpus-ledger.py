@@ -960,6 +960,9 @@ def main() -> int:
     parser.add_argument("--days", type=int, default=None, help="local app-store horizon to inventory")
     parser.add_argument("--all", action="store_true", help="inventory all local app-store history")
     parser.add_argument("--write", action="store_true", help="write docs and ignored private inventory")
+    parser.add_argument(
+        "--os-evidence-seconds", type=int, default=180, help="bounded native census budget, at most 3600 seconds"
+    )
     parser.add_argument("--os-evidence-start", help="inclusive local date for operating-system evidence review")
     parser.add_argument("--os-evidence-end", help="exclusive local date for operating-system evidence review")
     parser.add_argument(
@@ -974,23 +977,56 @@ def main() -> int:
         import importlib.util
         from zoneinfo import ZoneInfo
         from limen.operating_system_evidence import review, render
-        spec = importlib.util.spec_from_file_location("os_evidence_lifecycle", REPO_ROOT / "scripts/prompt-lifecycle-ledger.py")
+
+        spec = importlib.util.spec_from_file_location(
+            "os_evidence_lifecycle", REPO_ROOT / "scripts/prompt-lifecycle-ledger.py"
+        )
         lifecycle = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(lifecycle)
         zone = ZoneInfo("America/New_York")
         start = dt.datetime.fromisoformat(args.os_evidence_start).replace(tzinfo=zone)
         end = dt.datetime.fromisoformat(args.os_evidence_end).replace(tzinfo=zone)
         runtime_root = Path(os.environ.get("LIMEN_AGENT_RUNTIME_ROOT", Path.home() / "Workspace/limen/.agent-runtime"))
-        sources = [(source, runtime_root / root.relative_to(lifecycle.RUNTIME_ROOT)
-                    if root.is_relative_to(lifecycle.RUNTIME_ROOT) else root, patterns)
-                   for source, root, patterns in lifecycle.LOCAL_SOURCES]
-        sources.extend([
-            ("gemini-native", runtime_root / "gemini", ("*.json", "*.jsonl")),
-            ("opencode-native", runtime_root / "opencode/data", ("*.db",)),
-        ])
-        sources.extend([("codex-archived", root.parent / "archived_sessions", ("*.jsonl",))
-                       for source, root, _ in sources if source == "codex-sessions"])
-        public, private = review(sources, start, end)
+        sources = [
+            (
+                source,
+                runtime_root / root.relative_to(lifecycle.RUNTIME_ROOT)
+                if root.is_relative_to(lifecycle.RUNTIME_ROOT)
+                else root,
+                patterns,
+            )
+            for source, root, patterns in lifecycle.LOCAL_SOURCES
+        ]
+        sources.extend(
+            [
+                ("gemini-native", runtime_root / "gemini", ("*.json", "*.jsonl")),
+                ("opencode-native", runtime_root / "opencode/data", ("*.db",)),
+                ("copilot-native", HOME / ".copilot/session-state", ("events.jsonl",)),
+                ("cline-native", HOME / ".cline/data", ("*.json", "*.jsonl")),
+            ]
+        )
+        sources.extend(external_session_sources())
+        sources.extend(
+            [
+                ("derived-vendor-insights", runtime_root.parent / "logs/vendor-insights", ("*.json", "*.jsonl")),
+                (
+                    "derived-healing",
+                    runtime_root.parent / "logs",
+                    ("self-heal-liveness.jsonl", "heal-convergence.json", "estate-audit-heal.json"),
+                ),
+                ("derived-policy-admission", runtime_root.parent / "logs/dispatch-admission", ("*.json", "*.jsonl")),
+                ("derived-vendor-health", runtime_root.parent / "logs/insight-cross-vendor", ("*.json",)),
+            ]
+        )
+        sources = [(source, root, (*patterns, "*.jsonl.zst")) for source, root, patterns in sources]
+        sources.extend(
+            [
+                ("codex-archived", root.parent / "archived_sessions", ("*.jsonl",))
+                for source, root, _ in sources
+                if source == "codex-sessions"
+            ]
+        )
+        public, private = review(sources, start, end, seconds=max(1, min(3600, args.os_evidence_seconds)))
         markdown = render(public)
         if args.write:
             target = ROOT / "docs/reviews" / f"operating-system-{args.os_evidence_start}-{args.os_evidence_end}"
