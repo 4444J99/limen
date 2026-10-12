@@ -1,0 +1,14 @@
+{
+  "schema": "limen.native_visual_receipt.v1",
+  "observed_at": "2026-10-12T19:49:00+00:00",
+  "native_capture": true,
+  "application": "com.apple.TextEdit",
+  "window": "Untitled",
+  "surface": "mcp__cua_repl",
+  "evidence": "Codex task 01a13168-8c50-7fb2-a163-8b7fcc79b598: Capture the actual native smoke-test image; actual PNG retained inline in tool receipt",
+  "external_gates": ["platform_policy"],
+  "denial": "Computer Use is not allowed to use the app 'com.openai.codex' for safety reasons.",
+  "target_specific_acceptance": false,
+  "automatic_permission_bypass": false,
+  "supported_host_routing": "DomusAgentHost stable responsible identity; verify-lifetime predicate retained"
+}

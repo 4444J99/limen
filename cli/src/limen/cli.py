@@ -124,6 +124,37 @@ main.add_command(fanout_group)
 main.add_command(repos_group)
 
 
+@main.command("runtime-quota")
+@click.option("--request-maintenance", is_flag=True)
+@click.option("--target-percent", type=click.IntRange(1, 100), default=100)
+@click.option("--agent", type=click.Choice(["codex", "claude", "gemini", "opencode", "total"]))
+def runtime_quota(request_maintenance: bool, target_percent: int, agent: str | None) -> None:
+    """Observe Domus shared capacity or file deduplicated keeper-owned maintenance intake."""
+    from limen.runtime_quota import maintenance_requests
+
+    try:
+        if request_maintenance:
+            payload = json.loads(sys.stdin.read(1024 * 1024))
+            requests = maintenance_requests(payload, resolve_tasks_path(resolve_root()))
+            click.echo(json.dumps({"status": "intake_pending", "requests": requests}))
+        else:
+            command = ["domus-agent-runtime", "quota", "--json", "--target-percent", str(target_percent)]
+            if agent:
+                command.extend(["--agent", agent])
+            result = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+            )
+            click.echo(result.stdout)
+            if result.returncode:
+                raise click.exceptions.Exit(result.returncode)
+    except (OSError, ValueError, subprocess.SubprocessError) as exc:
+        raise click.ClickException("runtime quota owner unavailable or observation invalid") from exc
+
+
 @click.group("repo")
 def repo_group() -> None:
     """Acquire and release session-scoped repository residency."""
