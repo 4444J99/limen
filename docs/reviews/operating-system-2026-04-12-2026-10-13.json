@@ -1,0 +1,4285 @@
+{
+  "schema": "limen.operating_system_evidence.v1",
+  "observed_at": "2026-10-12T19:13:36.582052+00:00",
+  "window": {
+    "start": "2026-04-12T00:00:00-04:00",
+    "end_exclusive": "2026-10-13T00:00:00-04:00"
+  },
+  "scope": "declared local timestamped JSON/JSONL; observations do not prove completeness or completion",
+  "coverage": [
+    {
+      "source": "agy-cli-history",
+      "months": {
+        "2026-04": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-05": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-06": {
+          "records": 29,
+          "status": "observed"
+        },
+        "2026-07": {
+          "records": 317,
+          "status": "observed"
+        },
+        "2026-08": {
+          "records": 421,
+          "status": "observed"
+        },
+        "2026-09": {
+          "records": 701,
+          "status": "observed"
+        },
+        "2026-10": {
+          "records": 227,
+          "status": "observed"
+        }
+      }
+    },
+    {
+      "source": "claude-file-history",
+      "months": {
+        "2026-04": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-05": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-06": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-07": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-08": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-09": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-10": {
+          "records": 0,
+          "status": "no_observed_records"
+        }
+      }
+    },
+    {
+      "source": "claude-plans",
+      "months": {
+        "2026-04": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-05": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-06": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-07": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-08": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-09": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-10": {
+          "records": 0,
+          "status": "no_observed_records"
+        }
+      }
+    },
+    {
+      "source": "claude-projects",
+      "months": {
+        "2026-04": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-05": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-06": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-07": {
+          "records": 5348,
+          "status": "observed"
+        },
+        "2026-08": {
+          "records": 14153,
+          "status": "observed"
+        },
+        "2026-09": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-10": {
+          "records": 0,
+          "status": "no_observed_records"
+        }
+      }
+    },
+    {
+      "source": "claude-tasks",
+      "months": {
+        "2026-04": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-05": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-06": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-07": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-08": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-09": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-10": {
+          "records": 0,
+          "status": "no_observed_records"
+        }
+      }
+    },
+    {
+      "source": "codex-archived",
+      "months": {
+        "2026-04": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-05": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-06": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-07": {
+          "records": 5964,
+          "status": "observed"
+        },
+        "2026-08": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-09": {
+          "records": 907,
+          "status": "observed"
+        },
+        "2026-10": {
+          "records": 9073,
+          "status": "observed"
+        }
+      }
+    },
+    {
+      "source": "codex-attachments",
+      "months": {
+        "2026-04": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-05": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-06": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-07": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-08": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-09": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-10": {
+          "records": 0,
+          "status": "no_observed_records"
+        }
+      }
+    },
+    {
+      "source": "codex-history",
+      "months": {
+        "2026-04": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-05": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-06": {
+          "records": 922,
+          "status": "observed"
+        },
+        "2026-07": {
+          "records": 1369,
+          "status": "observed"
+        },
+        "2026-08": {
+          "records": 732,
+          "status": "observed"
+        },
+        "2026-09": {
+          "records": 601,
+          "status": "observed"
+        },
+        "2026-10": {
+          "records": 333,
+          "status": "observed"
+        }
+      }
+    },
+    {
+      "source": "codex-sessions",
+      "months": {
+        "2026-04": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-05": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-06": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-07": {
+          "records": 15492,
+          "status": "observed"
+        },
+        "2026-08": {
+          "records": 10357,
+          "status": "observed"
+        },
+        "2026-09": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-10": {
+          "records": 0,
+          "status": "no_observed_records"
+        }
+      }
+    },
+    {
+      "source": "gemini-native",
+      "months": {
+        "2026-04": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-05": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-06": {
+          "records": 972,
+          "status": "observed"
+        },
+        "2026-07": {
+          "records": 1,
+          "status": "observed"
+        },
+        "2026-08": {
+          "records": 971,
+          "status": "observed"
+        },
+        "2026-09": {
+          "records": 1277,
+          "status": "observed"
+        },
+        "2026-10": {
+          "records": 13574,
+          "status": "observed"
+        }
+      }
+    },
+    {
+      "source": "gemini-tmp-agy",
+      "months": {
+        "2026-04": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-05": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-06": {
+          "records": 15,
+          "status": "observed"
+        },
+        "2026-07": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-08": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-09": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-10": {
+          "records": 0,
+          "status": "no_observed_records"
+        }
+      }
+    },
+    {
+      "source": "opencode-native",
+      "months": {
+        "2026-04": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-05": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-06": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-07": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-08": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-09": {
+          "records": 0,
+          "status": "no_observed_records"
+        },
+        "2026-10": {
+          "records": 0,
+          "status": "no_observed_records"
+        }
+      }
+    }
+  ],
+  "gaps": [
+    {
+      "source": "claude-file-history",
+      "reason": "unsupported_format",
+      "count": 9693
+    },
+    {
+      "source": "claude-plans",
+      "reason": "undated_record",
+      "count": 292
+    },
+    {
+      "source": "claude-plans",
+      "reason": "unparsed_record",
+      "count": 281
+    },
+    {
+      "source": "claude-plans",
+      "reason": "unsupported_format",
+      "count": 1337
+    },
+    {
+      "source": "claude-projects",
+      "reason": "deadline_reached",
+      "count": 2
+    },
+    {
+      "source": "claude-projects",
+      "reason": "undated_record",
+      "count": 7383
+    },
+    {
+      "source": "claude-projects",
+      "reason": "unsupported_format",
+      "count": 20
+    },
+    {
+      "source": "claude-tasks",
+      "reason": "unparsed_record",
+      "count": 585
+    },
+    {
+      "source": "claude-tasks",
+      "reason": "unsupported_format",
+      "count": 122
+    },
+    {
+      "source": "codex-archived",
+      "reason": "deadline_reached",
+      "count": 2
+    },
+    {
+      "source": "codex-attachments",
+      "reason": "undated_record",
+      "count": 1
+    },
+    {
+      "source": "codex-attachments",
+      "reason": "unsupported_format",
+      "count": 47
+    },
+    {
+      "source": "codex-sessions",
+      "reason": "deadline_reached",
+      "count": 4
+    },
+    {
+      "source": "codex-sessions",
+      "reason": "oversized_record",
+      "count": 1
+    },
+    {
+      "source": "codex-sessions",
+      "reason": "unsupported_format",
+      "count": 9
+    },
+    {
+      "source": "gemini-native",
+      "reason": "deadline_reached",
+      "count": 1
+    },
+    {
+      "source": "gemini-native",
+      "reason": "undated_record",
+      "count": 2610
+    },
+    {
+      "source": "gemini-native",
+      "reason": "unparsed_record",
+      "count": 249933
+    },
+    {
+      "source": "gemini-tmp-agy",
+      "reason": "undated_record",
+      "count": 45
+    },
+    {
+      "source": "opencode-native",
+      "reason": "unsupported_format",
+      "count": 1
+    }
+  ],
+  "symptoms": [
+    {
+      "key": "runtime_storage",
+      "owner": "4444J99/domus-genoma",
+      "predicate": "runtime-pool",
+      "status": "requires_live_reconciliation",
+      "counts": {
+        "reported_context": 63,
+        "observed_failure": 25,
+        "operator_input": 1
+      },
+      "occurrences": [
+        {
+          "id": "93fd231f334c365d381e",
+          "source": "codex-history",
+          "timestamp": "2026-07-29T12:15:10+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "7e08b0dee900d26737b0",
+          "source": "gemini-native",
+          "timestamp": "2026-08-21T12:34:04.347842+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "052af0efc56604d1182a",
+          "source": "agy-cli-history",
+          "timestamp": "2026-08-21T12:46:02.187000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "69e510893fc3cdd892a1",
+          "source": "agy-cli-history",
+          "timestamp": "2026-09-30T23:48:38.079000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "de4719b2bb46b31c007c",
+          "source": "codex-history",
+          "timestamp": "2026-10-01T00:18:04+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "584af7c3a1d894acecdf",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T19:42:28.413000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "16be604c756d836b838f",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T19:42:28.417000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "064e8f01b69ab27d1178",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:14:20.591000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a43616257a3dadd4ec53",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:14:21.354000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ac8f7b659ccc223f0e7f",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:31:49.464000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "d7900308f46c8c7e0fba",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:31:49.840000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "46af12d5ac3a97df3284",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:39:23.223000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "57a53b8e8620ca8417ea",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:39:23.258000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "82a3cdde5661f51ef349",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:42:05.808000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "0aedc5d1d54f224bca49",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:42:05.812000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "cb5eaaa744d2271cbc18",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:23:47.719000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "48ab750b9b7340b6da9e",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:23:48.816000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "499cc12fa923a73e6d98",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:24:05.777000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "83f802bc7b26ffacd4e1",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:24:05.836000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "cc9dad6138276682b58b",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:24:37.776000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "20d33a0cc17024025355",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:24:37.837000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "7eca3e9aa4909a13ccd2",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:25:31.989000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "fe267f5c36cb52dd1fa1",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:25:32.061000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "09d8a82d240566cd1396",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:30:12.791000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "0be5f3fcdff1a4143fcf",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:30:12.793000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "403d0c5e0e18f82e3372",
+          "source": "codex-history",
+          "timestamp": "2026-10-01T22:04:16+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2808"
+          ]
+        },
+        {
+          "id": "e138a95eb036649528ba",
+          "source": "codex-history",
+          "timestamp": "2026-10-01T22:24:37+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/domus-genoma/pull/408",
+            "https://github.com/4444J99/limen/pull/2808",
+            "https://github.com/4444J99/limen/pull/2809",
+            "https://github.com/4444J99/limen/pull/2810"
+          ]
+        },
+        {
+          "id": "47b71686ce608c8528bb",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:25:13.850000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": [
+            "https://github.com/4444J99/domus-genoma/pull/408",
+            "https://github.com/4444J99/limen/pull/2808",
+            "https://github.com/4444J99/limen/pull/2809",
+            "https://github.com/4444J99/limen/pull/2810"
+          ]
+        },
+        {
+          "id": "d443651943d2552f6a07",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:25:34.289000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e567951ff2357653cb4a",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:25:34.377000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "aff5512a89aff9626f5d",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:25:34.381000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "1bfeb4f74ab1ef3d77af",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:25:47.697000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f1960c0e8f29c9ed64e5",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:25:47.755000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9d7079e961eaae174c61",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:25:52.136000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "600823d803bae6b5dcd9",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:25:52.138000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "127a3bd209d099d5c45c",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:26:04.452000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9138e02c557a04e3fd64",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:26:07.234000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "92526b1a4a5976dbf1a7",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:26:07.235000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "4b446e86a145297fd220",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:26:39.555000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a344259bb9a8c44af2e4",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:26:39.645000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "d22f9b69b419331c8088",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:26:39.647000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "02457712a394ccc5d1fa",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:26:39.675000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "58a490020d0f1d4f7918",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:26:40.431000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "4c0af81e36971174ab6f",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:28:20.020000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e7a4c73fa53c4aaf3acb",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:28:20.022000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "3ed6e9a4758822d55532",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:28:31.259000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "cf95afee1ea717656dcd",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:29:23.522000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9abd4cc83b517ef81dac",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:29:23.578000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6ade1c960b0d032db63a",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:29:29.089000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "61e6e525014d6f6428f5",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:29:29.093000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6b13ec260f4c99dbbcf6",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:32:31.019000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "52e34af1d691f170c0d0",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:32:31.021000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ad60502ccbb3c8559d14",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:32:31.053000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "52978f5d13cf83b84984",
+          "source": "codex-history",
+          "timestamp": "2026-10-01T23:04:54+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/domus-genoma/pull/408",
+            "https://github.com/4444J99/limen/pull/2808",
+            "https://github.com/4444J99/limen/pull/2809",
+            "https://github.com/4444J99/limen/pull/2810"
+          ]
+        },
+        {
+          "id": "fdc7c75501897a540c53",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T18:22:27.366000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ca5c777294026883a682",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:24:33.298000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "215e358de5d6b0297a0c",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:25:10.094000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "2c6c162a188987c305cd",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:25:10.111000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6eeb6d0ad841830acda4",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:25:14.038000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "64018417db52d8d4c677",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:25:14.098000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b0e20eabd83a472c93f2",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:30:29.835000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ead06f19248bcb31c8d6",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:30:29.921000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f3319085657725f04dd9",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:30:29.924000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "709fb77a86e724e999d0",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:30:46.538000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "333fdf4380cec9779020",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:01.216000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2718",
+            "https://github.com/4444J99/limen/pull/2789",
+            "https://github.com/4444J99/limen/pull/2801",
+            "https://github.com/4444J99/limen/pull/2805"
+          ]
+        },
+        {
+          "id": "5db3432888b87113a6c4",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:17.083000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/domus-genoma/pull/407",
+            "https://github.com/4444J99/limen/pull/2761",
+            "https://github.com/4444J99/limen/pull/2788",
+            "https://github.com/4444J99/limen/pull/2790"
+          ]
+        },
+        {
+          "id": "85d8b3e1c4ee98e97135",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:18.178000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2718"
+          ]
+        },
+        {
+          "id": "41879cb3391312a52370",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:35:38.145000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2808",
+            "https://github.com/4444J99/limen/pull/2810",
+            "https://github.com/4444J99/limen/pull/2823",
+            "https://github.com/4444J99/limen/pull/2824"
+          ]
+        },
+        {
+          "id": "a4bdbe93b3bcc5671d0b",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:46:50.860000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "40170a2b10c3a203493d",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:46:50.881000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "bace80cf48fea8b06caf",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:46:54.100000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "d6f27a3466fdc606a0ad",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:46:54.182000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ef2c598612a7f5fc0d26",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:46:54.187000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9167f863846bede07fde",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:49:25.358000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "66ad3b09b7bdc637fd88",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:51:14.698000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "42558f341eab315a664c",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:51:14.700000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5cac31fa907c99dca84e",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T20:07:49.654000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2808",
+            "https://github.com/4444J99/limen/pull/2810",
+            "https://github.com/4444J99/limen/pull/2823",
+            "https://github.com/4444J99/limen/pull/2824"
+          ]
+        },
+        {
+          "id": "a16e32aa3752032d620d",
+          "source": "codex-history",
+          "timestamp": "2026-10-07T02:02:38+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "28ec4f16375451ea6aa2",
+          "source": "codex-archived",
+          "timestamp": "2026-10-09T19:14:08.635000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "40e5fcedbdd1d4d5430c",
+          "source": "codex-archived",
+          "timestamp": "2026-10-09T19:14:08.986000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e438abe43ff28355f30c",
+          "source": "codex-archived",
+          "timestamp": "2026-10-09T19:14:15.490000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6fafc4fd959bd473530f",
+          "source": "codex-archived",
+          "timestamp": "2026-10-09T19:14:15.543000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "307a3e1e4c6107d552d1",
+          "source": "codex-archived",
+          "timestamp": "2026-10-09T20:02:18.027000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "0f232ca1c882f6a99368",
+          "source": "codex-archived",
+          "timestamp": "2026-10-09T20:02:18.031000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b46b078f82c681dd74c1",
+          "source": "codex-archived",
+          "timestamp": "2026-10-09T20:20:17.336000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "76c8bd3ad7c690e784dc",
+          "source": "codex-archived",
+          "timestamp": "2026-10-09T20:20:17.338000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "cde3293f119b0a9ed5c8",
+          "source": "codex-history",
+          "timestamp": "2026-10-09T20:27:55+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9b3f4b10610bb9214af8",
+          "source": "codex-history",
+          "timestamp": "2026-10-10T00:45:18+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "07e3be47c6e167528b50",
+          "source": "codex-history",
+          "timestamp": "2026-10-10T02:25:12+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        }
+      ]
+    },
+    {
+      "key": "chezmoi_source",
+      "owner": "4444J99/domus-genoma",
+      "predicate": "claude-source-parity",
+      "status": "requires_live_reconciliation",
+      "counts": {
+        "reported_context": 11,
+        "operator_input": 2,
+        "observed_failure": 26
+      },
+      "occurrences": [
+        {
+          "id": "74766e05d7442692ca8d",
+          "source": "gemini-native",
+          "timestamp": "2026-06-22T05:20:08.735000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "eb47a422266f9bf38a0d",
+          "source": "gemini-native",
+          "timestamp": "2026-06-22T05:20:10.341000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8df83acc5d2a404e9466",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-18T14:29:30.705000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "7bfc78f54367fd48afb4",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-18T15:17:28.891000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "7c452728bb6c7fa4d286",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "917ec11d5bb94936dedf",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:52:46.972000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "37242df5a98d8d102288",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:34:23.154000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "39a58c3699355bd44adf",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:34:23.154000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5a9eabe83c6a2f56f1e9",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:34:23.154000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b0e70ab32d416868faca",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:34:23.154000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e02456ac1b2be3d56a77",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:34:23.154000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "c375ed8be2a09046c888",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:55:03.738000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f488383bc421190cff4c",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T13:00:47.145000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "027a36d523f169892d1e",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T13:58:32.019000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "215158b48be5d3ebd814",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T21:12:24.981000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a0e911ce56125ff83225",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T00:45:56.023000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "748a48e737468812e3a0",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T02:07:17.116000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "cedfb1c3ccd90b2123de",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T02:24:44.285000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "17cd035e86a171bce753",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:01:20.081000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "d1b46657128756eae016",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:01:29.505000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "d1f1a1d0970f3d0517df",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:04:40.503000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f9f2336d736d60ae8315",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:08:34.174000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "2588e281a5bc11ac280b",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:08:41.525000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6ec3c6e5d4ac957c16f6",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:08:49.579000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "3ff53222e657db77463f",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:08:58.446000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ab471bc78914d6b87b2a",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:09:25.840000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "95608f42c5aa9e808301",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:23:40.134000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ae21a4a291595694d862",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T10:07:34.955000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "abf107410bae39c40862",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T10:08:09.640000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": []
+        },
+        {
+          "id": "24c1853cdaf657a4660d",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T12:00:59.213000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "2683243bad9017cd28d6",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T12:08:15.275000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "047840a5ba7a292ee3e8",
+          "source": "claude-projects",
+          "timestamp": "2026-08-06T01:42:19.829000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ac3ec8feb7bc951eefb5",
+          "source": "codex-history",
+          "timestamp": "2026-09-30T20:42:19+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "208be65c4adf4b81fc66",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:25:46.785000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "02cf42a0689d894a3d0d",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:25:46.801000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "3ed6e9a4758822d55532",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:28:31.259000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "230cf9522cb2dc06f596",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T22:28:31.271000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "68b660c08444252d0c9c",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:28:41.848000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "333fdf4380cec9779020",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:01.216000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2718",
+            "https://github.com/4444J99/limen/pull/2789",
+            "https://github.com/4444J99/limen/pull/2801",
+            "https://github.com/4444J99/limen/pull/2805"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "native_visual",
+      "owner": "4444J99/domus-genoma",
+      "predicate": "native-visual-smoke",
+      "status": "requires_live_reconciliation",
+      "counts": {
+        "observed_failure": 4,
+        "reported_context": 16
+      },
+      "occurrences": [
+        {
+          "id": "ddfb1216cd84ed97f4f0",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-18T14:29:30.705000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "9890528d3d7ee854b349",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T09:49:53.625000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "7cb949bf76ad45d087ca",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T13:27:31.648000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "e786ecdb8eda71c13b11",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T13:27:31.648000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "922e34fa85b9e7763363",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T12:05:48.474000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "76769b59e8c68dae1f79",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T12:08:15.404000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "90a771c33da505268778",
+          "source": "codex-sessions",
+          "timestamp": "2026-08-03T13:05:54.403000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "a7b87555eda89862c2c3",
+          "source": "codex-sessions",
+          "timestamp": "2026-08-03T13:08:46.833000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "4a393ffb7bd297ed105e",
+          "source": "claude-projects",
+          "timestamp": "2026-08-05T20:37:03.426000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "ea2aaa73a37ac3c71ab1",
+          "source": "claude-projects",
+          "timestamp": "2026-08-06T00:10:30.981000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "0d2a6a9bfa28e2bc254f",
+          "source": "claude-projects",
+          "timestamp": "2026-08-06T01:27:39.440000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "172f5e0db2611dd183a5",
+          "source": "claude-projects",
+          "timestamp": "2026-08-06T19:54:23.544000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "7ea2fd8e7cea0f646d9b",
+          "source": "claude-projects",
+          "timestamp": "2026-08-07T10:44:43.525000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "af290676469f06b7051f",
+          "source": "claude-projects",
+          "timestamp": "2026-08-07T13:48:55.247000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "41e1d99173fced27069e",
+          "source": "codex-history",
+          "timestamp": "2026-08-20T12:21:03+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "bd16d37e0c34c06354fb",
+          "source": "codex-archived",
+          "timestamp": "2026-09-15T12:15:01.652000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "unclassified",
+            "acceptance_predicate": "inspect-exact-denial",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "5d720e89056cea3bbf0c",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:17.079000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2802"
+          ],
+          "visual_classification": {
+            "cause": "host_admission",
+            "acceptance_predicate": "host-admission",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "5a3ebf795e0590b1033f",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:18.170000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "host_admission",
+            "acceptance_predicate": "host-admission",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "c83e0ab6fec12b4952fa",
+          "source": "codex-archived",
+          "timestamp": "2026-10-09T21:43:06.907000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "platform_policy",
+            "acceptance_predicate": "platform_permission",
+            "automatic_permission_bypass": false
+          }
+        },
+        {
+          "id": "9cc860fbfb8e8970d307",
+          "source": "codex-archived",
+          "timestamp": "2026-10-09T21:43:07.009000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": [],
+          "visual_classification": {
+            "cause": "platform_policy",
+            "acceptance_predicate": "platform_permission",
+            "automatic_permission_bypass": false
+          }
+        }
+      ]
+    },
+    {
+      "key": "host_admission",
+      "owner": "4444J99/limen",
+      "predicate": "host-admission",
+      "status": "requires_live_reconciliation",
+      "counts": {
+        "reported_context": 162,
+        "observed_failure": 131,
+        "operator_input": 10
+      },
+      "occurrences": [
+        {
+          "id": "42efdea60dc7e9fe642a",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-18T17:31:53.928000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5e969503c0c31a5c3c44",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-18T17:31:53.928000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f3d0f9ac73d6951b0902",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-18T17:31:53.928000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "11a25444f7ff0f934176",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-18T17:32:00.386000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "1b03aafa24cdb70caf33",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-18T17:32:00.386000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "92c9762c8836ebec6591",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-18T17:32:00.386000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "2332e5a92e9b8077f241",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-18T17:32:06.470000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6e285ae5c28155f056ed",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-18T17:32:06.470000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9ae0ff1928b1f7a0041b",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-18T17:32:06.470000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "017aa0ee18f0461699f8",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:01.621000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "1a8fdae38c7f70ce5a7d",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:01.621000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "24062d4e60fe0dd17d6c",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:01.621000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "2e49fc125a9939d14bb2",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:01.621000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "4c469eac7550fe96fbba",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:01.621000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5c3b6f8bea4adf6bc096",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:01.621000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "68ab744ba36da2dee3cf",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:01.621000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "75c1f119285881b32eae",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:01.621000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "77fbed1db5ef26385955",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:01.621000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "86af648dcb6a0cfc51ba",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:01.621000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "96871e065ae5cf2c9a28",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:01.621000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b5fc6b8fa938ab837bb8",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:01.621000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e5d3107e1db028ab0bbb",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:01.621000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "0f1da4d2d091a225a5a0",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "12d3030c1a8afef59eae",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "1fc9ed35c96541d1c414",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "3277cdbe4cba4c98042e",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "3ffc026e9afbf01ac86f",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5b40206c9422ca66164f",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "650579658ae66c8841f4",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8834275de3b965970bf3",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "88973ea2c5bbbf6897c6",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a44abe71881744ec6062",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a6651860481467ad397f",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b6c57bb7ea5e988f8b7d",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e206c320578332623c33",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e6f94b995af3b6ed4883",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e79941755dbe4b8593af",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ee96007abbb9a3985f6a",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:33:11.610000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5dc45df278217bd88966",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:53:04.950000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b02aed3ecc7fd7c90c17",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:53:04.950000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "95c3da9b070247484039",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:53:26.224000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "68f94f6a898769ff5454",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:54:00.800000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b3222090bdfdaa94c8bb",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:54:00.800000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "bcf4938fe38156f83464",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:54:00.800000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ec319a21b5f73c67de73",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:54:07.112000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "079226b63d355891098d",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:54:11.202000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ea16c47102a8c69ba390",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:54:16.069000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "3e71b331fdd5e3e5c6d2",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:56:08.897000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "d2449a38e5a3e72eb130",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:56:12.840000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f57133cd7ea1d599ae78",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:56:23.587000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ae11c13f2376190d324a",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:58:29.473000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "444a59327cd24f49ddaa",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T11:58:29.479000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "fd85d8dd7f5aa603a8c6",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:03:21.548000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "4f83fa453a14e89aec5e",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:03:21.554000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "54d370aa9b47863346dc",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:05:48.571000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "059e83a35ba9f4bd4100",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:05:58.224000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5c8048af15477da6b736",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:05:58.224000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "348f047cf8153f6881bc",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:34:23.154000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5a023ee792d9933d011f",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:55:03.738000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9496feed178400ba49fc",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:55:03.738000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e555cb3ad3d74fd8afe7",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:55:03.738000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f4442c39959252c0a0c9",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:55:03.738000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f5554e26e609b76915af",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:55:03.738000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a50fa7697bcddd76639b",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T18:39:05.083000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "c380d7655f9c29edaeb1",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T19:08:41.626000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e80e441a6809e774689b",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T19:28:47.960000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "582debaf77e09f7688d5",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T19:41:22.007000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "afe4128cd5b7163be7c2",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T19:41:22.014000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "4bbb2856b49abd97c7b9",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T19:48:49.456000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "4c793aff3adef9d499e9",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T21:09:45.338000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8ab5c3858eb1d19a12c3",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T21:35:21.093000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "1a1c76fba5f629b8fd74",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T21:38:42.996000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "65b73287a0f0b4e31486",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T21:38:43.024000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "744fc246a71c2df108c0",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T22:29:54.820000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "24adaa86a11790bcae76",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T22:30:00.440000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "7175ff37180e1cb51bae",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T22:30:00.444000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8e0a16bf01edc4436e2b",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T22:55:04.173000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9a6d677ac3b37246a9d0",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T22:55:16.371000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "de5888dcacb6b81c310d",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T22:59:02.283000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "fe5b335f596723d81339",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T22:59:21.521000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8c21a1632f334c6f4709",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T23:00:38.059000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "dd83d226912a1ed11446",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T23:01:37.701000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "35825fe07d3773553eeb",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T23:02:50.914000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f0b84d9d77f59b5167a2",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T23:17:32.391000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "edcb36ff3addc55b4d7d",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T23:17:34.104000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "95c8c9454344077d5fd1",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T23:19:46.756000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a9b3c57cb3b85183a85a",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T23:19:51.412000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "95bdc1134771334f2ea3",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T23:19:53.052000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "93d3153a769c46d999b5",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T23:20:26.281000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "c80c0955fa3da2900505",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T23:20:26.288000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "2328b13bea9d521dd83a",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T00:45:28.944000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "66921a27e833b199c6cd",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T00:49:15.800000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "d734fb102700a490d430",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T00:50:00.473000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5fdc003884e6b45600e8",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T00:50:51.044000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6ca66d0e2a77e13bf006",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T00:53:49.639000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a97f9040ccff4aef58d8",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T00:58:52.383000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6c76fcfbe125f5958c56",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:00:43.950000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "0f6914744b5ca90f4dff",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:00:55.164000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5fa3bf1b703b2a2890ed",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:06:59.795000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "afbf6958fc89f38be0f1",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:08:04.449000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ad71a856cf6b8f9a78e9",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:08:24.244000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "16c3aa2c7ca1e9e07f60",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:08:55.803000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "2e3bd4dc15f35eaa468e",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:09:21.987000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "422bfc9da708ff0452d9",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:14:20.742000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6b6244b3ec75f2f14918",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:17:08.617000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "47d61ad04eb34552f72c",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:22:35.159000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "cbb0674e0b905c107436",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:38:11.839000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a0d9f45efea5d925a1bb",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T02:03:21.999000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "21886cc5b8fd7ec0070c",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T02:03:27.290000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b9051e4b30f76a710e3f",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T02:04:09.169000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e3a909dc4d80f19d2561",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T02:18:26.949000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "455ea5a1abcbbb6da64d",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T02:18:32.897000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "d34884afd0f028eb8adb",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T02:18:32.902000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "80ea3027771b441f285c",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T02:18:58.536000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "0bb27be6fe837f853978",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T02:20:45.123000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ee731828c43f6176ebbf",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T02:27:43.190000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "3b2eefb795e976ade9e7",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T02:27:43.545000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "1f32156839e81cd1775d",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T06:33:17.068000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "1135701634d2db6f02f7",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T11:59:56.433000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9b59140ca8adb8194099",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:00:15.214000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "adbb4d17993fdd717d6c",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:00:30.570000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5ea8a64792a7d5aaea24",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:00:34.640000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9f6e34f2863a56e9ae4c",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:00:34.889000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "2bcb5453747998749a82",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:00:36.548000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "c82f511f667e91d74585",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:00:41.215000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5b56f04d785477d33f98",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:00:49.225000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f010cd3b963232601e3f",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:01:09.274000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "54278067ddc4ceb06bc3",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:01:31.699000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "1df745f8988c0898c905",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:01:56.288000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9f149d5eabd47835ed4b",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:02:46.629000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f8b86120a88dd7db2418",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:03:08.464000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "96d1e3710f5701bfae11",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:03:20.125000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "35d6fd9bd751f7a1e5a1",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:03:44.001000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "88c78c489b12b03784d7",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:04:30.553000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "7802307d377a40d2a3a7",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:14:07.646000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "27924cf581160757cf5c",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:18:59.367000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ef8e0487dae479650170",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:19:07.125000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "64b98f812672449bee46",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:19:07.126000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "bde43442b2adafeef488",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:20:03.377000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "dd451d1c978eac6605fa",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:20:03.377000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "22d84dd48c90d25da522",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:20:19.131000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e221845f7bcdf14f268b",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:23:12.183000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "bc041f0d54d011702b1e",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:25:17.687000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "fa18675543760fb77e75",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:25:17.752000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f4b927079ff8972f6ed7",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:29:24.091000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "12a120038d228e7afb85",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:31:36.930000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8ee67b72347c5cc7d337",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:34:53.028000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "aacf46140ca3149f7c44",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:37:07.905000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6e4ec61ed3a368dfc663",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:37:07.908000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "c81017bb0518df792546",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:37:07.914000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "967d377fedcf043ff36a",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:37:15.820000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b56211717bf44891dff4",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:49:37.799000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e40825aa4e89ce5e2491",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:49:53.637000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "18ffb74427f3fac5b9c2",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:54:35.284000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b2047c122a4a5630561b",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T13:11:38.235000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "85bd97772020d7c562cb",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T13:17:50.031000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5d4c5355be2c79209623",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T13:18:08.400000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "da0771696a8bad637669",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T13:20:35.320000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5dfb30b9bbc99b1d1326",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T13:25:24.152000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "19da02a209c7a8e34e3a",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T13:25:38.061000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "af04f110330923a2c021",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T13:26:06.160000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "073e32dd6fce476bd69f",
+          "source": "codex-history",
+          "timestamp": "2026-07-23T17:18:23+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e7a0673ca454f4c50037",
+          "source": "codex-history",
+          "timestamp": "2026-07-25T13:18:19+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "17226afde44f434f3782",
+          "source": "codex-history",
+          "timestamp": "2026-07-25T19:59:00+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "95438ed06aa22d2d4b03",
+          "source": "codex-history",
+          "timestamp": "2026-07-26T13:53:02+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "010d05a5c8973d4649c2",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T13:19:05.435000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "36a5cdfac1fc43453118",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T13:30:12.699000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "af5898d9f240fc5ac427",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T13:30:21.654000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "01b009e0906f52b5131e",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T13:31:15.146000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "79a9197c629aca151681",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T13:32:33.696000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "3cf2435e0e20662bb1d0",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T13:49:53.432000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": []
+        },
+        {
+          "id": "375486a9c77d3801db2d",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T14:20:47.515000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b6b36b8e32355212e216",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T14:22:00.315000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ae5ad44a94a64689ea85",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T14:23:44.022000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8bd0d963fb4dc43444ee",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T15:39:01.720000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": []
+        },
+        {
+          "id": "3976104cbd9a8125039b",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T19:27:48.091000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "7cbd1917f27c73bea812",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T19:28:00.877000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8868787dc69dacb7a42e",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T19:28:41.827000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8b1022f147cca80413f4",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T19:39:11.307000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "85745b5f7af10962bda7",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T19:40:12.878000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "bce68defd6e3549f444b",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T20:51:00.906000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": []
+        },
+        {
+          "id": "fe9412603269449ef674",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T21:06:51.171000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b92fad2e69a422144920",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T21:37:34.117000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f132df9ae5e798e0ca5f",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T21:40:05.578000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e4dd113212ac76c284b8",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T12:21:16.896000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "4c6a5933da8baf2491fa",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T13:35:26.235000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "909750d1dc325f7885e9",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T13:35:30.429000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f87c5b03a543276d21e7",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T13:36:03.520000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6f3212cf103b9b4deafe",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T13:39:23.040000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": []
+        },
+        {
+          "id": "29dbe1c596e7c0182979",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T13:44:32.093000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "17bb2d1177fa3a6eb215",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T13:51:08.342000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "eb400ad0fe4b2ae56dc2",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T13:51:17.528000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "737ff8d7de516c705d2f",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T13:53:20.073000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "38d1bac8ac71915035c3",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T14:07:32.765000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": []
+        },
+        {
+          "id": "827115cf534b48d4e158",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T14:10:25.747000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "c18fc28595c6f806d83c",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T14:10:32.225000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b48b9395b9ec4702e1ea",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T14:18:23.841000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a407f1f9c808203cdecc",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T14:22:20.173000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5be3278773145a182411",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T14:29:23.716000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "04316a4e6b5fe0783e60",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T14:29:33.063000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6d3cf01606a6304b5dde",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T14:29:59.893000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6efaf4c2790781cf9d31",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T15:20:50.706000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": []
+        },
+        {
+          "id": "2ec1e9a68163668ddc20",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T15:22:35.571000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ee1400c3feb20768ac9e",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T15:56:34.420000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5eefb920ab0b4496ee17",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T15:56:42.926000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "0175cd50360ee2f68b7d",
+          "source": "claude-projects",
+          "timestamp": "2026-08-02T16:01:31.295000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ab8f8ee9688f5d2e9ed8",
+          "source": "codex-sessions",
+          "timestamp": "2026-08-03T17:03:12.502000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f12f5fc04fdcd4e0860f",
+          "source": "claude-projects",
+          "timestamp": "2026-08-06T00:20:35.500000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8bcdbf93374b060b49c1",
+          "source": "claude-projects",
+          "timestamp": "2026-08-06T01:30:44.535000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9e44a22361fe145fdd35",
+          "source": "claude-projects",
+          "timestamp": "2026-08-06T03:32:16.155000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a0dfa76b873503e06a06",
+          "source": "gemini-native",
+          "timestamp": "2026-08-19T23:17:59.195613+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "fc224b078d02ce3848fb",
+          "source": "gemini-native",
+          "timestamp": "2026-08-20T18:06:34.941132+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "2feb1f8cd01ec74e6e28",
+          "source": "gemini-native",
+          "timestamp": "2026-08-20T18:35:52.469220+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "1bed44ee2a4654b26062",
+          "source": "gemini-native",
+          "timestamp": "2026-08-23T14:15:36.098498+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f12f8ccc559c5a613363",
+          "source": "gemini-native",
+          "timestamp": "2026-08-23T14:16:04.059515+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9997cd9d977d6ba5d8d8",
+          "source": "gemini-native",
+          "timestamp": "2026-08-23T14:30:08.743050+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b6c5d2f2bce63a9250b2",
+          "source": "gemini-native",
+          "timestamp": "2026-08-25T11:37:35.678074+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8ee1d5bed58913eb0498",
+          "source": "gemini-native",
+          "timestamp": "2026-08-25T11:43:34.051804+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "4db0829f7e335f03c093",
+          "source": "gemini-native",
+          "timestamp": "2026-08-25T11:44:10.219415+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6ee5c17ae47c6fa885b1",
+          "source": "gemini-native",
+          "timestamp": "2026-08-25T12:26:49.866755+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "1d77ca0883bef27a3f67",
+          "source": "gemini-native",
+          "timestamp": "2026-08-25T12:29:43.629533+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e3093a5960161b0cc649",
+          "source": "gemini-native",
+          "timestamp": "2026-08-25T12:30:31.847536+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f5127fa7e4e17b7360ca",
+          "source": "gemini-native",
+          "timestamp": "2026-08-25T12:30:53.454438+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e9723486cc9e3e6176b4",
+          "source": "gemini-native",
+          "timestamp": "2026-08-25T12:59:17.185773+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "abd46829a4850b8fce90",
+          "source": "gemini-native",
+          "timestamp": "2026-08-26T11:37:29.620835+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "154e810441457e6705e3",
+          "source": "gemini-native",
+          "timestamp": "2026-08-26T11:40:54.936842+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "895550d44e665e558192",
+          "source": "gemini-native",
+          "timestamp": "2026-08-26T11:41:49.511654+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "30bb3c1f3918cf37e2ba",
+          "source": "gemini-native",
+          "timestamp": "2026-08-26T12:08:16.028477+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "7cec6390b68253c575ad",
+          "source": "gemini-native",
+          "timestamp": "2026-08-26T13:01:25.720071+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "279053eed6a62016070a",
+          "source": "gemini-native",
+          "timestamp": "2026-08-26T13:06:29.999321+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5872deb8f56b94389faf",
+          "source": "gemini-native",
+          "timestamp": "2026-08-26T17:30:37.881483+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f3fa1e06483dea0517fd",
+          "source": "gemini-native",
+          "timestamp": "2026-08-26T17:32:18.426353+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "abd5be5b57802c33b428",
+          "source": "gemini-native",
+          "timestamp": "2026-08-26T17:32:18.980283+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b854ad986d99bbe01a92",
+          "source": "gemini-native",
+          "timestamp": "2026-08-26T17:32:19.576874+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e7bad4f715eab8e038c8",
+          "source": "gemini-native",
+          "timestamp": "2026-08-26T18:22:31.668448+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ba7920906b2e30c265c7",
+          "source": "codex-history",
+          "timestamp": "2026-09-08T16:29:46+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2567"
+          ]
+        },
+        {
+          "id": "bd16d37e0c34c06354fb",
+          "source": "codex-archived",
+          "timestamp": "2026-09-15T12:15:01.652000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5e1d3239f4b51197c5b8",
+          "source": "codex-archived",
+          "timestamp": "2026-09-15T12:15:48.313000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "91bac272a1df98751715",
+          "source": "codex-archived",
+          "timestamp": "2026-09-15T12:15:48.362000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "c57178a3c10d65b832bc",
+          "source": "codex-history",
+          "timestamp": "2026-09-15T21:34:51+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2595",
+            "https://github.com/4444J99/limen/pull/2623"
+          ]
+        },
+        {
+          "id": "1101d58a52ec52c11690",
+          "source": "codex-archived",
+          "timestamp": "2026-09-15T21:35:23.141000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2595",
+            "https://github.com/4444J99/limen/pull/2623"
+          ]
+        },
+        {
+          "id": "488a3c09df69554ae482",
+          "source": "codex-archived",
+          "timestamp": "2026-09-15T21:35:23.141000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "85b284f5d09aac2f3949",
+          "source": "codex-archived",
+          "timestamp": "2026-09-15T21:36:50.863000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "890cf9f62f13614deb9f",
+          "source": "codex-archived",
+          "timestamp": "2026-09-15T21:36:50.954000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "3a79d0f60d4879e72894",
+          "source": "codex-archived",
+          "timestamp": "2026-09-15T21:36:50.955000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e7db63c8a2bc3de67004",
+          "source": "codex-archived",
+          "timestamp": "2026-09-16T19:46:08.113000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ba7e6a3929c04a5803a2",
+          "source": "codex-archived",
+          "timestamp": "2026-09-16T19:46:33.524000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5c3b098ee9b6e1aa6d93",
+          "source": "codex-archived",
+          "timestamp": "2026-09-16T19:46:33.527000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "1f89a385de7545d2450b",
+          "source": "agy-cli-history",
+          "timestamp": "2026-09-20T19:22:03.743000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f873de958ccd1787f504",
+          "source": "agy-cli-history",
+          "timestamp": "2026-09-20T21:06:49.230000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "30c403602ab689f67f42",
+          "source": "agy-cli-history",
+          "timestamp": "2026-09-20T23:15:47.467000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f6a6eebf50b602c4a0e6",
+          "source": "codex-archived",
+          "timestamp": "2026-09-25T21:38:01.883000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b177fbda762d90ad8d38",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T00:46:40.826000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "584af7c3a1d894acecdf",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T19:42:28.413000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "064e8f01b69ab27d1178",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:14:20.591000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ac8f7b659ccc223f0e7f",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:31:49.464000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "d7900308f46c8c7e0fba",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:31:49.840000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8c35ea4de40902a1e111",
+          "source": "codex-history",
+          "timestamp": "2026-10-01T20:41:21+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "82a3cdde5661f51ef349",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:42:05.808000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a78874237e620ad0217a",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:51:27.844000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "5c5e0c0d48db8ce801e8",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:52:06.459000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "dcab1b3c9b0c11709448",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:53:51.723000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b611b78915b73fcf15af",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:06:53.148000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "2cf64dafd791a5892780",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:06:53.167000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8a352758a556151986e3",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:09:27.450000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "d6a2a387a50f68760c43",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:09:27.452000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "35278c24ee057a343478",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:21:13.747000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f7149a4a5feced6c5346",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:21:27.359000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "c916d89b384aa5f7c30f",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:22:52.518000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9d39558cceaa8ca3c7db",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:22:52.616000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9a65ac54eaa7f7aff558",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:27:04.388000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "90ce6d88b7e4c5e4e849",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:27:04.479000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ec8e937f0f7fdcf51697",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:27:27.382000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "00e787a316d8d9b472ca",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:27:27.432000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "0e3264d6108c24766a1e",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:28:07.083000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "c3c68618887ae72deafc",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:28:07.159000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "04b2ff85631ba19873df",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:28:11.268000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "09d8a82d240566cd1396",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:30:12.791000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "86dbc6e348ab36269e32",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:32:11.439000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2801"
+          ]
+        },
+        {
+          "id": "2fcd1448a9173a35a803",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:32:11.550000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2801"
+          ]
+        },
+        {
+          "id": "c01da64f8c2e9dd8c978",
+          "source": "codex-archived",
+          "timestamp": "2026-10-02T04:27:25.070000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "215e358de5d6b0297a0c",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:25:10.094000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "2c6c162a188987c305cd",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:25:10.111000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "68b660c08444252d0c9c",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:28:41.848000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "083414fa5a4db90865e4",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:28:41.872000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "333fdf4380cec9779020",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:01.216000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2718",
+            "https://github.com/4444J99/limen/pull/2789",
+            "https://github.com/4444J99/limen/pull/2801",
+            "https://github.com/4444J99/limen/pull/2805"
+          ]
+        },
+        {
+          "id": "131065b0755abdd85996",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:16.614000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2789",
+            "https://github.com/4444J99/limen/pull/2801"
+          ]
+        },
+        {
+          "id": "5d720e89056cea3bbf0c",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:17.079000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2802"
+          ]
+        },
+        {
+          "id": "5db3432888b87113a6c4",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:17.083000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/domus-genoma/pull/407",
+            "https://github.com/4444J99/limen/pull/2761",
+            "https://github.com/4444J99/limen/pull/2788",
+            "https://github.com/4444J99/limen/pull/2790"
+          ]
+        },
+        {
+          "id": "fef218c4a99d893222b0",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:17.715000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2718",
+            "https://github.com/4444J99/limen/pull/2781",
+            "https://github.com/4444J99/limen/pull/2789"
+          ]
+        },
+        {
+          "id": "5a3ebf795e0590b1033f",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:18.170000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "3ee1cb43a0ef2e6c7444",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:45:15.211000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2566",
+            "https://github.com/4444J99/limen/pull/2622",
+            "https://github.com/4444J99/limen/pull/2679",
+            "https://github.com/4444J99/limen/pull/2687"
+          ]
+        },
+        {
+          "id": "a4bdbe93b3bcc5671d0b",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:46:50.860000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "086445fa905b0c16dcbb",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:56:58.214000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "fc5b173fc782df4d3da3",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:57:07.844000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "d87604bfd4096c670e8b",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:58:32.076000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "662914e4cba830926534",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:58:32.327000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e13323befe6434d5d50c",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:59:45.939000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "6be59052e9b5a57e2361",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:59:54.357000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "4385f859f631e3630553",
+          "source": "codex-history",
+          "timestamp": "2026-10-09T19:32:52+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "4e0aedafee793dd46530",
+          "source": "codex-history",
+          "timestamp": "2026-10-09T21:41:59+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8384110fe51f80faa4cb",
+          "source": "codex-history",
+          "timestamp": "2026-10-09T23:53:03+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "7a9c54dbccc6d7b0aa97",
+          "source": "codex-history",
+          "timestamp": "2026-10-10T00:25:13+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        }
+      ]
+    },
+    {
+      "key": "deployment_drift",
+      "owner": "4444J99/limen",
+      "predicate": "runtime-deployment-parity",
+      "status": "requires_live_reconciliation",
+      "counts": {
+        "reported_context": 35,
+        "operator_input": 1,
+        "observed_failure": 15
+      },
+      "occurrences": [
+        {
+          "id": "a174096e3531565b462c",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:34:23.154000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a82d7a2cf3085985b95c",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:34:23.154000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e0e04ab6d7a246cab214",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:34:23.154000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "89cc0afb4ade94b287f4",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:45:53.868000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8e1072a91d5752143c24",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T12:54:56.088000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "8bc3bf16c304d7639d43",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T21:21:06.841000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9324c4b8e4890b399561",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-20T21:21:06.841000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a885ace20afc8e7a2b5b",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:06:10.066000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "a3898652739fa09970cf",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:06:10.085000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "c731e4174c46c553db11",
+          "source": "codex-history",
+          "timestamp": "2026-07-21T01:06:36+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "201742862d7ba6d81e9e",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:06:37.539000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "acea30c18284400d8591",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:06:37.539000+00:00",
+          "disposition": "operator_input",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ffdf94eb6771b73518c1",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:31:11.371000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9531a1cba75d5b447b64",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T01:57:07.024000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "63322a264aaca4cf35b2",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T02:17:19.281000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "32b0ab18c34eb0670492",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T03:53:43.252000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "df9138d9764f5322c76c",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T03:53:43.954000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "bc0be96a6ad01c9b42d9",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T03:55:13.556000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "011fd4d639dfb7fe2759",
+          "source": "codex-sessions",
+          "timestamp": "2026-07-21T05:23:00.643000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9f6e34f2863a56e9ae4c",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:00:34.889000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "fe9344c7138b9fcaa210",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:01:21.692000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "078a348409a47cdc7201",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:23:52.566000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "0d39f991eb26f2e85bda",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:31:36.930000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "12a120038d228e7afb85",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:31:36.930000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "28b41b26d6e97b5bffe7",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:31:36.930000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "9a0af34f96d0f938b658",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:31:36.930000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b9c2f68f1491aeff317a",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:31:36.930000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "ba5b80393791baeb5c41",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:31:36.930000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "b56211717bf44891dff4",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:49:37.799000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "870389d74aba8c9c1c97",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:49:53.637000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e40825aa4e89ce5e2491",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:49:53.637000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "fbc207d549a37b562f5a",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:49:53.637000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "67142537fc8ab2074b13",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:54:35.284000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "c5181a3e49217bf586a7",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T12:54:35.284000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "398a95deb17325cf90fb",
+          "source": "codex-archived",
+          "timestamp": "2026-07-21T13:00:21.224000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "c93c1989fa64db9418f6",
+          "source": "claude-projects",
+          "timestamp": "2026-07-31T19:27:14.627000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "fb776ad45b227c99868b",
+          "source": "codex-history",
+          "timestamp": "2026-09-24T19:20:57+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "bdb6aec33d4f836cbade",
+          "source": "codex-history",
+          "timestamp": "2026-09-24T22:45:40+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "13a1f71ee6bd7cb65f82",
+          "source": "codex-history",
+          "timestamp": "2026-09-25T13:37:17+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "2064a56de6ffe9afba0a",
+          "source": "codex-history",
+          "timestamp": "2026-09-25T20:47:16+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "e0c3dfa34ea51e116cea",
+          "source": "codex-history",
+          "timestamp": "2026-09-26T02:03:46+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2718"
+          ]
+        },
+        {
+          "id": "f712a3637f3175ff8f9f",
+          "source": "codex-history",
+          "timestamp": "2026-09-26T02:06:32+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2718"
+          ]
+        },
+        {
+          "id": "d389b3a5bba9d64181fc",
+          "source": "codex-history",
+          "timestamp": "2026-09-26T02:06:48+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2718"
+          ]
+        },
+        {
+          "id": "32fff854e03e608ac2b7",
+          "source": "codex-history",
+          "timestamp": "2026-09-26T04:01:57+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "53f4ffb7c0aa10e3924f",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T19:50:19.075000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "338cb94fd7a2907c80ea",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:38:07.526000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "226f34b69bcac64de64a",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T20:38:07.885000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "f59c272d46dede9db459",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:16:57.513000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": []
+        },
+        {
+          "id": "238df65ebb39399f2d77",
+          "source": "codex-archived",
+          "timestamp": "2026-10-01T21:17:02.522000+00:00",
+          "disposition": "observed_failure",
+          "receipt_candidates": []
+        },
+        {
+          "id": "333fdf4380cec9779020",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:01.216000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2718",
+            "https://github.com/4444J99/limen/pull/2789",
+            "https://github.com/4444J99/limen/pull/2801",
+            "https://github.com/4444J99/limen/pull/2805"
+          ]
+        },
+        {
+          "id": "131065b0755abdd85996",
+          "source": "codex-archived",
+          "timestamp": "2026-10-03T19:31:16.614000+00:00",
+          "disposition": "reported_context",
+          "receipt_candidates": [
+            "https://github.com/4444J99/limen/pull/2789",
+            "https://github.com/4444J99/limen/pull/2801"
+          ]
+        }
+      ]
+    }
+  ]
+}
