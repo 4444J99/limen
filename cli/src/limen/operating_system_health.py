@@ -39,17 +39,31 @@ def observations(root, home):
     if not probe(["chezmoi", "diff", "--include", "files", *targets]):
         result.append(("managed_configuration_drift", "4444J99/domus-genoma", True, "reviewed_source_render_mismatch"))
     host = home / "Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost"
-    # verify-lifetime is read-only; it does not request or change TCC permissions.
+    # The lifetime predicate requires the supported host context even when this
+    # scheduled observer was launched outside an existing host. It is read-only
+    # and does not request or change TCC permissions.
+    route = home / ".local/bin/domus-agent-host"
     try:
         ready = (
-            subprocess.run([str(host), "verify-lifetime"], capture_output=True, timeout=10, check=False).returncode == 0
+            subprocess.run(
+                [str(route), "ensure", "--", str(host), "verify-lifetime"],
+                capture_output=True,
+                timeout=10,
+                check=False,
+            ).returncode
+            == 0
         )
     except (OSError, subprocess.TimeoutExpired):
         ready = False
     if not ready:
         result.append(("native_host_routing", "4444J99/domus-genoma", True, "stable_host_unavailable"))
     try:
-        visual = json.loads((root / "docs/reviews/native-visual-20261012.json").read_text())
+        visual_path = root / "docs/reviews/native-visual-20261012.json"
+        if not visual_path.is_file():
+            # An intentionally divergent developer checkout need not contain the
+            # accepted receipt shipped with the immutable deployed runtime.
+            visual_path = home / ".local/share/limen/current/source/docs/reviews/native-visual-20261012.json"
+        visual = json.loads(visual_path.read_text())
         age = (datetime.now(UTC) - datetime.fromisoformat(visual["observed_at"])).total_seconds()
         if visual.get("native_capture") is not True or not 0 <= age <= 7 * 86400:
             raise ValueError()

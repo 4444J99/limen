@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OWNERSHIP = ROOT / "institutio" / "governance" / "heartbeat-ownership.json"
 CONTRACTS = ROOT / "spec" / "scheduled-process-contracts.json"
 OBSERVER = ROOT / "cli" / "src" / "limen" / "observer.py"
-EXPECTED_RUNG_COUNT = 44
+EXPECTED_RUNG_COUNT = 45
 ALLOWED_OWNERS = {
     "cloud_or_broker",
     "explicit_maintenance",
@@ -89,8 +89,15 @@ def registry_errors() -> list[str]:
         elif owner == "scheduled_contract":
             scheduled_rungs.add(name)
 
-    if scheduled_rungs != {"launch-agent-liveness", "beat-freshness"}:
+    if scheduled_rungs != {"launch-agent-liveness", "beat-freshness", "runtime-maintenance-observation"}:
         errors.append(f"scheduled_contract rungs are {sorted(scheduled_rungs)}")
+    if isinstance(scheduled, dict):
+        maintenance = next(
+            (probe for probe in scheduled.get("probes", []) if probe.get("name") == "runtime-maintenance-observation"),
+            None,
+        )
+        if maintenance is None or maintenance.get("cadence_seconds") != 900:
+            errors.append("runtime maintenance observation lacks its fifteen-minute contract")
     return errors
 
 
