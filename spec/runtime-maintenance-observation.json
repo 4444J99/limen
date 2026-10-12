@@ -8,5 +8,6 @@
     ".local/libexec/domus-agent-runtime.py": "5d22c2ebc44b09e7a2931328bd0e71066d4f59f5668586f7ebc2076bbf78665e",
     ".local/libexec/domus-codex-reclaim.py": "e6c127fe40a7b9284a8648961967ba396037a05a637123d99063de3028b1face",
     ".local/libexec/domus-codex-history.py": "f82819135c588dd546304f05afee8b4e76dffc868867e9dbc40e181bd748f94d"
-  }
+  },
+  "runtime_root": "Workspace/limen/.agent-runtime"
 }

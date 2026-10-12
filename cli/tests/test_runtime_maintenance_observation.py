@@ -17,6 +17,7 @@ def source(tmp_path):
     return tmp_path, {
         "schema": "limen.runtime_maintenance_observation.v1",
         "source_revision": "a" * 40,
+        "runtime_root": "Workspace/limen/.agent-runtime",
         "sha256": hashes,
     }
 
@@ -46,6 +47,9 @@ def test_observation_records_bookkeeping_without_requesting_worker(source):
     assert code == 0 and report["bookkeeping_only"] and not report["worker_requested"]
     assert calls[0][0] == [str(home / observation.PATHS[0]), "--record", "--json"]
     assert calls[0][1]["timeout_seconds"] == 60
+    environment = calls[0][1]["env"]
+    assert environment["DOMUS_AGENT_RUNTIME_ROOT"] == str(home / manifest["runtime_root"])
+    assert environment["LIMEN_AGENT_RUNTIME_ROOT"] == environment["DOMUS_AGENT_RUNTIME_ROOT"]
     payload["status"] = "maintenance_required"
     code, report = observation.observe(
         home, manifest, runner=lambda *a, **k: BoundedCompletedProcess(1, json.dumps(payload).encode(), b"")
@@ -93,3 +97,10 @@ def test_source_or_protocol_failure_never_runs_worker_and_is_system_failure(sour
     assert code == 78 and report["status"] == "failed"
     if damage in {"drift", "symlink"}:
         assert not calls
+
+
+def test_runtime_root_cannot_escape_reviewed_containment(source):
+    home, manifest = source
+    manifest["runtime_root"] = "../../unreviewed"
+    code, report = observation.observe(home, manifest, runner=lambda *a, **k: pytest.fail("unsafe root ran"))
+    assert code == 78 and report["reason"] == "observation_runtime_root_invalid"
