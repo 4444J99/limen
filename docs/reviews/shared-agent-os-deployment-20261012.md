@@ -47,7 +47,13 @@ The focused followup suite passed 57 tests. Nineteen scoped cheap gates passed a
 corrected formatting shard passed. Broad local heavy verification was not run after
 machine admission denied `swap-fraction`; the safeguard remains active. Hosted CI
 cannot start because of the independently confirmed account billing/spending gate.
-Existing issue #2848 owns external acceptance gates. A real native visual smoke test
+Hosted CI subsequently became available for #2851 and exposed real dependency audit
+failures. The final correction raises patched floors and refreshes both locks; both
+unchanged audit gates pass. The earlier account gate is a historical observation,
+not the cause of these failures. The launchd observer's empty-environment regression
+also passed after explicit reviewed-root selection; the focused suite now passes 58
+tests. Final accepted installation and natural scheduled receipts are linked on the
+correction PR. Existing issue #2848 owns external acceptance gates. A real native visual smoke test
 succeeded in TextEdit; Codex-target access remains restricted by the platform harness.
 
 Both dirty/divergent primary checkouts are preserved. The isolated implementation

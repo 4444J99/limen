@@ -24,6 +24,8 @@ def verify(home, manifest):
         PATHS
     ):
         raise ValueError("observation_contract_invalid")
+    if manifest.get("runtime_root") not in {"Workspace/limen/.agent-runtime", ".local/state/domus/agent-runtime"}:
+        raise ValueError("observation_runtime_root_invalid")
     for name in PATHS:
         fd = os.open(home / name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
         try:
@@ -42,8 +44,18 @@ def observe(home: Path, manifest: dict, *, runner=run_bounded_subprocess):
     try:
         verify(home, manifest)
         environment = dict(os.environ)
-        for key in ("DOMUS_AGENT_MAINTENANCE_IMPL", "DOMUS_AGENT_HOST_BIN", "DOMUS_AGENT_HOST_PYTHON"):
+        for key in (
+            "DOMUS_AGENT_MAINTENANCE_IMPL",
+            "DOMUS_AGENT_HOST_BIN",
+            "DOMUS_AGENT_HOST_PYTHON",
+            "DOMUS_AGENT_HOME",
+        ):
             environment.pop(key, None)
+        # launchd has no login-shell exports. Bind the reviewed migration root
+        # explicitly, retaining the controller's existing containment checks.
+        environment["HOME"] = str(home)
+        environment["DOMUS_AGENT_RUNTIME_ROOT"] = str(home / manifest["runtime_root"])
+        environment["LIMEN_AGENT_RUNTIME_ROOT"] = environment["DOMUS_AGENT_RUNTIME_ROOT"]
         result = runner(
             [str(home / PATHS[0]), "--record", "--json"],
             cwd=home,

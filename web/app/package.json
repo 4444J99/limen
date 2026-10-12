@@ -13,7 +13,7 @@
     "fetch-prs": "node scripts/fetch-pr-status.mjs"
   },
   "dependencies": {
-    "next": "^16.3",
+    "next": "^16.3.8",
     "react": "^19.2",
     "react-dom": "^19.2",
     "yaml": "^2.9.0"
@@ -25,6 +25,7 @@
   },
   "overrides": {
     "postcss": ">=8.5.18",
-    "sharp": ">=0.35.0"
+    "sharp": ">=0.35.5 <0.36.0",
+    "source-map-js": "^1.2.2"
   }
 }
