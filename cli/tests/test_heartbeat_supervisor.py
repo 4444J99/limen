@@ -277,12 +277,15 @@ def test_heavy_probe_is_deferred_under_pressure_without_spawn(tmp_path, monkeypa
     assert admission.acquired == 1
 
 
-def test_third_system_failure_disables_launch_agent(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    "kind,stage", [("timeout", None), ("unavailable", "rss_census"), ("unavailable", "descendant_census")]
+)
+def test_third_system_failure_disables_launch_agent(tmp_path, monkeypatch, kind, stage):
     _state(tmp_path, failures=2)
     monkeypatch.setattr(
         heartbeat,
         "run_bounded_subprocess",
-        lambda *_args, **_kwargs: (_ for _ in ()).throw(BoundedSubprocessError("timeout")),
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(BoundedSubprocessError(kind, stage=stage)),
     )
     disabled = []
     receipt = heartbeat.heartbeat_once(
@@ -298,6 +301,7 @@ def test_third_system_failure_disables_launch_agent(tmp_path, monkeypatch):
         ),
     )
     assert receipt["status"] == "failed"
+    assert receipt["reason"] == (f"{kind}:{stage}" if stage else kind)
     assert receipt["consecutive_system_failures"] == 3
     assert receipt["disabled"] is True
     assert receipt["surviving_descendant_count"] == "unknown"

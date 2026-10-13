@@ -14,6 +14,56 @@ from limen import bounded_subprocess
 from limen.bounded_subprocess import BoundedSubprocessError, run_bounded_subprocess
 
 
+def test_slow_process_census_uses_original_wall_budget(tmp_path, monkeypatch):
+    real_run = subprocess.run
+    ceilings = []
+
+    def delayed_census(command, **kwargs):
+        if command[0] == "ps":
+            ceilings.append(kwargs["timeout"])
+            time.sleep(0.55)
+        return real_run(command, **kwargs)
+
+    monkeypatch.setattr(bounded_subprocess.subprocess, "run", delayed_census)
+    result = run_bounded_subprocess(
+        [sys.executable, "-c", "import time; time.sleep(0.2)"],
+        cwd=tmp_path,
+        timeout_seconds=8,
+        stdout_ceiling=1024,
+        stderr_ceiling=1024,
+        rss_ceiling=512 * 1024 * 1024,
+    )
+    assert result.returncode == 0 and len(ceilings) == 2
+    assert all(0.5 < ceiling <= 3 for ceiling in ceilings)
+
+
+def test_unavailable_process_census_still_reaps_child(tmp_path, monkeypatch):
+    real_popen = subprocess.Popen
+    children = []
+
+    def capture(*args, **kwargs):
+        child = real_popen(*args, **kwargs)
+        children.append(child)
+        return child
+
+    def unavailable(command, **kwargs):
+        raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+
+    monkeypatch.setattr(bounded_subprocess.subprocess, "Popen", capture)
+    monkeypatch.setattr(bounded_subprocess.subprocess, "run", unavailable)
+    with pytest.raises(BoundedSubprocessError, match="unavailable") as raised:
+        run_bounded_subprocess(
+            [sys.executable, "-c", "import time; time.sleep(30)"],
+            cwd=tmp_path,
+            timeout_seconds=5,
+            stdout_ceiling=1024,
+            stderr_ceiling=1024,
+            rss_ceiling=512 * 1024 * 1024,
+        )
+    assert len(children) == 1 and children[0].poll() is not None
+    assert raised.value.stage == "rss_census"
+
+
 def test_unsupported_platform_fails_closed_before_process_start(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
