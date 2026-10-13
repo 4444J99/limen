@@ -2008,6 +2008,13 @@ def _call_remote_adapter(agent: str, task: Task, dry_run: bool) -> bool | str:
         )
         return True
     try:
+        client = client_from_env()
+        limits = client.execution_info(remote_task.id)
+        verification_reservation = client.reserve_growth(
+            remote_task.id, "verification", hashlib.sha256(f"{remote_task.id}:verification".encode()).hexdigest()
+        )
+        original_attempt_deadline = limits["attempt_deadline"]
+        original_verification_deadline = verification_reservation["deadline"]
         base_ref = os.environ.get("LIMEN_REMOTE_BASE_REF", "HEAD")
         base_sha = resolve_pushed_sha(
             repo,
@@ -2038,6 +2045,8 @@ def _call_remote_adapter(agent: str, task: Task, dry_run: bool) -> bool | str:
                 instruction=current_instruction,
                 repo=current_repo,
                 execution_profile=execution_profile_for(current_task).as_dict(),
+                attempt_deadline=original_attempt_deadline,
+                verification_deadline=original_verification_deadline,
             )
 
         request = build_request(remote_task, verification_context)

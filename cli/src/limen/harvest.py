@@ -274,6 +274,8 @@ def _adopt_orphan_remote_entry(
                 instruction=f"Verify completed implementation for task {task.id}; do not modify code: {task.title}",
                 repo=str(task.repo or ""),
                 execution_profile=execution_profile_for(task).as_dict(),
+                attempt_deadline=manifest.get("attempt_deadline"),
+                verification_deadline=manifest.get("verification_deadline"),
             )
             receipt = load_receipt(path, request)
         except (RemoteExecutionError, ValueError):
@@ -447,6 +449,10 @@ def check_remote_harvest(
             continue
         try:
             verification_context = verification_context_for_task(task, tasks_by_id)
+            saved_path = _remote_receipt_path(tasks_path, store, task.id, entry.remote_receipt)
+            saved_manifest = {}
+            if saved_path is not None and saved_path.exists():
+                saved_manifest = json.loads(saved_path.read_text()).get("request", {})
             request = remote_request_from_task(
                 task,
                 provider,
@@ -461,6 +467,8 @@ def check_remote_harvest(
                 instruction=f"Verify completed implementation for task {task.id}; do not modify code: {task.title}",
                 repo=str(task.repo or ""),
                 execution_profile=execution_profile_for(task).as_dict(),
+                attempt_deadline=saved_manifest.get("attempt_deadline"),
+                verification_deadline=saved_manifest.get("verification_deadline"),
             )
             stored = _remote_receipt_path(tasks_path, store, task.id, entry.remote_receipt)
             stored_receipt = None

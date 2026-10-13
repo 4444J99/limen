@@ -134,6 +134,8 @@ def request(provider: str = "github_actions", **overrides: object) -> RemoteRequ
         "predicate": "python3 scripts/check-remote.py",
         "receipt_target": f"artifact:organvm/limen:task:{task_id}",
         "instruction": f"Verify completed implementation for task {task_id}; do not modify code: bounded public verification",
+        "attempt_deadline": "2099-01-01T00:10:00+00:00",
+        "verification_deadline": "2099-01-01T00:05:00+00:00",
     }
     values.update(overrides)
     return RemoteRequest(**values)  # type: ignore[arg-type]
@@ -474,6 +476,8 @@ def _worker_args(repo: Path, req: RemoteRequest, packet_digest: str | None = Non
         output=str(repo.parent / "receipt.json"),
         timeout=30,
         docker_binary="docker-fixture",
+        attempt_deadline=req.attempt_deadline,
+        verification_deadline=req.verification_deadline,
     )
 
 
@@ -1471,6 +1475,8 @@ def workflow_payload(req: RemoteRequest, observed: RemoteRun) -> dict[str, objec
         "sandbox_profile_digest": SANDBOX_PROFILE_DIGEST,
         "sandbox_attestation_digest": digest_text("limen-sandbox-boundary-v1\n"),
         "outputs": [output_for(req, observed).identity()],
+        "attempt_deadline": req.attempt_deadline,
+        "verification_deadline": req.verification_deadline,
     }
     payload["receipt_digest"] = digest_bytes(canonical_json(payload))
     return payload
@@ -1806,6 +1812,18 @@ def test_remote_dispatch_final_guard_validates_authoritative_task_before_workflo
     monkeypatch.setattr(dispatch, "discover_adapters", lambda: ({"github_actions": adapter}, []))
     monkeypatch.setattr(dispatch, "resolve_pushed_sha", lambda *_args, **_kwargs: SHA)
     monkeypatch.setattr(dispatch, "_remote_receipt_store", lambda: ReceiptStore(tmp_path / "receipts"))
+
+    class KeeperFixture:
+        def execution_info(self, work_key):
+            assert work_key == submitted.id
+            return {"attempt_deadline": "2099-01-01T00:10:00+00:00"}
+
+        def reserve_growth(self, work_key, action, identity_hash):
+            assert work_key == submitted.id and action == "verification"
+            assert len(identity_hash) == 64
+            return {"deadline": "2099-01-01T00:05:00+00:00"}
+
+    monkeypatch.setattr(dispatch, "client_from_env", KeeperFixture)
 
     result = dispatch._call_remote_adapter("github_actions", submitted, dry_run=False)
 

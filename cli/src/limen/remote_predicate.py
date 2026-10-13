@@ -20,9 +20,11 @@ import sys
 import tempfile
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Callable, Mapping, Sequence
 from urllib.parse import urlparse
+from uuid import uuid4
 
 
 SCHEMA_VERSION = "limen.remote-execution.v4"
@@ -64,6 +66,28 @@ SANDBOX_ENV = {
 
 class PredicateContractError(ValueError):
     pass
+
+
+def validate_deadline_bounds(attempt: str | None, verification: str | None) -> tuple[datetime, datetime]:
+    """Parse original keeper bounds without renewing or normalizing their identity."""
+    try:
+        if not isinstance(attempt, str) or not isinstance(verification, str):
+            raise ValueError
+        outer = datetime.fromisoformat(attempt.replace("Z", "+00:00"))
+        inner = datetime.fromisoformat(verification.replace("Z", "+00:00"))
+        if outer.tzinfo is None or inner.tzinfo is None or inner > outer:
+            raise ValueError
+    except ValueError as exc:
+        raise PredicateContractError("missing or invalid original keeper deadlines") from exc
+    return outer, inner
+
+
+def remaining_verification_seconds(attempt: str | None, verification: str | None) -> int:
+    outer, inner = validate_deadline_bounds(attempt, verification)
+    remaining = math.floor((min(outer, inner) - datetime.now(timezone.utc)).total_seconds())
+    if remaining <= 0:
+        raise PredicateContractError("original keeper verification deadline expired")
+    return min(600, remaining)
 
 
 def digest_bytes(value: bytes) -> str:
@@ -291,6 +315,8 @@ def packet_payload(
     custody_mode: str,
     inputs: list[dict[str, object]],
     execution_profile: dict[str, object],
+    attempt_deadline: str | None = None,
+    verification_deadline: str | None = None,
 ) -> dict[str, object]:
     return {
         "schema_version": SCHEMA_VERSION,
@@ -312,6 +338,11 @@ def packet_payload(
         "custody_mode": custody_mode,
         "inputs": inputs,
         "execution_profile": execution_profile,
+        **(
+            {"attempt_deadline": attempt_deadline, "verification_deadline": verification_deadline}
+            if attempt_deadline is not None
+            else {}
+        ),
     }
 
 
@@ -335,6 +366,8 @@ def packet_digest(
     custody_mode: str,
     inputs: list[dict[str, object]],
     execution_profile: dict[str, object],
+    attempt_deadline: str | None = None,
+    verification_deadline: str | None = None,
 ) -> str:
     return digest_bytes(
         canonical_json(
@@ -357,6 +390,8 @@ def packet_digest(
                 custody_mode=custody_mode,
                 inputs=inputs,
                 execution_profile=execution_profile,
+                attempt_deadline=attempt_deadline,
+                verification_deadline=verification_deadline,
             )
         )
     )
@@ -416,6 +451,8 @@ def sandbox_command(cwd: Path, script: str, *, docker_binary: str = "docker") ->
         docker_binary,
         "run",
         "--rm",
+        "--name",
+        "limen-verifier-" + uuid4().hex,
         "--log-driver=local",
         "--log-opt=max-size=1m",
         "--log-opt=max-file=1",
@@ -495,6 +532,7 @@ def _default_sandbox_runner(argv: Sequence[str], timeout: int) -> subprocess.Com
             except ProcessLookupError:
                 pass
             process.wait()
+        _remove_owned_container(argv)
         message = b"sandbox output limit exceeded\n" if exceeded else b"sandbox timeout exceeded\n"
         return subprocess.CompletedProcess(list(argv), 124 if timed_out else 125, message)
     try:
@@ -505,8 +543,29 @@ def _default_sandbox_runner(argv: Sequence[str], timeout: int) -> subprocess.Com
         except ProcessLookupError:
             pass
         process.wait()
+        _remove_owned_container(argv)
         return subprocess.CompletedProcess(list(argv), 124, b"sandbox timeout exceeded\n")
     return subprocess.CompletedProcess(list(argv), returncode, b"".join(chunks))
+
+
+def _remove_owned_container(argv: Sequence[str]) -> None:
+    """Docker client termination does not terminate its daemon-owned container."""
+    if len(argv) < 2 or argv[1] != "run" or "--name" not in argv:
+        return
+    index = list(argv).index("--name") + 1
+    name = argv[index] if index < len(argv) else ""
+    if not re.fullmatch(r"limen-verifier-[0-9a-f]{32}", name):
+        raise PredicateContractError("sandbox container ownership is unavailable")
+    result = subprocess.run(
+        [argv[0], "rm", "--force", name],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        timeout=5,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise PredicateContractError("owned sandbox container termination was not confirmed")
 
 
 def _attest_sandbox_runtime(runner: SandboxRunner, *, docker_binary: str) -> None:
@@ -673,6 +732,10 @@ def execute_attested(
     *,
     sandbox_runner: SandboxRunner | None = None,
 ) -> dict[str, object]:
+    attempt_deadline = getattr(args, "attempt_deadline", None)
+    verification_deadline = getattr(args, "verification_deadline", None)
+    # Queue time consumes the same original reservation; never create a fresh timeout here.
+    remaining_verification_seconds(attempt_deadline, verification_deadline)
     predicate = parse_trusted_predicate(args.predicate)
     target = ReceiptTarget.parse(args.receipt_target)
     if not PROVIDER_RE.fullmatch(args.provider):
@@ -733,6 +796,8 @@ def execute_attested(
         custody_mode=args.custody_mode,
         inputs=inputs,
         execution_profile=profile,
+        attempt_deadline=attempt_deadline,
+        verification_deadline=verification_deadline,
     )
     if args.packet_digest != expected_packet:
         raise PredicateContractError("packet digest mismatch")
@@ -752,7 +817,12 @@ def execute_attested(
         raise PredicateContractError("instruction digest is invalid")
     _validate_repo_paths(predicate, cwd)
 
-    runner = sandbox_runner or _default_sandbox_runner
+    underlying_runner = sandbox_runner or _default_sandbox_runner
+
+    def runner(argv: Sequence[str], timeout: int) -> subprocess.CompletedProcess[bytes]:
+        remaining = remaining_verification_seconds(attempt_deadline, verification_deadline)
+        return underlying_runner(argv, min(timeout, remaining))
+
     _attest_sandbox_runtime(runner, docker_binary=args.docker_binary)
     sandbox_attestation_digest = _attest_sandbox(
         runner,
@@ -770,6 +840,10 @@ def execute_attested(
     delta_safe, delta_digest, delta_bytes = _scan_delta(cwd)
     clean = _git(cwd, "status", "--porcelain").stdout.strip() == b""
     exit_code = result.returncode if result.returncode != 0 else (0 if clean and delta_safe else 125)
+    try:
+        remaining_verification_seconds(attempt_deadline, verification_deadline)
+    except PredicateContractError:
+        exit_code = 124
     run_url = args.run_url.rstrip("/")
     if not re.fullmatch(rf"https://github\.com/{re.escape(args.control_repo)}/actions/runs/\d+", run_url):
         raise PredicateContractError("run URL does not bind the control repository and numeric run ID")
@@ -823,6 +897,8 @@ def execute_attested(
         "sandbox_profile_digest": SANDBOX_PROFILE_DIGEST,
         "sandbox_attestation_digest": sandbox_attestation_digest,
         "outputs": outputs,
+        "attempt_deadline": attempt_deadline,
+        "verification_deadline": verification_deadline,
     }
     receipt["receipt_digest"] = digest_bytes(canonical_json(receipt))
     return receipt
@@ -860,7 +936,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cwd", required=True)
     parser.add_argument("--control-cwd", required=True)
     parser.add_argument("--output", required=True)
-    parser.add_argument("--timeout", type=int, default=2700)
+    parser.add_argument("--attempt-deadline", required=True)
+    parser.add_argument("--verification-deadline", required=True)
+    parser.add_argument("--timeout", type=int, default=600)
     parser.add_argument("--docker-binary", default="docker")
     return parser
 

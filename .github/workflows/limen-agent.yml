@@ -80,6 +80,14 @@ on:
         description: Digest binding every execution input
         required: true
         type: string
+      attempt_deadline:
+        description: Original keeper attempt deadline, never renewed on recovery
+        required: true
+        type: string
+      verification_deadline:
+        description: Original keeper verification reservation deadline
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -89,7 +97,7 @@ jobs:
     # The personal controller is public: use GitHub's standard hosted runner and never admit a
     # public target to the operator's self-hosted machine.
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 10
     env:
       LIMEN_REQUEST_ID: ${{ inputs.request_id }}
       LIMEN_PROVIDER: ${{ inputs.provider }}
@@ -111,6 +119,8 @@ jobs:
       LIMEN_INPUTS_JSON: ${{ inputs.inputs_json }}
       LIMEN_EXECUTION_PROFILE_JSON: ${{ inputs.execution_profile_json }}
       LIMEN_PACKET_DIGEST: ${{ inputs.packet_digest }}
+      LIMEN_ATTEMPT_DEADLINE: ${{ inputs.attempt_deadline }}
+      VERIFICATION_DEADLINE: ${{ inputs.verification_deadline }}
       LIMEN_OBSERVED_CONTROL_REPO: ${{ github.repository }}
       LIMEN_OBSERVED_CONTROL_REF: ${{ github.ref_name }}
       LIMEN_OBSERVED_CONTROL_REF_KIND: ${{ github.ref_type }}
@@ -121,6 +131,17 @@ jobs:
       LIMEN_SANDBOX_IMAGE: python@sha256:eb43ff125d8d58d7449dcba7d336c23bcac412f526d861db493b9994d8010280
       LIMEN_SANDBOX_SECRET_SENTINEL: host-secret-must-not-cross
     steps:
+      - name: Reject an expired queued reservation before checkout
+        shell: python
+        run: |
+          import os
+          from datetime import datetime, timezone
+          attempt = datetime.fromisoformat(os.environ["LIMEN_ATTEMPT_DEADLINE"].replace("Z", "+00:00"))
+          verification = datetime.fromisoformat(os.environ["VERIFICATION_DEADLINE"].replace("Z", "+00:00"))
+          if attempt.tzinfo is None or verification.tzinfo is None or verification > attempt:
+              raise SystemExit("Invalid original keeper deadlines")
+          if verification <= datetime.now(timezone.utc):
+              raise SystemExit("Original keeper verification deadline expired while queued")
       - name: Check out pinned control code
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
@@ -175,6 +196,8 @@ jobs:
             --inputs-json "$LIMEN_INPUTS_JSON" \
             --execution-profile-json "$LIMEN_EXECUTION_PROFILE_JSON" \
             --packet-digest "$LIMEN_PACKET_DIGEST" \
+            --attempt-deadline "$LIMEN_ATTEMPT_DEADLINE" \
+            --verification-deadline "$VERIFICATION_DEADLINE" \
             --run-url "$LIMEN_RUN_URL" \
             --cwd target \
             --control-cwd .limen-control \
