@@ -62,8 +62,10 @@ def test_old_fires_cannot_establish_active_runtime(tmp_path: Path) -> None:
         "disabled": False,
     }
     (tmp_path / "old.json").write_text(json.dumps(receipt))
-    assert MODULE.active_errors(tmp_path, "merged-sha", 1, now=1420) == []
-    assert "stale" in MODULE.active_errors(tmp_path, "merged-sha", 1, now=1421)[0]
+    contract = json.loads(MODULE.CONTRACTS.read_text())["processes"]["com.limen.heartbeat"]
+    expiry = 1000 + contract["launchd"]["start_interval_seconds"] + contract["limits"]["wall_seconds_per_tick"]
+    assert MODULE.active_errors(tmp_path, "merged-sha", 1, now=expiry) == []
+    assert "stale" in MODULE.active_errors(tmp_path, "merged-sha", 1, now=expiry + 1)[0]
 
 
 def test_bad_timestamps_fail_without_crashing_or_sorting_as_fresh(tmp_path: Path) -> None:

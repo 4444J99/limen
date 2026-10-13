@@ -11,8 +11,11 @@ does not replenish ops reservations or unknown GES allowance.
 Reclaim the clean retained checkout from published #2856 head
 64d0fb98ed356ca8a1c555f02b55a0c5eea1f04d, preserving its branch and objects.
 Restore published #2840 head 8e1cef4d6dfa5ab898762d496a7df5860cea16a7 on an
-isolated reconciliation branch. Integrate one fixed main snapshot
-66b2ee71a1075d652a32a44186d01db258c8adce without repeated rewrites. Preserve
+isolated reconciliation branch. The PR base anchor
+66b2ee71a1075d652a32a44186d01db258c8adce was reconciled first, but is not live
+main. Integrate the captured live main snapshot
+d1e15e2506f97147a20d7aaa3387bb2aa67473ff without further moving-main rewrites.
+Preserve the accepted shared runtime pool and all heartbeat fixes. Preserve
 the current optional policy-custody route and its tests alongside the new allowance
 route, default fingerprint-only readback, authorization and no-store behavior.
 

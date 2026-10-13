@@ -961,11 +961,94 @@ def main() -> int:
     parser.add_argument("--all", action="store_true", help="inventory all local app-store history")
     parser.add_argument("--write", action="store_true", help="write docs and ignored private inventory")
     parser.add_argument(
+        "--os-evidence-seconds", type=int, default=180, help="bounded native census budget, at most 3600 seconds"
+    )
+    parser.add_argument("--os-evidence-start", help="inclusive local date for operating-system evidence review")
+    parser.add_argument("--os-evidence-end", help="exclusive local date for operating-system evidence review")
+    parser.add_argument(
         "--materialize",
         action="store_true",
         help="copy raw local files into the ignored content-addressed object store",
     )
     args = parser.parse_args()
+    if args.os_evidence_start or args.os_evidence_end:
+        if not args.os_evidence_start or not args.os_evidence_end:
+            parser.error("both operating-system evidence boundaries are required")
+        import importlib.util
+        from zoneinfo import ZoneInfo
+        from limen.operating_system_evidence import review, render, compressed_patterns, provider_inventory
+
+        spec = importlib.util.spec_from_file_location(
+            "os_evidence_lifecycle", REPO_ROOT / "scripts/prompt-lifecycle-ledger.py"
+        )
+        lifecycle = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(lifecycle)
+        zone = ZoneInfo("America/New_York")
+        start = dt.datetime.fromisoformat(args.os_evidence_start).replace(tzinfo=zone)
+        end = dt.datetime.fromisoformat(args.os_evidence_end).replace(tzinfo=zone)
+        runtime_root = Path(os.environ.get("LIMEN_AGENT_RUNTIME_ROOT", Path.home() / "Workspace/limen/.agent-runtime"))
+        sources = [
+            (
+                source,
+                runtime_root / root.relative_to(lifecycle.RUNTIME_ROOT)
+                if root.is_relative_to(lifecycle.RUNTIME_ROOT)
+                else root,
+                patterns,
+            )
+            for source, root, patterns in lifecycle.LOCAL_SOURCES
+        ]
+        sources.extend(
+            [
+                ("gemini-native", runtime_root / "gemini", ("*.json", "*.jsonl")),
+                ("opencode-native", runtime_root / "opencode/data", ("*.db",)),
+                ("copilot-native", HOME / ".copilot/session-state", ("events.jsonl",)),
+                ("cline-native", HOME / ".cline/data", ("*.json", "*.jsonl")),
+            ]
+        )
+        sources.extend(external_session_sources())
+        sources.extend(
+            [
+                ("derived-vendor-insights", runtime_root.parent / "logs/vendor-insights", ("*.json", "*.jsonl")),
+                (
+                    "derived-healing",
+                    runtime_root.parent / "logs",
+                    ("self-heal-liveness.jsonl", "heal-convergence.json", "estate-audit-heal.json"),
+                ),
+                ("derived-policy-admission", runtime_root.parent / "logs/dispatch-admission", ("*.json", "*.jsonl")),
+                ("derived-vendor-health", runtime_root.parent / "logs/insight-cross-vendor", ("*.json",)),
+            ]
+        )
+        # Match each compressed carrier beside its declared plaintext pattern.
+        # A blanket recursive *.jsonl.zst under the history root would relabel
+        # session files as history and hide an earlier truncated session scan.
+        sources = [(source, root, compressed_patterns(patterns)) for source, root, patterns in sources]
+        sources.extend(
+            [
+                ("codex-archived", root.parent / "archived_sessions", ("*.jsonl", "*.jsonl.zst"))
+                for source, root, _ in sources
+                if source == "codex-sessions"
+            ]
+        )
+        public, private = review(sources, start, end, seconds=max(1, min(3600, args.os_evidence_seconds)))
+        provider_spec = importlib.util.spec_from_file_location(
+            "os_evidence_providers", REPO_ROOT / "scripts/insight-cross-vendor-ingest.py"
+        )
+        providers = importlib.util.module_from_spec(provider_spec)
+        provider_spec.loader.exec_module(providers)
+        provider_inventory(providers.VENDOR_REGISTRY, public)
+        markdown = render(public)
+        if args.write:
+            target = ROOT / "docs/reviews" / f"operating-system-{args.os_evidence_start}-{args.os_evidence_end}"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.with_suffix(".md").write_text(markdown)
+            target.with_suffix(".json").write_text(json.dumps(public, indent=2) + "\n")
+            destination = PRIVATE_ROOT / "inventory" / (target.name + ".json")
+            destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+            descriptor = os.open(destination, os.O_CREAT | os.O_TRUNC | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
+            with os.fdopen(descriptor, "w") as stream:
+                json.dump(private, stream)
+        print(markdown)
+        return 0
     if args.all:
         args.days = None
     if args.days is not None and args.days <= 0:

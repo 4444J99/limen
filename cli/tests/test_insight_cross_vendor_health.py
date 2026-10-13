@@ -26,6 +26,9 @@ def _load(script: str, alias: str, limen_root: Path, monkeypatch):
     OUT_DIR/LOGS are computed at import time, so a shared instance would leak
     the real estate into a hermetic test."""
     monkeypatch.setenv("LIMEN_ROOT", str(limen_root))
+    from limen import operating_system_health
+
+    monkeypatch.setattr(operating_system_health, "observations", lambda *_: [])
     spec = importlib.util.spec_from_file_location(alias, _SCRIPTS / script)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
@@ -218,6 +221,33 @@ def test_health_packet_is_consumed_by_insight_cadence(tmp_path, monkeypatch):
     assert len(health_insights) == 1
     assert health_insights[0]["owner"] == "censor"
     assert health_insights[0]["severity"] == "warning"
+
+
+def test_external_os_signal_retains_owner_and_nonhealable_guard(tmp_path, monkeypatch):
+    _write_packet(
+        tmp_path,
+        "operating-system-domus-genoma",
+        extra={
+            "owner": "4444J99/domus-genoma",
+            "friction_signals": [
+                {
+                    "signal": "native_visual_platform_policy",
+                    "count": 1,
+                    "severity": "warning",
+                    "healable": False,
+                    "description": "platform_policy",
+                }
+            ],
+        },
+    )
+    cadence = _load("insight-cadence.py", "icad_os", tmp_path, monkeypatch)
+    rows = [row for row in cadence._gather_insights() if "native_visual_platform_policy" in row["title"]]
+    assert len(rows) == 1
+    assert rows[0]["owner"] == "4444J99/domus-genoma"
+    assert rows[0]["healable"] is False
+    assert rows[0]["id"] == next(
+        row["id"] for row in cadence._gather_insights() if "native_visual_platform_policy" in row["title"]
+    )
 
 
 def test_oldest_record_probe_seam(tmp_path, monkeypatch):

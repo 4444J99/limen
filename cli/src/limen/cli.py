@@ -149,7 +149,7 @@ def repair_checkout(work_key: str, repository: Path, destination: Path, revision
 @click.option("--target-percent", type=click.IntRange(1, 100), default=100)
 @click.option("--agent", type=click.Choice(["codex", "claude", "gemini", "opencode", "total"]))
 def runtime_quota(request_maintenance: bool, target_percent: int, agent: str | None) -> None:
-    """Observe Domus quotas or file deduplicated keeper-owned maintenance intake."""
+    """Observe Domus shared capacity or file deduplicated keeper-owned maintenance intake."""
     from limen.runtime_quota import maintenance_requests
 
     try:

@@ -1,0 +1,39 @@
+{
+  "schema": "limen.history_receipt_reconciliation.v1",
+  "observed_at": "2026-10-13T01:52:42.943010+00:00",
+  "observed_origin_main": "e7dc92d13520d5ea2eaf8e476bb85d9a2c947805",
+  "settlements": [
+    {
+      "historical_merge_sha": "7ba07525fa9a594f218c4687865e09f037d0204e",
+      "current_history_successor_sha": "7f2607d55d735282c6c973a7075fd67359c3052d",
+      "parent_to_commit_diff_sha256": "5b1eb23f8b14ebfd98abe56cbc4d20fdb743c2c8f49c33a010d02a2a23ae80d6",
+      "diffs_byte_identical": true,
+      "successor_reachable_from_origin_main": true,
+      "historical_github_receipt": {
+        "mergeCommit": {
+          "oid": "7ba07525fa9a594f218c4687865e09f037d0204e"
+        },
+        "mergedAt": "2026-07-29T17:42:34Z",
+        "state": "MERGED",
+        "url": "https://github.com/4444J99/limen/pull/1619"
+      }
+    },
+    {
+      "historical_merge_sha": "9a31939588864354f237042b7ed5116ea6c31226",
+      "current_history_successor_sha": "a26058ccb78cf14f2a42e0a1884dc090c4f51434",
+      "parent_to_commit_diff_sha256": "17dfd676c08fdda9f16df893821fadec6c4aa6311633d11a6dcd2be785698065",
+      "diffs_byte_identical": true,
+      "successor_reachable_from_origin_main": true,
+      "historical_github_receipt": {
+        "mergeCommit": {
+          "oid": "9a31939588864354f237042b7ed5116ea6c31226"
+        },
+        "mergedAt": "2026-07-29T14:24:29Z",
+        "state": "MERGED",
+        "url": "https://github.com/4444J99/limen/pull/1608"
+      }
+    }
+  ],
+  "ancestry_guard_unchanged": true,
+  "primary_checkouts_and_historical_objects_preserved": true
+}

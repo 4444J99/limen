@@ -40,6 +40,9 @@ personal_consolidation:
   sources: [a-organvm, meta-organvm, organvm, organvm-i-theoria, organvm-ii-poiesis, organvm-iii-ergon, organvm-iv-taxis, organvm-v-logos, organvm-vi-koinonia, organvm-vii-kerygma]
   default_visibility: private
   public_exceptions:
+    - repository_id: 1416276234
+      coordinates: [4444J99/domus-genoma]
+      why: "Human-approved fresh public Domus form; reviewed allowlist and independent history. Private operation remains repository 1124448005."
     - repository_id: 1255213941
       coordinates: [4444J99/limen, organvm/limen]
       why: "Public control-plane distribution dependency; preserve current publication."
@@ -863,6 +866,8 @@ repo_overrides:
   organvm/daily-engine: {class: operation_private, why: "personal daily engine — private operation"}
   organvm/digital-income-organism-inquiry: {class: vault_private, why: "inquiry corpus — internal strategy"}
   organvm/domus-genoma: {class: operation_private, why: "the config cartridge — host/factory operation; strategy+secret-shaped paths never publish raw"}
+  4444J99/domus-genoma-private: {class: operation_private, why: "Private Domus operation; repository ID 1124448005 retains all original history, issues, pull requests and private host data after the human-approved name swap.", split: {into: ["4444J99/domus-genoma"], why: "Fresh public form with an explicit reviewed allowlist; no private Git history or host data is published."}}
+  4444J99/domus-genoma: {class: portal_public, why: "Fresh public Domus form; curated architecture and portable examples. The private operation is 4444J99/domus-genoma-private."}
   organvm/edu-organism: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   organvm-iii-ergon/enterprise-plugin: {class: operation_private, why: "product operation; path-sample clean — publish-wave candidate (sweep + lever gated)", publish_candidate: true}
   4444J99/euro-trip-2026: {class: vault_private, why: "personal travel — private data"}

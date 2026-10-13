@@ -19,7 +19,6 @@ from typing import Any
 HOME = Path(os.environ.get("HOME", "/Users/4jp")).expanduser()
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1])).expanduser()
 sys.path.insert(0, str(ROOT / "cli" / "src"))
-from limen.resource_envelope import current_required_free_gib  # noqa: E402
 
 DOC_PATH = ROOT / "docs" / "substrate-storage-pressure.md"
 PRIVATE_PATH = ROOT / ".limen-private" / "session-corpus" / "lifecycle" / "substrate-storage-pressure.json"
@@ -250,16 +249,14 @@ def worktree_lifecycle_summary() -> dict[str, Any]:
 
 
 def build_snapshot() -> dict[str, Any]:
+    from limen.runtime_pool import RuntimePool
+
+    shared_pool = RuntimePool().observe(HOME)
     free = disk_free_gib()
-    try:
-        required = current_required_free_gib()
-    except (RuntimeError, ValueError):
-        required = None
-    headroom = (
-        round(free - required, 1)
-        if free is not None and required is not None
-        else None
-    )
+    reserve = shared_pool.get("required_reserve_bytes")
+    required = round(reserve / 1024**3, 1) if type(reserve) is int else None
+    growth = shared_pool.get("available_growth_bytes")
+    headroom = round(growth / 1024**3, 1) if type(growth) is int else None
     opencode_intake = latest_opencode_intake()
     rows = []
     for bucket in BUCKETS:
@@ -291,14 +288,13 @@ def build_snapshot() -> dict[str, Any]:
         "required_free_gib": required,
         "internal_free_gib": free,
         "resource_headroom_gib": headroom,
+        "shared_runtime_pool": shared_pool,
         "safe_reclaim": reclaim,
         "opencode_intake": opencode_intake,
         "worktree_lifecycle": worktree_lifecycle_summary(),
         "buckets": rows,
         "status": (
-            "resource-envelope-unavailable"
-            if headroom is None
-            else ("needs-owner-gates" if headroom < 0 else "clear")
+            "resource-envelope-unavailable" if headroom is None else ("needs-owner-gates" if headroom < 0 else "clear")
         ),
     }
 

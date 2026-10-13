@@ -13,6 +13,7 @@ dependencies = [
     "pydantic>=2.0",
     "jsonschema>=4.23",
     "rfc8785==0.1.4",
+    "zstandard>=0.23",
 ]
 
 [project.optional-dependencies]
@@ -32,7 +33,7 @@ experience = [
 ]
 
 [project.scripts]
-limen = "limen.cli:main"
+limen = "limen.entrypoint:main"
 limen-jules-api = "limen.jules_api:main"
 
 [project.entry-points."limen.fanout_execution"]

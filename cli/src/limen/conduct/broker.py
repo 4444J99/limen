@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 from pathlib import Path, PurePath
 from typing import Any, Callable
 
+from limen.storage_claim_census import storage_claim_census
 from limen.conduct.models import (
     AgentIdentityV1,
     AuthorityEnvelopeV1,
@@ -340,6 +341,7 @@ class ConductBroker:
                     for session_id, principal_id in state.get("session_principals", {}).items()
                     if principal is not None and principal_id == principal.principal_id
                 ),
+                "storage_claim_census": storage_claim_census(state, now, pending_remote_attempts),
                 "sessions": sessions,
             }
 
