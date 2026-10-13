@@ -54,6 +54,7 @@
         "cli/src/limen/heartbeat.py",
         "cli/src/limen/bounded_subprocess.py",
         "cli/src/limen/host_admission.py",
+        "cli/src/limen/vigilia/vitals.py",
         "cli/src/limen/notification_effect.py",
         "cli/src/limen/cli.py",
         "scripts/check-beat-freshness.py",

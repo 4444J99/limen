@@ -553,8 +553,8 @@ def _disk_observation(errors: list[str]) -> list[float] | None:
     return samples[-2:]
 
 
-def collect_pressure() -> dict[str, Any]:
-    """Collect one bounded host-pressure observation without mutating peer state."""
+def collect_pressure(*, state_root: Path | None = None) -> dict[str, Any]:
+    """Collect bounded pressure and record shared warning history, never shed peers."""
 
     errors: list[str] = []
 
@@ -562,7 +562,10 @@ def collect_pressure() -> dict[str, Any]:
         try:
             from limen.vigilia.vitals import beat_gate
 
-            vitals = beat_gate(shed=False)
+            if state_root is None:
+                vitals = beat_gate(shed=False, record=True)
+            else:
+                vitals = beat_gate(shed=False, record=True, state_root=state_root)
             return str(vitals.get("action") or "unknown")
         except Exception:  # pragma: no cover - defensive boundary around host sensor
             errors.append("vitals-sensor")
@@ -630,7 +633,9 @@ class AdmissionController:
         self.identity = identity
         self.process_cwd_probe = process_cwd_probe
         self.descendant = descendant
-        self.pressure_probe = pressure_probe
+        self.pressure_probe = (
+            (lambda: collect_pressure(state_root=self.root)) if pressure_probe is collect_pressure else pressure_probe
+        )
         self.thresholds = thresholds or _thresholds()
 
     def _ensure_root(self) -> None:
