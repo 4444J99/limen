@@ -1,0 +1,5 @@
+# Shared OS final acceptance revision 2
+
+Supersedes the fixture-only deployment assumption in the preceding plan. The naturally scheduled background census found an undeclared Homebrew lighttpd service. Verify its actual installed binary, add only its specific service label to the existing third-party registry, preserve all scheduling and misbehavior guards, run the existing background regression suite and live census with reviewed registry.
+
+Publish the registry correction together with historical test fixtures and redacted acceptance receipts. Merge the verified exact head normally. Parent remains the sole native installer: deploy the accepted combined successor (including the separately verified #2840 merge) once, review its activation plan, activate, retain controlled and actual natural receipts. Earlier d1e natural evidence stays historical, never inherited. Release the other recovery owner only after exact source and deployment identities are positively delivered. The existing watch anchors at the final runtime natural acceptance; unsupported app-updater access remains a visible external gate.

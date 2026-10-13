@@ -116,18 +116,60 @@ def test_the_trailer_is_read_from_the_body_not_gits_trailer_parser():
 # ── bookkeeping cannot settle a stream ─────────────────────────────────────────────
 
 
-def test_a_registry_only_commit_does_no_real_work():
-    """The registry may not talk a row into `settled`.
+@pytest.fixture
+def settlement_repository(tmp_path, monkeypatch):
+    """Exercise real Git commits without depending on retained historical objects."""
+    repository = tmp_path / "settlement"
+    repository.mkdir()
 
-    Uses the real commit that shipped this very registry's docs-only correction — a commit that
-    names a stream id and touches nothing but docs/plans.
-    """
-    assert M._does_real_work("0a17877b") is False
+    def git(*args):
+        return subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repository),
+                "-c",
+                "user.name=Settlement Fixture",
+                "-c",
+                "user.email=settlement@example.invalid",
+                "-c",
+                "commit.gpgsign=false",
+                "-c",
+                "core.hooksPath=/dev/null",
+                *args,
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=10,
+        ).stdout.strip()
+
+    git("init", "--initial-branch=main")
+    monkeypatch.setattr(M, "ROOT", str(repository))
+
+    def commit(path, subject):
+        target = repository / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(subject + "\n")
+        git("add", "--", path)
+        git("commit", "-m", subject)
+        return git("rev-parse", "HEAD")
+
+    return commit
 
 
-def test_a_commit_that_ships_code_does_real_work():
-    # 7ba07525 is #1619: cli/src/limen/workstream_contract.py, cli.py, tests.
-    assert M._does_real_work("7ba07525") is True
+def test_a_registry_only_commit_does_no_real_work(settlement_repository):
+    """A real bookkeeping commit mentioning a stream cannot settle it."""
+    sha = settlement_repository(
+        "docs/plans/settlement.md",
+        "docs(plans): s10-axis-coverage belongs to another plan",
+    )
+    assert M._does_real_work(sha) is False
+
+
+def test_a_commit_that_ships_code_does_real_work(settlement_repository):
+    sha = settlement_repository("cli/src/limen/workstream_contract.py", "feat: implement stream")
+    assert M._does_real_work(sha) is True
 
 
 # ── the live registry stays honest ─────────────────────────────────────────────────
