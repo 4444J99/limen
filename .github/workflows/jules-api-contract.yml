@@ -106,8 +106,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: organvm/ops-witness
+          repository: 4444J99/ops-witness
           ref: 75af87fe7e47d76d005f985c19d5c20be09e6266
+          token: ${{ secrets.OPS_SOURCE_GITHUB_TOKEN }}
           path: witness
           sparse-checkout: |
             scripts/jules-orchestrator.mjs

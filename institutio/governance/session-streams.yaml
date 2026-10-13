@@ -178,9 +178,10 @@ streams:
     title: "Lane tier pin — stop launched lanes inheriting a prohibited tier"
     branch_prefix: heal
     # Settled before the `Settles:` convention existed. 7ba07525 is #1619, whose diff is the fix
-    # itself (cli/src/limen/workstream_contract.py, cli.py, tests) — check H proves it is reachable
+    # itself (cli/src/limen/workstream_contract.py, cli.py, tests). Its byte-identical
+    # successor is 7f2607d5; preserve the historical PR identity while check H proves reachability
     # from origin/main and changed paths outside this registry.
-    settled_by: 7ba07525
+    settled_by: 7f2607d55d735282c6c973a7075fd67359c3052d
     intent: docs/continuations/s9-lane-tier-pin/intent.md
     requires: []
     unblocks: []
@@ -272,7 +273,8 @@ streams:
     # settled only because the registry's own bookkeeping commit b5d7909f said "record
     # s1-homing-spine settled by #1608" — the real work commit never names the id. 9a319395 IS that
     # real work (institutio/governance/atom-homing.yaml, atom-census.yaml, the residue baseline).
-    settled_by: 9a319395
+    # Byte-identical successor a26058cc is on current origin/main; original PR identity stays above.
+    settled_by: a26058ccb78cf14f2a42e0a1884dc090c4f51434
     intent: docs/continuations/s1-homing-spine/intent.md
     # NOT [s0]: the spine was authored store-free on purpose, so it never needed the corpus.
     # Measured by its own landing — #1608 shipped with the store cold-archived off this host.

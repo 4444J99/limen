@@ -33,7 +33,7 @@ experience = [
 ]
 
 [project.scripts]
-limen = "limen.cli:main"
+limen = "limen.entrypoint:main"
 limen-jules-api = "limen.jules_api:main"
 
 [project.entry-points."limen.fanout_execution"]

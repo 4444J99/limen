@@ -46,7 +46,20 @@ class JulesWorkflowContract(unittest.TestCase):
         self.assertEqual(job["timeout-minutes"], "24")
         for name, other in self.workflow["jobs"].items():
             if name != "account-readback":
-                self.assertNotIn("secrets.", json.dumps(other))
+                if name == "witness-contract":
+                    # The private, immutable source checkout needs the existing
+                    # source-read credential, never provider credentials.
+                    checkout = other["steps"][0]
+                    self.assertEqual(checkout["uses"], "actions/checkout@v4")
+                    self.assertEqual(checkout["with"]["repository"], "4444J99/ops-witness")
+                    self.assertEqual(checkout["with"]["ref"], "75af87fe7e47d76d005f985c19d5c20be09e6266")
+                    self.assertEqual(checkout["with"]["persist-credentials"], "false")
+                    expression = "${{ secrets.OPS_SOURCE_GITHUB_TOKEN }}"
+                    self.assertEqual(checkout["with"]["token"], expression)
+                    self.assertEqual(json.dumps(other).count(expression), 1)
+                    self.assertNotIn("secrets.", json.dumps(other).replace(expression, ""))
+                else:
+                    self.assertNotIn("secrets.", json.dumps(other))
 
     def test_readback_errors_are_not_converted_to_success(self):
         job = self.workflow["jobs"]["account-readback"]

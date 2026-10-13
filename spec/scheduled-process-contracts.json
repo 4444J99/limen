@@ -48,6 +48,9 @@
       ],
       "max_notification_events_per_fire": 1,
       "runtime_artifacts": [
+        "cli/src/limen/entrypoint.py",
+        "cli/src/limen/heartbeat_state.py",
+        "cli/pyproject.toml",
         "cli/src/limen/heartbeat.py",
         "cli/src/limen/bounded_subprocess.py",
         "cli/src/limen/host_admission.py",
