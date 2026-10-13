@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import platform
 import re
@@ -13,6 +14,7 @@ import sqlite3
 import subprocess
 import sys
 import tomllib
+from time import monotonic
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
@@ -819,7 +821,35 @@ def audit(
     runner: Runner = subprocess.run,
     strict: bool = False,
     write_baseline: Path | None = None,
+    budget_seconds: float | None = None,
 ) -> dict[str, Any]:
+    if budget_seconds is not None and (
+        isinstance(budget_seconds, bool)
+        or not isinstance(budget_seconds, (int, float))
+        or not math.isfinite(budget_seconds)
+        or not 0 < budget_seconds <= 20
+    ):
+        raise ValueError("audit budget must be positive and at most 20 seconds")
+    deadline = monotonic() + budget_seconds if budget_seconds is not None else None
+    budget_exhausted = False
+    native_runner = runner
+
+    def budgeted_runner(command, **kwargs):
+        nonlocal budget_exhausted
+        if deadline is not None:
+            remaining = deadline - monotonic()
+            if remaining <= 0:
+                budget_exhausted = True
+                raise subprocess.TimeoutExpired(command, 0)
+            kwargs["timeout"] = min(kwargs.get("timeout", remaining), remaining)
+        try:
+            return native_runner(command, **kwargs)
+        except subprocess.TimeoutExpired:
+            if deadline is not None and monotonic() >= deadline:
+                budget_exhausted = True
+            raise
+
+    runner = budgeted_runner
     values = dict(os.environ if env is None else env)
     observed_platform = platform_name or platform.system()
     if observed_platform != "Darwin" and "LIMEN_TCC_DB" not in values:
@@ -1088,6 +1118,8 @@ def audit(
         "status": "ok" if not failures else ("unmeasured" if unmeasured else "blocked"),
         "measured": {
             "tcc_database": db_measured,
+            "launchservices": "claude_helper_registration_unreadable" not in failures,
+            "budget_exhausted": budget_exhausted,
             "blind_failures": sorted(set(failures) & MEASUREMENT_BLIND_FAILURES),
         },
         "platform": observed_platform,
@@ -1164,6 +1196,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--strict", action="store_true")
+    parser.add_argument("--budget-seconds", type=float)
     parser.add_argument("--db")
     parser.add_argument("--baseline")
     parser.add_argument("--write-baseline")
@@ -1181,6 +1214,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         env,
         strict=args.strict,
         write_baseline=write_baseline,
+        budget_seconds=args.budget_seconds,
     )
     if args.json:
         print(json.dumps(payload, indent=2, sort_keys=True))

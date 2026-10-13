@@ -146,12 +146,49 @@ def active_errors(receipts_dir: Path, expected_sha: str, min_fires: int, *, now:
     return errors
 
 
+def cadence_interval(previous: dict, current: dict, maximum_seconds: float) -> dict:
+    """Keep wall gaps visible; classify only from measured same-boot clocks."""
+    wall = current["observed_epoch"] - previous["observed_epoch"]
+    result = {"wall_seconds": wall, "classification": "unmeasured"}
+    left = previous.get("clock_observation") or {}
+    right = current.get("clock_observation") or {}
+    for sample in (left, right):
+        if not isinstance(sample, dict):
+            return result
+        if sample.get("schema") != "limen.heartbeat_clock.v1" or sample.get("measured") is not True:
+            return result
+        boot = sample.get("boot_id")
+        if not isinstance(boot, str) or len(boot) != 64 or any(c not in "0123456789abcdef" for c in boot):
+            return result
+        if any(
+            type(sample.get(key)) is not int or not 0 <= sample[key] < 2**64 for key in ("awake_ns", "continuous_ns")
+        ):
+            return result
+    if left["boot_id"] != right["boot_id"]:
+        return {**result, "classification": "boot_changed"}
+    awake = (right["awake_ns"] - left["awake_ns"]) / 1e9
+    continuous = (right["continuous_ns"] - left["continuous_ns"]) / 1e9
+    if awake < 0 or continuous < 0 or awake > continuous + 0.05:
+        return result
+    result.update(awake_seconds=awake, continuous_seconds=continuous, sleep_seconds=max(0, continuous - awake))
+    if abs(wall - continuous) > 2:
+        result["classification"] = "wall_clock_changed"
+    elif awake > maximum_seconds:
+        result["classification"] = "awake_gap"
+    elif wall > maximum_seconds and continuous - awake > 0.05:
+        result["classification"] = "sleep_explained"
+    else:
+        result["classification"] = "within_cadence"
+    return result
+
+
 def scheduled_probe_report(receipts_dir: Path, expected_sha: str, *, now: float | None = None) -> dict[str, Any]:
     """Measure scheduled execution from current-runtime receipts, never retired voice stamps."""
     now = time.time() if now is None else now
     contract = _load_json(CONTRACTS)["processes"]["com.limen.heartbeat"]
     probes = {probe["name"]: probe for probe in contract["probes"]}
     latest: dict[str, dict[str, Any]] = {}
+    maintenance: list[dict[str, Any]] = []
     malformed = 0
     for path in receipts_dir.glob("*.json"):
         try:
@@ -166,6 +203,8 @@ def scheduled_probe_report(receipts_dir: Path, expected_sha: str, *, now: float 
         name = row.get("probe")
         if row.get("runtime_sha") != expected_sha or not isinstance(name, str) or name not in probes:
             continue
+        if name == "runtime-maintenance-observation":
+            maintenance.append(row)
         previous = latest.get(name)
         if previous is None or epoch > previous["observed_epoch"]:
             latest[name] = row
@@ -194,6 +233,11 @@ def scheduled_probe_report(receipts_dir: Path, expected_sha: str, *, now: float 
         else:
             counts["observed"] += 1
             counts["finding"] += int(row["status"] == "finding")
+    maintenance.sort(key=lambda row: row["observed_epoch"])
+    intervals = [
+        cadence_interval(left, right, 900 + contract["launchd"]["start_interval_seconds"])
+        for left, right in zip(maintenance, maintenance[1:])
+    ]
     return {
         "scope": "scheduled_probe_execution",
         "scheduled_total": len(probes),
@@ -201,6 +245,9 @@ def scheduled_probe_report(receipts_dir: Path, expected_sha: str, *, now: float 
         "malformed_receipts": malformed,
         **counts,
         "execution_complete": counts["observed"] == len(probes) and malformed == 0,
+        "maintenance_cadence": intervals,
+        "maintenance_cadence_violations": sum(row["classification"] == "awake_gap" for row in intervals),
+        "complete_elapsed_window_claimed": False,
     }
 
 
@@ -242,7 +289,7 @@ def main() -> int:
             return 1
         report = scheduled_probe_report(args.receipts_dir.expanduser(), expected_sha)
         print(json.dumps(report, sort_keys=True))
-        return 0 if report["execution_complete"] else 1
+        return 0 if report["execution_complete"] and not report["maintenance_cadence_violations"] else 1
     if args.require_active:
         errors.extend(active_errors(args.receipts_dir.expanduser(), args.expected_sha, args.min_fires))
     if errors:

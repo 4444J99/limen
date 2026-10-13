@@ -8,6 +8,7 @@ recorded bootstrap/kickstart calls + the plist actually being copied out of quar
 
 import importlib.util
 import json
+import time
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -15,6 +16,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = ROOT / "scripts" / "launch-agent-liveness.py"
+NATIVE_SLEEP = time.sleep
 
 
 class FakeLaunchctl:
@@ -52,10 +54,15 @@ def load_module(tmp_path, monkeypatch, *, loaded=None):
     m = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(m)
     m.IS_DARWIN = True  # exercise the darwin path deterministically on any host
-    m.time.sleep = lambda *a, **k: None  # no real settle delay
+    m.time = SimpleNamespace(sleep=lambda *a, **k: None)  # module-local settle clock
     fake = FakeLaunchctl(loaded=loaded)
     m._launchctl = fake
     return m, active, disabled, fake
+
+
+def test_fake_settle_clock_preserves_other_modules_real_sleep(tmp_path, monkeypatch):
+    load_module(tmp_path, monkeypatch)
+    assert time.sleep is NATIVE_SLEEP
 
 
 def write_manifest(tmp_path, agents):
