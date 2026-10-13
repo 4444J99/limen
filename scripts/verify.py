@@ -131,6 +131,20 @@ def load_registry() -> dict:
     return yaml.safe_load(REGISTRY.read_text())
 
 
+def verification_lock_path() -> Path:
+    if configured := os.environ.get("LIMEN_VERIFY_LOCK_FILE"):
+        return Path(configured)
+    if (ROOT / "cli/src/limen/host_admission.py").is_file():
+        sys.path.insert(0, str(ROOT / "cli/src"))
+        from limen.host_admission import default_state_root
+
+        base = default_state_root().parent
+    else:
+        # Resolver-only fixtures have no actual admission or heavy executable.
+        base = Path(tempfile.gettempdir())
+    return base / "limen-verify-whole.lock"
+
+
 def _reject_legacy_grafts() -> None:
     global _GRAFT_PATH
     if _GRAFT_PATH is None:
@@ -1057,10 +1071,7 @@ def cmd_changed(
             ):
                 return 1
             if tiers["serialized"]:
-                lock_path = os.environ.get(
-                    "LIMEN_VERIFY_LOCK_FILE",
-                    os.path.join(os.environ.get("TMPDIR", "/tmp"), "limen-verify-whole.lock"),
-                )
+                lock_path = verification_lock_path()
                 with open(lock_path, "w") as lock:
                     lock_deadline = min(aggregate_deadline, time.monotonic() + gate_timeout_seconds)
                     announced_wait = False

@@ -17,7 +17,6 @@ import re
 import stat
 import subprocess
 import sys
-import tempfile
 import threading
 import time
 import uuid
@@ -267,7 +266,28 @@ def default_state_root() -> Path:
     if configured != "auto":
         expanded = os.path.expandvars(os.path.expanduser(configured.replace("$UID", str(os.getuid()))))
         return Path(expanded)
-    return Path(tempfile.gettempdir()) / f"limen-host-admission-{os.getuid()}"
+    return host_temporary_root() / f"limen-host-admission-{os.getuid()}"
+
+
+def host_temporary_root() -> Path:
+    """Use the OS namespace, never the current process's scratch-directory override."""
+    if sys.platform != "darwin":
+        return Path("/tmp")
+    try:
+        native = ctypes.CDLL("/usr/lib/libSystem.B.dylib", use_errno=True).confstr
+        native.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_size_t]
+        native.restype = ctypes.c_size_t
+        value = ctypes.create_string_buffer(4096)
+        # Darwin <unistd.h>: _CS_DARWIN_USER_TEMP_DIR, independent of TMPDIR.
+        size = native(65537, value, len(value))
+        if not 1 < size <= len(value):
+            raise ValueError("invalid native temporary root")
+        root = Path(os.fsdecode(value.value))
+        if not root.is_absolute():
+            raise ValueError("relative native temporary root")
+        return root
+    except (OSError, AttributeError, TypeError, ValueError, ctypes.ArgumentError) as exc:
+        raise ValueError("host_temp_root_unavailable") from exc
 
 
 def pid_is_alive(pid: int) -> bool:
