@@ -2083,6 +2083,19 @@ def _receipt_from_workflow_payload(
         for key in ("attempt_deadline", "verification_deadline"):
             if payload.get(key) != getattr(request, key):
                 raise RemoteExecutionError(f"workflow receipt mismatch for {key}")
+        try:
+            started = datetime.fromisoformat(str(payload["started_at"]).replace("Z", "+00:00"))
+            completed = datetime.fromisoformat(str(payload["completed_at"]).replace("Z", "+00:00"))
+            _, deadline = validate_deadline_bounds(request.attempt_deadline, request.verification_deadline)
+            if (
+                started.tzinfo is None
+                or completed.tzinfo is None
+                or not started <= completed <= deadline
+                or (completed - started).total_seconds() > 600
+            ):
+                raise ValueError
+        except (KeyError, TypeError, ValueError) as exc:
+            raise RemoteExecutionError("workflow receipt lacks valid bounded execution timing") from exc
     try:
         exit_code = int(str(payload["predicate_exit_code"]))
     except (KeyError, TypeError, ValueError) as exc:

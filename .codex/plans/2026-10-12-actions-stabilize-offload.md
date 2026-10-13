@@ -84,3 +84,36 @@ Profile PRs were inspected but not integrated. #2745 already has its positive
 historical receipt. Ops owner-run entrypoint and profile manual/natural execution
 remain pending under their existing owners. Primary divergent checkout and the
 other active recovery checkout are unchanged by this work.
+
+## Corrective attempt — 2026-10-12 21:51 EDT
+
+The direct continuation admits one changed-input corrective root,
+run-9c99a5ee4cba4013cf660daf9dc36f25, under the same approved outcome. Original
+accounting is retained: first attempt 1800 reserved seconds plus correction 1800;
+the cumulative ceiling remains 7200. The corrective attempt expires at
+2026-10-13T02:08:12.951Z and its verification reservation expires at
+2026-10-13T01:54:51.786Z. The policy addition only adds the exact correction key;
+all five previous outcomes, resource limits and recovery concurrency remain unchanged.
+
+Draft PR: https://github.com/4444J99/limen/pull/2855 (owner 4444J99).
+The corrected source now bounds checkout, image preparation, Git attestation and
+container execution; cleanup has reserved runway and request-labelled ownership.
+Receipts require ordered, deadline-bounded start/completion evidence. Recovery
+loads original bounds and malformed custody fails closed. The journaled exception
+is limited to GitHub Actions verification-only tasks; public visibility, genuine
+implementation-parent custody and the original sandbox restrictions still apply.
+
+Verification: all 17 cheap scoped gates passed; remote-admission shard 227 passed
+with one local Docker-dependent skip. Additional remote/deadline/harvest/accounting
+batch: 186 passed with one Docker-dependent skip. The heavy scoped wave returned
+exit 75, heavy-lease-held, owned by a different verify-scoped process. No unchanged
+heavy-admission retry or lease interference is permitted. The Linux containment
+integration additionally verifies actual Docker container absence after timeout;
+that added daemon test still requires hosted execution.
+
+Review found an inherited probe-directory permission defect: the temporary probe
+was mode 0700 while the sandbox runs as UID 65534. A red/green regression covers
+making only that generated public probe readable. No host secrets or additional
+mounts are exposed. A separate fresh reviewer has not been admitted; no merge or
+accepted hosted canary is claimed. The required heavy verification and review
+remain merge conditions on PR2855, not a claim of complete first-wave acceptance.
