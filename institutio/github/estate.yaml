@@ -40,6 +40,9 @@ personal_consolidation:
   sources: [a-organvm, meta-organvm, organvm, organvm-i-theoria, organvm-ii-poiesis, organvm-iii-ergon, organvm-iv-taxis, organvm-v-logos, organvm-vi-koinonia, organvm-vii-kerygma]
   default_visibility: private
   public_exceptions:
+    - repository_id: 1416276234
+      coordinates: [4444J99/domus-genoma]
+      why: "Human-approved fresh public Domus form; reviewed allowlist and independent history. Private operation remains repository 1124448005."
     - repository_id: 1255213941
       coordinates: [4444J99/limen, organvm/limen]
       why: "Public control-plane distribution dependency; preserve current publication."
