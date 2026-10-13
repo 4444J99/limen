@@ -1,6 +1,15 @@
 {
   "background_item_correction": {
+    "actual_scheduled_probe": {
+      "consecutive_system_failures": 0,
+      "observed_at": "2026-10-13T02:51:15Z",
+      "receipt_sha256": "49a5583e8732067e3b2fc412e1492c8befccdb8bd6e267f5bf656f821e67ef96",
+      "returncode": 0,
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 365
+    },
     "broad_sh_brew_exemption_added": false,
+    "installed_registry_sha256": "cd8283864b98b1b1500899dac02d7fe486ae909451242a99fbf5f6404f13a657",
     "label": "sh.brew.lighttpd",
     "launch_policy_changed": false,
     "live_reviewed_registry_census": {
@@ -9,10 +18,10 @@
       "tombstone": 2,
       "undeclared": 0
     },
-    "successor_deployment_pending": true,
+    "successor_deployment_pending": false,
     "verified_program": "Homebrew lighttpd 1.4.85_1"
   },
-  "census_receipt_sha256": "4d388529a61f98e4ca73b4b121984062b39aa09b366b1bd05537ad5d8393d084",
+  "census_receipt_sha256": "84fbe72da4cd6fc951581df7c99652096e655b3043cb9a9b4d23ff245044d451",
   "claude": {
     "application_owned_state_preserved": true,
     "hook_sha256": "1f8c7b3ec350c61ff0f30f8ea6bc7e2eb4ea99b68c833e4e0919abf20bfe09f3",
@@ -24,21 +33,21 @@
   },
   "consumption_by_provider": {
     "claude": 2336525182,
-    "codex": 7431854571,
+    "codex": 7436857037,
     "gemini": 6279094300,
-    "opencode": 3726407939
+    "opencode": 3726408251
   },
   "controlled_activation": {
     "consecutive_system_failures": 0,
     "disabled": false,
-    "duration_ms": 33195,
-    "observed_at": "2026-10-13T02:24:48Z",
+    "duration_ms": 25601,
+    "observed_at": "2026-10-13T02:44:46Z",
     "returncode": 0,
     "status": "passed",
     "surviving_descendant_count": 0,
-    "whole_tick_duration_ms": 33324
+    "whole_tick_duration_ms": 25688
   },
-  "controlled_receipt_sha256": "deea8a7d0d1a0e6d9f04899dd923ec1fb90df9e3e8888a71899b72480235363a",
+  "controlled_receipt_sha256": "85436461ba68a4a1c13b546031a98ce1eb3afac6e1009ae942b288a54cb8353e",
   "corpus": {
     "april_may_zero_observed_is_absence_of_failures": false,
     "correction_lineage_preserved": true,
@@ -54,33 +63,224 @@
   "guarded_launches": {
     "probes": [
       {
-        "command": "zsh -ic opencode --version",
+        "argv": [
+          "zsh",
+          "-ic",
+          "opencode --version"
+        ],
         "exit_code": 0,
         "fully_exited": true,
         "version": "opencode v2.0.25"
       },
       {
-        "command": "zsh -ic codex --version",
+        "argv": [
+          "zsh",
+          "-ic",
+          "codex --version"
+        ],
         "exit_code": 0,
         "fully_exited": true,
         "version": "codex-cli 0.162.1"
       }
     ],
     "quota_or_attribution_warnings": [],
-    "receipt_sha256": "531bef2ecc42ca6a2f29e5d7ebe6553d51495d2a9758c1562ab8846d5c33c1b7",
-    "verified_at": "2026-10-13T02:30:44.855391+00:00"
+    "receipt_sha256": "8d06ced2260d4e2a420be14a8a570052bc4ccc9b162bbef44cca81ea969c7cce",
+    "remaining_reservation_truth": {
+      "after_all_probes_receipt_sha256": "9e2de5806b8315290d5878d4476e9bb7998ad81ef04e3997ed3e2b5b722b385c",
+      "after_all_probes_snapshot_pending": false,
+      "alive_identity_matches": true,
+      "bytes": 67108864,
+      "own_reservations_absent": true,
+      "owner": "foreign active Codex session",
+      "predates_verification": true,
+      "preserved": true,
+      "verified_after_recorded_launch_completion": true
+    },
+    "verified_at": "2026-10-13T02:48:31.577682+00:00"
+  },
+  "historical_d1_acceptance": {
+    "census_receipt_sha256": "4d388529a61f98e4ca73b4b121984062b39aa09b366b1bd05537ad5d8393d084",
+    "controlled_activation": {
+      "consecutive_system_failures": 0,
+      "disabled": false,
+      "duration_ms": 33195,
+      "observed_at": "2026-10-13T02:24:48Z",
+      "returncode": 0,
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 33324
+    },
+    "controlled_receipt_sha256": "deea8a7d0d1a0e6d9f04899dd923ec1fb90df9e3e8888a71899b72480235363a",
+    "guarded_launches": {
+      "probes": [
+        {
+          "command": "zsh -ic opencode --version",
+          "exit_code": 0,
+          "fully_exited": true,
+          "version": "opencode v2.0.25"
+        },
+        {
+          "command": "zsh -ic codex --version",
+          "exit_code": 0,
+          "fully_exited": true,
+          "version": "codex-cli 0.162.1"
+        }
+      ],
+      "quota_or_attribution_warnings": [],
+      "receipt_sha256": "531bef2ecc42ca6a2f29e5d7ebe6553d51495d2a9758c1562ab8846d5c33c1b7",
+      "verified_at": "2026-10-13T02:30:44.855391+00:00"
+    },
+    "natural_maintenance": {
+      "acceptance_applies_only_to_exact_d1_revision": true,
+      "accepted": true,
+      "consecutive_system_failures": 0,
+      "contract_digest": "0727b36d6fdaabafb7cf66ba146db6be6b459bbc2a1bb9a51c165b2537145353",
+      "controlled_to_natural_spacing_seconds": 939.2319791316986,
+      "disabled": false,
+      "duration_ms": 22792,
+      "label": "com.limen.heartbeat",
+      "naturally_due": true,
+      "notification_broker_channels": {},
+      "notification_broker_schema": null,
+      "notification_broker_status": null,
+      "notification_event_accepted_count": 0,
+      "notification_event_attempted_count": 0,
+      "notification_event_digest": null,
+      "notification_event_id": null,
+      "notification_event_selected_count": 0,
+      "notification_event_stable_id": null,
+      "observed_at": "2026-10-13T02:40:27Z",
+      "observed_epoch": 1791859227.771452,
+      "output_bytes": 889,
+      "probe": "runtime-maintenance-observation",
+      "probe_cost": "cheap",
+      "reason": null,
+      "receipt_sha256": "eea7e0e045e87af01abd1c0ec6d06770e4631941bb05ab108c28fd0e7e047d75",
+      "returncode": 0,
+      "run_id": "c2684d21d8194dab8a866a3d642d9fb4",
+      "runtime_digest": "99a4704b077c4a8fc1f007f6ef1a6a552fd7efdc0990ce7b57a904a1064e578c",
+      "runtime_sha": "d1e15e2506f97147a20d7aaa3387bb2aa67473ff",
+      "schema": "limen.heartbeat_private_receipt.v1",
+      "status": "passed",
+      "substitution_for_successor_run": false,
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 22878
+    },
+    "pool_observation": {
+      "allowed": true,
+      "available_growth_bytes": 26821586944,
+      "denial_reasons": [],
+      "filesystem_free_bytes": 26888695808,
+      "max_age_seconds": 120,
+      "observation_age_seconds": 0,
+      "observed_at": "2026-10-13T02:26:35.425141+00:00",
+      "outstanding_growth_bytes": 67108864,
+      "pool_mode": "shared_disk_aware",
+      "required_reserve_bytes": 0,
+      "reservation_count": 1,
+      "reserve_components": {
+        "apfs_churn_bytes": 0,
+        "custody_and_rollback_staging_bytes": 0,
+        "peak_concurrent_task_bytes": 0,
+        "projected_swap_expansion_bytes": 0,
+        "telemetry_error_bytes": 0,
+        "updater_claim_bytes": 0
+      },
+      "schema": "limen.runtime_pool.v1",
+      "storage_claim_count": 0
+    },
+    "shared_capacity": {
+      "census_complete": true,
+      "census_errors": [],
+      "census_files_scanned": 112663,
+      "failures": [],
+      "migration_diagnostics": [],
+      "target_met": true,
+      "target_percent": 70,
+      "total_bytes_to_target": 0,
+      "total_headroom_bytes": 26821586944,
+      "total_size_bytes": 21851558021,
+      "total_utilization_ratio": 0.44894485525258476,
+      "warnings": []
+    }
   },
   "implementation": {
-    "accepted_runtime_sha": "d1e15e2506f97147a20d7aaa3387bb2aa67473ff",
+    "acceptance_correction_pr": "https://github.com/4444J99/limen/pull/2857",
+    "accepted_runtime_sha": "c2927d53243d504ec6407d60fd1095fc2d55d5bf",
     "changed_runtime_source_in_followup": true,
     "contract_digest": "0727b36d6fdaabafb7cf66ba146db6be6b459bbc2a1bb9a51c165b2537145353",
+    "correction_tested_head": "772bbd270270a650877c527476804da2c2507146",
     "domus_accepted_sha": "124bc2fd4d61a141e388baa8c7c5450b564ffcdd",
-    "domus_pr": "https://github.com/4444J99/domus-genoma/pull/423",
+    "domus_pr": "https://github.com/4444J99/domus-genoma-private/pull/423",
+    "installed_recovery_cli_source_files_byte_equal": true,
     "limen_pr": "https://github.com/4444J99/limen/pull/2856",
-    "plan_digest": "ba33cf57f1786bcc1b61a075c0c559a1dfe0f37b0e77eae0a6a4b61c51a00282",
+    "plan_digest": "629fc1a5fc4571557dbc91d263f6735b3e531516c9442015a5ab852a1472352f",
+    "recovery_ancestor": "85092483d17b40766877be04ef451db52aecf26d",
+    "recovery_ancestry_predicate_exit": 0,
     "runtime_change": "Existing background-item ownership registry adds verified Homebrew lighttpd service; requires normal successor deployment",
-    "runtime_digest": "99a4704b077c4a8fc1f007f6ef1a6a552fd7efdc0990ce7b57a904a1064e578c",
+    "runtime_digest": "d40cfe4fcf18ab15518d880165347409568d4049748bd634dc436d1ef3ad9b92",
     "tested_head": "64d0fb98ed356ca8a1c555f02b55a0c5eea1f04d"
+  },
+  "independent_post_controlled_census": {
+    "pool_observation": {
+      "allowed": true,
+      "available_growth_bytes": 26649341952,
+      "denial_reasons": [],
+      "filesystem_free_bytes": 26716450816,
+      "max_age_seconds": 120,
+      "observation_age_seconds": 0,
+      "observed_at": "2026-10-13T02:46:39.062917+00:00",
+      "outstanding_growth_bytes": 67108864,
+      "pool_mode": "shared_disk_aware",
+      "required_reserve_bytes": 0,
+      "reservation_count": 1,
+      "reserve_components": {
+        "apfs_churn_bytes": 0,
+        "custody_and_rollback_staging_bytes": 0,
+        "peak_concurrent_task_bytes": 0,
+        "projected_swap_expansion_bytes": 0,
+        "telemetry_error_bytes": 0,
+        "updater_claim_bytes": 0
+      },
+      "schema": "limen.runtime_pool.v1",
+      "storage_claim_count": 0
+    },
+    "receipt_sha256": "6121ffb1d954c45e460c01cdc261bc58c7418fbb1b4fe199ff6beef65597e55c",
+    "shared_capacity": {
+      "census_complete": true,
+      "census_errors": [],
+      "census_files_scanned": 112669,
+      "failures": [],
+      "migration_diagnostics": [],
+      "target_met": true,
+      "target_percent": 70,
+      "total_bytes_to_target": 0,
+      "total_headroom_bytes": 26649341952,
+      "total_size_bytes": 21855672666,
+      "total_utilization_ratio": 0.4505858381473295,
+      "warnings": []
+    }
+  },
+  "maintenance_intake": {
+    "controller_receipt_sha256": "84fbe72da4cd6fc951581df7c99652096e655b3043cb9a9b4d23ff245044d451",
+    "controller_status": "healthy",
+    "episode_closed": true,
+    "managed_restoration_scope": "managed_native_api",
+    "native_restoration": "verified",
+    "new_worker_requested": false,
+    "original_episode_preserved": "af529e574f2b4f2e9c95a14837b3fdd4",
+    "worker_attempts": 1
+  },
+  "managed_cli_adoption": {
+    "commands": [
+      "runtime-quota --help",
+      "repair-checkout --help"
+    ],
+    "effects": "help only; no repair, worker or policy mutation",
+    "exit_codes": [
+      0,
+      0
+    ]
   },
   "native_visual": {
     "bypass_used": false,
@@ -91,13 +291,22 @@
     "receipt": "docs/reviews/native-visual-20261012.json"
   },
   "natural_maintenance": {
-    "acceptance_applies_only_to_exact_d1_revision": true,
     "accepted": true,
     "consecutive_system_failures": 0,
     "contract_digest": "0727b36d6fdaabafb7cf66ba146db6be6b459bbc2a1bb9a51c165b2537145353",
-    "controlled_to_natural_spacing_seconds": 939.2319791316986,
+    "controlled_to_natural_spacing_seconds": 931.6704840660095,
     "disabled": false,
-    "duration_ms": 22792,
+    "duration_ms": 25922,
+    "independent_process_evidence": {
+      "baseline_runs": 1,
+      "birth_at": "2026-10-13T03:00:18Z",
+      "exit_receipt_sha256": "b1622e075d8ac1c5801352ccea82e2900b0ab07b21f15d50fff33900ef678226",
+      "launchd_runs": 6,
+      "manual_fire": false,
+      "observed_absent_at": "2026-10-13T03:00:53.736171+00:00",
+      "origin_receipt_sha256": "55c3d3cad55702e690694128c3093777affa051083cdefcc5ec6078cd98d09d0",
+      "parent_pid": 1
+    },
     "label": "com.limen.heartbeat",
     "naturally_due": true,
     "notification_broker_channels": {},
@@ -109,32 +318,32 @@
     "notification_event_id": null,
     "notification_event_selected_count": 0,
     "notification_event_stable_id": null,
-    "observed_at": "2026-10-13T02:40:27Z",
-    "observed_epoch": 1791859227.771452,
+    "observed_at": "2026-10-13T03:00:18Z",
+    "observed_epoch": 1791860418.275986,
     "output_bytes": 889,
+    "prior_runtime_acceptance_inherited": false,
     "probe": "runtime-maintenance-observation",
     "probe_cost": "cheap",
     "reason": null,
-    "receipt_sha256": "eea7e0e045e87af01abd1c0ec6d06770e4631941bb05ab108c28fd0e7e047d75",
+    "receipt_sha256": "6b071d9577714eed79e408a2e98a8ea5ca3226939521af363f8cf7c91c19b893",
     "returncode": 0,
-    "run_id": "c2684d21d8194dab8a866a3d642d9fb4",
-    "runtime_digest": "99a4704b077c4a8fc1f007f6ef1a6a552fd7efdc0990ce7b57a904a1064e578c",
-    "runtime_sha": "d1e15e2506f97147a20d7aaa3387bb2aa67473ff",
+    "run_id": "546567a364bf4798b63865260f69d414",
+    "runtime_digest": "d40cfe4fcf18ab15518d880165347409568d4049748bd634dc436d1ef3ad9b92",
+    "runtime_sha": "c2927d53243d504ec6407d60fd1095fc2d55d5bf",
     "schema": "limen.heartbeat_private_receipt.v1",
     "status": "passed",
-    "substitution_for_successor_run": false,
     "surviving_descendant_count": 0,
-    "whole_tick_duration_ms": 22878
+    "whole_tick_duration_ms": 26021
   },
   "owner_registry": "https://github.com/4444J99/limen/issues/2848",
   "pool_observation": {
     "allowed": true,
-    "available_growth_bytes": 26821586944,
+    "available_growth_bytes": 26131955712,
     "denial_reasons": [],
-    "filesystem_free_bytes": 26888695808,
+    "filesystem_free_bytes": 26199064576,
     "max_age_seconds": 120,
     "observation_age_seconds": 0,
-    "observed_at": "2026-10-13T02:26:35.425141+00:00",
+    "observed_at": "2026-10-13T03:00:38.522270+00:00",
     "outstanding_growth_bytes": 67108864,
     "pool_mode": "shared_disk_aware",
     "required_reserve_bytes": 0,
@@ -161,6 +370,48 @@
     "source_export_retention": "Private custody staging retains archive, source manifest, attempted build receipt and test fixtures",
     "worker_attempts": 1
   },
+  "report_only_followup": {
+    "production_source_changed": false,
+    "reinstallation_required": false,
+    "runtime_contract_registry_parity_required": true
+  },
+  "repository_identity_reconciliation": {
+    "accepted_private_operation_prs": [
+      {
+        "merge_sha": "5cddfbc0705f4bc3f9e33f11a7f70f7a42d39735",
+        "number": 420
+      },
+      {
+        "merge_sha": "d61b735c74bf929b021479eac82a7ff1fbe1e9bd",
+        "number": 421
+      },
+      {
+        "merge_sha": "0cc760cdfa4ede7f01c2ad8f3c18f997bbf6b054",
+        "number": 422
+      },
+      {
+        "merge_sha": "124bc2fd4d61a141e388baa8c7c5450b564ffcdd",
+        "number": 423
+      }
+    ],
+    "all_states": "MERGED",
+    "current_pr_url_pattern": "https://github.com/4444J99/domus-genoma-private/pull/{number}",
+    "fresh_public_form": {
+      "name": "4444J99/domus-genoma",
+      "private": false,
+      "repository_id": 1416276234
+    },
+    "historical_ledger_observations_preserved": true,
+    "observed_at": "2026-10-13T03:07:54Z",
+    "old_spelling_is_not_current_identity_proof": true,
+    "operation": {
+      "canonical_name": "4444J99/domus-genoma-private",
+      "former_name": "4444J99/domus-genoma",
+      "private": true,
+      "repository_id": 1124448005
+    },
+    "source": "Authenticated live GitHub repository IDs and PR merge readbacks"
+  },
   "reserve_input_truth": {
     "authority": "unchanged Limen resource_envelope",
     "live_available_ram_approx_gib": 3.58,
@@ -174,20 +425,30 @@
   "shared_capacity": {
     "census_complete": true,
     "census_errors": [],
-    "census_files_scanned": 112663,
+    "census_files_scanned": 112668,
     "failures": [],
     "migration_diagnostics": [],
     "target_met": true,
     "target_percent": 70,
     "total_bytes_to_target": 0,
-    "total_headroom_bytes": 26821586944,
-    "total_size_bytes": 21851558021,
-    "total_utilization_ratio": 0.44894485525258476,
+    "total_headroom_bytes": 26131955712,
+    "total_size_bytes": 21856560799,
+    "total_utilization_ratio": 0.4554539791616606,
     "warnings": []
   },
   "verification": {
     "api_passed": 52,
     "background_census_regressions_passed": 14,
+    "correction_exact_head_hosted_successes": {
+      "app_audit": "https://github.com/4444J99/limen/actions/runs/38338177398/job/115102938839",
+      "head": "772bbd270270a650877c527476804da2c2507146",
+      "pr_gate": "https://github.com/4444J99/limen/actions/runs/38338177430/job/115102938571",
+      "python": "https://github.com/4444J99/limen/actions/runs/38338177398/job/115102938746",
+      "semgrep": "https://semgrep.dev/orgs/4444j99/projects/6111535/scans/244968211",
+      "web": "https://github.com/4444J99/limen/actions/runs/38338177398/job/115102938521",
+      "worker": "https://github.com/4444J99/limen/actions/runs/38338177398/job/115102938830",
+      "worker_audit": "https://github.com/4444J99/limen/actions/runs/38338177398/job/115102938942"
+    },
     "credential_wall_atoms_passed": 32,
     "fixture_source_sha256": "7711ffe12be5a80819b67fe15612b3a2e8d2e6bbeda37a39459a1f4ffc3b804e",
     "focused_native_regressions_passed": 154,
@@ -217,14 +478,40 @@
     "production_settlement_guard_changed": false,
     "ruff_check": "passed",
     "ruff_format": "passed",
-    "scoped_cheap_gates_passed": 19
+    "scoped_cheap_gates_passed": 19,
+    "unchanged_passing_shards_replayed_for_docs_only": false
   },
   "watch": {
-    "anchor": null,
+    "anchor": "2026-10-13T03:02:10.931617+00:00",
+    "anchor_basis": "Independent verified final natural acceptance; conservative observation window",
     "duplicate_scheduler_created": false,
+    "existing_app_watch_extension_completed": false,
     "existing_watch_active": true,
     "full_24_hours_completed": false,
+    "full_24h_acceptance_not_before": "2026-10-14T03:02:10.931617+00:00",
+    "private_watch_receipt_sha256": "5ad3d12c5a5c002640de5321a2424890cade2932ece58d1ebf88d1f9bfa6f4cb",
     "raw_configuration_bypass": false,
     "update_external_gate": "Supported Codex app automation updater unavailable to current terminal harness"
+  },
+  "worker_deployment": {
+    "accepted_source_sha": "85092483d17b40766877be04ef451db52aecf26d",
+    "allowance_denial": "execution_priority_not_approved",
+    "allowance_status": 409,
+    "authenticated_source_version_readback": true,
+    "bounded_deploy_seconds": 28.66,
+    "cloudflare_version": "e1d715ed-0127-42d9-a4f3-272ca6fe1c0a",
+    "config_binding_and_ten_secret_identities_preserved": true,
+    "deploy_exit": 0,
+    "live_policy_fingerprint_preserved": "0f9ea6155e0c5d1c0a823a91d6c8fa01f3d8126c9578a48df803e2501aec0587",
+    "policy_gate_owner_receipt": "https://github.com/4444J99/ops-witness/issues/6#issuecomment-6137111825",
+    "policy_replacement_performed": false,
+    "private_receipt_sha256": {
+      "deploy-850-receipt.json": "a9883524d07c7edb8a7db34f3c4f4c362c2cc939f367638ec95720b6f883bba9",
+      "postdeploy-receipt.json": "d58ed3d5b3f43469427cb9097afcc9a80f2ad8436aa2e4966251177594947b44"
+    },
+    "public_receipt": "https://github.com/4444J99/limen/pull/2840#issuecomment-6137102003",
+    "rollback_version_retained": "15e11888-cc4b-4aba-a08e-ce2416c91a92",
+    "run_or_reservation_created": false,
+    "unauthenticated_status": 401
   }
 }
