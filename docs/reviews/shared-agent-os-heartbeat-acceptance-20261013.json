@@ -1,0 +1,727 @@
+{
+  "acceptance_predicates": {
+    "final_fingerprint_natural_execution_complete": true,
+    "implemented_and_deployed": true,
+    "natural_dialog_measurement_complete": true,
+    "original_full_24_hour_window_complete": false,
+    "permission_health_complete": false
+  },
+  "activation": {
+    "contract_digest": "39008ab9af067fca0d5aa65823705f543ff38fe5e02fc95c8556e601a9357fef",
+    "plan_sha256": "dfa42e8f9bd0a061bfa42a52cadcfc082af09bd738fdeae7b4e83e43c872eb48",
+    "plist_sha256": "0c48e8e67dae481ca471131917fe67ad37f34734d64500c6e565221a2868ded3",
+    "receipt_sha256": "aecbbe646be276bd6ae758aa5b3230c81ddc65d68b5ee466acb69c2f4eca8d99",
+    "result_sha256": "0af11b4e2970791bdf323bc46caf29212119dce889df3ea70d3ab138fd7852f4",
+    "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+    "verification": {
+      "audit_bytes": 183335,
+      "audit_limit_bytes": 262144,
+      "consecutive_system_failures": 0,
+      "expected_runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "label_loaded": true,
+      "label_status": "present",
+      "limen_launcher_body_sha256": "27f013c183fe09611bb92be9f32dd5d11c178fb0cf49d3664fc88edafe100c06",
+      "limen_package_sha256": "d6b4d96ae3621f59b0ae6f53a59f1a7bd69571b1e43e1f423a0ebddde4b53f25",
+      "plist_sha256": "0c48e8e67dae481ca471131917fe67ad37f34734d64500c6e565221a2868ded3",
+      "python_interpreter_sha256": "b3be4099b63da4865986a3a9f2fedf15486bcd07f7bee7df8a0c32756800ced7",
+      "reviewed_runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "schema": "domus.limen_heartbeat_verification.v1",
+      "sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+      "status": "passed",
+      "surviving_process_count": 0,
+      "surviving_process_digests": [],
+      "verified": true,
+      "watchdog_absent": true,
+      "watchdog_label_status": "absent"
+    }
+  },
+  "controlled_maintenance": {
+    "clock_observation": {
+      "awake_ns": 16341510965416,
+      "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+      "continuous_ns": 16341510964708,
+      "measured": true,
+      "schema": "limen.heartbeat_clock.v1"
+    },
+    "consecutive_system_failures": 0,
+    "contract_digest": "39008ab9af067fca0d5aa65823705f543ff38fe5e02fc95c8556e601a9357fef",
+    "disabled": false,
+    "duration_ms": 19105,
+    "observed_at": "2026-10-13T19:22:32Z",
+    "observed_epoch": 1791919352.3086069,
+    "output_bytes": 889,
+    "probe": "runtime-maintenance-observation",
+    "probe_evidence": {
+      "reason_codes": [],
+      "schema": "limen.runtime_maintenance_observation.v1",
+      "status": "healthy"
+    },
+    "reason": null,
+    "receipt_sha256": "4e27cdb2a791c449d222f597d0c25bee183a99bc25dd808c0f138a7a079ecfea",
+    "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+    "runtime_sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+    "status": "passed",
+    "surviving_descendant_count": 0,
+    "whole_tick_duration_ms": 19174
+  },
+  "external_gates": {
+    "actual_native_auth_gate_receipt": "https://github.com/4444J99/limen/issues/1703#issuecomment-6150473784",
+    "native_codex_visual_policy_bypassed": false,
+    "permission_health_complete": false,
+    "provider_or_platform_gaps_preserved": true,
+    "tcc_owner": "https://github.com/4444J99/limen/issues/1703"
+  },
+  "fresh_claude_source_render_parity": {
+    "deployed_sha256": "4aa08ae41e0b4f5804ffbc2b9bf0c4a2787aa8ed46dbeabbf68bdbfc21a43c0e",
+    "observed_at": "2026-10-13T19:39:48.375255+00:00",
+    "receipt_sha256": "46023fe11f8995cec02c1b79ef13633b26199f422b42a953bb14193d7d9b05f7",
+    "render_exit": 0,
+    "source_render_equal": true,
+    "source_render_sha256": "4aa08ae41e0b4f5804ffbc2b9bf0c4a2787aa8ed46dbeabbf68bdbfc21a43c0e",
+    "target_mutated": false
+  },
+  "historical_3a3_natural_acceptance": [
+    {
+      "acceptance_sha256": "56d45c08b274468377d9886d49c1f6c8f59d24f668ebfee29a96260ff74b45f0",
+      "observed_at": "2026-10-13T17:14:10.980337+00:00",
+      "observed_identity_survivors": 0,
+      "probe": "runtime-maintenance-observation",
+      "probe_evidence": {
+        "reason_codes": [],
+        "schema": "limen.runtime_maintenance_observation.v1",
+        "status": "healthy"
+      },
+      "receipt_sha256": "9bd258b013ce2eb15412331ffb17b3b5f598200a6c8d20774fd66bde15b77b40",
+      "root_exited": true,
+      "runtime_sha": "3a3faf50401df9a1a38d1ae1fbb1d692705aff35",
+      "status": "passed",
+      "substitution_for_final_revision": false
+    },
+    {
+      "acceptance_sha256": "3458462e70be107257a2df1ba10e80510ebd3dde074d04313ecf51344d68abff",
+      "observed_at": "2026-10-13T17:23:32.110183+00:00",
+      "observed_identity_survivors": 0,
+      "probe": "dialogs-silenced",
+      "probe_evidence": {
+        "reason_codes": [
+          "malformed_claude_helper_registration",
+          "tcc_database_unavailable"
+        ],
+        "schema": "limen.dialogs_evidence.v1",
+        "status": "blocked"
+      },
+      "receipt_sha256": "959789097111f35848a204e2de633b007a8c6f56cd63a64b1d6d2b7f9d2faea1",
+      "root_exited": true,
+      "runtime_sha": "3a3faf50401df9a1a38d1ae1fbb1d692705aff35",
+      "status": "finding",
+      "substitution_for_final_revision": false
+    },
+    {
+      "acceptance_sha256": "9f6b533aacb2b55843784b39e99fa40ca384d5b3bbe45a3a40058bd287cd403d",
+      "observed_at": "2026-10-13T17:29:48.069680+00:00",
+      "observed_identity_survivors": 0,
+      "probe": "runtime-maintenance-observation",
+      "probe_evidence": {
+        "reason_codes": [],
+        "schema": "limen.runtime_maintenance_observation.v1",
+        "status": "healthy"
+      },
+      "receipt_sha256": "5e2c3b31eeb616b8cdeb2ebd0f684f5955cea3689fbe4c72583086466c574c78",
+      "root_exited": true,
+      "runtime_sha": "3a3faf50401df9a1a38d1ae1fbb1d692705aff35",
+      "status": "passed",
+      "substitution_for_final_revision": false
+    }
+  ],
+  "implementation": {
+    "accepted_runtime_sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+    "admission_store_mutated": false,
+    "all_14_reviewed_files_byte_equal": true,
+    "domus_accepted_sha": "d725441908fad64e46acec827d00c54869e7407b",
+    "domus_pr": "https://github.com/4444J99/domus-genoma-private/pull/426",
+    "installed_parity_sha256": "14b51a4602ada3b4e94a2731ffe7824f1e33c38e6762f13071f88b9aa5df3025",
+    "limen_pr": "https://github.com/4444J99/limen/pull/2861",
+    "shared_admission_pr": "https://github.com/4444J99/limen/pull/2860",
+    "source_manifest_sha256": "fbc190a7e6b1ae40df807cca51c8121e9aaa90edd31de8f8428ff4d5732de1b1",
+    "tested_head": "47fb2b23bc55ef3eac2731f8eccd40adcf075b35",
+    "tmpdir_independent_shared_admission_root": true
+  },
+  "maintenance_intervals": [
+    {
+      "awake_seconds": 926.374482417,
+      "continuous_seconds": 926.374482125,
+      "first_receipt_sha256": "4e27cdb2a791c449d222f597d0c25bee183a99bc25dd808c0f138a7a079ecfea",
+      "passed": true,
+      "same_boot_measured": true,
+      "second_receipt_sha256": "483f80a457ce55f89c79a144da321816838a446e2c44a942b9d7955a37d7830c",
+      "unchanged_allowance_seconds": 1080,
+      "wall_seconds": 926.3501200675964
+    },
+    {
+      "awake_seconds": 932.054380375,
+      "continuous_seconds": 932.05438075,
+      "first_receipt_sha256": "483f80a457ce55f89c79a144da321816838a446e2c44a942b9d7955a37d7830c",
+      "passed": true,
+      "same_boot_measured": true,
+      "second_receipt_sha256": "98dec116b0e4dfedf509e74aea436f62ca52a0d59971f70332a7a98bfba1eb58",
+      "unchanged_allowance_seconds": 1080,
+      "wall_seconds": 932.0539171695709
+    }
+  ],
+  "native_measurement_diagnostic": {
+    "helper_files_preservation_sha256": "ea03fcece3d1f483650f295da55f1768e4a65d936bc785fc6387d2f16ee18f0d",
+    "helper_files_unchanged": true,
+    "launchservices_measured": true,
+    "malformed_helpers": 0,
+    "native_job_cleanup": true,
+    "native_output_complete": true,
+    "stdout_sha256": "7a67259aae5757bc3ad771cd70126f9f5563d0b10c4bbe70074c33061f14c3c6",
+    "substitution_for_natural_acceptance": false,
+    "tcc_database_measured": true
+  },
+  "natural_acceptance": [
+    {
+      "acceptance_sha256": "4bd0368ab6974fa6f6a6e65b8ae60f5cc105b6faba45f5f07551d8b9bf2ce546",
+      "clock_observation": {
+        "awake_ns": 17832637768458,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 17832637766666,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "controller_sha256": null,
+      "duration_ms": 5516,
+      "manual_fire": false,
+      "observed_at": "2026-10-13T19:47:23Z",
+      "observed_identity_survivors": 0,
+      "observed_process_count": 2,
+      "probe": "dialogs-silenced",
+      "probe_evidence": {
+        "native_job_cleanup": true,
+        "native_output_complete": true,
+        "reason_codes": [
+          "active_managed_tcc_leak",
+          "rotating_identity_active_grants",
+          "unrelated_app_management_grants_changed",
+          "visible_app_management_path_client"
+        ],
+        "schema": "limen.dialogs_evidence.v1",
+        "status": "blocked"
+      },
+      "process_observed_at": "2026-10-13T19:47:23.580946+00:00",
+      "reason": "probe-returncode:1",
+      "receipt_sha256": "69d9cf24a8ecefbf2ed980a14370378ce5a1c78fb3b77c069f8a7bb4dfa83073",
+      "root_exited": true,
+      "root_parent_pid": 1,
+      "status": "finding",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 5785
+    },
+    {
+      "acceptance_sha256": "b73eae2f803157e220fb2b53fd2fe4a75092a16fb30bc0d640ec4549e73e85b5",
+      "clock_observation": {
+        "awake_ns": 17267885447833,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 17267885446833,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "controller_sha256": "a6d862c961385c50d7f35c1a60cbb7278375488ed3dc3ead8fd003f6828bdf2d",
+      "duration_ms": 23778,
+      "manual_fire": false,
+      "observed_at": "2026-10-13T19:37:58Z",
+      "observed_identity_survivors": 0,
+      "observed_process_count": 4,
+      "probe": "runtime-maintenance-observation",
+      "probe_evidence": {
+        "reason_codes": [],
+        "schema": "limen.runtime_maintenance_observation.v1",
+        "status": "healthy"
+      },
+      "process_observed_at": "2026-10-13T19:38:14.252135+00:00",
+      "reason": null,
+      "receipt_sha256": "483f80a457ce55f89c79a144da321816838a446e2c44a942b9d7955a37d7830c",
+      "root_exited": true,
+      "root_parent_pid": 1,
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 23867
+    },
+    {
+      "acceptance_sha256": "5c115d2da91e7687a3498b6c4d2e33e6422375308e4e2b787a6511038eeef0a3",
+      "clock_observation": {
+        "awake_ns": 18199939828208,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 18199939827583,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "controller_sha256": "524addc001d53a4c2c0bf8005dd87bf11299285fcfc13ac9037645ef4893b834",
+      "duration_ms": 19051,
+      "manual_fire": false,
+      "observed_at": "2026-10-13T19:53:30Z",
+      "observed_identity_survivors": 0,
+      "observed_process_count": 2,
+      "probe": "runtime-maintenance-observation",
+      "probe_evidence": {
+        "reason_codes": [],
+        "schema": "limen.runtime_maintenance_observation.v1",
+        "status": "healthy"
+      },
+      "process_observed_at": "2026-10-13T19:53:30.835406+00:00",
+      "reason": null,
+      "receipt_sha256": "98dec116b0e4dfedf509e74aea436f62ca52a0d59971f70332a7a98bfba1eb58",
+      "root_exited": true,
+      "root_parent_pid": 1,
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 19123
+    }
+  ],
+  "observed_at": "2026-10-13T19:54:30.187282+00:00",
+  "original_watch": {
+    "anchor": "2026-10-13T03:02:10.931617Z",
+    "anchor_receipt_sha256": "5ad3d12c5a5c002640de5321a2424890cade2932ece58d1ebf88d1f9bfa6f4cb",
+    "anchor_reset": false,
+    "direct_task_message_result": "tool rejected: existing watch already has an active writer",
+    "duplicate_monitor_created": false,
+    "existing_watch_active": true,
+    "final_fingerprint_published_owner_receipt": "https://github.com/4444J99/limen/issues/2848#issuecomment-6153400023",
+    "full_24_hours_completed": false,
+    "historical_maintenance_reason_payloads_unavailable": 18,
+    "not_before_end": "2026-10-14T03:02:10.931617Z",
+    "old_dialog_timeout_cleanup": "unknown; never upgraded to zero",
+    "original_early_coverage_gap": "03:02-09:24 not retained in bounded historical receipt window"
+  },
+  "owner_url": "https://github.com/4444J99/limen/issues/2848",
+  "physical_free_bytes_observed": 37356617728,
+  "physical_recovery_attributed_to_this_routing_change": false,
+  "pool_controller_sha256": "524addc001d53a4c2c0bf8005dd87bf11299285fcfc13ac9037645ef4893b834",
+  "pool_observation": {
+    "census_complete": true,
+    "census_errors": [],
+    "census_files_scanned": 114022,
+    "failures": [],
+    "maintenance_target_percent": 70,
+    "migration_diagnostics": [],
+    "pool": {
+      "allowed": true,
+      "available_growth_bytes": 37290643456,
+      "denial_reasons": [],
+      "filesystem_free_bytes": 37357752320,
+      "max_age_seconds": 120,
+      "observation_age_seconds": 0,
+      "observed_at": "2026-10-13T19:53:46.711603+00:00",
+      "outstanding_growth_bytes": 67108864,
+      "pool_mode": "shared_disk_aware",
+      "required_reserve_bytes": 0,
+      "reservation_count": 1,
+      "reserve_components": {
+        "apfs_churn_bytes": 0,
+        "custody_and_rollback_staging_bytes": 0,
+        "peak_concurrent_task_bytes": 0,
+        "projected_swap_expansion_bytes": 0,
+        "telemetry_error_bytes": 0,
+        "updater_claim_bytes": 0
+      },
+      "schema": "limen.runtime_pool.v1",
+      "storage_claim_count": 0
+    },
+    "pool_mode": "shared_disk_aware",
+    "schema": "domus.agent_runtime.v2",
+    "total_bytes_to_target": 0,
+    "total_headroom_bytes": 37290643456,
+    "total_size_bytes": 21975549043,
+    "total_utilization_ratio": 0.3707940077873367,
+    "warnings": []
+  },
+  "preservation": {
+    "all_16_probes_retained": true,
+    "baseline_or_grants_reset": false,
+    "before_rollout_receipts_privately_retained": true,
+    "cadences_and_limits_unchanged": true,
+    "dirty_divergent_primary_checkouts_preserved": true,
+    "foreign_processes_signaled": false,
+    "native_history_deletion": false,
+    "retained_source_worktree_owner": "https://github.com/4444J99/limen/issues/2848"
+  },
+  "report_only_followup": {
+    "reinstallation_required": false,
+    "runtime_source_changed": false
+  },
+  "retained_original_acceptance": {
+    "claude": {
+      "application_owned_state_preserved": true,
+      "hook_sha256": "1f8c7b3ec350c61ff0f30f8ea6bc7e2eb4ea99b68c833e4e0919abf20bfe09f3",
+      "instruction_sha256": "4aa08ae41e0b4f5804ffbc2b9bf0c4a2787aa8ed46dbeabbf68bdbfc21a43c0e",
+      "parity_observed_at": "2026-10-13T01:58:29.708681Z",
+      "reviewed_targets_only": true,
+      "second_apply_no_change": true,
+      "source_render_equal": true
+    },
+    "corpus": {
+      "april_may_zero_observed_is_absence_of_failures": false,
+      "correction_lineage_preserved": true,
+      "exact_remote_candidates_linked": 264,
+      "ledger": "docs/reviews/operating-system-2026-04-12-2026-10-13.json",
+      "opaque_and_undated_boundaries_preserved": true,
+      "provider_count": 15,
+      "record_observations": 2366993,
+      "redaction_passed": true,
+      "remote_candidates": 265,
+      "unavailable_remote": "Historical Limen PR 10 HTTP404"
+    },
+    "native_visual": {
+      "bypass_used": false,
+      "codex_target_specific_acceptance": false,
+      "domus_agent_host_route_passed": true,
+      "external_denial": "Platform computer-use safety policy forbids com.openai.codex",
+      "native_textedit_smoke_passed": true,
+      "receipt": "docs/reviews/native-visual-20261012.json"
+    },
+    "report": "docs/reviews/shared-agent-os-final-acceptance-20261013.json",
+    "sha256": "827c04b20e438206802d4fa88e373c19b10e423e30835a455de39755a6017271",
+    "worker_deployment": {
+      "accepted_source_sha": "85092483d17b40766877be04ef451db52aecf26d",
+      "allowance_denial": "execution_priority_not_approved",
+      "allowance_status": 409,
+      "authenticated_source_version_readback": true,
+      "bounded_deploy_seconds": 28.66,
+      "cloudflare_version": "e1d715ed-0127-42d9-a4f3-272ca6fe1c0a",
+      "config_binding_and_ten_secret_identities_preserved": true,
+      "deploy_exit": 0,
+      "live_policy_fingerprint_preserved": "0f9ea6155e0c5d1c0a823a91d6c8fa01f3d8126c9578a48df803e2501aec0587",
+      "policy_gate_owner_receipt": "https://github.com/4444J99/ops-witness/issues/6#issuecomment-6137111825",
+      "policy_replacement_performed": false,
+      "private_receipt_sha256": {
+        "deploy-850-receipt.json": "a9883524d07c7edb8a7db34f3c4f4c362c2cc939f367638ec95720b6f883bba9",
+        "postdeploy-receipt.json": "d58ed3d5b3f43469427cb9097afcc9a80f2ad8436aa2e4966251177594947b44"
+      },
+      "public_receipt": "https://github.com/4444J99/limen/pull/2840#issuecomment-6137102003",
+      "rollback_version_retained": "15e11888-cc4b-4aba-a08e-ce2416c91a92",
+      "run_or_reservation_created": false,
+      "unauthenticated_status": 401
+    }
+  },
+  "scheduled_execution_receipts": [
+    {
+      "clock_observation": {
+        "awake_ns": 16341510965416,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 16341510964708,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "consecutive_system_failures": 0,
+      "contract_digest": "39008ab9af067fca0d5aa65823705f543ff38fe5e02fc95c8556e601a9357fef",
+      "disabled": false,
+      "duration_ms": 19105,
+      "observed_at": "2026-10-13T19:22:32Z",
+      "observed_epoch": 1791919352.3086069,
+      "output_bytes": 889,
+      "probe": "runtime-maintenance-observation",
+      "probe_evidence": {
+        "reason_codes": [],
+        "schema": "limen.runtime_maintenance_observation.v1",
+        "status": "healthy"
+      },
+      "reason": null,
+      "receipt_sha256": "4e27cdb2a791c449d222f597d0c25bee183a99bc25dd808c0f138a7a079ecfea",
+      "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "runtime_sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 19174
+    },
+    {
+      "clock_observation": {
+        "awake_ns": 16540834313083,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 16540834311791,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "consecutive_system_failures": 0,
+      "contract_digest": "39008ab9af067fca0d5aa65823705f543ff38fe5e02fc95c8556e601a9357fef",
+      "disabled": false,
+      "duration_ms": 4423,
+      "observed_at": "2026-10-13T19:25:51Z",
+      "observed_epoch": 1791919551.6327229,
+      "output_bytes": 313,
+      "probe": "host-pressure-freshness",
+      "probe_evidence": null,
+      "reason": null,
+      "receipt_sha256": "6bfbcae77bffd282a5a9c7962199567fcfc702c3feda351ca1f05c4aa7934b95",
+      "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "runtime_sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 4537
+    },
+    {
+      "clock_observation": {
+        "awake_ns": 16725460018583,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 16725460017500,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "consecutive_system_failures": 0,
+      "contract_digest": "39008ab9af067fca0d5aa65823705f543ff38fe5e02fc95c8556e601a9357fef",
+      "disabled": false,
+      "duration_ms": 131,
+      "observed_at": "2026-10-13T19:28:56Z",
+      "observed_epoch": 1791919736.259382,
+      "output_bytes": 690,
+      "probe": "background-items-census",
+      "probe_evidence": null,
+      "reason": null,
+      "receipt_sha256": "572c8893fec879c2adb9773b77f200aa95e4bacdfa3d403c88610e77113ec463",
+      "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "runtime_sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 215
+    },
+    {
+      "clock_observation": {
+        "awake_ns": 16905768243291,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 16905768242416,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "consecutive_system_failures": 0,
+      "contract_digest": "39008ab9af067fca0d5aa65823705f543ff38fe5e02fc95c8556e601a9357fef",
+      "disabled": false,
+      "duration_ms": 1002,
+      "observed_at": "2026-10-13T19:31:56Z",
+      "observed_epoch": 1791919916.5684679,
+      "output_bytes": 76,
+      "probe": "notification-registry-parity",
+      "probe_evidence": null,
+      "reason": null,
+      "receipt_sha256": "630d857bc673638525a1c193dd0a40a14838a96f9aa9eb0607bcae8bd9c7a0d1",
+      "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "runtime_sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 1081
+    },
+    {
+      "clock_observation": {
+        "awake_ns": 17086985599916,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 17086985598750,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "consecutive_system_failures": 0,
+      "contract_digest": "39008ab9af067fca0d5aa65823705f543ff38fe5e02fc95c8556e601a9357fef",
+      "disabled": false,
+      "duration_ms": 174,
+      "observed_at": "2026-10-13T19:34:57Z",
+      "observed_epoch": 1791920097.7588701,
+      "output_bytes": 339,
+      "probe": "sensor-canary",
+      "probe_evidence": null,
+      "reason": "probe-returncode:1",
+      "receipt_sha256": "92321c911212672128edfd676dcacb46c8a541e5adab0629bbcd21e55eaec519",
+      "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "runtime_sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+      "status": "finding",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 757
+    },
+    {
+      "clock_observation": {
+        "awake_ns": 17267885447833,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 17267885446833,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "consecutive_system_failures": 0,
+      "contract_digest": "39008ab9af067fca0d5aa65823705f543ff38fe5e02fc95c8556e601a9357fef",
+      "disabled": false,
+      "duration_ms": 23778,
+      "observed_at": "2026-10-13T19:37:58Z",
+      "observed_epoch": 1791920278.658727,
+      "output_bytes": 889,
+      "probe": "runtime-maintenance-observation",
+      "probe_evidence": {
+        "reason_codes": [],
+        "schema": "limen.runtime_maintenance_observation.v1",
+        "status": "healthy"
+      },
+      "reason": null,
+      "receipt_sha256": "483f80a457ce55f89c79a144da321816838a446e2c44a942b9d7955a37d7830c",
+      "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "runtime_sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 23867
+    },
+    {
+      "clock_observation": {
+        "awake_ns": 17471894169916,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 17471894169041,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "consecutive_system_failures": 0,
+      "contract_digest": "39008ab9af067fca0d5aa65823705f543ff38fe5e02fc95c8556e601a9357fef",
+      "disabled": false,
+      "duration_ms": 179,
+      "observed_at": "2026-10-13T19:41:22Z",
+      "observed_epoch": 1791920482.667392,
+      "output_bytes": 49,
+      "probe": "orphan-watcher",
+      "probe_evidence": null,
+      "reason": null,
+      "receipt_sha256": "7a2c996b2c514ba6afe83a8042bd0869f78fffeabc6854db3453199da3a05b9a",
+      "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "runtime_sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 251
+    },
+    {
+      "clock_observation": {
+        "awake_ns": 17652279383166,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 17652279382000,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "consecutive_system_failures": 0,
+      "contract_digest": "39008ab9af067fca0d5aa65823705f543ff38fe5e02fc95c8556e601a9357fef",
+      "disabled": false,
+      "duration_ms": 133,
+      "observed_at": "2026-10-13T19:44:23Z",
+      "observed_epoch": 1791920663.052375,
+      "output_bytes": 492,
+      "probe": "harness-root-probe",
+      "probe_evidence": null,
+      "reason": null,
+      "receipt_sha256": "19736ebadd00f39d24c20890c5d63cbc24b9802846d180237a404672a2e7c129",
+      "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "runtime_sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 216
+    },
+    {
+      "clock_observation": {
+        "awake_ns": 17832637768458,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 17832637766666,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "consecutive_system_failures": 0,
+      "contract_digest": "39008ab9af067fca0d5aa65823705f543ff38fe5e02fc95c8556e601a9357fef",
+      "disabled": false,
+      "duration_ms": 5516,
+      "observed_at": "2026-10-13T19:47:23Z",
+      "observed_epoch": 1791920843.4106328,
+      "output_bytes": 2694,
+      "probe": "dialogs-silenced",
+      "probe_evidence": {
+        "native_job_cleanup": true,
+        "native_output_complete": true,
+        "reason_codes": [
+          "active_managed_tcc_leak",
+          "rotating_identity_active_grants",
+          "unrelated_app_management_grants_changed",
+          "visible_app_management_path_client"
+        ],
+        "schema": "limen.dialogs_evidence.v1",
+        "status": "blocked"
+      },
+      "reason": "probe-returncode:1",
+      "receipt_sha256": "69d9cf24a8ecefbf2ed980a14370378ce5a1c78fb3b77c069f8a7bb4dfa83073",
+      "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "runtime_sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+      "status": "finding",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 5785
+    },
+    {
+      "clock_observation": {
+        "awake_ns": 18018549076541,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 18018549075166,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "consecutive_system_failures": 0,
+      "contract_digest": "39008ab9af067fca0d5aa65823705f543ff38fe5e02fc95c8556e601a9357fef",
+      "disabled": false,
+      "duration_ms": 968,
+      "observed_at": "2026-10-13T19:50:29Z",
+      "observed_epoch": 1791921029.321814,
+      "output_bytes": 483,
+      "probe": "live-checkout-currency",
+      "probe_evidence": null,
+      "reason": "probe-returncode:1",
+      "receipt_sha256": "d828860b4c86f8bac4fd48f202980d65b15485c3486beb9fb9eebdeb4ee9d542",
+      "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "runtime_sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+      "status": "finding",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 1306
+    },
+    {
+      "clock_observation": {
+        "awake_ns": 18199939828208,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 18199939827583,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "consecutive_system_failures": 0,
+      "contract_digest": "39008ab9af067fca0d5aa65823705f543ff38fe5e02fc95c8556e601a9357fef",
+      "disabled": false,
+      "duration_ms": 19051,
+      "observed_at": "2026-10-13T19:53:30Z",
+      "observed_epoch": 1791921210.712644,
+      "output_bytes": 889,
+      "probe": "runtime-maintenance-observation",
+      "probe_evidence": {
+        "reason_codes": [],
+        "schema": "limen.runtime_maintenance_observation.v1",
+        "status": "healthy"
+      },
+      "reason": null,
+      "receipt_sha256": "98dec116b0e4dfedf509e74aea436f62ca52a0d59971f70332a7a98bfba1eb58",
+      "runtime_digest": "e040ae27d70e7dbdc4080d0c286ceee7e26823169134849fdeba987dff7d0df8",
+      "runtime_sha": "dcb273386f48a5836256c9033664ed71d7f36b4f",
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 19123
+    }
+  ],
+  "schema": "limen.shared_os_heartbeat_acceptance.v1",
+  "verification": {
+    "api_passed": 52,
+    "cheap_gates_passed": 14,
+    "cli_existing_skips": 70,
+    "cli_passed": 8639,
+    "cli_subtests_passed": 8,
+    "credential_wall_exit": 0,
+    "credential_wall_registered_atoms": 32,
+    "earlier_failed_runs_preserved": true,
+    "head": "47fb2b23bc55ef3eac2731f8eccd40adcf075b35",
+    "heavy_batch_seconds": 289.694322542,
+    "heavy_lease_released": true,
+    "heavy_log_sha256": "6c2604a9184145ded94f0430c3da51af2b8b6e2fe5e497336ca420bbbcadb099",
+    "implicated_corrective_cheap_shards_passed": 5,
+    "native_job_regressions_passed": 18,
+    "normal_shared_admission_and_flock": true,
+    "observer_census_failure": "Darwin libproc EPERM on transient ps verifier child; active-job inspection now uses native reads",
+    "web_build": "passed"
+  }
+}
