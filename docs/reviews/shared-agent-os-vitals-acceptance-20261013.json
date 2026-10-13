@@ -1,4 +1,12 @@
 {
+  "acceptance_predicates": {
+    "actual_cleanup_admission_succeeded": true,
+    "final_runtime_consecutive_cadence_verified": true,
+    "final_runtime_natural_dialog_execution_verified": true,
+    "final_runtime_natural_maintenance_verified": true,
+    "full_original_24_hour_window_claimed": false,
+    "full_permission_health_claimed": false
+  },
   "accepted_scheduled_receipts": [
     {
       "clock_observation": {
@@ -79,6 +87,69 @@
       "status": "passed",
       "surviving_descendant_count": 0,
       "whole_tick_duration_ms": 16244
+    },
+    {
+      "clock_observation": {
+        "awake_ns": 23803325286291,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 23803325285541,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "consecutive_system_failures": 0,
+      "contract_digest": "4d69d3595afb38b915222edbe489942ed7500a47819c73b4e76aacb66d2e7fb5",
+      "disabled": false,
+      "duration_ms": 4908,
+      "observed_at": "2026-10-13T21:26:54Z",
+      "observed_epoch": 1791926814.1311932,
+      "probe": "dialogs-silenced",
+      "probe_evidence": {
+        "native_job_cleanup": true,
+        "native_output_complete": true,
+        "reason_codes": [
+          "active_managed_tcc_leak",
+          "rotating_identity_active_grants",
+          "unrelated_app_management_grants_changed",
+          "visible_app_management_path_client"
+        ],
+        "schema": "limen.dialogs_evidence.v1",
+        "status": "blocked"
+      },
+      "reason": "probe-returncode:1",
+      "receipt_sha256": "9429739b8487c3e374eb282b4c8c2c4baeed72f8661d785371c2da428cc8212d",
+      "runtime_digest": "11130d94a33718b21531a5a79f1642ffca9ae7a2609d46c467b56f79a0ef9d16",
+      "runtime_sha": "b7a61c0bfb87926518f4074af446bed49b07ab8d",
+      "status": "finding",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 5139
+    },
+    {
+      "clock_observation": {
+        "awake_ns": 24170234744708,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 24170234744208,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "consecutive_system_failures": 0,
+      "contract_digest": "4d69d3595afb38b915222edbe489942ed7500a47819c73b4e76aacb66d2e7fb5",
+      "disabled": false,
+      "duration_ms": 17764,
+      "observed_at": "2026-10-13T21:33:01Z",
+      "observed_epoch": 1791927181.041548,
+      "probe": "runtime-maintenance-observation",
+      "probe_evidence": {
+        "reason_codes": [],
+        "schema": "limen.runtime_maintenance_observation.v1",
+        "status": "healthy"
+      },
+      "reason": null,
+      "receipt_sha256": "662a1379b5e507687952d76034ea128190ba1892bd8c36dadfdb9d946c30ea79",
+      "runtime_digest": "11130d94a33718b21531a5a79f1642ffca9ae7a2609d46c467b56f79a0ef9d16",
+      "runtime_sha": "b7a61c0bfb87926518f4074af446bed49b07ab8d",
+      "status": "passed",
+      "surviving_descendant_count": 0,
+      "whole_tick_duration_ms": 17854
     }
   ],
   "activation": {
@@ -275,6 +346,61 @@
     "source_manifest_sha256": "ac20e350f0d1406b13f26b6415ae50956f8307a83c270d112f1d80e2d286d0b5",
     "tested_head": "e4c55a85860e44194b2ad52dabeb2197e5b65aad"
   },
+  "independent_natural_process_captures": [
+    {
+      "acceptance_sha256": "a8080309f7a255fc591b3c8fe360246924c2076daf27e5ac8f559d60e4b3bb1d",
+      "clock_observation": {
+        "awake_ns": 23803325286291,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 23803325285541,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "manual_fire": false,
+      "observed_identity_survivors": 0,
+      "probe": "dialogs-silenced",
+      "probe_evidence": {
+        "native_job_cleanup": true,
+        "native_output_complete": true,
+        "reason_codes": [
+          "active_managed_tcc_leak",
+          "rotating_identity_active_grants",
+          "unrelated_app_management_grants_changed",
+          "visible_app_management_path_client"
+        ],
+        "schema": "limen.dialogs_evidence.v1",
+        "status": "blocked"
+      },
+      "process_observed_at": "2026-10-13T21:26:54.135060+00:00",
+      "receipt_sha256": "9429739b8487c3e374eb282b4c8c2c4baeed72f8661d785371c2da428cc8212d",
+      "root_exited": true,
+      "root_parent_pid": 1,
+      "surviving_descendant_count": 0
+    },
+    {
+      "acceptance_sha256": "dd9faee1c25b5c7a339968bb517ba94b298b1794c1216b56b2c6be273d16fd05",
+      "clock_observation": {
+        "awake_ns": 24170234744708,
+        "boot_id": "349a85c345fe53124cdb5b7a0c738316eb7157bbdea297067e1b80d7d349a422",
+        "continuous_ns": 24170234744208,
+        "measured": true,
+        "schema": "limen.heartbeat_clock.v1"
+      },
+      "manual_fire": false,
+      "observed_identity_survivors": 0,
+      "probe": "runtime-maintenance-observation",
+      "probe_evidence": {
+        "reason_codes": [],
+        "schema": "limen.runtime_maintenance_observation.v1",
+        "status": "healthy"
+      },
+      "process_observed_at": "2026-10-13T21:33:00.908804+00:00",
+      "receipt_sha256": "662a1379b5e507687952d76034ea128190ba1892bd8c36dadfdb9d946c30ea79",
+      "root_exited": true,
+      "root_parent_pid": 1,
+      "surviving_descendant_count": 0
+    }
+  ],
   "independent_pressure_origin_inspection": {
     "observed_fire_at": "2026-10-13T21:05:31Z",
     "receipt_not_replaced_or_manually_fired": true,
@@ -282,23 +408,41 @@
     "started_at": "2026-10-13T21:06:18Z",
     "status": "missed_observation_window"
   },
-  "observed_at": "2026-10-13T21:22:52.141836+00:00",
+  "maintenance_intervals": [
+    {
+      "allowance_seconds": 1080,
+      "awake_seconds": 923.99325375,
+      "first_receipt_sha256": "52fbffa710c398b4249d5c183dfa7506523b1d0f1d1b73e3adaf9da1aaa897b2",
+      "last_receipt_sha256": "9a578880456608792a5530637397417e7ff4c7dc9195655f2ce760737008cf03",
+      "passed": true,
+      "same_boot_measured": true
+    },
+    {
+      "allowance_seconds": 1080,
+      "awake_seconds": 923.940651833,
+      "first_receipt_sha256": "9a578880456608792a5530637397417e7ff4c7dc9195655f2ce760737008cf03",
+      "last_receipt_sha256": "662a1379b5e507687952d76034ea128190ba1892bd8c36dadfdb9d946c30ea79",
+      "passed": true,
+      "same_boot_measured": true
+    }
+  ],
+  "observed_at": "2026-10-13T21:36:30.324943+00:00",
   "owner_url": "https://github.com/4444J99/limen/issues/2848",
   "physical_recovery_attributed_to_policy_change": false,
   "pool_snapshot": {
     "census_complete": true,
     "census_errors": [],
-    "census_files_scanned": 114082,
+    "census_files_scanned": 114084,
     "failures": [],
     "migration_diagnostics": [],
     "pool": {
       "allowed": true,
-      "available_growth_bytes": 29172150272,
+      "available_growth_bytes": 29104730112,
       "denial_reasons": [],
-      "filesystem_free_bytes": 29306368000,
+      "filesystem_free_bytes": 29238947840,
       "max_age_seconds": 120,
       "observation_age_seconds": 0,
-      "observed_at": "2026-10-13T21:17:49.034253+00:00",
+      "observed_at": "2026-10-13T21:33:15.859196+00:00",
       "outstanding_growth_bytes": 134217728,
       "pool_mode": "shared_disk_aware",
       "required_reserve_bytes": 0,
@@ -317,8 +461,8 @@
     "pool_mode": "shared_disk_aware",
     "schema": "domus.agent_runtime.v2",
     "total_bytes_to_target": 0,
-    "total_headroom_bytes": 29172150272,
-    "total_size_bytes": 22014869984,
+    "total_headroom_bytes": 29104730112,
+    "total_size_bytes": 22018420091,
     "warnings": []
   },
   "pool_snapshot_is_current_admission_clearance": false,
