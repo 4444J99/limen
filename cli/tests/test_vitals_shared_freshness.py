@@ -108,15 +108,20 @@ def test_explicit_admission_root_contains_its_own_warning_history(tmp_path, monk
     controller = host_admission.AdmissionController(root=tmp_path / "isolated")
     monkeypatch.setattr(host_admission, "collect_pressure", lambda **kw: observed.append(kw) or {})
     assert controller.pressure_probe() == {}
-    assert observed == [{"state_root": controller.root}]
+    assert observed == [{"state_root": controller.root, "record": True}]
     assert original is not host_admission.collect_pressure
 
 
-def test_admission_records_pressure_without_shedding_processes(monkeypatch):
+@pytest.mark.parametrize("record", [False, True])
+def test_pressure_collection_records_only_explicit_admission_observations(monkeypatch, record):
     calls = []
     monkeypatch.setattr(vitals, "beat_gate", lambda **kw: calls.append(kw) or {"action": "throttle"})
     monkeypatch.setattr(host_admission, "_backblaze_observation", lambda _errors: (0, 0))
     monkeypatch.setattr(host_admission, "_swap_observation", lambda _errors: (0, 16 * 2**30))
     monkeypatch.setattr(host_admission, "_disk_observation", lambda _errors: [0, 0])
-    assert host_admission.collect_pressure()["vitals_action"] == "throttle"
-    assert calls == [{"shed": False, "record": True}]
+    if record:
+        result = host_admission.collect_pressure(record=True)
+    else:
+        result = host_admission.collect_pressure()
+    assert result["vitals_action"] == "throttle"
+    assert calls == [{"shed": False, "record": record}]

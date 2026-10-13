@@ -553,8 +553,8 @@ def _disk_observation(errors: list[str]) -> list[float] | None:
     return samples[-2:]
 
 
-def collect_pressure(*, state_root: Path | None = None) -> dict[str, Any]:
-    """Collect bounded pressure and record shared warning history, never shed peers."""
+def collect_pressure(*, state_root: Path | None = None, record: bool = False) -> dict[str, Any]:
+    """Collect pressure; only admission's explicit record=True writes history."""
 
     errors: list[str] = []
 
@@ -563,9 +563,9 @@ def collect_pressure(*, state_root: Path | None = None) -> dict[str, Any]:
             from limen.vigilia.vitals import beat_gate
 
             if state_root is None:
-                vitals = beat_gate(shed=False, record=True)
+                vitals = beat_gate(shed=False, record=record)
             else:
-                vitals = beat_gate(shed=False, record=True, state_root=state_root)
+                vitals = beat_gate(shed=False, record=record, state_root=state_root)
             return str(vitals.get("action") or "unknown")
         except Exception:  # pragma: no cover - defensive boundary around host sensor
             errors.append("vitals-sensor")
@@ -634,7 +634,9 @@ class AdmissionController:
         self.process_cwd_probe = process_cwd_probe
         self.descendant = descendant
         self.pressure_probe = (
-            (lambda: collect_pressure(state_root=self.root)) if pressure_probe is collect_pressure else pressure_probe
+            (lambda: collect_pressure(state_root=self.root, record=True))
+            if pressure_probe is collect_pressure
+            else pressure_probe
         )
         self.thresholds = thresholds or _thresholds()
 
