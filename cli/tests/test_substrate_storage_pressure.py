@@ -5,6 +5,7 @@ import json
 import subprocess
 from pathlib import Path
 
+from limen.runtime_pool import RuntimePool
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "substrate-storage-pressure.py"
@@ -59,7 +60,17 @@ def test_build_snapshot_classifies_configured_bucket(monkeypatch, tmp_path):
     )
     monkeypatch.setattr(mod, "RECLAIM_LOGS", {})
     monkeypatch.setattr(mod, "disk_free_gib", lambda: 50.0)
-    monkeypatch.setattr(mod, "current_required_free_gib", lambda: 200.0)
+    pool = {
+        "schema": "limen.runtime_pool.v1",
+        "pool_mode": "shared_disk_aware",
+        "filesystem_free_bytes": 50 * 1024**3,
+        "required_reserve_bytes": 200 * 1024**3,
+        "outstanding_growth_bytes": 2 * 1024**3,
+        "available_growth_bytes": -152 * 1024**3,
+        "allowed": False,
+        "denial_reasons": ["shared_pool_exhausted"],
+    }
+    monkeypatch.setattr(RuntimePool, "observe", lambda _self, path: pool)
     monkeypatch.setattr(
         mod,
         "worktree_lifecycle_summary",
@@ -80,7 +91,9 @@ def test_build_snapshot_classifies_configured_bucket(monkeypatch, tmp_path):
     snapshot = mod.build_snapshot()
 
     assert snapshot["status"] == "needs-owner-gates"
-    assert snapshot["resource_headroom_gib"] == -150.0
+    # Consume the shared envelope, including outstanding claims exactly once.
+    assert snapshot["resource_headroom_gib"] == -152.0
+    assert snapshot["shared_runtime_pool"] == pool
     assert snapshot["buckets"][0]["id"] == "bucket"
     assert snapshot["buckets"][0]["exists"] is True
     assert snapshot["worktree_lifecycle"]["summary"] == "0 debt roots / 2 scanned; 0 reapable roots"
@@ -130,7 +143,16 @@ def test_opencode_bucket_reflects_verified_intake(monkeypatch, tmp_path):
     )
     monkeypatch.setattr(mod, "RECLAIM_LOGS", {})
     monkeypatch.setattr(mod, "disk_free_gib", lambda: 90.0)
-    monkeypatch.setattr(mod, "current_required_free_gib", lambda: 200.0)
+    monkeypatch.setattr(
+        RuntimePool,
+        "observe",
+        lambda _self, path: {
+            "required_reserve_bytes": 200 * 1024**3,
+            "available_growth_bytes": -110 * 1024**3,
+            "allowed": False,
+            "denial_reasons": ["shared_pool_exhausted"],
+        },
+    )
     monkeypatch.setattr(mod, "worktree_lifecycle_summary", lambda: {"present": True, "ok": True})
 
     snapshot = mod.build_snapshot()

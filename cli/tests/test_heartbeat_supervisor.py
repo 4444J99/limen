@@ -63,6 +63,18 @@ def test_contract_is_a_one_shot_resource_contract():
     assert "--no-write" in commands["tcc-track-c"]
 
 
+@pytest.mark.parametrize("already_written", [False, True])
+def test_whole_tick_timeout_counts_once_and_retains_three_failure_switch(tmp_path, monkeypatch, already_written):
+    _state(tmp_path, failures=3 if already_written else 2)
+    disabled = []
+    monkeypatch.setattr(heartbeat, "_disable_launch_agent", lambda: disabled.append(True))
+    receipt = heartbeat.record_tick_timeout(ROOT, tmp_path, 115000, failures_before=2)
+    assert receipt["status"] == "failed" and receipt["reason"] == "tick_wall_timeout"
+    assert receipt["duration_ms"] == 115000
+    assert receipt["consecutive_system_failures"] == 3 and receipt["disabled"]
+    assert disabled == [True]
+
+
 def test_maintenance_cadence_survives_startup_backlog_without_starving_existing_probes():
     from collections import defaultdict
 

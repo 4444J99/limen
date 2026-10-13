@@ -27,6 +27,7 @@ no path here that reads a secret value.
 Exit 0 from --check  ⟺  every credential/secret in use has a registered home (nothing hangs in a
 chat or a head).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -67,14 +68,23 @@ def _load_default_map() -> list[dict]:
 LANE_META: dict[str, dict] = {
     "gemini": {"issue": "#265", "hand": "his — vendor account re-mint; verify current provider state at action time"},
     "gh/copilot/jules": {"issue": "—", "hand": "none — keyring-derived, self-heals every beat (#251)"},
-    "cloudflare (wrangler deploy)": {"issue": "—", "hand": "none — token valid + headless via cf-wrangler.sh (#518); phantom re-mint lever retired 2026-07-01"},
-    "cloudflare (a-i-chat--exporter CI secret)": {"issue": "—", "hand": "none — organ-owned gh_secret sink; lands once op can read (gated on the non-blocking SA vault-grant on #320)"},
+    "cloudflare (wrangler deploy)": {
+        "issue": "—",
+        "hand": "none — token valid + headless via cf-wrangler.sh (#518); phantom re-mint lever retired 2026-07-01",
+    },
+    "cloudflare (a-i-chat--exporter CI secret)": {
+        "issue": "—",
+        "hand": "none — organ-owned gh_secret sink; lands once op can read (gated on the non-blocking SA vault-grant on #320)",
+    },
     "gmail (C_MAIL app-password)": {"issue": "#261", "hand": "reroutable — `op read … | gh secret set`"},
     "ianva (cloud connector bearer)": {"issue": "#263", "hand": "his — claude.ai account edit"},
     "claude": {"issue": "—", "hand": "none — owned by the Rung-0 credential-race self-heal"},
     "codex/opencode (openai)": {"issue": "—", "hand": "none — codex authenticates via ChatGPT OAuth"},
     "opencode (openrouter)": {"issue": "—", "hand": "none — free model / own auth"},
-    "vox (elevenlabs voice clone)": {"issue": "#898", "hand": "his — vendor MINT (create ElevenLabs API key); parked enabled=False until minted (vox mock is default)"},
+    "vox (elevenlabs voice clone)": {
+        "issue": "#898",
+        "hand": "his — vendor MINT (create ElevenLabs API key); parked enabled=False until minted (vox mock is default)",
+    },
 }
 
 # CI / runtime secrets — NOT hydration lanes; their home is GitHub Actions / GCP Secret Manager /
@@ -85,7 +95,7 @@ CI_SECRETS: list[dict] = [
     {
         "name": "OPS_SOURCE_GITHUB_TOKEN",
         "home": "GitHub Actions secret in 4444J99/limen; existing trusted gh credential, no new credential minted",
-        "used": "accepted ops reusable workflow private-source checkout; persist-credentials false",
+        "used": "accepted ops reusable workflow and exact pinned Jules witness private-source checkout; persist-credentials false",
         "hand": "none — exact recovery commit read verified before installation on 2026-10-09",
         "issue": "ops#6 / ops#30",
     },
@@ -198,8 +208,7 @@ live pass/fail. Pinned. Discussions are disabled on this repo, so this pinned is
 def wall_body() -> str:
     dm = _load_default_map()
     lines = [_HEADER, "", "## Hydration lanes — live from `creds-hydrate.py` `DEFAULT_MAP`", ""]
-    lines += ["| Lane | Home | Env var(s) | Probe | Whose hand | Issue |",
-              "|---|---|---|---|---|---|"]
+    lines += ["| Lane | Home | Env var(s) | Probe | Whose hand | Issue |", "|---|---|---|---|---|---|"]
     for e in dm:
         lane = str(e.get("lane", "?"))
         if not e.get("enabled"):
@@ -220,8 +229,7 @@ def wall_body() -> str:
         lines.append(f"| {lane} | {home} | {env} | {probe} | {meta.get('hand', '—')} | {meta.get('issue', '—')} |")
 
     lines += ["", "## CI / runtime secrets — GitHub Actions · GCP Secret Manager · 1Password SA", ""]
-    lines += ["| Secret | Home | Used by | Whose hand | Issue |",
-              "|---|---|---|---|---|"]
+    lines += ["| Secret | Home | Used by | Whose hand | Issue |", "|---|---|---|---|---|"]
     for s in CI_SECRETS:
         lines.append(f"| `{s['name']}` | {s['home']} | {s['used']} | {s['hand']} | {s['issue']} |")
 

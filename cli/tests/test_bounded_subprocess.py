@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import os
+import ctypes
+import errno
+import json
 import signal
 import subprocess
 import sys
 import time
+from types import SimpleNamespace
 from pathlib import Path
 
 import pytest
@@ -14,15 +18,119 @@ from limen import bounded_subprocess
 from limen.bounded_subprocess import BoundedSubprocessError, run_bounded_subprocess
 
 
+def test_spawn_bootstrap_preserves_native_context_and_closes_inherited_handles(tmp_path, monkeypatch):
+    captured = []
+    real_popen = subprocess.Popen
+
+    def capture(*args, **kwargs):
+        captured.append(kwargs)
+        return real_popen(*args, **kwargs)
+
+    monkeypatch.setattr(bounded_subprocess.subprocess, "Popen", capture)
+    with (tmp_path / "private-handle").open("w") as private:
+        os.set_inheritable(private.fileno(), True)
+        script = """
+import json, os, resource, sys
+try:
+    os.fstat(int(sys.argv[1]))
+    inherited = True
+except OSError:
+    inherited = False
+print(json.dumps({'inherited': inherited, 'group': os.getpgrp() == os.getpid(),
+                  'cwd': os.getcwd(), 'stdin': sys.stdin.read(), 'env': os.environ['BOOTSTRAP_TEST'],
+                  'cpu': resource.getrlimit(resource.RLIMIT_CPU)[0]}))
+"""
+        result = run_bounded_subprocess(
+            [sys.executable, "-c", script, str(private.fileno())],
+            cwd=tmp_path,
+            env={**os.environ, "BOOTSTRAP_TEST": "literal $(no shell)"},
+            input_bytes=b"native input",
+            timeout_seconds=10,
+            stdout_ceiling=4096,
+            stderr_ceiling=1024,
+            cpu_seconds=1,
+        )
+        os.fstat(private.fileno())  # Closing the child's copy never touches the parent.
+    assert result.returncode == 0
+    assert json.loads(result.stdout) == {
+        "inherited": False,
+        "group": True,
+        "cwd": str(tmp_path.resolve()),
+        "stdin": "native input",
+        "env": "literal $(no shell)",
+        "cpu": 1,
+    }
+    assert captured[0].get("preexec_fn") is None
+    assert captured[0].get("cwd") is None and not captured[0].get("start_new_session")
+    assert captured[0]["close_fds"] is False
+
+
+def test_spawn_bootstrap_setup_failure_remains_typed_unavailable(tmp_path):
+    with pytest.raises(BoundedSubprocessError, match="unavailable"):
+        run_bounded_subprocess(
+            [str(tmp_path / "missing-executable")],
+            cwd=tmp_path,
+            timeout_seconds=5,
+            stdout_ceiling=1024,
+            stderr_ceiling=1024,
+            cpu_seconds=1,
+        )
+
+
+def test_darwin_owned_group_uses_pid_count_and_exact_rss(monkeypatch):
+    def enumerate_group(pgid, buffer, _size):
+        assert pgid == 99
+        buffer[0], buffer[1] = 101, 102
+        return 2  # Apple proc_listpgrppids returns a count, not byte length.
+
+    def task(pid, flavor, _arg, output, size):
+        assert flavor == 4 and size == 96
+        ctypes.cast(output, ctypes.POINTER(bounded_subprocess._ProcTaskInfo)).contents.resident_size = pid * 1024
+        return size
+
+    monkeypatch.setattr(bounded_subprocess.os, "getpgid", lambda _pid: 99)
+    group = bounded_subprocess._DarwinProcessGroup(
+        99, SimpleNamespace(proc_listpgrppids=enumerate_group, proc_pidinfo=task)
+    )
+    assert group.pids() == [101, 102]
+    assert group.rss() == 203 * 1024
+
+
+@pytest.mark.parametrize("count,error", [(1024, 0), (-1, 0), (0, errno.EPERM)])
+def test_darwin_incomplete_group_census_fails_closed(count, error):
+    def enumerate_group(*_args):
+        ctypes.set_errno(error)
+        return count
+
+    group = bounded_subprocess._DarwinProcessGroup(99, SimpleNamespace(proc_listpgrppids=enumerate_group))
+    with pytest.raises(BoundedSubprocessError) as raised:
+        group.pids()
+    assert raised.value.stage == "descendant_census"
+
+
+def test_darwin_unreadable_member_rss_fails_closed(monkeypatch):
+    def enumerate_group(_pgid, buffer, _size):
+        buffer[0] = 101
+        return 1
+
+    monkeypatch.setattr(bounded_subprocess.os, "getpgid", lambda _pid: 99)
+    group = bounded_subprocess._DarwinProcessGroup(
+        99, SimpleNamespace(proc_listpgrppids=enumerate_group, proc_pidinfo=lambda *_: 0)
+    )
+    with pytest.raises(BoundedSubprocessError) as raised:
+        group.rss()
+    assert raised.value.stage == "rss_census"
+
+
 def test_slow_process_census_uses_original_wall_budget(tmp_path, monkeypatch):
-    real_run = subprocess.run
+    monkeypatch.setattr(bounded_subprocess.sys, "platform", "linux")
     ceilings = []
 
     def delayed_census(command, **kwargs):
         if command[0] == "ps":
             ceilings.append(kwargs["timeout"])
             time.sleep(0.55)
-        return real_run(command, **kwargs)
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
     monkeypatch.setattr(bounded_subprocess.subprocess, "run", delayed_census)
     result = run_bounded_subprocess(
@@ -38,6 +146,7 @@ def test_slow_process_census_uses_original_wall_budget(tmp_path, monkeypatch):
 
 
 def test_unavailable_process_census_still_reaps_child(tmp_path, monkeypatch):
+    monkeypatch.setattr(bounded_subprocess.sys, "platform", "linux")
     real_popen = subprocess.Popen
     children = []
 
@@ -145,7 +254,7 @@ def test_exited_wrapper_does_not_leave_a_pipe_holding_descendant(
         run_bounded_subprocess(
             [sys.executable, "-c", script, str(child_pid_path)],
             cwd=tmp_path,
-            timeout_seconds=0.3,
+            timeout_seconds=5,
             stdout_ceiling=1024,
             stderr_ceiling=1024,
         )
@@ -174,7 +283,7 @@ def test_exited_wrapper_census_kills_detached_pipe_free_descendant(tmp_path: Pat
         run_bounded_subprocess(
             [sys.executable, "-c", script, str(child_pid_path)],
             cwd=tmp_path,
-            timeout_seconds=2,
+            timeout_seconds=5,
             stdout_ceiling=1024,
             stderr_ceiling=1024,
         )
