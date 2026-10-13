@@ -143,7 +143,7 @@ def test_routing_vocabulary_is_not_a_disclosure_marker(tmp_path: Path, text: str
     assert result.returncode == 0, f"{text!r} should not be a marker\n{result.stdout}"
 
 
-@pytest.mark.parametrize("text", ["the Client-One contract", "victoroff-os handoff", "Elevate Align parity"])
+@pytest.mark.parametrize("text", ["the victoroff-os contract", "victoroff-os handoff", "Elevate Align parity"])
 def test_a_token_that_names_a_lane_is_a_disclosure_marker(tmp_path: Path, text: str) -> None:
     board = _board(tmp_path, [{"id": "NAMES-A-LANE", "title": "t", "repo": "organvm/limen", "context": text}])
     result = _run(board, "--check")
@@ -155,7 +155,7 @@ def test_content_findings_never_quote_the_content(tmp_path: Path) -> None:
     secret = "BBNC executive transformation proposal"
     board = _board(
         tmp_path,
-        [{"id": "LEAK", "title": secret, "repo": "organvm/limen", "context": f"client-one — {secret}"}],
+        [{"id": "LEAK", "title": secret, "repo": "organvm/limen", "context": f"victoroff-os — {secret}"}],
     )
     out = _run(board).stdout
     assert "LEAK" in out

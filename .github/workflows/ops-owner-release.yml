@@ -3,26 +3,41 @@ name: Ops-owned scheduler release carrier
 on:
   push:
     branches: [main]
-    paths: ['.github/workflows/ops-owner-release.yml']
+    paths: ['.github/workflows/ops-owner-release.yml', 'scripts/test_ops_inspect_carrier.py']
   workflow_dispatch:
+    inputs:
+      apply:
+        description: Apply the pinned accepted recovery source
+        type: boolean
+        default: false
   issue_comment:
     types: [created]
 
 permissions:
   contents: read
 
-# One fixed owner-only read command on the existing incident carrier PR avoids
-# making another commit merely to refresh evidence. No comment becomes code,
-# a source ref, a deployment request, or a run-state write.
+# Comments and pushes inspect. Only an owner dispatch on main can authorize apply.
 jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate owner dispatch and inspection authorization
+        run: python3 -m unittest discover -s scripts -p test_ops_inspect_carrier.py -v
   owner:
+    needs: validate
     if: >-
       github.event_name == 'push' || github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issue_comment' && github.event.action == 'created' &&
        github.event.issue.number == 2731 && github.event.comment.user.id == 24796448 &&
        github.event.comment.body == '/ops inspect')
-    uses: 4444J99/ops/.github/workflows/cloudflare-owner-release.yml@d8dc9d52cba35877cafb2321af940a6955285615
+    uses: 4444J99/ops/.github/workflows/cloudflare-owner-release.yml@08d493caf5cf6fe7a64cbb67f6ed7e6b07ea119e
     with:
-      source_sha: d8dc9d52cba35877cafb2321af940a6955285615
+      source_sha: 62469ec5b402460a5610145e67901fcdd0ca00b9
+      apply_source: ${{ github.event_name == 'workflow_dispatch' && github.actor_id == '24796448' && github.ref == 'refs/heads/main' && inputs.apply == true && '62469ec5b402460a5610145e67901fcdd0ca00b9' || '' }}
     secrets:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      OPS_SOURCE_GITHUB_TOKEN: ${{ secrets.OPS_SOURCE_GITHUB_TOKEN }}

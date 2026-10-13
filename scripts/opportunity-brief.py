@@ -36,7 +36,9 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
-OPERATOR_EMAIL = os.environ.get("LIMEN_OPERATOR_EMAIL", "<owner-email>")
+# The operator inbox is personal: set LIMEN_OPERATOR_EMAIL in ~/.limen.env (it is no longer
+# committed). Unset means the brief is built but not mailed.
+OPERATOR_EMAIL = os.environ.get("LIMEN_OPERATOR_EMAIL", "").strip()
 STATE_PATH = ROOT / "logs" / "opportunity-brief-state.json"
 
 
@@ -219,6 +221,9 @@ def _stamp_sent(subject: str) -> None:
 
 def _send(subject: str, body: str) -> int:
     """Send via the headless mail-send lane. Returns the subprocess exit code."""
+    if not OPERATOR_EMAIL or OPERATOR_EMAIL.startswith("<"):
+        print("opportunity-brief: LIMEN_OPERATOR_EMAIL unset; brief not mailed")
+        return 0
     with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
         f.write(body)
         body_path = f.name

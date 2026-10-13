@@ -109,3 +109,30 @@ generate_peer_audit_comments.py
 # constellation atlas — generated HTML register (regenerable via constellation-atlas.py)
 logs/constellation/
 github-universe-ledger.json
+
+# Sensitive material lives in the private sibling 4444J99/limen--private (purged 2026-10-10)
+/organs/legal/matters/
+/organs/legal/live-matter/
+/organs/legal/FRAMEWORK-FOR-MICAH.md
+/organs/health/cases/
+/organs/health/RECOVERY-ACCESS-PROTOCOL.md
+/organs/health/PROTOCOL-recovery-access.md
+/organs/health/recovery-protocol.md
+/organs/financial/PERSONAL-BALANCE-SHEET.md
+/organs/financial/balance-sheet.md
+/organs/financial/balances-history.json
+/organs/financial/cashflow.md
+/organs/financial/obligation-action-plan.md
+/organs/financial/goals.md
+/organs/financial/entities.yaml
+/organs/representation/records/christopher-notarnicola.yaml
+/organs/representation/packets/chris-yale-review-nonfiction/
+/organs/representation/approvals/chris-yale-review-nonfiction-dry-run.template.yaml
+/organs/representation/approvals/chris-yale-review-nonfiction-real-send.template.yaml
+/engagements/victoroff.yaml
+/.podcast-os-audit/
+/.staged-heal/
+/.union-params.yaml
+/.stage1-params.yaml
+/.stage2-params.yaml
+/.stage3-params.yaml

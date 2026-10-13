@@ -25,7 +25,7 @@ import json
 import os
 import re
 import sys
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 try:
@@ -37,6 +37,9 @@ except ImportError:
 
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[2]))
 HERE = ROOT / "organs" / "financial"
+# Personal financial data (entities, balances, balance sheet, cashflow) lives in the private
+# sibling repo 4444J99/limen--private. LIMEN_PRIVATE_ROOT overrides its checkout path.
+DATA = Path(os.environ.get("LIMEN_PRIVATE_ROOT", ROOT.parent / "limen--private")) / "organs" / "financial"
 WEB_FACE = ROOT / "web" / "app" / "public"
 MACRO_FACE = HERE / "MACRO.md"
 MICRO_FACE = HERE / "MICRO.md"
@@ -85,7 +88,7 @@ def classify_account(acct_type: str) -> str:
 
 
 def load_balance_journal() -> list:
-    path = HERE / "balances-history.json"
+    path = DATA / "balances-history.json"
     if path.exists():
         try:
             data = json.loads(path.read_text())
@@ -123,7 +126,7 @@ def append_balance_journal(snapshots: list, entities: dict) -> list:
 
 
 def write_balance_journal(snapshots: list) -> bool:
-    path = HERE / "balances-history.json"
+    path = DATA / "balances-history.json"
     content = {
         "schema": "1.0",
         "snapshots": snapshots,
@@ -604,19 +607,19 @@ def write_json_if_changed(path: Path, data: dict) -> bool:
 
 
 def main() -> int:
-    entities = load_yaml(HERE / "entities.yaml")
+    entities = load_yaml(DATA / "entities.yaml")
     revenue = load_json(ROOT / "revenue-ladder.json")
     obligations = load_json(ROOT / "obligations-ledger.json")
 
     classification = (
-        load_yaml(HERE / "entities.yaml").get("account_classification", ACCOUNT_CLASSIFICATION)
+        load_yaml(DATA / "entities.yaml").get("account_classification", ACCOUNT_CLASSIFICATION)
         or ACCOUNT_CLASSIFICATION
     )
 
     snapshots = load_balance_journal()
     snapshots = append_balance_journal(snapshots, entities)
     if write_balance_journal(snapshots):
-        print(f"[consolidate] wrote {HERE}/balances-history.json ({len(snapshots)} snapshots)")
+        print(f"[consolidate] wrote {DATA}/balances-history.json ({len(snapshots)} snapshots)")
 
     classified = classify_balances(snapshots, classification)
 
@@ -627,11 +630,13 @@ def main() -> int:
     }
 
     for filename, content in artifacts.items():
-        path = HERE / filename
+        # STATUS.md is the public counts-only dashboard; the rest is private data.
+        path = (HERE if filename == "STATUS.md" else DATA) / filename
+        path.parent.mkdir(parents=True, exist_ok=True)
         if write_if_changed(path, content):
-            print(f"[consolidate] wrote {path.relative_to(ROOT)} ({len(content)} chars)")
+            print(f"[consolidate] wrote {path} ({len(content)} chars)")
         else:
-            print(f"[consolidate] unchanged {path.relative_to(ROOT)}")
+            print(f"[consolidate] unchanged {path}")
 
     dashboard_json = build_web_dashboard(entities, classified)
     web_path = WEB_FACE / "financial-standing.json"
