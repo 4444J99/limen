@@ -211,7 +211,7 @@
     "contract_digest": "0727b36d6fdaabafb7cf66ba146db6be6b459bbc2a1bb9a51c165b2537145353",
     "correction_tested_head": "772bbd270270a650877c527476804da2c2507146",
     "domus_accepted_sha": "124bc2fd4d61a141e388baa8c7c5450b564ffcdd",
-    "domus_pr": "https://github.com/4444J99/domus-genoma/pull/423",
+    "domus_pr": "https://github.com/4444J99/domus-genoma-private/pull/423",
     "installed_recovery_cli_source_files_byte_equal": true,
     "limen_pr": "https://github.com/4444J99/limen/pull/2856",
     "plan_digest": "629fc1a5fc4571557dbc91d263f6735b3e531516c9442015a5ab852a1472352f",
@@ -374,6 +374,43 @@
     "production_source_changed": false,
     "reinstallation_required": false,
     "runtime_contract_registry_parity_required": true
+  },
+  "repository_identity_reconciliation": {
+    "accepted_private_operation_prs": [
+      {
+        "merge_sha": "5cddfbc0705f4bc3f9e33f11a7f70f7a42d39735",
+        "number": 420
+      },
+      {
+        "merge_sha": "d61b735c74bf929b021479eac82a7ff1fbe1e9bd",
+        "number": 421
+      },
+      {
+        "merge_sha": "0cc760cdfa4ede7f01c2ad8f3c18f997bbf6b054",
+        "number": 422
+      },
+      {
+        "merge_sha": "124bc2fd4d61a141e388baa8c7c5450b564ffcdd",
+        "number": 423
+      }
+    ],
+    "all_states": "MERGED",
+    "current_pr_url_pattern": "https://github.com/4444J99/domus-genoma-private/pull/{number}",
+    "fresh_public_form": {
+      "name": "4444J99/domus-genoma",
+      "private": false,
+      "repository_id": 1416276234
+    },
+    "historical_ledger_observations_preserved": true,
+    "observed_at": "2026-10-13T03:07:54Z",
+    "old_spelling_is_not_current_identity_proof": true,
+    "operation": {
+      "canonical_name": "4444J99/domus-genoma-private",
+      "former_name": "4444J99/domus-genoma",
+      "private": true,
+      "repository_id": 1124448005
+    },
+    "source": "Authenticated live GitHub repository IDs and PR merge readbacks"
   },
   "reserve_input_truth": {
     "authority": "unchanged Limen resource_envelope",
