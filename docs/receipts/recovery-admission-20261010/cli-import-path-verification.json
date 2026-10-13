@@ -1,0 +1,26 @@
+{
+  "schema": "limen.recovery_cli_supplemental_verification.v1",
+  "authorized_seconds": 60,
+  "authorization": "User explicitly authorized 60 additional seconds; original usage retained",
+  "original_receipt": "cli-verification-exhaustion.json",
+  "original_remaining_seconds": 0,
+  "started_utc": "2026-10-10T02:52:38.782954+00:00",
+  "command_deadline_seconds": 57,
+  "heavy_admitted": false,
+  "stages": [],
+  "tested_files_sha256": {
+    "scripts/run-pytest-hermetic.sh": "26547abf570b0af9d083039cff4e853f490df963ad4c9098408a718c4715d299",
+    "cli/tests/test_run_pytest_hermetic.py": "e403f8ec1807f35886f719667205c5d1005880175636a13b4fbefabd97bd3cab"
+  },
+  "host_denial_reasons": [
+    "swap-fraction"
+  ],
+  "elapsed_seconds": 2.442659249994904,
+  "remaining_seconds": 57.557340750005096,
+  "focused_verification_passed": false,
+  "tests_started": false,
+  "original_nine_failures_resolved": false,
+  "unchanged_retry": false,
+  "host_override": false,
+  "next_owner_action": "After materially changed host evidence, verify the import-path correction within the retained supplemental allowance. The original nine scoped failures remain unresolved; no merge or dependent delivery is admitted."
+}

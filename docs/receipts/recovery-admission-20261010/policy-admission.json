@@ -1,0 +1,10 @@
+{
+  "schema": "limen.execution_policy_reconciliation.v1",
+  "installed": false,
+  "outcome": "ops6-recovery-20261009",
+  "work_key": "ops6-coordinate-20261009",
+  "owner": "https://github.com/4444J99/ops/issues/6",
+  "status": "blocked",
+  "gate": "owner_route_rejected",
+  "http_status": 404
+}

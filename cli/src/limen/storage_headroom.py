@@ -6,6 +6,11 @@ import fcntl
 import json
 import os
 import tempfile
+import hashlib
+import plistlib
+import subprocess
+import sys
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -28,7 +33,14 @@ def _state_root() -> Path:
 
 
 def _existing_volume_path(target: Path) -> Path:
-    path = target.expanduser().absolute()
+    try:
+        path = target.expanduser().resolve(strict=False)
+    except (OSError, RuntimeError):
+        raise StorageAdmissionError("storage-volume-unavailable") from None
+    if len(path.parts) >= 3 and path.parts[1] == "Volumes":
+        mount = Path(*path.parts[:3])
+        if not mount.is_mount():
+            raise StorageAdmissionError("storage-mount-unavailable")
     while True:
         try:
             path.stat()
@@ -41,6 +53,29 @@ def _existing_volume_path(target: Path) -> Path:
         if parent == path:
             raise StorageAdmissionError("storage-volume-unavailable")
         path = parent
+
+
+def storage_identity(path: Path) -> str:
+    """Verified capacity pool identity; APFS siblings share a container UUID."""
+    if sys.platform != "darwin":
+        return f"device:{path.stat().st_dev}"
+    try:
+        result = subprocess.run(["df", "-P", str(path)], capture_output=True, check=True, timeout=5)
+        device = result.stdout.decode().splitlines()[-1].split()[0]
+        if not device.startswith("/dev/"):
+            raise ValueError("unidentified device")
+
+        def info(name):
+            result = subprocess.run(["diskutil", "info", "-plist", name], capture_output=True, check=True, timeout=5)
+            return plistlib.loads(result.stdout)
+
+        volume = info(device)
+        if volume.get("FilesystemType") == "apfs":
+            container = info(volume["APFSContainerReference"])
+            return "apfs:" + str(uuid.UUID(container["DiskUUID"]))
+        return "volume:" + str(uuid.UUID(volume["VolumeUUID"]))
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError, IndexError):
+        raise StorageAdmissionError("storage-identity-unavailable") from None
 
 
 def _load_latch(path: Path) -> bool:
@@ -58,7 +93,8 @@ def _load_latch(path: Path) -> bool:
         not isinstance(value, dict)
         or value.get("schema") != SCHEMA
         or not isinstance(value.get("blocked"), bool)
-        or not isinstance(value.get("observed_free_bytes"), int)
+        or type(value.get("observed_free_bytes")) is not int
+        or value["observed_free_bytes"] < 0
     ):
         raise StorageAdmissionError("storage-admission-state-invalid")
     return value["blocked"]
@@ -90,6 +126,8 @@ def _store_latch(path: Path, *, blocked: bool, free_bytes: int) -> None:
 def require_storage_headroom(target: str | Path) -> None:
     """Deny new worktrees below 50 GiB, and keep the latch until 200 GiB."""
     volume_path = _existing_volume_path(Path(target))
+    identity = storage_identity(volume_path)
+    internal = identity == storage_identity(Path.home())
     try:
         volume_stats = os.statvfs(volume_path)
         free_bytes = volume_stats.f_bavail * volume_stats.f_frsize
@@ -103,16 +141,22 @@ def require_storage_headroom(target: str | Path) -> None:
         if state_root.is_symlink() or state_stat.st_uid != os.getuid() or state_stat.st_mode & 0o077:
             raise StorageAdmissionError("storage-admission-state-invalid")
         lock_path = state_root / "storage-headroom.lock"
-        state_path = state_root / "storage-headroom.json"
+        legacy_path = state_root / "storage-headroom.json"
+        state_path = state_root / ("storage-headroom-" + hashlib.sha256(identity.encode()).hexdigest() + ".json")
         fd = os.open(lock_path, os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
         try:
             fcntl.flock(fd, fcntl.LOCK_EX)
             blocked = _load_latch(state_path)
+            # External observations cannot clear the old internal restriction.
+            if internal:
+                blocked = _load_latch(legacy_path) or blocked
             if free_bytes < BLOCK_BELOW_BYTES:
                 blocked = True
             elif free_bytes >= REENABLE_AT_BYTES:
                 blocked = False
             _store_latch(state_path, blocked=blocked, free_bytes=free_bytes)
+            if internal:
+                _store_latch(legacy_path, blocked=blocked, free_bytes=free_bytes)
         finally:
             os.close(fd)
     except StorageAdmissionError:

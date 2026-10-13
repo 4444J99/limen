@@ -1,0 +1,14 @@
+{
+  "schema": "limen.recovery_verification.v1",
+  "head": "926f3c5c",
+  "base": "d1e15e2506f97147a20d7aaa3387bb2aa67473ff",
+  "authorized_additional_seconds": 600,
+  "prior_ledgers_preserved": true,
+  "prior_current_window_seconds": 20.27196641699993,
+  "elapsed_seconds": 12.642470833001425,
+  "cumulative_current_window_seconds": 32.914437250001356,
+  "remaining_additional_seconds": 567.0855627499986,
+  "exit_code": 1,
+  "command": "python scripts/verify.py --changed --integration --base d1e15e2506f97147a20d7aaa3387bb2aa67473ff --jobs 2 --total-timeout-seconds 565 --gate-timeout-seconds 555 --gate-output-bytes 2097152",
+  "log": "docs/receipts/recovery-admission-20261010/final-tree-20261013-pass2.log"
+}

@@ -325,6 +325,15 @@ export class ConductKeeperDurableObject {
       const body = await parseBody(request);
       return json(await this.service.call("execution_info", {work_key: bodyIdentifier(body, "work_key"), principal}), 200, this.env);
     }
+    if (path === "/api/conduct/execution/allowance" && request.method === "POST") {
+      requireRole(principal, "conductor");
+      const body = await parseBody(request, 4096);
+      const response = json(await this.service.call("execution_allowance", {
+        work_key: bodyIdentifier(body, "work_key"), principal,
+      }), 200, this.env);
+      response.headers.set("cache-control", "no-store");
+      return response;
+    }
     if (path === "/api/conduct/execution/policy" && request.method === "GET") {
       requireRole(principal, "conductor");
       let policy;

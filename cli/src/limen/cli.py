@@ -124,6 +124,26 @@ main.add_command(fanout_group)
 main.add_command(repos_group)
 
 
+@main.command("repair-checkout")
+@click.option("--work-key", required=True)
+@click.option("--repository", type=click.Path(exists=True, path_type=Path), required=True)
+@click.option("--destination", type=click.Path(path_type=Path), required=True)
+@click.option("--revision", required=True)
+def repair_checkout(work_key: str, repository: Path, destination: Path, revision: str) -> None:
+    """Create one owner-admitted repair checkout; prefer an inactive existing checkout."""
+    from limen.conduct.client import HttpConductClient
+    from limen.repair_checkout import create_repair_checkout
+    from limen.storage_headroom import StorageAdmissionError
+
+    client = client_from_env()
+    if not isinstance(client, HttpConductClient):
+        raise click.ClickException("repair requires the authenticated remote keeper")
+    try:
+        click.echo(json.dumps(create_repair_checkout(client, work_key, repository, destination, revision)))
+    except (StorageAdmissionError, OSError, subprocess.SubprocessError) as exc:
+        raise click.ClickException("repair checkout denied; inspect retained owner state") from exc
+
+
 @main.command("runtime-quota")
 @click.option("--request-maintenance", is_flag=True)
 @click.option("--target-percent", type=click.IntRange(1, 100), default=100)

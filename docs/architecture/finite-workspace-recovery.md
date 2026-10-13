@@ -14,6 +14,17 @@ automatic continuation. Discoveries stay in their owning registry without automa
 
 ### Authorized project continuation: github-engineering-standards
 
+The October 9 direct instruction for the seven held correction-wave items reinstates
+an explicit 120 cumulative agent-minute ceiling for that correction outcome,
+including native descendants, replacement roots, unfinished work and publication
+tails. It takes precedence over the earlier continuation exception below for this
+scope. Unknown or exhausted allowance holds implementation; provisional lower
+bounds cannot admit it. Exact checkout custody needs positive owning-writer
+release or an accepted narrow recovery run. This hold does not block independent
+ops recovery or integration. The serialized correction order is A freeze, B, C,
+D, A reconciliation, E, A integration, with publication, release and broker
+completion between writers. Keep draft #496 and delivery Staged.
+
 On 2026-10-03 the human explicitly authorized revision of this owning policy to
 continue the approved github-engineering-standards completion outcome. Owner:
 [Limen issue #2821](https://github.com/4444J99/limen/issues/2821).
@@ -60,6 +71,37 @@ Local disposable-worktree admission measures available bytes on the target volum
 The latch is kept in the user's state directory across producer and machine restarts.
 An unreadable or invalid latch fails closed. Existing checkouts and their running work
 remain available; the gate applies only to new worktree reservations.
+
+Storage latches are keyed by verified capacity identity. APFS volumes in one container
+share a latch. The legacy global latch remains the internal pool's restriction;
+external observations cannot clear it. An absent mount is an error, never an
+observation of its parent filesystem.
+
+### Standing bounded repair admission
+
+The October 9 recovery-admission implementation instruction authorizes this additive
+repair lane. Prefer a verified inactive existing checkout. When isolation needs an
+additional checkout, `limen repair-checkout` requires a live keeper reservation whose
+approved recovery priority sets `storage_repair: true` and permits one worktree.
+It retains the original deadline, verification allowance and cumulative outcome
+accounting. One repair writer may allocate at most 256 MiB, with free space strictly
+above that budget plus 10 GiB before creation and above 10 GiB after creation.
+The attempt remains at most 30 minutes including at most 10 minutes verification.
+
+The existing state directory retains an exclusive repair checkout reservation across
+interruptions, errors, process death and expired attempts. An unresolved retained
+checkout denies a replacement; no timeout clears its custody obligation. Actual
+allocated blocks are checked before use. Allocation failure retains the checkout
+for its owner, without deleting data or clearing the ordinary 50/200 GiB latch.
+This is bounded repair authority, not unrestricted dispatch or a budget reset.
+
+Domus exposes read-only `domus-agent-runtime quota --json`. Launches warn at 80%
+and submit immutable, deduplicated maintenance intake through Limen's existing
+ticket owner. `limen runtime-quota --target-percent 70` verifies the target.
+Intake pending is not broker acceptance or maintenance execution. Handle verified
+inactive downloaded releases first; history retirement still requires native
+restoration, replica acceptance, fresh source comparison and active-session protection.
+Retain SQLite, its sidecars and interrupted transfer payloads.
 
 ### Standing closeout-only isolation admission
 

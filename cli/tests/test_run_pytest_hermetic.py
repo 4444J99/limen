@@ -4,6 +4,8 @@ import os
 import subprocess
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[2]
 RUNNER = ROOT / "scripts" / "run-pytest-hermetic.sh"
@@ -46,6 +48,49 @@ def test_runner_scrubs_the_complete_limen_runtime_namespace(tmp_path: Path) -> N
     result = subprocess.run(
         ["bash", str(RUNNER), str(probe), "-q"],
         cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("inherited_path", [False, True])
+def test_runner_children_import_the_owning_checkout(tmp_path: Path, inherited_path: bool) -> None:
+    foreign_source = tmp_path / "foreign-source"
+    foreign_package = foreign_source / "limen"
+    foreign_package.mkdir(parents=True)
+    (foreign_package / "__init__.py").write_text("raise RuntimeError('foreign checkout imported')\n")
+    expected = (ROOT / "cli/src/limen/__init__.py").resolve()
+    probe = tmp_path / "test_child_import.py"
+    probe.write_text(
+        "import subprocess\n"
+        "import sys\n"
+        "from pathlib import Path\n"
+        "import limen\n\n"
+        "def test_child_import_uses_this_checkout():\n"
+        f"    expected = Path({str(expected)!r})\n"
+        "    assert Path(limen.__file__).resolve() == expected\n"
+        "    result = subprocess.run(\n"
+        "        [sys.executable, '-c',\n"
+        "         'import limen; from pathlib import Path; print(Path(limen.__file__).resolve())'],\n"
+        "        text=True, capture_output=True, timeout=5, check=False,\n"
+        "    )\n"
+        "    assert result.returncode == 0, result.stderr\n"
+        "    assert result.stdout.strip() == str(expected)\n",
+        encoding="utf-8",
+    )
+    env = dict(os.environ)
+    env.pop("PYTHONPATH", None)
+    if inherited_path:
+        env["PYTHONPATH"] = str(foreign_source)
+
+    result = subprocess.run(
+        ["bash", str(RUNNER), str(probe), "-q"],
+        cwd=tmp_path,
         env=env,
         text=True,
         capture_output=True,

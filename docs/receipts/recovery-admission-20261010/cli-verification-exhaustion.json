@@ -1,0 +1,320 @@
+{
+  "schema": "limen.cli_verification_exhaustion.v1",
+  "owner": "https://github.com/4444J99/limen/pull/2840",
+  "observed_utc": "2026-10-10T02:33:19.337067+00:00",
+  "tested_head": "c083165d5c13468d80f3ee84cd8a5bb4de5aa3ef",
+  "original_limit_seconds": 600,
+  "accounting_meter": "conservative sum of native CommandExecution durations including overlapping Limen checks; separate Domus outcome excluded",
+  "source_sessions": [
+    "01a12317-df50-74a2-8ed7-12e3135785df",
+    "01a12306-926e-7ee3-9a8c-89cb563ef01d"
+  ],
+  "prior_execution_seconds": 514.881652415,
+  "prior_executions": [
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 306,
+      "native_item_id": "exec-e5abcad3-fb5f-4755-9614-a892803b196b",
+      "utc": "2026-10-10T00:03:01.118Z",
+      "kind": "python-tests",
+      "elapsed_seconds": 8.280635125,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 366,
+      "native_item_id": "exec-f76c3a1e-ad23-4171-a6f3-998900fdfe5b",
+      "utc": "2026-10-10T00:06:42.900Z",
+      "kind": "python-tests",
+      "elapsed_seconds": 26.261555958,
+      "exit_code": 1
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 387,
+      "native_item_id": "exec-17e8d4db-fcda-4c77-bf94-731fdf9ae033",
+      "utc": "2026-10-10T00:07:13.288Z",
+      "kind": "python-tests",
+      "elapsed_seconds": 1.300253,
+      "exit_code": 1
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 408,
+      "native_item_id": "exec-05b42cf4-7f0a-45b0-85e2-fff053ecd5ac",
+      "utc": "2026-10-10T00:07:46.500Z",
+      "kind": "worker-tests",
+      "elapsed_seconds": 1.5417475,
+      "exit_code": 1
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 411,
+      "native_item_id": "exec-7342a763-722d-4c61-ae83-5d7efc1c02db",
+      "utc": "2026-10-10T00:07:47.278Z",
+      "kind": "python-tests",
+      "elapsed_seconds": 1.136465458,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 450,
+      "native_item_id": "exec-68d96881-4de0-45b2-9148-f374be8b88f3",
+      "utc": "2026-10-10T00:08:32.968Z",
+      "kind": "worker-tests",
+      "elapsed_seconds": 0.658040916,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 477,
+      "native_item_id": "exec-b0ba7a7c-c938-4888-8a1a-dd423724060a",
+      "utc": "2026-10-10T00:09:20.368Z",
+      "kind": "worker-tests",
+      "elapsed_seconds": 1.5943092079999999,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 542,
+      "native_item_id": "exec-9556622d-992f-49aa-9914-75f32c20a4c0",
+      "utc": "2026-10-10T00:11:04.826Z",
+      "kind": "static-check",
+      "elapsed_seconds": 3.709284375,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 566,
+      "native_item_id": "exec-f1b6c3ac-ae3a-47c9-b525-72a515240952",
+      "utc": "2026-10-10T00:12:42.452Z",
+      "kind": "python-tests",
+      "elapsed_seconds": 4.290679209,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 597,
+      "native_item_id": "exec-84b9ab2c-30a1-41f9-aba4-6a65f94f764c",
+      "utc": "2026-10-10T00:13:59.972Z",
+      "kind": "python-tests",
+      "elapsed_seconds": 0.914542042,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 607,
+      "native_item_id": "exec-fec55a86-bf41-447c-8f52-793f33a77818",
+      "utc": "2026-10-10T00:14:11.461Z",
+      "kind": "static-check",
+      "elapsed_seconds": 1.4416e-05,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 620,
+      "native_item_id": "exec-e751e954-03f4-4f37-90f0-f88bf26e0117",
+      "utc": "2026-10-10T00:14:30.759Z",
+      "kind": "static-check",
+      "elapsed_seconds": 8.291e-06,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 645,
+      "native_item_id": "exec-9bb6f3cd-c8e5-4760-b749-2ca17dbb33ad",
+      "utc": "2026-10-10T00:15:09.307Z",
+      "kind": "scoped-resolver",
+      "elapsed_seconds": 39.680977541,
+      "exit_code": 1
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 669,
+      "native_item_id": "exec-c228dd10-6266-4a5d-b424-43c6a5907660",
+      "utc": "2026-10-10T00:15:45.493Z",
+      "kind": "scoped-resolver",
+      "elapsed_seconds": 1.1042e-05,
+      "exit_code": 1
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 698,
+      "native_item_id": "exec-8abe69e4-d466-4a63-b02e-46dc861f4447",
+      "utc": "2026-10-10T00:16:41.418Z",
+      "kind": "scoped-resolver",
+      "elapsed_seconds": 31.298199667,
+      "exit_code": 1
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 748,
+      "native_item_id": "exec-9ef44048-8821-4b2b-bbb0-0d13e54c15b3",
+      "utc": "2026-10-10T00:18:08.635Z",
+      "kind": "scoped-resolver",
+      "elapsed_seconds": 28.730783208,
+      "exit_code": 1
+    },
+    {
+      "native_session_id": "01a12317-df50-74a2-8ed7-12e3135785df",
+      "native_line": 808,
+      "native_item_id": "exec-13a4ee3c-48c2-4c94-a3e7-39709b6c8a9a",
+      "utc": "2026-10-10T00:19:48.207Z",
+      "kind": "scoped-resolver",
+      "elapsed_seconds": 33.680248959,
+      "exit_code": 75
+    },
+    {
+      "native_session_id": "01a12306-926e-7ee3-9a8c-89cb563ef01d",
+      "native_line": 268,
+      "native_item_id": "exec-bff740a7-27f2-46e2-9ffd-a33ee57889b7",
+      "utc": "2026-10-10T00:51:50.389Z",
+      "kind": "python-tests",
+      "elapsed_seconds": 0.496450042,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12306-926e-7ee3-9a8c-89cb563ef01d",
+      "native_line": 290,
+      "native_item_id": "exec-88280985-f71b-41ed-b4dd-d15a435c597a",
+      "utc": "2026-10-10T00:52:59.039Z",
+      "kind": "python-tests",
+      "elapsed_seconds": 1.474654958,
+      "exit_code": 1
+    },
+    {
+      "native_session_id": "01a12306-926e-7ee3-9a8c-89cb563ef01d",
+      "native_line": 309,
+      "native_item_id": "exec-11a7db35-e24d-4271-89d3-067e3b276e60",
+      "utc": "2026-10-10T00:53:49.594Z",
+      "kind": "python-tests",
+      "elapsed_seconds": 0.725388833,
+      "exit_code": 1
+    },
+    {
+      "native_session_id": "01a12306-926e-7ee3-9a8c-89cb563ef01d",
+      "native_line": 310,
+      "native_item_id": "exec-051e7e03-bbaa-4357-b6a5-3cf25e406b37",
+      "utc": "2026-10-10T00:53:49.881Z",
+      "kind": "worker-tests",
+      "elapsed_seconds": 1.012060375,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12306-926e-7ee3-9a8c-89cb563ef01d",
+      "native_line": 321,
+      "native_item_id": "exec-09c59844-8b7b-4cf5-ace9-1e239425d0ef",
+      "utc": "2026-10-10T00:54:11.321Z",
+      "kind": "python-tests",
+      "elapsed_seconds": 5.396628,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12306-926e-7ee3-9a8c-89cb563ef01d",
+      "native_line": 375,
+      "native_item_id": "exec-2ffaa90f-1698-4a44-a407-9338c052e473",
+      "utc": "2026-10-10T00:56:35.128Z",
+      "kind": "python-tests",
+      "elapsed_seconds": 0.670905708,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12306-926e-7ee3-9a8c-89cb563ef01d",
+      "native_line": 475,
+      "native_item_id": "exec-af2d7f88-0a65-4b53-84c8-18841d70f25a",
+      "utc": "2026-10-10T01:01:54.013Z",
+      "kind": "scoped-resolver",
+      "elapsed_seconds": 319.567931833,
+      "exit_code": 1
+    },
+    {
+      "native_session_id": "01a12306-926e-7ee3-9a8c-89cb563ef01d",
+      "native_line": 513,
+      "native_item_id": "exec-6348b456-f47a-40e3-a2d9-8170309ce5e5",
+      "utc": "2026-10-10T01:03:18.237Z",
+      "kind": "python-tests",
+      "elapsed_seconds": 2.459843375,
+      "exit_code": 1
+    },
+    {
+      "native_session_id": "01a12306-926e-7ee3-9a8c-89cb563ef01d",
+      "native_line": 517,
+      "native_item_id": "exec-6eb22cea-6867-4c1e-bd60-06dc245205bc",
+      "utc": "2026-10-10T01:03:38.471Z",
+      "kind": "static-check",
+      "elapsed_seconds": 8.167e-06,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12306-926e-7ee3-9a8c-89cb563ef01d",
+      "native_line": 519,
+      "native_item_id": "exec-a80abb23-3755-4964-ba7f-63d26ecf7e30",
+      "utc": "2026-10-10T01:03:38.540Z",
+      "kind": "static-check",
+      "elapsed_seconds": 8.334e-06,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12306-926e-7ee3-9a8c-89cb563ef01d",
+      "native_line": 565,
+      "native_item_id": "exec-a9bd4190-9f2e-438b-891d-22def1c2ae0d",
+      "utc": "2026-10-10T02:09:02.008Z",
+      "kind": "static-check",
+      "elapsed_seconds": 9.375e-06,
+      "exit_code": 0
+    },
+    {
+      "native_session_id": "01a12306-926e-7ee3-9a8c-89cb563ef01d",
+      "native_line": 594,
+      "native_item_id": "exec-49f33a50-912f-4244-8cef-a14e02c180c5",
+      "utc": "2026-10-10T02:09:52.574Z",
+      "kind": "static-check",
+      "elapsed_seconds": 7.5e-06,
+      "exit_code": 0
+    }
+  ],
+  "diagnostic": {
+    "budget_seconds": 85.11834758500004,
+    "elapsed_seconds": 85.17430408298969,
+    "exit_code": 124,
+    "remaining_seconds": 0,
+    "head": "c083165d5c13468d80f3ee84cd8a5bb4de5aa3ef",
+    "workers": 2,
+    "maxfail": 1,
+    "command": "bash scripts/run-pytest-hermetic.sh cli/tests -vv -n 2 --maxfail=1 --tb=short -r f",
+    "collected_items": 8605,
+    "observed_pass_reports": 958,
+    "observed_fail_reports": 1,
+    "failing_nodes": [
+      "cli/tests/test_agent_state_cli.py::test_resume_requires_explicit_run_id"
+    ],
+    "traceback_captured": false,
+    "last_progress_percent": 11,
+    "raw_log_sha256": "b45603cda45841445059bb7a1b8be567205918a550bb8d325cd73f3498e14077",
+    "sanitized_log_sha256": "5929c96736ff2c5ed561885f1fd7198a29e1b3cc31d7da873cf6578a340acb0a",
+    "retained_log": "cli-diagnostic-20261010.log.gz",
+    "compressed_log_sha256": "18cb9a14e71c7913b39e88f8e0b4fba92366e571f797564f12253f7ba9f4d862",
+    "termination": "shared process-group deadline; bounded cleanup"
+  },
+  "total_recorded_execution_seconds": 600.0559564979897,
+  "cleanup_overrun_seconds": 0.05595649798965496,
+  "remaining_verification_seconds": 0,
+  "status": "exhausted_unverified",
+  "automatic_continuation": false,
+  "heavy_lease_released": true,
+  "limen_merged": false,
+  "managed_cli_installed": false,
+  "worker_deployed": false,
+  "policy_installed": false,
+  "ops_reservations_created": 0,
+  "ges": {
+    "live_head": "3db2831f7b37852414bd77d330a240d7a0f9a35b",
+    "is_draft": true,
+    "remaining_allowance": null,
+    "positive_checkout_custody": false,
+    "items_held": 7,
+    "delivery": "Staged",
+    "accounting": "previous bounded mixed-outcome candidates do not establish exhaustive attribution"
+  },
+  "next_owner_action": "Resolve original verification exhaustion in the owning outcome before any further test execution; target the observed agent-state CLI subprocess failure and capture its traceback. Do not renew allowance by restart, deploy an unverified head, or reuse partial suite progress as a passing gate."
+}
