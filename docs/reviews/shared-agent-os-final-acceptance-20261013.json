@@ -1,0 +1,230 @@
+{
+  "background_item_correction": {
+    "broad_sh_brew_exemption_added": false,
+    "label": "sh.brew.lighttpd",
+    "launch_policy_changed": false,
+    "live_reviewed_registry_census": {
+      "estate": 7,
+      "third_party": 9,
+      "tombstone": 2,
+      "undeclared": 0
+    },
+    "successor_deployment_pending": true,
+    "verified_program": "Homebrew lighttpd 1.4.85_1"
+  },
+  "census_receipt_sha256": "4d388529a61f98e4ca73b4b121984062b39aa09b366b1bd05537ad5d8393d084",
+  "claude": {
+    "application_owned_state_preserved": true,
+    "hook_sha256": "1f8c7b3ec350c61ff0f30f8ea6bc7e2eb4ea99b68c833e4e0919abf20bfe09f3",
+    "instruction_sha256": "4aa08ae41e0b4f5804ffbc2b9bf0c4a2787aa8ed46dbeabbf68bdbfc21a43c0e",
+    "parity_observed_at": "2026-10-13T01:58:29.708681Z",
+    "reviewed_targets_only": true,
+    "second_apply_no_change": true,
+    "source_render_equal": true
+  },
+  "consumption_by_provider": {
+    "claude": 2336525182,
+    "codex": 7431854571,
+    "gemini": 6279094300,
+    "opencode": 3726407939
+  },
+  "controlled_activation": {
+    "consecutive_system_failures": 0,
+    "disabled": false,
+    "duration_ms": 33195,
+    "observed_at": "2026-10-13T02:24:48Z",
+    "returncode": 0,
+    "status": "passed",
+    "surviving_descendant_count": 0,
+    "whole_tick_duration_ms": 33324
+  },
+  "controlled_receipt_sha256": "deea8a7d0d1a0e6d9f04899dd923ec1fb90df9e3e8888a71899b72480235363a",
+  "corpus": {
+    "april_may_zero_observed_is_absence_of_failures": false,
+    "correction_lineage_preserved": true,
+    "exact_remote_candidates_linked": 264,
+    "ledger": "docs/reviews/operating-system-2026-04-12-2026-10-13.json",
+    "opaque_and_undated_boundaries_preserved": true,
+    "provider_count": 15,
+    "record_observations": 2366993,
+    "redaction_passed": true,
+    "remote_candidates": 265,
+    "unavailable_remote": "Historical Limen PR 10 HTTP404"
+  },
+  "guarded_launches": {
+    "probes": [
+      {
+        "command": "zsh -ic opencode --version",
+        "exit_code": 0,
+        "fully_exited": true,
+        "version": "opencode v2.0.25"
+      },
+      {
+        "command": "zsh -ic codex --version",
+        "exit_code": 0,
+        "fully_exited": true,
+        "version": "codex-cli 0.162.1"
+      }
+    ],
+    "quota_or_attribution_warnings": [],
+    "receipt_sha256": "531bef2ecc42ca6a2f29e5d7ebe6553d51495d2a9758c1562ab8846d5c33c1b7",
+    "verified_at": "2026-10-13T02:30:44.855391+00:00"
+  },
+  "implementation": {
+    "accepted_runtime_sha": "d1e15e2506f97147a20d7aaa3387bb2aa67473ff",
+    "changed_runtime_source_in_followup": true,
+    "contract_digest": "0727b36d6fdaabafb7cf66ba146db6be6b459bbc2a1bb9a51c165b2537145353",
+    "domus_accepted_sha": "124bc2fd4d61a141e388baa8c7c5450b564ffcdd",
+    "domus_pr": "https://github.com/4444J99/domus-genoma/pull/423",
+    "limen_pr": "https://github.com/4444J99/limen/pull/2856",
+    "plan_digest": "ba33cf57f1786bcc1b61a075c0c559a1dfe0f37b0e77eae0a6a4b61c51a00282",
+    "runtime_change": "Existing background-item ownership registry adds verified Homebrew lighttpd service; requires normal successor deployment",
+    "runtime_digest": "99a4704b077c4a8fc1f007f6ef1a6a552fd7efdc0990ce7b57a904a1064e578c",
+    "tested_head": "64d0fb98ed356ca8a1c555f02b55a0c5eea1f04d"
+  },
+  "native_visual": {
+    "bypass_used": false,
+    "codex_target_specific_acceptance": false,
+    "domus_agent_host_route_passed": true,
+    "external_denial": "Platform computer-use safety policy forbids com.openai.codex",
+    "native_textedit_smoke_passed": true,
+    "receipt": "docs/reviews/native-visual-20261012.json"
+  },
+  "natural_maintenance": {
+    "acceptance_applies_only_to_exact_d1_revision": true,
+    "accepted": true,
+    "consecutive_system_failures": 0,
+    "contract_digest": "0727b36d6fdaabafb7cf66ba146db6be6b459bbc2a1bb9a51c165b2537145353",
+    "controlled_to_natural_spacing_seconds": 939.2319791316986,
+    "disabled": false,
+    "duration_ms": 22792,
+    "label": "com.limen.heartbeat",
+    "naturally_due": true,
+    "notification_broker_channels": {},
+    "notification_broker_schema": null,
+    "notification_broker_status": null,
+    "notification_event_accepted_count": 0,
+    "notification_event_attempted_count": 0,
+    "notification_event_digest": null,
+    "notification_event_id": null,
+    "notification_event_selected_count": 0,
+    "notification_event_stable_id": null,
+    "observed_at": "2026-10-13T02:40:27Z",
+    "observed_epoch": 1791859227.771452,
+    "output_bytes": 889,
+    "probe": "runtime-maintenance-observation",
+    "probe_cost": "cheap",
+    "reason": null,
+    "receipt_sha256": "eea7e0e045e87af01abd1c0ec6d06770e4631941bb05ab108c28fd0e7e047d75",
+    "returncode": 0,
+    "run_id": "c2684d21d8194dab8a866a3d642d9fb4",
+    "runtime_digest": "99a4704b077c4a8fc1f007f6ef1a6a552fd7efdc0990ce7b57a904a1064e578c",
+    "runtime_sha": "d1e15e2506f97147a20d7aaa3387bb2aa67473ff",
+    "schema": "limen.heartbeat_private_receipt.v1",
+    "status": "passed",
+    "substitution_for_successor_run": false,
+    "surviving_descendant_count": 0,
+    "whole_tick_duration_ms": 22878
+  },
+  "owner_registry": "https://github.com/4444J99/limen/issues/2848",
+  "pool_observation": {
+    "allowed": true,
+    "available_growth_bytes": 26821586944,
+    "denial_reasons": [],
+    "filesystem_free_bytes": 26888695808,
+    "max_age_seconds": 120,
+    "observation_age_seconds": 0,
+    "observed_at": "2026-10-13T02:26:35.425141+00:00",
+    "outstanding_growth_bytes": 67108864,
+    "pool_mode": "shared_disk_aware",
+    "required_reserve_bytes": 0,
+    "reservation_count": 1,
+    "reserve_components": {
+      "apfs_churn_bytes": 0,
+      "custody_and_rollback_staging_bytes": 0,
+      "peak_concurrent_task_bytes": 0,
+      "projected_swap_expansion_bytes": 0,
+      "telemetry_error_bytes": 0,
+      "updater_claim_bytes": 0
+    },
+    "schema": "limen.runtime_pool.v1",
+    "storage_claim_count": 0
+  },
+  "preservation": {
+    "dirty_divergent_primary_checkouts_preserved": true,
+    "foreign_recovery_worktree_preserved": true,
+    "new_source_worktree_created": false,
+    "no_native_history_or_custody_deletion": true,
+    "old_failed_natural_receipts_preserved": true,
+    "original_maintenance_episode": "af529e574f2b4f2e9c95a14837b3fdd4",
+    "source_export_archive_sha256": "4b27167012e1a3e549ef82318c7e6089a18fdbd88787bd2df5ddfff12b7c0d50",
+    "source_export_retention": "Private custody staging retains archive, source manifest, attempted build receipt and test fixtures",
+    "worker_attempts": 1
+  },
+  "reserve_input_truth": {
+    "authority": "unchanged Limen resource_envelope",
+    "live_available_ram_approx_gib": 3.58,
+    "live_swap_used_mib": 1628.31,
+    "physical_recovery_attributed_to_capacity_change": false,
+    "swap_projection": "max(0, swap_used - ram_available)",
+    "updater_apfs_error_environment_overrides": [],
+    "zero_registered_default_inputs_disclosed": true
+  },
+  "schema": "limen.shared_os_acceptance.v1",
+  "shared_capacity": {
+    "census_complete": true,
+    "census_errors": [],
+    "census_files_scanned": 112663,
+    "failures": [],
+    "migration_diagnostics": [],
+    "target_met": true,
+    "target_percent": 70,
+    "total_bytes_to_target": 0,
+    "total_headroom_bytes": 26821586944,
+    "total_size_bytes": 21851558021,
+    "total_utilization_ratio": 0.44894485525258476,
+    "warnings": []
+  },
+  "verification": {
+    "api_passed": 52,
+    "background_census_regressions_passed": 14,
+    "credential_wall_atoms_passed": 32,
+    "fixture_source_sha256": "7711ffe12be5a80819b67fe15612b3a2e8d2e6bbeda37a39459a1f4ffc3b804e",
+    "focused_native_regressions_passed": 154,
+    "historical_pr_gate_failure": {
+      "cause": "Two tests referenced historical Git objects unavailable in fresh CI clone",
+      "correction": "Real temporary Git commits retain both negative bookkeeping and positive code classification assertions",
+      "url": "https://github.com/4444J99/limen/actions/runs/38334592701/job/115091728649"
+    },
+    "historical_sha_fixture_cases_passed": 8,
+    "hosted_successes": {
+      "app_audit": "https://github.com/4444J99/limen/actions/runs/38334592779/job/115091728967",
+      "python": "https://github.com/4444J99/limen/actions/runs/38334592779/job/115091728868",
+      "web": "https://github.com/4444J99/limen/actions/runs/38334592779/job/115091729029",
+      "witness_contract": "https://github.com/4444J99/limen/actions/runs/38334592751/job/115091728992",
+      "worker": "https://github.com/4444J99/limen/actions/runs/38334592779/job/115091728965",
+      "worker_audit": "https://github.com/4444J99/limen/actions/runs/38334592779/job/115091728936"
+    },
+    "local_cli_existing_skips": 58,
+    "local_cli_passed": 8581,
+    "local_cli_subtests": 8,
+    "local_export_web_attempt": {
+      "accepted_shard": "Exact-head hosted web build passed",
+      "hard_guard_bypassed": false,
+      "reason": "heavy-lease-held",
+      "result": "not_run_host_admission_denied"
+    },
+    "production_settlement_guard_changed": false,
+    "ruff_check": "passed",
+    "ruff_format": "passed",
+    "scoped_cheap_gates_passed": 19
+  },
+  "watch": {
+    "anchor": null,
+    "duplicate_scheduler_created": false,
+    "existing_watch_active": true,
+    "full_24_hours_completed": false,
+    "raw_configuration_bypass": false,
+    "update_external_gate": "Supported Codex app automation updater unavailable to current terminal harness"
+  }
+}
