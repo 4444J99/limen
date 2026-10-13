@@ -55,6 +55,9 @@ class BoundedSubprocessError(RuntimeError):
     def __init__(self, kind: FailureKind, *, stage: Literal["rss_census", "descendant_census"] | None = None):
         self.kind = kind
         self.stage = stage
+        self.stdout: bytes | None = None
+        self.stderr: bytes | None = None
+        self.root_reaped: bool | None = None
         super().__init__(kind)
 
 
@@ -391,12 +394,17 @@ def run_bounded_subprocess(
             raise BoundedSubprocessError("descendants")
         if returncode == 125 and b"".join(stderr_chunks).startswith(_BOOTSTRAP_FAILURE):
             raise BoundedSubprocessError("unavailable")
-    except BoundedSubprocessError:
-        _terminate_process_group(process)
+    except BoundedSubprocessError as exc:
+        exc.root_reaped = _terminate_process_group(process)
+        exc.stdout = b"".join(stdout_chunks)
+        exc.stderr = b"".join(stderr_chunks)
         raise
     except OSError as exc:
-        _terminate_process_group(process)
-        raise BoundedSubprocessError("unavailable") from exc
+        failure = BoundedSubprocessError("unavailable")
+        failure.root_reaped = _terminate_process_group(process)
+        failure.stdout = b"".join(stdout_chunks)
+        failure.stderr = b"".join(stderr_chunks)
+        raise failure from exc
     except BaseException:
         _terminate_process_group(process)
         raise

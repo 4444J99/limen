@@ -59,7 +59,9 @@ if [ ! -f "$TCC_AUDIT" ] || [ ! -r "$TCC_AUDIT" ] || [ ! -x "$TCC_AUDIT" ]; then
   tcc_output="tcc-identity-audit wrapper is missing, unreadable, or not executable: $TCC_AUDIT"
   tcc_status=69
 else
-  tcc_output="$("$TCC_AUDIT" --strict 2>&1)"
+  # One complete inventory serves both identity and helper-registration checks.
+  # Its internal budget leaves room inside the unchanged 30-second scheduled probe.
+  tcc_output="$("$TCC_AUDIT" --strict --json --budget-seconds 20 2>&1)"
   tcc_status=$?
 fi
 if [ "$tcc_status" -eq 0 ]; then
@@ -305,7 +307,11 @@ echo
 # actually CONCLUDES. Unset in production.
 LSREG="${LIMEN_CLAUDE_LSREGISTER_BIN:-/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Support/lsregister}"
 stub_bad=""
-if [ -x "$LSREG" ]; then
+helper_inventory_measured=0
+if [ -n "${LIMEN_CLAUDE_LSREGISTER_BIN:-}" ] && [ -x "$LSREG" ]; then
+  # Retain the existing explicit sensor/effector contract-test seam. Production
+  # consumes the already measured strict inventory instead of repeating it.
+  helper_inventory_measured=1
   while IFS= read -r p; do
     [ -n "$p" ] || continue
     case "$p" in "$HOME"/.local/share/claude/*|"$HOME"/.Trash/*) : ;; *) continue ;; esac
@@ -317,8 +323,32 @@ if [ -x "$LSREG" ]; then
   done <<EOF
 $("$LSREG" -dump 2>/dev/null | grep -oE '/[^ ()]*ClaudeCode\.app' | sort -u)
 EOF
+else
+  helper_inventory="$(printf '%s\n' "$tcc_output" | python3 -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    rows = data["malformed_claude_helpers"]
+    valid = (data.get("schema") == "limen.tcc_identity_audit.v2"
+             and data.get("measured", {}).get("launchservices") is True
+             and isinstance(rows, list)
+             and all(isinstance(row, dict) and isinstance(row.get("path"), str) and row["path"] for row in rows))
+except (ValueError, KeyError, TypeError):
+    valid = False
+if valid:
+    print("MEASURED")
+    print(" ".join(row["path"] for row in rows))
+else:
+    print("UNMEASURED")
+')"
+  case "$helper_inventory" in
+    MEASURED) helper_inventory_measured=1; stub_bad="" ;;
+    MEASURED$'\n'*) helper_inventory_measured=1; stub_bad="${helper_inventory#*$'\n'}" ;;
+  esac
 fi
-if [ -z "$stub_bad" ]; then
+if [ "$helper_inventory_measured" -ne 1 ]; then
+  redx "Gatekeeper: ClaudeCode.app registration inventory is UNMEASURED; strict audit supplied no complete evidence"
+elif [ -z "$stub_bad" ]; then
   green "Gatekeeper: ClaudeCode.app is inert — 0 unassessable LaunchServices registrations (IF-GATEKEEPER-INERT)"
 else
   redx "Gatekeeper: LaunchServices-registered ClaudeCode.app cannot be assessed → 'damaged, move to Trash' on launch:$stub_bad"
@@ -326,6 +356,23 @@ else
   note "Never click 'Move to Trash' — it reseeds the loop into ~/.Trash, where LaunchServices keeps it registered. And never DELETE the bundle: the vendor recreates it every start, and removal destroys the stable TCC identity sensor 0g8d keeps. Unregistration is the convergent cure; removal is a duty cycle."
 fi
 echo
+
+# A small typed receipt retains denial reasons without publishing client paths,
+# permission rows, settings or credential-shaped diagnostic output.
+printf '%s\n' "$tcc_output" | python3 -c '
+import json, re, sys
+try:
+    data = json.load(sys.stdin)
+    if data.get("schema") != "limen.tcc_identity_audit.v2":
+        raise ValueError("schema")
+    reasons = [code for code in data.get("failures", []) if isinstance(code, str) and re.fullmatch(r"[a-z][a-z0-9_]{0,95}", code)]
+    evidence = {"schema": "limen.dialogs_evidence.v1", "status": data.get("status"), "reason_codes": reasons,
+                "launchservices_measured": data.get("measured", {}).get("launchservices") is True,
+                "budget_exhausted": data.get("measured", {}).get("budget_exhausted") is True}
+except (ValueError, KeyError, TypeError):
+    evidence = {"schema": "limen.dialogs_evidence.v1", "status": "unmeasured", "reason_codes": ["tcc_audit_evidence_unavailable"]}
+print("limen-probe-evidence=" + json.dumps(evidence, sort_keys=True, separators=(",", ":")))
+'
 
 if [ "$AGENT_ONLY" = 1 ]; then
   if [ "$curable_gaps" -eq 0 ]; then

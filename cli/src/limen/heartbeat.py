@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import ctypes
 import json
 import os
+import re
 import sys
 import time
 import uuid
@@ -49,6 +51,84 @@ SYSTEM_FAILURES = frozenset({"descendants", "invalid", "output", "resource", "ti
 NOTIFICATION_STABLE_ID = "limen.heartbeat.finding"
 NOTIFICATION_SEVERITY_ORDER = {"urgent": 0, "normal": 1, "summary": 2}
 Clock = Callable[[], float]
+
+
+def _clock_observation() -> dict[str, Any]:
+    """Measure independent Darwin awake/continuous clocks; never infer old sleep."""
+    unavailable = {"schema": "limen.heartbeat_clock.v1", "measured": False}
+    if sys.platform != "darwin" or not hasattr(time, "CLOCK_UPTIME_RAW"):
+        return {**unavailable, "reason": "native_clock_unsupported"}
+    try:
+        library = ctypes.CDLL("/usr/lib/libSystem.B.dylib", use_errno=True)
+        native = library.sysctlbyname
+        native.argtypes = [
+            ctypes.c_char_p,
+            ctypes.c_void_p,
+            ctypes.POINTER(ctypes.c_size_t),
+            ctypes.c_void_p,
+            ctypes.c_size_t,
+        ]
+        native.restype = ctypes.c_int
+        value = ctypes.create_string_buffer(128)
+        size = ctypes.c_size_t(len(value))
+        if native(b"kern.bootsessionuuid", value, ctypes.byref(size), None, 0) != 0:
+            raise OSError("boot identity unavailable")
+        identity = str(uuid.UUID(value.value.decode("ascii")))
+        continuous = time.clock_gettime_ns(time.CLOCK_MONOTONIC_RAW)
+        awake = time.clock_gettime_ns(time.CLOCK_UPTIME_RAW)
+        return {
+            "schema": "limen.heartbeat_clock.v1",
+            "measured": True,
+            "boot_id": hashlib.sha256(identity.encode()).hexdigest(),
+            "continuous_ns": continuous,
+            "awake_ns": awake,
+        }
+    except (OSError, ValueError, AttributeError, UnicodeError):
+        return {**unavailable, "reason": "native_clock_unavailable"}
+
+
+def _probe_evidence(probe: dict[str, Any], stdout: bytes) -> dict[str, Any] | None:
+    """Only typed reason codes survive private custody; never persist raw probe text."""
+    try:
+        if probe["name"] == "runtime-maintenance-observation":
+            payload = json.loads(stdout)
+            if payload.get("schema") != "limen.runtime_maintenance_observation.v1":
+                return None
+            pool = payload.get("pool") or {}
+            codes = pool.get("denial_reasons") or []
+            if not isinstance(codes, list):
+                return None
+            codes = list(codes)
+            if isinstance(payload.get("reason"), str):
+                codes.append(payload["reason"])
+        elif probe["name"] == "dialogs-silenced":
+            line = next(
+                line for line in stdout.decode("utf-8").splitlines() if line.startswith("limen-probe-evidence=")
+            )
+            payload = json.loads(line.partition("=")[2])
+            if payload.get("schema") != "limen.dialogs_evidence.v1":
+                return None
+            codes = payload.get("reason_codes") or []
+        else:
+            return None
+        if not isinstance(codes, list):
+            return None
+        status = payload.get("status")
+        if not isinstance(status, str) or not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", status):
+            return None
+        return {
+            "schema": payload["schema"],
+            "status": status,
+            "reason_codes": sorted(
+                {
+                    code
+                    for code in codes
+                    if isinstance(code, str) and re.fullmatch(r"[A-Za-z][A-Za-z0-9_.:-]{0,95}", code)
+                }
+            )[:32],
+        }
+    except (ValueError, TypeError, AttributeError, StopIteration, UnicodeError):
+        return None
 
 
 def _select_probe(contract: dict[str, Any], state: dict[str, Any], now: float) -> dict[str, Any] | None:
@@ -264,6 +344,7 @@ def heartbeat_once(
     root = root.resolve()
     state_root = (state_root or _default_state_root()).resolve()
     now = clock()
+    clock_observation = _clock_observation()
     observed_at = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now))
     try:
         contract, contract_digest = _load_contract(root)
@@ -346,6 +427,8 @@ def heartbeat_once(
         duration_ms = 0
         returncode: int | None = None
         output_bytes = 0
+        probe_evidence = None
+        output_observation: dict[str, Any] = {"complete": True, "stdout_sha256": None, "stderr_sha256": None}
         surviving_descendant_count: int | str = 0
         system_failure = state_error is not None
         if probe is not None and not state["disabled"]:
@@ -382,6 +465,11 @@ def heartbeat_once(
                     )
                     returncode = completed.returncode
                     output_bytes = len(completed.stdout) + len(completed.stderr)
+                    probe_evidence = _probe_evidence(probe, completed.stdout)
+                    output_observation.update(
+                        stdout_sha256=hashlib.sha256(completed.stdout).hexdigest(),
+                        stderr_sha256=hashlib.sha256(completed.stderr).hexdigest(),
+                    )
                     if returncode == 0:
                         status = "passed"
                     elif returncode in probe.get("system_failure_exit_codes", []):
@@ -400,6 +488,20 @@ def heartbeat_once(
                     reason = f"{exc.kind}:{exc.stage}" if exc.stage else exc.kind
                     system_failure = exc.kind in SYSTEM_FAILURES
                     surviving_descendant_count = "unknown"
+                    partial_stdout = exc.stdout
+                    partial_stderr = exc.stderr
+                    output_bytes = len(partial_stdout or b"") + len(partial_stderr or b"")
+                    output_observation = {
+                        "complete": False,
+                        "root_reaped": exc.root_reaped,
+                        "stdout_sha256": hashlib.sha256(partial_stdout).hexdigest()
+                        if partial_stdout is not None
+                        else None,
+                        "stderr_sha256": hashlib.sha256(partial_stderr).hexdigest()
+                        if partial_stderr is not None
+                        else None,
+                    }
+                    probe_evidence = _probe_evidence(probe, partial_stdout) if partial_stdout is not None else None
                 except HeartbeatContractError as exc:
                     status = "failed"
                     reason = str(exc)
@@ -463,6 +565,9 @@ def heartbeat_once(
             "whole_tick_duration_ms": round((time.monotonic() - tick_started) * 1000),
             "returncode": returncode,
             "output_bytes": output_bytes,
+            "output_observation": output_observation,
+            "probe_evidence": probe_evidence,
+            "clock_observation": clock_observation,
             "surviving_descendant_count": surviving_descendant_count,
             "runtime_sha": runtime_sha,
             "runtime_digest": runtime_digest,

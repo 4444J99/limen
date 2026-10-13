@@ -1,0 +1,39 @@
+# Heartbeat watch repair and preserved acceptance boundaries
+
+Continuation of [shared OS delivery](shared-agent-os-deployment-20261012.md), owned by Limen issue #2848. Original runtime `c2927d53243d504ec6407d60fd1095fc2d55d5bf`, runtime digest `d40cfe4fcf18ab15518d880165347409568d4049748bd634dc436d1ef3ad9b92`, contract digest `0727b36d6fdaabafb7cf66ba146db6be6b459bbc2a1bb9a51c165b2537145353`. This repair does not alter the 16 probes, 900-second maintenance period, admission, locks, bounds, three-failure kill switch, or public receipt projection.
+
+## Diagnosis and custody
+
+The original watch anchor remains **2026-10-13T03:02:10.931617Z**; its receipt SHA-256 is `5ad3d12c5a5c002640de5321a2424890cade2932ece58d1ebf88d1f9bfa6f4cb`. The existing independent watch is now extended through the supported app updater until original-window assessment and post-repair acceptance. No replacement monitor or reset observation window is introduced. The old report's unavailable-updater limitation is superseded by this verified supported extension.
+
+The retained 96-receipt snapshot covers only 09:24–14:56 UTC. Earlier receipts are unavailable. Three retained dialog executions exceeded 30 seconds; state also records an earlier timeout. Historical cleanup remains unknown. Eighteen maintenance findings lost their reason payloads under the old receipt implementation; their exact causes cannot be reconstructed from output lengths.
+
+Independent `pmset` evidence identifies 900 seconds of sleep inside the 1825.738733-second maintenance interval and 574 seconds inside the 1502.307510-second interval. Awake intervals 925.738733/928.307510 satisfy the unchanged 1080-second allowance. Kernel boot epoch 1791903015 independently establishes a reboot at 14:50:15 UTC; its cause is unknown. These facts neither explain the dialog timeouts nor prove missing coverage healthy.
+
+Private custody directory: `heartbeat-watch-repair-20261013-8m19gdwg` under Limen's custody-staging root. Snapshot check SHA-256 `fa8619211010294a2860677ac8e7e1ffcc710de1e4557c13938a97e799b65fdb`; filtered power events `8e863f06d794a2b79490e93b4da482902fe4db51042c3bfa7a9ad270a92c22b4`. Raw client paths and native diagnostics remain private.
+
+## Implemented correction
+
+Dialogs previously repeated LaunchServices enumeration and signature checks after the strict identity audit. Production now reuses that complete inventory, with a 20-second aggregate native-command budget inside the unchanged outer bound. Missing inventory stays unmeasured and failing. Existing sensor/effector fixture routing remains supported.
+
+Private heartbeat receipts retain bounded output hashes, partial-output completeness and actual root-reaping evidence. Descendant cleanup stays unknown when not measured. Typed maintenance/dialog reason codes survive without raw output, client paths or credentials. Malformed payloads remain unavailable rather than producing invented reason codes.
+
+Future receipts sample hashed native boot identity and independent continuous/awake clocks at fire start. The rollout reader distinguishes sleep, boot change, wall-clock adjustment, measured awake backlog and unknown history. It never credits a complete elapsed window. Clock semantics follow Apple's `clock_gettime(3)` documentation; only deltas of each clock are compared.
+
+## Supported TCC transaction and remaining acceptance
+
+Manual diagnostic execution completed in 7.578 seconds with a real TCC finding, rather than a timeout. Strict audit found active managed leaks, rotating grants, visible App Management path rows and unrelated bundle-map drift. These remain findings; the repair must not suppress them or reset the baseline.
+
+Read-only private identity manifest SHA-256 `ef1a635e448f7884f0f4aa9f804b058af5895aae0b4c8133465892bc7e86c3f9` binds 32 managed clients and original baseline digest `sha256:5eef31923d4a5de72e048c528b90a546a5925f903d4bbf946fc4757b08c7f41b`. Twenty-eight client executables were absent; four still existed. A unique absent Python executable's App Management row was selected and removed through System Settings's supported per-row minus control. No authentication prompt was observed. Readback `tcc-operator-after-removal.json`, SHA-256 `6e9096f4ddfe5c364f848d5431b07c2bfa002aa0606e2c7479a5565fbd8f2efa`, proves that exact service grant disappeared and the stable-host record stayed identical. It does not prove all grants removed.
+
+The unrelated VS Code grant changed from denied to allowed between these observations, independently of the selected Python row. Preserve its current state and report the delta; do not undo another writer's correction or overwrite the immutable original baseline. The source audit therefore correctly remains non-green.
+
+The concrete remaining transaction follows [the supported TCC lifecycle](../architecture/tcc-stable-agent-host.md#one-supported-app-management-transaction): resolve exact remaining path identities against the private manifest, protect active sessions, remove only verified obsolete rows using the relevant native pane, and retain pre/post host signature and unrelated-grant maps. Two identically named Ruby UI rows cannot be safely attributed by name alone; do not guess. Historical nonexistent executable paths in Automation may have no exact supported removal surface. `tccutil` bundle-ID resets do not target those path clients; service-wide resets, direct database writes and baseline resets remain prohibited. These are distinct attribution/platform boundaries, not an invented blanket authentication requirement.
+
+Subsequent protected readback `tcc-all-app-management.json`, SHA-256 `466251db66a084953d8209f378530331d67abf0e5bc993cca6497cee42c63d86`, identified both Ruby rows as absent Homebrew portable runtimes. The native per-row Remove action on one opened the actual macOS authentication sheet requiring Touch ID or the user's password. That observed gate supersedes the earlier attribution uncertainty. It is left available to the user; no agent credential or biometric bypass is attempted. Exact identities and the native gate receipt remain private; issue #2848 comment 6149875472 records the owning boundary. The existing Claude executable remains protected pending lifecycle proof.
+
+The full parallel CLI run returned 8,604 passes, 70 skips and five asynchronous cell-registration failures; its failed shard passed all 11 cases alone and all 71 combined cell/runner/notification cases under ten workers. A proposed nested-cleanup reproducer passed before any fix, so the hypothesis was rejected and no speculative runner change retained. A scratch directory inside the managed workspace was also rejected by the existing conduct containment guard; the guard stayed intact and the diagnostic run moved to OS temporary storage.
+
+The five cell failures were then reproduced deterministically by running launch-agent liveness tests before cells: the former fixture assigned to the shared Python `time.sleep`, permanently replacing the real wait with a no-op. Cell polls therefore exhausted immediately even while actual child receipts correctly reached accepted/exited. The fixture now uses a module-local clock object, with a regression proving the process-wide sleep function remains unchanged. No production cell ownership or stopping rules are relaxed. Failed-run logs and the deterministic red reproduction remain evidence; final output is retained privately.
+
+Post-repair acceptance requires normal immutable installation of merged source, reviewed activation, and **natural scheduled** maintenance and dialog receipts with new source/runtime/contract identities. A completed finding proves execution only; it does not prove TCC cleanliness. Full original-window coverage remains failed/incomplete where evidence is absent. Codex-target visual capture retains the previously documented external platform safeguard.
