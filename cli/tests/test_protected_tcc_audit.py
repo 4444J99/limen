@@ -3,6 +3,7 @@
 import json
 import shutil
 import signal
+import struct
 import subprocess
 import sys
 import time
@@ -77,12 +78,27 @@ def _gone(pid):
     return result.returncode != 0 or result.stdout.strip().startswith("Z")
 
 
+def test_launcher_census_failure_keeps_cleanup_and_measurement_unverified(monkeypatch, capfd):
+    monkeypatch.setattr(sys, "argv", ["audit", "--launch", "/host", "/implementation"])
+
+    def unavailable(*_args):
+        raise BoundedSubprocessError("unavailable", stage="rss_census")
+
+    monkeypatch.setattr(native, "launch", unavailable)
+    assert native.main() == 69
+    sys.stdout.buffer.flush()
+    payload = json.loads(capfd.readouterr().out)
+    assert payload["failures"] == ["native_tcc_audit_unavailable"]
+    assert payload["measured"]["native_job_cleanup"] is False
+    assert payload["native_output_complete"] is False
+
+
 def test_external_native_job_waits_for_result_and_verified_completion(native_fixture):
     root, driver, scratch = native_fixture
     result = subprocess.run([sys.executable, str(driver)], capture_output=True, text=True, timeout=12)
     assert result.returncode == 0, result.stderr
     value = json.loads(result.stdout)
-    assert value["code"] == 1
+    assert value["code"] == 1, value
     assert json.loads(value["stdout"])["measured"]["tcc_database"] is True
     assert json.loads(value["stdout"])["native_output_complete"] is True
     assert _gone(int((root / "host.pid").read_text()))
@@ -238,3 +254,26 @@ def test_native_import_hang_is_owned_and_cancelled_before_probe_work(native_fixt
 def test_reused_pid_is_not_the_owned_process(monkeypatch):
     monkeypatch.setattr(native, "_identity", lambda _pid: "different-birth")
     assert native._alive(12345, "known-birth") is False
+
+
+def test_darwin_command_decoder_keeps_exact_arguments_and_empty_values():
+    raw = struct.pack("=i", 4) + b"/executable\0\0\0/host with spaces\0run\0\0/job/request.json\0ENV=value\0"
+    assert native._darwin_argv(raw) == ["/host with spaces", "run", "", "/job/request.json"]
+
+
+@pytest.mark.parametrize("raw", [b"", struct.pack("=i", 513) + b"x\0", struct.pack("=i", 2) + b"x\0\0one\0"])
+def test_darwin_incomplete_command_census_fails_closed(raw):
+    with pytest.raises(native.NativeAuditError, match="command_unmeasured"):
+        native._darwin_argv(raw)
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="Darwin native process ABI")
+def test_native_process_inspection_never_spawns_ps_into_measured_group(monkeypatch):
+    def forbidden(*_args, **_kwargs):
+        raise AssertionError("inspection spawned a child in the measured group")
+
+    monkeypatch.setattr(native.subprocess, "run", forbidden)
+    assert native._identity(native.os.getpid()).startswith("darwin-proc-start:")
+    parent, arguments = native._process_details(native.os.getpid())
+    assert parent == native.os.getppid()
+    assert arguments and any("python" in argument.lower() for argument in arguments)

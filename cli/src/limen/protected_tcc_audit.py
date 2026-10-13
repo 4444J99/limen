@@ -14,6 +14,7 @@ import resource
 import shutil
 import signal
 import stat
+import struct
 import subprocess
 import sys
 import tempfile
@@ -22,7 +23,7 @@ import uuid
 from pathlib import Path
 
 from limen.bounded_subprocess import BoundedSubprocessError, _DarwinProcessGroup, _ProcTaskInfo, run_bounded_subprocess
-from limen.host_admission import host_temporary_root, process_identity
+from limen.host_admission import _darwin_process_identity, _ProcBsdInfo, host_temporary_root, process_identity
 
 OUTPUT_LIMIT = 1048576
 RSS_LIMIT = 536870912
@@ -70,9 +71,9 @@ def _json(path: Path) -> dict:
 
 
 def _identity(pid: int) -> str | None:
+    if sys.platform == "darwin":
+        return _darwin_process_identity(pid)
     identity = process_identity(pid)
-    if sys.platform == "darwin" and identity and not identity.startswith("darwin-proc-start:"):
-        return None
     return identity
 
 
@@ -87,11 +88,72 @@ def _alive(pid: int, identity: str) -> bool:
     return current == identity
 
 
-def _host_command_matches(pid: int, host: Path, request: Path) -> bool:
+def _darwin_argv(raw: bytes) -> list[str]:
+    if len(raw) < 5:
+        raise NativeAuditError("native_audit_command_unmeasured")
+    count = struct.unpack_from("=i", raw)[0]
+    if not 0 < count <= 512:
+        raise NativeAuditError("native_audit_command_unmeasured")
+    end = raw.find(b"\0", 4)
+    if end < 0:
+        raise NativeAuditError("native_audit_command_unmeasured")
+    position = end
+    while position < len(raw) and raw[position] == 0:
+        position += 1
+    arguments = raw[position:].split(b"\0")
+    if len(arguments) <= count:
+        raise NativeAuditError("native_audit_command_unmeasured")
+    return [os.fsdecode(argument) for argument in arguments[:count]]
+
+
+def _process_details(pid: int) -> tuple[int, list[str]]:
+    if sys.platform == "darwin":
+        library = _DarwinProcessGroup(pid).library
+        info = _ProcBsdInfo()
+        if (
+            library.proc_pidinfo(pid, 3, 0, ctypes.byref(info), ctypes.sizeof(info)) != ctypes.sizeof(info)
+            or info.pbi_pid != pid
+        ):
+            raise NativeAuditError("native_audit_ancestry_unmeasured")
+        # Public SDK sysctl.h: CTL_KERN=1, KERN_PROCARGS2=49. No ps child
+        # inside the caller's measured group: macOS denies its transient RSS.
+        system = ctypes.CDLL("/usr/lib/libSystem.B.dylib", use_errno=True)
+        system.sysctl.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_uint,
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_size_t,
+        ]
+        system.sysctl.restype = ctypes.c_int
+        mib = (ctypes.c_int * 3)(1, 49, pid)
+        buffer = ctypes.create_string_buffer(262144)
+        length = ctypes.c_size_t(len(buffer))
+        if system.sysctl(mib, 3, buffer, ctypes.byref(length), None, 0) != 0 or length.value > len(buffer):
+            raise NativeAuditError("native_audit_command_unmeasured")
+        return int(info.pbi_ppid), _darwin_argv(buffer.raw[: length.value])
     result = subprocess.run(
-        ["/bin/ps", "-ww", "-p", str(pid), "-o", "command="], capture_output=True, text=True, timeout=1, check=False
+        ["/bin/ps", "-ww", "-p", str(pid), "-o", "ppid=,command="],
+        capture_output=True,
+        text=True,
+        timeout=0.25,
+        check=True,
     )
-    return result.returncode == 0 and str(host) in result.stdout and str(request) in result.stdout
+    fields = result.stdout.strip().split(None, 1)
+    if len(fields) != 2:
+        raise NativeAuditError("native_audit_ancestry_unmeasured")
+    return int(fields[0]), [fields[1]]
+
+
+def _host_command_matches(pid: int, host: Path, request: Path) -> bool:
+    try:
+        _, arguments = _process_details(pid)
+    except (NativeAuditError, OSError, subprocess.SubprocessError):
+        return False
+    if sys.platform == "darwin":
+        return str(host) in arguments and str(request) in arguments
+    return str(host) in arguments[0] and str(request) in arguments[0]
 
 
 def _rss(pid: int) -> int:
@@ -128,6 +190,9 @@ def _heartbeat_ancestor(root: Path) -> tuple[int, str] | None:
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             raise NativeAuditError("native_audit_ancestry_unmeasured")
+        # This ancestry walk finishes before the native job starts. ps can
+        # inspect protected ancestors that libproc cannot; it must never run
+        # concurrently with that job's aggregate RSS census.
         result = subprocess.run(
             ["/bin/ps", "-ww", "-p", str(pid), "-o", "ppid=,command="],
             capture_output=True,
@@ -147,13 +212,14 @@ def _heartbeat_ancestor(root: Path) -> tuple[int, str] | None:
     raise NativeAuditError("native_audit_ancestry_unmeasured")
 
 
-def _failed(code: str) -> bytes:
+def _failed(code: str, stage: str | None = None) -> bytes:
     return json.dumps(
         {
             "schema": "limen.tcc_identity_audit.v2",
             "ok": False,
             "status": "unmeasured",
             "failures": [code],
+            "failure_stage": stage,
             "native_output_complete": False,
             "malformed_claude_helpers": [],
             "measured": {"tcc_database": False, "launchservices": False, "native_job_cleanup": False},
@@ -244,7 +310,7 @@ def receive(request_path: Path) -> int:
         stdout, stderr, code = completed.stdout, completed.stderr, completed.returncode
         verified_empty = True
     except BoundedSubprocessError as exc:
-        stdout, stderr, code = _failed(f"native_tcc_audit_{exc.kind}"), b"", 69
+        stdout, stderr, code = _failed(f"native_tcc_audit_{exc.kind}", exc.stage), b"", 69
         verified_empty = False
     finally:
         signal.setitimer(signal.ITIMER_REAL, 0)
@@ -314,14 +380,8 @@ def launch(
             or not _host_command_matches(candidate["host_pid"], host, request_path)
         ):
             raise NativeAuditError("native_audit_claim_unmeasured")
-        parent = subprocess.run(
-            ["/bin/ps", "-p", str(candidate["receiver_pid"]), "-o", "ppid="],
-            capture_output=True,
-            text=True,
-            timeout=0.5,
-            check=True,
-        )
-        if parent.stdout.strip() != str(candidate["host_pid"]):
+        parent, _ = _process_details(candidate["receiver_pid"])
+        if parent != candidate["host_pid"]:
             raise NativeAuditError("native_audit_claim_invalid")
         return {
             **candidate,
@@ -469,7 +529,10 @@ def main() -> int:
             sys.stderr.buffer.write(stderr)
             return code
         raise NativeAuditError("native_audit_arguments_invalid")
-    except (NativeAuditError, OSError, ValueError, KeyError, subprocess.SubprocessError) as exc:
-        failure_code = str(exc) if isinstance(exc, NativeAuditError) else "native_tcc_route_unavailable"
+    except (NativeAuditError, BoundedSubprocessError, OSError, ValueError, KeyError, subprocess.SubprocessError) as exc:
+        if isinstance(exc, BoundedSubprocessError):
+            failure_code = f"native_tcc_audit_{exc.kind}"
+        else:
+            failure_code = str(exc) if isinstance(exc, NativeAuditError) else "native_tcc_route_unavailable"
         sys.stdout.buffer.write(_failed(failure_code))
         return 69
