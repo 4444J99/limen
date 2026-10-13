@@ -772,7 +772,7 @@ def heartbeat_once(
                         reason = f"probe-returncode:{returncode}"
                 except BoundedSubprocessError as exc:
                     status = "failed"
-                    reason = exc.kind
+                    reason = f"{exc.kind}:{exc.stage}" if exc.stage else exc.kind
                     system_failure = exc.kind in SYSTEM_FAILURES
                     surviving_descendant_count = "unknown"
                 except HeartbeatContractError as exc:

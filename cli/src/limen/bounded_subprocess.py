@@ -24,8 +24,9 @@ FailureKind = Literal["descendants", "invalid", "output", "resource", "timeout",
 class BoundedSubprocessError(RuntimeError):
     """A subprocess failed before it could return one bounded result."""
 
-    def __init__(self, kind: FailureKind):
+    def __init__(self, kind: FailureKind, *, stage: Literal["rss_census", "descendant_census"] | None = None):
         self.kind = kind
+        self.stage = stage
         super().__init__(kind)
 
 
@@ -158,19 +159,27 @@ def run_bounded_subprocess(
     next_rss_check = 0.0
     streams: dict[int, tuple[str, object]] = {}
 
+    def census_timeout() -> float:
+        # A busy host can take more than 0.5s to enumerate its protected jobs.
+        # Census remains mandatory and consumes the original wall budget.
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise BoundedSubprocessError("timeout")
+        return min(3.0, remaining)
+
     def process_group_rss() -> int:
         try:
             observed = subprocess.run(
                 ["ps", "-axo", "pgid=,rss="],
                 capture_output=True,
                 text=True,
-                timeout=0.5,
+                timeout=census_timeout(),
                 check=False,
             )
         except (OSError, subprocess.SubprocessError) as exc:
-            raise BoundedSubprocessError("unavailable") from exc
+            raise BoundedSubprocessError("unavailable", stage="rss_census") from exc
         if observed.returncode != 0:
-            raise BoundedSubprocessError("unavailable")
+            raise BoundedSubprocessError("unavailable", stage="rss_census")
         total_kib = 0
         for line in observed.stdout.splitlines():
             fields = line.split()
@@ -184,13 +193,13 @@ def run_bounded_subprocess(
                 ["ps", "-axo", "pid=,pgid="],
                 capture_output=True,
                 text=True,
-                timeout=0.5,
+                timeout=census_timeout(),
                 check=False,
             )
         except (OSError, subprocess.SubprocessError) as exc:
-            raise BoundedSubprocessError("unavailable") from exc
+            raise BoundedSubprocessError("unavailable", stage="descendant_census") from exc
         if observed.returncode != 0:
-            raise BoundedSubprocessError("unavailable")
+            raise BoundedSubprocessError("unavailable", stage="descendant_census")
         survivors: list[int] = []
         for line in observed.stdout.splitlines():
             fields = line.split()
