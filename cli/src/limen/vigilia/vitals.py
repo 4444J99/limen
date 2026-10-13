@@ -27,18 +27,26 @@ Cold swap stock alone (large used, modest total, healthy free RAM) stays green.
 All axes combine by MAX severity: any can throttle/shed, none can mask another. A
 warn that SUSTAINS for VITALS_WARN_SUSTAIN_BEATS consecutive gate beats escalates to
 shed — 7/16 sat at 'warn' for hours; sustained warn IS critical. The streak counts
-only on the gate path (``beat_gate(shed=True)``, once per heartbeat); the executive's
-read-only record (``shed=False``) never double-counts it.
+only on real gate/admission observations, at most once per minute. Read-only
+records never count. Shared host state is boot-bound and expires after two
+declared VITALS sampling periods; old checkout counters stay untouched.
 
-Fail-OPEN everywhere: a sensor fault reads as 'normal' and never blocks the beat.
+Kernel/load/swap fallback behavior is unchanged. Invalid shared warning history
+propagates as unmeasured to admission rather than fabricating a normal history.
 """
 
 from __future__ import annotations
 
+import fcntl
+import hashlib
 import json
+import math
 import os
 import re
 import subprocess
+import stat
+import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -140,36 +148,115 @@ def assess_swap(swap: dict | None) -> str:
 
 
 def _streak_path() -> Path:
-    root = params._repo_root() or Path(os.environ.get("LIMEN_ROOT", ".")).expanduser()
-    return root / "logs" / "vigilia" / "vitals-streak.json"
+    from limen.host_admission import default_state_root
+
+    return default_state_root() / "vitals-streak.json"
 
 
-def _update_warn_streak(action: str, update: bool) -> int:
+def _boot_identity() -> str:
+    if sys.platform == "darwin":
+        from limen.heartbeat import _clock_observation
+
+        observation = _clock_observation()
+        if observation.get("measured") is True:
+            return str(observation["boot_id"])
+    else:
+        try:
+            return hashlib.sha256(Path("/proc/sys/kernel/random/boot_id").read_bytes()).hexdigest()
+        except OSError:
+            pass
+    raise ValueError("vitals_boot_unmeasured")
+
+
+def _streak_max_age() -> float:
+    return 2 * max(60, params.get("VITALS_SAMPLE_SECONDS", 300, cast=int))
+
+
+def _read_streak(path: Path, now: float, boot: str) -> tuple[int, float]:
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    except FileNotFoundError:
+        return 0, 0.0
+    try:
+        info = os.fstat(fd)
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o077 or info.st_size > 16384:
+            raise ValueError("vitals_streak_state_unsafe")
+        with os.fdopen(fd, "rb", closefd=False) as stream:
+            prior = json.loads(stream.read(16385))
+    finally:
+        os.close(fd)
+    if not isinstance(prior, dict) or prior.get("schema") != "limen.vitals_warn_streak.v2":
+        raise ValueError("vitals_streak_state_invalid")
+    streak, last = prior.get("streak"), prior.get("last")
+    if type(streak) is not int or streak < 0 or not isinstance(last, (int, float)) or isinstance(last, bool):
+        raise ValueError("vitals_streak_state_invalid")
+    try:
+        timestamp = float(last)
+    except OverflowError as exc:
+        raise ValueError("vitals_streak_state_invalid") from exc
+    if not math.isfinite(timestamp):
+        raise ValueError("vitals_streak_state_invalid")
+    if prior.get("boot_id") != boot or not 0 <= now - timestamp <= _streak_max_age():
+        return 0, 0.0
+    return streak, timestamp
+
+
+def _update_warn_streak(action: str, update: bool, *, state_root: Path | None = None) -> int:
     """Consecutive gate beats at >= throttle, persisted across processes.
 
     Increments only on the gate path (``update=True``) and at most once per 60 s, so
     the executive's read-only record and rapid re-invocations never inflate it.
-    Resets on ok. Fail-open: unreadable state reads as streak 0."""
-    path = _streak_path()
-    streak, last = 0, 0.0
-    try:
-        prior = json.loads(path.read_text())
-        streak, last = int(prior.get("streak", 0)), float(prior.get("last", 0.0))
-    except Exception:
-        pass
+    Freshness, boot identity and atomic host-wide updates define consecutiveness.
+    Read-only calls never create/reset files. Invalid shared state is unmeasured;
+    admission fails closed rather than fabricating a healthy history.
+    """
+    path = state_root / "vitals-streak.json" if state_root is not None else _streak_path()
     if not update:
+        try:
+            path.lstat()
+        except FileNotFoundError:
+            return 0
+        streak, _last = _read_streak(path, time.time(), _boot_identity())
         return 0 if action == OK else streak
-    now = time.time()
-    if action == OK:
-        streak, last = 0, now
-    elif now - last >= 60.0:
-        streak, last = streak + 1, now
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    parent = path.parent.lstat()
+    if not stat.S_ISDIR(parent.st_mode) or parent.st_uid != os.getuid() or parent.st_mode & 0o077:
+        raise ValueError("vitals_streak_root_unsafe")
+    lock = os.open(path.with_suffix(".lock"), os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    temporary = None
     try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({"streak": streak, "last": last}))
-    except Exception:
-        pass
-    return streak
+        info = os.fstat(lock)
+        if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_mode & 0o077:
+            raise ValueError("vitals_streak_lock_unsafe")
+        deadline = time.monotonic() + 0.25
+        while True:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError:
+                if time.monotonic() >= deadline:
+                    raise ValueError("vitals_streak_lock_unavailable")
+                time.sleep(0.005)
+        now, boot = time.time(), _boot_identity()
+        streak, last = _read_streak(path, now, boot)
+        if action == OK:
+            streak, last = 0, now
+        elif streak == 0 or now - last >= 60.0:
+            streak, last = streak + 1, now
+        fd, temporary = tempfile.mkstemp(prefix=".vitals-streak-", dir=path.parent)
+        with os.fdopen(fd, "w") as stream:
+            json.dump(
+                {"schema": "limen.vitals_warn_streak.v2", "streak": streak, "last": last, "boot_id": boot}, stream
+            )
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, path)
+        temporary = None
+        return streak
+    finally:
+        if temporary is not None:
+            os.unlink(temporary)
+        os.close(lock)
 
 
 _SEVERITY = {OK: 0, THROTTLE: 1, SHED: 2}
@@ -205,7 +292,7 @@ def shed_ollama() -> list[str]:
     return stopped
 
 
-def beat_gate(shed: bool = True) -> dict:
+def beat_gate(shed: bool = True, *, record: bool | None = None, state_root: Path | None = None) -> dict:
     """The per-beat VITALS decision.
 
     Returns a status dict. The heartbeat reads ``status['action'] == 'shed'`` to
@@ -221,7 +308,17 @@ def beat_gate(shed: bool = True) -> dict:
     action = max(memory_action, load_action, swap_action, key=lambda a: _SEVERITY.get(a, 0))
     # Sustained warn IS critical (2026-07-16: hours at 'warn' while swap filled).
     sustain = params.get("VITALS_WARN_SUSTAIN_BEATS", 3, cast=int)
-    streak = _update_warn_streak(action, update=shed)
+    recorded = shed if record is None else record
+    streak_status = "measured"
+    try:
+        if state_root is None:
+            streak = _update_warn_streak(action, update=recorded)
+        else:
+            streak = _update_warn_streak(action, update=recorded, state_root=state_root)
+    except (OSError, ValueError):
+        if action != SHED:
+            raise
+        streak, streak_status = 0, "unmeasured"
     sustained = sustain > 0 and action == THROTTLE and streak >= sustain
     if sustained:
         action = SHED
@@ -245,6 +342,11 @@ def beat_gate(shed: bool = True) -> dict:
         "ram_gib": round(swap["ram_bytes"] / gib, 2) if swap else None,
         "swap_action": swap_action,
         "warn_streak": streak,
+        "warn_streak_status": streak_status,
+        "warn_streak_mode": "shared_boot_bound_recent",
+        "warn_streak_recorded": recorded,
+        "warn_streak_max_age_seconds": _streak_max_age(),
+        "migration_diagnostic": "legacy_repository_streak_not_imported",
         "sustained_warn": sustained,
         "action": action,
         "shed_ollama": stopped,
