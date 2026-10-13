@@ -18,7 +18,7 @@ from collections.abc import Mapping, Sequence
 from contextlib import suppress
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Callable
 
 FailureKind = Literal["descendants", "invalid", "output", "resource", "timeout", "unavailable"]
 _BOOTSTRAP_FAILURE = b"limen: bounded child setup unavailable\n"
@@ -184,6 +184,7 @@ def run_bounded_subprocess(
     input_bytes: bytes | None = None,
     cpu_seconds: int | None = None,
     rss_ceiling: int | None = None,
+    additional_rss: Callable[[], int] | None = None,
 ) -> BoundedCompletedProcess:
     """Run one command while terminating it as soon as either output cap is crossed."""
 
@@ -199,6 +200,7 @@ def run_bounded_subprocess(
         or not isinstance(stderr_ceiling, int)
         or stderr_ceiling < 0
         or (input_bytes is not None and not isinstance(input_bytes, bytes))
+        or (additional_rss is not None and not callable(additional_rss))
         or (
             cpu_seconds is not None
             and (isinstance(cpu_seconds, bool) or not isinstance(cpu_seconds, int) or cpu_seconds <= 0)
@@ -341,7 +343,10 @@ def run_bounded_subprocess(
                 raise BoundedSubprocessError("timeout")
             if rss_ceiling is not None and process.poll() is None and now >= next_rss_check:
                 next_rss_check = now + 1.0
-                if process_group_rss() > rss_ceiling:
+                extra = additional_rss() if additional_rss is not None else 0
+                if type(extra) is not int or extra < 0:
+                    raise BoundedSubprocessError("unavailable", stage="rss_census")
+                if process_group_rss() + extra > rss_ceiling:
                     raise BoundedSubprocessError("resource")
             if streams:
                 events = selector.select(timeout=min(remaining, 0.1))

@@ -116,7 +116,7 @@ def _probe_evidence(probe: dict[str, Any], stdout: bytes) -> dict[str, Any] | No
         status = payload.get("status")
         if not isinstance(status, str) or not re.fullmatch(r"[a-z][a-z0-9_]{0,63}", status):
             return None
-        return {
+        result = {
             "schema": payload["schema"],
             "status": status,
             "reason_codes": sorted(
@@ -127,6 +127,11 @@ def _probe_evidence(probe: dict[str, Any], stdout: bytes) -> dict[str, Any] | No
                 }
             )[:32],
         }
+        if isinstance(payload.get("native_job_cleanup"), bool):
+            result["native_job_cleanup"] = payload["native_job_cleanup"]
+        if isinstance(payload.get("native_output_complete"), bool):
+            result["native_output_complete"] = payload["native_output_complete"]
+        return result
     except (ValueError, TypeError, AttributeError, StopIteration, UnicodeError):
         return None
 
@@ -483,6 +488,11 @@ def heartbeat_once(
                     else:
                         status = "finding"
                         reason = f"probe-returncode:{returncode}"
+                    if probe_evidence and probe_evidence.get("native_job_cleanup") is False:
+                        status = "failed"
+                        reason = "native_audit_cleanup_unverified"
+                        system_failure = True
+                        surviving_descendant_count = "unknown"
                 except BoundedSubprocessError as exc:
                     status = "failed"
                     reason = f"{exc.kind}:{exc.stage}" if exc.stage else exc.kind

@@ -65,6 +65,9 @@
         "cli/src/limen/models.py",
         "cli/src/limen/runtime_maintenance_observation.py",
         "scripts/runtime-maintenance-observation.py",
+        "scripts/tcc-identity-audit",
+        "scripts/tcc-identity-audit.py",
+        "scripts/protected-tcc-audit.py",
         "spec/runtime-maintenance-observation.json"
       ],
       "probes": [

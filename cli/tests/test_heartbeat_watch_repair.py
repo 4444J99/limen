@@ -42,7 +42,7 @@ def test_malformed_reason_collection_does_not_invent_one_character_denials():
     assert heartbeat._probe_evidence({"name": "runtime-maintenance-observation"}, json.dumps(payload).encode()) is None
 
 
-def _dialog_run(tmp_path, *, measured, malformed):
+def _dialog_run(tmp_path, *, measured, malformed, extra=None):
     root = tmp_path / "repository"
     scripts = root / "scripts"
     scripts.mkdir(parents=True)
@@ -77,6 +77,7 @@ def _dialog_run(tmp_path, *, measured, malformed):
         if measured
         else ["claude_helper_registration_unreadable"],
     }
+    payload.update(extra or {})
     audit = scripts / "tcc-identity-audit"
     audit.write_text(
         f"#!{sys.executable}\nimport json\nprint(json.dumps({payload!r}))\nraise SystemExit({int(not payload['ok'])})\n"
@@ -90,6 +91,81 @@ def _dialog_run(tmp_path, *, measured, malformed):
         timeout=10,
     )
     return result, marker
+
+
+def test_dialogs_keeps_large_private_inventory_inside_unchanged_output_bound(tmp_path):
+    result, _ = _dialog_run(
+        tmp_path,
+        measured=True,
+        malformed=True,
+        extra={"private_inventory": "PRIVATE_CLIENT_PATH " * 20000},
+    )
+    assert result.returncode == 1
+    assert len(result.stdout.encode()) < 16384
+    assert "PRIVATE_CLIENT_PATH" not in result.stdout
+    assert "limen-probe-evidence=" in result.stdout
+
+
+def test_database_permission_denial_has_a_distinct_read_only_failure(tmp_path, monkeypatch):
+    database = tmp_path / "protected.db"
+    database.touch()
+    original = os.open
+
+    def denied(path, *args, **kwargs):
+        if Path(path) == database:
+            raise PermissionError(1, "operation not permitted")
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", denied)
+    with pytest.raises(AUDIT.TCCPermissionDenied):
+        AUDIT._read_clients([database], baseline_identities=None, application=tmp_path / "host.app", env={})
+
+
+def test_permission_denial_remains_unmeasured_and_keeps_specific_reason(tmp_path, monkeypatch):
+    def denied(*_args, **_kwargs):
+        raise AUDIT.TCCPermissionDenied("protected database")
+
+    monkeypatch.setattr(AUDIT, "_read_clients", denied)
+    payload = AUDIT.audit(
+        {"HOME": str(tmp_path), "LIMEN_TCC_DB": str(tmp_path / "db")},
+        platform_name="Darwin",
+        runner=lambda command, **_kwargs: subprocess.CompletedProcess(command, 0, "", ""),
+    )
+    assert payload["measured"]["tcc_database"] is False
+    assert "tcc_database_permission_denied" in payload["measured"]["blind_failures"]
+
+
+@pytest.mark.parametrize("verified", [False, True])
+def test_native_cleanup_evidence_controls_system_failure_without_hiding_findings(tmp_path, monkeypatch, verified):
+    evidence = {
+        "schema": "limen.dialogs_evidence.v1",
+        "status": "blocked",
+        "reason_codes": ["visible_app_management_path_client"],
+        "native_job_cleanup": verified,
+    }
+    monkeypatch.setattr(
+        heartbeat,
+        "_select_probe",
+        lambda contract, _state, _now: next(
+            probe for probe in contract["probes"] if probe["name"] == "dialogs-silenced"
+        ),
+    )
+    monkeypatch.setattr(
+        heartbeat,
+        "run_bounded_subprocess",
+        lambda *_a, **_k: BoundedCompletedProcess(1, ("limen-probe-evidence=" + json.dumps(evidence)).encode(), b""),
+    )
+    receipt = heartbeat.heartbeat_once(
+        ROOT,
+        state_root=tmp_path,
+        clock=lambda: 1000000,
+        notification_emitter=lambda _root, candidate: DeliveryReceipt(
+            "withheld", candidate.event["stable_id"], candidate.event["event_id"], {}
+        ),
+    )
+    assert receipt["status"] == ("finding" if verified else "failed")
+    assert receipt["surviving_descendant_count"] == (0 if verified else "unknown")
+    assert receipt["consecutive_system_failures"] == int(not verified)
 
 
 def test_dialogs_uses_complete_audit_inventory_without_a_second_launchservices_pass(tmp_path):
