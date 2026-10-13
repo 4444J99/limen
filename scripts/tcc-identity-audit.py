@@ -41,6 +41,7 @@ APP_MANAGEMENT_SERVICE = "kTCCServiceSystemPolicyAppBundles"
 MEASUREMENT_BLIND_FAILURES = frozenset(
     {
         "tcc_database_unavailable",
+        "tcc_database_permission_denied",
         "claude_helper_registration_unreadable",
     }
 )
@@ -110,6 +111,10 @@ Runner = Callable[..., subprocess.CompletedProcess[str]]
 
 class AuditError(RuntimeError):
     """The read-only audit could not establish its predicate."""
+
+
+class TCCPermissionDenied(AuditError):
+    """The OS or SQLite explicitly denied the protected read."""
 
 
 def _truthy(value: object) -> bool:
@@ -291,11 +296,19 @@ def _read_clients(
     rows: list[tuple[Any, ...]] = []
     for database in databases:
         try:
+            # A read-only open distinguishes actual OS denial from an opaque
+            # SQLITE_CANTOPEN result without changing the database or its grants.
+            descriptor = os.open(database.resolve(), os.O_RDONLY | os.O_NONBLOCK | os.O_NOFOLLOW)
+            os.close(descriptor)
             connection = sqlite3.connect(
                 f"{database.resolve().as_uri()}?mode=ro",
                 uri=True,
             )
+        except PermissionError as exc:
+            raise TCCPermissionDenied(f"TCC database permission denied: {database}") from exc
         except (OSError, sqlite3.Error) as exc:
+            if getattr(exc, "sqlite_errorcode", None) in {sqlite3.SQLITE_AUTH, sqlite3.SQLITE_PERM}:
+                raise TCCPermissionDenied(f"TCC database permission denied: {database}") from exc
             raise AuditError(f"TCC database is unavailable: {database}") from exc
         try:
             rows.extend(
@@ -305,6 +318,8 @@ def _read_clients(
                 ).fetchall()
             )
         except sqlite3.Error as exc:
+            if getattr(exc, "sqlite_errorcode", None) in {sqlite3.SQLITE_AUTH, sqlite3.SQLITE_PERM}:
+                raise TCCPermissionDenied(f"TCC database permission denied: {database}") from exc
             raise AuditError(f"TCC access schema is unreadable: {database}") from exc
         finally:
             connection.close()
@@ -947,6 +962,8 @@ def audit(
         clients = []
         unrelated = 0
         failures.append("tcc_database_unavailable")
+        if isinstance(exc, TCCPermissionDenied):
+            failures.append("tcc_database_permission_denied")
         database_error = str(exc)
     else:
         database_error = None

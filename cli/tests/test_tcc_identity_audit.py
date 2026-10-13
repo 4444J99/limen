@@ -674,6 +674,32 @@ def test_wrapper_skips_missing_python_only_when_not_strict(tmp_path: Path):
     assert "Python 3 is unavailable" in strict.stderr
 
 
+def test_immutable_wrapper_uses_its_verified_interpreter_instead_of_path(tmp_path: Path):
+    source = tmp_path / "runtime/source"
+    scripts = source / "scripts"
+    scripts.mkdir(parents=True)
+    wrapper = scripts / "tcc-identity-audit"
+    shutil.copy2(WRAPPER, wrapper)
+    managed = tmp_path / "runtime/venv/bin/python"
+    managed.parent.mkdir(parents=True)
+    managed.write_text("#!/bin/sh\nprintf managed-interpreter\\n\n")
+    managed.chmod(0o755)
+    binary = tmp_path / "bin"
+    binary.mkdir()
+    (binary / "dirname").symlink_to(shutil.which("dirname"))
+    (binary / "uname").write_text("#!/bin/sh\nprintf Linux\n")
+    (binary / "uname").chmod(0o755)
+    result = subprocess.run(
+        ["/bin/sh", str(wrapper), "--strict"],
+        env={"HOME": str(tmp_path), "PATH": str(binary)},
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    assert result.returncode == 0
+    assert result.stdout.startswith("managed-interpreter")
+
+
 def test_wrapper_requires_live_host_lifetime_descriptor(tmp_path: Path):
     dirname = shutil.which("dirname")
     assert dirname is not None

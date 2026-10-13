@@ -68,11 +68,21 @@ if [ "$tcc_status" -eq 0 ]; then
   green "TCC identity: automatic updates enabled; stable host valid; active leaks, visible path rows, and unhosted ingresses all zero"
 else
   redb "TCC identity invariant is not contained (audit exit $tcc_status)"
-  while IFS= read -r audit_line; do
-    [ -n "$audit_line" ] && note "$audit_line"
-  done <<EOF
-$tcc_output
-EOF
+  # The complete inventory can exceed the scheduled output bound and contains
+  # private client paths. Keep it in memory for the helper check; emit codes only.
+  audit_summary="$(printf '%s\n' "$tcc_output" | python3 -c '
+import json, re, sys
+try:
+    data = json.load(sys.stdin)
+    if data.get("schema") != "limen.tcc_identity_audit.v2":
+        raise ValueError("schema")
+    codes = [c for c in data.get("failures", []) if isinstance(c, str) and re.fullmatch(r"[a-z][a-z0-9_]{0,95}", c)][:32]
+    summary = {"reason_codes": codes, "tcc_database_measured": data.get("measured", {}).get("tcc_database") is True}
+except (ValueError, TypeError, KeyError, AttributeError):
+    summary = {"reason_codes": ["tcc_audit_evidence_unavailable"], "tcc_database_measured": False}
+print(json.dumps(summary, sort_keys=True, separators=(",", ":")))
+')"
+  note "$audit_summary"
   cure "Install/apply DomusAgentHost, route the named launch seam through it, then run: tcc-identity-audit --strict"
   note "Never cure this by setting DISABLE_AUTOUPDATER, DISABLE_UPDATES, HOMEBREW_NO_AUTO_UPDATE, pinning a tool, resetting all TCC, or editing TCC.db."
 fi
@@ -369,6 +379,10 @@ try:
     evidence = {"schema": "limen.dialogs_evidence.v1", "status": data.get("status"), "reason_codes": reasons,
                 "launchservices_measured": data.get("measured", {}).get("launchservices") is True,
                 "budget_exhausted": data.get("measured", {}).get("budget_exhausted") is True}
+    if isinstance(data.get("measured", {}).get("native_job_cleanup"), bool):
+        evidence["native_job_cleanup"] = data["measured"]["native_job_cleanup"]
+    if isinstance(data.get("native_output_complete"), bool):
+        evidence["native_output_complete"] = data["native_output_complete"]
 except (ValueError, KeyError, TypeError):
     evidence = {"schema": "limen.dialogs_evidence.v1", "status": "unmeasured", "reason_codes": ["tcc_audit_evidence_unavailable"]}
 print("limen-probe-evidence=" + json.dumps(evidence, sort_keys=True, separators=(",", ":")))

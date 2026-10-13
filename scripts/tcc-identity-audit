@@ -14,6 +14,13 @@ for argument in "$@"; do
   fi
 done
 python="$(command -v python3 2>/dev/null || true)"
+# Immutable deployments use their verified interpreter, independent of PATH churn.
+managed_python="${root%/source}/venv/bin/python"
+if [ "$root" != "${root%/source}" ] && [ -x "$managed_python" ]; then
+  python="$managed_python"
+elif [ -x "${HOME:-}/.local/share/limen/current/venv/bin/python" ]; then
+  python="${HOME}/.local/share/limen/current/venv/bin/python"
+fi
 if [ -z "$python" ]; then
   if [ "$strict" -eq 1 ]; then
     printf 'tcc-identity-audit: Python 3 is unavailable\n' >&2
@@ -51,6 +58,11 @@ if ! printf '%s\n' "$host_status" |
     /usr/bin/grep -Eq '"ok"[[:space:]]*:[[:space:]]*true'; then
   printf 'tcc-identity-audit: stable Domus agent host contract is invalid: %s\n' "$host" >&2
   exit 69
+fi
+if [ "$#" -eq 4 ] && [ "$1" = "--strict" ] && [ "$2" = "--json" ] && \
+  [ "$3" = "--budget-seconds" ] && [ "$4" = "20" ] && \
+  [ "$host" = "$home/Applications/DomusAgentHost.app/Contents/MacOS/DomusAgentHost" ]; then
+  exec "$python" "$root/scripts/protected-tcc-audit.py" --launch "$host" "$implementation"
 fi
 if "$host" verify-lifetime >/dev/null 2>&1; then
   exec "$python" "$implementation" "$@"
