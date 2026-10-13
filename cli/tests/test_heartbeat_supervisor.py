@@ -63,6 +63,25 @@ def test_contract_is_a_one_shot_resource_contract():
     assert "--no-write" in commands["tcc-track-c"]
 
 
+def test_maintenance_cadence_survives_startup_backlog_without_starving_existing_probes():
+    from collections import defaultdict
+
+    contract, _ = heartbeat._load_contract(ROOT)
+    state = {"probes": {}}
+    fired = defaultdict(list)
+    start = 1_000_000
+    for now in range(start, start + 86400, contract["launchd"]["start_interval_seconds"]):
+        probe = heartbeat._select_probe(contract, state, now)
+        if probe:
+            fired[probe["name"]].append(now)
+            state["probes"][probe["name"]] = {"last_attempt_epoch": now}
+    observed = fired["runtime-maintenance-observation"]
+    assert observed[0] == start
+    assert all(right - left == 900 for left, right in zip(observed, observed[1:]))
+    assert set(fired) == {probe["name"] for probe in contract["probes"]}
+    assert contract["limits"]["wall_seconds_per_tick"] < contract["launchd"]["start_interval_seconds"]
+
+
 def test_audit_rotation_preserves_full_prior_stream_within_contract_bound(tmp_path):
     root = tmp_path / "heartbeat"
     root.mkdir()
@@ -146,6 +165,23 @@ def test_probe_finding_does_not_increment_kill_switch(tmp_path, monkeypatch):
     receipt = heartbeat.heartbeat_once(ROOT, state_root=tmp_path, clock=lambda: 1_000_000)
     assert receipt["status"] == "finding"
     assert receipt["consecutive_system_failures"] == 0
+
+
+def test_source_contract_failure_uses_existing_three_failure_kill_switch(tmp_path, monkeypatch):
+    _state(tmp_path, failures=2)
+    monkeypatch.setattr(heartbeat, "run_bounded_subprocess", lambda *_a, **_k: BoundedCompletedProcess(78, b"", b""))
+    disabled = []
+    receipt = heartbeat.heartbeat_once(
+        ROOT,
+        state_root=tmp_path,
+        clock=lambda: 1_000_000,
+        disable_launch_agent=lambda: disabled.append(True),
+        notification_emitter=lambda _root, candidate: DeliveryReceipt(
+            "submitted", candidate.event["stable_id"], candidate.event["event_id"], {"macos": "submitted"}
+        ),
+    )
+    assert receipt["status"] == "failed" and receipt["consecutive_system_failures"] == 3
+    assert disabled == [True]
 
 
 def test_finding_emits_one_notification_event_with_bound_broker_receipt(tmp_path, monkeypatch):

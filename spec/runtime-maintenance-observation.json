@@ -1,0 +1,13 @@
+{
+  "schema": "limen.runtime_maintenance_observation.v1",
+  "source_repository": "4444J99/domus-genoma",
+  "source_revision": "0cc760cdfa4ede7f01c2ad8f3c18f997bbf6b054",
+  "sha256": {
+    ".local/bin/domus-agent-maintain": "6f99936bb1704aa6b958d2ccf7990a6f644201f720276cc1e9e537418b912f50",
+    ".local/libexec/domus-agent-maintenance.py": "d9bfd3a0f7ec9ede4c7151aeb0f95ae6fd3b190f181666c78d35be0745f22962",
+    ".local/libexec/domus-agent-runtime.py": "5d22c2ebc44b09e7a2931328bd0e71066d4f59f5668586f7ebc2076bbf78665e",
+    ".local/libexec/domus-codex-reclaim.py": "e6c127fe40a7b9284a8648961967ba396037a05a637123d99063de3028b1face",
+    ".local/libexec/domus-codex-history.py": "f82819135c588dd546304f05afee8b4e76dffc868867e9dbc40e181bd748f94d"
+  },
+  "runtime_root": "Workspace/limen/.agent-runtime"
+}

@@ -80,9 +80,10 @@ def _load_contract(root: Path) -> tuple[dict[str, Any], str]:
         "process_type": launchd.get("process_type") == "Background",
         "low_priority_io": launchd.get("low_priority_io") is True,
         "nice": isinstance(launchd.get("nice"), int) and launchd["nice"] >= 5,
-        "interval": isinstance(launchd.get("start_interval_seconds"), int) and launchd["start_interval_seconds"] >= 300,
+        "interval": isinstance(launchd.get("start_interval_seconds"), int) and launchd["start_interval_seconds"] >= 180,
         "throttle": launchd.get("throttle_interval_seconds") == launchd.get("start_interval_seconds"),
-        "wall": isinstance(limits.get("wall_seconds_per_tick"), int) and 1 <= limits["wall_seconds_per_tick"] <= 300,
+        "wall": isinstance(limits.get("wall_seconds_per_tick"), int)
+        and 1 <= limits["wall_seconds_per_tick"] <= min(300, launchd.get("start_interval_seconds", 0)),
         "cpu": isinstance(limits.get("cpu_seconds_per_tick"), int)
         and 1 <= limits["cpu_seconds_per_tick"] <= limits.get("wall_seconds_per_tick", 0),
         "rss": isinstance(limits.get("rss_bytes"), int) and 1 <= limits["rss_bytes"] <= 536870912,
@@ -123,6 +124,9 @@ def _load_contract(root: Path) -> tuple[dict[str, Any], str]:
             or timeout > limits["wall_seconds_per_tick"]
             or not isinstance(cadence, int)
             or cadence < launchd["start_interval_seconds"]
+            or type(probe.get("priority", 0)) is not int
+            or not 0 <= probe.get("priority", 0) <= 100
+            or probe.get("system_failure_exit_codes", []) not in ([], [78])
         ):
             raise HeartbeatContractError(f"probe contract is unsafe: {name!r}")
         if any(value in {"--apply", "--emit", "--live", "dispatch"} for value in command):
@@ -236,7 +240,11 @@ def _select_probe(contract: dict[str, Any], state: dict[str, Any], now: float) -
         last = float((probe_state.get(probe["name"]) or {}).get("last_attempt_epoch") or 0.0)
         if now - last >= probe["cadence_seconds"]:
             due.append((last, index, probe))
-    return min(due, default=(0.0, 0, None), key=lambda value: (value[0], value[1]))[2]
+    return min(
+        due,
+        default=(0.0, 0, None),
+        key=lambda value: (-value[2].get("priority", 0), value[0], value[1]),
+    )[2]
 
 
 def _command(root: Path, declared: list[str]) -> list[str]:
@@ -751,6 +759,10 @@ def heartbeat_once(
                     output_bytes = len(completed.stdout) + len(completed.stderr)
                     if returncode == 0:
                         status = "passed"
+                    elif returncode in probe.get("system_failure_exit_codes", []):
+                        status = "failed"
+                        reason = f"probe-contract-returncode:{returncode}"
+                        system_failure = True
                     elif returncode < 0:
                         status = "failed"
                         reason = f"signal:{-returncode}"

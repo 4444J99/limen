@@ -72,6 +72,63 @@ FAILURE = re.compile(r"denied|blocked|not allowed|inconsistent state|error|faile
 RECEIPT = re.compile(r"https://github\.com/4444J99/(?:limen|domus-genoma)/(?:pull/\d+|commit/[a-f0-9]{40})(?![a-f0-9])")
 
 
+def compressed_patterns(patterns):
+    """Preserve source scope when including lossless compressed carriers."""
+    return tuple(dict.fromkeys((*patterns, *(pattern + ".zst" for pattern in patterns if pattern.endswith(".jsonl")))))
+
+
+def provider_inventory(registry, public):
+    native = {
+        "codex": {"codex-sessions", "codex-history", "codex-archived"},
+        "claude": {"claude-projects"},
+        "gemini": {"gemini-native"},
+        "antigravity": {"agy-cli-history", "gemini-tmp-agy"},
+        "opencode": {"opencode-native"},
+        "copilot": {"copilot-native"},
+        "cline": {"cline-native"},
+    }
+    months = next(iter(public["coverage"]), {"months": {}})["months"]
+    rows = []
+    for provider, metadata in sorted(registry.items()):
+        sources = native.get(provider, set())
+        try:
+            metadata["path"].stat()
+            estate = "present"
+        except FileNotFoundError:
+            estate = "missing"
+        except PermissionError:
+            estate = "permission_denied"
+        boundary = (
+            "opaque_payload_contract"
+            if metadata.get("opaque_payload")
+            else "server_side_mirror_requires_supported_export"
+            if metadata.get("server_side_mirror")
+            else "declared_dormant_unverified"
+            if metadata.get("dormant")
+            else "existing_adapter_counts_only"
+            if not sources
+            else "native_message_adapter"
+        )
+        rows.append(
+            {
+                "provider": provider,
+                "estate": estate,
+                "boundary": boundary,
+                "months": {
+                    month: {
+                        "records": sum(
+                            row["months"][month]["records"] for row in public["coverage"] if row["source"] in sources
+                        ),
+                        "scope": "native_record_observations" if sources else "content_not_reviewed",
+                    }
+                    for month in months
+                },
+            }
+        )
+    public["provider_coverage"] = rows
+    return public
+
+
 def visual_cause(text):
     """Classify evidence without turning harness safeguards into local repairs."""
     lowered = text.lower()
@@ -403,4 +460,16 @@ def render(public):
             "",
         ]
     )
+    if public.get("provider_coverage"):
+        lines.extend(["", "| Registered provider | Local estate | Evidence boundary |", "|---|---|---|"])
+        for row in public["provider_coverage"]:
+            lines.append(f"| {row['provider']} | {row['estate']} | {row['boundary']} |")
+    if public.get("receipt_verifications"):
+        verified = sum(row["status"] == "identity_verified" for row in public["receipt_verifications"])
+        lines.extend(
+            [
+                "",
+                f"Exact remote receipt identities: {verified} verified; {len(public['receipt_verifications']) - verified} unavailable. Identity linkage alone is not acceptance.",
+            ]
+        )
     return "\n".join(lines)
