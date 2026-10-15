@@ -1,5 +1,7 @@
 # Shared VITALS admission correction — October 13, 2026
 
+> October 15 status: the original watch failed coverage and its app follow-up stopped. Current restoration acceptance is blocked by expired evidence, host clock validation and pressure admission. See the [dated follow-up](shared-agent-os-evidence-20261015.md); the observations below retain their original dates.
+
 The cleanup denial exposed an additional local policy defect: a warning counter last written53days earlier was treated as three current warnings, and source/runtime checkouts read different counters. Limen [PR #2863](https://github.com/4444J99/limen/pull/2863) is merged and deployed as `b7a61c0bfb87926518f4074af446bed49b07ab8d`. The old counter is preserved byte-for-byte; no pressure, load, swap or sample-count limit was relaxed.
 
 Warning history now lives in the existing shared per-user admission store. Atomic updates bind it to the current boot and two existing VITALS sampling periods (600seconds by default). Real admission records samples at most once per60seconds without shedding processes. Diagnostics remain read-only. Three recent warnings and current critical pressure still deny; corrupt shared history stays unmeasured and fails closed.
