@@ -1,5 +1,7 @@
 # Shared agent OS deployment acceptance
 
+> October 15 status: the original watch failed coverage and its app follow-up stopped. Current restoration acceptance is blocked by expired evidence, host clock validation and pressure admission. See the [dated follow-up](shared-agent-os-evidence-20261015.md); the observations below retain their original dates.
+
 The shared OS repairs are merged and deployed. The final native Limen runtime is **`c2927d53243d504ec6407d60fd1095fc2d55d5bf`**; the authenticated Worker runs accepted source **`85092483d17b40766877be04ef451db52aecf26d`**, Cloudflare version **`e1d715ed-0127-42d9-a4f3-272ca6fe1c0a`**. Actual final-runtime natural maintenance passed, guarded OpenCode/Codex launches passed, Claude render parity is proved, and measured shared growth is **24.34 GiB** at **45.5454% utilization**, below 70% with zero target deficit.
 
 Exact identities, private receipt digests, immutable CI job links and preserved historical observations appear in [the companion acceptance JSON](shared-agent-os-final-acceptance-20261013.json). Earlier failed attempts remain evidence; they are never rewritten as successes. The full 24-hour observation window remains in progress, with external gates stated below.

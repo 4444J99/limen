@@ -147,6 +147,7 @@ registry-declared **single-owner fast lane** merges its verified head immediatel
 `gh pr merge NUMBER --repo OWNER/NAME --squash --match-head-commit SHA`; remote checks and automated reviews are advisory. Include any implicated local build/deploy predicate in that batch.
 Other repositories submit at most once with
 `scripts/merge-drain.py --repo OWNER/NAME --pr NUMBER --expected-head SHA` and return control.
+Untyped submissions become delivery; holds are preserved.
 `QUEUED` is GitHub ownership, never a `MERGED` receipt. Never retry, re-arm, poll non-required
 checks, or rerun a green exact-head predicate without a changed head or observed failure.
 

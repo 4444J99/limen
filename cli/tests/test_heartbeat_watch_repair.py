@@ -335,8 +335,14 @@ def test_executed_probes_cannot_hide_a_measured_awake_cadence_violation(tmp_path
 
 
 def test_audit_budget_caps_every_native_command(tmp_path, monkeypatch):
-    # Real audit runs against an unreadable database; only OS command boundaries are substituted.
-    ticks = iter([0.0, 0.1, 20.1])
+    # Model both macOS command boundaries even when the suite runs on Linux.
+    original_exists = Path.exists
+    monkeypatch.setattr(
+        Path,
+        "exists",
+        lambda path: True if path.name == "lsregister" else original_exists(path),
+    )
+    ticks = iter([0.0, 18.0, 20.1])
     monkeypatch.setattr(AUDIT, "monotonic", lambda: next(ticks, 20.1), raising=False)
     calls = []
 
@@ -349,7 +355,10 @@ def test_audit_budget_caps_every_native_command(tmp_path, monkeypatch):
     )
     assert report["ok"] is False
     assert report["measured"]["budget_exhausted"] is True
-    assert all(timeout <= 20 for _, timeout in calls)
+    # The first command gets only the remaining budget; the second never starts.
+    assert len(calls) == 1
+    assert calls[0][0][-2:] == ["status", "--json"]
+    assert calls[0][1] == 2.0
 
 
 def test_timeout_preserves_bounded_partial_output_without_claiming_descendant_cleanup():

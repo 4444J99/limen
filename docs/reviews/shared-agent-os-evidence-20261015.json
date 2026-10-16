@@ -1,0 +1,290 @@
+{
+  "attempts": {
+    "corrected_python315": {
+      "conversion_performed": false,
+      "detail": "managed native verification failed",
+      "elapsed_seconds": 34.454235583980335,
+      "owner": "4444J99/limen#2848",
+      "reason": "RuntimeError",
+      "status": "blocked"
+    },
+    "initial_failure_preserved": true,
+    "initial_python312": {
+      "conversion_performed": false,
+      "detail": "No module named 'compression'",
+      "elapsed_seconds": 3.9476491670066025,
+      "owner": "4444J99/limen#2848",
+      "reason": "ModuleNotFoundError",
+      "status": "blocked"
+    },
+    "native_probe_retry_after_unchanged_clock_denial": false
+  },
+  "broker_census": {
+    "active_run_count": 0,
+    "census_age_seconds": -1.4225268363952637,
+    "census_observed_at": "2026-10-15T13:52:49.447Z",
+    "claim_count": 0,
+    "complete": true,
+    "denial_reasons": [],
+    "generated_at": "2026-10-15T13:52:49.447Z",
+    "http_age": null,
+    "http_date": "Thu, 15 Oct 2026 13:52:50 GMT",
+    "local_received_at": "2026-10-15T13:52:48.024473+00:00",
+    "local_started_at": "2026-10-15T13:52:46.837337+00:00"
+  },
+  "claude_render": {
+    "deployed_sha256": "4aa08ae41e0b4f5804ffbc2b9bf0c4a2787aa8ed46dbeabbf68bdbfc21a43c0e",
+    "equal": true,
+    "exit": 0,
+    "source_render_sha256": "4aa08ae41e0b4f5804ffbc2b9bf0c4a2787aa8ed46dbeabbf68bdbfc21a43c0e"
+  },
+  "clock_gate": {
+    "clock_modified": false,
+    "clock_tolerance_modified": false,
+    "host_clock_offset_seconds": 2.167059,
+    "native_reader_identities_changed": false,
+    "required_receipt_max_age_seconds": 86400,
+    "source": "sntp -t 2 time.apple.com",
+    "sudo_noninteractive_reason": "a password is required",
+    "sudo_noninteractive_systemsetup_exit": 1,
+    "systemsetup_unprivileged": "administrator access required",
+    "uncertainty_seconds": 0.033846
+  },
+  "controller": {
+    "episode": {
+      "attempts": 1,
+      "closed_at": 1791847618.2672472,
+      "id": "af529e574f2b4f2e9c95a14837b3fdd4",
+      "last_attempt_at": 1791832570.037058,
+      "opened_at": 1791829646.633078
+    },
+    "history_compatibility": {
+      "native_restoration": "not_verified",
+      "receipt_sha256": "406b1a61c7f48b78230f46367fd22e1dcfe288a07d67705cc37a2e0fb528e880",
+      "scope": "isolated_native_fixtures",
+      "status": "blocked"
+    },
+    "managed_restoration": {
+      "native_restoration": "not_verified",
+      "receipt_sha256": "6675014385efbfa39d4e50357087a465aa8076e004d9cbe40feb1558c414c55e",
+      "scope": "managed_native_api",
+      "status": "blocked"
+    },
+    "native_restoration": "not_verified",
+    "observed_at": 1792071910.251564,
+    "status": "inspection_blocked",
+    "worker": {
+      "recovery_status": "not_requested"
+    }
+  },
+  "domus_sha": "d725441908fad64e46acec827d00c54869e7407b",
+  "expiry": {
+    "expiry_extended": false,
+    "installed_receipts": {
+      "codex-compatibility-8d85d263c4b1736047d3d01b.json": {
+        "age_hours": 62.274320800304416,
+        "sha256": "406b1a61c7f48b78230f46367fd22e1dcfe288a07d67705cc37a2e0fb528e880",
+        "unchanged": true
+      },
+      "codex-managed-restoration-8d85d263c4b1736047d3d01b.json": {
+        "age_hours": 65.49230562898848,
+        "sha256": "6675014385efbfa39d4e50357087a465aa8076e004d9cbe40feb1558c414c55e",
+        "unchanged": true
+      }
+    },
+    "maximum_age_seconds": 86400,
+    "reader_identities_unchanged": true
+  },
+  "isolated_compatibility": {
+    "deployed": false,
+    "native_baseline_sha256": "f93159fcfbfa73dd1d78b9b27455e7b09452e677ae387972b3ca637f1c14a3dc",
+    "native_baseline_turns": 10,
+    "readers": [
+      {
+        "checks": {
+          "append": true,
+          "compressed_read": true,
+          "corrupt_rejected": true,
+          "fork_restore": true,
+          "plain_read": true,
+          "restart_read": true,
+          "resume": true,
+          "rollout_restore": true
+        },
+        "reason": null,
+        "surface": "standalone"
+      },
+      {
+        "checks": {
+          "append": true,
+          "compressed_read": true,
+          "corrupt_rejected": true,
+          "fork_restore": true,
+          "plain_read": true,
+          "restart_read": true,
+          "resume": true,
+          "rollout_restore": true
+        },
+        "reason": null,
+        "surface": "packaged_daemon"
+      },
+      {
+        "checks": {
+          "append": true,
+          "compressed_read": true,
+          "corrupt_rejected": true,
+          "fork_restore": true,
+          "plain_read": true,
+          "restart_read": true,
+          "resume": true,
+          "rollout_restore": true
+        },
+        "reason": null,
+        "surface": "plugin"
+      },
+      {
+        "checks": {
+          "append": true,
+          "compressed_read": true,
+          "corrupt_rejected": true,
+          "fork_restore": true,
+          "plain_read": true,
+          "restart_read": true,
+          "resume": true,
+          "rollout_restore": true
+        },
+        "reason": null,
+        "surface": "vscode"
+      },
+      {
+        "checks": {
+          "append": true,
+          "compressed_read": true,
+          "corrupt_rejected": true,
+          "fork_restore": true,
+          "plain_read": true,
+          "restart_read": true,
+          "resume": true,
+          "rollout_restore": true
+        },
+        "reason": null,
+        "surface": "chatgpt"
+      }
+    ],
+    "receipt_sha256": "fe47480ed2d429e2847270c43ddb56721c8dc4dac29e9a3c81a6006af589e24a",
+    "status": "verified",
+    "unique_required_checks_passed": 40
+  },
+  "managed_restoration": {
+    "live_append_started": false,
+    "readers": [
+      {
+        "checks": {},
+        "reason": "native reader exited before its response",
+        "surface": "standalone"
+      },
+      {
+        "checks": {},
+        "reason": "native reader exited before its response",
+        "surface": "packaged_daemon"
+      },
+      {
+        "checks": {},
+        "reason": "native reader exited before its response",
+        "surface": "plugin"
+      },
+      {
+        "checks": {},
+        "reason": "native reader exited before its response",
+        "surface": "vscode"
+      },
+      {
+        "checks": {},
+        "reason": "native reader exited before its response",
+        "surface": "chatgpt"
+      }
+    ],
+    "receipt_replaced": false,
+    "status": "blocked",
+    "underlying_launcher_exit": 75,
+    "underlying_launcher_reason": "broker_storage_census_stale"
+  },
+  "native_session": "01a13168-8c50-7fb2-a163-8b7fcc79b598",
+  "original_watch": {
+    "anchor": "2026-10-13T03:02:10.931617Z",
+    "app_followup": "stopped",
+    "end": "2026-10-14T03:02:10.931617Z",
+    "historical_gaps_repaired": false,
+    "native_scheduler": "remains_enabled",
+    "publication": "https://github.com/4444J99/domus-genoma-private/pull/422#issuecomment-6193372901",
+    "receipt_sha256": "120ec51f335de7a70f0a50e5ffc1be4d453a3b0d215e59783c50edca41ceaad6",
+    "replacement_watch_created": false,
+    "status": "coverage_failure"
+  },
+  "owner": "https://github.com/4444J99/limen/issues/2848",
+  "preservation": {
+    "native_history_deleted": false,
+    "new_scheduler_created": false,
+    "old_receipts_byte_identical": true,
+    "primary_checkouts_untouched": true,
+    "private_payload_owner": "https://github.com/4444J99/limen/issues/2848",
+    "watch_anchor_reset": false
+  },
+  "private_evidence_sha256": {
+    "claude-parity.json": "21343e189717eeff4b982ec8f204afb79fe9a3ffe1ba2743490fbf168f49c0bf",
+    "clock-gate.json": "5df30b7d5bb7b02d1a4f9a2ba8b2d79c400e310868266ff5f0d36a931674d59f",
+    "clock-observation.json": "d4c4a89456140bde9d7e761b4ee1a997def747dd93d5fc41dcf116baa76dc94f",
+    "current-state.json": "ee9de2d60acb72b48094b2dec333285cec78f639831f9937e94287d2150a83dc",
+    "preservation.json": "4ba2424e8a16512713a8ab58673ab7054509dd0e4ab9f754864b2c804733050c",
+    "publication-denied.json": "2f2ed4415e20bb07b21b945f1522c5363eb97a43d843bbe6a1d4df6e0a85a9e6",
+    "retry-python315/admission.json": "defbb52030d237211b0954f2c5b931a2f94ee3f74281b5617965ac86d074a478",
+    "retry-python315/isolated/compatibility.json": "fe47480ed2d429e2847270c43ddb56721c8dc4dac29e9a3c81a6006af589e24a",
+    "retry-python315/managed/managed-restoration.json": "f22260442346400c7129d4295b741ce0495b3aa5f0c1872ea2f4341dd311dd18",
+    "retry-python315/result.json": "531d93d176916b19f53eab6f88f9aa0163777fde9ab67aabbe11c6452b0a3f9f",
+    "retry-python315/verification.log": "51980ae4b18b2c9ae80c7f8f699c7aa8ab26c7cd85bdc2a9e938692f2c0f54fd"
+  },
+  "publication_admission": {
+    "attempt": "fresh-compatibility-publication-and-controller-record",
+    "conversion_performed": false,
+    "managed_receipt_replaced": false,
+    "reason": "vitals-shed",
+    "receipt_publication_performed": false,
+    "status": "not_started"
+  },
+  "remaining_acceptance": [
+    {
+      "gate": "macos_administrator_clock_correction",
+      "next_action": "Administrator reviews automatic network time in macOS Date & Time; sudo /usr/sbin/systemsetup -setusingnetworktime on requires the existing administrator password.",
+      "owner": "https://github.com/4444J99/limen/issues/2848",
+      "predicate": "Supported host time synchronization restores a fresh authenticated broker census within the existing -1..120 second bound."
+    },
+    {
+      "gate": "host_pressure_admission",
+      "owner": "https://github.com/4444J99/limen/issues/2848",
+      "predicate": "Normal shared heavy admission permits the bounded managed verification and evidence publication after pressure clears.",
+      "unchanged_denial_retried": false
+    },
+    {
+      "gate": "native_external_permissions",
+      "owner": "https://github.com/4444J99/limen/issues/1703",
+      "predicate": "Existing external native permission and Codex-target platform acceptance succeeds without bypass."
+    },
+    {
+      "gate": "historical_watch_coverage_failure",
+      "owner": "https://github.com/4444J99/limen/issues/2848",
+      "predicate": "Retain the failed original window; future native observations cannot backfill missing original evidence."
+    }
+  ],
+  "runtime_sha": "b7a61c0bfb87926518f4074af446bed49b07ab8d",
+  "schema": "limen.shared_os_evidence_refresh.v1",
+  "status": "acceptance_blocked",
+  "storage": {
+    "conversion_performed": false,
+    "filesystem_free_bytes": 17467785216,
+    "observed_at_epoch": 1792072391.7343318,
+    "physical_recovery_attributed_bytes": 0,
+    "quota_thresholds_changed": false,
+    "shared_available_growth_bytes": null,
+    "shared_growth_status": "unavailable_due_to_broker_clock_validation"
+  }
+}

@@ -143,14 +143,14 @@ ratchets:
   estate_yaml_derives: false
 
 literal_baseline:
-  scripts/merge-drain.py: 6
+  scripts/merge-drain.py: 5
   scripts/pr-lifecycle-manifest.py: 5
   scripts/pr-lifecycle-estate-manifest.py: 6
   scripts/gitvs.py: 8
 
 literal_baseline_by_disposition:
   scripts/merge-drain.py:
-    "lifecycle:delivery": 2
+    "lifecycle:delivery": 1
     "lifecycle:preservation": 1
     "lifecycle:active-human": 1
     "lifecycle:blocked": 1

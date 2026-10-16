@@ -87,4 +87,4 @@ sanctioned:
   - {path: value-repos.json, kind: registry, owner: observation, why: "value-repo census (65 referents)"}
   - {path: web, kind: dir, owner: web, why: "worker + api + dashboard"}
 
-grandfathered:
+grandfathered: []
