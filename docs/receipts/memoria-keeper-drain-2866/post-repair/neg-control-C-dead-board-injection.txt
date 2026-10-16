@@ -1,0 +1,98 @@
+..................FF.....                                                [100%]
+=================================== FAILURES ===================================
+____________ test_memory_outcome_is_never_silently_absent[deferred] ____________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-119/test_memory_outcome_is_never_s1')
+board_mode = 'deferred'
+
+    @pytest.mark.parametrize("board_mode", [None, "deferred", "processed"])
+    def test_memory_outcome_is_never_silently_absent(tmp_path, board_mode):
+        """Normal mode must publish the memory outcome it computed.
+    
+        Covers the empty, deferred, and processed board branches. Deferred and
+        processed stub only the external board boundary; the real entry point and
+        the real state writer are exercised.
+        """
+        sb = KeeperSandbox(
+            tmp_path, f"outcome-{board_mode or 'empty'}",
+            memoria=True, memory_populated=True, health_state="preexisting",
+            board_mode=board_mode,
+        )
+        proc = sb.run()
+        state = sb.state_payload()
+        assert state, f"no health-state artifact published; stdout: {proc.stdout}"
+>       _assert_board_branch(state, board_mode)
+
+cli/tests/test_tabularius_organ_memory.py:242: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+state = {'updated': '2026-10-16T17:57:21.235016+00:00', 'pending': 0, 'applied': 0, 'rejected': 0, ...}
+board_mode = 'deferred'
+
+    def _assert_board_branch(state: dict, board_mode) -> None:
+        """Prove the requested board branch actually ran.
+    
+        Without this, a silently dead board-boundary injection makes every
+        parameterised case fall through to the same empty-inbox branch and the
+        three-branch coverage claim is false.
+        """
+        if board_mode == "deferred":
+>           assert state.get("deferred") is True, f"deferred branch not reached: {state}"
+E           AssertionError: deferred branch not reached: {'updated': '2026-10-16T17:57:21.235016+00:00', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection', 'memory_pending': 1, 'memory_applied': 1, 'memory_rejected': 0}
+E           assert None is True
+E            +  where None = <built-in method get of dict object at 0x109c92480>('deferred')
+E            +    where <built-in method get of dict object at 0x109c92480> = {'updated': '2026-10-16T17:57:21.235016+00:00', 'pending': 0, 'applied': 0, 'rejected': 0, ...}.get
+
+cli/tests/test_tabularius_organ_memory.py:257: AssertionError
+___________ test_memory_outcome_is_never_silently_absent[processed] ____________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-119/test_memory_outcome_is_never_s2')
+board_mode = 'processed'
+
+    @pytest.mark.parametrize("board_mode", [None, "deferred", "processed"])
+    def test_memory_outcome_is_never_silently_absent(tmp_path, board_mode):
+        """Normal mode must publish the memory outcome it computed.
+    
+        Covers the empty, deferred, and processed board branches. Deferred and
+        processed stub only the external board boundary; the real entry point and
+        the real state writer are exercised.
+        """
+        sb = KeeperSandbox(
+            tmp_path, f"outcome-{board_mode or 'empty'}",
+            memoria=True, memory_populated=True, health_state="preexisting",
+            board_mode=board_mode,
+        )
+        proc = sb.run()
+        state = sb.state_payload()
+        assert state, f"no health-state artifact published; stdout: {proc.stdout}"
+>       _assert_board_branch(state, board_mode)
+
+cli/tests/test_tabularius_organ_memory.py:242: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+state = {'updated': '2026-10-16T17:57:21.462932+00:00', 'pending': 0, 'applied': 0, 'rejected': 0, ...}
+board_mode = 'processed'
+
+    def _assert_board_branch(state: dict, board_mode) -> None:
+        """Prove the requested board branch actually ran.
+    
+        Without this, a silently dead board-boundary injection makes every
+        parameterised case fall through to the same empty-inbox branch and the
+        three-branch coverage claim is false.
+        """
+        if board_mode == "deferred":
+            assert state.get("deferred") is True, f"deferred branch not reached: {state}"
+            assert state.get("pending") == 3, f"deferred pending not injected: {state}"
+        elif board_mode == "processed":
+            assert "deferred" not in state, f"processed branch not reached: {state}"
+>           assert state.get("applied") == 2, f"processed applied not injected: {state}"
+E           AssertionError: processed applied not injected: {'updated': '2026-10-16T17:57:21.462932+00:00', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection', 'memory_pending': 1, 'memory_applied': 1, 'memory_rejected': 0}
+E           assert 0 == 2
+E            +  where 0 = <built-in method get of dict object at 0x109b61b40>('applied')
+E            +    where <built-in method get of dict object at 0x109b61b40> = {'updated': '2026-10-16T17:57:21.462932+00:00', 'pending': 0, 'applied': 0, 'rejected': 0, ...}.get
+
+cli/tests/test_tabularius_organ_memory.py:261: AssertionError
+=========================== short test summary info ============================
+FAILED cli/tests/test_tabularius_organ_memory.py::test_memory_outcome_is_never_silently_absent[deferred]
+FAILED cli/tests/test_tabularius_organ_memory.py::test_memory_outcome_is_never_silently_absent[processed]
+2 failed, 23 passed in 4.22s

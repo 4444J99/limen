@@ -168,11 +168,20 @@ def _hook(event, args):
             })
             return
         if event == "fcntl.flock":
+            # A lock record with no path can never satisfy a path-based
+            # assertion, so resolve the descriptor to its target where possible.
+            _fd = args[0] if args else None
+            _target = None
+            try:
+                if isinstance(_fd, int):
+                    _target = os.readlink("/dev/fd/%d" % _fd)
+            except Exception:
+                _target = None
             _emit(_state["lines"], {
                 "kind": "mutation", "event": event,
-                "fd": args[0] if args else None,
+                "fd": _fd,
                 "operation": args[1] if len(args) > 1 else None,
-                "paths": [],
+                "paths": [_target] if _target else [],
             })
             return
         idx = _MULTIPATH.get(event)
@@ -204,6 +213,14 @@ def _finish():
     _state["busy"] = True
     try:
         _emit(_state["lines"], {
+            "kind": "marker", "marker": "observer_modules",
+            "modules": {
+                n: getattr(m, "__file__", None)
+                for n, m in list(sys.modules.items())
+                if n.split(".")[0] == "limen"
+            },
+        })
+        _emit(_state["lines"], {
             "kind": "marker", "marker": "observer_completed",
             "mutations": sum(
                 1 for ln in _state["lines"] if '"kind": "mutation"' in ln
@@ -212,6 +229,45 @@ def _finish():
     finally:
         _state["busy"] = False
     _write(_state["lines"])
+
+
+def _inject_board_boundary():
+    """Stub ONLY the external board boundary so no remote keeper is contacted.
+
+    Consumes REPRO_BOARD_MODE / REPRO_SRC set by the sandbox. The outer entry
+    point and the real _stamp() writer are left untouched, so the deferred and
+    processed branches run through real code.
+    """
+    _mode = os.environ.get("REPRO_BOARD_MODE")
+    _src = os.environ.get("REPRO_SRC")
+    if not _mode or not _src:
+        return
+    if _src not in sys.path:
+        # insert(0): the venv also provides `limen`, and the checkout under
+        # test must win for provenance to hold.
+        sys.path.insert(0, _src)
+    try:
+        import limen.tabularius as _tb
+    except Exception:
+        return
+
+    class _Result:
+        def __init__(self):
+            if _mode == "deferred":
+                self.deferred, self.pending = True, 3
+                self.applied, self.rejected, self.wrote = 0, 0, 0
+                self.note = "synthetic deferral (board-boundary injection)"
+            elif _mode == "processed":
+                self.deferred, self.pending = False, 2
+                self.applied, self.rejected, self.wrote = 2, 1, 2
+                self.note = "synthetic processed (board-boundary injection)"
+            else:
+                raise ValueError("unknown REPRO_BOARD_MODE %r" % (_mode,))
+
+    _tb.drain_once = lambda board, dry_run=False: _Result()
+
+
+_inject_board_boundary()
 
 
 if _LOG:
@@ -243,10 +299,23 @@ def _sha256(path: Path) -> str:
 
 
 def inventory(root: Path) -> dict:
-    """Snapshot path/type/mode/size/mtime_ns/sha256 beneath `root`."""
+    """Snapshot the root itself plus everything beneath it.
+
+    The root entry is what distinguishes an absent protected area from an
+    existing empty one; recording only descendants makes those two identical.
+    """
     out: dict = {}
     if not root.exists():
         return out
+    rst = root.lstat()
+    out["."] = {
+        "type": "link" if root.is_symlink() else ("dir" if root.is_dir() else "file"),
+        "mode": oct(rst.st_mode & 0o7777),
+        "size": rst.st_size,
+        "mtime_ns": rst.st_mtime_ns,
+    }
+    if out["."]["type"] == "file":
+        out["."]["sha256"] = _sha256(root)
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames.sort()
         for name in sorted(dirnames) + sorted(filenames):
@@ -372,13 +441,37 @@ class KeeperSandbox:
                 f"exit status {proc.returncode} != expected {expect_exit}.\n"
                 f"stdout: {proc.stdout}\nstderr: {stderr}"
             )
-        # Positive evidence: the intended entry point was the process's script.
-        blob = proc.stdout + proc.stderr
-        if str(ENTRY_POINT) not in blob and not (proc.stdout or "").strip():
+        self._guard_identity()
+
+    def _guard_identity(self):
+        """Positive evidence of application identity.
+
+        Non-empty stdout is NOT evidence: any child that merely prints something
+        would satisfy a substring check. Instead require the observer's own
+        structured record naming the executed entry point, and — when the memory
+        lane is enabled — the `limen` modules it actually imported, bound to this
+        checkout.
+        """
+        recs = self.write_attempts(require=False)
+        entry = self.child_reported_entry(recs)
+        if not entry or str(ENTRY_POINT) not in entry:
             raise ChildDidNotStart(
-                "child produced no output identifying the entry point; assertions "
-                f"would be vacuous.\nstdout: {proc.stdout!r}\nstderr: {stderr!r}"
+                "child did not report the expected entry point; assertions would "
+                f"be vacuous. expected={ENTRY_POINT} reported={entry!r}"
             )
+        if self.env.get("LIMEN_MEMORIA") == "1":
+            modules = self.child_reported_modules(recs) or {}
+            resolved = modules.get("limen.memoria")
+            if not resolved:
+                raise ChildDidNotStart(
+                    "memory lane enabled but the child reported no imported "
+                    "limen.memoria module; assertions would be vacuous."
+                )
+            if str(REPO_ROOT / "cli" / "src") not in str(resolved):
+                raise ChildDidNotStart(
+                    "limen.memoria resolved outside the checkout under test: "
+                    f"{resolved}"
+                )
 
     # --- observation --------------------------------------------------------
 
@@ -412,11 +505,17 @@ class KeeperSandbox:
                 hits.append(rec)
         return hits
 
-    def child_reported_entry(self) -> str | None:
-        for rec in self.write_attempts(require=False):
+    def child_reported_entry(self, recs: list[dict] | None = None) -> str | None:
+        for rec in (recs if recs is not None else self.write_attempts(require=False)):
             if rec.get("marker") == "observer_installed":
                 return rec.get("entry")
         return None
+
+    def child_reported_modules(self, recs: list[dict] | None = None) -> dict:
+        for rec in (recs if recs is not None else self.write_attempts(require=False)):
+            if rec.get("marker") == "observer_modules":
+                return rec.get("modules") or {}
+        return {}
 
     # --- state --------------------------------------------------------------
 

@@ -31,6 +31,7 @@ snapshots. `test_observation_limits_are_documented` keeps that caveat attached.
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -83,7 +84,9 @@ def test_observer_records_known_mutations(tmp_path):
     assert len(rename["paths"]) >= 2, f"rename destination dropped: {rename}"
     assert any("renamedir" in str(p) for p in rename["paths"]), rename
 
-    assert sb.child_reported_entry() is None or True  # entry recorded only in-child
+    # The observer must self-report; a silent observer proves nothing.
+    assert sb.child_reported_entry() is not None, "observer did not self-report"
+    assert sb.child_reported_modules() is not None
 
 
 def test_observer_refuses_to_satisfy_a_no_write_assertion(tmp_path):
@@ -117,6 +120,33 @@ def test_guard_rejects_child_that_never_reached_entry_point(tmp_path):
         stderr = ""
     with pytest.raises(ChildDidNotStart):
         sb._guard(SignalProc(), expect_exit=0)
+
+
+def test_guard_rejects_unrelated_output(tmp_path):
+    """Printing something unrelated must not satisfy the identity guard.
+
+    A substring-on-stdout check accepted a child that merely printed text. The
+    guard now requires the observer's structured record of the executed entry
+    point, so an unrelated-printing child is rejected.
+    """
+    sb = KeeperSandbox(tmp_path, "guard-unrelated-output", memoria=True)
+
+    class ChattyProc:
+        returncode = 0
+        stdout = "not the keeper"
+        stderr = ""
+    with pytest.raises(ChildDidNotStart):
+        sb._guard(ChattyProc(), expect_exit=0)
+
+    # And the negative control from review: a real child with no observer
+    # identity recorded must also be rejected.
+    proc = subprocess.run(
+        [sys.executable, "-c", "print('not the keeper')"],
+        env=sb.env, capture_output=True, text=True, timeout=60, check=False,
+    )
+    sb.last_proc = proc
+    with pytest.raises(ChildDidNotStart):
+        sb._guard(proc, expect_exit=0)
 
 
 # --- fixture integrity --------------------------------------------------------
@@ -159,7 +189,11 @@ def test_read_only_mode_leaves_protected_areas_unchanged(tmp_path, flag, memstat
         f"changed : {sorted(k for k in set(before['root']) & set(after['root']) if before['root'][k] != after['root'][k])}\n"
         f"mem new : {sorted(set(after['mem']) - set(before['mem']))}"
     )
-    assert not sb.mutations_touching(str(sb.limen_root)), sb.mutations_touching(str(sb.limen_root))
+    # Assert against every protected area, not just LIMEN_ROOT, and count lock
+    # events as mutations now that descriptors are resolved to paths.
+    for area in ("root", "mem", "board"):
+        hits = sb.mutations_touching(str(sb.root / area))
+        assert not hits, f"{flag} mutated protected area {area!r}: {hits}"
 
 
 def test_read_only_mode_does_not_create_bare_directory(tmp_path):
@@ -205,17 +239,39 @@ def test_memory_outcome_is_never_silently_absent(tmp_path, board_mode):
     proc = sb.run()
     state = sb.state_payload()
     assert state, f"no health-state artifact published; stdout: {proc.stdout}"
+    _assert_board_branch(state, board_mode)
     assert _memory_state(state) != "absent", (
         "memory outcome computed but absent from the published stamp; "
         f"state={state}\nstdout: {proc.stdout}"
     )
 
 
+def _assert_board_branch(state: dict, board_mode) -> None:
+    """Prove the requested board branch actually ran.
+
+    Without this, a silently dead board-boundary injection makes every
+    parameterised case fall through to the same empty-inbox branch and the
+    three-branch coverage claim is false.
+    """
+    if board_mode == "deferred":
+        assert state.get("deferred") is True, f"deferred branch not reached: {state}"
+        assert state.get("pending") == 3, f"deferred pending not injected: {state}"
+    elif board_mode == "processed":
+        assert "deferred" not in state, f"processed branch not reached: {state}"
+        assert state.get("applied") == 2, f"processed applied not injected: {state}"
+        assert state.get("rejected") == 1, f"processed rejected not injected: {state}"
+        assert state.get("wrote") == 2, f"processed wrote not injected: {state}"
+    else:
+        assert "deferred" not in state, f"empty branch expected: {state}"
+        assert state.get("pending") == 0, f"empty pending expected: {state}"
+
+
 def test_memory_pass_succeeds(tmp_path):
     """Separate from error propagation: the memory pass must actually work.
 
     Guards against a repair that merely propagates `memory_error` while leaving
-    the invalid `MEMORY_DIR` import in place.
+    the invalid import in place. A valid ticket is pending, so an all-zero
+    result is NOT success and must not satisfy this assertion.
     """
     sb = KeeperSandbox(tmp_path, "memory-succeeds", memoria=True, memory_populated=True)
     proc = sb.run()
@@ -229,6 +285,35 @@ def test_memory_pass_succeeds(tmp_path):
         f"memory pass reported no counts and no error; state={state}\n"
         f"stdout: {proc.stdout}"
     )
+    assert state.get("memory_pending", 0) >= 1, (
+        f"expected a pending ticket to be counted: state={state}\n"
+        f"stdout: {proc.stdout}"
+    )
+
+
+def test_valid_ticket_lifecycle_is_applied_then_idempotent(tmp_path):
+    """The synthetic lifecycle: applied content, then no duplicate on re-run.
+
+    Idempotence concerns the ticket's effects. The liveness `updated` timestamp
+    legitimately changes on a second normal-mode run, so only ticket-derived
+    content is compared.
+    """
+    sb = KeeperSandbox(tmp_path, "lifecycle", memoria=True, memory_populated=True)
+    proc = sb.run()
+    state = sb.state_payload()
+    assert state.get("memory_applied", 0) >= 1, (
+        f"pending valid ticket was not applied: state={state}\nstdout: {proc.stdout}"
+    )
+    atom = sb.memory_dir / f"{VALID_TICKET['slug']}.md"
+    assert atom.exists(), f"expected atom {atom}; store={sorted(p.name for p in sb.memory_dir.iterdir())}"
+    first = atom.read_bytes()
+
+    proc2 = sb.run()
+    state2 = sb.state_payload()
+    assert state2.get("memory_applied", 0) == 0, (
+        f"re-run re-applied the same ticket: {state2}\nstdout: {proc2.stdout}"
+    )
+    assert atom.read_bytes() == first, "atom content changed on a no-op re-run"
 
 
 # --- lifecycle (temporary stores only) ----------------------------------------

@@ -172,6 +172,9 @@ def main(argv: list[str] | None = None) -> int:
     result = drain_once(BOARD, dry_run=args.dry_run)
     preserve = None if args.dry_run else preserve_board_projection(BOARD)
     memory = _memory_pass(check=False, dry_run=args.dry_run)
+    if args.dry_run and memory:
+        # --dry-run suppresses the stamp, so stdout is the only channel.
+        print(f"tabularius: memory {_describe(memory)}")
     publication_failed = _publication_required_failure(args.require_published, preserve)
 
     # Two contracts meet here. `--dry-run` promises no writes, so the liveness

@@ -104,28 +104,40 @@
       "bytes": 1995
     },
     "post-repair/README.md": {
-      "sha256": "29f2361844e40a5edb44f74bef1a890e3657f100d837e889abf0d9006f5aded1",
-      "bytes": 3960
+      "sha256": "55feed11b2eff8a9b77f7bb42081538c033decd2cd611f8bce865e7796cad903",
+      "bytes": 5105
     },
     "post-repair/neg-control-A-diagnostic-stamp.txt": {
-      "sha256": "db94f18e9b0d9a2ce344023f27f65bd032501adcdb78de45f3a9944146fbc0ed",
-      "bytes": 13000
+      "sha256": "0bd39bb5732a4f729b5ce5806de715bffd568dfecedc24349f0519918e4a2f68",
+      "bytes": 13138
     },
     "post-repair/neg-control-B-broken-import.txt": {
-      "sha256": "71d02446bcccbde36c18fb71babca8fdc9de64493c899f8025ac82a5af9e1e3b",
-      "bytes": 1859
+      "sha256": "23e79d1b7f8eb1b793e27910c0e47d389554351b52b09eabbf8d7cd06a3e728e",
+      "bytes": 3867
+    },
+    "post-repair/neg-control-C-dead-board-injection.txt": {
+      "sha256": "d9eb705713e37d0dc055895764cf36daf1a335e6f1be26162601c341f88d2ee2",
+      "bytes": 5719
     },
     "post-repair/post-repair-tests.txt": {
-      "sha256": "21ac74496be79e4f5e4440863283757c5b2778e63890aa07bf553b6cd0db66a0",
+      "sha256": "955bbc136939b2442a8445522566ea87524630d3fb1056091328402910c0cadf",
       "bytes": 99
     }
   },
   "post_repair": {
-    "status": "tests + bounded repair of scripts/tabularius-organ.py",
-    "repaired_result": "23 passed, pytest exit 0",
-    "negative_control_A": "diagnostic stamp restored -> 6 failed, 17 passed",
-    "negative_control_B": "invalid MEMORY_DIR import restored -> 1 failed, 22 passed",
+    "status": "repair candidate pending acceptance; NOT a completed closeout",
+    "repaired_result": "25 passed, pytest exit 0",
+    "negative_control_A": "diagnostic stamp restored -> 6 failed, 19 passed",
+    "negative_control_B": "invalid MEMORY_DIR import restored -> 2 failed, 23 passed",
+    "negative_control_C": "board injection disabled -> 2 failed (deferred, processed), 23 passed",
     "historical_evidence_modified": false,
-    "ruff": "clean on changed cli/tests files; host ruff 0.17.1 vs estate pin 0.15.8"
+    "pending_gates": [
+      "authoritative ruff-lint under estate pin 0.15.8 (host is 0.17.1)"
+    ],
+    "not_claimed": [
+      "live activation",
+      "routing acceptance",
+      "downstream consumer interpretation"
+    ]
   }
 }
