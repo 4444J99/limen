@@ -40,8 +40,9 @@ from limen.progress import (
     render_universe_progress,
 )
 from limen.progress_source_registry import build_source_registry
-from limen.status import print_status
 from limen.repository_retirement_cli import repos_group
+from limen.shared_context_admission import shared_context_group
+from limen.status import print_status
 
 # The live owner of a quota-exhausted keeper. NOT a human lever: L-CLOUDFLARE-DO-QUOTA was
 # RETIRED 2026-08-10 because the recurrence proved the defect is ours — unbounded heartbeat
@@ -347,6 +348,8 @@ def host_admission_release(kind: str, cwd: Path | None, json_output: bool) -> No
 
 
 main.add_command(host_admission_group)
+
+main.add_command(shared_context_group)
 
 
 def _yaml_json_default(value: object) -> str:

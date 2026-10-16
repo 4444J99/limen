@@ -52,6 +52,19 @@ def admit_pre_tool_action(
     """Apply one lane-neutral action decision and acquire its exact writer scope."""
 
     action = classify_action(payload)
+    if action.category == "shared_context":
+        from limen.shared_context_admission import admit_command
+
+        raw = payload.get("tool_input") or {}
+        command = str(raw.get("command") or raw.get("cmd") or "") if isinstance(raw, dict) else str(raw)
+        try:
+            admit_command(
+                command, controller=controller, owner=owner, pid=pid, surface=surface, ttl_seconds=ttl_seconds
+            )
+        # A producer failure must never fall through to ordinary write admission.
+        except Exception as exc:  # noqa: BLE001
+            return ToolAdmission(False, f"shared-context-admission: {type(exc).__name__}")
+        return ToolAdmission(True)
     if action.category in {"observe", "sanctioned_control"}:
         return ToolAdmission(True)
     if action.category == "deny":
