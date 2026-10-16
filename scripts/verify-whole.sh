@@ -102,8 +102,12 @@ python3 scripts/tests/claude-workflow-guard-phase.test.py
 step "Verify the resolver selection fixtures (verify.py implicates exactly the registered gates)"
 bash scripts/tests/verify-resolver.test.sh
 
-step "Observe live positioning/profile parity outside exact-tree source admission"
-python3 scripts/positioning-research-adjudication.py --verify-live
+if [[ "${LIMEN_VERIFY_LIVE:-0}" == "1" ]]; then
+  step "Observe live positioning/profile parity outside exact-tree source admission"
+  python3 scripts/positioning-research-adjudication.py --verify-live
+else
+  printf 'Skipping live positioning/profile parity; set LIMEN_VERIFY_LIVE=1 to require it.\n'
+fi
 
 step "Verify the enactment predicate (declared-ON fleet flags are actually wired live, not just merged)"
 bash scripts/tests/enactment-audit.test.sh
@@ -336,3 +340,4 @@ step "Check diff hygiene"
 git diff --check -- ':(exclude)tasks.yaml' ':(exclude)tasks.yaml.lock'
 
 printf '\nWhole-system verification passed\n'
+

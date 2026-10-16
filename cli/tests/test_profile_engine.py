@@ -15,6 +15,7 @@ import xml.dom.minidom
 from collections import Counter
 from pathlib import Path
 
+import pytest
 import yaml
 
 
@@ -116,6 +117,7 @@ def test_current_streak_holds_when_today_empty_but_yesterday_active():
 def test_collect_facts_indexes_personal_repos_without_polluting_org_aggregates(monkeypatch):
     personal_repositories = [
         {
+            "id": index + 1,
             "full_name": f"4444J99/personal-{index:02d}",
             "private": False,
             "fork": False,
@@ -128,6 +130,7 @@ def test_collect_facts_indexes_personal_repos_without_polluting_org_aggregates(m
     # enlarge the identity denominator or replace the first observed spelling.
     personal_repositories.append(
         {
+            "id": 1,
             "full_name": "4444j99/PERSONAL-00",
             "private": False,
             "fork": False,
@@ -137,6 +140,7 @@ def test_collect_facts_indexes_personal_repos_without_polluting_org_aggregates(m
     )
     organization_repositories = [
         {
+            "id": 100 + index,
             "full_name": f"organvm/original-{index:03d}",
             "private": False,
             "fork": False,
@@ -146,6 +150,7 @@ def test_collect_facts_indexes_personal_repos_without_polluting_org_aggregates(m
         for index in range(197)
     ] + [
         {
+            "id": 400 + index,
             "full_name": f"organvm/fork-{index:03d}",
             "private": False,
             "fork": True,
@@ -167,7 +172,7 @@ def test_collect_facts_indexes_personal_repos_without_polluting_org_aggregates(m
             }
         if path == "users/4444J99/repos?type=owner&per_page=100":
             return personal_repositories
-        if path == "users/4444J99/orgs":
+        if path == "users/4444J99/orgs?per_page=100":
             return [{"login": "organvm"}]
         if path == "orgs/organvm":
             return {"public_repos": 226}
@@ -198,6 +203,196 @@ def test_collect_facts_indexes_personal_repos_without_polluting_org_aggregates(m
         True,
         90,
     ) in calls
+
+
+def test_gh_json_flattens_all_list_pages(monkeypatch):
+    calls = []
+
+    def fake_gh(args, *, timeout):
+        calls.append((args, timeout))
+        return json.dumps([[{"id": 1}], [{"id": 2}], []])
+
+    monkeypatch.setattr(P, "_gh", fake_gh)
+    assert P.gh_json("users/test/repos", paginate=True) == [{"id": 1}, {"id": 2}]
+    assert calls == [(["api", "--paginate", "--slurp", "users/test/repos"], 90)]
+
+
+def repository_record(repo_id, full_name, *, fork=False, private=False):
+    return {
+        "id": repo_id,
+        "full_name": full_name,
+        "private": private,
+        "fork": fork,
+        "language": "Python",
+        "stargazers_count": 3,
+    }
+
+
+def stub_inventory(monkeypatch, *, personal=None, organizations=None, unavailable=None):
+    organizations = organizations or {}
+    responses = {
+        "users/4444J99": {
+            "name": "Test Builder",
+            "public_repos": len({repo["id"] for repo in personal or [] if not repo["private"]}),
+        },
+        "users/4444J99/repos?type=owner&per_page=100": personal or [],
+        "users/4444J99/orgs?per_page=100": [{"login": org} for org in organizations],
+        **{
+            f"orgs/{org}": {"public_repos": len({repo["id"] for repo in repos if not repo["private"]})}
+            for org, repos in organizations.items()
+        },
+        **{f"orgs/{org}/repos?type=public&per_page=100": repos for org, repos in organizations.items()},
+    }
+
+    def fake_gh_json(path, *, paginate=False, timeout=90):
+        if path == unavailable:
+            raise P.GhError("HTTP 503: inventory unavailable")
+        return responses[path]
+
+    monkeypatch.setattr(P, "FALLBACK_ORGS", [])
+    monkeypatch.setattr(P, "gh_json", fake_gh_json)
+    monkeypatch.setattr(P, "fetch_calendar_days", lambda _login: [])
+    monkeypatch.setattr(P, "fetch_calendar_total", lambda _login: 10)
+
+
+@pytest.mark.parametrize("empty_org", [False, True])
+def test_personal_public_repos_survive_empty_organization_inventory(monkeypatch, empty_org):
+    stub_inventory(
+        monkeypatch,
+        personal=[
+            repository_record(1, "4444J99/original"),
+            repository_record(2, "4444J99/fork", fork=True),
+            repository_record(3, "4444J99/private", private=True),
+        ],
+        organizations={"organvm": []} if empty_org else {},
+    )
+    facts = P.collect_facts()
+    assert facts.public_repos == ["4444J99/fork", "4444J99/original"]
+    assert facts.get("ecosystem_public_repos") == 0
+    assert facts.get("ecosystem_original_repos") == 0
+    assert facts.get("ecosystem_forks") == 0
+    assert facts.get("ecosystem_orgs") == 0
+    assert facts.get("ecosystem_stars") == 0
+    assert facts.languages == Counter()
+    assert "orgs/<org>/repos" in facts.items["ecosystem_original_repos"].source_query
+
+
+def test_complete_empty_inventory_emits_zero_facts(monkeypatch):
+    stub_inventory(monkeypatch)
+    facts = P.collect_facts()
+    assert facts.public_repos == []
+    assert facts.get("ecosystem_public_repos") == 0
+    assert facts.get("ecosystem_original_repos") == 0
+    assert facts.get("ecosystem_forks") == 0
+
+
+def test_transferred_repository_is_counted_once_by_stable_id(monkeypatch):
+    stub_inventory(
+        monkeypatch,
+        personal=[repository_record(1, "4444J99/transferred")],
+        organizations={
+            "organvm": [
+                repository_record(1, "organvm/previous-name"),
+                repository_record(2, "organvm/original"),
+                repository_record(2, "ORGANVM/ORIGINAL"),
+            ],
+        },
+    )
+    facts = P.collect_facts()
+    assert facts.public_repos == ["4444J99/transferred", "organvm/original"]
+    assert facts.get("ecosystem_public_repos") == 2
+    assert facts.get("ecosystem_original_repos") == 2
+    assert facts.get("ecosystem_stars") == 6
+
+
+@pytest.mark.parametrize(
+    "unavailable",
+    [
+        "users/4444J99",
+        "users/4444J99/repos?type=owner&per_page=100",
+        "users/4444J99/orgs?per_page=100",
+        "orgs/organvm",
+        "orgs/organvm/repos?type=public&per_page=100",
+    ],
+)
+def test_incomplete_inventory_withholds_headline_facts(monkeypatch, unavailable):
+    stub_inventory(
+        monkeypatch,
+        personal=[repository_record(1, "4444J99/original")],
+        organizations={"organvm": [repository_record(2, "organvm/original")]},
+        unavailable=unavailable,
+    )
+    facts = P.collect_facts()
+    assert facts.get("ecosystem_public_repos") is None
+    assert facts.get("ecosystem_original_repos") is None
+    assert facts.public_repos == []
+    assert facts.languages == Counter()
+    assert facts.get("contributions_last_year") == 10
+
+
+@pytest.mark.parametrize(
+    "malformed",
+    [
+        None,
+        {"message": "API failure"},
+        [None],
+        [{"full_name": "4444J99/missing-id", "private": False}],
+        [dict(repository_record(1, "4444J99/original"), fork=None)],
+    ],
+)
+def test_malformed_inventory_cannot_be_published_as_zero(monkeypatch, malformed):
+    stub_inventory(monkeypatch)
+    original = P.gh_json
+
+    def fake_gh_json(path, **kwargs):
+        if path == "users/4444J99/repos?type=owner&per_page=100":
+            return malformed
+        return original(path, **kwargs)
+
+    monkeypatch.setattr(P, "gh_json", fake_gh_json)
+    facts = P.collect_facts()
+    assert facts.get("ecosystem_public_repos") is None
+    assert facts.get("ecosystem_original_repos") is None
+
+
+def test_overlapping_pages_cannot_hide_an_incomplete_org_inventory(monkeypatch):
+    stub_inventory(
+        monkeypatch,
+        organizations={"organvm": [repository_record(1, "organvm/original")]},
+    )
+    original = P.gh_json
+
+    def fake_gh_json(path, **kwargs):
+        if path == "orgs/organvm":
+            return {"public_repos": 2}
+        if path == "orgs/organvm/repos?type=public&per_page=100":
+            return [repository_record(1, "organvm/original")] * 2
+        return original(path, **kwargs)
+
+    monkeypatch.setattr(P, "gh_json", fake_gh_json)
+    facts = P.collect_facts()
+    assert facts.get("ecosystem_public_repos") is None
+    assert facts.get("ecosystem_original_repos") is None
+
+
+@pytest.mark.parametrize("expected", [2, None, "1", -1])
+def test_incomplete_or_unverified_personal_count_blocks_publication(monkeypatch, expected):
+    stub_inventory(
+        monkeypatch,
+        personal=[repository_record(1, "4444J99/original")] * 2,
+        organizations={"organvm": []},
+    )
+    original = P.gh_json
+
+    def fake_gh_json(path, **kwargs):
+        if path == "users/4444J99":
+            return {"public_repos": expected}
+        return original(path, **kwargs)
+
+    monkeypatch.setattr(P, "gh_json", fake_gh_json)
+    facts = P.collect_facts()
+    assert facts.get("ecosystem_public_repos") is None
+    assert facts.public_repos == []
 
 
 # --- provability predicate --------------------------------------------------

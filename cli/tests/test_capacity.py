@@ -341,13 +341,85 @@ def test_agent_status_ollama_reachable_with_model(monkeypatch: pytest.MonkeyPatc
 
 def test_agent_status_github_actions_includes_workflow(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     fake_gh = tmp_path / "gh"
-    fake_gh.write_text("#!/bin/sh\n")
+    fake_gh.write_text('#!/bin/sh\nif [ "$1" = api ]; then echo public; fi\n')
     fake_gh.chmod(0o755)
     monkeypatch.setenv("PATH", str(tmp_path))
     monkeypatch.setenv("LIMEN_GITHUB_ACTIONS_WORKFLOW", "custom-workflow.yml")
     status = agent_status("github_actions")
     assert status["reachable"] is True
     assert "custom-workflow.yml" in status["detail"]
+
+
+@pytest.mark.parametrize("visibility", ["private", "internal", "null", ""])
+def test_agent_status_github_actions_rejects_private_or_unknown_carrier(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, visibility: str
+) -> None:
+    fake_gh = tmp_path / "gh"
+    workflow_probe = tmp_path / "workflow-probed"
+    fake_gh.write_text(
+        "#!/bin/sh\n"
+        f'if [ "$1" = api ]; then printf "%s\\n" "{visibility}"; fi\n'
+        f'if [ "$1" = workflow ]; then : > "{workflow_probe}"; fi\n'
+    )
+    fake_gh.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.delenv("LIMEN_GITHUB_ACTIONS_DISPATCH_CMD", raising=False)
+    status = agent_status("github_actions")
+    assert status["reachable"] is False
+    assert "control" in status["detail"]
+    assert not workflow_probe.exists()
+
+
+@pytest.mark.parametrize("visibility", ["private", "internal", "null", "public"])
+def test_public_health_repo_does_not_mask_actual_actions_carrier(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, visibility: str
+) -> None:
+    fake_gh = tmp_path / "gh"
+    calls = tmp_path / "gh-calls"
+    fake_gh.write_text(
+        "#!/bin/sh\n"
+        f'printf "%s\\n" "$*" >> "{calls}"\n'
+        'if [ "$1" = api ]; then\n'
+        f'  if [ "$2" = repos/example/carrier ]; then echo "{visibility}"; else echo public; fi\n'
+        "fi\n"
+    )
+    fake_gh.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.delenv("LIMEN_GITHUB_ACTIONS_DISPATCH_CMD", raising=False)
+    monkeypatch.setenv("LIMEN_GITHUB_ACTIONS_REPO", "example/carrier")
+    monkeypatch.setenv("LIMEN_GITHUB_ACTIONS_HEALTH_REPO", "example/public-health")
+    monkeypatch.setenv("LIMEN_GITHUB_ACTIONS_WORKFLOW", "health.yml")
+
+    status = agent_status("github_actions")
+    observed = calls.read_text().splitlines()
+    assert "api repos/example/carrier --jq .visibility" in observed
+    assert status["reachable"] is (visibility == "public")
+    workflow_probe = "workflow view health.yml --repo example/public-health"
+    assert (workflow_probe in observed) is (visibility == "public")
+    if visibility != "public":
+        assert "control=example/carrier" in status["detail"]
+
+
+def test_public_health_repo_does_not_mask_empty_actions_carrier(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    fake_gh = tmp_path / "gh"
+    workflow_probe = tmp_path / "workflow-probed"
+    fake_gh.write_text(
+        "#!/bin/sh\n"
+        'if [ "$1" = api ]; then echo public; fi\n'
+        f'if [ "$1" = workflow ]; then : > "{workflow_probe}"; fi\n'
+    )
+    fake_gh.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.delenv("LIMEN_GITHUB_ACTIONS_DISPATCH_CMD", raising=False)
+    monkeypatch.setenv("LIMEN_GITHUB_ACTIONS_REPO", "")
+    monkeypatch.setenv("LIMEN_GITHUB_ACTIONS_HEALTH_REPO", "example/public-health")
+
+    status = agent_status("github_actions")
+    assert status["reachable"] is False
+    assert "control repository identity is invalid" in status["detail"]
+    assert not workflow_probe.exists()
 
 
 def test_agent_status_copilot_enabled_via_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:

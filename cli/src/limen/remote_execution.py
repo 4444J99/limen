@@ -1468,18 +1468,13 @@ class GitHubWorkflowAdapter:
             or workflow_row.get("state") != "active"
         ):
             raise RemoteExecutionError("control workflow identity changed before submission")
-        visibility = self.runner(
-            [self.gh_binary, "api", f"repos/{request.repo}", "--jq", ".private"],
-            30,
+        require_public_actions_repository(
+            request.repo, role="target", runner=self.runner, gh=self.gh_binary
         )
-        _require_success(visibility, "target visibility probe")
-        value = visibility.stdout.strip().lower()
-        if value != "false":
-            if value == "true":
-                raise RemoteExecutionError(
-                    "private target blocked: org Actions allowance/budget and private runner capacity are unavailable"
-                )
-            raise RemoteExecutionError("target visibility probe returned an invalid value")
+        if self.control_repo != request.repo:
+            require_public_actions_repository(
+                self.control_repo, role="control", runner=self.runner, gh=self.gh_binary
+            )
         self._verify_implementation_custody(request)
 
     def intent(self, request: RemoteRequest) -> RemoteRun:
@@ -1855,6 +1850,28 @@ class RemoteCapability:
     detail: str
 
 
+def require_public_actions_repository(
+    repo: str,
+    *,
+    role: str,
+    runner: CommandRunner = run_command,
+    gh: str = "gh",
+    timeout: int = 30,
+) -> None:
+    """Require live public visibility for both source and workflow carrier."""
+    if not REPO_RE.fullmatch(repo):
+        raise RemoteExecutionError(f"{role} repository identity is invalid")
+    visibility = runner([gh, "api", f"repos/{repo}", "--jq", ".visibility"], timeout)
+    _require_success(visibility, f"{role} visibility probe")
+    value = visibility.stdout.strip()
+    if value in {"private", "internal"}:
+        raise RemoteExecutionError(
+            f"{value} {role} blocked: GitHub Actions requires a public {role} repository"
+        )
+    if value != "public":
+        raise RemoteExecutionError(f"{role} visibility probe returned an invalid value")
+
+
 def discover_adapters(
     *,
     environ: Mapping[str, str] | None = None,
@@ -1885,6 +1902,11 @@ def discover_adapters(
         auth = runner([gh, "auth", "status", "--hostname", "github.com"], 30)
         if auth.returncode != 0:
             capabilities.append(RemoteCapability(provider, False, "github-workflow", "GitHub auth unavailable"))
+            continue
+        try:
+            require_public_actions_repository(repo, role="control", runner=runner, gh=gh)
+        except RemoteExecutionError as exc:
+            capabilities.append(RemoteCapability(provider, False, "github-workflow", str(exc)))
             continue
         if configured_ref is None:
             default_branch = runner([gh, "api", f"repos/{repo}", "--jq", ".default_branch"], 30)
