@@ -479,7 +479,8 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         }
         for repository in MODULE.public_observation_withdrawals(self.audit):
             heads.pop(repository, None)
-        first_repository = self.public_row()["repository"]
+        first_repository = next(iter(heads))
+        first_head = heads[first_repository]
         heads[first_repository] = "0" * 40
         errors = MODULE.validate_audit(
             self.audit,
@@ -499,16 +500,39 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         )
         response = {
             "data": {
-                f"r{index}": {"isPrivate": False, "object": {"oid": value["observed_head"]}}
+                f"r{index}": {
+                    "isPrivate": False,
+                    "object": {"oid": value["observed_head"]},
+                    "databaseId": (
+                        MODULE.PUBLIC_CANDIDATE_REPOSITORY_IDENTITIES[value["repository"]].repository_id
+                        if value["repository"] in MODULE.PUBLIC_CANDIDATE_REPOSITORY_IDENTITIES
+                        else index + 1
+                    ),
+                }
                 for index, value in enumerate(public_rows)
             }
         }
         collection = MODULE.LiveCollection(call_limit=1)
-        with mock.patch.object(MODULE, "_run_json", return_value=response):
+        with mock.patch.object(MODULE, "_run_json", return_value=response) as run:
             self.assertEqual(
-                heads | {first_repository: self.public_row()["observed_head"]},
+                heads | {first_repository: first_head},
                 MODULE.collect_public_head_observations(self.audit, collection),
             )
+        query = run.call_args.args[0][-1]
+        self.assertIn('repository(owner:"4444J99",name:"trendpulse")', query)
+        self.assertIn('repository(owner:"4444J99",name:"vulnpulse")', query)
+        self.assertNotIn('owner:"organvm-iii-ergon"', query)
+        for index, row in enumerate(public_rows):
+            if row["repository"] not in MODULE.PUBLIC_CANDIDATE_REPOSITORY_IDENTITIES:
+                continue
+            for invalid_id in (None, True, "1228979753", 1228979753.0, 1):
+                changed_response = copy.deepcopy(response)
+                changed_response["data"][f"r{index}"]["databaseId"] = invalid_id
+                with (
+                    mock.patch.object(MODULE, "_run_json", return_value=changed_response),
+                    self.assertRaisesRegex(MODULE.AuditError, "immutable public head observation failed"),
+                ):
+                    MODULE.collect_public_head_observations(self.audit)
         response["data"]["r0"]["object"]["oid"] = "0" * 40
         with (
             mock.patch.object(MODULE, "_run_json", return_value=response),
@@ -516,16 +540,25 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         ):
             MODULE.collect_public_head_observations(self.audit)
 
+    def test_unknown_public_observation_cannot_create_a_withdrawal(self) -> None:
+        original = MODULE.PUBLIC_OBSERVATION_WITHDRAWALS.read_bytes()
+        with (
+            mock.patch.object(MODULE, "_run_json", return_value={"data": {"r0": None}}),
+            self.assertRaisesRegex(MODULE.AuditError, "immutable public head observation failed"),
+        ):
+            MODULE.collect_public_head_observations(self.audit)
+        self.assertEqual(original, MODULE.PUBLIC_OBSERVATION_WITHDRAWALS.read_bytes())
+
     def test_withdrawals_preserve_denominator_and_never_verify_private_heads(self) -> None:
         withdrawn = MODULE.public_observation_withdrawals(self.audit)
-        self.assertEqual(len(withdrawn), 41)
+        self.assertEqual(len(withdrawn), 50)
         self.assertEqual(len(self.audit["candidates"]), 62)
         heads = {
             row["repository"]: row["observed_head"]
             for row in self.audit["candidates"]
             if row["visibility"] == "public" and row["repository"] not in withdrawn
         }
-        self.assertEqual(len(heads), 13)
+        self.assertEqual(len(heads), 4)
         self.assertEqual(MODULE.validate_audit(self.audit, self.snapshot, self.contract, live_heads=heads), [])
         repository = next(iter(withdrawn))
         heads[repository] = next(

@@ -212,6 +212,13 @@ immutable public evidence blobs and run provenance plus the canonical W01 marked
 authenticates every recorded public head as an immutable repository commit without enumerating private
 repositories. Its owning PR workflow
 grants only `actions: read`, `contents: read`, and `issues: read`; no write permission is introduced.
+The reviewed observation custody manifest now withdraws 50 historical public rows from public
+head verification after owner-restricted visibility was confirmed. Each disposition binds the
+complete unchanged audit row; every withdrawn row remains blocked, score zero, and ineligible
+for transfer. Four public rows still require immutable-head verification. The two transferred
+public repositories resolve through reviewed canonical coordinates and their unchanged numeric
+GitHub repository IDs. Unknown or inaccessible API responses never create withdrawals. The
+accepted denominator remains 62 candidates, and the audit still permits zero transfers.
 The whole-only
 `positioning-foundry-technical-readiness-live` predicate retains private-inclusive
 identity, private-clearance custody, and private-leak checks under explicitly armed

@@ -35,7 +35,7 @@ CLI_SRC = ROOT / "cli" / "src"
 if str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
 
-from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY  # noqa: E402
+from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY, RepositoryIdentityV1  # noqa: E402
 
 PACKAGE = ROOT / "docs/positioning/foundry/psp-c11"
 AUDIT = PACKAGE / "technical-readiness-audit.json"
@@ -952,6 +952,20 @@ def _graphql_heads(
 
 
 PUBLIC_OBSERVATION_WITHDRAWALS = Path(__file__).with_name("public-observation-withdrawals.json")
+# Reviewed public transfers: REST redirects and canonical metadata resolved to
+# the same numeric repository IDs. Historical audit coordinates remain intact.
+PUBLIC_CANDIDATE_REPOSITORY_IDENTITIES = {
+    "organvm-iii-ergon/trendpulse": RepositoryIdentityV1(
+        repository_id=1_228_979_753,
+        canonical_coordinate="4444J99/trendpulse",
+        historical_aliases=("organvm-iii-ergon/trendpulse",),
+    ),
+    "organvm-iii-ergon/vulnpulse": RepositoryIdentityV1(
+        repository_id=1_229_016_238,
+        canonical_coordinate="4444J99/vulnpulse",
+        historical_aliases=("organvm-iii-ergon/vulnpulse",),
+    ),
+}
 
 
 def public_observation_withdrawals(audit: dict[str, Any]) -> set[str]:
@@ -1033,10 +1047,12 @@ def collect_public_head_observations(
     rows = [(repository, head) for repository, head in rows if repository not in withdrawn]
     selections: list[str] = []
     for index, (repository, head) in enumerate(rows):
-        owner, name = repository.split("/", 1)
+        identity = PUBLIC_CANDIDATE_REPOSITORY_IDENTITIES.get(repository)
+        coordinate = identity.canonical_coordinate if identity is not None else repository
+        owner, name = coordinate.split("/", 1)
         selections.append(
             f"r{index}:repository(owner:{json.dumps(owner)},name:{json.dumps(name)})"
-            f"{{isPrivate object(expression:{json.dumps(head)}){{... on Commit{{oid}}}}}}"
+            f"{{databaseId isPrivate object(expression:{json.dumps(head)}){{... on Commit{{oid}}}}}}"
         )
     response = _run_json(
         ["gh", "api", "graphql", "-f", "query=query{" + "".join(selections) + "}"],
@@ -1049,7 +1065,16 @@ def collect_public_head_observations(
     for index, (repository, head) in enumerate(rows):
         value = data.get(f"r{index}")
         observed = (value.get("object") or {}).get("oid") if isinstance(value, dict) else None
-        if not isinstance(value, dict) or value.get("isPrivate") is not False or observed != head:
+        identity = PUBLIC_CANDIDATE_REPOSITORY_IDENTITIES.get(repository)
+        if (
+            not isinstance(value, dict)
+            or value.get("isPrivate") is not False
+            or observed != head
+            or (
+                identity is not None
+                and (not _is_nonnegative_int(value.get("databaseId")) or value["databaseId"] != identity.repository_id)
+            )
+        ):
             raise AuditError(f"immutable public head observation failed for {repository}")
         observations[repository] = head
     return observations
