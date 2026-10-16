@@ -1,0 +1,72 @@
+{
+  "issue": 2866,
+  "bundle": "bundle-11case-original",
+  "pinned_source_revision": "24da5bffeefb855f1968e0c830c1ca5445a291cf",
+  "pinned_source_blobs": {
+    "scripts/tabularius-organ.py": "5c8336ef3872efab5b8521b2a4dfa53e0f4a2823",
+    "cli/src/limen/memoria.py": "a2595a0ac2af00ff53d7226a1a90b2dd20953b0d"
+  },
+  "entry_point": "/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/scripts/tabularius-organ.py",
+  "interpreter": "/Users/4jp/.local/share/limen/runtimes/b7a61c0bfb87926518f4074af446bed49b07ab8d/venv/bin/python",
+  "interpreter_version": "3.9.6",
+  "execution_command": "env -i PATH=/usr/bin:/bin HOME=$HOME /usr/bin/python3 harness/runner.py",
+  "case_count": 11,
+  "reconciled_totals": {
+    "B_created": 4,
+    "B_overwritten": 4,
+    "ACD_created": 3,
+    "ACD_overwritten": 0,
+    "all_created": 7,
+    "all_overwritten": 4,
+    "B_cases_writing": "8/8",
+    "exit_codes_observed": [
+      0
+    ]
+  },
+  "instrumentation": {
+    "method": "PEP 578 sys.addaudithook via harness/sitecustomize.py",
+    "install_point": "interpreter startup, before entry point import",
+    "filtered_events": [
+      "open",
+      "os.mkdir",
+      "os.rename",
+      "os.replace",
+      "os.remove",
+      "os.rmdir",
+      "os.truncate",
+      "os.link",
+      "os.symlink",
+      "os.chmod",
+      "shutil.copyfile",
+      "shutil.copymode",
+      "shutil.copystat",
+      "shutil.rmtree"
+    ],
+    "open_filter": "mode string only (w/a/x/+)",
+    "known_limits": [
+      "audit hooks are event observation, NOT an OS-wide write trace or sandbox",
+      "filter inspects the mode string, not CPython's separate open() flags argument",
+      "create-then-delete between snapshots would not appear as persistent state"
+    ],
+    "observed_sandbox_write_attempts": 36,
+    "observed_memory_store_write_attempts": 0
+  },
+  "files": {
+    "evidence/results.json": {
+      "sha256": "88f5192d662e22ec9d5cfb2f59b41a5e535337101573bbb608ac5f45f3050b86",
+      "bytes": 21817
+    },
+    "evidence/writes.jsonl": {
+      "sha256": "1e884f1d9bf5259f841e6d1df2878ac88d096d488746e4cfc2fc619b4e609056",
+      "bytes": 5471
+    },
+    "harness/runner.py": {
+      "sha256": "f68e483556c3d1b86962fa3796af16235f756139a43c4408a18942d6e51dd8ef",
+      "bytes": 8732
+    },
+    "harness/sitecustomize.py": {
+      "sha256": "e3dae03cc9c41dff96bdc1ecb36a926e187404c692187c98d5cf9ae793f2689d",
+      "bytes": 1995
+    }
+  }
+}
