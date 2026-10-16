@@ -11,4 +11,8 @@ if [[ "${1:-}" == "--full" ]]; then
   shift
   exec "$ROOT/scripts/verify-whole.sh" "$@"
 fi
-exec python3 "$ROOT/scripts/verify.py" --changed "$@"
+# The interpreter is resolved once (PyYAML-capable, PATH-independent) and handed to verify.py.
+source "$ROOT/scripts/lib/gate-python.sh"
+LIMEN_GATE_PYTHON="$(limen_gate_python)" || exit 1
+export LIMEN_GATE_PYTHON
+exec "$LIMEN_GATE_PYTHON" "$ROOT/scripts/verify.py" --changed "$@"
