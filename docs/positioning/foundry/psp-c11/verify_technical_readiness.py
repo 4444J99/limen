@@ -47,7 +47,12 @@ W01_SNAPSHOT_PATH = "docs/positioning/foundry/psp-c11/product-candidate-snapshot
 SOURCE_LOCK = {
     "w01_receipt": "https://github.com/organvm/limen/issues/2265#issuecomment-5295999920",
     "w01_receipt_sha256": "18b9348da9f1819f43d2c11b9065cb927966482309b0c304e21bf8c03e5ca7ce",
+    # The head the published W01 receipt recorded — receipt-bound, so it stays historical even
+    # though the 2026-10-10 history rewrite (#2878) removed that commit from the public lineage.
     "w01_accepted_head": "0239e60c68278b7f9747764b0212e8e8f1527c28",
+    # Its post-rewrite counterpart (same author time and subject, #2418), whose snapshot blob is
+    # byte-identical; snapshot reads use this so a fresh clone can resolve them.
+    "w01_snapshot_commit": "3a97d47263aeee669e0c7708d44d3fdace1de7df",
     "w01_acceptance_sha256": "2280964c776528533bc982dadd028d99fbf80977034d48d2b99f5406654c7bbb",
     "candidate_identity_sha256": "9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca",
     "w01_candidate_snapshot_path": W01_SNAPSHOT_PATH,
@@ -1476,7 +1481,7 @@ def _candidate_projection_from_bytes(content: bytes) -> str:
 def _accepted_w01_candidate_projection_local() -> str:
     try:
         result = subprocess.run(
-            ["git", "show", f"{SOURCE_LOCK['w01_accepted_head']}:{W01_SNAPSHOT_PATH}"],
+            ["git", "show", f"{SOURCE_LOCK['w01_snapshot_commit']}:{W01_SNAPSHOT_PATH}"],
             cwd=ROOT,
             capture_output=True,
             check=False,
@@ -1494,7 +1499,7 @@ def accepted_w01_candidate_projection_digest(collection: LiveCollection | None =
         return _accepted_w01_candidate_projection_local()
     content = _fetch_repository_blob(
         LIMEN_REPOSITORY_IDENTITY.canonical_coordinate,
-        SOURCE_LOCK["w01_accepted_head"],
+        SOURCE_LOCK["w01_snapshot_commit"],
         W01_SNAPSHOT_PATH,
         collection,
     )
