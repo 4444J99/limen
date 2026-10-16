@@ -1113,9 +1113,7 @@ def test_public_target_and_distinct_public_carrier_pass_preflight() -> None:
 
 
 @pytest.mark.parametrize(("visibility", "returncode"), [("private\n", 0), ("internal\n", 0), ("null\n", 0), ("", 1)])
-def test_discovery_does_not_advertise_private_or_unknown_carrier(
-    visibility: str, returncode: int
-) -> None:
+def test_discovery_does_not_advertise_private_or_unknown_carrier(visibility: str, returncode: int) -> None:
     def runner(argv: object, _timeout: int) -> CommandResult:
         args = tuple(argv)  # type: ignore[arg-type]
         if args[-2:] == ("--jq", ".visibility"):

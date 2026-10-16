@@ -406,9 +406,7 @@ def test_public_health_repo_does_not_mask_empty_actions_carrier(
     fake_gh = tmp_path / "gh"
     workflow_probe = tmp_path / "workflow-probed"
     fake_gh.write_text(
-        "#!/bin/sh\n"
-        'if [ "$1" = api ]; then echo public; fi\n'
-        f'if [ "$1" = workflow ]; then : > "{workflow_probe}"; fi\n'
+        f'#!/bin/sh\nif [ "$1" = api ]; then echo public; fi\nif [ "$1" = workflow ]; then : > "{workflow_probe}"; fi\n'
     )
     fake_gh.chmod(0o755)
     monkeypatch.setenv("PATH", str(tmp_path))

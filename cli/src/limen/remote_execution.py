@@ -1468,13 +1468,9 @@ class GitHubWorkflowAdapter:
             or workflow_row.get("state") != "active"
         ):
             raise RemoteExecutionError("control workflow identity changed before submission")
-        require_public_actions_repository(
-            request.repo, role="target", runner=self.runner, gh=self.gh_binary
-        )
+        require_public_actions_repository(request.repo, role="target", runner=self.runner, gh=self.gh_binary)
         if self.control_repo != request.repo:
-            require_public_actions_repository(
-                self.control_repo, role="control", runner=self.runner, gh=self.gh_binary
-            )
+            require_public_actions_repository(self.control_repo, role="control", runner=self.runner, gh=self.gh_binary)
         self._verify_implementation_custody(request)
 
     def intent(self, request: RemoteRequest) -> RemoteRun:
@@ -1865,9 +1861,7 @@ def require_public_actions_repository(
     _require_success(visibility, f"{role} visibility probe")
     value = visibility.stdout.strip()
     if value in {"private", "internal"}:
-        raise RemoteExecutionError(
-            f"{value} {role} blocked: GitHub Actions requires a public {role} repository"
-        )
+        raise RemoteExecutionError(f"{value} {role} blocked: GitHub Actions requires a public {role} repository")
     if value != "public":
         raise RemoteExecutionError(f"{role} visibility probe returned an invalid value")
 
