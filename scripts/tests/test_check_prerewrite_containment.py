@@ -161,3 +161,50 @@ def test_ref_names_never_carry_object_ids():
     full = mod.public_ref_name("refs/limen/retired-worktrees/x/" + "ab12" * 10)
     assert "ab12ab12" not in full
     assert mod.public_ref_name("refs/heads/fix/portable-acceptance-20261003").endswith("-20261003")
+
+
+def test_short_ids_worktree_paths_and_quarantine_commands_are_safe(world, capsys):
+    mod = world["mod"]
+    assert "b1e80cf4" not in mod.public_ref_name("refs/tags/archive/pr-1-detached-b1e80cf4-20260828")
+    detached = mod.public_ref_name("worktree-head:/Users/someone/private/checkout")
+    assert "/Users" not in detached and detached.startswith("worktree-head:path:")
+    run(world["repo"], "branch", "evil;touch${IFS}pwn;#", world["o3"])
+    args = ["--private-dir", str(world["private"]), "--ledger", str(world["ledger"])]
+    mod.main([*args, "--write-ledger"])
+    capsys.readouterr()
+    assert mod.main([*args, "--quarantine"]) == 0
+    lines = [line for line in capsys.readouterr().out.splitlines() if "evil" in line]
+    assert lines and all("'branch.evil;touch${IFS}pwn;#." in line for line in lines)
+
+
+def test_filesystem_push_target_is_push_capable(world):
+    mod = world["mod"]
+    run(world["repo"], "config", "branch.old-topic.remote", ".")
+    run(world["repo"], "config", "branch.old-topic.pushRemote", "../elsewhere.git")
+    assert mod.upstream_state("refs/heads/old-topic")["push_capable"] is True
+    run(world["repo"], "config", "branch.old-topic.pushRemote", ".")
+    assert mod.upstream_state("refs/heads/old-topic")["push_capable"] is False
+
+
+def test_mode_only_change_is_unique_work(world):
+    mod = world["mod"]
+    run(world["repo"], "checkout", "-q", "old-topic")
+    run(world["repo"], "update-index", "--chmod=+x", "notes.txt")
+    run(world["repo"], "commit", "-q", "-m", "make notes executable", date="2026-06-05T10:00:00")
+    head = run(world["repo"], "rev-parse", "HEAD")
+    ev = mod.evaluate(world["private"], learn=True)
+    assert ev["commits"][head]["class"] == "unique-work"
+
+
+def test_ours_merge_side_blob_is_inventoried(world):
+    mod = world["mod"]
+    repo = world["repo"]
+    run(repo, "checkout", "-q", "-b", "side", world["o1"])
+    commit(repo, {"secret/record.md": "side version\n"}, "side edit", "2026-06-06T10:00:00")
+    side_blob = run(repo, "rev-parse", "HEAD:secret/record.md")
+    run(repo, "checkout", "-q", "main")
+    run(repo, "merge", "-q", "-s", "ours", "--no-edit", "side", date="2026-06-07T10:00:00")
+    run(repo, "branch", "-D", "side")
+    ev = mod.evaluate(world["private"], learn=True)
+    assert side_blob in ev["blobs"]["secret/record.md"]
+    assert side_blob in ev["blobs_missing"]

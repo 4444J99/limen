@@ -81,7 +81,7 @@
     "quarantined": true,
     "remote": "."
    },
-   "worktree": "/Users/4jp/Workspace/limen/.worktrees/av-directory-receipt-20261010"
+   "worktree": "path:e35bb7df12ff"
   },
   {
    "class": "unique-work",
@@ -576,7 +576,7 @@
     "quarantined": true,
     "remote": "."
    },
-   "worktree": "/Users/4jp/Workspace/limen"
+   "worktree": "path:69d411268d7d"
   },
   {
    "class": "purge-equivalent",
@@ -805,7 +805,7 @@
     "quarantined": true,
     "remote": "."
    },
-   "worktree": "/Users/4jp/Workspace/limen/.worktrees/reap-scope-20261004"
+   "worktree": "path:1252d6d228c8"
   },
   {
    "class": "unique-work",
@@ -882,7 +882,7 @@
     "quarantined": true,
     "remote": "."
    },
-   "worktree": "/Volumes/Scratch/limen-custody-retirement-20261009-01a121f2/review-checkout"
+   "worktree": "path:da97326fe1de"
   },
   {
    "class": "purge-equivalent",
@@ -1125,7 +1125,7 @@
    },
    "kind": "detached-worktree",
    "private_custody": true,
-   "ref": "worktree-head:/Users/4jp/Workspace/limen/.worktrees/av-policy-readback-20261010",
+   "ref": "worktree-head:path:37b3edc73abe",
    "tip": "8d0e332b56fb7c59e2d719a1"
   }
  ],

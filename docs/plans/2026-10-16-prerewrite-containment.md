@@ -86,7 +86,7 @@ paths) and 80 are already on the new lineage (identical change, rewritten parent
    unique and are fully in `limen--private`. Retire through the receipt-backed reap rail only after
    #2537 lands, so local copies remain until GitHub stops serving old ids.
 6. **Old-lineage worktrees** — `av-directory-receipt-20261010`, `av-policy-readback-20261010`,
-   `reap-scope-20261004`, and `/Volumes/Scratch/…/review-checkout` follow their branch's step 3/5
+   `reap-scope-20261004`, and the external-volume custody-retirement review checkout follow their branch's step 3/5
    outcome. `recovery-admission-20261010` is new lineage and locked by a human session: untouched.
 7. **Lift the quarantine** — restore each branch's original upstream from the private receipt only
    for refs that end on the new lineage; the predicate's C check keeps every old one quarantined.

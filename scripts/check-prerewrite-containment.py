@@ -38,6 +38,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -55,8 +56,10 @@ DIGEST_SALT = "limen-prerewrite-containment:"
 EMPTY_TREE = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 HEX_TOKEN = re.compile(r"\b[0-9a-f]{7,40}\b")
 OID_COMPONENT = re.compile(r"^[0-9a-f]{40}$")
-# A hex run of 10+ chars holding both a letter and a digit (dates and plain numbers stay readable).
-EMBEDDED_HEX = re.compile(r"(?<![0-9a-f:])(?=[0-9a-f]*[a-f])(?=[0-9a-f]*[0-9])[0-9a-f]{10,64}(?![0-9a-f])")
+# A hex run of 7+ chars (git's shortest default abbreviation) holding both a letter and a digit;
+# dates and plain numbers stay readable.
+EMBEDDED_HEX = re.compile(r"(?<![0-9a-f:])(?=[0-9a-f]*[a-f])(?=[0-9a-f]*[0-9])[0-9a-f]{7,64}(?![0-9a-f])")
+WORKTREE_HEAD = "worktree-head:"
 WS_SPLIT = re.compile(r"(\s+)")
 CLASSES = ("already-on-new-lineage", "purge-equivalent", "unique-work")
 # Agent working-tree snapshot namespaces: never pushed, never commits of record. A purged-path
@@ -95,8 +98,15 @@ def public_ref_name(name: str) -> str:
     Old commit ids must never reach the ledger: GitHub may keep serving them until #2537, so even a
     12-hex abbreviation inside a tag name (`…-detached-<abbrev>-<date>`) is a lookup key.
     """
+    if name.startswith(WORKTREE_HEAD):
+        return WORKTREE_HEAD + public_path(name[len(WORKTREE_HEAD) :])
     name = "/".join(f"oid:{digest(p)}" if OID_COMPONENT.match(p) else p for p in name.split("/"))
     return EMBEDDED_HEX.sub(lambda m: f"oid:{digest(m.group(0))[:12]}", name)
+
+
+def public_path(path: str) -> str:
+    """Host paths never enter the ledger; the private evidence maps each digest back."""
+    return f"path:{digest(path)[:12]}"
 
 
 # ── purge manifest ──────────────────────────────────────────────────────────────────────────────
@@ -151,7 +161,7 @@ def inventory() -> list[dict[str, Any]]:
         if "branch" in fields:
             checked_out[fields["branch"]] = path
         elif fields.get("HEAD"):
-            refs.append({"ref": f"worktree-head:{path}", "oid": fields["HEAD"], "kind": "detached-worktree"})
+            refs.append({"ref": f"{WORKTREE_HEAD}{path}", "oid": fields["HEAD"], "kind": "detached-worktree"})
     for item in refs:
         if item["ref"] in checked_out:
             item["worktree"] = checked_out[item["ref"]]
@@ -289,18 +299,19 @@ def content_on_new_tip(oid: str, parents: list[str], patterns: list[str]) -> boo
     ]
     if not changed:
         return False
-    mine = dict(_ls_blobs(oid, changed))
-    theirs = dict(_ls_blobs(NEW_REF, changed))
+    mine = dict(_ls_entries(oid, changed))
+    theirs = dict(_ls_entries(NEW_REF, changed))
     return all(mine.get(p) == theirs.get(p) for p in changed)
 
 
-def _ls_blobs(rev: str, paths: list[str]) -> list[tuple[str, str]]:
+def _ls_entries(rev: str, paths: list[str]) -> list[tuple[str, str]]:
+    """(path, "mode type oid") — the whole tree entry, so a mode-only change is not 'already present'."""
     out = git("ls-tree", "-r", "-z", rev, "--", *(f":(top,literal){p}" for p in paths))
     rows = []
     for entry in out.split("\0"):
         if entry:
             info, path = entry.split("\t", 1)
-            rows.append((path, info.split()[2]))
+            rows.append((path, info))
     return rows
 
 
@@ -367,7 +378,11 @@ def purged_blobs(old_refs: list[dict[str, Any]], patterns: list[str]) -> dict[st
     tips = sorted({r["oid"] for r in old_refs})
     if not tips:
         return {}
-    commits = git("log", "--format=%H", *tips, f"^{NEW_REF}", "--", *manifest_pathspecs(patterns)).split()
+    # --full-history: default path-limited simplification drops a merged side whose version the merge
+    # discarded (an `ours` merge), yet that side's blob stays reachable from the old tip.
+    commits = git(
+        "log", "--full-history", "--format=%H", *tips, f"^{NEW_REF}", "--", *manifest_pathspecs(patterns)
+    ).split()
     blobs: dict[str, set[str]] = collections.defaultdict(set)
     for oid in commits:
         for path, blob in _ls_blobs_manifest(oid, patterns):
@@ -405,7 +420,6 @@ def private_reaches(oid: str, private_git: Path) -> bool:
 
 def upstream_state(branch_ref: str) -> dict[str, Any]:
     name = branch_ref[len("refs/heads/") :]
-    remotes = set(git("remote").split())
 
     def cfg(key: str) -> str:
         return git("config", "--get", key, check=False).strip()
@@ -416,7 +430,9 @@ def upstream_state(branch_ref: str) -> dict[str, Any]:
         cfg(f"branch.{name}.merge"),
     )
     effective_push = push_remote or cfg("remote.pushDefault") or remote or "origin"
-    capable = [r for r in {remote, effective_push} if r and r != QUARANTINE_REMOTE and (r in remotes or ":" in r)]
+    # Only the explicit self-target is safe: git also accepts a bare filesystem path (or an unknown
+    # name that resolves as one) as the <repository> operand, and that push writes.
+    capable = [r for r in {remote, effective_push} if r and r != QUARANTINE_REMOTE]
     return {
         "branch": name,
         "remote": remote or None,
@@ -467,7 +483,7 @@ def evaluate(private_dir: Path, learn: bool) -> dict[str, Any]:
             "private_custody": private_reaches(r["oid"], private_git) if (private_git / "HEAD").exists() else None,
         }
         if r.get("worktree"):
-            row["worktree"] = r["worktree"]
+            row["worktree"] = public_path(r["worktree"])
         if r["kind"] == "branch":
             st = upstream_state(r["ref"])
             row["upstream"] = {k: st[k] for k in ("remote", "push_remote", "push_capable", "quarantined")}
@@ -595,9 +611,12 @@ def main(argv: list[str] | None = None) -> int:
                 up = row.get("upstream")
                 if up and not up["quarantined"]:
                     name = row["ref"][len("refs/heads/") :]
-                    print(f"git config branch.{name}.remote {QUARANTINE_REMOTE}")
-                    print(f"git config branch.{name}.merge refs/heads/{name}")
-                    print(f"git config branch.{name}.pushRemote {QUARANTINE_REMOTE}")
+                    for key, value in (
+                        ("remote", QUARANTINE_REMOTE),
+                        ("merge", f"refs/heads/{name}"),
+                        ("pushRemote", QUARANTINE_REMOTE),
+                    ):
+                        print(f"git config {shlex.quote(f'branch.{name}.{key}')} {shlex.quote(value)}")
             return 0
         if args.write_ledger:
             _write_private(args.private_dir / "evidence.json", private_evidence(ev))
