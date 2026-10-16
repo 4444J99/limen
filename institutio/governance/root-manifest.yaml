@@ -88,4 +88,3 @@ sanctioned:
   - {path: web, kind: dir, owner: web, why: "worker + api + dashboard"}
 
 grandfathered:
-  - {path: .staged-heal, target_home: DELETE, why: "temporary staged heal fixtures for chezmoi clobber recovery"}
