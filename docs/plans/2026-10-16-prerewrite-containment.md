@@ -61,13 +61,15 @@ paths) and 80 are already on the new lineage (identical change, rewritten parent
 1. **Lineage pre-push guard** — add a repo-scoped `pre-push` refusal for any pushed commit whose
    ancestry contains an old-lineage commit (boundary descendant not reachable from `origin/main`).
    Owner: domus (the global hooks dir is chezmoi-rendered). Closes hazards 1–3 for every pusher.
-2. **Preserve unique work without private custody first** — 7 refs hold unique commits that
-   `limen--private` does not reach: `reap/amend-receipt-20261005`, `reap/closeout-audit-20261005`,
-   `reap/closeout-correction-20261005`, `reap/closeout-invariant-20261005`,
-   `fix/recovery-admission-20261010`, the `refs/limen/continuation-beat/…` receipt ref, and the three
-   `refs/cline/checkpoints/*` (which also hold the one checkpoint-only purged-path version). Bundle
-   each to custody staging (`git bundle`) and push to `limen--private` under `preserve/prerewrite/*`
-   — owner decision (writes to the private sibling).
+2. **Preserve unique work without private custody first** — the ledger's `private_custody: false`
+   rows are 4 refs: the `refs/limen/continuation-beat/…` receipt ref (9 unique commits) and the three
+   `refs/cline/checkpoints/*` (1 each; they also hold the one checkpoint-only purged-path version).
+   Bundle each to custody staging (`git bundle`) and push to `limen--private` under
+   `preserve/prerewrite/*` — owner decision (writes to the private sibling). Separately, 5 branches
+   are in private custody but have **no remote counterpart** (`reap/amend-receipt-20261005`,
+   `reap/closeout-audit-20261005`, `reap/closeout-correction-20261005`,
+   `reap/closeout-invariant-20261005`, `fix/recovery-admission-20261010`): their unique work exists
+   only locally and in `limen--private`, so step 3 must port it before any retirement.
 3. **Port unique work forward, per ref** — for each of the 45 unique-work refs, check its PR state
    (`gh pr list --head <branch> --state all`). Merged → the unique commits are squash residue;
    record and retire. Open/unmerged → cherry-pick the unique commits onto a fresh branch from
@@ -93,7 +95,7 @@ paths) and 80 are already on the new lineage (identical change, rewritten parent
 
 ## Owner decisions needed
 
-- D1: push the 7 custody-less unique-work refs (and the checkpoint-only purged version) to
+- D1: push the 4 custody-less unique-work refs (and the checkpoint-only purged version) to
   `limen--private` (step 2).
 - D2: per-ref port-or-retire for the 45 unique-work refs (step 3) — the predicate cannot decide intent.
 - D3: realign the shared checkout's `main` to `origin/main` (step 4).

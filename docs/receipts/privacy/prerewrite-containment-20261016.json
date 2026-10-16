@@ -1,10 +1,10 @@
 {
- "boundary": "31664a78ba7459bf475416accf7c03d3555f54fc",
+ "boundary": "oid:05852172dcc28909cc165381",
  "checkpoint_only_unpublished_blobs": [
   "513a7df68cc0ad613423f83b"
  ],
  "issue": "4444J99/limen#2537",
- "manifest_commit": "66b2ee71a1075d652a32a44186d01db258c8adce",
+ "manifest_commit": "oid:b8c610f3db4cec49cbdeabc6",
  "new_ref": "refs/remotes/origin/main",
  "private_repository": "4444J99/limen--private",
  "refs": [
@@ -58,9 +58,9 @@
    "tip": "c03c894a667b082de14f22cf",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -77,9 +77,9 @@
    "tip": "81d56c3b75f6bd4f48b78ff0",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    },
    "worktree": "path:e35bb7df12ff"
   },
@@ -97,9 +97,9 @@
    "tip": "a78915abfe9cb561608ecd78",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -116,9 +116,9 @@
    "tip": "c84aa641a69eff3a9163e8dd",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -135,9 +135,9 @@
    "tip": "67fdeb5bce57223ff3bfcbd6",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -154,9 +154,9 @@
    "tip": "96ba997962df1f0375fdec8f",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -173,9 +173,9 @@
    "tip": "12406b784e2bbd97d181c2bc",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -192,9 +192,9 @@
    "tip": "eb876785ba6107fe11dec468",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -211,9 +211,9 @@
    "tip": "fcb6f94ef6add5b321387ebf",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -230,9 +230,9 @@
    "tip": "2ab2ba06695134a81a9abe89",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -249,9 +249,9 @@
    "tip": "920b8ccce13e405697e1b0f7",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -268,9 +268,9 @@
    "tip": "5fda5c9eff30926b00fedfa0",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -287,9 +287,9 @@
    "tip": "6a9e1696e9b60b6e6822a2ea",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -306,9 +306,9 @@
    "tip": "18614d5a2bdaa5a201f13bbe",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -325,9 +325,9 @@
    "tip": "8b92f573d8d669c759492218",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -344,9 +344,9 @@
    "tip": "0c030e0ff1b9854e26f504c7",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -363,9 +363,9 @@
    "tip": "715bb524b3d94d0a6608e243",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -382,9 +382,9 @@
    "tip": "ab429df4914e4cb7ead09bf6",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -401,9 +401,9 @@
    "tip": "c9255fc90f0a0aca8e334c40",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -420,9 +420,9 @@
    "tip": "c44ca8aba61167769da311fa",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -439,9 +439,9 @@
    "tip": "f67e6aeb9e1101052ee47b67",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -458,9 +458,9 @@
    "tip": "95523a2593ff110861994723",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -477,9 +477,9 @@
    "tip": "06aacb39565d2f34aab4ee4f",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -496,9 +496,9 @@
    "tip": "e8d2284e2153986509dd4802",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -515,9 +515,9 @@
    "tip": "1e79a545df2a71a037f21d0c",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -534,9 +534,9 @@
    "tip": "4c5d0abe191b249a0cfec222",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -553,9 +553,9 @@
    "tip": "d71d82abb08efd4c5e811958",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -572,9 +572,9 @@
    "tip": "14769310d1f92f0fd4251cd9",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    },
    "worktree": "path:69d411268d7d"
   },
@@ -592,9 +592,9 @@
    "tip": "7dff1bfcd69123972486a82c",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -611,9 +611,9 @@
    "tip": "f4e5e6cc831178c76ecdf507",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -630,9 +630,9 @@
    "tip": "fcf247c55704b2a81d370064",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -649,9 +649,9 @@
    "tip": "8a9209787abbc33bcfe0a75b",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -668,9 +668,9 @@
    "tip": "ccd15293f80161fc90039e9d",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -687,9 +687,9 @@
    "tip": "629189970cb82deaf642a016",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -706,9 +706,9 @@
    "tip": "a51f3857364cdb4eff042a02",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -725,9 +725,9 @@
    "tip": "01016dca974dd6fc8388cdae",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -744,9 +744,9 @@
    "tip": "febadae0f106c10a679e3da2",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -763,9 +763,9 @@
    "tip": "d250bb1d0ddcfa4395a8e1bd",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -782,9 +782,9 @@
    "tip": "3b826fa873ebcc2c1f7cfd40",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -801,9 +801,9 @@
    "tip": "15b769200d3b45af936c8e7b",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    },
    "worktree": "path:1252d6d228c8"
   },
@@ -821,9 +821,9 @@
    "tip": "d475004779e2398bd9a47a9b",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -840,9 +840,9 @@
    "tip": "940863eb4ddec35036a957a9",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -859,9 +859,9 @@
    "tip": "434d6424657ca5265e75ff65",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -878,9 +878,9 @@
    "tip": "0d0d95ce74c707232a7c82a0",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    },
    "worktree": "path:da97326fe1de"
   },
@@ -898,9 +898,9 @@
    "tip": "db9cea4530c70893351e15d0",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -917,9 +917,9 @@
    "tip": "2047ef1ff9d38ae690ab4707",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -936,9 +936,9 @@
    "tip": "dc3c4feddd64d10d89e5086e",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {
@@ -955,9 +955,9 @@
    "tip": "f78276488f727f7575a64237",
    "upstream": {
     "push_capable": false,
-    "push_remote": ".",
+    "push_remote": "self",
     "quarantined": true,
-    "remote": "."
+    "remote": "self"
    }
   },
   {

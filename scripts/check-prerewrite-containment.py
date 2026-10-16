@@ -41,6 +41,7 @@ import re
 import shlex
 import subprocess
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -107,6 +108,20 @@ def public_ref_name(name: str) -> str:
 def public_path(path: str) -> str:
     """Host paths never enter the ledger; the private evidence maps each digest back."""
     return f"path:{digest(path)[:12]}"
+
+
+def public_destination(value: str | None) -> str | None:
+    """A push/pull destination as the ledger may show it: self, a configured remote name, or a digest.
+
+    Paths and URLs (which can carry credentials) are digested; only the safety booleans stay plain.
+    """
+    if not value:
+        return None
+    if value == QUARANTINE_REMOTE:
+        return "self"
+    if value in set(git("remote").split()):
+        return f"remote:{value}"
+    return f"destination:{digest(value)[:12]}"
 
 
 # ── purge manifest ──────────────────────────────────────────────────────────────────────────────
@@ -486,7 +501,12 @@ def evaluate(private_dir: Path, learn: bool) -> dict[str, Any]:
             row["worktree"] = public_path(r["worktree"])
         if r["kind"] == "branch":
             st = upstream_state(r["ref"])
-            row["upstream"] = {k: st[k] for k in ("remote", "push_remote", "push_capable", "quarantined")}
+            row["upstream"] = {
+                "remote": public_destination(st["remote"]),
+                "push_remote": public_destination(st["push_remote"]),
+                "push_capable": st["push_capable"],
+                "quarantined": st["quarantined"],
+            }
             row["remote_counterpart"] = git_ok(
                 "rev-parse", "--verify", "--quiet", f"refs/remotes/origin/{st['branch']}"
             )
@@ -522,8 +542,8 @@ def public_ledger(ev: dict[str, Any]) -> dict[str, Any]:
     return {
         "schema": SCHEMA,
         "issue": "4444J99/limen#2537",
-        "boundary": BOUNDARY,
-        "manifest_commit": MANIFEST_COMMIT,
+        "boundary": f"oid:{digest(BOUNDARY)}",
+        "manifest_commit": f"oid:{digest(MANIFEST_COMMIT)}",
         "new_ref": NEW_REF,
         "private_repository": "4444J99/limen--private",
         "scrub_map_sha256": ev["map_digest"],
@@ -607,16 +627,26 @@ def main(argv: list[str] | None = None) -> int:
     try:
         ev = evaluate(args.private_dir, learn=args.write_ledger)
         if args.quarantine:
-            for row in ev["refs"]:
-                up = row.get("upstream")
-                if up and not up["quarantined"]:
-                    name = row["ref"][len("refs/heads/") :]
-                    for key, value in (
-                        ("remote", QUARANTINE_REMOTE),
-                        ("merge", f"refs/heads/{name}"),
-                        ("pushRemote", QUARANTINE_REMOTE),
-                    ):
-                        print(f"git config {shlex.quote(f'branch.{name}.{key}')} {shlex.quote(value)}")
+            pending = [
+                st
+                for st in (upstream_state(r["ref"]) for r in ev["raw_refs"] if r["kind"] == "branch")
+                if not st["quarantined"]
+            ]
+            # The originals are written BEFORE any command is shown, so step 7 of the plan can
+            # restore them; one receipt per invocation, never overwritten.
+            stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
+            _write_private(
+                args.private_dir / f"upstream-quarantine-receipt-{stamp}.json",
+                {"branches": [{k: st[k] for k in ("branch", "remote", "merge", "push_remote")} for st in pending]},
+            )
+            for st in pending:
+                name = st["branch"]
+                for key, value in (
+                    ("remote", QUARANTINE_REMOTE),
+                    ("merge", f"refs/heads/{name}"),
+                    ("pushRemote", QUARANTINE_REMOTE),
+                ):
+                    print(f"git config {shlex.quote(f'branch.{name}.{key}')} {shlex.quote(value)}")
             return 0
         if args.write_ledger:
             _write_private(args.private_dir / "evidence.json", private_evidence(ev))

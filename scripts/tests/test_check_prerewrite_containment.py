@@ -177,6 +177,23 @@ def test_short_ids_worktree_paths_and_quarantine_commands_are_safe(world, capsys
     assert lines and all("'branch.evil;touch${IFS}pwn;#." in line for line in lines)
 
 
+def test_ledger_redacts_destinations_and_full_ids_and_quarantine_keeps_a_receipt(world, capsys):
+    mod = world["mod"]
+    run(world["repo"], "config", "branch.old-topic.pushRemote", "/secret/host/path.git")
+    args = ["--private-dir", str(world["private"]), "--ledger", str(world["ledger"])]
+    mod.main([*args, "--write-ledger"])
+    text = world["ledger"].read_text()
+    assert "/secret/host/path.git" not in text
+    assert mod.BOUNDARY not in text and mod.MANIFEST_COMMIT not in text
+    capsys.readouterr()
+    assert mod.main([*args, "--quarantine"]) == 0
+    receipts = list(world["private"].glob("upstream-quarantine-receipt-*.json"))
+    assert len(receipts) == 1
+    saved = {b["branch"]: b for b in json.loads(receipts[0].read_text())["branches"]}
+    assert saved["old-topic"]["push_remote"] == "/secret/host/path.git"
+    assert saved["main"]["remote"] == "origin"
+
+
 def test_filesystem_push_target_is_push_capable(world):
     mod = world["mod"]
     run(world["repo"], "config", "branch.old-topic.remote", ".")
