@@ -47,7 +47,7 @@ W01_SNAPSHOT_PATH = "docs/positioning/foundry/psp-c11/product-candidate-snapshot
 SOURCE_LOCK = {
     "w01_receipt": "https://github.com/organvm/limen/issues/2265#issuecomment-5295999920",
     "w01_receipt_sha256": "18b9348da9f1819f43d2c11b9065cb927966482309b0c304e21bf8c03e5ca7ce",
-    "w01_accepted_head": "3a97d47263aeee669e0c7708d44d3fdace1de7df",
+    "w01_accepted_head": "0239e60c68278b7f9747764b0212e8e8f1527c28",
     "w01_acceptance_sha256": "2280964c776528533bc982dadd028d99fbf80977034d48d2b99f5406654c7bbb",
     "candidate_identity_sha256": "9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca",
     "w01_candidate_snapshot_path": W01_SNAPSHOT_PATH,
