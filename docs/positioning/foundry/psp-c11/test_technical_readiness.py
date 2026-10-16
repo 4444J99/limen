@@ -339,6 +339,42 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             any("duplicate repositories" in error or "projection digest drift" in error for error in errors)
         )
 
+    def test_snapshot_bytes_must_match_the_receipt_bound_blob(self) -> None:
+        content = MODULE.SNAPSHOT.read_bytes()
+        self.assertEqual(content, MODULE._bound_w01_snapshot(content))
+        with self.assertRaisesRegex(MODULE.AuditError, "snapshot blob drifted"):
+            MODULE._bound_w01_snapshot(content + b" ")
+        collection = MODULE.LiveCollection()
+        with (
+            mock.patch.object(MODULE, "_fetch_repository_blob", return_value=content.replace(b"{", b"{ ", 1)),
+            self.assertRaisesRegex(MODULE.AuditError, "snapshot blob drifted"),
+        ):
+            MODULE.accepted_w01_candidate_projection_digest(collection)
+
+    def test_trusted_live_census_honors_withdrawals_and_keeps_private_leak_checks(self) -> None:
+        snapshot = {
+            "candidates": [
+                {"repository": "o/kept", "visibility": "public"},
+                {"repository": "o/withdrawn", "visibility": "public"},
+            ]
+        }
+        census = [
+            {"full_name": "o/kept", "name": "kept", "private": False},
+            {"full_name": "o/withdrawn", "name": "withdrawn", "private": True},
+        ]
+        preflight = {"collect_live_repositories": lambda: (None, census)}
+        with (
+            mock.patch.object(MODULE.runpy, "run_path", return_value=preflight),
+            mock.patch.object(MODULE, "_graphql_heads", side_effect=lambda repos: {r: "0" * 40 for r in repos}),
+            mock.patch.object(MODULE, "_private_identity_leaks", return_value=[]) as leaks,
+            mock.patch.object(MODULE, "_live_candidate_identity_digest", return_value="digest"),
+        ):
+            with self.assertRaisesRegex(MODULE.AuditError, "missing or private: o/withdrawn"):
+                MODULE.collect_live_context(snapshot)
+            heads, _, _ = MODULE.collect_live_context(snapshot, {"o/withdrawn"})
+        self.assertEqual({"o/kept": "0" * 40}, heads)
+        self.assertIn("o/withdrawn", leaks.call_args.args[0])
+
     def test_candidate_projection_is_resolved_from_the_immutable_w01_revision(self) -> None:
         content = MODULE.SNAPSHOT.read_bytes()
         expected = MODULE.candidate_projection_digest(self.snapshot)
@@ -351,7 +387,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             ) as run:
                 self.assertEqual(expected, MODULE.accepted_w01_candidate_projection_digest())
             self.assertEqual(
-                ["git", "show", f"{MODULE.SOURCE_LOCK['w01_accepted_head']}:{MODULE.W01_SNAPSHOT_PATH}"],
+                ["git", "show", f"{MODULE.SOURCE_LOCK['w01_snapshot_commit']}:{MODULE.W01_SNAPSHOT_PATH}"],
                 run.call_args.args[0],
             )
         finally:
@@ -362,7 +398,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             self.assertEqual(expected, MODULE.accepted_w01_candidate_projection_digest(collection))
         fetch.assert_called_once_with(
             MODULE.LIMEN_REPOSITORY_IDENTITY.canonical_coordinate,
-            MODULE.SOURCE_LOCK["w01_accepted_head"],
+            MODULE.SOURCE_LOCK["w01_snapshot_commit"],
             MODULE.W01_SNAPSHOT_PATH,
             collection,
         )
@@ -454,16 +490,24 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 MODULE.verify_w01_live_receipt()
 
     def test_public_head_and_live_head_are_exact(self) -> None:
+        # A withdrawn row is bound by its full snapshot digest, so mutating one would trip the
+        # withdrawal binding instead; exercise a row that is still publicly verified.
+        withdrawn = MODULE.public_observation_withdrawals(self.audit)
+        verified_id = next(
+            row["candidate_id"]
+            for row in self.audit["candidates"]
+            if row["visibility"] == "public" and row["repository"] not in withdrawn
+        )
         changed = copy.deepcopy(self.audit)
-        row = self.public_row(changed)
+        row = self.public_row(changed, verified_id)
         row["observed_head"] = "not-a-head"
         self.assertTrue(any("40-hex commit" in error for error in self.errors(changed)))
         heads = {
             row["repository"]: row["observed_head"] for row in self.audit["candidates"] if row["visibility"] == "public"
         }
-        for repository in MODULE.public_observation_withdrawals(self.audit):
+        for repository in withdrawn:
             heads.pop(repository, None)
-        first_repository = self.public_row()["repository"]
+        first_repository = self.public_row(candidate_id=verified_id)["repository"]
         heads[first_repository] = "0" * 40
         errors = MODULE.validate_audit(
             self.audit,
@@ -490,7 +534,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
         collection = MODULE.LiveCollection(call_limit=1)
         with mock.patch.object(MODULE, "_run_json", return_value=response):
             self.assertEqual(
-                heads | {first_repository: self.public_row()["observed_head"]},
+                heads | {first_repository: self.public_row(candidate_id=verified_id)["observed_head"]},
                 MODULE.collect_public_head_observations(self.audit, collection),
             )
         response["data"]["r0"]["object"]["oid"] = "0" * 40
@@ -502,14 +546,14 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
 
     def test_withdrawals_preserve_denominator_and_never_verify_private_heads(self) -> None:
         withdrawn = MODULE.public_observation_withdrawals(self.audit)
-        self.assertEqual(len(withdrawn), 41)
+        self.assertEqual(len(withdrawn), 50)
         self.assertEqual(len(self.audit["candidates"]), 62)
         heads = {
             row["repository"]: row["observed_head"]
             for row in self.audit["candidates"]
             if row["visibility"] == "public" and row["repository"] not in withdrawn
         }
-        self.assertEqual(len(heads), 13)
+        self.assertEqual(len(heads), 4)
         self.assertEqual(MODULE.validate_audit(self.audit, self.snapshot, self.contract, live_heads=heads), [])
         repository = next(iter(withdrawn))
         heads[repository] = next(
