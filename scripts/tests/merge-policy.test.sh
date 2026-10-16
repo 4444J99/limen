@@ -323,13 +323,17 @@ check "expected head mismatch" 2 --expected-head bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 
 # Resolver unavailable ⇒ website-sensitive (fail toward caution). With a broken python3 the
 # deploy regex cannot derive from the GATES registry, so a docs-only PR with zero checks —
-# normally CLEARED — must HOLD instead of risking an unclassified live deploy.
+# normally CLEARED — must HOLD instead of risking an unclassified live deploy. The gate-python
+# resolver would otherwise route around the stub to another python on PATH, so the inherited override
+# is cleared and the candidate list names nothing that exists: "no usable interpreter" is the case, and
+# merge-policy then falls back to the bare (stubbed) python3 whose derivation fails.
 cat > "$stubdir/python3" <<'STUB'
 #!/usr/bin/env bash
 exit 1
 STUB
 chmod +x "$stubdir/python3"
-mkjson OPEN false CLEAN "$DOC_FILES" "$NONE"; check "resolver unavailable (forced sensitive)" 2
+mkjson OPEN false CLEAN "$DOC_FILES" "$NONE"
+LIMEN_GATE_PYTHON="" LIMEN_GATE_PYTHON_CANDIDATES=limen-no-such-python check "resolver unavailable (forced sensitive)" 2
 rm -f "$stubdir/python3"
 
 # Personal relay cannot fall through a standalone policy helper even with a

@@ -51,6 +51,17 @@ repo_args=(); [ -n "$REPO" ] && repo_args=(--repo "$REPO")
 STALE=0
 _root="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 
+# Interpreter: resolve one PyYAML-capable python once (scripts/lib/gate-python.sh) instead of trusting
+# whatever bare `python3` the caller's PATH yields. If none resolves, fall back to bare python3 so every
+# call site keeps its own fail-toward-caution behavior (the deploy-regex derivation below then fails
+# and STALE=1 forces website-sensitive) — the resolver's stderr hint says how to repair the host.
+_py=python3
+if [ -f "$_root/scripts/lib/gate-python.sh" ]; then
+  # shellcheck source=lib/gate-python.sh
+  source "$_root/scripts/lib/gate-python.sh"
+  _py="$(limen_gate_python)" || _py=python3
+fi
+
 # AUTONOMY-PAUSED chokepoint (issue #1079): the 2026-07-15 incident merged green PRs
 # while autonomy was paused because nothing in the interactive merge path consulted
 # the pause. The governor computes the authoritative mode — pause marker, expiry,
@@ -62,7 +73,7 @@ _root="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 # fleet) inherits the pause for free.
 _autonomy_mode=""
 if [ -d "$_root/logs" ] && [ -f "$_root/scripts/autonomy-governor.py" ]; then
-  _autonomy_mode="$(LIMEN_ROOT="$_root" python3 "$_root/scripts/autonomy-governor.py" mode 2>/dev/null || true)"
+  _autonomy_mode="$(LIMEN_ROOT="$_root" "$_py" "$_root/scripts/autonomy-governor.py" mode 2>/dev/null || true)"
 fi
 if [ "$_autonomy_mode" = "paused" ]; then
   _pause_prohibitions=""
@@ -78,7 +89,7 @@ if [ -z "$_autonomy_mode" ] && [ -d "$_root/logs" ]; then
   echo "VERDICT: HOLD — autonomy-governor reported no mode; refusing to clear a merge on an unverified pause state."
   exit 2
 fi
-DEPLOY_RE="$(python3 "$_root/scripts/verify.py" --deploy-regex 2>/dev/null || true)"
+DEPLOY_RE="$("$_py" "$_root/scripts/verify.py" --deploy-regex 2>/dev/null || true)"
 if [ -z "$DEPLOY_RE" ]; then
   echo "merge-policy: cannot derive the deploy regex from the GATES registry — treating the PR as website-sensitive (fail toward caution)." >&2
   STALE=1
@@ -133,7 +144,7 @@ fi
 for dependency_repo in "$canonical_repo" "$requested_repo"; do
   case "$dependency_repo" in
     organvm-vii-kerygma/portfolio|organvm-iii-ergon/public-record-data-scrapper|4444j99/portfolio)
-      if ! python3 "$_root/scripts/_dependency_upkeep.py" --repo "$dependency_repo" --pr "$PR" --expected-head "$head"; then
+      if ! "$_py" "$_root/scripts/_dependency_upkeep.py" --repo "$dependency_repo" --pr "$PR" --expected-head "$head"; then
         echo "VERDICT: HOLD — dependency evidence/review route requires trusted upkeep; automatic acceptance is inactive."
         exit 2
       fi
@@ -152,7 +163,7 @@ if [ -z "$queue_repo" ]; then
 fi
 queue_capability="unknown"
 if [ -n "$queue_repo" ]; then
-  queue_capability=$(python3 "$_root/scripts/_pr_scan.py" merge-queue-capability \
+  queue_capability=$("$_py" "$_root/scripts/_pr_scan.py" merge-queue-capability \
     "$queue_repo" "$base" 2>/dev/null || true)
 fi
 case "$queue_capability" in
@@ -223,7 +234,7 @@ if [ -n "$req_json" ] && printf '%s' "$req_json" | jq -e 'type == "array"' >/dev
   req_scope="required"
   req_failing=$(printf '%s' "$req_json" | jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")] | length')
   req_pending=$(printf '%s' "$req_json" | jq '[.[] | select(.bucket == "pending")] | length')
-elif [ -n "$REPO" ] && python3 "$_root/scripts/_required_checks.py" \
+elif [ -n "$REPO" ] && "$_py" "$_root/scripts/_required_checks.py" \
     --prove-no-required "$REPO" --branch "$base" >/dev/null 2>&1; then
   # gh emits text/nonzero rather than [] when the policy has no required checks.
   # Prove that absence through the shared branch-protection AND rules predicate;

@@ -105,7 +105,9 @@ def test_verify_whole_takes_legacy_flock_before_host_admission() -> None:
 def test_verify_scoped_remains_contractual_thin_wrapper() -> None:
     lines = (ROOT / "scripts" / "verify-scoped.sh").read_text(encoding="utf-8").splitlines()
     assert len(lines) <= 20
-    assert any('exec python3 "$ROOT/scripts/verify.py" --changed' in line for line in lines)
+    # The interpreter is resolved once by scripts/lib/gate-python.sh (PyYAML-capable, PATH-independent).
+    assert any('exec "$LIMEN_GATE_PYTHON" "$ROOT/scripts/verify.py" --changed' in line for line in lines)
+    assert any("scripts/lib/gate-python.sh" in line for line in lines)
 
 
 def test_explicit_ci_batch_budget_is_not_silently_clamped_to_ten_minutes(monkeypatch):

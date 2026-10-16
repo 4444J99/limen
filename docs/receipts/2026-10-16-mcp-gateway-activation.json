@@ -1,0 +1,92 @@
+{
+  "schema": "limen.mcp_gateway_activation.v1",
+  "issue": 2876,
+  "observed_at": "2026-10-16T21:57:34.357529+00:00",
+  "source_commit": "579ef53a56fb39624aadd4c420a86b75ce327af3",
+  "source_pr": 2875,
+  "sdk_version": "1.30.0",
+  "lock_sha256": "2a9cea205a8565856d52bd2e22d5b810eed05a14e18944a2bded64425adbca2a",
+  "installation": {
+    "owner": "uv tool",
+    "editable": false,
+    "installed_packages_matching_lock": 34,
+    "matching_first_party_python_files": 218,
+    "command": "$HOME/.local/share/uv/tools/limen-mcp/bin/python",
+    "args": [
+      "-m",
+      "limen_mcp.server"
+    ]
+  },
+  "gateway": {
+    "pid_before": 4621,
+    "pid_after": 4621,
+    "old_limen_pid": 4638,
+    "new_limen_pid": 39246,
+    "other_upstream_pids_preserved": [
+      4637,
+      5077
+    ],
+    "reported_upstream_version": "1.30.0",
+    "reported_upstream_status": "connected",
+    "limen_tools": 23,
+    "aggregate_tools": 47,
+    "initialize_passed": true,
+    "tools_list_passed": true,
+    "readonly_tool": "limen-get_budget_status",
+    "readonly_call_passed": true,
+    "source_override_persisted": true,
+    "materialized_config_readback": true,
+    "unrelated_configuration_preserved": true,
+    "gateway_restarted": false
+  },
+  "codex": {
+    "terminal": {
+      "fresh_client": true,
+      "plugin_refetch": true,
+      "mcp_reload": true,
+      "endpoint_overrides": false,
+      "parent_lane_token_unset": true,
+      "model_turns": 0,
+      "authenticated_reads": {
+        "limen-runtime": true,
+        "firecrawl": true,
+        "netlify": true,
+        "launchdarkly": true
+      },
+      "original_warnings_present": {
+        "unsupported_project_notify": false,
+        "startup_incomplete": false,
+        "not_logged_in": false,
+        "reauthentication_required": false,
+        "missing_lane_token": false
+      }
+    },
+    "desktop": {
+      "fresh_client": true,
+      "plugin_refetch": true,
+      "mcp_reload": true,
+      "endpoint_overrides": false,
+      "parent_lane_token_unset": true,
+      "model_turns": 0,
+      "authenticated_reads": {
+        "limen-runtime": true,
+        "firecrawl": true,
+        "netlify": true,
+        "launchdarkly": true
+      },
+      "original_warnings_present": {
+        "unsupported_project_notify": false,
+        "startup_incomplete": false,
+        "not_logged_in": false,
+        "reauthentication_required": false,
+        "missing_lane_token": false
+      }
+    }
+  },
+  "retention": {
+    "old_runtime": "retained",
+    "configuration_preimages": "retained in owner-private custody",
+    "source_checkout": "retained",
+    "protected_primary_checkout": "not mutated by activation"
+  }
+}
