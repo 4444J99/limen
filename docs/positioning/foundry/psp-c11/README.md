@@ -99,13 +99,15 @@ a finite experiment and is parked after two bounded failures rather than kept al
 receipt URL, its canonical issue-comment receipt digest, accepted head, acceptance digest, and
 private-inclusive candidate identity digest. The
 validator recomputes that identity digest from the live accepted W01 candidate identities and also
-derives the complete accepted candidate projection from the immutable snapshot at the recorded W01
-accepted revision. Deterministic validation uses the already-public bundled snapshot, whose bytes
-must match SHA-256 `af047714aded8b2560ca8563966eaa1234191d715419cf9123a04a1d01209f82`.
-Those bytes are identical to Git blob `35e4df33690c6eef7e710efbb97853776586b20e` at accepted
-head `0239e60c68278b7f9747764b0212e8e8f1527c28`; no historical commit object or private
-repository access is needed. Missing or changed bytes fail closed. Live validation still fetches
-the exact accepted revision and verifies the same byte digest and accepted receipt binding.
+derives the complete accepted candidate projection from immutable, receipt-bound snapshot bytes.
+Deterministic validation reads the already-public bundled snapshot on every call; its bytes must
+match SHA-256 `af047714aded8b2560ca8563966eaa1234191d715419cf9123a04a1d01209f82` and
+Git blob `35e4df33690c6eef7e710efbb97853776586b20e`. No historical commit object or private
+repository access is needed. Missing or changed bytes fail closed. Live validation fetches the
+snapshot at rewritten public commit `3a97d47263aeee669e0c7708d44d3fdace1de7df` and checks both
+byte bindings. That snapshot is byte-identical to the one at historical accepted head
+`0239e60c68278b7f9747764b0212e8e8f1527c28`, which remains unchanged in the W01 receipt binding;
+the rewritten snapshot location does not replace the accepted receipt or its digest.
 It compares that revision-bound projection with the working snapshot across
 identity, visibility, repository, lifecycle, fork, demand, economics, blocker, and source
 transfer-eligibility fields; no working-tree projection digest is trusted. Its denominator is exactly 62

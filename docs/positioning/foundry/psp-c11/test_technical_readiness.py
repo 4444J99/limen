@@ -339,6 +339,53 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             any("duplicate repositories" in error or "projection digest drift" in error for error in errors)
         )
 
+    def test_snapshot_bytes_must_match_the_receipt_bound_blob(self) -> None:
+        content = MODULE.SNAPSHOT.read_bytes()
+        self.assertEqual(content, MODULE._bound_w01_snapshot(content))
+        with self.assertRaisesRegex(MODULE.AuditError, "snapshot blob drifted"):
+            MODULE._bound_w01_snapshot(content + b" ")
+        collection = MODULE.LiveCollection()
+        with (
+            mock.patch.object(MODULE, "_fetch_repository_blob", return_value=content.replace(b"{", b"{ ", 1)),
+            self.assertRaisesRegex(MODULE.AuditError, "byte digest drift"),
+        ):
+            MODULE.accepted_w01_candidate_projection_digest(collection)
+
+    def test_local_and_live_snapshot_reads_enforce_the_source_locked_git_blob(self) -> None:
+        content = MODULE.SNAPSHOT.read_bytes()
+        with (
+            mock.patch.dict(MODULE.SOURCE_LOCK, {"w01_snapshot_blob": "0" * 40}),
+            mock.patch.object(MODULE, "_fetch_repository_blob", return_value=content),
+        ):
+            for collection in (None, MODULE.LiveCollection()):
+                with self.subTest(live=collection is not None):
+                    with self.assertRaisesRegex(MODULE.AuditError, "snapshot blob drifted"):
+                        MODULE.accepted_w01_candidate_projection_digest(collection)
+
+    def test_trusted_live_census_honors_withdrawals_and_keeps_private_leak_checks(self) -> None:
+        snapshot = {
+            "candidates": [
+                {"repository": "o/kept", "visibility": "public"},
+                {"repository": "o/withdrawn", "visibility": "public"},
+            ]
+        }
+        census = [
+            {"full_name": "o/kept", "name": "kept", "private": False},
+            {"full_name": "o/withdrawn", "name": "withdrawn", "private": True},
+        ]
+        preflight = {"collect_live_repositories": lambda: (None, census)}
+        with (
+            mock.patch.object(MODULE.runpy, "run_path", return_value=preflight),
+            mock.patch.object(MODULE, "_graphql_heads", side_effect=lambda repos: {r: "0" * 40 for r in repos}),
+            mock.patch.object(MODULE, "_private_identity_leaks", return_value=[]) as leaks,
+            mock.patch.object(MODULE, "_live_candidate_identity_digest", return_value="digest"),
+        ):
+            with self.assertRaisesRegex(MODULE.AuditError, "missing or private: o/withdrawn"):
+                MODULE.collect_live_context(snapshot)
+            heads, _, _ = MODULE.collect_live_context(snapshot, {"o/withdrawn"})
+        self.assertEqual({"o/kept": "0" * 40}, heads)
+        self.assertIn("o/withdrawn", leaks.call_args.args[0])
+
     def test_candidate_projection_uses_hash_bound_public_snapshot_without_git_history(self) -> None:
         content = MODULE.SNAPSHOT.read_bytes()
         expected = MODULE.candidate_projection_digest(self.snapshot)
@@ -356,7 +403,7 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             self.assertEqual(expected, MODULE.accepted_w01_candidate_projection_digest(collection))
         fetch.assert_called_once_with(
             MODULE.LIMEN_REPOSITORY_IDENTITY.canonical_coordinate,
-            MODULE.SOURCE_LOCK["w01_accepted_head"],
+            MODULE.SOURCE_LOCK["w01_snapshot_commit"],
             MODULE.W01_SNAPSHOT_PATH,
             collection,
         )
@@ -479,8 +526,16 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 MODULE.verify_w01_live_receipt()
 
     def test_public_head_and_live_head_are_exact(self) -> None:
+        # A withdrawn row is bound by its full snapshot digest, so mutating one would trip the
+        # withdrawal binding instead; exercise a row that is still publicly verified.
+        withdrawn = MODULE.public_observation_withdrawals(self.audit)
+        verified_id = next(
+            row["candidate_id"]
+            for row in self.audit["candidates"]
+            if row["visibility"] == "public" and row["repository"] not in withdrawn
+        )
         changed = copy.deepcopy(self.audit)
-        row = self.public_row(changed)
+        row = self.public_row(changed, verified_id)
         row["observed_head"] = "not-a-head"
         self.assertTrue(any("40-hex commit" in error for error in self.errors(changed)))
         heads = {
