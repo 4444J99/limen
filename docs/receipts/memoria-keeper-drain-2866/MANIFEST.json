@@ -102,6 +102,30 @@
     "harness/sitecustomize.py": {
       "sha256": "e3dae03cc9c41dff96bdc1ecb36a926e187404c692187c98d5cf9ae793f2689d",
       "bytes": 1995
+    },
+    "post-repair/README.md": {
+      "sha256": "29f2361844e40a5edb44f74bef1a890e3657f100d837e889abf0d9006f5aded1",
+      "bytes": 3960
+    },
+    "post-repair/neg-control-A-diagnostic-stamp.txt": {
+      "sha256": "db94f18e9b0d9a2ce344023f27f65bd032501adcdb78de45f3a9944146fbc0ed",
+      "bytes": 13000
+    },
+    "post-repair/neg-control-B-broken-import.txt": {
+      "sha256": "71d02446bcccbde36c18fb71babca8fdc9de64493c899f8025ac82a5af9e1e3b",
+      "bytes": 1859
+    },
+    "post-repair/post-repair-tests.txt": {
+      "sha256": "21ac74496be79e4f5e4440863283757c5b2778e63890aa07bf553b6cd0db66a0",
+      "bytes": 99
     }
+  },
+  "post_repair": {
+    "status": "tests + bounded repair of scripts/tabularius-organ.py",
+    "repaired_result": "23 passed, pytest exit 0",
+    "negative_control_A": "diagnostic stamp restored -> 6 failed, 17 passed",
+    "negative_control_B": "invalid MEMORY_DIR import restored -> 1 failed, 22 passed",
+    "historical_evidence_modified": false,
+    "ruff": "clean on changed cli/tests files; host ruff 0.17.1 vs estate pin 0.15.8"
   }
 }

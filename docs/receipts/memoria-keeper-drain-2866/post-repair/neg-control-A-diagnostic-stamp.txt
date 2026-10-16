@@ -1,0 +1,208 @@
+......F.F.F.F.FF.......                                                  [100%]
+=================================== FAILURES ===================================
+_ test_read_only_mode_leaves_protected_areas_unchanged[absent-absent---check] __
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-109/test_read_only_mode_leaves_pro0')
+flag = '--check', memstate = 'absent', health = 'absent'
+
+    @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
+    @pytest.mark.parametrize("memstate", ["absent", "populated"])
+    @pytest.mark.parametrize("health", ["absent", "preexisting"])
+    def test_read_only_mode_leaves_protected_areas_unchanged(tmp_path, flag, memstate, health):
+        """A non-mutating mode must not create, overwrite, or add anything.
+    
+        Compares whole-area inventories, so a new atom, receipt, lockfile, or bare
+        directory is caught, not just a single known file.
+        """
+        sb = KeeperSandbox(
+            tmp_path, f"ro-{flag.strip('-')}-{memstate}-{health}",
+            memoria=True, memory_populated=(memstate == "populated"),
+            health_state=health,
+        )
+        before = sb.protected_inventory()
+        sb.run(flag, expect_exit=0)
+        after = sb.protected_inventory()
+    
+>       assert before == after, (
+            f"{flag} mutated a protected area (mem={memstate}, health={health})\n"
+            f"created : {sorted(set(after['root']) - set(before['root']))}\n"
+            f"changed : {sorted(k for k in set(before['root']) & set(after['root']) if before['root'][k] != after['root'][k])}\n"
+            f"mem new : {sorted(set(after['mem']) - set(before['mem']))}"
+        )
+E       AssertionError: --check mutated a protected area (mem=absent, health=absent)
+E         created : ['logs', 'logs/tabularius-organ-state.json']
+E         changed : []
+E         mem new : []
+E       assert {'root': {}, ...187034, ...}}} == {'root': {'lo...187034, ...}}}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'root': {}} != {'root': {'logs': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792172369788855881}, 'logs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 109, 'mtime_ns': 1792172369788955563, ...}}}
+E         Use -v to get more diff
+
+cli/tests/test_tabularius_organ_memory.py:156: AssertionError
+_ test_read_only_mode_leaves_protected_areas_unchanged[absent-populated---check] _
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-109/test_read_only_mode_leaves_pro2')
+flag = '--check', memstate = 'populated', health = 'absent'
+
+    @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
+    @pytest.mark.parametrize("memstate", ["absent", "populated"])
+    @pytest.mark.parametrize("health", ["absent", "preexisting"])
+    def test_read_only_mode_leaves_protected_areas_unchanged(tmp_path, flag, memstate, health):
+        """A non-mutating mode must not create, overwrite, or add anything.
+    
+        Compares whole-area inventories, so a new atom, receipt, lockfile, or bare
+        directory is caught, not just a single known file.
+        """
+        sb = KeeperSandbox(
+            tmp_path, f"ro-{flag.strip('-')}-{memstate}-{health}",
+            memoria=True, memory_populated=(memstate == "populated"),
+            health_state=health,
+        )
+        before = sb.protected_inventory()
+        sb.run(flag, expect_exit=0)
+        after = sb.protected_inventory()
+    
+>       assert before == after, (
+            f"{flag} mutated a protected area (mem={memstate}, health={health})\n"
+            f"created : {sorted(set(after['root']) - set(before['root']))}\n"
+            f"changed : {sorted(k for k in set(before['root']) & set(after['root']) if before['root'][k] != after['root'][k])}\n"
+            f"mem new : {sorted(set(after['mem']) - set(before['mem']))}"
+        )
+E       AssertionError: --check mutated a protected area (mem=populated, health=absent)
+E         created : ['logs', 'logs/tabularius-organ-state.json']
+E         changed : []
+E         mem new : []
+E       assert {'root': {}, ...505397, ...}}} == {'root': {'lo...505397, ...}}}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'root': {}} != {'root': {'logs': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792172370562347894}, 'logs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 109, 'mtime_ns': 1792172370562425208, ...}}}
+E         Use -v to get more diff
+
+cli/tests/test_tabularius_organ_memory.py:156: AssertionError
+_ test_read_only_mode_leaves_protected_areas_unchanged[preexisting-absent---check] _
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-109/test_read_only_mode_leaves_pro4')
+flag = '--check', memstate = 'absent', health = 'preexisting'
+
+    @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
+    @pytest.mark.parametrize("memstate", ["absent", "populated"])
+    @pytest.mark.parametrize("health", ["absent", "preexisting"])
+    def test_read_only_mode_leaves_protected_areas_unchanged(tmp_path, flag, memstate, health):
+        """A non-mutating mode must not create, overwrite, or add anything.
+    
+        Compares whole-area inventories, so a new atom, receipt, lockfile, or bare
+        directory is caught, not just a single known file.
+        """
+        sb = KeeperSandbox(
+            tmp_path, f"ro-{flag.strip('-')}-{memstate}-{health}",
+            memoria=True, memory_populated=(memstate == "populated"),
+            health_state=health,
+        )
+        before = sb.protected_inventory()
+        sb.run(flag, expect_exit=0)
+        after = sb.protected_inventory()
+    
+>       assert before == after, (
+            f"{flag} mutated a protected area (mem={memstate}, health={health})\n"
+            f"created : {sorted(set(after['root']) - set(before['root']))}\n"
+            f"changed : {sorted(k for k in set(before['root']) & set(after['root']) if before['root'][k] != after['root'][k])}\n"
+            f"mem new : {sorted(set(after['mem']) - set(before['mem']))}"
+        )
+E       AssertionError: --check mutated a protected area (mem=absent, health=preexisting)
+E         created : []
+E         changed : ['logs/tabularius-organ-state.json']
+E         mem new : []
+E       assert {'root': {'lo...647889, ...}}} == {'root': {'lo...647889, ...}}}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'root': {'logs': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792172371090840466}, 'logs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 61, 'mtime_ns': 1792172371090896785, ...}}} != {'root': {'logs': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792172371090840466}, 'logs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 109, 'mtime_ns': 1792172371438965770, ...}}}
+E         Use -v to get more diff
+
+cli/tests/test_tabularius_organ_memory.py:156: AssertionError
+_ test_read_only_mode_leaves_protected_areas_unchanged[preexisting-populated---check] _
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-109/test_read_only_mode_leaves_pro6')
+flag = '--check', memstate = 'populated', health = 'preexisting'
+
+    @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
+    @pytest.mark.parametrize("memstate", ["absent", "populated"])
+    @pytest.mark.parametrize("health", ["absent", "preexisting"])
+    def test_read_only_mode_leaves_protected_areas_unchanged(tmp_path, flag, memstate, health):
+        """A non-mutating mode must not create, overwrite, or add anything.
+    
+        Compares whole-area inventories, so a new atom, receipt, lockfile, or bare
+        directory is caught, not just a single known file.
+        """
+        sb = KeeperSandbox(
+            tmp_path, f"ro-{flag.strip('-')}-{memstate}-{health}",
+            memoria=True, memory_populated=(memstate == "populated"),
+            health_state=health,
+        )
+        before = sb.protected_inventory()
+        sb.run(flag, expect_exit=0)
+        after = sb.protected_inventory()
+    
+>       assert before == after, (
+            f"{flag} mutated a protected area (mem={memstate}, health={health})\n"
+            f"created : {sorted(set(after['root']) - set(before['root']))}\n"
+            f"changed : {sorted(k for k in set(before['root']) & set(after['root']) if before['root'][k] != after['root'][k])}\n"
+            f"mem new : {sorted(set(after['mem']) - set(before['mem']))}"
+        )
+E       AssertionError: --check mutated a protected area (mem=populated, health=preexisting)
+E         created : []
+E         changed : ['logs/tabularius-organ-state.json']
+E         mem new : []
+E       assert {'root': {'lo...991866, ...}}} == {'root': {'lo...991866, ...}}}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'root': {'logs': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792172371806334620}, 'logs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 61, 'mtime_ns': 1792172371806367946, ...}}} != {'root': {'logs': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792172371806334620}, 'logs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 109, 'mtime_ns': 1792172372212162768, ...}}}
+E         Use -v to get more diff
+
+cli/tests/test_tabularius_organ_memory.py:156: AssertionError
+______________ test_read_only_mode_does_not_create_bare_directory ______________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-109/test_read_only_mode_does_not_c0')
+
+    def test_read_only_mode_does_not_create_bare_directory(tmp_path):
+        """Directory creation alone is a mutation even with no file written."""
+        sb = KeeperSandbox(tmp_path, "bare-dir", memoria=False)
+        sb.run("--check", expect_exit=0)
+>       assert not sb.limen_root.exists(), f"--check created {sb.limen_root}"
+E       AssertionError: --check created /private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-109/test_read_only_mode_does_not_c0/bare-dir/root
+E       assert not True
+E        +  where True = exists()
+E        +    where exists = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-109/test_read_only_mode_does_not_c0/bare-dir/root').exists
+E        +      where PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-109/test_read_only_mode_does_not_c0/bare-dir/root') = <tabularius_organ_fixtures.KeeperSandbox object at 0x109267cb0>.limen_root
+
+cli/tests/test_tabularius_organ_memory.py:169: AssertionError
+_____________ test_check_mode_write_is_independent_of_memory_state _____________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-109/test_check_mode_write_is_indep0')
+
+    def test_check_mode_write_is_independent_of_memory_state(tmp_path):
+        """Control: the outer write is unconditional, not caused by the import failure."""
+        sb = KeeperSandbox(tmp_path, "control-memoria-disabled", memoria=False)
+        sb.run("--check", expect_exit=0)
+>       assert not sb.limen_root.exists(), (
+            "--check wrote a health-state file with MEMORIA disabled"
+        )
+E       AssertionError: --check wrote a health-state file with MEMORIA disabled
+E       assert not True
+E        +  where True = exists()
+E        +    where exists = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-109/test_check_mode_write_is_indep0/control-memoria-disabled/root').exists
+E        +      where PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-109/test_check_mode_write_is_indep0/control-memoria-disabled/root') = <tabularius_organ_fixtures.KeeperSandbox object at 0x109267930>.limen_root
+
+cli/tests/test_tabularius_organ_memory.py:176: AssertionError
+=========================== short test summary info ============================
+FAILED cli/tests/test_tabularius_organ_memory.py::test_read_only_mode_leaves_protected_areas_unchanged[absent-absent---check]
+FAILED cli/tests/test_tabularius_organ_memory.py::test_read_only_mode_leaves_protected_areas_unchanged[absent-populated---check]
+FAILED cli/tests/test_tabularius_organ_memory.py::test_read_only_mode_leaves_protected_areas_unchanged[preexisting-absent---check]
+FAILED cli/tests/test_tabularius_organ_memory.py::test_read_only_mode_leaves_protected_areas_unchanged[preexisting-populated---check]
+FAILED cli/tests/test_tabularius_organ_memory.py::test_read_only_mode_does_not_create_bare_directory
+FAILED cli/tests/test_tabularius_organ_memory.py::test_check_mode_write_is_independent_of_memory_state
+6 failed, 17 passed in 6.46s

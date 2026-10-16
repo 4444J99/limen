@@ -52,16 +52,31 @@ def _stamp(**fields: object) -> None:
         pass
 
 
+def _describe(memory: dict[str, object]) -> str:
+    """Human-readable memory outcome, for the non-mutating modes' stdout."""
+    if "memory_error" in memory:
+        return f"pass FAILED ({memory['memory_error']})"
+    pending = memory.get("memory_pending")
+    applied = memory.get("memory_applied")
+    rejected = memory.get("memory_rejected")
+    if applied is None:
+        return f"pass OK ({pending} pending)"
+    return f"pass OK ({pending} pending, {applied} applied, {rejected} rejected)"
+
+
 def _memory_pass(*, check: bool, dry_run: bool) -> dict[str, object]:
     if not MEMORIA_ENABLED:
         return {}
     try:
-        from limen.memoria import MEMORY_DIR, drain_memory_once
-        from limen.memoria import pending_count as memory_pending_count
+        # `memoria` owns the memory-dir derivation and exposes no module-level
+        # constant for it. Both call sites below leave `memdir` unset so its
+        # resolver (LIMEN_MEMORY_DIR, else the workspace-derived default) stays
+        # authoritative. Do not reintroduce a hardcoded path here.
+        from limen.memoria import drain_memory_once, pending_count
 
         if check:
-            return {"memory_pending": memory_pending_count(MEMORY_DIR)}
-        result = drain_memory_once(MEMORY_DIR, dry_run=dry_run)
+            return {"memory_pending": pending_count()}
+        result = drain_memory_once(dry_run=dry_run)
         return {
             "memory_pending": result.pending,
             "memory_applied": result.applied,
@@ -148,7 +163,10 @@ def main(argv: list[str] | None = None) -> int:
         n = pending_count(BOARD)
         print(f"tabularius: {n} ticket(s) pending in inbox" if n else "tabularius: inbox empty")
         memory = _memory_pass(check=True, dry_run=args.dry_run)
-        _stamp(pending=n, mode="check", **memory)
+        # `--check` is a read-only diagnostic: it reports on stdout and must not
+        # create ROOT/logs or write the liveness stamp.
+        if memory:
+            print(f"tabularius: memory {_describe(memory)}")
         return 0
 
     result = drain_once(BOARD, dry_run=args.dry_run)
@@ -156,10 +174,20 @@ def main(argv: list[str] | None = None) -> int:
     memory = _memory_pass(check=False, dry_run=args.dry_run)
     publication_failed = _publication_required_failure(args.require_published, preserve)
 
+    # Two contracts meet here. `--dry-run` promises no writes, so the liveness
+    # stamp is suppressed entirely. Otherwise every published stamp carries the
+    # memory outcome computed above, so an enabled-but-failing memory pass can
+    # never read as memory success in the status monitoring consumes. Board
+    # outcomes stay independent: a memory failure does not stop the board pass.
+    def stamp(**fields: object) -> None:
+        if args.dry_run:
+            return
+        _stamp(**fields, **memory)
+
     if result.deferred:
         note = getattr(result, "note", "remote keeper deferred")
         print(f"tabularius: {result.pending} ticket(s) deferred ({note})")
-        _stamp(
+        stamp(
             pending=result.pending,
             applied=getattr(result, "applied", 0),
             rejected=getattr(result, "rejected", 0),
@@ -172,7 +200,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"tabularius: OK — inbox empty; local publication skipped ({preserve.reason})")
         else:
             print("tabularius: OK — inbox empty (no-op)")
-        _stamp(
+        stamp(
             pending=0,
             applied=0,
             rejected=0,
@@ -188,7 +216,7 @@ def main(argv: list[str] | None = None) -> int:
     if preserve and preserve.reason not in {"no-board-changes", ""}:
         parts.append(f"local publication skipped: {preserve.reason}")
     print("; ".join(parts))
-    _stamp(
+    stamp(
         pending=result.pending,
         applied=result.applied,
         rejected=result.rejected,

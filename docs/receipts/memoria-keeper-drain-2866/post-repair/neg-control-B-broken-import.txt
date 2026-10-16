@@ -1,0 +1,31 @@
+...................F...                                                  [100%]
+=================================== FAILURES ===================================
+__________________________ test_memory_pass_succeeds ___________________________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-110/test_memory_pass_succeeds0')
+
+    def test_memory_pass_succeeds(tmp_path):
+        """Separate from error propagation: the memory pass must actually work.
+    
+        Guards against a repair that merely propagates `memory_error` while leaving
+        the invalid `MEMORY_DIR` import in place.
+        """
+        sb = KeeperSandbox(tmp_path, "memory-succeeds", memoria=True, memory_populated=True)
+        proc = sb.run()
+        state = sb.state_payload()
+        kind = _memory_state(state)
+>       assert kind != "error", (
+            f"memory pass still failing: state={state}\nstdout: {proc.stdout}\n"
+            f"stderr: {proc.stderr}"
+        )
+E       AssertionError: memory pass still failing: state={'updated': '2026-10-16T17:39:39.572849+00:00', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection', 'memory_error': 'ImportError'}
+E         stdout: tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)
+E         tabularius: OK — inbox empty; local publication skipped (remote-keeper-owns-projection)
+E         
+E         stderr: 
+E       assert 'error' != 'error'
+
+cli/tests/test_tabularius_organ_memory.py:224: AssertionError
+=========================== short test summary info ============================
+FAILED cli/tests/test_tabularius_organ_memory.py::test_memory_pass_succeeds
+1 failed, 22 passed in 3.90s
