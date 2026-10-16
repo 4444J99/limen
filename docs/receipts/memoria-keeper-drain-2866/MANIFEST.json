@@ -1,64 +1,99 @@
 {
   "issue": 2866,
-  "bundle": "bundle-11case-original",
+  "custody_branch": "test/tabularius-organ-memory-2866",
   "pinned_source_revision": "24da5bffeefb855f1968e0c830c1ca5445a291cf",
+  "note": "origin/main equalled this revision at capture time.",
   "pinned_source_blobs": {
     "scripts/tabularius-organ.py": "5c8336ef3872efab5b8521b2a4dfa53e0f4a2823",
     "cli/src/limen/memoria.py": "a2595a0ac2af00ff53d7226a1a90b2dd20953b0d"
   },
-  "entry_point": "/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/scripts/tabularius-organ.py",
-  "interpreter": "/Users/4jp/.local/share/limen/runtimes/b7a61c0bfb87926518f4074af446bed49b07ab8d/venv/bin/python",
-  "interpreter_version": "3.9.6",
-  "execution_command": "env -i PATH=/usr/bin:/bin HOME=$HOME /usr/bin/python3 harness/runner.py",
-  "case_count": 11,
-  "reconciled_totals": {
-    "B_created": 4,
-    "B_overwritten": 4,
-    "ACD_created": 3,
-    "ACD_overwritten": 0,
-    "all_created": 7,
-    "all_overwritten": 4,
-    "B_cases_writing": "8/8",
-    "exit_codes_observed": [
-      0
-    ]
-  },
+  "runs": [
+    {
+      "name": "11-case original reproduction",
+      "harness": "harness/",
+      "evidence": "evidence-11case/",
+      "cases": 11,
+      "interpreter": "/Users/4jp/.local/share/limen/runtimes/b7a61c0bfb87926518f4074af446bed49b07ab8d/venv/bin/python",
+      "execution_command": "env -i PATH=/usr/bin:/bin HOME=$HOME /usr/bin/python3 harness/runner.py",
+      "totals": {
+        "B_created": 4,
+        "B_overwritten": 4,
+        "ACD_created": 3,
+        "ACD_overwritten": 0,
+        "all_created": 7,
+        "all_overwritten": 4,
+        "B_cases_writing": "8/8",
+        "exit_codes_observed": [
+          0
+        ]
+      }
+    },
+    {
+      "name": "13-case extended reproduction (+deferred/processed, flags-aware filter, board injection)",
+      "harness": "harness-13case/",
+      "evidence": "evidence-13case/",
+      "cases": 13,
+      "totals": {
+        "B_created": 4,
+        "B_overwritten": 4,
+        "extra_normal_mode_cases": 2,
+        "exit_codes_observed": [
+          0
+        ]
+      }
+    }
+  ],
   "instrumentation": {
-    "method": "PEP 578 sys.addaudithook via harness/sitecustomize.py",
-    "install_point": "interpreter startup, before entry point import",
-    "filtered_events": [
-      "open",
-      "os.mkdir",
-      "os.rename",
-      "os.replace",
-      "os.remove",
-      "os.rmdir",
-      "os.truncate",
-      "os.link",
-      "os.symlink",
-      "os.chmod",
-      "shutil.copyfile",
-      "shutil.copymode",
-      "shutil.copystat",
-      "shutil.rmtree"
+    "method": "PEP 578 sys.addaudithook via sitecustomize.py",
+    "install_point": "child interpreter startup, before the entry point imports",
+    "open_filter_11case": "mode string only",
+    "open_filter_13case": "mode string AND CPython open() flags; rename/remove/truncate/chmod/lock covered",
+    "observation_limits": [
+      "not an OS-wide write trace",
+      "not a sandbox",
+      "cannot detect a concurrent external writer",
+      "create-then-delete between snapshots leaves no persistent trace"
     ],
-    "open_filter": "mode string only (w/a/x/+)",
-    "known_limits": [
-      "audit hooks are event observation, NOT an OS-wide write trace or sandbox",
-      "filter inspects the mode string, not CPython's separate open() flags argument",
-      "create-then-delete between snapshots would not appear as persistent state"
-    ],
-    "observed_sandbox_write_attempts": 36,
+    "observed_write_attempts_11case": 36,
     "observed_memory_store_write_attempts": 0
   },
+  "permanent_tests": {
+    "path": "cli/tests/test_tabularius_organ_memory.py",
+    "baseline": "8 failed, 6 passed (pytest exit 1)",
+    "interpretation": "expected red; asserts the desired contract"
+  },
   "files": {
-    "evidence/results.json": {
+    "README.md": {
+      "sha256": "0ffe375d71aa6e4cc5dc7352ebe8d2ab9daae1b12af1a6c16eae83a5cbba1216",
+      "bytes": 3655
+    },
+    "permanent-tests-baseline.txt": {
+      "sha256": "186043e2359a13160a3defd47085fa1ae90c1cab27562ed6c2b44f0d438c11df",
+      "bytes": 15439
+    },
+    "evidence-11case/results.json": {
       "sha256": "88f5192d662e22ec9d5cfb2f59b41a5e535337101573bbb608ac5f45f3050b86",
       "bytes": 21817
     },
-    "evidence/writes.jsonl": {
+    "evidence-11case/writes.jsonl": {
       "sha256": "1e884f1d9bf5259f841e6d1df2878ac88d096d488746e4cfc2fc619b4e609056",
       "bytes": 5471
+    },
+    "evidence-13case/results.json": {
+      "sha256": "1c4f184e1e622c26e04e0d02ade0bcbb160ff7b6553f77d2ef3cab22bcaa3d51",
+      "bytes": 26198
+    },
+    "evidence-13case/writes.jsonl": {
+      "sha256": "679bb26bdb3568d33b8791d0adfba8bdf43d9c19bf5b0f2e575e6240443f0109",
+      "bytes": 3857
+    },
+    "harness-13case/runner.py": {
+      "sha256": "f2abbb28344202fd7f6e8f7900fd47e9015750b2256a01278cade52b7d8a7687",
+      "bytes": 9409
+    },
+    "harness-13case/sitecustomize.py": {
+      "sha256": "153e81dbcd77c8c76f93db915aa95684bb6588e487bb3c182e7ea9e6a822fab4",
+      "bytes": 4288
     },
     "harness/runner.py": {
       "sha256": "f68e483556c3d1b86962fa3796af16235f756139a43c4408a18942d6e51dd8ef",

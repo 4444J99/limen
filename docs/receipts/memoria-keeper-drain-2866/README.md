@@ -8,12 +8,14 @@ Scope: tests and evidence only. **No production repair, no live memory routing, 
 
 | Path | Contents |
 |---|---|
-| `MANIFEST.json` | SHA-256 of every artifact, bound to the pinned revision, entry point, interpreter, and exact execution command |
-| `harness/sitecustomize.py` | The **original** 11-case observer: mode-string-only `open` filter; no board injection |
-| `harness/runner.py` | The **original** 11-case matrix driver |
-| `evidence/results.json` | Per-case raw records: exit code, stdout, stderr, before/after state records, inventory delta, controlled env |
-| `evidence/writes.jsonl` | Raw PEP 578 audit-event log from the child interpreters |
+| `MANIFEST.json` | SHA-256 of every artifact, bound to the pinned revision, entry point, interpreters, and exact execution commands |
+| `harness/` | **Original** 11-case observer and matrix driver: mode-string-only `open` filter, no board injection |
+| `harness-13case/` | Extended harness: flags-aware `open` filter, rename/remove/truncate/chmod/lock coverage, board-boundary injection |
+| `evidence-11case/` | Raw records and audit events for the original 11-case run |
+| `evidence-13case/` | Raw records and audit events for the extended 13-case run (adds deferred/processed) |
 | `permanent-tests-baseline.txt` | Output of the permanent regression suite against this baseline |
+
+Both runs are retained. The 13-case run is **additional** evidence against the same pinned revision; it does not replace the 11-case baseline.
 
 ## Reproduced results (11 cases, original harness)
 
