@@ -1,82 +1,96 @@
 # Post-repair verification — #2866
 
-Baseline evidence remains `24da5bffeefb855f1968e0c830c1ca5445a291cf`. The historical 11-case
-and 13-case reproductions in the parent directory are **unmodified**.
-
-## Repair
-
-| Change | Detail |
-|---|---|
-| Import | `from limen.memoria import MEMORY_DIR` removed — `memoria` exposes no such constant, so the import always raised `ImportError`. Both call sites leave `memdir` unset so memoria's own resolver stays authoritative. No hardcoded constant introduced. |
-| Diagnostic no-write contract | `--check` no longer calls `_stamp()`. An inner `stamp()` helper suppresses the liveness stamp under `--dry-run`. Both now report the memory outcome on stdout via `_describe()`, verified. |
-| Memory propagation | Every normal-mode stamp carries the computed memory outcome. Board outcomes stay independent of the memory result. |
-
-Exit-status policy unchanged by choice: the issue requires the failure be visible in
-monitoring-visible status, which the stamp now satisfies, without altering caller contracts
-beyond this bounded repair. **This does not establish that any downstream monitoring consumer
-interprets the new fields correctly** — that is a separate, unverified consumer question.
+Baseline evidence remains `24da5bffeefb855f1968e0c830c1ca5445a291cf`. The historical 11-case and 13-case reproductions in the parent directory are **unmodified**.
 
 ## Result
 
+Focused suites: `cli/tests/test_tabularius_organ_memory.py` + `cli/tests/test_organ_health_defect.py`.
+
 | Run | pytest exit | Outcome |
 |---|---:|---|
-| Repaired | **0** | **25 passed** |
-| Control A — diagnostic stamp restored | 1 | 6 failed, 19 passed |
-| Control B — invalid `MEMORY_DIR` import restored | 1 | 2 failed, 23 passed |
-| Control C — board-boundary injection disabled | 1 | 2 failed, 23 passed |
+| Repaired | 1 | **1 failed, 42 passed** — the single failure is pre-existing at `origin/main` (see below) |
+| Control A — diagnostic stamp restored | 1 | 7 failed, 36 passed |
+| Control B — invalid `MEMORY_DIR` import restored | 1 | 3 failed, 40 passed |
+| Control C — board-boundary injection disabled | 1 | 3 failed, 40 passed |
+| Control D — consumer defect reader removed | 1 | 3 failed, 40 passed |
 
-## Negative controls
+Each control is one above the pre-existing failure, i.e. it fails only what it is meant to fail.
 
-**A — re-break the diagnostic write.** Restoring `_stamp(pending=n, mode="check", **memory)`
-fails exactly the six read-only assertions. No unrelated test moved.
+### The pre-existing failure is not ours
 
-**B — re-break the import while keeping error propagation.** Fails `test_memory_pass_succeeds`,
-which now requires a pending ticket to be counted and an all-zero result is explicitly not
-success. Error-propagation assertions still pass, so success and propagation remain separate.
+`test_fast_wave_interval_reads_the_deployed_env_file` fails with `StopIteration`. Reproduced in a
+detached worktree at `origin/main` with the unmodified test and script; output preserved as
+`baseline-pre-existing-failure.txt`. It is a `LIMEN_VITALS_SAMPLE_SECONDS` / `_discover_doors`
+matter, untouched by this unit.
 
-**C — disable the board-boundary injection.** This is the control for the coverage regression
-found in review. Removing the injection fails **exactly** `test_memory_outcome_is_never_silently_absent[deferred]`
-and `[processed]`, and nothing else. Before this control existed, the injection had been
-silently dead: all three parameterisations fell through to the same empty-inbox branch while
-still passing. Branch-specific assertions (`deferred is True`, `pending == 3`; `applied == 2`,
-`rejected == 1`, `wrote == 2`) now bind the claim to execution evidence rather than to test
-names and environment variables.
+## Repair
 
-## Corrections made in this pass
+| Change | File |
+|---|---|
+| Removed `from limen.memoria import MEMORY_DIR` — no such constant exists, so the import always raised. Both call sites leave `memdir` unset so memoria's resolver stays authoritative. | `scripts/tabularius-organ.py` |
+| `--check` no longer stamps; an inner `stamp()` suppresses the liveness stamp under `--dry-run`. Both report the memory outcome on stdout via `_describe()`. | `scripts/tabularius-organ.py` |
+| Every normal-mode stamp carries the computed memory outcome. Board outcomes stay independent. | `scripts/tabularius-organ.py` |
+| `updated` now uses the trailing-`Z` UTC form. | `scripts/tabularius-organ.py` |
+| TABVLARIVS gained a `defect=` reader over `memory_error`. | `scripts/organ-health.py` |
 
-- **Board injection restored.** `REPRO_BOARD_MODE` / `REPRO_SRC` were being set by the sandbox
-  but consumed by nothing; the deferred and processed branches were never reached.
-- **Entry-point guard strengthened.** The old condition accepted any non-empty stdout. The
-  observer now self-reports the executed entry point and the imported `limen` module paths, and
-  the guard requires both to bind to this checkout when the memory lane is enabled. A child
-  printing unrelated text is rejected (`test_guard_rejects_unrelated_output`).
-- **Junk assertion removed.** `assert x is None or True` could not fail; it is replaced by a
-  real self-report assertion.
-- **Inventory includes its root.** An absent protected area and an existing empty one previously
-  had identical inventories; root existence and metadata are now recorded.
-- **Lock events are actionable.** `fcntl.flock` records resolve the descriptor to its target via
-  `/dev/fd`, so a lock record can satisfy a path-based assertion. Recording was previously not
-  asserting.
-- **All protected areas asserted.** The read-only matrix checks `root`, `mem`, and `board`, not
-  just `LIMEN_ROOT`.
-- **Dry-run now prints the memory outcome.** The earlier receipt claimed both diagnostic modes
-  report it; only `--check` did. Verified by probe, not by assertion of intent.
-- **Lifecycle verified.** A valid pending ticket must be applied (`memory_applied >= 1`), its
-  atom `<slug>.md` must exist, and a second run must apply nothing and leave atom bytes
-  unchanged. Idempotence concerns ticket effects; the `updated` liveness timestamp legitimately
-  changes and is not compared.
+### Two real defects surfaced by the consumer wiring
+
+**The state timestamp was unreadable by the consumer.** `_json_nested_error(..., stamp="updated")`
+computes its "recorded Nh ago" suffix through `_json_field_ts`, which honours a trailing `Z` and
+otherwise parses a naive datetime as **local**. The keeper wrote
+`datetime.now(timezone.utc).isoformat()`, which emits `+00:00` — not recognised as UTC. The result
+was `(recorded -1.0h ago)`: a failure shown as having happened in the future. The producer now
+emits the trailing-`Z` form the reader documents, matching the other UTC producers.
+
+**macOS cannot resolve `/dev/fd` by `readlink`.** Probed directly: `os.readlink("/dev/fd/N")`
+raises `EINVAL` on this host, so the lock-attribution path was silently producing
+`paths: []` on macOS while working on Linux. The observer now resolves via `/dev/fd` → macOS
+`F_GETPATH` (`fcntl.fcntl(fd, 50, bytes(1024))`) → `/proc/self/fd`, and reports
+`attributed: false` when none resolve.
+
+## Consumer acceptance
+
+`build()` derives status from freshness and gating, then overrides to `down` when a configured
+`defect` probe returns a failure. Before this change the TABVLARIVS entry had no `defect`
+callback, so adding or removing `memory_error` could not change its classification. Tests vary
+**only** the recorded memory outcome at equal freshness and assert the resulting classification:
+
+- fresh stamp + `memory_error` → `down`, note carries `memory_error` and the value, `age_h < 1`
+- fresh stamp + successful memory counts → `green` (the control; without it a hard-wired `down`
+  would also pass)
+- fresh stamp + no memory fields (lane disabled) → `green` (absence is not a recorded failure)
+- recorded age names the artifact's own clock, not the voice stamp
+
+Control D removes the reader and fails exactly the two classification tests, so the wiring is
+load-bearing rather than decorative.
+
+## Guard corrections
+
+- Entry-point guard reads structured self-reported evidence (executed entry point + imported
+  `limen` module paths) bound to this checkout. Any non-empty stdout no longer satisfies it.
+- `inventory()` records its root, so an absent protected area differs from an existing empty one.
+- Read-only matrix asserts `root`, `mem`, and `board`, and rejects **unattributed** mutation
+  records so a path-less event can never satisfy a no-write assertion.
+- `test_lock_events_are_attributed_to_the_protected_file` asserts attribution, which event
+  capture alone does not establish.
+- Valid `MemoryTicket` fixture; success requires a pending ticket to be counted (an all-zero
+  result is not success); a lifecycle test verifies the ticket is applied, its atom appears, and
+  a second run applies nothing and leaves atom bytes unchanged.
+
+## Predicates
+
+| Predicate | Status |
+|---|---|
+| `ruff-lint` under pinned `0.15.8` | **Satisfied.** `check-ruff-pin.py` exit 0; `ruff check cli/src cli/tests web/api mcp ianva apps organs` exit 0, "All checks passed!" |
+| Consumer distinguishes memory failure from success at equal freshness | **Satisfied**, with Control D as proof |
+| Lock self-test proves attribution and rejects unattributed | **Satisfied** |
+| Live routing or activation | **Outside this unit; no acceptance claimed** |
+
+`ruff` was run from a scratch venv pinned to `0.15.8`; the host's `0.17.1` is not the estate pin.
 
 ## Scope
 
-Tests plus one bounded repair of `scripts/tabularius-organ.py`. All execution in disposable
-temporary stores with no live credentials and no remote keeper contact. No live memory routing,
-no launcher or credential configuration change, no deployment, no worktree reclamation.
-
-## Pending
-
-`ruff` is clean on the changed `cli/tests` files, but host `ruff` is **0.17.1** while the estate
-pin is **0.15.8** (`cli/pyproject.toml`, issue #1658). `gates.yaml`'s `ruff-lint` runs
-`scripts/check-ruff-pin.py` first and fails loud on mismatch, so the authoritative gate needs a
-pinned-version run before merge. This is a **repair candidate pending acceptance**, not a
-completed closeout: no authoritative merge gate has been executed, and no live activation or
-routing acceptance is claimed.
+Tests plus a bounded repair of `scripts/tabularius-organ.py` and one `defect=` registration in
+`scripts/organ-health.py`. All execution in disposable temporary stores with no live credentials
+and no remote keeper contact. No live memory routing, no launcher or credential configuration
+change, no deployment, no worktree reclamation.

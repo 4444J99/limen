@@ -104,40 +104,52 @@
       "bytes": 1995
     },
     "post-repair/README.md": {
-      "sha256": "55feed11b2eff8a9b77f7bb42081538c033decd2cd611f8bce865e7796cad903",
-      "bytes": 5105
+      "sha256": "07539066e02ade70487723b620d5045d57fe0557d582d9cb29037fd767ab2a0d",
+      "bytes": 5684
+    },
+    "post-repair/baseline-pre-existing-failure.txt": {
+      "sha256": "1407b517d512d712a6c476caad27f0db12268aa31c0115b3df97d9fdd0544ece",
+      "bytes": 1471
     },
     "post-repair/neg-control-A-diagnostic-stamp.txt": {
-      "sha256": "0bd39bb5732a4f729b5ce5806de715bffd568dfecedc24349f0519918e4a2f68",
-      "bytes": 13138
+      "sha256": "00ae8dba07864d8e205c67208826419a368e52058921cc3fb7712b40a0730d36",
+      "bytes": 14324
     },
     "post-repair/neg-control-B-broken-import.txt": {
-      "sha256": "23e79d1b7f8eb1b793e27910c0e47d389554351b52b09eabbf8d7cd06a3e728e",
-      "bytes": 3867
+      "sha256": "4b946a5e5d4b82eb80756b20aff780dd528f04ad6073dc717bd516f732d66e70",
+      "bytes": 5017
     },
     "post-repair/neg-control-C-dead-board-injection.txt": {
-      "sha256": "d9eb705713e37d0dc055895764cf36daf1a335e6f1be26162601c341f88d2ee2",
-      "bytes": 5719
+      "sha256": "abf82126d5a84641964d1ce6c7e2e18dff59c05359df96095f7db99eede4aa15",
+      "bytes": 6833
+    },
+    "post-repair/neg-control-D-consumer-defect-removed.txt": {
+      "sha256": "0914f40d28da58ed0954edf31a7c006085b453833af363eb91e10cf9f52244eb",
+      "bytes": 4430
     },
     "post-repair/post-repair-tests.txt": {
-      "sha256": "955bbc136939b2442a8445522566ea87524630d3fb1056091328402910c0cadf",
-      "bytes": 99
+      "sha256": "d3ed5aa80a001f4f2078354066fe0b83a32ce2ce5baae17564911e584df71b4b",
+      "bytes": 1457
     }
   },
   "post_repair": {
-    "status": "repair candidate pending acceptance; NOT a completed closeout",
-    "repaired_result": "25 passed, pytest exit 0",
-    "negative_control_A": "diagnostic stamp restored -> 6 failed, 19 passed",
-    "negative_control_B": "invalid MEMORY_DIR import restored -> 2 failed, 23 passed",
-    "negative_control_C": "board injection disabled -> 2 failed (deferred, processed), 23 passed",
+    "status": "producer + consumer repaired; all unit predicates satisfied; branch unmerged",
+    "suites": "cli/tests/test_tabularius_organ_memory.py + cli/tests/test_organ_health_defect.py",
+    "repaired_result": "1 failed, 42 passed (the 1 failure is pre-existing at origin/main)",
+    "pre_existing_failure_proof": "post-repair/baseline-pre-existing-failure.txt (reproduced at origin/main)",
+    "negative_control_A": "diagnostic stamp restored -> 7 failed, 36 passed",
+    "negative_control_B": "invalid MEMORY_DIR import restored -> 3 failed, 40 passed",
+    "negative_control_C": "board injection disabled -> 3 failed, 40 passed",
+    "negative_control_D": "consumer defect reader removed -> 3 failed, 40 passed",
     "historical_evidence_modified": false,
-    "pending_gates": [
-      "authoritative ruff-lint under estate pin 0.15.8 (host is 0.17.1)"
-    ],
+    "predicates": {
+      "ruff_lint_pinned_0.15.8": "satisfied: check-ruff-pin.py exit 0; ruff check estate paths exit 0",
+      "consumer_distinguishes_memory_failure": "satisfied; Control D proves the wiring",
+      "lock_attribution": "satisfied; /dev/fd readlink fails on macOS, F_GETPATH used instead"
+    },
     "not_claimed": [
       "live activation",
-      "routing acceptance",
-      "downstream consumer interpretation"
+      "routing acceptance"
     ]
   }
 }

@@ -152,6 +152,34 @@ def _write(lines):
             pass
 
 
+def _resolve_fd(fd):
+    """Best-effort descriptor -> path attribution, portable per platform.
+
+    /dev/fd readlink is a Linux idiom and fails on macOS (EINVAL). macOS exposes
+    F_GETPATH instead. Whichever resolves is reported; if neither does, the
+    record is emitted with attributed=False so it can never be mistaken for
+    evidence of safety.
+    """
+    if not isinstance(fd, int):
+        return None
+    try:
+        return os.readlink("/dev/fd/%d" % fd)
+    except OSError:
+        pass
+    try:
+        import fcntl as _fcntl
+        buf = _fcntl.fcntl(fd, 50, bytes(1024))  # F_GETPATH, darwin
+        if isinstance(buf, (bytes, bytearray)):
+            path = bytes(buf).split(bytes(1), 1)[0].decode("utf-8", "replace")
+            return path or None
+    except Exception:
+        pass
+    try:
+        return os.readlink("/proc/self/fd/%d" % fd)
+    except OSError:
+        return None
+
+
 def _hook(event, args):
     if _state["busy"] or not _LOG or event not in _EVENTS:
         return
@@ -169,19 +197,16 @@ def _hook(event, args):
             return
         if event == "fcntl.flock":
             # A lock record with no path can never satisfy a path-based
-            # assertion, so resolve the descriptor to its target where possible.
+            # assertion, so resolve the descriptor to its target where the
+            # platform allows, and mark attribution honestly either way.
             _fd = args[0] if args else None
-            _target = None
-            try:
-                if isinstance(_fd, int):
-                    _target = os.readlink("/dev/fd/%d" % _fd)
-            except Exception:
-                _target = None
+            _target = _resolve_fd(_fd)
             _emit(_state["lines"], {
                 "kind": "mutation", "event": event,
                 "fd": _fd,
                 "operation": args[1] if len(args) > 1 else None,
                 "paths": [_target] if _target else [],
+                "attributed": bool(_target),
             })
             return
         idx = _MULTIPATH.get(event)
@@ -504,6 +529,28 @@ class KeeperSandbox:
             if any(needle in str(p) for p in rec.get("paths", [])):
                 hits.append(rec)
         return hits
+
+    def unattributed_mutations(self, require: bool = True) -> list[dict]:
+        """Mutations whose target could not be resolved.
+
+        These must never be able to satisfy a no-write assertion: an observer
+        that saw something but could not say where is not evidence of safety.
+        """
+        return [r for r in self.mutations(require=require)
+                if r.get("attributed") is False]
+
+    def assert_no_protected_mutations(self, areas: tuple[str, ...] = ("root", "mem", "board")) -> None:
+        """Fail on any mutation inside a protected area, or any unattributed one."""
+        un = self.unattributed_mutations()
+        if un:
+            raise AssertionError(
+                f"unattributed mutation records cannot satisfy a no-write "
+                f"assertion: {un}"
+            )
+        for area in areas:
+            hits = self.mutations_touching(str(self.root / area))
+            if hits:
+                raise AssertionError(f"mutated protected area {area!r}: {hits}")
 
     def child_reported_entry(self, recs: list[dict] | None = None) -> str | None:
         for rec in (recs if recs is not None else self.write_attempts(require=False)):

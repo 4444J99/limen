@@ -280,3 +280,95 @@ def test_the_freshness_budget_is_the_organs_own_cadence_not_one_beat(tmp_path: P
     row = _routines_row(mod)
     assert row["expected_h"] == 6.0, "the budget must track the sensor's --throttle, not one beat"
     assert row["status"] == "green", "a healthy organ inside its own cadence is not down"
+
+
+# --- TABVLARIVS memory-pass consumer acceptance (issue #2866) -----------------
+#
+# The producer records the memory outcome, but a producer-side fix proves nothing about the
+# reader. These tests vary ONLY the recorded memory outcome while holding freshness constant,
+# so a change in classification can only come from the defect channel.
+
+
+def _tabularius_state(mod, tmp_path: Path, state: dict[str, Any]) -> None:
+    """Publish a freshly-written tabularius state file, so every age signal says healthy."""
+    logs = tmp_path / "logs"
+    logs.mkdir(parents=True, exist_ok=True)
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    # Same trailing-Z form the keeper producer emits; `_json_field_ts` honours it.
+    payload = {"updated": now.strftime("%Y-%m-%dT%H:%M:%SZ"), **state}
+    (logs / "tabularius-organ-state.json").write_text(json.dumps(payload))
+    mod.LOGS = logs
+
+
+def _tabularius_row(mod) -> dict[str, Any]:
+    rows = mod.build()["organs"]
+    row = next((r for r in rows if r["key"] == "tabularius"), None)
+    assert row is not None, "the tabularius rung is no longer discovered"
+    return row
+
+
+def test_a_fresh_keeper_stamp_over_a_recorded_memory_error_is_reported_down(tmp_path: Path) -> None:
+    """Freshness says the organ ran; the recorded failure says its memory half did not.
+
+    Every age-based signal here is deliberately perfect — the state file was written seconds
+    ago. Only `memory_error` says otherwise. Without the defect channel this exact artifact
+    reads green indefinitely, because the keeper writes the stamp even when memory fails.
+    """
+    mod = _load()
+    _tabularius_state(mod, tmp_path, {
+        "pending": 0, "applied": 0, "rejected": 0,
+        "memory_error": "ImportError",
+    })
+
+    row = _tabularius_row(mod)
+    assert row["status"] == "down", row
+    assert "self-reported defect" in row["note"], row["note"]
+    assert "memory_error" in row["note"], row["note"]
+    assert "ImportError" in row["note"], row["note"]
+    # Freshness itself is untouched: the keeper DID fire.
+    assert row["age_h"] is not None and row["age_h"] < 1
+
+
+def test_a_fresh_keeper_stamp_over_a_successful_memory_pass_stays_green(tmp_path: Path) -> None:
+    """The control. Without it, a defect channel hard-wired to `down` would also pass."""
+    mod = _load()
+    _tabularius_state(mod, tmp_path, {
+        "pending": 0, "applied": 0, "rejected": 0,
+        "memory_pending": 0, "memory_applied": 0, "memory_rejected": 0,
+    })
+
+    row = _tabularius_row(mod)
+    assert row["status"] == "green", row
+    assert "self-reported defect" not in (row["note"] or "")
+
+
+def test_a_fresh_keeper_stamp_with_no_memory_lane_recorded_stays_green(tmp_path: Path) -> None:
+    """Intended disabled behavior: the lane is dark, so there is no memory verdict to read.
+
+    When LIMEN_MEMORIA is off the keeper records no memory fields at all. Absence is not a
+    recorded failure, so the reader stays fail-open rather than manufacturing an atom.
+    """
+    mod = _load()
+    _tabularius_state(mod, tmp_path, {"pending": 0, "applied": 0, "rejected": 0})
+
+    row = _tabularius_row(mod)
+    assert row["status"] == "green", row
+    assert "self-reported defect" not in (row["note"] or "")
+
+
+def test_a_recorded_memory_error_names_its_own_age_not_the_voice(tmp_path: Path) -> None:
+    """The state stamp is the artifact's own clock; the suffix must not claim false immediacy."""
+    mod = _load()
+    logs = tmp_path / "logs"
+    logs.mkdir(parents=True, exist_ok=True)
+    stale = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(hours=3)
+    (logs / "tabularius-organ-state.json").write_text(json.dumps({
+        "updated": stale.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "memory_error": "ImportError",
+    }))
+    mod.LOGS = logs
+
+    row = _tabularius_row(mod)
+    # Staleness alone already reads not-green; what matters is that the reason travels.
+    assert row["status"] == "down", row
+    assert "recorded 3" in row["note"] or "recorded 2.9" in row["note"], row["note"]

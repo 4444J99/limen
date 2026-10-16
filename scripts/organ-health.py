@@ -602,6 +602,17 @@ def _registry():
             gate_default="1",
             what="the conduct relay — submit the lock-free ticket inbox to the authenticated remote keeper and archive only acknowledged projection receipts",
             probe=lambda: _mtime(LOGS / "tabularius-organ-state.json"),
+            # Freshness answers "did it run", not "did it work". The keeper writes this stamp
+            # even when the memory pass fails, so a fresh mtime over a recorded memory_error
+            # read green indefinitely. The keeper now records the outcome (see #2866); this
+            # reads it, so an enabled-but-failing memory pass is reported `down` instead of
+            # being swallowed by a fresh timestamp. An absent memory_error (lane disabled, or
+            # a clean pass) is not a defect and stays fail-open.
+            defect=lambda: _json_nested_error(
+                LOGS / "tabularius-organ-state.json",
+                ("memory_error",),
+                stamp="updated",
+            ),
         ),
         # no cadence_key: runs as a metabolize.sh pre-beat check (section 0h), not a
         # timed heartbeat voice — so it claims no cadence and never trips the absent-

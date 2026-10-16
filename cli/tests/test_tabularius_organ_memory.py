@@ -189,11 +189,9 @@ def test_read_only_mode_leaves_protected_areas_unchanged(tmp_path, flag, memstat
         f"changed : {sorted(k for k in set(before['root']) & set(after['root']) if before['root'][k] != after['root'][k])}\n"
         f"mem new : {sorted(set(after['mem']) - set(before['mem']))}"
     )
-    # Assert against every protected area, not just LIMEN_ROOT, and count lock
-    # events as mutations now that descriptors are resolved to paths.
-    for area in ("root", "mem", "board"):
-        hits = sb.mutations_touching(str(sb.root / area))
-        assert not hits, f"{flag} mutated protected area {area!r}: {hits}"
+    # Assert against every protected area, not just LIMEN_ROOT, and reject any
+    # mutation the observer could not attribute to a path.
+    sb.assert_no_protected_mutations()
 
 
 def test_read_only_mode_does_not_create_bare_directory(tmp_path):
@@ -332,3 +330,67 @@ def test_pending_ticket_is_a_valid_ticket_on_disk(tmp_path):
     sb = KeeperSandbox(tmp_path, "ticket-valid", memoria=True, memory_populated=True)
     raw = json.loads((sb.memory_dir / ".covenant-inbox" / "synthetic.json").read_text())
     assert set(VALID_TICKET) <= set(raw), "fixture ticket is missing required fields"
+
+def test_lock_events_are_attributed_to_the_protected_file(tmp_path):
+    """A recorded lock must resolve to a path, not merely exist.
+
+    The observer previously emitted `paths: []` when descriptor resolution
+    failed, so a lock could be recorded yet never satisfy a path-based
+    assertion. This asserts attribution, which event capture alone does not.
+    """
+    sb = KeeperSandbox(tmp_path, "lock-attribution", memoria=False)
+    target = sb.limen_root / "protected.bin"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(b"x")
+    code = (
+        "import fcntl, os\n"
+        f"fd = os.open({str(target)!r}, os.O_RDWR)\n"
+        "fcntl.flock(fd, fcntl.LOCK_EX)\n"
+        "fcntl.flock(fd, fcntl.LOCK_UN)\n"
+        "os.close(fd)\n"
+    )
+    subprocess.run([sys.executable, "-c", code], env=sb.env, capture_output=True,
+                   text=True, timeout=60, check=False)
+
+    locks = [r for r in sb.mutations() if r["event"] == "fcntl.flock"]
+    assert locks, "no fcntl.flock event observed"
+    attributed = [r for r in locks if r.get("attributed")]
+    assert attributed, f"lock events were recorded but none attributed: {locks}"
+    assert sb.mutations_touching(str(target)), (
+        f"lock was attributed but mutations_touching missed it: {attributed}"
+    )
+    assert not sb.unattributed_mutations(), sb.unattributed_mutations()
+
+
+def test_an_unresolved_descriptor_cannot_satisfy_a_no_write_assertion(tmp_path):
+    """An observer that saw a lock but could not place it must be surfaced, not ignored."""
+    sb = KeeperSandbox(tmp_path, "lock-unresolved", memoria=False)
+    code = (
+        "import fcntl, os\n"
+        # Close the descriptor first, so /dev/fd resolution cannot succeed.
+        "fd = os.open(os.devnull, os.O_RDWR)\n"
+        "os.close(fd)\n"
+        "try:\n"
+        "    fcntl.flock(fd, fcntl.LOCK_EX)\n"
+        "except OSError:\n"
+        "    pass\n"
+    )
+    subprocess.run([sys.executable, "-c", code], env=sb.env, capture_output=True,
+                   text=True, timeout=60, check=False)
+
+    # Whether or not a lock event fired, the assertion helper must never treat an
+    # unattributed record as clean evidence.
+    if sb.unattributed_mutations():
+        with pytest.raises(AssertionError):
+            sb.assert_no_protected_mutations()
+    else:
+        # Force the shape directly: an unattributed record must always raise.
+        recs = sb.mutations()
+        sb.write_log.write_text(
+            "\n".join([
+                *[str(r).replace("'", '"') for r in recs],
+                '{"kind": "mutation", "event": "fcntl.flock", "paths": [], "attributed": false}',
+            ]) + "\n"
+        )
+        with pytest.raises(AssertionError):
+            sb.assert_no_protected_mutations()

@@ -47,7 +47,20 @@ def _stamp(**fields: object) -> None:
     """Write the counts-only liveness stamp organ-health.py probes (no task content — PII-clean)."""
     try:
         STATE.parent.mkdir(parents=True, exist_ok=True)
-        STATE.write_text(json.dumps({"updated": datetime.now(timezone.utc).isoformat(), **fields}, indent=2))
+        # `updated` is read by scripts/organ-health.py `_json_field_ts`, which honours a trailing
+        # `Z` and otherwise parses naive datetime as LOCAL. `datetime.now(timezone.utc).isoformat()`
+        # emits "+00:00", which that reader does NOT recognise as UTC — so it read this stamp as
+        # local time and reported the record as being in the future ("recorded -1.0h ago").
+        # Emit the trailing-Z form the reader documents, matching the other UTC producers.
+        STATE.write_text(
+            json.dumps(
+                {
+                    "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                    **fields,
+                },
+                indent=2,
+            )
+        )
     except OSError:
         pass
 

@@ -1,2 +1,26 @@
-.........................                                                [100%]
-25 passed in 3.57s
+...........................F...............                              [100%]
+=================================== FAILURES ===================================
+_____________ test_fast_wave_interval_reads_the_deployed_env_file ______________
+
+tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-145/test_fast_wave_interval_reads_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x107336f20>
+
+    def test_fast_wave_interval_reads_the_deployed_env_file(tmp_path, monkeypatch):
+        mod = _load()
+        env_file = tmp_path / "limen.env"
+        env_file.write_text("export LIMEN_VITALS_SAMPLE_SECONDS=1200 # twenty minutes\n", encoding="utf-8")
+        mod.ENV_FILE = env_file
+        monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
+    
+        loop = (
+            'C_DERIVE="${LIMEN_BEAT_DERIVE:-1}"\n'
+            "python3 scripts/beat-sensors.py --run --source fast-wave --scheduled-only\n"
+        )
+>       diurnal = next(row for row in mod._discover_doors(loop) if row["key"] == "diurnal")
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       StopIteration
+
+cli/tests/test_organ_health_defect.py:44: StopIteration
+=========================== short test summary info ============================
+FAILED cli/tests/test_organ_health_defect.py::test_fast_wave_interval_reads_the_deployed_env_file
+1 failed, 42 passed in 5.26s
