@@ -53,6 +53,9 @@ SOURCE_LOCK = {
     # Its post-rewrite counterpart (same author time and subject, #2418), whose snapshot blob is
     # byte-identical; snapshot reads use this so a fresh clone can resolve them.
     "w01_snapshot_commit": "3a97d47263aeee669e0c7708d44d3fdace1de7df",
+    # Git blob id of the snapshot at BOTH revisions (verified equal at the rewrite). Every read is
+    # checked against it, so the replacement commit cannot carry a different denominator.
+    "w01_snapshot_blob": "35e4df33690c6eef7e710efbb97853776586b20e",
     "w01_acceptance_sha256": "2280964c776528533bc982dadd028d99fbf80977034d48d2b99f5406654c7bbb",
     "candidate_identity_sha256": "9829f24cc353b23ab8812c8327905cec66ed4df92095552594b60caaf05bc2ca",
     "w01_candidate_snapshot_path": W01_SNAPSHOT_PATH,
@@ -1491,7 +1494,15 @@ def _accepted_w01_candidate_projection_local() -> str:
         raise AuditError("accepted W01 candidate snapshot cannot be resolved from git") from exc
     if result.returncode != 0:
         raise AuditError("accepted W01 candidate snapshot cannot be resolved from git")
-    return _candidate_projection_from_bytes(result.stdout)
+    return _candidate_projection_from_bytes(_bound_w01_snapshot(result.stdout))
+
+
+def _bound_w01_snapshot(content: bytes) -> bytes:
+    """Reject snapshot bytes whose git blob id differs from the one bound at the rewrite."""
+    blob_id = hashlib.sha1(b"blob %d\0" % len(content) + content).hexdigest()  # noqa: S324 - git object identity
+    if blob_id != SOURCE_LOCK["w01_snapshot_blob"]:
+        raise AuditError("accepted W01 candidate snapshot blob drifted from the receipt-bound revision")
+    return content
 
 
 def accepted_w01_candidate_projection_digest(collection: LiveCollection | None = None) -> str:
@@ -1503,7 +1514,7 @@ def accepted_w01_candidate_projection_digest(collection: LiveCollection | None =
         W01_SNAPSHOT_PATH,
         collection,
     )
-    return _candidate_projection_from_bytes(content)
+    return _candidate_projection_from_bytes(_bound_w01_snapshot(content))
 
 
 def _fetch_exact_head_blob(
@@ -1533,13 +1544,24 @@ def _live_candidate_identity_digest(module: dict[str, Any], repositories: list[d
     return hashlib.sha256("\n".join(identities).encode("utf-8")).hexdigest()
 
 
-def collect_live_context(snapshot: dict[str, Any]) -> tuple[dict[str, str], list[str], str]:
+def collect_live_context(
+    snapshot: dict[str, Any], withdrawn: frozenset[str] | set[str] = frozenset()
+) -> tuple[dict[str, str], list[str], str]:
+    """Live owner census for the trusted path.
+
+    Reviewed withdrawals (``public_observation_withdrawals``) leave the public head set exactly as
+    on the public-live path; the private census and identity-leak checks still see every private
+    repository, so a withdrawal never hides a leak.
+    """
     module = runpy.run_path(str(PREFLIGHT))
     _, repositories = module["collect_live_repositories"]()
     public_repositories = sorted(
         row["repository"]
         for row in snapshot.get("candidates", [])
-        if isinstance(row, dict) and row.get("visibility") == "public" and _is_nonblank_text(row.get("repository"))
+        if isinstance(row, dict)
+        and row.get("visibility") == "public"
+        and _is_nonblank_text(row.get("repository"))
+        and row["repository"] not in withdrawn
     )
     by_name = {str(row.get("full_name") or ""): row for row in repositories if isinstance(row, dict)}
     if len(by_name) != len(repositories):
@@ -2839,7 +2861,8 @@ def main() -> int:
         if args.require_cleared and not args.live:
             raise AuditError("--require-cleared requires --live")
         if args.live:
-            heads, leaks, live_identity_digest = collect_live_context(snapshot)
+            withdrawn = public_observation_withdrawals(audit) if audit is not None else set()
+            heads, leaks, live_identity_digest = collect_live_context(snapshot, withdrawn)
             private_clearance_receipts = load_private_clearance_receipts()
             verify_w01_live_receipt(live_collection)
             accepted_projection_digest = accepted_w01_candidate_projection_digest(live_collection)

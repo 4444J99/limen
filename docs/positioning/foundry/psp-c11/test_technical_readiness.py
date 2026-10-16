@@ -339,6 +339,42 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             any("duplicate repositories" in error or "projection digest drift" in error for error in errors)
         )
 
+    def test_snapshot_bytes_must_match_the_receipt_bound_blob(self) -> None:
+        content = MODULE.SNAPSHOT.read_bytes()
+        self.assertEqual(content, MODULE._bound_w01_snapshot(content))
+        with self.assertRaisesRegex(MODULE.AuditError, "snapshot blob drifted"):
+            MODULE._bound_w01_snapshot(content + b" ")
+        collection = MODULE.LiveCollection()
+        with (
+            mock.patch.object(MODULE, "_fetch_repository_blob", return_value=content.replace(b"{", b"{ ", 1)),
+            self.assertRaisesRegex(MODULE.AuditError, "snapshot blob drifted"),
+        ):
+            MODULE.accepted_w01_candidate_projection_digest(collection)
+
+    def test_trusted_live_census_honors_withdrawals_and_keeps_private_leak_checks(self) -> None:
+        snapshot = {
+            "candidates": [
+                {"repository": "o/kept", "visibility": "public"},
+                {"repository": "o/withdrawn", "visibility": "public"},
+            ]
+        }
+        census = [
+            {"full_name": "o/kept", "name": "kept", "private": False},
+            {"full_name": "o/withdrawn", "name": "withdrawn", "private": True},
+        ]
+        preflight = {"collect_live_repositories": lambda: (None, census)}
+        with (
+            mock.patch.object(MODULE.runpy, "run_path", return_value=preflight),
+            mock.patch.object(MODULE, "_graphql_heads", side_effect=lambda repos: {r: "0" * 40 for r in repos}),
+            mock.patch.object(MODULE, "_private_identity_leaks", return_value=[]) as leaks,
+            mock.patch.object(MODULE, "_live_candidate_identity_digest", return_value="digest"),
+        ):
+            with self.assertRaisesRegex(MODULE.AuditError, "missing or private: o/withdrawn"):
+                MODULE.collect_live_context(snapshot)
+            heads, _, _ = MODULE.collect_live_context(snapshot, {"o/withdrawn"})
+        self.assertEqual({"o/kept": "0" * 40}, heads)
+        self.assertIn("o/withdrawn", leaks.call_args.args[0])
+
     def test_candidate_projection_is_resolved_from_the_immutable_w01_revision(self) -> None:
         content = MODULE.SNAPSHOT.read_bytes()
         expected = MODULE.candidate_projection_digest(self.snapshot)
