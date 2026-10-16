@@ -56,6 +56,7 @@ MEMORY_ERROR_KEYS = ("memory_error",)
 
 # --- observer self-tests (guard the guard) ------------------------------------
 
+
 def test_observer_records_known_mutations(tmp_path):
     """The observer must see create, rename-both-endpoints, and a real lock."""
     sb = KeeperSandbox(tmp_path, "observer-self-test")
@@ -71,8 +72,8 @@ def test_observer_records_known_mutations(tmp_path):
         "os.close(fd)\n"
     )
     import subprocess
-    subprocess.run([sys.executable, "-c", code], env=sb.env, capture_output=True,
-                   text=True, timeout=60, check=False)
+
+    subprocess.run([sys.executable, "-c", code], env=sb.env, capture_output=True, text=True, timeout=60, check=False)
 
     recs = sb.mutations()
     events = {r["event"] for r in recs}
@@ -106,11 +107,13 @@ def test_observation_limits_are_documented():
 def test_guard_rejects_child_that_never_reached_entry_point(tmp_path):
     """A child exiting early or by signal must not yield a vacuous pass."""
     sb = KeeperSandbox(tmp_path, "guard-negative")
+
     # Simulate a child that produced no output and a wrong exit status.
     class FakeProc:
         returncode = 9
         stdout = ""
         stderr = ""
+
     with pytest.raises(ChildDidNotStart):
         sb._guard(FakeProc(), expect_exit=0)
 
@@ -118,6 +121,7 @@ def test_guard_rejects_child_that_never_reached_entry_point(tmp_path):
         returncode = -9
         stdout = "partial"
         stderr = ""
+
     with pytest.raises(ChildDidNotStart):
         sb._guard(SignalProc(), expect_exit=0)
 
@@ -135,6 +139,7 @@ def test_guard_rejects_unrelated_output(tmp_path):
         returncode = 0
         stdout = "not the keeper"
         stderr = ""
+
     with pytest.raises(ChildDidNotStart):
         sb._guard(ChattyProc(), expect_exit=0)
 
@@ -142,7 +147,11 @@ def test_guard_rejects_unrelated_output(tmp_path):
     # identity recorded must also be rejected.
     proc = subprocess.run(
         [sys.executable, "-c", "print('not the keeper')"],
-        env=sb.env, capture_output=True, text=True, timeout=60, check=False,
+        env=sb.env,
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
     )
     sb.last_proc = proc
     with pytest.raises(ChildDidNotStart):
@@ -150,6 +159,7 @@ def test_guard_rejects_unrelated_output(tmp_path):
 
 
 # --- fixture integrity --------------------------------------------------------
+
 
 def test_fixture_state_path_agrees_with_limen_root(tmp_path):
     sb = KeeperSandbox(tmp_path, "path-agreement")
@@ -165,6 +175,7 @@ def test_valid_synthetic_ticket_has_required_model_fields(tmp_path):
 
 # --- 1. no-write contract: full absent/populated x absent/pre-existing --------
 
+
 @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
 @pytest.mark.parametrize("memstate", ["absent", "populated"])
 @pytest.mark.parametrize("health", ["absent", "preexisting"])
@@ -175,8 +186,10 @@ def test_read_only_mode_leaves_protected_areas_unchanged(tmp_path, flag, memstat
     directory is caught, not just a single known file.
     """
     sb = KeeperSandbox(
-        tmp_path, f"ro-{flag.strip('-')}-{memstate}-{health}",
-        memoria=True, memory_populated=(memstate == "populated"),
+        tmp_path,
+        f"ro-{flag.strip('-')}-{memstate}-{health}",
+        memoria=True,
+        memory_populated=(memstate == "populated"),
         health_state=health,
     )
     before = sb.protected_inventory()
@@ -205,12 +218,11 @@ def test_check_mode_write_is_independent_of_memory_state(tmp_path):
     """Control: the outer write is unconditional, not caused by the import failure."""
     sb = KeeperSandbox(tmp_path, "control-memoria-disabled", memoria=False)
     sb.run("--check", expect_exit=0)
-    assert not sb.limen_root.exists(), (
-        "--check wrote a health-state file with MEMORIA disabled"
-    )
+    assert not sb.limen_root.exists(), "--check wrote a health-state file with MEMORIA disabled"
 
 
 # --- 2. memory-result propagation ---------------------------------------------
+
 
 def _memory_state(state: dict) -> str:
     """Classify the memory outcome present in a state stamp."""
@@ -230,8 +242,11 @@ def test_memory_outcome_is_never_silently_absent(tmp_path, board_mode):
     the real state writer are exercised.
     """
     sb = KeeperSandbox(
-        tmp_path, f"outcome-{board_mode or 'empty'}",
-        memoria=True, memory_populated=True, health_state="preexisting",
+        tmp_path,
+        f"outcome-{board_mode or 'empty'}",
+        memoria=True,
+        memory_populated=True,
+        health_state="preexisting",
         board_mode=board_mode,
     )
     proc = sb.run()
@@ -239,8 +254,7 @@ def test_memory_outcome_is_never_silently_absent(tmp_path, board_mode):
     assert state, f"no health-state artifact published; stdout: {proc.stdout}"
     _assert_board_branch(state, board_mode)
     assert _memory_state(state) != "absent", (
-        "memory outcome computed but absent from the published stamp; "
-        f"state={state}\nstdout: {proc.stdout}"
+        f"memory outcome computed but absent from the published stamp; state={state}\nstdout: {proc.stdout}"
     )
 
 
@@ -275,17 +289,10 @@ def test_memory_pass_succeeds(tmp_path):
     proc = sb.run()
     state = sb.state_payload()
     kind = _memory_state(state)
-    assert kind != "error", (
-        f"memory pass still failing: state={state}\nstdout: {proc.stdout}\n"
-        f"stderr: {proc.stderr}"
-    )
-    assert kind == "counts", (
-        f"memory pass reported no counts and no error; state={state}\n"
-        f"stdout: {proc.stdout}"
-    )
+    assert kind != "error", f"memory pass still failing: state={state}\nstdout: {proc.stdout}\nstderr: {proc.stderr}"
+    assert kind == "counts", f"memory pass reported no counts and no error; state={state}\nstdout: {proc.stdout}"
     assert state.get("memory_pending", 0) >= 1, (
-        f"expected a pending ticket to be counted: state={state}\n"
-        f"stdout: {proc.stdout}"
+        f"expected a pending ticket to be counted: state={state}\nstdout: {proc.stdout}"
     )
 
 
@@ -308,13 +315,12 @@ def test_valid_ticket_lifecycle_is_applied_then_idempotent(tmp_path):
 
     proc2 = sb.run()
     state2 = sb.state_payload()
-    assert state2.get("memory_applied", 0) == 0, (
-        f"re-run re-applied the same ticket: {state2}\nstdout: {proc2.stdout}"
-    )
+    assert state2.get("memory_applied", 0) == 0, f"re-run re-applied the same ticket: {state2}\nstdout: {proc2.stdout}"
     assert atom.read_bytes() == first, "atom content changed on a no-op re-run"
 
 
 # --- lifecycle (temporary stores only) ----------------------------------------
+
 
 @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
 def test_read_only_mode_does_not_consume_pending_ticket(tmp_path, flag):
@@ -330,6 +336,7 @@ def test_pending_ticket_is_a_valid_ticket_on_disk(tmp_path):
     sb = KeeperSandbox(tmp_path, "ticket-valid", memoria=True, memory_populated=True)
     raw = json.loads((sb.memory_dir / ".covenant-inbox" / "synthetic.json").read_text())
     assert set(VALID_TICKET) <= set(raw), "fixture ticket is missing required fields"
+
 
 def test_lock_events_are_attributed_to_the_protected_file(tmp_path):
     """A recorded lock must resolve to a path, not merely exist.
@@ -349,16 +356,13 @@ def test_lock_events_are_attributed_to_the_protected_file(tmp_path):
         "fcntl.flock(fd, fcntl.LOCK_UN)\n"
         "os.close(fd)\n"
     )
-    subprocess.run([sys.executable, "-c", code], env=sb.env, capture_output=True,
-                   text=True, timeout=60, check=False)
+    subprocess.run([sys.executable, "-c", code], env=sb.env, capture_output=True, text=True, timeout=60, check=False)
 
     locks = [r for r in sb.mutations() if r["event"] == "fcntl.flock"]
     assert locks, "no fcntl.flock event observed"
     attributed = [r for r in locks if r.get("attributed")]
     assert attributed, f"lock events were recorded but none attributed: {locks}"
-    assert sb.mutations_touching(str(target)), (
-        f"lock was attributed but mutations_touching missed it: {attributed}"
-    )
+    assert sb.mutations_touching(str(target)), f"lock was attributed but mutations_touching missed it: {attributed}"
     assert not sb.unattributed_mutations(), sb.unattributed_mutations()
 
 
@@ -375,8 +379,7 @@ def test_an_unresolved_descriptor_cannot_satisfy_a_no_write_assertion(tmp_path):
         "except OSError:\n"
         "    pass\n"
     )
-    subprocess.run([sys.executable, "-c", code], env=sb.env, capture_output=True,
-                   text=True, timeout=60, check=False)
+    subprocess.run([sys.executable, "-c", code], env=sb.env, capture_output=True, text=True, timeout=60, check=False)
 
     # Whether or not a lock event fired, the assertion helper must never treat an
     # unattributed record as clean evidence.
@@ -387,10 +390,13 @@ def test_an_unresolved_descriptor_cannot_satisfy_a_no_write_assertion(tmp_path):
         # Force the shape directly: an unattributed record must always raise.
         recs = sb.mutations()
         sb.write_log.write_text(
-            "\n".join([
-                *[str(r).replace("'", '"') for r in recs],
-                '{"kind": "mutation", "event": "fcntl.flock", "paths": [], "attributed": false}',
-            ]) + "\n"
+            "\n".join(
+                [
+                    *[str(r).replace("'", '"') for r in recs],
+                    '{"kind": "mutation", "event": "fcntl.flock", "paths": [], "attributed": false}',
+                ]
+            )
+            + "\n"
         )
         with pytest.raises(AssertionError):
             sb.assert_no_protected_mutations()

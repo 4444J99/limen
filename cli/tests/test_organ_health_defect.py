@@ -325,10 +325,16 @@ def test_a_fresh_keeper_stamp_over_a_recorded_memory_error_is_reported_down(tmp_
     reads green indefinitely, because the keeper writes the stamp even when memory fails.
     """
     mod = _load()
-    _tabularius_state(mod, tmp_path, {
-        "pending": 0, "applied": 0, "rejected": 0,
-        "memory_error": "ImportError",
-    })
+    _tabularius_state(
+        mod,
+        tmp_path,
+        {
+            "pending": 0,
+            "applied": 0,
+            "rejected": 0,
+            "memory_error": "ImportError",
+        },
+    )
 
     row = _tabularius_row(mod)
     assert row["status"] == "down", row
@@ -342,10 +348,18 @@ def test_a_fresh_keeper_stamp_over_a_recorded_memory_error_is_reported_down(tmp_
 def test_a_fresh_keeper_stamp_over_a_successful_memory_pass_stays_green(tmp_path: Path) -> None:
     """The control. Without it, a defect channel hard-wired to `down` would also pass."""
     mod = _load()
-    _tabularius_state(mod, tmp_path, {
-        "pending": 0, "applied": 0, "rejected": 0,
-        "memory_pending": 0, "memory_applied": 0, "memory_rejected": 0,
-    })
+    _tabularius_state(
+        mod,
+        tmp_path,
+        {
+            "pending": 0,
+            "applied": 0,
+            "rejected": 0,
+            "memory_pending": 0,
+            "memory_applied": 0,
+            "memory_rejected": 0,
+        },
+    )
 
     row = _tabularius_row(mod)
     assert row["status"] == "green", row
@@ -372,10 +386,14 @@ def test_a_recorded_memory_error_names_its_own_age_not_the_voice(tmp_path: Path)
     logs = tmp_path / "logs"
     logs.mkdir(parents=True, exist_ok=True)
     stale = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(hours=3)
-    (logs / "tabularius-organ-state.json").write_text(json.dumps({
-        "updated": stale.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "memory_error": "ImportError",
-    }))
+    (logs / "tabularius-organ-state.json").write_text(
+        json.dumps(
+            {
+                "updated": stale.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "memory_error": "ImportError",
+            }
+        )
+    )
     mod.LOGS = logs
 
     row = _tabularius_row(mod)

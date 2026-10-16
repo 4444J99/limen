@@ -59,12 +59,19 @@ class ObservationUnavailable(RuntimeError):
 
 # --- child interpreter selection ---------------------------------------------
 
+
 def _interpreter_has_yaml(candidate: str, env: dict | None = None) -> bool:
     try:  # discovery-time probe: any failure means "not usable"
-        return subprocess.run(
-            [candidate, "-c", "import yaml"], capture_output=True, timeout=60,
-            env=env, check=False,
-        ).returncode == 0
+        return (
+            subprocess.run(
+                [candidate, "-c", "import yaml"],
+                capture_output=True,
+                timeout=60,
+                env=env,
+                check=False,
+            ).returncode
+            == 0
+        )
     except (OSError, subprocess.SubprocessError):
         return False
 
@@ -366,15 +373,22 @@ class KeeperSandbox:
     entry point fails closed on the broker and no remote keeper is contacted.
     """
 
-    def __init__(self, base: Path, name: str, *, memoria: bool = True,
-                 memory_populated: bool = False, memory_ticket: dict | None = None,
-                 health_state: str | None = None, board_mode: str | None = None,
-                 omit_memory_dir: bool = False):
+    def __init__(
+        self,
+        base: Path,
+        name: str,
+        *,
+        memoria: bool = True,
+        memory_populated: bool = False,
+        memory_ticket: dict | None = None,
+        health_state: str | None = None,
+        board_mode: str | None = None,
+        omit_memory_dir: bool = False,
+    ):
         self.root = base / name
         if self.root.exists():
             shutil.rmtree(self.root)
-        for sub in ("home", "tmp", "xdg-cache", "xdg-config", "xdg-data",
-                    "board", "auditor"):
+        for sub in ("home", "tmp", "xdg-cache", "xdg-config", "xdg-data", "board", "auditor"):
             (self.root / sub).mkdir(parents=True, exist_ok=True)
 
         # The entry point resolves STATE as LIMEN_ROOT / STATE_RELPATH. These
@@ -394,9 +408,7 @@ class KeeperSandbox:
 
         if health_state == "preexisting":
             self.state_path.parent.mkdir(parents=True, exist_ok=True)
-            self.state_path.write_text(
-                '{"updated": "1970-01-01T00:00:00+00:00", "preExisting": true}'
-            )
+            self.state_path.write_text('{"updated": "1970-01-01T00:00:00+00:00", "preExisting": true}')
 
         (self.root / "auditor" / "sitecustomize.py").write_text(_AUDITOR)
 
@@ -429,8 +441,12 @@ class KeeperSandbox:
         """Run the entry point and prove it actually reached the code under test."""
         proc = subprocess.run(
             [CHILD_INTERPRETER, str(ENTRY_POINT), *argv],
-            env=self.env, capture_output=True, text=True,
-            timeout=timeout, cwd=str(REPO_ROOT), check=False,
+            env=self.env,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=str(REPO_ROOT),
+            check=False,
         )
         self.last_proc = proc
         self._guard(proc, expect_exit)
@@ -440,17 +456,25 @@ class KeeperSandbox:
         """Run without the guard. For negative-control probes only."""
         proc = subprocess.run(
             [CHILD_INTERPRETER, str(ENTRY_POINT), *argv],
-            env=self.env, capture_output=True, text=True,
-            timeout=timeout, cwd=str(REPO_ROOT), check=False,
+            env=self.env,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=str(REPO_ROOT),
+            check=False,
         )
         self.last_proc = proc
         return proc
 
     def _guard(self, proc, expect_exit):
         stderr = proc.stderr or ""
-        for marker in ("Traceback (most recent call last)", "ModuleNotFoundError",
-                       "SyntaxError", "ImportError: No module named",
-                       "REPRO_OBSERVER_FLUSH_FAILED"):
+        for marker in (
+            "Traceback (most recent call last)",
+            "ModuleNotFoundError",
+            "SyntaxError",
+            "ImportError: No module named",
+            "REPRO_OBSERVER_FLUSH_FAILED",
+        ):
             if marker in stderr:
                 raise ChildDidNotStart(
                     f"child failed to start cleanly ({marker}); assertions would be "
@@ -458,13 +482,11 @@ class KeeperSandbox:
                 )
         if proc.returncode < 0:
             raise ChildDidNotStart(
-                f"child terminated by signal {-proc.returncode}; assertions would "
-                f"be vacuous.\nstdout: {proc.stdout}"
+                f"child terminated by signal {-proc.returncode}; assertions would be vacuous.\nstdout: {proc.stdout}"
             )
         if expect_exit is not None and proc.returncode != expect_exit:
             raise ChildDidNotStart(
-                f"exit status {proc.returncode} != expected {expect_exit}.\n"
-                f"stdout: {proc.stdout}\nstderr: {stderr}"
+                f"exit status {proc.returncode} != expected {expect_exit}.\nstdout: {proc.stdout}\nstderr: {stderr}"
             )
         self._guard_identity()
 
@@ -493,10 +515,7 @@ class KeeperSandbox:
                     "limen.memoria module; assertions would be vacuous."
                 )
             if str(REPO_ROOT / "cli" / "src") not in str(resolved):
-                raise ChildDidNotStart(
-                    "limen.memoria resolved outside the checkout under test: "
-                    f"{resolved}"
-                )
+                raise ChildDidNotStart(f"limen.memoria resolved outside the checkout under test: {resolved}")
 
     # --- observation --------------------------------------------------------
 
@@ -504,9 +523,7 @@ class KeeperSandbox:
         """Parsed observer records. Raises unless evidence is available."""
         if not self.write_log.exists():
             if require:
-                raise ObservationUnavailable(
-                    f"observer produced no evidence at {self.write_log}"
-                )
+                raise ObservationUnavailable(f"observer produced no evidence at {self.write_log}")
             return []
         records = []
         for line in self.write_log.read_text().splitlines():
@@ -514,14 +531,11 @@ class KeeperSandbox:
                 records.append(json.loads(line))
         markers = {r.get("marker") for r in records if r.get("kind") == "marker"}
         if require and not {"observer_installed", "observer_completed"} <= markers:
-            raise ObservationUnavailable(
-                f"observer evidence incomplete; markers={sorted(m for m in markers if m)}"
-            )
+            raise ObservationUnavailable(f"observer evidence incomplete; markers={sorted(m for m in markers if m)}")
         return records
 
     def mutations(self, require: bool = True) -> list[dict]:
-        return [r for r in self.write_attempts(require=require)
-                if r.get("kind") == "mutation"]
+        return [r for r in self.write_attempts(require=require) if r.get("kind") == "mutation"]
 
     def mutations_touching(self, needle: str, require: bool = True) -> list[dict]:
         hits = []
@@ -536,30 +550,26 @@ class KeeperSandbox:
         These must never be able to satisfy a no-write assertion: an observer
         that saw something but could not say where is not evidence of safety.
         """
-        return [r for r in self.mutations(require=require)
-                if r.get("attributed") is False]
+        return [r for r in self.mutations(require=require) if r.get("attributed") is False]
 
     def assert_no_protected_mutations(self, areas: tuple[str, ...] = ("root", "mem", "board")) -> None:
         """Fail on any mutation inside a protected area, or any unattributed one."""
         un = self.unattributed_mutations()
         if un:
-            raise AssertionError(
-                f"unattributed mutation records cannot satisfy a no-write "
-                f"assertion: {un}"
-            )
+            raise AssertionError(f"unattributed mutation records cannot satisfy a no-write assertion: {un}")
         for area in areas:
             hits = self.mutations_touching(str(self.root / area))
             if hits:
                 raise AssertionError(f"mutated protected area {area!r}: {hits}")
 
     def child_reported_entry(self, recs: list[dict] | None = None) -> str | None:
-        for rec in (recs if recs is not None else self.write_attempts(require=False)):
+        for rec in recs if recs is not None else self.write_attempts(require=False):
             if rec.get("marker") == "observer_installed":
                 return rec.get("entry")
         return None
 
     def child_reported_modules(self, recs: list[dict] | None = None) -> dict:
-        for rec in (recs if recs is not None else self.write_attempts(require=False)):
+        for rec in recs if recs is not None else self.write_attempts(require=False):
             if rec.get("marker") == "observer_modules":
                 return rec.get("modules") or {}
         return {}
@@ -589,6 +599,9 @@ class KeeperSandbox:
             "child_interpreter": CHILD_INTERPRETER,
             "child_python_version": subprocess.run(
                 [CHILD_INTERPRETER, "-c", "import sys;print(sys.version.split()[0])"],
-                capture_output=True, text=True, timeout=60, check=False,
+                capture_output=True,
+                text=True,
+                timeout=60,
+                check=False,
             ).stdout.strip(),
         }
