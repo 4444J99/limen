@@ -1,0 +1,121 @@
+{
+  "schema": "limen.session_closeout.v2",
+  "session_id": "01a1470a-98ad-7f61-acad-55b65060196f",
+  "session_root_path_sha256": "6a038fbe7c51d2d92294fcfe9cb4a99f81bc72223cde93d80dd596f46a3aa97f",
+  "receipt_root_id": "limen",
+  "owner_url": "https://github.com/4444J99/limen/pull/2888",
+  "disposition": "handoff",
+  "scope_roots": [
+    {
+      "id": "limen",
+      "kind": "git",
+      "path_sha256": "4b577c0a90c83ed10abf2076299ad03c22acdf45e92285b299abbb1c23d29ad1",
+      "repository": "4444J99/limen",
+      "repository_id": 1255213941,
+      "base_head": "fba569680cb8d72bdabf9f24ed3f205b8fe1f3a5",
+      "publication_branch": "fix/insights-review-20261016",
+      "owned_paths": [
+        ".codex/plans/2026-10-16-insights-review.md",
+        ".claude/skills/vendor-insights/SKILL.md",
+        "scripts/vendor-insights.py",
+        "cli/tests/test_vendor_insights.py",
+        "censor/insights-suggestions.jsonl",
+        "docs/continuations/insights-review-20261016/review.md",
+        "docs/continuations/insights-review-20261016/native-generator-owner.md"
+      ],
+      "retained_work": []
+    },
+    {
+      "id": "domus",
+      "kind": "git",
+      "path_sha256": "b00e9b2432bd88d0facef1f5d68e2ecbb3ae83b43eb40c3d3245a0c5ebabd710",
+      "repository": "4444J99/domus-genoma-private",
+      "repository_id": 1124448005,
+      "base_head": "deb28a564ae76e5da1fa7446686a573125d75525",
+      "subject_head": "0673fa659801834da464baa6bd68ac378646d565",
+      "publication_branch": "fix/insights-evidence-20261016",
+      "owned_paths": [
+        ".codex/plans/2026-10-16-insights-evidence.md",
+        "dot_local/bin/executable_insights-snapshot",
+        "tests/test_insights_snapshot.py"
+      ],
+      "retained_work": []
+    }
+  ],
+  "verification": [
+    {
+      "evidence": "docs/continuations/insights-review-20261016/verification.json",
+      "sha256": "69f0fe73841a25127108c6033455bd2b604d6747401cd9e838ec9203f0ec9beb",
+      "root_id": "limen",
+      "command": "focused vendor-insights regressions and12 cheap scopedgates",
+      "head": "2098f6051257bde609c818c3fd24db06b3646c86",
+      "exit_code": 0
+    },
+    {
+      "evidence": "docs/continuations/insights-review-20261016/verification.json",
+      "sha256": "69f0fe73841a25127108c6033455bd2b604d6747401cd9e838ec9203f0ec9beb",
+      "root_id": "limen",
+      "command": "scripts/verify-scoped.sh --base fba569680",
+      "head": "2098f6051257bde609c818c3fd24db06b3646c86",
+      "exit_code": 75,
+      "purpose": "completion",
+      "owner_url": "https://github.com/4444J99/limen/pull/2888"
+    },
+    {
+      "evidence": "docs/continuations/insights-review-20261016/verification.json",
+      "sha256": "69f0fe73841a25127108c6033455bd2b604d6747401cd9e838ec9203f0ec9beb",
+      "root_id": "limen",
+      "command": "scripts/credential-wall.py --check",
+      "head": "2098f6051257bde609c818c3fd24db06b3646c86",
+      "exit_code": 0
+    },
+    {
+      "evidence": "docs/continuations/insights-review-20261016/verification.json",
+      "sha256": "69f0fe73841a25127108c6033455bd2b604d6747401cd9e838ec9203f0ec9beb",
+      "root_id": "domus",
+      "command": "pytest tests/test_insights_snapshot.py -q",
+      "head": "0673fa659801834da464baa6bd68ac378646d565",
+      "exit_code": 0
+    },
+    {
+      "evidence": "docs/continuations/insights-review-20261016/live-readback.json",
+      "sha256": "4af1e7af10724263b1c23c9c7cf5957dfc70be7e52d1ba47752de0a83907c831",
+      "root_id": "domus",
+      "command": "deployed snapshot byteidentity and read-only report validation",
+      "head": "0673fa659801834da464baa6bd68ac378646d565",
+      "exit_code": 0
+    }
+  ],
+  "custody": {
+    "evidence": "docs/continuations/insights-review-20261016/custody.json",
+    "sha256": "e93959b74d41b9c7c45cf10cb69e58c20d50f66d0e215c97a31f7cac07b87d27",
+    "verified": true,
+    "root_ids": [
+      "domus",
+      "limen"
+    ]
+  },
+  "external_effects": [
+    {
+      "evidence": "docs/continuations/insights-review-20261016/live-readback.json",
+      "sha256": "4af1e7af10724263b1c23c9c7cf5957dfc70be7e52d1ba47752de0a83907c831",
+      "id": "snapshot-deployment",
+      "kind": "targeted-chezmoi-file-application",
+      "verified": true
+    },
+    {
+      "evidence": "docs/continuations/insights-review-20261016/verification.json",
+      "sha256": "69f0fe73841a25127108c6033455bd2b604d6747401cd9e838ec9203f0ec9beb",
+      "id": "domus-pr-landing",
+      "kind": "github-merge",
+      "verified": true
+    },
+    {
+      "evidence": "docs/continuations/insights-review-20261016/verification.json",
+      "sha256": "69f0fe73841a25127108c6033455bd2b604d6747401cd9e838ec9203f0ec9beb",
+      "id": "native-generator-owner",
+      "kind": "github-issue",
+      "verified": true
+    }
+  ]
+}

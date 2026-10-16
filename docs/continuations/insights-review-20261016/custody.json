@@ -1,0 +1,14 @@
+{
+  "schema": "limen.insights_retention_evidence.v1",
+  "scope_ids": [
+    "domus",
+    "limen"
+  ],
+  "private_inputs": "Original native reports, metadata, chats and databases remain at their original owners; none copied into either topic checkout or Git.",
+  "introduced_artifacts": "Source, synthetic tests, redacted aggregate evidence, plan and disposition records only.",
+  "retirement_authorized": false,
+  "worktrees": "Both isolated topic checkouts retained; primary concurrent changes preserved.",
+  "publication": "Each implementation and plan is pushed to its explicit topic branch; authenticated exact-ref publication is rechecked by the native release predicate.",
+  "credentials": "No secret values introduced; credential-wall check passed for all32 registeredatoms.",
+  "native_original_hashes_preserved": true
+}
