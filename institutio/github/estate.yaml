@@ -1092,11 +1092,11 @@ budgets:
   actions_minutes:
     budget: unlimited_public
     owner: gitvs
-    note: "Public and private usage are measured separately; dynamic server-side CodeQL/default-setup schedules are inventoried even when no workflow file exists; actions_spend below is the current budget predicate. A provider admission message never routes to a historical lever by default."
+    note: "2026-10-16 operating constraint: private GitHub Actions execution is unavailable. Reviewed public source editions use standard public hosted runners; private operational execution requires its own existing bounded native path and exact-revision evidence. Inventory public/private usage and dynamic CodeQL schedules separately; missing or skipped execution never means passing."
   actions_spend:
     monthly_net_usd_max: 25                # mirrors orgs.canonical.actions_spending_limit_usd; env override LIMEN_ACTIONS_BUDGET
     owner: gitvs
-    note: "Projected monthly NET Actions spend ceiling — the gitvs.py usage --check predicate (beat sensor github-actions-usage). The $0 relief for private heavy lanes is the self-hosted runner (scripts/runner-install.sh); this budget is the net under it."
+    note: "Projected monthly NET Actions spend ceiling — the gitvs.py usage --check predicate (beat sensor github-actions-usage). This ceiling does not establish private Actions capacity or authorize paid service, runner enrollment, or a budget change; execution admission must satisfy the current public-carrier contract."
   token_cascade:
     expected: "app > pat > gh"             # gh-app-token.sh --which should resolve to `app` once the App is born
     owner: gitvs

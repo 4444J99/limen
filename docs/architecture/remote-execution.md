@@ -97,4 +97,3 @@ This slice does not reroute native AI providers through the deterministic worker
 
 Those are separate provider-family child packets, not hidden completion of an all-provider task.
 Models remain provider Auto/live-catalog decisions; no model ID or fixed tier table is encoded here.
-

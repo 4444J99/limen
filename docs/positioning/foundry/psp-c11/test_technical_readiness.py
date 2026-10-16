@@ -339,21 +339,19 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             any("duplicate repositories" in error or "projection digest drift" in error for error in errors)
         )
 
-    def test_candidate_projection_is_resolved_from_the_immutable_w01_revision(self) -> None:
+    def test_candidate_projection_uses_hash_bound_public_snapshot_without_git_history(self) -> None:
         content = MODULE.SNAPSHOT.read_bytes()
         expected = MODULE.candidate_projection_digest(self.snapshot)
         MODULE._accepted_w01_candidate_projection_local.cache_clear()
         try:
-            with mock.patch.object(
-                MODULE.subprocess,
-                "run",
-                return_value=mock.Mock(returncode=0, stdout=content),
-            ) as run:
-                self.assertEqual(expected, MODULE.accepted_w01_candidate_projection_digest())
-            self.assertEqual(
-                ["git", "show", f"{MODULE.SOURCE_LOCK['w01_accepted_head']}:{MODULE.W01_SNAPSHOT_PATH}"],
-                run.call_args.args[0],
-            )
+            with tempfile.TemporaryDirectory() as directory:
+                snapshot = Path(directory) / "accepted-w01-snapshot.json"
+                snapshot.write_bytes(content)
+                with (
+                    mock.patch.object(MODULE, "SNAPSHOT", snapshot),
+                    mock.patch.object(MODULE.subprocess, "run", side_effect=AssertionError("git invoked")),
+                ):
+                    self.assertEqual(expected, MODULE.accepted_w01_candidate_projection_digest())
         finally:
             MODULE._accepted_w01_candidate_projection_local.cache_clear()
 
@@ -366,6 +364,9 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
             MODULE.W01_SNAPSHOT_PATH,
             collection,
         )
+        with mock.patch.object(MODULE, "_fetch_repository_blob", return_value=content + b"\n"):
+            with self.assertRaisesRegex(MODULE.AuditError, "byte digest drift"):
+                MODULE.accepted_w01_candidate_projection_digest(collection)
 
         changed_snapshot = copy.deepcopy(self.snapshot)
         changed_snapshot["candidates"][0]["demand"]["score"] += 1
@@ -378,6 +379,21 @@ class TechnicalReadinessAuditTest(unittest.TestCase):
                 accepted_candidate_projection_sha256=expected,
             ),
         )
+
+    def test_accepted_public_snapshot_rejects_missing_or_changed_bytes(self) -> None:
+        content = MODULE.SNAPSHOT.read_bytes()
+        with tempfile.TemporaryDirectory() as directory:
+            snapshot = Path(directory) / "accepted-w01-snapshot.json"
+            with mock.patch.object(MODULE, "SNAPSHOT", snapshot):
+                MODULE._accepted_w01_candidate_projection_local.cache_clear()
+                try:
+                    with self.assertRaisesRegex(MODULE.AuditError, "cannot be read from the public package"):
+                        MODULE.accepted_w01_candidate_projection_digest()
+                    snapshot.write_bytes(content + b"\n")
+                    with self.assertRaisesRegex(MODULE.AuditError, "byte digest drift"):
+                        MODULE.accepted_w01_candidate_projection_digest()
+                finally:
+                    MODULE._accepted_w01_candidate_projection_local.cache_clear()
 
     def test_candidate_projection_digest_binds_lifecycle_fields(self) -> None:
         expected_digest = MODULE.candidate_projection_digest(self.snapshot)

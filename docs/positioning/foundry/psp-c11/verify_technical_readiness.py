@@ -43,6 +43,9 @@ SNAPSHOT = PACKAGE / "product-candidate-snapshot.json"
 CONTRACT = PACKAGE / "foundry-preflight-contract.json"
 PREFLIGHT = ROOT / "scripts/positioning-foundry-preflight.py"
 W01_SNAPSHOT_PATH = "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
+# Exact public snapshot bytes at SOURCE_LOCK["w01_accepted_head"]. Keep the
+# accepted evidence portable when that historical commit is absent from a clone.
+W01_SNAPSHOT_SHA256 = "af047714aded8b2560ca8563966eaa1234191d715419cf9123a04a1d01209f82"
 
 SOURCE_LOCK = {
     "w01_receipt": "https://github.com/organvm/limen/issues/2265#issuecomment-5295999920",
@@ -1463,6 +1466,8 @@ def _exact_head_blob_location(value: Any) -> tuple[str, str, str]:
 
 
 def _candidate_projection_from_bytes(content: bytes) -> str:
+    if hashlib.sha256(content).hexdigest() != W01_SNAPSHOT_SHA256:
+        raise AuditError("accepted W01 candidate snapshot byte digest drift")
     try:
         snapshot = json.loads(content, object_pairs_hook=_object_without_duplicate_keys)
     except (UnicodeDecodeError, json.JSONDecodeError, AuditError) as exc:
@@ -1475,18 +1480,10 @@ def _candidate_projection_from_bytes(content: bytes) -> str:
 @functools.cache
 def _accepted_w01_candidate_projection_local() -> str:
     try:
-        result = subprocess.run(
-            ["git", "show", f"{SOURCE_LOCK['w01_accepted_head']}:{W01_SNAPSHOT_PATH}"],
-            cwd=ROOT,
-            capture_output=True,
-            check=False,
-            timeout=30,
-        )
-    except (OSError, subprocess.TimeoutExpired) as exc:
-        raise AuditError("accepted W01 candidate snapshot cannot be resolved from git") from exc
-    if result.returncode != 0:
-        raise AuditError("accepted W01 candidate snapshot cannot be resolved from git")
-    return _candidate_projection_from_bytes(result.stdout)
+        content = SNAPSHOT.read_bytes()
+    except OSError as exc:
+        raise AuditError("accepted W01 candidate snapshot cannot be read from the public package") from exc
+    return _candidate_projection_from_bytes(content)
 
 
 def accepted_w01_candidate_projection_digest(collection: LiveCollection | None = None) -> str:

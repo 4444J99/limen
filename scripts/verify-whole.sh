@@ -340,4 +340,3 @@ step "Check diff hygiene"
 git diff --check -- ':(exclude)tasks.yaml' ':(exclude)tasks.yaml.lock'
 
 printf '\nWhole-system verification passed\n'
-
