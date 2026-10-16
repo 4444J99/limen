@@ -158,6 +158,13 @@ unknown ownership and owned unpublished work fail closed. A filed atom is homed,
 implemented. Reuse unchanged scoped verification; a read-only recheck must mutate nothing.
 A completed session creates no successor capsule. Handoffs retain existing task states.
 Use the established exact-head merge rail, or one `merge-drain` submission where applicable.
+The first closeout is the real one: before the session predicate, inventory hanging work
+(unmerged session PRs, landed-unreaped branches, live-checkout and installed-runtime
+currency, unfiled follow-ups) and resolve or home each item. Status words are
+evidence-bound and reported separately: "merged" (on origin/main), "live" (the live
+checkout/runtime contains it), "observed" (runtime evidence); no "verified end-to-end"
+without observed. Idempotence is two runs of the predicate, both bare exit 0. Procedure:
+`.agents/skills/closeout/SKILL.md` steps 4-7.
 After a successful session predicate, end with:
 CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items
 Nothing follows the terminal statement.
