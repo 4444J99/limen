@@ -31,7 +31,17 @@ def _load():
 
 
 def test_fast_wave_interval_reads_the_deployed_env_file(tmp_path, monkeypatch):
+    # `organ-health.py` resolves ROOT — and therefore SENSORS — at IMPORT time:
+    #     ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+    # An inherited LIMEN_ROOT pointing at a nonexistent path makes _discover_doors()
+    # see an unreadable sensor registry, which it converts to `sensors = {}`. No
+    # `diurnal` row is then discovered and `next(...)` raises StopIteration BEFORE this
+    # test's interval assertion is ever reached — the failure looks like a product
+    # defect when it is invocation configuration. Pin the root before the module loads.
+    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
     mod = _load()
+    assert mod.SENSORS.exists(), f"sensor registry missing at {mod.SENSORS}"
+
     env_file = tmp_path / "limen.env"
     env_file.write_text("export LIMEN_VITALS_SAMPLE_SECONDS=1200 # twenty minutes\n", encoding="utf-8")
     mod.ENV_FILE = env_file
