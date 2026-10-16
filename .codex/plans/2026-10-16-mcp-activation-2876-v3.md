@@ -1,0 +1,11 @@
+# Final activation route
+
+Supersedes v2's gateway restart proposal. Inspection located the existing generated management credential in the gateway's private startup log; the normal login API accepted it. The credential and session JWT stayed in memory and were never printed, copied to a credential file or committed.
+
+MCPHub's normalizer drops empty argument lists and its update validator then rejects them. The first targeted update therefore returned 400 without changing gateway state. The changed input uses the managed tool environment's Python with `-m limen_mcp.server`. The normal per-server update then succeeded and reconnected only Limen. The gateway PID and both Playwright PIDs remained unchanged. No LaunchAgent restart occurred, and v2 was not executed.
+
+The gateway's live server inventory reports connected / version 1.30.0 / 23 tools. Its new child process launches the managed installed environment. The IANVA source override and materialized settings both carry the new launch command; all other upstreams and non-server settings compare equal to retained private preimages.
+
+Final validation: the UV source override initially made the CLI dependency editable; reinstalling with `--no-sources` produced non-editable CLI and MCP packages. All 34 installed package versions match the merged lock, and all 218 first-party Python files match the merged source. A fresh targeted handoff after that packaging correction reports MCP 1.30.0 on new Limen PID 39246. The gateway PID remains 4621 and Playwright PIDs remain 4637/5077.
+
+The gateway completed MCP initialization, listed 47 aggregate tools (23 Limen), and passed the harmless `limen-get_budget_status` read. Fresh terminal and bundled desktop Codex clients each refetched plugins, reloaded MCP, discovered all four originally affected providers and passed all four authenticated reads. No model turns or endpoint overrides were used, the parent Limen token variable was unset, and neither log contains the original warning set. Sanitized measurements are in docs/receipts/2026-10-16-mcp-gateway-activation.json. Private account reads, logs and rollback preimages remain in owner-private custody. Retain the checkout and old environment.
