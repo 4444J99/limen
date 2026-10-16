@@ -543,7 +543,7 @@ def test_parallel_selection_suppresses_chronic_push_rejection(tmp_path: Path, mo
 def test_capacity_census_lists_every_paid_lane(tmp_path: Path, monkeypatch) -> None:
     for binary in ("codex", "claude", "opencode", "agy", "gemini", "jules", "ollama", "gh", "agent-dispatch"):
         path = tmp_path / binary
-        path.write_text("#!/bin/sh\nexit 0\n")
+        path.write_text('#!/bin/sh\nif [ "$1" = api ]; then echo public; fi\nexit 0\n')
         path.chmod(0o755)
     monkeypatch.setenv("PATH", str(tmp_path))
     monkeypatch.setenv("GEMINI_API_KEY", "test-key")
@@ -581,7 +581,7 @@ def test_isolated_lane_env_points_limen_root_at_worktree(tmp_path: Path, monkeyp
 
 def test_auto_lane_selector_includes_github_actions_and_blocks_oz_without_warp_key(tmp_path: Path, monkeypatch) -> None:
     gh = tmp_path / "gh"
-    gh.write_text("#!/bin/sh\nexit 0\n")
+    gh.write_text('#!/bin/sh\nif [ "$1" = api ]; then echo public; fi\nexit 0\n')
     gh.chmod(0o755)
     monkeypatch.setenv("PATH", str(tmp_path))
     monkeypatch.delenv("WARP_API_KEY", raising=False)
@@ -652,6 +652,7 @@ def test_github_actions_lane_requires_configured_workflow(tmp_path: Path, monkey
     gh = tmp_path / "gh"
     gh.write_text(
         "#!/bin/sh\n"
+        'if [ "$1" = api ]; then echo public; exit 0; fi\n'
         'if [ "$1" = workflow ] && [ "$2" = view ]; then\n'
         "  echo 'workflow missing' >&2\n"
         "  exit 1\n"
@@ -678,6 +679,7 @@ def test_github_actions_lane_uses_configured_executor_workflow(tmp_path: Path, m
     gh = tmp_path / "gh"
     gh.write_text(
         "#!/bin/sh\n"
+        'if [ "$1" = api ]; then echo public; exit 0; fi\n'
         'if [ "$1" = workflow ] && [ "$2" = view ] && [ "$3" = custom-agent.yml ]; then\n'
         "  exit 0\n"
         "fi\n"

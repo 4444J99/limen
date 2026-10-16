@@ -35,7 +35,7 @@ CLI_SRC = ROOT / "cli" / "src"
 if str(CLI_SRC) not in sys.path:
     sys.path.insert(0, str(CLI_SRC))
 
-from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY  # noqa: E402
+from limen.repository_identity import LIMEN_REPOSITORY_IDENTITY, RepositoryIdentityV1  # noqa: E402
 
 PACKAGE = ROOT / "docs/positioning/foundry/psp-c11"
 AUDIT = PACKAGE / "technical-readiness-audit.json"
@@ -43,6 +43,9 @@ SNAPSHOT = PACKAGE / "product-candidate-snapshot.json"
 CONTRACT = PACKAGE / "foundry-preflight-contract.json"
 PREFLIGHT = ROOT / "scripts/positioning-foundry-preflight.py"
 W01_SNAPSHOT_PATH = "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json"
+# Exact public snapshot bytes at SOURCE_LOCK["w01_accepted_head"]. Keep the
+# accepted evidence portable when that historical commit is absent from a clone.
+W01_SNAPSHOT_SHA256 = "af047714aded8b2560ca8563966eaa1234191d715419cf9123a04a1d01209f82"
 
 SOURCE_LOCK = {
     "w01_receipt": "https://github.com/organvm/limen/issues/2265#issuecomment-5295999920",
@@ -957,6 +960,20 @@ def _graphql_heads(
 
 
 PUBLIC_OBSERVATION_WITHDRAWALS = Path(__file__).with_name("public-observation-withdrawals.json")
+# Reviewed public transfers: REST redirects and canonical metadata resolved to
+# the same numeric repository IDs. Historical audit coordinates remain intact.
+PUBLIC_CANDIDATE_REPOSITORY_IDENTITIES = {
+    "organvm-iii-ergon/trendpulse": RepositoryIdentityV1(
+        repository_id=1_228_979_753,
+        canonical_coordinate="4444J99/trendpulse",
+        historical_aliases=("organvm-iii-ergon/trendpulse",),
+    ),
+    "organvm-iii-ergon/vulnpulse": RepositoryIdentityV1(
+        repository_id=1_229_016_238,
+        canonical_coordinate="4444J99/vulnpulse",
+        historical_aliases=("organvm-iii-ergon/vulnpulse",),
+    ),
+}
 
 
 def public_observation_withdrawals(audit: dict[str, Any]) -> set[str]:
@@ -1038,10 +1055,12 @@ def collect_public_head_observations(
     rows = [(repository, head) for repository, head in rows if repository not in withdrawn]
     selections: list[str] = []
     for index, (repository, head) in enumerate(rows):
-        owner, name = repository.split("/", 1)
+        identity = PUBLIC_CANDIDATE_REPOSITORY_IDENTITIES.get(repository)
+        coordinate = identity.canonical_coordinate if identity is not None else repository
+        owner, name = coordinate.split("/", 1)
         selections.append(
             f"r{index}:repository(owner:{json.dumps(owner)},name:{json.dumps(name)})"
-            f"{{isPrivate object(expression:{json.dumps(head)}){{... on Commit{{oid}}}}}}"
+            f"{{databaseId isPrivate object(expression:{json.dumps(head)}){{... on Commit{{oid}}}}}}"
         )
     response = _run_json(
         ["gh", "api", "graphql", "-f", "query=query{" + "".join(selections) + "}"],
@@ -1054,7 +1073,16 @@ def collect_public_head_observations(
     for index, (repository, head) in enumerate(rows):
         value = data.get(f"r{index}")
         observed = (value.get("object") or {}).get("oid") if isinstance(value, dict) else None
-        if not isinstance(value, dict) or value.get("isPrivate") is not False or observed != head:
+        identity = PUBLIC_CANDIDATE_REPOSITORY_IDENTITIES.get(repository)
+        if (
+            not isinstance(value, dict)
+            or value.get("isPrivate") is not False
+            or observed != head
+            or (
+                identity is not None
+                and (not _is_nonnegative_int(value.get("databaseId")) or value["databaseId"] != identity.repository_id)
+            )
+        ):
             raise AuditError(f"immutable public head observation failed for {repository}")
         observations[repository] = head
     return observations
@@ -1470,7 +1498,18 @@ def _exact_head_blob_location(value: Any) -> tuple[str, str, str]:
     return _evidence_location(value)
 
 
+def _bound_w01_snapshot(content: bytes) -> bytes:
+    """Reject snapshot bytes whose git blob id differs from the one bound at the rewrite."""
+    blob_id = hashlib.sha1(b"blob %d\0" % len(content) + content).hexdigest()  # noqa: S324 - git object identity
+    if blob_id != SOURCE_LOCK["w01_snapshot_blob"]:
+        raise AuditError("accepted W01 candidate snapshot blob drifted from the receipt-bound revision")
+    return content
+
+
 def _candidate_projection_from_bytes(content: bytes) -> str:
+    if hashlib.sha256(content).hexdigest() != W01_SNAPSHOT_SHA256:
+        raise AuditError("accepted W01 candidate snapshot byte digest drift")
+    content = _bound_w01_snapshot(content)
     try:
         snapshot = json.loads(content, object_pairs_hook=_object_without_duplicate_keys)
     except (UnicodeDecodeError, json.JSONDecodeError, AuditError) as exc:
@@ -1480,29 +1519,12 @@ def _candidate_projection_from_bytes(content: bytes) -> str:
     return candidate_projection_digest(snapshot)
 
 
-@functools.cache
 def _accepted_w01_candidate_projection_local() -> str:
     try:
-        result = subprocess.run(
-            ["git", "show", f"{SOURCE_LOCK['w01_snapshot_commit']}:{W01_SNAPSHOT_PATH}"],
-            cwd=ROOT,
-            capture_output=True,
-            check=False,
-            timeout=30,
-        )
-    except (OSError, subprocess.TimeoutExpired) as exc:
-        raise AuditError("accepted W01 candidate snapshot cannot be resolved from git") from exc
-    if result.returncode != 0:
-        raise AuditError("accepted W01 candidate snapshot cannot be resolved from git")
-    return _candidate_projection_from_bytes(_bound_w01_snapshot(result.stdout))
-
-
-def _bound_w01_snapshot(content: bytes) -> bytes:
-    """Reject snapshot bytes whose git blob id differs from the one bound at the rewrite."""
-    blob_id = hashlib.sha1(b"blob %d\0" % len(content) + content).hexdigest()  # noqa: S324 - git object identity
-    if blob_id != SOURCE_LOCK["w01_snapshot_blob"]:
-        raise AuditError("accepted W01 candidate snapshot blob drifted from the receipt-bound revision")
-    return content
+        content = SNAPSHOT.read_bytes()
+    except OSError as exc:
+        raise AuditError("accepted W01 candidate snapshot cannot be read from the public package") from exc
+    return _candidate_projection_from_bytes(content)
 
 
 def accepted_w01_candidate_projection_digest(collection: LiveCollection | None = None) -> str:
@@ -1514,7 +1536,7 @@ def accepted_w01_candidate_projection_digest(collection: LiveCollection | None =
         W01_SNAPSHOT_PATH,
         collection,
     )
-    return _candidate_projection_from_bytes(_bound_w01_snapshot(content))
+    return _candidate_projection_from_bytes(content)
 
 
 def _fetch_exact_head_blob(

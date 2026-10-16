@@ -108,8 +108,15 @@ def _gh(args: list[str], *, timeout: int = 90) -> str:
 def gh_json(path: str, *, paginate: bool = False, timeout: int = 90) -> Any:
     args = ["api", path]
     if paginate:
-        args.insert(1, "--paginate")
-    return json.loads(_gh(args, timeout=timeout) or "null")
+        args[1:1] = ["--paginate", "--slurp"]
+    payload = json.loads(_gh(args, timeout=timeout) or "null")
+    if paginate:
+        # gh otherwise prints adjacent JSON documents for multiple pages.
+        # Every paginated caller here consumes a list endpoint.
+        if not isinstance(payload, list) or any(not isinstance(page, list) for page in payload):
+            raise GhError(f"Incomplete paginated list: {path}")
+        return [item for page in payload for item in page]
+    return payload
 
 
 _TRANSIENT = ("resource_limits", "rate limit", "was submitted too quickly", "timed out", "timeout")
@@ -242,22 +249,91 @@ def _stable_repository_identities(*repository_groups: Any) -> list[str]:
     return [identities[key] for key in sorted(identities)]
 
 
+def _public_repository_union(*repository_groups: Any) -> list[dict[str, Any]]:
+    """Validate complete list responses and deduplicate public repositories by ID."""
+    repositories_by_id: dict[int, dict[str, Any]] = {}
+    for repositories in repository_groups:
+        if not isinstance(repositories, list):
+            raise GhError("Repository inventory is not a list")
+        for repository in repositories:
+            if not isinstance(repository, dict):
+                raise GhError("Malformed repository inventory entry")
+            if repository.get("private") is True:
+                continue
+            repo_id = repository.get("id")
+            name = repository.get("full_name")
+            stars = repository.get("stargazers_count")
+            if (
+                type(repo_id) is not int
+                or repo_id <= 0
+                or not isinstance(name, str)
+                or not name.strip()
+                or repository.get("private") is not False
+                or type(repository.get("fork")) is not bool
+                or type(stars) is not int
+                or stars < 0
+                or (repository.get("language") is not None and not isinstance(repository["language"], str))
+            ):
+                raise GhError("Incomplete public repository inventory entry")
+            repositories_by_id.setdefault(repo_id, repository)
+    return sorted(repositories_by_id.values(), key=lambda repository: repository["full_name"].casefold())
+
+
+def _collect_repository_inventory(
+    login: str, expected_personal: Any
+) -> tuple[list[dict], list[dict], list[str], set[str]]:
+    """Fail closed unless discovery and every declared public inventory are complete.
+
+    Personal repositories participate in the identity index, while ecosystem
+    aggregates retain their existing organization-only denominator.
+    """
+    if type(expected_personal) is not int or expected_personal < 0:
+        raise GhError("Incomplete personal public repository count")
+    personal = _public_repository_union(gh_json(f"users/{login}/repos?type=owner&per_page=100", paginate=True))
+    if len(personal) != expected_personal:
+        raise GhError("Incomplete personal public repository inventory")
+    memberships = gh_json(f"users/{login}/orgs?per_page=100", paginate=True)
+    if not isinstance(memberships, list) or any(
+        not isinstance(org, dict) or not isinstance(org.get("login"), str) or not org["login"].strip()
+        for org in memberships
+    ):
+        raise GhError("Incomplete public organization discovery")
+    orgs = sorted({org["login"] for org in memberships} | set(FALLBACK_ORGS))
+    groups = []
+    orgs_with_public = set()
+    for org in orgs:
+        meta = gh_json(f"orgs/{org}")
+        expected = meta.get("public_repos") if isinstance(meta, dict) else None
+        if type(expected) is not int or expected < 0:
+            raise GhError(f"Incomplete public repository count for {org}")
+        repositories = _public_repository_union(gh_json(f"orgs/{org}/repos?type=public&per_page=100", paginate=True))
+        if len(repositories) != expected:
+            raise GhError(f"Incomplete public repository inventory for {org}")
+        groups.append(repositories)
+        if repositories:
+            orgs_with_public.add(org)
+    return personal, _public_repository_union(*groups), orgs, orgs_with_public
+
+
 def collect_facts(login: str = LOGIN) -> Facts:
     """Collect every provable profile fact. Each fact degrades to omission on failure."""
     facts = Facts(login=login)
 
     # --- personal account (users/<login>) ---
     user = _try(lambda: gh_json(f"users/{login}"), {}) or {}
+    if not isinstance(user, dict):
+        user = {}
     if user:
         facts.name = str(user.get("name") or login)
-        facts.put(
-            Fact(
-                "personal_public_repos",
-                int(user.get("public_repos", 0)),
-                "live-public-gh-api",
-                f"gh api users/{login} --jq .public_repos",
+        if type(user.get("public_repos")) is int and user["public_repos"] >= 0:
+            facts.put(
+                Fact(
+                    "personal_public_repos",
+                    user["public_repos"],
+                    "live-public-gh-api",
+                    f"gh api users/{login} --jq .public_repos",
+                )
             )
-        )
         facts.put(
             Fact(
                 "followers",
@@ -270,94 +346,35 @@ def collect_facts(login: str = LOGIN) -> Facts:
         if created:
             facts.put(Fact("member_since", created, "live-public-gh-api", f"gh api users/{login} --jq .created_at"))
 
-    # The user endpoint is the public, owner-only identity denominator.  These
-    # repositories join the public index, but never the organization aggregates below.
-    personal_repositories = (
-        _try(
-            lambda: gh_json(f"users/{login}/repos?type=owner&per_page=100", paginate=True),
-            [],
+    # A successful empty organization inventory is a real zero; a failed fetch
+    # remains unknown. Never publish partial aggregates as complete observations.
+    inventory = _try(lambda: _collect_repository_inventory(login, user.get("public_repos")))
+    if inventory is not None:
+        personal_repositories, organization_repositories, orgs, orgs_with_public = inventory
+        public_repositories = _public_repository_union(personal_repositories, organization_repositories)
+        facts.public_repos = _stable_repository_identities(public_repositories)
+        originals = [repository for repository in organization_repositories if not repository["fork"]]
+        langs = Counter(repository["language"] for repository in originals if repository.get("language"))
+        orgs_q = (
+            f"gh api --paginate --slurp users/{login}/orgs?per_page=100; "
+            f"include declared FALLBACK_ORGS: {', '.join(orgs)}; "
+            "gh api orgs/<org> and gh api --paginate --slurp orgs/<org>/repos?type=public&per_page=100; "
+            "flatten pages, filter private==false, deduplicate by repository id; "
+            "require per-org counts to match .public_repos"
         )
-        or []
-    )
-
-    # --- org ecosystem: derive orgs, aggregate public repos / originals / forks / stars / langs ---
-    org_logins = _try(lambda: [o["login"] for o in gh_json(f"users/{login}/orgs")], []) or []
-    orgs = sorted(set(org_logins) | set(FALLBACK_ORGS))
-    total_public = 0
-    originals = 0
-    forks = 0
-    stars = 0
-    langs: Counter = Counter()
-    orgs_with_public: set[str] = set()
-    organization_repositories: list[dict[str, Any]] = []
-    for org in orgs:
-        meta = _try(lambda org=org: gh_json(f"orgs/{org}"))
-        if not meta:
-            continue
-        pub = int(meta.get("public_repos", 0))
-        total_public += pub
-        if pub > 0:
-            orgs_with_public.add(org)
-        repos = (
-            _try(
-                lambda org=org: gh_json(f"orgs/{org}/repos?type=public&per_page=100", paginate=True),
-                [],
-            )
-            or []
-        )
-        organization_repositories.extend(r for r in repos if isinstance(r, dict))
-        for r in repos:
-            stars += int(r.get("stargazers_count", 0))
-            if r.get("fork"):
-                forks += 1
-            else:
-                originals += 1
-                if r.get("language"):
-                    langs[r["language"]] += 1
-    facts.public_repos = _stable_repository_identities(personal_repositories, organization_repositories)
-    if orgs_with_public:
-        orgs_q = f"gh api users/{login}/orgs then sum orgs/<org>.public_repos"
-        facts.put(Fact("ecosystem_public_repos", total_public, "live-public-gh-api", orgs_q))
-        facts.put(
-            Fact(
-                "ecosystem_original_repos",
-                originals,
-                "live-public-gh-api",
-                "gh api --paginate orgs/<org>/repos?type=public | count .fork==false",
-            )
-        )
-        facts.put(
-            Fact(
-                "ecosystem_forks",
-                forks,
-                "live-public-gh-api",
-                "gh api --paginate orgs/<org>/repos?type=public | count .fork==true",
-            )
-        )
-        facts.put(
-            Fact(
+        for key, value, operation in (
+            ("ecosystem_public_repos", len(organization_repositories), "count public organization repositories"),
+            ("ecosystem_original_repos", len(originals), "count .fork==false"),
+            ("ecosystem_forks", len(organization_repositories) - len(originals), "count .fork==true"),
+            (
                 "ecosystem_stars",
-                stars,
-                "live-public-gh-api",
-                "gh api --paginate orgs/<org>/repos?type=public | sum .stargazers_count",
-            )
-        )
-        facts.put(
-            Fact(
-                "ecosystem_orgs",
-                len(orgs_with_public),
-                "live-public-gh-api",
-                f"gh api users/{login}/orgs then count orgs with public_repos>0",
-            )
-        )
-        facts.put(
-            Fact(
-                "ecosystem_classified_repos",
-                sum(langs.values()),
-                "live-public-gh-api",
-                "count original ecosystem repos with a detected primary language",
-            )
-        )
+                sum(repository["stargazers_count"] for repository in organization_repositories),
+                "sum .stargazers_count",
+            ),
+            ("ecosystem_orgs", len(orgs_with_public), "count organizations with public repositories"),
+            ("ecosystem_classified_repos", sum(langs.values()), "count originals with a primary language"),
+        ):
+            facts.put(Fact(key, value, "live-public-gh-api", f"{orgs_q}; {operation}"))
         facts.languages = langs
 
     # --- contributions ---
