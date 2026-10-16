@@ -1224,6 +1224,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "Per-gate wall-clock deadline for scoped verification (0.1–1800 seconds). All commands in a per-file gate share this one deadline; expiry terminates the complete process group and fails closed."
+  LIMEN_GATE_PYTHON:
+    default: ""
+    env: LIMEN_GATE_PYTHON
+    self_update: none
+    owner: continuity
+    note: "Interpreter the gate rail runs on (verify-scoped.sh, merge-policy.sh, and every gate command verify.py spawns). Unset, scripts/lib/gate-python.sh resolves it; verify.py then pins bare python3/python to it for the whole gate subtree so sub-gates stop re-resolving against the caller's PATH. Set it to force a specific interpreter — it is used only if it can import yaml, otherwise it is reported and ignored."
+  LIMEN_GATE_PYTHON_CANDIDATES:
+    default: "python3.13 python3 python3.12 python3.14 python3.11"
+    env: LIMEN_GATE_PYTHON_CANDIDATES
+    self_update: none
+    owner: continuity
+    note: "Space-separated interpreter names scripts/lib/gate-python.sh searches on PATH (every hit of each, in order) when LIMEN_GATE_PYTHON is unset: the first with the full gate toolchain (yaml+pytest+ruff) wins, else the first with PyYAML. Narrowing it is how tests prove the fail-toward-caution path."
   LIMEN_VERIFY_NO_DEPLOY_ESCALATION:
     default: "0"
     env: LIMEN_VERIFY_NO_DEPLOY_ESCALATION
