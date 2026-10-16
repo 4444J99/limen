@@ -1835,14 +1835,36 @@ def cmd_render(vendor: str) -> int:
         print(f"ERROR: {index_path} missing — run `index --vendor {vendor}` first", file=sys.stderr)
         return 2
     index = json.loads(index_path.read_text())
-    facets = []
+    indexed_ids = {
+        session["id"]
+        for session in index.get("sessions", [])
+        if isinstance(session, dict)
+        and isinstance(session.get("id"), str)
+        and session["id"]
+    }
+    facets_by_id = {}
+    duplicate_ids = set()
     facets_dir = vdir / "facets"
     if facets_dir.is_dir():
         for p in sorted(facets_dir.glob("*.json")):
             try:
-                facets.append(json.loads(p.read_text()))
+                facet = json.loads(p.read_text())
             except (OSError, json.JSONDecodeError):
                 print(f"WARN: unreadable facet {p.name}", file=sys.stderr)
+                continue
+            sid = facet.get("session_id") if isinstance(facet, dict) else None
+            if not isinstance(sid, str) or not sid or sid not in indexed_ids:
+                print(f"WARN: facet {p.name} has missing or unindexed session identity; excluded", file=sys.stderr)
+                continue
+            if sid in facets_by_id or sid in duplicate_ids:
+                # Conflicting files leave this session unfaceted rather than
+                # arbitrarily selecting one model estimate or counting it twice.
+                facets_by_id.pop(sid, None)
+                duplicate_ids.add(sid)
+                print(f"WARN: duplicate facet identity in {p.name}; all copies excluded", file=sys.stderr)
+                continue
+            facets_by_id[sid] = facet
+    facets = list(facets_by_id.values())
     narrative = {}
     npath = vdir / "narrative.json"
     if npath.exists():

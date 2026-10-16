@@ -403,6 +403,39 @@ def test_render_escapes_html_in_narrative(tmp_path, monkeypatch):
     assert "&lt;script&gt;" in html_text
 
 
+def test_render_excludes_stale_duplicate_and_missing_facet_identities(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(vi, "OUT_ROOT", tmp_path)
+    vdir = tmp_path / "codex"
+    facets_dir = vdir / "facets"
+    facets_dir.mkdir(parents=True)
+    (vdir / "index.json").write_text(json.dumps({"sessions": [{"id": "a"}, {"id": "b"}, {}]}))
+    (vdir / "narrative.json").write_text(json.dumps({"tldr": "Current window"}))
+    records = {
+        "a.json": {"session_id": "a"},
+        "a-duplicate.json": {"session_id": "a"},
+        "a-third.json": {"session_id": "a"},
+        "stale.json": {"session_id": "previous-window"},
+        "missing.json": {},
+        "empty.json": {"session_id": ""},
+        "b.json": {"session_id": "b", "friction_counts": {"current_label": 2}},
+    }
+    for name, record in records.items():
+        if name != "b.json":
+            record["friction_counts"] = {"excluded_label": 100}
+        (facets_dir / name).write_text(json.dumps(record))
+
+    assert vi.cmd_render("codex") == 0
+
+    html_text = (vdir / "report.html").read_text()
+    assert "Denominator: 1 faceted sessions of 3 indexed" in html_text
+    assert "2 of 3 indexed sessions were not faceted" in html_text
+    assert "<td>current_label</td><td class='num'>2</td>" in html_text
+    assert "excluded_label" not in html_text
+    warnings = capsys.readouterr().err
+    assert "duplicate facet identity" in warnings
+    assert "missing or unindexed session identity" in warnings
+
+
 def test_render_keeps_recommendations_provisional_and_labels_repeated_estimates():
     index = {
         "sessions": [{"id": "a"}, {"id": "b"}, {"id": "c"}],
