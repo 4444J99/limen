@@ -403,6 +403,46 @@ def test_render_escapes_html_in_narrative(tmp_path, monkeypatch):
     assert "&lt;script&gt;" in html_text
 
 
+def test_render_keeps_recommendations_provisional_and_labels_repeated_estimates():
+    index = {
+        "sessions": [{"id": "a"}, {"id": "b"}, {"id": "c"}],
+        "meta": {"total_in_window": 7, "shown": 3, "capped": True},
+    }
+    facets = [
+        {
+            "session_id": "a",
+            "friction_counts": {"guard_denial": 3},
+            "user_satisfaction_counts": {"likely_satisfied": 4},
+        },
+        {
+            "session_id": "b",
+            "friction_counts": {"guard_denial": 2},
+            "user_satisfaction_counts": {"likely_satisfied": 3},
+        },
+    ]
+    narrative = {
+        "at_a_glance": {"quick_wins": "Run this now"},
+        "suggestions": [{"title": "Already approved", "detail": "<script>install()</script>"}],
+    }
+
+    html_text = vi._render_html("codex", index, facets, narrative)
+
+    assert "Recommendation status: unreviewed proposals." in html_text
+    assert html_text.index("unreviewed proposals") < html_text.index("Run this now")
+    assert "Suggestions — unreviewed proposals" in html_text
+    assert "A usage report grants no standing authority" in html_text
+    assert "model-estimated label counts" in html_text
+    assert "Counts may repeat within a session and across labels" in html_text
+    assert "Denominator: 2 faceted sessions of 3 indexed (7 in-window)" in html_text
+    assert "<td>guard_denial</td><td class='num'>5</td>" in html_text
+    assert "<td>likely_satisfied</td><td class='num'>7</td>" in html_text
+    assert "<script>install()</script>" not in html_text
+    assert "&lt;script&gt;install()&lt;/script&gt;" in html_text
+    # A legacy index without population metadata must not invent a corpus size.
+    legacy_html = vi._render_html("codex", {"sessions": index["sessions"]}, facets, {})
+    assert "Denominator: 2 faceted sessions of 3 indexed (unknown in-window)" in legacy_html
+
+
 # ─── index honesty: population, cap, ordering (R3) ───────────────────
 
 

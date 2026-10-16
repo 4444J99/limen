@@ -1615,6 +1615,11 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
         f"{indexed_phrase} · {len(facets)} faceted · "
         f"{user_msgs} user messages · {tool_calls} tool calls · models: {_esc(', '.join(models) or '—')}</p></header>"
     )
+    parts.append(
+        "<p class='notice'><strong>Recommendation status: unreviewed proposals.</strong> "
+        "Review suggestions, quick wins and horizon ideas against current instructions, "
+        "scope and owning sources before adoption. A usage report grants no standing authority.</p>"
+    )
 
     glance = narrative.get("at_a_glance") or {}
     if glance:
@@ -1645,11 +1650,16 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
 
     parts.append(
         sec(
-            "Facet aggregates (deterministic)",
+            "Facet label totals",
+            "<p>Friction and satisfaction are model-estimated label counts. Counts may repeat "
+            "within a session and across labels; they are not unique-session rates or measured "
+            "satisfaction. "
+            f"Denominator: {len(facets)} faceted sessions of {n_sessions} indexed "
+            f"({_esc(imeta.get('total_in_window', 'unknown'))} in-window).</p>"
             "<div class='tables'>"
             f"<table><caption>Outcomes</caption>{_dl(agg['outcomes'])}</table>"
-            f"<table><caption>Friction</caption>{_dl(agg['friction_counts'])}</table>"
-            f"<table><caption>Satisfaction</caption>{_dl(agg['satisfaction_counts'])}</table>"
+            f"<table><caption>Friction label counts</caption>{_dl(agg['friction_counts'])}</table>"
+            f"<table><caption>Satisfaction label counts</caption>{_dl(agg['satisfaction_counts'])}</table>"
             f"<table><caption>Goal categories</caption>{_dl(agg['goal_categories'])}</table>"
             "</div>",
         )
@@ -1674,7 +1684,7 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
             f"<div class='area'><h3>{_esc(s.get('title'))}</h3><p>{_esc(s.get('detail'))}</p></div>"
             for s in suggestions
         )
-        parts.append(sec("Suggestions", body))
+        parts.append(sec("Suggestions — unreviewed proposals", body))
 
     # No silent caps: name what was NOT covered.
     missing = [
@@ -1710,6 +1720,7 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
         " margin: 0 auto; max-width: 60rem; padding: 2rem 1.25rem; }"
         "header h1 { margin: 0 0 .25rem; font-size: 1.6rem; }"
         ".meta { color: #777; margin: 0 0 1.5rem; }"
+        ".notice { border: 1px solid #8888; border-inline-start-width: .3rem; padding: .75rem; }"
         "section { margin: 1.75rem 0; }"
         "h2 { font-size: 1.15rem; border-bottom: 1px solid #8884; padding-bottom: .3rem; }"
         ".cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: .75rem; }"

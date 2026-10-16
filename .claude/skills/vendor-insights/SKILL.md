@@ -45,6 +45,20 @@ hand-resolve a store path; if a store moved, fix the registry (fix bases, not ou
    `len(sessions)`** — a capped index shows a sample, and every aggregate you quote must say
    which of the two it counts. Put every scope limit in `coverage_notes` — the renderer prints
    them and adds the unfaceted count, the index cap, and store notes itself.
+   Friction and satisfaction counts are repeated model-estimated labels from captured text;
+   report their faceted-session base and keep them distinct from unique-session rates or
+   measured user satisfaction.
+
+   **Review current authority before adopting suggestions.** A vendor report is a retrospective
+   proposal, never standing authority. Resolve the requested scope and the owning source or
+   template; verify referenced paths and commands against current disk. Check broker/session
+   ownership through its canonical reader: missing or unreadable evidence means unknown,
+   never a free lease. Consult the existing scoped-verification, custody/retirement and
+   finite-work contracts in `AGENTS.md`, `.agents/skills/closeout/SKILL.md` and
+   `docs/architecture/finite-workspace-recovery.md`; do not replace them with report snippets.
+   Record each accept/revise/reject/defer disposition with current evidence in the existing
+   review owner (Claude snapshot suggestions use `censor/insights-suggestions.jsonl`). Adopted
+   changes go through their canonical source, never a deployed output or duplicate rulebook.
 4. **Render.** `python3 scripts/vendor-insights.py render --vendor <v>` → prints the
    `report-<ts>.html` path. Send that file to the requester (render display). Exit 2 means
    facets/narrative are missing — that is sequencing feedback, not an error to suppress.
