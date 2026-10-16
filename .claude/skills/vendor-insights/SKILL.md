@@ -14,6 +14,21 @@ Vendors: `codex` · `copilot` · `opencode` · `antigravity` (alias `agy`) · `g
 Store paths live in `scripts/insight-cross-vendor-ingest.py` `VENDOR_REGISTRY` — never
 hand-resolve a store path; if a store moved, fix the registry (fix bases, not outputs).
 
+## Repository context
+
+The skill may be discovered through a link in an agent's global skills directory.
+Before running any command below, resolve the Limen repository root: use `LIMEN_ROOT`
+when set; otherwise resolve this `SKILL.md` symlink and take its fourth parent
+(`vendor-insights` → `skills` → `.claude` → repository). Validate that the root contains
+both `scripts/vendor-insights.py` and `scripts/insight-cross-vendor-ingest.py`, then run
+the commands from that root or use their absolute paths. Do not resolve `scripts/`
+against the requesting agent's current directory. These two companion scripts remain
+Limen dependencies; copying this instruction file alone does not install them.
+
+The registry honors `CLAUDE_CONFIG_DIR` and `CODEX_HOME` while retaining distinct
+legacy stores. `LIMEN_VENDOR_INSIGHTS_DIR` may select a separate private report run;
+keep output under the owning Limen ignored logs directory and preserve prior reports.
+
 ## Steps
 
 1. **Index.** `python3 scripts/vendor-insights.py index --vendor <v> [--window-days N] [--max-sessions M]`

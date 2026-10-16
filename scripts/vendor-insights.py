@@ -270,7 +270,7 @@ def _cat_claude(mod, sid: str, max_chars: int) -> str | None:
 def _codex_roots(mod) -> list[Path]:
     meta = mod.VENDOR_REGISTRY["codex"]
     roots = [Path(p) for p in meta.get("sessions_roots", [])]
-    return [r for r in roots if r.is_dir()]
+    return list({r.resolve(): r for r in roots if r.is_dir()}.values())
 
 
 def _codex_scan_file(p: Path) -> dict:
