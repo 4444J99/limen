@@ -1,29 +1,8 @@
-...........................F...........F..F                              [100%]
+.......................................F..F                              [100%]
 =================================== FAILURES ===================================
-_____________ test_fast_wave_interval_reads_the_deployed_env_file ______________
-
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-140/test_fast_wave_interval_reads_0')
-monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10bd36f20>
-
-    def test_fast_wave_interval_reads_the_deployed_env_file(tmp_path, monkeypatch):
-        mod = _load()
-        env_file = tmp_path / "limen.env"
-        env_file.write_text("export LIMEN_VITALS_SAMPLE_SECONDS=1200 # twenty minutes\n", encoding="utf-8")
-        mod.ENV_FILE = env_file
-        monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
-    
-        loop = (
-            'C_DERIVE="${LIMEN_BEAT_DERIVE:-1}"\n'
-            "python3 scripts/beat-sensors.py --run --source fast-wave --scheduled-only\n"
-        )
->       diurnal = next(row for row in mod._discover_doors(loop) if row["key"] == "diurnal")
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E       StopIteration
-
-cli/tests/test_organ_health_defect.py:44: StopIteration
 ___ test_a_fresh_keeper_stamp_over_a_recorded_memory_error_is_reported_down ____
 
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-140/test_a_fresh_keeper_stamp_over0')
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-15/test_a_fresh_keeper_stamp_over0')
 
     def test_a_fresh_keeper_stamp_over_a_recorded_memory_error_is_reported_down(tmp_path: Path) -> None:
         """Freshness says the organ ran; the recorded failure says its memory half did not.
@@ -49,7 +28,7 @@ E         + green
 cli/tests/test_organ_health_defect.py:324: AssertionError
 _________ test_a_recorded_memory_error_names_its_own_age_not_the_voice _________
 
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-140/test_a_recorded_memory_error_n0')
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-15/test_a_recorded_memory_error_n0')
 
     def test_a_recorded_memory_error_names_its_own_age_not_the_voice(tmp_path: Path) -> None:
         """The state stamp is the artifact's own clock; the suffix must not claim false immediacy."""
@@ -74,7 +53,6 @@ E         + green
 
 cli/tests/test_organ_health_defect.py:373: AssertionError
 =========================== short test summary info ============================
-FAILED cli/tests/test_organ_health_defect.py::test_fast_wave_interval_reads_the_deployed_env_file
 FAILED cli/tests/test_organ_health_defect.py::test_a_fresh_keeper_stamp_over_a_recorded_memory_error_is_reported_down
 FAILED cli/tests/test_organ_health_defect.py::test_a_recorded_memory_error_names_its_own_age_not_the_voice
-3 failed, 40 passed in 4.21s
+2 failed, 41 passed in 4.48s

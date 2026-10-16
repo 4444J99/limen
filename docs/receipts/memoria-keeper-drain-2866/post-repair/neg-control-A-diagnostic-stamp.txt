@@ -1,8 +1,8 @@
-.......F.F.F.F.FF..........F...............                              [100%]
+.......F.F.F.F.FF..........................                              [100%]
 =================================== FAILURES ===================================
 _ test_read_only_mode_leaves_protected_areas_unchanged[absent-absent---check] __
 
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-142/test_read_only_mode_leaves_pro0')
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-12/test_read_only_mode_leaves_pro0')
 flag = '--check', memstate = 'absent', health = 'absent'
 
     @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
@@ -33,17 +33,17 @@ E       AssertionError: --check mutated a protected area (mem=absent, health=abs
 E         created : ['.', 'logs', 'logs/tabularius-organ-state.json']
 E         changed : []
 E         mem new : []
-E       assert {'root': {}, ...800862, ...}}} == {'root': {'.'...800862, ...}}}
+E       assert {'root': {}, ...605257, ...}}} == {'root': {'.'...605257, ...}}}
 E         
 E         Omitting 2 identical items, use -vv to show
 E         Differing items:
-E         {'root': {}} != {'root': {'.': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792174085643420084}, 'logs': {'type': 'dir', ...ogs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 97, 'mtime_ns': 1792174085643741168, ...}}}
+E         {'root': {}} != {'root': {'.': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792175638703017160}, 'logs': {'type': 'dir', ...ogs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 97, 'mtime_ns': 1792175638703394115, ...}}}
 E         Use -v to get more diff
 
 cli/tests/test_tabularius_organ_memory.py:186: AssertionError
 _ test_read_only_mode_leaves_protected_areas_unchanged[absent-populated---check] _
 
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-142/test_read_only_mode_leaves_pro2')
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-12/test_read_only_mode_leaves_pro2')
 flag = '--check', memstate = 'populated', health = 'absent'
 
     @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
@@ -74,17 +74,17 @@ E       AssertionError: --check mutated a protected area (mem=populated, health=
 E         created : ['.', 'logs', 'logs/tabularius-organ-state.json']
 E         changed : []
 E         mem new : []
-E       assert {'root': {}, ...643088, ...}}} == {'root': {'.'...643088, ...}}}
+E       assert {'root': {}, ...805309, ...}}} == {'root': {'.'...805309, ...}}}
 E         
 E         Omitting 2 identical items, use -vv to show
 E         Differing items:
-E         {'root': {}} != {'root': {'.': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792174086168289283}, 'logs': {'type': 'dir', ...ogs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 97, 'mtime_ns': 1792174086168597700, ...}}}
+E         {'root': {}} != {'root': {'.': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792175639091730702}, 'logs': {'type': 'dir', ...ogs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 97, 'mtime_ns': 1792175639091982658, ...}}}
 E         Use -v to get more diff
 
 cli/tests/test_tabularius_organ_memory.py:186: AssertionError
 _ test_read_only_mode_leaves_protected_areas_unchanged[preexisting-absent---check] _
 
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-142/test_read_only_mode_leaves_pro4')
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-12/test_read_only_mode_leaves_pro4')
 flag = '--check', memstate = 'absent', health = 'preexisting'
 
     @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
@@ -115,17 +115,17 @@ E       AssertionError: --check mutated a protected area (mem=absent, health=pre
 E         created : []
 E         changed : ['logs/tabularius-organ-state.json']
 E         mem new : []
-E       assert {'root': {'.'...947884, ...}}} == {'root': {'.'...947884, ...}}}
+E       assert {'root': {'.'...396323, ...}}} == {'root': {'.'...396323, ...}}}
 E         
 E         Omitting 2 identical items, use -vv to show
 E         Differing items:
-E         {'root': {'.': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792174086589055301}, 'logs': {'type': 'dir', ...ogs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 61, 'mtime_ns': 1792174086589143259, ...}}} != {'root': {'.': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792174086589055301}, 'logs': {'type': 'dir', ...ogs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 97, 'mtime_ns': 1792174086788904874, ...}}}
+E         {'root': {'.': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792175639300480239}, 'logs': {'type': 'dir', ...ogs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 61, 'mtime_ns': 1792175639300550280, ...}}} != {'root': {'.': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792175639300480239}, 'logs': {'type': 'dir', ...ogs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 97, 'mtime_ns': 1792175639466428411, ...}}}
 E         Use -v to get more diff
 
 cli/tests/test_tabularius_organ_memory.py:186: AssertionError
 _ test_read_only_mode_leaves_protected_areas_unchanged[preexisting-populated---check] _
 
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-142/test_read_only_mode_leaves_pro6')
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-12/test_read_only_mode_leaves_pro6')
 flag = '--check', memstate = 'populated', health = 'preexisting'
 
     @pytest.mark.parametrize("flag", ["--check", "--dry-run"])
@@ -156,33 +156,33 @@ E       AssertionError: --check mutated a protected area (mem=populated, health=
 E         created : []
 E         changed : ['logs/tabularius-organ-state.json']
 E         mem new : []
-E       assert {'root': {'.'...710902, ...}}} == {'root': {'.'...710902, ...}}}
+E       assert {'root': {'.'...102419, ...}}} == {'root': {'.'...102419, ...}}}
 E         
 E         Omitting 2 identical items, use -vv to show
 E         Differing items:
-E         {'root': {'.': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792174087007994652}, 'logs': {'type': 'dir', ...ogs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 61, 'mtime_ns': 1792174087008059402, ...}}} != {'root': {'.': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792174087007994652}, 'logs': {'type': 'dir', ...ogs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 97, 'mtime_ns': 1792174087179875774, ...}}}
+E         {'root': {'.': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792175639669338376}, 'logs': {'type': 'dir', ...ogs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 61, 'mtime_ns': 1792175639669391250, ...}}} != {'root': {'.': {'type': 'dir', 'mode': '0o755', 'size': 96, 'mtime_ns': 1792175639669338376}, 'logs': {'type': 'dir', ...ogs/tabularius-organ-state.json': {'type': 'file', 'mode': '0o644', 'size': 97, 'mtime_ns': 1792175639837825025, ...}}}
 E         Use -v to get more diff
 
 cli/tests/test_tabularius_organ_memory.py:186: AssertionError
 ______________ test_read_only_mode_does_not_create_bare_directory ______________
 
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-142/test_read_only_mode_does_not_c0')
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-12/test_read_only_mode_does_not_c0')
 
     def test_read_only_mode_does_not_create_bare_directory(tmp_path):
         """Directory creation alone is a mutation even with no file written."""
         sb = KeeperSandbox(tmp_path, "bare-dir", memoria=False)
         sb.run("--check", expect_exit=0)
 >       assert not sb.limen_root.exists(), f"--check created {sb.limen_root}"
-E       AssertionError: --check created /private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-142/test_read_only_mode_does_not_c0/bare-dir/root
+E       AssertionError: --check created /private/tmp/pytest-of-4jp/pytest-12/test_read_only_mode_does_not_c0/bare-dir/root
 E       assert not True
 E        +  where True = exists()
-E        +    where exists = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-142/test_read_only_mode_does_not_c0/bare-dir/root').exists
-E        +      where PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-142/test_read_only_mode_does_not_c0/bare-dir/root') = <tabularius_organ_fixtures.KeeperSandbox object at 0x10bb0e270>.limen_root
+E        +    where exists = PosixPath('/private/tmp/pytest-of-4jp/pytest-12/test_read_only_mode_does_not_c0/bare-dir/root').exists
+E        +      where PosixPath('/private/tmp/pytest-of-4jp/pytest-12/test_read_only_mode_does_not_c0/bare-dir/root') = <tabularius_organ_fixtures.KeeperSandbox object at 0x10af0b230>.limen_root
 
 cli/tests/test_tabularius_organ_memory.py:201: AssertionError
 _____________ test_check_mode_write_is_independent_of_memory_state _____________
 
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-142/test_check_mode_write_is_indep0')
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-12/test_check_mode_write_is_indep0')
 
     def test_check_mode_write_is_independent_of_memory_state(tmp_path):
         """Control: the outer write is unconditional, not caused by the import failure."""
@@ -194,31 +194,10 @@ tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/p
 E       AssertionError: --check wrote a health-state file with MEMORIA disabled
 E       assert not True
 E        +  where True = exists()
-E        +    where exists = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-142/test_check_mode_write_is_indep0/control-memoria-disabled/root').exists
-E        +      where PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-142/test_check_mode_write_is_indep0/control-memoria-disabled/root') = <tabularius_organ_fixtures.KeeperSandbox object at 0x10bb207a0>.limen_root
+E        +    where exists = PosixPath('/private/tmp/pytest-of-4jp/pytest-12/test_check_mode_write_is_indep0/control-memoria-disabled/root').exists
+E        +      where PosixPath('/private/tmp/pytest-of-4jp/pytest-12/test_check_mode_write_is_indep0/control-memoria-disabled/root') = <tabularius_organ_fixtures.KeeperSandbox object at 0x10b055bf0>.limen_root
 
 cli/tests/test_tabularius_organ_memory.py:208: AssertionError
-_____________ test_fast_wave_interval_reads_the_deployed_env_file ______________
-
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-142/test_fast_wave_interval_reads_0')
-monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x10ba9de10>
-
-    def test_fast_wave_interval_reads_the_deployed_env_file(tmp_path, monkeypatch):
-        mod = _load()
-        env_file = tmp_path / "limen.env"
-        env_file.write_text("export LIMEN_VITALS_SAMPLE_SECONDS=1200 # twenty minutes\n", encoding="utf-8")
-        mod.ENV_FILE = env_file
-        monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
-    
-        loop = (
-            'C_DERIVE="${LIMEN_BEAT_DERIVE:-1}"\n'
-            "python3 scripts/beat-sensors.py --run --source fast-wave --scheduled-only\n"
-        )
->       diurnal = next(row for row in mod._discover_doors(loop) if row["key"] == "diurnal")
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E       StopIteration
-
-cli/tests/test_organ_health_defect.py:44: StopIteration
 =========================== short test summary info ============================
 FAILED cli/tests/test_tabularius_organ_memory.py::test_read_only_mode_leaves_protected_areas_unchanged[absent-absent---check]
 FAILED cli/tests/test_tabularius_organ_memory.py::test_read_only_mode_leaves_protected_areas_unchanged[absent-populated---check]
@@ -226,5 +205,4 @@ FAILED cli/tests/test_tabularius_organ_memory.py::test_read_only_mode_leaves_pro
 FAILED cli/tests/test_tabularius_organ_memory.py::test_read_only_mode_leaves_protected_areas_unchanged[preexisting-populated---check]
 FAILED cli/tests/test_tabularius_organ_memory.py::test_read_only_mode_does_not_create_bare_directory
 FAILED cli/tests/test_tabularius_organ_memory.py::test_check_mode_write_is_independent_of_memory_state
-FAILED cli/tests/test_organ_health_defect.py::test_fast_wave_interval_reads_the_deployed_env_file
-7 failed, 36 passed in 4.39s
+6 failed, 37 passed in 4.31s

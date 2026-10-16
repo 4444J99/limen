@@ -1,8 +1,8 @@
-....................FF.....F...............                              [100%]
+....................FF.....................                              [100%]
 =================================== FAILURES ===================================
 __________________________ test_memory_pass_succeeds ___________________________
 
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-143/test_memory_pass_succeeds0')
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-13/test_memory_pass_succeeds0')
 
     def test_memory_pass_succeeds(tmp_path):
         """Separate from error propagation: the memory pass must actually work.
@@ -19,7 +19,7 @@ tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/p
             f"memory pass still failing: state={state}\nstdout: {proc.stdout}\n"
             f"stderr: {proc.stderr}"
         )
-E       AssertionError: memory pass still failing: state={'updated': '2026-10-16T18:08:12Z', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection', 'memory_error': 'ImportError'}
+E       AssertionError: memory pass still failing: state={'updated': '2026-10-16T18:34:05Z', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection', 'memory_error': 'ImportError'}
 E         stdout: tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)
 E         tabularius: OK — inbox empty; local publication skipped (remote-keeper-owns-projection)
 E         
@@ -29,7 +29,7 @@ E       assert 'error' != 'error'
 cli/tests/test_tabularius_organ_memory.py:278: AssertionError
 ____________ test_valid_ticket_lifecycle_is_applied_then_idempotent ____________
 
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-143/test_valid_ticket_lifecycle_is0')
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-13/test_valid_ticket_lifecycle_is0')
 
     def test_valid_ticket_lifecycle_is_applied_then_idempotent(tmp_path):
         """The synthetic lifecycle: applied content, then no duplicate on re-run.
@@ -44,38 +44,16 @@ tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/p
 >       assert state.get("memory_applied", 0) >= 1, (
             f"pending valid ticket was not applied: state={state}\nstdout: {proc.stdout}"
         )
-E       AssertionError: pending valid ticket was not applied: state={'updated': '2026-10-16T18:08:12Z', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection', 'memory_error': 'ImportError'}
+E       AssertionError: pending valid ticket was not applied: state={'updated': '2026-10-16T18:34:05Z', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection', 'memory_error': 'ImportError'}
 E         stdout: tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)
 E         tabularius: OK — inbox empty; local publication skipped (remote-keeper-owns-projection)
 E         
 E       assert 0 >= 1
-E        +  where 0 = <built-in method get of dict object at 0x1096dd840>('memory_applied', 0)
-E        +    where <built-in method get of dict object at 0x1096dd840> = {'updated': '2026-10-16T18:08:12Z', 'pending': 0, 'applied': 0, 'rejected': 0, ...}.get
+E        +  where 0 = <built-in method get of dict object at 0x10bf215c0>('memory_applied', 0)
+E        +    where <built-in method get of dict object at 0x10bf215c0> = {'updated': '2026-10-16T18:34:05Z', 'pending': 0, 'applied': 0, 'rejected': 0, ...}.get
 
 cli/tests/test_tabularius_organ_memory.py:302: AssertionError
-_____________ test_fast_wave_interval_reads_the_deployed_env_file ______________
-
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-143/test_fast_wave_interval_reads_0')
-monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x109368de0>
-
-    def test_fast_wave_interval_reads_the_deployed_env_file(tmp_path, monkeypatch):
-        mod = _load()
-        env_file = tmp_path / "limen.env"
-        env_file.write_text("export LIMEN_VITALS_SAMPLE_SECONDS=1200 # twenty minutes\n", encoding="utf-8")
-        mod.ENV_FILE = env_file
-        monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
-    
-        loop = (
-            'C_DERIVE="${LIMEN_BEAT_DERIVE:-1}"\n'
-            "python3 scripts/beat-sensors.py --run --source fast-wave --scheduled-only\n"
-        )
->       diurnal = next(row for row in mod._discover_doors(loop) if row["key"] == "diurnal")
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E       StopIteration
-
-cli/tests/test_organ_health_defect.py:44: StopIteration
 =========================== short test summary info ============================
 FAILED cli/tests/test_tabularius_organ_memory.py::test_memory_pass_succeeds
 FAILED cli/tests/test_tabularius_organ_memory.py::test_valid_ticket_lifecycle_is_applied_then_idempotent
-FAILED cli/tests/test_organ_health_defect.py::test_fast_wave_interval_reads_the_deployed_env_file
-3 failed, 40 passed in 3.51s
+2 failed, 41 passed in 4.12s

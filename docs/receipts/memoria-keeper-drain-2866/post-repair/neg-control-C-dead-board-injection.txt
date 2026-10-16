@@ -1,8 +1,8 @@
-..................FF.......F...............                              [100%]
+..................FF.......................                              [100%]
 =================================== FAILURES ===================================
 ____________ test_memory_outcome_is_never_silently_absent[deferred] ____________
 
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-144/test_memory_outcome_is_never_s1')
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-14/test_memory_outcome_is_never_s1')
 board_mode = 'deferred'
 
     @pytest.mark.parametrize("board_mode", [None, "deferred", "processed"])
@@ -26,7 +26,7 @@ board_mode = 'deferred'
 cli/tests/test_tabularius_organ_memory.py:240: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-state = {'updated': '2026-10-16T18:08:15Z', 'pending': 0, 'applied': 0, 'rejected': 0, ...}
+state = {'updated': '2026-10-16T18:34:09Z', 'pending': 0, 'applied': 0, 'rejected': 0, ...}
 board_mode = 'deferred'
 
     def _assert_board_branch(state: dict, board_mode) -> None:
@@ -38,15 +38,15 @@ board_mode = 'deferred'
         """
         if board_mode == "deferred":
 >           assert state.get("deferred") is True, f"deferred branch not reached: {state}"
-E           AssertionError: deferred branch not reached: {'updated': '2026-10-16T18:08:15Z', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection', 'memory_pending': 1, 'memory_applied': 1, 'memory_rejected': 0}
+E           AssertionError: deferred branch not reached: {'updated': '2026-10-16T18:34:09Z', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection', 'memory_pending': 1, 'memory_applied': 1, 'memory_rejected': 0}
 E           assert None is True
-E            +  where None = <built-in method get of dict object at 0x109c5cf00>('deferred')
-E            +    where <built-in method get of dict object at 0x109c5cf00> = {'updated': '2026-10-16T18:08:15Z', 'pending': 0, 'applied': 0, 'rejected': 0, ...}.get
+E            +  where None = <built-in method get of dict object at 0x107faac00>('deferred')
+E            +    where <built-in method get of dict object at 0x107faac00> = {'updated': '2026-10-16T18:34:09Z', 'pending': 0, 'applied': 0, 'rejected': 0, ...}.get
 
 cli/tests/test_tabularius_organ_memory.py:255: AssertionError
 ___________ test_memory_outcome_is_never_silently_absent[processed] ____________
 
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-144/test_memory_outcome_is_never_s2')
+tmp_path = PosixPath('/private/tmp/pytest-of-4jp/pytest-14/test_memory_outcome_is_never_s2')
 board_mode = 'processed'
 
     @pytest.mark.parametrize("board_mode", [None, "deferred", "processed"])
@@ -70,7 +70,7 @@ board_mode = 'processed'
 cli/tests/test_tabularius_organ_memory.py:240: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-state = {'updated': '2026-10-16T18:08:16Z', 'pending': 0, 'applied': 0, 'rejected': 0, ...}
+state = {'updated': '2026-10-16T18:34:09Z', 'pending': 0, 'applied': 0, 'rejected': 0, ...}
 board_mode = 'processed'
 
     def _assert_board_branch(state: dict, board_mode) -> None:
@@ -86,35 +86,13 @@ board_mode = 'processed'
         elif board_mode == "processed":
             assert "deferred" not in state, f"processed branch not reached: {state}"
 >           assert state.get("applied") == 2, f"processed applied not injected: {state}"
-E           AssertionError: processed applied not injected: {'updated': '2026-10-16T18:08:16Z', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection', 'memory_pending': 1, 'memory_applied': 1, 'memory_rejected': 0}
+E           AssertionError: processed applied not injected: {'updated': '2026-10-16T18:34:09Z', 'pending': 0, 'applied': 0, 'rejected': 0, 'preserve_published': False, 'preserve_reason': 'remote-keeper-owns-projection', 'memory_pending': 1, 'memory_applied': 1, 'memory_rejected': 0}
 E           assert 0 == 2
-E            +  where 0 = <built-in method get of dict object at 0x1099f3040>('applied')
-E            +    where <built-in method get of dict object at 0x1099f3040> = {'updated': '2026-10-16T18:08:16Z', 'pending': 0, 'applied': 0, 'rejected': 0, ...}.get
+E            +  where 0 = <built-in method get of dict object at 0x107f4f4c0>('applied')
+E            +    where <built-in method get of dict object at 0x107f4f4c0> = {'updated': '2026-10-16T18:34:09Z', 'pending': 0, 'applied': 0, 'rejected': 0, ...}.get
 
 cli/tests/test_tabularius_organ_memory.py:259: AssertionError
-_____________ test_fast_wave_interval_reads_the_deployed_env_file ______________
-
-tmp_path = PosixPath('/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/pytest-of-4jp/pytest-144/test_fast_wave_interval_reads_0')
-monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x109953460>
-
-    def test_fast_wave_interval_reads_the_deployed_env_file(tmp_path, monkeypatch):
-        mod = _load()
-        env_file = tmp_path / "limen.env"
-        env_file.write_text("export LIMEN_VITALS_SAMPLE_SECONDS=1200 # twenty minutes\n", encoding="utf-8")
-        mod.ENV_FILE = env_file
-        monkeypatch.delenv("LIMEN_VITALS_SAMPLE_SECONDS", raising=False)
-    
-        loop = (
-            'C_DERIVE="${LIMEN_BEAT_DERIVE:-1}"\n'
-            "python3 scripts/beat-sensors.py --run --source fast-wave --scheduled-only\n"
-        )
->       diurnal = next(row for row in mod._discover_doors(loop) if row["key"] == "diurnal")
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-E       StopIteration
-
-cli/tests/test_organ_health_defect.py:44: StopIteration
 =========================== short test summary info ============================
 FAILED cli/tests/test_tabularius_organ_memory.py::test_memory_outcome_is_never_silently_absent[deferred]
 FAILED cli/tests/test_tabularius_organ_memory.py::test_memory_outcome_is_never_silently_absent[processed]
-FAILED cli/tests/test_organ_health_defect.py::test_fast_wave_interval_reads_the_deployed_env_file
-3 failed, 40 passed in 4.01s
+2 failed, 41 passed in 4.35s

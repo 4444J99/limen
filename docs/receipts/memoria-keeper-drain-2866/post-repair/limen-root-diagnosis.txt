@@ -1,0 +1,22 @@
+########## baseline (24da5bffe) ##########
+--- UNCONTROLLED: LIMEN_ROOT=/Users/4jp/Workspace/library/engine/organvm/limen (stale, nonexistent) ---
+  "ROOT": "/Users/4jp/Workspace/library/engine/organvm/limen",
+  "registry_exists": false,
+  "diurnal_discovered": false,
+  "ambient_LIMEN_ROOT": "/Users/4jp/Workspace/library/engine/organvm/limen"
+--- CONTROLLED: LIMEN_ROOT=$checkout ---
+  "ROOT": "/Users/4jp/Workspace/limen/.worktrees/baseline-paired-2866",
+  "registry_exists": true,
+  "diurnal_discovered": false,
+  "ambient_LIMEN_ROOT": "/Users/4jp/Workspace/limen/.worktrees/baseline-paired-2866"
+########## candidate (47bfb3ba8) ##########
+--- UNCONTROLLED: LIMEN_ROOT=/Users/4jp/Workspace/library/engine/organvm/limen (stale, nonexistent) ---
+  "ROOT": "/Users/4jp/Workspace/library/engine/organvm/limen",
+  "registry_exists": false,
+  "diurnal_discovered": false,
+  "ambient_LIMEN_ROOT": "/Users/4jp/Workspace/library/engine/organvm/limen"
+--- CONTROLLED: LIMEN_ROOT=$checkout ---
+  "ROOT": "/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866",
+  "registry_exists": true,
+  "diurnal_discovered": false,
+  "ambient_LIMEN_ROOT": "/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866"
