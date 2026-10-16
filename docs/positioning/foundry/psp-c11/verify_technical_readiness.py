@@ -1502,7 +1502,6 @@ def _candidate_projection_from_bytes(content: bytes) -> str:
     return candidate_projection_digest(snapshot)
 
 
-@functools.cache
 def _accepted_w01_candidate_projection_local() -> str:
     try:
         content = SNAPSHOT.read_bytes()

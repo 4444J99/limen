@@ -350,6 +350,52 @@ def test_agent_status_github_actions_includes_workflow(monkeypatch: pytest.Monke
     assert "custom-workflow.yml" in status["detail"]
 
 
+@pytest.mark.parametrize("visibility", ["private", "internal", "null", "", "public"])
+def test_actions_configured_command_cannot_mask_carrier_admission(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, visibility: str
+) -> None:
+    fake_gh = tmp_path / "gh"
+    workflow_probe = tmp_path / "workflow-probed"
+    fake_gh.write_text(
+        "#!/bin/sh\n"
+        f'if [ "$1" = api ]; then printf "%s\\n" "{visibility}"; fi\n'
+        f'if [ "$1" = workflow ]; then : > "{workflow_probe}"; fi\n'
+    )
+    fake_gh.chmod(0o755)
+    configured = tmp_path / "custom-dispatch"
+    configured.write_text("#!/bin/sh\nexit 0\n")
+    configured.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.setenv("LIMEN_GITHUB_ACTIONS_BIN", "gh")
+    monkeypatch.setenv("LIMEN_GITHUB_ACTIONS_DISPATCH_CMD", "custom-dispatch --flag")
+    monkeypatch.setenv("LIMEN_GITHUB_ACTIONS_REPO", "example/carrier")
+    monkeypatch.delenv("LIMEN_GITHUB_ACTIONS_HEALTH_REPO", raising=False)
+
+    status = agent_status("github_actions")
+
+    assert status["reachable"] is (visibility == "public")
+    assert status["command"] == ["gh"]
+    assert workflow_probe.exists() is (visibility == "public")
+    assert "configured command" not in status["detail"]
+
+
+def test_actions_configured_command_cannot_mask_missing_adapter_binary(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    configured = tmp_path / "custom-dispatch"
+    configured.write_text("#!/bin/sh\nexit 0\n")
+    configured.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path))
+    monkeypatch.setenv("LIMEN_GITHUB_ACTIONS_BIN", "gh")
+    monkeypatch.setenv("LIMEN_GITHUB_ACTIONS_DISPATCH_CMD", "custom-dispatch --flag")
+
+    status = agent_status("github_actions")
+
+    assert status["reachable"] is False
+    assert status["command"] == ["gh"]
+    assert "configured command" not in status["detail"]
+
+
 @pytest.mark.parametrize("visibility", ["private", "internal", "null", ""])
 def test_agent_status_github_actions_rejects_private_or_unknown_carrier(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, visibility: str

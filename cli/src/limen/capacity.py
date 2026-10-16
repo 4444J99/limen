@@ -290,7 +290,9 @@ def agent_status(agent: str) -> AgentStatus:
         }
 
     configured = _configured_command(agent)
-    if configured:
+    # GitHub Actions always dispatches through the attested adapter, which ignores
+    # command overrides. Its capacity must describe that same guarded carrier.
+    if configured and agent != "github_actions":
         ok, detail = _binary_status(configured[0])
         return {
             "agent": agent,
