@@ -57,7 +57,10 @@ def request_bounds(request: dict[str, Any], now: float) -> tuple[str | None, boo
 def valid_build_transition(request: dict[str, Any]) -> bool:
     try:
         task = Task.model_validate(request.get("task"))
-        validate_receipt_for_task(task, request.get("plan_receipt"))
+        plan = request.get("plan_receipt")
+        if not isinstance(plan, dict):
+            return False
+        validate_receipt_for_task(task, plan)
         return True
     except (ValueError, TypeError):
         return False
