@@ -49,6 +49,10 @@ class ImmutableRuntimeError(RuntimeError):
     """The installed host policy cannot safely own this hook event."""
 
 
+class OwnerIdentityError(ValueError):
+    """Fixed internal owner diagnostics, never text copied from hook input."""
+
+
 class HookDeadlineExceeded(BaseException):
     """Cancellation must cross lower-level OSError/Exception recovery blocks."""
 
@@ -167,7 +171,7 @@ def codex_owner_pid() -> int:
     current = os.getppid()
     table = _process_table()
     if not table:
-        raise ValueError("durable Codex owner process table is unavailable")
+        raise OwnerIdentityError("durable Codex owner process table is unavailable")
     seen: set[int] = set()
     for _ in range(32):
         if current <= 1 or current in seen:
@@ -180,7 +184,7 @@ def codex_owner_pid() -> int:
         if _is_codex_process(command):
             return current
         current = parent
-    raise ValueError("durable Codex owner ancestor cannot be proven")
+    raise OwnerIdentityError("durable Codex owner ancestor cannot be proven")
 
 
 def _turn_owner(payload: dict[str, Any]) -> str | None:
@@ -529,11 +533,12 @@ def _main(args: list[str], registered_event: str) -> int:
         event = str(payload.get("hook_event_name") or "")
         output = handle(payload)
     except (AdmissionStateError, ValueError) as exc:
-        text = (
-            _state_error_text(exc)
-            if isinstance(exc, AdmissionStateError)
-            else (f"Limen host admission hook evaluation unavailable: {type(exc).__name__}")
-        )
+        if isinstance(exc, AdmissionStateError):
+            text = _state_error_text(exc)
+        elif isinstance(exc, OwnerIdentityError):
+            text = f"Limen host admission failed closed: {exc}"
+        else:
+            text = f"Limen host admission hook evaluation unavailable: {type(exc).__name__}"
         if event == "PreToolUse" or not event:
             output = _tool_deny(text)
         else:
