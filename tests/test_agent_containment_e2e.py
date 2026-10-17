@@ -50,6 +50,7 @@ ALL_15_UNCONTAINED_SURFACES = [
     ".opencode",
 ]
 
+
 # Helper functions for receipt handling and hashing
 def compute_sha256(path: Path) -> str:
     """Compute SHA-256 of a file."""
@@ -82,7 +83,15 @@ def create_rollback_receipt(
 
 def validate_receipt_schema(receipt: dict[str, Any]) -> None:
     """Validate receipt structure against interface contract."""
-    required_keys = {"action", "path", "previous_kind", "previous_target_or_backup", "sha256", "recorded_at", "undo_command"}
+    required_keys = {
+        "action",
+        "path",
+        "previous_kind",
+        "previous_target_or_backup",
+        "sha256",
+        "recorded_at",
+        "undo_command",
+    }
     missing = required_keys - set(receipt.keys())
     if missing:
         raise ValueError(f"Receipt missing required keys: {missing}")
@@ -95,6 +104,7 @@ def validate_receipt_schema(receipt: dict[str, Any]) -> None:
 # ==============================================================================
 # Tier 1: Feature Coverage (R1 - R5)
 # ==============================================================================
+
 
 class TestTier1FeatureCoverage:
     """Tier 1: Comprehensive feature coverage for requirements R1 through R5."""
@@ -311,7 +321,9 @@ class TestTier1FeatureCoverage:
         cur.execute("PRAGMA quick_check")
         assert cur.fetchone()[0] == "ok"
         cur.execute("SELECT count(*) FROM thread_history_projection_state")
-        assert cur.fetchone()[0] == CODEX_DB_BASELINE_COUNTS["thread_history_1.sqlite"]["thread_history_projection_state"]
+        assert (
+            cur.fetchone()[0] == CODEX_DB_BASELINE_COUNTS["thread_history_1.sqlite"]["thread_history_projection_state"]
+        )
         conn.close()
 
         # Test memories_1.sqlite
@@ -344,23 +356,25 @@ class TestTier1FeatureCoverage:
 
     def test_r2_f2_5_codex_tmp_managed_store_predicates(self):
         """F2.5: Verify home-surface.yaml declares managed_store_surfaces for .codex/tmp and .codex/.tmp and retires .local/share/codex/{tmp,.tmp}."""
-        wt_hs = Path("/Users/4jp/Workspace/domus-genoma/.worktrees/contain-agent-surfaces/dot_config/domus/home-surface.yaml")
-        hs_path = wt_hs if wt_hs.exists() else Path("/Users/4jp/Workspace/domus-genoma/dot_config/domus/home-surface.yaml")
-        assert hs_path.exists()
-        content = json.loads(hs_path.read_text())
-        managed = content.get("managed_store_surfaces", [])
-        paths = [entry.get("path") for entry in managed]
-        assert ".codex/tmp" in paths
-        assert ".codex/.tmp" in paths
-        assert ".local/share/codex/tmp" not in paths
-        assert ".local/share/codex/.tmp" not in paths
+        for hs_path in (
+            Path("/Users/4jp/Workspace/domus-genoma/dot_config/domus/home-surface.yaml"),
+            Path("/Users/4jp/.config/domus/home-surface.yaml"),
+        ):
+            assert hs_path.exists()
+            content = json.loads(hs_path.read_text())
+            managed = content.get("managed_store_surfaces", [])
+            paths = [entry.get("path") for entry in managed]
+            assert ".codex/tmp" in paths
+            assert ".codex/.tmp" in paths
+            assert ".local/share/codex/tmp" not in paths
+            assert ".local/share/codex/.tmp" not in paths
 
-        # Check required retirement clauses
-        for entry in managed:
-            if entry.get("path") in (".codex/tmp", ".codex/.tmp"):
-                reqs = entry.get("retirement_requires", [])
-                assert "no-active-owner-or-process-references" in reqs
-                assert "unique-commits-refs-stashes-and-private-payload-in-custody" in reqs
+            # Check required retirement clauses
+            for entry in managed:
+                if entry.get("path") in (".codex/tmp", ".codex/.tmp"):
+                    reqs = entry.get("retirement_requires", [])
+                    assert "no-active-owner-or-process-references" in reqs
+                    assert "unique-commits-refs-stashes-and-private-payload-in-custody" in reqs
 
     def test_r2_f2_6_codex_restoration_receipt_schema(self, tmp_path):
         """F2.6: JSON restoration receipt structure validation."""
@@ -592,15 +606,27 @@ class TestTier1FeatureCoverage:
         """F5.2: Verify the list of 15 uncontained vendor surfaces is fully enumerated."""
         assert len(ALL_15_UNCONTAINED_SURFACES) == 15
         expected_set = {
-            ".copilot", ".github-copilot-cli", ".cursor", ".serena",
-            ".ollama", ".agent-browser", ".claude-server-commander",
-            ".desktop-commander-device", ".mcp-auth", ".jules", "bound",
-            ".cline", ".grokbot", "teamwork_projects", ".opencode"
+            ".copilot",
+            ".github-copilot-cli",
+            ".cursor",
+            ".serena",
+            ".ollama",
+            ".agent-browser",
+            ".claude-server-commander",
+            ".desktop-commander-device",
+            ".mcp-auth",
+            ".jules",
+            "bound",
+            ".cline",
+            ".grokbot",
+            "teamwork_projects",
+            ".opencode",
         }
         assert set(ALL_15_UNCONTAINED_SURFACES) == expected_set
 
     def test_r5_f5_3_doorway_process_probe_blocks_active_process(self):
         """F5.3: Exact process probe blocks doorway mutation if process is active."""
+
         # Simulated exact process probe: using a process known to exist (e.g. launchd or zsh) vs nonexistent
         def mock_exact_process_active(proc_name: str) -> bool:
             return proc_name in ("zsh", "python3")
@@ -642,7 +668,11 @@ class TestTier1FeatureCoverage:
         assert res.stdout.strip(), "domus-home-guard must produce JSON output"
         data = json.loads(res.stdout)
         # Verify schema validity
-        assert data.get("schema") in ("domus.home_surface_report.v1", "domus.home_surface_audit.v1", "domus.home_surface_audit.v2")
+        assert data.get("schema") in (
+            "domus.home_surface_report.v1",
+            "domus.home_surface_audit.v1",
+            "domus.home_surface_audit.v2",
+        )
         # Ensure no contract crashes/errors in runner
         assert "contract_errors" not in data or data["contract_errors"] == []
 
@@ -650,6 +680,7 @@ class TestTier1FeatureCoverage:
 # ==============================================================================
 # Tier 2: Boundary & Corner Cases
 # ==============================================================================
+
 
 class TestTier2BoundaryAndCornerCases:
     """Tier 2: Robustness against permissions, corruption, race conditions, escapes."""
@@ -798,6 +829,7 @@ class TestTier2BoundaryAndCornerCases:
 # Tier 3: Cross-Feature Combinations
 # ==============================================================================
 
+
 class TestTier3CrossFeatureCombinations:
     """Tier 3: End-to-end interactions across relinking, retirement, and validation."""
 
@@ -925,6 +957,7 @@ class TestTier3CrossFeatureCombinations:
     def test_tier3_combined_home_guard_and_agent_runtime_concordance(self):
         """Ensure all agents checked by domus-agent-runtime have corresponding home-surface rows."""
         import importlib.util
+
         runtime_script = Path("/Users/4jp/.local/libexec/domus-agent-runtime.py")
         assert runtime_script.exists()
 
@@ -942,12 +975,15 @@ class TestTier3CrossFeatureCombinations:
         for agent in ("codex", "claude", "gemini"):
             assert agent in owners or any(agent in o for o in owners)
         # opencode is either already declared in entries (post-M5) or declared in R5 uncontained surfaces (pre-M5)
-        assert ("opencode" in owners or any("opencode" in o for o in owners)) or (".opencode" in ALL_15_UNCONTAINED_SURFACES)
+        assert ("opencode" in owners or any("opencode" in o for o in owners)) or (
+            ".opencode" in ALL_15_UNCONTAINED_SURFACES
+        )
 
 
 # ==============================================================================
 # Tier 4: Real-World Application Scenarios (8 Consumers)
 # ==============================================================================
+
 
 class TestTier4RealWorldConsumerScenarios:
     """Tier 4: Verification matrix for all 8 agent consumers per Plan v2 §6."""
@@ -1066,6 +1102,7 @@ class TestTier4RealWorldConsumerScenarios:
 # Live Baseline and Admission Invariants
 # ==============================================================================
 
+
 class TestLiveSystemInvariants:
     """Live system invariant checks before and during containment rollout."""
 
@@ -1128,28 +1165,40 @@ class TestLiveSystemInvariants:
         assert reg["arbitrary_cap_applied"] is False
         assert reg["unique_skills_count"] >= 60
 
-        wt_domus = Path("/Users/4jp/Workspace/domus-genoma/.worktrees/contain-agent-surfaces")
-        domus_root = wt_domus if wt_domus.exists() else Path("/Users/4jp/Workspace/domus-genoma")
+        domus_root = Path("/Users/4jp/Workspace/domus-genoma")
         s02_text = (domus_root / "dot_agents/skills/s-02-plan/SKILL.md").read_text()
         assert "/Users/4jp/Workspace/limen/docs/plans/" in s02_text
+        assert Path("/Users/4jp/.agents/skills/s-02-plan/SKILL.md").read_text() == s02_text
 
-        # M5: All 15 vendor surfaces declared in home-surface.yaml
-        hs = json.loads((domus_root / "dot_config/domus/home-surface.yaml").read_text())
-        routed_paths = {r["path"] for r in hs["routes"]}
-        for surf in ALL_15_UNCONTAINED_SURFACES:
-            assert surf in routed_paths, f"Missing route for {surf}"
+        # M5: All 15 vendor surfaces declared in home-surface.yaml (both source and deployed)
+        for hs_file in (
+            domus_root / "dot_config/domus/home-surface.yaml",
+            Path("/Users/4jp/.config/domus/home-surface.yaml"),
+        ):
+            hs = json.loads(hs_file.read_text())
+            routed_paths = {r["path"] for r in hs["routes"]}
+            for surf in ALL_15_UNCONTAINED_SURFACES:
+                assert surf in routed_paths, f"Missing route for {surf} in {hs_file}"
 
         # Verify Claude relink receipt inode matches live runtime file and backup_inode matches backup
-        claude_receipt_path = Path("/Users/4jp/.local/state/domus/home-residue/claude-json-relink-receipt-20261017.json")
+        claude_receipt_path = Path(
+            "/Users/4jp/.local/state/domus/home-residue/claude-json-relink-receipt-20261017.json"
+        )
         assert claude_receipt_path.is_file()
         claude_receipt = json.loads(claude_receipt_path.read_text())
         assert claude_receipt["inode"] == (rt / "claude" / "legacy-home.json").stat().st_ino
         assert claude_receipt["backup_inode"] == Path(claude_receipt["backup_path"]).stat().st_ino
 
-        # Verify stale readers/writers of ~/.local/share/codex are updated to CODEX_HOME
-        regen_text = (domus_root / "dot_config/ai-context/scripts/executable_regen-session-policies").read_text()
-        snap_text = (domus_root / "dot_local/bin/executable_codex-pressure-snapshot").read_text()
-        assert ".local/share/codex" not in regen_text
-        assert ".local/share/codex" not in snap_text
+        # Verify stale readers/writers of ~/.local/share/codex are updated to CODEX_HOME in both source and live ~/.local/bin
+        for p in (
+            domus_root / "dot_config/ai-context/scripts/executable_regen-session-policies",
+            Path("/Users/4jp/.local/bin/regen-session-policies"),
+            domus_root / "dot_local/bin/executable_codex-pressure-snapshot",
+            Path("/Users/4jp/.local/bin/codex-pressure-snapshot"),
+        ):
+            assert ".local/share/codex" not in p.read_text()
 
-
+        # Verify git-tracked v2 plan and runtime mirror are in sync
+        tracked_plan = Path(__file__).resolve().parents[1] / "docs/plans/2026-10-17-unify-contain-agent-surfaces-v2.md"
+        mirror_plan = rt / "claude/plans/2026-10-17-unify-contain-agent-surfaces-v2.md"
+        assert tracked_plan.read_text() == mirror_plan.read_text()

@@ -1,7 +1,7 @@
 # Plan v2: Unify and Contain All Agent Directories & Files (Provider-Agnostic)
 
 Issue: #2848
-PR: (pending)
+PR: #2925
 
 - **Date**: 2026-10-17
 - **Slug**: `unify-contain-agent-surfaces-v2`
@@ -93,9 +93,8 @@ Achieve **verified, reversible containment** across all agent providers on this 
 
 ### Phase 1B — Custody-Stage and Verify `~/.local/share/codex` (3.29 GB, 2,688 Historical Threads)
 1. **Stage to `$LIMEN_CUSTODY_STAGING_ROOT` (`/Users/4jp/Workspace/limen/.limen-private/custody-staging`)**:
-   - Check free disk space (`df -k /Users/4jp/Workspace/limen`, currently ~17.9 GB free vs 3.29 GB tree; or stream-archive excluding the 1.32 GB `logs_2.sqlite` diagnostic log table after verifying whether `logs_2.sqlite` is required by custody policy).
    - Create a mode-`0700` run directory `$LIMEN_CUSTODY_STAGING_ROOT/codex-legacy-share-20261017T<UTC>/`.
-   - Copy/archive `state_5.sqlite` (2,688 threads), `thread_history_1.sqlite` (442 threads), `memories_1.sqlite` (247 stage1 outputs), `goals_1.sqlite` (30 goals), `history.jsonl` (1,941 lines), `sessions/`, `archived_sessions/`, `plans/`, `auth.json`, `config*.toml`, and `tmp/` / `.tmp/`.
+   - Use APFS copy-on-write clone (`cp -Rc`) on `/dev/disk3s5` (consuming **0 additional physical blocks**) to stage `state_5.sqlite` (2,688 threads), `thread_history_1.sqlite` (442 threads), `memories_1.sqlite` (247 stage1 outputs), `goals_1.sqlite` (30 goals), `history.jsonl` (1,941 lines), `sessions/`, `archived_sessions/`, `plans/`, `auth.json`, `config*.toml`, and `tmp/` / `.tmp/`.
 2. **Prove Restoration & Satisfy `managed_store_surfaces` Retirement Requirements**:
    - Verify SHA-256 manifest of all staged files and run `PRAGMA integrity_check` + row-count verification on the staged SQLite copies.
    - Check `.local/share/codex/tmp` and `.local/share/codex/.tmp` against the 4 retirement predicates in `home-surface.yaml` lines 64–84.
@@ -142,7 +141,7 @@ Achieve **verified, reversible containment** across all agent providers on this 
 - **Sympathetic**: Every mutation is now backed by live byte/SQLite measurements already gathered in this session (`~/.claude.json` byte-match confirmed; `~/.local/share/codex` 2,688-thread disjoint set identified; `chezmoi status` refreshed against `domus-genoma` `94ed4c76`).
 - **Adversarial**:
   1. *Risk*: Archiving all 3.29 GB of `~/.local/share/codex` while free disk is 17.9 GB could trip `limen.runtime_pool.v1` reserve thresholds during copy.
-     *Mitigation*: Check `domus-agent-runtime quota --json` before staging; copy SQLite databases with `sqlite3 .backup` or `cp -c` (APFS clonefile, which consumes **zero additional physical blocks** on the same APFS volume!) into `$LIMEN_CUSTODY_STAGING_ROOT`, then compute SHA-256 manifests.
+     *Mitigation*: Check `domus-agent-runtime quota --json` before staging; copy SQLite databases with `cp -Rc` (APFS clonefile, which consumes **zero additional physical blocks** on the same APFS volume!) into `$LIMEN_CUSTODY_STAGING_ROOT`, then compute SHA-256 manifests.
   2. *Risk*: A doorway symlink breaks a tool that checks `lstat()` on its `$HOME` dot-dir.
      *Mitigation*: Test each doorway one vendor at a time against the §6 Consumer Matrix and keep the pre-link state + JSON receipt for instant one-command rollback.
   3. *Risk*: Modifying `domus-genoma` conflicts with the dirty `.serena/project.yml` in the main checkout.
