@@ -836,6 +836,11 @@ def control_ref_result(
     sha: str = CONTROL_SHA,
 ) -> CommandResult | None:
     if args[1:] in {
+        ("api", "repos/organvm/limen", "--jq", ".visibility"),
+        ("api", "repos/4444J99/limen", "--jq", ".visibility"),
+    }:
+        return CommandResult(args, 0, "public\n")
+    if args[1:] in {
         ("api", "repos/organvm/limen", "--jq", ".default_branch"),
         ("api", "repos/4444J99/limen", "--jq", ".default_branch"),
     }:
@@ -966,10 +971,12 @@ def test_discovery_does_not_advertise_unreachable_auth_or_workflow(auth_rc: int,
     assert capabilities[0].reachable is False
 
 
-def _actions_adapter(runner, provider: str = "github_actions") -> GitHubWorkflowAdapter:
+def _actions_adapter(
+    runner, provider: str = "github_actions", control_repo: str = "organvm/limen"
+) -> GitHubWorkflowAdapter:
     return GitHubWorkflowAdapter(
         provider=provider,
-        control_repo="organvm/limen",
+        control_repo=control_repo,
         control_sha=CONTROL_SHA,
         control_ref="main",
         control_ref_kind="branch",
@@ -1033,12 +1040,12 @@ def exact_actions_job(
 
 def preflight_result(args: tuple[str, ...], *, private: bool = False) -> CommandResult | None:
     joined = " ".join(args)
+    if args[1:] == ("api", "repos/organvm/limen", "--jq", ".visibility"):
+        return CommandResult(args, 0, "private\n" if private else "public\n")
     if result := control_ref_result(args):
         return result
     if f"repos/organvm/limen/actions/workflows/{WORKFLOW_ID}" in args:
         return CommandResult(args, 0, json.dumps({"id": WORKFLOW_ID, "path": WORKFLOW_PATH, "state": "active"}))
-    if args[1:3] == ("api", "repos/organvm/limen"):
-        return CommandResult(args, 0, "true\n" if private else "false\n")
     if "/pulls/7" in joined:
         return CommandResult(args, 0, "2026-07-13T00:00:00Z\n")
     return None
@@ -1055,6 +1062,72 @@ def test_private_target_fails_closed_before_workflow_mutation() -> None:
     with pytest.raises(RemoteExecutionError, match="private target blocked"):
         _actions_adapter(runner).submit(request())
     assert not any(args[1:3] == ("workflow", "run") for args in calls)
+
+
+@pytest.mark.parametrize(
+    ("visibility", "returncode", "message"),
+    [
+        ("private\n", 0, "private control blocked"),
+        ("internal\n", 0, "internal control blocked"),
+        ("null\n", 0, "control visibility probe returned an invalid value"),
+        ("", 1, "control visibility probe failed"),
+    ],
+)
+def test_public_target_cannot_dispatch_on_private_or_unknown_carrier(
+    visibility: str, returncode: int, message: str
+) -> None:
+    calls: list[tuple[str, ...]] = []
+    carrier = "organvm/carrier"
+
+    def runner(argv: object, _timeout: int) -> CommandResult:
+        args = tuple(argv)  # type: ignore[arg-type]
+        calls.append(args)
+        if args[1:] == ("api", f"repos/{carrier}", "--jq", ".visibility"):
+            return CommandResult(args, returncode, visibility)
+        if f"repos/{carrier}/actions/workflows/{WORKFLOW_ID}" in args:
+            return CommandResult(args, 0, json.dumps({"id": WORKFLOW_ID, "path": WORKFLOW_PATH, "state": "active"}))
+        return preflight_result(args) or CommandResult(args, 1)
+
+    with pytest.raises(RemoteExecutionError, match=message):
+        _actions_adapter(runner, control_repo=carrier).submit(
+            request(control_repo=carrier, receipt_target=f"artifact:{carrier}:task:REMOTE-1")
+        )
+    assert ("gh", "api", "repos/organvm/limen", "--jq", ".visibility") in calls
+    assert not any(args[1:3] == ("workflow", "run") for args in calls)
+
+
+def test_public_target_and_distinct_public_carrier_pass_preflight() -> None:
+    carrier = "organvm/carrier"
+
+    def runner(argv: object, _timeout: int) -> CommandResult:
+        args = tuple(argv)  # type: ignore[arg-type]
+        if args[1:] == ("api", f"repos/{carrier}", "--jq", ".visibility"):
+            return CommandResult(args, 0, "public\n")
+        if f"repos/{carrier}/actions/workflows/{WORKFLOW_ID}" in args:
+            return CommandResult(args, 0, json.dumps({"id": WORKFLOW_ID, "path": WORKFLOW_PATH, "state": "active"}))
+        return preflight_result(args) or CommandResult(args, 1)
+
+    _actions_adapter(runner, control_repo=carrier).preflight(
+        request(control_repo=carrier, receipt_target=f"artifact:{carrier}:task:REMOTE-1")
+    )
+
+
+@pytest.mark.parametrize(("visibility", "returncode"), [("private\n", 0), ("internal\n", 0), ("null\n", 0), ("", 1)])
+def test_discovery_does_not_advertise_private_or_unknown_carrier(visibility: str, returncode: int) -> None:
+    def runner(argv: object, _timeout: int) -> CommandResult:
+        args = tuple(argv)  # type: ignore[arg-type]
+        if args[-2:] == ("--jq", ".visibility"):
+            return CommandResult(args, returncode, visibility)
+        if "auth" in args:
+            return CommandResult(args, 0)
+        raise AssertionError("discovery must stop before querying workflow capacity")
+
+    adapters, capabilities = discover_adapters(
+        vendors=(vendor(),), runner=runner, binary_finder=lambda _name: "/fixture/gh"
+    )
+    assert adapters == {}
+    assert capabilities[0].reachable is False
+    assert "control" in capabilities[0].detail
 
 
 def test_control_head_advance_during_catalog_lookup_stops_workflow_mutation() -> None:

@@ -400,6 +400,11 @@ gates:
     paths: ["scripts/check-sensitive-history-removal.py", "cli/tests/test_sensitive_history_removal.py"]
     owner: governance
     note: "Postflight custody receipts publish complete bytes atomically and cannot replace a concurrent immutable receipt."
+  prerewrite-containment-test:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_check_prerewrite_containment.py -q"
+    paths: ["scripts/check-prerewrite-containment.py", "scripts/tests/test_check_prerewrite_containment.py"]
+    owner: governance
+    note: "The pre-rewrite containment classifier holds on a synthetic two-lineage history: dropped paths and text scrubs read as purge-equivalent, rewritten-id messages as already-on-new-lineage, the ledger never carries old ids/paths/names, and only a self-upstream quarantine clears check C. The live predicate itself is host-bound (old refs + limen--private clone) and runs on the custody host, not in CI."
   closeout-evidence-test:
     command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_closeout_evidence.py cli/tests/test_verify_dispatch.py -q"
     paths: ["scripts/reconcile-closeouts.py", "scripts/tests/test_closeout_evidence.py", "scripts/verify-dispatch.py", "cli/tests/test_verify_dispatch.py", "scripts/board.py"]

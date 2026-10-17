@@ -45,6 +45,7 @@ holds the registry to the workflows and consumers; this resolver trusts a green 
 from __future__ import annotations
 
 import argparse
+import atexit
 import concurrent.futures
 import fcntl
 import json
@@ -54,6 +55,7 @@ import importlib.metadata
 import os
 import re
 import shlex
+import shutil
 import signal
 import subprocess
 import sys
@@ -540,6 +542,33 @@ def wave_interrupt_guard(cancel_event: threading.Event):
     finally:
         for signum, handler in previous_handlers.items():
             signal.signal(signum, handler)
+
+
+def install_gate_python_shim(interpreter: str) -> Path:
+    """Make bare ``python3``/``python`` in every spawned gate resolve to ``interpreter``.
+
+    Gate commands are ``bash -c`` strings that start ``python3 scripts/check-*.py`` (or call scripts that do),
+    and most import PyYAML. A bare name resolves against the caller's PATH, so a shell whose first python3
+    lacks PyYAML fails every sub-gate even though this process (which imported yaml) is fine. A directory
+    placed first on PATH pins the interpreter for the whole subtree. A symlink adds no process (Homebrew
+    publishes ``python3`` the same way, and nested verify.py runs stack these without compounding latency);
+    a venv interpreter needs an exec script instead, since a symlink elsewhere would lose its ``pyvenv.cfg``.
+    """
+
+    shim_dir = Path(tempfile.mkdtemp(prefix="limen-gate-python-"))
+    atexit.register(shutil.rmtree, shim_dir, ignore_errors=True)
+    target = Path(interpreter)
+    is_venv = any((candidate / "pyvenv.cfg").exists() for candidate in (target.parent, target.parent.parent))
+    for name in ("python3", "python"):
+        shim = shim_dir / name
+        if is_venv:
+            shim.write_text(f'#!/bin/sh\nexec {shlex.quote(interpreter)} "$@"\n')
+            shim.chmod(0o755)
+        else:
+            shim.symlink_to(interpreter)
+    os.environ["PATH"] = f"{shim_dir}{os.pathsep}{os.environ.get('PATH', '')}"
+    os.environ["LIMEN_GATE_PYTHON"] = interpreter
+    return shim_dir
 
 
 def run_command(
@@ -1032,6 +1061,7 @@ def cmd_changed(
         else:
             tiers[gate.get("tier", "cheap")].append(gate_id)
 
+    install_gate_python_shim(os.environ.get("LIMEN_GATE_PYTHON") or sys.executable)
     os.environ["PYTHONPATH"] = f"{ROOT / 'cli' / 'src'}" + (
         os.pathsep + os.environ["PYTHONPATH"] if os.environ.get("PYTHONPATH") else ""
     )

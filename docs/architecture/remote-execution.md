@@ -45,6 +45,35 @@ events contain only the provider run identity, exact target/control ref and SHAs
 verification-context digest, state, stable request ID, and receipt path. Raw predicate output,
 patches, prompts, credentials, and private paths are excluded.
 
+## Public CI and private operation
+
+The operating constraint recorded on 2026-10-16 is that private GitHub Actions
+execution is unavailable for estate work. Route eligible reusable source, tests,
+synthetic fixtures, documentation, and release builds through reviewed public
+editions on standard hosted runners. Both the workflow carrier and the target
+must be observably public before this lane advertises capacity or dispatches.
+
+A public caller does not make a private reusable workflow available. Publication
+must include the admitted implementation and its public dependency closure;
+copying a wrapper that still checks out private operational source is not a
+completed migration. Follow [the split protocol](../repo-split-protocol.md) and
+the existing estate publication policy. Preserve original private custody and
+history; do not merge that history into an independent public edition.
+
+Private operations retain their existing bounded native execution paths and
+private evidence. A private repository must not depend on hosted Actions for its
+only verification or deployment path. Establish a working replacement and
+exact-revision evidence before changing required checks or retiring a workflow;
+this directive does not itself weaken protection or manufacture successful
+statuses. No new paid service or runner enrollment is implied.
+
+Report source validation and live operational validation separately.
+`LIMEN_VERIFY_LIVE=0` selects source verification;
+`LIMEN_VERIFY_LIVE=1` also requires live observations and preserves their failure
+codes. A skipped live probe, a missing run, a readable workflow, or a public
+visibility setting is not execution success. Completion binds the actual
+predicate and result to the exact accepted commit and its public/private edition.
+
 ## Current external capability gate
 
 Private targets fail closed before workflow dispatch because this first contract has no live,

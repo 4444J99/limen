@@ -49,23 +49,11 @@ contracts; everything internal loads at runtime from a Cloudflare Worker (or the
 Keep the lifecycle + persona-sanction semantics intact and any of Firebase/Cloud
 Run/Next.js/FastAPI can be swapped.
 
-**Components** (each owns its remaining work — see [Closeout Definition](#closeout-definition)):
+**Components:** one directory per component (`cli/`, `web/api/`, `web/worker/`, `web/app/`, `mcp/`, `ianva/`, `moneta/`, `spec/contracts/`, `scripts/`, `organs/`, `apps/`, `studium/`, `censor/`); each owns its remaining work (see [Closeout Definition](#closeout-definition)) and its README/manifest is the build reference. Gotchas the tree cannot tell you:
 
-| Path | What it is | Build/run |
-|------|-----------|-----------|
-| `cli/` | The `limen` CLI (`limen.cli:main`, Click). Core verbs: `dispatch`, `release-stale`, `doctor`, `qa`, `status`, `harvest`, `streams`, plus the `conduct` group (`limen init` is retired — fails closed; the full verb/flag table lives in `README.md`). Logic in `dispatch.py`, `harvest.py`, `capacity.py`, `model_selection.py`, `converge.py`; data shapes in `models.py`; YAML I/O in `io.py`. The autonomic institution lives under `cli/src/limen/vigilia/`. | `pip install -e 'cli[test]'`; tests in `cli/tests/` |
-| `web/api/` | FastAPI runtime adapter (`main.py`). Same HTTP contract as the Worker. | `uvicorn main:app` / Docker; tests in `web/api/tests/` |
-| `web/worker/` | Cloudflare Worker — the **live** runtime, GitHub-Contents storage. Deploys on-demand via wrangler (not on merge). | `npm run dev` / `npm run deploy`; lint `npm run check` |
-| `web/app/` | Next.js dashboard (static export → Cloudflare Pages `limen-dashboard.pages.dev`; the Firebase Hosting step is dormant — its GCP credential exists nowhere, road-not-taken). Surfaces `/` (owner), `/qa`, `/client`, `/public`. | `npm run dev`; `npm run build` (prebuild generates static data + validates surfaces) |
-| `mcp/` | MCP adapter exposing the same authenticated conduct protocol and task-compatibility events (`mcp/src/limen_mcp/server.py`). | `pip install -e mcp/` |
-| `ianva/` | MCP doorway/aggregator package. | `pip install -e ianva/` |
-| `moneta/` | **MONETA** — sovereign Bitcoin licence mint, no processor in the path (see `moneta/README.md`). Gotcha: unconfigured it *pools* demand as `reserved` orders (the valve) and auto-opens them the moment a receive address is set. | `cd moneta && npm test` |
-| `spec/contracts/` (incl. `spec/contracts/conduct/`) | Portable JSON Schemas the generated surface contracts must satisfy. | `node scripts/validate-contract-schemas.mjs` |
-| `scripts/` (~420 files) | The operational fleet: `metabolize.sh`/`heartbeat-loop.sh` (the beat), `verify-whole.sh` (whole-system predicate), `merge-policy.sh` (merge decision), `organ-health.py` (liveness), `creds-hydrate.py` (credential organ), plus per-organ generators. | run directly |
-| `organs/`, `organ-ladder.json`, `pillars.yaml`, `his-hand-levers.json` | Declarative registries: the self-* organ ladder, platform pillars, and the owned human-gated lever registry. | data files |
-| `apps/` | Product applications and migration pointers. `apps/danse/README.md` points to Danse's canonical external source; its duplicate local source and instructions were retired. | per-app |
-| `studium/` | The study/publishing estate (essays, film, music, rubric, ledger) — the repo's largest component by file count; declarative + content, no build gate. | data/content files |
-| `censor/` | Insight→correction lineage: `censor/precedents.jsonl` is the precedent registry "the registry owns the answer" queries; mirrored to `censor`-labelled issues by `scripts/sync-censor-issues.py`. | data files |
+- `limen init` is retired and fails closed; the live verb/flag table is `README.md`.
+- **MONETA** unconfigured *pools* demand as `reserved` orders (the valve) and auto-opens them the moment a receive address is set.
+- The dashboard deploys to Cloudflare Pages; the Firebase Hosting step is dormant (its GCP credential exists nowhere). `web/worker/` is the live runtime but deploys on-demand via wrangler, not on merge.
 
 **Storage modes** (`io.py`): local files are development projections; the authenticated Worker
 plus GitHub Contents projection is the durable hosted keeper. Agents never treat a local
@@ -75,9 +63,6 @@ plus GitHub Contents projection is the durable hosted keeper. Agents never treat
 **Common commands** (beyond the [CI Gate Matrix](#worktree-isolation--ci-gate-matrix)):
 
 ```bash
-python -m pytest web/api/tests cli/tests -q          # full test suite
-python -m pytest cli/tests/test_dispatch.py -q       # one test file
-python -m pytest cli/tests/test_dispatch.py::test_x  # one test
 python3 scripts/check-ruff-pin.py && python3 -m ruff check cli/src cli/tests web/api mcp ianva  # lint (config: root .ruff.toml — py311, line-length 120; version pin: cli/pyproject.toml [test])
 scripts/verify-whole.sh                              # whole-system predicate (exit 0 ⟺ green)
 limen dispatch --agent jules         # dry-run preview; add --live to dispatch for real
@@ -173,6 +158,13 @@ unknown ownership and owned unpublished work fail closed. A filed atom is homed,
 implemented. Reuse unchanged scoped verification; a read-only recheck must mutate nothing.
 A completed session creates no successor capsule. Handoffs retain existing task states.
 Use the established exact-head merge rail, or one `merge-drain` submission where applicable.
+The first closeout is the real one: before the session predicate, inventory hanging work
+(unmerged session PRs, landed-unreaped branches, live-checkout and installed-runtime
+currency, unfiled follow-ups) and resolve or home each item. Status words are
+evidence-bound and reported separately: "merged" (on origin/main), "live" (the live
+checkout/runtime contains it), "observed" (runtime evidence); no "verified end-to-end"
+without observed. Idempotence is two runs of the predicate, both bare exit 0. Procedure:
+`.agents/skills/closeout/SKILL.md` steps 4-7.
 After a successful session predicate, end with:
 CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items
 Nothing follows the terminal statement.
@@ -221,62 +213,10 @@ Do **not** declare work "done" or "fully done" until verified end-to-end:
 
 ## Data Grounding
 
-Before drawing ANY conclusion from a dataset — a message export, a mail archive, a review window,
-a log trawl — establish the ground truth of the *input* first (case histories behind every rule
-here: [`docs/data-grounding-precedents.md`](docs/data-grounding-precedents.md)):
-
-- **Enumerate the CHANNELS before analyzing any one of them.** A missing channel does not widen
-  the error bars — it **inverts the conclusion's sign**. Before concluding anything about an
-  interaction, a relationship, or a sequence of events, list every channel that could carry it
-  (text messages, voice/video calls, a second messaging app, email, transfers, in-person) and
-  state in the output which you queried and which you did not (precedent P1). **No scope,
-  window, or count check catches this**, because every count *within* the queried channel was
-  correct — which is why channel enumeration precedes all of them.
-- **State the scope up front, in the output**: the exact date/window boundaries, the direction of
-  the records (sent AND received? one side only?), any export filters, and the **total record
-  count** — before the first conclusion, so a scope error surfaces immediately.
-- **Window = the last human review point, never the last automated run.** An automation's
-  timestamp is not evidence a human saw anything.
-- **Suspicious-count self-check**: if a count looks too low or too high against the requester's
-  stated expectation or the surrounding evidence, treat that as a data-scope bug in YOUR input
-  until proven otherwise — re-derive it by a second independent method before presenting.
-- **When a file could be a queue or a record, assume RECORD** — verify live sent-state/channel
-  state before acting on a file's title or presence.
-- **A conversation corpus records SPEECH ACTS, not EVENTS.** "I sent you $150" is evidence that a
-  sentence was typed. Ideas floated, contracts drafted, plans proposed, dates agreed and amounts
-  negotiated are *conversation* — most are never executed. A claim of the form "X happened"
-  sourced only from message text is **asserted-in-conversation**, never **occurred**, unless a
-  NON-conversational channel corroborates it: commits, transactions, calendar, filesystem
-  artifacts, or the operator. Mark the distinction in the output (precedent P2).
-- **A window is not the corpus — never state a sample's finding in the corpus's language.** Report
-  the denominator you actually read, next to the denominator that exists, every time. The failure
-  is silent and it scales (precedent P3). If the
-  full extent is unknown, that is itself the first finding — establish it before analyzing.
-- **Corpus retrieval fails silently and looks like absence.** Before concluding a corpus holds
-  nothing about a subject, verify the resolver reached a real store: `python3
-  scripts/corpus_resolve.py` must name a populated home. The estate has now twice reported "no
-  populated corpus" with hundreds of MB on disk (registry header, and again 2026-07-31 from a
-  relocated store) — "I found nothing" and "I read nothing" are indistinguishable in the output.
-- **On a "since we last reviewed" ask, the PRIOR SESSIONS are one of the channels — and their
-  findings live in the assistant's prose, not in their tool results.** Reconstructing the watermark
-  from the earlier session's *user prompts* is under-reading it. (2026-08-07: a Charles review did
-  exactly that, then reported "Instagram was never read — no export on disk." It had been read, live
-  via the Chrome bridge, in that same prior session; the four-phase relationship arc, the lifetime
-  money total, and a decisive verbatim exchange were all already established there and had to be
-  recovered from the transcript after the operator said "a lot happened in the previous sessions.")
-  Browser-read evidence leaves **no artifact on disk** — it survives as screenshots, so grep the
-  assistant `text` blocks. Absence of a file is not absence of a reading. Locate the prior work
-  (`grep -rli <subject> .agent-runtime/*/projects/*/*.jsonl`), inherit its findings **with
-  provenance**, then state only what is new — and write the result to a durable artifact so the next
-  session never pays this cost again.
-- **A binary or attachment-backed event is invisible to a text dump, and reads as "it didn't
-  happen."** Rendering a thread by its text column silently drops every non-text event. (2026-08-07,
-  same review: two Apple Cash transfers rendered as `[media]` placeholders and were reported as "no
-  money moved in this window" — they had moved, mid-call, six days after the operator said "dont ask
-  me for money ever again," which was the single most load-bearing fact in the window.) In
-  `chat.db`, payments are `message.balloon_bundle_id LIKE '%PeerPayment%'` with the amount inside
-  `payload_data`; enumerate the distinct `balloon_bundle_id` values before trusting any dump, and
-  never conclude "no X occurred" from a channel rendered in one modality.
+Before drawing any conclusion from a dataset (a message export, a mail archive, `chat.db`, a review window, a log
+trawl), load the `data-grounding` skill (`.claude/skills/data-grounding/SKILL.md`): enumerate every channel before
+analyzing one, state scope and denominators in the output, verify corpus retrieval reached a real store, and treat
+conversation text as speech acts, never events. Case histories: [`docs/data-grounding-precedents.md`](docs/data-grounding-precedents.md).
 
 ## Edits Policy
 

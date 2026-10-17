@@ -26,7 +26,8 @@ def test_lifecycle_registry_offline_predicate_is_green() -> None:
     )
 
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "literal debt=25" in result.stdout
+    literal_debt = sum(yaml.safe_load(REGISTRY.read_text())["literal_baseline"].values())
+    assert f"literal debt={literal_debt}" in result.stdout
 
 
 def test_lifecycle_capabilities_and_draft_owner_are_declared() -> None:
@@ -158,7 +159,7 @@ def test_cohort_precedence_rejects_duplicate_entries() -> None:
 def test_per_disposition_literal_baseline_detects_swapped_literal() -> None:
     module = _load_check_module()
     registry = yaml.safe_load(REGISTRY.read_text())
-    registry["literal_baseline_by_disposition"]["scripts/merge-drain.py"]["lifecycle:delivery"] = 1
+    registry["literal_baseline_by_disposition"]["scripts/merge-drain.py"]["lifecycle:delivery"] += 1
 
     module.validate_consumers(registry, set(registry["dispositions"]))
 
