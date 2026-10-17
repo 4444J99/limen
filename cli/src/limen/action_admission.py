@@ -125,7 +125,18 @@ _GIT_ADMIN_ENV = frozenset(
     }
 )
 _SANCTIONED_LIMEN = frozenset(
-    {"channels", "conduct", "dispatch", "fanout", "harvest", "host-admission", "progress", "status", "workstream"}
+    {
+        "channels",
+        "conduct",
+        "dispatch",
+        "fanout",
+        "harvest",
+        "host-admission",
+        "progress",
+        "shared-context",
+        "status",
+        "workstream",
+    }
 )
 _SANCTIONED_SCRIPTS = frozenset(
     {
@@ -428,6 +439,10 @@ def classify_bash(command: str) -> Action:
         return Action("deny", "empty-command")
     if saw_output:
         return Action("workspace_write", "shell-output-redirection")
+    if any(
+        Path(token).name in {"domus-shared-context", "executable_domus-shared-context"} for token in command_tokens[:2]
+    ):
+        return Action("shared_context")
     if _sanctioned_control(command_tokens):
         return Action("sanctioned_control")
     if _guarded_heavy(command_tokens):
