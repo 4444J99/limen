@@ -39,10 +39,18 @@ VERBOSITY="-v"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -t|--tier)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: Option '$1' requires an argument." >&2
+        exit 1
+      fi
       TIER="$2"
       shift 2
       ;;
     -k)
+      if [[ $# -lt 2 ]]; then
+        echo "Error: Option '$1' requires an argument." >&2
+        exit 1
+      fi
       KEYWORD="$2"
       shift 2
       ;;
@@ -105,8 +113,8 @@ if [[ -n "${TARGET_EXPR}" ]]; then
 fi
 
 cd "${LIMEN_ROOT}"
-pytest "${PYTEST_ARGS[@]}"
-EXIT_CODE=$?
+EXIT_CODE=0
+pytest "${PYTEST_ARGS[@]}" || EXIT_CODE=$?
 
 echo "========================================================================"
 if [[ ${EXIT_CODE} -eq 0 ]]; then
@@ -117,3 +125,4 @@ fi
 echo "========================================================================"
 
 exit ${EXIT_CODE}
+
