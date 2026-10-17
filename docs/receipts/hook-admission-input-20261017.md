@@ -130,3 +130,19 @@ verification belongs to #2886 and this draft; native trust review, two fresh
 sessions and the observation threshold belong to the hook-estate acceptance
 owner. Retain both checkouts. There is no passing full-scope or merge receipt,
 and this checkpoint does not reset the attempt or cumulative allowance.
+
+## Human-authorized finishline continuation
+
+The human reopened this outcome at 16:54 UTC. The #2886 fixture race was reproduced
+deterministically with a 250 ms cold-start delay: the existing 200 ms deadline
+expired before its descendant existed. The cleanup case now starts a real owned
+process group, waits at most five seconds for the child to install its signal
+handler and write readiness, then exercises the actual monitor with the same
+200 ms deadline. It asserts root and descendant termination before fallback
+fixture cleanup. The separate cold-start gate still tests timeout from spawn.
+Production timeout, output and process-group policies are unchanged.
+
+The scheduling fixture suite passed every case with the cold-start delay in
+place. One intermediate run reported an invalid-byte output-limit failure; a
+bounded diagnostic was added and the final run passed that case too. This is
+not a claim to have diagnosed or fixed an unrelated intermittent output case.
