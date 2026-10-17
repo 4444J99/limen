@@ -717,6 +717,54 @@ def live_label_metadata_drift(
 
 
 
+def _remaining_open_pr_nodes(repository: str, cursor: object, deadline: float) -> list[Any] | None:
+    """Follow one repository's open-PR search past its first 100 results, cursor by cursor.
+
+    The 1,000-result search cap bounds the walk to ten pages; the caller still reconciles the
+    identity count against issueCount, so a page dropped here fails closed rather than undercounting.
+    """
+    nodes: list[Any] = []
+    for _page in range(10):
+        if not isinstance(cursor, str) or not cursor:
+            fail("D", f"live open-PR census has no usable page cursor for {repository}")
+            return None
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            fail("D", "live open-PR census exceeded its aggregate probe deadline")
+            return None
+        query = (
+            f'query {{ search(query: "repo:{repository} is:pr is:open", type: ISSUE, first: 100, '
+            f"after: {json.dumps(cursor)}) {{ "
+            "nodes { ... on PullRequest { repository { nameWithOwner } number } } "
+            "pageInfo { hasNextPage endCursor } } }"
+        )
+        try:
+            result = subprocess.run(
+                ["gh", "api", "graphql", "-f", f"query={query}"],
+                capture_output=True,
+                text=True,
+                timeout=max(1, min(60, int(remaining))),
+                check=False,
+            )
+            payload = json.loads(result.stdout) if result.returncode == 0 else None
+        except (OSError, subprocess.SubprocessError, ValueError) as exc:
+            fail("D", f"live open-PR census page query failed: {type(exc).__name__}")
+            return None
+        data = payload.get("data") if isinstance(payload, dict) else None
+        search = data.get("search") if isinstance(data, dict) else None
+        page_nodes = search.get("nodes") if isinstance(search, dict) else None
+        page_info = search.get("pageInfo") if isinstance(search, dict) else None
+        if not isinstance(page_nodes, list) or not isinstance(page_info, dict):
+            fail("D", f"live open-PR census page query returned no nodes or page info for {repository}")
+            return None
+        nodes.extend(page_nodes)
+        if page_info.get("hasNextPage") is not True:
+            return nodes
+        cursor = page_info.get("endCursor")
+    fail("D", f"live open-PR census repository exceeded the ten-page search bound: {repository}")
+    return None
+
+
 def live_open_pr_identities(repositories: set[str] | None = None) -> set[str] | None:
     """Return live open-PR identities through bounded batched GraphQL searches."""
     repositories = _complete_estate_repositories() if repositories is None else repositories
@@ -789,11 +837,10 @@ def live_open_pr_identities(repositories: set[str] | None = None) -> set[str] | 
                 fail("D", f"live open-PR census query returned no page info for {repository}")
                 return None
             if page_info.get("hasNextPage") is True:
-                fail(
-                    "D",
-                    f"live open-PR census batch requires pagination beyond the 100-result bound: {repository}",
-                )
-                return None
+                more = _remaining_open_pr_nodes(repository, page_info.get("endCursor"), deadline)
+                if more is None:
+                    return None
+                nodes = [*nodes, *more]
             repository_identities: set[str] = set()
             for node in nodes:
                 node_repository = node.get("repository") if isinstance(node, dict) else None

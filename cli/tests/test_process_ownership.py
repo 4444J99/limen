@@ -187,6 +187,55 @@ def test_native_witness_reads_header_only_and_checks_child_lineage(tmp_path):
         ownership.transcript_witness(path)
 
 
+def test_native_witness_accepts_thread_spawn_parent_without_forked_from(tmp_path):
+    sessions = tmp_path / "sessions" / "2026" / "10" / "17"
+    sessions.mkdir(parents=True)
+    child = {
+        "type": "session_meta",
+        "payload": {
+            "id": "child",
+            "session_id": "root",
+            "source": {"subagent": {"thread_spawn": {"parent_thread_id": "root"}}},
+        },
+    }
+    root = {"type": "session_meta", "payload": {"id": "root", "session_id": "root"}}
+    (sessions / "rollout-child.jsonl").write_text(json.dumps(child) + "\n")
+    (sessions / "rollout-root.jsonl").write_text(json.dumps(root) + "\n")
+
+    witnesses = ownership.read_native_witnesses(tmp_path, {"child"})
+
+    assert witnesses["child"]["parent_thread_id"] == "root"
+    assert witnesses["child"]["session_id"] == witnesses["root"]["session_id"]
+
+
+@pytest.mark.parametrize(
+    "root_header",
+    [
+        None,
+        {"type": "session_meta", "payload": {"id": "root", "session_id": "another-session"}},
+    ],
+    ids=["missing-parent", "cross-session-parent"],
+)
+def test_native_witness_rejects_missing_or_cross_session_parent(tmp_path, root_header):
+    sessions = tmp_path / "sessions" / "2026" / "10" / "17"
+    sessions.mkdir(parents=True)
+    child = {
+        "type": "session_meta",
+        "payload": {
+            "id": "child",
+            "session_id": "root",
+            "forked_from_id": "root",
+            "source": {"subagent": {"thread_spawn": {"parent_thread_id": "root"}}},
+        },
+    }
+    (sessions / "rollout-child.jsonl").write_text(json.dumps(child) + "\n")
+    if root_header:
+        (sessions / "rollout-root.jsonl").write_text(json.dumps(root_header) + "\n")
+
+    with pytest.raises(ownership.ObservationUnavailable, match="native_ancestry_invalid"):
+        ownership.read_native_witnesses(tmp_path, {"child"})
+
+
 def test_snapshot_rejects_permission_limited_census(monkeypatch, tmp_path):
     from unittest.mock import MagicMock
 

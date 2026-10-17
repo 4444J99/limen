@@ -46,11 +46,16 @@ from _pr_scan import (  # noqa: E402
 OWNERS = [o.strip() for o in os.environ.get("LIMEN_OWNERS", "organvm,4444J99").split(",") if o.strip()]
 ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parent.parent))
 LOG = ROOT / "logs" / "merge-drain.log"
-POLICY = ROOT / "scripts" / "merge-policy.sh"
+# The policy is this script's sibling, never a path under $LIMEN_ROOT: that variable names the state root
+# (logs/), and a stale or relocated value made `bash <missing>/merge-policy.sh` exit 127 under the drain
+# while the same call bare exited with the real verdict (issue #2895 defect A).
+SCRIPTS_DIR = Path(__file__).resolve().parent
+POLICY = SCRIPTS_DIR / "merge-policy.sh"
 CI_RED_LEDGER = ROOT / "logs" / "merge-drain-ci-red-ledger.json"
+DELIVERY_LABEL = "lifecycle:delivery"
 LIFECYCLE_LABELS = frozenset(
     {
-        "lifecycle:delivery",
+        DELIVERY_LABEL,
         "lifecycle:preservation",
         "lifecycle:active-human",
         "lifecycle:blocked",
@@ -130,6 +135,63 @@ def lifecycle_disposition(labels) -> str | None:
     names = {str(label.get("name") if isinstance(label, dict) else label).strip().lower() for label in (labels or [])}
     matches = names & LIFECYCLE_LABELS
     return next(iter(matches)) if len(matches) == 1 else None
+
+
+def ensure_delivery_classification(repo: str, num: int, expected_head: str) -> str | None:
+    """Record explicit delivery intent, preserving holds and verifying the exact head.
+
+    Only submit_one calls this mutating handoff. Fleet assessment remains read-only.
+    A classification is intent, never evidence that the existing merge gates passed.
+    """
+
+    def inspect() -> tuple[str | None, bool]:
+        result = gh(
+            ["pr", "view", str(num), "-R", repo, "--json", "state,isDraft,headRefOid,labels,body"],
+            timeout=40,
+        )
+        if result.returncode:
+            return "LIFECYCLE-UNAVAILABLE", False
+        data = json.loads(result.stdout)
+        if not isinstance(data, dict) or not isinstance(data.get("labels"), list):
+            return "LIFECYCLE-UNAVAILABLE", False
+        if data.get("headRefOid") != expected_head:
+            return "HEAD-CHANGED", False
+        if data.get("state") != "OPEN":
+            return "PR-NOT-OPEN", False
+        if data.get("isDraft") is not False:
+            return "DRAFT-OR-UNMEASURED", False
+        names = set()
+        for label in data["labels"]:
+            if not isinstance(label, dict) or not isinstance(label.get("name"), str):
+                return "LIFECYCLE-UNAVAILABLE", False
+            names.add(label["name"].strip().lower())
+        lifecycle = {name for name in names if name.startswith("lifecycle:")}
+        if "custody:preservation" in names or (
+            "Lifecycle preservation PR opened by `scripts/worktree-pr-receipts.py`." in (data.get("body") or "")
+        ):
+            return "PRESERVATION", False
+        if lifecycle and lifecycle != {DELIVERY_LABEL}:
+            disposition = lifecycle_disposition(data["labels"])
+            reason = (
+                disposition.removeprefix("lifecycle:").upper()
+                if len(lifecycle) == 1 and disposition
+                else "LIFECYCLE-UNKNOWN"
+            )
+            return reason, False
+        return None, lifecycle == {DELIVERY_LABEL}
+
+    try:
+        reason, classified = inspect()
+        if reason or classified:
+            return reason
+        result = gh(["pr", "edit", str(num), "-R", repo, "--add-label", DELIVERY_LABEL], timeout=40)
+        if result.returncode:
+            return "LIFECYCLE-CLASSIFICATION-FAILED"
+        # A concurrent hold, draft conversion or new head must stop this submission.
+        reason, classified = inspect()
+        return reason if reason else (None if classified else "LIFECYCLE-NOT-PERSISTED")
+    except (OSError, ValueError, TypeError, subprocess.TimeoutExpired):
+        return "LIFECYCLE-UNAVAILABLE"
 
 
 def _no_required_policy(repo: str, branch: str | None) -> bool:
@@ -310,7 +372,7 @@ def assess(rn):
             str(label.get("name") if isinstance(label, dict) else label).strip().lower() in LIFECYCLE_LABELS
             for label in (d.get("labels") or [])
         )
-        delivery = disposition == "lifecycle:delivery"
+        delivery = disposition == DELIVERY_LABEL
         if declared_lifecycle and not delivery:
             status = disposition.removeprefix("lifecycle:").upper() if disposition else "LIFECYCLE-UNKNOWN"
             return (repo, num, status)
@@ -426,6 +488,9 @@ def _queue_state(repo, num):
 
 def _merge_policy(repo, num, expected_head):
     """Re-run the one authority immediately before mutation and return its exact mode."""
+    if not POLICY.is_file():
+        print("MERGE-DIAGNOSTIC: stage=policy reason=policy-missing")
+        return None
     try:
         r = subprocess.run(
             [
@@ -448,13 +513,16 @@ def _merge_policy(repo, num, expected_head):
         return None
     if r.returncode != 0:
         # Emit only the policy vocabulary, never arbitrary provider output or secrets.
+        # The policy prints its VERDICT on stdout, but its GitHub lookup-failure verdicts go to stderr;
+        # read both so a real HOLD/BLOCKED is never reported as unknown.
         verdict = "unknown"
-        for line in r.stdout.splitlines():
+        for line in (r.stdout + "\n" + r.stderr).splitlines():
             if line.startswith("VERDICT: "):
                 candidate = line.removeprefix("VERDICT: ").split(maxsplit=1)
                 if candidate and candidate[0] in {"HOLD", "BLOCKED"}:
                     verdict = candidate[0]
-        print(f"MERGE-DIAGNOSTIC: stage=policy exit={r.returncode} verdict={verdict}")
+        suffix = " reason=command-not-runnable" if r.returncode in (126, 127) and verdict == "unknown" else ""
+        print(f"MERGE-DIAGNOSTIC: stage=policy exit={r.returncode} verdict={verdict}{suffix}")
         return None
     out = r.stdout + r.stderr
     mode = ""
@@ -492,7 +560,7 @@ def merge(repo, num, expected_head, mode_hint):
             result = subprocess.run(
                 [
                     sys.executable,
-                    str(ROOT / "scripts/_relay_merge.py"),
+                    str(SCRIPTS_DIR / "_relay_merge.py"),
                     "--pr",
                     str(num),
                     "--expected-head",
@@ -604,6 +672,10 @@ def submit_one(repo: str, num: int, expected_head: str) -> int:
         print(f"MERGE-SUBMISSION {identity}: QUEUED — already owned by GitHub")
         return 0
 
+    classification = ensure_delivery_classification(repo, num, expected_head)
+    if classification is not None:
+        print(f"MERGE-SUBMISSION {identity}: DEFERRED — {classification}")
+        return 2
     row = assess((repo, num))
     if len(row) < 5 or row[2] != "READY":
         print(f"MERGE-SUBMISSION {identity}: DEFERRED — {row[2]}")

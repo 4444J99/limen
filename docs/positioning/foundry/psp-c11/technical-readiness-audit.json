@@ -6014,7 +6014,9 @@
     "w01_accepted_head": "0239e60c68278b7f9747764b0212e8e8f1527c28",
     "w01_candidate_snapshot_path": "docs/positioning/foundry/psp-c11/product-candidate-snapshot.json",
     "w01_receipt": "https://github.com/organvm/limen/issues/2265#issuecomment-5295999920",
-    "w01_receipt_sha256": "18b9348da9f1819f43d2c11b9065cb927966482309b0c304e21bf8c03e5ca7ce"
+    "w01_receipt_sha256": "18b9348da9f1819f43d2c11b9065cb927966482309b0c304e21bf8c03e5ca7ce",
+    "w01_snapshot_blob": "35e4df33690c6eef7e710efbb97853776586b20e",
+    "w01_snapshot_commit": "3a97d47263aeee669e0c7708d44d3fdace1de7df"
   },
   "status": "ACCEPTANCE_EVIDENCE",
   "summary": {

@@ -254,6 +254,7 @@ def test_submit_one_returns_queued_without_polling_or_retry(monkeypatch, capsys)
     mod = _load()
     head = "a" * 40
     calls = []
+    monkeypatch.setattr(mod, "ensure_delivery_classification", lambda *_args: None)
     monkeypatch.setattr(
         mod,
         "_queue_state",
@@ -278,6 +279,7 @@ def test_submit_one_returns_queued_without_polling_or_retry(monkeypatch, capsys)
 def test_submit_one_deferred_is_terminal_for_the_invocation(monkeypatch, capsys):
     mod = _load()
     head = "b" * 40
+    monkeypatch.setattr(mod, "ensure_delivery_classification", lambda *_args: None)
     monkeypatch.setattr(
         mod,
         "_queue_state",
@@ -292,6 +294,127 @@ def test_submit_one_deferred_is_terminal_for_the_invocation(monkeypatch, capsys)
 
     assert mod.submit_one("4444J99/limen", 2543, head) == 2
     assert capsys.readouterr().out.strip().endswith(": DEFERRED — CI-PENDING")
+
+
+def _delivery_view(**changes):
+    return {"state": "OPEN", "isDraft": False, "headRefOid": "a" * 40, "labels": [], "body": ""} | changes
+
+
+@pytest.mark.parametrize("readiness", ["READY", "CI-PENDING", "CI-RED", "STALE-BASE", "CONFLICT"])
+def test_explicit_submission_labels_before_assessment_without_weakening_readiness(monkeypatch, readiness):
+    mod = _load()
+    state = _delivery_view()
+    calls = []
+    monkeypatch.setattr(mod, "merge_prohibition", lambda: None)
+    monkeypatch.setattr(mod._dependency_upkeep, "pilot", lambda _repo: False)
+    monkeypatch.setattr(mod, "_queue_state", lambda *_args: {"state": "OPEN", "head": "a" * 40, "queued": False})
+
+    def fake_gh(args, timeout=60):
+        calls.append(args[:2])
+        if args[:2] == ["pr", "view"]:
+            return _R(json.dumps(state))
+        assert args == ["pr", "edit", "446", "-R", "owner/repo", "--add-label", "lifecycle:delivery"]
+        state["labels"] = [{"name": "lifecycle:delivery"}]
+        return _R("")
+
+    def assess(value):
+        assert state["labels"] == [{"name": "lifecycle:delivery"}]
+        calls.append(["assess"])
+        return (*value, readiness, "a" * 40, "direct")
+
+    monkeypatch.setattr(mod, "gh", fake_gh)
+    monkeypatch.setattr(mod, "assess", assess)
+    monkeypatch.setattr(mod, "merge", lambda *_args: calls.append(["merge"]) or "MERGED")
+    assert mod.submit_one("owner/repo", 446, "a" * 40) == (0 if readiness == "READY" else 2)
+    assert calls[:4] == [["pr", "view"], ["pr", "edit"], ["pr", "view"], ["assess"]]
+    assert (["merge"] in calls) == (readiness == "READY")
+
+
+@pytest.mark.parametrize(
+    ("changes", "reason"),
+    [
+        ({"labels": [{"name": "lifecycle:delivery"}]}, None),
+        ({"labels": [{"name": "lifecycle:blocked"}]}, "BLOCKED"),
+        ({"labels": [{"name": "lifecycle:preservation"}]}, "PRESERVATION"),
+        ({"labels": [{"name": "lifecycle:active-human"}]}, "ACTIVE-HUMAN"),
+        ({"labels": [{"name": "lifecycle:superseded"}]}, "SUPERSEDED"),
+        ({"labels": [{"name": "lifecycle:future-hold"}]}, "LIFECYCLE-UNKNOWN"),
+        ({"labels": [{"name": "lifecycle:delivery"}, {"name": "lifecycle:blocked"}]}, "LIFECYCLE-UNKNOWN"),
+        ({"labels": [{"name": "custody:preservation"}]}, "PRESERVATION"),
+        ({"body": "Lifecycle preservation PR opened by `scripts/worktree-pr-receipts.py`."}, "PRESERVATION"),
+        ({"isDraft": True}, "DRAFT-OR-UNMEASURED"),
+        ({"isDraft": None}, "DRAFT-OR-UNMEASURED"),
+        ({"state": "CLOSED"}, "PR-NOT-OPEN"),
+        ({"headRefOid": "b" * 40}, "HEAD-CHANGED"),
+        ({"labels": None}, "LIFECYCLE-UNAVAILABLE"),
+        ({"labels": [None]}, "LIFECYCLE-UNAVAILABLE"),
+    ],
+)
+def test_delivery_classification_preserves_existing_states_without_writes(monkeypatch, changes, reason):
+    mod = _load()
+    calls = []
+
+    def fake_gh(args, timeout=60):
+        calls.append(args)
+        assert args[:2] == ["pr", "view"]
+        return _R(json.dumps(_delivery_view(**changes)))
+
+    monkeypatch.setattr(mod, "gh", fake_gh)
+    assert mod.ensure_delivery_classification("owner/repo", 446, "a" * 40) == reason
+    assert len(calls) == 1
+
+
+@pytest.mark.parametrize(
+    ("after", "reason"),
+    [
+        ({"headRefOid": "b" * 40}, "HEAD-CHANGED"),
+        ({"isDraft": True}, "DRAFT-OR-UNMEASURED"),
+        ({"state": "CLOSED"}, "PR-NOT-OPEN"),
+        ({"labels": []}, "LIFECYCLE-NOT-PERSISTED"),
+        ({"labels": [{"name": "lifecycle:blocked"}]}, "BLOCKED"),
+        ({"labels": [{"name": "lifecycle:delivery"}, {"name": "lifecycle:preservation"}]}, "LIFECYCLE-UNKNOWN"),
+    ],
+)
+def test_classification_readback_rejects_races_without_removing_labels(monkeypatch, after, reason):
+    mod = _load()
+    calls = []
+
+    def fake_gh(args, timeout=60):
+        calls.append(args[:2])
+        if args[:2] == ["pr", "edit"]:
+            assert "--add-label" in args and "--remove-label" not in args
+            return _R("")
+        return _R(json.dumps(_delivery_view(**(after if len(calls) > 1 else {}))))
+
+    monkeypatch.setattr(mod, "gh", fake_gh)
+    assert mod.ensure_delivery_classification("owner/repo", 446, "a" * 40) == reason
+    assert calls == [["pr", "view"], ["pr", "edit"], ["pr", "view"]]
+
+
+@pytest.mark.parametrize("failure", ["read", "invalid-json", "write", "readback", "timeout"])
+def test_classification_api_failures_stop_before_assessment(monkeypatch, failure):
+    mod = _load()
+    calls = []
+    monkeypatch.setattr(mod, "merge_prohibition", lambda: None)
+    monkeypatch.setattr(mod._dependency_upkeep, "pilot", lambda _repo: False)
+    monkeypatch.setattr(mod, "_queue_state", lambda *_args: {"state": "OPEN", "head": "a" * 40, "queued": False})
+    monkeypatch.setattr(mod, "assess", lambda *_args: pytest.fail("classification failure reached assessment"))
+
+    def fake_gh(args, timeout=60):
+        calls.append(args[:2])
+        if failure == "timeout":
+            raise mod.subprocess.TimeoutExpired("gh", timeout)
+        if failure == "invalid-json":
+            return _R("not-json")
+        if failure == "read" or (failure == "readback" and len(calls) == 3):
+            return _R("", returncode=1)
+        if args[:2] == ["pr", "edit"]:
+            return _R("", returncode=1 if failure == "write" else 0)
+        return _R(json.dumps(_delivery_view()))
+
+    monkeypatch.setattr(mod, "gh", fake_gh)
+    assert mod.submit_one("owner/repo", 446, "a" * 40) == 2
+    assert len(calls) <= 3
 
 
 def test_one_shot_dry_run_is_rejected_before_submission(monkeypatch):
@@ -461,3 +584,65 @@ def test_readable_nonexecutable_policy_runs_through_bash(tmp_path, monkeypatch):
     policy.chmod(0o644)
     monkeypatch.setattr(mod, "POLICY", policy)
     assert mod._merge_policy("example/project", 1, "a" * 40) == "direct"
+
+
+# --- issue #2895 defect A: the policy exited 127 under the drain, with its verdict hidden ---
+
+
+def test_policy_path_is_the_sibling_script_not_the_limen_root_state_dir(monkeypatch, tmp_path):
+    """A stale/relocated $LIMEN_ROOT (state root holding only logs/) made `bash <missing>` exit 127."""
+    monkeypatch.setenv("LIMEN_ROOT", str(tmp_path))
+    mod = _load()
+    assert mod.ROOT == tmp_path
+    assert mod.POLICY == SCRIPT.parent / "merge-policy.sh"
+    assert mod.POLICY.is_file()
+
+
+def test_missing_policy_is_named_not_exit_127(monkeypatch, tmp_path, capsys):
+    mod = _load()
+    monkeypatch.setattr(mod, "POLICY", tmp_path / "absent" / "merge-policy.sh")
+    monkeypatch.setattr(
+        mod.subprocess, "run", lambda *a, **kw: (_ for _ in ()).throw(AssertionError("must not launch"))
+    )
+    assert mod._merge_policy("example/project", 1, "a" * 40) is None
+    assert capsys.readouterr().out == "MERGE-DIAGNOSTIC: stage=policy reason=policy-missing\n"
+
+
+def test_unrunnable_policy_exit_is_labelled(monkeypatch, capsys):
+    mod = _load()
+    monkeypatch.setattr(
+        mod.subprocess, "run", lambda *a, **kw: SimpleNamespace(returncode=127, stdout="", stderr="not found")
+    )
+    assert mod._merge_policy("example/project", 1, "a" * 40) is None
+    out = capsys.readouterr().out
+    assert out == "MERGE-DIAGNOSTIC: stage=policy exit=127 verdict=unknown reason=command-not-runnable\n"
+
+
+def test_policy_verdict_on_stderr_is_surfaced(monkeypatch, capsys):
+    """The policy's GitHub lookup-failure verdicts go to stderr; the drain must still report them."""
+    mod = _load()
+    monkeypatch.setattr(
+        mod.subprocess,
+        "run",
+        lambda *a, **kw: SimpleNamespace(
+            returncode=3, stdout="", stderr="VERDICT: BLOCKED — cannot read PR; secret-detail\n"
+        ),
+    )
+    assert mod._merge_policy("example/project", 1, "a" * 40) is None
+    assert capsys.readouterr().out == "MERGE-DIAGNOSTIC: stage=policy exit=3 verdict=BLOCKED\n"
+
+
+def test_real_policy_under_minimal_path_and_stale_limen_root_surfaces_its_verdict(monkeypatch, tmp_path, capsys):
+    """End to end through the real merge-policy.sh with a stale $LIMEN_ROOT and PATH=stub:/usr/bin:/bin."""
+    stub = tmp_path / "bin"
+    stub.mkdir()
+    gh_stub = stub / "gh"
+    gh_stub.write_text("#!/bin/bash\necho 'boom: not a transport error' >&2\nexit 1\n")
+    gh_stub.chmod(0o755)
+    stale_root = tmp_path / "stale-limen-root"
+    (stale_root / "logs").mkdir(parents=True)
+    monkeypatch.setenv("LIMEN_ROOT", str(stale_root))
+    monkeypatch.setenv("PATH", f"{stub}:/usr/bin:/bin")
+    mod = _load()
+    assert mod._merge_policy("example/project", 1, "a" * 40) is None
+    assert capsys.readouterr().out == "MERGE-DIAGNOSTIC: stage=policy exit=3 verdict=BLOCKED\n"

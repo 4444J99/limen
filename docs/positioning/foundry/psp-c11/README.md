@@ -99,8 +99,16 @@ a finite experiment and is parked after two bounded failures rather than kept al
 receipt URL, its canonical issue-comment receipt digest, accepted head, acceptance digest, and
 private-inclusive candidate identity digest. The
 validator recomputes that identity digest from the live accepted W01 candidate identities and also
-derives the complete accepted candidate projection from the immutable snapshot at the recorded W01
-accepted revision. It compares that revision-bound projection with the working snapshot across
+derives the complete accepted candidate projection from immutable, receipt-bound snapshot bytes.
+Deterministic validation reads the already-public bundled snapshot on every call; its bytes must
+match SHA-256 `af047714aded8b2560ca8563966eaa1234191d715419cf9123a04a1d01209f82` and
+Git blob `35e4df33690c6eef7e710efbb97853776586b20e`. No historical commit object or private
+repository access is needed. Missing or changed bytes fail closed. Live validation fetches the
+snapshot at rewritten public commit `3a97d47263aeee669e0c7708d44d3fdace1de7df` and checks both
+byte bindings. That snapshot is byte-identical to the one at historical accepted head
+`0239e60c68278b7f9747764b0212e8e8f1527c28`, which remains unchanged in the W01 receipt binding;
+the rewritten snapshot location does not replace the accepted receipt or its digest.
+It compares that revision-bound projection with the working snapshot across
 identity, visibility, repository, lifecycle, fork, demand, economics, blocker, and source
 transfer-eligibility fields; no working-tree projection digest is trusted. Its denominator is exactly 62
 candidates: 54 public rows and eight opaque private
@@ -206,6 +214,13 @@ immutable public evidence blobs and run provenance plus the canonical W01 marked
 authenticates every recorded public head as an immutable repository commit without enumerating private
 repositories. Its owning PR workflow
 grants only `actions: read`, `contents: read`, and `issues: read`; no write permission is introduced.
+The reviewed observation custody manifest now withdraws 50 historical public rows from public
+head verification after owner-restricted visibility was confirmed. Each disposition binds the
+complete unchanged audit row; every withdrawn row remains blocked, score zero, and ineligible
+for transfer. Four public rows still require immutable-head verification. The two transferred
+public repositories resolve through reviewed canonical coordinates and their unchanged numeric
+GitHub repository IDs. Unknown or inaccessible API responses never create withdrawals. The
+accepted denominator remains 62 candidates, and the audit still permits zero transfers.
 The whole-only
 `positioning-foundry-technical-readiness-live` predicate retains private-inclusive
 identity, private-clearance custody, and private-leak checks under explicitly armed

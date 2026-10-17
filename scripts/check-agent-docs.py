@@ -101,6 +101,10 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 SERVER = ROOT / "mcp" / "src" / "limen_mcp" / "server.py"
 DOCS = [ROOT / "AGENTS.md", ROOT / "GEMINI.md", ROOT / "CLAUDE.md"]
+# CLAUDE.md loads into every Claude session and Claude Code warns above 40,000 characters. Prose-only
+# trims regrew past it twice (#1900, #2872 -> #2889), so the cap is an executable predicate: relocate
+# case history to docs/ rather than growing past it.
+CLAUDE_MD_CHAR_CAP = 40_000
 STANDARD = ROOT / "docs" / "agent-instruction-standard.md"
 AGY_SKILL = ROOT / ".agents" / "skills" / "agy_conductor" / "SKILL.md"
 COPILOT_PROFILE = ROOT / "integrations" / "copilot" / "limen-conductor.agent.md"
@@ -395,6 +399,11 @@ def main() -> int:
             errors.append(f"{doc.name} presents non-canonical status values: {sorted(invalid_presented)}")
 
     claude_text = (ROOT / "CLAUDE.md").read_text(encoding="utf-8")
+    if len(claude_text) > CLAUDE_MD_CHAR_CAP:
+        errors.append(
+            f"CLAUDE.md is {len(claude_text):,} characters, over the {CLAUDE_MD_CHAR_CAP:,} cap; "
+            "relocate case history to docs/architecture/merge-and-branch-protocol-detail.md and link it"
+        )
     if "Anthony" in claude_text:
         errors.append("CLAUDE.md should use role-based wording, not the operator's personal name")
     if re.search(r"\broute around\b", claude_text, re.I):

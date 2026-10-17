@@ -756,6 +756,30 @@ parameters:
     self_update: none
     owner: continuity
     note: "Ignored local private cartridge root (parent of session-corpus, photos-universe, etc.). Full media-dedup paths/hashes live here and are never committed; public receipts carry aggregates only."
+  LIMEN_CUSTODY_STAGING_ROOT:
+    default: "$LIMEN_ROOT/.limen-private/custody-staging"
+    env: LIMEN_CUSTODY_STAGING_ROOT
+    self_update: none
+    owner: continuity
+    note: "Bulk custody staging root (the shared liturgy's § Bulk custody staging): per-run 0700 directories for bundles, private clones and receipts, outside every vendor runtime root. scripts/check-prerewrite-containment.py keeps its limen--private bare clone, learned scrub map, private evidence and upstream-quarantine receipt under <root>/prerewrite-containment-20261016/; nothing there is committed."
+  LIMEN_SEALED_CUSTODY_TEST:
+    default: ""
+    env: LIMEN_SEALED_CUSTODY_TEST
+    self_update: none
+    owner: continuity
+    note: "Test-only switch for scripts/sealed-custody.py: only when set to 1 is LIMEN_SEALED_CUSTODY_DEVICE_ID_OVERRIDE honored. Production runs leave it unset so device identity always comes from the physical-disk probe."
+  LIMEN_SEALED_CUSTODY_DEVICE_ID_OVERRIDE:
+    default: ""
+    env: LIMEN_SEALED_CUSTODY_DEVICE_ID_OVERRIDE
+    self_update: none
+    owner: continuity
+    note: "Test-only opaque device id that replaces the diskutil probe in scripts/sealed-custody.py so the hermetic test can simulate two physical devices; ignored unless LIMEN_SEALED_CUSTODY_TEST=1."
+  LIMEN_SEALED_CUSTODY_PYTHON:
+    default: ""
+    env: LIMEN_SEALED_CUSTODY_PYTHON
+    self_update: none
+    owner: continuity
+    note: "Interpreter override for scripts/tests/sealed-custody.test.sh; must import rfc8785 and pydantic (the cli venv). Unset, the test probes the gate python, the cli venvs, then PATH pythons."
   LIMEN_PRIVATE_CUSTODY_ROOT:
     default: "$LIMEN_ROOT/.limen-private"
     env: LIMEN_PRIVATE_CUSTODY_ROOT
@@ -1224,6 +1248,18 @@ parameters:
     self_update: none
     owner: continuity
     note: "Per-gate wall-clock deadline for scoped verification (0.1–1800 seconds). All commands in a per-file gate share this one deadline; expiry terminates the complete process group and fails closed."
+  LIMEN_GATE_PYTHON:
+    default: ""
+    env: LIMEN_GATE_PYTHON
+    self_update: none
+    owner: continuity
+    note: "Interpreter the gate rail runs on (verify-scoped.sh, merge-policy.sh, and every gate command verify.py spawns). Unset, scripts/lib/gate-python.sh resolves it; verify.py then pins bare python3/python to it for the whole gate subtree so sub-gates stop re-resolving against the caller's PATH. Set it to force a specific interpreter — it is used only if it can import yaml, otherwise it is reported and ignored."
+  LIMEN_GATE_PYTHON_CANDIDATES:
+    default: "python3.13 python3 python3.12 python3.14 python3.11"
+    env: LIMEN_GATE_PYTHON_CANDIDATES
+    self_update: none
+    owner: continuity
+    note: "Space-separated interpreter names scripts/lib/gate-python.sh searches on PATH (every hit of each, in order) when LIMEN_GATE_PYTHON is unset: the first with the full gate toolchain (yaml+pytest+ruff) wins, else the first with PyYAML. Narrowing it is how tests prove the fail-toward-caution path."
   LIMEN_VERIFY_NO_DEPLOY_ESCALATION:
     default: "0"
     env: LIMEN_VERIFY_NO_DEPLOY_ESCALATION

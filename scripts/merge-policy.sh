@@ -8,6 +8,9 @@
 #
 #   exit 0  CLEARED — safe to `gh pr merge`. (A non-deploy PR that is mergeable, or a
 #                     deploy-touching PR whose CI is fully GREEN + COMPLETE.)
+#                     A non-limen repo whose estate class is `single_owner_fast_lane: true` (every private
+#                     repo: Actions are billing-locked, so remote checks are never evidence) is CLEARED
+#                     direct whenever GitHub reports it mergeable and it is not a draft.
 #   exit 2  HOLD    — website-sensitive AND CI not yet green/complete, or the PR is a draft,
 #                     or a non-deploy PR still has checks running, or autonomy is paused
 #                     (autonomy-governor mode=paused). Wait for green; never
@@ -51,6 +54,17 @@ repo_args=(); [ -n "$REPO" ] && repo_args=(--repo "$REPO")
 STALE=0
 _root="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 
+# Interpreter: resolve one PyYAML-capable python once (scripts/lib/gate-python.sh) instead of trusting
+# whatever bare `python3` the caller's PATH yields. If none resolves, fall back to bare python3 so every
+# call site keeps its own fail-toward-caution behavior (the deploy-regex derivation below then fails
+# and STALE=1 forces website-sensitive) — the resolver's stderr hint says how to repair the host.
+_py=python3
+if [ -f "$_root/scripts/lib/gate-python.sh" ]; then
+  # shellcheck source=lib/gate-python.sh
+  source "$_root/scripts/lib/gate-python.sh"
+  _py="$(limen_gate_python)" || _py=python3
+fi
+
 # AUTONOMY-PAUSED chokepoint (issue #1079): the 2026-07-15 incident merged green PRs
 # while autonomy was paused because nothing in the interactive merge path consulted
 # the pause. The governor computes the authoritative mode — pause marker, expiry,
@@ -62,7 +76,7 @@ _root="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd)"
 # fleet) inherits the pause for free.
 _autonomy_mode=""
 if [ -d "$_root/logs" ] && [ -f "$_root/scripts/autonomy-governor.py" ]; then
-  _autonomy_mode="$(LIMEN_ROOT="$_root" python3 "$_root/scripts/autonomy-governor.py" mode 2>/dev/null || true)"
+  _autonomy_mode="$(LIMEN_ROOT="$_root" "$_py" "$_root/scripts/autonomy-governor.py" mode 2>/dev/null || true)"
 fi
 if [ "$_autonomy_mode" = "paused" ]; then
   _pause_prohibitions=""
@@ -78,7 +92,7 @@ if [ -z "$_autonomy_mode" ] && [ -d "$_root/logs" ]; then
   echo "VERDICT: HOLD — autonomy-governor reported no mode; refusing to clear a merge on an unverified pause state."
   exit 2
 fi
-DEPLOY_RE="$(python3 "$_root/scripts/verify.py" --deploy-regex 2>/dev/null || true)"
+DEPLOY_RE="$("$_py" "$_root/scripts/verify.py" --deploy-regex 2>/dev/null || true)"
 if [ -z "$DEPLOY_RE" ]; then
   echo "merge-policy: cannot derive the deploy regex from the GATES registry — treating the PR as website-sensitive (fail toward caution)." >&2
   STALE=1
@@ -98,6 +112,16 @@ lookup_failure() {
   if grep -Eqi 'HTTP 5[0-9]{2}|timed? ?out|connection (reset|refused)|could not resolve|no such host|network (is )?unreachable|tls handshake|unexpected eof|broken pipe|bad gateway|service unavailable|gateway timeout' "$err"; then
     echo "VERDICT: HOLD — GitHub API lookup failed with a transient transport error; re-run." >&2
     exit 2
+  fi
+  # Surface the captured diagnostic so an unclassified failure is verifiable (2026-10-17: PR #2904
+  # returned BLOCKED twice while `gh pr view` succeeded, and nothing recorded why). Bounded to the
+  # last 300 bytes, control characters stripped, credential shapes redacted; stderr only.
+  diag="$(tail -c 300 "$err" | LC_ALL=C tr -d '\000-\010\013-\037' | sed -E \
+    -e 's/gh[pousr]_[A-Za-z0-9]{20,}/[REDACTED]/g' \
+    -e 's/github_pat_[A-Za-z0-9_]{20,}/[REDACTED]/g' \
+    -e 's/([Bb]earer|[Tt]oken|TOKEN|[Aa]uthorization)([[:space:]:=]+)[^[:space:]]+/\1\2[REDACTED]/g')"
+  if [ -n "$diag" ]; then
+    printf 'merge-policy: gh diagnostic (scrubbed, last 300B): %s\n' "$diag" >&2
   fi
   echo "VERDICT: BLOCKED — cannot read PR; lookup failure cause is unverified." >&2
   exit 3
@@ -133,7 +157,7 @@ fi
 for dependency_repo in "$canonical_repo" "$requested_repo"; do
   case "$dependency_repo" in
     organvm-vii-kerygma/portfolio|organvm-iii-ergon/public-record-data-scrapper|4444j99/portfolio)
-      if ! python3 "$_root/scripts/_dependency_upkeep.py" --repo "$dependency_repo" --pr "$PR" --expected-head "$head"; then
+      if ! "$_py" "$_root/scripts/_dependency_upkeep.py" --repo "$dependency_repo" --pr "$PR" --expected-head "$head"; then
         echo "VERDICT: HOLD — dependency evidence/review route requires trusted upkeep; automatic acceptance is inactive."
         exit 2
       fi
@@ -152,7 +176,7 @@ if [ -z "$queue_repo" ]; then
 fi
 queue_capability="unknown"
 if [ -n "$queue_repo" ]; then
-  queue_capability=$(python3 "$_root/scripts/_pr_scan.py" merge-queue-capability \
+  queue_capability=$("$_py" "$_root/scripts/_pr_scan.py" merge-queue-capability \
     "$queue_repo" "$base" 2>/dev/null || true)
 fi
 case "$queue_capability" in
@@ -185,10 +209,30 @@ if [ -z "$head_now" ] || [ "$head_now" != "$head" ]; then
   exit 2
 fi
 
+# Single-owner fast lane (registry-derived; institutio/github/estate.yaml class `single_owner_fast_lane`).
+# The GATES deploy_triggers registry describes LIMEN's own site/API, so it says nothing about any other
+# repository — and every private repo runs no GitHub Actions at all (billing lock, operator fact
+# 2026-10-17), so a remote check can never be evidence for one. On a fast-lane repo the caller's exact-head
+# local verification is the admission; remote checks are advisory. limen itself is excluded: its deploy
+# rails stay governed by GATES exactly as before. If the class cannot be derived, fast_lane stays 0 and the
+# conservative path below applies unchanged.
+fast_lane=0
+lane_repo="${canonical_repo:-$requested_repo}"
+if [ -n "$lane_repo" ] && [ "$canonical_repo" != "4444j99/limen" ] && [ "$requested_repo" != "4444j99/limen" ] \
+    && [ "$canonical_repo" != "organvm/limen" ] && [ "$requested_repo" != "organvm/limen" ]; then
+  lane_answer="$("$_py" "$_root/scripts/_fast_lane.py" "$lane_repo" 2>/dev/null || true)"
+  case "$lane_answer" in
+    true) fast_lane=1 ;;
+    false) ;;
+    *) echo "merge-policy: cannot derive the estate class for $lane_repo — keeping the conservative path (fail toward caution)." >&2 ;;
+  esac
+fi
+
 deploy_hits=$(jq -r '.files[].path' "$j" | grep -E "$DEPLOY_RE" || true)
 sensitive=0
 [ -n "$deploy_hits" ] && sensitive=1
 [ "$STALE" = 1 ] && sensitive=1   # fail-safe: uncertain classification ⇒ treat as a live deploy
+[ "$fast_lane" = 1 ] && sensitive=0   # limen's deploy registry does not describe this repository
 
 # CI rollup: count failing / pending across CheckRuns (conclusion/status) and StatusContexts (state).
 # Dedupe to the LATEST run per check name first. GitHub attaches every re-run of a check (a
@@ -223,7 +267,7 @@ if [ -n "$req_json" ] && printf '%s' "$req_json" | jq -e 'type == "array"' >/dev
   req_scope="required"
   req_failing=$(printf '%s' "$req_json" | jq '[.[] | select(.bucket == "fail" or .bucket == "cancel")] | length')
   req_pending=$(printf '%s' "$req_json" | jq '[.[] | select(.bucket == "pending")] | length')
-elif [ -n "$REPO" ] && python3 "$_root/scripts/_required_checks.py" \
+elif [ -n "$REPO" ] && "$_py" "$_root/scripts/_required_checks.py" \
     --prove-no-required "$REPO" --branch "$base" >/dev/null 2>&1; then
   # gh emits text/nonzero rather than [] when the policy has no required checks.
   # Prove that absence through the shared branch-protection AND rules predicate;
@@ -235,7 +279,9 @@ echo "PR #$PR — $title"
 echo "  $url"
 echo "  base=$base  head=${head:0:12}  mergeState=$mss  draft=$draft"
 echo "  merge-queue=$queue_capability"
-if [ "$sensitive" = 1 ]; then
+if [ "$fast_lane" = 1 ]; then
+  echo "  single-owner fast lane ($lane_repo) — not a limen deploy rail; merging will NOT trigger a live website/API deploy"
+elif [ "$sensitive" = 1 ]; then
   if [ -n "$deploy_hits" ]; then
     echo "  WEBSITE-SENSITIVE — diff touches deploy-trigger paths:"
     printf '%s\n' "$deploy_hits" | sed 's/^/      /'
@@ -276,7 +322,7 @@ fi
 if [ "$sensitive" = 1 ] && [ "$failing" -gt 0 ]; then
   echo "VERDICT: HOLD — $failing CI check(s) failing and the merge deploys the live site. Fix before merge."; exit 2
 fi
-if [ "$sensitive" != 1 ] && [ "$req_failing" -gt 0 ]; then
+if [ "$sensitive" != 1 ] && [ "$fast_lane" != 1 ] && [ "$req_failing" -gt 0 ]; then
   echo "VERDICT: HOLD — $req_failing required check(s) failing ($req_scope scope). Fix before merge."; exit 2
 fi
 # --- optional review gate (LIMEN_REVIEW_GATE=1; DEFAULT OFF) ---
@@ -295,6 +341,21 @@ if [ "${LIMEN_REVIEW_GATE:-0}" = "1" ]; then
       echo "VERDICT: HOLD — $unresolved unresolved review thread(s) (LIMEN_REVIEW_GATE=1). Address + resolve them (self-heal's REVIEW-FEEDBACK tasks own the loop), then re-run."; exit 2
     fi
   fi
+fi
+# Single-owner fast lane: GitHub reports the PR mergeable (conflicts, drafts and protection gates were
+# already refused above), so the verdict is CLEARED direct. Remote checks — which on a billing-locked
+# private repo never run — are advisory; admission is the caller's exact-head local verification.
+# Any other merge state (e.g. BEHIND under an active queue) falls through to the shared logic below.
+if [ "$fast_lane" = 1 ]; then
+  case "$mss" in
+    CLEAN|UNSTABLE|HAS_HOOKS)
+      echo "  note: remote checks are advisory on this single-owner fast lane (private repos run no Actions: billing lock); admission is the caller's exact-head local verification."
+      echo "VERDICT: CLEARED — single-owner fast lane; remote checks advisory. Merge the locally verified exact head."
+      echo "MERGE-MODE: direct"
+      echo "MERGE-HEAD: $head (use gh pr merge --match-head-commit $head)"
+      exit 0
+      ;;
+  esac
 fi
 # Past the not-mergeable states: only an explicitly mergeable state may proceed toward CLEARED.
 case "$mss" in

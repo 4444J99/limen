@@ -7,8 +7,10 @@ import hashlib
 import json
 import os
 import shlex
+import signal
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +21,36 @@ from limen.action_admission_runtime import admit_pre_tool_action  # noqa: E402
 from limen.host_admission import AdmissionController, AdmissionStateError  # noqa: E402
 
 _EXECUTION_TTL_SECONDS = 24 * 60 * 60
+_INPUT_LIMIT_BYTES = 1024 * 1024
+_HOOK_BUDGET_SECONDS = 8.0
+
+
+class HookDeadlineExceeded(BaseException):
+    """Cross lower-level recovery blocks when the entire hook budget expires."""
+
+
+def _deadline_expired(_signum: int, _frame: Any) -> None:
+    raise HookDeadlineExceeded("hook-evaluation-deadline")
+
+
+def _read_payload() -> dict[str, Any]:
+    source = getattr(sys.stdin, "buffer", sys.stdin)
+    raw = source.read(_INPUT_LIMIT_BYTES + 1)
+    encoded = raw.encode("utf-8") if isinstance(raw, str) else raw
+    if len(encoded) > _INPUT_LIMIT_BYTES:
+        raise ValueError("hook-input-size-limit")
+    payload = json.loads(encoded.decode("utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("hook input must be a JSON object")
+    if payload.get("hook_event_name") != "PreToolUse":
+        raise ValueError("hook-input-event-invalid")
+    if (
+        not isinstance(payload.get("tool_name"), str)
+        or not payload["tool_name"]
+        or not isinstance(payload.get("tool_input"), dict)
+    ):
+        raise ValueError("hook-input-tool-invalid")
+    return payload
 
 
 def _process_table() -> dict[int, tuple[int, str]]:
@@ -131,13 +163,26 @@ def handle(
 
 
 def main() -> int:
+    started = time.monotonic()
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    previous_timer = signal.getitimer(signal.ITIMER_REAL)
     try:
-        payload = json.load(sys.stdin)
-        if not isinstance(payload, dict):
-            raise ValueError("hook input must be a JSON object")
-        output = handle(payload)
+        signal.signal(signal.SIGALRM, _deadline_expired)
+        signal.setitimer(
+            signal.ITIMER_REAL,
+            min(_HOOK_BUDGET_SECONDS, previous_timer[0] or _HOOK_BUDGET_SECONDS),
+        )
+        output = handle(_read_payload())
     except (AdmissionStateError, ValueError) as exc:
         output = _tool_deny(f"Limen host admission hook failed closed: {exc}")
+    except (Exception, HookDeadlineExceeded) as exc:
+        output = _tool_deny(f"Limen host admission evaluation unavailable: {type(exc).__name__}")
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous_handler)
+        if previous_timer[0]:
+            remaining = max(0.000001, previous_timer[0] - (time.monotonic() - started))
+            signal.setitimer(signal.ITIMER_REAL, remaining, previous_timer[1])
     if output is not None:
         print(json.dumps(output, separators=(",", ":")))
     return 0

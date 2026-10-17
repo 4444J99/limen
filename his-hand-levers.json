@@ -5047,6 +5047,267 @@
         "historical_gate_requires_verification": null,
         "decision_status": "chosen_pending_evidence"
       }
+    },
+    {
+      "id": "L-TMB-INGRESS-SOURCE-MOUNT",
+      "label": "Provide a custody disk on a physical device distinct from the Ingress device so the original footage gets a second physical copy (Ingress is now mounted; its first hash chain is done).",
+      "owner": "yours",
+      "cost": "connect one drive on a physical device other than disk6s2; one bounded ~17 GB verified copy + readback",
+      "unlocks": "copy the six originals (~17 GB) to the new disk, verify sha256 against the private hash manifest / tracked census root 69e942b7…, then run a restore readback (sealed-custody.py seal for the derivatives; plain verified copy for the originals)",
+      "source_task": "TMB PRESERVATION_REPAIR_RECEIPT (Ingress absent; no original sha256 exists anywhere); plan 2026-10-17-tmb-acceptance-gaps G9/G7",
+      "gate": "the originals have exactly one physical copy; Archive4T shares physical store disk6s2 with Ingress so it cannot serve as the independent copy; a human must connect a disk on a different physical device",
+      "status": "needs_human",
+      "added": "2026-10-17",
+      "steps": [
+        "DONE: Ingress mounted (observed 2026-10-17).",
+        "DONE: first sha256 chain of originals (TMB PR #9).",
+        "DONE: derivative rebuild, zero manifest drift.",
+        "REMAINING (human): connect a disk on a physical device other than disk6s2; move or delete nothing.",
+        "REMAINING (agent): copies and hash-verifies the originals there and receipts it."
+      ],
+      "issue": 2909,
+      "sovereignty": {
+        "reason": "physical_act"
+      },
+      "diagnosed_at": null,
+      "diagnosis_provenance": "unknown",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Copy the six Ingress originals to a custody disk on a physical device distinct from the Ingress store, verify sha256 against the private hash manifest and tracked census root, then run a restore readback.",
+        "rationale": "The first hash chain is committed, but the originals have exactly one physical copy: Archive4T shares physical store disk6s2 with Ingress, so a human must connect a disk on a different physical device.",
+        "evidence_refs": [
+          "his-hand-levers.json#L-TMB-INGRESS-SOURCE-MOUNT",
+          "docs/plans/2026-10-17-tmb-acceptance-gaps.md",
+          "time-moment-brief PRESERVATION_REPAIR_RECEIPT.md",
+          "time-moment-brief PR #9 (merge 60c6453f4b88048f115591dfd55abf8648a79e2b)",
+          "docs/receipts/2026-10-17-tmb-ingress-first-pass.md"
+        ],
+        "doctrine_refs": [
+          "AGENTS.md#engineering-ownership",
+          "AGENTS.md#safety--evidence"
+        ],
+        "owner": "TMB/AV acceptance gaps plan (docs/plans/2026-10-17-tmb-acceptance-gaps.md); owner issue #2909",
+        "acceptance": {
+          "condition": "A second verified copy of the six originals exists on a disk on a physical device distinct from the Ingress store (not disk6s2), sha256-matching the private hash manifest / census root, with a restore readback receipt.",
+          "predicate": null,
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "A custody disk on a physical device distinct from Ingress (disk6s2) and the internal disk",
+          "Host admission"
+        ],
+        "remaining_human_action": "Connect a disk on a physical device other than disk6s2; do not infer device identity from a mount label.",
+        "historical_gate_requires_verification": "the originals have exactly one physical copy; Archive4T shares physical store disk6s2 with Ingress so it cannot serve as the independent copy; a human must connect a disk on a different physical device",
+        "decision_status": "chosen_pending_evidence"
+      },
+      "note": "2026-10-17 first Ingress pass: Ingress (disk7s2) and Archive4T (disk7s1) are volumes of the same APFS container disk7 / physical store disk6s2, so Archive4T is not an independent physical copy of the originals; the originals currently have exactly one physical copy (Archive4T remains independent of the Mac internal disk, so the sealed-media custody from limen PR #2927 is unaffected). Ingress was mounted writable; the pass wrote nothing to it (find -newer check empty). Receipt: docs/receipts/2026-10-17-tmb-ingress-first-pass.md."
+    },
+    {
+      "id": "L-TMB-FOURTH-CAMERA",
+      "label": "Supply a fourth physical camera view: 100GOPRO is eliminated (its clips match the F6 audio at other times, not the matched passage), so a new capture or an existing recording of the matched passage from a fourth sensor is required.",
+      "owner": "yours",
+      "cost": "locate an existing fourth-sensor recording of the matched passage, or a capture session",
+      "unlocks": "if a fourth-sensor recording of the matched passage exists elsewhere: place it under the ingress root, add its collection to the expected tree in synchronized-generation-calibration/tools/ingress_resume.py, run the tool (hash chain + onset match against F6 window [510,526]); otherwise schedule a new capture; then update webcodecs-spike/source-manifest.json to sensors=4 and rerun the four-view suites",
+      "source_task": "4444J99/the-thing-without-a-name-screendance#69; webcodecs-spike/source-manifest.json sensors=3 views=4 (cam3 is a rectilinear crop of gopro-360); 100GOPRO metadata ends ~16:18:51Z vs passage ~16:43:44Z (camera clocks untrusted)",
+      "gate": "a new capture needs hardware and a body; generated substitutes cannot close the four-camera predicate",
+      "status": "needs_human",
+      "added": "2026-10-17",
+      "steps": [
+        "DONE: Ingress check ran (TMB PR #9); 100GOPRO metadata verdict no-coverage-likely (gap 1492.7 s, camera clocks untrusted).",
+        "DONE: onset verdict negative — GH010043 matches F6 elsewhere (peak 54.0018 s, margin 71.0%), GH010044 matches F6 elsewhere (peak 760.0005 s, margin 57.25%), floor 19.2%, window overlap 0.0 s with the matched passage [510, 526]; 100GOPRO eliminated.",
+        "REMAINING (human): supply a fourth-sensor recording of the matched passage if one exists, or schedule a new capture.",
+        "REMAINING (agent): ingest it (ingress_resume.py hash chain + onset match), update webcodecs-spike/source-manifest.json to sensors=4 and rerun the four-view suites."
+      ],
+      "issue": 2909,
+      "sovereignty": {
+        "reason": "physical_act"
+      },
+      "diagnosed_at": null,
+      "diagnosis_provenance": "unknown",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Ingest a real fourth-sensor recording of the matched passage (hash chain + F6 onset match) and promote it to a fourth sensor in source-manifest.json, or schedule a new matched capture.",
+        "rationale": "The manifest declares three sensors for four views (cam3 is a crop of the 360 camera); 100GOPRO was checked and eliminated (onset negative), so only a new real fourth sensor view closes the four-camera predicate.",
+        "evidence_refs": [
+          "his-hand-levers.json#L-TMB-FOURTH-CAMERA",
+          "docs/plans/2026-10-17-tmb-acceptance-gaps.md",
+          "time-moment-brief/webcodecs-spike/source-manifest.json",
+          "time-moment-brief evidence/hundred-gopro-coverage.json",
+          "time-moment-brief PR #9 (merge 60c6453f4b88048f115591dfd55abf8648a79e2b)",
+          "docs/receipts/2026-10-17-tmb-ingress-first-pass.md"
+        ],
+        "doctrine_refs": [
+          "AGENTS.md#engineering-ownership",
+          "AGENTS.md#safety--evidence"
+        ],
+        "owner": "TMB/AV acceptance gaps plan (docs/plans/2026-10-17-tmb-acceptance-gaps.md); owner issue #2909",
+        "acceptance": {
+          "condition": "The manifest declares three sensors for four views (cam3 is a crop of the 360 camera); only a real fourth sensor view closes the four-camera predicate.",
+          "predicate": null,
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "Danse #69 matched-pair capture decision"
+        ],
+        "remaining_human_action": "Supply a fourth-sensor recording of the matched passage if one exists, or schedule a new matched capture.",
+        "historical_gate_requires_verification": "a new capture needs hardware and a body; generated substitutes cannot close the four-camera predicate",
+        "decision_status": "chosen_pending_evidence"
+      },
+      "note": "2026-10-17 first Ingress pass: evidence/hundred-gopro-coverage.json records metadata_verdict no-coverage-likely and onset_verdict negative (blind full-range onset-envelope correlation against F6, floor 19.2%). 100GOPRO is the only fourth sensor on the disk, so the four-independent-camera predicate still requires a new capture or a recording from elsewhere. The negative is evidence of non-overlap with the matched window, not proof that nothing else exists. Receipt: docs/receipts/2026-10-17-tmb-ingress-first-pass.md."
+    },
+    {
+      "id": "L-TMB-DEVICE-ACCEPTANCE",
+      "label": "Run the TMB device acceptance gates on a real phone, a WebXR headset and capture hardware (comfort/thermal, motion-to-photon, lip-sync).",
+      "owner": "yours",
+      "cost": "one session per device",
+      "unlocks": "time-moment-brief/webcodecs-spike/DEVICE-CHECK.md gates A-E -> webcodecs-spike/DEVICE-CHECK-<model>-<date>.md via PR; DEVICE_ACCEPTANCE_RESULTS.json updated",
+      "source_task": "TMB DEVICE_ACCEPTANCE_RESULTS limits; TMB PR #2 (device acceptance unverified); plan G11",
+      "gate": "needs physical devices worn and handled by a person; comfort/thermal judgment is bodily; no phone or headset model is named in any receipt",
+      "status": "needs_human",
+      "added": "2026-10-17",
+      "steps": [
+        "Name the phone and headset models.",
+        "Run gates A-E per DEVICE-CHECK.md; agent drives the probe server and collects counters.",
+        "Agent commits each DEVICE-CHECK receipt and updates DEVICE_ACCEPTANCE_RESULTS.json."
+      ],
+      "note": "Safari lifecycle (G10) and live FOA on the Mac (G6) are agent work, not this lever.",
+      "issue": 2909,
+      "sovereignty": {
+        "reason": "physical_act"
+      },
+      "diagnosed_at": null,
+      "diagnosis_provenance": "unknown",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Run DEVICE-CHECK gates A-E on a named phone and a named WebXR headset and commit one receipt per device.",
+        "rationale": "Comfort, thermal, motion-to-photon and lip-sync are judged on worn or handled hardware; no receipt names a phone or headset model, so device acceptance stays unverified.",
+        "evidence_refs": [
+          "his-hand-levers.json#L-TMB-DEVICE-ACCEPTANCE",
+          "docs/plans/2026-10-17-tmb-acceptance-gaps.md",
+          "time-moment-brief/webcodecs-spike/DEVICE-CHECK.md",
+          "time-moment-brief/DEVICE_ACCEPTANCE_RESULTS.json"
+        ],
+        "doctrine_refs": [
+          "AGENTS.md#engineering-ownership",
+          "AGENTS.md#safety--evidence"
+        ],
+        "owner": "TMB/AV acceptance gaps plan (docs/plans/2026-10-17-tmb-acceptance-gaps.md); owner issue #2909",
+        "acceptance": {
+          "condition": "Comfort, thermal, motion-to-photon and lip-sync are judged on worn or handled hardware; no receipt names a phone or headset model, so device acceptance stays unverified.",
+          "predicate": null,
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "Named phone and headset",
+          "Probe server on the same byte-range server",
+          "Capture hardware for lip-sync"
+        ],
+        "remaining_human_action": "Wear or handle each device through gates A-E and name its model.",
+        "historical_gate_requires_verification": "needs physical devices worn and handled by a person; comfort/thermal judgment is bodily; no phone or headset model is named in any receipt",
+        "decision_status": "chosen_pending_evidence"
+      }
+    },
+    {
+      "id": "L-TMB-LOOPBACK-AUDIO-DEVICE",
+      "label": "Install a 2-channel virtual loopback audio device (BlackHole 2ch) so live FOA output can be captured on this Mac.",
+      "owner": "yours",
+      "cost": "one install + one restart of coreaudiod",
+      "unlocks": "python3 tests/e2e/foa_loopback_probe.py (time-moment-brief, Lane J) -> FOA_LIVE_OUTPUT_RESULTS.json",
+      "source_task": "plan G6; tests/e2e/test_foa_browser_audio.py covers only OfflineAudioContext",
+      "gate": "installer needs an admin password and a coreaudiod restart; only a mono Teams virtual device exists today",
+      "status": "needs_human",
+      "added": "2026-10-17",
+      "steps": [
+        "Install blackhole-2ch (Homebrew cask or vendor pkg) with admin auth.",
+        "Agent runs foa_loopback_probe.py and records lateral/gain/latency predicates."
+      ],
+      "issue": 2909,
+      "sovereignty": {
+        "reason": "physical_act"
+      },
+      "diagnosed_at": null,
+      "diagnosis_provenance": "unknown",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "Install a 2-channel loopback device, then run foa_loopback_probe.py and record lateral, gain, channel-order and latency predicates into FOA_LIVE_OUTPUT_RESULTS.json.",
+        "rationale": "FOA rendering is only proven on OfflineAudioContext; live output on a real device needs a 2-channel loopback sink, and the installer requires admin authorization.",
+        "evidence_refs": [
+          "his-hand-levers.json#L-TMB-LOOPBACK-AUDIO-DEVICE",
+          "docs/plans/2026-10-17-tmb-acceptance-gaps.md",
+          "time-moment-brief/tests/e2e/test_foa_browser_audio.py"
+        ],
+        "doctrine_refs": [
+          "AGENTS.md#engineering-ownership",
+          "AGENTS.md#safety--evidence"
+        ],
+        "owner": "TMB/AV acceptance gaps plan (docs/plans/2026-10-17-tmb-acceptance-gaps.md); owner issue #2909",
+        "acceptance": {
+          "condition": "FOA rendering is only proven on OfflineAudioContext; live output on a real device needs a 2-channel loopback sink, and the installer requires admin authorization.",
+          "predicate": null,
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "Admin password for the installer",
+          "coreaudiod restart"
+        ],
+        "remaining_human_action": "Install blackhole-2ch with admin authorization and allow one coreaudiod restart.",
+        "historical_gate_requires_verification": "installer needs an admin password and a coreaudiod restart; only a mono Teams virtual device exists today",
+        "decision_status": "chosen_pending_evidence"
+      }
+    },
+    {
+      "id": "L-TMB-HISTORY-REMOVAL",
+      "label": "Purge six private media blobs from 4444J99/time-moment-brief history (declined 2026-10-17: private, owner-only, fork-free, no Pages - exposure bounded; recipe retained; deferred by decision).",
+      "owner": "yours",
+      "cost": "owner force-push + one Support request + three re-pin PRs; deferred by decision",
+      "unlocks": "owner reverses the 2026-10-17 decline; then plan 2026-10-17-tmb-acceptance-gaps Lane E (v2 packet, filter-repo --strip-blobs-with-ids mirror, preflight, force-push, Support request, postflight -> docs/receipts/privacy/tmb-history-removal-<date>.json, commit-map + three re-pin PRs, plaintext retirement)",
+      "source_task": "plan G1; blobs 2b29542dd0d5a7f46be97bd346afc30f9ecc16bb, 05b73e817e8bea630561838ff181a4cc6d103fb5, 0b85513b6a14d87591079bfcffee44cad9ce14ad, 8a68159dc4c47e75d29901ec70d0330bc0969dc7, b7c423db1dc53f714d76ee46db1b4b22baa886c2, 1bda54636874fe1818b5460db5e8fd7a61892a31; introduced ed5a09f/cbce79d/62c0c3e; deleted e5900ef",
+      "gate": "default-branch history rewrite requires an owner force-push of every branch (banned for agents; explicit owner exception only) plus a GitHub Support purge of refs/pull/* and cached objects; rewrites every SHA pinned downstream (simvltanea PR #28 provenance, all TMB receipts, limen #2904)",
+      "status": "optional",
+      "added": "2026-10-17",
+      "steps": [
+        "(deferred) Seal custody of all six blobs on two devices (Lane C) - this proceeds regardless.",
+        "(deferred) Build the v2 removal packet and prepared mirror; preflight exit 0.",
+        "(human) Force-push refs/heads/*:refs/heads/* from the mirror as a recorded exception.",
+        "(human) One GitHub Support sensitive-data-removal request: repo, six OIDs, old SHAs, refs/pull/{1..5} dereference + GC; no content, no paths.",
+        "(agent) Postflight, receipt PR, quarantine local carriers (branch.<b>.remote=.), re-clone, commit-map re-pin PRs.",
+        "(human) Authorize retiring the plaintext custody copies (internal staging + Archive4T av-media-20261017-171406)."
+      ],
+      "note": "status is optional because 'deferred' is not in scripts/check-his-hand.py STATUSES; the decline is recorded in label, unlocks and steps. Sovereignty is identity (owner force-push exception on a default branch).",
+      "issue": 2909,
+      "sovereignty": {
+        "reason": "identity"
+      },
+      "diagnosed_at": null,
+      "diagnosis_provenance": "unknown",
+      "implementation": {
+        "schema_version": 1,
+        "behavior": "If the owner reverses the decline, rewrite the mirror with filter-repo --strip-blobs-with-ids, force-push branches as a recorded exception, and prove absence through a v2 postflight receipt.",
+        "rationale": "Exposure is bounded (private, owner-only, fork-free, no Pages), so the owner declined the purge on 2026-10-17; the recipe and the six blob OIDs stay filed so a reversal needs no re-derivation.",
+        "evidence_refs": [
+          "his-hand-levers.json#L-TMB-HISTORY-REMOVAL",
+          "docs/plans/2026-10-17-tmb-acceptance-gaps.md",
+          "time-moment-brief history (ed5a09f, cbce79d, 62c0c3e, e5900ef)"
+        ],
+        "doctrine_refs": [
+          "AGENTS.md#engineering-ownership",
+          "AGENTS.md#safety--evidence"
+        ],
+        "owner": "TMB/AV acceptance gaps plan (docs/plans/2026-10-17-tmb-acceptance-gaps.md); owner issue #2909",
+        "acceptance": {
+          "condition": "Exposure is bounded (private, owner-only, fork-free, no Pages), so the owner declined the purge on 2026-10-17; the recipe and the six blob OIDs stay filed so a reversal needs no re-derivation.",
+          "predicate": null,
+          "status": "not_currently_verified"
+        },
+        "dependencies": [
+          "Two-device sealed custody of all six blobs (Lane C)",
+          "Owner force-push exception",
+          "GitHub Support completion"
+        ],
+        "remaining_human_action": "Only if reversing the decline: force-push from the prepared mirror, file the Support request, authorize plaintext retirement.",
+        "historical_gate_requires_verification": "default-branch history rewrite requires an owner force-push of every branch (banned for agents; explicit owner exception only) plus a GitHub Support purge of refs/pull/* and cached objects; rewrites every SHA pinned downstream (simvltanea PR #28 provenance, all TMB receipts, limen #2904)",
+        "decision_status": "chosen_pending_evidence"
+      }
     }
   ]
 }

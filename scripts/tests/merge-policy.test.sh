@@ -311,6 +311,15 @@ else
 fi
 unset GH_PR_VIEW_ERROR
 
+# 2026-10-17: an unclassified lookup failure must SURFACE its gh diagnostic (bounded, scrubbed)
+# on the BLOCKED path, and must never leak a credential shape into the verdict output.
+export GH_PR_VIEW_ERROR="HTTP 404 Not Found token ghp_abcdefghijklmnopqrstuvwxyz0123456789"  # allow-secret: synthetic fixture
+check_output "blocked: diagnostic surfaces" 3 "HTTP 404 Not Found" "ghp_abcdef"
+unset GH_PR_VIEW_ERROR
+export GH_PR_VIEW_ERROR="$(printf 'LEADING-MARKER-%0400d tail-marker' 0)"
+check_output "blocked: diagnostic is bounded" 3 "tail-marker" "LEADING-MARKER"
+unset GH_PR_VIEW_ERROR
+
 # The check rollup must remain attached to the exact head captured in the first PR snapshot.
 export GH_RECHECK_HEAD=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"; check "head changed during predicate" 2
@@ -323,14 +332,73 @@ check "expected head mismatch" 2 --expected-head bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 
 # Resolver unavailable ⇒ website-sensitive (fail toward caution). With a broken python3 the
 # deploy regex cannot derive from the GATES registry, so a docs-only PR with zero checks —
-# normally CLEARED — must HOLD instead of risking an unclassified live deploy.
+# normally CLEARED — must HOLD instead of risking an unclassified live deploy. The gate-python
+# resolver would otherwise route around the stub to another python on PATH, so the inherited override
+# is cleared and the candidate list names nothing that exists: "no usable interpreter" is the case, and
+# merge-policy then falls back to the bare (stubbed) python3 whose derivation fails.
 cat > "$stubdir/python3" <<'STUB'
 #!/usr/bin/env bash
 exit 1
 STUB
 chmod +x "$stubdir/python3"
-mkjson OPEN false CLEAN "$DOC_FILES" "$NONE"; check "resolver unavailable (forced sensitive)" 2
+mkjson OPEN false CLEAN "$DOC_FILES" "$NONE"
+LIMEN_GATE_PYTHON="" LIMEN_GATE_PYTHON_CANDIDATES=limen-no-such-python check "resolver unavailable (forced sensitive)" 2
 rm -f "$stubdir/python3"
+
+# Single-owner fast lane (issue #2895; operator fact 2026-10-17: private-repo Actions are billing-locked,
+# so remote checks never run and are never evidence). The class is DERIVED from estate.yaml — the
+# 4444J99/domus-genoma-private override is operation_private, which declares single_owner_fast_lane.
+# GitHub-reported mergeability and drafts still bind; limen's own deploy rails are untouched.
+check_repo_output() { # name expected_exit repo required_substring [forbidden_substring]
+  local name="$1" want="$2" repo="$3" required="$4" forbidden="${5:-}" got out
+  set +e
+  out=$(PATH="$stubdir:$PATH" bash "$policy" 1 --repo "$repo" 2>&1)
+  got=$?
+  set -e
+  if [ "$got" = "$want" ] && [[ "$out" == *"$required"* ]] \
+      && { [ -z "$forbidden" ] || [[ "$out" != *"$forbidden"* ]]; }; then
+    printf '  ok   %-34s exit=%s\n' "$name" "$got"; pass=$((pass+1))
+  else
+    printf '  FAIL %-34s want=%s got=%s required=%q forbidden=%q\n' \
+      "$name" "$want" "$got" "$required" "$forbidden"
+    printf '%s\n' "$out" | sed 's/^/       /'
+    fail=$((fail+1))
+  fi
+}
+PRIVATE_REPO=4444J99/domus-genoma-private
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$FAILING"
+check_repo_output "private fast lane: failing checks advisory" 0 "$PRIVATE_REPO" "MERGE-MODE: direct" "MERGE-MODE: queue"
+check_repo_output "private fast lane: binds exact head" 0 "$PRIVATE_REPO" \
+  "MERGE-HEAD: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+check_repo_output "private fast lane: states checks advisory" 0 "$PRIVATE_REPO" "remote checks are advisory" "WEBSITE-SENSITIVE"
+mkjson OPEN false UNSTABLE "$WEB_FILES" "$FAILING"
+check_repo_output "private fast lane: limen deploy paths moot" 0 "$PRIVATE_REPO" "MERGE-MODE: direct" "WEBSITE-SENSITIVE"
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$PENDING"
+check_repo_output "private fast lane: pending checks advisory" 0 "$PRIVATE_REPO" "MERGE-MODE: direct"
+mkjson OPEN false CLEAN "$DOC_FILES" "$NONE"
+check_repo_output "private fast lane: zero checks (no Actions)" 0 "$PRIVATE_REPO" "MERGE-MODE: direct"
+mkjson OPEN false DIRTY "$DOC_FILES" "$GREEN"
+check_repo_output "private fast lane: conflicts BLOCKED" 3 "$PRIVATE_REPO" "VERDICT: BLOCKED"
+mkjson OPEN false BEHIND "$DOC_FILES" "$GREEN"
+check_repo_output "private fast lane: stale base BLOCKED" 3 "$PRIVATE_REPO" "VERDICT: BLOCKED"
+mkjson OPEN true CLEAN "$DOC_FILES" "$GREEN"
+check_repo_output "private fast lane: draft HOLD" 2 "$PRIVATE_REPO" "VERDICT: HOLD"
+mkjson OPEN false UNKNOWN "$DOC_FILES" "$GREEN"
+check_repo_output "private fast lane: UNKNOWN HOLD" 2 "$PRIVATE_REPO" "VERDICT: HOLD"
+mkjson MERGED false CLEAN "$DOC_FILES" "$GREEN"
+check_repo_output "private fast lane: closed-PR guard" 3 "$PRIVATE_REPO" "VERDICT: BLOCKED"
+# limen is a fast-lane class too, but its deploy rails stay governed by GATES: a failing check
+# still holds, and a deploy-trigger path is still website-sensitive.
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$FAILING"
+check_repo_output "limen: failing check still holds" 2 4444J99/limen "VERDICT: HOLD" "fast lane"
+mkjson OPEN false UNSTABLE "$WEB_FILES" "$PENDING"
+check_repo_output "limen: deploy path still sensitive" 2 4444J99/limen "WEBSITE-SENSITIVE" "fast lane"
+mkjson OPEN false UNSTABLE "$DOC_FILES" "$FAILING"
+check_repo_output "limen alias: failing check holds" 2 organvm/limen "VERDICT: HOLD" "fast lane"
+# A public governed repo is not a fast lane: failing checks keep their conservative meaning.
+check_repo_output "public repo: failing check holds" 2 organvm/some-public-repo "VERDICT: HOLD" "fast lane"
+# The class cannot be derived (the stub `gh repo view` fails, and o/r has no override): fail toward caution.
+check_repo_output "class unresolved: caution kept" 2 o/r "cannot derive the estate class" "fast lane"
 
 # Personal relay cannot fall through a standalone policy helper even with a
 # passing duplicate context, --repo case variation, or canonical URL discovery.

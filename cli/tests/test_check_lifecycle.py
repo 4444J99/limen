@@ -26,7 +26,8 @@ def test_lifecycle_registry_offline_predicate_is_green() -> None:
     )
 
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "literal debt=25" in result.stdout
+    literal_debt = sum(yaml.safe_load(REGISTRY.read_text())["literal_baseline"].values())
+    assert f"literal debt={literal_debt}" in result.stdout
 
 
 def test_lifecycle_capabilities_and_draft_owner_are_declared() -> None:
@@ -158,7 +159,7 @@ def test_cohort_precedence_rejects_duplicate_entries() -> None:
 def test_per_disposition_literal_baseline_detects_swapped_literal() -> None:
     module = _load_check_module()
     registry = yaml.safe_load(REGISTRY.read_text())
-    registry["literal_baseline_by_disposition"]["scripts/merge-drain.py"]["lifecycle:delivery"] = 1
+    registry["literal_baseline_by_disposition"]["scripts/merge-drain.py"]["lifecycle:delivery"] += 1
 
     module.validate_consumers(registry, set(registry["dispositions"]))
 
@@ -250,6 +251,79 @@ def test_live_pr_identity_queries_are_partitioned_by_repository(monkeypatch) -> 
         hashlib.sha256(b"owner/other#8").hexdigest(),
     }
     assert len(calls) == 1
+
+
+def _pr_nodes(repository: str, numbers: range) -> list[dict]:
+    return [{"repository": {"nameWithOwner": repository}, "number": number} for number in numbers]
+
+
+def test_live_pr_identity_probe_follows_cursor_past_first_page(monkeypatch) -> None:
+    module = _load_check_module()
+    calls = []
+
+    class _Result:
+        returncode = 0
+
+        def __init__(self, payload):
+            self.stdout = json.dumps(payload)
+
+    def fake_run(args, **_kwargs):
+        query = " ".join(args)
+        calls.append(query)
+        if "after:" in query:
+            return _Result(
+                {
+                    "data": {
+                        "search": {
+                            "nodes": _pr_nodes("organvm/big", range(101, 131)),
+                            "pageInfo": {"hasNextPage": False, "endCursor": None},
+                        }
+                    }
+                }
+            )
+        return _Result(
+            {
+                "data": {
+                    "r0": {
+                        "issueCount": 130,
+                        "nodes": _pr_nodes("organvm/big", range(1, 101)),
+                        "pageInfo": {"hasNextPage": True, "endCursor": "Y3Vyc29yOjEwMA"},
+                    }
+                }
+            }
+        )
+
+    monkeypatch.setattr(module.subprocess, "run", fake_run)
+
+    identities = module.live_open_pr_identities({"organvm/big"})
+
+    assert identities == {hashlib.sha256(f"organvm/big#{n}".encode()).hexdigest() for n in range(1, 131)}
+    assert len(calls) == 2
+    assert 'after: "Y3Vyc29yOjEwMA"' in calls[1]
+    assert not module.failures
+
+
+def test_live_pr_identity_probe_fails_closed_without_a_page_cursor(monkeypatch) -> None:
+    module = _load_check_module()
+
+    class _Result:
+        returncode = 0
+        stdout = json.dumps(
+            {
+                "data": {
+                    "r0": {
+                        "issueCount": 130,
+                        "nodes": _pr_nodes("organvm/big", range(1, 101)),
+                        "pageInfo": {"hasNextPage": True, "endCursor": None},
+                    }
+                }
+            }
+        )
+
+    monkeypatch.setattr(module.subprocess, "run", lambda *_args, **_kwargs: _Result())
+
+    assert module.live_open_pr_identities({"organvm/big"}) is None
+    assert any("no usable page cursor" in failure for failure in module.failures)
 
 
 def test_new_consumer_requires_zero_initial_baseline() -> None:

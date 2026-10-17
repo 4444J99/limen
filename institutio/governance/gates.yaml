@@ -400,6 +400,11 @@ gates:
     paths: ["scripts/check-sensitive-history-removal.py", "cli/tests/test_sensitive_history_removal.py"]
     owner: governance
     note: "Postflight custody receipts publish complete bytes atomically and cannot replace a concurrent immutable receipt."
+  prerewrite-containment-test:
+    command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_check_prerewrite_containment.py -q"
+    paths: ["scripts/check-prerewrite-containment.py", "scripts/tests/test_check_prerewrite_containment.py"]
+    owner: governance
+    note: "The pre-rewrite containment classifier holds on a synthetic two-lineage history: dropped paths and text scrubs read as purge-equivalent, rewritten-id messages as already-on-new-lineage, the ledger never carries old ids/paths/names, and only a self-upstream quarantine clears check C. The live predicate itself is host-bound (old refs + limen--private clone) and runs on the custody host, not in CI."
   closeout-evidence-test:
     command: "bash scripts/run-pytest-hermetic.sh scripts/tests/test_closeout_evidence.py cli/tests/test_verify_dispatch.py -q"
     paths: ["scripts/reconcile-closeouts.py", "scripts/tests/test_closeout_evidence.py", "scripts/verify-dispatch.py", "cli/tests/test_verify_dispatch.py", "scripts/board.py"]
@@ -541,6 +546,13 @@ gates:
     scoped: false
     owner: lifecycle
     note: "Hand-rolled PR poll-loop deny matrix (G6, 2026-08-06): the charter's `for … gh pr … sleep … done` ban made mechanical — deny requires loop+gh-probe+sleep co-occurring in ONE command string; the sanctioned waiter, bounded retries, build sleeps, and multi-PR iteration all pass (the negative cases are the deliverable). Wired into .claude/settings.json AND .codex/hooks.json — covenant, not Claude rule. Escape hatch LIMEN_ALLOW_PR_POLL."
+  codex-host-admission-test:
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_hook_admission_boundary.py cli/tests/test_codex_host_admission_hook.py cli/tests/test_closeout_action_admission.py cli/tests/test_closeout_runtime_python.py cli/tests/test_action_admission_text.py -q"
+    paths: ["scripts/hooks/codex-host-admission.py", "scripts/hooks/codex-hook-runner.sh", "scripts/no-tasks-on-me.sh", ".codex/hooks.json", "cli/tests/test_hook_admission_boundary.py", "cli/tests/test_codex_host_admission_hook.py", "cli/tests/test_closeout_action_admission.py", "cli/tests/test_closeout_runtime_python.py", "cli/tests/test_action_admission_text.py", "cli/src/limen/action_admission.py", "cli/src/limen/action_admission_runtime.py", "cli/src/limen/bounded_subprocess.py"]
+    scoped: true
+    tier: cheap
+    owner: lifecycle
+    note: "Mandatory admission input, delegation verdict, process-group and event-registration regressions; fixtures do not establish native interception or live enforcement."
   outbound-preflight-test:
     command: "bash scripts/tests/outbound-preflight-guard.test.sh && bash scripts/tests/preflight-thread-state.test.sh"
     paths: ["scripts/hooks/outbound-preflight-guard.py", "scripts/preflight-receipt.py", "scripts/preflight-sent-state.py", "scripts/preflight-thread-state.py", "scripts/tests/outbound-preflight-guard.test.sh", "scripts/tests/preflight-thread-state.test.sh", "institutio/governance/outbound-effectors.yaml"]
@@ -1137,6 +1149,11 @@ gates:
     paths: ["scripts/arca.sh", "scripts/arca-freshness.py", "scripts/tests/arca-generation.test.sh", "scripts/check-arca-escrow.py", "scripts/tests/test-arca-escrow.py"]
     owner: continuity
     note: "Hermetic generation-rotation fixtures for ARCA (POTESTAS 0.3, #2089): a seed backup commits ciphertext and pushes to a depth-1 private clone; a re-run makes no commit; a changed store re-seals; an oversized pack auto-cuts generation -g2 as an orphan ROOT commit that is pushed to a fresh repo, with the old generation recorded as archived and the manifest re-pointed; `rotate` on a vault-less env seeds a fresh generation and archives the env repo; status distinguishes current/never-sealed/changed; chunked ciphertext reassembles and restores byte-identical; the freshness sensor follows the manifest's `_generation.repo`. Uses local file:// bare remotes and shimmed gh/security, so it never touches the real Keychain or the real arca repos."
+  sealed-custody-test:
+    command: "bash scripts/tests/sealed-custody.test.sh"
+    paths: ["scripts/sealed-custody.py", "scripts/tests/sealed-custody.test.sh", "scripts/arca.sh", "cli/src/limen/agent_state/crypto.py"]
+    owner: continuity
+    note: "Hermetic contract for the reusable sealed-custody tool: private bundles are arca-sealed onto two replicas on DISTINCT physical devices (test-only device-id override); `verify` is KEY-LESS (ciphertext sha256/bytes vs manifest, never touches a key source) and detects a one-byte corruption; `restore` unseals into a 0700 scratch under the staging root, checks every member sha256, and leaves no plaintext behind, via the Keychain key AND via the op escrow key (ARCA_KEY_SOURCE=op, proving the escrow copy alone restores the bundle); `receipt` emits a validated CustodyReceiptV1 plus a redacted tracked receipt with no device ids, absolute paths, or member digests, and refuses unrestored replicas or one device used twice. PATH-stubbed `security` and `op` with a throwaway key — never the real Keychain or 1Password."
   sync-marketplace-config-test:
     command: "bash scripts/tests/sync-marketplace-config.test.sh"
     paths: ["scripts/sync-marketplace-config.py", "scripts/tests/sync-marketplace-config.test.sh", "institutio/github/estate.yaml"]
