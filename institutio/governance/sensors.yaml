@@ -1447,10 +1447,11 @@ sensors:
     default: "1"
     source: [metabolize]
     owner: vitals
+    timeout: 15
     steps:
-      - command: "python3 scripts/host-pressure-stale.py --read-only"
+      - command: "python3 scripts/host-pressure-stale.py --read-only --on-demand"
         severity: advisory
-        escalation: "VITALS gauge missed its declared sample cadence — inspect the one-shot heartbeat receipt and run the explicit `python3 -m limen.vigilia sample` maintenance path; do not restore the legacy resident fast wave"
+        escalation: "on-demand host-pressure observation is unavailable or malformed — inspect the limen.host_admission.collect_pressure sensor errors; the explicit `python3 -m limen.vigilia sample` maintenance path remains for recorded sampler evidence; do not restore the legacy resident fast wave"
 
   runtime-lag:
     section: "0o3"
