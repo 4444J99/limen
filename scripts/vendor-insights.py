@@ -41,6 +41,7 @@ All vendor stores are opened STRICTLY read-only (SQLite via file:...?mode=ro).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import html
 import importlib.util
 import json
@@ -1757,6 +1758,11 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
         f"{indexed_phrase} · {len(facets)} faceted · "
         f"{user_msgs} user messages · {tool_calls} tool calls · models: {_esc(', '.join(models) or '—')}</p></header>"
     )
+    parts.append(
+        "<p class='notice'><strong>Recommendation status: unreviewed proposals.</strong> "
+        "Review suggestions, quick wins and horizon ideas against current instructions, "
+        "scope and owning sources before adoption. A usage report grants no standing authority.</p>"
+    )
 
     glance = narrative.get("at_a_glance") or {}
     if glance:
@@ -1787,11 +1793,16 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
 
     parts.append(
         sec(
-            "Facet aggregates (deterministic)",
+            "Facet label totals",
+            "<p>Friction and satisfaction are model-estimated label counts. Counts may repeat "
+            "within a session and across labels; they are not unique-session rates or measured "
+            "satisfaction. "
+            f"Denominator: {len(facets)} faceted sessions of {n_sessions} indexed "
+            f"({_esc(imeta.get('total_in_window', 'unknown'))} in-window).</p>"
             "<div class='tables'>"
             f"<table><caption>Outcomes</caption>{_dl(agg['outcomes'])}</table>"
-            f"<table><caption>Friction</caption>{_dl(agg['friction_counts'])}</table>"
-            f"<table><caption>Satisfaction</caption>{_dl(agg['satisfaction_counts'])}</table>"
+            f"<table><caption>Friction label counts</caption>{_dl(agg['friction_counts'])}</table>"
+            f"<table><caption>Satisfaction label counts</caption>{_dl(agg['satisfaction_counts'])}</table>"
             f"<table><caption>Goal categories</caption>{_dl(agg['goal_categories'])}</table>"
             "</div>",
         )
@@ -1816,7 +1827,7 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
             f"<div class='area'><h3>{_esc(s.get('title'))}</h3><p>{_esc(s.get('detail'))}</p></div>"
             for s in suggestions
         )
-        parts.append(sec("Suggestions", body))
+        parts.append(sec("Suggestions — unreviewed proposals", body))
 
     # No silent caps: name what was NOT covered.
     missing = [
@@ -1852,6 +1863,7 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
         " margin: 0 auto; max-width: 60rem; padding: 2rem 1.25rem; }"
         "header h1 { margin: 0 0 .25rem; font-size: 1.6rem; }"
         ".meta { color: #777; margin: 0 0 1.5rem; }"
+        ".notice { border: 1px solid #8888; border-inline-start-width: .3rem; padding: .75rem; }"
         "section { margin: 1.75rem 0; }"
         "h2 { font-size: 1.15rem; border-bottom: 1px solid #8884; padding-bottom: .3rem; }"
         ".cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: .75rem; }"
@@ -1877,6 +1889,28 @@ def _render_html(vendor: str, index: dict, facets: list[dict], narrative: dict) 
 # ---------------------------------------------------------------------------
 # Commands
 # ---------------------------------------------------------------------------
+
+
+def _fingerprint(value: object) -> str:
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def _bind_capture(session: dict, text: str, max_chars: int) -> None:
+    session["capture_sha256"] = hashlib.sha256(text.encode()).hexdigest()
+    session["capture_max_chars"] = max_chars
+    session["source_fingerprint"] = _fingerprint({k: v for k, v in session.items() if k != "source_fingerprint"})
+
+
+def _index_fingerprint(index: dict) -> str:
+    # Touching/reformatting an index cannot renew evidence. Window, population,
+    # metadata and bounded captured content all contribute to this generation.
+    return _fingerprint({k: v for k, v in index.items() if k not in ("generated_at", "index_fingerprint")})
+
+
+def _current_binding(index: dict) -> bool:
+    return index.get("binding_schema") == "limen.vendor_insights.binding.v1" and index.get(
+        "index_fingerprint"
+    ) == _index_fingerprint(index)
 
 
 def _resolve_vendor(name: str) -> str:
@@ -1919,6 +1953,13 @@ def cmd_index(mod, vendor: str, window_days: int, max_sessions: int) -> int:
     result = INDEXERS[vendor](mod, window_start, max_sessions)
     sessions = result.sessions
     sessions.sort(key=lambda s: s.get("started_at") or "", reverse=True)
+    for session in sessions:
+        try:
+            captured = CATTERS[vendor](mod, session["id"], DEFAULT_MAX_CHARS)
+        except (OSError, ValueError, UnicodeError):
+            captured = None
+        if captured is not None:
+            _bind_capture(session, captured, DEFAULT_MAX_CHARS)
     meta = {
         "total_in_window": result.total_in_window,
         "shown": len(sessions),
@@ -1937,7 +1978,9 @@ def cmd_index(mod, vendor: str, window_days: int, max_sessions: int) -> int:
         "max_sessions": max_sessions,
         "meta": meta,
         "sessions": sessions,
+        "binding_schema": "limen.vendor_insights.binding.v1",
     }
+    doc["index_fingerprint"] = _index_fingerprint(doc)
     out = OUT_ROOT / vendor / "index.json"
     _atomic_write(out, json.dumps(doc, indent=2))
     capnote = f" (of {result.total_in_window} in-window — CAPPED)" if meta["capped"] else ""
@@ -1950,7 +1993,28 @@ def cmd_cat(mod, vendor: str, sid: str, max_chars: int) -> int:
     if vendor not in CATTERS:
         print(f"ERROR: no session reader for vendor '{vendor}'", file=sys.stderr)
         return 1
-    text = CATTERS[vendor](mod, sid, max_chars)
+    try:
+        index = json.loads((OUT_ROOT / vendor / "index.json").read_text())
+        session = next(s for s in index.get("sessions", []) if s.get("id") == sid)
+        if not _current_binding(index) or not session.get("source_fingerprint"):
+            raise ValueError("unbound index")
+        captured = CATTERS[vendor](mod, sid, session["capture_max_chars"])
+        if captured is None or hashlib.sha256(captured.encode()).hexdigest() != session["capture_sha256"]:
+            raise ValueError("source changed")
+    except (OSError, ValueError, UnicodeError, KeyError, StopIteration):
+        print("ERROR: session binding unknown or source changed; regenerate index before faceting", file=sys.stderr)
+        return 2
+    print(
+        json.dumps(
+            {
+                "source_fingerprint": session["source_fingerprint"],
+                "index_fingerprint": index["index_fingerprint"],
+                "capture_max_chars": session["capture_max_chars"],
+            }
+        ),
+        file=sys.stderr,
+    )
+    text = captured[:max_chars] if max_chars <= session["capture_max_chars"] else CATTERS[vendor](mod, sid, max_chars)
     if text is None:
         print(f"ERROR: session '{sid}' not found for vendor '{vendor}'", file=sys.stderr)
         return 2
@@ -1965,22 +2029,77 @@ def cmd_render(vendor: str) -> int:
     if not index_path.exists():
         print(f"ERROR: {index_path} missing — run `index --vendor {vendor}` first", file=sys.stderr)
         return 2
-    index = json.loads(index_path.read_text())
-    facets = []
+    try:
+        index = json.loads(index_path.read_text())
+    except (OSError, ValueError, UnicodeError):
+        print("ERROR: index unreadable; regenerate index", file=sys.stderr)
+        return 2
+    binding_current = _current_binding(index)
+    validation_notes = []
+    if not binding_current:
+        validation_notes.append(
+            "Index freshness unknown: legacy or altered generation; regenerate index and judgments."
+        )
+    indexed_ids = {
+        session["id"]
+        for session in index.get("sessions", [])
+        if isinstance(session, dict) and isinstance(session.get("id"), str) and session["id"]
+    }
+    indexed_sessions = {
+        s["id"]: s for s in index.get("sessions", []) if isinstance(s, dict) and s.get("id") in indexed_ids
+    }
+    facets_by_id = {}
+    duplicate_ids = set()
     facets_dir = vdir / "facets"
     if facets_dir.is_dir():
         for p in sorted(facets_dir.glob("*.json")):
             try:
-                facets.append(json.loads(p.read_text()))
-            except (OSError, json.JSONDecodeError):
+                facet = json.loads(p.read_text())
+            except (OSError, ValueError, UnicodeError):
                 print(f"WARN: unreadable facet {p.name}", file=sys.stderr)
+                validation_notes.append("Unreadable facet excluded; regenerate that judgment.")
+                continue
+            sid = facet.get("session_id") if isinstance(facet, dict) else None
+            if not isinstance(sid, str) or not sid or sid not in indexed_ids:
+                print(f"WARN: facet {p.name} has missing or unindexed session identity; excluded", file=sys.stderr)
+                continue
+            if sid in facets_by_id or sid in duplicate_ids:
+                # Conflicting files leave this session unfaceted rather than
+                # arbitrarily selecting one model estimate or counting it twice.
+                facets_by_id.pop(sid, None)
+                duplicate_ids.add(sid)
+                print(f"WARN: duplicate facet identity in {p.name}; all copies excluded", file=sys.stderr)
+                continue
+            expected = indexed_sessions[sid].get("source_fingerprint")
+            if not binding_current or not expected or facet.get("source_fingerprint") != expected:
+                print(f"WARN: facet {p.name} freshness unknown or mismatched; excluded; regenerate", file=sys.stderr)
+                validation_notes.append(
+                    "Unbound or stale facet excluded; regenerate against the current captured-source fingerprint."
+                )
+                continue
+            facets_by_id[sid] = facet
+    facets = list(facets_by_id.values())
     narrative = {}
     npath = vdir / "narrative.json"
     if npath.exists():
         try:
             narrative = json.loads(npath.read_text())
-        except (OSError, json.JSONDecodeError):
+        except (OSError, ValueError, UnicodeError):
             print("WARN: narrative.json unreadable — rendering without narrative", file=sys.stderr)
+        if (
+            not isinstance(narrative, dict)
+            or not binding_current
+            or narrative.get("index_fingerprint") != index.get("index_fingerprint")
+        ):
+            narrative = {}
+            print("WARN: narrative freshness unknown or mismatched; excluded; regenerate", file=sys.stderr)
+            validation_notes.append(
+                "Narrative excluded: unbound or stale index population; regenerate against the current index fingerprint."
+            )
+    if validation_notes:
+        index.setdefault("meta", {}).setdefault("notes", []).extend(sorted(set(validation_notes)))
+        for note in sorted(set(validation_notes)):
+            print(f"WARN: {note}", file=sys.stderr)
     if not facets and not narrative:
         print(f"ERROR: no facets and no narrative under {vdir} — the skill half hasn't run", file=sys.stderr)
         return 2
