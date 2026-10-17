@@ -183,6 +183,38 @@ Wiring it is a one-line addition of a `("memory_deferred",)` trail plus its cont
 | Exact-head CI acceptance | **Not yet observed** — the GitHub check-runs endpoint returned zero records at inspection |
 | Live routing or activation | **Outside this unit; no acceptance claimed** |
 
+## Delivery disposition — PR #2869
+
+Branch `test/tabularius-organ-memory-2866` at `1cf2333fc4a0537c80471f4e8ba9fbd6914790f8`, pushed,
+`origin/main` integrated once (`249b89b1c`, no conflict — main touched none of the changed paths).
+
+`scripts/merge-drain.py --repo 4444J99/limen --pr 2869 --expected-head 1cf2333fc…` was submitted
+**once**, per protocol, and returned:
+
+```
+MERGE-SUBMISSION 4444J99/limen#2869@1cf2333fc…: DEFERRED — BLOCKED
+```
+
+`BLOCKED` is `assess()`'s fallthrough for `mergeable != "MERGEABLE"` (`merge-drain.py:433`). A
+read taken immediately after returned `mergeable: MERGEABLE`, so the classification caught
+GitHub's transient `UNKNOWN` while it recomputed mergeability after the push and PR-body edit —
+not a durable hold and not a rejection of the head. **This is a `DEFERRED` hold, not a `MERGED`
+receipt.** It is preserved for the beat's own drain to re-assess; re-submitting here would be the
+retry the protocol forbids, so it was not retried and no check was polled.
+
+`gh pr checks` at submission: `pr-gate`, `python`, `web`, `worker` and `semgrep` pending;
+`npm-audit` ×2 and CodeRabbit passed; `Sourcery review` and `compat` skipped. Remote checks and
+automated reviews are advisory.
+
+**No password rotation and no worktree removal were performed.** Both remain barred until the
+relevant gates pass, and the heavy `pytest-cli` gate has not yet run at this head.
+
+### Not claimed
+
+Landing. No merge is claimed until the exact head is an ancestor of `origin/main`, verified by
+`git merge-base --is-ancestor` against the merged ref — not by this PR's state, its age, or the
+absence of an open PR.
+
 Local pinned-Ruff verification is not CI acceptance. The two are recorded separately.
 
 ## Scope
