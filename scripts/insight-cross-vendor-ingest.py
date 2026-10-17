@@ -227,17 +227,10 @@ def _ingest_claude(window_start: datetime) -> dict:
     )
     MAX_SESSIONS = 500  # hard cap to prevent runaway I/O on 1316 project dirs
     # Each project dir contains JSONL files directly.
-    # Fast path: use os.scandir + stat for mtime pre-filter on project dirs.
+    # Appending a transcript does not update its parent directory's mtime.
     project_dirs = [d for r in roots for d in r.iterdir()]
     for proj_dir in project_dirs:
         if not proj_dir.is_dir():
-            continue
-        # Fast pre-filter: skip entire project dir if its own mtime predates window
-        try:
-            dir_mtime = datetime.fromtimestamp(proj_dir.stat().st_mtime, tz=timezone.utc)
-            if dir_mtime < window_start:
-                continue
-        except OSError:
             continue
         for jsonl_path in proj_dir.glob("*.jsonl"):
             if sessions_seen >= MAX_SESSIONS:

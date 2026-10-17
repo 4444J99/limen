@@ -31,6 +31,19 @@ keep output under the owning Limen ignored logs directory and preserve prior rep
 
 ## Steps
 
+Use `record_id` when an index contains several source records with the same native
+session ID. `cat-session --record <record_id> --json` resolves that exact indexed
+source and returns a receipt for the actual bounded text. A native `--session` ID
+that is ambiguous fails closed. Keep `record_id` in its facet; never substitute a
+first matching capture from another root.
+
+The read receipt separates returned text coverage from successful execution.
+`prompt_only`, `tool_only`, `metadata_only`, pruned, or unavailable captures do not
+establish failure, silence, or inactivity. Expanded reads with `reindex_required`
+are not judgment-eligible: reindex with `--capture-max-chars` covering the intended
+read before binding facets. Modification-window selection and selected-session
+lifetime message counts are explicitly named in index metadata.
+
 1. **Index.** `python3 scripts/vendor-insights.py index --vendor <v> [--window-days N] [--max-sessions M]`
    → `logs/vendor-insights/<v>/index.json`. Pick the window from the ask (default 14d; a lane
    that has been quiet needs a wider window — check `list` first if unsure). Codex note: the

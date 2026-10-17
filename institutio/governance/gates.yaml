@@ -1205,13 +1205,14 @@ gates:
     owner: censor
     note: "Hermetic effective-runtime path, alias deduplication, and explicit report capture regression."
   vendor-insights-test:
-    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_vendor_insights.py cli/tests/test_insight_cross_vendor_health.py -q"
+    command: "bash scripts/run-pytest-hermetic.sh cli/tests/test_vendor_insights.py cli/tests/test_vendor_insights_contract.py cli/tests/test_insight_cross_vendor_health.py -q"
     paths:
       [
         "scripts/vendor-insights.py",
         "scripts/insight-cross-vendor-ingest.py",
         "scripts/insight-cadence.py",
         "cli/tests/test_vendor_insights.py",
+        "cli/tests/test_vendor_insights_contract.py",
         "cli/tests/test_insight_cross_vendor_health.py",
         ".claude/skills/vendor-insights/SKILL.md",
       ]
