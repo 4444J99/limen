@@ -33,6 +33,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -40,6 +41,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from tabularius_organ_fixtures import (
+    CHILD_INTERPRETER,
+    ENTRY_POINT,
     OBSERVATION_LIMITS_DOC,
     STATE_RELPATH,
     VALID_TICKET,
@@ -73,13 +76,15 @@ def test_observer_records_known_mutations(tmp_path):
     )
     import subprocess
 
-    subprocess.run([sys.executable, "-c", code], env=sb.env, capture_output=True, text=True, timeout=60, check=False)
+    sb.run_raw([sys.executable, "-c", code])
 
     recs = sb.mutations()
     events = {r["event"] for r in recs}
     assert "open" in events, events
     assert any(e.startswith("os.rename") or e == "os.rename" for e in events), events
     assert "fcntl.flock" in events, f"lock events not observed; saw {sorted(events)}"
+    # Every record is attributable to the child that emitted it.
+    assert {r.get("pid") for r in recs} == {sb.child_pid}, recs
 
     rename = next(r for r in recs if r["event"] == "os.rename")
     assert len(rename["paths"]) >= 2, f"rename destination dropped: {rename}"
@@ -278,6 +283,118 @@ def _assert_board_branch(state: dict, board_mode) -> None:
         assert state.get("pending") == 0, f"empty pending expected: {state}"
 
 
+def test_a_deferred_memory_pass_is_published_as_deferred_not_as_success(tmp_path):
+    """A held-lock deferral must never read as a completed pass.
+
+    `drain_memory_once` defers while the memory lock is held and reports pending with
+    nothing applied and nothing rejected. `_memory_pass` dropped `deferred` and `note`,
+    so the stamp carried `memory_pending/0 applied/0 rejected` — indistinguishable
+    from an empty inbox, and rendered "pass OK" on the only channel `--dry-run` has.
+    """
+    sb = KeeperSandbox(tmp_path, "memory-deferred", memoria=True, memory_populated=True)
+    proc = _run_with_deferred_memory_lock(sb)
+    state = sb.state_payload()
+
+    assert state, f"no health-state artifact published; stdout: {proc.stdout}"
+    assert _memory_state(state) != "error", f"unexpected memory error: {state}\nstdout: {proc.stdout}"
+    # The deferral itself is preserved, as a readable string.
+    assert state.get("memory_deferred"), f"deferral dropped from the stamp: {state}\nstdout: {proc.stdout}"
+    assert "memory lock" in str(state["memory_deferred"]), state
+    # ...and the outcome is not claimed as a pass.
+    assert "DEFERRED" in proc.stdout, (
+        f"deferred pass reported as success on stdout: {proc.stdout!r}"
+    )
+    assert "pass OK" not in proc.stdout, f"deferral rendered as 'pass OK': {proc.stdout!r}"
+    # Nothing was consumed: a deferral applies nothing.
+    ticket = sb.memory_dir / ".covenant-inbox" / "synthetic.json"
+    assert ticket.exists(), "a deferred drain consumed a pending ticket"
+
+
+def _run_with_deferred_memory_lock(sb) -> subprocess.CompletedProcess:
+    """Run normally with the memory lock already held, forcing a real deferral.
+
+    A second process holds `flock` on the memory lock file for the duration of the
+    keeper run, so the real `drain_memory_once` takes its documented deferral path.
+    No stubbing: the deferral must come from the production code under test.
+    """
+    memdir = sb.memory_dir
+    memdir.mkdir(parents=True, exist_ok=True)
+    # The exact lock path memoria.py's `_lockfile` derives; a different name would
+    # leave the lock uncontended and the test would silently assert nothing.
+    lock = memdir / ".covenant.lock"
+    holder = subprocess.Popen(
+        [
+            "python3",
+            "-c",
+            "import fcntl,sys,time\n"
+            "fd=open(sys.argv[1],'a')\n"
+            "fcntl.flock(fd, fcntl.LOCK_EX)\n"
+            "time.sleep(60)\n",
+            str(lock),
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        # Give the holder time to take the lock before the keeper runs.
+        deadline = time.monotonic() + 20
+        import fcntl as _fcntl
+
+        while time.monotonic() < deadline:
+            probe = open(lock, "a")
+            try:
+                _fcntl.flock(probe.fileno(), _fcntl.LOCK_EX | _fcntl.LOCK_NB)
+                _fcntl.flock(probe.fileno(), _fcntl.LOCK_UN)
+            except OSError:
+                break  # holder has it
+            finally:
+                probe.close()
+            time.sleep(0.1)
+        return sb.run()
+    finally:
+        holder.terminate()
+        holder.wait(timeout=30)
+
+
+def test_dry_run_counts_are_labelled_would_be_not_completed(tmp_path):
+    """`--dry-run` writes nothing, so its counts are would-be, not completions.
+
+    `drain_memory_once(dry_run=True)` reports how many tickets are *applicable* and
+    how many are *unparseable*. `_describe` rendered them "applied"/"rejected",
+    reporting work that never happened on the only channel `--dry-run` publishes.
+    """
+    sb = KeeperSandbox(tmp_path, "dry-run-would-be", memoria=True, memory_populated=True)
+    proc = sb.run("--dry-run", expect_exit=0)
+    out = proc.stdout
+
+    assert "WOULD APPLY" in out, f"dry-run counts not labelled would-be: {out!r}"
+    assert "would apply" in out, f"dry-run applied count not labelled would-be: {out!r}"
+    # The bare completed-tense form must be absent for the same numbers.
+    assert " applied " not in out, f"dry-run reported an applied count as completed: {out!r}"
+    # ...and nothing was actually written.
+    assert not sb.state_path.exists(), "--dry-run wrote a health-state stamp"
+    ticket = sb.memory_dir / ".covenant-inbox" / "synthetic.json"
+    assert ticket.exists(), "--dry-run consumed a pending memory ticket"
+    assert not (sb.memory_dir / f"{VALID_TICKET['slug']}.md").exists(), (
+        "--dry-run wrote a memory atom"
+    )
+
+
+def test_check_dry_run_count_is_not_relabelled_would_be(tmp_path):
+    """The control for the would-be label: a real count stays a real count.
+
+    `--check` counts pending tickets; it does not simulate a drain, so labelling its
+    output "WOULD APPLY" would misreport a measurement. The dry-run fact therefore
+    travels in the memory outcome rather than being re-derived from the caller's flag.
+    """
+    sb = KeeperSandbox(tmp_path, "check-dry-run", memoria=True, memory_populated=True)
+    proc = sb.run("--check", "--dry-run", expect_exit=0)
+    out = proc.stdout
+
+    assert "WOULD APPLY" not in out, f"--check count relabelled would-be: {out!r}"
+    assert "1 pending" in out, f"--check did not report the pending count: {out!r}"
+
+
 def test_memory_pass_succeeds(tmp_path):
     """Separate from error propagation: the memory pass must actually work.
 
@@ -315,8 +432,70 @@ def test_valid_ticket_lifecycle_is_applied_then_idempotent(tmp_path):
 
     proc2 = sb.run()
     state2 = sb.state_payload()
+    # The key must be PRESENT before its value is asserted zero. `dict.get(k, 0) == 0`
+    # is satisfied by a missing key, so a second run that recorded no memory outcome at
+    # all — the pass errored, or the field was dropped — read as a clean no-op.
+    assert "memory_applied" in state2, (
+        f"re-run recorded no memory_applied; a missing field is not a zero: {state2}\nstdout: {proc2.stdout}"
+    )
     assert state2.get("memory_applied", 0) == 0, f"re-run re-applied the same ticket: {state2}\nstdout: {proc2.stdout}"
     assert atom.read_bytes() == first, "atom content changed on a no-op re-run"
+
+
+def test_observer_readers_are_scoped_to_the_current_child(tmp_path):
+    """Evidence from one run must never satisfy an assertion about another.
+
+    `writes.jsonl` is append-only and shared by every child the sandbox runs. The
+    readers used to take the FIRST matching record, so after a second run they
+    reported the first run's mutations — and its markers — as the second run's. A run
+    that observed nothing therefore inherited the previous run's proof that
+    something was observed.
+    """
+    sb = KeeperSandbox(tmp_path, "run-scoping", memoria=True, memory_populated=True)
+
+    sb.run()
+    first_muts = sb.mutations()
+    first_entry = sb.child_reported_entry()
+    assert first_muts, "first run observed nothing; the fixture cannot prove scoping"
+
+    # Second run: different pid, same append-only log.
+    sb.run()
+    second_muts = sb.mutations()
+    second_entry = sb.child_reported_entry()
+
+    assert second_entry is not None, "second run reported no entry point"
+    assert {r.get("pid") for r in second_muts} <= {sb.child_pid}, (
+        f"second run's reader surfaced another child's records: {second_muts}"
+    )
+    # The log really did accumulate: scoping must narrow, not silently truncate.
+    all_pids = {r.get("pid") for r in sb.write_attempts() if r.get("kind") == "mutation"}
+    assert len(all_pids) >= 2, f"expected two runs' records in the log; saw pids={all_pids}"
+    assert not ({r.get("pid") for r in second_muts} & {r.get("pid") for r in first_muts}), (
+        "the two runs' mutation sets overlap after scoping"
+    )
+
+
+def test_a_later_run_cannot_inherit_an_earlier_runs_observer_markers(tmp_path):
+    """The marker check must be run-scoped, or 'evidence available' always passes.
+
+    `write_attempts(require=True)` required that both markers appear in the log. Once
+    any earlier run had written them, a later run whose observer never installed or
+    never flushed still satisfied the requirement — turning "no usable evidence" into
+    a silent pass.
+    """
+    sb = KeeperSandbox(tmp_path, "marker-scoping", memoria=True, memory_populated=True)
+
+    sb.run()
+    assert sb.write_attempts(require=True), "first run produced no evidence"
+
+    # A child whose observer never installed contributes nothing of its own: point it
+    # at a write log that is never created, leaving the shared log holding run 1 only.
+    sb.run_raw(
+        [CHILD_INTERPRETER, str(ENTRY_POINT), "--check"],
+        env={**sb.env, "REPRO_WRITE_LOG": str(sb.root / "auditor" / "unwritten.jsonl")},
+    )
+    with pytest.raises(ObservationUnavailable):
+        sb.write_attempts(require=True)
 
 
 # --- lifecycle (temporary stores only) ----------------------------------------
@@ -356,7 +535,7 @@ def test_lock_events_are_attributed_to_the_protected_file(tmp_path):
         "fcntl.flock(fd, fcntl.LOCK_UN)\n"
         "os.close(fd)\n"
     )
-    subprocess.run([sys.executable, "-c", code], env=sb.env, capture_output=True, text=True, timeout=60, check=False)
+    sb.run_raw([sys.executable, "-c", code])
 
     locks = [r for r in sb.mutations() if r["event"] == "fcntl.flock"]
     assert locks, "no fcntl.flock event observed"
@@ -379,7 +558,7 @@ def test_an_unresolved_descriptor_cannot_satisfy_a_no_write_assertion(tmp_path):
         "except OSError:\n"
         "    pass\n"
     )
-    subprocess.run([sys.executable, "-c", code], env=sb.env, capture_output=True, text=True, timeout=60, check=False)
+    sb.run_raw([sys.executable, "-c", code])
 
     # Whether or not a lock event fired, the assertion helper must never treat an
     # unattributed record as clean evidence.
@@ -387,16 +566,19 @@ def test_an_unresolved_descriptor_cannot_satisfy_a_no_write_assertion(tmp_path):
         with pytest.raises(AssertionError):
             sb.assert_no_protected_mutations()
     else:
-        # Force the shape directly: an unattributed record must always raise.
+        # Force the shape directly: an unattributed record must always raise. It
+        # carries the current pid, so the run-scoped reader cannot filter it away
+        # and quietly turn this negative control back into a pass.
         recs = sb.mutations()
+        forced = {
+            "kind": "mutation",
+            "event": "fcntl.flock",
+            "paths": [],
+            "attributed": False,
+            "pid": sb.child_pid,
+        }
         sb.write_log.write_text(
-            "\n".join(
-                [
-                    *[str(r).replace("'", '"') for r in recs],
-                    '{"kind": "mutation", "event": "fcntl.flock", "paths": [], "attributed": false}',
-                ]
-            )
-            + "\n"
+            "\n".join([*(json.dumps(r) for r in recs), json.dumps(forced)]) + "\n"
         )
         with pytest.raises(AssertionError):
             sb.assert_no_protected_mutations()

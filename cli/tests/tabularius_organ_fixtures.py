@@ -3,7 +3,7 @@
 Issue #2866. Provides disposable-sandbox construction, filesystem inventory, and
 a PEP 578 mutation observer for `scripts/tabularius-organ.py`.
 
-Three guards exist because a no-write assertion can pass without observing
+Four guards exist because a no-write assertion can pass without observing
 anything. Each closes a distinct way that happens:
 
 1. `assert_child_started` requires a case-specific exit status AND positive
@@ -14,6 +14,9 @@ anything. Each closes a distinct way that happens:
    watching".
 3. The observer records both endpoints of multi-path operations and covers the
    real CPython lock event.
+4. Every reader is scoped to the CURRENT child pid. `writes.jsonl` is append-only
+   and shared across runs, so a first-match reader attributes an earlier run's
+   records — including its markers — to a later run that observed nothing.
 
 Observation limits carried from the reproduction: PEP 578 audit hooks observe
 events raised by the child interpreter only. They are NOT an operating-system-
@@ -138,6 +141,12 @@ _EVENTS = frozenset((
 
 
 def _emit(lines, rec):
+    # Every record carries the emitting process id. writes.jsonl is APPEND-ONLY and
+    # shared by every child this sandbox runs, so a reader that takes the first match
+    # reports the FIRST run's evidence for a later run. The pid is what makes a record
+    # attributable to the run that produced it.
+    rec = dict(rec)
+    rec["pid"] = os.getpid()
     lines.append(json.dumps(rec, sort_keys=True))
 
 
@@ -235,7 +244,7 @@ def _install():
         _emit(_state["lines"], {
             "kind": "marker", "marker": "observer_installed",
             "entry": sys.argv[0] if sys.argv else None,
-            "cwd": os.getcwd(), "pid": os.getpid(),
+            "cwd": os.getcwd(),
         })
     finally:
         _state["busy"] = False
@@ -434,37 +443,42 @@ class KeeperSandbox:
         if board_mode:
             self.env["REPRO_BOARD_MODE"] = board_mode
             self.env["REPRO_SRC"] = str(REPO_ROOT / "cli" / "src")
+        # Bound by run()/run_raw(); readers are scoped to it so evidence never leaks
+        # between runs.
+        self.child_pid: int | None = None
+
+    def run_raw(self, argv: list[str], *, env: dict | None = None, timeout: int = 120) -> subprocess.CompletedProcess:
+        """Run an arbitrary child under the sandbox env, bound to ITS OWN pid.
+
+        `subprocess.run` does not expose the child pid, and that pid is precisely what
+        scopes the observer records. Popen does, so the binding cannot be guessed or
+        inherited from a previous run.
+        """
+        popen = subprocess.Popen(
+            argv,
+            env=env or self.env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            cwd=str(REPO_ROOT),
+        )
+        self.child_pid = popen.pid
+        out, err = popen.communicate(timeout=timeout)
+        proc = subprocess.CompletedProcess(popen.args, popen.returncode, out, err)
+        self.last_proc = proc
+        return proc
 
     # --- execution ----------------------------------------------------------
 
     def run(self, *argv: str, expect_exit: int | None = 0, timeout: int = 120):
         """Run the entry point and prove it actually reached the code under test."""
-        proc = subprocess.run(
-            [CHILD_INTERPRETER, str(ENTRY_POINT), *argv],
-            env=self.env,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=str(REPO_ROOT),
-            check=False,
-        )
-        self.last_proc = proc
+        proc = self.run_raw([CHILD_INTERPRETER, str(ENTRY_POINT), *argv], timeout=timeout)
         self._guard(proc, expect_exit)
         return proc
 
     def run_unchecked(self, *argv: str, timeout: int = 120):
         """Run without the guard. For negative-control probes only."""
-        proc = subprocess.run(
-            [CHILD_INTERPRETER, str(ENTRY_POINT), *argv],
-            env=self.env,
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            cwd=str(REPO_ROOT),
-            check=False,
-        )
-        self.last_proc = proc
-        return proc
+        return self.run_raw([CHILD_INTERPRETER, str(ENTRY_POINT), *argv], timeout=timeout)
 
     def _guard(self, proc, expect_exit):
         stderr = proc.stderr or ""
@@ -519,8 +533,28 @@ class KeeperSandbox:
 
     # --- observation --------------------------------------------------------
 
+    def current_run_records(self, recs: list[dict] | None = None) -> list[dict]:
+        """Records emitted by the CURRENT child only.
+
+        `writes.jsonl` is append-only and every child appends to it, so an unscoped
+        read attributes an earlier run's records — and its markers — to a later run.
+        That is a false green in both directions: a run that observed nothing inherits
+        the previous run's proof, and a run that wrote inherits the previous run's
+        mutations. With no child bound (a probe reading raw evidence), pass everything
+        through rather than silently returning nothing.
+        """
+        if recs is None:
+            recs = self.write_attempts(require=False)
+        if self.child_pid is None:
+            return list(recs)
+        return [r for r in recs if r.get("pid") == self.child_pid]
+
     def write_attempts(self, require: bool = True) -> list[dict]:
-        """Parsed observer records. Raises unless evidence is available."""
+        """Parsed observer records. Raises unless evidence is available.
+
+        Returns every record in the append-only log; use `current_run_records` (or
+        the readers below, which already scope) to isolate the current child.
+        """
         if not self.write_log.exists():
             if require:
                 raise ObservationUnavailable(f"observer produced no evidence at {self.write_log}")
@@ -529,13 +563,20 @@ class KeeperSandbox:
         for line in self.write_log.read_text().splitlines():
             if line.strip():
                 records.append(json.loads(line))
-        markers = {r.get("marker") for r in records if r.get("kind") == "marker"}
+        # Marker completeness is checked against the CURRENT run. Checking the whole
+        # log lets an earlier run's markers satisfy a later run whose observer never
+        # installed or never flushed.
+        markers = {r.get("marker") for r in self.current_run_records(records) if r.get("kind") == "marker"}
         if require and not {"observer_installed", "observer_completed"} <= markers:
-            raise ObservationUnavailable(f"observer evidence incomplete; markers={sorted(m for m in markers if m)}")
+            raise ObservationUnavailable(
+                "observer evidence incomplete for the current child "
+                f"(pid={self.child_pid}); markers={sorted(m for m in markers if m)}"
+            )
         return records
 
     def mutations(self, require: bool = True) -> list[dict]:
-        return [r for r in self.write_attempts(require=require) if r.get("kind") == "mutation"]
+        recs = self.write_attempts(require=require)
+        return [r for r in self.current_run_records(recs) if r.get("kind") == "mutation"]
 
     def mutations_touching(self, needle: str, require: bool = True) -> list[dict]:
         hits = []
@@ -563,13 +604,13 @@ class KeeperSandbox:
                 raise AssertionError(f"mutated protected area {area!r}: {hits}")
 
     def child_reported_entry(self, recs: list[dict] | None = None) -> str | None:
-        for rec in recs if recs is not None else self.write_attempts(require=False):
+        for rec in self.current_run_records(recs):
             if rec.get("marker") == "observer_installed":
                 return rec.get("entry")
         return None
 
     def child_reported_modules(self, recs: list[dict] | None = None) -> dict:
-        for rec in recs if recs is not None else self.write_attempts(require=False):
+        for rec in self.current_run_records(recs):
             if rec.get("marker") == "observer_modules":
                 return rec.get("modules") or {}
         return {}

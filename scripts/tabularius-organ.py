@@ -69,11 +69,25 @@ def _describe(memory: dict[str, object]) -> str:
     """Human-readable memory outcome, for the non-mutating modes' stdout."""
     if "memory_error" in memory:
         return f"pass FAILED ({memory['memory_error']})"
+    # A deferral is not a pass. `drain_memory_once` defers while the memory lock is
+    # held, reporting pending with nothing applied and nothing rejected — which, once
+    # applied/rejected are dropped, is indistinguishable from an empty inbox and
+    # rendered as "pass OK (0 pending, 0 applied, 0 rejected)".
+    if memory.get("memory_deferred"):
+        return f"pass DEFERRED ({memory['memory_deferred']})"
     pending = memory.get("memory_pending")
     applied = memory.get("memory_applied")
     rejected = memory.get("memory_rejected")
     if applied is None:
         return f"pass OK ({pending} pending)"
+    # Under --dry-run these are WOULD-BE counts: memoria reports how many tickets
+    # are *applicable* and how many are *unparseable*, having written nothing.
+    # Rendering them "applied"/"rejected" reports completions that never happened.
+    # The dry-run fact travels in the outcome dict rather than being re-derived from
+    # the caller's flag, so `--check --dry-run` — whose count is a real count — stays
+    # truthful instead of being relabelled.
+    if memory.get("memory_dry_run"):
+        return f"pass OK WOULD APPLY ({pending} pending, would apply {applied}, {rejected} unparseable)"
     return f"pass OK ({pending} pending, {applied} applied, {rejected} rejected)"
 
 
@@ -90,11 +104,28 @@ def _memory_pass(*, check: bool, dry_run: bool) -> dict[str, object]:
         if check:
             return {"memory_pending": pending_count()}
         result = drain_memory_once(dry_run=dry_run)
-        return {
+        # `deferred` and `note` are part of this outcome, not decoration. Dropping them
+        # published a held-lock deferral as pending-with-nothing-applied, which both the
+        # health reader and `_describe` read as success.
+        note = str(getattr(result, "note", "") or "")
+        fields: dict[str, object] = {
             "memory_pending": result.pending,
             "memory_applied": result.applied,
             "memory_rejected": result.rejected,
+            "memory_dry_run": bool(dry_run),
         }
+        if note:
+            fields["memory_note"] = note
+        if getattr(result, "deferred", False):
+            # A STRING, not a bool. `organ-health.py`'s `_json_nested_error` reads a
+            # recorded failure at a key path and requires a non-empty string, so a bare
+            # `true` would be written and then silently un-readable — the "signal with
+            # no effector" shape. Note the reader currently registers only
+            # `("memory_error",)`, so a deferral is recorded and reported on stdout
+            # but does NOT yet turn the TABVLARIVS row down; whether contention should
+            # read as a defect is a judgement for the owner, not a silent default.
+            fields["memory_deferred"] = note or "deferred to next beat"
+        return fields
     except Exception as exc:
         print(f"tabularius[memoria]: skipped ({type(exc).__name__}: {str(exc)[:120]})")
         return {"memory_error": type(exc).__name__}
@@ -185,8 +216,13 @@ def main(argv: list[str] | None = None) -> int:
     result = drain_once(BOARD, dry_run=args.dry_run)
     preserve = None if args.dry_run else preserve_board_projection(BOARD)
     memory = _memory_pass(check=False, dry_run=args.dry_run)
-    if args.dry_run and memory:
-        # --dry-run suppresses the stamp, so stdout is the only channel.
+    # Under --dry-run the stamp is suppressed, so stdout is the only channel. A
+    # deferral is reported there too, and in normal mode: it is the one non-error
+    # outcome that reads as success if you only look at the counts, since
+    # `pending=N, applied=0, rejected=0` is exactly what an empty inbox looks
+    # like. Nothing else renders it, so without this the `_describe` deferral
+    # branch would be unreachable.
+    if memory and (args.dry_run or memory.get("memory_deferred")):
         print(f"tabularius: memory {_describe(memory)}")
     publication_failed = _publication_required_failure(args.require_published, preserve)
 
