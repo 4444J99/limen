@@ -11,13 +11,13 @@ and native adapters in its own checkout. This lane changes only the Limen
 admission reader/delegate boundary and its tests. Preserve primary checkouts,
 trust stores, all capabilities, existing session-start behavior, and Stop release.
 
-- [ ] Reproduce malformed/stalled/oversized stdin and invalid delegate verdicts
+- [x] Reproduce malformed/stalled/oversized stdin and invalid delegate verdicts
   using isolated harmless subprocesses; assert exact JSON and exit status.
-- [ ] Add a bounded reader with an end-to-end deadline, byte limit, and a native
+- [x] Add a bounded reader with an end-to-end deadline, byte limit, and a native
   PreToolUse denial when a covered event cannot be classified. Known lifecycle
   events stay advisory; a registered event argument supplies classification
   independent of malformed JSON.
-- [ ] Bound immutable capability/delegate work by the same remaining deadline;
+- [x] Bound immutable capability/delegate work by the same remaining deadline;
   reject invalid or ambiguous verdicts instead of treating them as permission.
 - [ ] Verify focused admission regressions and implicated scoped gates, then
   commit/push source, tests, and sanitized evidence to a topic PR.

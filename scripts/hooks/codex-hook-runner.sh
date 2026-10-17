@@ -3,7 +3,8 @@
 #
 # Resolves the Limen root without assuming CLAUDE_PROJECT_DIR is set, then
 # exports both CLAUDE_PROJECT_DIR and CODEX_PROJECT_DIR for the legacy scripts.
-# Missing targets are diagnostic no-ops so startup/edit hooks stay fail-open.
+# Missing advisory targets are diagnostic no-ops. Mandatory admission retains
+# its registered event even when the policy entrypoint is unavailable.
 set -uo pipefail
 
 hook_name="${1:-}"
@@ -11,6 +12,24 @@ shift 2>/dev/null || true
 
 log() {
   printf 'limen-hook[%s]: %s\n' "${hook_name:-unknown}" "$*" >&2
+}
+
+unavailable() {
+  log "$1"
+  if [[ "$hook_name" == "host-admission" ]]; then
+    local registered_event="" previous="" argument
+    for argument in "${@:2}"; do
+      if [[ "$previous" == "--event" ]]; then registered_event="$argument"; fi
+      previous="$argument"
+    done
+    case "$registered_event" in
+      Stop|UserPromptSubmit|SubagentStart) ;;
+      *)
+        printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"Limen mandatory admission entrypoint unavailable"}}'
+        ;;
+    esac
+  fi
+  exit 0
 }
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd -P)"
@@ -32,8 +51,7 @@ resolve_root() {
 }
 
 root="$(resolve_root)" || {
-  log "no project root resolved; skipping"
-  exit 0
+  unavailable "no project root resolved" "$@"
 }
 
 case "$hook_name" in
@@ -57,8 +75,7 @@ case "$hook_name" in
 esac
 
 if [[ ! -f "$target" ]]; then
-  log "missing script: $target"
-  exit 0
+  unavailable "missing hook script" "$@"
 fi
 
 export CLAUDE_PROJECT_DIR="$root"
