@@ -74,7 +74,6 @@ def test_observer_records_known_mutations(tmp_path):
         "fcntl.flock(fd, fcntl.LOCK_UN)\n"
         "os.close(fd)\n"
     )
-    import subprocess
 
     sb.run_raw([sys.executable, "-c", code])
 
@@ -301,9 +300,7 @@ def test_a_deferred_memory_pass_is_published_as_deferred_not_as_success(tmp_path
     assert state.get("memory_deferred"), f"deferral dropped from the stamp: {state}\nstdout: {proc.stdout}"
     assert "memory lock" in str(state["memory_deferred"]), state
     # ...and the outcome is not claimed as a pass.
-    assert "DEFERRED" in proc.stdout, (
-        f"deferred pass reported as success on stdout: {proc.stdout!r}"
-    )
+    assert "DEFERRED" in proc.stdout, f"deferred pass reported as success on stdout: {proc.stdout!r}"
     assert "pass OK" not in proc.stdout, f"deferral rendered as 'pass OK': {proc.stdout!r}"
     # Nothing was consumed: a deferral applies nothing.
     ticket = sb.memory_dir / ".covenant-inbox" / "synthetic.json"
@@ -326,10 +323,7 @@ def _run_with_deferred_memory_lock(sb) -> subprocess.CompletedProcess:
         [
             "python3",
             "-c",
-            "import fcntl,sys,time\n"
-            "fd=open(sys.argv[1],'a')\n"
-            "fcntl.flock(fd, fcntl.LOCK_EX)\n"
-            "time.sleep(60)\n",
+            "import fcntl,sys,time\nfd=open(sys.argv[1],'a')\nfcntl.flock(fd, fcntl.LOCK_EX)\ntime.sleep(60)\n",
             str(lock),
         ],
         stdout=subprocess.DEVNULL,
@@ -375,9 +369,7 @@ def test_dry_run_counts_are_labelled_would_be_not_completed(tmp_path):
     assert not sb.state_path.exists(), "--dry-run wrote a health-state stamp"
     ticket = sb.memory_dir / ".covenant-inbox" / "synthetic.json"
     assert ticket.exists(), "--dry-run consumed a pending memory ticket"
-    assert not (sb.memory_dir / f"{VALID_TICKET['slug']}.md").exists(), (
-        "--dry-run wrote a memory atom"
-    )
+    assert not (sb.memory_dir / f"{VALID_TICKET['slug']}.md").exists(), "--dry-run wrote a memory atom"
 
 
 def test_check_dry_run_count_is_not_relabelled_would_be(tmp_path):
@@ -457,6 +449,7 @@ def test_observer_readers_are_scoped_to_the_current_child(tmp_path):
     first_muts = sb.mutations()
     first_entry = sb.child_reported_entry()
     assert first_muts, "first run observed nothing; the fixture cannot prove scoping"
+    assert first_entry, "first run reported no entry point; scoping would be untestable"
 
     # Second run: different pid, same append-only log.
     sb.run()
@@ -577,8 +570,6 @@ def test_an_unresolved_descriptor_cannot_satisfy_a_no_write_assertion(tmp_path):
             "attributed": False,
             "pid": sb.child_pid,
         }
-        sb.write_log.write_text(
-            "\n".join([*(json.dumps(r) for r in recs), json.dumps(forced)]) + "\n"
-        )
+        sb.write_log.write_text("\n".join([*(json.dumps(r) for r in recs), json.dumps(forced)]) + "\n")
         with pytest.raises(AssertionError):
             sb.assert_no_protected_mutations()
