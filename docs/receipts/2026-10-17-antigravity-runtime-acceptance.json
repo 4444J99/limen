@@ -1,16 +1,18 @@
 {
   "schema": "limen.runtime_acceptance.v1",
-  "recorded_at": "2026-10-17T19:53:40Z",
+  "recorded_at": "2026-10-17T21:10:24Z",
   "rollout_step": 8,
   "platform": "darwin-arm64",
   "status": "passed",
   "surfaces": {
     "agy_cli": {
       "path": "/opt/homebrew/bin/agy",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "status": "ok",
       "doorway_path": "/Users/4jp/.gemini/bin/agy",
-      "doorway_version": "1.3.4"
+      "doorway_version": "1.4.1",
+      "byte_parity_verified": true,
+      "legacy_binary_backup": "/Users/4jp/Workspace/limen/.agent-runtime/antigravity/bin/agy.1.3.4.bak"
     },
     "antigravity_ide": {
       "path": "/Users/4jp/.antigravity-ide",
@@ -27,6 +29,14 @@
       "active_session": "a533360f-ebab-4a4f-a044-a207e993d2cd",
       "status": "ok"
     },
+    "independent_probe": {
+      "command": "/opt/homebrew/bin/agy --print 'reply with the single word PONG' --model gemini-3.8-flash-low --print-timeout 30s",
+      "output": "PONG",
+      "exit_code": 0,
+      "created_session_id": "3811b5d5-e2ec-43a6-a981-8ac04cfe1e69",
+      "created_transcript": "/Users/4jp/.gemini/antigravity-cli/brain/3811b5d5-e2ec-43a6-a981-8ac04cfe1e69/.system_generated/logs/transcript.jsonl",
+      "status": "verified"
+    },
     "gemini_cli": {
       "path": "/opt/homebrew/bin/gemini",
       "version": "0.61.0",
@@ -35,6 +45,14 @@
     }
   },
   "verification": {
+    "domus_home_guard": {
+      "ok": true,
+      "declared": 94,
+      "actual": 94,
+      "actions": 0,
+      "blocked_actions": 0,
+      "violations": 0
+    },
     "domus_agent_runtime_check": {
       "ok": true,
       "status": "ok",
@@ -43,13 +61,22 @@
     "limen_e2e_tests": {
       "total": 54,
       "passed": 54,
-      "failed": 0,
-      "duration_seconds": 25.26
+      "failed": 0
     },
     "domus_tests": {
       "total": 108,
       "passed": 108,
       "failed": 0
+    }
+  },
+  "dispositions": {
+    "go": {
+      "reconciled_to": "/Users/4jp/.local/share/go/pkg/mod",
+      "receipt": "/Users/4jp/.local/state/domus/home-residue/go-reconcile-receipt-20261017.json"
+    },
+    "limen_doorway": {
+      "retired_to": "/Users/4jp/.local/state/domus/retired-home-doorways/limen",
+      "receipt": "/Users/4jp/.local/state/domus/home-residue/limen-doorway-retirement-receipt-20261017.json"
     }
   },
   "rollback_receipt": "/Users/4jp/.local/state/domus/home-residue/antigravity-runtime-stage-receipt-20261017.json"
