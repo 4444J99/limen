@@ -1,0 +1,62 @@
+{
+  "native_session_id": "01a14ac6-cf1c-7043-a3d6-839e4fbd4f56",
+  "status": "incomplete-handoff",
+  "source": {
+    "limen": "183a9793bcf0a1febfb9546e18f562b82058059a",
+    "domus": "aff4f7671318c7691edf94d73b1e6adcb74c6a4e"
+  },
+  "observations": [
+    {
+      "root_id": "limen",
+      "command": "env PYTHONPATH=cli/src /opt/homebrew/opt/python@3.14/bin/python3.14 -m pytest cli/tests/test_dynamic_routing.py cli/tests/test_provider_selection.py -q",
+      "exit_code": 0,
+      "passed": 25,
+      "qualification": "focused implementation snapshot; source was uncommitted and the final installed-health seam was added afterward; not a final exact-head pass"
+    },
+    {
+      "root_id": "domus",
+      "command": "/opt/homebrew/opt/python@3.14/bin/python3.14 -m pytest tests/test_dynamic_model_adapters.py tests/test_agent_hook_policy.py tests/test_guard_liveness.py tests/test_hook_evidence.py -q",
+      "exit_code": 1,
+      "passed": 52,
+      "failed": 1,
+      "qualification": "one assertion expects model.execution-tier rather than the intentional model.explicit-fresh-fork reason"
+    }
+  ],
+  "final_scoped_verification": {
+    "executed": false,
+    "guard_reason": "swap-fraction",
+    "exit_code": null
+  },
+  "custody": {
+    "source_branches_published": true,
+    "ci_four_heads_verified": true,
+    "independent_restore_verified": false,
+    "retirement_performed": false
+  },
+  "external_effects": [
+    {
+      "kind": "remote-branch-preservation",
+      "repository": "4444J99/domus-genoma-private",
+      "branch": "fix/ci-python-env-20261017",
+      "head": "b811cdc0d55d8fe3cbd5911ba4cb06e2e539aefc"
+    },
+    {
+      "kind": "draft-pr",
+      "url": "https://github.com/4444J99/limen/pull/2903"
+    },
+    {
+      "kind": "draft-pr",
+      "url": "https://github.com/4444J99/domus-genoma-private/pull/490"
+    }
+  ],
+  "retained_owners": [
+    "https://github.com/4444J99/limen/issues/940",
+    "https://github.com/4444J99/domus-genoma-private/issues/487"
+  ],
+  "guard_rejections": [
+    "workspace-scope-unavailable",
+    "command-substitution-or-multiline",
+    "swap-fraction"
+  ],
+  "native_enforcement_verified": false
+}
