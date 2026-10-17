@@ -1,0 +1,381 @@
+[
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "docs/av-second-device-custody-20261017",
+    "sha": "27b20b605b72",
+    "pr_state": "merged",
+    "prs": [
+      2904
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "docs/claude-md-trim-20261016",
+    "sha": "b31e6a8b1d8a",
+    "pr_state": "merged",
+    "prs": [
+      2872
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "docs/closeout-live-state-20261016",
+    "sha": "7c7316a6ca23",
+    "pr_state": "merged",
+    "prs": [
+      2889
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "docs/heartbeat-watch-acceptance-final-20261013",
+    "sha": "94414ad0a6dc",
+    "pr_state": "merged",
+    "prs": [
+      2862
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "docs/mcp-activation-2876-20261016",
+    "sha": "56d069dce0a6",
+    "pr_state": "merged",
+    "prs": [
+      2877
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "docs/pr-debt-observation-20261017",
+    "sha": "02b83588f437",
+    "pr_state": "merged",
+    "prs": [
+      2906
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "docs/prerewrite-containment-20261016",
+    "sha": "06c13af6dcfe",
+    "pr_state": "merged",
+    "prs": [
+      2882
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "docs/prerewrite-d3-ledger-20261017",
+    "sha": "45fe3b1afaac",
+    "pr_state": "merged",
+    "prs": [
+      2899
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "docs/shared-os-evidence-refresh-20261015",
+    "sha": "f76d036f6c85",
+    "pr_state": "merged",
+    "prs": [
+      2865
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "docs/ship-skill-stale-refs-20261016",
+    "sha": "a4c762232cbd",
+    "pr_state": "merged",
+    "prs": [
+      2890
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "docs/vitals-freshness-acceptance-20261013",
+    "sha": "a506923995e2",
+    "pr_state": "merged",
+    "prs": [
+      2864
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/bounded-process-census-20261012",
+    "sha": "9b7d528c76d5",
+    "pr_state": "merged",
+    "prs": [
+      2853
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/codex-native-lineage-20261017",
+    "sha": "6cdeab38b951",
+    "pr_state": "merged",
+    "prs": [
+      2894
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/gate-python-resolver-20261016",
+    "sha": "d1e900446c11",
+    "pr_state": "merged",
+    "prs": [
+      2879
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/heartbeat-watch-repair-20261013",
+    "sha": "1b2c39e36621",
+    "pr_state": "merged",
+    "prs": [
+      2859
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/hook-admission-input-20261017",
+    "sha": "adeac7849a74",
+    "pr_state": "merged",
+    "prs": [
+      2900
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/host-admission-temp-root-20261013",
+    "sha": "ca96b72d1b3d",
+    "pr_state": "merged",
+    "prs": [
+      2860
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/mcp-audit-2874-20261016",
+    "sha": "91d77a94115b",
+    "pr_state": "merged",
+    "prs": [
+      2875
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/pr-delivery-classification-20261016",
+    "sha": "d24475c47bfe",
+    "pr_state": "merged",
+    "prs": [
+      2873
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/private-fast-lane-billing-lock-20261017",
+    "sha": "4ee5148f0458",
+    "pr_state": "merged",
+    "prs": [
+      2896
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/readiness-withdraw-hokage-chess-20261016",
+    "sha": "f2dd52a8ba8e",
+    "pr_state": "merged",
+    "prs": [
+      2883
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/recovery-admission-reconcile-20261013",
+    "sha": "b68e2942a78b",
+    "pr_state": "no-pr",
+    "prs": []
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/shared-agent-os-receipts-20261012",
+    "sha": "d7f580480c29",
+    "pr_state": "merged",
+    "prs": [
+      2851
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/shared-os-rollout-corrections-20261012",
+    "sha": "1cb27a20ce7f",
+    "pr_state": "merged",
+    "prs": [
+      2852
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/tcc-observation-evidence-20261013",
+    "sha": "47fb2b23bc55",
+    "pr_state": "merged",
+    "prs": [
+      2861
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/vendor-insights-reader-gaps",
+    "sha": "2a216b1101c9",
+    "pr_state": "merged",
+    "prs": [
+      2897
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/vitals-shared-freshness-20261013",
+    "sha": "e4c55a85860e",
+    "pr_state": "merged",
+    "prs": [
+      2863
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/limen",
+    "slug": "4444J99/limen",
+    "branch": "fix/witness-source-access-20261012",
+    "sha": "64d0fb98ed35",
+    "pr_state": "merged",
+    "prs": [
+      2856
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/domus-genoma",
+    "slug": "4444J99/domus-genoma-private",
+    "branch": "fix/codex-config-reconcile-20261016",
+    "sha": "a2e7a131c7b3",
+    "pr_state": "merged",
+    "prs": [
+      430,
+      428
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/domus-genoma",
+    "slug": "4444J99/domus-genoma-private",
+    "branch": "fix/quota-maintenance-20261010",
+    "sha": "736ccc236c2f",
+    "pr_state": "no-pr",
+    "prs": []
+  },
+  {
+    "repo": "/Users/4jp/Workspace/domus-genoma",
+    "slug": "4444J99/domus-genoma-private",
+    "branch": "fix/security-hardening-domus-genoma",
+    "sha": "663b3cc97b0a",
+    "pr_state": "open",
+    "prs": [
+      149
+    ]
+  },
+  {
+    "repo": "/Users/4jp/.local/share/ai-skills/source",
+    "slug": "4444J99/a-i--skills",
+    "branch": "feat/claude-default-on-skills-20261016",
+    "sha": "0e497f6b93f4",
+    "pr_state": "open",
+    "prs": [
+      47
+    ]
+  },
+  {
+    "repo": "/Users/4jp/.local/share/ai-skills/source",
+    "slug": "4444J99/a-i--skills",
+    "branch": "feat/closeout-live-state-20261016",
+    "sha": "83502b13da0b",
+    "pr_state": "open",
+    "prs": [
+      48
+    ]
+  },
+  {
+    "repo": "/Users/4jp/.local/share/ai-skills/source",
+    "slug": "4444J99/a-i--skills",
+    "branch": "fix/local-skill-catalog-review-20261016",
+    "sha": "ff94094f3ca6",
+    "pr_state": "no-pr",
+    "prs": []
+  },
+  {
+    "repo": "/Users/4jp/Workspace/organvm-vii-kerygma/portfolio",
+    "slug": "organvm-vii-kerygma/portfolio",
+    "branch": "chamber-pr-169",
+    "sha": "a47b5147a528",
+    "pr_state": "no-pr",
+    "prs": []
+  },
+  {
+    "repo": "/Users/4jp/Workspace/organvm-vii-kerygma/portfolio",
+    "slug": "organvm-vii-kerygma/portfolio",
+    "branch": "remediate-228",
+    "sha": "2e2ab9bc8eda",
+    "pr_state": "no-pr",
+    "prs": []
+  },
+  {
+    "repo": "/Users/4jp/Workspace/organvm-vii-kerygma/portfolio",
+    "slug": "organvm-vii-kerygma/portfolio",
+    "branch": "remediate-229",
+    "sha": "94ee0cada369",
+    "pr_state": "no-pr",
+    "prs": []
+  },
+  {
+    "repo": "/Users/4jp/Workspace/4444J99/generative-multimedia-spatial-environment",
+    "slug": "4444J99/generative-multimedia-spatial-environment",
+    "branch": "dependabot/npm_and_yarn/undici-8.11.2",
+    "sha": "23221dd48d2b",
+    "pr_state": "closed",
+    "prs": [
+      152
+    ]
+  },
+  {
+    "repo": "/Users/4jp/Workspace/4444J99/generative-multimedia-spatial-environment",
+    "slug": "4444J99/generative-multimedia-spatial-environment",
+    "branch": "dependabot/npm_and_yarn/vitest-5.0.4",
+    "sha": "97abeab43ece",
+    "pr_state": "closed",
+    "prs": [
+      158
+    ]
+  }
+]

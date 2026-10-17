@@ -1,0 +1,554 @@
+{
+  "by_reapable_reason": {
+    "clean+merged+idle": 5,
+    "clean+pushed+idle": 18
+  },
+  "by_reason": {
+    "active(<24h)": 27,
+    "clean+merged+idle": 5,
+    "clean+pushed+idle": 18,
+    "dirty": 10,
+    "not-a-git-dir": 14,
+    "unpushed-commits": 2
+  },
+  "complete": false,
+  "debt": 26,
+  "debt_target": 0,
+  "items": [
+    {
+      "debt": true,
+      "name": "added-git-refs-b_dhpwv1",
+      "path": "/Volumes/Scratch/limen-worktrees/added-git-refs-b_dhpwv1",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": true,
+      "name": "added-native-k1k8gvwl",
+      "path": "/Volumes/Scratch/limen-worktrees/added-native-k1k8gvwl",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": false,
+      "name": "estate-vault-assigned-closeout-20261001",
+      "path": "/Volumes/Scratch/limen-worktrees/estate-vault-assigned-closeout-20261001",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": true,
+      "name": "group05-archive-custody-20261001",
+      "path": "/Volumes/Scratch/limen-worktrees/group05-archive-custody-20261001",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": false,
+      "name": "portvs-assigned-closeout-20261001",
+      "path": "/Volumes/Scratch/limen-worktrees/portvs-assigned-closeout-20261001",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": true,
+      "name": "ship-docs-diurnal-20260812002605-91121",
+      "path": "/Volumes/Scratch/limen-worktrees/ship-docs-diurnal-20260812002605-91121",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": true,
+      "name": "ship-docs-hospes-heal-expand-ideal-forms-20260815152541-51910",
+      "path": "/Volumes/Scratch/limen-worktrees/ship-docs-hospes-heal-expand-ideal-forms-20260815152541-51910",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": true,
+      "name": "ship-docs-portvs-astra-plan-20260730191734-44905",
+      "path": "/Volumes/Scratch/limen-worktrees/ship-docs-portvs-astra-plan-20260730191734-44905",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": true,
+      "name": "ship-docs-pr-debt-observation-20260811213554-55168",
+      "path": "/Volumes/Scratch/limen-worktrees/ship-docs-pr-debt-observation-20260811213554-55168",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": true,
+      "name": "ship-docs-session-contention-incident-20260811213856-57783",
+      "path": "/Volumes/Scratch/limen-worktrees/ship-docs-session-contention-incident-20260811213856-57783",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": true,
+      "name": "ship-docs-session-contention-incident-20260811231848-78004",
+      "path": "/Volumes/Scratch/limen-worktrees/ship-docs-session-contention-incident-20260811231848-78004",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": true,
+      "name": "ship-docs-session-contention-incident-20260815164503-70210",
+      "path": "/Volumes/Scratch/limen-worktrees/ship-docs-session-contention-incident-20260815164503-70210",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": true,
+      "name": "ship-docs-session-contention-incident-20260815203149-88671",
+      "path": "/Volumes/Scratch/limen-worktrees/ship-docs-session-contention-incident-20260815203149-88671",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": true,
+      "name": "not-present",
+      "path": "/Volumes/Scratch/.limen-worktrees-repo-cache/not-present",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": false,
+      "name": "insights-effective-runtime-20261016",
+      "path": "/Users/4jp/Workspace/.limen-worktrees/insights-effective-runtime-20261016",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": false,
+      "name": "ai-skills-closeout-live-state-20261016",
+      "path": "/Users/4jp/Workspace/.worktrees/ai-skills-closeout-live-state-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "clavis-ci-20261016",
+      "path": "/Users/4jp/Workspace/.worktrees/clavis-ci-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "domus-adapter-source-path-20261017",
+      "path": "/Users/4jp/Workspace/.worktrees/domus-adapter-source-path-20261017",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "domus-ci-complete-20261017",
+      "path": "/Users/4jp/Workspace/.worktrees/domus-ci-complete-20261017",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "domus-ci-python-env-20261017",
+      "path": "/Users/4jp/Workspace/.worktrees/domus-ci-python-env-20261017",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "domus-gpt-inventory-20261017",
+      "path": "/Users/4jp/Workspace/.worktrees/domus-gpt-inventory-20261017",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "domus-hook-census-20261016",
+      "path": "/Users/4jp/Workspace/.worktrees/domus-hook-census-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "domus-skills-allowlist-20261016",
+      "path": "/Users/4jp/Workspace/.worktrees/domus-skills-allowlist-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "domus-skills-rollback-20261016-1857",
+      "path": "/Users/4jp/Workspace/.worktrees/domus-skills-rollback-20261016-1857",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "domus-skills-root-dedupe-20261016",
+      "path": "/Users/4jp/Workspace/.worktrees/domus-skills-root-dedupe-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "skills-consolidation-20261016",
+      "path": "/Users/4jp/Workspace/.worktrees/skills-consolidation-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "skills-default-on-20261016",
+      "path": "/Users/4jp/Workspace/.worktrees/skills-default-on-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "editorial-bounded-pilot",
+      "path": "/Users/4jp/Workspace/4444J99/.worktrees/editorial-bounded-pilot",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": false,
+      "name": "engine-bounded-warning-pilot",
+      "path": "/Users/4jp/Workspace/4444J99/.worktrees/engine-bounded-warning-pilot",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": true,
+      "name": "ges-native-enforcement-pilot",
+      "path": "/Users/4jp/Workspace/4444J99/.worktrees/ges-native-enforcement-pilot",
+      "reapable": false,
+      "reason": "dirty"
+    },
+    {
+      "debt": true,
+      "name": "ges-wave-20261009",
+      "path": "/Users/4jp/Workspace/4444J99/.worktrees/ges-wave-20261009",
+      "reapable": false,
+      "reason": "dirty"
+    },
+    {
+      "debt": true,
+      "name": "github-engineering-standards-a1-integration",
+      "path": "/Users/4jp/Workspace/4444J99/.worktrees/github-engineering-standards-a1-integration",
+      "reapable": false,
+      "reason": "dirty"
+    },
+    {
+      "debt": false,
+      "name": "github-engineering-standards-a3-capsule",
+      "path": "/Users/4jp/Workspace/4444J99/.worktrees/github-engineering-standards-a3-capsule",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": false,
+      "name": "github-engineering-standards-b0",
+      "path": "/Users/4jp/Workspace/4444J99/.worktrees/github-engineering-standards-b0",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": false,
+      "name": "github-engineering-standards-c0",
+      "path": "/Users/4jp/Workspace/4444J99/.worktrees/github-engineering-standards-c0",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": true,
+      "name": "github-engineering-standards-repository-factory",
+      "path": "/Users/4jp/Workspace/4444J99/.worktrees/github-engineering-standards-repository-factory",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": false,
+      "name": "portfolio-bounded-pilot",
+      "path": "/Users/4jp/Workspace/4444J99/.worktrees/portfolio-bounded-pilot",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": false,
+      "name": "styx-990-pr991-closeout",
+      "path": "/Users/4jp/Workspace/4444J99/peer-audited--behavioral-blockchain/.worktrees/styx-990-pr991-closeout",
+      "reapable": true,
+      "reason": "clean+merged+idle"
+    },
+    {
+      "debt": false,
+      "name": "work-verify-planning-custody-receipt",
+      "path": "/Users/4jp/Workspace/4444J99/peer-audited--behavioral-blockchain/.worktrees/work-verify-planning-custody-receipt",
+      "reapable": true,
+      "reason": "clean+merged+idle"
+    },
+    {
+      "debt": false,
+      "name": "agent-config-runtime-root-20261016",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/agent-config-runtime-root-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "agent-neutral-slash-skills-20261016",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/agent-neutral-slash-skills-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "closeout-global-discovery-20260916",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/closeout-global-discovery-20260916",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": false,
+      "name": "closeout-runtime-20260930",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/closeout-runtime-20260930",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": false,
+      "name": "codex-default-model-reset-main-20261009",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/codex-default-model-reset-main-20261009",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "codex-doctor-heal-20261017",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/codex-doctor-heal-20261017",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "codex-doctor-proof-20261017",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/codex-doctor-proof-20261017",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "codex-startup-acceptance-20261016",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/codex-startup-acceptance-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "codex-startup-repair-20261016",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/codex-startup-repair-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "disable-claudeai-skill-sync-20261017",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/disable-claudeai-skill-sync-20261017",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "domvs-recovery-pilot-20260930",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/domvs-recovery-pilot-20260930",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": true,
+      "name": "host-repair-20260925",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/host-repair-20260925",
+      "reapable": false,
+      "reason": "dirty"
+    },
+    {
+      "debt": false,
+      "name": "public-face-split-20261016",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/public-face-split-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "quota-maintenance-20261010",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/quota-maintenance-20261010",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": false,
+      "name": "workspace-recovery-policy-20260916",
+      "path": "/Users/4jp/Workspace/domus-genoma/.worktrees/workspace-recovery-policy-20260916",
+      "reapable": true,
+      "reason": "clean+merged+idle"
+    },
+    {
+      "debt": false,
+      "name": "foundation",
+      "path": "/Users/4jp/Workspace/library/shelves/organvm-vi-koinonia/context-aware-essay-evaluation/.worktrees/foundation",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": true,
+      "name": "av-directory-receipt-20261010",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/av-directory-receipt-20261010",
+      "reapable": false,
+      "reason": "unpushed-commits"
+    },
+    {
+      "debt": true,
+      "name": "av-policy-readback-20261010",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/av-policy-readback-20261010",
+      "reapable": false,
+      "reason": "dirty"
+    },
+    {
+      "debt": false,
+      "name": "claude-md-trim-20261016",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/claude-md-trim-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "codex-native-lineage-20261017",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/codex-native-lineage-20261017",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "context-runtime-skills-20261016",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/context-runtime-skills-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "gate-python-resolver-20261016",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/gate-python-resolver-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "memoria-repro-2866",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": false,
+      "name": "ops-d1-recovery-source-20261009",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/ops-d1-recovery-source-20261009",
+      "reapable": true,
+      "reason": "clean+merged+idle"
+    },
+    {
+      "debt": false,
+      "name": "ops-private-release-20261009",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/ops-private-release-20261009",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": false,
+      "name": "ops-witness-20261010",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/ops-witness-20261010",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": false,
+      "name": "prerewrite-containment-20261016",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/prerewrite-containment-20261016",
+      "reapable": false,
+      "reason": "active(<24h)"
+    },
+    {
+      "debt": true,
+      "name": "reap-scope-20261004",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/reap-scope-20261004",
+      "reapable": false,
+      "reason": "dirty"
+    },
+    {
+      "debt": false,
+      "name": "recovery-admission-20261010",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/recovery-admission-20261010",
+      "reapable": true,
+      "reason": "clean+merged+idle"
+    },
+    {
+      "debt": false,
+      "name": "speech-score-engine",
+      "path": "/Users/4jp/Workspace/limen/.worktrees/speech-score-engine",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": true,
+      "name": "remediate-198",
+      "path": "/Users/4jp/Workspace/organvm-vii-kerygma/portfolio/.worktrees/remediate-198",
+      "reapable": false,
+      "reason": "dirty"
+    },
+    {
+      "debt": false,
+      "name": "ucc-restoration-20260917",
+      "path": "/Users/4jp/Workspace/public-record-data-scrapper/.worktrees/ucc-restoration-20260917",
+      "reapable": true,
+      "reason": "clean+pushed+idle"
+    },
+    {
+      "debt": true,
+      "name": "pr-104",
+      "path": "/Users/4jp/Workspace/chamber_worktrees/chamber_1/organvm-engine/pr-104",
+      "reapable": false,
+      "reason": "dirty"
+    },
+    {
+      "debt": true,
+      "name": "pr-1",
+      "path": "/Users/4jp/Workspace/chamber_worktrees/chamber_2/speech-score-engine/pr-1",
+      "reapable": false,
+      "reason": "dirty"
+    },
+    {
+      "debt": true,
+      "name": "pr-391",
+      "path": "/Users/4jp/Workspace/chamber_worktrees/chamber_3/victoroff-os/pr-391",
+      "reapable": false,
+      "reason": "not-a-git-dir"
+    },
+    {
+      "debt": true,
+      "name": "pr-169",
+      "path": "/Users/4jp/Workspace/chamber_worktrees/outer_ring/portfolio/pr-169",
+      "reapable": false,
+      "reason": "dirty"
+    },
+    {
+      "debt": true,
+      "name": "pr-229",
+      "path": "/Users/4jp/Workspace/chamber_worktrees/outer_ring/portfolio/pr-229",
+      "reapable": false,
+      "reason": "unpushed-commits"
+    }
+  ],
+  "reapable": 23,
+  "reapable_limit": 0,
+  "total": 76
+}

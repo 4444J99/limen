@@ -1,0 +1,2044 @@
+{
+  "date": "20261017",
+  "apply": false,
+  "repos": [
+    {
+      "repo": "/Users/4jp/Workspace/limen",
+      "reapable": [
+        {
+          "branch": "docs/heartbeat-watch-acceptance-20261013",
+          "sha": "3a3faf50401d",
+          "on": "origin/HEAD -> origin/main"
+        },
+        {
+          "branch": "fix/lifecycle-measure-pagination-20261017",
+          "sha": "49a75fec94e6",
+          "on": "origin/HEAD -> origin/main"
+        }
+      ],
+      "pushed": [
+        {
+          "branch": "docs/av-second-device-custody-20261017",
+          "sha": "27b20b605b72",
+          "dry_run": true
+        },
+        {
+          "branch": "docs/claude-md-trim-20261016",
+          "sha": "b31e6a8b1d8a",
+          "dry_run": true
+        },
+        {
+          "branch": "docs/closeout-live-state-20261016",
+          "sha": "7c7316a6ca23",
+          "dry_run": true
+        },
+        {
+          "branch": "docs/heartbeat-watch-acceptance-final-20261013",
+          "sha": "94414ad0a6dc",
+          "dry_run": true
+        },
+        {
+          "branch": "docs/mcp-activation-2876-20261016",
+          "sha": "56d069dce0a6",
+          "dry_run": true
+        },
+        {
+          "branch": "docs/pr-debt-observation-20261017",
+          "sha": "02b83588f437",
+          "dry_run": true
+        },
+        {
+          "branch": "docs/prerewrite-containment-20261016",
+          "sha": "06c13af6dcfe",
+          "dry_run": true
+        },
+        {
+          "branch": "docs/prerewrite-d3-ledger-20261017",
+          "sha": "45fe3b1afaac",
+          "dry_run": true
+        },
+        {
+          "branch": "docs/shared-os-evidence-refresh-20261015",
+          "sha": "f76d036f6c85",
+          "dry_run": true
+        },
+        {
+          "branch": "docs/ship-skill-stale-refs-20261016",
+          "sha": "a4c762232cbd",
+          "dry_run": true
+        },
+        {
+          "branch": "docs/vitals-freshness-acceptance-20261013",
+          "sha": "a506923995e2",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/bounded-process-census-20261012",
+          "sha": "9b7d528c76d5",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/codex-native-lineage-20261017",
+          "sha": "6cdeab38b951",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/gate-python-resolver-20261016",
+          "sha": "d1e900446c11",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/heartbeat-watch-repair-20261013",
+          "sha": "1b2c39e36621",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/hook-admission-input-20261017",
+          "sha": "adeac7849a74",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/host-admission-temp-root-20261013",
+          "sha": "ca96b72d1b3d",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/mcp-audit-2874-20261016",
+          "sha": "91d77a94115b",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/pr-delivery-classification-20261016",
+          "sha": "d24475c47bfe",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/private-fast-lane-billing-lock-20261017",
+          "sha": "4ee5148f0458",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/readiness-withdraw-hokage-chess-20261016",
+          "sha": "f2dd52a8ba8e",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/recovery-admission-reconcile-20261013",
+          "sha": "b68e2942a78b",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/shared-agent-os-receipts-20261012",
+          "sha": "d7f580480c29",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/shared-os-rollout-corrections-20261012",
+          "sha": "1cb27a20ce7f",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/tcc-observation-evidence-20261013",
+          "sha": "47fb2b23bc55",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/vendor-insights-reader-gaps",
+          "sha": "2a216b1101c9",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/vitals-shared-freshness-20261013",
+          "sha": "e4c55a85860e",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/witness-source-access-20261012",
+          "sha": "64d0fb98ed35",
+          "dry_run": true
+        }
+      ],
+      "failed": [],
+      "skipped_protected": [],
+      "remote": "https://github.com/4444J99/limen.git",
+      "fetch": "ok"
+    },
+    {
+      "repo": "/Users/4jp/Workspace/domus-genoma",
+      "reapable": [
+        {
+          "branch": "docs/codex-session-triage-20261017-01a14a97",
+          "sha": "86aa72bf972f",
+          "on": "origin/docs/codex-session-triage-20261017-01a14a97"
+        },
+        {
+          "branch": "feat/agent-neutral-slash-skills-20261016",
+          "sha": "8a2dc0359700",
+          "on": "origin/claude/audit-docs-20261016-f8d84f"
+        },
+        {
+          "branch": "fix/cce-managed-refresh-20260925",
+          "sha": "37bf9cbdfc85",
+          "on": "origin/custody/group02-20260930/fix/cce-managed-refresh-20260925"
+        },
+        {
+          "branch": "fix/ci-python-env-20261017",
+          "sha": "b811cdc0d55d",
+          "on": "origin/fix/ci-python-env-20261017"
+        },
+        {
+          "branch": "fix/codex-startup-closeout",
+          "sha": "d11f196949cc",
+          "on": "origin/preserve/visible-retirement-20260926/codex-startup-closeout"
+        },
+        {
+          "branch": "fix/domus-source-root-reconcile-20260925",
+          "sha": "aba45318eb29",
+          "on": "origin/custody/group02-20260930/fix/domus-source-root-reconcile-20260925"
+        },
+        {
+          "branch": "fix/history-storage-recovery-local-20261012",
+          "sha": "6f9cd3c17055",
+          "on": "origin/fix/history-storage-recovery-20261012"
+        },
+        {
+          "branch": "fix/unattended-auth-20260916",
+          "sha": "631e1403c9af",
+          "on": "origin/docs/unattended-signed-api-route-20260916"
+        }
+      ],
+      "pushed": [
+        {
+          "branch": "fix/codex-config-reconcile-20261016",
+          "sha": "a2e7a131c7b3",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/quota-maintenance-20261010",
+          "sha": "736ccc236c2f",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/security-hardening-domus-genoma",
+          "sha": "663b3cc97b0a",
+          "dry_run": true
+        }
+      ],
+      "failed": [],
+      "skipped_protected": [],
+      "remote": "https://github.com/4444J99/domus-genoma-private.git",
+      "fetch": "ok"
+    },
+    {
+      "repo": "/Users/4jp/Workspace/4444J99/universal-mail--automation-backup",
+      "reapable": [
+        {
+          "branch": "reap-unreachable-00010b83",
+          "sha": "00010b834b70",
+          "on": "origin/reap-unreachable-00010b83"
+        },
+        {
+          "branch": "reap-unreachable-001dcc90",
+          "sha": "001dcc9078a4",
+          "on": "origin/reap-unreachable-001dcc90"
+        },
+        {
+          "branch": "reap-unreachable-01377639",
+          "sha": "013776397654",
+          "on": "origin/reap-unreachable-01377639"
+        },
+        {
+          "branch": "reap-unreachable-0264821d",
+          "sha": "0264821dfeac",
+          "on": "origin/reap-unreachable-0264821d"
+        },
+        {
+          "branch": "reap-unreachable-04a5abae",
+          "sha": "04a5abaefb6d",
+          "on": "origin/reap-unreachable-04a5abae"
+        },
+        {
+          "branch": "reap-unreachable-07accf92",
+          "sha": "07accf92fc95",
+          "on": "origin/reap-unreachable-07accf92"
+        },
+        {
+          "branch": "reap-unreachable-07c62f2d",
+          "sha": "07c62f2db7d4",
+          "on": "origin/reap-unreachable-07c62f2d"
+        },
+        {
+          "branch": "reap-unreachable-07caba43",
+          "sha": "07caba434020",
+          "on": "origin/reap-unreachable-07caba43"
+        },
+        {
+          "branch": "reap-unreachable-081894d6",
+          "sha": "081894d660dc",
+          "on": "origin/reap-unreachable-081894d6"
+        },
+        {
+          "branch": "reap-unreachable-09009f4d",
+          "sha": "09009f4dd09e",
+          "on": "origin/reap-unreachable-09009f4d"
+        },
+        {
+          "branch": "reap-unreachable-09209893",
+          "sha": "092098931b29",
+          "on": "origin/reap-unreachable-09209893"
+        },
+        {
+          "branch": "reap-unreachable-09302d91",
+          "sha": "09302d91beb4",
+          "on": "origin/reap-unreachable-09302d91"
+        },
+        {
+          "branch": "reap-unreachable-0b237fc6",
+          "sha": "0b237fc66086",
+          "on": "origin/reap-unreachable-0b237fc6"
+        },
+        {
+          "branch": "reap-unreachable-0d2e6300",
+          "sha": "0d2e6300eb52",
+          "on": "origin/reap-unreachable-0d2e6300"
+        },
+        {
+          "branch": "reap-unreachable-0ea6f986",
+          "sha": "0ea6f986bc50",
+          "on": "origin/reap-unreachable-0ea6f986"
+        },
+        {
+          "branch": "reap-unreachable-0ee92643",
+          "sha": "0ee926431d3e",
+          "on": "origin/reap-unreachable-0ee92643"
+        },
+        {
+          "branch": "reap-unreachable-0f968886",
+          "sha": "0f9688860a93",
+          "on": "origin/reap-unreachable-0f968886"
+        },
+        {
+          "branch": "reap-unreachable-10fbe303",
+          "sha": "10fbe30357e6",
+          "on": "origin/reap-unreachable-10fbe303"
+        },
+        {
+          "branch": "reap-unreachable-11b8b714",
+          "sha": "11b8b7147866",
+          "on": "origin/reap-unreachable-11b8b714"
+        },
+        {
+          "branch": "reap-unreachable-1209d6d0",
+          "sha": "1209d6d03adc",
+          "on": "origin/reap-unreachable-1209d6d0"
+        },
+        {
+          "branch": "reap-unreachable-1254d991",
+          "sha": "1254d9912a0c",
+          "on": "origin/reap-unreachable-1254d991"
+        },
+        {
+          "branch": "reap-unreachable-1265af43",
+          "sha": "1265af438bbd",
+          "on": "origin/reap-unreachable-1265af43"
+        },
+        {
+          "branch": "reap-unreachable-128842a0",
+          "sha": "128842a003d8",
+          "on": "origin/reap-unreachable-128842a0"
+        },
+        {
+          "branch": "reap-unreachable-13c1d77d",
+          "sha": "13c1d77d5350",
+          "on": "origin/reap-unreachable-13c1d77d"
+        },
+        {
+          "branch": "reap-unreachable-13c4718e",
+          "sha": "13c4718e2c2a",
+          "on": "origin/reap-unreachable-13c4718e"
+        },
+        {
+          "branch": "reap-unreachable-146bc6e1",
+          "sha": "146bc6e12832",
+          "on": "origin/reap-unreachable-146bc6e1"
+        },
+        {
+          "branch": "reap-unreachable-14c6c9a9",
+          "sha": "14c6c9a9a943",
+          "on": "origin/reap-unreachable-14c6c9a9"
+        },
+        {
+          "branch": "reap-unreachable-14e99f8d",
+          "sha": "14e99f8df42a",
+          "on": "origin/reap-unreachable-14e99f8d"
+        },
+        {
+          "branch": "reap-unreachable-14f96a50",
+          "sha": "14f96a502566",
+          "on": "origin/reap-unreachable-14f96a50"
+        },
+        {
+          "branch": "reap-unreachable-16911d63",
+          "sha": "16911d630495",
+          "on": "origin/reap-unreachable-16911d63"
+        },
+        {
+          "branch": "reap-unreachable-16f3fc54",
+          "sha": "16f3fc540558",
+          "on": "origin/reap-unreachable-16f3fc54"
+        },
+        {
+          "branch": "reap-unreachable-16fb3549",
+          "sha": "16fb3549d871",
+          "on": "origin/reap-unreachable-16fb3549"
+        },
+        {
+          "branch": "reap-unreachable-186ca274",
+          "sha": "186ca2748571",
+          "on": "origin/reap-unreachable-186ca274"
+        },
+        {
+          "branch": "reap-unreachable-19a3199a",
+          "sha": "19a3199a1a2b",
+          "on": "origin/reap-unreachable-19a3199a"
+        },
+        {
+          "branch": "reap-unreachable-1a23522f",
+          "sha": "1a23522fcb82",
+          "on": "origin/reap-unreachable-1a23522f"
+        },
+        {
+          "branch": "reap-unreachable-1a7c6244",
+          "sha": "1a7c624442cc",
+          "on": "origin/reap-unreachable-1a7c6244"
+        },
+        {
+          "branch": "reap-unreachable-1ab438c7",
+          "sha": "1ab438c70bee",
+          "on": "origin/reap-unreachable-1ab438c7"
+        },
+        {
+          "branch": "reap-unreachable-1b0c22e4",
+          "sha": "1b0c22e4d74f",
+          "on": "origin/reap-unreachable-1b0c22e4"
+        },
+        {
+          "branch": "reap-unreachable-1b798901",
+          "sha": "1b798901909d",
+          "on": "origin/reap-unreachable-1b798901"
+        },
+        {
+          "branch": "reap-unreachable-1bc4e4f4",
+          "sha": "1bc4e4f4645d",
+          "on": "origin/reap-unreachable-1bc4e4f4"
+        },
+        {
+          "branch": "reap-unreachable-1c24ab64",
+          "sha": "1c24ab647e3c",
+          "on": "origin/reap-unreachable-1c24ab64"
+        },
+        {
+          "branch": "reap-unreachable-1c696664",
+          "sha": "1c696664838d",
+          "on": "origin/reap-unreachable-1c696664"
+        },
+        {
+          "branch": "reap-unreachable-1ed7e2ea",
+          "sha": "1ed7e2ea4074",
+          "on": "origin/reap-unreachable-1ed7e2ea"
+        },
+        {
+          "branch": "reap-unreachable-1ef38860",
+          "sha": "1ef38860ec76",
+          "on": "origin/reap-unreachable-1ef38860"
+        },
+        {
+          "branch": "reap-unreachable-1f639028",
+          "sha": "1f6390284ede",
+          "on": "origin/reap-unreachable-1f639028"
+        },
+        {
+          "branch": "reap-unreachable-1ffb5bf1",
+          "sha": "1ffb5bf1107e",
+          "on": "origin/reap-unreachable-1ffb5bf1"
+        },
+        {
+          "branch": "reap-unreachable-20556a29",
+          "sha": "20556a29825e",
+          "on": "origin/reap-unreachable-20556a29"
+        },
+        {
+          "branch": "reap-unreachable-20ecbcb8",
+          "sha": "20ecbcb8aa58",
+          "on": "origin/reap-unreachable-20ecbcb8"
+        },
+        {
+          "branch": "reap-unreachable-229fed9c",
+          "sha": "229fed9c7b9b",
+          "on": "origin/reap-unreachable-229fed9c"
+        },
+        {
+          "branch": "reap-unreachable-23946e5c",
+          "sha": "23946e5ccf3e",
+          "on": "origin/reap-unreachable-23946e5c"
+        },
+        {
+          "branch": "reap-unreachable-23db07a0",
+          "sha": "23db07a09940",
+          "on": "origin/reap-unreachable-23db07a0"
+        },
+        {
+          "branch": "reap-unreachable-261f83a1",
+          "sha": "261f83a1bcf7",
+          "on": "origin/reap-unreachable-261f83a1"
+        },
+        {
+          "branch": "reap-unreachable-26260324",
+          "sha": "2626032403dd",
+          "on": "origin/reap-unreachable-26260324"
+        },
+        {
+          "branch": "reap-unreachable-26ae246c",
+          "sha": "26ae246cd5a0",
+          "on": "origin/reap-unreachable-26ae246c"
+        },
+        {
+          "branch": "reap-unreachable-26e530f2",
+          "sha": "26e530f278d5",
+          "on": "origin/reap-unreachable-26e530f2"
+        },
+        {
+          "branch": "reap-unreachable-271ae7b5",
+          "sha": "271ae7b5cc0a",
+          "on": "origin/reap-unreachable-271ae7b5"
+        },
+        {
+          "branch": "reap-unreachable-27ca2728",
+          "sha": "27ca27287e23",
+          "on": "origin/reap-unreachable-27ca2728"
+        },
+        {
+          "branch": "reap-unreachable-287ee99e",
+          "sha": "287ee99e76d2",
+          "on": "origin/reap-unreachable-287ee99e"
+        },
+        {
+          "branch": "reap-unreachable-28a74f1e",
+          "sha": "28a74f1ed4d6",
+          "on": "origin/reap-unreachable-28a74f1e"
+        },
+        {
+          "branch": "reap-unreachable-29407eb6",
+          "sha": "29407eb644a8",
+          "on": "origin/reap-unreachable-29407eb6"
+        },
+        {
+          "branch": "reap-unreachable-29570686",
+          "sha": "2957068685ee",
+          "on": "origin/reap-unreachable-29570686"
+        },
+        {
+          "branch": "reap-unreachable-29eb062f",
+          "sha": "29eb062fab0a",
+          "on": "origin/reap-unreachable-29eb062f"
+        },
+        {
+          "branch": "reap-unreachable-29f6b4bc",
+          "sha": "29f6b4bcbe21",
+          "on": "origin/reap-unreachable-29f6b4bc"
+        },
+        {
+          "branch": "reap-unreachable-2b06223c",
+          "sha": "2b06223c1e35",
+          "on": "origin/reap-unreachable-2b06223c"
+        },
+        {
+          "branch": "reap-unreachable-2bc88d26",
+          "sha": "2bc88d268308",
+          "on": "origin/reap-unreachable-2bc88d26"
+        },
+        {
+          "branch": "reap-unreachable-2bffde75",
+          "sha": "2bffde75a7e3",
+          "on": "origin/reap-unreachable-2bffde75"
+        },
+        {
+          "branch": "reap-unreachable-2cecdb06",
+          "sha": "2cecdb06c871",
+          "on": "origin/reap-unreachable-2cecdb06"
+        },
+        {
+          "branch": "reap-unreachable-2df8358c",
+          "sha": "2df8358c7201",
+          "on": "origin/reap-unreachable-2df8358c"
+        },
+        {
+          "branch": "reap-unreachable-2e6c756d",
+          "sha": "2e6c756d4053",
+          "on": "origin/reap-unreachable-2e6c756d"
+        },
+        {
+          "branch": "reap-unreachable-2eb4febd",
+          "sha": "2eb4febd1671",
+          "on": "origin/reap-unreachable-2eb4febd"
+        },
+        {
+          "branch": "reap-unreachable-2ee227ed",
+          "sha": "2ee227ed6da2",
+          "on": "origin/reap-unreachable-2ee227ed"
+        },
+        {
+          "branch": "reap-unreachable-2f9665c0",
+          "sha": "2f9665c07fa4",
+          "on": "origin/reap-unreachable-2f9665c0"
+        },
+        {
+          "branch": "reap-unreachable-2f9aa434",
+          "sha": "2f9aa434266e",
+          "on": "origin/reap-unreachable-2f9aa434"
+        },
+        {
+          "branch": "reap-unreachable-2fffe02f",
+          "sha": "2fffe02f1f96",
+          "on": "origin/reap-unreachable-2fffe02f"
+        },
+        {
+          "branch": "reap-unreachable-30bb9d89",
+          "sha": "30bb9d89f8d9",
+          "on": "origin/reap-unreachable-30bb9d89"
+        },
+        {
+          "branch": "reap-unreachable-30c0267c",
+          "sha": "30c0267c04ab",
+          "on": "origin/reap-unreachable-30c0267c"
+        },
+        {
+          "branch": "reap-unreachable-30ef23bb",
+          "sha": "30ef23bb29f6",
+          "on": "origin/reap-unreachable-30ef23bb"
+        },
+        {
+          "branch": "reap-unreachable-31c92d2a",
+          "sha": "31c92d2a5ed5",
+          "on": "origin/reap-unreachable-31c92d2a"
+        },
+        {
+          "branch": "reap-unreachable-3203c64a",
+          "sha": "3203c64aee42",
+          "on": "origin/reap-unreachable-3203c64a"
+        },
+        {
+          "branch": "reap-unreachable-328371e8",
+          "sha": "328371e81677",
+          "on": "origin/reap-unreachable-328371e8"
+        },
+        {
+          "branch": "reap-unreachable-3363e8fd",
+          "sha": "3363e8fd0ec4",
+          "on": "origin/reap-unreachable-3363e8fd"
+        },
+        {
+          "branch": "reap-unreachable-339efb85",
+          "sha": "339efb8503df",
+          "on": "origin/reap-unreachable-339efb85"
+        },
+        {
+          "branch": "reap-unreachable-3787580c",
+          "sha": "3787580ca234",
+          "on": "origin/reap-unreachable-3787580c"
+        },
+        {
+          "branch": "reap-unreachable-38005a7c",
+          "sha": "38005a7c2420",
+          "on": "origin/reap-unreachable-38005a7c"
+        },
+        {
+          "branch": "reap-unreachable-38987613",
+          "sha": "38987613553b",
+          "on": "origin/reap-unreachable-38987613"
+        },
+        {
+          "branch": "reap-unreachable-3a9ce00a",
+          "sha": "3a9ce00a06d3",
+          "on": "origin/reap-unreachable-3a9ce00a"
+        },
+        {
+          "branch": "reap-unreachable-3ec7ac0e",
+          "sha": "3ec7ac0e932f",
+          "on": "origin/reap-unreachable-3ec7ac0e"
+        },
+        {
+          "branch": "reap-unreachable-3f33274e",
+          "sha": "3f33274e0624",
+          "on": "origin/reap-unreachable-3f33274e"
+        },
+        {
+          "branch": "reap-unreachable-4049710b",
+          "sha": "4049710b3c09",
+          "on": "origin/reap-unreachable-4049710b"
+        },
+        {
+          "branch": "reap-unreachable-417f2f3b",
+          "sha": "417f2f3b61fc",
+          "on": "origin/reap-unreachable-417f2f3b"
+        },
+        {
+          "branch": "reap-unreachable-431a604d",
+          "sha": "431a604d8de1",
+          "on": "origin/reap-unreachable-431a604d"
+        },
+        {
+          "branch": "reap-unreachable-4419830f",
+          "sha": "4419830fe9a7",
+          "on": "origin/reap-unreachable-4419830f"
+        },
+        {
+          "branch": "reap-unreachable-45be08b1",
+          "sha": "45be08b118f3",
+          "on": "origin/reap-unreachable-45be08b1"
+        },
+        {
+          "branch": "reap-unreachable-4665702d",
+          "sha": "4665702d31c9",
+          "on": "origin/reap-unreachable-4665702d"
+        },
+        {
+          "branch": "reap-unreachable-49874001",
+          "sha": "49874001f2a2",
+          "on": "origin/reap-unreachable-49874001"
+        },
+        {
+          "branch": "reap-unreachable-4a59129a",
+          "sha": "4a59129a5a59",
+          "on": "origin/reap-unreachable-4a59129a"
+        },
+        {
+          "branch": "reap-unreachable-4ac188fb",
+          "sha": "4ac188fb702b",
+          "on": "origin/reap-unreachable-4ac188fb"
+        },
+        {
+          "branch": "reap-unreachable-4ada5ff1",
+          "sha": "4ada5ff1d74e",
+          "on": "origin/reap-unreachable-4ada5ff1"
+        },
+        {
+          "branch": "reap-unreachable-4aeedc2b",
+          "sha": "4aeedc2bb4f3",
+          "on": "origin/reap-unreachable-4aeedc2b"
+        },
+        {
+          "branch": "reap-unreachable-50b68b37",
+          "sha": "50b68b37545a",
+          "on": "origin/reap-unreachable-50b68b37"
+        },
+        {
+          "branch": "reap-unreachable-5198f955",
+          "sha": "5198f9559628",
+          "on": "origin/reap-unreachable-5198f955"
+        },
+        {
+          "branch": "reap-unreachable-547cef57",
+          "sha": "547cef57fd82",
+          "on": "origin/reap-unreachable-547cef57"
+        },
+        {
+          "branch": "reap-unreachable-56bf292c",
+          "sha": "56bf292cb4aa",
+          "on": "origin/reap-unreachable-56bf292c"
+        },
+        {
+          "branch": "reap-unreachable-5766767e",
+          "sha": "5766767e2293",
+          "on": "origin/reap-unreachable-5766767e"
+        },
+        {
+          "branch": "reap-unreachable-57c26923",
+          "sha": "57c269234dde",
+          "on": "origin/reap-unreachable-57c26923"
+        },
+        {
+          "branch": "reap-unreachable-596c6678",
+          "sha": "596c6678d9ae",
+          "on": "origin/reap-unreachable-596c6678"
+        },
+        {
+          "branch": "reap-unreachable-59fedfc8",
+          "sha": "59fedfc8885c",
+          "on": "origin/reap-unreachable-59fedfc8"
+        },
+        {
+          "branch": "reap-unreachable-5a9aa9e2",
+          "sha": "5a9aa9e2ceee",
+          "on": "origin/reap-unreachable-5a9aa9e2"
+        },
+        {
+          "branch": "reap-unreachable-5aadb2f3",
+          "sha": "5aadb2f3dcc1",
+          "on": "origin/reap-unreachable-5aadb2f3"
+        },
+        {
+          "branch": "reap-unreachable-5ae4b87e",
+          "sha": "5ae4b87edfc1",
+          "on": "origin/reap-unreachable-5ae4b87e"
+        },
+        {
+          "branch": "reap-unreachable-5c6693cf",
+          "sha": "5c6693cfdc11",
+          "on": "origin/reap-unreachable-5c6693cf"
+        },
+        {
+          "branch": "reap-unreachable-5cb1da06",
+          "sha": "5cb1da06294b",
+          "on": "origin/reap-unreachable-5cb1da06"
+        },
+        {
+          "branch": "reap-unreachable-5cd0dd3a",
+          "sha": "5cd0dd3a6c59",
+          "on": "origin/reap-unreachable-5cd0dd3a"
+        },
+        {
+          "branch": "reap-unreachable-5ce0a3d4",
+          "sha": "5ce0a3d40ecb",
+          "on": "origin/reap-unreachable-5ce0a3d4"
+        },
+        {
+          "branch": "reap-unreachable-5e4eab90",
+          "sha": "5e4eab906885",
+          "on": "origin/reap-unreachable-5e4eab90"
+        },
+        {
+          "branch": "reap-unreachable-5eb1f149",
+          "sha": "5eb1f149d6dc",
+          "on": "origin/reap-unreachable-5eb1f149"
+        },
+        {
+          "branch": "reap-unreachable-5efb141a",
+          "sha": "5efb141a7c22",
+          "on": "origin/reap-unreachable-5efb141a"
+        },
+        {
+          "branch": "reap-unreachable-5fd5f65d",
+          "sha": "5fd5f65df041",
+          "on": "origin/reap-unreachable-5fd5f65d"
+        },
+        {
+          "branch": "reap-unreachable-6158fe4b",
+          "sha": "6158fe4b2442",
+          "on": "origin/reap-unreachable-6158fe4b"
+        },
+        {
+          "branch": "reap-unreachable-61993583",
+          "sha": "61993583d79e",
+          "on": "origin/reap-unreachable-61993583"
+        },
+        {
+          "branch": "reap-unreachable-63416e3e",
+          "sha": "63416e3e1961",
+          "on": "origin/reap-unreachable-63416e3e"
+        },
+        {
+          "branch": "reap-unreachable-638eb0bc",
+          "sha": "638eb0bc7154",
+          "on": "origin/reap-unreachable-638eb0bc"
+        },
+        {
+          "branch": "reap-unreachable-6405043c",
+          "sha": "6405043c6e31",
+          "on": "origin/reap-unreachable-6405043c"
+        },
+        {
+          "branch": "reap-unreachable-640b7dca",
+          "sha": "640b7dcac37b",
+          "on": "origin/reap-unreachable-640b7dca"
+        },
+        {
+          "branch": "reap-unreachable-664cce7d",
+          "sha": "664cce7d252e",
+          "on": "origin/reap-unreachable-664cce7d"
+        },
+        {
+          "branch": "reap-unreachable-6671c4b2",
+          "sha": "6671c4b21671",
+          "on": "origin/reap-unreachable-6671c4b2"
+        },
+        {
+          "branch": "reap-unreachable-66fa0144",
+          "sha": "66fa01446fc5",
+          "on": "origin/reap-unreachable-66fa0144"
+        },
+        {
+          "branch": "reap-unreachable-687bc7ae",
+          "sha": "687bc7ae8c55",
+          "on": "origin/reap-unreachable-687bc7ae"
+        },
+        {
+          "branch": "reap-unreachable-68ecdc39",
+          "sha": "68ecdc3986b8",
+          "on": "origin/reap-unreachable-68ecdc39"
+        },
+        {
+          "branch": "reap-unreachable-690f9263",
+          "sha": "690f9263a59e",
+          "on": "origin/reap-unreachable-690f9263"
+        },
+        {
+          "branch": "reap-unreachable-6a16f890",
+          "sha": "6a16f890a9fa",
+          "on": "origin/reap-unreachable-6a16f890"
+        },
+        {
+          "branch": "reap-unreachable-6a874120",
+          "sha": "6a8741208bfc",
+          "on": "origin/reap-unreachable-6a874120"
+        },
+        {
+          "branch": "reap-unreachable-6d671a94",
+          "sha": "6d671a94b18c",
+          "on": "origin/reap-unreachable-6d671a94"
+        },
+        {
+          "branch": "reap-unreachable-6d8ee9cc",
+          "sha": "6d8ee9cc34ef",
+          "on": "origin/reap-unreachable-6d8ee9cc"
+        },
+        {
+          "branch": "reap-unreachable-6e992c4f",
+          "sha": "6e992c4fb1df",
+          "on": "origin/reap-unreachable-6e992c4f"
+        },
+        {
+          "branch": "reap-unreachable-6f952352",
+          "sha": "6f95235245bb",
+          "on": "origin/reap-unreachable-6f952352"
+        },
+        {
+          "branch": "reap-unreachable-6fe5e43b",
+          "sha": "6fe5e43bce01",
+          "on": "origin/reap-unreachable-6fe5e43b"
+        },
+        {
+          "branch": "reap-unreachable-7082b18d",
+          "sha": "7082b18df4e2",
+          "on": "origin/reap-unreachable-7082b18d"
+        },
+        {
+          "branch": "reap-unreachable-71b14b6e",
+          "sha": "71b14b6ed279",
+          "on": "origin/reap-unreachable-71b14b6e"
+        },
+        {
+          "branch": "reap-unreachable-7250287b",
+          "sha": "7250287bfc46",
+          "on": "origin/reap-unreachable-7250287b"
+        },
+        {
+          "branch": "reap-unreachable-737b32d5",
+          "sha": "737b32d51362",
+          "on": "origin/reap-unreachable-737b32d5"
+        },
+        {
+          "branch": "reap-unreachable-744a90ee",
+          "sha": "744a90eeb1a3",
+          "on": "origin/reap-unreachable-744a90ee"
+        },
+        {
+          "branch": "reap-unreachable-7498ec1f",
+          "sha": "7498ec1ffb54",
+          "on": "origin/reap-unreachable-7498ec1f"
+        },
+        {
+          "branch": "reap-unreachable-7539fbb6",
+          "sha": "7539fbb68d9c",
+          "on": "origin/reap-unreachable-7539fbb6"
+        },
+        {
+          "branch": "reap-unreachable-75b77fbf",
+          "sha": "75b77fbf58ff",
+          "on": "origin/reap-unreachable-75b77fbf"
+        },
+        {
+          "branch": "reap-unreachable-768f37c8",
+          "sha": "768f37c83486",
+          "on": "origin/reap-unreachable-768f37c8"
+        },
+        {
+          "branch": "reap-unreachable-77622290",
+          "sha": "77622290c14a",
+          "on": "origin/reap-unreachable-77622290"
+        },
+        {
+          "branch": "reap-unreachable-7875facd",
+          "sha": "7875facde502",
+          "on": "origin/reap-unreachable-7875facd"
+        },
+        {
+          "branch": "reap-unreachable-78df4ecb",
+          "sha": "78df4ecbddd4",
+          "on": "origin/reap-unreachable-78df4ecb"
+        },
+        {
+          "branch": "reap-unreachable-7961e20e",
+          "sha": "7961e20eaabd",
+          "on": "origin/reap-unreachable-7961e20e"
+        },
+        {
+          "branch": "reap-unreachable-79daf5db",
+          "sha": "79daf5db273d",
+          "on": "origin/reap-unreachable-79daf5db"
+        },
+        {
+          "branch": "reap-unreachable-7c8b10a8",
+          "sha": "7c8b10a8df67",
+          "on": "origin/reap-unreachable-7c8b10a8"
+        },
+        {
+          "branch": "reap-unreachable-7cf07063",
+          "sha": "7cf070638545",
+          "on": "origin/reap-unreachable-7cf07063"
+        },
+        {
+          "branch": "reap-unreachable-7d49cd32",
+          "sha": "7d49cd323110",
+          "on": "origin/reap-unreachable-7d49cd32"
+        },
+        {
+          "branch": "reap-unreachable-7ddef5bd",
+          "sha": "7ddef5bd2d70",
+          "on": "origin/reap-unreachable-7ddef5bd"
+        },
+        {
+          "branch": "reap-unreachable-7e165d13",
+          "sha": "7e165d1358de",
+          "on": "origin/reap-unreachable-7e165d13"
+        },
+        {
+          "branch": "reap-unreachable-80603df5",
+          "sha": "80603df5dffd",
+          "on": "origin/reap-unreachable-80603df5"
+        },
+        {
+          "branch": "reap-unreachable-81b2d07f",
+          "sha": "81b2d07f7e18",
+          "on": "origin/reap-unreachable-81b2d07f"
+        },
+        {
+          "branch": "reap-unreachable-81c860e3",
+          "sha": "81c860e3d178",
+          "on": "origin/reap-unreachable-81c860e3"
+        },
+        {
+          "branch": "reap-unreachable-81ed796d",
+          "sha": "81ed796d608e",
+          "on": "origin/reap-unreachable-81ed796d"
+        },
+        {
+          "branch": "reap-unreachable-83f48bda",
+          "sha": "83f48bdae615",
+          "on": "origin/reap-unreachable-83f48bda"
+        },
+        {
+          "branch": "reap-unreachable-84e29a74",
+          "sha": "84e29a7481ef",
+          "on": "origin/reap-unreachable-84e29a74"
+        },
+        {
+          "branch": "reap-unreachable-84f01b89",
+          "sha": "84f01b893846",
+          "on": "origin/reap-unreachable-84f01b89"
+        },
+        {
+          "branch": "reap-unreachable-85d77790",
+          "sha": "85d777907385",
+          "on": "origin/reap-unreachable-85d77790"
+        },
+        {
+          "branch": "reap-unreachable-85d83046",
+          "sha": "85d830463275",
+          "on": "origin/reap-unreachable-85d83046"
+        },
+        {
+          "branch": "reap-unreachable-86c78332",
+          "sha": "86c783321745",
+          "on": "origin/reap-unreachable-86c78332"
+        },
+        {
+          "branch": "reap-unreachable-8a8431f1",
+          "sha": "8a8431f1d49d",
+          "on": "origin/reap-unreachable-8a8431f1"
+        },
+        {
+          "branch": "reap-unreachable-8b5b9fd8",
+          "sha": "8b5b9fd8c747",
+          "on": "origin/reap-unreachable-8b5b9fd8"
+        },
+        {
+          "branch": "reap-unreachable-8d9f4957",
+          "sha": "8d9f4957d9aa",
+          "on": "origin/reap-unreachable-8d9f4957"
+        },
+        {
+          "branch": "reap-unreachable-8e6304ca",
+          "sha": "8e6304ca9cfe",
+          "on": "origin/reap-unreachable-8e6304ca"
+        },
+        {
+          "branch": "reap-unreachable-8eb08a1a",
+          "sha": "8eb08a1a7a08",
+          "on": "origin/reap-unreachable-8eb08a1a"
+        },
+        {
+          "branch": "reap-unreachable-8f5811dd",
+          "sha": "8f5811dd9578",
+          "on": "origin/reap-unreachable-8f5811dd"
+        },
+        {
+          "branch": "reap-unreachable-906d2b30",
+          "sha": "906d2b3017c4",
+          "on": "origin/reap-unreachable-906d2b30"
+        },
+        {
+          "branch": "reap-unreachable-911172ce",
+          "sha": "911172ce756b",
+          "on": "origin/reap-unreachable-911172ce"
+        },
+        {
+          "branch": "reap-unreachable-91a24ae7",
+          "sha": "91a24ae76d9f",
+          "on": "origin/reap-unreachable-91a24ae7"
+        },
+        {
+          "branch": "reap-unreachable-91f5b255",
+          "sha": "91f5b255b833",
+          "on": "origin/reap-unreachable-91f5b255"
+        },
+        {
+          "branch": "reap-unreachable-933e755f",
+          "sha": "933e755f8fd6",
+          "on": "origin/reap-unreachable-933e755f"
+        },
+        {
+          "branch": "reap-unreachable-94269dbb",
+          "sha": "94269dbb4287",
+          "on": "origin/reap-unreachable-94269dbb"
+        },
+        {
+          "branch": "reap-unreachable-948c4cb4",
+          "sha": "948c4cb47efc",
+          "on": "origin/reap-unreachable-948c4cb4"
+        },
+        {
+          "branch": "reap-unreachable-94eee5d9",
+          "sha": "94eee5d9e933",
+          "on": "origin/reap-unreachable-94eee5d9"
+        },
+        {
+          "branch": "reap-unreachable-95f1c9e5",
+          "sha": "95f1c9e5d1e0",
+          "on": "origin/reap-unreachable-95f1c9e5"
+        },
+        {
+          "branch": "reap-unreachable-95fd5b63",
+          "sha": "95fd5b6339cc",
+          "on": "origin/reap-unreachable-95fd5b63"
+        },
+        {
+          "branch": "reap-unreachable-96f750d5",
+          "sha": "96f750d5813a",
+          "on": "origin/reap-unreachable-96f750d5"
+        },
+        {
+          "branch": "reap-unreachable-97af4ee2",
+          "sha": "97af4ee2c5b1",
+          "on": "origin/reap-unreachable-97af4ee2"
+        },
+        {
+          "branch": "reap-unreachable-97ea8686",
+          "sha": "97ea868632db",
+          "on": "origin/reap-unreachable-97ea8686"
+        },
+        {
+          "branch": "reap-unreachable-981a33bc",
+          "sha": "981a33bcd1ea",
+          "on": "origin/reap-unreachable-981a33bc"
+        },
+        {
+          "branch": "reap-unreachable-9921c357",
+          "sha": "9921c3573bab",
+          "on": "origin/reap-unreachable-9921c357"
+        },
+        {
+          "branch": "reap-unreachable-992b470c",
+          "sha": "992b470cf845",
+          "on": "origin/reap-unreachable-992b470c"
+        },
+        {
+          "branch": "reap-unreachable-993f29c9",
+          "sha": "993f29c9d2d6",
+          "on": "origin/reap-unreachable-993f29c9"
+        },
+        {
+          "branch": "reap-unreachable-99af7550",
+          "sha": "99af7550f19e",
+          "on": "origin/reap-unreachable-99af7550"
+        },
+        {
+          "branch": "reap-unreachable-9ae466a6",
+          "sha": "9ae466a6469c",
+          "on": "origin/reap-unreachable-9ae466a6"
+        },
+        {
+          "branch": "reap-unreachable-9aeffed0",
+          "sha": "9aeffed0609b",
+          "on": "origin/reap-unreachable-9aeffed0"
+        },
+        {
+          "branch": "reap-unreachable-9c54a0ce",
+          "sha": "9c54a0ce8fc4",
+          "on": "origin/reap-unreachable-9c54a0ce"
+        },
+        {
+          "branch": "reap-unreachable-9cbc9965",
+          "sha": "9cbc99653b83",
+          "on": "origin/reap-unreachable-9cbc9965"
+        },
+        {
+          "branch": "reap-unreachable-9e34b792",
+          "sha": "9e34b792b14b",
+          "on": "origin/reap-unreachable-9e34b792"
+        },
+        {
+          "branch": "reap-unreachable-9e6f0cf6",
+          "sha": "9e6f0cf67fad",
+          "on": "origin/reap-unreachable-9e6f0cf6"
+        },
+        {
+          "branch": "reap-unreachable-9fc65488",
+          "sha": "9fc65488c349",
+          "on": "origin/reap-unreachable-9fc65488"
+        },
+        {
+          "branch": "reap-unreachable-9fcd6dd4",
+          "sha": "9fcd6dd45a87",
+          "on": "origin/reap-unreachable-9fcd6dd4"
+        },
+        {
+          "branch": "reap-unreachable-a081d77e",
+          "sha": "a081d77efbdf",
+          "on": "origin/reap-unreachable-a081d77e"
+        },
+        {
+          "branch": "reap-unreachable-a08a3403",
+          "sha": "a08a3403452e",
+          "on": "origin/reap-unreachable-a08a3403"
+        },
+        {
+          "branch": "reap-unreachable-a0b283ee",
+          "sha": "a0b283ee042f",
+          "on": "origin/reap-unreachable-a0b283ee"
+        },
+        {
+          "branch": "reap-unreachable-a0fac22f",
+          "sha": "a0fac22fad5e",
+          "on": "origin/reap-unreachable-a0fac22f"
+        },
+        {
+          "branch": "reap-unreachable-a265ec09",
+          "sha": "a265ec094c58",
+          "on": "origin/reap-unreachable-a265ec09"
+        },
+        {
+          "branch": "reap-unreachable-a3c6056e",
+          "sha": "a3c6056e2a34",
+          "on": "origin/reap-unreachable-a3c6056e"
+        },
+        {
+          "branch": "reap-unreachable-a4d51e89",
+          "sha": "a4d51e89acb6",
+          "on": "origin/reap-unreachable-a4d51e89"
+        },
+        {
+          "branch": "reap-unreachable-a646efc1",
+          "sha": "a646efc1a911",
+          "on": "origin/reap-unreachable-a646efc1"
+        },
+        {
+          "branch": "reap-unreachable-a723c2d5",
+          "sha": "a723c2d52437",
+          "on": "origin/reap-unreachable-a723c2d5"
+        },
+        {
+          "branch": "reap-unreachable-a89d526f",
+          "sha": "a89d526fd3d3",
+          "on": "origin/reap-unreachable-a89d526f"
+        },
+        {
+          "branch": "reap-unreachable-a912337f",
+          "sha": "a912337f5d27",
+          "on": "origin/reap-unreachable-a912337f"
+        },
+        {
+          "branch": "reap-unreachable-aa7c1777",
+          "sha": "aa7c17778f9a",
+          "on": "origin/reap-unreachable-aa7c1777"
+        },
+        {
+          "branch": "reap-unreachable-ab407da9",
+          "sha": "ab407da9a3e6",
+          "on": "origin/reap-unreachable-ab407da9"
+        },
+        {
+          "branch": "reap-unreachable-abe36cd7",
+          "sha": "abe36cd7a2a3",
+          "on": "origin/reap-unreachable-abe36cd7"
+        },
+        {
+          "branch": "reap-unreachable-ad1c532b",
+          "sha": "ad1c532b6b03",
+          "on": "origin/reap-unreachable-ad1c532b"
+        },
+        {
+          "branch": "reap-unreachable-aee0a980",
+          "sha": "aee0a9802648",
+          "on": "origin/reap-unreachable-aee0a980"
+        },
+        {
+          "branch": "reap-unreachable-b056c9a0",
+          "sha": "b056c9a00f9d",
+          "on": "origin/reap-unreachable-b056c9a0"
+        },
+        {
+          "branch": "reap-unreachable-b07ee020",
+          "sha": "b07ee020b558",
+          "on": "origin/reap-unreachable-b07ee020"
+        },
+        {
+          "branch": "reap-unreachable-b1b31b1a",
+          "sha": "b1b31b1ab25e",
+          "on": "origin/reap-unreachable-b1b31b1a"
+        },
+        {
+          "branch": "reap-unreachable-b1eb50e6",
+          "sha": "b1eb50e6ad75",
+          "on": "origin/reap-unreachable-b1eb50e6"
+        },
+        {
+          "branch": "reap-unreachable-b351813f",
+          "sha": "b351813f37a5",
+          "on": "origin/reap-unreachable-b351813f"
+        },
+        {
+          "branch": "reap-unreachable-b3be3f49",
+          "sha": "b3be3f498bad",
+          "on": "origin/reap-unreachable-b3be3f49"
+        },
+        {
+          "branch": "reap-unreachable-b49377ad",
+          "sha": "b49377ad61b5",
+          "on": "origin/reap-unreachable-b49377ad"
+        },
+        {
+          "branch": "reap-unreachable-b6beaa1d",
+          "sha": "b6beaa1d8cec",
+          "on": "origin/reap-unreachable-b6beaa1d"
+        },
+        {
+          "branch": "reap-unreachable-b6cfaf7d",
+          "sha": "b6cfaf7dfda5",
+          "on": "origin/reap-unreachable-b6cfaf7d"
+        },
+        {
+          "branch": "reap-unreachable-b7f9c325",
+          "sha": "b7f9c325ffb7",
+          "on": "origin/reap-unreachable-b7f9c325"
+        },
+        {
+          "branch": "reap-unreachable-ba4010ef",
+          "sha": "ba4010ef7a67",
+          "on": "origin/reap-unreachable-ba4010ef"
+        },
+        {
+          "branch": "reap-unreachable-bb693029",
+          "sha": "bb6930299b37",
+          "on": "origin/reap-unreachable-bb693029"
+        },
+        {
+          "branch": "reap-unreachable-bcfdcab6",
+          "sha": "bcfdcab6e1f1",
+          "on": "origin/reap-unreachable-bcfdcab6"
+        },
+        {
+          "branch": "reap-unreachable-bd2adb32",
+          "sha": "bd2adb32beb8",
+          "on": "origin/reap-unreachable-bd2adb32"
+        },
+        {
+          "branch": "reap-unreachable-bd702df9",
+          "sha": "bd702df99b82",
+          "on": "origin/reap-unreachable-bd702df9"
+        },
+        {
+          "branch": "reap-unreachable-be1bc88d",
+          "sha": "be1bc88d1ac4",
+          "on": "origin/reap-unreachable-be1bc88d"
+        },
+        {
+          "branch": "reap-unreachable-be79c843",
+          "sha": "be79c843468e",
+          "on": "origin/reap-unreachable-be79c843"
+        },
+        {
+          "branch": "reap-unreachable-bf49e0a4",
+          "sha": "bf49e0a4e0ba",
+          "on": "origin/reap-unreachable-bf49e0a4"
+        },
+        {
+          "branch": "reap-unreachable-bf5abcc6",
+          "sha": "bf5abcc67f43",
+          "on": "origin/reap-unreachable-bf5abcc6"
+        },
+        {
+          "branch": "reap-unreachable-c08971f0",
+          "sha": "c08971f0ba92",
+          "on": "origin/reap-unreachable-c08971f0"
+        },
+        {
+          "branch": "reap-unreachable-c0ccf03a",
+          "sha": "c0ccf03ab5bf",
+          "on": "origin/reap-unreachable-c0ccf03a"
+        },
+        {
+          "branch": "reap-unreachable-c2087ecb",
+          "sha": "c2087ecb81fb",
+          "on": "origin/reap-unreachable-c2087ecb"
+        },
+        {
+          "branch": "reap-unreachable-c27b51fe",
+          "sha": "c27b51febe02",
+          "on": "origin/reap-unreachable-c27b51fe"
+        },
+        {
+          "branch": "reap-unreachable-c40b66be",
+          "sha": "c40b66be7bed",
+          "on": "origin/reap-unreachable-c40b66be"
+        },
+        {
+          "branch": "reap-unreachable-c47b76c5",
+          "sha": "c47b76c53e80",
+          "on": "origin/reap-unreachable-c47b76c5"
+        },
+        {
+          "branch": "reap-unreachable-c4b4bf67",
+          "sha": "c4b4bf676cfb",
+          "on": "origin/reap-unreachable-c4b4bf67"
+        },
+        {
+          "branch": "reap-unreachable-c50d3002",
+          "sha": "c50d30023b51",
+          "on": "origin/reap-unreachable-c50d3002"
+        },
+        {
+          "branch": "reap-unreachable-c5daca5a",
+          "sha": "c5daca5a31f7",
+          "on": "origin/reap-unreachable-c5daca5a"
+        },
+        {
+          "branch": "reap-unreachable-c6452e3a",
+          "sha": "c6452e3aff90",
+          "on": "origin/reap-unreachable-c6452e3a"
+        },
+        {
+          "branch": "reap-unreachable-c6e61eaa",
+          "sha": "c6e61eaa9400",
+          "on": "origin/reap-unreachable-c6e61eaa"
+        },
+        {
+          "branch": "reap-unreachable-c70eba00",
+          "sha": "c70eba00fe0c",
+          "on": "origin/reap-unreachable-c70eba00"
+        },
+        {
+          "branch": "reap-unreachable-c79f0b0b",
+          "sha": "c79f0b0b75af",
+          "on": "origin/reap-unreachable-c79f0b0b"
+        },
+        {
+          "branch": "reap-unreachable-c7b5f9fd",
+          "sha": "c7b5f9fd285d",
+          "on": "origin/reap-unreachable-c7b5f9fd"
+        },
+        {
+          "branch": "reap-unreachable-c88cc67a",
+          "sha": "c88cc67a9bbe",
+          "on": "origin/reap-unreachable-c88cc67a"
+        },
+        {
+          "branch": "reap-unreachable-c94a9d30",
+          "sha": "c94a9d30936e",
+          "on": "origin/reap-unreachable-c94a9d30"
+        },
+        {
+          "branch": "reap-unreachable-c9541e9e",
+          "sha": "c9541e9ea207",
+          "on": "origin/reap-unreachable-c9541e9e"
+        },
+        {
+          "branch": "reap-unreachable-cc25d60a",
+          "sha": "cc25d60a0ad8",
+          "on": "origin/reap-unreachable-cc25d60a"
+        },
+        {
+          "branch": "reap-unreachable-cd7f9227",
+          "sha": "cd7f9227adaa",
+          "on": "origin/reap-unreachable-cd7f9227"
+        },
+        {
+          "branch": "reap-unreachable-cdab2fa1",
+          "sha": "cdab2fa19a46",
+          "on": "origin/reap-unreachable-cdab2fa1"
+        },
+        {
+          "branch": "reap-unreachable-cee409aa",
+          "sha": "cee409aafdec",
+          "on": "origin/reap-unreachable-cee409aa"
+        },
+        {
+          "branch": "reap-unreachable-cfecb3f5",
+          "sha": "cfecb3f5ff06",
+          "on": "origin/reap-unreachable-cfecb3f5"
+        },
+        {
+          "branch": "reap-unreachable-d0f2cc73",
+          "sha": "d0f2cc7367c5",
+          "on": "origin/reap-unreachable-d0f2cc73"
+        },
+        {
+          "branch": "reap-unreachable-d12bf129",
+          "sha": "d12bf1290e46",
+          "on": "origin/reap-unreachable-d12bf129"
+        },
+        {
+          "branch": "reap-unreachable-d1d2eca2",
+          "sha": "d1d2eca2c810",
+          "on": "origin/reap-unreachable-d1d2eca2"
+        },
+        {
+          "branch": "reap-unreachable-d3579339",
+          "sha": "d35793390430",
+          "on": "origin/reap-unreachable-d3579339"
+        },
+        {
+          "branch": "reap-unreachable-d47c79d7",
+          "sha": "d47c79d7511d",
+          "on": "origin/reap-unreachable-d47c79d7"
+        },
+        {
+          "branch": "reap-unreachable-d4eab108",
+          "sha": "d4eab108233f",
+          "on": "origin/reap-unreachable-d4eab108"
+        },
+        {
+          "branch": "reap-unreachable-d5196137",
+          "sha": "d5196137b1b2",
+          "on": "origin/reap-unreachable-d5196137"
+        },
+        {
+          "branch": "reap-unreachable-d524f883",
+          "sha": "d524f8833ab8",
+          "on": "origin/reap-unreachable-d524f883"
+        },
+        {
+          "branch": "reap-unreachable-d75b3b1d",
+          "sha": "d75b3b1dcded",
+          "on": "origin/reap-unreachable-d75b3b1d"
+        },
+        {
+          "branch": "reap-unreachable-d75e4b0f",
+          "sha": "d75e4b0f2b83",
+          "on": "origin/reap-unreachable-d75e4b0f"
+        },
+        {
+          "branch": "reap-unreachable-d81b0f8b",
+          "sha": "d81b0f8b7f6a",
+          "on": "origin/reap-unreachable-d81b0f8b"
+        },
+        {
+          "branch": "reap-unreachable-da5d7cf1",
+          "sha": "da5d7cf10e88",
+          "on": "origin/reap-unreachable-da5d7cf1"
+        },
+        {
+          "branch": "reap-unreachable-dc548d94",
+          "sha": "dc548d9469f8",
+          "on": "origin/reap-unreachable-dc548d94"
+        },
+        {
+          "branch": "reap-unreachable-dcb9212f",
+          "sha": "dcb9212f0ece",
+          "on": "origin/reap-unreachable-dcb9212f"
+        },
+        {
+          "branch": "reap-unreachable-dd093fc4",
+          "sha": "dd093fc442f5",
+          "on": "origin/reap-unreachable-dd093fc4"
+        },
+        {
+          "branch": "reap-unreachable-dd30fa55",
+          "sha": "dd30fa558bef",
+          "on": "origin/reap-unreachable-dd30fa55"
+        },
+        {
+          "branch": "reap-unreachable-df27c798",
+          "sha": "df27c7982d64",
+          "on": "origin/reap-unreachable-df27c798"
+        },
+        {
+          "branch": "reap-unreachable-df2aae80",
+          "sha": "df2aae804c14",
+          "on": "origin/reap-unreachable-df2aae80"
+        },
+        {
+          "branch": "reap-unreachable-e0c60df5",
+          "sha": "e0c60df53a28",
+          "on": "origin/reap-unreachable-e0c60df5"
+        },
+        {
+          "branch": "reap-unreachable-e267f19f",
+          "sha": "e267f19fd35f",
+          "on": "origin/reap-unreachable-e267f19f"
+        },
+        {
+          "branch": "reap-unreachable-e33dfa07",
+          "sha": "e33dfa07f18a",
+          "on": "origin/reap-unreachable-e33dfa07"
+        },
+        {
+          "branch": "reap-unreachable-e5175428",
+          "sha": "e51754289e53",
+          "on": "origin/reap-unreachable-e5175428"
+        },
+        {
+          "branch": "reap-unreachable-e5dd5bec",
+          "sha": "e5dd5bec2f17",
+          "on": "origin/reap-unreachable-e5dd5bec"
+        },
+        {
+          "branch": "reap-unreachable-e6f6cce8",
+          "sha": "e6f6cce8985e",
+          "on": "origin/reap-unreachable-e6f6cce8"
+        },
+        {
+          "branch": "reap-unreachable-e757b8d6",
+          "sha": "e757b8d6a03a",
+          "on": "origin/reap-unreachable-e757b8d6"
+        },
+        {
+          "branch": "reap-unreachable-e7fc768f",
+          "sha": "e7fc768f1bbc",
+          "on": "origin/reap-unreachable-e7fc768f"
+        },
+        {
+          "branch": "reap-unreachable-e92f3b9d",
+          "sha": "e92f3b9da245",
+          "on": "origin/reap-unreachable-e92f3b9d"
+        },
+        {
+          "branch": "reap-unreachable-ea164c5c",
+          "sha": "ea164c5c59d9",
+          "on": "origin/reap-unreachable-ea164c5c"
+        },
+        {
+          "branch": "reap-unreachable-eb4a6168",
+          "sha": "eb4a6168c7f1",
+          "on": "origin/reap-unreachable-eb4a6168"
+        },
+        {
+          "branch": "reap-unreachable-eb51633c",
+          "sha": "eb51633c4941",
+          "on": "origin/reap-unreachable-eb51633c"
+        },
+        {
+          "branch": "reap-unreachable-eb7f03f2",
+          "sha": "eb7f03f2fc4c",
+          "on": "origin/reap-unreachable-eb7f03f2"
+        },
+        {
+          "branch": "reap-unreachable-eb87a3e2",
+          "sha": "eb87a3e258fc",
+          "on": "origin/reap-unreachable-eb87a3e2"
+        },
+        {
+          "branch": "reap-unreachable-ece40d54",
+          "sha": "ece40d54cd40",
+          "on": "origin/reap-unreachable-ece40d54"
+        },
+        {
+          "branch": "reap-unreachable-eceae3da",
+          "sha": "eceae3da1c64",
+          "on": "origin/reap-unreachable-eceae3da"
+        },
+        {
+          "branch": "reap-unreachable-ed470a8e",
+          "sha": "ed470a8e734e",
+          "on": "origin/reap-unreachable-ed470a8e"
+        },
+        {
+          "branch": "reap-unreachable-ee222af6",
+          "sha": "ee222af63ac3",
+          "on": "origin/reap-unreachable-ee222af6"
+        },
+        {
+          "branch": "reap-unreachable-eec83a78",
+          "sha": "eec83a78818d",
+          "on": "origin/reap-unreachable-eec83a78"
+        },
+        {
+          "branch": "reap-unreachable-efc4999f",
+          "sha": "efc4999f1d00",
+          "on": "origin/reap-unreachable-efc4999f"
+        },
+        {
+          "branch": "reap-unreachable-f09cc6d4",
+          "sha": "f09cc6d47b36",
+          "on": "origin/reap-unreachable-f09cc6d4"
+        },
+        {
+          "branch": "reap-unreachable-f0bdccab",
+          "sha": "f0bdccab6c4d",
+          "on": "origin/reap-unreachable-f0bdccab"
+        },
+        {
+          "branch": "reap-unreachable-f0ca8d15",
+          "sha": "f0ca8d1595dd",
+          "on": "origin/reap-unreachable-f0ca8d15"
+        },
+        {
+          "branch": "reap-unreachable-f11aff37",
+          "sha": "f11aff372b03",
+          "on": "origin/reap-unreachable-f11aff37"
+        },
+        {
+          "branch": "reap-unreachable-f18ef22c",
+          "sha": "f18ef22c070d",
+          "on": "origin/reap-unreachable-f18ef22c"
+        },
+        {
+          "branch": "reap-unreachable-f1d8b8d4",
+          "sha": "f1d8b8d4318d",
+          "on": "origin/reap-unreachable-f1d8b8d4"
+        },
+        {
+          "branch": "reap-unreachable-f1fb9bf7",
+          "sha": "f1fb9bf7da00",
+          "on": "origin/reap-unreachable-f1fb9bf7"
+        },
+        {
+          "branch": "reap-unreachable-f20d1647",
+          "sha": "f20d16477ab2",
+          "on": "origin/reap-unreachable-f20d1647"
+        },
+        {
+          "branch": "reap-unreachable-f22faf04",
+          "sha": "f22faf04eae0",
+          "on": "origin/reap-unreachable-f22faf04"
+        },
+        {
+          "branch": "reap-unreachable-f33ac22a",
+          "sha": "f33ac22a6955",
+          "on": "origin/reap-unreachable-f33ac22a"
+        },
+        {
+          "branch": "reap-unreachable-f34d82de",
+          "sha": "f34d82de0837",
+          "on": "origin/reap-unreachable-f34d82de"
+        },
+        {
+          "branch": "reap-unreachable-f46a11ba",
+          "sha": "f46a11ba8aa7",
+          "on": "origin/reap-unreachable-f46a11ba"
+        },
+        {
+          "branch": "reap-unreachable-f5b94ddc",
+          "sha": "f5b94ddc7813",
+          "on": "origin/reap-unreachable-f5b94ddc"
+        },
+        {
+          "branch": "reap-unreachable-f765beea",
+          "sha": "f765beeae1bf",
+          "on": "origin/reap-unreachable-f765beea"
+        },
+        {
+          "branch": "reap-unreachable-f782ccae",
+          "sha": "f782ccae9cbe",
+          "on": "origin/reap-unreachable-f782ccae"
+        },
+        {
+          "branch": "reap-unreachable-f792b00a",
+          "sha": "f792b00a917b",
+          "on": "origin/reap-unreachable-f792b00a"
+        },
+        {
+          "branch": "reap-unreachable-f794713c",
+          "sha": "f794713c479e",
+          "on": "origin/reap-unreachable-f794713c"
+        },
+        {
+          "branch": "reap-unreachable-f7bc9ac0",
+          "sha": "f7bc9ac00e50",
+          "on": "origin/reap-unreachable-f7bc9ac0"
+        },
+        {
+          "branch": "reap-unreachable-f9ee39b7",
+          "sha": "f9ee39b71551",
+          "on": "origin/reap-unreachable-f9ee39b7"
+        },
+        {
+          "branch": "reap-unreachable-fb8dc1d5",
+          "sha": "fb8dc1d53bfc",
+          "on": "origin/reap-unreachable-fb8dc1d5"
+        },
+        {
+          "branch": "reap-unreachable-fc805fd7",
+          "sha": "fc805fd7b300",
+          "on": "origin/reap-unreachable-fc805fd7"
+        },
+        {
+          "branch": "reap-unreachable-fc9cdb41",
+          "sha": "fc9cdb41c0e1",
+          "on": "origin/reap-unreachable-fc9cdb41"
+        },
+        {
+          "branch": "reap-unreachable-fd174ff1",
+          "sha": "fd174ff18c58",
+          "on": "origin/reap-unreachable-fd174ff1"
+        },
+        {
+          "branch": "reap-unreachable-fe880d29",
+          "sha": "fe880d295596",
+          "on": "origin/reap-unreachable-fe880d29"
+        }
+      ],
+      "pushed": [],
+      "failed": [],
+      "skipped_protected": [],
+      "remote": "https://github.com/4444J99/universal-mail--automation-backup.git",
+      "fetch": "ok"
+    },
+    {
+      "repo": "/Users/4jp/Workspace/public-record-data-scrapper",
+      "reapable": [
+        {
+          "branch": "hotfix/512-rule-engine-post-merge",
+          "sha": "e535b18d816d",
+          "on": "origin/hotfix/512-rule-engine-post-merge"
+        },
+        {
+          "branch": "pr13-remote-head",
+          "sha": "0c5a0ced0f22",
+          "on": "origin/custody/group03-20261001/0c5a0ced0f22618e35d86db31fd47a31d9b3620a"
+        },
+        {
+          "branch": "repair/pr13-ops-recovery",
+          "sha": "0c5a0ced0f22",
+          "on": "origin/custody/group03-20261001/0c5a0ced0f22618e35d86db31fd47a31d9b3620a"
+        }
+      ],
+      "pushed": [],
+      "failed": [],
+      "skipped_protected": [],
+      "remote": "git@github.com:organvm-iii-ergon/public-record-data-scrapper.git",
+      "fetch": "ok"
+    },
+    {
+      "repo": "/Users/4jp/Workspace/4444J99/styx-public-repo",
+      "reapable": [
+        {
+          "branch": "chore/styx-990-pr991-closeout",
+          "sha": "1e1c969791de",
+          "on": "origin/chore/styx-990-pr991-closeout"
+        },
+        {
+          "branch": "lane/evolve-platform",
+          "sha": "d688fd83ed23",
+          "on": "origin/lane/evolve-platform"
+        },
+        {
+          "branch": "lane/expand-external",
+          "sha": "bb8101ac7efe",
+          "on": "origin/lane/expand-external"
+        },
+        {
+          "branch": "lane/expand-product",
+          "sha": "711905ca9aa4",
+          "on": "origin/lane/expand-product"
+        },
+        {
+          "branch": "lane/heal",
+          "sha": "2cde23b4c35b",
+          "on": "origin/lane/heal"
+        },
+        {
+          "branch": "lane/verify",
+          "sha": "41b95f6286e5",
+          "on": "origin/lane/verify"
+        },
+        {
+          "branch": "work/lane-evolve-platform/bifurcation-types-extraction-2026-09-17",
+          "sha": "9b1c52a0016a",
+          "on": "origin/work/lane-evolve-platform/bifurcation-types-extraction-2026-09-17"
+        },
+        {
+          "branch": "work/lane-verify/ci-gate-fixes-2026-09-17",
+          "sha": "c750c75a4cff",
+          "on": "origin/work/lane-verify/ci-gate-fixes-2026-09-17"
+        },
+        {
+          "branch": "work/verify/990-local-demo-login-throttle",
+          "sha": "27a1a717c234",
+          "on": "origin/chore/styx-990-pr991-closeout"
+        }
+      ],
+      "pushed": [],
+      "failed": [],
+      "skipped_protected": [],
+      "remote": "git@github.com:4444J99/styx-public.git",
+      "fetch": "ok"
+    },
+    {
+      "repo": "/Users/4jp/Workspace/4444J99/portvs",
+      "reapable": [
+        {
+          "branch": "fix/residency-preservation-20261001",
+          "sha": "2e47a58e6747",
+          "on": "origin/HEAD -> origin/main"
+        },
+        {
+          "branch": "remediate-1",
+          "sha": "766f3c7bb846",
+          "on": "origin/custody/group02-20260930/remediate-1"
+        },
+        {
+          "branch": "remediate-3",
+          "sha": "95512d1eae58",
+          "on": "origin/custody/group02-20260930/remediate-3"
+        }
+      ],
+      "pushed": [],
+      "failed": [],
+      "skipped_protected": [],
+      "remote": "git@github.com:organvm/portvs.git",
+      "fetch": "ok"
+    },
+    {
+      "repo": "/Users/4jp/.local/share/ai-skills/source",
+      "reapable": [],
+      "pushed": [
+        {
+          "branch": "feat/claude-default-on-skills-20261016",
+          "sha": "0e497f6b93f4",
+          "dry_run": true
+        },
+        {
+          "branch": "feat/closeout-live-state-20261016",
+          "sha": "83502b13da0b",
+          "dry_run": true
+        },
+        {
+          "branch": "fix/local-skill-catalog-review-20261016",
+          "sha": "ff94094f3ca6",
+          "dry_run": true
+        }
+      ],
+      "failed": [],
+      "skipped_protected": [],
+      "remote": "https://github.com/4444J99/a-i--skills.git",
+      "fetch": "ok"
+    },
+    {
+      "repo": "/Users/4jp/Workspace/audiovisual-composition-system/the-thing-without-a-name",
+      "reapable": [
+        {
+          "branch": "topic/engine-extraction-integration",
+          "sha": "933bf0035f15",
+          "on": "origin/topic/engine-extraction-integration"
+        }
+      ],
+      "pushed": [],
+      "failed": [],
+      "skipped_protected": [],
+      "remote": "https://github.com/organvm/the-thing-without-a-name.git",
+      "fetch": "ok"
+    },
+    {
+      "repo": "/Users/4jp/Workspace/organvm-vii-kerygma/portfolio",
+      "reapable": [
+        {
+          "branch": "chamber-pr-229",
+          "sha": "898217e3a614",
+          "on": "origin/preserve/chamber-pr-229-orphaned-history-20261017"
+        },
+        {
+          "branch": "remediate-198",
+          "sha": "504c6762dfd4",
+          "on": "origin/preserve/remediate-198-wip-20261017"
+        }
+      ],
+      "pushed": [
+        {
+          "branch": "chamber-pr-169",
+          "sha": "a47b5147a528",
+          "dry_run": true
+        },
+        {
+          "branch": "remediate-228",
+          "sha": "2e2ab9bc8eda",
+          "dry_run": true
+        },
+        {
+          "branch": "remediate-229",
+          "sha": "94ee0cada369",
+          "dry_run": true
+        }
+      ],
+      "failed": [],
+      "skipped_protected": [],
+      "remote": "git@github.com:organvm-vii-kerygma/portfolio.git",
+      "fetch": "ok"
+    },
+    {
+      "repo": "/Users/4jp/Workspace/a-organvm/organvm-engine",
+      "reapable": [
+        {
+          "branch": "limen/limen-060-4a78",
+          "sha": "a7d0abffab1e",
+          "on": "origin/HEAD -> origin/main"
+        }
+      ],
+      "pushed": [],
+      "failed": [],
+      "skipped_protected": [],
+      "remote": "https://github.com/organvm/organvm-engine.git",
+      "fetch": "ok"
+    },
+    {
+      "repo": "/Users/4jp/Workspace/4444J99/generative-multimedia-spatial-environment",
+      "reapable": [],
+      "pushed": [
+        {
+          "branch": "dependabot/npm_and_yarn/undici-8.11.2",
+          "sha": "23221dd48d2b",
+          "dry_run": true
+        },
+        {
+          "branch": "dependabot/npm_and_yarn/vitest-5.0.4",
+          "sha": "97abeab43ece",
+          "dry_run": true
+        }
+      ],
+      "failed": [],
+      "skipped_protected": [],
+      "remote": "https://github.com/4444J99/generative-multimedia-spatial-environment.git",
+      "fetch": "ok"
+    }
+  ]
+}
