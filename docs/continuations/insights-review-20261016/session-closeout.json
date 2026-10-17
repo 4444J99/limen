@@ -21,7 +21,10 @@
         "cli/tests/test_vendor_insights.py",
         "censor/insights-suggestions.jsonl",
         "docs/continuations/insights-review-20261016/review.md",
-        "docs/continuations/insights-review-20261016/native-generator-owner.md"
+        "docs/continuations/insights-review-20261016/native-generator-owner.md",
+        ".codex/plans/2026-10-16-insights-review-v2.md",
+        "cli/src/limen/process_ownership.py",
+        "cli/tests/test_process_ownership.py"
       ],
       "retained_work": []
     },
@@ -40,40 +43,56 @@
         "tests/test_insights_snapshot.py"
       ],
       "retained_work": []
+    },
+    {
+      "id": "domus_mcp",
+      "kind": "git",
+      "path_sha256": "38e928ce8c647ed819ebfda0938e5605b2bb67de10920d76ccd630695c563fa4",
+      "repository": "4444J99/domus-genoma-private",
+      "repository_id": 1124448005,
+      "base_head": "cd9a53e8bd3b937d443b777cfb7803d518f9787a",
+      "subject_head": "f0b12d3110a1b0ba78cfd90b8b1229ac97767972",
+      "publication_branch": "fix/1password-native-command-20261016",
+      "owned_paths": [
+        ".codex/plans/2026-10-16-1password-native-command.md",
+        "Workspace/limen/private_dot_agent-runtime/private_codex/modify_private_config.toml.tmpl",
+        "tests/test_modify_codex_config.py"
+      ],
+      "retained_work": []
     }
   ],
   "verification": [
     {
-      "evidence": "docs/continuations/insights-review-20261016/verification.json",
-      "sha256": "69f0fe73841a25127108c6033455bd2b604d6747401cd9e838ec9203f0ec9beb",
+      "evidence": "docs/continuations/insights-review-20261016/followup-verification.json",
+      "sha256": "97a770a6dc6c0ab7ce13c6a0cb00a3075f8a1d5c4118fb4fdf2f08d17b31d66f",
       "root_id": "limen",
-      "command": "focused vendor-insights regressions and12 cheap scopedgates",
-      "head": "2098f6051257bde609c818c3fd24db06b3646c86",
-      "exit_code": 0
-    },
-    {
-      "evidence": "docs/continuations/insights-review-20261016/verification.json",
-      "sha256": "69f0fe73841a25127108c6033455bd2b604d6747401cd9e838ec9203f0ec9beb",
-      "root_id": "limen",
-      "command": "scripts/verify-scoped.sh --base fba569680",
-      "head": "2098f6051257bde609c818c3fd24db06b3646c86",
-      "exit_code": 75,
+      "command": "human-authorized bounded scoped verification;14 cheap gates reused on exact unchanged head; canonical serialized heavy tail",
+      "head": "085462b215f49c0ef5b6f5fe21865fa54bae231d",
+      "exit_code": 1,
       "purpose": "completion",
       "owner_url": "https://github.com/4444J99/limen/pull/2888"
     },
     {
-      "evidence": "docs/continuations/insights-review-20261016/verification.json",
-      "sha256": "69f0fe73841a25127108c6033455bd2b604d6747401cd9e838ec9203f0ec9beb",
+      "evidence": "docs/continuations/insights-review-20261016/followup-verification.json",
+      "sha256": "97a770a6dc6c0ab7ce13c6a0cb00a3075f8a1d5c4118fb4fdf2f08d17b31d66f",
       "root_id": "limen",
-      "command": "scripts/credential-wall.py --check",
-      "head": "2098f6051257bde609c818c3fd24db06b3646c86",
+      "command": "scripts/credential-wall.py --check; all32 atoms registered",
+      "head": "085462b215f49c0ef5b6f5fe21865fa54bae231d",
+      "exit_code": 0
+    },
+    {
+      "evidence": "docs/continuations/insights-review-20261016/followup-verification.json",
+      "sha256": "97a770a6dc6c0ab7ce13c6a0cb00a3075f8a1d5c4118fb4fdf2f08d17b31d66f",
+      "root_id": "limen",
+      "command": "live native alias normalization and identity-refusal regression",
+      "head": "085462b215f49c0ef5b6f5fe21865fa54bae231d",
       "exit_code": 0
     },
     {
       "evidence": "docs/continuations/insights-review-20261016/verification.json",
       "sha256": "69f0fe73841a25127108c6033455bd2b604d6747401cd9e838ec9203f0ec9beb",
       "root_id": "domus",
-      "command": "pytest tests/test_insights_snapshot.py -q",
+      "command": "pytest tests/test_insights_snapshot.py -q;15passed",
       "head": "0673fa659801834da464baa6bd68ac378646d565",
       "exit_code": 0
     },
@@ -81,27 +100,26 @@
       "evidence": "docs/continuations/insights-review-20261016/live-readback.json",
       "sha256": "4af1e7af10724263b1c23c9c7cf5957dfc70be7e52d1ba47752de0a83907c831",
       "root_id": "domus",
-      "command": "deployed snapshot byteidentity and read-only report validation",
+      "command": "deployed snapshot byteidentity and report validation",
       "head": "0673fa659801834da464baa6bd68ac378646d565",
       "exit_code": 0
     },
     {
-      "root_id": "limen",
-      "command": "installed native multi-root session release through configured DomusAgentHost",
-      "head": "3ede3ae19cd81e99b7017cfda5ff3503b0bdc066",
-      "exit_code": 2,
-      "purpose": "release",
-      "owner_url": "https://github.com/4444J99/limen/pull/2888",
-      "evidence": "docs/continuations/insights-review-20261016/closeout-attempt.json",
-      "sha256": "e0876d351344c8537e39f1cc963d2d86d79ba29f46f1350bc9c1d6da903a4c63"
+      "evidence": "docs/continuations/insights-review-20261016/followup-verification.json",
+      "sha256": "97a770a6dc6c0ab7ce13c6a0cb00a3075f8a1d5c4118fb4fdf2f08d17b31d66f",
+      "root_id": "domus_mcp",
+      "command": "pytest tests/test_modify_codex_config.py -q;47passed plus targeted deployment and native service contract readback",
+      "head": "f0b12d3110a1b0ba78cfd90b8b1229ac97767972",
+      "exit_code": 0
     }
   ],
   "custody": {
     "evidence": "docs/continuations/insights-review-20261016/custody.json",
-    "sha256": "e93959b74d41b9c7c45cf10cb69e58c20d50f66d0e215c97a31f7cac07b87d27",
+    "sha256": "6431a0b5d22b7e41ba702e02a17cf048570b334dd585ff7574a65cd79193ea1e",
     "verified": true,
     "root_ids": [
       "domus",
+      "domus_mcp",
       "limen"
     ]
   },
@@ -125,6 +143,27 @@
       "sha256": "69f0fe73841a25127108c6033455bd2b604d6747401cd9e838ec9203f0ec9beb",
       "id": "native-generator-owner",
       "kind": "github-issue",
+      "verified": true
+    },
+    {
+      "evidence": "docs/continuations/insights-review-20261016/closeout-attempt.json",
+      "sha256": "e0876d351344c8537e39f1cc963d2d86d79ba29f46f1350bc9c1d6da903a4c63",
+      "id": "prior-release-failure-preserved",
+      "kind": "historical-release-observation",
+      "verified": true
+    },
+    {
+      "evidence": "docs/continuations/insights-review-20261016/followup-verification.json",
+      "sha256": "97a770a6dc6c0ab7ce13c6a0cb00a3075f8a1d5c4118fb4fdf2f08d17b31d66f",
+      "id": "native-mcp-config-deployment",
+      "kind": "targeted-chezmoi-file-application",
+      "verified": true
+    },
+    {
+      "evidence": "docs/continuations/insights-review-20261016/followup-verification.json",
+      "sha256": "97a770a6dc6c0ab7ce13c6a0cb00a3075f8a1d5c4118fb4fdf2f08d17b31d66f",
+      "id": "domus-mcp-pr-landing",
+      "kind": "github-merge",
       "verified": true
     }
   ]

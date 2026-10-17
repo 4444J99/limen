@@ -1,0 +1,114 @@
+{
+  "schema": "limen.insights_followup_verification.v1",
+  "authorization": {
+    "native_session": "01a1470a-98ad-7f61-acad-55b65060196f",
+    "one_bounded_local_verification_override": true,
+    "human_answer": "Yes\u2014one bounded verification run",
+    "guard_configuration_changed": false
+  },
+  "domus_mcp": {
+    "head": "f0b12d3110a1b0ba78cfd90b8b1229ac97767972",
+    "owner_url": "https://github.com/4444J99/domus-genoma-private/pull/455",
+    "state": "MERGED",
+    "merge_commit": "fb88b36adc17649eb6ba454dc1284cc848410642",
+    "regression_failed_before_fix": true,
+    "modifier_tests_passed": 47,
+    "modifier_tests_exit_code": 0,
+    "deployed_command": "/Applications/1Password.app/Contents/MacOS/1password-mcp",
+    "targeted_apply": "only the managed MCP command line changed; enabled state, comments and app keys preserved",
+    "native_resolves": true,
+    "native_executable": true,
+    "alias_same_device_inode": true,
+    "alias_owner_uid": 0,
+    "alias_mode": "0o700",
+    "live_service_contract_id": "codex/1password",
+    "live_service_contract_derivation": "passed",
+    "contract_sha256": "5ab9797fb28f86e28f5706cd358ad02a7face43fb06da1589a9c33bfd96a6d6d",
+    "authentication_claimed": false
+  },
+  "host_pressure": {
+    "observed_at": "2026-10-17T00:13:58Z",
+    "swap_used_bytes": 9796384194,
+    "memory_bytes": 17179869184,
+    "swap_fraction": 0.5702246093424037,
+    "swap_fraction_threshold": 0.25,
+    "vitals_action": "shed",
+    "sensor_errors": [],
+    "denial_reasons": [
+      "swap-fraction",
+      "vitals-shed"
+    ],
+    "read_only": true
+  },
+  "changed_tree_cheap_batch": {
+    "head": "d8b78b57",
+    "passed_gates": 12,
+    "focused_tests_passed": 57,
+    "batch_exit_code": 75,
+    "heavy_denial_reasons": [
+      "swap-fraction",
+      "swap-growth"
+    ]
+  },
+  "preserved_native_reports": {
+    "report-2026-10-16-192341.html": "b03961bc968e4cfe24af00aa844bef284a5915b14f8d336560fdf3a769ece398",
+    "report-2026-10-16-192739.html": "3bcb023def14ec67341764658143bbea153061b9af463cca3efe500e4bd714af"
+  },
+  "authorized_scoped_batch": {
+    "head": "085462b215f49c0ef5b6f5fe21865fa54bae231d",
+    "exit_code": 1,
+    "started_epoch": 1792196803.044929,
+    "duration_seconds": 285.4227788448334,
+    "total_deadline_seconds": 300,
+    "gate_deadline_seconds": 285,
+    "pytest_workers": 2,
+    "cheap_gates_reused": 14,
+    "completed_gates": [
+      [
+        "pytest-cli",
+        "FAIL",
+        "285.03"
+      ]
+    ],
+    "pytest_summaries": [],
+    "prior_interruption": "Tool turn interruption stopped the first heavy invocation; no current success receipt existed and no process survived. Only unfinished heavy verification resumed; prior cheap results reused.",
+    "guard_configuration_changed": false,
+    "shared_heavy_serialization_preserved": true,
+    "pytest_cli": "timeout at285seconds; approximately70percent complete; not passed",
+    "pytest_api": "not executed after failed CLI gate",
+    "heavy_gate_success_claimed": false
+  },
+  "credential_wall": {
+    "head": "085462b215f49c0ef5b6f5fe21865fa54bae231d",
+    "exit_code": 0,
+    "registered_secret_atoms": 32
+  },
+  "native_alias_resolution": {
+    "head": "085462b215f49c0ef5b6f5fe21865fa54bae231d",
+    "measured": true,
+    "canonical_command": "/Applications/1Password.app/Contents/MacOS/1password-mcp",
+    "arguments_preserved": true,
+    "regressions_passed": 29,
+    "identity_mismatch_refused": true
+  },
+  "peer_review": {
+    "head": "085462b215f49c0ef5b6f5fe21865fa54bae231d",
+    "read_only": true,
+    "blocking_findings": 0,
+    "bounded_captured_view_limitation_explicit": true
+  },
+  "live_deployment_reconciliation": {
+    "config_reverted_after_tool_interruption": true,
+    "targeted_apply_repeated_after_observed_drift": true,
+    "current_command": "/Applications/1Password.app/Contents/MacOS/1password-mcp"
+  },
+  "live_process_preflight": {
+    "complete": true,
+    "observed_at": "2026-10-17T00:30:54Z",
+    "unknown_processes": 53,
+    "owned_verification_processes_then_running": 4,
+    "permission_error": false,
+    "release_pass_claimed": false,
+    "processes_stopped": false
+  }
+}
