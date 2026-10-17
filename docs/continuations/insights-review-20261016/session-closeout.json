@@ -111,6 +111,16 @@
       "command": "pytest tests/test_modify_codex_config.py -q;47passed plus targeted deployment and native service contract readback",
       "head": "f0b12d3110a1b0ba78cfd90b8b1229ac97767972",
       "exit_code": 0
+    },
+    {
+      "root_id": "limen",
+      "command": "native multi-root closeout through validated current source and configured DomusAgentHost",
+      "head": "085462b215f49c0ef5b6f5fe21865fa54bae231d",
+      "exit_code": 1,
+      "purpose": "release",
+      "owner_url": "https://github.com/4444J99/limen/pull/2888",
+      "evidence": "docs/continuations/insights-review-20261016/closeout-followup.json",
+      "sha256": "999791fa66c07a3929df468b813e3185218d4958aa9f7ff074ba12fa74eb586e"
     }
   ],
   "custody": {
