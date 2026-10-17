@@ -35,9 +35,7 @@ def _install_fixture(tmp_path: Path, *, runtime_python: bool) -> tuple[Path, Pat
         venv_bin = tmp_path / "runtime/venv/bin"
         venv_bin.mkdir(parents=True)
         wrapper = venv_bin / "python"
-        wrapper.write_text(
-            f"#!/bin/sh\nexport {RUNTIME_ENV}=1\nexec {shlex.quote(sys.executable)} \"$@\"\n"
-        )
+        wrapper.write_text(f'#!/bin/sh\nexport {RUNTIME_ENV}=1\nexec {shlex.quote(sys.executable)} "$@"\n')
         wrapper.chmod(0o700)
     poisoned = tmp_path / "path"
     poisoned.mkdir()
