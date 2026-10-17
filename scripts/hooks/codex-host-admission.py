@@ -7,8 +7,10 @@ import hashlib
 import json
 import os
 import shlex
+import signal
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any, Callable
 
@@ -25,6 +27,10 @@ if sys.argv[1:] == ["--capabilities"]:
 
 from limen.action_admission import classify_action  # noqa: E402
 from limen.action_admission_runtime import admit_pre_tool_action  # noqa: E402
+from limen.bounded_subprocess import (  # noqa: E402
+    BoundedSubprocessError,
+    run_bounded_subprocess,
+)
 from limen.host_admission import (  # noqa: E402
     AdmissionController,
     AdmissionStateError,
@@ -34,10 +40,77 @@ from limen.host_admission import (  # noqa: E402
 _EXECUTION_TTL_SECONDS = 24 * 60 * 60
 _CAPABILITY_TIMEOUT_SECONDS = 1.0
 _DELEGATE_TIMEOUT_SECONDS = 8.0
+_INPUT_LIMIT_BYTES = 1024 * 1024
+_HOOK_BUDGET_SECONDS = 8.0
+_EVENTS = {"PreToolUse", "UserPromptSubmit", "Stop", "SubagentStart"}
 
 
 class ImmutableRuntimeError(RuntimeError):
     """The installed host policy cannot safely own this hook event."""
+
+
+class OwnerIdentityError(ValueError):
+    """Fixed internal owner diagnostics, never text copied from hook input."""
+
+
+class HookDeadlineExceeded(BaseException):
+    """Cancellation must cross lower-level OSError/Exception recovery blocks."""
+
+
+def _deadline_expired(_signum: int, _frame: Any) -> None:
+    raise HookDeadlineExceeded("hook-evaluation-deadline")
+
+
+def _read_input() -> str:
+    source = getattr(sys.stdin, "buffer", sys.stdin)
+    raw = source.read(_INPUT_LIMIT_BYTES + 1)
+    encoded = raw.encode("utf-8") if isinstance(raw, str) else raw
+    if len(encoded) > _INPUT_LIMIT_BYTES:
+        raise ValueError("hook-input-size-limit")
+    return encoded.decode("utf-8")
+
+
+def _parse_payload(raw: str, registered_event: str) -> dict[str, Any]:
+    payload = json.loads(raw)
+    if not isinstance(payload, dict):
+        raise ValueError("hook-input-not-object")
+    event = payload.get("hook_event_name")
+    if not isinstance(event, str) or event not in _EVENTS:
+        raise ValueError("hook-input-event-invalid")
+    if registered_event and event != registered_event:
+        raise ValueError("hook-input-event-mismatch")
+    if event == "PreToolUse" and (
+        not isinstance(payload.get("tool_name"), str)
+        or not payload["tool_name"]
+        or not isinstance(payload.get("tool_input"), dict)
+    ):
+        raise ValueError("hook-input-tool-invalid")
+    return payload
+
+
+def _valid_delegate_verdict(output: dict[str, Any], event: str) -> bool:
+    if event == "PreToolUse":
+        verdict = output.get("hookSpecificOutput")
+        return (
+            set(output) == {"hookSpecificOutput"}
+            and isinstance(verdict, dict)
+            and verdict.get("hookEventName") == event
+            and isinstance(verdict.get("permissionDecision"), str)
+            and verdict.get("permissionDecision") in {"allow", "deny", "ask"}
+            and isinstance(verdict.get("permissionDecisionReason"), str)
+            and bool(verdict["permissionDecisionReason"])
+        )
+    if not output or not set(output) <= {"systemMessage", "continue", "stopReason", "hookSpecificOutput"}:
+        return False
+    if "continue" in output and not isinstance(output["continue"], bool):
+        return False
+    if output.get("continue") is False and not isinstance(output.get("stopReason"), str):
+        return False
+    if "systemMessage" in output and not isinstance(output["systemMessage"], str):
+        return False
+    return "hookSpecificOutput" not in output or (
+        isinstance(output["hookSpecificOutput"], dict) and output["hookSpecificOutput"].get("hookEventName") == event
+    )
 
 
 def _hash_label(prefix: str, raw: str) -> str:
@@ -98,7 +171,7 @@ def codex_owner_pid() -> int:
     current = os.getppid()
     table = _process_table()
     if not table:
-        raise ValueError("durable Codex owner process table is unavailable")
+        raise OwnerIdentityError("durable Codex owner process table is unavailable")
     seen: set[int] = set()
     for _ in range(32):
         if current <= 1 or current in seen:
@@ -111,7 +184,7 @@ def codex_owner_pid() -> int:
         if _is_codex_process(command):
             return current
         current = parent
-    raise ValueError("durable Codex owner ancestor cannot be proven")
+    raise OwnerIdentityError("durable Codex owner ancestor cannot be proven")
 
 
 def _turn_owner(payload: dict[str, Any]) -> str | None:
@@ -173,22 +246,24 @@ def _probe_immutable_capabilities(target: Path) -> dict[str, Any]:
     if resolved == Path(__file__).resolve():
         raise ImmutableRuntimeError("runtime-entrypoint-is-mutable-project")
     try:
-        completed = subprocess.run(
+        completed = run_bounded_subprocess(
             [_runtime_interpreter(resolved), str(resolved), "--capabilities"],
-            capture_output=True,
-            text=True,
-            timeout=_CAPABILITY_TIMEOUT_SECONDS,
-            check=False,
+            cwd=ROOT,
+            timeout_seconds=_CAPABILITY_TIMEOUT_SECONDS,
+            stdout_ceiling=65536,
+            stderr_ceiling=8192,
         )
     except subprocess.TimeoutExpired as exc:
         raise ImmutableRuntimeError("runtime-capabilities-timeout") from exc
     except OSError as exc:
         raise ImmutableRuntimeError("runtime-capabilities-unavailable") from exc
+    except BoundedSubprocessError as exc:
+        raise ImmutableRuntimeError(f"runtime-capabilities-{exc.kind}") from exc
     if completed.returncode != 0:
         raise ImmutableRuntimeError("runtime-capabilities-nonzero")
     try:
         observed = json.loads(completed.stdout)
-    except json.JSONDecodeError as exc:
+    except (json.JSONDecodeError, UnicodeError) as exc:
         raise ImmutableRuntimeError("runtime-capabilities-malformed") from exc
     if not isinstance(observed, dict):
         raise ImmutableRuntimeError("runtime-capabilities-not-an-object")
@@ -215,28 +290,32 @@ def delegate_immutable(target: Path, raw: str) -> dict[str, Any] | None:
     resolved = target.resolve(strict=False)
     _probe_immutable_capabilities(resolved)
     try:
-        completed = subprocess.run(
+        completed = run_bounded_subprocess(
             [_runtime_interpreter(resolved), str(resolved)],
-            input=raw,
-            capture_output=True,
-            text=True,
-            timeout=_DELEGATE_TIMEOUT_SECONDS,
-            check=False,
+            input_bytes=raw.encode("utf-8"),
+            cwd=ROOT,
+            timeout_seconds=_DELEGATE_TIMEOUT_SECONDS,
+            stdout_ceiling=65536,
+            stderr_ceiling=8192,
         )
     except subprocess.TimeoutExpired as exc:
         raise ImmutableRuntimeError("runtime-delegate-timeout") from exc
     except OSError as exc:
         raise ImmutableRuntimeError("runtime-delegate-unavailable") from exc
+    except BoundedSubprocessError as exc:
+        raise ImmutableRuntimeError(f"runtime-delegate-{exc.kind}") from exc
     if completed.returncode != 0:
         raise ImmutableRuntimeError("runtime-delegate-nonzero")
     if not completed.stdout.strip():
         return None
     try:
         output = json.loads(completed.stdout)
-    except json.JSONDecodeError as exc:
+    except (json.JSONDecodeError, UnicodeError) as exc:
         raise ImmutableRuntimeError("runtime-delegate-malformed-output") from exc
     if not isinstance(output, dict):
         raise ImmutableRuntimeError("runtime-delegate-output-not-an-object")
+    if not _valid_delegate_verdict(output, json.loads(raw).get("hook_event_name", "")):
+        raise ImmutableRuntimeError("runtime-delegate-invalid-verdict")
     return output
 
 
@@ -361,9 +440,7 @@ def handle(
         controller = controller or AdmissionController()
         owner = _turn_owner(payload)
         if owner is None:
-            return _tool_deny(
-                "Limen host admission denied mutation: durable Codex session identity is missing"
-            )
+            return _tool_deny("Limen host admission denied mutation: durable Codex session identity is missing")
         pid = owner_pid or codex_owner_pid()
         decision = admit_pre_tool_action(
             payload,
@@ -432,46 +509,79 @@ def handle(
     return None
 
 
-def main() -> int:
-    if sys.argv[1:] == ["--capabilities"]:
+def _main(args: list[str], registered_event: str) -> int:
+    if args == ["--capabilities"]:
         print(json.dumps(host_admission_capabilities(), separators=(",", ":"), sort_keys=True))
         return 0
-    if len(sys.argv) == 3 and sys.argv[1] == "--delegate-immutable":
-        raw = sys.stdin.read()
+    if len(args) == 2 and args[0] == "--delegate-immutable":
         try:
-            payload = json.loads(raw)
-            if not isinstance(payload, dict):
-                raise ValueError("hook input must be a JSON object")
+            raw = _read_input()
+            payload = _parse_payload(raw, registered_event)
         except (json.JSONDecodeError, ValueError) as exc:
-            output = _warning(f"Limen host admission hook failed closed: {exc}")
+            output = _boundary_failure(registered_event, exc)
         else:
             try:
-                output = delegate_immutable(Path(sys.argv[2]), raw)
+                output = delegate_immutable(Path(args[1]), raw)
             except ImmutableRuntimeError as exc:
                 output = _runtime_unavailable(payload, exc)
         if output is not None:
             print(json.dumps(output, separators=(",", ":")))
         return 0
-    event = ""
+    event = registered_event
     try:
-        payload = json.load(sys.stdin)
-        if not isinstance(payload, dict):
-            raise ValueError("hook input must be a JSON object")
+        payload = _parse_payload(_read_input(), registered_event)
         event = str(payload.get("hook_event_name") or "")
         output = handle(payload)
     except (AdmissionStateError, ValueError) as exc:
-        text = (
-            _state_error_text(exc)
-            if isinstance(exc, AdmissionStateError)
-            else (f"Limen host admission hook failed closed: {exc}")
-        )
-        if event == "PreToolUse":
+        if isinstance(exc, AdmissionStateError):
+            text = _state_error_text(exc)
+        elif isinstance(exc, OwnerIdentityError):
+            text = f"Limen host admission failed closed: {exc}"
+        else:
+            text = f"Limen host admission hook evaluation unavailable: {type(exc).__name__}"
+        if event == "PreToolUse" or not event:
             output = _tool_deny(text)
         else:
             output = _warning(text)
     if output is not None:
         print(json.dumps(output, separators=(",", ":")))
     return 0
+
+
+def _boundary_failure(event: str, exc: BaseException) -> dict[str, Any]:
+    # Error class is enough to diagnose the boundary without copying input or
+    # private paths from exception messages into audit logs.
+    text = f"Limen host admission evaluation unavailable: {type(exc).__name__}"
+    return _warning(text) if event in _EVENTS - {"PreToolUse"} else _tool_deny(text)
+
+
+def main() -> int:
+    args = list(sys.argv[1:])
+    event = ""
+    started = time.monotonic()
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    previous_timer = signal.getitimer(signal.ITIMER_REAL)
+    try:
+        if "--event" in args:
+            index = args.index("--event")
+            event = args[index + 1]
+            del args[index : index + 2]
+            if event not in _EVENTS or "--event" in args:
+                event = ""
+                raise ValueError("hook-registration-event-invalid")
+        signal.signal(signal.SIGALRM, _deadline_expired)
+        budget = min(_HOOK_BUDGET_SECONDS, previous_timer[0] or _HOOK_BUDGET_SECONDS)
+        signal.setitimer(signal.ITIMER_REAL, budget)
+        return _main(args, event)
+    except (Exception, HookDeadlineExceeded) as exc:
+        print(json.dumps(_boundary_failure(event, exc), separators=(",", ":")))
+        return 0
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous_handler)
+        if previous_timer[0]:
+            remaining = max(0.000001, previous_timer[0] - (time.monotonic() - started))
+            signal.setitimer(signal.ITIMER_REAL, remaining, previous_timer[1])
 
 
 if __name__ == "__main__":

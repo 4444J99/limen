@@ -399,7 +399,54 @@ def _compound_is_read_only(tokens: list[str]) -> bool:
     return True
 
 
-def classify_bash(command: str) -> Action:
+def _canonical_closeout_read_only(tokens: list[str], cwd: Path | None) -> bool:
+    """Trust the policy owner's checker, never a filename or arbitrary source tree."""
+
+    if len(tokens) < 2:
+        return False
+    scripts = {
+        "bash": "no-tasks-on-me.sh",
+        "/bin/bash": "no-tasks-on-me.sh",
+        "python3": "session-closeout.py",
+    }
+    name = scripts.get(tokens[0])
+    if name is None:
+        return False
+    root = Path(__file__).resolve().parents[3]
+    script = Path(tokens[1]).expanduser()
+    if not script.is_absolute():
+        if cwd is None:
+            return False
+        script = cwd / script
+    try:
+        if script.is_symlink() or script.resolve(strict=True) != (root / "scripts" / name).resolve(strict=True):
+            return False
+        if (root / "cli/src/limen/action_admission.py").resolve(strict=True) != Path(__file__).resolve():
+            return False
+    except (OSError, RuntimeError):
+        return False
+    seen: set[str] = set()
+    values = {"--session-id", "--worktree", "--receipt", "--native-transcript", "--scope-root"}
+    flags = {"--json", "--check"}
+    index = 2
+    while index < len(tokens):
+        option = tokens[index]
+        if option in seen and option != "--scope-root":
+            return False
+        seen.add(option)
+        if option in flags:
+            index += 1
+        elif option in values and index + 1 < len(tokens) and not tokens[index + 1].startswith("-"):
+            if not tokens[index + 1]:
+                return False
+            index += 2
+        else:
+            return False
+    # No-argument wrapper mode is an estate diagnostic with different effects.
+    return {"--session-id", "--worktree", "--receipt"}.issubset(seen)
+
+
+def classify_bash(command: str, *, cwd: Path | None = None) -> Action:
     """Classify Bash through a narrow parser and fail closed on opaque mutation."""
 
     if not command.strip():
@@ -428,6 +475,8 @@ def classify_bash(command: str) -> Action:
         return Action("deny", "empty-command")
     if saw_output:
         return Action("workspace_write", "shell-output-redirection")
+    if _canonical_closeout_read_only(command_tokens, cwd):
+        return Action("observe")
     if _sanctioned_control(command_tokens):
         return Action("sanctioned_control")
     if _guarded_heavy(command_tokens):
@@ -444,7 +493,11 @@ def classify_action(payload: dict[str, Any]) -> Action:
 
     name = _tool_name(payload).lower()
     if name == "bash":
-        return classify_bash(_tool_command(payload))
+        try:
+            cwd = resolve_effective_cwd(payload)
+        except (AdmissionInputError, ValueError):
+            cwd = None
+        return classify_bash(_tool_command(payload), cwd=cwd)
     if name in {
         "apply_patch",
         "applypatch",
