@@ -74,7 +74,9 @@ def _describe(memory: dict[str, object]) -> str:
     # applied/rejected are dropped, is indistinguishable from an empty inbox and
     # rendered as "pass OK (0 pending, 0 applied, 0 rejected)".
     if memory.get("memory_deferred"):
-        return f"pass DEFERRED ({memory['memory_deferred']})"
+        streak = memory.get("memory_defer_note")
+        detail = f" — {streak}" if streak else ""
+        return f"pass DEFERRED ({memory['memory_deferred']}{detail})"
     pending = memory.get("memory_pending")
     applied = memory.get("memory_applied")
     rejected = memory.get("memory_rejected")
@@ -150,6 +152,22 @@ def _memory_pass(*, check: bool, dry_run: bool) -> dict[str, object]:
             # threshold, and the stamp alone cannot express "how long".
             fields["memory_deferred_since"] = since or datetime.now(timezone.utc).strftime(
                 "%Y-%m-%dT%H:%M:%SZ"
+            )
+            # `_describe` is the only channel a reader of this outcome has when the memory
+            # lane is enabled but the board inbox is empty — that branch prints no memory
+            # line, so a streak that never advances visibly would look like a single
+            # tolerated event indefinitely. Show the count and its age; the health reader
+            # applies the threshold, this just makes repetition legible at the call site.
+            hours = ""
+            try:
+                started = datetime.strptime(
+                    str(fields["memory_deferred_since"]), "%Y-%m-%dT%H:%M:%SZ"
+                ).replace(tzinfo=timezone.utc)
+                hours = f", {round(max(0.0, (datetime.now(timezone.utc) - started).total_seconds()) / 3600, 1)}h"
+            except ValueError:
+                pass
+            fields["memory_defer_note"] = (
+                f"{fields['memory_defer_streak']} consecutive run(s){hours}"
             )
         elif not dry_run:
             # A drain that ran and did not defer IS a successful drain, and it ends the
