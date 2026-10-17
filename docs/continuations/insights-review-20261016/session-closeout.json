@@ -84,6 +84,16 @@
       "command": "deployed snapshot byteidentity and read-only report validation",
       "head": "0673fa659801834da464baa6bd68ac378646d565",
       "exit_code": 0
+    },
+    {
+      "root_id": "limen",
+      "command": "installed native multi-root session release through configured DomusAgentHost",
+      "head": "3ede3ae19cd81e99b7017cfda5ff3503b0bdc066",
+      "exit_code": 2,
+      "purpose": "release",
+      "owner_url": "https://github.com/4444J99/limen/pull/2888",
+      "evidence": "docs/continuations/insights-review-20261016/closeout-attempt.json",
+      "sha256": "e0876d351344c8537e39f1cc963d2d86d79ba29f46f1350bc9c1d6da903a4c63"
     }
   ],
   "custody": {
