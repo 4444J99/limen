@@ -39,6 +39,18 @@ unavailable with the deliberately narrowed verification PATH (which omitted
 the isolated test environment. It also covers a reproduced missing-interpreter
 case: the shell runner now emits a native denial rather than exiting 127 silently.
 
+The corrective batch on `c0c23c7d` exited 1: 30 cheap gates passed, including
+62 admission tests in 22.68 seconds and whole-estate Python lint/format. The sole
+failure was `verify-parallel-test` / `timeout-process-group`: the timeout fixture
+never recorded its descendant. That exact failure and venv-launch sensitivity
+already have an open owner, [Limen #2886](https://github.com/4444J99/limen/issues/2886).
+The full CLI/API suites did not execute because the cheap wave failed. Neither
+batch is reported as a green scoped result. No unchanged retry or merge is
+authorized by these partial results; preserve the draft for that verification
+owner and native hook acceptance. Documentation-only publication of this result
+does not change the tested source paths; passing shard evidence remains scoped
+to the recorded source commit.
+
 ## Integration and acceptance
 
 This is an independent Limen packet. The concurrent Domus branch
