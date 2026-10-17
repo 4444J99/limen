@@ -589,3 +589,64 @@ def test_pristine_recheck_detects_raced_write(tmp_path):
     (clone / "src").mkdir()
     (clone / "src" / "creds-2026-07-01.json").write_text('{"api_key": "sk-irreplaceable"}\n')
     assert reap._pristine_now(clone) is False
+
+
+@pytest.fixture
+def hostile_global_ignore(tmp_path, monkeypatch):
+    """Reintroduce #2776 even when the outer test runner disables global Git config."""
+    ignore = tmp_path / "global-ignore"
+    ignore.write_text("build/\n")
+    config = tmp_path / "global-gitconfig"
+    subprocess.run(
+        ["git", "config", "--file", str(config), "core.excludesFile", str(ignore)],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(config))
+
+
+@pytest.mark.parametrize("pressure", [False, True], ids=["idle", "pressure"])
+def test_global_ignore_cannot_hide_unsaved_work(tmp_path, hostile_global_ignore, pressure):
+    clone = _init_origin_and_clone(tmp_path, "globalignored")
+    (clone / "build").mkdir()
+    notes = clone / "build" / "notes.txt"
+    notes.write_text("irreplaceable unsaved work\n")
+    assert _out(clone, "status", "--porcelain") == ""
+    assert _out(clone, "status", "--porcelain", "--ignored") == "!! build/"
+    assert _out(clone, "-c", "core.excludesFile=/dev/null", "status", "--porcelain") == "?? build/"
+
+    v = _verdict(clone, age_days=99, pressure=pressure)
+
+    assert v.reap is False
+    assert v.reason == "dirty-or-untracked"
+    assert notes.read_text() == "irreplaceable unsaved work\n"
+
+
+def test_pristine_recheck_detects_globally_ignored_raced_write(tmp_path, hostile_global_ignore):
+    clone = _init_origin_and_clone(tmp_path, "globalraced")
+    assert _verdict(clone, age_days=99, pressure=True).reap is True
+    assert reap._pristine_now(clone) is True
+    (clone / "build").mkdir()
+    (clone / "build" / "notes.txt").write_text("work arriving after classification\n")
+    assert _out(clone, "status", "--porcelain") == ""
+    assert _out(clone, "status", "--porcelain", "--ignored") == "!! build/"
+
+    assert reap._pristine_now(clone) is False
+
+
+def test_repo_ignored_build_still_reaps_with_global_ignore(tmp_path, hostile_global_ignore):
+    clone = _init_origin_and_clone(tmp_path, "localignored")
+    (clone / ".gitignore").write_text("build/\n")
+    _git(clone, "add", ".gitignore")
+    _git(clone, "commit", "-qm", "ignore generated build output")
+    _git(clone, "push", "-q", "origin", "main")
+    (clone / "build").mkdir()
+    (clone / "build" / "output.bin").write_text("regenerable build output\n")
+
+    v = _verdict(clone, age_days=99, pressure=True)
+
+    assert v.reap is True
+    assert v.reason == "pushed-mirror-under-pressure"
+    assert reap._ignored_is_all_regenerable(clone) is True
+    assert reap._pristine_now(clone) is True
