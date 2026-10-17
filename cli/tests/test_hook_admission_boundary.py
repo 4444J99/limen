@@ -177,6 +177,23 @@ def test_registered_runner_denies_if_policy_entrypoint_is_missing(tmp_path: Path
     assert_denied(result)
 
 
+def test_registered_runner_denies_if_interpreter_is_missing(tmp_path: Path) -> None:
+    tool_bin = tmp_path / "bin"
+    tool_bin.mkdir()
+    (tool_bin / "dirname").symlink_to("/usr/bin/dirname")
+    (tool_bin / "git").symlink_to("/usr/bin/git")
+    result = subprocess.run(
+        ["/bin/bash", str(ROOT / "scripts/hooks/codex-hook-runner.sh"), "host-admission", "--event", "PreToolUse"],
+        input="{",
+        capture_output=True,
+        text=True,
+        cwd=ROOT,
+        env={"PATH": str(tool_bin), "HOME": str(tmp_path), "CODEX_PROJECT_DIR": str(ROOT)},
+        timeout=3,
+    )
+    assert_denied(result)
+
+
 def test_delegate_descendants_are_terminated(tmp_path: Path) -> None:
     target = tmp_path / "delegate.py"
     witness = tmp_path / "child.pid"

@@ -32,6 +32,13 @@ The new scoped gate keeps those fixtures selected for future entrypoint changes.
 `check-gates.py` and `check-test-hygiene.py` passed; the complete scoped batch is the
 publication gate and its result must be recorded separately.
 
+The first complete scoped batch passed all 31 cheap gates, including the 61-test
+admission shard, then exited 75 before either heavy suite: pressure sensors were
+unavailable with the deliberately narrowed verification PATH (which omitted
+`/usr/sbin`). The corrective batch restores the original host PATH while selecting
+the isolated test environment. It also covers a reproduced missing-interpreter
+case: the shell runner now emits a native denial rather than exiting 127 silently.
+
 ## Integration and acceptance
 
 This is an independent Limen packet. The concurrent Domus branch

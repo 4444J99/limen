@@ -82,6 +82,7 @@ export CLAUDE_PROJECT_DIR="$root"
 export CODEX_PROJECT_DIR="${CODEX_PROJECT_DIR:-$root}"
 
 if [[ "$target" == *.py ]]; then
+  command -v python3 >/dev/null 2>&1 || unavailable "missing Python interpreter" "$@"
   if [[ "$hook_name" == "host-admission" ]]; then
     exec python3 "$target" --delegate-immutable "$immutable_target" "$@"
   fi
