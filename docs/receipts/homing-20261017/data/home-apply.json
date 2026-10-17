@@ -1,0 +1,334 @@
+{
+  "date": "20261017",
+  "apply": true,
+  "results": [
+    {
+      "name": "limen-av-directory-receipt-head",
+      "repo": "/Users/4jp/Workspace/limen/.worktrees/av-directory-receipt-20261010",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "3389e454123e9c206770a2b73c7d233578b8c489",
+      "push": {
+        "pushed": false,
+        "target": null,
+        "first_error": "/github.com/4444J99/limen.git'\nhint: Updates were rejected because the tip of your current branch is behind\nhint: its remote counterpart. If you want to integrate the remote changes,\nhint: use 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.",
+        "stderr": "pre-push: refusing 3389e454123e9c206770a2b73c7d233578b8c489 -> https://github.com/4444J99/limen.git: it carries pre-rewrite Limen history (see limen docs/plans/2026-10-16-prerewrite-containment.md)\nerror: failed to push some refs to 'https://github.com/4444J99/limen.git'"
+      },
+      "status": "push-failed"
+    },
+    {
+      "name": "limen-reap-scope-head",
+      "repo": "/Users/4jp/Workspace/limen/.worktrees/reap-scope-20261004",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "5ff3790240c00166c830362fb8a957db1fadc070",
+      "push": {
+        "pushed": false,
+        "target": null,
+        "first_error": "/github.com/4444J99/limen.git'\nhint: Updates were rejected because the tip of your current branch is behind\nhint: its remote counterpart. If you want to integrate the remote changes,\nhint: use 'git pull' before pushing again.\nhint: See the 'Note about fast-forwards' in 'git push --help' for details.",
+        "stderr": "pre-push: refusing 5ff3790240c00166c830362fb8a957db1fadc070 -> https://github.com/4444J99/limen.git: it carries pre-rewrite Limen history (see limen docs/plans/2026-10-16-prerewrite-containment.md)\nerror: failed to push some refs to 'https://github.com/4444J99/limen.git'"
+      },
+      "status": "push-failed"
+    },
+    {
+      "name": "limen-reap-scope-dirty",
+      "repo": "/Users/4jp/Workspace/limen/.worktrees/reap-scope-20261004",
+      "kind": "snapshot",
+      "remote": "origin",
+      "note": "snapshot commit over 5ff3790240c0",
+      "object": "f43793b61ccf474a8ad0b43578fcafc82b120206",
+      "push": {
+        "pushed": false,
+        "target": null,
+        "first_error": "pre-push: refusing f43793b61ccf474a8ad0b43578fcafc82b120206 -> https://github.com/4444J99/limen.git: it carries pre-rewrite Limen history (see limen docs/plans/2026-10-16-prerewrite-containment.md)\nerror: failed to push some refs to 'https://github.com/4444J99/limen.git'",
+        "stderr": "pre-push: refusing f43793b61ccf474a8ad0b43578fcafc82b120206 -> https://github.com/4444J99/limen.git: it carries pre-rewrite Limen history (see limen docs/plans/2026-10-16-prerewrite-containment.md)\nerror: failed to push some refs to 'https://github.com/4444J99/limen.git'"
+      },
+      "status": "push-failed"
+    },
+    {
+      "name": "limen-live-untracked",
+      "repo": "/Users/4jp/Workspace/limen",
+      "kind": "snapshot",
+      "remote": "origin",
+      "note": "snapshot commit over 8615f1f144b3",
+      "object": "1c7b690fe06b1f0b80a2ff53ea11a741d861e8dc",
+      "push": {
+        "pushed": true,
+        "target": "preserve/live-checkout-untracked-20261017",
+        "stderr": "017' on GitHub by visiting:        \nremote:      https://github.com/4444J99/limen/pull/new/preserve/live-checkout-untracked-20261017        \nremote: \nTo https://github.com/4444J99/limen.git\n * [new branch]          1c7b690fe06b1f0b80a2ff53ea11a741d861e8dc -> preserve/live-checkout-untracked-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "limen-live-stash0",
+      "repo": "/Users/4jp/Workspace/limen",
+      "kind": "stash",
+      "remote": "origin",
+      "object": "561c7a6782e7ed2b2a2bbacf3a5df74d19ba20f5",
+      "push": {
+        "pushed": false,
+        "target": null,
+        "first_error": "pre-push: refusing 561c7a6782e7ed2b2a2bbacf3a5df74d19ba20f5 -> https://github.com/4444J99/limen.git: it carries pre-rewrite Limen history (see limen docs/plans/2026-10-16-prerewrite-containment.md)\nerror: failed to push some refs to 'https://github.com/4444J99/limen.git'",
+        "stderr": "pre-push: refusing 561c7a6782e7ed2b2a2bbacf3a5df74d19ba20f5 -> https://github.com/4444J99/limen.git: it carries pre-rewrite Limen history (see limen docs/plans/2026-10-16-prerewrite-containment.md)\nerror: failed to push some refs to 'https://github.com/4444J99/limen.git'"
+      },
+      "status": "push-failed"
+    },
+    {
+      "name": "limen-peer-audited-wip",
+      "repo": "/Users/4jp/Workspace/limen/peer-audited--behavioral-blockchain",
+      "kind": "snapshot",
+      "remote": "origin",
+      "note": "snapshot commit over 9c69118253ec",
+      "object": "c6cf4d61ba019c71c36d7db56a5de1b56254258f",
+      "push": {
+        "pushed": true,
+        "target": "preserve/limen-nested-checkout-wip-20261017",
+        "stderr": "b.com/4444J99/peer-audited--behavioral-blockchain/pull/new/preserve/limen-nested-checkout-wip-20261017        \nremote: \nTo https://github.com/organvm/peer-audited--behavioral-blockchain.git\n * [new branch]        c6cf4d61ba019c71c36d7db56a5de1b56254258f -> preserve/limen-nested-checkout-wip-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "domus-stash0",
+      "repo": "/Users/4jp/Workspace/domus-genoma",
+      "kind": "stash",
+      "remote": "origin",
+      "object": "16aae3d0b0ecc36f66ece55f2c874bf6a668deec",
+      "push": {
+        "pushed": true,
+        "target": "preserve/stash-main-wip-local-snapshot-20261012",
+        "stderr": "te:      https://github.com/4444J99/domus-genoma-private/pull/new/preserve/stash-main-wip-local-snapshot-20261012        \nremote: \nTo https://github.com/4444J99/domus-genoma-private.git\n * [new branch]        16aae3d0b0ecc36f66ece55f2c874bf6a668deec -> preserve/stash-main-wip-local-snapshot-20261012"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "domus-stash1",
+      "repo": "/Users/4jp/Workspace/domus-genoma",
+      "kind": "stash",
+      "remote": "origin",
+      "object": "b3e0d8292f22dc215e06336f46db3fd0f018d3cf",
+      "push": {
+        "pushed": true,
+        "target": "preserve/stash-master-local-snapshot-unstaged-20261016",
+        "stderr": "://github.com/4444J99/domus-genoma-private/pull/new/preserve/stash-master-local-snapshot-unstaged-20261016        \nremote: \nTo https://github.com/4444J99/domus-genoma-private.git\n * [new branch]        b3e0d8292f22dc215e06336f46db3fd0f018d3cf -> preserve/stash-master-local-snapshot-unstaged-20261016"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "domus-stash2",
+      "repo": "/Users/4jp/Workspace/domus-genoma",
+      "kind": "stash",
+      "remote": "origin",
+      "object": "bf6230941c76a7756798df801e0cfc405d1e202a",
+      "push": {
+        "pushed": false,
+        "target": null,
+        "first_error": "   \nTo https://github.com/4444J99/domus-genoma-private.git\n ! [remote rejected]   bf6230941c76a7756798df801e0cfc405d1e202a -> preserve/stash-security-hardening-autonomic-sync-20260702 (pre-receive hook declined)\nerror: failed to push some refs to 'https://github.com/4444J99/domus-genoma-private.git'",
+        "stderr": "://git-lfs.github.com.        \nTo https://github.com/4444J99/domus-genoma-private.git\n ! [remote rejected]   bf6230941c76a7756798df801e0cfc405d1e202a -> preserve/domus-stash2-20261017 (pre-receive hook declined)\nerror: failed to push some refs to 'https://github.com/4444J99/domus-genoma-private.git'"
+      },
+      "status": "push-failed"
+    },
+    {
+      "name": "domus-live-dirty",
+      "repo": "/Users/4jp/Workspace/domus-genoma",
+      "kind": "snapshot",
+      "remote": "origin",
+      "note": "snapshot commit over f5d3c96469f8",
+      "object": "a1de89915d4976dd83ec6f7c91f45cccb0e1e90a",
+      "push": {
+        "pushed": true,
+        "target": "preserve/live-master-dirty-20261017",
+        "stderr": "y visiting:        \nremote:      https://github.com/4444J99/domus-genoma-private/pull/new/preserve/live-master-dirty-20261017        \nremote: \nTo https://github.com/4444J99/domus-genoma-private.git\n * [new branch]        a1de89915d4976dd83ec6f7c91f45cccb0e1e90a -> preserve/live-master-dirty-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "domus-host-repair-untracked",
+      "repo": "/Users/4jp/Workspace/domus-genoma/.worktrees/host-repair-20260925",
+      "kind": "snapshot",
+      "remote": "origin",
+      "note": "snapshot commit over 8177c0b1c1b1",
+      "object": "d34327fd9ed0a2b636ced1ff37337a9cda0be47f",
+      "push": {
+        "pushed": true,
+        "target": "preserve/host-repair-20260925-untracked-20261017",
+        "stderr": ":      https://github.com/4444J99/domus-genoma-private/pull/new/preserve/host-repair-20260925-untracked-20261017        \nremote: \nTo https://github.com/4444J99/domus-genoma-private.git\n * [new branch]        d34327fd9ed0a2b636ced1ff37337a9cda0be47f -> preserve/host-repair-20260925-untracked-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "portfolio-remediate-198-head",
+      "repo": "/Users/4jp/Workspace/organvm-vii-kerygma/portfolio/.worktrees/remediate-198",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "504c6762dfd4b1d4979889ab78d2f4250d4383be",
+      "push": {
+        "pushed": true,
+        "target": "remediate-198",
+        "stderr": ": \nremote: Create a pull request for 'remediate-198' on GitHub by visiting:        \nremote:      https://github.com/4444J99/portfolio/pull/new/remediate-198        \nremote: \nTo github.com:organvm-vii-kerygma/portfolio.git\n * [new branch]      504c6762dfd4b1d4979889ab78d2f4250d4383be -> remediate-198"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "portfolio-remediate-198-dirty",
+      "repo": "/Users/4jp/Workspace/organvm-vii-kerygma/portfolio/.worktrees/remediate-198",
+      "kind": "snapshot",
+      "remote": "origin",
+      "note": "snapshot commit over 504c6762dfd4",
+      "object": "9082815ba3290e3b116864ea549671740ee93717",
+      "push": {
+        "pushed": true,
+        "target": "preserve/remediate-198-wip-20261017",
+        "stderr": "0261017' on GitHub by visiting:        \nremote:      https://github.com/4444J99/portfolio/pull/new/preserve/remediate-198-wip-20261017        \nremote: \nTo github.com:organvm-vii-kerygma/portfolio.git\n * [new branch]      9082815ba3290e3b116864ea549671740ee93717 -> preserve/remediate-198-wip-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "portfolio-chamber-pr-229",
+      "repo": "/Users/4jp/Workspace/chamber_worktrees/outer_ring/portfolio/pr-229",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "898217e3a614a56926d81a496682080858c47df0",
+      "push": {
+        "pushed": true,
+        "target": "preserve/chamber-pr-229-orphaned-history-20261017",
+        "stderr": "ng:        \nremote:      https://github.com/4444J99/portfolio/pull/new/preserve/chamber-pr-229-orphaned-history-20261017        \nremote: \nTo github.com:organvm-vii-kerygma/portfolio.git\n * [new branch]      898217e3a614a56926d81a496682080858c47df0 -> preserve/chamber-pr-229-orphaned-history-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "portfolio-chamber-pr-169-conflicted",
+      "repo": "/Users/4jp/Workspace/chamber_worktrees/outer_ring/portfolio/pr-169",
+      "kind": "snapshot",
+      "remote": "origin",
+      "note": "snapshot commit over 45f70547d4a2",
+      "object": "7ae02babdaf5b35addfd0bc77c9bdb276bcc6df2",
+      "push": {
+        "pushed": true,
+        "target": "preserve/chamber-pr-169-conflicted-20261017",
+        "stderr": "ub by visiting:        \nremote:      https://github.com/4444J99/portfolio/pull/new/preserve/chamber-pr-169-conflicted-20261017        \nremote: \nTo github.com:organvm-vii-kerygma/portfolio.git\n * [new branch]      7ae02babdaf5b35addfd0bc77c9bdb276bcc6df2 -> preserve/chamber-pr-169-conflicted-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "engine-chamber-pr-104-staged",
+      "repo": "/Users/4jp/Workspace/chamber_worktrees/chamber_1/organvm-engine/pr-104",
+      "kind": "snapshot",
+      "remote": "origin",
+      "note": "snapshot commit over 1371aa02ac01",
+      "object": "98d56eeab9ace4f97faff7a878d14df8a17c8983",
+      "push": {
+        "pushed": true,
+        "target": "preserve/chamber-pr-104-staged-20261017",
+        "stderr": "tHub by visiting:        \nremote:      https://github.com/4444J99/organvm-engine/pull/new/preserve/chamber-pr-104-staged-20261017        \nremote: \nTo https://github.com/organvm/organvm-engine.git\n * [new branch]      98d56eeab9ace4f97faff7a878d14df8a17c8983 -> preserve/chamber-pr-104-staged-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "speech-chamber-pr-1-staged",
+      "repo": "/Users/4jp/Workspace/chamber_worktrees/chamber_2/speech-score-engine/pr-1",
+      "kind": "snapshot",
+      "remote": "origin",
+      "note": "snapshot commit over d8569814c27c",
+      "object": "4173a3cf4b7756fdc6fdac62315d8a642095aa40",
+      "push": {
+        "pushed": true,
+        "target": "preserve/chamber-pr-1-staged-20261017",
+        "stderr": "visiting:        \nremote:      https://github.com/4444J99/speech-score-engine/pull/new/preserve/chamber-pr-1-staged-20261017        \nremote: \nTo github.com:organvm-iii-ergon/speech-score-engine.git\n * [new branch]      4173a3cf4b7756fdc6fdac62315d8a642095aa40 -> preserve/chamber-pr-1-staged-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "thing-main-ahead",
+      "repo": "/Users/4jp/Workspace/audiovisual-composition-system/the-thing-without-a-name",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "f6f27c10a4bf617d895b0f0387eb3013aa39913b",
+      "push": {
+        "pushed": true,
+        "target": "heal/main-ahead-ambisonic-demo-20261017",
+        "stderr": ":      https://github.com/4444J99/the-thing-without-a-name-screendance/pull/new/heal/main-ahead-ambisonic-demo-20261017        \nremote: \nTo https://github.com/organvm/the-thing-without-a-name.git\n * [new branch]      f6f27c10a4bf617d895b0f0387eb3013aa39913b -> heal/main-ahead-ambisonic-demo-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "thing-topic-engine-extraction",
+      "repo": "/Users/4jp/Workspace/audiovisual-composition-system/the-thing-without-a-name",
+      "kind": "ref",
+      "remote": "origin",
+      "object": "933bf0035f15f732d6e4d3635c9f848d95fa6679",
+      "push": {
+        "pushed": true,
+        "target": "topic/engine-extraction-integration",
+        "stderr": " \nremote:      https://github.com/4444J99/the-thing-without-a-name-screendance/pull/new/topic/engine-extraction-integration        \nremote: \nTo https://github.com/organvm/the-thing-without-a-name.git\n * [new branch]      933bf0035f15f732d6e4d3635c9f848d95fa6679 -> topic/engine-extraction-integration"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "corpvs-stash0",
+      "repo": "/Users/4jp/Workspace/organvm-corpvs-testamentvm",
+      "kind": "stash",
+      "remote": "origin",
+      "object": "d24539f410d7f9ff1b8fcbdade7178ffb70c9979",
+      "push": {
+        "pushed": true,
+        "target": "preserve/stash-recovered-autostash-d24539f4-20261017",
+        "stderr": "hub.com/4444J99/organvm-corpvs-testamentvm/pull/new/preserve/stash-recovered-autostash-d24539f4-20261017        \nremote: \nTo https://github.com/organvm/organvm-corpvs-testamentvm.git\n * [new branch]      d24539f410d7f9ff1b8fcbdade7178ffb70c9979 -> preserve/stash-recovered-autostash-d24539f4-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "scrapper-stash0",
+      "repo": "/Users/4jp/Workspace/public-record-data-scrapper",
+      "kind": "stash",
+      "remote": "origin",
+      "object": "a2e802229b0d5273d8500886169883e092ba0df9",
+      "push": {
+        "pushed": true,
+        "target": "preserve/stash-local-ca-scraper-experiment-20261017",
+        "stderr": "b.com/4444J99/public-record-data-scrapper/pull/new/preserve/stash-local-ca-scraper-experiment-20261017        \nremote: \nTo github.com:organvm-iii-ergon/public-record-data-scrapper.git\n * [new branch]      a2e802229b0d5273d8500886169883e092ba0df9 -> preserve/stash-local-ca-scraper-experiment-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "postdsp-stash0",
+      "repo": "/Users/4jp/Workspace/post-dsp-platform",
+      "kind": "stash",
+      "remote": "origin",
+      "object": "92f718ae0b112eb394c10b3888acc87330e29432",
+      "push": {
+        "pushed": true,
+        "target": "preserve/stash-autostash-20261017",
+        "stderr": "0261017' on GitHub by visiting:        \nremote:      https://github.com/4444J99/post-dsp-platform/pull/new/preserve/stash-autostash-20261017        \nremote: \nTo github.com:4444J99/post-dsp-platform.git\n * [new branch]      92f718ae0b112eb394c10b3888acc87330e29432 -> preserve/stash-autostash-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "doctoral-applications-dirty",
+      "repo": "/Users/4jp/Workspace/doctoral-execution-20260908/applications",
+      "kind": "snapshot",
+      "remote": "origin",
+      "note": "snapshot commit over d08b9aeec352",
+      "object": "ebd9aac10c66ca959e2a64df5fcf0495e6a8cad8",
+      "push": {
+        "pushed": true,
+        "target": "preserve/live-dirty-20261017",
+        "stderr": "7' on GitHub by visiting:        \nremote:      https://github.com/4444J99/application-pipeline/pull/new/preserve/live-dirty-20261017        \nremote: \nTo https://github.com/organvm/application-pipeline.git\n * [new branch]        ebd9aac10c66ca959e2a64df5fcf0495e6a8cad8 -> preserve/live-dirty-20261017"
+      },
+      "status": "pushed"
+    },
+    {
+      "name": "doctoral-omni-dirty",
+      "repo": "/Users/4jp/Workspace/doctoral-execution-20260908/omni",
+      "kind": "snapshot",
+      "remote": "origin",
+      "note": "snapshot commit over 18a8e31441b3",
+      "object": "27ec88b9cfc318e3f4202098e7bbf5903070d5a5",
+      "push": {
+        "pushed": true,
+        "target": "preserve/live-dirty-20261017",
+        "stderr": "-20261017' on GitHub by visiting:        \nremote:      https://github.com/4444J99/metasystem-master/pull/new/preserve/live-dirty-20261017        \nremote: \nTo https://github.com/organvm/metasystem-master.git\n * [new branch]      27ec88b9cfc318e3f4202098e7bbf5903070d5a5 -> preserve/live-dirty-20261017"
+      },
+      "status": "pushed"
+    }
+  ]
+}
