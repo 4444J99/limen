@@ -41,8 +41,36 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+CODE_ROOT = Path(__file__).resolve().parents[1]
+# The same live-checkout default check-live-checkout.py measures (IF-LIVE-TREE-COHERENCE).
+LIVE_ROOT_DEFAULT = Path.home() / "Workspace" / "limen"
 MIB = 1024 * 1024
+
+
+def _is_git_checkout(path: Path) -> bool:
+    return (path / ".git").exists()
+
+
+def measured_root() -> Path:
+    """The tree whose residue is measured — never silently the tree the code happens to run from.
+
+    The heartbeat runs this census from an immutable, worktree-free runtime
+    (~/.local/share/limen/runtimes/<sha>/source): no .git, no .agent-runtime, no ledger. Measuring
+    THAT tree made every git-derived class unmeasured and the census print "every cap holds —
+    nothing is sprawling" every six hours while the live checkout held 29 worktrees, 100 local
+    branches and 21 GiB of agent runtime (measured 2026-10-17). Order: an explicit LIMEN_ROOT wins;
+    a git checkout measures itself (development, CI and worktree runs are unchanged); anything else
+    measures the live checkout.
+    """
+    explicit = os.environ.get("LIMEN_ROOT")
+    if explicit:
+        return Path(explicit).expanduser()
+    if _is_git_checkout(CODE_ROOT):
+        return CODE_ROOT
+    return LIVE_ROOT_DEFAULT
+
+
+ROOT = measured_root()
 
 
 def _env_int(name: str, default: int) -> int:
@@ -65,7 +93,15 @@ def _du_kb(path: Path) -> int | None:
     if not path.exists():
         return None
     try:
-        r = subprocess.run(["du", "-sk", str(path)], capture_output=True, text=True, timeout=120)
+        # Three du walks must fit inside the heartbeat contract's 90s probe timeout, which counts as
+        # a system failure toward the Rule 55a kill switch. A walk that runs out of time is
+        # unmeasured (never a breach), so a cold cache degrades the reading, not the heartbeat.
+        r = subprocess.run(
+            ["du", "-sk", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=_env_int("LIMEN_RESIDUE_DU_TIMEOUT", 25),
+        )
         if r.returncode != 0:
             return None
         return int(r.stdout.split()[0])
@@ -183,7 +219,11 @@ def census() -> dict:
             state = "BREACH"
             breaches += 1
         rows.append({**c, "state": state})
-    return {"rows": rows, "breaches": breaches, "unmeasured": unmeasured}
+    # One absent path is unknown, never a breach. A measured root that is not a git checkout is
+    # different: the census can see none of the git-derived classes, so "nothing is sprawling"
+    # would be a claim about a tree it never looked at.
+    blind = not _is_git_checkout(ROOT)
+    return {"rows": rows, "breaches": breaches, "unmeasured": unmeasured, "blind": blind, "root": str(ROOT)}
 
 
 def main() -> int:
@@ -193,9 +233,17 @@ def main() -> int:
     args = ap.parse_args()
 
     result = census()
+    failing = bool(result["breaches"] or result["blind"])
     if args.json:
         print(json.dumps(result, indent=2, sort_keys=True))
-        return 1 if (args.check and result["breaches"]) else 0
+        return 1 if (args.check and failing) else 0
+
+    if result["blind"]:
+        print(
+            f"residue-census: BLIND — measured root {result['root']} is not a git checkout; "
+            "worktrees and branches cannot be counted. Set LIMEN_ROOT to the live checkout."
+        )
+        return 1 if args.check else 0
 
     print(f"residue-census: breaches={result['breaches']}")
     for r in result["rows"]:
