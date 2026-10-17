@@ -1,0 +1,68 @@
+{
+  "schema": "limen.insights_verification.v1",
+  "limen_head": "2098f6051257bde609c818c3fd24db06b3646c86",
+  "domus_head": "0673fa659801834da464baa6bd68ac378646d565",
+  "limen_focused": {
+    "command": "scripts/run-pytest-hermetic.sh cli/tests/test_vendor_insights.py cli/tests/test_insight_cross_vendor_health.py -q",
+    "passed": 54,
+    "exit_code": 0
+  },
+  "domus_focused": {
+    "command": "pytest tests/test_insights_snapshot.py -q",
+    "passed": 15,
+    "exit_code": 0
+  },
+  "limen_scoped": {
+    "command": "scripts/verify-scoped.sh --base fba569680 --total-timeout-seconds 450 --gate-timeout-seconds 180 --gate-output-bytes 65536 --jobs 2",
+    "exit_code": 75,
+    "passed_gates": [
+      "syntax-changed",
+      "diff-hygiene",
+      "direct-main-writer-contract",
+      "check-params",
+      "check-test-hygiene",
+      "check-docs-exports",
+      "check-note-links",
+      "check-board-consumers",
+      "check-effectors",
+      "ruff-lint",
+      "ruff-format",
+      "vendor-insights-test"
+    ],
+    "unverified_gates": [
+      "pytest-cli",
+      "pytest-api"
+    ],
+    "admission_denials": [
+      "swap-fraction",
+      "vitals-shed"
+    ],
+    "owner_url": "https://github.com/4444J99/limen/pull/2888",
+    "retry_performed": false
+  },
+  "credential_wall": {
+    "command": "scripts/credential-wall.py --check",
+    "exit_code": 0,
+    "registered_secret_atoms": 32
+  },
+  "domus_landing": {
+    "owner_url": "https://github.com/4444J99/domus-genoma-private/pull/451",
+    "state": "MERGED",
+    "head": "0673fa659801834da464baa6bd68ac378646d565",
+    "merge_commit": "6fbc9f626b304fb40aa13c2a5c7e0e3a4236cd52"
+  },
+  "broker": {
+    "registration": "protected exact native session registered",
+    "new_reservation": "rejected with conduct_rejected HTTP409; no reservation asserted",
+    "session_release_requires_live_zero_lease_audit": true
+  },
+  "reviews": {
+    "independent_peer_review": true,
+    "findings_corrected": [
+      "facet membership and duplicate identity",
+      "timestamp/report-window compatibility",
+      "context-bound duration",
+      "bounded regular-file metadata reads"
+    ]
+  }
+}

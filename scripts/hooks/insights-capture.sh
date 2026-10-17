@@ -11,8 +11,9 @@
 # runs (incl. concurrent fleet sessions) converge on one snapshot per report.
 set -u
 
-REPORT="$HOME/.claude/usage-data/report.html"
-LOG="$HOME/.claude/usage-data/.capture.log"
+CONFIG_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+REPORT="$CONFIG_DIR/usage-data/report.html"
+LOG="$CONFIG_DIR/usage-data/.capture.log"
 
 # Locate the tool: prefer the chezmoi-deployed path, else PATH. Silent no-op
 # if absent on this host. The tool also auto-commits the archive repo, so a
@@ -26,5 +27,5 @@ fi
 
 # --only-if-newer: exit immediately if this report is already archived.
 # --quiet: no output on the common no-op path; only errors hit the log.
-"$TOOL" --only-if-newer --quiet 2>>"$LOG" || true
+"$TOOL" --src "$REPORT" --only-if-newer --quiet 2>>"$LOG" || true
 exit 0
