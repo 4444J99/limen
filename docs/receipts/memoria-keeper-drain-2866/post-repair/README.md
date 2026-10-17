@@ -174,7 +174,10 @@ Wiring it is a one-line addition of a `("memory_deferred",)` trail plus its cont
 |---|---|
 | Focused suites green | **Satisfied** — 48 passed, exit 0, controlled environment |
 | Each of the three defects caught by its own tests | **Satisfied** — Controls E/F/G plus the lifecycle vacuity pair |
-| `ruff-lint` under pinned `0.15.8` | **Re-run pending** at `c6bbf6aad` — round 1's result predates these edits |
+| `ruff-lint` under pinned `0.15.8` | **Satisfied** — `check-ruff-pin.py` exit 0; `ruff check cli/src cli/tests web/api mcp ianva apps organs` → `All checks passed!` |
+| `ruff-format` under pinned `0.15.8` | **Satisfied** — `ruff format --check …` → `790 files already formatted` |
+| `scripts/verify-scoped.sh` | **Cheap wave PASS**; **heavy wave exit 75** — `Host admission denied scoped heavy verification: heavy-lease-held`, held by `claude-lane-j-foa-live` (pid 74553, surface `tmb-foa-live-browser`, alive). Not killed: at most one heavy surface machine-wide, and existing work is never killed. Exit 75 is the prescribed fail-open "blocked on a held condition", not a defect. The held gate is `pytest-cli` (whole `cli/tests`, `tier: heavy`, `serialize: true`). |
+| Heavy `pytest-cli` blast radius | **Contained** — `tabularius_organ_fixtures` is imported by exactly one file, `cli/tests/test_tabularius_organ_memory.py` (verified by full-repo grep; the other hits are receipt prose). `scripts/organ-health.py` is untouched this round. So the held gate exercises no changed path beyond the two files driven directly here. Full-suite confirmation is left to `pr-gate`. |
 | Consumer distinguishes recorded memory failure at equal freshness | **Satisfied** — Control D proves the wiring |
 | Lock attribution proven; unattributed rejected | **Satisfied** |
 | Exact-head CI acceptance | **Not yet observed** — the GitHub check-runs endpoint returned zero records at inspection |
