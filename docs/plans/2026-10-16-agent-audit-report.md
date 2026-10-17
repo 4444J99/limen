@@ -1,5 +1,8 @@
 # Agent audit report, 2026-10-16
 
+Issue: #2848
+Status: superseded — superseded by 2026-10-17-unify-contain-agent-surfaces-v2.md
+
 Scope: every AI coding agent on this Mac (Claude Code, Codex, Copilot, Antigravity/agy, Gemini CLI, OpenCode, Cursor, Cline, Aider, Goose, Zed) plus the dotfile layer (chezmoi, domus-genoma) that configures them. Fable planned; Sonnet, Opus and Haiku executed.
 
 ## Findings

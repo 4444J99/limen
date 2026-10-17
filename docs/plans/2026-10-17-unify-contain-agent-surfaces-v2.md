@@ -1,5 +1,8 @@
 # Plan v2: Unify and Contain All Agent Directories & Files (Provider-Agnostic)
 
+Issue: #2848
+PR: (pending)
+
 - **Date**: 2026-10-17
 - **Slug**: `unify-contain-agent-surfaces-v2`
 - **Supersedes**: `2026-10-17-unify-contain-agent-surfaces.md` (v1 retained unmodified)

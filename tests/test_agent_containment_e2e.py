@@ -343,18 +343,21 @@ class TestTier1FeatureCoverage:
         assert line_count == CODEX_HISTORY_JSONL_LINES
 
     def test_r2_f2_5_codex_tmp_managed_store_predicates(self):
-        """F2.5: Verify home-surface.yaml declares managed_store_surfaces for codex tmp/.tmp."""
-        hs_path = Path("/Users/4jp/Workspace/domus-genoma/dot_config/domus/home-surface.yaml")
+        """F2.5: Verify home-surface.yaml declares managed_store_surfaces for .codex/tmp and .codex/.tmp and retires .local/share/codex/{tmp,.tmp}."""
+        wt_hs = Path("/Users/4jp/Workspace/domus-genoma/.worktrees/contain-agent-surfaces/dot_config/domus/home-surface.yaml")
+        hs_path = wt_hs if wt_hs.exists() else Path("/Users/4jp/Workspace/domus-genoma/dot_config/domus/home-surface.yaml")
         assert hs_path.exists()
         content = json.loads(hs_path.read_text())
         managed = content.get("managed_store_surfaces", [])
         paths = [entry.get("path") for entry in managed]
-        assert ".local/share/codex/tmp" in paths
-        assert ".local/share/codex/.tmp" in paths
+        assert ".codex/tmp" in paths
+        assert ".codex/.tmp" in paths
+        assert ".local/share/codex/tmp" not in paths
+        assert ".local/share/codex/.tmp" not in paths
 
         # Check required retirement clauses
         for entry in managed:
-            if entry.get("path") in (".local/share/codex/tmp", ".local/share/codex/.tmp"):
+            if entry.get("path") in (".codex/tmp", ".codex/.tmp"):
                 reqs = entry.get("retirement_requires", [])
                 assert "no-active-owner-or-process-references" in reqs
                 assert "unique-commits-refs-stashes-and-private-payload-in-custody" in reqs
@@ -763,7 +766,7 @@ class TestTier2BoundaryAndCornerCases:
         link_a.symlink_to(link_b)
         link_b.symlink_to(link_a)
 
-        with pytest.raises(OSError):
+        with pytest.raises((OSError, RuntimeError)):
             link_a.resolve(strict=True)
 
     def test_tier2_boundary_quota_reserve_exhaustion_protection(self):
@@ -1126,12 +1129,27 @@ class TestLiveSystemInvariants:
         assert reg["unique_skills_count"] >= 60
 
         wt_domus = Path("/Users/4jp/Workspace/domus-genoma/.worktrees/contain-agent-surfaces")
-        s02_text = (wt_domus / "dot_agents/skills/s-02-plan/SKILL.md").read_text()
+        domus_root = wt_domus if wt_domus.exists() else Path("/Users/4jp/Workspace/domus-genoma")
+        s02_text = (domus_root / "dot_agents/skills/s-02-plan/SKILL.md").read_text()
         assert "/Users/4jp/Workspace/limen/docs/plans/" in s02_text
 
-        # M5: All 15 vendor surfaces declared in worktree home-surface.yaml
-        hs = json.loads((wt_domus / "dot_config/domus/home-surface.yaml").read_text())
+        # M5: All 15 vendor surfaces declared in home-surface.yaml
+        hs = json.loads((domus_root / "dot_config/domus/home-surface.yaml").read_text())
         routed_paths = {r["path"] for r in hs["routes"]}
         for surf in ALL_15_UNCONTAINED_SURFACES:
             assert surf in routed_paths, f"Missing route for {surf}"
+
+        # Verify Claude relink receipt inode matches live runtime file and backup_inode matches backup
+        claude_receipt_path = Path("/Users/4jp/.local/state/domus/home-residue/claude-json-relink-receipt-20261017.json")
+        assert claude_receipt_path.is_file()
+        claude_receipt = json.loads(claude_receipt_path.read_text())
+        assert claude_receipt["inode"] == (rt / "claude" / "legacy-home.json").stat().st_ino
+        assert claude_receipt["backup_inode"] == Path(claude_receipt["backup_path"]).stat().st_ino
+
+        # Verify stale readers/writers of ~/.local/share/codex are updated to CODEX_HOME
+        regen_text = (domus_root / "dot_config/ai-context/scripts/executable_regen-session-policies").read_text()
+        snap_text = (domus_root / "dot_local/bin/executable_codex-pressure-snapshot").read_text()
+        assert ".local/share/codex" not in regen_text
+        assert ".local/share/codex" not in snap_text
+
 

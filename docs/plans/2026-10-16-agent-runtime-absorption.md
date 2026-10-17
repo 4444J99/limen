@@ -1,5 +1,8 @@
 # Plan: absorb the legacy Claude layer into the shared agent runtime (2026-10-16)
 
+Issue: #2848
+Status: superseded — superseded by 2026-10-17-unify-contain-agent-surfaces-v2.md
+
 Owner: Fable (planning only). Executors: Sonnet (absorption), Opus (dotfiles convergence), Haiku (verification).
 
 ## Why
