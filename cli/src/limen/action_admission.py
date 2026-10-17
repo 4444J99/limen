@@ -399,6 +399,30 @@ def _compound_is_read_only(tokens: list[str]) -> bool:
     return True
 
 
+def _plain_text_reader(tokens: list[str]) -> bool:
+    """Recognize readers whose argument text cannot launch a heavy command."""
+
+    tokens = _strip_env_assignments(tokens)
+    if not tokens:
+        return False
+    command = Path(tokens[0]).name
+    if command in {"cat", "head", "tail", "echo", "printf", "grep", "egrep", "fgrep"}:
+        return True
+    if command == "rg":
+        return not any(
+            token in {"--pre", "--hostname-bin"} or token.startswith(("--pre=", "--hostname-bin="))
+            for token in tokens[1:]
+        )
+    if command == "sed":
+        return (
+            len(tokens) >= 3
+            and tokens[1] == "-n"
+            and re.fullmatch(r"\d+(?:,(?:\d+|\$))?p", tokens[2]) is not None
+            and all(not token.startswith("-") for token in tokens[3:])
+        )
+    return False
+
+
 def _canonical_closeout_read_only(tokens: list[str], cwd: Path | None) -> bool:
     """Trust the policy owner's checker, never a filename or arbitrary source tree."""
 
@@ -481,6 +505,8 @@ def classify_bash(command: str, *, cwd: Path | None = None) -> Action:
         return Action("sanctioned_control")
     if _guarded_heavy(command_tokens):
         return Action("guarded_heavy")
+    if _plain_text_reader(command_tokens):
+        return Action("observe")
     if _HEAVY_COMMAND.search(command):
         return Action("unguarded_heavy", "unguarded-heavy", "bash scripts/verify-scoped.sh")
     if _simple_read_only(command_tokens):
