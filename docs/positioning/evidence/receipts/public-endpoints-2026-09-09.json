@@ -1,0 +1,68 @@
+{
+  "receipt_type": "bounded-http-observation",
+  "observed_at": "2026-09-09T12:35:14.711961+00:00",
+  "method": "unauthenticated HTTPS GET; 20-second timeout and 1MB response limit per endpoint",
+  "observations": [
+    {
+      "url": "https://limen-runtime.ivixivi.workers.dev/health",
+      "http_status": 200,
+      "observed_at": "2026-09-09T12:35:06.815298+00:00",
+      "raw_body_sha256": "sha256:ca0302beb8feee09af9da493b7dac16a3b19a973901a32da9fe01296fbb93a84",
+      "body": {
+        "status": "ok",
+        "time": "2026-09-09T12:35:02.233Z",
+        "storage": {
+          "mode": "private-durable-object",
+          "access": "private_read_write_public_aggregate",
+          "configured": true,
+          "writable": true,
+          "mutation_owner": "conduct_keeper",
+          "public_projection": "github-aggregate-only",
+          "repo": "organvm/limen",
+          "branch": "tabularius/board-projection",
+          "path": "tasks.yaml"
+        }
+      }
+    },
+    {
+      "url": "https://limen-dashboard.pages.dev/public-status.json",
+      "http_status": 200,
+      "observed_at": "2026-09-09T12:35:14.711412+00:00",
+      "raw_body_sha256": "sha256:0867819ee0c58d863cd428d30ec9780c58edc4927b854d1a9a62a6c93e4019d6",
+      "body": {
+        "status": "ok",
+        "surface": "public",
+        "summary": {
+          "portal": {
+            "name": "Universal Task Intake",
+            "description": "Aggregate operational health; authenticated board details are private."
+          },
+          "total": 0,
+          "completed": 0,
+          "completion_rate": 0,
+          "active": 0,
+          "by_status": {},
+          "generated_at": "2026-08-20T23:21:16.041Z",
+          "throughput": {
+            "first_created": "2026-08-20",
+            "current_date": "2026-08-20",
+            "age_days": 1,
+            "daily_capacity": 100,
+            "expected_capacity_runs": 100,
+            "task_burndown_target_per_day": 0,
+            "recorded_events": 0,
+            "recorded_starts": 0,
+            "recorded_finishes": 0,
+            "done": 0,
+            "not_done": 0,
+            "unrecorded_capacity_runs": 100,
+            "by_event_status": {},
+            "by_event_agent": {},
+            "by_event_date": {}
+          }
+        }
+      }
+    }
+  ],
+  "boundary": "These are reachability and response observations at the recorded times. The public projection remains dated 2026-08-20 and does not reveal private task activity, autonomous monitoring, reliability over a period, or customer adoption."
+}
