@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   auto-scale:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       GH_TOKEN: ${{ github.token }}
       GITHUB_TOKEN: ${{ github.token }}
