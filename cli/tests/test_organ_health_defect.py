@@ -434,9 +434,7 @@ def test_repeated_deferrals_with_no_successful_drain_degrade_health(tmp_path: Pa
         (9, 0.0, "persistent is required; repetition inside the window is tolerated"),
     ],
 )
-def test_either_deferral_condition_alone_stays_green(
-    tmp_path: Path, streak: int, hours: float, why: str
-) -> None:
+def test_either_deferral_condition_alone_stays_green(tmp_path: Path, streak: int, hours: float, why: str) -> None:
     """Both conditions are required, so each alone must keep the lane green.
 
     Without these the classification could pass on repetition alone — which a one-beat

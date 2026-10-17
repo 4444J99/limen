@@ -304,9 +304,7 @@ def test_a_deferred_memory_pass_is_published_as_deferred_not_as_success(tmp_path
     assert "pass OK" not in proc.stdout, f"deferral rendered as 'pass OK': {proc.stdout!r}"
     # The repetition count travels on the only channel this branch has. Without it a
     # streak that keeps advancing reads as one tolerated event indefinitely.
-    assert "1 consecutive run(s)" in proc.stdout, (
-        f"deferral did not report its streak: {proc.stdout!r}"
-    )
+    assert "1 consecutive run(s)" in proc.stdout, f"deferral did not report its streak: {proc.stdout!r}"
     # Nothing was consumed: a deferral applies nothing.
     ticket = sb.memory_dir / ".covenant-inbox" / "synthetic.json"
     assert ticket.exists(), "a deferred drain consumed a pending ticket"
@@ -421,9 +419,7 @@ def test_a_deferral_records_a_streak_that_a_success_resets(tmp_path):
     proc2 = sb.last_proc
     second = sb.state_payload()
     assert second.get("memory_defer_streak") == 2, second
-    assert second.get("memory_deferred_since") == first_since, (
-        f"streak start rewritten instead of preserved: {second}"
-    )
+    assert second.get("memory_deferred_since") == first_since, f"streak start rewritten instead of preserved: {second}"
     # ...and the streak is legible at the call site, not only in the artifact.
     assert "2 consecutive run(s)" in proc2.stdout, (
         f"second deferral did not report its advanced streak: {proc2.stdout!r}"

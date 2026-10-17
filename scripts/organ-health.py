@@ -385,10 +385,7 @@ def _memory_deferral_advisory(path, *, min_streak=2, min_hours=1.0):
         return None
     if facts["streak"] >= min_streak and facts["hours"] >= min_hours:
         return None
-    return (
-        f"memory deferral — {facts['note']} "
-        f"({facts['streak']} consecutive run(s), {facts['hours']}h): tolerated"
-    )
+    return f"memory deferral — {facts['note']} ({facts['streak']} consecutive run(s), {facts['hours']}h): tolerated"
 
 
 def _json_nested_error(path, *trails, stamp=None):
@@ -681,12 +678,14 @@ def _registry():
             # which keeps it visible without inventing a status the dot/label maps and every
             # downstream reader would have to learn.
             advisory=lambda: _memory_deferral_advisory(LOGS / "tabularius-organ-state.json"),
-            defect=lambda: _json_nested_error(
-                LOGS / "tabularius-organ-state.json",
-                ("memory_error",),
-                stamp="updated",
-            )
-            or _memory_deferral_defect(LOGS / "tabularius-organ-state.json"),
+            defect=lambda: (
+                _json_nested_error(
+                    LOGS / "tabularius-organ-state.json",
+                    ("memory_error",),
+                    stamp="updated",
+                )
+                or _memory_deferral_defect(LOGS / "tabularius-organ-state.json")
+            ),
         ),
         # no cadence_key: runs as a metabolize.sh pre-beat check (section 0h), not a
         # timed heartbeat voice — so it claims no cadence and never trips the absent-
