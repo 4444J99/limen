@@ -1,0 +1,157 @@
+{
+  "schema": "limen.vendor_insights.implementation_checkpoint.v1",
+  "plan_pr": "https://github.com/4444J99/limen/pull/2893",
+  "tracking_issue": "https://github.com/4444J99/limen/issues/2892",
+  "attempt": {
+    "started_at": "2026-10-17T01:55:00Z",
+    "deadline": "2026-10-17T02:25:00Z",
+    "disposition": "incomplete_checkpoint",
+    "automatic_continuation": false
+  },
+  "source": {
+    "limen": {
+      "pr": 2868,
+      "implementation_commit": "3d867668d464a58b11761b72596f2a3f093f9924",
+      "reused_binding_commit": "cac8b9fda186dc821695de4db69d41eebbb52396",
+      "publication": "push accepted"
+    },
+    "domus": {
+      "pr": 436,
+      "implementation_commits": [
+        "e8958031cc224557b9770721b3d8a03029cdbab3",
+        "4b6baf16"
+      ],
+      "publication": "normal fast-forward push"
+    }
+  },
+  "verification": {
+    "reader_tests": {
+      "passed": 74
+    },
+    "domus_scoped_tests": {
+      "passed": 29
+    },
+    "scoped_first_run": {
+      "passed": 33,
+      "failed": [
+        "missing zstandard",
+        "Ruff version mismatch: lint",
+        "Ruff version mismatch: format"
+      ]
+    },
+    "scoped_corrective_run": {
+      "passed": 35,
+      "failed": [
+        "verify-parallel-test: timeout-process-group: timeout fixture never recorded its descendant"
+      ],
+      "heavy_gates": "unrun because cheap wave failed"
+    },
+    "domus_lint": {
+      "status": "failed",
+      "finding": "38 E/F/W findings before bounded-reader follow-up; legacy findings and new E501 lines remain undisposed"
+    },
+    "independent_review": "unrun"
+  },
+  "tasks": [
+    {
+      "task": 1,
+      "status": "source changes published; broader acceptance incomplete",
+      "delivered": [
+        "fresh child discovery independent of directory mtime",
+        "physical alias deduplication",
+        "exact Claude record/source selection",
+        "explicit selection and count basis"
+      ]
+    },
+    {
+      "task": 2,
+      "status": "partial",
+      "delivered": [
+        "hard returned-text bounds",
+        "actual returned capture hash and length",
+        "larger reads marked reindex-required",
+        "existing generation binding reused"
+      ],
+      "remaining": [
+        "renderer enforcement against an explicitly ineligible expanded capture",
+        "scoped heavy verification"
+      ]
+    },
+    {
+      "task": 3,
+      "status": "partial",
+      "delivered": [
+        "prompt-only and metadata coverage exposed",
+        "history-only Antigravity prompt access"
+      ],
+      "remaining": [
+        "explicit decoder/read-error distinctions throughout adapters",
+        "all-six regenerated evidence acceptance"
+      ]
+    },
+    {
+      "task": 4,
+      "status": "partial",
+      "delivered": [
+        "content identity covers report and facets",
+        "completed snapshots retained",
+        "adjacent relocated sidecars captured",
+        "bounded no-follow object reads",
+        "quiet delivery receipt outside immutable snapshot",
+        "unchanged archives retry push",
+        "commit path restriction preserves unrelated staged files"
+      ],
+      "remaining": [
+        "cross-file/concurrent-capture atomicity",
+        "native delivery and retry acceptance",
+        "full owner validation"
+      ]
+    },
+    {
+      "task": 5,
+      "status": "unrun",
+      "owner_prs": [
+        2891,
+        436
+      ],
+      "remaining": [
+        "immutable runtime adoption",
+        "complete skill/context/capability acceptance",
+        "all actual consumer observations"
+      ]
+    },
+    {
+      "task": 6,
+      "status": "unrun",
+      "remaining": [
+        "exact-head integration and deployment",
+        "six vendor regeneration",
+        "consumer acceptance",
+        "existing workstream and closeout terminal receipts"
+      ]
+    }
+  ],
+  "guard_state": {
+    "autonomous_dispatch": "denied: execution_priority_not_approved; no policy changed",
+    "direct_writers": "existing isolated checkouts admitted by local writer leases",
+    "history": "merge existing histories; normal pushes only; no deletion, reset, force push, or retirement",
+    "retention": "both implementation checkouts retained"
+  },
+  "deployment": {
+    "status": "unrun for new commits",
+    "consumer_acceptance": "unrun",
+    "merge": "unrun; failing required scoped gate preserved"
+  },
+  "next": {
+    "owner": "existing #2868/#436 implementation owners; #2892 tracking",
+    "predicate": "diagnose timeout-process-group at its verifier fixture source; do not suppress the guard",
+    "then": [
+      "finish remaining reader evidence states and expanded-read renderer rejection",
+      "complete Domus validation",
+      "admit exact heads through canonical merge rails",
+      "deploy through immutable source-owned installers",
+      "observe each actual consumer before terminal closeout"
+    ]
+  }
+}
+
