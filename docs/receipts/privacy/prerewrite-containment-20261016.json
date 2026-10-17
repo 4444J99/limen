@@ -561,26 +561,6 @@
   {
    "class": "purge-equivalent",
    "commits": {
-    "already-on-new-lineage": 4176,
-    "purge-equivalent": 99,
-    "unique-work": 0
-   },
-   "kind": "branch",
-   "private_custody": true,
-   "ref": "refs/heads/main",
-   "remote_counterpart": true,
-   "tip": "14769310d1f92f0fd4251cd9",
-   "upstream": {
-    "push_capable": false,
-    "push_remote": "self",
-    "quarantined": true,
-    "remote": "self"
-   },
-   "worktree": "path:69d411268d7d"
-  },
-  {
-   "class": "purge-equivalent",
-   "commits": {
     "already-on-new-lineage": 4166,
     "purge-equivalent": 99,
     "unique-work": 0
@@ -590,6 +570,25 @@
    "ref": "refs/heads/policy/ges-continuation-20261003",
    "remote_counterpart": true,
    "tip": "7dff1bfcd69123972486a82c",
+   "upstream": {
+    "push_capable": false,
+    "push_remote": "self",
+    "quarantined": true,
+    "remote": "self"
+   }
+  },
+  {
+   "class": "purge-equivalent",
+   "commits": {
+    "already-on-new-lineage": 4176,
+    "purge-equivalent": 99,
+    "unique-work": 0
+   },
+   "kind": "branch",
+   "private_custody": true,
+   "ref": "refs/heads/prerewrite/main-20261017",
+   "remote_counterpart": false,
+   "tip": "14769310d1f92f0fd4251cd9",
    "upstream": {
     "push_capable": false,
     "push_remote": "self",
@@ -1071,9 +1070,21 @@
   {
    "class": "unique-work",
    "commits": {
-    "already-on-new-lineage": 3963,
+    "already-on-new-lineage": 4177,
+    "purge-equivalent": 99,
+    "unique-work": 1
+   },
+   "kind": "hidden",
+   "private_custody": false,
+   "ref": "refs/stash",
+   "tip": "455c5ac063b52cb2474f958d"
+  },
+  {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 3962,
     "purge-equivalent": 98,
-    "unique-work": 26
+    "unique-work": 27
    },
    "kind": "tag",
    "private_custody": true,
@@ -1117,6 +1128,18 @@
    "tip": "74397d5878a0efd569891eac"
   },
   {
+   "class": "unique-work",
+   "commits": {
+    "already-on-new-lineage": 4177,
+    "purge-equivalent": 99,
+    "unique-work": 1
+   },
+   "kind": "stash",
+   "private_custody": false,
+   "ref": "stash@{0}",
+   "tip": "455c5ac063b52cb2474f958d"
+  },
+  {
    "class": "purge-equivalent",
    "commits": {
     "already-on-new-lineage": 4180,
@@ -1136,15 +1159,15 @@
   "commits_by_class": {
    "already-on-new-lineage": 4279,
    "purge-equivalent": 99,
-   "unique-work": 398
+   "unique-work": 400
   },
-  "old_lineage_refs": 65,
-  "old_only_commits": 4776,
+  "old_lineage_refs": 67,
+  "old_only_commits": 4778,
   "purged_blobs": 132,
   "purged_blobs_missing_in_private": 0,
   "purged_paths": 77,
   "purged_paths_without_private_match": 0,
-  "unmatched_commits": 686
+  "unmatched_commits": 688
  },
  "unmatched_commits": [
   {
@@ -1603,9 +1626,9 @@
    "evidence": "no-equivalent"
   },
   {
-   "class": "already-on-new-lineage",
+   "class": "unique-work",
    "commit": "1de107d345977e3b3394c813",
-   "evidence": "content-on-new-tip"
+   "evidence": "no-equivalent"
   },
   {
    "class": "unique-work",
@@ -2040,6 +2063,11 @@
   {
    "class": "unique-work",
    "commit": "4545e7a8a3b76a4365825b5d",
+   "evidence": "no-equivalent"
+  },
+  {
+   "class": "unique-work",
+   "commit": "455c5ac063b52cb2474f958d",
    "evidence": "no-equivalent"
   },
   {
@@ -3226,6 +3254,11 @@
    "class": "unique-work",
    "commit": "a09918b1c8f7d6da1a56c8d0",
    "evidence": "no-equivalent"
+  },
+  {
+   "class": "already-on-new-lineage",
+   "commit": "a0a060e84c29fb668fa412d6",
+   "evidence": "empty-change"
   },
   {
    "class": "already-on-new-lineage",
