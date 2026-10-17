@@ -1,0 +1,27 @@
+{
+  "schema": "limen.session_corpus_egress.v1",
+  "date": "2026-10-06",
+  "owner": "4444J99/limen#2739",
+  "original_root_index": 15,
+  "status": "remote-recovery-verified",
+  "source_files": 14244,
+  "logical_source_bytes": 969491044,
+  "ciphertext_bytes": 403408880,
+  "source_stable": true,
+  "publication_repository": "4444J99/arca-g3",
+  "publication_prefix": "limen-reap/20261006/session-corpus",
+  "source_generation": "054489fcfbde51287d1681d5e4bc14b81b8d796d",
+  "private_execution_proof_commit": "b6092c8a61a32c5b70060230582dc1133fb0f68a",
+  "fresh_remote_files_verified": 26,
+  "independent_escrow_recovery_verified": true,
+  "logical_restore_verified": true,
+  "ciphertext_segmentation": {
+    "maximum_segment_bytes": 16777216,
+    "original_concatenated_cipher_stream_unchanged": true,
+    "source_recaptured": false
+  },
+  "recovery_finished_at": "2026-10-07T00:53:09.419839+00:00",
+  "native_filesystem_materialization_verified": false,
+  "source_removed": false,
+  "retirement_owner": "4444J99/limen#2739"
+}

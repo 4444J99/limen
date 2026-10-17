@@ -47,6 +47,31 @@ portable_recovery:
   unavailable_rails_remain_visible: true
   retirement_requires_separate_proof: true
 
+# Human correction, 2026-10-05, owner 4444J99/limen#2739. This specifies
+# the full collection campaign; it does not rewrite legacy v2 retention gates.
+github_full_collection:
+  owner: horrevm
+  owner_ref: https://github.com/4444J99/limen/issues/2739
+  authority: github-git-commits
+  required_content:
+    - original-recovery-bytes
+    - native-metadata-recovery-bytes
+    - processed-derivatives
+    - capture-manifests-and-transformation-provenance
+  private_content: encrypted-before-publication
+  key_recovery: independently-recoverable-outside-git
+  sequence:
+    - commit-every-original-and-derivative-to-github
+    - fresh-remote-readback-and-restoration
+    - mirror-the-complete-remote-collection-to-both-ssds
+    - restore-each-mirror-and-prove-separate-retirement-gates
+  mirror_rails: [archive4t, t7recovery]
+  ssd_only_authoritative_content_allowed: false
+  release_assets_substitute_for_git_commits: false
+  remote_readiness_authorizes_retirement: false
+  legacy_custody_v2_retention_unchanged: true
+  git_mirrored_acceptance_adapter: pending-implementation
+
 rails:
   icloud:
     service: "iCloud Drive (com.apple.CloudDocs)"
@@ -168,7 +193,7 @@ rails:
   archive4t:
     service: "Archive4T (APFS volume, 4TB SSD)"
     declared_state: adopted
-    role: "Optional local archive — existing curated recovered data, manifests, operating docs remain preserved; Backblaze-backed when attached. Portable session recovery uses independently verified remote custody and does not require this mount."
+    role: "Full mirror of the GitHub collection, including encrypted originals, native recovery metadata, processed derivatives and provenance. Mirror and restore verification follow remote publication; existing curated data remains preserved and must also enter the remote collection."
     never: ["Time Machine-only safety", "scratch work", "unreviewed Downloads dumps", "living inside a consumer sync folder"]
     mount: "/Volumes/Archive4T"
     required_mounted: false   # absence stays visible; portable recovery is separately gated
@@ -178,7 +203,7 @@ rails:
   t7recovery:
     service: "T7Recovery (second local copy)"
     declared_state: adopted
-    role: "Second local recovery copy of CleanUnique until offsite restore proof exists; then re-evaluate."
+    role: "Second full mirror of the same GitHub collection as Archive4T. Preserve CleanUnique and include its unique content remotely before final mirror and restore verification."
     never: ["scratch", "active workspace", "new unsorted data", "deletion before offsite restore proof"]
     mount: "/Volumes/T7Recovery"
     required_mounted: false   # may be detached; report-only
@@ -200,7 +225,7 @@ rails:
   ingress:
     service: "Ingress (intake volume)"
     declared_state: adopted
-    role: "Intake zone: new imports, unpacking, review-before-promotion. Nothing archived until promoted to Archive4T."
+    role: "Intake zone: new imports, unpacking, review-before-promotion. Nothing archived until committed to the GitHub collection with recovery proof; both SSDs mirror it in the final pass."
     never: ["long-term storage", "Backblaze selection"]
     mount: "/Volumes/Ingress"
     required_mounted: false

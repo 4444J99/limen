@@ -1,0 +1,75 @@
+{
+  "schema": "limen.recovery_continuation_amendment.v1",
+  "owner": "4444J99/limen#2739",
+  "receipt_pr": "4444J99/limen#2834",
+  "outcome_id": "remote-first-custody-20261005",
+  "native_session_id": "01a122a8-a304-73d2-87ab-32e5ff93a22f",
+  "existing_recovery_writer_native_session": "01a12234-5566-7c62-a3cb-e131db894e50",
+  "authorization": {
+    "source": "direct human reply yes to conditional single 30-minute proposal in this native session",
+    "recorded_at": "2026-10-09T22:02:05.306463+00:00",
+    "approved_proposal_commit": "8db4225cb7c46fd3fd0c2360cf34e67e56e4035e",
+    "approved_proposal_receipt": "docs/receipts/remote-first-custody-20261005/serialized-preparation-20261009.json",
+    "approved_proposal_sha256": "a1844b9d71918cc490aac7091252b363145a9637d795a571c9d9cfc90a624d32",
+    "conditions_preserved": true
+  },
+  "status": "authorized-awaiting-external-staging-and-admission",
+  "started_at": null,
+  "hard_deadline": null,
+  "additional_seconds": 1800,
+  "verification_seconds_within_attempt": 600,
+  "max_attempts": 1,
+  "initiated_children": 0,
+  "historical_consumption_lower_bound_seconds": 17284.892685,
+  "historical_full_campaign_duration_seconds": null,
+  "cumulative_accounting_reset": false,
+  "sole_recovery_writer": true,
+  "host_override_authorized": false,
+  "scope": [
+    "receive G exact missing-object closure manifests after external staging returns",
+    "recover and inspect independently verified private controller",
+    "perform at most one candidate reconstruction in the admitted window",
+    "publish exact recovery result and handoff to distinct H auditor; retain candidate until independent audit and immediate eligibility gates pass"
+  ],
+  "personal_originals_retained": true,
+  "shared_git_stores_retained": true,
+  "automatic_continuation": false,
+  "t7_substitution": false,
+  "admission": {
+    "execution_packet_constructed": false,
+    "new_broker_run_reserved": false,
+    "external_staging_mounted": false,
+    "Archive4T_mounted": false,
+    "T7Recovery_mounted": false,
+    "diskutil_external_physical_devices": [],
+    "host_allowed": false,
+    "host_reasons": [
+      "swap-fraction"
+    ],
+    "host_observed_at": "2026-10-09T22:01:17.664345+00:00",
+    "swap_fraction": 0.5403820800711401,
+    "active_host_leases": 0,
+    "existing_broker_root": "run-810c476a7068a56a75f39ea62fafb139",
+    "existing_root_status": "blocked",
+    "existing_root_deadline": "2026-10-09T20:21:54.188000Z",
+    "existing_root_extended": false,
+    "existing_writer_accepting_work": false,
+    "existing_writer_active_leases": 0,
+    "runtime_git_sha": "f93f3dd9076992ce6d38f4d697a5f7176b776013",
+    "runtime_deployment_id": "a0c5aa90-6538-4382-833a-b9844072d7a5"
+  },
+  "start_condition": "approval now satisfied; external staging access, G exact closure packet, existing writer availability and supported broker/ordinary host/storage admission remain required; admitted start binds one nonrenewable deadline",
+  "results": {
+    "recovery_attempts_started": 0,
+    "objects_downloaded": 0,
+    "caches_removed": 0,
+    "allocated_bytes_removed": 0,
+    "attributable_reclaimed_bytes": 0,
+    "ssd_transfers": 0
+  },
+  "checkout_disposition": "no new checkout; absent external checkout and all payloads retained; coordinator releases receipt writer after publication",
+  "verification": {
+    "proposal_digest_and_bounds_assertions": "passed",
+    "implementation_or_restoration_tests": "not run; prerequisites absent"
+  }
+}

@@ -36,8 +36,8 @@ the PREC-2026-07-10 "declared-but-unwired is a defect" pattern).
 | **Dropbox** | Headless break-glass grab bag (recovery card + sealed continuity kernel) | desktop File Provider app; archive warehouse; only-backup of anything |
 | **OneDrive** | Nothing — dormant by design | any backup role; silent adoption |
 | **Backblaze** | Primary offsite/versioned backup for `/` and Archive4T | backing up TM-Mac/Ingress/Scratch; any doctor-initiated bz action |
-| **Archive4T** | PRIMARY local archive — SSOT for curated recovered data | TM-only safety; scratch; consumer-sync-folder residence |
-| **T7Recovery** | Second local recovery copy until offsite restore proof | scratch; active workspace; premature deletion |
+| **Archive4T** | Full mirror of the GitHub collection, including encrypted originals and derivatives | TM-only safety; scratch; consumer-sync-folder residence |
+| **T7Recovery** | Second full mirror of the same GitHub collection | scratch; active workspace; premature deletion |
 | **Time Machine → TM-Mac** | Local Mac rollback only (optional convenience) | substitute for offsite; backup of Archive4T |
 | **Ingress** | Intake zone — nothing archived until promoted | long-term storage; Backblaze selection |
 | **Scratch** | Disposable workspace | only home of anything important |
@@ -58,7 +58,7 @@ The desktop File Provider layer (Dropbox.app / Google Drive.app / OneDrive.app) 
 bloated, and silently broke. It stays **required-absent** — for Drive and Dropbox even after
 headless adoption. The doctor red-flags: a desktop app reappearing, a File Provider registration,
 a NEW dated `iCloudDrive-iCloudDrive (…)` provider domain beyond the 3 baselined forensic ones,
-any unrecognized `~/Library/CloudStorage` entry, or the Archive4T SSOT unmounted.
+any unrecognized `~/Library/CloudStorage` entry, or a required mirror unavailable when final mirror verification is due.
 
 ## Do not do (binding, from the originals + estate law)
 
@@ -75,3 +75,19 @@ any unrecognized `~/Library/CloudStorage` entry, or the Archive4T SSOT unmounted
 The originals embed the operator's Google account string in path listings; it is ported here and
 in the registry as the glob `GoogleDrive-*` / `GoogleDrive-<account>`. The doctor masks account
 tokens in everything it emits, and its unit tests fail on any `@` in serialized output.
+
+## Full collection correction (2026-10-05)
+
+[Issue #2739](https://github.com/4444J99/limen/issues/2739) owns the human's
+remote-first correction. Commit the complete collection to GitHub first:
+original recovery bytes, actual native metadata values, processed derivatives,
+private capture inventories and transformation provenance. Encrypt private
+material before publication; release assets do not replace Git commits.
+
+Verify restoration from fresh remote fetches without local object alternates.
+Then mirror that same complete collection to both Archive4T and T7Recovery and
+restore each mirror. Neither SSD is an exclusive home for authoritative content.
+Keep remote readiness distinct from independent key recovery, full native
+restoration, active-owner release and retirement. The existing v2 contract's
+provider-enforced retention requirements remain unchanged; the additive
+Git-mirrored acceptance adapter is still implementation work.

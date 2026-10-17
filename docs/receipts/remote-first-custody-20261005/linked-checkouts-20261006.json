@@ -1,0 +1,25 @@
+{
+  "schema": "limen.linked_checkout_egress.v1",
+  "date": "2026-10-06",
+  "owner": "4444J99/limen#2739",
+  "original_root_indices": [
+    7,
+    10
+  ],
+  "status": "remote-recovery-verified",
+  "source_files": 5881,
+  "ciphertext_bytes": 63617168,
+  "source_stable": true,
+  "publication_repository": "4444J99/arca-g3",
+  "publication_prefix": "limen-reap/20261006/linked-checkouts",
+  "source_generation": "a540aaaf2c2ab2e382998eddf103a1ec48a4eb0e",
+  "private_execution_proof_commit": "ddc571e6c4f9d6b467bf8c151a1e58ec21e0303a",
+  "fresh_remote_files_verified": 6,
+  "independent_escrow_recovery_verified": true,
+  "logical_restore_verified": true,
+  "native_filesystem_materialization_verified": false,
+  "source_removed": false,
+  "human_protected_worktree_retained": true,
+  "active_mcp_component_retained": true,
+  "retirement_owner": "4444J99/limen#2739"
+}

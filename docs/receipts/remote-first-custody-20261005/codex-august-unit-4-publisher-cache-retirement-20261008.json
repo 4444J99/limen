@@ -1,0 +1,14 @@
+{
+  "schema": "limen.publisher_cache_retirement_public_receipt.v1",
+  "unit": "codex-august-unit-4",
+  "repository": "4444J99/arca-g3",
+  "preservation_proof": "54d123f333ef56166d7e0fb673ac9108acddf589",
+  "cleanup_proof": "7d0d6d1434412429d2400ad7df407b17fc457af6",
+  "fresh_remote_equal": true,
+  "independent_escrow_decryption_equal": true,
+  "logical_bytes_removed": 707023680,
+  "observed_free_bytes_delta": 228220928,
+  "concurrent_activity_affects_measurement": true,
+  "original_sources_removed": false,
+  "shared_store_removed": false
+}

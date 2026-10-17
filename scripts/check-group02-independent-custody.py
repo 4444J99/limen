@@ -190,7 +190,8 @@ def verify(
                 }
             env = dict(os.environ)
             env.pop("OP_SERVICE_ACCOUNT_TOKEN", None)
-            key = run("op", "read", "op://Private/limen-arca-vault/password", env=env).strip()
+            key = run(str(Path.home() / ".local/bin/op-unattended"), "--", "read",
+                      "op://Limen-Automation/limen-arca-vault/password", env=env).strip()
             if not re.fullmatch(rb"[0-9a-fA-F]{64}", key):
                 raise ValueError("escrow-key-shape")
             read_fd, write_fd = os.pipe()

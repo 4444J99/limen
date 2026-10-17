@@ -1,0 +1,105 @@
+{
+  "admission": {
+    "new_children_launched": 0,
+    "projection_edited": false,
+    "rejection": "execution_priority_not_approved",
+    "root_lease": null
+  },
+  "attempt_deadline": "2026-10-05T17:37:54.344931+00:00",
+  "campaign_complete": false,
+  "created_at": "2026-10-05T17:37:54.969048+00:00",
+  "current_target_counts": {
+    "absent": 8,
+    "empty": 1,
+    "indirect": 0,
+    "nonempty": 15,
+    "unmeasured": 0
+  },
+  "external_pass": "deferred-by-human-until-complete-remote-collection",
+  "instruction": "GitHub full collection first; both SSD full mirrors last",
+  "native_agent": "codex",
+  "native_session_id": "01a10ceb-651d-7c81-b5ba-40cff41236f5",
+  "original_target_denominator": 24,
+  "original_targets_removed_this_attempt": 0,
+  "owner_ref": "https://github.com/4444J99/limen/issues/2739",
+  "primary_checkout": "retained-clean-active",
+  "private_generation": {
+    "branch": "custody/limen-reap-20261005",
+    "captured_file_count": 4,
+    "committed_blob_count_verified": 18,
+    "encrypted_original_and_derivative_bytes_restore_equal": true,
+    "independent_key_recovery_verified": false,
+    "logical_restore_equal": true,
+    "native_changed_field_counts": {
+      "birthtime_ns": 2,
+      "gid": 7,
+      "xattrs": 7
+    },
+    "native_restore_equal": false,
+    "original_archive_bytes": 65536,
+    "original_payload_commit": "c0d29da9f21b1c43f7cc93f7f72f23a7272d8279",
+    "proof_checkpoint_commit": "9ccd9f0de8ef61a19c1056d6293185379bab8b64",
+    "repository": "4444J99/arca-g3"
+  },
+  "remaining_owned_work": [
+    {
+      "next_action": "continue retained-root publication using immutable private generations; retain protected writers and all original scope targets",
+      "owner": "4444J99/limen#2739",
+      "predicate": "full collection committed and restored from GitHub; source scope and current delta complete"
+    },
+    {
+      "next_action": "implement actual raw native values and reconstruction; resolve observed group, xattr and creation-time drift without weakening equivalence or v2 retention",
+      "owner": "4444J99/limen#2739 and PR #2834",
+      "predicate": "full native restoration and separate supported Git-mirrored custody acceptance"
+    },
+    {
+      "next_command": "scripts/verify-scoped.sh --base origin/main --require-base",
+      "owner": "PR #2834",
+      "predicate": "scripts/verify-scoped.sh on the exact published tree passes"
+    },
+    {
+      "next_action": "install the human-authorized outcome in the owning execution policy, then resubmit the existing packet; no hidden native fanout",
+      "owner": "conduct execution-policy deployment, recorded in issue #2739",
+      "predicate": "installed approved-priority registry admits this bounded outcome"
+    },
+    {
+      "next_action": "perform the external pass only after complete remote publication, then use owning retirement and session predicates",
+      "owner": "4444J99/limen#2739",
+      "predicate": "both full SSD mirrors and restores; independent key recovery; active owner release; shared-store dependency proof"
+    }
+  ],
+  "result": "partial-preservation-checkpoint",
+  "retirement_authorized": false,
+  "schema": "limen.recovery_attempt_checkpoint.v1",
+  "source_fresh_git_readback": {
+    "equal": true,
+    "file_count": 6,
+    "local_alternates": false
+  },
+  "source_pr": "https://github.com/4444J99/limen/pull/2834",
+  "temporary_verification_artifacts": {
+    "temporary_artifacts_removed": true,
+    "temporary_allocated_bytes": 51523584,
+    "free_bytes_before": 42291191808,
+    "free_bytes_after": 42342785024,
+    "free_byte_change_attribution": "unattributed-concurrent-volume-change",
+    "original_targets_removed": 0,
+    "receipt_remote_equal": true,
+    "scope": "only-this-attempt-generated-copies",
+    "original_target_cleanup": false
+  },
+  "verification": {
+    "credential_wall": "passed-31-secret-atoms-registered",
+    "full_scoped_exact_tree": "pending",
+    "instruction_drift": "passed-with-documented-template-skips",
+    "legacy_storage_policy": "passed",
+    "ruff_format": "passed",
+    "ruff_lint": "passed",
+    "streaming_and_legacy_tests": {
+      "failed": 0,
+      "passed": 25
+    }
+  },
+  "verified_source_commit": "e8e2b8a729671d04db3d82a1ce36f974360e1cf0",
+  "checkpoint_receipt_commit": "0d3173e85678d34b0ad9e4a0bda3e195845890ee"
+}
