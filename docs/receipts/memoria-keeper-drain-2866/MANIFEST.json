@@ -1,0 +1,165 @@
+{
+  "issue": 2866,
+  "custody_branch": "test/tabularius-organ-memory-2866",
+  "pinned_source_revision": "24da5bffeefb855f1968e0c830c1ca5445a291cf",
+  "note": "origin/main equalled this revision at capture time.",
+  "pinned_source_blobs": {
+    "scripts/tabularius-organ.py": "5c8336ef3872efab5b8521b2a4dfa53e0f4a2823",
+    "cli/src/limen/memoria.py": "a2595a0ac2af00ff53d7226a1a90b2dd20953b0d"
+  },
+  "runs": [
+    {
+      "name": "11-case original reproduction",
+      "harness": "harness/",
+      "evidence": "evidence-11case/",
+      "cases": 11,
+      "interpreter": "/Users/4jp/.local/share/limen/runtimes/b7a61c0bfb87926518f4074af446bed49b07ab8d/venv/bin/python",
+      "execution_command": "env -i PATH=/usr/bin:/bin HOME=$HOME /usr/bin/python3 harness/runner.py",
+      "totals": {
+        "B_created": 4,
+        "B_overwritten": 4,
+        "ACD_created": 3,
+        "ACD_overwritten": 0,
+        "all_created": 7,
+        "all_overwritten": 4,
+        "B_cases_writing": "8/8",
+        "exit_codes_observed": [
+          0
+        ]
+      }
+    },
+    {
+      "name": "13-case extended reproduction (+deferred/processed, flags-aware filter, board injection)",
+      "harness": "harness-13case/",
+      "evidence": "evidence-13case/",
+      "cases": 13,
+      "totals": {
+        "B_created": 4,
+        "B_overwritten": 4,
+        "extra_normal_mode_cases": 2,
+        "exit_codes_observed": [
+          0
+        ]
+      }
+    }
+  ],
+  "instrumentation": {
+    "method": "PEP 578 sys.addaudithook via sitecustomize.py",
+    "install_point": "child interpreter startup, before the entry point imports",
+    "open_filter_11case": "mode string only",
+    "open_filter_13case": "mode string AND CPython open() flags; rename/remove/truncate/chmod/lock covered",
+    "observation_limits": [
+      "not an OS-wide write trace",
+      "not a sandbox",
+      "cannot detect a concurrent external writer",
+      "create-then-delete between snapshots leaves no persistent trace"
+    ],
+    "observed_write_attempts_11case": 36,
+    "observed_memory_store_write_attempts": 0
+  },
+  "permanent_tests": {
+    "path": "cli/tests/test_tabularius_organ_memory.py",
+    "baseline": "8 failed, 6 passed (pytest exit 1)",
+    "interpretation": "expected red; asserts the desired contract"
+  },
+  "files": {
+    "README.md": {
+      "sha256": "0ffe375d71aa6e4cc5dc7352ebe8d2ab9daae1b12af1a6c16eae83a5cbba1216",
+      "bytes": 3655
+    },
+    "permanent-tests-baseline.txt": {
+      "sha256": "186043e2359a13160a3defd47085fa1ae90c1cab27562ed6c2b44f0d438c11df",
+      "bytes": 15439
+    },
+    "evidence-11case/results.json": {
+      "sha256": "88f5192d662e22ec9d5cfb2f59b41a5e535337101573bbb608ac5f45f3050b86",
+      "bytes": 21817
+    },
+    "evidence-11case/writes.jsonl": {
+      "sha256": "1e884f1d9bf5259f841e6d1df2878ac88d096d488746e4cfc2fc619b4e609056",
+      "bytes": 5471
+    },
+    "evidence-13case/results.json": {
+      "sha256": "1c4f184e1e622c26e04e0d02ade0bcbb160ff7b6553f77d2ef3cab22bcaa3d51",
+      "bytes": 26198
+    },
+    "evidence-13case/writes.jsonl": {
+      "sha256": "679bb26bdb3568d33b8791d0adfba8bdf43d9c19bf5b0f2e575e6240443f0109",
+      "bytes": 3857
+    },
+    "harness-13case/runner.py": {
+      "sha256": "f2abbb28344202fd7f6e8f7900fd47e9015750b2256a01278cade52b7d8a7687",
+      "bytes": 9409
+    },
+    "harness-13case/sitecustomize.py": {
+      "sha256": "153e81dbcd77c8c76f93db915aa95684bb6588e487bb3c182e7ea9e6a822fab4",
+      "bytes": 4288
+    },
+    "harness/runner.py": {
+      "sha256": "f68e483556c3d1b86962fa3796af16235f756139a43c4408a18942d6e51dd8ef",
+      "bytes": 8732
+    },
+    "harness/sitecustomize.py": {
+      "sha256": "e3dae03cc9c41dff96bdc1ecb36a926e187404c692187c98d5cf9ae793f2689d",
+      "bytes": 1995
+    },
+    "post-repair/README.md": {
+      "sha256": "c6c1e5ddd28c3abe8a7c46a69adfdcc2fffd5bf4558ec64c230e8a1639e1b73b",
+      "bytes": 6813
+    },
+    "post-repair/limen-root-diagnosis.txt": {
+      "sha256": "84e493f68e2b63f6cc49336c572292b5fc97b2a5b688014b983cfd4160235bc9",
+      "bytes": 1199
+    },
+    "post-repair/neg-control-A-diagnostic-stamp.txt": {
+      "sha256": "1e2db2d279f8febd8155920a52e4ba038e6bfba621dbb1860f71914da48c71cf",
+      "bytes": 12643
+    },
+    "post-repair/neg-control-B-broken-import.txt": {
+      "sha256": "4c7687f8d6ee3cab4c7b6172ada8807f885e4af38f4152ceebaf0e00c88ac9f6",
+      "bytes": 3741
+    },
+    "post-repair/neg-control-C-dead-board-injection.txt": {
+      "sha256": "ae6eeb75be9e1bd610cf3008c19edfd77b0b6a5746abc11528a8966b4ee8d279",
+      "bytes": 5557
+    },
+    "post-repair/neg-control-D-consumer-defect-removed.txt": {
+      "sha256": "07aa09420f7c3865f02c2db15f6446b9f93f8b284cf94894fd2176fc13c2bf48",
+      "bytes": 3154
+    },
+    "post-repair/post-repair-tests.txt": {
+      "sha256": "da461875c5cc94285222393a24b5093fed54e3ba8fafbfeee7ee8ffe473000fe",
+      "bytes": 99
+    },
+    "post-repair/uncontrolled-env-failure-reproduction.txt": {
+      "sha256": "1407b517d512d712a6c476caad27f0db12268aa31c0115b3df97d9fdd0544ece",
+      "bytes": 1471
+    }
+  },
+  "post_repair": {
+    "status": "focused suites green under a controlled environment; branch unmerged, CI acceptance pending",
+    "suites": "cli/tests/test_tabularius_organ_memory.py + cli/tests/test_organ_health_defect.py",
+    "environment": "env -i with LIMEN_ROOT set to the checkout under test",
+    "repaired_result": "43 passed, pytest exit 0",
+    "control_deltas_over_repaired": {
+      "A": 6,
+      "B": 2,
+      "C": 2,
+      "D": 2
+    },
+    "outstanding_failure_disposition": "test_fast_wave_interval_reads_the_deployed_env_file StopIteration is caused by an inherited LIMEN_ROOT pointing at a nonexistent path, not by code. Both 24da5bffe and 47bfb3ba8 pass under a controlled root. Evidence: limen-root-diagnosis.txt",
+    "historical_evidence_modified": false,
+    "predicates": {
+      "focused_suites_green": "satisfied (43 passed, controlled)",
+      "ruff_lint_pinned_0.15.8": "satisfied locally; not CI acceptance",
+      "consumer_distinguishes_memory_failure": "satisfied; Control D proves the wiring",
+      "lock_attribution": "satisfied; /dev/fd readlink fails on macOS, F_GETPATH used instead",
+      "exact_head_ci_acceptance": "not yet observed; check-runs endpoint returned zero records",
+      "live_routing_or_activation": "outside this unit; not claimed"
+    },
+    "not_claimed": [
+      "live activation",
+      "routing acceptance"
+    ]
+  }
+}

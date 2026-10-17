@@ -1,0 +1,545 @@
+{
+  "revision": "24da5bffeefb855f1968e0c830c1ca5445a291cf",
+  "entry": "/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/scripts/tabularius-organ.py",
+  "interpreter": "/Users/4jp/.local/share/limen/runtimes/b7a61c0bfb87926518f4074af446bed49b07ab8d/venv/bin/python",
+  "results": [
+    {
+      "case": "A_baseline_check_memoria_enabled",
+      "argv": [
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 0.171,
+      "stdout": "tabularius: inbox empty\ntabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)",
+      "stderr": "",
+      "state_relpath": "root_absent/logs/tabularius-organ-state.json",
+      "state_before": null,
+      "state_after": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 119,
+        "mtime_ns": 1792171209699103464,
+        "sha256": "a4fcc5b1d4bdd16d7a1ff2d1883d7e2ac8d6128a3580b7c70aa2cf24076cc993"
+      },
+      "state_created": true,
+      "state_overwritten": false,
+      "delta": {
+        "added": [
+          "root_absent",
+          "root_absent/logs",
+          "root_absent/logs/tabularius-organ-state.json"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "env_controlled": {
+        "LIMEN_ROOT": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/A_baseline_check_memoria_enabled/root_absent",
+        "LIMEN_TASKS": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/A_baseline_check_memoria_enabled/board/tasks.yaml",
+        "LIMEN_MEMORY_DIR": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/A_baseline_check_memoria_enabled/mem",
+        "LIMEN_MEMORIA": "1",
+        "LIMEN_WORKDIR": null,
+        "GITHUB_WORKSPACE": null,
+        "HOME": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/A_baseline_check_memoria_enabled/home"
+      },
+      "state_content": "{\n  \"updated\": \"2026-10-16T17:20:09.698852+00:00\",\n  \"pending\": 0,\n  \"mode\": \"check\",\n  \"memory_error\": \"ImportError\"\n}"
+    },
+    {
+      "case": "B_check_mem-absent_health-absent",
+      "argv": [
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 0.156,
+      "stdout": "tabularius: inbox empty\ntabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)",
+      "stderr": "",
+      "state_relpath": "root/logs/tabularius-organ-state.json",
+      "state_before": null,
+      "state_after": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 119,
+        "mtime_ns": 1792171209851358568,
+        "sha256": "84a1dad2551daab12761ad4b28900e104f04ff56b7427c6905ea562eb822b9de"
+      },
+      "state_created": true,
+      "state_overwritten": false,
+      "delta": {
+        "added": [
+          "root",
+          "root/logs",
+          "root/logs/tabularius-organ-state.json"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "env_controlled": {
+        "LIMEN_ROOT": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-absent_health-absent/root",
+        "LIMEN_TASKS": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-absent_health-absent/board/tasks.yaml",
+        "LIMEN_MEMORY_DIR": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-absent_health-absent/mem",
+        "LIMEN_MEMORIA": "1",
+        "LIMEN_WORKDIR": null,
+        "GITHUB_WORKSPACE": null,
+        "HOME": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-absent_health-absent/home"
+      },
+      "state_content": "{\n  \"updated\": \"2026-10-16T17:20:09.850878+00:00\",\n  \"pending\": 0,\n  \"mode\": \"check\",\n  \"memory_error\": \"ImportError\"\n}"
+    },
+    {
+      "case": "B_check_mem-absent_health-preexisting",
+      "argv": [
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 0.215,
+      "stdout": "tabularius: inbox empty\ntabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)",
+      "stderr": "",
+      "state_relpath": "root/logs/tabularius-organ-state.json",
+      "state_before": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 61,
+        "mtime_ns": 1792171209870532576,
+        "sha256": "c06696bc446305af8f73fd5d4a49e3cff2ed331f92d9a5822a245e24f538165b"
+      },
+      "state_after": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 119,
+        "mtime_ns": 1792171210062059242,
+        "sha256": "14c3f2b81a92154bb672178a82a2bb037bbdeb102c01375ab2655ec631bc5c38"
+      },
+      "state_created": false,
+      "state_overwritten": true,
+      "delta": {
+        "added": [],
+        "removed": [],
+        "changed": [
+          "root/logs/tabularius-organ-state.json"
+        ]
+      },
+      "env_controlled": {
+        "LIMEN_ROOT": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-absent_health-preexisting/root",
+        "LIMEN_TASKS": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-absent_health-preexisting/board/tasks.yaml",
+        "LIMEN_MEMORY_DIR": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-absent_health-preexisting/mem",
+        "LIMEN_MEMORIA": "1",
+        "LIMEN_WORKDIR": null,
+        "GITHUB_WORKSPACE": null,
+        "HOME": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-absent_health-preexisting/home"
+      },
+      "state_content": "{\n  \"updated\": \"2026-10-16T17:20:10.060102+00:00\",\n  \"pending\": 0,\n  \"mode\": \"check\",\n  \"memory_error\": \"ImportError\"\n}"
+    },
+    {
+      "case": "B_check_mem-populated_health-absent",
+      "argv": [
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 0.378,
+      "stdout": "tabularius: inbox empty\ntabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)",
+      "stderr": "",
+      "state_relpath": "root/logs/tabularius-organ-state.json",
+      "state_before": null,
+      "state_after": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 119,
+        "mtime_ns": 1792171210427565740,
+        "sha256": "a7733c1baabc5b15ef1528507f27fbed5aae5a8add8c2cbaa29a7e4e4d67b489"
+      },
+      "state_created": true,
+      "state_overwritten": false,
+      "delta": {
+        "added": [
+          "root",
+          "root/logs",
+          "root/logs/tabularius-organ-state.json"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "env_controlled": {
+        "LIMEN_ROOT": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-populated_health-absent/root",
+        "LIMEN_TASKS": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-populated_health-absent/board/tasks.yaml",
+        "LIMEN_MEMORY_DIR": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-populated_health-absent/mem",
+        "LIMEN_MEMORIA": "1",
+        "LIMEN_WORKDIR": null,
+        "GITHUB_WORKSPACE": null,
+        "HOME": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-populated_health-absent/home"
+      },
+      "state_content": "{\n  \"updated\": \"2026-10-16T17:20:10.427261+00:00\",\n  \"pending\": 0,\n  \"mode\": \"check\",\n  \"memory_error\": \"ImportError\"\n}"
+    },
+    {
+      "case": "B_check_mem-populated_health-preexisting",
+      "argv": [
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 0.176,
+      "stdout": "tabularius: inbox empty\ntabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)",
+      "stderr": "",
+      "state_relpath": "root/logs/tabularius-organ-state.json",
+      "state_before": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 61,
+        "mtime_ns": 1792171210474184796,
+        "sha256": "c06696bc446305af8f73fd5d4a49e3cff2ed331f92d9a5822a245e24f538165b"
+      },
+      "state_after": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 119,
+        "mtime_ns": 1792171210636572406,
+        "sha256": "b0abcc049385c77e9b7a65c8ecd16711b017345c5d227e61d7e234ff91e1bee6"
+      },
+      "state_created": false,
+      "state_overwritten": true,
+      "delta": {
+        "added": [],
+        "removed": [],
+        "changed": [
+          "root/logs/tabularius-organ-state.json"
+        ]
+      },
+      "env_controlled": {
+        "LIMEN_ROOT": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-populated_health-preexisting/root",
+        "LIMEN_TASKS": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-populated_health-preexisting/board/tasks.yaml",
+        "LIMEN_MEMORY_DIR": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-populated_health-preexisting/mem",
+        "LIMEN_MEMORIA": "1",
+        "LIMEN_WORKDIR": null,
+        "GITHUB_WORKSPACE": null,
+        "HOME": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_check_mem-populated_health-preexisting/home"
+      },
+      "state_content": "{\n  \"updated\": \"2026-10-16T17:20:10.636343+00:00\",\n  \"pending\": 0,\n  \"mode\": \"check\",\n  \"memory_error\": \"ImportError\"\n}"
+    },
+    {
+      "case": "B_dry-run_mem-absent_health-absent",
+      "argv": [
+        "--dry-run"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 0.16,
+      "stdout": "tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)\ntabularius: OK \u2014 inbox empty (no-op)",
+      "stderr": "",
+      "state_relpath": "root/logs/tabularius-organ-state.json",
+      "state_before": null,
+      "state_after": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 156,
+        "mtime_ns": 1792171210796409921,
+        "sha256": "032de4d683a65aefb42fc782a3fc68fd4ca449d4f977219c978f27a5bfeee935"
+      },
+      "state_created": true,
+      "state_overwritten": false,
+      "delta": {
+        "added": [
+          "root",
+          "root/logs",
+          "root/logs/tabularius-organ-state.json"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "env_controlled": {
+        "LIMEN_ROOT": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-absent_health-absent/root",
+        "LIMEN_TASKS": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-absent_health-absent/board/tasks.yaml",
+        "LIMEN_MEMORY_DIR": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-absent_health-absent/mem",
+        "LIMEN_MEMORIA": "1",
+        "LIMEN_WORKDIR": null,
+        "GITHUB_WORKSPACE": null,
+        "HOME": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-absent_health-absent/home"
+      },
+      "state_content": "{\n  \"updated\": \"2026-10-16T17:20:10.796037+00:00\",\n  \"pending\": 0,\n  \"applied\": 0,\n  \"rejected\": 0,\n  \"preserve_published\": false,\n  \"preserve_reason\": \"\"\n}"
+    },
+    {
+      "case": "B_dry-run_mem-absent_health-preexisting",
+      "argv": [
+        "--dry-run"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 0.159,
+      "stdout": "tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)\ntabularius: OK \u2014 inbox empty (no-op)",
+      "stderr": "",
+      "state_relpath": "root/logs/tabularius-organ-state.json",
+      "state_before": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 61,
+        "mtime_ns": 1792171210816238974,
+        "sha256": "c06696bc446305af8f73fd5d4a49e3cff2ed331f92d9a5822a245e24f538165b"
+      },
+      "state_after": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 156,
+        "mtime_ns": 1792171210962508049,
+        "sha256": "369bd11bfc271b468e4b83cb03e27e06404de5d2f8857ec9f708e62ad42c632e"
+      },
+      "state_created": false,
+      "state_overwritten": true,
+      "delta": {
+        "added": [],
+        "removed": [],
+        "changed": [
+          "root/logs/tabularius-organ-state.json"
+        ]
+      },
+      "env_controlled": {
+        "LIMEN_ROOT": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-absent_health-preexisting/root",
+        "LIMEN_TASKS": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-absent_health-preexisting/board/tasks.yaml",
+        "LIMEN_MEMORY_DIR": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-absent_health-preexisting/mem",
+        "LIMEN_MEMORIA": "1",
+        "LIMEN_WORKDIR": null,
+        "GITHUB_WORKSPACE": null,
+        "HOME": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-absent_health-preexisting/home"
+      },
+      "state_content": "{\n  \"updated\": \"2026-10-16T17:20:10.962280+00:00\",\n  \"pending\": 0,\n  \"applied\": 0,\n  \"rejected\": 0,\n  \"preserve_published\": false,\n  \"preserve_reason\": \"\"\n}"
+    },
+    {
+      "case": "B_dry-run_mem-populated_health-absent",
+      "argv": [
+        "--dry-run"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 0.148,
+      "stdout": "tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)\ntabularius: OK \u2014 inbox empty (no-op)",
+      "stderr": "",
+      "state_relpath": "root/logs/tabularius-organ-state.json",
+      "state_before": null,
+      "state_after": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 156,
+        "mtime_ns": 1792171211115108028,
+        "sha256": "44d86e2e70324ca9e2b647d8159e237001c0d7214df13f68d38b15bece24115c"
+      },
+      "state_created": true,
+      "state_overwritten": false,
+      "delta": {
+        "added": [
+          "root",
+          "root/logs",
+          "root/logs/tabularius-organ-state.json"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "env_controlled": {
+        "LIMEN_ROOT": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-populated_health-absent/root",
+        "LIMEN_TASKS": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-populated_health-absent/board/tasks.yaml",
+        "LIMEN_MEMORY_DIR": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-populated_health-absent/mem",
+        "LIMEN_MEMORIA": "1",
+        "LIMEN_WORKDIR": null,
+        "GITHUB_WORKSPACE": null,
+        "HOME": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-populated_health-absent/home"
+      },
+      "state_content": "{\n  \"updated\": \"2026-10-16T17:20:11.114855+00:00\",\n  \"pending\": 0,\n  \"applied\": 0,\n  \"rejected\": 0,\n  \"preserve_published\": false,\n  \"preserve_reason\": \"\"\n}"
+    },
+    {
+      "case": "B_dry-run_mem-populated_health-preexisting",
+      "argv": [
+        "--dry-run"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 0.147,
+      "stdout": "tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)\ntabularius: OK \u2014 inbox empty (no-op)",
+      "stderr": "",
+      "state_relpath": "root/logs/tabularius-organ-state.json",
+      "state_before": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 61,
+        "mtime_ns": 1792171211129213804,
+        "sha256": "c06696bc446305af8f73fd5d4a49e3cff2ed331f92d9a5822a245e24f538165b"
+      },
+      "state_after": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 156,
+        "mtime_ns": 1792171211261842772,
+        "sha256": "405725aaffead1970cf6079443b9570d55edb37346cc1eb88c6ca0a3cec28297"
+      },
+      "state_created": false,
+      "state_overwritten": true,
+      "delta": {
+        "added": [],
+        "removed": [],
+        "changed": [
+          "root/logs/tabularius-organ-state.json"
+        ]
+      },
+      "env_controlled": {
+        "LIMEN_ROOT": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-populated_health-preexisting/root",
+        "LIMEN_TASKS": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-populated_health-preexisting/board/tasks.yaml",
+        "LIMEN_MEMORY_DIR": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-populated_health-preexisting/mem",
+        "LIMEN_MEMORIA": "1",
+        "LIMEN_WORKDIR": null,
+        "GITHUB_WORKSPACE": null,
+        "HOME": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/B_dry-run_mem-populated_health-preexisting/home"
+      },
+      "state_content": "{\n  \"updated\": \"2026-10-16T17:20:11.261618+00:00\",\n  \"pending\": 0,\n  \"applied\": 0,\n  \"rejected\": 0,\n  \"preserve_published\": false,\n  \"preserve_reason\": \"\"\n}"
+    },
+    {
+      "case": "C_control_check_memoria_disabled",
+      "argv": [
+        "--check"
+      ],
+      "exit_code": 0,
+      "elapsed_s": 0.148,
+      "stdout": "tabularius: inbox empty",
+      "stderr": "",
+      "state_relpath": "root/logs/tabularius-organ-state.json",
+      "state_before": null,
+      "state_after": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 86,
+        "mtime_ns": 1792171211410804275,
+        "sha256": "b117cd365387477ec753f69e65adb2743ed8aee98c6f0aebb9bcdd62851309cf"
+      },
+      "state_created": true,
+      "state_overwritten": false,
+      "delta": {
+        "added": [
+          "root",
+          "root/logs",
+          "root/logs/tabularius-organ-state.json"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "env_controlled": {
+        "LIMEN_ROOT": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/C_control_check_memoria_disabled/root",
+        "LIMEN_TASKS": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/C_control_check_memoria_disabled/board/tasks.yaml",
+        "LIMEN_MEMORY_DIR": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/C_control_check_memoria_disabled/mem",
+        "LIMEN_MEMORIA": null,
+        "LIMEN_WORKDIR": null,
+        "GITHUB_WORKSPACE": null,
+        "HOME": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/C_control_check_memoria_disabled/home"
+      },
+      "state_content": "{\n  \"updated\": \"2026-10-16T17:20:11.410568+00:00\",\n  \"pending\": 0,\n  \"mode\": \"check\"\n}"
+    },
+    {
+      "case": "D_normal_mode_empty_board",
+      "argv": [],
+      "exit_code": 0,
+      "elapsed_s": 0.149,
+      "stdout": "tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)\ntabularius: OK \u2014 inbox empty; local publication skipped (remote-keeper-owns-projection)",
+      "stderr": "",
+      "state_relpath": "root/logs/tabularius-organ-state.json",
+      "state_before": null,
+      "state_after": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 185,
+        "mtime_ns": 1792171211564489885,
+        "sha256": "44175672ee0a335f84974a5a38df63ddd8a5acc3fc0272c251a2834c47602c56"
+      },
+      "state_created": true,
+      "state_overwritten": false,
+      "delta": {
+        "added": [
+          "root",
+          "root/logs",
+          "root/logs/tabularius-organ-state.json"
+        ],
+        "removed": [],
+        "changed": []
+      },
+      "env_controlled": {
+        "LIMEN_ROOT": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/D_normal_mode_empty_board/root",
+        "LIMEN_TASKS": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/D_normal_mode_empty_board/board/tasks.yaml",
+        "LIMEN_MEMORY_DIR": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/D_normal_mode_empty_board/mem",
+        "LIMEN_MEMORIA": "1",
+        "LIMEN_WORKDIR": null,
+        "GITHUB_WORKSPACE": null,
+        "HOME": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/D_normal_mode_empty_board/home"
+      },
+      "state_content": "{\n  \"updated\": \"2026-10-16T17:20:11.564235+00:00\",\n  \"pending\": 0,\n  \"applied\": 0,\n  \"rejected\": 0,\n  \"preserve_published\": false,\n  \"preserve_reason\": \"remote-keeper-owns-projection\"\n}"
+    },
+    {
+      "case": "D2_normal_mode_board-deferred_fault_injected",
+      "argv": [],
+      "exit_code": 0,
+      "elapsed_s": 0.145,
+      "stdout": "tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)\ntabularius: 3 ticket(s) deferred (synthetic deferral (fault injection))",
+      "stderr": "",
+      "state_relpath": "root/logs/tabularius-organ-state.json",
+      "state_before": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 61,
+        "mtime_ns": 1792171211579206039,
+        "sha256": "c06696bc446305af8f73fd5d4a49e3cff2ed331f92d9a5822a245e24f538165b"
+      },
+      "state_after": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 120,
+        "mtime_ns": 1792171211712231884,
+        "sha256": "6579c1846352a31cc63c4e473b9cfb4366f60a0428629517182928614e65f72e"
+      },
+      "state_created": false,
+      "state_overwritten": true,
+      "delta": {
+        "added": [],
+        "removed": [],
+        "changed": [
+          "root/logs/tabularius-organ-state.json"
+        ]
+      },
+      "env_controlled": {
+        "LIMEN_ROOT": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/D2_normal_mode_board-deferred_fault_injected/root",
+        "LIMEN_TASKS": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/D2_normal_mode_board-deferred_fault_injected/board/tasks.yaml",
+        "LIMEN_MEMORY_DIR": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/D2_normal_mode_board-deferred_fault_injected/mem",
+        "LIMEN_MEMORIA": "1",
+        "LIMEN_WORKDIR": null,
+        "GITHUB_WORKSPACE": null,
+        "HOME": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/D2_normal_mode_board-deferred_fault_injected/home"
+      },
+      "state_content": "{\n  \"updated\": \"2026-10-16T17:20:11.712008+00:00\",\n  \"pending\": 3,\n  \"applied\": 0,\n  \"rejected\": 0,\n  \"deferred\": true\n}"
+    },
+    {
+      "case": "D2_normal_mode_board-processed_fault_injected",
+      "argv": [],
+      "exit_code": 0,
+      "elapsed_s": 0.143,
+      "stdout": "tabularius[memoria]: skipped (ImportError: cannot import name 'MEMORY_DIR' from 'limen.memoria' (/Users/4jp/Workspace/limen/.worktrees/memoria-repro-2866/cli/src/l)\ntabularius: broker acknowledged 2 ticket(s); quarantined 1; local publication skipped: remote-keeper-owns-projection",
+      "stderr": "",
+      "state_relpath": "root/logs/tabularius-organ-state.json",
+      "state_before": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 61,
+        "mtime_ns": 1792171211727168664,
+        "sha256": "c06696bc446305af8f73fd5d4a49e3cff2ed331f92d9a5822a245e24f538165b"
+      },
+      "state_after": {
+        "type": "file",
+        "mode": "0o644",
+        "size": 219,
+        "mtime_ns": 1792171211858312999,
+        "sha256": "53a4b66ba17a36a0c841c6760eca5748a9e4bd251e6520642e769fee03e19243"
+      },
+      "state_created": false,
+      "state_overwritten": true,
+      "delta": {
+        "added": [],
+        "removed": [],
+        "changed": [
+          "root/logs/tabularius-organ-state.json"
+        ]
+      },
+      "env_controlled": {
+        "LIMEN_ROOT": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/D2_normal_mode_board-processed_fault_injected/root",
+        "LIMEN_TASKS": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/D2_normal_mode_board-processed_fault_injected/board/tasks.yaml",
+        "LIMEN_MEMORY_DIR": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/D2_normal_mode_board-processed_fault_injected/mem",
+        "LIMEN_MEMORIA": "1",
+        "LIMEN_WORKDIR": null,
+        "GITHUB_WORKSPACE": null,
+        "HOME": "/private/var/folders/l9/zn9x070d4xqb1qb5wfzr9tjr0000gn/T/opencode/memoria-repro/sandbox/D2_normal_mode_board-processed_fault_injected/home"
+      },
+      "state_content": "{\n  \"updated\": \"2026-10-16T17:20:11.858093+00:00\",\n  \"pending\": 2,\n  \"applied\": 2,\n  \"rejected\": 1,\n  \"wrote\": 2,\n  \"dry_run\": false,\n  \"preserve_published\": false,\n  \"preserve_reason\": \"remote-keeper-owns-projection\"\n}"
+    }
+  ]
+}

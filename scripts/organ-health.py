@@ -327,6 +327,67 @@ def _json_field_ts(path, *fields):
     return None
 
 
+def _memory_deferral_facts(path):
+    """Read the keeper's memory-deferral streak state, or None when there is none.
+
+    Fail-open on shape for the same reason `_json_nested_error` is: an unreadable or
+    oddly-shaped artifact means "no signal", not "fault", and manufacturing a defect from
+    it would turn a format change into a false operator atom.
+    """
+    try:
+        obj = json.loads(Path(path).read_text())
+    except (OSError, ValueError):
+        return None
+    if not isinstance(obj, dict):
+        return None
+    note = obj.get("memory_deferred")
+    if not (isinstance(note, str) and note.strip()):
+        return None
+    streak = obj.get("memory_defer_streak")
+    streak = streak if isinstance(streak, int) and streak > 0 else 1
+    since = _json_field_ts(path, "memory_deferred_since")
+    hours = max(0.0, (time.time() - since) / 3600) if since is not None else 0.0
+    return {"note": note.strip(), "streak": streak, "hours": round(hours, 1)}
+
+
+def _memory_deferral_defect(path, *, min_streak=2, min_hours=1.0):
+    """Repeated deferrals with no successful drain in between: the lane is stuck.
+
+    Two independent conditions, both required, because each alone has a healthy
+    explanation. A streak of 1 is ordinary contention — memoria defers rather than
+    blocking, and the other drainer finishes. An old `since` with a low streak means the
+    stamp has not been rewritten, which freshness already reports. Only repetition AND
+    persistence together mean no drain is succeeding.
+
+    The thresholds are explicit parameters rather than constants so the classification is
+    testable at its boundary; the defaults encode "more than one beat's contention, and
+    past an hour".
+    """
+    facts = _memory_deferral_facts(path)
+    if not facts:
+        return None
+    if facts["streak"] < min_streak or facts["hours"] < min_hours:
+        return None
+    return (
+        f"memory_deferred: {facts['note']} — deferred {facts['streak']} consecutive runs "
+        f"over {facts['hours']}h with no successful drain"
+    )
+
+
+def _memory_deferral_advisory(path, *, min_streak=2, min_hours=1.0):
+    """Name a tolerated deferral without judging it a fault.
+
+    Returns None once the deferral has met `_memory_deferral_defect`'s threshold, so the
+    advisory never competes with the defect reason that supersedes it.
+    """
+    facts = _memory_deferral_facts(path)
+    if not facts:
+        return None
+    if facts["streak"] >= min_streak and facts["hours"] >= min_hours:
+        return None
+    return f"memory deferral — {facts['note']} ({facts['streak']} consecutive run(s), {facts['hours']}h): tolerated"
+
+
 def _json_nested_error(path, *trails, stamp=None):
     """First recorded failure inside an organ's OWN artifact, or None.
 
@@ -602,6 +663,29 @@ def _registry():
             gate_default="1",
             what="the conduct relay — submit the lock-free ticket inbox to the authenticated remote keeper and archive only acknowledged projection receipts",
             probe=lambda: _mtime(LOGS / "tabularius-organ-state.json"),
+            # Freshness answers "did it run", not "did it work". The keeper writes this stamp
+            # even when the memory pass fails, so a fresh mtime over a recorded memory_error
+            # read green indefinitely. The keeper now records the outcome (see #2866); this
+            # reads it, so an enabled-but-failing memory pass is reported `down` instead of
+            # being swallowed by a fresh timestamp. An absent memory_error (lane disabled, or
+            # a clean pass) is not a defect and stays fail-open.
+            #
+            # A memory-lock DEFERRAL is deliberately NOT routed through `defect`. Deferring is
+            # memoria's designed behaviour under contention ("never dead-stop the beat"), so a
+            # single recent one must not read `down` — that would page an operator for a lock
+            # that clears on the next beat. It degrades only once repeated with no successful
+            # drain in between, past an explicit threshold; until then it is an advisory note,
+            # which keeps it visible without inventing a status the dot/label maps and every
+            # downstream reader would have to learn.
+            advisory=lambda: _memory_deferral_advisory(LOGS / "tabularius-organ-state.json"),
+            defect=lambda: (
+                _json_nested_error(
+                    LOGS / "tabularius-organ-state.json",
+                    ("memory_error",),
+                    stamp="updated",
+                )
+                or _memory_deferral_defect(LOGS / "tabularius-organ-state.json")
+            ),
         ),
         # no cadence_key: runs as a metabolize.sh pre-beat check (section 0h), not a
         # timed heartbeat voice — so it claims no cadence and never trips the absent-
@@ -823,6 +907,16 @@ def build():
         if defect:
             status = "down"
             note = " · ".join([b for b in (f"self-reported defect — {defect}", note) if b])
+        # An ADVISORY finding appends to the note WITHOUT touching status. It is the channel
+        # for a real observation that is not yet a defect — lock contention that has not yet
+        # met its threshold. Deliberate: `defect` above forces `down` for ANY non-empty string,
+        # so routing a tolerated deferral through it would turn a designed, self-clearing
+        # contention into a page. Applied AFTER the defect branch so a real defect's own
+        # reason is never crowded out by the advisory it superseded.
+        advisory_probe = o.get("advisory")
+        advisory = advisory_probe() if (advisory_probe and not gated) else None
+        if advisory and not defect:
+            note = " · ".join([b for b in (advisory, note) if b])
 
         organs.append(
             {

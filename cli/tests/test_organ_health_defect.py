@@ -19,6 +19,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "organ-health.py"
 
@@ -31,7 +33,17 @@ def _load():
 
 
 def test_fast_wave_interval_reads_the_deployed_env_file(tmp_path, monkeypatch):
+    # `organ-health.py` resolves ROOT — and therefore SENSORS — at IMPORT time:
+    #     ROOT = Path(os.environ.get("LIMEN_ROOT", Path(__file__).resolve().parents[1]))
+    # An inherited LIMEN_ROOT pointing at a nonexistent path makes _discover_doors()
+    # see an unreadable sensor registry, which it converts to `sensors = {}`. No
+    # `diurnal` row is then discovered and `next(...)` raises StopIteration BEFORE this
+    # test's interval assertion is ever reached — the failure looks like a product
+    # defect when it is invocation configuration. Pin the root before the module loads.
+    monkeypatch.setenv("LIMEN_ROOT", str(ROOT))
     mod = _load()
+    assert mod.SENSORS.exists(), f"sensor registry missing at {mod.SENSORS}"
+
     env_file = tmp_path / "limen.env"
     env_file.write_text("export LIMEN_VITALS_SAMPLE_SECONDS=1200 # twenty minutes\n", encoding="utf-8")
     mod.ENV_FILE = env_file
@@ -280,3 +292,371 @@ def test_the_freshness_budget_is_the_organs_own_cadence_not_one_beat(tmp_path: P
     row = _routines_row(mod)
     assert row["expected_h"] == 6.0, "the budget must track the sensor's --throttle, not one beat"
     assert row["status"] == "green", "a healthy organ inside its own cadence is not down"
+
+
+def test_a_deferral_interrupted_by_a_success_cannot_accumulate_a_streak(tmp_path: Path) -> None:
+    """Repetition must mean CONSECUTIVE contention, not contention over all time.
+
+    This is the case that makes the explicit streak reset load-bearing rather than
+    cosmetic. Sequence: clean, deferred, clean. The keeper writes `memory_defer_streak: 0`
+    on every clean run, so the stamp a reader sees after run 3 is a STREAK OF ONE — the
+    deferral is over and the lane drained.
+
+    If the reset were implied by the field's absence instead, the sequence would leave the
+    reader reading `1` from run 2, and every later isolated contention would restart the
+    count. Enough of those, spread across days, would cross the threshold and turn a
+    healthy lane permanently `down` — the same false green, reached from the other side.
+    """
+    mod = _load()
+    _tabularius_state(
+        mod,
+        tmp_path,
+        {
+            "pending": 0,
+            "applied": 1,
+            "rejected": 0,
+            "memory_pending": 0,
+            "memory_applied": 1,
+            "memory_rejected": 0,
+            "memory_defer_streak": 0,
+            "memory_note": "folded",
+        },
+    )
+
+    row = _tabularius_row(mod)
+    assert row["status"] == "green", row
+    # The recovered run carries no deferral at all, so the reader has nothing to tolerate.
+    assert "memory deferral" not in (row["note"] or ""), row["note"]
+
+
+def test_a_streak_that_never_advanced_cannot_be_reconstructed_from_staleness(tmp_path: Path) -> None:
+    """Staleness and repetition are different faults and must not substitute for each other.
+
+    A stamp recording a deferral with a streak of 1, left untouched for six hours, is an
+    organ that stopped being rewritten — which is what the freshness path already reports.
+    It is NOT evidence of repeated contention, and reading it as such would double-report
+    one fault while hiding which one it is.
+    """
+    mod = _load()
+    _tabularius_state(
+        mod,
+        tmp_path,
+        {
+            "pending": 0,
+            "applied": 0,
+            "rejected": 0,
+            "memory_pending": 1,
+            "memory_applied": 0,
+            "memory_rejected": 0,
+            "memory_deferred": "memory lock held; deferred to next beat",
+            "memory_defer_streak": 1,
+            "memory_deferred_since": _utc_hours_ago(6.0),
+        },
+    )
+
+    row = _tabularius_row(mod)
+    # Not the DEFECT channel: this must not claim a stuck lane it cannot demonstrate.
+    assert "no successful drain" not in row["note"], row["note"]
+    assert "self-reported defect" not in row["note"], row["note"]
+    # The deferral is still named — tolerated, not hidden.
+    assert "memory deferral" in row["note"], row["note"]
+
+
+def test_a_recent_single_deferral_is_tolerated_not_down(tmp_path: Path) -> None:
+    """Contention is memoria's DESIGNED outcome, so one deferral must not page anyone.
+
+    `drain_memory_once` defers rather than blocking when the memory lock is held, and the
+    other drainer finishes. Reading that as `down` would raise an operator atom for a lock
+    that clears on the next beat — so it stays green and is NAMED.
+    """
+    mod = _load()
+    _tabularius_state(
+        mod,
+        tmp_path,
+        {
+            "pending": 0,
+            "applied": 0,
+            "rejected": 0,
+            "memory_pending": 1,
+            "memory_applied": 0,
+            "memory_rejected": 0,
+            "memory_deferred": "memory lock held; deferred to next beat",
+            "memory_defer_streak": 1,
+            "memory_deferred_since": _utc_now(),
+        },
+    )
+
+    row = _tabularius_row(mod)
+    assert row["status"] == "green", row
+    assert "memory deferral" in row["note"], row["note"]
+    assert "tolerated" in row["note"], row["note"]
+    assert "1 consecutive run(s)" in row["note"], row["note"]
+    assert "self-reported defect" not in row["note"], row["note"]
+
+
+def test_repeated_deferrals_with_no_successful_drain_degrade_health(tmp_path: Path) -> None:
+    """The other half: persistence is a real fault, and must not read green forever.
+
+    Same artifact as the tolerated case except repetition and duration. Without this the
+    deferral note would be the only thing standing between a stuck lane and a green row.
+    """
+    mod = _load()
+    _tabularius_state(
+        mod,
+        tmp_path,
+        {
+            "pending": 0,
+            "applied": 0,
+            "rejected": 0,
+            "memory_pending": 1,
+            "memory_applied": 0,
+            "memory_rejected": 0,
+            "memory_deferred": "memory lock held; deferred to next beat",
+            "memory_defer_streak": 7,
+            "memory_deferred_since": _utc_hours_ago(3.0),
+        },
+    )
+
+    row = _tabularius_row(mod)
+    assert row["status"] == "down", row
+    assert "self-reported defect" in row["note"], row["note"]
+    assert "memory_deferred" in row["note"], row["note"]
+    assert "7 consecutive" in row["note"], row["note"]
+    assert "no successful drain" in row["note"], row["note"]
+    # The advisory must yield to the defect rather than crowd its reason out.
+    assert "tolerated" not in row["note"], row["note"]
+
+
+@pytest.mark.parametrize(
+    ("streak", "hours", "why"),
+    [
+        (1, 5.0, "repeated is required; a long-past single deferral is not 'repeated'"),
+        (9, 0.0, "persistent is required; repetition inside the window is tolerated"),
+    ],
+)
+def test_either_deferral_condition_alone_stays_green(tmp_path: Path, streak: int, hours: float, why: str) -> None:
+    """Both conditions are required, so each alone must keep the lane green.
+
+    Without these the classification could pass on repetition alone — which a one-beat
+    lock collision satisfies — or on persistence alone, which a stamp nobody rewrote
+    satisfies. Each is a healthy explanation on its own.
+    """
+    mod = _load()
+    _tabularius_state(
+        mod,
+        tmp_path,
+        {
+            "pending": 0,
+            "applied": 0,
+            "rejected": 0,
+            "memory_pending": 1,
+            "memory_applied": 0,
+            "memory_rejected": 0,
+            "memory_deferred": "memory lock held; deferred to next beat",
+            "memory_defer_streak": streak,
+            "memory_deferred_since": _utc_hours_ago(hours),
+        },
+    )
+
+    row = _tabularius_row(mod)
+    assert row["status"] == "green", f"{why}: {row}"
+    assert "memory deferral" in row["note"], row["note"]
+    assert f"{streak} consecutive run(s)" in row["note"], row["note"]
+
+
+def test_a_successful_drain_carries_no_deferral_and_stays_green(tmp_path: Path) -> None:
+    """The control. A streak counter must be reset by a success, not merely absent.
+
+    A `memory_defer_streak` of 0 with no `memory_deferred` is what a clean drain writes;
+    if the reader keyed off the streak alone it would either page on every clean run or
+    need the field absent to mean healthy.
+    """
+    mod = _load()
+    _tabularius_state(
+        mod,
+        tmp_path,
+        {
+            "pending": 0,
+            "applied": 1,
+            "rejected": 0,
+            "memory_pending": 0,
+            "memory_applied": 1,
+            "memory_rejected": 0,
+            "memory_note": "folded",
+            "memory_defer_streak": 0,
+        },
+    )
+
+    row = _tabularius_row(mod)
+    assert row["status"] == "green", row
+    assert "memory deferral" not in (row["note"] or ""), row["note"]
+    assert "self-reported defect" not in row["note"], row["note"]
+
+
+def test_a_recorded_error_outranks_a_recorded_deferral(tmp_path: Path) -> None:
+    """Both fields present: the error is the reason, and it must not be crowded out."""
+    mod = _load()
+    _tabularius_state(
+        mod,
+        tmp_path,
+        {
+            "pending": 0,
+            "applied": 0,
+            "rejected": 0,
+            "memory_error": "ImportError",
+            "memory_deferred": "memory lock held; deferred to next beat",
+            "memory_defer_streak": 5,
+            "memory_deferred_since": _utc_hours_ago(2.0),
+        },
+    )
+
+    row = _tabularius_row(mod)
+    assert row["status"] == "down", row
+    assert "ImportError" in row["note"], row["note"]
+
+
+def test_deferral_readers_are_quiet_on_anything_that_is_not_a_recorded_deferral(tmp_path: Path) -> None:
+    """Fail-open on shape, like every other reader in this file."""
+    mod = _load()
+    path = tmp_path / "a.json"
+
+    assert mod._memory_deferral_advisory(path) is None
+    assert mod._memory_deferral_defect(path) is None
+
+    path.write_text("{not json")
+    assert mod._memory_deferral_advisory(path) is None
+    assert mod._memory_deferral_defect(path) is None
+
+    path.write_text(json.dumps([1, 2, 3]))
+    assert mod._memory_deferral_advisory(path) is None
+
+    # A non-string / whitespace deferral is not a recorded deferral.
+    path.write_text(json.dumps({"memory_deferred": "   "}))
+    assert mod._memory_deferral_advisory(path) is None
+    path.write_text(json.dumps({"memory_deferred": True}))
+    assert mod._memory_deferral_advisory(path) is None
+
+    # A recorded deferral whose streak/since fields are absent must still be readable:
+    # a reader that required them would go blind on a stamp written before they existed.
+    path.write_text(json.dumps({"memory_deferred": "locked"}))
+    assert mod._memory_deferral_advisory(path) is not None
+    assert mod._memory_deferral_defect(path) is None
+
+
+# --- TABVLARIVS memory-pass consumer acceptance (issue #2866) -----------------
+#
+# The producer records the memory outcome, but a producer-side fix proves nothing about the
+# reader. These tests vary ONLY the recorded memory outcome while holding freshness constant,
+# so a change in classification can only come from the defect channel.
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _utc_hours_ago(hours: float) -> str:
+    when = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(hours=hours)
+    return when.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _tabularius_state(mod, tmp_path: Path, state: dict[str, Any]) -> None:
+    """Publish a freshly-written tabularius state file, so every age signal says healthy."""
+    logs = tmp_path / "logs"
+    logs.mkdir(parents=True, exist_ok=True)
+    now = datetime.now(timezone.utc).replace(microsecond=0)
+    # Same trailing-Z form the keeper producer emits; `_json_field_ts` honours it.
+    payload = {"updated": now.strftime("%Y-%m-%dT%H:%M:%SZ"), **state}
+    (logs / "tabularius-organ-state.json").write_text(json.dumps(payload))
+    mod.LOGS = logs
+
+
+def _tabularius_row(mod) -> dict[str, Any]:
+    rows = mod.build()["organs"]
+    row = next((r for r in rows if r["key"] == "tabularius"), None)
+    assert row is not None, "the tabularius rung is no longer discovered"
+    return row
+
+
+def test_a_fresh_keeper_stamp_over_a_recorded_memory_error_is_reported_down(tmp_path: Path) -> None:
+    """Freshness says the organ ran; the recorded failure says its memory half did not.
+
+    Every age-based signal here is deliberately perfect — the state file was written seconds
+    ago. Only `memory_error` says otherwise. Without the defect channel this exact artifact
+    reads green indefinitely, because the keeper writes the stamp even when memory fails.
+    """
+    mod = _load()
+    _tabularius_state(
+        mod,
+        tmp_path,
+        {
+            "pending": 0,
+            "applied": 0,
+            "rejected": 0,
+            "memory_error": "ImportError",
+        },
+    )
+
+    row = _tabularius_row(mod)
+    assert row["status"] == "down", row
+    assert "self-reported defect" in row["note"], row["note"]
+    assert "memory_error" in row["note"], row["note"]
+    assert "ImportError" in row["note"], row["note"]
+    # Freshness itself is untouched: the keeper DID fire.
+    assert row["age_h"] is not None and row["age_h"] < 1
+
+
+def test_a_fresh_keeper_stamp_over_a_successful_memory_pass_stays_green(tmp_path: Path) -> None:
+    """The control. Without it, a defect channel hard-wired to `down` would also pass."""
+    mod = _load()
+    _tabularius_state(
+        mod,
+        tmp_path,
+        {
+            "pending": 0,
+            "applied": 0,
+            "rejected": 0,
+            "memory_pending": 0,
+            "memory_applied": 0,
+            "memory_rejected": 0,
+        },
+    )
+
+    row = _tabularius_row(mod)
+    assert row["status"] == "green", row
+    assert "self-reported defect" not in (row["note"] or "")
+
+
+def test_a_fresh_keeper_stamp_with_no_memory_lane_recorded_stays_green(tmp_path: Path) -> None:
+    """Intended disabled behavior: the lane is dark, so there is no memory verdict to read.
+
+    When LIMEN_MEMORIA is off the keeper records no memory fields at all. Absence is not a
+    recorded failure, so the reader stays fail-open rather than manufacturing an atom.
+    """
+    mod = _load()
+    _tabularius_state(mod, tmp_path, {"pending": 0, "applied": 0, "rejected": 0})
+
+    row = _tabularius_row(mod)
+    assert row["status"] == "green", row
+    assert "self-reported defect" not in (row["note"] or "")
+
+
+def test_a_recorded_memory_error_names_its_own_age_not_the_voice(tmp_path: Path) -> None:
+    """The state stamp is the artifact's own clock; the suffix must not claim false immediacy."""
+    mod = _load()
+    logs = tmp_path / "logs"
+    logs.mkdir(parents=True, exist_ok=True)
+    stale = datetime.now(timezone.utc).replace(microsecond=0) - timedelta(hours=3)
+    (logs / "tabularius-organ-state.json").write_text(
+        json.dumps(
+            {
+                "updated": stale.strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "memory_error": "ImportError",
+            }
+        )
+    )
+    mod.LOGS = logs
+
+    row = _tabularius_row(mod)
+    # Staleness alone already reads not-green; what matters is that the reason travels.
+    assert row["status"] == "down", row
+    assert "recorded 3" in row["note"] or "recorded 2.9" in row["note"], row["note"]
