@@ -368,6 +368,20 @@ def test_fixture_mode_is_alive_end_to_end_with_the_real_homing_check(stubs):
     )
 
 
+def test_fixture_mode_is_alive_with_the_real_recurring_form_builder(stubs):
+    env = {k: v for k, v in _environment(stubs).items() if k != "KNOWLEDGE_ALIVE_FORMS_SCRIPT"}
+    done = subprocess.run(
+        [sys.executable, str(SCRIPT), "--fixture"], capture_output=True, text=True, env=env, timeout=300, check=False
+    )
+    assert done.returncode == 0, done.stdout + done.stderr
+    lines = done.stdout.splitlines()
+    assert re.fullmatch(
+        r"check 7 recurring forms: ok [1-9]\d* forms, \d+ members, [1-9]\d* spanning two or more providers", lines[6]
+    )
+    assert lines[9] == "check 10 determinism: ok"
+    assert re.fullmatch(r"ALIVE [0-9a-f]{16}", lines[-1])
+
+
 def test_output_is_deterministic_and_carries_no_text_ids_titles_or_paths(stubs):
     first = _run(stubs, "--fixture")
     second = _run(stubs, "--fixture")

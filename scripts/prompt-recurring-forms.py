@@ -279,7 +279,7 @@ def read_index(private_dir: Path) -> list[Row]:
 
 
 def write_atomically(path: Path, content: bytes) -> None:
-    temporary = path.with_name(f".{path.name}.tmp-{os.getpid()}")
+    temporary = path.with_name(f".{path.name}.partial-{os.getpid()}")
     descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     try:
         with os.fdopen(descriptor, "wb") as handle:
