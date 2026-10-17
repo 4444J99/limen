@@ -409,6 +409,12 @@ def test_a_deferral_records_a_streak_that_a_success_resets(tmp_path):
     assert first.get("memory_deferred_since"), f"streak start not recorded: {first}"
     first_since = first["memory_deferred_since"]
 
+    # Whole-second stamps: two runs inside the same second produce IDENTICAL strings, so
+    # "the start was preserved" and "the start was rewritten to now" are indistinguishable.
+    # Without this the assertion below is vacuous, and it stayed vacuous through a control
+    # that removed the carry-forward and still passed.
+    time.sleep(1.1)
+
     # A second contended run advances the streak and preserves the original start, so a
     # reader can tell repetition from a single recent event.
     _run_with_deferred_memory_lock(sb)
@@ -428,6 +434,49 @@ def test_a_deferral_records_a_streak_that_a_success_resets(tmp_path):
     third = sb.state_payload()
     assert "memory_deferred" not in third, f"a clean drain still reports a deferral: {third}"
     assert third.get("memory_defer_streak") == 0, third
+
+
+def test_a_recovery_starts_a_new_streak_with_a_new_start_time(tmp_path):
+    """A deferral after a recovery must not inherit the pre-recovery streak start.
+
+    This is the sequence that distinguishes the two halves of the carry-forward: defer,
+    succeed, defer again. The third run is a streak of ONE, so its `memory_deferred_since`
+    must be when *that* streak began — not when the first, already-ended streak began.
+
+    Without the success resetting `memory_deferred_since`, the reader would date the new
+    deferral to a recovery boundary and compute a persistence that never elapsed, so a
+    lane that recovered and then hit one ordinary collision could age into `down` on a
+    clock that was never running.
+
+    The sleeps are load-bearing: both stamps are written with whole-second precision, so
+    runs inside the same second produce identical strings and the comparison is vacuous.
+    """
+    sb = KeeperSandbox(tmp_path, "streak-restart", memoria=True, memory_populated=True)
+
+    _run_with_deferred_memory_lock(sb)
+    first_since = sb.state_payload()["memory_deferred_since"]
+
+    # A successful drain clears the streak, so the next deferral starts a new one. It
+    # also CONSUMES the ticket, so re-seed the inbox — an empty inbox returns before
+    # locking and would never defer, making the sequence test nothing.
+    sb.run()
+    assert sb.state_payload().get("memory_defer_streak") == 0
+    assert "memory_deferred_since" not in sb.state_payload(), (
+        f"a successful drain left a streak start behind: {sb.state_payload()}"
+    )
+    inbox = sb.memory_dir / ".covenant-inbox"
+    inbox.mkdir(parents=True, exist_ok=True)
+    (inbox / "synthetic.json").write_text(json.dumps(VALID_TICKET))
+
+    time.sleep(1.1)  # whole-second stamps: without this both reads are the same string
+
+    _run_with_deferred_memory_lock(sb)
+    third = sb.state_payload()
+    assert third.get("memory_defer_streak") == 1, f"streak did not restart: {third}"
+    assert third["memory_deferred_since"] != first_since, (
+        "a post-recovery deferral inherited the ended streak's start time: "
+        f"{third['memory_deferred_since']} == {first_since}"
+    )
 
 
 def test_a_clean_drain_records_no_deferral_fields(tmp_path):
