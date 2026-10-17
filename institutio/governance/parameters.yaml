@@ -4463,6 +4463,12 @@ parameters:
     self_update: none
     owner: continuity
     note: "Timeout (seconds) for the residue census: du walks .agent-runtime (~10 GiB, ~1.2s measured) and logs/, plus three git ref counts — cheap, but it needs more headroom than a pure-registry check."
+  LIMEN_RESIDUE_DU_TIMEOUT:
+    default: 25
+    env: LIMEN_RESIDUE_DU_TIMEOUT
+    self_update: none
+    owner: continuity
+    note: "Per-walk du timeout (seconds) inside the residue census. Three walks must fit under the heartbeat contract's 90s residue-census probe timeout, because a probe timeout is a system failure that feeds the Rule 55a kill switch. A walk that runs out of time reads as unmeasured, never as a breach. Pinned by test_du_walks_fit_inside_the_heartbeat_probe_timeout."
   LIMEN_RESIDUE_WORKTREES:
     default: 8
     env: LIMEN_RESIDUE_WORKTREES
