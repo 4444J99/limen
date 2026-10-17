@@ -125,3 +125,11 @@ def test_complex_requirement_never_assumes_unknown_reasoning():
         )
     )[0]
     assert not model.satisfies(replace(execution_profile_for(None), reasoning_depth=0.9))
+
+
+def test_unknown_availability_is_not_eligible():
+    raw = entry()
+    raw.pop("enabled")
+    model = parse_opencode_catalog(json.dumps(raw))[0]
+    assert not model.active
+    assert select_opencode_model([model], execution_profile_for(None)) is None

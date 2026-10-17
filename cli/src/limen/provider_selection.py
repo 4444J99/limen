@@ -251,10 +251,12 @@ def _capability_from_payload(payload: dict[str, Any], reported_id: str = "") -> 
     limits = _dict_value(payload, "limit")
     costs = payload.get("cost")
     variants = payload.get("variants") or []
-    status = str(payload.get("status") or "active").strip().lower()
+    status = str(payload.get("status") or "").strip().lower()
+    enabled = payload.get("enabled")
+    available = {"active", "available", "ready"}
     return ModelCapability(
         model_id=model_id,
-        active=status in {"active", "available", "ready"} and payload.get("enabled", True) is True,
+        active=(enabled is True or (enabled is None and status in available)) and (not status or status in available),
         text_input=input_caps.get("text") is True
         or (isinstance(capabilities.get("input"), list) and "text" in capabilities["input"]),
         text_output=output_caps.get("text") is True
