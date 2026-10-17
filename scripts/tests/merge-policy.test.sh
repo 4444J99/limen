@@ -311,6 +311,15 @@ else
 fi
 unset GH_PR_VIEW_ERROR
 
+# 2026-10-17: an unclassified lookup failure must SURFACE its gh diagnostic (bounded, scrubbed)
+# on the BLOCKED path, and must never leak a credential shape into the verdict output.
+export GH_PR_VIEW_ERROR="HTTP 404 Not Found token ghp_abcdefghijklmnopqrstuvwxyz0123456789"  # allow-secret: synthetic fixture
+check_output "blocked: diagnostic surfaces" 3 "HTTP 404 Not Found" "ghp_abcdef"
+unset GH_PR_VIEW_ERROR
+export GH_PR_VIEW_ERROR="$(printf 'LEADING-MARKER-%0400d tail-marker' 0)"
+check_output "blocked: diagnostic is bounded" 3 "tail-marker" "LEADING-MARKER"
+unset GH_PR_VIEW_ERROR
+
 # The check rollup must remain attached to the exact head captured in the first PR snapshot.
 export GH_RECHECK_HEAD=bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
 mkjson OPEN false CLEAN "$DOC_FILES" "$GREEN"; check "head changed during predicate" 2
