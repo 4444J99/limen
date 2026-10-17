@@ -113,6 +113,16 @@ lookup_failure() {
     echo "VERDICT: HOLD — GitHub API lookup failed with a transient transport error; re-run." >&2
     exit 2
   fi
+  # Surface the captured diagnostic so an unclassified failure is verifiable (2026-10-17: PR #2904
+  # returned BLOCKED twice while `gh pr view` succeeded, and nothing recorded why). Bounded to the
+  # last 300 bytes, control characters stripped, credential shapes redacted; stderr only.
+  diag="$(tail -c 300 "$err" | LC_ALL=C tr -d '\000-\010\013-\037' | sed -E \
+    -e 's/gh[pousr]_[A-Za-z0-9]{20,}/[REDACTED]/g' \
+    -e 's/github_pat_[A-Za-z0-9_]{20,}/[REDACTED]/g' \
+    -e 's/([Bb]earer|[Tt]oken|TOKEN|[Aa]uthorization)([[:space:]:=]+)[^[:space:]]+/\1\2[REDACTED]/g')"
+  if [ -n "$diag" ]; then
+    printf 'merge-policy: gh diagnostic (scrubbed, last 300B): %s\n' "$diag" >&2
+  fi
   echo "VERDICT: BLOCKED — cannot read PR; lookup failure cause is unverified." >&2
   exit 3
 }
