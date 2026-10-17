@@ -322,6 +322,7 @@ def test_a_recent_single_deferral_is_tolerated_not_down(tmp_path: Path) -> None:
     assert row["status"] == "green", row
     assert "memory deferral" in row["note"], row["note"]
     assert "tolerated" in row["note"], row["note"]
+    assert "1 consecutive run(s)" in row["note"], row["note"]
     assert "self-reported defect" not in row["note"], row["note"]
 
 
@@ -394,6 +395,7 @@ def test_either_deferral_condition_alone_stays_green(
     row = _tabularius_row(mod)
     assert row["status"] == "green", f"{why}: {row}"
     assert "memory deferral" in row["note"], row["note"]
+    assert f"{streak} consecutive run(s)" in row["note"], row["note"]
 
 
 def test_a_successful_drain_carries_no_deferral_and_stays_green(tmp_path: Path) -> None:

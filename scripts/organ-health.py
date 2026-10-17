@@ -385,7 +385,10 @@ def _memory_deferral_advisory(path, *, min_streak=2, min_hours=1.0):
         return None
     if facts["streak"] >= min_streak and facts["hours"] >= min_hours:
         return None
-    return f"memory deferral — {facts['note']} ({facts['streak']} run(s), {facts['hours']}h): tolerated"
+    return (
+        f"memory deferral — {facts['note']} "
+        f"({facts['streak']} consecutive run(s), {facts['hours']}h): tolerated"
+    )
 
 
 def _json_nested_error(path, *trails, stamp=None):
