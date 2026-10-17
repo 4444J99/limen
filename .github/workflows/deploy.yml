@@ -26,7 +26,7 @@ jobs:
     # most once per idle day. Fail-open by construction: a cache miss or lookup
     # error deploys exactly as before; only a proven already-deployed
     # fingerprint skips.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       should_deploy: ${{ steps.decide.outputs.should_deploy }}
       fingerprint: ${{ steps.fp.outputs.hash }}
@@ -62,7 +62,7 @@ jobs:
       actions: write
     needs: precheck
     if: needs.precheck.outputs.should_deploy == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       GCP_SA_KEY_SET: ${{ secrets.GCP_SA_KEY != '' }}
       CF_PAGES_TOKEN_SET: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
