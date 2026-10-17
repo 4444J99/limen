@@ -69,3 +69,40 @@ with the hook-estate rollout owner. Fixtures establish source behavior only.
 Retain the isolated topic checkout through publication and acceptance. The primary
 Limen checkout's one-commit drift and unrelated files belong to the existing release
 owner; this session did not fast-forward or otherwise alter that checkout.
+
+## Estate completion audit, 2026-10-17 16:49 UTC
+
+The concurrent Domus source packet is now committed through `d6ad7263`.
+Its owning receipt is `docs/receipts/hook-estate-20261017.md`; its preserved
+pre-deployment census is `docs/receipts/hook-estate-census-20261017-before.json`,
+observed at 16:41:12 UTC. Inspection of that committed snapshot confirms 64 roots,
+1102 surfaces, 364 handler declarations and 165 explicit coverage gaps. This is a
+historical baseline, not a current installed/enforced census.
+
+| Original requirement | Evidence and remaining acceptance | Owner |
+|---|---|---|
+| Effective roots, project/plugin/scoped discovery, registry/worktree reconciliation | Candidate inventory and reference generator exist; unresolved repositories and source renders keep coverage unknown. | Domus inventory |
+| Separate configured, enabled, trusted, intercepted and enforced states | Snapshot records the fields separately; all 364 interception/enforcement fields are unknown. | Native runtime acceptance |
+| Every discovered surface has an owner and disposition | All 364 handler rows have both fields, but all 1102 surface rows lack both. Add surface-level ownership/disposition and regression coverage before claiming this completion clause. | Domus inventory |
+| Shared evaluator, command-aware matching, actual model inheritance/routing | Source packet exists; fixture results and native behavior require their own evidence. Cross-provider tier equivalence remains unresolved in its owner receipt. | Domus policy |
+| Mandatory input/delegate failures block covered mutations | This Limen packet has 62 passing fixtures; global suppression stays conservative until native project execution is proven. | Limen admission and Domus adapter |
+| Concurrency-safe cadence and bounded closeout failure accounting | Shared source changes exist; deployment and observed operation remain separate. Intentional paired SessionEnd producers remain represented. | Domus lifecycle |
+| Claude failure contract; native Gemini/OpenCode/Copilot/Cursor adapters | Source definitions exist; new providers begin in observation. No source declaration establishes activation. Copilot timeout fail-open remains an explicit limitation. | Provider adapters |
+| Codex discovery, trust/hash, matcher, payload and consumed verdict | Changed registration commands still require native review and fresh CLI/current-client receipts. No trust hashes were manufactured. | Native Codex loader |
+| Independent fixture, interception and enforcement acceptance | Only fixture behavior is proven here. No native denial/allow marker pair is claimed. | Hook-estate acceptance |
+| Two fresh sessions, 24 hours and 20 representative events | Pending; no synthetic timestamps, event counts or session evidence substitute for observed activity. | Hook-estate acceptance |
+| Unsupported/bypassed execution paths remain explicit | Antigravity registration and cloud-orchestrated local hooks remain named gaps in the owning source receipt. | Runtime capability owners |
+| Reviewed scoped deployment and rollback via chezmoi | Source rollout tooling exists; this session applied no managed target and changed no trust state. | Domus rollout |
+| Complete scoped verification, publication and retention | Source is published in draft #2900; #2886 owns the failing broader fixture. Full CLI/API suites and merge remain unproven. Retain checkout. | Limen verification/lifecycle |
+
+Independent-review admission was attempted through the keeper: native session
+registration succeeded with Codex identity and human protection, but the bounded
+read-only review reservation returned `conduct_rejected` (409). No run/lease was
+returned and no reviewer child was launched. This is not independent review proof.
+The existing draft PR remains the review/verification owner.
+
+GitHub CLI and MCP reads subsequently returned 401. Removing ambient token
+overrides did not restore CLI access. Existing SSH authentication successfully
+read the exact topic head, providing a publication route without changing account
+credentials or repository remotes. API authentication remains an access gap;
+SSH publication must not be described as restored GitHub API access.
