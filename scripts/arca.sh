@@ -106,6 +106,17 @@ esac
 vault_key() {
   # Fetch (or first-run: generate) the vault key. The value is captured by callers into a
   # local var and handed to openssl via env — it is never echoed, logged, or written to disk.
+  # ARCA_KEY_SOURCE=op reads the credential-organ escrow copy instead of the Keychain, which is
+  # what proves a restore works WITHOUT this host's Keychain (L-ARCA-KEY-ESCROW). Unset/keychain
+  # is the original behavior, byte for byte.
+  if [ "${ARCA_KEY_SOURCE:-keychain}" = "op" ]; then
+    local escrow_key
+    escrow_key=$(env -u OP_SERVICE_ACCOUNT_TOKEN op read "op://Private/${KEY_SERVICE}/password" 2>/dev/null) \
+      || die "cannot read escrow key via op (locked? signed out?)"
+    [[ "$escrow_key" =~ ^[0-9a-fA-F]{64}$ ]] || die "escrow key from op is not a 64-hex key — refusing"
+    printf '%s\n' "$escrow_key"
+    return 0
+  fi
   security find-generic-password -s "$KEY_SERVICE" -w 2>/dev/null && return 0
   security add-generic-password -s "$KEY_SERVICE" -a "$USER" -w "$(openssl rand -hex 32)" >/dev/null \
     || die "cannot create vault key in Keychain (locked? headless?)"

@@ -1149,6 +1149,11 @@ gates:
     paths: ["scripts/arca.sh", "scripts/arca-freshness.py", "scripts/tests/arca-generation.test.sh", "scripts/check-arca-escrow.py", "scripts/tests/test-arca-escrow.py"]
     owner: continuity
     note: "Hermetic generation-rotation fixtures for ARCA (POTESTAS 0.3, #2089): a seed backup commits ciphertext and pushes to a depth-1 private clone; a re-run makes no commit; a changed store re-seals; an oversized pack auto-cuts generation -g2 as an orphan ROOT commit that is pushed to a fresh repo, with the old generation recorded as archived and the manifest re-pointed; `rotate` on a vault-less env seeds a fresh generation and archives the env repo; status distinguishes current/never-sealed/changed; chunked ciphertext reassembles and restores byte-identical; the freshness sensor follows the manifest's `_generation.repo`. Uses local file:// bare remotes and shimmed gh/security, so it never touches the real Keychain or the real arca repos."
+  sealed-custody-test:
+    command: "bash scripts/tests/sealed-custody.test.sh"
+    paths: ["scripts/sealed-custody.py", "scripts/tests/sealed-custody.test.sh", "scripts/arca.sh", "cli/src/limen/agent_state/crypto.py"]
+    owner: continuity
+    note: "Hermetic contract for the reusable sealed-custody tool: private bundles are arca-sealed onto two replicas on DISTINCT physical devices (test-only device-id override); `verify` is KEY-LESS (ciphertext sha256/bytes vs manifest, never touches a key source) and detects a one-byte corruption; `restore` unseals into a 0700 scratch under the staging root, checks every member sha256, and leaves no plaintext behind, via the Keychain key AND via the op escrow key (ARCA_KEY_SOURCE=op, proving the escrow copy alone restores the bundle); `receipt` emits a validated CustodyReceiptV1 plus a redacted tracked receipt with no device ids, absolute paths, or member digests, and refuses unrestored replicas or one device used twice. PATH-stubbed `security` and `op` with a throwaway key — never the real Keychain or 1Password."
   sync-marketplace-config-test:
     command: "bash scripts/tests/sync-marketplace-config.test.sh"
     paths: ["scripts/sync-marketplace-config.py", "scripts/tests/sync-marketplace-config.test.sh", "institutio/github/estate.yaml"]
