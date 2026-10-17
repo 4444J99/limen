@@ -1,0 +1,40 @@
+{
+  "schema": "limen.insights_live_readback.v1",
+  "snapshot_source_matches_deployed": true,
+  "snapshot_sha256": "f775af98349ccc3902ba8780c285ccde6f2f6d4c667bdbb34b53ac80e3128f77",
+  "reports": {
+    "report-2026-10-16-192341.html": {
+      "sha256": "b03961bc968e4cfe24af00aa844bef284a5915b14f8d336560fdf3a769ece398",
+      "sessions_selected": 95,
+      "sessions_faceted": 50,
+      "satisfaction_labels_displayed": 107,
+      "cumulative_session_hours": null,
+      "suggestions_review": "unreviewed_proposals",
+      "timezone_validation": {
+        "status": "unknown",
+        "reason": "metadata population does not exactly match report histogram",
+        "declared_baseline": "PT (UTC-8)"
+      }
+    },
+    "report-2026-10-16-192739.html": {
+      "sha256": "3bcb023def14ec67341764658143bbea153061b9af463cca3efe500e4bd714af",
+      "sessions_selected": 96,
+      "sessions_faceted": 51,
+      "satisfaction_labels_displayed": 107,
+      "cumulative_session_hours": 292,
+      "suggestions_review": "unreviewed_proposals",
+      "timezone_validation": {
+        "status": "confirmed_mismatch",
+        "reason": "raw hours already use a different timezone; selector shifts them again",
+        "declared_baseline": "PT (UTC-8)",
+        "population_match": "exact",
+        "messages_checked": 865,
+        "selection": "user_message_count >= 2 and duration_minutes >= 1",
+        "source_timezone": "America/New_York",
+        "declared_offset_matches_dates": false
+      }
+    }
+  },
+  "unsafe_hook_snippets_installed": false,
+  "native_originals_preserved": true
+}
