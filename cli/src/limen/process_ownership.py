@@ -219,7 +219,8 @@ def transcript_witness(path: Path) -> dict:
     parent = (
         parent.get("subagent", {}).get("thread_spawn", {}).get("parent_thread_id") if isinstance(parent, dict) else None
     )
-    if session != thread and (not parent or payload.get("forked_from_id") != parent):
+    forked_from = payload.get("forked_from_id")
+    if session != thread and (not parent or (forked_from is not None and forked_from != parent)):
         raise ObservationUnavailable("native_ancestry_invalid")
     return {"thread_id": thread, "session_id": session, "parent_thread_id": parent, "cwd": payload.get("cwd")}
 
