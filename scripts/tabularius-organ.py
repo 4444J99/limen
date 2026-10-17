@@ -173,6 +173,13 @@ def _memory_pass(*, check: bool, dry_run: bool) -> dict[str, object]:
             # A drain that ran and did not defer IS a successful drain, and it ends the
             # streak — including the "inbox empty" no-op, which means the lane worked
             # and had nothing to do. Only a real deferred run may carry the streak on.
+            #
+            # The explicit `= 0` is load-bearing. Without it the field VANISHES on every
+            # clean run, so a single contended beat between two clean ones would restart
+            # the count at 1 and no streak could ever exceed the threshold — the exact
+            # false-green this streak exists to close. A reader that must distinguish
+            # "never deferred" from "deferred and then recovered" needs the reset to be
+            # visible rather than implied by absence.
             fields["memory_defer_streak"] = 0
         return fields
     except Exception as exc:

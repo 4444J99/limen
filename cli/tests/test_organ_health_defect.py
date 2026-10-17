@@ -294,6 +294,74 @@ def test_the_freshness_budget_is_the_organs_own_cadence_not_one_beat(tmp_path: P
     assert row["status"] == "green", "a healthy organ inside its own cadence is not down"
 
 
+def test_a_deferral_interrupted_by_a_success_cannot_accumulate_a_streak(tmp_path: Path) -> None:
+    """Repetition must mean CONSECUTIVE contention, not contention over all time.
+
+    This is the case that makes the explicit streak reset load-bearing rather than
+    cosmetic. Sequence: clean, deferred, clean. The keeper writes `memory_defer_streak: 0`
+    on every clean run, so the stamp a reader sees after run 3 is a STREAK OF ONE — the
+    deferral is over and the lane drained.
+
+    If the reset were implied by the field's absence instead, the sequence would leave the
+    reader reading `1` from run 2, and every later isolated contention would restart the
+    count. Enough of those, spread across days, would cross the threshold and turn a
+    healthy lane permanently `down` — the same false green, reached from the other side.
+    """
+    mod = _load()
+    _tabularius_state(
+        mod,
+        tmp_path,
+        {
+            "pending": 0,
+            "applied": 1,
+            "rejected": 0,
+            "memory_pending": 0,
+            "memory_applied": 1,
+            "memory_rejected": 0,
+            "memory_defer_streak": 0,
+            "memory_note": "folded",
+        },
+    )
+
+    row = _tabularius_row(mod)
+    assert row["status"] == "green", row
+    # The recovered run carries no deferral at all, so the reader has nothing to tolerate.
+    assert "memory deferral" not in (row["note"] or ""), row["note"]
+
+
+def test_a_streak_that_never_advanced_cannot_be_reconstructed_from_staleness(tmp_path: Path) -> None:
+    """Staleness and repetition are different faults and must not substitute for each other.
+
+    A stamp recording a deferral with a streak of 1, left untouched for six hours, is an
+    organ that stopped being rewritten — which is what the freshness path already reports.
+    It is NOT evidence of repeated contention, and reading it as such would double-report
+    one fault while hiding which one it is.
+    """
+    mod = _load()
+    _tabularius_state(
+        mod,
+        tmp_path,
+        {
+            "pending": 0,
+            "applied": 0,
+            "rejected": 0,
+            "memory_pending": 1,
+            "memory_applied": 0,
+            "memory_rejected": 0,
+            "memory_deferred": "memory lock held; deferred to next beat",
+            "memory_defer_streak": 1,
+            "memory_deferred_since": _utc_hours_ago(6.0),
+        },
+    )
+
+    row = _tabularius_row(mod)
+    # Not the DEFECT channel: this must not claim a stuck lane it cannot demonstrate.
+    assert "no successful drain" not in row["note"], row["note"]
+    assert "self-reported defect" not in row["note"], row["note"]
+    # The deferral is still named — tolerated, not hidden.
+    assert "memory deferral" in row["note"], row["note"]
+
+
 def test_a_recent_single_deferral_is_tolerated_not_down(tmp_path: Path) -> None:
     """Contention is memoria's DESIGNED outcome, so one deferral must not page anyone.
 
