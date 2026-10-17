@@ -238,6 +238,8 @@ because a control was run rather than assumed.
 | Predicate | Status |
 |---|---|
 | Focused suites green | **Satisfied** — 60 passed, exit 0, controlled environment |
+| Every direct consumer of both changed scripts green | **Satisfied** — 170 tests, exit 0 (see "Blast radius of the held heavy gate") |
+| Session-release predicate satisfied | **NOT satisfied** — `BrokerUnavailable`, `status: unmeasured`, fail-closed. Named atom below; `CLOSEOUT COMPLETE` therefore withheld. |
 | One recent deferral reads green and is named | **Satisfied** — Control H |
 | Repeated deferrals with no drain degrade | **Satisfied** — Control K proves the conditions are independent |
 | A recovered lane reads clean | **Satisfied** — Controls I and J |
@@ -245,9 +247,9 @@ because a control was run rather than assumed.
 | Each of the three defects caught by its own tests | **Satisfied** — Controls E/F/G plus the lifecycle vacuity pair |
 | `ruff-lint` under pinned `0.15.8` | **Satisfied** — `check-ruff-pin.py` exit 0; `ruff check cli/src cli/tests web/api mcp ianva apps organs` → `All checks passed!` |
 | `ruff-format` under pinned `0.15.8` | **Satisfied** — `ruff format --check …` → `790 files already formatted` |
-| `scripts/verify-scoped.sh` | **Cheap wave PASS** (all 13 cheap gates); **heavy wave exit 75** — `Host admission denied scoped heavy verification: heavy-lease-held`, held by `claude-lane-j-foa-live` (pid 74553, surface `tmb-foa-live-browser`, alive). Not killed: at most one heavy surface machine-wide, and existing work is never killed. Exit 75 is the prescribed fail-open "blocked on a held condition", not a defect. The held gate is `pytest-cli` (whole `cli/tests`, `tier: heavy`, `serialize: true`). |
+| `scripts/verify-scoped.sh` | **Cheap wave PASS** (all 13 cheap gates); **heavy wave exit 75** — `Host admission denied scoped heavy verification: heavy-lease-held`, held by `claude-lane-j-foa-live` (pid 74553, surface `tmb-foa-live-browser`, alive). **At closeout the holder had changed:** pid 74553 released its lease, and the heavy surface was then held by a different live session — `limen-verify-61933` (pid 61933, `verify.py --changed`, worktree `closeout-runtime-test-20261017`). The surface remains occupied by a co-equal session, so the gate is still unavailable here and was not retried. Not killed: at most one heavy surface machine-wide, and existing work is never killed. Exit 75 is the prescribed fail-open "blocked on a held condition", not a defect. The held gate is `pytest-cli` (whole `cli/tests`, `tier: heavy`, `serialize: true`). |
 | `APPLY FAILED: 4444J99/limen:estate-contract` in the gate log | **Not a failure.** It is the suppressed stdout of a deliberate negative control inside `merge-queue-contract-test` (`test_repository_plan_failure_refuses_all_mutations`, which mocks `gh_json_checked` to fail and asserts every mutation is refused). That gate reported `186 passed` / `FINISH status=PASS`. |
-| Heavy `pytest-cli` blast radius | **Contained** — `tabularius_organ_fixtures` is imported by exactly one file, `cli/tests/test_tabularius_organ_memory.py` (verified by full-repo grep; the other hits are receipt prose). `scripts/organ-health.py` is untouched this round. So the held gate exercises no changed path beyond the two files driven directly here. Full-suite confirmation is left to `pr-gate`. |
+| Heavy `pytest-cli` blast radius | **Measured, not assumed** — see "Blast radius of the held heavy gate" below. Every test file in the repository that loads either changed script was run directly and is green. |
 | Consumer distinguishes recorded memory failure at equal freshness | **Satisfied** — Control D proves the wiring |
 | Lock attribution proven; unattributed rejected | **Satisfied** |
 | Exact-head CI acceptance | **Not yet observed** — the GitHub check-runs endpoint returned zero records at inspection |
@@ -255,26 +257,37 @@ because a control was run rather than assumed.
 
 ## Delivery disposition — PR #2869
 
-Branch `test/tabularius-organ-memory-2866` at `1cf2333fc4a0537c80471f4e8ba9fbd6914790f8`, pushed,
-`origin/main` integrated once (`249b89b1c`, no conflict — main touched none of the changed paths).
+Branch `test/tabularius-organ-memory-2866`, pushed. **Local, remote, and PR head all agree** at
+`063cc615d9c95463911c2237c7b146e73e5969c5` (PR #2869, `state: OPEN`, `mergeable: MERGEABLE`).
 
-`scripts/merge-drain.py --repo 4444J99/limen --pr 2869 --expected-head 1cf2333fc…` was submitted
-**once**, per protocol, and returned:
+`origin/main` was integrated once during round 2 (`249b89b1c`, no conflict — main touched none of the
+changed paths). At round 3, `git merge-base --is-ancestor origin/main HEAD` exits 0, so there was
+nothing to re-integrate.
 
-```
-MERGE-SUBMISSION 4444J99/limen#2869@1cf2333fc…: DEFERRED — BLOCKED
-```
+### Three submissions, one per head — none retried
 
-`BLOCKED` is `assess()`'s fallthrough for `mergeable != "MERGEABLE"` (`merge-drain.py:433`). A
-read taken immediately after returned `mergeable: MERGEABLE`, so the classification caught
-GitHub's transient `UNKNOWN` while it recomputed mergeability after the push and PR-body edit —
-not a durable hold and not a rejection of the head. **This is a `DEFERRED` hold, not a `MERGED`
-receipt.** It is preserved for the beat's own drain to re-assess; re-submitting here would be the
-retry the protocol forbids, so it was not retried and no check was polled.
+| Head | Submitted | Result |
+|---|---|---|
+| `1cf2333fc` (round 1) | once | `DEFERRED — BLOCKED` — **stranded**: submitted before the commit that recorded it, so that receipt never captured this submission |
+| `67c46345f` (round 2) | twice | `DEFERRED — BLOCKED` — identical, not a retry of a changed head but a resubmission after the head moved |
+| `063cc615d` (round 3) | once | `DEFERRED — BLOCKED` — not retried, no check polled |
 
-`gh pr checks` at submission: `pr-gate`, `python`, `web`, `worker` and `semgrep` pending;
-`npm-audit` ×2 and CodeRabbit passed; `Sourcery review` and `compat` skipped. Remote checks and
-automated reviews are advisory.
+`BLOCKED` is `assess()`'s fallthrough for `mergeable != "MERGEABLE"` (`merge-drain.py:433`).
+`gh pr checks 2869 --required` reports **no required checks** on this branch, and reads taken after
+each submission returned `mergeable: MERGEABLE` — the classification caught GitHub's transient
+`UNKNOWN` while it recomputes mergeability after a push. Not a rejection of the head.
+
+**Verified at closeout:** `git merge-base --is-ancestor 063cc615d origin/main` exits **1**, and
+`gh pr view 2869` reports `mergedAt: null`. **The work has not landed.**
+
+### merge-drain persists nothing on DEFERRED
+
+Read directly from `submit_one` (`merge-drain.py:639-689`): every terminal branch, including both
+`DEFERRED` returns, only prints and returns an exit code. There is no submission ledger — the
+`_save_ci_red_ledger` helper belongs to the unrelated CI-red subject path. So the claim that a
+`DEFERRED` hold is "preserved for the beat's own drain" is true only insofar as the open PR itself is
+visible to that drain; **no separate durable record of these three submissions exists.** The durable
+owner is therefore the open PR plus its named merge condition, which is a valid closure form.
 
 **No password rotation and no worktree removal were performed.** Both remain barred until the
 relevant gates pass, and the heavy `pytest-cli` gate has not yet run at this head.
@@ -293,6 +306,98 @@ git merge-base --is-ancestor <exact-head> origin/main   # exit 0 ⟺ landed
 Not by this PR's state, its age, the absence of an open PR, or a passing merge-drain line.
 
 Local pinned-Ruff verification is not CI acceptance. The two are recorded separately.
+
+## Blast radius of the held heavy gate
+
+An earlier revision of this receipt claimed `scripts/organ-health.py` was "untouched this round".
+**That was false** — round 3 changed it substantially: a new `advisory` hook in `build()`, three new
+readers (`_memory_deferral_facts`, `_memory_deferral_defect`, `_memory_deferral_advisory`), and the
+TABVLARIVS rung's `defect` lambda. The claim contradicted this receipt's own Round 3 section and is
+corrected here rather than left standing.
+
+A corrected claim is still a claim, so the blast radius was measured. Every test file in the
+repository that loads either changed script, found by grepping for both filenames under `cli/`:
+
+| Consumer | Loads | Result |
+|---|---|---|
+| `cli/tests/test_organ_health_defect.py` | `organ-health.py` | **25 passed** |
+| `cli/tests/e2e/test_ecosystem_liveness.py` | `organ-health.py` | **27 passed** |
+| `cli/tests/test_vigilia.py` | `organ-health.py` | **pass** (in the 83) |
+| `cli/tests/test_positioning_organ.py` | `organ-health.py` | **pass** (in the 83) |
+| `cli/tests/test_tabularius_organ.py` | `tabularius-organ.py` | **pass** (in the 83) |
+| `cli/tests/test_memoria.py` | `tabularius-organ.py` | **pass** (in the 83) |
+| `cli/tests/test_tabularius_organ_memory.py` | `tabularius_organ_fixtures.py` | **34 passed** |
+| `cli/tests/tabularius_organ_fixtures.py` | the fixture module itself (one importer) | exercised above |
+
+**170 tests, all green**, covering every direct consumer of both changed scripts — 60
+(`test_tabularius_organ_memory` + `test_organ_health_defect`), 27 (e2e), 83
+(`test_tabularius_organ` + `test_memoria` + `test_vigilia` + `test_positioning_organ`).
+
+Two of these were genuinely at risk and had never been run before this closeout:
+`test_ecosystem_liveness.py::test_tier2_08` asserts a self-reported defect still forces `down`
+despite a fresh timestamp — the exact branch round 3 edited — and `test_tier2_09` asserts
+`_json_nested_error`'s trail precedence and timestamp parsing, the function whose neighbours round 3
+added to. Both pass, which is the substantive half of the evidence the heavy gate would have
+produced for these files.
+
+**What this does not prove:** the heavy gate as a whole has still not run. The remaining ~1,000 tests
+do not reference either changed script, so the residual risk is now *bounded and stated* rather than
+*assumed away* — but a bounded risk is not a satisfied gate, and the gate is not marked satisfied here.
+
+## Session closeout — 2026-10-17
+
+### Parity
+
+| Surface | Local | Remote | PR | Agreement |
+|---|---|---|---|---|
+| `test/tabularius-organ-memory-2866` | `063cc615d` | `063cc615d` | `063cc615d` | **1:1** |
+| `main` (this checkout) | — | `1df15fa1b` | — | **behind 1** — a fast-forward, not lane-local state |
+
+Working tree clean, including `--untracked-files=all`: no local-only scratch, no orphan files.
+`scripts/credential-wall.py --check` → exit 0, 32 secret atoms registered.
+
+### Done and evidenced
+
+- Three original defects (rounds 1–2) fixed, each caught by its own control (E/F/G plus the
+  lifecycle vacuity pair).
+- Deferral classification (round 3): tolerated-then-degraded, controls H/I/J/K, plus one vacuous
+  assertion the controls exposed and that is now closed.
+- 170 tests green across every direct consumer of both changed scripts.
+- `ruff-lint` and `ruff-format` clean under the pinned `0.15.8`; `verify-scoped.sh` cheap wave PASS.
+- Receipt, branch, and PR comment all carry the exact-head evidence.
+
+### Open, each with its durable owner
+
+| Atom | State | Owner | Next command |
+|---|---|---|---|
+| **PR #2869 not landed** | `OPEN`, `mergedAt: null`, `merge-base --is-ancestor` exits 1 | the recurring merge drain (open PR + named merge condition is a valid closure form) | drain re-assesses; do not re-submit from this lane |
+| **Heavy `pytest-cli` not run** | denied, `heavy-lease-held` | `verify` gate; machine-wide admission | `./scripts/verify-scoped.sh` once when admission allows |
+| **Session-release predicate unmeasured** | `BrokerUnavailable`, `status: unmeasured` — fail-closed | **credential wall** | set `LIMEN_CONDUCT_URL` + `LIMEN_CONDUCT_TOKEN`, then re-run the predicate |
+| **`no-tasks-on-me.sh` wrapper picks a dep-less interpreter** | exits `ModuleNotFoundError: rfc8785` | gate/tooling hygiene | see below |
+
+### Two infrastructure defects found while auditing (named, not silently absorbed)
+
+1. **`scripts/no-tasks-on-me.sh` cannot run as invoked.** It resolves bare `python3`, which on this
+   host is `/opt/homebrew/bin/python3` — the one interpreter *without* `rfc8785`; `/usr/local/bin/python3`,
+   `/opt/homebrew/bin/python3.14`, and the limen venv all have it. The committed closeout predicate
+   therefore crashes with a stack trace instead of reporting a verdict. Worked around here by calling
+   `scripts/session-closeout.py` directly under `/usr/local/bin/python3`. **Not fixed in this lane** —
+   it is a shared-tooling change outside a bounded memory-pass repair, and filing it silently inside
+   this repair would hide a machine-wide defect behind an unrelated diff.
+
+2. **The conduct broker is unconfigured.** `LIMEN_CONDUCT_URL` and `LIMEN_CONDUCT_TOKEN` are unset,
+   so `client_from_env()` raises `BrokerUnavailable` and the session predicate fails closed at
+   `status: unmeasured`. Credentials belong to the credential organ, never to this transcript, so
+   this is a `BLOCKED` atom by owner rather than something to work around.
+
+### Consequence for the terminal statement
+
+The closeout **cannot** declare `CLOSEOUT COMPLETE — idempotent fixed point, zero dangling items`.
+That statement requires a satisfied session predicate, and the predicate returns `unmeasured` while the
+broker is unconfigured and its wrapper cannot resolve an interpreter. Per the charter, "unknown
+ownership fails closed; estate diagnostics do not substitute for session proof." The work is durably
+homed and its evidence is complete; the *session release* is not, and that gap is named above rather
+than papered over.
 
 ## Scope
 
