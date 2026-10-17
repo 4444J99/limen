@@ -36,7 +36,7 @@ concurrency:
 
 jobs:
   contract:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
@@ -74,7 +74,7 @@ jobs:
     # PRs are secret-free, including same-repository PRs. This is a post-landing
     # activation proof, never a substitute for the offline contract above.
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 24
     steps:
       - uses: actions/checkout@v4
@@ -101,7 +101,7 @@ jobs:
   witness-contract:
     # Source verification on the working personal runner is not provider activation
     # or a replacement for any independently required ops-witness check.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -181,7 +181,7 @@ jobs:
     # Manual incident diagnostic only. The inherited first failure is already preserved
     # on both the pinned base and API head; the complete required PR Gate remains unchanged.
     if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 8
     strategy:
       fail-fast: false

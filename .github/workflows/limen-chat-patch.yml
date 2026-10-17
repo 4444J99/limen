@@ -20,7 +20,7 @@ env:
 jobs:
   prepare:
     if: github.ref == 'refs/heads/main' && github.sha == inputs.control_sha && github.run_attempt == 1
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 2
     outputs:
       context: ${{ steps.context.outputs.context }}
@@ -35,7 +35,7 @@ jobs:
           LIMEN_CHAT_EXECUTOR_TOKEN: ${{ secrets.LIMEN_CHAT_EXECUTOR_TOKEN }}
   verify:
     needs: prepare
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     outputs:
       verification: ${{ steps.predicate.outputs.verification }}
@@ -66,7 +66,7 @@ jobs:
           retention-days: 14
   publish:
     needs: [prepare, verify]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 2
     env:
       LIMEN_CHAT_CONTEXT: ${{ needs.prepare.outputs.context }}
@@ -89,7 +89,7 @@ jobs:
   report-failure:
     needs: [prepare, verify, publish]
     if: always() && (needs.prepare.result == 'failure' || needs.verify.result == 'failure' || needs.publish.result == 'failure')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
