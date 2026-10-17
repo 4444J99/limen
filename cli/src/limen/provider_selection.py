@@ -11,13 +11,13 @@ import json
 import math
 import re
 import subprocess
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import asdict, dataclass
-from datetime import date, datetime, timezone
-from typing import Any, Iterable, Mapping, Sequence, get_type_hints
+from datetime import UTC, date, datetime
+from typing import Any, get_type_hints
 
 from limen.provider_eligibility import EvidenceVerifier, provider_eligibility_reason
 from limen.provider_health import ProviderHealthSnapshot
-
 
 _ANSI = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
 
@@ -192,8 +192,7 @@ class ModelCapability:
     @property
     def cost_known(self) -> bool:
         return all(
-            isinstance(value, (int, float)) and not isinstance(value, bool)
-            and math.isfinite(value) and value >= 0
+            isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value) and value >= 0
             for value in (self.input_cost, self.output_cost)
         )
 
@@ -256,12 +255,10 @@ def _capability_from_payload(payload: dict[str, Any], reported_id: str = "") -> 
     return ModelCapability(
         model_id=model_id,
         active=status in {"active", "available", "ready"} and payload.get("enabled", True) is True,
-        text_input=input_caps.get("text") is True or (
-            isinstance(capabilities.get("input"), list) and "text" in capabilities["input"]
-        ),
-        text_output=output_caps.get("text") is True or (
-            isinstance(capabilities.get("output"), list) and "text" in capabilities["output"]
-        ),
+        text_input=input_caps.get("text") is True
+        or (isinstance(capabilities.get("input"), list) and "text" in capabilities["input"]),
+        text_output=output_caps.get("text") is True
+        or (isinstance(capabilities.get("output"), list) and "text" in capabilities["output"]),
         toolcall=capabilities.get("toolcall", capabilities.get("tools")) is True,
         reasoning=capabilities.get("reasoning") is True,
         attachment=capabilities.get("attachment") is True,
@@ -283,8 +280,7 @@ def parse_opencode_catalog(output: str) -> list[ModelCapability]:
         decoded = None
     rows = decoded.get("data", decoded.get("models")) if isinstance(decoded, dict) else decoded
     if isinstance(rows, list):
-        return [model for row in rows if isinstance(row, dict)
-                if (model := _capability_from_payload(row)) is not None]
+        return [model for row in rows if isinstance(row, dict) if (model := _capability_from_payload(row)) is not None]
 
     decoder = json.JSONDecoder()
     cursor = 0
@@ -327,15 +323,18 @@ def discover_opencode_models(binary: str = "opencode", *, timeout: int = 30) -> 
         remaining = deadline - time.monotonic()
         if remaining <= 0:
             return []
-        result = subprocess.run([binary, "models", "--verbose"], capture_output=True,
-                                text=True, timeout=remaining, check=False)
+        result = subprocess.run(
+            [binary, "models", "--verbose"], capture_output=True, text=True, timeout=remaining, check=False
+        )
         return parse_opencode_catalog(result.stdout) if result.returncode == 0 else []
     except (OSError, subprocess.SubprocessError):
         return []
 
 
 def _model_score(model: ModelCapability, profile: ExecutionProfile) -> tuple[float, str]:
-    cost = float(model.input_cost) + float(model.output_cost)
+    if model.input_cost is None or model.output_cost is None:
+        raise ValueError("model score requires known input and output prices")
+    cost = model.input_cost + model.output_cost
     context_headroom = math.log2(max(1, model.context_limit / max(1, profile.min_context)))
     output_headroom = math.log2(max(1, model.output_limit / max(1, profile.min_output)))
     score = (
@@ -360,7 +359,7 @@ def select_opencode_model(
     eligibility_evidence: Mapping[str, Mapping[str, Any]] | None = None,
     eligibility_verifier: EvidenceVerifier | None = None,
 ) -> ModelCapability | None:
-    current = now or datetime.now(timezone.utc)
+    current = now or datetime.now(UTC)
     eligible = [
         model
         for model in models
