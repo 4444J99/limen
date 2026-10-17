@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI context migration"
+  short_description: "Export, sanitize, compare, and import AI context"
+  default_prompt: "Use $ai-context-migration to export, sanitize, compare, and import my AI-assistant context across providers."
