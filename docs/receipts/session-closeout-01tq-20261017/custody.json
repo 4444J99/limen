@@ -1,0 +1,35 @@
+{
+  "schema": "limen.session_custody_note.v1",
+  "session_id": "session_01Tq5hLA9iPoPcYacFesH2HG",
+  "merged": [
+    {"repository": "4444J99/limen", "pr": 2901, "merge_commit": "46ae311a5a073bdebc11f4195a2e0430221efb67"},
+    {"repository": "4444J99/domus-genoma-private", "pr": 496, "merge_commit": "cebff8dfd43c194255e669649f7a312d25344ca3"},
+    {"repository": "4444J99/domus-genoma-private", "pr": 497, "merge_commit": "982c9a0e9329da72e72c078ac464d9967b870299"}
+  ],
+  "filed_owners": [
+    "https://github.com/4444J99/limen/issues/2929",
+    "https://github.com/4444J99/domus-genoma-private/issues/487"
+  ],
+  "deployed": {
+    "limen_runtime_current": "5d7f2ef70c16c02d35da664e065b53e5d42523ae",
+    "heartbeat_plan_sha256": "4d4624bd09d24f7d8fa80d662b6c32a3c1103a1603d8f2a2f823d1f59369b253",
+    "chezmoi_targets": [
+      "~/.local/bin/domus-limen-runtime",
+      "~/.local/libexec/agent_hook_policy.py",
+      "~/.local/libexec/hook_evidence.py"
+    ]
+  },
+  "session_worktrees": {
+    "created_and_removed_after_tree_equality_proof": [
+      "~/Workspace/.worktrees/domus-limen-runtime-probe-20261017",
+      "~/Workspace/.worktrees/domus-hook-client-surface-20261017"
+    ],
+    "receipt_worktree": "~/Workspace/.limen-worktrees/session-closeout-01Tq-20261017"
+  },
+  "not_owned_by_this_session": [
+    ".limen-worktrees/hook-bounds-repair-20261017",
+    ".limen-worktrees/dynamic-routing-residue-20261017",
+    ".worktrees/domus-dynamic-routing-residue-20261017"
+  ],
+  "local_only_state": "none; job temp files under the session job dir are disposable scratch"
+}

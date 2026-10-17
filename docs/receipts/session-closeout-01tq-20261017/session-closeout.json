@@ -1,0 +1,36 @@
+{
+  "schema": "limen.session_closeout.v1",
+  "session_id": "session_01Tq5hLA9iPoPcYacFesH2HG",
+  "worktree_name": "session-closeout-01Tq-20261017",
+  "repository": "4444J99/limen",
+  "publication_branch": "docs/session-closeout-01tq-20261017",
+  "base_head": "80efee81d0bbe3897edfd08b21c2d1178d93e2a8",
+  "disposition": "handoff",
+  "owner_url": "https://github.com/4444J99/domus-genoma-private/issues/487",
+  "owned_paths": [],
+  "retained_work": [
+    {
+      "owner_url": "https://github.com/4444J99/limen/issues/2929",
+      "paths": ["scripts/check-lifecycle.py"]
+    },
+    {
+      "owner_url": "https://github.com/4444J99/limen/pull/2903",
+      "paths": ["docs/continuations/dynamic-routing-20261017-cf1c"]
+    }
+  ],
+  "verification": [
+    {
+      "purpose": "completion",
+      "head": "80efee81d0bbe3897edfd08b21c2d1178d93e2a8",
+      "exit_code": 0,
+      "evidence": "docs/receipts/session-closeout-01tq-20261017/verification.txt",
+      "sha256": "72803a7ceac02c8ee13d7bbf40c5accc31a0d1f1a98c87979baa41552d309bdf",
+      "owner_url": "https://github.com/4444J99/domus-genoma-private/issues/487"
+    }
+  ],
+  "custody": {
+    "verified": true,
+    "evidence": "docs/receipts/session-closeout-01tq-20261017/custody.json",
+    "sha256": "787743b85761e869e360b5c1f2d6d1b879d484972048f5a1f2834306b55f213f"
+  }
+}
