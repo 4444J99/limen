@@ -28,11 +28,28 @@ jobs:
           persist-credentials: false
 
       - name: Checkout the engine (4444J99/limen)
-        uses: actions/checkout@v4
-        with:
-          repository: 4444J99/limen
-          path: .engine
-          persist-credentials: false
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # actions/checkout has no retry and its "Get a repository" API call
+          # 404s transiently (14 straight daily failures observed). A git clone
+          # skips that REST call entirely (git protocol only) and retries here
+          # with backoff. Token is scrubbed from the remote URL after clone so
+          # no credential is persisted (persist-credentials: false equivalent).
+          # Shallow clone of the default branch, matching checkout defaults.
+          rm -rf .engine
+          for attempt in 1 2 3 4 5; do
+            if git clone --depth 1 \
+                "https://x-access-token:${GH_TOKEN}@github.com/4444J99/limen.git" \
+                .engine; then
+              git -C .engine remote set-url origin https://github.com/4444J99/limen.git
+              exit 0
+            fi
+            echo "engine checkout attempt ${attempt}/5 failed; backing off..." >&2
+            sleep $((attempt * 20))
+          done
+          echo "engine checkout failed after 5 attempts" >&2
+          exit 1
 
       - uses: actions/setup-python@v5
         with:
