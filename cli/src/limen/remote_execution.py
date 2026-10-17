@@ -46,6 +46,8 @@ from limen.remote_predicate import (
     validate_content_references,
     validate_control_ref,
     validate_execution_profile,
+    validate_deadline_bounds,
+    remaining_verification_seconds,
 )
 
 
@@ -289,10 +291,14 @@ class RemoteRequest:
     inputs: tuple[ContentReference, ...] = ()
     execution_profile: Mapping[str, object] = field(default_factory=dict)
     custody_mode: str = "artifact"
+    attempt_deadline: str | None = None
+    verification_deadline: str | None = None
     _verification_context_json: bytes = field(init=False, repr=False, compare=False)
     _execution_profile_json: bytes = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
+        if self.attempt_deadline is not None or self.verification_deadline is not None:
+            validate_deadline_bounds(self.attempt_deadline, self.verification_deadline)
         if not self.provider or not SAFE_ID_RE.fullmatch(self.task_id):
             raise ValueError("provider and task_id are required")
         if not PROVIDER_RE.fullmatch(self.provider):
@@ -376,6 +382,8 @@ class RemoteRequest:
             custody_mode=self.custody_mode,
             inputs=[asdict(item) for item in self.inputs],
             execution_profile=self.execution_profile_payload(),
+            attempt_deadline=self.attempt_deadline,
+            verification_deadline=self.verification_deadline,
         )
 
     def public_manifest(self) -> dict[str, object]:
@@ -399,6 +407,11 @@ class RemoteRequest:
             "inputs": [asdict(item) for item in self.inputs],
             "execution_profile_digest": digest_bytes(self._execution_profile_json),
             "packet_digest": self.packet_digest,
+            **(
+                {"attempt_deadline": self.attempt_deadline, "verification_deadline": self.verification_deadline}
+                if self.attempt_deadline is not None
+                else {}
+            ),
         }
 
     @property
@@ -1381,6 +1394,11 @@ class GitHubWorkflowAdapter:
         self.gh_binary = gh_binary
 
     def _validate_request(self, request: RemoteRequest, *, submitting: bool) -> None:
+        if submitting:
+            try:
+                remaining_verification_seconds(request.attempt_deadline, request.verification_deadline)
+            except PredicateContractError as exc:
+                raise RemoteExecutionError(str(exc)) from exc
         target = ReceiptTarget.parse(request.receipt_target)
         expected = ReceiptTarget("artifact", self.control_repo, "artifact", request.task_id)
         if (
@@ -1561,8 +1579,12 @@ class GitHubWorkflowAdapter:
                 f"execution_profile_json={profile_json}",
                 "-f",
                 f"packet_digest={request.packet_digest}",
+                "-f",
+                f"attempt_deadline={request.attempt_deadline}",
+                "-f",
+                f"verification_deadline={request.verification_deadline}",
             ],
-            90,
+            min(90, remaining_verification_seconds(request.attempt_deadline, request.verification_deadline)),
         )
         _require_success(result, "workflow submission")
         try:
@@ -1995,6 +2017,8 @@ def remote_request_from_task(
     instruction: str = "",
     repo: str | None = None,
     execution_profile: Mapping[str, object] | None = None,
+    attempt_deadline: str | None = None,
+    verification_deadline: str | None = None,
 ) -> RemoteRequest:
     return RemoteRequest(
         provider=provider,
@@ -2013,6 +2037,8 @@ def remote_request_from_task(
         instruction=instruction,
         execution_profile=execution_profile or {},
         custody_mode="artifact",
+        attempt_deadline=attempt_deadline,
+        verification_deadline=verification_deadline,
     )
 
 
@@ -2069,6 +2095,23 @@ def _receipt_from_workflow_payload(
     for key, value in expected.items():
         if payload.get(key) != value:
             raise RemoteExecutionError(f"workflow receipt mismatch for {key}")
+    if request.attempt_deadline is not None:
+        for key in ("attempt_deadline", "verification_deadline"):
+            if payload.get(key) != getattr(request, key):
+                raise RemoteExecutionError(f"workflow receipt mismatch for {key}")
+        try:
+            started = datetime.fromisoformat(str(payload["started_at"]).replace("Z", "+00:00"))
+            completed = datetime.fromisoformat(str(payload["completed_at"]).replace("Z", "+00:00"))
+            _, deadline = validate_deadline_bounds(request.attempt_deadline, request.verification_deadline)
+            if (
+                started.tzinfo is None
+                or completed.tzinfo is None
+                or not started <= completed <= deadline
+                or (completed - started).total_seconds() > 600
+            ):
+                raise ValueError
+        except (KeyError, TypeError, ValueError) as exc:
+            raise RemoteExecutionError("workflow receipt lacks valid bounded execution timing") from exc
     try:
         exit_code = int(str(payload["predicate_exit_code"]))
     except (KeyError, TypeError, ValueError) as exc:

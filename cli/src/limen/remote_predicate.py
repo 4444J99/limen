@@ -20,9 +20,11 @@ import sys
 import tempfile
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Callable, Mapping, Sequence
 from urllib.parse import urlparse
+from uuid import uuid4
 
 
 SCHEMA_VERSION = "limen.remote-execution.v4"
@@ -64,6 +66,28 @@ SANDBOX_ENV = {
 
 class PredicateContractError(ValueError):
     pass
+
+
+def validate_deadline_bounds(attempt: str | None, verification: str | None) -> tuple[datetime, datetime]:
+    """Parse original keeper bounds without renewing or normalizing their identity."""
+    try:
+        if not isinstance(attempt, str) or not isinstance(verification, str):
+            raise ValueError
+        outer = datetime.fromisoformat(attempt.replace("Z", "+00:00"))
+        inner = datetime.fromisoformat(verification.replace("Z", "+00:00"))
+        if outer.tzinfo is None or inner.tzinfo is None or inner > outer:
+            raise ValueError
+    except ValueError as exc:
+        raise PredicateContractError("missing or invalid original keeper deadlines") from exc
+    return outer, inner
+
+
+def remaining_verification_seconds(attempt: str | None, verification: str | None) -> int:
+    outer, inner = validate_deadline_bounds(attempt, verification)
+    remaining = math.floor((min(outer, inner) - datetime.now(timezone.utc)).total_seconds())
+    if remaining <= 0:
+        raise PredicateContractError("original keeper verification deadline expired")
+    return min(600, remaining)
 
 
 def digest_bytes(value: bytes) -> str:
@@ -291,6 +315,8 @@ def packet_payload(
     custody_mode: str,
     inputs: list[dict[str, object]],
     execution_profile: dict[str, object],
+    attempt_deadline: str | None = None,
+    verification_deadline: str | None = None,
 ) -> dict[str, object]:
     return {
         "schema_version": SCHEMA_VERSION,
@@ -312,6 +338,11 @@ def packet_payload(
         "custody_mode": custody_mode,
         "inputs": inputs,
         "execution_profile": execution_profile,
+        **(
+            {"attempt_deadline": attempt_deadline, "verification_deadline": verification_deadline}
+            if attempt_deadline is not None
+            else {}
+        ),
     }
 
 
@@ -335,6 +366,8 @@ def packet_digest(
     custody_mode: str,
     inputs: list[dict[str, object]],
     execution_profile: dict[str, object],
+    attempt_deadline: str | None = None,
+    verification_deadline: str | None = None,
 ) -> str:
     return digest_bytes(
         canonical_json(
@@ -357,6 +390,8 @@ def packet_digest(
                 custody_mode=custody_mode,
                 inputs=inputs,
                 execution_profile=execution_profile,
+                attempt_deadline=attempt_deadline,
+                verification_deadline=verification_deadline,
             )
         )
     )
@@ -399,7 +434,7 @@ def _sandbox_profile() -> dict[str, object]:
 SANDBOX_PROFILE_DIGEST = digest_bytes(canonical_json(_sandbox_profile()))
 
 
-def sandbox_command(cwd: Path, script: str, *, docker_binary: str = "docker") -> tuple[str, ...]:
+def sandbox_command(cwd: Path, script: str, *, docker_binary: str = "docker", owner: str = "") -> tuple[str, ...]:
     """Build the fixed OS isolation boundary for one untrusted repository verifier.
 
     The only variable container inputs are a resolved target directory and a prevalidated script
@@ -412,10 +447,15 @@ def sandbox_command(cwd: Path, script: str, *, docker_binary: str = "docker") ->
         raise PredicateContractError("sandbox target path is unavailable or unsupported")
     if not VERIFIER_SCRIPT_RE.fullmatch(script):
         raise PredicateContractError("sandbox script is not a verification-only entrypoint")
+    if owner and not re.fullmatch(r"[0-9a-f]{32}", owner):
+        raise PredicateContractError("sandbox request ownership is invalid")
     return (
         docker_binary,
         "run",
         "--rm",
+        "--name",
+        "limen-verifier-" + uuid4().hex,
+        *(("--label=limen.verification.request=" + owner,) if owner else ()),
         "--log-driver=local",
         "--log-opt=max-size=1m",
         "--log-opt=max-file=1",
@@ -495,6 +535,7 @@ def _default_sandbox_runner(argv: Sequence[str], timeout: int) -> subprocess.Com
             except ProcessLookupError:
                 pass
             process.wait()
+        _remove_owned_container(argv)
         message = b"sandbox output limit exceeded\n" if exceeded else b"sandbox timeout exceeded\n"
         return subprocess.CompletedProcess(list(argv), 124 if timed_out else 125, message)
     try:
@@ -505,8 +546,29 @@ def _default_sandbox_runner(argv: Sequence[str], timeout: int) -> subprocess.Com
         except ProcessLookupError:
             pass
         process.wait()
+        _remove_owned_container(argv)
         return subprocess.CompletedProcess(list(argv), 124, b"sandbox timeout exceeded\n")
     return subprocess.CompletedProcess(list(argv), returncode, b"".join(chunks))
+
+
+def _remove_owned_container(argv: Sequence[str]) -> None:
+    """Docker client termination does not terminate its daemon-owned container."""
+    if len(argv) < 2 or argv[1] != "run" or "--name" not in argv:
+        return
+    index = list(argv).index("--name") + 1
+    name = argv[index] if index < len(argv) else ""
+    if not re.fullmatch(r"limen-verifier-[0-9a-f]{32}", name):
+        raise PredicateContractError("sandbox container ownership is unavailable")
+    result = subprocess.run(
+        [argv[0], "rm", "--force", name],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        timeout=5,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise PredicateContractError("owned sandbox container termination was not confirmed")
 
 
 def _attest_sandbox_runtime(runner: SandboxRunner, *, docker_binary: str) -> None:
@@ -575,14 +637,18 @@ print("limen-sandbox-boundary-v1")
 """
 
 
-def _attest_sandbox(runner: SandboxRunner, *, docker_binary: str, timeout: int) -> str:
+def _attest_sandbox(runner: SandboxRunner, *, docker_binary: str, timeout: int, owner: str = "") -> str:
     with tempfile.TemporaryDirectory(prefix="limen-sandbox-probe-") as directory:
         root = Path(directory)
+        root.chmod(0o755)  # Only the public boundary probe, readable by sandbox UID 65534.
         script = root / "scripts" / "check-limen-sandbox.py"
         script.parent.mkdir()
+        script.parent.chmod(0o755)
         script.write_text(_sandbox_probe_source())
         script.chmod(0o644)
-        result = runner(sandbox_command(root, "scripts/check-limen-sandbox.py", docker_binary=docker_binary), timeout)
+        result = runner(
+            sandbox_command(root, "scripts/check-limen-sandbox.py", docker_binary=docker_binary, owner=owner), timeout
+        )
     if result.returncode != 0 or result.stdout != SANDBOX_OK or len(result.stdout or b"") > SANDBOX_OUTPUT_LIMIT:
         detail = (result.stdout or b"").decode(errors="replace").strip()[:240]
         raise PredicateContractError(f"verification sandbox boundary self-test failed: {detail or result.returncode}")
@@ -596,28 +662,30 @@ def _run_sandbox(
     timeout: int,
     runner: SandboxRunner,
     docker_binary: str,
+    owner: str = "",
 ) -> subprocess.CompletedProcess[bytes]:
-    result = runner(sandbox_command(cwd, predicate.argv[1], docker_binary=docker_binary), timeout)
+    result = runner(sandbox_command(cwd, predicate.argv[1], docker_binary=docker_binary, owner=owner), timeout)
     if len(result.stdout or b"") <= SANDBOX_OUTPUT_LIMIT:
         return result
     return subprocess.CompletedProcess(result.args, 125, b"sandbox output limit exceeded\n")
 
 
-def _git(cwd: Path, *args: str) -> subprocess.CompletedProcess[bytes]:
-    return _run(("git", *args), cwd=cwd, timeout=60)
+def _git(cwd: Path, *args: str, deadlines: tuple[str, str] | None = None) -> subprocess.CompletedProcess[bytes]:
+    timeout = min(60, remaining_verification_seconds(*deadlines)) if deadlines else 60
+    return _run(("git", *args), cwd=cwd, timeout=timeout)
 
 
-def _validate_repo_paths(predicate: TrustedPredicate, cwd: Path) -> None:
+def _validate_repo_paths(predicate: TrustedPredicate, cwd: Path, *, deadlines: tuple[str, str] | None = None) -> None:
     """Reject verifier paths that escape the exact checkout through a symlink or flag value."""
 
-    symlink_rows = _git(cwd, "ls-files", "-s")
+    symlink_rows = _git(cwd, "ls-files", "-s", deadlines=deadlines)
     if symlink_rows.returncode != 0:
         raise PredicateContractError("unable to attest tracked verifier paths")
     if any(row.startswith(b"120000 ") for row in symlink_rows.stdout.splitlines()):
         raise PredicateContractError("remote verifier checkout may not contain tracked symlinks")
 
     relative = predicate.argv[1]
-    tracked = _git(cwd, "ls-files", "--error-unmatch", "--", relative)
+    tracked = _git(cwd, "ls-files", "--error-unmatch", "--", relative, deadlines=deadlines)
     if tracked.returncode != 0 or tracked.stdout.decode(errors="replace").strip() != relative:
         raise PredicateContractError(f"predicate verifier is not tracked at the exact checkout: {relative}")
     candidate = cwd / relative
@@ -630,9 +698,9 @@ def _validate_repo_paths(predicate: TrustedPredicate, cwd: Path) -> None:
         raise PredicateContractError(f"predicate target must be a regular non-symlink file: {relative}")
 
 
-def _scan_delta(cwd: Path) -> tuple[bool, str, int]:
-    diff = _git(cwd, "diff", "HEAD", "--binary", "--no-ext-diff")
-    status = _git(cwd, "status", "--porcelain=v1", "-z", "--untracked-files=all")
+def _scan_delta(cwd: Path, *, deadlines: tuple[str, str] | None = None) -> tuple[bool, str, int]:
+    diff = _git(cwd, "diff", "HEAD", "--binary", "--no-ext-diff", deadlines=deadlines)
+    status = _git(cwd, "status", "--porcelain=v1", "-z", "--untracked-files=all", deadlines=deadlines)
     payload = bytearray(diff.stdout or b"")
     unsafe = diff.returncode != 0 or status.returncode != 0
     for raw_row in (status.stdout or b"").split(b"\0"):
@@ -673,6 +741,14 @@ def execute_attested(
     *,
     sandbox_runner: SandboxRunner | None = None,
 ) -> dict[str, object]:
+    attempt_deadline = getattr(args, "attempt_deadline", None)
+    verification_deadline = getattr(args, "verification_deadline", None)
+    if not isinstance(attempt_deadline, str) or not isinstance(verification_deadline, str):
+        raise PredicateContractError("missing original keeper deadlines")
+    started_at = os.environ.get("VERIFICATION_STARTED_AT") or datetime.now(timezone.utc).isoformat()
+    # Queue time consumes the same original reservation; never create a fresh timeout here.
+    remaining_verification_seconds(attempt_deadline, verification_deadline)
+    deadlines = (attempt_deadline, verification_deadline)
     predicate = parse_trusted_predicate(args.predicate)
     target = ReceiptTarget.parse(args.receipt_target)
     if not PROVIDER_RE.fullmatch(args.provider):
@@ -733,31 +809,42 @@ def execute_attested(
         custody_mode=args.custody_mode,
         inputs=inputs,
         execution_profile=profile,
+        attempt_deadline=attempt_deadline,
+        verification_deadline=verification_deadline,
     )
     if args.packet_digest != expected_packet:
         raise PredicateContractError("packet digest mismatch")
     if args.request_id != expected_packet.removeprefix("sha256:")[:32]:
         raise PredicateContractError("request ID does not match recomputed packet digest")
     cwd = Path(args.cwd).resolve()
-    observed = _git(cwd, "rev-parse", "HEAD")
+    observed = _git(cwd, "rev-parse", "HEAD", deadlines=deadlines)
     observed_sha = observed.stdout.decode().strip().lower() if observed.returncode == 0 else ""
     if observed_sha != args.base_sha:
         raise PredicateContractError("observed checkout SHA does not match packet base SHA")
     control_cwd = Path(args.control_cwd).resolve()
-    observed_control = _git(control_cwd, "rev-parse", "HEAD")
+    observed_control = _git(control_cwd, "rev-parse", "HEAD", deadlines=deadlines)
     observed_control_sha = observed_control.stdout.decode().strip().lower() if observed_control.returncode == 0 else ""
     if observed_control_sha != args.control_sha:
         raise PredicateContractError("observed control checkout SHA does not match packet control SHA")
     if not DIGEST_RE.fullmatch(args.instruction_digest):
         raise PredicateContractError("instruction digest is invalid")
-    _validate_repo_paths(predicate, cwd)
+    _validate_repo_paths(predicate, cwd, deadlines=deadlines)
 
-    runner = sandbox_runner or _default_sandbox_runner
+    underlying_runner = sandbox_runner or _default_sandbox_runner
+
+    def runner(argv: Sequence[str], timeout: int) -> subprocess.CompletedProcess[bytes]:
+        remaining = remaining_verification_seconds(attempt_deadline, verification_deadline)
+        # Leave time for process-group termination and daemon-owned container removal.
+        if remaining <= 8:
+            raise PredicateContractError("insufficient deadline runway for sandbox termination")
+        return underlying_runner(argv, min(timeout, remaining - 8))
+
     _attest_sandbox_runtime(runner, docker_binary=args.docker_binary)
     sandbox_attestation_digest = _attest_sandbox(
         runner,
         docker_binary=args.docker_binary,
         timeout=min(60, args.timeout),
+        owner=args.request_id,
     )
     result = _run_sandbox(
         predicate,
@@ -765,11 +852,20 @@ def execute_attested(
         timeout=args.timeout,
         runner=runner,
         docker_binary=args.docker_binary,
+        owner=args.request_id,
     )
     output_digest = digest_bytes(result.stdout or b"")
-    delta_safe, delta_digest, delta_bytes = _scan_delta(cwd)
-    clean = _git(cwd, "status", "--porcelain").stdout.strip() == b""
+    try:
+        delta_safe, delta_digest, delta_bytes = _scan_delta(cwd, deadlines=deadlines)
+        clean = _git(cwd, "status", "--porcelain", deadlines=deadlines).stdout.strip() == b""
+    except (PredicateContractError, subprocess.TimeoutExpired):
+        delta_safe, delta_digest, delta_bytes, clean = False, digest_bytes(b""), 0, False
+        result = subprocess.CompletedProcess(result.args, 124, b"verification deadline expired\n")
     exit_code = result.returncode if result.returncode != 0 else (0 if clean and delta_safe else 125)
+    try:
+        remaining_verification_seconds(attempt_deadline, verification_deadline)
+    except PredicateContractError:
+        exit_code = 124
     run_url = args.run_url.rstrip("/")
     if not re.fullmatch(rf"https://github\.com/{re.escape(args.control_repo)}/actions/runs/\d+", run_url):
         raise PredicateContractError("run URL does not bind the control repository and numeric run ID")
@@ -823,6 +919,10 @@ def execute_attested(
         "sandbox_profile_digest": SANDBOX_PROFILE_DIGEST,
         "sandbox_attestation_digest": sandbox_attestation_digest,
         "outputs": outputs,
+        "attempt_deadline": attempt_deadline,
+        "verification_deadline": verification_deadline,
+        "started_at": started_at,
+        "completed_at": datetime.now(timezone.utc).isoformat(),
     }
     receipt["receipt_digest"] = digest_bytes(canonical_json(receipt))
     return receipt
@@ -860,7 +960,9 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--cwd", required=True)
     parser.add_argument("--control-cwd", required=True)
     parser.add_argument("--output", required=True)
-    parser.add_argument("--timeout", type=int, default=2700)
+    parser.add_argument("--attempt-deadline", required=True)
+    parser.add_argument("--verification-deadline", required=True)
+    parser.add_argument("--timeout", type=int, default=600)
     parser.add_argument("--docker-binary", default="docker")
     return parser
 

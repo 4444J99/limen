@@ -134,6 +134,8 @@ def request(provider: str = "github_actions", **overrides: object) -> RemoteRequ
         "predicate": "python3 scripts/check-remote.py",
         "receipt_target": f"artifact:organvm/limen:task:{task_id}",
         "instruction": f"Verify completed implementation for task {task_id}; do not modify code: bounded public verification",
+        "attempt_deadline": "2099-01-01T00:10:00+00:00",
+        "verification_deadline": "2099-01-01T00:05:00+00:00",
     }
     values.update(overrides)
     return RemoteRequest(**values)  # type: ignore[arg-type]
@@ -474,6 +476,8 @@ def _worker_args(repo: Path, req: RemoteRequest, packet_digest: str | None = Non
         output=str(repo.parent / "receipt.json"),
         timeout=30,
         docker_binary="docker-fixture",
+        attempt_deadline=req.attempt_deadline,
+        verification_deadline=req.verification_deadline,
     )
 
 
@@ -719,6 +723,15 @@ def test_real_sandbox_blocks_outside_write_github_env_sibling_secret_and_network
     )
     assert result.returncode == 0
     assert result.stdout == SANDBOX_OK
+
+    # A killed Docker client must not leave its daemon-owned sandbox alive.
+    (target / "scripts" / "check-limen-timeout.py").write_text("import time\ntime.sleep(60)\n")
+    command = sandbox_command(target, "scripts/check-limen-timeout.py", docker_binary=docker)
+    timed_out = _default_sandbox_runner(command, 3)
+    assert timed_out.returncode == 124
+    name = command[command.index("--name") + 1]
+    absent = subprocess.run([docker, "inspect", name], capture_output=True, timeout=5)
+    assert absent.returncode != 0, "timed-out sandbox still exists in the Docker daemon"
 
 
 def test_receipt_store_validates_filename_content_and_live_contract(tmp_path: Path) -> None:
@@ -1544,6 +1557,10 @@ def workflow_payload(req: RemoteRequest, observed: RemoteRun) -> dict[str, objec
         "sandbox_profile_digest": SANDBOX_PROFILE_DIGEST,
         "sandbox_attestation_digest": digest_text("limen-sandbox-boundary-v1\n"),
         "outputs": [output_for(req, observed).identity()],
+        "attempt_deadline": req.attempt_deadline,
+        "verification_deadline": req.verification_deadline,
+        "started_at": "2026-01-01T00:00:00+00:00",
+        "completed_at": "2026-01-01T00:00:01+00:00",
     }
     payload["receipt_digest"] = digest_bytes(canonical_json(payload))
     return payload
@@ -1880,6 +1897,18 @@ def test_remote_dispatch_final_guard_validates_authoritative_task_before_workflo
     monkeypatch.setattr(dispatch, "resolve_pushed_sha", lambda *_args, **_kwargs: SHA)
     monkeypatch.setattr(dispatch, "_remote_receipt_store", lambda: ReceiptStore(tmp_path / "receipts"))
 
+    class KeeperFixture:
+        def execution_info(self, work_key):
+            assert work_key == submitted.id
+            return {"attempt_deadline": "2099-01-01T00:10:00+00:00"}
+
+        def reserve_growth(self, work_key, action, identity_hash):
+            assert work_key == submitted.id and action == "verification"
+            assert len(identity_hash) == 64
+            return {"deadline": "2099-01-01T00:05:00+00:00"}
+
+    monkeypatch.setattr(dispatch, "client_from_env", KeeperFixture)
+
     result = dispatch._call_remote_adapter("github_actions", submitted, dry_run=False)
 
     assert dispatch._is_blocked_result(result)
@@ -1979,7 +2008,7 @@ def test_workflow_has_no_raw_shell_predicate_or_patch_upload() -> None:
     assert "remote.patch" not in workflow
     assert "actions/checkout@v" not in workflow
     assert "actions/upload-artifact@v" not in workflow
-    assert "persist-credentials: false" in workflow
+    assert "credential.helper=" in workflow
     assert "remote_predicate.py" in workflow
     assert "inputs.base_sha" in workflow
     assert "inputs.control_ref" in workflow
@@ -1992,6 +2021,6 @@ def test_workflow_has_no_raw_shell_predicate_or_patch_upload() -> None:
     assert "github.ref_type" in workflow
     assert "inputs.workflow_path" in workflow
     assert "verification_context_digest" in workflow
-    assert 'docker pull "$LIMEN_SANDBOX_IMAGE"' in workflow
+    assert '["docker", "pull", os.environ["LIMEN_SANDBOX_IMAGE"]]' in workflow
     assert SANDBOX_IMAGE in workflow
     assert "instruction_digest" in workflow

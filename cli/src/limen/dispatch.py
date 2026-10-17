@@ -1827,7 +1827,12 @@ def _journaled_agent_dispatch(
         limits = client_from_env().execution_info(task.id)
         if datetime.fromisoformat(limits["attempt_deadline"].replace("Z", "+00:00")) <= datetime.now(timezone.utc):
             return _prelaunch_blocked_result("execution_attempt_exhausted")
-        if canonical_agent(agent) not in _LOCAL_AGENTS:
+        bounded_actions_verifier = (
+            canonical_agent(agent) == "github_actions"
+            and task.type == "verification"
+            and "mode:verification-only" in task.labels
+        )
+        if canonical_agent(agent) not in _LOCAL_AGENTS and not bounded_actions_verifier:
             return _prelaunch_blocked_result(
                 f"execution hard deadline unavailable for autonomous {agent}; provider retained for observation and recovery"
             )
@@ -2008,6 +2013,13 @@ def _call_remote_adapter(agent: str, task: Task, dry_run: bool) -> bool | str:
         )
         return True
     try:
+        client = client_from_env()
+        limits = client.execution_info(remote_task.id)
+        verification_reservation = client.reserve_growth(
+            remote_task.id, "verification", hashlib.sha256(f"{remote_task.id}:verification".encode()).hexdigest()
+        )
+        original_attempt_deadline = limits["attempt_deadline"]
+        original_verification_deadline = verification_reservation["deadline"]
         base_ref = os.environ.get("LIMEN_REMOTE_BASE_REF", "HEAD")
         base_sha = resolve_pushed_sha(
             repo,
@@ -2038,6 +2050,8 @@ def _call_remote_adapter(agent: str, task: Task, dry_run: bool) -> bool | str:
                 instruction=current_instruction,
                 repo=current_repo,
                 execution_profile=execution_profile_for(current_task).as_dict(),
+                attempt_deadline=original_attempt_deadline,
+                verification_deadline=original_verification_deadline,
             )
 
         request = build_request(remote_task, verification_context)
@@ -2059,7 +2073,7 @@ def _call_remote_adapter(agent: str, task: Task, dry_run: bool) -> bool | str:
         reason = f"remote {agent} submission requires a successor workstream: {str(exc)[:300]}"
         print(f"  BLOCKED {task.id}: {reason}")
         return _workstream_successor_result(reason)
-    except (RemoteExecutionError, ValueError, OSError) as exc:
+    except (RemoteExecutionError, ConductError, KeyError, ValueError, OSError) as exc:
         reason = f"remote {agent} submission blocked: {str(exc)[:300]}"
         print(f"  BLOCKED {task.id}: {reason}")
         return _blocked_result(reason)
